@@ -6,7 +6,7 @@ import { DowngradePluginSubscriptionCommand } from '../downgrade-plugin-subscrip
 
 @CommandHandler(DowngradePluginSubscriptionCommand)
 export class DowngradePluginSubscriptionCommandHandler implements ICommandHandler<DowngradePluginSubscriptionCommand> {
-	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) {}
+	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) { }
 
 	/**
 	 * Execute plugin subscription downgrade command.
@@ -39,6 +39,11 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 
 		if (!subscription) {
 			throw new NotFoundException(`Plugin subscription with ID ${subscriptionId} not found or access denied`);
+		}
+
+		// Ensure the user can only downgrade their own subscription
+		if (userId && subscription.subscriberId && subscription.subscriberId !== userId) {
+			throw new BadRequestException('You can only downgrade your own subscriptions');
 		}
 
 		// Validate that the new plan is different from current plan

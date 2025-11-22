@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { IPlugin } from '@gauzy/contracts';
+import { IPlugin, PluginScope } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,7 +11,6 @@ import {
 	filter,
 	firstValueFrom,
 	map,
-	of,
 	startWith,
 	switchMap,
 	take,
@@ -112,6 +111,7 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	// Expose enums to template
 	public readonly PluginSubscriptionType = PluginSubscriptionType;
 	public readonly PluginBillingPeriod = PluginBillingPeriod;
+	public readonly PluginScope = PluginScope;
 
 	// Computed observables based on available PLANS
 	public hasFreePlan$: Observable<boolean>;
@@ -207,6 +207,8 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			billingPeriod: [PluginBillingPeriod.MONTHLY],
 			paymentMethodId: [''],
 			promoCode: [''],
+			scope: [null, Validators.required], // Will be set automatically based on plan type
+			autoRenew: [true],
 			agreeToTerms: [false, Validators.requiredTrue]
 		});
 
@@ -227,6 +229,10 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 				tap(([planViewModel, currentSubscription]) => {
 					// Update selected plan view model
 					this.selectedPlanViewModel$.next(planViewModel);
+
+					// Automatically determine and set scope based on plan type
+					const determinedScope = this.determineScope(planViewModel.type);
+					this.subscriptionForm.patchValue({ scope: determinedScope }, { emitEvent: false });
 
 					// Perform plan comparison
 					const comparisonResult = this.planComparison.comparePlans(
@@ -250,6 +256,7 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 					}
 
 					console.log('[PluginSubscriptionSelection] Plan comparison result:', comparisonResult);
+					console.log('[PluginSubscriptionSelection] Auto-determined scope:', determinedScope);
 				}),
 				untilDestroyed(this)
 			)
@@ -321,14 +328,19 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 			this.subscriptionForm.get('planId')!.valueChanges.pipe(startWith(null))
 		])
 			.pipe(
-				filter(([viewModels, currentSubscription, currentFormValue]) => !currentFormValue && viewModels.length > 0),
+				filter(
+					([viewModels, currentSubscription, currentFormValue]) => !currentFormValue && viewModels.length > 0
+				),
 				map(([viewModels, currentSubscription]) => {
 					// Auto-select logic based on subscription status
 					if (currentSubscription?.planId) {
 						// User has existing subscription - select current plan by ID
 						const currentPlan = viewModels.find((vm) => vm.id === currentSubscription.planId);
 						if (currentPlan) {
-							console.log('[PluginSubscriptionSelection] Auto-selecting current plan by ID:', currentPlan.name);
+							console.log(
+								'[PluginSubscriptionSelection] Auto-selecting current plan by ID:',
+								currentPlan.name
+							);
 							return currentPlan;
 						}
 					}
@@ -377,6 +389,29 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe((viewModel) => this.onPlanSelected(viewModel));
+	}
+
+	/**
+	 * Automatically determine the appropriate scope based on plan type
+	 * Following the business logic from backend:
+	 * - FREE plans: Always USER scope
+	 * - TRIAL plans: Always USER scope
+	 * - Paid plans (BASIC, PREMIUM, ENTERPRISE, CUSTOM): Default to USER scope
+	 */
+	private determineScope(planType: PluginSubscriptionType): PluginScope {
+		switch (planType) {
+			case PluginSubscriptionType.FREE:
+			case PluginSubscriptionType.TRIAL:
+				return PluginScope.USER;
+			case PluginSubscriptionType.BASIC:
+			case PluginSubscriptionType.PREMIUM:
+				return PluginScope.ORGANIZATION;
+			case PluginSubscriptionType.ENTERPRISE:
+			case PluginSubscriptionType.CUSTOM:
+				return PluginScope.TENANT;
+			default:
+				return PluginScope.USER;
+		}
 	}
 
 	public async validatePromoCode(): Promise<void> {
@@ -467,8 +502,8 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 		const subscriptionInput: IPluginSubscriptionCreateInput = {
 			pluginId: this.pluginId || this.plugin?.id!,
 			planId: selectedPlanViewModel.id,
-			subscriptionType: selectedPlanViewModel.type,
-			billingPeriod: this.subscriptionForm.value.billingPeriod,
+			scope: this.subscriptionForm.value.scope,
+			autoRenew: this.subscriptionForm.value.autoRenew,
 			paymentMethodId: this.subscriptionForm.value.paymentMethodId,
 			promoCode: this.subscriptionForm.value.promoCode,
 			metadata: {
@@ -477,7 +512,9 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 				requiresSubscription: true,
 				actionType: comparisonResult.actionType,
 				previousSubscriptionId: currentSubscription?.id,
-				prorationAmount: comparisonResult.prorationAmount
+				prorationAmount: comparisonResult.prorationAmount,
+				billingPeriod: this.subscriptionForm.value.billingPeriod,
+				requestedScope: this.subscriptionForm.value.scope
 			}
 		};
 
@@ -694,7 +731,10 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	public getActionButtonTextForPlan(planViewModel: IPlanViewModel): Observable<string> {
 		return this.currentSubscription$.pipe(
 			map((currentSubscription) => {
-				const comparisonResult = this.planComparison.comparePlans(currentSubscription, planViewModel.originalPlan);
+				const comparisonResult = this.planComparison.comparePlans(
+					currentSubscription,
+					planViewModel.originalPlan
+				);
 				return this.planComparison.getActionDescription(comparisonResult, planViewModel.name);
 			})
 		);
@@ -706,7 +746,10 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	public isPlanDisabled(planViewModel: IPlanViewModel): Observable<boolean> {
 		return this.currentSubscription$.pipe(
 			map((currentSubscription) => {
-				const comparisonResult = this.planComparison.comparePlans(currentSubscription, planViewModel.originalPlan);
+				const comparisonResult = this.planComparison.comparePlans(
+					currentSubscription,
+					planViewModel.originalPlan
+				);
 				return this.planComparison.isPlanSelectionDisabled(comparisonResult);
 			})
 		);
@@ -715,10 +758,15 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	/**
 	 * Get the button variant for a specific plan
 	 */
-	public getActionButtonVariant(planViewModel: IPlanViewModel): Observable<'primary' | 'success' | 'warning' | 'basic'> {
+	public getActionButtonVariant(
+		planViewModel: IPlanViewModel
+	): Observable<'primary' | 'success' | 'warning' | 'basic'> {
 		return this.currentSubscription$.pipe(
 			map((currentSubscription) => {
-				const comparisonResult = this.planComparison.comparePlans(currentSubscription, planViewModel.originalPlan);
+				const comparisonResult = this.planComparison.comparePlans(
+					currentSubscription,
+					planViewModel.originalPlan
+				);
 				return this.planComparison.getActionButtonVariant(comparisonResult);
 			})
 		);
@@ -862,7 +910,9 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	/**
 	 * Calculate savings for yearly vs monthly billing
 	 */
-	public calculateYearlySavings(planViewModel: IPlanViewModel): Observable<{ amount: number; percentage: number } | null> {
+	public calculateYearlySavings(
+		planViewModel: IPlanViewModel
+	): Observable<{ amount: number; percentage: number } | null> {
 		return this.planViewModels$.pipe(
 			map((viewModels) => {
 				// Find monthly version of the same plan type

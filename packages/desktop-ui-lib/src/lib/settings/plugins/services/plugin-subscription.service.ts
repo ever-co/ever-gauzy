@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IPagination } from '@gauzy/contracts';
+import { IPagination, PluginScope } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { BehaviorSubject, map, Observable, of, shareReplay, tap } from 'rxjs';
 
@@ -9,6 +9,7 @@ export interface IPluginSubscription {
 	id: string;
 	pluginId: string;
 	planId?: string;
+	scope: PluginScope;
 	userId: string;
 	subscriptionType: PluginSubscriptionType;
 	billingPeriod: PluginBillingPeriod;
@@ -35,7 +36,7 @@ export interface IPluginSubscriptionPlan {
 	id: string;
 	pluginId: string;
 	type: PluginSubscriptionType;
-	scope?: string; // 'user', 'organization', 'tenant', 'global'
+	scope?: PluginScope | 'global'; // Allow legacy global scope while backend expects contracts enum
 	name: string;
 	description: string;
 	price: number;
@@ -144,8 +145,9 @@ export enum PaymentMethod {
 export interface IPluginSubscriptionCreateInput {
 	pluginId: string;
 	planId?: string;
-	subscriptionType: PluginSubscriptionType;
-	billingPeriod: PluginBillingPeriod;
+	scope: PluginScope;
+	autoRenew?: boolean;
+	paymentMethod?: string;
 	paymentMethodId?: string;
 	promoCode?: string;
 	metadata?: Record<string, any>;
@@ -163,7 +165,7 @@ export interface IPluginPlanCreateInput {
 	id?: string;
 	pluginId: string;
 	type: PluginSubscriptionType;
-	scope?: string; // 'user', 'organization', 'tenant', 'global'
+	scope?: PluginScope | 'global';
 	name: string;
 	description: string;
 	price: number;
@@ -192,7 +194,7 @@ export class PluginSubscriptionService {
 	private readonly subscriptionsCache$ = new BehaviorSubject<IPluginSubscription[]>([]);
 	private readonly plansCache$ = new BehaviorSubject<IPluginSubscriptionPlan[]>([]);
 
-	constructor(private readonly http: HttpClient) { }
+	constructor(private readonly http: HttpClient) {}
 
 	/**
 	 * Utility method to normalize API responses that may be arrays or paginated objects
@@ -249,11 +251,18 @@ export class PluginSubscriptionService {
 	}
 
 	public createSubscription(subscription: IPluginSubscriptionCreateInput): Observable<IPluginSubscription> {
+		const payload = {
+			pluginId: subscription.pluginId,
+			planId: subscription.planId,
+			scope: subscription.scope,
+			autoRenew: subscription.autoRenew ?? true,
+			paymentMethod: subscription.paymentMethod ?? subscription.paymentMethodId,
+			promoCode: subscription.promoCode,
+			metadata: subscription.metadata
+		};
+
 		return this.http
-			.post<IPluginSubscription>(
-				`${this.subscriptionsEndPoint}/${subscription.pluginId}/subscriptions`,
-				subscription
-			)
+			.post<IPluginSubscription>(`${this.subscriptionsEndPoint}/${subscription.pluginId}/subscriptions`, payload)
 			.pipe(
 				tap((newSubscription) => {
 					const current = this.subscriptionsCache$.value;

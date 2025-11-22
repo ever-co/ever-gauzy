@@ -175,7 +175,11 @@ hasExistingSubscription$ | async;
 				</div>
 
 				@if (planViewModels && planViewModels.length > 0) {
-				<div class="plans-grid" [class.single-plan]="planViewModels.length === 1" [class.comparison-view]="showComparisonView">
+				<div
+					class="plans-grid"
+					[class.single-plan]="planViewModels.length === 1"
+					[class.comparison-view]="showComparisonView"
+				>
 					@for (planViewModel of planViewModels; track planViewModel.id) {
 					<div class="plan-card-wrapper">
 						<!-- Upgrade/Downgrade Badge -->
@@ -192,15 +196,13 @@ hasExistingSubscription$ | async;
 						</div>
 						} }
 						<!-- Yearly Savings Badge -->
-						@if (planViewModel.billingPeriod === PluginBillingPeriod.YEARLY) {
-							@let savings = calculateYearlySavings(planViewModel) | async;
-							@if (savings && savings.percentage > 0) {
-							<div class="savings-badge">
-								<nb-icon icon="pricetags-outline"></nb-icon>
-								<span>Save {{ savings.percentage }}%</span>
-							</div>
-							}
-						}
+						@if (planViewModel.billingPeriod === PluginBillingPeriod.YEARLY) { @let savings =
+						calculateYearlySavings(planViewModel) | async; @if (savings && savings.percentage > 0) {
+						<div class="savings-badge">
+							<nb-icon icon="pricetags-outline"></nb-icon>
+							<span>Save {{ savings.percentage }}%</span>
+						</div>
+						} }
 						<lib-plan-card
 							[plan]="planViewModel"
 							[isSelected]="selectedPlanViewModel?.id === planViewModel.id"
@@ -248,6 +250,27 @@ hasExistingSubscription$ | async;
 				}
 			</div>
 
+			<!-- Scope Information (Read-only) -->
+			@if (selectedPlanViewModel) {
+			<div class="scope-info-section">
+				<nb-alert status="info" size="small" closable="false" class="scope-info-alert">
+					<div class="scope-info-content">
+						<nb-icon icon="shield-outline"></nb-icon>
+						<span>
+							This <strong>{{ selectedPlanViewModel.type | titlecase }}</strong> plan will apply to
+							<strong>Individual User</strong>
+							<nb-icon
+								icon="question-mark-circle-outline"
+								class="info-icon-small"
+								nbTooltip="The scope is automatically determined based on the plan type"
+								nbTooltipPlacement="top"
+							></nb-icon>
+						</span>
+					</div>
+				</nb-alert>
+			</div>
+			}
+
 			<!-- Billing Options (for paid plans) -->
 			@if (selectedPlanViewModel && !selectedPlanViewModel.isFree) {
 			<div class="billing-section">
@@ -274,12 +297,11 @@ hasExistingSubscription$ | async;
 							class="billing-option-btn"
 						>
 							{{ formatBillingPeriod(period) }}
-							@if (period === PluginBillingPeriod.YEARLY && selectedPlanViewModel) {
-								@let savings = calculateYearlySavings(selectedPlanViewModel) | async;
-								@if (savings && savings.percentage > 0) {
-								<span class="billing-badge">Save {{ savings.percentage }}%</span>
-								}
-							}
+							@if (period === PluginBillingPeriod.YEARLY && selectedPlanViewModel) { @let savings =
+							calculateYearlySavings(selectedPlanViewModel) | async; @if (savings && savings.percentage >
+							0) {
+							<span class="billing-badge">Save {{ savings.percentage }}%</span>
+							} }
 						</button>
 						}
 					</nb-button-group>
@@ -324,6 +346,13 @@ hasExistingSubscription$ | async;
 				</div>
 			</div>
 			}
+
+			<!-- Auto renew toggle -->
+			<div class="auto-renew-section">
+				<nb-checkbox formControlName="autoRenew">
+					Enable auto-renew so your subscription stays active without interruption
+				</nb-checkbox>
+			</div>
 
 			<!-- Subscription Preview -->
 			<lib-subscription-preview [preview]="preview"></lib-subscription-preview>

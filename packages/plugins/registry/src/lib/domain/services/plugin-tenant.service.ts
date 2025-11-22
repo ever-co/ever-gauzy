@@ -43,7 +43,7 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 		const currentUser = RequestContext.currentUser();
 
 		// Create new plugin tenant if not found
-		const createData: Partial<PluginTenant> = {
+		const data: Partial<IPluginTenant> = {
 			enabled: true,
 			autoInstall: false,
 			requiresApproval: true,
@@ -54,23 +54,20 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 			currentActiveUsers: 0,
 			isDataCompliant: true,
 			approvedById: currentUser?.id,
+			approvedAt: new Date(),
 			...input
 		};
 
 		if (organizationId) {
-			createData.organizationId = organizationId;
+			data.organizationId = organizationId;
 		}
 
 		try {
-			const createdPluginTenant = await this.create(createData);
-			this.logger.log(
-				`Created new plugin tenant: ${createdPluginTenant.id} for plugin ${pluginId} and tenant ${tenantId}`
-			);
-			createdPluginTenant.allowUser(currentUser);
-
-			await this.save(createdPluginTenant);
-
-			return createdPluginTenant.id;
+			const tenant = PluginTenant.create(data);
+			tenant.allowUser(currentUser);
+			this.logger.log(`Created new plugin tenant: ${tenant.id} for plugin ${pluginId} and tenant ${tenantId}`);
+			const { id } = await this.save(tenant);
+			return id;
 		} catch (error) {
 			this.logger.error(`Failed to create plugin tenant for plugin ${pluginId} and tenant ${tenantId}`, error);
 			throw new BadRequestException(`Failed to create plugin tenant relationship: ${error.message}`);

@@ -1,4 +1,4 @@
-import { CurrenciesEnum, ID } from '@gauzy/contracts';
+import { ID } from '@gauzy/contracts';
 import { CrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions, MoreThan } from 'typeorm';
@@ -7,7 +7,6 @@ import {
 	IPluginSubscriptionPlanCreateInput,
 	IPluginSubscriptionPlanFindInput,
 	IPluginSubscriptionPlanUpdateInput,
-	PluginBillingPeriod,
 	PluginSubscriptionType
 } from '../../shared/models/plugin-subscription.model';
 import { PluginSubscriptionPlan } from '../entities/plugin-subscription-plan.entity';
@@ -29,38 +28,20 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 		createInput: Partial<IPluginSubscriptionPlanCreateInput> & {
 			name: string;
 			pluginId: ID;
-			type: PluginSubscriptionType;
-			price: number;
-			currency: string;
-			billingPeriod: PluginBillingPeriod;
-			features: string[];
 		}
 	): Promise<IPluginSubscriptionPlan> {
 		try {
-			// Ensure required fields are set
-			const planData = {
-				...createInput,
-				isActive: createInput.isActive ?? true,
-				sortOrder: createInput.sortOrder ?? 0,
-				price: createInput.price ?? 0,
-				currency: createInput.currency ?? CurrenciesEnum.USD,
-				features: createInput.features ?? []
-			};
-
 			// Validate that the plan name is unique per plugin
-			const existingPlan = await this.typeOrmRepository.findOne({
-				where: {
-					pluginId: planData.pluginId,
-					name: planData.name
-				}
+			const existingPlan = await this.findOneOrFailByWhereOptions({
+				pluginId: createInput.pluginId,
+				name: createInput.name
 			});
 
-			if (existingPlan) {
-				throw new BadRequestException(`A plan with name "${planData.name}" already exists for this plugin`);
+			if (existingPlan.success) {
+				throw new BadRequestException(`A plan with name "${createInput.name}" already exists for this plugin`);
 			}
-
 			// Create and save the new plan
-			const newPlan = this.create(planData);
+			const newPlan = PluginSubscriptionPlan.create(createInput);
 			return this.save(newPlan);
 		} catch (error) {
 			if (error instanceof BadRequestException) {
@@ -75,18 +56,17 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 	 */
 	async updatePlan(id: ID, updateInput: IPluginSubscriptionPlanUpdateInput): Promise<IPluginSubscriptionPlan> {
 		try {
-			const existingPlan = await this.findOneByIdString(id);
-			if (!existingPlan) {
+			const { success: isExists, record: existingPlan } = await this.findOneOrFailByIdString(id);
+
+			if (!isExists) {
 				throw new NotFoundException(`Subscription plan with ID ${id} not found`);
 			}
 
 			// If updating name, ensure uniqueness per plugin
 			if (updateInput.name && updateInput.name !== existingPlan.name) {
-				const duplicatePlan = await this.typeOrmRepository.findOne({
-					where: {
-						pluginId: existingPlan.pluginId,
-						name: updateInput.name
-					}
+				const duplicatePlan = await this.findOneByWhereOptions({
+					pluginId: existingPlan.pluginId,
+					name: updateInput.name
 				});
 
 				if (duplicatePlan && duplicatePlan.id !== id) {
@@ -97,7 +77,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 			}
 
 			// Update the plan
-			await this.typeOrmRepository.update(id, updateInput);
+			await this.update(id, updateInput);
 			return await this.findOneByIdString(id);
 		} catch (error) {
 			if (error instanceof NotFoundException || error instanceof BadRequestException) {
@@ -124,7 +104,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 			//     throw new BadRequestException('Cannot delete plan with active subscriptions');
 			// }
 
-			await this.typeOrmRepository.delete(id);
+			await this.delete(id);
 		} catch (error) {
 			if (error instanceof NotFoundException || error instanceof BadRequestException) {
 				throw error;
@@ -140,7 +120,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 	 */
 	async hasPlans(pluginId: ID): Promise<boolean> {
 		try {
-			const count = await this.typeOrmRepository.count({
+			const count = await this.count({
 				where: { pluginId }
 			});
 			return count > 0;
@@ -172,7 +152,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 				}
 			};
 
-			return await this.typeOrmRepository.find(queryOptions);
+			return await this.find(queryOptions);
 		} catch (error) {
 			throw new BadRequestException(`Failed to get plans for plugin ${pluginId}: ${error.message}`);
 		}
@@ -200,7 +180,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 				}
 			};
 
-			return await this.typeOrmRepository.find(queryOptions);
+			return await this.find(queryOptions);
 		} catch (error) {
 			throw new BadRequestException(`Failed to get active plans: ${error.message}`);
 		}
@@ -236,7 +216,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 			}
 
 			// Create new plan based on source
-			const newPlan = this.typeOrmRepository.create({
+			const newPlan = PluginSubscriptionPlan.create({
 				...sourcePlan,
 				id: undefined, // Remove ID to create new entity
 				name: newName,
@@ -246,7 +226,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 				updatedAt: undefined
 			});
 
-			return this.typeOrmRepository.save(newPlan);
+			return this.save(newPlan);
 		} catch (error) {
 			if (error instanceof NotFoundException || error instanceof BadRequestException) {
 				throw error;

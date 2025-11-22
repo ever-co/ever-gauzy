@@ -13,7 +13,7 @@ import {
 } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsUUID, Min, ValidateIf } from 'class-validator';
-import { Index, Relation, RelationId } from 'typeorm';
+import { Index, JoinTable, Relation, RelationId } from 'typeorm';
 import { IPlugin, IPluginSetting, IPluginSubscription, IPluginTenant, PluginScope } from '../../shared';
 import { PluginSetting } from './plugin-setting.entity';
 import { PluginSubscription } from './plugin-subscription.entity';
@@ -280,11 +280,13 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		description: 'Roles explicitly allowed to access this plugin'
 	})
 	@MultiORMManyToMany(() => Role, {
+		onDelete: 'SET NULL',
 		owner: true,
 		pivotTable: 'plugin_tenant_allowed_roles',
 		joinColumn: 'pluginTenantId',
 		inverseJoinColumn: 'roleId'
 	})
+	@JoinTable({ name: 'plugin_tenant_allowed_roles' })
 	allowedRoles?: Relation<IRole[]>;
 
 	@ApiPropertyOptional({
@@ -293,11 +295,13 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		description: 'Users explicitly allowed to access this plugin'
 	})
 	@MultiORMManyToMany(() => User, {
+		onDelete: 'SET NULL',
 		owner: true,
 		pivotTable: 'plugin_tenant_allowed_users',
 		joinColumn: 'pluginTenantId',
 		inverseJoinColumn: 'userId'
 	})
+	@JoinTable({ name: 'plugin_tenant_allowed_users' })
 	allowedUsers?: Relation<IUser[]>;
 
 	@ApiPropertyOptional({
@@ -306,11 +310,13 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		description: 'Users explicitly denied access to this plugin'
 	})
 	@MultiORMManyToMany(() => User, {
+		onDelete: 'SET NULL',
 		owner: true,
 		pivotTable: 'plugin_tenant_denied_users',
 		joinColumn: 'pluginTenantId',
 		inverseJoinColumn: 'userId'
 	})
+	@JoinTable({ name: 'plugin_tenant_denied_users' })
 	deniedUsers?: Relation<IUser[]>;
 
 	/*
@@ -732,24 +738,11 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	 * @param params - Configuration parameters
 	 * @returns New PluginTenant instance
 	 */
-	public static create(params: {
-		plugin: IPlugin;
-		scope?: PluginScope;
-		enabled?: boolean;
-		autoInstall?: boolean;
-		requiresApproval?: boolean;
-		isMandatory?: boolean;
-		maxInstallations?: number;
-		maxActiveUsers?: number;
-		allowedRoles?: IRole[];
-		allowedUsers?: IUser[];
-		isDataCompliant?: boolean;
-	}): PluginTenant {
+	public static create(params: Partial<IPluginTenant>): PluginTenant {
 		const pluginTenant = new PluginTenant();
 
 		// Required fields
-		pluginTenant.plugin = params.plugin;
-		pluginTenant.pluginId = params.plugin.id!;
+		pluginTenant.pluginId = params.pluginId;
 
 		// Configuration with defaults
 		pluginTenant.scope = params.scope ?? PluginScope.USER;
@@ -769,17 +762,17 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		pluginTenant.allowedRoles = params.allowedRoles;
 		pluginTenant.allowedUsers = params.allowedUsers;
 
-		return pluginTenant;
+		return Object.assign(pluginTenant, params);
 	}
 
 	/**
 	 * Create a plugin tenant with unlimited access
-	 * @param plugin - Plugin to create tenant relationship for
+	 * @param input - Plugin to create tenant relationship for
 	 * @returns New PluginTenant instance with no restrictions
 	 */
-	public static createUnlimited(plugin: IPlugin): PluginTenant {
+	public static createUnlimited(input: IPluginTenant): PluginTenant {
 		return PluginTenant.create({
-			plugin,
+			...input,
 			enabled: true,
 			autoInstall: false,
 			requiresApproval: false,
@@ -794,9 +787,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	 * @param allowedRoles - Roles that can access the plugin
 	 * @returns New PluginTenant instance with restrictions
 	 */
-	public static createRestricted(plugin: IPlugin, allowedRoles?: IRole[]): PluginTenant {
+	public static createRestricted(input: IPluginTenant, allowedRoles?: IRole[]): PluginTenant {
 		return PluginTenant.create({
-			plugin,
+			...input,
 			enabled: false,
 			autoInstall: false,
 			requiresApproval: true,

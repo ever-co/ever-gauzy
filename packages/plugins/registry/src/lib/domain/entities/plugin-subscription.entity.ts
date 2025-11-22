@@ -39,6 +39,7 @@ import { Plugin } from './plugin.entity';
 @Index(['pluginId', 'tenantId', 'organizationId'], { unique: false })
 @Index(['subscriberId', 'tenantId'], { unique: false })
 @Index(['status', 'endDate'], { unique: false })
+@Index(['pluginId', 'subscriberId'], { unique: true })
 @Index(['planId'], { unique: false })
 @Index(['externalSubscriptionId'], { unique: false })
 @Index(['parentId'], { unique: false })

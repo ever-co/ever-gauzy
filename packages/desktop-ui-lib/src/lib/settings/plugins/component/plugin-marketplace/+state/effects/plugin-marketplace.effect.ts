@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { PluginScope } from '@gauzy/contracts';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,11 +10,7 @@ import { coalesceValue } from '../../../../../../utils';
 import { PluginAnalyticsService } from '../../../../services/plugin-analytics.service';
 import { PluginSecurityService } from '../../../../services/plugin-security.service';
 import { PluginSettingsService } from '../../../../services/plugin-settings.service';
-import {
-	PluginBillingPeriod,
-	PluginSubscriptionService,
-	PluginSubscriptionType
-} from '../../../../services/plugin-subscription.service';
+import { PluginBillingPeriod, PluginSubscriptionService } from '../../../../services/plugin-subscription.service';
 import { PluginTagsService } from '../../../../services/plugin-tags.service';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
@@ -357,9 +354,12 @@ export class PluginMarketplaceEffects {
 					.createSubscription({
 						pluginId,
 						planId,
-						subscriptionType: PluginSubscriptionType.BASIC,
-						billingPeriod: PluginBillingPeriod.MONTHLY,
-						paymentMethodId: paymentMethod.id
+						scope: PluginScope.USER,
+						autoRenew: true,
+						paymentMethodId: paymentMethod.id,
+						metadata: {
+							billingPeriod: PluginBillingPeriod.MONTHLY
+						}
 					})
 					.pipe(
 						tap((subscription) => {

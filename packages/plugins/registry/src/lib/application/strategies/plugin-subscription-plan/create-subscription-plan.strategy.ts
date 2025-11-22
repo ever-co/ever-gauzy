@@ -12,9 +12,11 @@ export class CreateSubscriptionPlan implements ISubscriptionPlanOperation {
 	 * @param context - The operation context containing pluginId, tenantId, etc.
 	 */
 	async execute(input: CreatePluginSubscriptionPlanDTO, context: SubscriptionPlanOperationContext): Promise<void> {
-		const { tenantId, organizationId, userId, commandBus } = context;
+		const { tenantId, organizationId, userId, commandBus, pluginId } = context;
 
 		// The pluginId should already be included in the input DTO
-		await commandBus.execute(new CreatePluginSubscriptionPlanCommand(input, tenantId, organizationId, userId));
+		await commandBus.execute(
+			new CreatePluginSubscriptionPlanCommand({ ...input, pluginId }, tenantId, organizationId, userId)
+		);
 	}
 }

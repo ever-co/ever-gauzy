@@ -1,8 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { FindOptionsWhere } from 'typeorm';
 import { PluginSubscriptionPlanService, PluginSubscriptionService, PluginTenantService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
-import { IPluginSubscription, PluginBillingPeriod, PluginScope } from '../../../../shared';
+import { IPluginSubscription, PluginBillingPeriod, PluginScope, PluginSubscriptionStatus } from '../../../../shared';
 import { PurchasePluginSubscriptionCommand } from '../purchase-plugin-subscription.command';
 
 @CommandHandler(PurchasePluginSubscriptionCommand)
@@ -33,6 +34,52 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 		}
 		if (!tenantId) {
 			throw new BadRequestException('Tenant ID is required');
+		}
+
+		// Check for existing subscription based on scope
+		const options: FindOptionsWhere<PluginSubscription> = {
+			pluginId: purchaseDto.pluginId
+		};
+
+		// Add scope-specific constraints
+		switch (purchaseDto.scope) {
+			case PluginScope.USER:
+				if (!userId) {
+					throw new BadRequestException('User ID is required for USER scope subscription');
+				}
+				options.scope = PluginScope.USER;
+				options.subscriberId = userId;
+				break;
+			case PluginScope.ORGANIZATION:
+				if (!organizationId) {
+					throw new BadRequestException('Organization ID is required for ORGANIZATION scope subscription');
+				}
+				options.organizationId = organizationId;
+				options.scope = PluginScope.ORGANIZATION;
+				break;
+			case PluginScope.TENANT:
+				options.tenantId = tenantId;
+				options.scope = PluginScope.TENANT;
+				break;
+		}
+
+		const { record: existingSubscription, success } =
+			await this.pluginSubscriptionService.findOneOrFailByWhereOptions(options);
+
+		if (success && existingSubscription) {
+			// If user has an active or trial subscription, reject the purchase
+			if (
+				[PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL].includes(existingSubscription.status)
+			) {
+				throw new BadRequestException(
+					'You already have an active subscription for this plugin. Please use upgrade or downgrade to change your plan.'
+				);
+			}
+			console.log(
+				`[PurchaseSubscription] Deleting ${existingSubscription.status} subscription ${existingSubscription.id} to replace with new purchase`
+			);
+			// Delete the old subscription to avoid unique constraint violation
+			await this.pluginSubscriptionService.delete(existingSubscription.id);
 		}
 
 		const pluginTenantInput = {
@@ -71,7 +118,7 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 					organizationId
 				);
 				subscription.planId = purchaseDto.planId;
-				subscription.scope = PluginScope.USER; // Free plans are always user-scoped
+				subscription.scope = purchaseDto.scope; // Use requested scope
 			} else if (plan.hasTrial) {
 				// Trial plan - create trial subscription
 				subscription = PluginSubscription.createTrialSubscription(
@@ -110,6 +157,10 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 				userId,
 				organizationId
 			);
+			// Ensure scope is set correctly for free subscription if not USER
+			if (purchaseDto.scope !== PluginScope.USER) {
+				subscription.scope = purchaseDto.scope;
+			}
 		}
 
 		// Set additional properties from purchase DTO

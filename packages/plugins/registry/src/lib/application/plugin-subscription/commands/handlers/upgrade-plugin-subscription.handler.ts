@@ -6,7 +6,7 @@ import { UpgradePluginSubscriptionCommand } from '../upgrade-plugin-subscription
 
 @CommandHandler(UpgradePluginSubscriptionCommand)
 export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<UpgradePluginSubscriptionCommand> {
-	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) {}
+	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) { }
 
 	/**
 	 * Execute plugin subscription upgrade command.
@@ -38,6 +38,11 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 
 		if (!subscription) {
 			throw new NotFoundException(`Plugin subscription with ID ${subscriptionId} not found or access denied`);
+		}
+
+		// Ensure the user can only upgrade their own subscription
+		if (userId && subscription.subscriberId && subscription.subscriberId !== userId) {
+			throw new BadRequestException('You can only upgrade your own subscriptions');
 		}
 
 		// Validate that the new plan is different from current plan

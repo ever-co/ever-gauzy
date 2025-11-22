@@ -1,4 +1,4 @@
-import { IUser } from '@gauzy/contracts';
+import { CurrenciesEnum, IUser } from '@gauzy/contracts';
 import { BaseEntity, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany, User } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -250,5 +250,418 @@ export class PluginSubscriptionPlan extends BaseEntity implements IPluginSubscri
 			[PluginBillingPeriod.ONE_TIME]: 'one-time'
 		};
 		return periodMap[this.billingPeriod] || 'monthly';
+	}
+
+	/*
+	 * Static helper methods
+	 */
+
+	/**
+	 * Create a new subscription plan instance
+	 */
+	static create(plan: Partial<IPluginSubscriptionPlan>): PluginSubscriptionPlan {
+		// ---- 1. Validate required fields -----------------------------------------------------
+		const name = plan.name?.trim();
+		const pluginId = plan.pluginId?.trim();
+
+		if (!name) {
+			throw new Error('Plan name is required');
+		}
+		if (!pluginId) {
+			throw new Error('Plugin ID is required');
+		}
+
+		// ---- 2. Normalize + resolve defaults -------------------------------------------------
+		const normalized: Pick<
+			IPluginSubscriptionPlan,
+			| 'name'
+			| 'pluginId'
+			| 'type'
+			| 'price'
+			| 'currency'
+			| 'billingPeriod'
+			| 'isActive'
+			| 'isPopular'
+			| 'isRecommended'
+			| 'sortOrder'
+		> &
+			Partial<IPluginSubscriptionPlan> = {
+			// Required
+			name,
+			pluginId,
+
+			// Defaults
+			type: plan.type ?? PluginSubscriptionType.FREE,
+			price: plan.price ?? 0,
+			currency: plan.currency ?? CurrenciesEnum.USD,
+			billingPeriod: plan.billingPeriod ?? PluginBillingPeriod.MONTHLY,
+			isActive: plan.isActive ?? true,
+			isPopular: plan.isPopular ?? false,
+			isRecommended: plan.isRecommended ?? false,
+			sortOrder: this.getSortOrderByType(plan.type),
+
+			// Optionals (preserve null/undefined as given)
+			description: plan.description,
+			features: plan.features ?? [],
+			limitations: plan.limitations,
+			trialDays: plan.trialDays,
+			setupFee: plan.setupFee,
+			discountPercentage: plan.discountPercentage,
+			metadata: plan.metadata,
+			createdById: plan.createdById
+		};
+
+		// ---- 3. Validate pricing rules -------------------------------------------------------
+		if (!this.validatePricing(normalized.price, normalized.billingPeriod, normalized.setupFee)) {
+			throw new Error('Invalid pricing configuration');
+		}
+
+		// ---- 4. Create the instance (single source of truth) ---------------------------------
+		return Object.assign(new PluginSubscriptionPlan(), normalized);
+	}
+
+	/**
+	 * Create a free plan template
+	 */
+	static createFreePlan(pluginId: string, features: string[] = [], name = 'Free'): PluginSubscriptionPlan {
+		return this.create({
+			name,
+			type: PluginSubscriptionType.FREE,
+			price: 0,
+			currency: CurrenciesEnum.USD,
+			billingPeriod: PluginBillingPeriod.MONTHLY,
+			features: features.length > 0 ? features : ['Basic features', 'Community support'],
+			isActive: true,
+			pluginId
+		});
+	}
+
+	/**
+	 * Create a basic plan template
+	 */
+	static createBasicPlan(
+		pluginId: string,
+		price: number,
+		currency: string = CurrenciesEnum.USD,
+		features: string[] = [],
+		name = 'Basic'
+	): PluginSubscriptionPlan {
+		return this.create({
+			name,
+			type: PluginSubscriptionType.BASIC,
+			price,
+			currency,
+			billingPeriod: PluginBillingPeriod.MONTHLY,
+			features: features.length > 0 ? features : ['Standard features', 'Email support', 'Basic integrations'],
+			isActive: true,
+			pluginId
+		});
+	}
+
+	/**
+	 * Create a pro plan template
+	 */
+	static createProPlan(
+		pluginId: string,
+		price: number,
+		currency: string = CurrenciesEnum.USD,
+		features: string[] = [],
+		name = 'Pro'
+	): PluginSubscriptionPlan {
+		return this.create({
+			name,
+			type: PluginSubscriptionType.PREMIUM,
+			price,
+			currency,
+			billingPeriod: PluginBillingPeriod.MONTHLY,
+			features:
+				features.length > 0
+					? features
+					: [
+							'All Basic features',
+							'Advanced features',
+							'Priority support',
+							'Advanced integrations',
+							'Custom workflows'
+					  ],
+			isActive: true,
+			isPopular: true,
+			pluginId
+		});
+	}
+
+	/**
+	 * Create an enterprise plan template
+	 */
+	static createEnterprisePlan(
+		pluginId: string,
+		price: number,
+		currency: string = CurrenciesEnum.USD,
+		features: string[] = [],
+		name = 'Enterprise'
+	): PluginSubscriptionPlan {
+		return this.create({
+			name,
+			type: PluginSubscriptionType.ENTERPRISE,
+			price,
+			currency,
+			billingPeriod: PluginBillingPeriod.YEARLY,
+			features:
+				features.length > 0
+					? features
+					: [
+							'All Pro features',
+							'Unlimited usage',
+							'Dedicated support',
+							'Custom development',
+							'SLA guarantee',
+							'On-premise deployment'
+					  ],
+			isActive: true,
+			isRecommended: true,
+			pluginId
+		});
+	}
+
+	/**
+	 * Calculate monthly equivalent price for any billing period
+	 */
+	static calculateMonthlyEquivalent(price: number, billingPeriod: PluginBillingPeriod): number {
+		const daysInMonth = 30;
+		const monthsInYear = 12;
+		const monthsInQuarter = 3;
+		const weeksInMonth = 4.33;
+
+		switch (billingPeriod) {
+			case PluginBillingPeriod.DAILY:
+				return price * daysInMonth;
+			case PluginBillingPeriod.WEEKLY:
+				return price * weeksInMonth;
+			case PluginBillingPeriod.MONTHLY:
+				return price;
+			case PluginBillingPeriod.QUARTERLY:
+				return price / monthsInQuarter;
+			case PluginBillingPeriod.YEARLY:
+				return price / monthsInYear;
+			case PluginBillingPeriod.ONE_TIME:
+				return price; // One-time payments don't have a monthly equivalent
+			default:
+				return price;
+		}
+	}
+
+	/**
+	 * Compare plans by effective monthly price
+	 */
+	static comparePlans(plan1: IPluginSubscriptionPlan, plan2: IPluginSubscriptionPlan): number {
+		const monthly1 = this.calculateMonthlyEquivalent(plan1.price, plan1.billingPeriod);
+		const monthly2 = this.calculateMonthlyEquivalent(plan2.price, plan2.billingPeriod);
+		return monthly1 - monthly2;
+	}
+
+	/**
+	 * Sort plans by type order
+	 */
+	static getSortOrderByType(type: PluginSubscriptionType): number {
+		const typeOrder = {
+			[PluginSubscriptionType.FREE]: 0,
+			[PluginSubscriptionType.BASIC]: 1,
+			[PluginSubscriptionType.PREMIUM]: 2,
+			[PluginSubscriptionType.ENTERPRISE]: 3,
+			[PluginSubscriptionType.CUSTOM]: 4
+		};
+		return typeOrder[type] ?? 0;
+	}
+
+	/**
+	 * Validate plan pricing
+	 */
+	static validatePricing(price: number, billingPeriod: PluginBillingPeriod, setupFee?: number): boolean {
+		if (price < 0) return false;
+		if (setupFee !== undefined && setupFee < 0) return false;
+
+		// Additional business rules
+		if (billingPeriod === PluginBillingPeriod.YEARLY && price < 1) {
+			return false; // Yearly plans should have meaningful pricing
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check if a plan offers better value than another (based on monthly equivalent)
+	 */
+	static isBetterValue(plan1: IPluginSubscriptionPlan, plan2: IPluginSubscriptionPlan): boolean {
+		const monthly1 = this.calculateMonthlyEquivalent(plan1.price, plan1.billingPeriod);
+		const monthly2 = this.calculateMonthlyEquivalent(plan2.price, plan2.billingPeriod);
+
+		// Better value if same or higher tier at lower monthly cost
+		const typeOrder = {
+			[PluginSubscriptionType.FREE]: 0,
+			[PluginSubscriptionType.BASIC]: 1,
+			[PluginSubscriptionType.PREMIUM]: 2,
+			[PluginSubscriptionType.ENTERPRISE]: 3,
+			[PluginSubscriptionType.CUSTOM]: 4
+		};
+
+		return (typeOrder[plan1.type] ?? 0) >= (typeOrder[plan2.type] ?? 0) && monthly1 < monthly2;
+	}
+
+	/**
+	 * Calculate annual savings for yearly vs monthly billing
+	 */
+	static calculateAnnualSavings(yearlyPlan: IPluginSubscriptionPlan, monthlyPlan: IPluginSubscriptionPlan): number {
+		if (yearlyPlan.billingPeriod !== PluginBillingPeriod.YEARLY) {
+			throw new Error('First plan must be a yearly plan');
+		}
+		if (monthlyPlan.billingPeriod !== PluginBillingPeriod.MONTHLY) {
+			throw new Error('Second plan must be a monthly plan');
+		}
+
+		const yearlyTotal = yearlyPlan.price;
+		const monthlyAnnualTotal = monthlyPlan.price * 12;
+
+		return monthlyAnnualTotal - yearlyTotal;
+	}
+
+	/**
+	 * Calculate savings percentage for yearly vs monthly
+	 */
+	static calculateSavingsPercentage(
+		yearlyPlan: IPluginSubscriptionPlan,
+		monthlyPlan: IPluginSubscriptionPlan
+	): number {
+		const savings = this.calculateAnnualSavings(yearlyPlan, monthlyPlan);
+		const monthlyAnnualTotal = monthlyPlan.price * 12;
+
+		return monthlyAnnualTotal > 0 ? (savings / monthlyAnnualTotal) * 100 : 0;
+	}
+
+	/**
+	 * Check if plan has a specific feature
+	 */
+	static hasFeature(plan: IPluginSubscriptionPlan, feature: string): boolean {
+		return plan.features.some((f) => f.toLowerCase().includes(feature.toLowerCase()));
+	}
+
+	/**
+	 * Create a custom plan builder
+	 */
+	static builder(pluginId: string): PluginSubscriptionPlanBuilder {
+		return new PluginSubscriptionPlanBuilder(pluginId);
+	}
+}
+
+/**
+ * Builder class for creating subscription plans
+ */
+export class PluginSubscriptionPlanBuilder {
+	private plan: Partial<IPluginSubscriptionPlan>;
+
+	constructor(pluginId: string) {
+		this.plan = {
+			pluginId,
+			type: PluginSubscriptionType.BASIC,
+			price: 0,
+			currency: CurrenciesEnum.USD,
+			billingPeriod: PluginBillingPeriod.MONTHLY,
+			features: [],
+			isActive: true,
+			isPopular: false,
+			isRecommended: false,
+			sortOrder: 0
+		};
+	}
+
+	withName(name: string): this {
+		this.plan.name = name;
+		return this;
+	}
+
+	withDescription(description: string): this {
+		this.plan.description = description;
+		return this;
+	}
+
+	withType(type: PluginSubscriptionType): this {
+		this.plan.type = type;
+		return this;
+	}
+
+	withPrice(price: number): this {
+		this.plan.price = price;
+		return this;
+	}
+
+	withCurrency(currency: string): this {
+		this.plan.currency = currency;
+		return this;
+	}
+
+	withBillingPeriod(period: PluginBillingPeriod): this {
+		this.plan.billingPeriod = period;
+		return this;
+	}
+
+	withFeatures(features: string[]): this {
+		this.plan.features = features;
+		return this;
+	}
+
+	addFeature(feature: string): this {
+		if (!this.plan.features) {
+			this.plan.features = [];
+		}
+		this.plan.features.push(feature);
+		return this;
+	}
+
+	withLimitations(limitations: Record<string, any>): this {
+		this.plan.limitations = limitations;
+		return this;
+	}
+
+	withTrialDays(days: number): this {
+		this.plan.trialDays = days;
+		return this;
+	}
+
+	withSetupFee(fee: number): this {
+		this.plan.setupFee = fee;
+		return this;
+	}
+
+	withDiscount(percentage: number): this {
+		this.plan.discountPercentage = percentage;
+		return this;
+	}
+
+	asPopular(): this {
+		this.plan.isPopular = true;
+		return this;
+	}
+
+	asRecommended(): this {
+		this.plan.isRecommended = true;
+		return this;
+	}
+
+	withSortOrder(order: number): this {
+		this.plan.sortOrder = order;
+		return this;
+	}
+
+	withMetadata(metadata: Record<string, any>): this {
+		this.plan.metadata = metadata;
+		return this;
+	}
+
+	setActive(active: boolean): this {
+		this.plan.isActive = active;
+		return this;
+	}
+
+	build(): PluginSubscriptionPlan {
+		return PluginSubscriptionPlan.create(this.plan);
 	}
 }

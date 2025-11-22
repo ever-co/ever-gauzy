@@ -797,6 +797,58 @@
         }
       }
 
+      // Scope Information (Read-only)
+      .scope-info-section {
+        margin-bottom: 2rem;
+
+        .scope-info-alert {
+          padding: 0.75rem 1rem;
+
+          .scope-info-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+
+            nb-icon {
+              flex-shrink: 0;
+              font-size: 1.1rem;
+              color: var(--color-info-default);
+            }
+
+            .info-icon-small {
+              font-size: 0.9rem;
+              margin-left: 0.25rem;
+              color: var(--text-hint-color);
+              cursor: help;
+              transition: color 0.2s ease;
+
+              &:hover {
+                color: var(--color-info-default);
+              }
+            }
+
+            span {
+              color: var(--text-basic-color);
+            }
+
+            strong {
+              font-weight: 600;
+              color: var(--color-info-default);
+            }
+          }
+        }
+      }
+
+      .auto-renew-section {
+        margin-bottom: 2rem;
+
+        nb-checkbox {
+          font-size: 0.9rem;
+          color: var(--text-hint-color);
+        }
+      }
+
       // Billing Section
       .billing-section {
         margin-bottom: 2rem;

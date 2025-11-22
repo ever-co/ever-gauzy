@@ -209,7 +209,7 @@ class UserSubscriptionFinder implements ISubscriptionFinderStrategy {
 		if (!context.userId) return null;
 
 		try {
-			const whereOptions: any = {
+			const whereOptions: FindOptionsWhere<IPluginSubscription> = {
 				pluginId: context.pluginId,
 				tenantId: context.tenantId,
 				subscriberId: context.userId,
@@ -239,10 +239,11 @@ class OrganizationSubscriptionFinder implements ISubscriptionFinderStrategy {
 		if (!context.organizationId) return null;
 
 		try {
-			const whereOptions: any = {
+			const whereOptions: FindOptionsWhere<IPluginSubscription> = {
 				pluginId: context.pluginId,
 				tenantId: context.tenantId,
 				organizationId: context.organizationId,
+				subscriberId: context.userId,
 				scope: PluginScope.ORGANIZATION
 			};
 
@@ -268,9 +269,11 @@ class TenantSubscriptionFinder implements ISubscriptionFinderStrategy {
 	async findSubscription(context: ISubscriptionFindContext): Promise<IPluginSubscription | null> {
 		try {
 			const whereOptions: FindOptionsWhere<IPluginSubscription> = {
+				scope: PluginScope.TENANT,
 				pluginId: context.pluginId,
 				tenantId: context.tenantId,
-				scope: PluginScope.TENANT
+				subscriberId: context.userId,
+				organizationId: context.organizationId
 			};
 
 			if (context.activeOnly !== false) {
@@ -691,7 +694,7 @@ export class PluginSubscriptionAccessService {
 	 */
 	async canAssignSubscriptions(pluginId: ID, tenantId: ID, organizationId?: ID, userId?: ID): Promise<boolean> {
 		try {
-			const subscription = await this.findApplicableSubscription(pluginId, tenantId, organizationId);
+			const subscription = await this.findApplicableSubscription(pluginId, tenantId, organizationId, userId);
 
 			if (!subscription) return false;
 
