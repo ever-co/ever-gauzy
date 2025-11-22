@@ -150,27 +150,50 @@ export class OAuth2AuthorizationServer {
 		this.validateConfiguration();
 	}
 
-	private initializeCSRFProtection() {
-		const isHttps = this.config.baseUrl.startsWith('https');
+	/**
+	 * Extracts cookie domain from baseUrl for HTTPS connections
+	 * @param isHttps Whether the connection is HTTPS
+	 * @returns The hostname if valid domain, undefined for IPs/localhost or non-HTTPS
+	 */
+	private extractCookieDomain(isHttps: boolean): string | undefined {
+		if (!isHttps) {
+			return undefined;
+		}
 
-		// Extract domain from baseUrl for cookie configuration
-		let cookieDomain: string | undefined;
 		try {
 			const baseUrlObj = new URL(this.config.baseUrl);
 			const hostname = baseUrlObj.hostname;
 
-			// For production HTTPS, set cookie domain to allow subdomain sharing
-			// For localhost/IP addresses, don't set domain (browser default)
-			if (isHttps && hostname !== 'localhost' && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
-				const parts = hostname.split('.');
-				if (parts.length >= 2) {
-					// For subdomain sharing: use parent domain (e.g., 'example.com' from 'api.example.com')
-					// This allows cookies to be shared across subdomains
-					cookieDomain = parts.slice(-2).join('.');
-				}
+			// Don't set domain for localhost or IP addresses (IPv4 or IPv6)
+			const isIPv4 = /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+			const isIPv6 = hostname.includes(':') || hostname.startsWith('[');
+
+			if (hostname === 'localhost' || isIPv4 || isIPv6) {
+				return undefined;
 			}
+
+			// Return hostname for valid domain names
+			return hostname;
 		} catch (error) {
 			this.securityLogger.error('Failed to parse baseUrl for cookie domain', { error });
+			return undefined;
+		}
+	}
+
+	private initializeCSRFProtection() {
+		const isHttps = this.config.baseUrl.startsWith('https');
+
+		// Extract domain from baseUrl for cookie configuration
+		const hostname = this.extractCookieDomain(isHttps);
+		let cookieDomain: string | undefined;
+
+		if (hostname) {
+			const parts = hostname.split('.');
+			if (parts.length >= 2) {
+				// For subdomain sharing: use registrable root domain (e.g., 'example.com' from 'api.example.com')
+				// This allows cookies to be shared across subdomains
+				cookieDomain = parts.slice(-2).join('.');
+			}
 		}
 
 		// Choose cookie name based on whether we're setting a domain
@@ -308,20 +331,8 @@ export class OAuth2AuthorizationServer {
 
 		// Extract domain from baseUrl for session cookie configuration
 		const isHttps = this.config.baseUrl.startsWith('https');
-		let sessionCookieDomain: string | undefined;
-		try {
-			const baseUrlObj = new URL(this.config.baseUrl);
-			const hostname = baseUrlObj.hostname;
-
-			// For production HTTPS, set cookie domain
-			// For localhost/IP addresses, don't set domain (browser default)
-			if (isHttps && hostname !== 'localhost' && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
-				// Use the exact hostname for session cookie
-				sessionCookieDomain = hostname;
-			}
-		} catch (error) {
-			this.securityLogger.error('Failed to parse baseUrl for session cookie domain', { error });
-		}
+		// Use the exact hostname for session cookie (no subdomain sharing)
+		const sessionCookieDomain = this.extractCookieDomain(isHttps);
 
 		// Session management
 		const sessionConfig: session.SessionOptions = {
@@ -678,9 +689,11 @@ export class OAuth2AuthorizationServer {
 		// Generate CSRF token for the form
 		const csrfToken = this.generateToken(req, res);
 		const sessionId = (req as any).sessionID;
+		// Sanitize returnUrl to avoid logging sensitive query params
+		const sanitizedReturnUrl = safeReturnUrl.split('?')[0];
 		this.securityLogger.debug('Generated CSRF token for login form', {
 			hasSessionId: !!sessionId,
-			returnUrl: safeReturnUrl
+			returnUrl: sanitizedReturnUrl
 		});
 
 		res.send(this.generateLoginForm(error, safeReturnUrl, csrfToken));
