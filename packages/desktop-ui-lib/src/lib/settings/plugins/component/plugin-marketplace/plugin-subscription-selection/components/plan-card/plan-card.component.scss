@@ -2,33 +2,41 @@
 	position: relative;
 	display: flex;
 	flex-direction: column;
-	padding: 1.5rem;
+	padding: 1.75rem;
 	border: 2px solid var(--border-basic-color-3);
-	border-radius: 12px;
+	border-radius: 16px;
 	background: var(--background-basic-color-1);
 	cursor: pointer;
-	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 	height: 100%;
+	min-height: 420px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
-	&:hover:not(.disabled) {
+	&:hover:not(.disabled):not(.current-plan) {
 		border-color: var(--color-primary-default);
-		transform: translateY(-4px);
-		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+		transform: translateY(-6px) scale(1.01);
+		box-shadow: 0 16px 32px rgba(0, 0, 0, 0.16),
+					0 4px 8px rgba(51, 102, 255, 0.12);
 	}
 
 	&:focus-visible {
 		outline: 3px solid var(--color-primary-default);
-		outline-offset: 2px;
+		outline-offset: 3px;
+		box-shadow: 0 0 0 6px rgba(51, 102, 255, 0.15);
 	}
 
 	&.selected {
 		border-color: var(--color-primary-default);
 		border-width: 3px;
-		background: linear-gradient(135deg, var(--background-basic-color-1), var(--background-basic-color-2));
-		box-shadow: 0 8px 24px rgba(51, 102, 255, 0.25),
-					0 0 0 4px rgba(51, 102, 255, 0.1);
-		animation: selectedPulse 0.4s ease-out;
-		transform: scale(1.02);
+		background: linear-gradient(135deg,
+					rgba(51, 102, 255, 0.03),
+					var(--background-basic-color-1),
+					var(--background-basic-color-2));
+		box-shadow: 0 12px 32px rgba(51, 102, 255, 0.3),
+					0 0 0 5px rgba(51, 102, 255, 0.12),
+					0 0 20px rgba(51, 102, 255, 0.15);
+		animation: selectedPulse 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+		transform: scale(1.03);
 
 		&:hover:not(.disabled) {
 			box-shadow: 0 12px 32px rgba(51, 102, 255, 0.35),
