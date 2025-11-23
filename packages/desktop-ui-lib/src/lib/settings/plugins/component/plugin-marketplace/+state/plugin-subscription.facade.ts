@@ -9,7 +9,7 @@ import {
 	IPluginSubscriptionUpdateInput,
 	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
-import { PlanActionType } from '../plugin-subscription-selection/services/plan-comparison.service';
+import { PlanActionType } from '../plugin-subscription-plan-selection/services/plan-comparison.service';
 import { PluginSubscriptionActions } from './actions/plugin-subscription.action';
 import { PluginSubscriptionQuery } from './queries/plugin-subscription.query';
 
@@ -55,7 +55,7 @@ export class PluginSubscriptionFacade {
 	public readonly paidPlans$ = this.query.paidPlans$;
 	public readonly featuredPlans$ = this.query.featuredPlans$;
 
-	constructor(private readonly query: PluginSubscriptionQuery, private readonly actions$: Actions) {}
+	constructor(private readonly query: PluginSubscriptionQuery, private readonly actions$: Actions) { }
 
 	// Subscription Management
 	public loadPluginSubscriptions(pluginId: string): void {

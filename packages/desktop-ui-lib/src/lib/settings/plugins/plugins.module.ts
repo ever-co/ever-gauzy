@@ -95,9 +95,9 @@ import { PluginMarketplaceComponent } from './component/plugin-marketplace/plugi
 import { PluginSettingsManagementComponent } from './component/plugin-marketplace/plugin-settings-management/plugin-settings-management.component';
 import { PluginSettingsManagerComponent } from './component/plugin-marketplace/plugin-settings-manager/plugin-settings-manager.component';
 import { PluginSubscriptionManagerComponent } from './component/plugin-marketplace/plugin-subscription-manager/plugin-subscription-manager.component';
-import { PlanCardComponent } from './component/plugin-marketplace/plugin-subscription-selection/components/plan-card/plan-card.component';
-import { SubscriptionPreviewComponent } from './component/plugin-marketplace/plugin-subscription-selection/components/subscription-preview/subscription-preview.component';
-import { PluginSubscriptionSelectionComponent } from './component/plugin-marketplace/plugin-subscription-selection/plugin-subscription-selection.component';
+import { PlanCardComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/plan-card/plan-card.component';
+import { SubscriptionPreviewComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/subscription-preview/subscription-preview.component';
+import { PluginSubscriptionPlanSelectionComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
 import { PluginTagsManagerComponent } from './component/plugin-marketplace/plugin-tags-manager/plugin-tags-manager.component';
 import { PluginUserManagementComponent } from './component/plugin-marketplace/plugin-user-management/plugin-user-management.component';
 import { PluginComponent } from './component/plugin/plugin.component';
@@ -127,7 +127,7 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginSettingsManagerComponent,
 		PluginSettingsManagementComponent,
 		PluginSubscriptionManagerComponent,
-		PluginSubscriptionSelectionComponent,
+		PluginSubscriptionPlanSelectionComponent,
 		PlanCardComponent,
 		SubscriptionPreviewComponent,
 		PluginTagsManagerComponent,
@@ -237,4 +237,4 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class PluginsModule {}
+export class PluginsModule { }

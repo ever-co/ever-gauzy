@@ -19,9 +19,9 @@ import { DialogInstallationValidationComponent } from '../plugin-marketplace-ite
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSettingsManagementComponent } from '../plugin-settings-management/plugin-settings-management.component';
 import {
-    IPluginSubscriptionSelectionResult,
-    PluginSubscriptionSelectionComponent
-} from '../plugin-subscription-selection/plugin-subscription-selection.component';
+	IPluginSubscriptionPlanSelectionResult,
+	PluginSubscriptionPlanSelectionComponent
+} from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
 import { PluginUserManagementComponent } from '../plugin-user-management/plugin-user-management.component';
 
 // Define enums locally since they might not be available in contracts
@@ -60,7 +60,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly subscriptionService: PluginSubscriptionService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		// Guard against undefined plugin
@@ -131,7 +131,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 */
 	private showSubscriptionDialog(): void {
 		this.dialog
-			.open(PluginSubscriptionSelectionComponent, {
+			.open(PluginSubscriptionPlanSelectionComponent, {
 				context: {
 					plugin: this.plugin,
 					pluginId: this.plugin.id
@@ -141,7 +141,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			})
 			.onClose.pipe(
 				take(1),
-				tap((result: IPluginSubscriptionSelectionResult | null) => {
+				tap((result: IPluginSubscriptionPlanSelectionResult | null) => {
 					if (result?.proceedWithInstallation) {
 						// If subscription was created or it's a free plugin, proceed with installation
 						this.installPlugin();

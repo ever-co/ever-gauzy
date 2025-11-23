@@ -33,7 +33,7 @@ import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.ser
 import { PluginScope } from '../../../services/plugin-subscription-access.service';
 import { PluginSubscriptionService } from '../../../services/plugin-subscription.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
-import { PluginSubscriptionSelectionComponent } from '../plugin-subscription-selection/plugin-subscription-selection.component';
+import { PluginSubscriptionPlanSelectionComponent } from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
 import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './dialog-installation-validation/dialog-installation-validation.component';
@@ -80,7 +80,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		public readonly versionQuery: PluginVersionQuery,
 		public readonly sourceQuery: PluginSourceQuery,
 		public readonly accessFacade: PluginSubscriptionAccessFacade
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.plugin$
@@ -469,7 +469,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	private showSubscriptionSelectionDialog(): Observable<{ proceedWithInstallation: boolean }> {
-		return this.dialogService.open(PluginSubscriptionSelectionComponent, {
+		return this.dialogService.open(PluginSubscriptionPlanSelectionComponent, {
 			context: {
 				plugin: this.plugin,
 				pluginId: this.pluginId

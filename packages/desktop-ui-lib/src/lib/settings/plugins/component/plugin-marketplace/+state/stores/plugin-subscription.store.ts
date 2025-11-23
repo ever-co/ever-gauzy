@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
 import { IPluginSubscription, IPluginSubscriptionPlan } from '../../../../services/plugin-subscription.service';
-import { PlanActionType } from '../../plugin-subscription-selection/services/plan-comparison.service';
+import { PlanActionType } from '../../plugin-subscription-plan-selection/services/plan-comparison.service';
 
 export interface IPluginSubscriptionState {
 	subscriptions: IPluginSubscription[];

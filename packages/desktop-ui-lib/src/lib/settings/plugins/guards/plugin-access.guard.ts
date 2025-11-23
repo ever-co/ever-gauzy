@@ -6,7 +6,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap, take } from 'rxjs/operators';
 import { ToastrNotificationService } from '../../../services';
 import { PluginSubscriptionAccessFacade } from '../component/plugin-marketplace/+state/plugin-subscription-access.facade';
-import { PluginSubscriptionSelectionComponent } from '../component/plugin-marketplace/plugin-subscription-selection/plugin-subscription-selection.component';
+import { PluginSubscriptionPlanSelectionComponent } from '../component/plugin-marketplace/plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
 
 /**
  * Plugin Access Guard
@@ -32,7 +32,7 @@ export class PluginAccessGuard implements CanActivate {
 		private readonly dialogService: NbDialogService,
 		private readonly translateService: TranslateService,
 		private readonly toastrService: ToastrNotificationService
-	) {}
+	) { }
 
 	canActivate(
 		route: ActivatedRouteSnapshot,
@@ -62,11 +62,11 @@ export class PluginAccessGuard implements CanActivate {
 					take(1),
 					map(
 						(requiresSubscription) =>
-							({
-								allowed: false,
-								hasAccess,
-								requiresSubscription
-							} as const)
+						({
+							allowed: false,
+							hasAccess,
+							requiresSubscription
+						} as const)
 					)
 				);
 			}),
@@ -101,7 +101,7 @@ export class PluginAccessGuard implements CanActivate {
 	private showSubscriptionDialog(pluginId: string, returnUrl: string): Observable<boolean | UrlTree> {
 		return new Observable((observer) => {
 			this.dialogService
-				.open(PluginSubscriptionSelectionComponent, {
+				.open(PluginSubscriptionPlanSelectionComponent, {
 					context: {
 						pluginId: pluginId
 					},

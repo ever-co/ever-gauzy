@@ -31,12 +31,12 @@ import { IPlanViewModel, ISubscriptionPreviewViewModel } from './models/plan-vie
 import { IPlanComparisonResult, PlanActionType, PlanComparisonService } from './services/plan-comparison.service';
 import { PlanFormatterService } from './services/plan-formatter.service';
 
-export interface IPluginSubscriptionSelectionContext {
+export interface IPluginSubscriptionPlanSelectionContext {
 	plugin: IPlugin;
 	pluginId: string;
 }
 
-export interface IPluginSubscriptionSelectionResult {
+export interface IPluginSubscriptionPlanSelectionResult {
 	subscriptionPlan: IPluginSubscriptionPlan;
 	subscriptionInput: IPluginSubscriptionCreateInput;
 	proceedWithInstallation: boolean;
@@ -53,13 +53,13 @@ export interface IPluginSubscriptionSelectionResult {
  */
 @UntilDestroy()
 @Component({
-	selector: 'lib-plugin-subscription-selection',
-	templateUrl: './plugin-subscription-selection.component.html',
-	styleUrls: ['./plugin-subscription-selection.component.scss'],
+	selector: 'lib-plugin-subscription-plan-selection',
+	templateUrl: './plugin-subscription-plan-selection.component.html',
+	styleUrls: ['./plugin-subscription-plan-selection.component.scss'],
 	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
+export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestroy {
 	@Input() plugin: IPlugin;
 	@Input() pluginId: string;
 
@@ -118,7 +118,7 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	public hasPaidPlans$: Observable<boolean>;
 
 	constructor(
-		private readonly dialogRef: NbDialogRef<PluginSubscriptionSelectionComponent>,
+		private readonly dialogRef: NbDialogRef<PluginSubscriptionPlanSelectionComponent>,
 		private readonly subscriptionService: PluginSubscriptionService,
 		private readonly formBuilder: FormBuilder,
 		private readonly pluginSubscriptionQuery: PluginSubscriptionQuery,
@@ -642,7 +642,7 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 	}
 
 	private proceedWithInstallation(plan: IPluginSubscriptionPlan, input: IPluginSubscriptionCreateInput): void {
-		const result: IPluginSubscriptionSelectionResult = {
+		const result: IPluginSubscriptionPlanSelectionResult = {
 			subscriptionPlan: plan,
 			subscriptionInput: input,
 			proceedWithInstallation: true
@@ -657,7 +657,7 @@ export class PluginSubscriptionSelectionComponent implements OnInit, OnDestroy {
 
 	public onSkipSubscription(): void {
 		// Allow proceeding without subscription for free plugins or if user wants to install without subscription
-		const result: IPluginSubscriptionSelectionResult = {
+		const result: IPluginSubscriptionPlanSelectionResult = {
 			subscriptionPlan: null!,
 			subscriptionInput: null!,
 			proceedWithInstallation: true

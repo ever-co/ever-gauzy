@@ -7,7 +7,7 @@ import {
 	IPluginSubscriptionPlan,
 	IPluginSubscriptionUpdateInput
 } from '../../../../services/plugin-subscription.service';
-import { PlanActionType } from '../../plugin-subscription-selection/services/plan-comparison.service';
+import { PlanActionType } from '../../plugin-subscription-plan-selection/services/plan-comparison.service';
 
 export class PluginSubscriptionActions {
 	// Load Plugin Subscriptions

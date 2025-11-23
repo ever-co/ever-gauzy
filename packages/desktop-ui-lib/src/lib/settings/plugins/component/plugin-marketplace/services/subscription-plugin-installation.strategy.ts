@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
 import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
 import { ToastrNotificationService } from '../../../../../services';
-import { PluginSubscriptionSelectionComponent } from '../plugin-subscription-selection/plugin-subscription-selection.component';
+import { PluginSubscriptionPlanSelectionComponent } from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
 import { IInstallationPreparationResult, IPluginInstallationStrategy } from './plugin-installation-strategy.interface';
 
 /**
@@ -23,7 +23,7 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 		private readonly dialogService: NbDialogService,
 		private readonly translateService: TranslateService,
 		private readonly toastrService: ToastrNotificationService
-	) {}
+	) { }
 
 	/**
 	 * Validates if user has active subscription for the plugin
@@ -64,7 +64,7 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 
 				return new Observable<void>((observer) => {
 					this.dialogService
-						.open(PluginSubscriptionSelectionComponent, {
+						.open(PluginSubscriptionPlanSelectionComponent, {
 							context: {
 								plugin: plugin,
 								pluginId: plugin.id

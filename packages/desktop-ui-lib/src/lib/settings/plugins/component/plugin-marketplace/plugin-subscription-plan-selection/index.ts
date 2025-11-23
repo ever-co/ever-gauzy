@@ -1,10 +1,10 @@
 /**
- * Public API for Plugin Subscription Selection module
+ * Public API for Plugin Subscription Plan Selection module
  * Exports all public components, services, and interfaces
  */
 
 // Main component
-export * from './plugin-subscription-selection.component';
+export * from './plugin-subscription-plan-selection.component';
 
 // Presentational components
 export * from './components/plan-card/plan-card.component';
