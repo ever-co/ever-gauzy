@@ -7,10 +7,13 @@
 export * from './plugin-subscription-plan-selection.component';
 
 // Presentational components
+export * from './components/plan-card-comparison.component';
 export * from './components/plan-card/plan-card.component';
+export * from './components/subscription-confirmation.component';
 export * from './components/subscription-preview/subscription-preview.component';
 
 // Services
+export * from './services/plan-comparison.service';
 export * from './services/plan-formatter.service';
 
 // Models and interfaces

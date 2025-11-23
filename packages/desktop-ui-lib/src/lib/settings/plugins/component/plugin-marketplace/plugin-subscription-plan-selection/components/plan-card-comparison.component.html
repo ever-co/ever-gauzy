@@ -81,12 +81,12 @@
 	<!-- Action Button -->
 	<div class="plan-action">
 		<button
-			nb-button
-			[status]="comparisonInfo?.buttonVariant || 'basic'"
+			nbButton
 			[disabled]="comparisonInfo?.isDisabled"
-			[size]="'medium'"
-			[outline]="comparisonInfo?.actionType === PlanActionType.CURRENT"
 			fullWidth
+			size="medium"
+			[attr.status]="comparisonInfo?.buttonVariant || 'basic'"
+			[class.outline]="comparisonInfo?.actionType === PlanActionType.CURRENT"
 			(click)="onPlanSelect()"
 		>
 			<nb-icon *ngIf="getActionIcon()" [icon]="getActionIcon()" class="action-icon"></nb-icon>

@@ -95,7 +95,9 @@ import { PluginMarketplaceComponent } from './component/plugin-marketplace/plugi
 import { PluginSettingsManagementComponent } from './component/plugin-marketplace/plugin-settings-management/plugin-settings-management.component';
 import { PluginSettingsManagerComponent } from './component/plugin-marketplace/plugin-settings-manager/plugin-settings-manager.component';
 import { PluginSubscriptionManagerComponent } from './component/plugin-marketplace/plugin-subscription-manager/plugin-subscription-manager.component';
+import { PlanCardComparisonComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/plan-card-comparison.component';
 import { PlanCardComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/plan-card/plan-card.component';
+import { SubscriptionConfirmationComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/subscription-confirmation.component';
 import { SubscriptionPreviewComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/subscription-preview/subscription-preview.component';
 import { PluginSubscriptionPlanSelectionComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
 import { PluginTagsManagerComponent } from './component/plugin-marketplace/plugin-tags-manager/plugin-tags-manager.component';
@@ -129,6 +131,8 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginSubscriptionManagerComponent,
 		PluginSubscriptionPlanSelectionComponent,
 		PlanCardComponent,
+		PlanCardComparisonComponent,
+		SubscriptionConfirmationComponent,
 		SubscriptionPreviewComponent,
 		PluginTagsManagerComponent,
 		PluginUserManagementComponent,
@@ -237,4 +241,4 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class PluginsModule { }
+export class PluginsModule {}
