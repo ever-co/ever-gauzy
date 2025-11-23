@@ -18,8 +18,36 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	extends CrudService<T>
 	implements ICrudService<T>
 {
+	private static readonly SKIP_EMPLOYEE_FILTER_KEY = 'skipEmployeeFilter';
+
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
+	}
+
+	/**
+	 * Gets the current skipEmployeeFilter flag from request context.
+	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions.
+	 */
+	private getSkipEmployeeFilter(): boolean {
+		try {
+			const context = RequestContext['clsService'];
+			return context?.get(TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY) ?? false;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Sets the skipEmployeeFilter flag in request context.
+	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions.
+	 */
+	private setSkipEmployeeFilter(value: boolean): void {
+		try {
+			const context = RequestContext['clsService'];
+			context?.set(TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY, value);
+		} catch {
+			// Silently fail if context is not available
+		}
 	}
 
 	/**
@@ -28,6 +56,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns The find conditions based on the current user's relationship with employees.
 	 */
 	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T> {
+		// If skipEmployeeFilter is enabled, don't apply automatic filtering
+		if (this.getSkipEmployeeFilter()) {
+			return {} as FindOptionsWhere<T>;
+		}
+
 		const employeeId = RequestContext.currentEmployeeId();
 		return (
 			/**
@@ -48,6 +81,31 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 					: {}
 			) as FindOptionsWhere<T>
 		);
+	}
+
+	/**
+	 * Executes a callback without automatic employeeId filtering.
+	 * This is useful when you need to implement custom access control logic.
+	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions between concurrent requests.
+	 *
+	 * @param callback - The async function to execute without employee filtering
+	 * @returns The result of the callback
+	 *
+	 * @example
+	 * ```typescript
+	 * const dailyPlan = await this.withoutEmployeeFilter(async () => {
+	 *     return await this.findOneByIdString(planId);
+	 * });
+	 * ```
+	 */
+	protected async withoutEmployeeFilter<R>(callback: () => Promise<R>): Promise<R> {
+		const originalValue = this.getSkipEmployeeFilter();
+		this.setSkipEmployeeFilter(true);
+		try {
+			return await callback();
+		} finally {
+			this.setSkipEmployeeFilter(originalValue);
+		}
 	}
 
 	/**
