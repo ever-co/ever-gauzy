@@ -7,11 +7,19 @@ import {
 	ITenant,
 	OrganizationProjectBudgetTypeEnum,
 	ProjectStatusEnum,
+	RolesEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
-import { Employee, OrganizationContact, OrganizationProjectEmployee, Tag } from './../core/entities/internal';
+import {
+	Employee,
+	OrganizationContact,
+	OrganizationProjectEmployee,
+	OrganizationTeam,
+	Role,
+	Tag
+} from './../core/entities/internal';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from '../database/database.helper';
 import { replacePlaceholders } from '../core/utils';
@@ -52,6 +60,12 @@ export const createDefaultOrganizationProjects = async (
 			organizationId
 		});
 
+		// Fetch all OrganizationTeams to assign projects to teams
+		const organizationTeams = await dataSource.manager.findBy(OrganizationTeam, {
+			tenantId,
+			organizationId
+		});
+
 		// Define a mapping between Budget Types and their respective min and max values
 		const budgetRanges: Record<OrganizationProjectBudgetTypeEnum, { min: number; max: number }> = {
 			[OrganizationProjectBudgetTypeEnum.COST]: { min: 500, max: 5000 },
@@ -74,9 +88,9 @@ export const createDefaultOrganizationProjects = async (
 			// Create a new OrganizationProject instance
 			const project = new OrganizationProject();
 			project.name = projectName;
-            project.status = faker.helpers.arrayElement(
-                Object.values(ProjectStatusEnum).filter((s) => s !== ProjectStatusEnum.CUSTOM)
-            );
+			project.status = faker.helpers.arrayElement(
+				Object.values(ProjectStatusEnum).filter((s) => s !== ProjectStatusEnum.CUSTOM)
+			);
 			project.tags = tags;
 			project.organizationContact = faker.helpers.arrayElement(organizationContacts);
 			project.organization = organization;
@@ -88,6 +102,12 @@ export const createDefaultOrganizationProjects = async (
 			// If organizationContacts is not empty, assign a random organization contact
 			if (organizationContacts.length > 0) {
 				project.organizationContact = faker.helpers.arrayElement(organizationContacts);
+			}
+
+			// Assign project to 1-3 random teams if teams exist
+			if (organizationTeams.length > 0) {
+				const numberOfTeams = faker.number.int({ min: 1, max: Math.min(3, organizationTeams.length) });
+				project.teams = faker.helpers.arrayElements(organizationTeams, numberOfTeams);
 			}
 
 			// Add project to projects array
@@ -171,9 +191,9 @@ export const createRandomOrganizationProjects = async (
 				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
 				project.name = faker.company.name();
-                project.status = faker.helpers.arrayElement(
-                    Object.values(ProjectStatusEnum).filter((s) => s !== ProjectStatusEnum.CUSTOM)
-                );
+				project.status = faker.helpers.arrayElement(
+					Object.values(ProjectStatusEnum).filter((s) => s !== ProjectStatusEnum.CUSTOM)
+				);
 				project.organization = organization;
 				project.tenant = tenant;
 				project.budgetType = budgetType;
@@ -210,16 +230,22 @@ export const createRandomOrganizationProjects = async (
 export const assignOrganizationProjectToEmployee = async (dataSource: DataSource, organization: IOrganization) => {
 	const { id: organizationId, tenantId } = organization;
 
-	// Fetch all projects and employees for the organization and tenant
-	const [organizationProjects, employees] = await Promise.all([
+	// Fetch all projects, employees, and manager role for the organization and tenant
+	const [organizationProjects, employees, managerRole] = await Promise.all([
 		dataSource.manager.findBy(OrganizationProject, { tenantId, organizationId }),
-		dataSource.manager.findBy(Employee, { tenantId, organizationId })
+		dataSource.manager.findBy(Employee, { tenantId, organizationId }),
+		dataSource.manager.findOneBy(Role, { tenantId, name: RolesEnum.MANAGER })
 	]);
 
 	// Check if there are enough projects to assign
 	if (organizationProjects.length == 0) {
 		console.warn('Not enough projects to assign. At least 1 projects are required.');
 		return;
+	}
+
+	// Guard against missing manager role
+	if (!managerRole) {
+		console.warn('Manager role not found for tenant. Projects will be assigned without managers.');
 	}
 
 	// Initialize an array to store the OrganizationProjectEmployee instances
@@ -234,12 +260,28 @@ export const assignOrganizationProjectToEmployee = async (dataSource: DataSource
 		const projects = chain(organizationProjects).shuffle().take(numberOfProjects).value();
 
 		// Create OrganizationProjectEmployee instances for the selected projects
-		for (const project of projects) {
+		for (let i = 0; i < projects.length; i++) {
+			const project = projects[i];
+
+			// Make the first project assignment a manager role (25% chance to be manager)
+			// Only if managerRole exists
+			const isManager = managerRole && i === 0 && faker.datatype.boolean({ probability: 0.25 });
+
 			const projectEmployee = new OrganizationProjectEmployee();
+			// Set IDs
+			projectEmployee.employeeId = employee.id;
+			projectEmployee.organizationProjectId = project.id;
+			projectEmployee.organizationId = organizationId;
+			projectEmployee.tenantId = tenantId;
+			// Set relations
 			projectEmployee.employee = employee;
 			projectEmployee.organizationProject = project;
 			projectEmployee.organization = organization;
 			projectEmployee.tenant = organization.tenant;
+			// Set manager fields
+			projectEmployee.isManager = isManager;
+			projectEmployee.role = isManager ? managerRole : undefined;
+			projectEmployee.assignedAt = new Date();
 
 			members.push(projectEmployee);
 		}
