@@ -44,6 +44,10 @@ export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant,
 		return;
 	}
 	const teams = await dataSource.manager.find(OrganizationTeam, {
+		where: {
+			tenantId: tenant.id,
+			organizationId: organization.id
+		},
 		relations: ['members', 'members.employee']
 	});
 	const users = await dataSource.manager.find(User);
