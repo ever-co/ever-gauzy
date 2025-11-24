@@ -55,7 +55,7 @@ export class PluginSubscriptionFacade {
 	public readonly paidPlans$ = this.query.paidPlans$;
 	public readonly featuredPlans$ = this.query.featuredPlans$;
 
-	constructor(private readonly query: PluginSubscriptionQuery, private readonly actions$: Actions) { }
+	constructor(private readonly query: PluginSubscriptionQuery, private readonly actions$: Actions) {}
 
 	// Subscription Management
 	public loadPluginSubscriptions(pluginId: string): void {

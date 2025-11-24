@@ -275,15 +275,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 			console.log('[SubscriptionManager] Upgrading subscription to:', targetPlan.name);
 
 			// Update the subscription with new plan type and billing period
-			this.facade.updateSubscription(this.plugin.id, this.currentSubscription.id, {
-				subscriptionType: targetPlan.type,
-				billingPeriod: targetPlan.billingPeriod,
-				metadata: {
-					newPlanId: targetPlan.id,
-					newPlanName: targetPlan.name,
-					upgradeAction: 'immediate'
-				}
-			});
+			this.facade.upgradeSubscription(this.plugin.id, this.currentSubscription.id, targetPlan.id);
 
 			this.facade.updating$.pipe(take(2), untilDestroyed(this)).subscribe((updating) => {
 				if (!updating) {
@@ -315,15 +307,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 			console.log('[SubscriptionManager] Downgrading subscription to:', targetPlan.name);
 
 			// Update the subscription with new plan type and billing period
-			this.facade.updateSubscription(this.plugin.id, this.currentSubscription.id, {
-				subscriptionType: targetPlan.type,
-				billingPeriod: targetPlan.billingPeriod,
-				metadata: {
-					newPlanId: targetPlan.id,
-					newPlanName: targetPlan.name,
-					downgradeAction: 'end-of-period'
-				}
-			});
+			this.facade.downgradeSubscription(this.plugin.id, this.currentSubscription.id, targetPlan.id);
 
 			this.facade.updating$.pipe(take(2), untilDestroyed(this)).subscribe((updating) => {
 				if (!updating) {

@@ -153,13 +153,7 @@ export interface IPluginSubscriptionCreateInput {
 	metadata?: Record<string, any>;
 }
 
-export interface IPluginSubscriptionUpdateInput {
-	subscriptionType?: PluginSubscriptionType;
-	billingPeriod?: PluginBillingPeriod;
-	isAutoRenew?: boolean;
-	paymentMethodId?: string;
-	metadata?: Record<string, any>;
-}
+export type IPluginSubscriptionUpdateInput = Partial<IPluginSubscriptionCreateInput>;
 
 export interface IPluginPlanCreateInput {
 	id?: string;
