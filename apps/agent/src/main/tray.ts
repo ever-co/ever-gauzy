@@ -66,7 +66,7 @@ class TrayMenu {
 				label: TranslateService.instant('MENU.DASHBOARD'),
 				async click() {
 					await appWindow.initLogWindow();
-					appWindow.logWindow.show();
+					appWindow.logWindowShow();
 				}
 			},
 			{

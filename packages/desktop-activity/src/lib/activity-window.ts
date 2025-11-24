@@ -2,29 +2,29 @@
 import { TWindowActivities } from './i-kb-mouse';
 
 export type TActiveWindowResult = {
-  platform: 'macos' | 'linux' | 'windows';
-  title: string;
-  id: number;
-  bounds: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-  contentBounds?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-  owner: {
-    name: string;
-    processId: number;
-    bundleId?: string;
-    path: string;
-  };
-  url?: string;
-  memoryUsage: number;
+	platform: 'macos' | 'linux' | 'windows';
+	title: string;
+	id: number;
+	bounds: {
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+	};
+	contentBounds?: {
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+	};
+	owner: {
+		name: string;
+		processId: number;
+		bundleId?: string;
+		path: string;
+	};
+	url?: string;
+	memoryUsage: number;
 };
 
 export type TActiveWindowOption = {
@@ -57,16 +57,14 @@ export class ActivityWindow {
 	}
 
 	private updateWindowActivities(windowActivity: TWindowActivities) {
-		if (this.windowActivities.has(windowActivity.name)) {
-			const currentApp = this.windowActivities.get(windowActivity.name);
+		const key = `${windowActivity.name}_${windowActivity.type}`;
+		if (this.windowActivities.has(key)) {
+			const currentApp = this.windowActivities.get(key);
 			currentApp.duration += windowActivity.duration;
 			currentApp.dateEnd = windowActivity.dateEnd;
-			if (!currentApp.meta.some((mt) => mt.title === windowActivity.meta[0].title)) {
-				currentApp.meta.push(...windowActivity.meta);
-			}
-			this.windowActivities.set(windowActivity.name, currentApp);
+			this.windowActivities.set(key, currentApp);
 		} else {
-			this.windowActivities.set(windowActivity.name, windowActivity);
+			this.windowActivities.set(key, windowActivity);
 		}
 	}
 
@@ -85,14 +83,27 @@ export class ActivityWindow {
 				duration: 1, // value 1, method run every second
 				dateEnd: new Date(),
 				dateStart: new Date(),
-				meta: [
-					{
+				type: 'APP',
+				meta: {
+					title: currentActiveWindow.title,
+					url: currentActiveWindow.platform === 'macos' ? currentActiveWindow.url : '',
+					platform: currentActiveWindow.platform
+				}
+			});
+			if (currentActiveWindow.url) {
+				this.updateWindowActivities({
+					name: currentActiveWindow.title || currentActiveWindow.owner.name,
+					duration: 1,
+					dateEnd: new Date(),
+					dateStart: new Date(),
+					type: 'URL',
+					meta: {
 						title: currentActiveWindow.title,
 						url: currentActiveWindow.platform === 'macos' ? currentActiveWindow.url : '',
 						platform: currentActiveWindow.platform
 					}
-				]
-			});
+				})
+			}
 		}
 	}
 

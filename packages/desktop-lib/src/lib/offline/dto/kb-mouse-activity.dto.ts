@@ -11,11 +11,14 @@ export type TMouseEvents = {
 	};
 };
 
+export type TActivityType = 'APP' | 'URL';
+
 export type TActiveWindows = {
 	name: string;
 	duration: number;
 	dateStart: Date;
 	dateEnd: Date;
+	type: TActivityType,
 	meta: {
 		url?: string;
 		title: string;

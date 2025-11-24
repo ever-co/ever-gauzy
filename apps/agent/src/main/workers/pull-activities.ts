@@ -66,7 +66,6 @@ class PullActivities {
 		this.isStarted = false;
 		this.agentLogger = AgentLogger.getInstance();
 		this.appWindow = AppWindow.getInstance(path.join(__dirname, '../..'));
-		this.appWindow.initScreenShotNotification();
 		this.mainEvent = MainEvent.getInstance();
 		this.apiService = ApiService.getInstance();
 		this.timerService = new TimerService();

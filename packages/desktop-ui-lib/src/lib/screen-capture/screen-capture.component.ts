@@ -9,10 +9,10 @@ import { ElectronService } from '../electron/services';
 import { GAUZY_ENV } from '../constants';
 
 @Component({
-    selector: 'ngx-screen-capture',
-    templateUrl: './screen-capture.component.html',
-    styleUrls: ['./screen-capture.component.scss'],
-    standalone: false
+	selector: 'ngx-screen-capture',
+	templateUrl: './screen-capture.component.html',
+	styleUrls: ['./screen-capture.component.scss'],
+	standalone: false
 })
 export class ScreenCaptureComponent implements OnInit {
 	private _screenCaptureUrl$: BehaviorSubject<SafeUrl>;
@@ -42,6 +42,11 @@ export class ScreenCaptureComponent implements OnInit {
 				});
 			}
 		);
+		try {
+			this.electronService.ipcRenderer.invoke('capture_window_init');
+		} catch (error) {
+			console.log('event handler not initialize');
+		}
 	}
 
 	public get screenCaptureUrl$(): Observable<SafeUrl> {
