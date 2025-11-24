@@ -32,4 +32,66 @@ export class PluginVersionStore extends Store<IPluginVersionState> {
 	constructor() {
 		super(createInitialPluginVersionState());
 	}
+
+	// Loading states
+	public setCreating(creating: boolean): void {
+		this.update({ creating });
+	}
+
+	public setUpdating(updating: boolean): void {
+		this.update({ updating });
+	}
+
+	public setDeleting(deleting: boolean): void {
+		this.update({ deleting });
+	}
+
+	public setRestoring(restoring: boolean): void {
+		this.update({ restoring });
+	}
+
+	// Version management
+	public setVersions(versions: IPluginVersion[], count?: number): void {
+		this.update({
+			versions,
+			count: count ?? versions.length
+		});
+	}
+
+	public addVersion(version: IPluginVersion): void {
+		this.update((state) => ({
+			versions: [...state.versions, version],
+			count: state.count + 1
+		}));
+	}
+
+	public updateVersion(versionId: ID, updates: Partial<IPluginVersion>): void {
+		this.update((state) => ({
+			versions: state.versions.map((v) => (v.id === versionId ? { ...v, ...updates } : v)),
+			version: state.version?.id === versionId ? { ...state.version, ...updates } : state.version
+		}));
+	}
+
+	public removeVersion(versionId: ID): void {
+		this.update((state) => ({
+			versions: state.versions.filter((v) => v.id !== versionId),
+			count: state.count - 1,
+			version: state.version?.id === versionId ? null : state.version
+		}));
+	}
+
+	// Selection
+	public selectVersion(version: IPluginVersion | null): void {
+		this.update({ version });
+	}
+
+	// Context management
+	public setPluginId(pluginId: ID): void {
+		this.update({ pluginId });
+	}
+
+	// Reset
+	public reset(): void {
+		this.update(createInitialPluginVersionState());
+	}
 }

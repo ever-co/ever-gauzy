@@ -21,40 +21,48 @@ export interface IPluginFilter {
 }
 
 export interface IPluginMarketplaceState {
+	// Loading states
+	loading: boolean;
 	updating: boolean;
 	deleting: boolean;
-	loading: boolean;
+
+	// Plugin data
 	plugins: IPlugin[];
-	plugin: IPlugin;
+	plugin: IPlugin | null;
 	count: number;
 	totalCount: number;
 	filteredCount: number;
+
+	// Filtering & search
 	filters: IPluginFilter;
 	appliedFilters: IPluginFilter;
 	searchQuery: string;
-	installingPlugins: { [pluginId: string]: boolean };
-	subscriptionPlans: { [pluginId: string]: any[] };
-	subscriptions: { [pluginId: string]: any };
+
+	// Tags (marketplace-specific metadata)
 	tags: any[];
-	pluginSettings: { [pluginId: string]: any };
-	pluginAnalytics: { [pluginId: string]: any };
-	pluginSecurity: { [pluginId: string]: any };
+
+	// Upload state
 	upload: {
 		uploading: boolean;
 		progress: number;
 	};
+
+	// UI state
 	ui: {
 		showAdvancedFilters: boolean;
 		collapsedFilters: boolean;
 		selectedView: 'grid' | 'list';
 	};
+
+	// Error handling
+	error: string | null;
 }
 
 export function createInitialMarketplaceState(): IPluginMarketplaceState {
 	return {
+		loading: false,
 		updating: false,
 		deleting: false,
-		loading: false,
 		plugins: [],
 		plugin: null,
 		count: 0,
@@ -63,13 +71,7 @@ export function createInitialMarketplaceState(): IPluginMarketplaceState {
 		filters: {},
 		appliedFilters: {},
 		searchQuery: '',
-		installingPlugins: {},
-		subscriptionPlans: {},
-		subscriptions: {},
 		tags: [],
-		pluginSettings: {},
-		pluginAnalytics: {},
-		pluginSecurity: {},
 		upload: {
 			uploading: false,
 			progress: 0
@@ -78,7 +80,8 @@ export function createInitialMarketplaceState(): IPluginMarketplaceState {
 			showAdvancedFilters: false,
 			collapsedFilters: false,
 			selectedView: 'grid'
-		}
+		},
+		error: null
 	};
 }
 
@@ -145,101 +148,82 @@ export class PluginMarketplaceStore extends Store<IPluginMarketplaceState> {
 		}));
 	}
 
+	// Loading states
 	public setLoading(loading: boolean): void {
 		this.update({ loading });
 	}
 
-	public setInstalling(pluginId: string, installing: boolean): void {
+	public setUpdating(updating: boolean): void {
+		this.update({ updating });
+	}
+
+	public setDeleting(deleting: boolean): void {
+		this.update({ deleting });
+	}
+
+	// Error handling
+	public setErrorMessage(error: string | null): void {
+		this.update({ error });
+	}
+
+	public clearError(): void {
+		this.update({ error: null });
+	}
+
+	// Plugin management
+	public setPlugins(plugins: IPlugin[], count?: number): void {
+		this.update({
+			plugins,
+			count: count ?? plugins.length
+		});
+	}
+
+	public appendPlugins(plugins: IPlugin[]): void {
 		this.update((state) => ({
-			...state,
-			installingPlugins: {
-				...state.installingPlugins,
-				[pluginId]: installing
-			}
+			plugins: [...state.plugins, ...plugins],
+			count: state.count + plugins.length
 		}));
 	}
 
-	public setSubscriptionPlans(pluginId: string, plans: any[]): void {
+	public selectPlugin(plugin: IPlugin | null): void {
+		this.update({ plugin });
+	}
+
+	public updatePlugin(pluginId: string, updates: Partial<IPlugin>): void {
 		this.update((state) => ({
-			...state,
-			subscriptionPlans: {
-				...state.subscriptionPlans,
-				[pluginId]: plans
-			}
+			plugins: state.plugins.map((p) => (p.id === pluginId ? { ...p, ...updates } : p)),
+			plugin: state.plugin?.id === pluginId ? { ...state.plugin, ...updates } : state.plugin
 		}));
 	}
 
-	public setSubscription(pluginId: string, subscription: any): void {
+	public updatePluginRating(pluginId: string, ratingData: any): void {
 		this.update((state) => ({
-			...state,
-			subscriptions: {
-				...state.subscriptions,
-				[pluginId]: subscription
-			}
+			plugins: state.plugins.map((plugin) =>
+				plugin.id === pluginId ? { ...plugin, rating: ratingData } : plugin
+			),
+			plugin: state.plugin?.id === pluginId ? { ...state.plugin, rating: ratingData } : state.plugin
 		}));
 	}
 
+	// Tags management
 	public setTags(tags: any[]): void {
 		this.update({ tags });
 	}
 
 	public addTag(tag: any): void {
 		this.update((state) => ({
-			...state,
 			tags: [...state.tags, tag]
 		}));
 	}
 
-	public setPluginSettings(pluginId: string, settings: any): void {
+	public removeTag(tagId: string): void {
 		this.update((state) => ({
-			...state,
-			pluginSettings: {
-				...state.pluginSettings,
-				[pluginId]: settings
-			}
+			tags: state.tags.filter((t) => t.id !== tagId)
 		}));
 	}
 
-	public updatePluginSetting(pluginId: string, setting: any): void {
-		this.update((state) => ({
-			...state,
-			pluginSettings: {
-				...state.pluginSettings,
-				[pluginId]: {
-					...state.pluginSettings[pluginId],
-					...setting
-				}
-			}
-		}));
-	}
-
-	public setPluginAnalytics(pluginId: string, analytics: any): void {
-		this.update((state) => ({
-			...state,
-			pluginAnalytics: {
-				...state.pluginAnalytics,
-				[pluginId]: analytics
-			}
-		}));
-	}
-
-	public setPluginSecurity(pluginId: string, security: any): void {
-		this.update((state) => ({
-			...state,
-			pluginSecurity: {
-				...state.pluginSecurity,
-				[pluginId]: security
-			}
-		}));
-	}
-
-	public updatePluginRating(pluginId: string, ratingData: any): void {
-		this.update((state) => ({
-			...state,
-			plugins: state.plugins.map((plugin) =>
-				plugin.id === pluginId ? { ...plugin, rating: ratingData } : plugin
-			),
-			plugin: state.plugin?.id === pluginId ? { ...state.plugin, rating: ratingData } : state.plugin
-		}));
+	// Reset
+	public reset(): void {
+		this.update(createInitialMarketplaceState());
 	}
 }

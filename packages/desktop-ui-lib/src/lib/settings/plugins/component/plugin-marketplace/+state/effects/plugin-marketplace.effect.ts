@@ -1,16 +1,25 @@
+/**
+ * Plugin Marketplace Effects
+ *
+ * Handles side effects for plugin marketplace operations including:
+ * - Plugin CRUD operations (upload, get, update, delete)
+ * - Search and filtering
+ * - Tags management
+ * - Rating and reviews
+ *
+ * For other operations, use dedicated effects:
+ * @see PluginInstallationEffects for installation operations
+ * @see PluginSubscriptionEffects for subscription operations
+ * @see PluginSettingsEffects for settings operations
+ */
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { PluginScope } from '@gauzy/contracts';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { EMPTY, catchError, debounceTime, distinctUntilChanged, filter, finalize, map, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { coalesceValue } from '../../../../../../utils';
-import { PluginAnalyticsService } from '../../../../services/plugin-analytics.service';
-import { PluginSecurityService } from '../../../../services/plugin-security.service';
-import { PluginSettingsService } from '../../../../services/plugin-settings.service';
-import { PluginBillingPeriod, PluginSubscriptionService } from '../../../../services/plugin-subscription.service';
 import { PluginTagsService } from '../../../../services/plugin-tags.service';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
@@ -23,10 +32,6 @@ export class PluginMarketplaceEffects {
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginService: PluginService,
 		private readonly pluginTagsService: PluginTagsService,
-		private readonly pluginSubscriptionService: PluginSubscriptionService,
-		private readonly pluginSettingsService: PluginSettingsService,
-		private readonly pluginAnalyticsService: PluginAnalyticsService,
-		private readonly pluginSecurityService: PluginSecurityService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
 		private readonly router: Router
@@ -45,10 +50,11 @@ export class PluginMarketplaceEffects {
 					filter((res) => Boolean(res?.plugin)), // Ensure plugin is not null/undefined
 					map((res) => res.plugin),
 					tap((uploaded) => {
-						this.pluginMarketplaceStore.update((state) => ({
-							plugins: [uploaded, ...state.plugins], // Immutable update
-							count: state.count + 1
-						}));
+						const currentPlugins = this.pluginMarketplaceStore.getValue().plugins;
+						this.pluginMarketplaceStore.setPlugins(
+							[uploaded, ...currentPlugins],
+							currentPlugins.length + 1
+						);
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPLOADED'));
 					}),
 					finalize(() => this.pluginMarketplaceStore.setUpload({ uploading: false })), // Always stop loading
@@ -79,16 +85,16 @@ export class PluginMarketplaceEffects {
 						const total = typeof response?.total === 'number' ? response.total : items.length;
 						const skip = (params as any)?.skip || 0;
 
-						this.pluginMarketplaceStore.update((state) => ({
-							...state,
-							plugins:
-								skip > 1
-									? [...new Map([...state.plugins, ...items].map((item) => [item.id, item])).values()]
-									: items, // Replace on first load, merge on pagination
-							count: total,
-							totalCount: total,
-							filteredCount: total
-						}));
+						if (skip > 1) {
+							// Pagination: append plugins
+							this.pluginMarketplaceStore.appendPlugins(items);
+						} else {
+							// First load: replace plugins
+							this.pluginMarketplaceStore.setPlugins(items, total);
+						}
+
+						this.pluginMarketplaceStore.setTotalCount(total);
+						this.pluginMarketplaceStore.setFilteredCount(total);
 					}),
 					finalize(() => this.pluginMarketplaceStore.setLoading(false)), // Always stop loading
 					catchError((error) => {
@@ -109,7 +115,7 @@ export class PluginMarketplaceEffects {
 				this.pluginService.getOne(id, params).pipe(
 					filter(Boolean), // Filter out null or undefined responses
 					tap((plugin) => {
-						this.pluginMarketplaceStore.update({ plugin });
+						this.pluginMarketplaceStore.selectPlugin(plugin);
 					}),
 					finalize(() => this.pluginMarketplaceStore.setLoading(false)), // Always stop loading
 					catchError((error) => {
@@ -125,19 +131,16 @@ export class PluginMarketplaceEffects {
 		this.action$.pipe(
 			ofType(PluginMarketplaceActions.update),
 			tap(() => {
-				this.pluginMarketplaceStore.update({ updating: true });
+				this.pluginMarketplaceStore.setUpdating(true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UPDATING'));
 			}),
 			switchMap(({ id, plugin }) =>
 				this.pluginService.update(id, plugin).pipe(
-					tap((plugin) => {
-						this.pluginMarketplaceStore.update((state) => ({
-							plugins: [...new Map([...state.plugins, plugin].map((item) => [item.id, item])).values()],
-							plugin: { ...state.plugin, ...plugin }
-						}));
+					tap((updatedPlugin) => {
+						this.pluginMarketplaceStore.updatePlugin(id, updatedPlugin);
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPDATED'));
 					}),
-					finalize(() => this.pluginMarketplaceStore.update({ updating: false })),
+					finalize(() => this.pluginMarketplaceStore.setUpdating(false)),
 					catchError((error) => {
 						this.toastrService.error(error.message || error);
 						return EMPTY;
@@ -151,20 +154,20 @@ export class PluginMarketplaceEffects {
 		this.action$.pipe(
 			ofType(PluginMarketplaceActions.delete),
 			tap(() => {
-				this.pluginMarketplaceStore.update({ deleting: true });
+				this.pluginMarketplaceStore.setDeleting(true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.DELETING'));
 			}),
 			switchMap(({ id }) =>
 				this.pluginService.delete(id).pipe(
 					tap(() => {
 						this.router.navigate(['settings', 'marketplace-plugins']);
-						this.pluginMarketplaceStore.update((state) => ({
-							plugins: [...state.plugins.filter((plugin) => plugin.id !== id)],
-							plugin: null
-						}));
+						const currentPlugins = this.pluginMarketplaceStore.getValue().plugins;
+						const filteredPlugins = currentPlugins.filter((plugin) => plugin.id !== id);
+						this.pluginMarketplaceStore.setPlugins(filteredPlugins, filteredPlugins.length);
+						this.pluginMarketplaceStore.selectPlugin(null);
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.DELETED'));
 					}),
-					finalize(() => this.pluginMarketplaceStore.update({ deleting: false })),
+					finalize(() => this.pluginMarketplaceStore.setDeleting(false)),
 					catchError((error) => {
 						this.toastrService.error(error.message || error);
 						return EMPTY;
@@ -177,7 +180,7 @@ export class PluginMarketplaceEffects {
 	reset$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginMarketplaceActions.reset),
-			tap(() => this.pluginMarketplaceStore.update({ plugins: [] }))
+			tap(() => this.pluginMarketplaceStore.reset())
 		)
 	);
 
@@ -250,14 +253,10 @@ export class PluginMarketplaceEffects {
 							: [];
 						const total = typeof response?.total === 'number' ? response.total : items.length;
 
-						this.pluginMarketplaceStore.update((state) => ({
-							...state,
-							plugins: items,
-							count: total,
-							totalCount: total,
-							filteredCount: total,
-							searchQuery: query
-						}));
+						this.pluginMarketplaceStore.setPlugins(items, total);
+						this.pluginMarketplaceStore.setTotalCount(total);
+						this.pluginMarketplaceStore.setFilteredCount(total);
+						this.pluginMarketplaceStore.update({ searchQuery: query });
 					}),
 					finalize(() => this.pluginMarketplaceStore.setLoading(false)),
 					catchError((error) => {
@@ -266,113 +265,6 @@ export class PluginMarketplaceEffects {
 						return EMPTY;
 					})
 				)
-			)
-		)
-	);
-
-	// Installation Effects
-	install$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginMarketplaceActions.install),
-			tap(({ pluginId }) => {
-				this.pluginMarketplaceStore.setInstalling(pluginId, true);
-				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.INSTALLING'));
-			}),
-			switchMap(({ pluginId, versionId }) =>
-				this.pluginService.install({ pluginId, versionId }).pipe(
-					tap(() => {
-						this.pluginMarketplaceStore.update((state) => ({
-							plugins: state.plugins.map((p) => (p.id === pluginId ? { ...p, isInstalled: true } : p))
-						}));
-						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.INSTALLED'));
-					}),
-					finalize(() => this.pluginMarketplaceStore.setInstalling(pluginId, false)),
-					catchError((error) => {
-						this.toastrService.error(
-							error.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.INSTALL')
-						);
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
-
-	uninstall$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginMarketplaceActions.uninstall),
-			tap(({ pluginId }) => {
-				this.pluginMarketplaceStore.setInstalling(pluginId, true);
-				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UNINSTALLING'));
-			}),
-			switchMap(({ pluginId, installationId, reason }) =>
-				this.pluginService.uninstall(pluginId, installationId, reason).pipe(
-					tap(() => {
-						this.pluginMarketplaceStore.update((state) => ({
-							plugins: state.plugins.map((p) => (p.id === pluginId ? { ...p, isInstalled: false } : p))
-						}));
-						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'));
-					}),
-					finalize(() => this.pluginMarketplaceStore.setInstalling(pluginId, false)),
-					catchError((error) => {
-						this.toastrService.error(
-							error.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL')
-						);
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
-
-	// Subscription Effects
-	loadSubscriptionPlans$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginMarketplaceActions.loadSubscriptionPlans),
-			switchMap(({ pluginId }) =>
-				this.pluginSubscriptionService.getPluginPlans(pluginId).pipe(
-					tap((plans) => {
-						this.pluginMarketplaceStore.setSubscriptionPlans(pluginId, plans);
-					}),
-					catchError((error) => {
-						this.toastrService.error(error.message || 'Failed to load subscription plans');
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
-
-	subscribe$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginMarketplaceActions.subscribe),
-			tap(() => {
-				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SUBSCRIBING'));
-			}),
-			switchMap(({ pluginId, planId, paymentMethod }) =>
-				this.pluginSubscriptionService
-					.createSubscription({
-						pluginId,
-						planId,
-						scope: PluginScope.USER,
-						autoRenew: true,
-						paymentMethodId: paymentMethod.id,
-						metadata: {
-							billingPeriod: PluginBillingPeriod.MONTHLY
-						}
-					})
-					.pipe(
-						tap((subscription) => {
-							this.pluginMarketplaceStore.setSubscription(pluginId, subscription);
-							this.toastrService.success(
-								this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SUBSCRIBED')
-							);
-						}),
-						catchError((error) => {
-							this.toastrService.error(error.message || 'Failed to create subscription');
-							return EMPTY;
-						})
-					)
 			)
 		)
 	);
@@ -406,78 +298,6 @@ export class PluginMarketplaceEffects {
 					}),
 					catchError((error) => {
 						this.toastrService.error(error.message || 'Failed to create tag');
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
-
-	// Settings Effects
-	loadPluginSettings$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginMarketplaceActions.loadPluginSettings),
-			switchMap(({ pluginId }) =>
-				this.pluginSettingsService.getPluginSettings(pluginId).pipe(
-					tap((settings) => {
-						this.pluginMarketplaceStore.setPluginSettings(pluginId, settings);
-					}),
-					catchError((error) => {
-						this.toastrService.error(error.message || 'Failed to load plugin settings');
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
-
-	updatePluginSetting$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginMarketplaceActions.updatePluginSetting),
-			switchMap(({ pluginId, key, value }) =>
-				this.pluginSettingsService.setSettingValue(pluginId, key, value).pipe(
-					tap((setting) => {
-						this.pluginMarketplaceStore.updatePluginSetting(pluginId, setting);
-						this.toastrService.success('Setting updated successfully');
-					}),
-					catchError((error) => {
-						this.toastrService.error(error.message || 'Failed to update setting');
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
-
-	// Analytics Effects
-	loadPluginAnalytics$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginMarketplaceActions.loadPluginAnalytics),
-			switchMap(({ pluginId, period }) =>
-				this.pluginAnalyticsService.getPluginMetrics(pluginId, period).pipe(
-					tap((analytics) => {
-						this.pluginMarketplaceStore.setPluginAnalytics(pluginId, analytics);
-					}),
-					catchError((error) => {
-						this.toastrService.error(error.message || 'Failed to load plugin analytics');
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
-
-	// Security Effects
-	loadPluginSecurity$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginMarketplaceActions.loadPluginSecurity),
-			switchMap(({ pluginId }) =>
-				this.pluginSecurityService.getPluginSecurity(pluginId).pipe(
-					tap((security) => {
-						this.pluginMarketplaceStore.setPluginSecurity(pluginId, security);
-					}),
-					catchError((error) => {
-						this.toastrService.error(error.message || 'Failed to load plugin security');
 						return EMPTY;
 					})
 				)

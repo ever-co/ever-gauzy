@@ -404,16 +404,12 @@ hasExistingSubscription$ | async;
 				<!-- User has subscription and selected a different plan - show upgrade/downgrade with tooltip -->
 				<button
 					nbButton
-					[status]="
-						isPlanUpgrade(currentSubscription!.subscriptionType, selectedPlanViewModel.type)
-							? 'success'
-							: 'warning'
-					"
+					[status]="isPlanUpgrade(currentSubscription.plan, selectedPlanViewModel) ? 'success' : 'warning'"
 					(click)="onSubscribeAndInstall()"
 					[disabled]="!subscriptionForm.valid || creating || updating || !selectedPlanViewModel || error"
 					*gauzySpinnerButton="creating || updating"
 					[nbTooltip]="
-						isPlanUpgrade(currentSubscription!.subscriptionType, selectedPlanViewModel.type)
+						isPlanUpgrade(currentSubscription.plan, selectedPlanViewModel)
 							? 'Upgrade to get instant access to new features'
 							: 'Downgrade will take effect at the end of your current billing cycle'
 					"
@@ -421,13 +417,13 @@ hasExistingSubscription$ | async;
 				>
 					<nb-icon
 						[icon]="
-							isPlanUpgrade(currentSubscription!.subscriptionType, selectedPlanViewModel.type)
+							isPlanUpgrade(currentSubscription.plan, selectedPlanViewModel)
 								? 'arrow-upward-outline'
 								: 'arrow-downward-outline'
 						"
 					></nb-icon>
-					@if (isPlanUpgrade(currentSubscription!.subscriptionType, selectedPlanViewModel.type)) { Upgrade
-					Plan } @else { Downgrade Plan }
+					@if (isPlanUpgrade(currentSubscription.plan, selectedPlanViewModel)) { Upgrade Plan } @else {
+					Downgrade Plan }
 				</button>
 				} @else {
 				<!-- No existing subscription - show normal subscribe button -->

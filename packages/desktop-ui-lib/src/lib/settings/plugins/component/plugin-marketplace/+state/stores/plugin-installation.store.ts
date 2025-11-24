@@ -125,9 +125,82 @@ export class PluginInstallationStore extends Store<IPluginInstallationState> {
 	}
 
 	/**
+	 * Sets the downloading state
+	 */
+	public setDownloading(downloading: boolean): void {
+		this.update({ downloading });
+	}
+
+	/**
+	 * Sets the installing state
+	 */
+	public setInstalling(installing: boolean): void {
+		this.update({ installing });
+	}
+
+	/**
+	 * Sets the server installing state
+	 */
+	public setServerInstalling(serverInstalling: boolean): void {
+		this.update({ serverInstalling });
+	}
+
+	/**
+	 * Sets the completing installation state
+	 */
+	public setCompletingInstallation(completingInstallation: boolean): void {
+		this.update({ completingInstallation });
+	}
+
+	/**
+	 * Sets the activating state
+	 */
+	public setActivating(activating: boolean): void {
+		this.update({ activating });
+	}
+
+	/**
+	 * Sets the uninstalling state
+	 */
+	public setUninstalling(uninstalling: boolean): void {
+		this.update({ uninstalling });
+	}
+
+	/**
+	 * Sets the deactivating state
+	 */
+	public setDeactivating(deactivating: boolean): void {
+		this.update({ deactivating });
+	}
+
+	/**
+	 * Sets the current plugin being operated on
+	 */
+	public setCurrentPlugin(pluginId: string | null, installationId?: string | null): void {
+		this.update({
+			currentPluginId: pluginId,
+			currentInstallationId: installationId ?? null
+		});
+	}
+
+	/**
+	 * Checks if a plugin has a pending installation
+	 */
+	public hasPendingInstallation(pluginId: string): boolean {
+		return !!this.getValue().pendingInstallations[pluginId];
+	}
+
+	/**
+	 * Gets pending installation for a plugin
+	 */
+	public getPendingInstallation(pluginId: string): IPendingInstallation | null {
+		return this.getValue().pendingInstallations[pluginId] || null;
+	}
+
+	/**
 	 * Sets error state
 	 */
-	public setInstallationError(error: string): void {
+	public setErrorMessage(error: string | null): void {
 		this.update({ error });
 	}
 
@@ -136,5 +209,31 @@ export class PluginInstallationStore extends Store<IPluginInstallationState> {
 	 */
 	public clearError(): void {
 		this.update({ error: null });
+	}
+
+	/**
+	 * Resets all installation states
+	 */
+	public resetStates(): void {
+		this.update({
+			downloading: false,
+			downloadProgress: 0,
+			installing: false,
+			serverInstalling: false,
+			completingInstallation: false,
+			activating: false,
+			uninstalling: false,
+			deactivating: false,
+			currentPluginId: null,
+			currentInstallationId: null,
+			error: null
+		});
+	}
+
+	/**
+	 * Resets the entire store
+	 */
+	public reset(): void {
+		this.update(createInitialInstallationState());
 	}
 }

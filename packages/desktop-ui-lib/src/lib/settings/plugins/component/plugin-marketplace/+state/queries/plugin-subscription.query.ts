@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { Observable, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -10,10 +10,13 @@ import {
 	PluginSubscriptionType
 } from '../../../../services/plugin-subscription.service';
 import { PlanActionType } from '../../plugin-subscription-plan-selection/services/plan-comparison.service';
+import { SubscriptionPlanService } from '../../shared';
 import { IPluginSubscriptionState, PluginSubscriptionStore } from '../stores/plugin-subscription.store';
 
 @Injectable({ providedIn: 'root' })
 export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
+	//Plan service
+	private readonly planService = inject(SubscriptionPlanService);
 	// Basic selectors
 	public readonly subscriptions$: Observable<IPluginSubscription[]> = this.select((state) => state.subscriptions);
 	public readonly selectedSubscription$: Observable<IPluginSubscription | null> = this.select(
@@ -287,7 +290,7 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 				const fromPlan = plans.find((p) => p.id === fromPlanId);
 				const toPlan = plans.find((p) => p.id === toPlanId);
 				if (!fromPlan || !toPlan) return false;
-				return this.isPlanUpgrade(fromPlan.type, toPlan.type);
+				return this.planService.canUpgrade(fromPlan, toPlan);
 			})
 		);
 	}
@@ -298,7 +301,7 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 				const fromPlan = plans.find((p) => p.id === fromPlanId);
 				const toPlan = plans.find((p) => p.id === toPlanId);
 				if (!fromPlan || !toPlan) return false;
-				return !this.isPlanUpgrade(fromPlan.type, toPlan.type) && fromPlan.type !== toPlan.type;
+				return this.planService.canDowngrade(fromPlan, toPlan);
 			})
 		);
 	}
@@ -307,18 +310,6 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	 * Determine if the plan change is an upgrade
 	 * Order: FREE < TRIAL < BASIC < PREMIUM < ENTERPRISE < CUSTOM
 	 */
-	private isPlanUpgrade(currentType: PluginSubscriptionType, newType: PluginSubscriptionType): boolean {
-		const planHierarchy = {
-			[PluginSubscriptionType.FREE]: 0,
-			[PluginSubscriptionType.TRIAL]: 1,
-			[PluginSubscriptionType.BASIC]: 2,
-			[PluginSubscriptionType.PREMIUM]: 3,
-			[PluginSubscriptionType.ENTERPRISE]: 4,
-			[PluginSubscriptionType.CUSTOM]: 5
-		};
-
-		return planHierarchy[newType] > planHierarchy[currentType];
-	}
 
 	// Get subscription status for a specific plugin
 	public getPluginSubscriptionStatus(pluginId: string): Observable<{

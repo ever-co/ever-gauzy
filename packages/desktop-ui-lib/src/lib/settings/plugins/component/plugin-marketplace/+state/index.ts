@@ -1,4 +1,12 @@
-// State management
+// Plugin Marketplace State Management
+export * from './stores/plugin-market.store';
+export * from './queries/plugin-marketplace.query';
+
+// Plugin Installation State Management
+export * from './stores/plugin-installation.store';
+export * from './queries/plugin-installation.query';
+
+// Plugin Settings State Management
 export * from './actions/plugin-settings.actions';
 export * from './effects/plugin-settings.effects';
 export * from './queries/plugin-settings.query';
@@ -23,3 +31,15 @@ export * from './actions/plugin-category.action';
 export * from './effects/plugin-category.effect';
 export * from './queries/plugin-category.query';
 export * from './stores/plugin-category.store';
+
+// Plugin Version State Management
+export * from './stores/plugin-version.store';
+export * from './queries/plugin-version.query';
+
+// Plugin Source State Management
+export * from './stores/plugin-source.store';
+export * from './queries/plugin-source.query';
+
+// Plugin User Assignment State Management
+export * from './stores/plugin-user-assignment.store';
+export * from './queries/plugin-user-assignment.query';

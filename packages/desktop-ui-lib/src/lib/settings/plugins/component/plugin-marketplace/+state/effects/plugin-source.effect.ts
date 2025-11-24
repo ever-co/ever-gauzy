@@ -28,7 +28,7 @@ export class PluginSourceEffects {
 		this.action$.pipe(
 			ofType(PluginSourceActions.add),
 			tap(() => {
-				this.pluginSourceStore.update({ creating: true });
+				this.pluginSourceStore.setCreating(true);
 				this.pluginMarketplaceStore.setUpload({ uploading: true });
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.ADDING'));
 			}),
@@ -39,20 +39,22 @@ export class PluginSourceEffects {
 					map((res) => res.sources),
 					withLatestFrom(this.pluginElectronService.getOS()),
 					tap(([created, os]) => {
-						this.pluginSourceStore.update((state) => ({
-							source: created[0],
-							sources: [...created, ...state.sources].sort((a, b) => {
+						// Sort sources with current OS first
+						const sortedSources = [...created, ...this.pluginSourceStore.getValue().sources].sort(
+							(a, b) => {
 								if (a.operatingSystem === os.platform) return -1;
 								if (b.operatingSystem === os.platform) return 1;
 								return 0;
-							}),
-							count: state.count + created.length
-						}));
+							}
+						);
+
+						this.pluginSourceStore.setSources(sortedSources, sortedSources.length);
+						this.pluginSourceStore.selectSource(created[0]);
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SOURCE.ADD'));
 					}),
 					finalize(() => {
 						this.pluginMarketplaceStore.setUpload({ uploading: false });
-						this.pluginSourceStore.update({ creating: false });
+						this.pluginSourceStore.setCreating(false);
 					}), // Always stop loading
 					catchError((error) => {
 						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.ADD')); // Handle error properly
@@ -66,38 +68,39 @@ export class PluginSourceEffects {
 	getAll$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.getAll),
-			tap(() => this.pluginSourceStore.setLoading(true)), // Start loading state
+			tap(({ pluginId, versionId }) => {
+				this.pluginSourceStore.setLoading(true);
+				this.pluginSourceStore.setPluginVersion(pluginId, versionId);
+			}),
 			switchMap(({ pluginId, versionId, params = {} }) =>
 				this.pluginService.getSources(pluginId, versionId, params).pipe(
 					withLatestFrom(this.pluginElectronService.getOS()),
 					tap(([{ items, total }, os]) => {
-						this.pluginSourceStore.update((state) => {
-							if (!items?.length) {
-								return {
-									sources: state.sources || [],
-									source: state.source,
-									count: total
-								};
-							}
+						if (!items?.length) {
+							this.pluginSourceStore.setSources([], total);
+							return;
+						}
 
-							const sourceMap = new Map<string, IPluginSource>(
-								(state.sources || []).map((item) => [item.id, item])
-							);
+						// Merge with existing sources
+						const currentSources = this.pluginSourceStore.getValue().sources || [];
+						const sourceMap = new Map<string, IPluginSource>(currentSources.map((item) => [item.id, item]));
 
-							items.forEach((item) => sourceMap.set(item.id, item));
+						items.forEach((item) => sourceMap.set(item.id, item));
 
-							const sortedSources = Array.from(sourceMap.values()).sort((a, b) => {
-								if (a.operatingSystem === os.platform) return -1;
-								if (b.operatingSystem === os.platform) return 1;
-								return 0;
-							});
-
-							return {
-								sources: sortedSources,
-								source: state.source ?? sortedSources[0],
-								count: total
-							};
+						// Sort with current OS first
+						const sortedSources = Array.from(sourceMap.values()).sort((a, b) => {
+							if (a.operatingSystem === os.platform) return -1;
+							if (b.operatingSystem === os.platform) return 1;
+							return 0;
 						});
+
+						this.pluginSourceStore.setSources(sortedSources, total);
+
+						// Select first source if none selected
+						const currentSource = this.pluginSourceStore.getValue().source;
+						if (!currentSource && sortedSources.length > 0) {
+							this.pluginSourceStore.selectSource(sortedSources[0]);
+						}
 					}),
 					finalize(() => this.pluginSourceStore.setLoading(false)), // Always stop loading
 					catchError((error) => {
@@ -112,18 +115,14 @@ export class PluginSourceEffects {
 	select$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.selectSource),
-			tap(({ source }) => this.pluginSourceStore.update((state) => ({ ...state, source })))
+			tap(({ source }) => this.pluginSourceStore.selectSource(source))
 		)
 	);
 
 	reset$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.reset),
-			tap(() =>
-				this.pluginSourceStore.update({
-					sources: []
-				})
-			)
+			tap(() => this.pluginSourceStore.reset())
 		)
 	);
 
@@ -131,26 +130,26 @@ export class PluginSourceEffects {
 		this.action$.pipe(
 			ofType(PluginSourceActions.delete),
 			tap(() => {
-				this.pluginSourceStore.update({ deleting: true });
+				this.pluginSourceStore.setDeleting(true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.DELETING'));
 			}),
 			mergeMap(({ pluginId, versionId, sourceId }) =>
 				this.pluginService.deleteSource(pluginId, versionId, sourceId).pipe(
 					tap(() => {
 						const deletedAt = new Date();
-						this.pluginSourceStore.update((state) => ({
-							source: state.source && { ...state.source, deletedAt },
-							sources: [
-								...state.sources.map((source) =>
-									source.id === sourceId ? { ...source, deletedAt } : source
-								)
-							]
-						}));
+						this.pluginSourceStore.updateSource(sourceId, { deletedAt });
+
+						// Update selected source if it was deleted
+						const currentSource = this.pluginSourceStore.getValue().source;
+						if (currentSource?.id === sourceId) {
+							this.pluginSourceStore.selectSource({ ...currentSource, deletedAt });
+						}
+
 						this.toastrService.success(
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SOURCE.DELETE')
 						);
 					}),
-					finalize(() => this.pluginSourceStore.update({ deleting: false })),
+					finalize(() => this.pluginSourceStore.setDeleting(false)),
 					catchError((error) => {
 						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.DELETE'));
 						return EMPTY;
@@ -164,19 +163,20 @@ export class PluginSourceEffects {
 		this.action$.pipe(
 			ofType(PluginSourceActions.restore),
 			tap(() => {
-				this.pluginSourceStore.update({ restoring: true });
+				this.pluginSourceStore.setRestoring(true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.RESTORING'));
 			}),
 			mergeMap(({ pluginId, versionId, sourceId }) =>
 				this.pluginService.restoreSource(pluginId, versionId, sourceId).pipe(
 					tap(() => {
-						this.pluginSourceStore.update((state) => ({
-							version:
-								state.source?.id === sourceId ? { ...state.source, deletedAt: null } : state.source,
-							sources: state.sources.map((source) =>
-								source.id === sourceId ? { ...source, deletedAt: null } : source
-							)
-						}));
+						this.pluginSourceStore.updateSource(sourceId, { deletedAt: null });
+
+						// Update selected source if it was restored
+						const currentSource = this.pluginSourceStore.getValue().source;
+						if (currentSource?.id === sourceId) {
+							this.pluginSourceStore.selectSource({ ...currentSource, deletedAt: null });
+						}
+
 						this.toastrService.success(
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SOURCE.RESTORE')
 						);
@@ -186,7 +186,7 @@ export class PluginSourceEffects {
 						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.RESTORE'));
 						return EMPTY;
 					}),
-					finalize(() => this.pluginSourceStore.update({ restoring: false }))
+					finalize(() => this.pluginSourceStore.setRestoring(false))
 				)
 			)
 		)
