@@ -11,9 +11,11 @@
 		<div class="current-plan" *ngIf="currentSubscription && comparisonResult.actionType !== PlanActionType.NEW">
 			<h5>Current Plan</h5>
 			<div class="plan-info">
-				<span class="plan-name">{{ formatSubscriptionType(currentSubscription.subscriptionType) }}</span>
+				<span class="plan-name">{{ formatSubscriptionType(currentSubscription.plan.type) }}</span>
 				<span class="plan-price"
-					>${{ currentSubscription.amount }}/{{ currentSubscription.billingPeriod }}</span
+					>${{ currentSubscription.plan?.price ?? currentSubscription.amount }}/{{
+						currentSubscription.plan?.billingPeriod ?? currentSubscription.billingPeriod
+					}}</span
 				>
 			</div>
 		</div>

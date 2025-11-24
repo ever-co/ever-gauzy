@@ -42,8 +42,9 @@ export class SubscriptionPlanService {
 	 */
 	calculatePlanSavings(plan: IPluginSubscriptionPlan): string | null {
 		if (plan.billingPeriod === PluginBillingPeriod.YEARLY) {
-			const monthlyEquivalent = plan.price / 12;
-			const monthlySavings = (plan.price * 1.2) / 12 - monthlyEquivalent;
+			const price = Number(plan.price);
+			const monthlyEquivalent = price / 12;
+			const monthlySavings = (price * 1.2) / 12 - monthlyEquivalent;
 			return `Save $${monthlySavings.toFixed(2)}/month`;
 		}
 		return null;
@@ -67,11 +68,11 @@ export class SubscriptionPlanService {
 	 * Compare two plans and determine action type
 	 */
 	comparePlans(
-		currentType: PluginSubscriptionType,
-		targetType: PluginSubscriptionType
+		currentPlan: IPluginSubscriptionPlan,
+		targetPlan: IPluginSubscriptionPlan
 	): 'upgrade' | 'downgrade' | 'same' {
-		const currentIndex = this.getSubscriptionTypeIndex(currentType);
-		const targetIndex = this.getSubscriptionTypeIndex(targetType);
+		const currentIndex = currentPlan.sortOrder;
+		const targetIndex = targetPlan.sortOrder;
 
 		if (targetIndex > currentIndex) return 'upgrade';
 		if (targetIndex < currentIndex) return 'downgrade';
@@ -81,18 +82,18 @@ export class SubscriptionPlanService {
 	/**
 	 * Check if plan can be upgraded
 	 */
-	canUpgrade(currentType: PluginSubscriptionType, targetPlan: IPluginSubscriptionPlan): boolean {
-		const currentIndex = this.getSubscriptionTypeIndex(currentType);
-		const targetIndex = this.getSubscriptionTypeIndex(targetPlan.type);
+	canUpgrade(currentPlan: IPluginSubscriptionPlan, targetPlan: IPluginSubscriptionPlan): boolean {
+		const currentIndex = currentPlan.sortOrder;
+		const targetIndex = targetPlan.sortOrder;
 		return targetIndex > currentIndex;
 	}
 
 	/**
 	 * Check if plan can be downgraded
 	 */
-	canDowngrade(currentType: PluginSubscriptionType, targetPlan: IPluginSubscriptionPlan): boolean {
-		const currentIndex = this.getSubscriptionTypeIndex(currentType);
-		const targetIndex = this.getSubscriptionTypeIndex(targetPlan.type);
+	canDowngrade(currentPlan: IPluginSubscriptionPlan, targetPlan: IPluginSubscriptionPlan): boolean {
+		const currentIndex = currentPlan.sortOrder;
+		const targetIndex = targetPlan.sortOrder;
 		return targetIndex < currentIndex;
 	}
 
@@ -105,7 +106,7 @@ export class SubscriptionPlanService {
 		daysRemaining: number
 	): number {
 		const daysInPeriod = this.getDaysInBillingPeriod(newPlan.billingPeriod);
-		const proratedAmount = (newPlan.price - currentPlan.price) * (daysRemaining / daysInPeriod);
+		const proratedAmount = (Number(newPlan.price) - Number(currentPlan.price)) * (daysRemaining / daysInPeriod);
 		return Math.max(0, proratedAmount);
 	}
 

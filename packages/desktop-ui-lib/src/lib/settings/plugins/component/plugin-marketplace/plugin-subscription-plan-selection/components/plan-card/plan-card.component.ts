@@ -46,6 +46,10 @@ export class PlanCardComponent {
 		}
 	}
 
+	public hasLimitations(): boolean {
+		return this.plan.limitations != null && Object.values(this.plan.limitations).some((value) => value != null);
+	}
+
 	public getLimitationEntries(): Array<[string, any]> {
 		if (!this.plan.limitations) {
 			return [];

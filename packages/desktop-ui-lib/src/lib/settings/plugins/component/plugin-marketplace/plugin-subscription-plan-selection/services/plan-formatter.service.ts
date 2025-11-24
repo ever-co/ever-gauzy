@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import {
-	IPluginSubscriptionPlan,
-	PluginBillingPeriod,
-	PluginSubscriptionType
+    IPluginSubscriptionPlan,
+    PluginBillingPeriod,
+    PluginSubscriptionType
 } from '../../../../services/plugin-subscription.service';
 import { IPlanViewModel, ISubscriptionPreviewViewModel } from '../models/plan-view.model';
 
@@ -23,23 +23,23 @@ export class PlanFormatterService {
 			name: plan.name,
 			description: plan.description,
 			type: plan.type,
-			price: plan.price,
+			price: Number(plan.price),
 			currency: plan.currency,
 			billingPeriod: plan.billingPeriod,
 			features: plan.features,
 			limitations: plan.limitations,
-			formattedPrice: this.formatPrice(plan.price, plan.currency),
+			formattedPrice: this.formatPrice(Number(plan.price), plan.currency),
 			formattedBillingPeriod: this.formatBillingPeriod(plan.billingPeriod),
 			icon: this.getPlanTypeIcon(plan.type),
 			colorStatus: this.getPlanTypeColor(plan.type),
 			isPopular: plan.isPopular || false,
 			isRecommended: plan.isRecommended || false,
-			isFree: plan.type === PluginSubscriptionType.FREE || plan.price === 0,
+			isFree: plan.type === PluginSubscriptionType.FREE || Number(plan.price) === 0,
 			trialDays: plan.trialDays,
 			trialText: plan.trialDays ? `${plan.trialDays} days free trial` : undefined,
-			setupFee: plan.setupFee,
-			formattedSetupFee: plan.setupFee ? this.formatPrice(plan.setupFee, plan.currency) : undefined,
-			discountPercentage: plan.discountPercentage,
+			setupFee: Number(plan.setupFee),
+			formattedSetupFee: plan.setupFee ? this.formatPrice(Number(plan.setupFee), plan.currency) : undefined,
+			discountPercentage: Number(plan.discountPercentage),
 			originalPlan: plan
 		};
 	}
@@ -62,7 +62,8 @@ export class PlanFormatterService {
 		const setupFee = Number(plan.setupFee) || 0;
 
 		// Calculate plan discount if applicable
-		const planDiscount = plan.discountPercentage ? (baseAmount * plan.discountPercentage) / 100 : 0;
+		const discountPercent = Number(plan.discountPercentage) || 0;
+		const planDiscount = discountPercent ? (baseAmount * discountPercent) / 100 : 0;
 
 		// Calculate subtotal after plan discount
 		const subtotal = baseAmount - planDiscount + setupFee;

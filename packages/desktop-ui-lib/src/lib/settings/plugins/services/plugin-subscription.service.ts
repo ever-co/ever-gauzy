@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IPagination, PluginScope } from '@gauzy/contracts';
+import { IPagination, IUser, PluginScope } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { BehaviorSubject, map, Observable, of, shareReplay, tap } from 'rxjs';
 
@@ -9,27 +9,39 @@ export interface IPluginSubscription {
 	id: string;
 	pluginId: string;
 	planId?: string;
+	plan?: IPluginSubscriptionPlan;
 	scope: PluginScope;
-	userId: string;
-	subscriptionType: PluginSubscriptionType;
-	billingPeriod: PluginBillingPeriod;
+	subscriberId: string;
+	subscriber?: IUser;
 	status: PluginSubscriptionStatus;
-	startDate: Date;
-	endDate?: Date;
-	trialEndDate?: Date;
-	nextBillingDate?: Date;
-	amount: number;
-	currency: string;
-	features: string[];
-	isAutoRenew: boolean;
+	startDate: Date | string;
+	endDate?: Date | string | null;
+	trialEndDate?: Date | string | null;
+	nextBillingDate?: Date | string;
+	autoRenew: boolean;
+	parentId?: string | null;
+	pluginTenantId?: string;
+	pluginTenant?: any;
+	externalSubscriptionId?: string | null;
 	paymentMethodId?: string;
-	lastPaymentDate?: Date;
+	lastPaymentDate?: Date | string;
 	lastPaymentAmount?: number;
-	cancelledAt?: Date;
+	cancelledAt?: Date | string | null;
+	cancellationReason?: string | null;
+	metadata?: Record<string, any> | null;
+	// Base entity fields
+	isActive: boolean;
+	isArchived: boolean;
+	archivedAt?: Date | string | null;
+	createdAt: Date | string;
+	updatedAt: Date | string;
+	deletedAt?: Date | string | null;
+	createdByUserId?: string;
+	updatedByUserId?: string;
+	deletedByUserId?: string | null;
+	tenantId: string;
+	organizationId?: string;
 	cancelReason?: string;
-	metadata?: Record<string, any>;
-	createdAt: Date;
-	updatedAt: Date;
 }
 
 export interface IPluginSubscriptionPlan {
@@ -39,7 +51,7 @@ export interface IPluginSubscriptionPlan {
 	scope?: PluginScope | 'global'; // Allow legacy global scope while backend expects contracts enum
 	name: string;
 	description: string;
-	price: number;
+	price: number | string; // API returns string
 	currency: string;
 	billingPeriod: PluginBillingPeriod;
 	features: string[];
@@ -47,12 +59,21 @@ export interface IPluginSubscriptionPlan {
 	isPopular?: boolean;
 	isRecommended?: boolean;
 	trialDays?: number;
-	setupFee?: number;
-	discountPercentage?: number;
+	setupFee?: number | string; // API returns string
+	discountPercentage?: number | string; // API returns string
 	isActive: boolean;
-	metadata?: Record<string, any>;
-	createdAt: Date;
-	updatedAt: Date;
+	sortOrder?: number;
+	metadata?: Record<string, any> | null;
+	// Base entity fields
+	isArchived: boolean;
+	archivedAt?: Date | string | null;
+	createdAt: Date | string;
+	updatedAt: Date | string;
+	deletedAt?: Date | string | null;
+	createdById?: string;
+	createdByUserId?: string;
+	updatedByUserId?: string;
+	deletedByUserId?: string | null;
 }
 
 export interface IPluginBilling {
@@ -155,25 +176,7 @@ export interface IPluginSubscriptionCreateInput {
 
 export type IPluginSubscriptionUpdateInput = Partial<IPluginSubscriptionCreateInput>;
 
-export interface IPluginPlanCreateInput {
-	id?: string;
-	pluginId: string;
-	type: PluginSubscriptionType;
-	scope?: PluginScope | 'global';
-	name: string;
-	description: string;
-	price: number;
-	currency: string;
-	billingPeriod: PluginBillingPeriod;
-	features: string[];
-	limitations?: Record<string, any>;
-	trialDays?: number;
-	setupFee?: number;
-	discountPercentage?: number;
-	isPopular?: boolean;
-	isRecommended?: boolean;
-	metadata?: Record<string, any>;
-}
+export type IPluginPlanCreateInput = Partial<IPluginSubscriptionPlan>;
 
 @Injectable({
 	providedIn: 'root'
@@ -601,10 +604,20 @@ export class PluginSubscriptionService {
 		newPlan: IPluginSubscriptionPlan,
 		daysRemaining: number
 	): number {
-		const currentDailyRate = currentPlan.price / this.getBillingPeriodDays(currentPlan.billingPeriod);
-		const newDailyRate = newPlan.price / this.getBillingPeriodDays(newPlan.billingPeriod);
+		const currentPrice = this.parsePriceAsNumber(currentPlan.price);
+		const newPrice = this.parsePriceAsNumber(newPlan.price);
+
+		const currentDailyRate = currentPrice / this.getBillingPeriodDays(currentPlan.billingPeriod);
+		const newDailyRate = newPrice / this.getBillingPeriodDays(newPlan.billingPeriod);
 
 		return (newDailyRate - currentDailyRate) * daysRemaining;
+	}
+
+	private parsePriceAsNumber(price: number | string): number {
+		if (typeof price === 'number') {
+			return price;
+		}
+		return parseFloat(price) || 0;
 	}
 
 	private getBillingPeriodDays(period: PluginBillingPeriod): number {

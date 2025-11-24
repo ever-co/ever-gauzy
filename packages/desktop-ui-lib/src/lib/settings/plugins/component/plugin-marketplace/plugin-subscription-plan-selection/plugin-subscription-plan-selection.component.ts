@@ -498,7 +498,7 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 		console.log('[PluginSubscriptionSelection] Subscription action:', {
 			action: comparisonResult.actionType,
 			selectedPlan: selectedPlanViewModel.name,
-			currentSubscription: currentSubscription?.subscriptionType,
+			currentSubscription: currentSubscription?.plan.type,
 			requiresPayment: comparisonResult.requiresPayment,
 			prorationAmount: comparisonResult.prorationAmount
 		});
@@ -578,8 +578,9 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 		newPlan: IPluginSubscriptionPlan,
 		input: IPluginSubscriptionCreateInput
 	): void {
+		const currentType = currentSubscription.plan.type;
 		console.log('[PluginSubscriptionSelection] Upgrading SUBSCRIPTION using facade:', {
-			from: currentSubscription.subscriptionType,
+			from: currentType,
 			to: newPlan.type,
 			currentSubscriptionId: currentSubscription.id,
 			newPlanId: newPlan.id
@@ -616,8 +617,9 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 		newPlan: IPluginSubscriptionPlan,
 		input: IPluginSubscriptionCreateInput
 	): void {
+		const currentType = currentSubscription.plan.type;
 		console.log('[PluginSubscriptionSelection] Downgrading SUBSCRIPTION using facade:', {
-			from: currentSubscription.subscriptionType,
+			from: currentType,
 			to: newPlan.type,
 			currentSubscriptionId: currentSubscription.id,
 			newPlanId: newPlan.id
@@ -802,8 +804,8 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 	 * Determine if the plan change is an upgrade
 	 * Order: FREE < TRIAL < BASIC < PREMIUM < ENTERPRISE < CUSTOM
 	 */
-	public isPlanUpgrade(currentType: PluginSubscriptionType, newType: PluginSubscriptionType): boolean {
-		return this.planService.comparePlans(currentType, newType) === 'upgrade';
+	public isPlanUpgrade(current: IPluginSubscriptionPlan, newPlan: IPluginSubscriptionPlan): boolean {
+		return this.planService.comparePlans(current, newPlan) === 'upgrade';
 	}
 
 	/**
@@ -814,13 +816,18 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 			return `Select ${plan.name} plan for ${plan.formattedPrice} per ${plan.formattedBillingPeriod}`;
 		}
 
-		if (currentSubscription.subscriptionType === plan.type) {
+		const currentPlan = currentSubscription.plan;
+		if (currentPlan.id === plan.id) {
 			return `${plan.name} plan - Your current active plan`;
 		}
 
-		const isUpgrade = this.isPlanUpgrade(currentSubscription.subscriptionType, plan.type);
-		const action = isUpgrade ? 'Upgrade' : 'Downgrade';
-		return `${action} to ${plan.name} plan for ${plan.formattedPrice} per ${plan.formattedBillingPeriod}`;
+		if (currentPlan) {
+			const isUpgrade = this.isPlanUpgrade(currentPlan, plan.originalPlan);
+			const action = isUpgrade ? 'Upgrade' : 'Downgrade';
+			return `${action} to ${plan.name} plan for ${plan.formattedPrice} per ${plan.formattedBillingPeriod}`;
+		}
+
+		return `Select ${plan.name} plan for ${plan.formattedPrice} per ${plan.formattedBillingPeriod}`;
 	}
 
 	/**

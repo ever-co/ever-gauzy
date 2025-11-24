@@ -88,10 +88,12 @@ export class PluginSubscriptionController {
 		@Query() query: PluginSubscriptionQueryDTO,
 		@Query('expiring') expiring?: boolean,
 		@Query('days') days?: number,
-		@Query('active') active?: boolean
+		@Query('active') active?: boolean,
+		@Query('relations') relations: string[] = ['plugin', 'pluginTenant', 'subscriber', 'plan']
 	): Promise<PluginSubscription[]> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
+		const subscriberId = query.subscriberId || RequestContext.currentUserId();
 
 		// Note: Access checks and expiring subscriptions analytics have been moved to
 		// plugin-subscription-analytics.controller.ts for better separation of concerns
@@ -105,19 +107,27 @@ export class PluginSubscriptionController {
 		}
 
 		// Handle subscriber filter
-		if (query.subscriberId) {
+		if (subscriberId) {
 			return await this.queryBus.execute(
-				new GetPluginSubscriptionsBySubscriberIdQuery(query.subscriberId, [
+				new GetPluginSubscriptionsBySubscriberIdQuery(subscriberId, [
 					'plugin',
 					'pluginTenant',
-					'subscriber'
+					'subscriber',
+					'plan',
+					...relations
 				])
 			);
 		}
 
 		// Default: get subscriptions for this plugin
 		return await this.queryBus.execute(
-			new GetPluginSubscriptionsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant', 'subscriber'])
+			new GetPluginSubscriptionsByPluginIdQuery(pluginId, [
+				'plugin',
+				'pluginTenant',
+				'subscriber',
+				'plan',
+				...relations
+			])
 		);
 	}
 

@@ -22,12 +22,14 @@
 
 							<div class="detail-row">
 								<span class="label">{{ 'PLUGIN.HIERARCHY.TYPE' | translate }}:</span>
-								<span class="value">{{ node.subscription.subscriptionType | titlecase }}</span>
+								<span class="value">{{ node.Subscription.plan.type | titlecase }}</span>
 							</div>
 
 							<div class="detail-row">
 								<span class="label">{{ 'PLUGIN.HIERARCHY.BILLING_PERIOD' | translate }}:</span>
-								<span class="value">{{ node.subscription.billingPeriod | titlecase }}</span>
+								<span class="value">{{
+									node.subscription.plan?.billingPeriod ?? node.subscription.billingPeriod | titlecase
+								}}</span>
 							</div>
 
 							<div class="detail-row">
@@ -75,12 +77,18 @@
 							<!-- Features -->
 							<div
 								class="features-section"
-								*ngIf="node.subscription.features && node.subscription.features.length > 0"
+								*ngIf="
+									(node.subscription.plan?.features ?? node.subscription.features) &&
+									(node.subscription.plan?.features ?? node.subscription.features).length > 0
+								"
 							>
 								<span class="label">{{ 'PLUGIN.HIERARCHY.FEATURES' | translate }}:</span>
 								<div class="features-list">
 									<nb-badge
-										*ngFor="let feature of node.subscription.features"
+										*ngFor="
+											let feature of node.subscription.plan?.features ??
+												node.subscription.features
+										"
 										status="info"
 										class="feature-badge"
 										[text]="feature"

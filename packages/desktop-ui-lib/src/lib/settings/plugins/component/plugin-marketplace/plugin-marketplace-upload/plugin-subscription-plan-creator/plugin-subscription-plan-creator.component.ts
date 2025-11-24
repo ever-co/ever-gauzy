@@ -193,14 +193,14 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 				type: plan.type,
 				name: plan.name,
 				description: plan.description,
-				price: plan.price,
+				price: Number(plan.price),
 				currency: plan.currency,
 				billingPeriod: plan.billingPeriod,
 				features: plan.features,
 				limitations: plan.limitations,
 				trialDays: plan.trialDays,
-				setupFee: plan.setupFee,
-				discountPercentage: plan.discountPercentage,
+				setupFee: Number(plan.setupFee),
+				discountPercentage: Number(plan.discountPercentage),
 				isPopular: plan.isPopular,
 				isRecommended: plan.isRecommended
 			};
@@ -476,14 +476,14 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 			type: planValue.type,
 			name: planValue.name,
 			description: planValue.description,
-			price: planValue.price,
+			price: Number(planValue.price),
 			currency: planValue.currency,
 			billingPeriod: planValue.billingPeriod,
 			features: planValue.features || [],
 			limitations: planValue.limitations,
 			trialDays: planValue.trialDays,
-			setupFee: planValue.setupFee,
-			discountPercentage: planValue.discountPercentage,
+			setupFee: Number(planValue.setupFee),
+			discountPercentage: Number(planValue.discountPercentage),
 			isPopular: planValue.isPopular,
 			isRecommended: planValue.isRecommended
 		};
@@ -538,7 +538,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 		if (newPlans.length > 0) {
 			// Remove id, createdAt, updatedAt, isActive fields for creation
 			const plansForCreation = newPlans.map(
-				({ pluginId, type, name, description, price, currency, billingPeriod, features, ...rest }) => ({
+				({
 					pluginId,
 					type,
 					name,
@@ -547,6 +547,21 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 					currency,
 					billingPeriod,
 					features,
+					setupFee,
+					discountPercentage,
+					...rest
+				}) => ({
+					pluginId,
+					type,
+					name,
+					description,
+					price: Number(price),
+					currency,
+					billingPeriod,
+					features,
+					setupFee: Number(setupFee),
+					discountPercentage: Number(discountPercentage),
+					isArchived: false,
 					...rest
 				})
 			);

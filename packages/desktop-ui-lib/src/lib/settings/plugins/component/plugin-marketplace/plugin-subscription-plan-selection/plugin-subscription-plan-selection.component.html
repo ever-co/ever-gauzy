@@ -68,9 +68,9 @@ hasExistingSubscription$ | async;
 				></gauzy-subscription-status-badge>
 				<span>
 					You have an active
-					<strong>{{ currentSubscription.subscriptionType | titlecase }}</strong> subscription.
+					<strong>{{ currentSubscription.plan.type | titlecase }}</strong> subscription.
 					{{
-						currentSubscription.subscriptionType === selectedPlanViewModel?.type
+						currentSubscription.plan.id === selectedPlanViewModel?.id
 							? 'Select a different plan to upgrade or downgrade.'
 							: 'Select a plan below to upgrade or downgrade.'
 					}}
@@ -185,8 +185,8 @@ hasExistingSubscription$ | async;
 					@for (planViewModel of planViewModels; track planViewModel.id) {
 					<div class="plan-card-wrapper">
 						<!-- Upgrade/Downgrade Badge -->
-						@if (currentSubscription && currentSubscription.subscriptionType !== planViewModel.type) { @if
-						(isPlanUpgrade(currentSubscription.subscriptionType, planViewModel.type)) {
+						@if (currentSubscription && currentSubscription.plan.id !== planViewModel.id) { @if
+						(isPlanUpgrade(currentSubscription.plan, planViewModel)) {
 						<div class="plan-action-badge upgrade-badge">
 							<nb-icon icon="arrow-upward-outline"></nb-icon>
 							<span>Upgrade</span>
@@ -208,25 +208,20 @@ hasExistingSubscription$ | async;
 						<lib-plan-card
 							[plan]="planViewModel"
 							[isSelected]="selectedPlanViewModel?.id === planViewModel.id"
-							[isCurrentPlan]="
-								currentSubscription && currentSubscription.subscriptionType === planViewModel.type
-							"
-							[isDisabled]="
-								currentSubscription && currentSubscription.subscriptionType === planViewModel.type
-							"
+							[isCurrentPlan]="currentSubscription && currentSubscription.plan === planViewModel"
+							[isDisabled]="currentSubscription && currentSubscription.plan === planViewModel"
 							[attr.role]="'button'"
 							[attr.aria-label]="getPlanAriaLabel(planViewModel, currentSubscription)"
 							[attr.tabindex]="0"
 							(planSelected)="onPlanSelected($event)"
 							class="plan-card-animated"
 							[class.is-upgrade]="
-								currentSubscription &&
-								isPlanUpgrade(currentSubscription.subscriptionType, planViewModel.type)
+								currentSubscription && isPlanUpgrade(currentSubscription.plan, planViewModel)
 							"
 							[class.is-downgrade]="
 								currentSubscription &&
-								!isPlanUpgrade(currentSubscription.subscriptionType, planViewModel.type) &&
-								currentSubscription.subscriptionType !== planViewModel.type
+								!isPlanUpgrade(currentSubscription.plan, planViewModel) &&
+								currentSubscription.plan.id !== planViewModel.id
 							"
 						>
 						</lib-plan-card>
@@ -398,8 +393,8 @@ hasExistingSubscription$ | async;
 					<nb-icon icon="refresh-outline"></nb-icon>
 					Reset & Try Again
 				</button>
-				} @if (currentSubscription && selectedPlanViewModel && currentSubscription.subscriptionType ===
-				selectedPlanViewModel.type) {
+				} @if (currentSubscription && selectedPlanViewModel && currentSubscription.plan.id ===
+				selectedPlanViewModel.id) {
 				<!-- Current plan is selected - show disabled button -->
 				<button nbButton status="success" [disabled]="true">
 					<nb-icon icon="checkmark-circle-outline"></nb-icon>

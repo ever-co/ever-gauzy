@@ -19,6 +19,11 @@ import { SubscriptionFormService } from '../../services/subscription-form.servic
 	standalone: false
 })
 export class SubscriptionBillingFormComponent implements OnInit, OnDestroy {
+	public monthlyPrice: number = 0;
+	public quarterlyPrice: number = 0;
+	public quarterlyDetail: number = 0;
+	public yearlyPrice: number = 0;
+	public yearlyDetail: number = 0;
 	@Input() form: FormGroup;
 	@Input() plan: IPluginSubscriptionPlan;
 	@Input() isLoading = false;
@@ -35,6 +40,12 @@ export class SubscriptionBillingFormComponent implements OnInit, OnDestroy {
 		if (this.form) {
 			this.setupPaymentMethodListener();
 		}
+		// Precompute price values for template
+		this.monthlyPrice = Number(this.plan?.price) || 0;
+		this.quarterlyPrice = this.monthlyPrice * 3 * 0.95;
+		this.quarterlyDetail = this.monthlyPrice * 3;
+		this.yearlyPrice = this.monthlyPrice * 12 * 0.8;
+		this.yearlyDetail = this.monthlyPrice * 12;
 	}
 
 	ngOnDestroy(): void {

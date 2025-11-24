@@ -1,14 +1,14 @@
-@let installing = installationQuery.installing$ | async;
-@let uninstalling = installationQuery.uninstalling$ | async;
-@let checked = isChecked$ | async;
-@let toggle = installationQuery.toggle$ | async;
-@let disabled = installing || uninstalling;
-@let isSelected = plugin?.id === toggle.plugin?.id;
-@let showProgress = disabled && isSelected;
-@let editing = marketplaceQuery.updating$ | async;
-
-@if(plugin) {
-<div class="plugin-card" [class.featured]="plugin.isFeatured" [class.verified]="plugin.isVerified" [class.list-view]="viewMode === 'list'" [class.grid-view]="viewMode === 'grid'">
+@let installing = installationQuery.installing$ | async; @let uninstalling = installationQuery.uninstalling$ | async;
+@let checked = isChecked$ | async; @let toggle = installationQuery.toggle$ | async; @let disabled = installing ||
+uninstalling; @let isSelected = plugin?.id === toggle.plugin?.id; @let showProgress = disabled && isSelected; @let
+editing = marketplaceQuery.updating$ | async; @if(plugin) {
+<div
+	class="plugin-card"
+	[class.featured]="plugin.isFeatured"
+	[class.verified]="plugin.isVerified"
+	[class.list-view]="viewMode === 'list'"
+	[class.grid-view]="viewMode === 'grid'"
+>
 	<!-- Plugin Header with Status Indicators -->
 	<div class="plugin-header">
 		<div class="plugin-title-section">
@@ -17,20 +17,21 @@
 				<!-- Security badges -->
 				<div class="security-badges">
 					@if(plugin.isVerified) {
-						<nb-badge
-							class="security-badge verified"
-							status="success"
-							[nbTooltip]="'PLUGIN.SECURITY.VERIFIED' | translate">
-							<nb-icon icon="shield-checkmark-outline"></nb-icon>
-						</nb-badge>
-					}
-					@if(plugin.version?.signature) {
-						<nb-badge
-							class="security-badge signed"
-							status="info"
-							[nbTooltip]="'PLUGIN.SECURITY.SIGNED' | translate">
-							<nb-icon icon="checkmark-circle-outline"></nb-icon>
-						</nb-badge>
+					<nb-badge
+						class="security-badge verified"
+						status="success"
+						[nbTooltip]="'PLUGIN.SECURITY.VERIFIED' | translate"
+					>
+						<nb-icon icon="shield-checkmark-outline"></nb-icon>
+					</nb-badge>
+					} @if(plugin.version?.signature) {
+					<nb-badge
+						class="security-badge signed"
+						status="info"
+						[nbTooltip]="'PLUGIN.SECURITY.SIGNED' | translate"
+					>
+						<nb-icon icon="checkmark-circle-outline"></nb-icon>
+					</nb-badge>
 					}
 				</div>
 			</div>
@@ -46,23 +47,12 @@
 
 		<!-- Plugin Status and Type -->
 		<div class="plugin-status-section">
-			<nb-badge
-				[status]="getStatusColor(plugin.status)"
-				class="status-badge"
-				[text]="plugin.status | titlecase">
+			<nb-badge [status]="getStatusColor(plugin.status)" class="status-badge" [text]="plugin.status | titlecase">
 			</nb-badge>
-			<nb-badge
-				status="basic"
-				class="type-badge"
-				[text]="plugin.type | titlecase">
-			</nb-badge>
+			<nb-badge status="basic" class="type-badge" [text]="plugin.type | titlecase"> </nb-badge>
 			<!-- Free Badge if plugin has no plans -->
 			@if(!plugin.hasPlan) {
-				<nb-badge
-					status="success"
-					class="free-badge"
-					text="Free">
-				</nb-badge>
+			<nb-badge status="success" class="free-badge" text="Free"> </nb-badge>
 			}
 		</div>
 	</div>
@@ -72,7 +62,8 @@
 		<div
 			[readMore]="120"
 			[readMoreText]="'BUTTONS.READ_MORE' | translate"
-			[readLessText]="'BUTTONS.READ_LESS' | translate">
+			[readLessText]="'BUTTONS.READ_LESS' | translate"
+		>
 			{{ plugin.description || 'No description available' }}
 		</div>
 	</div>
@@ -80,26 +71,16 @@
 	<!-- Plugin Categories -->
 	<div class="plugin-categories" *ngIf="plugin.category">
 		<nb-icon icon="folder-outline" class="category-icon"></nb-icon>
-		<nb-badge
-			status="primary"
-			class="category-badge"
-			[text]="plugin.category.name">
-		</nb-badge>
+		<nb-badge status="primary" class="category-badge" [text]="plugin.category.name"> </nb-badge>
 	</div>
 
 	<!-- Plugin Tags -->
 	<div class="plugin-tags" *ngIf="plugin.tags && plugin.tags.length > 0">
 		<div class="tags-container">
 			@for(tag of plugin.tags.slice(0, 5); track tag.id) {
-				<nb-badge
-					status="basic"
-					class="tag-badge"
-					[class.featured]="tag.isFeatured"
-					[text]="tag.name">
-				</nb-badge>
-			}
-			@if(plugin.tags.length > 5) {
-				<span class="more-tags">+{{ plugin.tags.length - 5 }} more</span>
+			<nb-badge status="basic" class="tag-badge" [class.featured]="tag.isFeatured" [text]="tag.name"> </nb-badge>
+			} @if(plugin.tags.length > 5) {
+			<span class="more-tags">+{{ plugin.tags.length - 5 }} more</span>
 			}
 		</div>
 	</div>
@@ -108,26 +89,32 @@
 	<div class="plugin-subscription" *ngIf="plugin.subscription">
 		<div class="subscription-info">
 			<div class="subscription-type">
-				<nb-icon [icon]="getSubscriptionIcon(plugin.subscription.subscriptionType)"></nb-icon>
-				<span>{{ plugin.subscription.subscriptionType | titlecase }}</span>
-				@if(plugin.subscription.price && plugin.subscription.price > 0) {
-					<span class="price">{{ plugin.subscription.price | currency:plugin.subscription.currency }}</span>
-					<span class="billing-period">/{{ plugin.subscription.billingPeriod.toLowerCase() }}</span>
+				<nb-icon [icon]="getSubscriptionIcon(plugin.Subscription.plan.type)"></nb-icon>
+				<span>{{ plugin.Subscription.plan.type | titlecase }}</span>
+				@if((plugin.subscription.plan?.price ?? plugin.subscription.price) && (plugin.subscription.plan?.price
+				?? plugin.subscription.price) > 0) {
+				<span class="price">{{
+					plugin.subscription.plan?.price ?? plugin.subscription.price
+						| currency : plugin.subscription.plan?.currency ?? plugin.subscription.currency
+				}}</span>
+				<span class="billing-period"
+					>/{{
+						(plugin.subscription.plan?.billingPeriod ?? plugin.subscription.billingPeriod)?.toLowerCase()
+					}}</span
+				>
 				}
 			</div>
 
 			@if(plugin.subscription.isInTrial) {
-				<nb-badge status="warning" class="trial-badge">
-					<nb-icon icon="time-outline"></nb-icon>
-					Trial {{ plugin.subscription.daysUntilExpiration }} days left
-				</nb-badge>
-			}
-
-			@if(plugin.subscription.isExpiringSoon && !plugin.subscription.isInTrial) {
-				<nb-badge status="danger" class="expiring-badge">
-					<nb-icon icon="alert-triangle-outline"></nb-icon>
-					Expires in {{ plugin.subscription.daysUntilExpiration }} days
-				</nb-badge>
+			<nb-badge status="warning" class="trial-badge">
+				<nb-icon icon="time-outline"></nb-icon>
+				Trial {{ plugin.subscription.daysUntilExpiration }} days left
+			</nb-badge>
+			} @if(plugin.subscription.isExpiringSoon && !plugin.subscription.isInTrial) {
+			<nb-badge status="danger" class="expiring-badge">
+				<nb-icon icon="alert-triangle-outline"></nb-icon>
+				Expires in {{ plugin.subscription.daysUntilExpiration }} days
+			</nb-badge>
 			}
 		</div>
 	</div>
@@ -137,7 +124,7 @@
 		<div class="metric-item">
 			<nb-icon icon="calendar-outline"></nb-icon>
 			<span class="metric-label">Updated</span>
-			<span class="metric-value">{{ plugin.updatedAt | date:'short' }}</span>
+			<span class="metric-value">{{ plugin.updatedAt | date : 'short' }}</span>
 		</div>
 		<div class="metric-item" *ngIf="plugin.license">
 			<nb-icon icon="file-text-outline"></nb-icon>
@@ -147,7 +134,7 @@
 		<div class="metric-item" *ngIf="plugin.version?.releaseDate">
 			<nb-icon icon="layers-outline"></nb-icon>
 			<span class="metric-label">Released</span>
-			<span class="metric-value">{{ plugin.version.releaseDate | date:'short' }}</span>
+			<span class="metric-value">{{ plugin.version.releaseDate | date : 'short' }}</span>
 		</div>
 	</div>
 
@@ -162,36 +149,39 @@
 				class="action-btn settings-btn"
 				(click)="openSettings()"
 				[disabled]="!checked"
-				[nbTooltip]="'PLUGIN.ACTIONS.SETTINGS' | translate">
+				[nbTooltip]="'PLUGIN.ACTIONS.SETTINGS' | translate"
+			>
 				<nb-icon icon="settings-outline"></nb-icon>
 			</button>
 
 			<!-- User assignment button (only for plugins with plans) -->
 			@if(plugin.hasPlan) {
-				<button
-					nbButton
-					ghost
-					size="small"
-					class="action-btn users-btn"
-					(click)="manageUsers()"
-					[disabled]="!checked"
-					[nbTooltip]="'PLUGIN.ACTIONS.MANAGE_USERS' | translate">
-					<nb-icon icon="people-outline"></nb-icon>
-				</button>
+			<button
+				nbButton
+				ghost
+				size="small"
+				class="action-btn users-btn"
+				(click)="manageUsers()"
+				[disabled]="!checked"
+				[nbTooltip]="'PLUGIN.ACTIONS.MANAGE_USERS' | translate"
+			>
+				<nb-icon icon="people-outline"></nb-icon>
+			</button>
 			}
 
 			<!-- Edit button (owner only) -->
 			@if(isOwner) {
-				<button
-					nbButton
-					ghost
-					size="small"
-					class="action-btn edit-btn"
-					(click)="editPlugin()"
-					*gauzySpinnerButton="editing && isSelected"
-					[nbTooltip]="'PLUGIN.ACTIONS.EDIT' | translate">
-					<nb-icon icon="edit-outline"></nb-icon>
-				</button>
+			<button
+				nbButton
+				ghost
+				size="small"
+				class="action-btn edit-btn"
+				(click)="editPlugin()"
+				*gauzySpinnerButton="editing && isSelected"
+				[nbTooltip]="'PLUGIN.ACTIONS.EDIT' | translate"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+			</button>
 			}
 
 			<!-- More actions dropdown -->
@@ -202,7 +192,8 @@
 				class="action-btn more-btn"
 				[nbContextMenu]="getContextMenuItems()"
 				[nbContextMenuTag]="'plugin-more-actions-' + plugin.id"
-				[nbTooltip]="'PLUGIN.ACTIONS.MORE' | translate">
+				[nbTooltip]="'PLUGIN.ACTIONS.MORE' | translate"
+			>
 				<nb-icon icon="more-vertical-outline"></nb-icon>
 			</button>
 		</div>
@@ -210,45 +201,40 @@
 		<!-- Install/Uninstall Toggle -->
 		<div class="installation-control">
 			@if(showProgress) {
-				<div class="progress-indicator">
-					<nb-icon *gauzySpinnerButton="true" icon="sync-outline"></nb-icon>
-					<span class="progress-text">
-						{{ installing ? 'Installing...' : 'Uninstalling...' }}
+			<div class="progress-indicator">
+				<nb-icon *gauzySpinnerButton="true" icon="sync-outline"></nb-icon>
+				<span class="progress-text">
+					{{ installing ? 'Installing...' : 'Uninstalling...' }}
+				</span>
+			</div>
+			} @else {
+			<div class="installation-wrapper">
+				<!-- Show subscription requirement if needed -->
+				@if(plugin.hasPlan && !checked) {
+				<div class="subscription-required">
+					<nb-icon icon="card-outline" class="subscription-icon"></nb-icon>
+					<span class="subscription-text">Subscription Required</span>
+				</div>
+				} @else if(!plugin.hasPlan && !checked) {
+				<div class="free-plugin">
+					<nb-icon icon="gift-outline" class="free-icon" status="success"></nb-icon>
+					<span class="free-text">Free</span>
+				</div>
+				}
+
+				<div class="toggle-wrapper">
+					<nb-toggle
+						[disabled]="disabled"
+						[checked]="checked"
+						(checkedChange)="togglePlugin($event)"
+						class="install-toggle"
+					>
+					</nb-toggle>
+					<span class="toggle-label">
+						@if(checked) { Installed } @else if(plugin.hasPlan) { Subscribe & Install } @else { Install }
 					</span>
 				</div>
-			} @else {
-				<div class="installation-wrapper">
-					<!-- Show subscription requirement if needed -->
-					@if(plugin.hasPlan && !checked) {
-						<div class="subscription-required">
-							<nb-icon icon="card-outline" class="subscription-icon"></nb-icon>
-							<span class="subscription-text">Subscription Required</span>
-						</div>
-					} @else if(!plugin.hasPlan && !checked) {
-						<div class="free-plugin">
-							<nb-icon icon="gift-outline" class="free-icon" status="success"></nb-icon>
-							<span class="free-text">Free</span>
-						</div>
-					}
-
-					<div class="toggle-wrapper">
-						<nb-toggle
-							[disabled]="disabled"
-							[checked]="checked"
-							(checkedChange)="togglePlugin($event)"
-							class="install-toggle">
-						</nb-toggle>
-						<span class="toggle-label">
-							@if(checked) {
-								Installed
-							} @else if(plugin.hasPlan) {
-								Subscribe & Install
-							} @else {
-								Install
-							}
-						</span>
-					</div>
-				</div>
+			</div>
 			}
 		</div>
 	</div>

@@ -128,7 +128,7 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	public readonly paidPlans$: Observable<IPluginSubscriptionPlan[]> = this.plans$.pipe(
 		map((plans) => {
 			const plansArray = Array.isArray(plans) ? plans : [];
-			return plansArray.filter((p) => p.price > 0);
+			return plansArray.filter((p) => Number(p.price) > 0);
 		})
 	);
 
@@ -358,7 +358,7 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 					isActive,
 					isTrial,
 					isExpired,
-					currentPlanType: subscription.subscriptionType,
+					currentPlanType: subscription.plan.type,
 					daysRemaining
 				};
 			})

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { PluginScope } from '@gauzy/contracts';
+import { CurrenciesEnum, PluginScope } from '@gauzy/contracts';
 import { IPluginSubscription, PluginSubscriptionStatus } from '../../../services/plugin-subscription.service';
 import { SubscriptionStatusService } from '../shared';
 
@@ -48,15 +48,18 @@ export class PluginSubscriptionHierarchyComponent implements OnInit {
 	// Status badge logic moved to SubscriptionStatusService
 
 	getUserId(subscription: IPluginSubscription): string {
-		return subscription.userId || 'N/A';
+		return subscription.subscriberId || 'N/A';
 	}
 
-	formatDate(date: Date | string | undefined): string {
+	formatDate(date: Date | string | undefined | null): string {
 		if (!date) return 'N/A';
 		return new Date(date).toLocaleDateString();
 	}
 
 	formatAmount(subscription: IPluginSubscription): string {
-		return `${subscription.currency} ${subscription.amount.toFixed(2)}`;
+		// Handle both plan.price and subscription.amount
+		const amount = subscription.plan.price || 0;
+		const currency = subscription.plan?.currency || CurrenciesEnum.USD;
+		return `${currency} ${amount}`;
 	}
 }

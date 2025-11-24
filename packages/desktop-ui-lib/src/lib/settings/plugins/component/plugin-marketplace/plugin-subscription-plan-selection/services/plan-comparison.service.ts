@@ -57,7 +57,7 @@ export class PlanComparisonService {
 		}
 
 		// Current subscription exists
-		const currentType = currentSubscription.subscriptionType;
+		const currentType = currentSubscription.plan.type;
 		const selectedType = selectedPlan.type;
 
 		// Same plan type - current plan
@@ -65,8 +65,8 @@ export class PlanComparisonService {
 			return this.createCurrentPlanResult(currentSubscription, selectedPlan);
 		}
 
-		// Different plans - determine if upgrade or downgrade
-		const isUpgrade = this.isPlanUpgrade(currentType, selectedType);
+		// Different plans - determine if upgrade or downgrade based on sortOrder
+		const isUpgrade = this.isPlanUpgrade(currentSubscription, selectedPlan);
 
 		if (isUpgrade) {
 			return this.createUpgradeResult(currentSubscription, selectedPlan);
@@ -84,18 +84,49 @@ export class PlanComparisonService {
 			return subscription.planId === plan.id;
 		}
 
+		// Check using plan object if available
+		if (subscription.plan) {
+			return subscription.plan.id === plan.id;
+		}
+
 		// Fall back to type and billing period comparison
-		return (
-			subscription.subscriptionType === plan.type &&
-			subscription.billingPeriod === plan.billingPeriod &&
-			subscription.amount === plan.price
-		);
+		const currentType = subscription.plan.type;
+		const currentBillingPeriod = subscription.plan.billingPeriod;
+		const currentAmount = subscription.plan.price;
+
+		if (!currentType || !currentBillingPeriod) {
+			return false;
+		}
+
+		const planPrice = this.parsePriceAsNumber(plan.price);
+
+		return currentType === plan.type && currentBillingPeriod === plan.billingPeriod && currentAmount === planPrice;
 	}
 
 	/**
-	 * Determine if the plan change is an upgrade
+	 * Determine if the plan change is an upgrade based on sortOrder
+	 * If sortOrder is not available, fall back to type-based hierarchy
 	 */
-	private isPlanUpgrade(currentType: PluginSubscriptionType, newType: PluginSubscriptionType): boolean {
+	private isPlanUpgrade(currentSubscription: IPluginSubscription, newPlan: IPluginSubscriptionPlan): boolean {
+		// Get current plan sortOrder from the plan object if available
+		const currentSortOrder = currentSubscription.plan?.sortOrder;
+		const newSortOrder = newPlan.sortOrder;
+
+		// If both sortOrders are available, use them for comparison
+		if (currentSortOrder !== undefined && newSortOrder !== undefined) {
+			return newSortOrder > currentSortOrder;
+		}
+
+		// Fall back to type-based hierarchy
+		// Use plan.type if available, otherwise use legacy subscriptionType
+		const currentType = currentSubscription.plan?.type || currentSubscription.plan.type;
+		const newType = newPlan.type;
+
+		if (!currentType) {
+			// If we can't determine current type, consider it an upgrade
+			return true;
+		}
+
 		return this.planHierarchy[newType] > this.planHierarchy[currentType];
 	}
 
@@ -103,7 +134,8 @@ export class PlanComparisonService {
 	 * Create result for new subscription
 	 */
 	private createNewSubscriptionResult(selectedPlan: IPluginSubscriptionPlan): IPlanComparisonResult {
-		const isFree = selectedPlan.type === PluginSubscriptionType.FREE || selectedPlan.price === 0;
+		const planPrice = this.parsePriceAsNumber(selectedPlan.price);
+		const isFree = selectedPlan.type === PluginSubscriptionType.FREE || planPrice === 0;
 
 		return {
 			actionType: PlanActionType.NEW,
@@ -230,8 +262,10 @@ export class PlanComparisonService {
 		currentSubscription: IPluginSubscription,
 		newPlan: IPluginSubscriptionPlan
 	): number {
+		const newPrice = this.parsePriceAsNumber(newPlan.price);
+
 		if (!currentSubscription.nextBillingDate) {
-			return newPlan.price; // Full price if no billing date
+			return newPrice; // Full price if no billing date
 		}
 
 		const now = new Date();
@@ -239,17 +273,37 @@ export class PlanComparisonService {
 		const daysRemaining = Math.ceil((nextBilling.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
 		if (daysRemaining <= 0) {
-			return newPlan.price; // Full price if billing is due
+			return newPrice; // Full price if billing is due
 		}
 
 		// Calculate daily rates
+		// Use plan.price if available, otherwise fall back to subscription.amount
+		const currentAmount = currentSubscription.plan?.price
+			? this.parsePriceAsNumber(currentSubscription.plan.price)
+			: currentSubscription.plan.price || 0;
+		const currentBillingPeriod = currentSubscription.plan?.billingPeriod || currentSubscription.plan.billingPeriod;
+
+		if (!currentBillingPeriod) {
+			return newPrice; // Can't calculate proration without billing period
+		}
+
 		const currentDailyRate =
-			currentSubscription.amount / this.getBillingPeriodDays(currentSubscription.billingPeriod);
-		const newDailyRate = newPlan.price / this.getBillingPeriodDays(newPlan.billingPeriod);
+			this.parsePriceAsNumber(currentAmount) / this.getBillingPeriodDays(currentBillingPeriod);
+		const newDailyRate = newPrice / this.getBillingPeriodDays(newPlan.billingPeriod);
 
 		// Return prorated difference
 		const prorationAmount = (newDailyRate - currentDailyRate) * daysRemaining;
 		return Math.max(0, prorationAmount); // Ensure non-negative
+	}
+
+	/**
+	 * Parse price as number (handles both string and number types)
+	 */
+	private parsePriceAsNumber(price: number | string): number {
+		if (typeof price === 'number') {
+			return price;
+		}
+		return parseFloat(price) || 0;
 	}
 
 	/**
@@ -274,7 +328,13 @@ export class PlanComparisonService {
 	private getFeatureDifferences(subscription: IPluginSubscription, newPlan: IPluginSubscriptionPlan): string[] {
 		// This would ideally compare current subscription features with new plan features
 		// For now, we'll return generic warnings based on plan types
-		const currentTier = this.planHierarchy[subscription.subscriptionType];
+		const currentType = subscription.plan.type;
+
+		if (!currentType) {
+			return [];
+		}
+
+		const currentTier = this.planHierarchy[currentType];
 		const newTier = this.planHierarchy[newPlan.type];
 
 		if (newTier >= currentTier) {
@@ -284,15 +344,12 @@ export class PlanComparisonService {
 		// Generic feature differences - in a real app, this would be more specific
 		const potentialLosses = [];
 
-		if (
-			subscription.subscriptionType === PluginSubscriptionType.ENTERPRISE &&
-			newPlan.type !== PluginSubscriptionType.ENTERPRISE
-		) {
+		if (currentType === PluginSubscriptionType.ENTERPRISE && newPlan.type !== PluginSubscriptionType.ENTERPRISE) {
 			potentialLosses.push('Enterprise support', 'Advanced analytics');
 		}
 
 		if (
-			subscription.subscriptionType === PluginSubscriptionType.PREMIUM &&
+			currentType === PluginSubscriptionType.PREMIUM &&
 			[PluginSubscriptionType.BASIC, PluginSubscriptionType.FREE].includes(newPlan.type)
 		) {
 			potentialLosses.push('Premium features', 'Priority support');

@@ -16,7 +16,6 @@ import { PluginElectronService } from '../../../services/plugin-electron.service
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import {
 	IPluginSubscription as IPluginSubscriptionDetail,
-	PluginSubscriptionService,
 	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
 import { DialogInstallationValidationComponent } from '../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
@@ -27,15 +26,6 @@ import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manag
 import { IPluginSubscriptionPlanSelectionResult } from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
 import { PluginUserManagementComponent } from '../plugin-user-management/plugin-user-management.component';
 import { SubscriptionDialogRouterService } from '../services/subscription-dialog-router.service';
-
-// Define enums locally since they might not be available in contracts
-enum LocalPluginSubscriptionType {
-	FREE = 'free',
-	TRIAL = 'trial',
-	BASIC = 'basic',
-	PREMIUM = 'premium',
-	ENTERPRISE = 'enterprise'
-}
 
 @UntilDestroy()
 @Component({
@@ -62,11 +52,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly action: Actions,
 		private readonly pluginService: PluginElectronService,
 		private readonly menuService: NbMenuService,
-		private readonly subscriptionService: PluginSubscriptionService,
 		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		// Guard against undefined plugin
@@ -138,6 +127,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 * Users without active subscriptions are routed to PluginSubscriptionPlanSelection.
 	 */
 	private showSubscriptionDialog(): void {
+		this.action.dispatch(PluginMarketplaceActions.setSelectedPlugin(this.plugin));
 		this.subscriptionDialogRouter
 			.openSubscriptionDialog(this.plugin)
 			.pipe(

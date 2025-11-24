@@ -14,20 +14,18 @@
 		<div class="subscription-card current">
 			<div class="subscription-header">
 				<div class="subscription-info">
-					<h5>Current Plan: {{ currentSubscription.subscriptionType | titlecase }}</h5>
+					<h5>
+						Current Plan:
+						{{ currentSubscription.plan?.type ?? currentSubscription.subscriptionType | titlecase }}
+					</h5>
 					<p class="subscription-status" [class]="currentSubscription.status">
 						<nb-icon [icon]="getStatusIcon(currentSubscription.status)"></nb-icon>
 						{{ currentSubscription.status | titlecase }}
 					</p>
 				</div>
 				<div class="subscription-actions">
-					<button
-						nbButton
-						status="warning"
-						size="small"
-						(click)="cancelSubscription()"
-						[disabled]="isLoading$ | async"
-					>
+					<button nbButton status="warning" size="small" (click)="cancelSubscription()"
+						[disabled]="isLoading$ | async">
 						Cancel
 					</button>
 				</div>
@@ -64,11 +62,10 @@
 				} } @if(currentSubscription.amount){
 				<div class="detail-item">
 					<span class="label">Price:</span>
-					<span class="value"
-						>{{ currentSubscription.amount | currency : currentSubscription.currency }}/{{
-							currentSubscription.billingPeriod
-						}}</span
-					>
+					<span class="value">{{
+						currentSubscription.plan?.price ?? currentSubscription.amount
+						| currency : currentSubscription.plan?.currency ?? currentSubscription.currency
+						}}/{{ currentSubscription.plan?.billingPeriod ?? currentSubscription.billingPeriod }}</span>
 				</div>
 				}
 				<div class="detail-item" *ngIf="currentSubscription.nextBillingDate">
@@ -95,30 +92,23 @@
 
 		<div class="plans-grid">
 			@for(planViewModel of (planViewModels$ | async); track planViewModel.id) {
-			<lib-plan-card
-				[plan]="planViewModel"
-				[isSelected]="selectedPlanViewModel?.id === planViewModel.id"
+			<lib-plan-card [plan]="planViewModel" [isSelected]="selectedPlanViewModel?.id === planViewModel.id"
 				[isCurrentPlan]="isCurrentPlan(planViewModel.originalPlan)"
-				[isDisabled]="isCurrentPlan(planViewModel.originalPlan)"
-				[showSelection]="true"
-				(planSelected)="onPlanSelected($event)"
-			>
+				[isDisabled]="isCurrentPlan(planViewModel.originalPlan)" [showSelection]="true"
+				(planSelected)="onPlanSelected($event)">
 			</lib-plan-card>
 			}
 		</div>
 	</div>
 
 	<!-- Billing Form -->
-	<div class="billing-form" *ngIf="showBillingForm && selectedPlan">
-		<gauzy-subscription-billing-form
-			[form]="subscriptionForm"
-			[plan]="selectedPlan"
-			[isLoading]="isLoading$ | async"
-			[isUpgrade]="currentSubscription && canUpgrade(selectedPlan)"
-			[isDowngrade]="currentSubscription && canDowngrade(selectedPlan)"
-			(formSubmit)="subscribeToPlan()"
-			(formCancel)="showBillingForm = false"
-		>
+	@if(showBillingForm && selectedPlan) {
+	<div class="billing-form">
+		<gauzy-subscription-billing-form [form]="subscriptionForm" [plan]="selectedPlan"
+			[isLoading]="isLoading$ | async" [isUpgrade]="currentSubscription && canUpgrade(selectedPlan)"
+			[isDowngrade]="currentSubscription && canDowngrade(selectedPlan)" (formSubmit)="subscribeToPlan()"
+			(formCancel)="showBillingForm = false">
 		</gauzy-subscription-billing-form>
 	</div>
+	}
 </div>

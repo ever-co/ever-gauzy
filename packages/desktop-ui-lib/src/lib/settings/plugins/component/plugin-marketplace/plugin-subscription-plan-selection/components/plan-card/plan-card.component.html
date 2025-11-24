@@ -76,7 +76,7 @@
 	</div>
 
 	<!-- Plan Limitations -->
-	@if (plan.limitations && getLimitationEntries().length > 0) {
+	@if (hasLimitations()) {
 	<div class="plan-limitations">
 		<h6 class="limitations-title">Limitations:</h6>
 		<ul class="limitations-list">

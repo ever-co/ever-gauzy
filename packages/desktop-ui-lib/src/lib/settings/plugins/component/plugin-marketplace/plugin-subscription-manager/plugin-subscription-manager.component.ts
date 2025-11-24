@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { IPlugin } from '@gauzy/contracts';
+import { IPlugin, PluginScope } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
@@ -41,9 +41,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	public PluginBillingPeriod = PluginBillingPeriod;
 
 	constructor(
-		private readonly dialogService: NbDialogService,
 		private readonly dialogRef: NbDialogRef<PluginSubscriptionManagerComponent>,
-		private readonly subscriptionService: PluginSubscriptionService,
 		private readonly facade: PluginSubscriptionFacade,
 		public readonly planService: SubscriptionPlanService,
 		private readonly formService: SubscriptionFormService,
@@ -67,14 +65,12 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 			);
 
 			// If no current subscription passed, try to load it
-			if (!this.currentSubscription) {
-				this.facade
-					.getCurrentPluginSubscription(this.plugin.id)
-					.pipe(take(1), untilDestroyed(this))
-					.subscribe((subscription) => {
-						this.currentSubscription = subscription;
-					});
-			}
+			this.facade
+				.getCurrentPluginSubscription(this.plugin.id)
+				.pipe(take(1), untilDestroyed(this))
+				.subscribe((subscription) => {
+					this.currentSubscription = subscription;
+				});
 
 			// Reactively compute the current plan from subscription and available plans
 			this.setupCurrentPlan();
@@ -171,9 +167,10 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		if (this.currentSubscription) {
 			if (this.canUpgrade(plan) || this.canDowngrade(plan)) {
 				this.showBillingForm = true;
+				const currentType = this.currentSubscription.plan?.type || this.currentSubscription.plan.type;
 				console.log('[SubscriptionManager] Billing form shown for plan change:', {
 					action: this.canUpgrade(plan) ? 'upgrade' : 'downgrade',
-					fromPlan: this.currentSubscription.subscriptionType,
+					fromPlan: currentType,
 					toPlan: plan.type
 				});
 			}
@@ -219,7 +216,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		const subscriptionInput = {
 			pluginId: this.plugin.id,
 			planId: this.selectedPlan.id,
-			scope: 'user' as any,
+			scope: PluginScope.USER,
 			autoRenew: this.subscriptionForm.get('autoRenew')?.value ?? true,
 			paymentMethodId: this.subscriptionForm.get('paymentMethod')?.value
 		};
@@ -339,12 +336,14 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 
 	public canUpgrade(plan: IPluginSubscriptionPlan): boolean {
 		if (!this.currentSubscription) return plan.type !== PluginSubscriptionType.FREE;
-		return this.planService.canUpgrade(this.currentSubscription.subscriptionType, plan);
+		const currentPlan = this.currentSubscription.plan
+		return currentPlan ? this.planService.canUpgrade(currentPlan, plan) : false;
 	}
 
 	public canDowngrade(plan: IPluginSubscriptionPlan): boolean {
 		if (!this.currentSubscription) return false;
-		return this.planService.canDowngrade(this.currentSubscription.subscriptionType, plan);
+		const currentPlan = this.currentSubscription.plan;
+		return currentPlan ? this.planService.canDowngrade(currentPlan, plan) : false;
 	}
 
 	// Helper methods moved to services
