@@ -29,11 +29,17 @@ export class EmployeeSettingSubscriber extends BaseEntityEventSubscriber<Employe
 				if (typeof entity.data === 'object') {
 					entity.data = JSON.stringify(entity.data);
 				}
+
+				// serialize the `defaultData` field if it's an object
+				if (typeof entity.defaultData === 'object') {
+					entity.defaultData = JSON.stringify(entity.defaultData);
+				}
 			}
 		} catch (error) {
 			// Log the error and reset the data to an empty object if JSON parsing fails
 			console.error('Error stringify data:', error);
 			entity.data = '{}';
+			entity.defaultData = '{}';
 		}
 	}
 
@@ -76,11 +82,17 @@ export class EmployeeSettingSubscriber extends BaseEntityEventSubscriber<Employe
 				if (entity.data && typeof entity.data === 'string') {
 					entity.data = JSON.parse(entity.data);
 				}
+
+				// Parse the `defaultData` field if it's a string
+				if (entity.defaultData && typeof entity.defaultData === 'string') {
+					entity.defaultData = JSON.parse(entity.defaultData);
+				}
 			}
 		} catch (error) {
 			// Log the error and reset the data to an empty object if JSON parsing fails
 			console.error('Error parsing JSON data:', error);
 			entity.data = {};
+			entity.defaultData = {};
 		}
 	}
 }
