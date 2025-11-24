@@ -499,7 +499,15 @@ export class SeedDataService {
 			this.dataSource,
 			this.tenant
 		);
-		this.superAdminUsers.push(...(defaultSuperAdminUsers as IUser[]));
+
+		// Set the first super admin as the creator of the tenant
+		if (defaultSuperAdminUsers && defaultSuperAdminUsers.length > 0) {
+			this.superAdminUsers.push(...(defaultSuperAdminUsers as IUser[]));
+
+			const superAdmin = defaultSuperAdminUsers[0];
+			await this.dataSource.manager.update('tenant', { id: this.tenant.id }, { createdByUserId: superAdmin.id });
+			console.log(`Tenant "${this.tenant.name}" creator set to Super Admin: ${superAdmin.email}`);
+		}
 
 		const { defaultEmployeeUsers } = await createDefaultEmployeesUsers(this.dataSource, this.tenant);
 

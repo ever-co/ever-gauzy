@@ -43,7 +43,13 @@ export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant,
 		console.warn('Warning: projects not found, DefaultTasks will not be created');
 		return;
 	}
-	const teams = await dataSource.manager.find(OrganizationTeam);
+	const teams = await dataSource.manager.find(OrganizationTeam, {
+		where: {
+			tenantId: tenant.id,
+			organizationId: organization.id
+		},
+		relations: ['members', 'members.employee']
+	});
 	const users = await dataSource.manager.find(User);
 	const employees = await dataSource.manager.find(Employee);
 
@@ -76,7 +82,22 @@ export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant,
 		if (count % 10 < 7 && teams.length > 0) {
 			// Assign to 1-2 teams
 			const numberOfTeams = faker.number.int({ min: 1, max: Math.min(2, teams.length) });
-			task.teams = faker.helpers.arrayElements(teams, numberOfTeams);
+			const selectedTeams = faker.helpers.arrayElements(teams, numberOfTeams);
+			task.teams = selectedTeams;
+
+			// Also assign the task to specific members from the selected teams
+			const teamMembers: Employee[] = [];
+			for (const team of selectedTeams) {
+				if (team.members && team.members.length > 0) {
+					// Select 1-3 random members from each team
+					const numberOfMembers = faker.number.int({ min: 1, max: Math.min(3, team.members.length) });
+					const selectedMembers = faker.helpers.arrayElements(team.members, numberOfMembers);
+					// Extract the employee from each OrganizationTeamEmployee
+					teamMembers.push(...selectedMembers.map((m) => m.employee).filter(Boolean));
+				}
+			}
+			// Assign unique members to the task
+			task.members = [...new Map(teamMembers.map((emp) => [emp.id, emp])).values()];
 		} else if (employees.length > 0) {
 			task.members = faker.helpers.arrayElements(employees, faker.number.int({ min: 1, max: 5 }));
 		}
@@ -124,9 +145,12 @@ export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[
 				console.warn('Warning: projects not found, RandomTasks will not be created');
 				continue;
 			}
-			const teams = await dataSource.manager.findBy(OrganizationTeam, {
-				tenantId,
-				organizationId
+			const teams = await dataSource.manager.find(OrganizationTeam, {
+				where: {
+					tenantId,
+					organizationId
+				},
+				relations: ['members', 'members.employee']
 			});
 
 			const tags: ITag[] = await createTags(dataSource, labels, tenant, organization);
@@ -164,7 +188,22 @@ export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[
 				if (count % 10 < 7 && teams.length > 0) {
 					// Assign to 1-2 teams
 					const numberOfTeams = faker.number.int({ min: 1, max: Math.min(2, teams.length) });
-					task.teams = faker.helpers.arrayElements(teams, numberOfTeams);
+					const selectedTeams = faker.helpers.arrayElements(teams, numberOfTeams);
+					task.teams = selectedTeams;
+
+					// Also assign the task to specific members from the selected teams
+					const teamMembers: Employee[] = [];
+					for (const team of selectedTeams) {
+						if (team.members && team.members.length > 0) {
+							// Select 1-3 random members from each team
+							const numberOfMembers = faker.number.int({ min: 1, max: Math.min(3, team.members.length) });
+							const selectedMembers = faker.helpers.arrayElements(team.members, numberOfMembers);
+							// Extract the employee from each OrganizationTeamEmployee
+							teamMembers.push(...selectedMembers.map((m) => m.employee).filter(Boolean));
+						}
+					}
+					// Assign unique members to the task
+					task.members = [...new Map(teamMembers.map((emp) => [emp.id, emp])).values()];
 				} else if (employees.length > 0) {
 					task.members = faker.helpers.arrayElements(employees, faker.number.int({ min: 1, max: 5 }));
 				}
