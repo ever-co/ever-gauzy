@@ -13,6 +13,7 @@ import {
 	PluginSubscriptionService,
 	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
+import { IPlanViewModel, PlanFormatterService } from '../plugin-subscription-plan-selection';
 import { SubscriptionFormService, SubscriptionPlanService, SubscriptionStatusService } from '../shared';
 
 @UntilDestroy()
@@ -29,7 +30,9 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	public subscriptionForm: FormGroup;
 	public isLoading$: Observable<boolean>;
 	public availablePlans$: Observable<IPluginSubscriptionPlan[]>;
+	public planViewModels$: Observable<IPlanViewModel[]>;
 	public currentPlan$: Observable<IPluginSubscriptionPlan | null>;
+	public selectedPlanViewModel: IPlanViewModel | null = null;
 	public selectedPlan: IPluginSubscriptionPlan | null = null;
 	public showBillingForm = false;
 
@@ -44,7 +47,8 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		private readonly facade: PluginSubscriptionFacade,
 		public readonly planService: SubscriptionPlanService,
 		private readonly formService: SubscriptionFormService,
-		public readonly statusService: SubscriptionStatusService
+		public readonly statusService: SubscriptionStatusService,
+		public readonly formatter: PlanFormatterService
 	) {
 		this.subscriptionForm = this.formService.createSubscriptionForm();
 		this.isLoading$ = this.facade.isLoading$;
@@ -55,6 +59,12 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 			// Load subscription plans for this plugin
 			this.facade.loadPluginPlans(this.plugin.id);
 			this.availablePlans$ = this.facade.getCurrentPluginPlans(this.plugin.id);
+
+			// Transform plans to view models
+			this.planViewModels$ = this.availablePlans$.pipe(
+				map((plans) => this.formatter.transformToViewModels(plans)),
+				untilDestroyed(this)
+			);
 
 			// If no current subscription passed, try to load it
 			if (!this.currentSubscription) {
@@ -135,7 +145,8 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	public selectPlan(plan: IPluginSubscriptionPlan): void {
+	public onPlanSelected(planViewModel: IPlanViewModel): void {
+		const plan = planViewModel.originalPlan;
 		console.log('[SubscriptionManager] Plan selected:', {
 			plan: plan,
 			type: plan.type,
@@ -143,6 +154,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 			willShowForm: plan.type !== PluginSubscriptionType.FREE
 		});
 
+		this.selectedPlanViewModel = planViewModel;
 		this.selectedPlan = plan;
 		this.subscriptionForm.patchValue({
 			subscriptionType: plan.type,

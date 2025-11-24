@@ -1,12 +1,33 @@
 /* Plugin Subscription Manager Styles */
 .subscription-manager {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 24px;
-  background: var(--card-background-color);
-  border-radius: 12px;
+  padding: 32px;
+  background: var(--background-basic-color-1);
+  border-radius: 16px;
   max-height: 90vh;
   overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--background-basic-color-2);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-basic-color-4);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: var(--color-primary-400);
+    }
+  }
 }
 
 /* Manager Header */
@@ -14,54 +35,90 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border-basic-color-3);
 
   .manager-title {
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: var(--text-primary-color);
-    font-size: 20px;
-    font-weight: 600;
+    gap: 12px;
+    color: var(--text-basic-color);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 
     nb-icon {
-      color: var(--primary-color);
-      font-size: 24px;
+      color: var(--color-primary-500);
+      font-size: 28px;
+      animation: iconPulse 2s ease-in-out infinite;
     }
   }
 
   .close-btn {
-    min-width: 36px;
-    height: 36px;
-    border-radius: 18px;
+    min-width: 40px;
+    height: 40px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: var(--color-danger-transparent-200);
+      transform: rotate(90deg);
+    }
 
     nb-icon {
-      font-size: 18px;
+      font-size: 20px;
     }
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
   }
 }
 
 /* Current Subscription */
 .current-subscription {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 
   .subscription-card {
-    background: var(--basic-background-color);
-    border: 2px solid var(--primary-color);
-    border-radius: 12px;
-    padding: 20px;
+    background: var(--background-basic-color-1);
+    border: 2px solid var(--color-primary-500);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(64, 123, 255, 0.15);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--color-primary-500), var(--color-success-500));
+    }
 
     &.current {
       background: linear-gradient(135deg,
-        var(--card-background-color) 0%,
-        rgba(64, 123, 255, 0.05) 100%
+        var(--background-basic-color-1) 0%,
+        var(--color-primary-transparent-100) 100%
       );
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(64, 123, 255, 0.25);
     }
   }
 
@@ -69,75 +126,161 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
 
     .subscription-info {
+      flex: 1;
+
       h5 {
-        margin: 0 0 8px 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-primary-color);
+        margin: 0 0 12px 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-basic-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        &::before {
+          content: '✦';
+          color: var(--color-primary-500);
+          font-size: 16px;
+        }
       }
 
       .subscription-status {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         margin: 0;
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: var(--background-basic-color-2);
+        transition: all 0.3s ease;
 
         &.active {
-          color: var(--success-color);
+          color: var(--color-success-700);
+          background: var(--color-success-transparent-200);
+          border: 1px solid var(--color-success-400);
         }
 
         &.trial {
-          color: var(--warning-color);
+          color: var(--color-warning-700);
+          background: var(--color-warning-transparent-200);
+          border: 1px solid var(--color-warning-400);
         }
 
         &.expired, &.cancelled {
-          color: var(--danger-color);
+          color: var(--color-danger-700);
+          background: var(--color-danger-transparent-200);
+          border: 1px solid var(--color-danger-400);
         }
 
         nb-icon {
-          font-size: 16px;
+          font-size: 18px;
+          animation: statusPulse 2s ease-in-out infinite;
+        }
+      }
+    }
+
+    .subscription-actions {
+      button {
+        font-weight: 600;
+        transition: all 0.3s ease;
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(255, 170, 0, 0.3);
         }
       }
     }
   }
 
+  @keyframes statusPulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
   .subscription-details {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
 
     .detail-item {
       display: flex;
       justify-content: space-between;
-      padding: 8px 12px;
-      background: var(--card-background-color);
-      border-radius: 6px;
-      border: 1px solid var(--border-color);
+      align-items: flex-start;
+      padding: 14px 16px;
+      background: var(--background-basic-color-2);
+      border-radius: 10px;
+      border: 1px solid var(--border-basic-color-3);
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: var(--background-basic-color-3);
+        border-color: var(--color-primary-400);
+        transform: translateX(4px);
+      }
 
       &.plan-details {
         grid-column: 1 / -1;
         flex-direction: column;
-        gap: 4px;
+        gap: 8px;
+        background: linear-gradient(135deg, var(--background-basic-color-2) 0%, var(--color-primary-transparent-100) 100%);
+        border: 2px solid var(--color-primary-300);
+
+        &.loading {
+          .value {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-hint-color);
+          }
+        }
+
+        &.warning {
+          background: linear-gradient(135deg, var(--background-basic-color-2) 0%, var(--color-warning-transparent-100) 100%);
+          border-color: var(--color-warning-300);
+
+          .value {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--color-warning-700);
+
+            nb-icon {
+              font-size: 18px;
+            }
+          }
+        }
+
+        .label {
+          font-size: 13px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
 
         .value {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 6px;
 
           strong {
-            font-size: 15px;
-            color: var(--primary-color);
+            font-size: 18px;
+            color: var(--color-primary-600);
+            font-weight: 700;
           }
 
           .plan-description {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-hint-color);
             font-weight: normal;
+            line-height: 1.5;
           }
         }
       }
@@ -145,26 +288,36 @@
       &.features {
         grid-column: 1 / -1;
         flex-direction: column;
+        background: var(--background-basic-color-2);
 
         .features-list-small {
           list-style: none;
           padding: 0;
-          margin: 8px 0 0 0;
+          margin: 12px 0 0 0;
           display: flex;
           flex-wrap: wrap;
-          gap: 8px;
+          gap: 10px;
 
           li {
-            font-size: 12px;
-            padding: 4px 10px;
-            background: var(--basic-background-color);
-            border-radius: 12px;
+            font-size: 13px;
+            padding: 6px 14px;
+            background: var(--background-basic-color-1);
+            border-radius: 16px;
             color: var(--text-basic-color);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border-basic-color-4);
+            transition: all 0.2s ease;
+            font-weight: 500;
+
+            &:hover {
+              background: var(--color-primary-transparent-100);
+              border-color: var(--color-primary-400);
+              transform: translateY(-2px);
+            }
 
             &.more-features {
               color: var(--text-hint-color);
               font-style: italic;
+              border-style: dashed;
             }
           }
         }
@@ -173,20 +326,38 @@
       .label {
         font-size: 13px;
         color: var(--text-hint-color);
-        font-weight: 500;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        &::before {
+          content: '•';
+          color: var(--color-primary-500);
+          font-size: 16px;
+        }
       }
 
       .value {
-        font-size: 13px;
+        font-size: 14px;
         color: var(--text-basic-color);
-        font-weight: 600;
+        font-weight: 700;
+        text-align: right;
 
         &.warning {
-          color: var(--warning-color);
+          color: var(--color-warning-600);
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
 
         &.danger {
-          color: var(--danger-color);
+          color: var(--color-danger-600);
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
       }
     }
@@ -195,19 +366,33 @@
 
 /* Available Plans */
 .available-plans {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 
   .plans-title {
-    margin: 0 0 20px 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary-color);
+    margin: 0 0 24px 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-basic-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border-basic-color-3);
+
+    &::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(180deg, var(--color-primary-500), var(--color-success-500));
+      border-radius: 2px;
+    }
   }
 
   .plans-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
   }
 }
 
@@ -363,34 +548,49 @@
 
 /* Billing Form */
 .billing-form {
-  background: var(--basic-background-color);
-  border-radius: 12px;
-  padding: 24px;
-  border: 1px solid var(--border-color);
+  background: var(--background-basic-color-2);
+  border-radius: 16px;
+  padding: 32px;
+  border: 2px solid var(--border-basic-color-3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  animation: slideInUp 0.4s ease-out;
 
   .form-header {
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-basic-color-3);
 
     h5 {
-      margin: 0 0 8px 0;
+      margin: 0 0 12px 0;
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-primary-color);
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-basic-color);
 
       nb-icon {
-        color: var(--primary-color);
+        color: var(--color-primary-500);
+        font-size: 24px;
       }
     }
 
     .selected-plan-info {
       margin: 0;
-      font-size: 14px;
+      font-size: 15px;
       color: var(--text-hint-color);
+      line-height: 1.6;
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
@@ -520,17 +720,57 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .subscription-manager {
-    padding: 16px;
+    padding: 20px;
+    border-radius: 12px;
   }
 
   .manager-header {
+    margin-bottom: 24px;
+
     .manager-title {
-      font-size: 18px;
+      font-size: 20px;
+
+      nb-icon {
+        font-size: 24px;
+      }
+    }
+
+    .close-btn {
+      min-width: 36px;
+      height: 36px;
     }
   }
 
-  .plans-grid {
-    grid-template-columns: 1fr;
+  .current-subscription {
+    margin-bottom: 32px;
+
+    .subscription-card {
+      padding: 20px;
+    }
+
+    .subscription-header {
+      flex-direction: column;
+      gap: 16px;
+
+      .subscription-actions {
+        width: 100%;
+
+        button {
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  .available-plans {
+    .plans-title {
+      font-size: 18px;
+    }
+
+    .plans-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
   }
 
   .plan-card {
@@ -538,7 +778,18 @@
   }
 
   .billing-form {
-    padding: 16px;
+    padding: 20px;
+    border-radius: 12px;
+
+    .form-header {
+      h5 {
+        font-size: 18px;
+
+        nb-icon {
+          font-size: 20px;
+        }
+      }
+    }
 
     .form-section {
       .billing-contact, .input-row {
@@ -556,24 +807,121 @@
     }
 
     .form-actions {
-      flex-direction: column;
+      flex-direction: column-reverse;
+
+      button {
+        width: 100%;
+      }
     }
   }
 }
 
 @media (max-width: 480px) {
+  .subscription-manager {
+    padding: 16px;
+    max-height: 95vh;
+  }
+
+  .manager-header {
+    .manager-title {
+      font-size: 18px;
+      gap: 8px;
+
+      nb-icon {
+        font-size: 20px;
+      }
+    }
+
+    .close-btn {
+      min-width: 32px;
+      height: 32px;
+
+      nb-icon {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .current-subscription {
+    .subscription-card {
+      padding: 16px;
+    }
+
+    .subscription-header {
+      .subscription-info {
+        h5 {
+          font-size: 16px;
+        }
+
+        .subscription-status {
+          font-size: 12px;
+          padding: 4px 10px;
+        }
+      }
+    }
+  }
+
   .subscription-details {
     grid-template-columns: 1fr;
+    gap: 12px;
+
+    .detail-item {
+      padding: 12px;
+
+      .label {
+        font-size: 12px;
+      }
+
+      .value {
+        font-size: 13px;
+      }
+
+      &.plan-details {
+        .value strong {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+
+  .available-plans {
+    .plans-title {
+      font-size: 16px;
+
+      &::before {
+        width: 3px;
+        height: 20px;
+      }
+    }
   }
 
   .plan-header {
     .plan-name {
-      font-size: 18px;
+      font-size: 16px;
     }
 
     .plan-price {
       .price-amount {
-        font-size: 20px;
+        font-size: 18px;
+      }
+    }
+  }
+
+  .billing-form {
+    padding: 16px;
+
+    .form-header {
+      h5 {
+        font-size: 16px;
+        gap: 8px;
+
+        nb-icon {
+          font-size: 18px;
+        }
+      }
+
+      .selected-plan-info {
+        font-size: 13px;
       }
     }
   }

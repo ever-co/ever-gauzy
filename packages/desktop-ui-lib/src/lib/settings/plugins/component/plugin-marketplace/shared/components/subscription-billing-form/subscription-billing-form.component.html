@@ -8,101 +8,225 @@
 			<p class="selected-plan-info">
 				{{ getDescriptionText() }} <strong>{{ plan.name }}</strong>
 				<ng-container *ngIf="isUpgrade">
-					<br /><small>You'll be charged a prorated amount for the remainder of your billing period.</small>
+					<br /><small class="info-text">
+						<nb-icon icon="arrow-upward-outline"></nb-icon>
+						You'll be charged a prorated amount for the remainder of your billing period.
+					</small>
 				</ng-container>
 				<ng-container *ngIf="isDowngrade">
-					<br /><small>Change takes effect at the end of your current billing period.</small>
+					<br /><small class="info-text">
+						<nb-icon icon="arrow-downward-outline"></nb-icon>
+						Change takes effect at the end of your current billing period.
+					</small>
 				</ng-container>
 			</p>
 		</div>
 
 		<!-- Billing Cycle -->
-		<div class="form-section">
-			<h6>Billing Cycle</h6>
+		<div class="form-section billing-cycle-section">
+			<h6>
+				<nb-icon icon="calendar-outline"></nb-icon>
+				Billing Cycle
+			</h6>
+			<p class="section-hint">Choose how often you'd like to be billed</p>
 			<nb-radio-group formControlName="billingPeriod" class="billing-period">
-				<nb-radio value="monthly"> Monthly - {{ plan.price | currency : plan.currency }}/month </nb-radio>
-				<nb-radio value="quarterly">
-					Quarterly - {{ plan.price * 3 * 0.95 | currency : plan.currency }}/quarter
-					<span class="savings">Save 5%</span>
+				<nb-radio value="monthly" class="billing-option">
+					<div class="option-content">
+						<div class="option-header">
+							<nb-icon icon="calendar-outline" status="info"></nb-icon>
+							<span class="option-title">Monthly</span>
+						</div>
+						<div class="option-price">{{ plan.price | currency : plan.currency }}/month</div>
+					</div>
 				</nb-radio>
-				<nb-radio value="yearly">
-					Yearly - {{ plan.price * 12 * 0.8 | currency : plan.currency }}/year
-					<span class="savings">Save 20%</span>
+				<nb-radio value="quarterly" class="billing-option">
+					<div class="option-content">
+						<div class="option-header">
+							<nb-icon icon="calendar-outline" status="success"></nb-icon>
+							<span class="option-title">Quarterly</span>
+							<nb-badge status="success" text="Save 5%" class="savings-badge"></nb-badge>
+						</div>
+						<div class="option-price">{{ plan.price * 3 * 0.95 | currency : plan.currency }}/quarter</div>
+						<div class="option-detail">{{ plan.price * 3 | currency : plan.currency }} billed every 3 months</div>
+					</div>
+				</nb-radio>
+				<nb-radio value="yearly" class="billing-option recommended">
+					<div class="option-content">
+						<div class="option-header">
+							<nb-icon icon="calendar-outline" status="warning"></nb-icon>
+							<span class="option-title">Yearly</span>
+							<nb-badge status="warning" text="Save 20%" class="savings-badge"></nb-badge>
+							<nb-badge status="primary" text="Best Value" class="recommended-badge"></nb-badge>
+						</div>
+						<div class="option-price">{{ plan.price * 12 * 0.8 | currency : plan.currency }}/year</div>
+						<div class="option-detail">{{ plan.price * 12 | currency : plan.currency }} billed annually</div>
+					</div>
 				</nb-radio>
 			</nb-radio-group>
 		</div>
 
 		<!-- Payment Method -->
-		<div class="form-section" *ngIf="showPaymentSection">
-			<h6>Payment Method</h6>
+		<div class="form-section payment-method-section" *ngIf="showPaymentSection">
+			<h6>
+				<nb-icon icon="credit-card-outline"></nb-icon>
+				Payment Method
+			</h6>
+			<p class="section-hint">Secure payment processing with industry-standard encryption</p>
 			<nb-radio-group formControlName="paymentMethod" class="payment-methods">
-				<nb-radio value="card">
-					<nb-icon icon="credit-card-outline"></nb-icon>
-					Credit/Debit Card
+				<nb-radio value="card" class="payment-option">
+					<div class="payment-option-content">
+						<nb-icon icon="credit-card-outline" status="primary"></nb-icon>
+						<div class="payment-info">
+							<span class="payment-title">Credit/Debit Card</span>
+							<span class="payment-subtitle">Visa, Mastercard, American Express</span>
+						</div>
+						<nb-icon icon="shield-outline" status="success" class="secure-icon"></nb-icon>
+					</div>
 				</nb-radio>
-				<nb-radio value="paypal">
-					<nb-icon icon="at-outline"></nb-icon>
-					PayPal
+				<nb-radio value="paypal" class="payment-option">
+					<div class="payment-option-content">
+						<nb-icon icon="at-outline" status="info"></nb-icon>
+						<div class="payment-info">
+							<span class="payment-title">PayPal</span>
+							<span class="payment-subtitle">Fast and secure checkout</span>
+						</div>
+						<nb-icon icon="shield-outline" status="success" class="secure-icon"></nb-icon>
+					</div>
 				</nb-radio>
 			</nb-radio-group>
 		</div>
 
 		<!-- Card Details -->
-		<div class="form-section" *ngIf="showPaymentSection && isCardPaymentMethod()">
-			<h6>Card Details</h6>
+		<div class="form-section card-details-section" *ngIf="showPaymentSection && isCardPaymentMethod()">
+			<h6>
+				<nb-icon icon="lock-outline"></nb-icon>
+				Card Details
+			</h6>
 			<div class="card-form">
 				<div class="input-group">
-					<label>Card Number</label>
-					<nb-form-field>
-						<input nbInput formControlName="cardNumber" placeholder="1234 5678 9012 3456" maxlength="16" />
+					<label for="cardNumber">
+						Card Number
+						<span class="required-indicator">*</span>
+					</label>
+					<nb-form-field [class.has-error]="hasError('cardNumber', 'required') || hasError('cardNumber', 'pattern')">
+						<input 
+							nbInput 
+							id="cardNumber"
+							formControlName="cardNumber" 
+							placeholder="1234 5678 9012 3456" 
+							maxlength="19"
+							type="text"
+							autocomplete="cc-number" />
+						<nb-icon nbSuffix icon="credit-card-outline" *ngIf="!hasError('cardNumber', 'required') && !hasError('cardNumber', 'pattern')"></nb-icon>
 					</nb-form-field>
-					<div class="error-message" *ngIf="hasError('cardNumber', 'required')">Card number is required</div>
+					<div class="error-message" *ngIf="hasError('cardNumber', 'required')">
+						<nb-icon icon="alert-circle-outline"></nb-icon>
+						Card number is required
+					</div>
 					<div class="error-message" *ngIf="hasError('cardNumber', 'pattern')">
-						Please enter a valid 16-digit card number
+						<nb-icon icon="alert-circle-outline"></nb-icon>
+						Please enter a valid card number
 					</div>
 				</div>
 
 				<div class="input-row">
 					<div class="input-group">
-						<label>Expiry Date</label>
-						<nb-form-field>
-							<input nbInput formControlName="expiryDate" placeholder="MM/YY" maxlength="5" />
+						<label for="expiryDate">
+							Expiry Date
+							<span class="required-indicator">*</span>
+						</label>
+						<nb-form-field [class.has-error]="hasError('expiryDate', 'pattern')">
+							<input 
+								nbInput 
+								id="expiryDate"
+								formControlName="expiryDate" 
+								placeholder="MM/YY" 
+								maxlength="5"
+								autocomplete="cc-exp" />
 						</nb-form-field>
-						<div class="error-message" *ngIf="hasError('expiryDate', 'pattern')">Format: MM/YY</div>
+						<div class="error-message" *ngIf="hasError('expiryDate', 'pattern')">
+							<nb-icon icon="alert-circle-outline"></nb-icon>
+							Format: MM/YY
+						</div>
 					</div>
 
 					<div class="input-group">
-						<label>CVV</label>
-						<nb-form-field>
-							<input nbInput formControlName="cvv" placeholder="123" maxlength="4" type="password" />
+						<label for="cvv">
+							CVV
+							<span class="required-indicator">*</span>
+							<nb-icon 
+								icon="question-mark-circle-outline" 
+								nbTooltip="3 or 4 digit security code on the back of your card"
+								class="help-icon"></nb-icon>
+						</label>
+						<nb-form-field [class.has-error]="hasError('cvv', 'pattern')">
+							<input 
+								nbInput 
+								id="cvv"
+								formControlName="cvv" 
+								placeholder="123" 
+								maxlength="4" 
+								type="password"
+								autocomplete="cc-csc" />
 						</nb-form-field>
-						<div class="error-message" *ngIf="hasError('cvv', 'pattern')">Invalid CVV</div>
+						<div class="error-message" *ngIf="hasError('cvv', 'pattern')">
+							<nb-icon icon="alert-circle-outline"></nb-icon>
+							Invalid CVV
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 
 		<!-- Billing Contact -->
-		<div class="form-section">
-			<h6>Billing Contact</h6>
+		<div class="form-section billing-contact-section">
+			<h6>
+				<nb-icon icon="person-outline"></nb-icon>
+				Billing Contact
+			</h6>
+			<p class="section-hint">We'll send your receipt and billing information to this email</p>
 			<div class="billing-contact">
 				<div class="input-group">
-					<label>Full Name</label>
-					<nb-form-field>
-						<input nbInput formControlName="billingName" placeholder="John Doe" />
+					<label for="billingName">
+						Full Name
+						<span class="required-indicator">*</span>
+					</label>
+					<nb-form-field [class.has-error]="hasError('billingName', 'required')">
+						<nb-icon nbPrefix icon="person-outline"></nb-icon>
+						<input 
+							nbInput 
+							id="billingName"
+							formControlName="billingName" 
+							placeholder="John Doe"
+							autocomplete="name" />
 					</nb-form-field>
 					<div class="error-message" *ngIf="hasError('billingName', 'required')">
+						<nb-icon icon="alert-circle-outline"></nb-icon>
 						Billing name is required
 					</div>
 				</div>
 
 				<div class="input-group">
-					<label>Email Address</label>
-					<nb-form-field>
-						<input nbInput formControlName="billingEmail" placeholder="john@example.com" type="email" />
+					<label for="billingEmail">
+						Email Address
+						<span class="required-indicator">*</span>
+					</label>
+					<nb-form-field [class.has-error]="hasError('billingEmail', 'required') || hasError('billingEmail', 'email')">
+						<nb-icon nbPrefix icon="email-outline"></nb-icon>
+						<input 
+							nbInput 
+							id="billingEmail"
+							formControlName="billingEmail" 
+							placeholder="john@example.com" 
+							type="email"
+							autocomplete="email" />
 					</nb-form-field>
-					<div class="error-message" *ngIf="hasError('billingEmail', 'required')">Email is required</div>
+					<div class="error-message" *ngIf="hasError('billingEmail', 'required')">
+						<nb-icon icon="alert-circle-outline"></nb-icon>
+						Email is required
+					</div>
 					<div class="error-message" *ngIf="hasError('billingEmail', 'email')">
+						<nb-icon icon="alert-circle-outline"></nb-icon>
 						Please enter a valid email address
 					</div>
 				</div>
@@ -110,34 +234,67 @@
 		</div>
 
 		<!-- Auto Renew -->
-		<div class="form-section">
-			<nb-checkbox formControlName="autoRenew"> Enable automatic renewal </nb-checkbox>
-			<p class="checkbox-help">Your subscription will automatically renew unless cancelled</p>
+		<div class="form-section auto-renew-section">
+			<div class="checkbox-wrapper">
+				<nb-checkbox formControlName="autoRenew">
+					<div class="checkbox-content">
+						<nb-icon icon="refresh-outline"></nb-icon>
+						<span>Enable automatic renewal</span>
+					</div>
+				</nb-checkbox>
+				<p class="checkbox-help">
+					<nb-icon icon="info-outline"></nb-icon>
+					Your subscription will automatically renew at the end of each billing period. You can cancel anytime.
+				</p>
+			</div>
 		</div>
 
 		<!-- Terms -->
-		<div class="form-section">
-			<nb-checkbox formControlName="acceptTerms">
-				I agree to the <a href="#" target="_blank">Terms of Service</a> and
-				<a href="#" target="_blank">Privacy Policy</a>
-			</nb-checkbox>
-			<div class="error-message" *ngIf="hasError('acceptTerms', 'required')">
-				You must accept the terms to continue
+		<div class="form-section terms-section">
+			<div class="checkbox-wrapper" [class.has-error]="hasError('acceptTerms', 'required')">
+				<nb-checkbox formControlName="acceptTerms">
+					<div class="checkbox-content">
+						I agree to the <a href="#" target="_blank" (click)="$event.stopPropagation()">Terms of Service</a> and
+						<a href="#" target="_blank" (click)="$event.stopPropagation()">Privacy Policy</a>
+					</div>
+				</nb-checkbox>
+				<div class="error-message" *ngIf="hasError('acceptTerms', 'required')">
+					<nb-icon icon="alert-circle-outline"></nb-icon>
+					You must accept the terms to continue
+				</div>
 			</div>
 		</div>
 
 		<!-- Actions -->
 		<div class="form-actions">
-			<button type="button" nbButton ghost (click)="onCancel()" [disabled]="isLoading">Cancel</button>
+			<button 
+				type="button" 
+				nbButton 
+				ghost 
+				size="large"
+				(click)="onCancel()" 
+				[disabled]="isLoading"
+				class="cancel-button">
+				<nb-icon icon="close-outline"></nb-icon>
+				Cancel
+			</button>
 			<button
 				type="submit"
 				nbButton
+				size="large"
 				[status]="getActionStatus()"
 				[disabled]="!form.valid || isLoading"
 				*gauzySpinnerButton="isLoading"
-			>
+				class="submit-button">
+				<nb-icon [icon]="isLoading ? 'loader-outline' : 'checkmark-outline'"></nb-icon>
 				{{ getActionText() }}
 			</button>
+		</div>
+		
+		<!-- Security Notice -->
+		<div class="security-notice">
+			<nb-icon icon="shield-outline" status="success"></nb-icon>
+			<span>Your payment information is encrypted and secure</span>
 		</div>
 	</form>
 </div>

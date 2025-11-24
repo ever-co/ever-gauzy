@@ -24,11 +24,9 @@ import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/p
 import { PluginSettingsManagementComponent } from '../plugin-settings-management/plugin-settings-management.component';
 import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
-import {
-	IPluginSubscriptionPlanSelectionResult,
-	PluginSubscriptionPlanSelectionComponent
-} from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
+import { IPluginSubscriptionPlanSelectionResult } from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
 import { PluginUserManagementComponent } from '../plugin-user-management/plugin-user-management.component';
+import { SubscriptionDialogRouterService } from '../services/subscription-dialog-router.service';
 
 // Define enums locally since they might not be available in contracts
 enum LocalPluginSubscriptionType {
@@ -65,6 +63,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly pluginService: PluginElectronService,
 		private readonly menuService: NbMenuService,
 		private readonly subscriptionService: PluginSubscriptionService,
+		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery
 	) {}
@@ -134,26 +133,23 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	/**
-	 * Show subscription selection dialog before installation
+	 * Show appropriate subscription dialog based on user's current subscription status.
+	 * Users with active subscriptions are routed to PluginSubscriptionManager.
+	 * Users without active subscriptions are routed to PluginSubscriptionPlanSelection.
 	 */
 	private showSubscriptionDialog(): void {
-		this.dialog
-			.open(PluginSubscriptionPlanSelectionComponent, {
-				context: {
-					plugin: this.plugin,
-					pluginId: this.plugin.id
-				},
-				backdropClass: 'backdrop-blur',
-				closeOnEsc: false
-			})
-			.onClose.pipe(
+		this.subscriptionDialogRouter
+			.openSubscriptionDialog(this.plugin)
+			.pipe(
 				take(1),
-				tap((result: IPluginSubscriptionPlanSelectionResult | null) => {
+				tap((result: IPluginSubscriptionPlanSelectionResult | any) => {
 					if (result?.proceedWithInstallation) {
 						// If subscription was created or it's a free plugin, proceed with installation
+						console.log('[PluginMarketplaceDetail] Proceeding with installation after subscription');
 						this.installPlugin();
 					} else {
 						// User cancelled or there was an error, reset the toggle
+						console.log('[PluginMarketplaceDetail] Subscription dialog closed without installation');
 						this.action.dispatch(
 							PluginInstallationActions.toggle({
 								isChecked: false,
@@ -164,7 +160,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 					}
 				}),
 				catchError((err) => {
-					console.error('Subscription dialog error:', err);
+					console.error('[PluginMarketplaceDetail] Subscription dialog error:', err);
 					// Reset toggle on error
 					this.action.dispatch(
 						PluginInstallationActions.toggle({
@@ -174,7 +170,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 					);
 					this._isChecked$.next(false);
 					return EMPTY;
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}

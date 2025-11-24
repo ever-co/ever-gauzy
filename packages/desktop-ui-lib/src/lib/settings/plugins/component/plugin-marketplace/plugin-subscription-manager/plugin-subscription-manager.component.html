@@ -61,8 +61,7 @@
 						Plan not found (ID: {{ currentSubscription.planId }})
 					</span>
 				</div>
-				} }
-
+				} } @if(currentSubscription.amount){
 				<div class="detail-item">
 					<span class="label">Price:</span>
 					<span class="value"
@@ -71,6 +70,7 @@
 						}}</span
 					>
 				</div>
+				}
 				<div class="detail-item" *ngIf="currentSubscription.nextBillingDate">
 					<span class="label">Next Billing:</span>
 					<span class="value">{{ currentSubscription.nextBillingDate | date : 'mediumDate' }}</span>
@@ -83,21 +83,6 @@
 					<span class="label">Expires:</span>
 					<span class="value danger">{{ currentSubscription.endDate | date : 'mediumDate' }}</span>
 				</div>
-
-				<!-- Show plan features if available -->
-				@if(!(isLoading$ | async)) { @if(currentPlan$ | async; as currentPlan) { @if(currentPlan.features &&
-				currentPlan.features.length > 0) {
-				<div class="detail-item features">
-					<span class="label">Features:</span>
-					<ul class="features-list-small">
-						@for(feature of currentPlan.features.slice(0, 3); track feature) {
-						<li>{{ feature }}</li>
-						} @if(currentPlan.features.length > 3) {
-						<li class="more-features">+{{ currentPlan.features.length - 3 }} more features</li>
-						}
-					</ul>
-				</div>
-				} } }
 			</div>
 		</div>
 	</div>
@@ -109,31 +94,16 @@
 		</h5>
 
 		<div class="plans-grid">
-			@for(plan of (availablePlans$ | async); track plan.id) {
-			<gauzy-subscription-plan-card
-				[plan]="plan"
-				[isSelected]="selectedPlan?.type === plan.type"
-				[isCurrent]="isCurrentPlan(plan)"
-				[isPopular]="plan.isPopular"
-				[isRecommended]="plan.isRecommended"
-				[canUpgrade]="canUpgrade(plan)"
-				[canDowngrade]="canDowngrade(plan)"
-				[priceLabel]="getPlanPrice(plan)"
-				[savingsLabel]="getPlanSavings(plan)"
-				[actionLabel]="
-					isCurrentPlan(plan)
-						? 'Current Plan'
-						: canUpgrade(plan)
-						? 'Upgrade to ' + plan.name
-						: canDowngrade(plan)
-						? 'Downgrade to ' + plan.name
-						: 'Select ' + plan.name
-				"
-				[disabled]="isCurrentPlan(plan)"
-				(planSelected)="selectPlan($event)"
-				(actionClicked)="selectPlan($event)"
+			@for(planViewModel of (planViewModels$ | async); track planViewModel.id) {
+			<lib-plan-card
+				[plan]="planViewModel"
+				[isSelected]="selectedPlanViewModel?.id === planViewModel.id"
+				[isCurrentPlan]="isCurrentPlan(planViewModel.originalPlan)"
+				[isDisabled]="isCurrentPlan(planViewModel.originalPlan)"
+				[showSelection]="true"
+				(planSelected)="onPlanSelected($event)"
 			>
-			</gauzy-subscription-plan-card>
+			</lib-plan-card>
 			}
 		</div>
 	</div>

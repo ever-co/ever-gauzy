@@ -6,7 +6,8 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap, take } from 'rxjs/operators';
 import { ToastrNotificationService } from '../../../services';
 import { PluginSubscriptionAccessFacade } from '../component/plugin-marketplace/+state/plugin-subscription-access.facade';
-import { PluginSubscriptionPlanSelectionComponent } from '../component/plugin-marketplace/plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
+import { PluginMarketplaceQuery } from '../component/plugin-marketplace/+state/queries/plugin-marketplace.query';
+import { SubscriptionDialogRouterService } from '../component/plugin-marketplace/services/subscription-dialog-router.service';
 
 /**
  * Plugin Access Guard
@@ -31,8 +32,10 @@ export class PluginAccessGuard implements CanActivate {
 		private readonly router: Router,
 		private readonly dialogService: NbDialogService,
 		private readonly translateService: TranslateService,
-		private readonly toastrService: ToastrNotificationService
-	) { }
+		private readonly toastrService: ToastrNotificationService,
+		private readonly marketplaceQuery: PluginMarketplaceQuery,
+		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService
+	) {}
 
 	canActivate(
 		route: ActivatedRouteSnapshot,
@@ -62,11 +65,11 @@ export class PluginAccessGuard implements CanActivate {
 					take(1),
 					map(
 						(requiresSubscription) =>
-						({
-							allowed: false,
-							hasAccess,
-							requiresSubscription
-						} as const)
+							({
+								allowed: false,
+								hasAccess,
+								requiresSubscription
+							} as const)
 					)
 				);
 			}),
@@ -95,33 +98,64 @@ export class PluginAccessGuard implements CanActivate {
 	}
 
 	/**
-	 * Show subscription selection dialog
-	 * Allows user to subscribe to the plugin
+	 * Show appropriate subscription dialog based on user's current subscription status.
+	 * Users with active subscriptions are routed to PluginSubscriptionManager.
+	 * Users without active subscriptions are routed to PluginSubscriptionPlanSelection.
 	 */
 	private showSubscriptionDialog(pluginId: string, returnUrl: string): Observable<boolean | UrlTree> {
 		return new Observable((observer) => {
-			this.dialogService
-				.open(PluginSubscriptionPlanSelectionComponent, {
-					context: {
-						pluginId: pluginId
+			// Get plugin data first
+			this.marketplaceQuery.plugin$
+				.pipe(
+					take(1),
+					switchMap((plugin) => {
+						if (!plugin) {
+							// Plugin not found, redirect to marketplace
+							this.toastrService.error(this.translateService.instant('PLUGIN.ACCESS.PLUGIN_NOT_FOUND'));
+							observer.next(this.router.createUrlTree(['/settings/marketplace-plugins']));
+							observer.complete();
+							return of(null);
+						}
+
+						// Open appropriate dialog based on subscription status
+						return this.subscriptionDialogRouter.openSubscriptionDialog(plugin);
+					})
+				)
+				.subscribe({
+					next: (result) => {
+						if (!result) {
+							// Dialog was closed or plugin not found
+							this.toastrService.info(
+								this.translateService.instant('PLUGIN.ACCESS.SUBSCRIPTION_CANCELLED')
+							);
+							observer.next(this.router.createUrlTree(['/settings/marketplace-plugins']));
+							observer.complete();
+							return;
+						}
+
+						if (result?.proceedWithInstallation) {
+							// User successfully subscribed, allow navigation
+							this.toastrService.success(
+								this.translateService.instant('PLUGIN.ACCESS.SUBSCRIPTION_SUCCESS')
+							);
+
+							// Refresh access check
+							this.accessFacade.refreshPluginAccess(pluginId);
+
+							observer.next(true);
+							observer.complete();
+						} else {
+							// User cancelled subscription, redirect to marketplace
+							this.toastrService.info(
+								this.translateService.instant('PLUGIN.ACCESS.SUBSCRIPTION_CANCELLED')
+							);
+							observer.next(this.router.createUrlTree(['/settings/marketplace-plugins']));
+							observer.complete();
+						}
 					},
-					backdropClass: 'backdrop-blur',
-					closeOnEsc: false
-				})
-				.onClose.pipe(take(1))
-				.subscribe((result) => {
-					if (result?.proceedWithInstallation || result?.subscribed) {
-						// User successfully subscribed, allow navigation
-						this.toastrService.success(this.translateService.instant('PLUGIN.ACCESS.SUBSCRIPTION_SUCCESS'));
-
-						// Refresh access check
-						this.accessFacade.refreshPluginAccess(pluginId);
-
-						observer.next(true);
-						observer.complete();
-					} else {
-						// User cancelled subscription, redirect to marketplace
-						this.toastrService.info(this.translateService.instant('PLUGIN.ACCESS.SUBSCRIPTION_CANCELLED'));
+					error: (error) => {
+						console.error('PluginAccessGuard: Error in subscription dialog', error);
+						this.toastrService.error(this.translateService.instant('PLUGIN.ACCESS.SUBSCRIPTION_FAILED'));
 						observer.next(this.router.createUrlTree(['/settings/marketplace-plugins']));
 						observer.complete();
 					}

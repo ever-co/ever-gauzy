@@ -100,6 +100,8 @@ import { PlanCardComponent } from './component/plugin-marketplace/plugin-subscri
 import { SubscriptionConfirmationComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/subscription-confirmation.component';
 import { SubscriptionPreviewComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/subscription-preview/subscription-preview.component';
 import { PluginSubscriptionPlanSelectionComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
+import { PlanComparisonService } from './component/plugin-marketplace/plugin-subscription-plan-selection/services/plan-comparison.service';
+import { PlanFormatterService } from './component/plugin-marketplace/plugin-subscription-plan-selection/services/plan-formatter.service';
 import { PluginTagsManagerComponent } from './component/plugin-marketplace/plugin-tags-manager/plugin-tags-manager.component';
 import { PluginUserManagementComponent } from './component/plugin-marketplace/plugin-user-management/plugin-user-management.component';
 import { PluginComponent } from './component/plugin/plugin.component';
@@ -118,7 +120,6 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 import {
 	SubscriptionBillingFormComponent,
 	SubscriptionFormService,
-	SubscriptionPlanCardComponent,
 	SubscriptionPlanService,
 	SubscriptionStatusBadgeComponent,
 	SubscriptionStatusService
@@ -165,8 +166,7 @@ import {
 		NpmFormComponent,
 		DialogCreateSourceComponent,
 		SourceContainerComponent,
-		// Shared subscription components
-		SubscriptionPlanCardComponent,
+		// Shared subscription components (note: SubscriptionPlanCardComponent removed - using lib-plan-card instead)
 		SubscriptionStatusBadgeComponent,
 		SubscriptionBillingFormComponent
 	],
@@ -226,6 +226,9 @@ import {
 		SubscriptionPlanService,
 		SubscriptionFormService,
 		SubscriptionStatusService,
+		// Plan selection services
+		PlanFormatterService,
+		PlanComparisonService,
 		provideEffectsManager(),
 		provideEffects(
 			PluginEffects,

@@ -38,7 +38,7 @@ import {
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
-import { PluginSubscriptionPlanSelectionComponent } from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
+import { SubscriptionDialogRouterService } from '../services/subscription-dialog-router.service';
 import { SubscriptionStatusService } from '../shared';
 import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
@@ -82,6 +82,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		private readonly toastrService: ToastrNotificationService,
 		private readonly action: Actions,
 		private readonly subscriptionService: PluginSubscriptionService,
+		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
 		public readonly versionQuery: PluginVersionQuery,
@@ -476,15 +477,13 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return this.plugin.hasPlan;
 	}
 
+	/**
+	 * Show appropriate subscription dialog based on user's current subscription status.
+	 * Users with active subscriptions are routed to PluginSubscriptionManager.
+	 * Users without active subscriptions are routed to PluginSubscriptionPlanSelection.
+	 */
 	private showSubscriptionSelectionDialog(): Observable<{ proceedWithInstallation: boolean }> {
-		return this.dialogService.open(PluginSubscriptionPlanSelectionComponent, {
-			context: {
-				plugin: this.plugin,
-				pluginId: this.pluginId
-			},
-			backdropClass: 'backdrop-blur',
-			closeOnEsc: false
-		}).onClose;
+		return this.subscriptionDialogRouter.openSubscriptionDialog(this.plugin);
 	}
 
 	/**

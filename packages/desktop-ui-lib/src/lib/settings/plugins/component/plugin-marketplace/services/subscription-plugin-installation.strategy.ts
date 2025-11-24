@@ -6,8 +6,8 @@ import { Observable } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
 import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
 import { ToastrNotificationService } from '../../../../../services';
-import { PluginSubscriptionPlanSelectionComponent } from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
 import { IInstallationPreparationResult, IPluginInstallationStrategy } from './plugin-installation-strategy.interface';
+import { SubscriptionDialogRouterService } from './subscription-dialog-router.service';
 
 /**
  * Strategy for installing plugins that require subscriptions
@@ -22,8 +22,9 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 		private readonly accessFacade: PluginSubscriptionAccessFacade,
 		private readonly dialogService: NbDialogService,
 		private readonly translateService: TranslateService,
-		private readonly toastrService: ToastrNotificationService
-	) { }
+		private readonly toastrService: ToastrNotificationService,
+		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService
+	) {}
 
 	/**
 	 * Validates if user has active subscription for the plugin
@@ -35,9 +36,7 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 				canProceed: hasAccess,
 				requiresSubscription: true,
 				hasActiveSubscription: hasAccess,
-				reason: hasAccess
-					? 'Active subscription found'
-					: 'No active subscription - user must subscribe first'
+				reason: hasAccess ? 'Active subscription found' : 'No active subscription - user must subscribe first'
 			}))
 		);
 	}
@@ -57,22 +56,13 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 					});
 				}
 
-				// No access - show subscription dialog
-				this.toastrService.info(
-					this.translateService.instant('PLUGIN.SUBSCRIPTION.REQUIRED_FOR_INSTALLATION')
-				);
+				// No access - show appropriate subscription dialog based on user's subscription status
+				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.REQUIRED_FOR_INSTALLATION'));
 
 				return new Observable<void>((observer) => {
-					this.dialogService
-						.open(PluginSubscriptionPlanSelectionComponent, {
-							context: {
-								plugin: plugin,
-								pluginId: plugin.id
-							},
-							backdropClass: 'backdrop-blur',
-							closeOnEsc: false
-						})
-						.onClose.pipe(take(1))
+					this.subscriptionDialogRouter
+						.openSubscriptionDialog(plugin)
+						.pipe(take(1))
 						.subscribe({
 							next: (subscriptionResult) => {
 								if (subscriptionResult?.proceedWithInstallation) {
