@@ -157,34 +157,15 @@ export class StatisticService {
 
 		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
-		const user = RequestContext.currentUser(); // Retrieve the current user
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			[], // projectIds
+			isOnlyMeSelected
 		);
-
-		// Set employeeIds based on permissions and request
-		if (user.employeeId && isOnlyMeSelected) {
-			// Case 1: User explicitly requests "Only Me"
-			employeeIds = [user.employeeId];
-		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
-			// Case 2: User doesn't have global permission → Check if manager of requested employees
-			if (isNotEmpty(employeeIds)) {
-				// Verify if user can manage ALL requested employees in the specified teams
-				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
-
-				if (!canManageAll) {
-					// User is NOT manager of all requested employees → Override with currentEmployeeId
-					employeeIds = [user.employeeId];
-				}
-				// Otherwise → Keep the requested employeeIds (no override)
-			} else {
-				// No specific employees requested → Override with currentEmployeeId
-				employeeIds = [user.employeeId];
-			}
-		}
 
 		let weekActivities = {
 			overall: 0,
@@ -309,34 +290,15 @@ export class StatisticService {
 
 		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
-		const user = RequestContext.currentUser(); // Retrieve the current user
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			[], // projectIds
+			isOnlyMeSelected
 		);
-
-		// Set employeeIds based on permissions and request
-		if (user.employeeId && isOnlyMeSelected) {
-			// Case 1: User explicitly requests "Only Me"
-			employeeIds = [user.employeeId];
-		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
-			// Case 2: User doesn't have global permission → Check if manager of requested employees
-			if (isNotEmpty(employeeIds)) {
-				// Verify if user can manage ALL requested employees in the specified teams
-				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
-
-				if (!canManageAll) {
-					// User is NOT manager of all requested employees → Override with currentEmployeeId
-					employeeIds = [user.employeeId];
-				}
-				// Otherwise → Keep the requested employeeIds (no override)
-			} else {
-				// No specific employees requested → Override with currentEmployeeId
-				employeeIds = [user.employeeId];
-			}
-		}
 
 		// Get average activity and total duration of the work for today.
 		let todayActivities = {
@@ -464,7 +426,6 @@ export class StatisticService {
 
 		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
-		const user = RequestContext.currentUser(); // Retrieve the current user
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
 		// Get the start and end date for the weekly statistics
@@ -473,28 +434,14 @@ export class StatisticService {
 			moment.utc(endDate || moment().endOf('week'))
 		);
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		// Filter employeeIds based on permissions and manager access
+		// Note: getMembers() doesn't have onlyMe parameter, so we pass false
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			projectIds,
+			false // onlyMe
 		);
-
-		// Set employeeIds based on permissions and request
-		if (!hasChangeSelectedEmployeePermission && user.employeeId) {
-			// User doesn't have global permission → Check if manager of requested employees
-			if (isNotEmpty(employeeIds)) {
-				// Verify if user can manage ALL requested employees in the specified teams
-				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
-
-				if (!canManageAll) {
-					// User is NOT manager of all requested employees → Override with currentEmployeeId
-					employeeIds = [user.employeeId];
-				}
-				// Otherwise → Keep the requested employeeIds (no override)
-			} else {
-				// No specific employees requested → Override with currentEmployeeId
-				employeeIds = [user.employeeId];
-			}
-		}
 
 		// Create a query builder for the Employee entity
 		const query = this.typeOrmEmployeeRepository.createQueryBuilder();
@@ -825,17 +772,11 @@ export class StatisticService {
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
-		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
-		);
-
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
 		// Retrieves the database type from the configuration service.
@@ -844,26 +785,13 @@ export class StatisticService {
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		// Set employeeIds based on permissions and request
-		if (user.employeeId && isOnlyMeSelected) {
-			// Case 1: User explicitly requests "Only Me"
-			employeeIds = [user.employeeId];
-		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
-			// Case 2: User doesn't have global permission → Check if manager of requested employees
-			if (isNotEmpty(employeeIds)) {
-				// Verify if user can manage ALL requested employees in the specified teams
-				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
-
-				if (!canManageAll) {
-					// User is NOT manager of all requested employees → Override with currentEmployeeId
-					employeeIds = [user.employeeId];
-				}
-				// Otherwise → Keep the requested employeeIds (no override)
-			} else {
-				// No specific employees requested → Override with currentEmployeeId
-				employeeIds = [user.employeeId];
-			}
-		}
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			projectIds,
+			isOnlyMeSelected
+		);
 
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 
@@ -1056,31 +984,26 @@ export class StatisticService {
 		}
 
 		// Set employeeIds based on permissions and request
-		if (user && user.employeeId && onlyMe) {
-			// Case 1: User explicitly requests "Only Me"
-			employeeIds = [user.employeeId];
-		} else if (user && user.employeeId && !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			// Case 2: User doesn't have global permission → Check if manager of requested employees
-			if (
-				isNotEmpty(organizationTeamId) ||
-				RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW)
-			) {
-				// Special case: organizationTeamId provided or has ORG_MEMBER_LAST_LOG_VIEW permission
-				if (isNotEmpty(employeeIds)) {
-					// Verify if user can manage ALL requested employees in the specified teams
-					const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
-
-					if (!canManageAll) {
-						// User is NOT manager of all requested employees → Override with currentEmployeeId
-						employeeIds = [user.employeeId];
-					}
-					// Otherwise → Keep the requested employeeIds (no override)
-				}
-				// If no employeeIds provided, keep empty array (will fetch all team members)
-			} else {
-				// No team context → Override with currentEmployeeId
-				employeeIds = [user.employeeId];
-			}
+		// Special handling for getTasks: if organizationTeamId or ORG_MEMBER_LAST_LOG_VIEW permission exists,
+		// allow empty employeeIds to fetch all team members
+		if (
+			user &&
+			user.employeeId &&
+			!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+			!onlyMe &&
+			!isNotEmpty(employeeIds) &&
+			(isNotEmpty(organizationTeamId) || RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW))
+		) {
+			// Special case: Keep empty employeeIds to fetch all team members
+			// This will be filtered by organizationTeamId in the query
+		} else {
+			// Standard filtering using ManagedEmployeeService
+			employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+				employeeIds,
+				teamIds,
+				[], // projectIds
+				onlyMe
+			);
 		}
 
 		if (todayStart && todayEnd) {
@@ -1609,7 +1532,6 @@ export class StatisticService {
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
-		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
@@ -1617,34 +1539,16 @@ export class StatisticService {
 			moment.utc(endDate || moment().endOf('week'))
 		);
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		);
-
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		// Set employeeIds based on permissions and request
-		if (user.employeeId && isOnlyMeSelected) {
-			// Case 1: User explicitly requests "Only Me"
-			employeeIds = [user.employeeId];
-		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
-			// Case 2: User doesn't have global permission → Check if manager of requested employees
-			if (isNotEmpty(employeeIds)) {
-				// Verify if user can manage ALL requested employees in the specified teams
-				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
-
-				if (!canManageAll) {
-					// User is NOT manager of all requested employees → Override with currentEmployeeId
-					employeeIds = [user.employeeId];
-				}
-				// Otherwise → Keep the requested employeeIds (no override)
-			} else {
-				// No specific employees requested → Override with currentEmployeeId
-				employeeIds = [user.employeeId];
-			}
-		}
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			projectIds,
+			isOnlyMeSelected
+		);
 
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
@@ -1735,17 +1639,11 @@ export class StatisticService {
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
-		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
-		);
-
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
 		// Retrieves the database type from the configuration service.
@@ -1754,26 +1652,13 @@ export class StatisticService {
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		// Set employeeIds based on permissions and request
-		if (user.employeeId && isOnlyMeSelected) {
-			// Case 1: User explicitly requests "Only Me"
-			employeeIds = [user.employeeId];
-		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
-			// Case 2: User doesn't have global permission → Check if manager of requested employees
-			if (isNotEmpty(employeeIds)) {
-				// Verify if user can manage ALL requested employees in the specified teams
-				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
-
-				if (!canManageAll) {
-					// User is NOT manager of all requested employees → Override with currentEmployeeId
-					employeeIds = [user.employeeId];
-				}
-				// Otherwise → Keep the requested employeeIds (no override)
-			} else {
-				// No specific employees requested → Override with currentEmployeeId
-				employeeIds = [user.employeeId];
-			}
-		}
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			projectIds,
+			isOnlyMeSelected
+		);
 
 		const query = this.typeOrmActivityRepository.createQueryBuilder();
 		query
@@ -1901,7 +1786,6 @@ export class StatisticService {
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
-		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
@@ -1909,34 +1793,16 @@ export class StatisticService {
 			moment.utc(endDate || moment().endOf('week'))
 		);
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		);
-
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		// Set employeeIds based on permissions and request
-		if (user.employeeId && isOnlyMeSelected) {
-			// Case 1: User explicitly requests "Only Me"
-			employeeIds = [user.employeeId];
-		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
-			// Case 2: User doesn't have global permission → Check if manager of requested employees
-			if (isNotEmpty(employeeIds)) {
-				// Verify if user can manage ALL requested employees in the specified teams
-				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
-
-				if (!canManageAll) {
-					// User is NOT manager of all requested employees → Override with currentEmployeeId
-					employeeIds = [user.employeeId];
-				}
-				// Otherwise → Keep the requested employeeIds (no override)
-			} else {
-				// No specific employees requested → Override with currentEmployeeId
-				employeeIds = [user.employeeId];
-			}
-		}
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			projectIds,
+			isOnlyMeSelected
+		);
 
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder();
 		query.innerJoin(`${query.alias}.employee`, 'employee');
