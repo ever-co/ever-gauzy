@@ -4,12 +4,7 @@
 			<nb-icon icon="credit-card-outline"></nb-icon>
 			Manage Subscription for {{ plugin?.name }}
 		</h4>
-		<button
-			nbButton
-			ghost
-			size="small"
-			class="close-btn"
-			(click)="close()">
+		<button nbButton ghost size="small" class="close-btn" (click)="close()">
 			<nb-icon icon="close-outline"></nb-icon>
 		</button>
 	</div>
@@ -31,29 +26,78 @@
 						status="warning"
 						size="small"
 						(click)="cancelSubscription()"
-						[disabled]="isLoading$ | async">
+						[disabled]="isLoading$ | async"
+					>
 						Cancel
 					</button>
 				</div>
 			</div>
 
 			<div class="subscription-details">
+				<!-- Current Plan Details -->
+				@if(isLoading$ | async) {
+				<div class="detail-item plan-details loading">
+					<span class="label">Plan:</span>
+					<span class="value">
+						<nb-spinner size="tiny"></nb-spinner>
+						Loading plan details...
+					</span>
+				</div>
+				} @else { @if(currentPlan$ | async; as currentPlan) {
+				<div class="detail-item plan-details">
+					<span class="label">Plan:</span>
+					<span class="value">
+						<strong>{{ currentPlan.name }}</strong>
+						@if(currentPlan.description) {
+						<small class="plan-description">{{ currentPlan.description }}</small>
+						}
+					</span>
+				</div>
+				} @else if(currentSubscription.planId) {
+				<div class="detail-item plan-details warning">
+					<span class="label">Plan:</span>
+					<span class="value">
+						<nb-icon icon="alert-triangle-outline"></nb-icon>
+						Plan not found (ID: {{ currentSubscription.planId }})
+					</span>
+				</div>
+				} }
+
 				<div class="detail-item">
 					<span class="label">Price:</span>
-					<span class="value">{{ currentSubscription.price | currency:currentSubscription.currency }}/{{ currentSubscription.billingPeriod }}</span>
+					<span class="value"
+						>{{ currentSubscription.amount | currency : currentSubscription.currency }}/{{
+							currentSubscription.billingPeriod
+						}}</span
+					>
 				</div>
 				<div class="detail-item" *ngIf="currentSubscription.nextBillingDate">
 					<span class="label">Next Billing:</span>
-					<span class="value">{{ currentSubscription.nextBillingDate | date:'mediumDate' }}</span>
+					<span class="value">{{ currentSubscription.nextBillingDate | date : 'mediumDate' }}</span>
 				</div>
 				<div class="detail-item" *ngIf="currentSubscription.isInTrial">
 					<span class="label">Trial Ends:</span>
-					<span class="value warning">{{ currentSubscription.trialEndDate | date:'mediumDate' }}</span>
+					<span class="value warning">{{ currentSubscription.trialEndDate | date : 'mediumDate' }}</span>
 				</div>
 				<div class="detail-item" *ngIf="currentSubscription.isExpiringSoon">
 					<span class="label">Expires:</span>
-					<span class="value danger">{{ currentSubscription.endDate | date:'mediumDate' }}</span>
+					<span class="value danger">{{ currentSubscription.endDate | date : 'mediumDate' }}</span>
 				</div>
+
+				<!-- Show plan features if available -->
+				@if(!(isLoading$ | async)) { @if(currentPlan$ | async; as currentPlan) { @if(currentPlan.features &&
+				currentPlan.features.length > 0) {
+				<div class="detail-item features">
+					<span class="label">Features:</span>
+					<ul class="features-list-small">
+						@for(feature of currentPlan.features.slice(0, 3); track feature) {
+						<li>{{ feature }}</li>
+						} @if(currentPlan.features.length > 3) {
+						<li class="more-features">+{{ currentPlan.features.length - 3 }} more features</li>
+						}
+					</ul>
+				</div>
+				} } }
 			</div>
 		</div>
 	</div>
@@ -65,235 +109,46 @@
 		</h5>
 
 		<div class="plans-grid">
-			@for(plan of availablePlans; track plan.type) {
-				<div
-					class="plan-card"
-					[class.selected]="selectedPlan?.type === plan.type"
-					[class.current]="isCurrentPlan(plan)"
-					[class.popular]="plan.isPopular"
-					[class.recommended]="plan.isRecommended"
-					(click)="selectPlan(plan)">
-
-					<!-- Plan badges -->
-					<div class="plan-badges">
-						@if(plan.isPopular) {
-							<nb-badge status="warning" text="Most Popular"></nb-badge>
-						}
-						@if(plan.isRecommended) {
-							<nb-badge status="success" text="Recommended"></nb-badge>
-						}
-						@if(isCurrentPlan(plan)) {
-							<nb-badge status="info" text="Current Plan"></nb-badge>
-						}
-					</div>
-
-					<!-- Plan header -->
-					<div class="plan-header">
-						<h6 class="plan-name">{{ plan.name }}</h6>
-						<div class="plan-price">
-							<span class="price-amount">{{ getPlanPrice(plan) }}</span>
-							@if(plan.trialDays) {
-								<span class="trial-info">{{ plan.trialDays }} days free</span>
-							}
-						</div>
-						@if(getPlanSavings(plan)) {
-							<div class="savings">{{ getPlanSavings(plan) }}</div>
-						}
-					</div>
-
-					<!-- Plan description -->
-					<p class="plan-description">{{ plan.description }}</p>
-
-					<!-- Plan features -->
-					<div class="plan-features">
-						<ul class="features-list">
-							@for(feature of plan.features; track feature) {
-								<li class="feature-item">
-									<nb-icon icon="checkmark-circle-outline" class="feature-check"></nb-icon>
-									{{ feature }}
-								</li>
-							}
-						</ul>
-					</div>
-
-					<!-- Plan action button -->
-					<div class="plan-action">
-						@if(isCurrentPlan(plan)) {
-							<button nbButton status="basic" disabled size="small" fullWidth>
-								Current Plan
-							</button>
-						} @else if(canUpgrade(plan)) {
-							<button nbButton status="success" size="small" fullWidth>
-								Upgrade to {{ plan.name }}
-							</button>
-						} @else if(canDowngrade(plan)) {
-							<button nbButton status="warning" size="small" fullWidth>
-								Downgrade to {{ plan.name }}
-							</button>
-						} @else {
-							<button nbButton status="primary" size="small" fullWidth>
-								Select {{ plan.name }}
-							</button>
-						}
-					</div>
-				</div>
+			@for(plan of (availablePlans$ | async); track plan.id) {
+			<gauzy-subscription-plan-card
+				[plan]="plan"
+				[isSelected]="selectedPlan?.type === plan.type"
+				[isCurrent]="isCurrentPlan(plan)"
+				[isPopular]="plan.isPopular"
+				[isRecommended]="plan.isRecommended"
+				[canUpgrade]="canUpgrade(plan)"
+				[canDowngrade]="canDowngrade(plan)"
+				[priceLabel]="getPlanPrice(plan)"
+				[savingsLabel]="getPlanSavings(plan)"
+				[actionLabel]="
+					isCurrentPlan(plan)
+						? 'Current Plan'
+						: canUpgrade(plan)
+						? 'Upgrade to ' + plan.name
+						: canDowngrade(plan)
+						? 'Downgrade to ' + plan.name
+						: 'Select ' + plan.name
+				"
+				[disabled]="isCurrentPlan(plan)"
+				(planSelected)="selectPlan($event)"
+				(actionClicked)="selectPlan($event)"
+			>
+			</gauzy-subscription-plan-card>
 			}
 		</div>
 	</div>
 
 	<!-- Billing Form -->
 	<div class="billing-form" *ngIf="showBillingForm && selectedPlan">
-		<form [formGroup]="subscriptionForm" (ngSubmit)="subscribeToPlan()">
-			<div class="form-header">
-				<h5>
-					<nb-icon icon="credit-card-outline"></nb-icon>
-					Billing Information
-				</h5>
-				<p class="selected-plan-info">
-					You're subscribing to <strong>{{ selectedPlan.name }}</strong>
-					for <strong>{{ getPlanPrice(selectedPlan) }}</strong>
-				</p>
-			</div>
-
-			<div class="form-section">
-				<h6>Billing Cycle</h6>
-				<nb-radio-group formControlName="billingPeriod" class="billing-period">
-					<nb-radio value="monthly">
-						Monthly - {{ selectedPlan.price | currency:selectedPlan.currency }}/month
-					</nb-radio>
-					<nb-radio value="quarterly">
-						Quarterly - {{ (selectedPlan.price * 3 * 0.95) | currency:selectedPlan.currency }}/quarter
-						<span class="savings">Save 5%</span>
-					</nb-radio>
-					<nb-radio value="yearly">
-						Yearly - {{ (selectedPlan.price * 12 * 0.8) | currency:selectedPlan.currency }}/year
-						<span class="savings">Save 20%</span>
-					</nb-radio>
-				</nb-radio-group>
-			</div>
-
-			<div class="form-section">
-				<h6>Payment Method</h6>
-				<nb-radio-group formControlName="paymentMethod" class="payment-methods">
-					<nb-radio value="card">
-						<nb-icon icon="credit-card-outline"></nb-icon>
-						Credit/Debit Card
-					</nb-radio>
-					<nb-radio value="paypal">
-						<nb-icon icon="at-outline"></nb-icon>
-						PayPal
-					</nb-radio>
-				</nb-radio-group>
-			</div>
-
-			<!-- Card details (shown only when card is selected) -->
-			<div class="form-section" *ngIf="subscriptionForm.get('paymentMethod')?.value === 'card'">
-				<h6>Card Details</h6>
-				<div class="card-form">
-					<div class="input-group">
-						<label>Card Number</label>
-						<nb-form-field>
-							<input
-								nbInput
-								formControlName="cardNumber"
-								placeholder="1234 5678 9012 3456"
-								maxlength="16">
-						</nb-form-field>
-						@if(subscriptionForm.get('cardNumber')?.invalid && subscriptionForm.get('cardNumber')?.touched) {
-							<div class="error-message">Please enter a valid 16-digit card number</div>
-						}
-					</div>
-
-					<div class="input-row">
-						<div class="input-group">
-							<label>Expiry Date</label>
-							<nb-form-field>
-								<input
-									nbInput
-									formControlName="expiryDate"
-									placeholder="MM/YY"
-									maxlength="5">
-							</nb-form-field>
-							@if(subscriptionForm.get('expiryDate')?.invalid && subscriptionForm.get('expiryDate')?.touched) {
-								<div class="error-message">Format: MM/YY</div>
-							}
-						</div>
-
-						<div class="input-group">
-							<label>CVV</label>
-							<nb-form-field>
-								<input
-									nbInput
-									formControlName="cvv"
-									placeholder="123"
-									maxlength="4">
-							</nb-form-field>
-							@if(subscriptionForm.get('cvv')?.invalid && subscriptionForm.get('cvv')?.touched) {
-								<div class="error-message">Invalid CVV</div>
-							}
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div class="form-section">
-				<h6>Billing Contact</h6>
-				<div class="billing-contact">
-					<div class="input-group">
-						<label>Full Name</label>
-						<nb-form-field>
-							<input nbInput formControlName="billingName" placeholder="John Doe">
-						</nb-form-field>
-						@if(subscriptionForm.get('billingName')?.invalid && subscriptionForm.get('billingName')?.touched) {
-							<div class="error-message">Billing name is required</div>
-						}
-					</div>
-
-					<div class="input-group">
-						<label>Email Address</label>
-						<nb-form-field>
-							<input nbInput formControlName="billingEmail" placeholder="john@example.com">
-						</nb-form-field>
-						@if(subscriptionForm.get('billingEmail')?.invalid && subscriptionForm.get('billingEmail')?.touched) {
-							<div class="error-message">Please enter a valid email address</div>
-						}
-					</div>
-				</div>
-			</div>
-
-			<div class="form-section">
-				<nb-checkbox formControlName="autoRenew">
-					Enable automatic renewal
-				</nb-checkbox>
-				<p class="checkbox-help">Your subscription will automatically renew unless cancelled</p>
-			</div>
-
-			<div class="form-section">
-				<nb-checkbox formControlName="acceptTerms">
-					I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a>
-				</nb-checkbox>
-				@if(subscriptionForm.get('acceptTerms')?.invalid && subscriptionForm.get('acceptTerms')?.touched) {
-					<div class="error-message">You must accept the terms to continue</div>
-				}
-			</div>
-
-			<div class="form-actions">
-				<button
-					type="button"
-					nbButton
-					ghost
-					(click)="showBillingForm = false">
-					Back to Plans
-				</button>
-				<button
-					type="submit"
-					nbButton
-					status="primary"
-					[disabled]="!subscriptionForm.valid || (isLoading$ | async)"
-					*gauzySpinnerButton="isLoading$ | async">
-					Subscribe Now
-				</button>
-			</div>
-		</form>
+		<gauzy-subscription-billing-form
+			[form]="subscriptionForm"
+			[plan]="selectedPlan"
+			[isLoading]="isLoading$ | async"
+			[isUpgrade]="currentSubscription && canUpgrade(selectedPlan)"
+			[isDowngrade]="currentSubscription && canDowngrade(selectedPlan)"
+			(formSubmit)="subscribeToPlan()"
+			(formCancel)="showBillingForm = false"
+		>
+		</gauzy-subscription-billing-form>
 	</div>
 </div>

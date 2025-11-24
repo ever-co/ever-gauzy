@@ -8,7 +8,7 @@
   text-align: center;
   padding: 2rem 1rem;
   margin-bottom: 2rem;
-  border-radius: nb-theme(border-radius);
+  border-radius: var(--border-radius);
   position: relative;
 
   nb-icon {
@@ -28,26 +28,26 @@
   }
 
   &.upgrade-header {
-    background: linear-gradient(135deg, rgba(nb-theme(color-success-500), 0.1), rgba(nb-theme(color-success-600), 0.05));
-    border: 2px solid nb-theme(color-success-300);
-    color: nb-theme(color-success-600);
+    background: linear-gradient(135deg, rgba(var(--color-success-500), 0.1), rgba(var(--color-success-600), 0.05));
+    border: 2px solid var(--color-success-300);
+    color: var(--color-success-600);
   }
 
   &.downgrade-header {
-    background: linear-gradient(135deg, rgba(nb-theme(color-warning-500), 0.1), rgba(nb-theme(color-warning-600), 0.05));
-    border: 2px solid nb-theme(color-warning-300);
-    color: nb-theme(color-warning-600);
+    background: linear-gradient(135deg, rgba(var(--color-warning-500), 0.1), rgba(var(--color-warning-600), 0.05));
+    border: 2px solid var(--color-warning-300);
+    color: var(--color-warning-600);
   }
 
   &.new-header {
-    background: linear-gradient(135deg, rgba(nb-theme(color-primary-500), 0.1), rgba(nb-theme(color-primary-600), 0.05));
-    border: 2px solid nb-theme(color-primary-300);
-    color: nb-theme(color-primary-600);
+    background: linear-gradient(135deg, rgba(var(--color-primary-500), 0.1), rgba(var(--color-primary-600), 0.05));
+    border: 2px solid var(--color-primary-300);
+    color: var(--color-primary-600);
   }
 
   &.default-header {
-    background: linear-gradient(135deg, rgba(nb-theme(color-basic-500), 0.1), rgba(nb-theme(color-basic-600), 0.05));
-    border: 2px solid nb-theme(border-basic-color-3);
+    background: linear-gradient(135deg, rgba(var(--color-basic-500), 0.1), rgba(var(--color-basic-600), 0.05));
+    border: 2px solid var(--border-basic-color-3);
   }
 }
 
@@ -57,18 +57,19 @@
   justify-content: space-between;
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: nb-theme(background-basic-color-2);
-  border-radius: nb-theme(border-radius);
-  border: 1px solid nb-theme(border-basic-color-4);
+  background: var(--background-basic-color-2);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-basic-color-4);
 
-  .current-plan, .selected-plan {
+  .current-plan,
+  .selected-plan {
     flex: 1;
     text-align: center;
 
     h5 {
       margin: 0 0 1rem;
       font-weight: 600;
-      color: nb-theme(text-hint-color);
+      color: var(--text-hint-color);
       font-size: 0.9rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -80,17 +81,17 @@
         font-weight: 600;
         font-size: 1.1rem;
         margin-bottom: 0.5rem;
-        color: nb-theme(text-basic-color);
+        color: var(--text-basic-color);
       }
 
       .plan-price {
         font-size: 1.25rem;
         font-weight: 700;
-        color: nb-theme(color-primary-600);
+        color: var(--color-primary-600);
       }
 
       .plan-period {
-        color: nb-theme(text-hint-color);
+        color: var(--text-hint-color);
         font-size: 0.9rem;
       }
     }
@@ -101,28 +102,35 @@
     margin: 0 1rem;
 
     nb-icon {
-      color: nb-theme(color-primary-500);
+      color: var(--color-primary-500);
       animation: pulse 2s infinite;
     }
   }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .payment-info {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: nb-theme(background-basic-color-1);
-  border: 1px solid nb-theme(border-basic-color-4);
-  border-radius: nb-theme(border-radius);
+  background: var(--background-basic-color-1);
+  border: 1px solid var(--border-basic-color-4);
+  border-radius: var(--border-radius);
 
   h5 {
     margin: 0 0 1.5rem;
     font-weight: 600;
-    color: nb-theme(text-basic-color);
+    color: var(--text-basic-color);
   }
 
   .payment-breakdown {
@@ -131,7 +139,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 0.75rem 0;
-      border-bottom: 1px solid nb-theme(border-basic-color-5);
+      border-bottom: 1px solid var(--border-basic-color-5);
 
       &:last-child {
         border-bottom: none;
@@ -140,12 +148,12 @@
       &.total {
         margin-top: 0.5rem;
         padding-top: 1rem;
-        border-top: 2px solid nb-theme(border-basic-color-3);
+        border-top: 2px solid var(--border-basic-color-3);
         font-size: 1.1rem;
       }
 
       .discount {
-        color: nb-theme(color-success-600);
+        color: var(--color-success-600);
         font-weight: 600;
       }
     }
@@ -154,16 +162,16 @@
   .payment-timing {
     margin-top: 1rem;
     padding: 1rem;
-    background: nb-theme(background-basic-color-2);
-    border-radius: nb-theme(border-radius);
+    background: var(--background-basic-color-2);
+    border-radius: var(--border-radius);
     display: flex;
     align-items: center;
     font-size: 0.9rem;
-    color: nb-theme(text-hint-color);
+    color: var(--text-hint-color);
 
     nb-icon {
       margin-right: 0.5rem;
-      color: nb-theme(color-info-500);
+      color: var(--color-info-500);
     }
   }
 }
@@ -176,10 +184,10 @@
     display: inline-flex;
     align-items: center;
     padding: 1rem 2rem;
-    background: linear-gradient(135deg, rgba(nb-theme(color-success-500), 0.1), rgba(nb-theme(color-success-600), 0.05));
-    border: 2px solid nb-theme(color-success-300);
-    border-radius: nb-theme(border-radius);
-    color: nb-theme(color-success-600);
+    background: linear-gradient(135deg, rgba(var(--color-success-500), 0.1), rgba(var(--color-success-600), 0.05));
+    border: 2px solid var(--color-success-300);
+    border-radius: var(--border-radius);
+    color: var(--color-success-600);
     font-weight: 600;
 
     nb-icon {
@@ -190,10 +198,12 @@
 }
 
 .action-details {
-  .benefits, .restrictions {
+
+  .benefits,
+  .restrictions {
     margin-bottom: 1.5rem;
     padding: 1rem;
-    border-radius: nb-theme(border-radius);
+    border-radius: var(--border-radius);
 
     h6 {
       display: flex;
@@ -233,28 +243,28 @@
   }
 
   .benefits {
-    background: rgba(nb-theme(color-success-500), 0.05);
-    border: 1px solid rgba(nb-theme(color-success-500), 0.2);
+    background: rgba(var(--color-success-500), 0.05);
+    border: 1px solid rgba(var(--color-success-500), 0.2);
 
     h6 {
-      color: nb-theme(color-success-600);
+      color: var(--color-success-600);
     }
 
     li {
-      color: nb-theme(color-success-700);
+      color: var(--color-success-700);
     }
   }
 
   .restrictions {
-    background: rgba(nb-theme(color-warning-500), 0.05);
-    border: 1px solid rgba(nb-theme(color-warning-500), 0.2);
+    background: rgba(var(--color-warning-500), 0.05);
+    border: 1px solid rgba(var(--color-warning-500), 0.2);
 
     h6 {
-      color: nb-theme(color-warning-600);
+      color: var(--color-warning-600);
     }
 
     li {
-      color: nb-theme(color-warning-700);
+      color: var(--color-warning-700);
     }
   }
 }
@@ -288,7 +298,9 @@
     padding: 1.5rem 1rem;
   }
 
-  .payment-info, .action-details .benefits, .action-details .restrictions {
+  .payment-info,
+  .action-details .benefits,
+  .action-details .restrictions {
     padding: 1rem;
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
 	ICDNSource,
@@ -31,9 +31,15 @@ import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginScope } from '../../../services/plugin-subscription-access.service';
-import { PluginSubscriptionService } from '../../../services/plugin-subscription.service';
+import {
+	IPluginSubscription as IPluginSubscriptionDetail,
+	PluginSubscriptionService
+} from '../../../services/plugin-subscription.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
+import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
 import { PluginSubscriptionPlanSelectionComponent } from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
+import { SubscriptionStatusService } from '../shared';
 import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './dialog-installation-validation/dialog-installation-validation.component';
@@ -65,9 +71,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	// Tabs configuration
 	tabs$: Observable<NbRouteTab[]>;
 
+	private readonly route = inject(ActivatedRoute);
+	private readonly router = inject(Router);
+
 	constructor(
-		private readonly route: ActivatedRoute,
-		private readonly router: Router,
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
@@ -79,8 +86,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		public readonly installationQuery: PluginInstallationQuery,
 		public readonly versionQuery: PluginVersionQuery,
 		public readonly sourceQuery: PluginSourceQuery,
-		public readonly accessFacade: PluginSubscriptionAccessFacade
-	) { }
+		public readonly accessFacade: PluginSubscriptionAccessFacade,
+		public readonly statusService: SubscriptionStatusService
+	) {}
 
 	ngOnInit(): void {
 		this.plugin$
@@ -477,6 +485,53 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			backdropClass: 'backdrop-blur',
 			closeOnEsc: false
 		}).onClose;
+	}
+
+	/**
+	 * Alternative subscription management dialog (simpler UI)
+	 */
+	public manageSubscription(): void {
+		this.dialogService
+			.open(PluginSubscriptionManagerComponent, {
+				backdropClass: 'backdrop-blur',
+				closeOnEsc: false,
+				context: {
+					plugin: this.plugin,
+					currentSubscription: (this.plugin?.subscription as any) || null
+				}
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				tap((result) => {
+					console.log('Subscription updated:', result);
+					this.loadPlugin();
+				}),
+				takeUntil(this.destroy$)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Check if plugin has subscription to show hierarchy button
+	 */
+	public hasSubscription(): boolean {
+		return !!this.plugin.subscription;
+	}
+
+	/**
+	 * View subscription hierarchy (admin feature)
+	 */
+	public viewSubscriptionHierarchy(): void {
+		this.dialogService
+			.open(PluginSubscriptionHierarchyComponent, {
+				backdropClass: 'backdrop-blur',
+				context: {
+					subscriptions: [this.plugin?.subscription as any].filter(Boolean) as IPluginSubscriptionDetail[],
+					showActions: true
+				}
+			})
+			.onClose.pipe(takeUntil(this.destroy$))
+			.subscribe();
 	}
 
 	private proceedWithInstallationValidation(isUpdate = false): void {

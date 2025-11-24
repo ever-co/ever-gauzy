@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus } from '@gauzy/contracts';
 import { NbDialogService, NbMenuService } from '@nebular/theme';
@@ -14,10 +14,16 @@ import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
-import { PluginSubscriptionService, PluginSubscriptionType } from '../../../services/plugin-subscription.service';
+import {
+	IPluginSubscription as IPluginSubscriptionDetail,
+	PluginSubscriptionService,
+	PluginSubscriptionType
+} from '../../../services/plugin-subscription.service';
 import { DialogInstallationValidationComponent } from '../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSettingsManagementComponent } from '../plugin-settings-management/plugin-settings-management.component';
+import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
+import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
 import {
 	IPluginSubscriptionPlanSelectionResult,
 	PluginSubscriptionPlanSelectionComponent
@@ -50,9 +56,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 	private readonly _isChecked$ = new BehaviorSubject<boolean>(false);
 
+	private readonly router = inject(Router);
+
 	constructor(
 		private readonly dialog: NbDialogService,
-		private readonly router: Router,
 		private readonly store: Store,
 		private readonly action: Actions,
 		private readonly pluginService: PluginElectronService,
@@ -60,7 +67,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly subscriptionService: PluginSubscriptionService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		// Guard against undefined plugin
@@ -402,6 +409,50 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	/**
+	 * Open subscription manager dialog (alternative to plan selection)
+	 */
+	public manageSubscription(): void {
+		this.dialog
+			.open(PluginSubscriptionManagerComponent, {
+				backdropClass: 'backdrop-blur',
+				closeOnEsc: false,
+				context: {
+					plugin: this.plugin,
+					currentSubscription: (this.plugin?.subscription as any) || null
+				}
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				tap((result) => {
+					console.log('Subscription updated:', result);
+					// Reload plugin data to get updated subscription
+					this.action.dispatch(
+						PluginMarketplaceActions.getOne(this.plugin.id, { relations: ['subscriptions'] })
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Open subscription hierarchy view (admin feature)
+	 */
+	public viewSubscriptionHierarchy(): void {
+		this.dialog
+			.open(PluginSubscriptionHierarchyComponent, {
+				backdropClass: 'backdrop-blur',
+				closeOnEsc: true,
+				context: {
+					subscriptions: [this.plugin?.subscription as any].filter(Boolean) as IPluginSubscriptionDetail[],
+					showActions: true
+				}
+			})
+			.onClose.pipe(filter(Boolean), untilDestroyed(this))
+			.subscribe();
+	}
+
+	/**
 	 * Open user assignment dialog
 	 */
 	public manageUsers(): void {
@@ -451,6 +502,15 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 				icon: 'settings-outline',
 				data: { action: 'settings' }
 			});
+
+			// Add subscription management for plugins with plans
+			if (this.plugin.hasPlan) {
+				items.push({
+					title: 'Manage Subscription',
+					icon: 'credit-card-outline',
+					data: { action: 'manage-subscription' }
+				});
+			}
 
 			// Only show user management for plugins with plans (subscription-based)
 			if (this.plugin.hasPlan) {
@@ -509,6 +569,12 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		switch (item.data.action) {
 			case 'settings':
 				this.openSettings();
+				break;
+			case 'manage-subscription':
+				this.manageSubscription();
+				break;
+			case 'view-subscription-hierarchy':
+				this.viewSubscriptionHierarchy();
 				break;
 			case 'manage-users':
 				this.manageUsers();

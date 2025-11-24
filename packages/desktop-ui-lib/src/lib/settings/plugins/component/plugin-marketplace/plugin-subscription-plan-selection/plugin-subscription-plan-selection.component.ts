@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IPlugin, PluginScope } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
@@ -6,11 +6,11 @@ import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	BehaviorSubject,
-	Observable,
 	combineLatest,
 	filter,
 	firstValueFrom,
 	map,
+	Observable,
 	startWith,
 	switchMap,
 	take,
@@ -27,6 +27,7 @@ import {
 	PluginSubscriptionService,
 	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
+import { SubscriptionFormService, SubscriptionPlanService, SubscriptionStatusService } from '../shared';
 import { IPlanViewModel, ISubscriptionPreviewViewModel } from './models/plan-view.model';
 import { IPlanComparisonResult, PlanActionType, PlanComparisonService } from './services/plan-comparison.service';
 import { PlanFormatterService } from './services/plan-formatter.service';
@@ -117,15 +118,19 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 	public hasFreePlan$: Observable<boolean>;
 	public hasPaidPlans$: Observable<boolean>;
 
+	private readonly formBuilder = inject(FormBuilder);
+
 	constructor(
 		private readonly dialogRef: NbDialogRef<PluginSubscriptionPlanSelectionComponent>,
 		private readonly subscriptionService: PluginSubscriptionService,
-		private readonly formBuilder: FormBuilder,
 		private readonly pluginSubscriptionQuery: PluginSubscriptionQuery,
 		private readonly actions$: Actions,
 		private readonly planFormatter: PlanFormatterService,
 		private readonly facade: PluginSubscriptionFacade,
-		private readonly planComparison: PlanComparisonService
+		private readonly planComparison: PlanComparisonService,
+		public readonly planService: SubscriptionPlanService,
+		private readonly formService: SubscriptionFormService,
+		public readonly statusService: SubscriptionStatusService
 	) {
 		this.initializeForm();
 		this.setupKeyboardShortcuts();
@@ -798,16 +803,7 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 	 * Order: FREE < TRIAL < BASIC < PREMIUM < ENTERPRISE < CUSTOM
 	 */
 	public isPlanUpgrade(currentType: PluginSubscriptionType, newType: PluginSubscriptionType): boolean {
-		const planHierarchy = {
-			[PluginSubscriptionType.FREE]: 0,
-			[PluginSubscriptionType.TRIAL]: 1,
-			[PluginSubscriptionType.BASIC]: 2,
-			[PluginSubscriptionType.PREMIUM]: 3,
-			[PluginSubscriptionType.ENTERPRISE]: 4,
-			[PluginSubscriptionType.CUSTOM]: 5
-		};
-
-		return planHierarchy[newType] > planHierarchy[currentType];
+		return this.planService.comparePlans(currentType, newType) === 'upgrade';
 	}
 
 	/**

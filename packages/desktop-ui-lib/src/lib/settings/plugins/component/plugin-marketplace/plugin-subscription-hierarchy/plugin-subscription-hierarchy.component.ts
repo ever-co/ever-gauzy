@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { PluginScope } from '../../../services/plugin-subscription-access.service';
+import { PluginScope } from '@gauzy/contracts';
 import { IPluginSubscription, PluginSubscriptionStatus } from '../../../services/plugin-subscription.service';
+import { SubscriptionStatusService } from '../shared';
 
 interface SubscriptionNode {
 	subscription: IPluginSubscription;
@@ -24,6 +25,8 @@ export class PluginSubscriptionHierarchyComponent implements OnInit {
 	readonly pluginScope = PluginScope;
 	readonly subscriptionStatus = PluginSubscriptionStatus;
 
+	constructor(public readonly statusService: SubscriptionStatusService) {}
+
 	ngOnInit(): void {
 		if (this.subscriptions && this.subscriptions.length > 0) {
 			this.buildHierarchy();
@@ -42,18 +45,7 @@ export class PluginSubscriptionHierarchyComponent implements OnInit {
 		}));
 	}
 
-	getStatusBadgeStatus(status: PluginSubscriptionStatus): string {
-		const statusMap: Partial<Record<PluginSubscriptionStatus, string>> = {
-			[PluginSubscriptionStatus.ACTIVE]: 'success',
-			[PluginSubscriptionStatus.PENDING]: 'warning',
-			[PluginSubscriptionStatus.CANCELLED]: 'danger',
-			[PluginSubscriptionStatus.EXPIRED]: 'basic',
-			[PluginSubscriptionStatus.TRIAL]: 'info',
-			[PluginSubscriptionStatus.SUSPENDED]: 'danger',
-			[PluginSubscriptionStatus.PAST_DUE]: 'warning'
-		};
-		return statusMap[status] || 'basic';
-	}
+	// Status badge logic moved to SubscriptionStatusService
 
 	getUserId(subscription: IPluginSubscription): string {
 		return subscription.userId || 'N/A';

@@ -19,6 +19,12 @@ this.sourceQuery.creating$ | async;
 					[text]="getStatusLabel(plugin.status)"
 					class="mr-2 position-relative"
 				></nb-badge>
+				<!-- Subscription Status Badge -->
+				<gauzy-subscription-status-badge
+					*ngIf="plugin?.subscription"
+					[status]="plugin.subscription.status"
+					class="mr-2"
+				></gauzy-subscription-status-badge>
 				<nb-badge
 					*ngIf="plugin"
 					[status]="getPluginTypeBadgeStatus(plugin.type)"
@@ -164,6 +170,22 @@ this.sourceQuery.creating$ | async;
 		</button>
 
 		<div class="action-buttons">
+			<!-- View Subscription Button (shown when plugin has subscription) -->
+			@if(hasSubscription()) {
+			<button
+				nbButton
+				type="button"
+				size="small"
+				status="info"
+				[disabled]="disabled"
+				(click)="viewSubscriptionHierarchy()"
+				class="mr-2 action"
+				[nbTooltip]="'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate"
+			>
+				<nb-icon icon="credit-card-outline" class="mr-1"></nb-icon>
+				{{ 'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate }}
+			</button>
+			}
 			<!-- Assign Users Button (for users with canAssign permission) -->
 			@if(canAssign$ | async) {
 			<button

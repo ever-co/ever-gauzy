@@ -1,0 +1,117 @@
+.plan-card {
+	border: 2px solid var(--border-basic-color-3);
+	border-radius: 8px;
+	padding: 1.5rem;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+
+	&:hover:not(.disabled) {
+		border-color: var(--color-primary-500);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		transform: translateY(-2px);
+	}
+
+	&.selected {
+		border-color: var(--color-primary-500);
+		background-color: var(--color-primary-transparent-100);
+	}
+
+	&.current {
+		border-color: var(--color-info-500);
+	}
+
+	&.popular {
+		border-color: var(--color-warning-500);
+	}
+
+	&.recommended {
+		border-color: var(--color-success-500);
+	}
+
+	&.disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+}
+
+.plan-badges {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	margin-bottom: 1rem;
+}
+
+.plan-header {
+	margin-bottom: 1rem;
+}
+
+.plan-name {
+	font-size: 1.25rem;
+	font-weight: 600;
+	margin-bottom: 0.5rem;
+}
+
+.plan-price {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-bottom: 0.5rem;
+}
+
+.price-amount {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--color-primary-500);
+}
+
+.trial-info {
+	font-size: 0.875rem;
+	color: var(--color-success-500);
+	font-weight: 500;
+}
+
+.savings {
+	font-size: 0.875rem;
+	color: var(--color-success-500);
+	font-weight: 500;
+}
+
+.plan-description {
+	color: var(--text-hint-color);
+	margin-bottom: 1rem;
+	font-size: 0.9375rem;
+	line-height: 1.5;
+}
+
+.plan-features {
+	flex-grow: 1;
+	margin-bottom: 1rem;
+}
+
+.features-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.feature-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	padding: 0.375rem 0;
+	font-size: 0.875rem;
+
+	.feature-check {
+		color: var(--color-success-500);
+		flex-shrink: 0;
+		margin-top: 0.125rem;
+	}
+}
+
+.plan-action {
+	margin-top: auto;
+}

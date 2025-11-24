@@ -1,37 +1,19 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 import { IPlugin } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { BehaviorSubject } from 'rxjs';
-
-// Define subscription types locally since they might not be available in contracts
-enum PluginSubscriptionType {
-	FREE = 'free',
-	TRIAL = 'trial',
-	BASIC = 'basic',
-	PREMIUM = 'premium',
-	ENTERPRISE = 'enterprise'
-}
-
-enum PluginBillingPeriod {
-	MONTHLY = 'monthly',
-	QUARTERLY = 'quarterly',
-	YEARLY = 'yearly'
-}
-
-interface ISubscriptionPlan {
-	type: PluginSubscriptionType;
-	name: string;
-	description: string;
-	price: number;
-	currency: string;
-	billingPeriod: PluginBillingPeriod;
-	features: string[];
-	isPopular?: boolean;
-	isRecommended?: boolean;
-	trialDays?: number;
-}
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Observable } from 'rxjs';
+import { map, take } from 'rxjs/operators';
+import { PluginSubscriptionFacade } from '../+state/plugin-subscription.facade';
+import {
+	IPluginSubscription,
+	IPluginSubscriptionPlan,
+	PluginBillingPeriod,
+	PluginSubscriptionService,
+	PluginSubscriptionType
+} from '../../../services/plugin-subscription.service';
+import { SubscriptionFormService, SubscriptionPlanService, SubscriptionStatusService } from '../shared';
 
 @UntilDestroy()
 @Component({
@@ -42,12 +24,13 @@ interface ISubscriptionPlan {
 })
 export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	@Input() plugin: IPlugin;
-	@Input() currentSubscription: any; // Replace with proper interface when available
+	@Input() currentSubscription: IPluginSubscription | null = null;
 
 	public subscriptionForm: FormGroup;
-	public isLoading$ = new BehaviorSubject<boolean>(false);
-	public availablePlans: ISubscriptionPlan[] = [];
-	public selectedPlan: ISubscriptionPlan | null = null;
+	public isLoading$: Observable<boolean>;
+	public availablePlans$: Observable<IPluginSubscriptionPlan[]>;
+	public currentPlan$: Observable<IPluginSubscriptionPlan | null>;
+	public selectedPlan: IPluginSubscriptionPlan | null = null;
 	public showBillingForm = false;
 
 	// Enum references for template
@@ -55,310 +38,326 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	public PluginBillingPeriod = PluginBillingPeriod;
 
 	constructor(
-		private readonly formBuilder: FormBuilder,
 		private readonly dialogService: NbDialogService,
-		private readonly dialogRef: NbDialogRef<PluginSubscriptionManagerComponent>
+		private readonly dialogRef: NbDialogRef<PluginSubscriptionManagerComponent>,
+		private readonly subscriptionService: PluginSubscriptionService,
+		private readonly facade: PluginSubscriptionFacade,
+		public readonly planService: SubscriptionPlanService,
+		private readonly formService: SubscriptionFormService,
+		public readonly statusService: SubscriptionStatusService
 	) {
-		this.initializeForm();
-		this.initializeAvailablePlans();
+		this.subscriptionForm = this.formService.createSubscriptionForm();
+		this.isLoading$ = this.facade.isLoading$;
 	}
 
 	ngOnInit(): void {
-		this.loadCurrentSubscription();
+		if (this.plugin?.id) {
+			// Load subscription plans for this plugin
+			this.facade.loadPluginPlans(this.plugin.id);
+			this.availablePlans$ = this.facade.getCurrentPluginPlans(this.plugin.id);
+
+			// If no current subscription passed, try to load it
+			if (!this.currentSubscription) {
+				this.facade
+					.getCurrentPluginSubscription(this.plugin.id)
+					.pipe(take(1), untilDestroyed(this))
+					.subscribe((subscription) => {
+						this.currentSubscription = subscription;
+					});
+			}
+
+			// Reactively compute the current plan from subscription and available plans
+			this.setupCurrentPlan();
+
+			// Setup payment method validation
+			this.setupPaymentMethodListener();
+		}
 	}
 
 	ngOnDestroy(): void {
 		// Cleanup handled by @UntilDestroy
 	}
 
-	private initializeForm(): void {
-		this.subscriptionForm = this.formBuilder.group({
-			subscriptionType: ['', Validators.required],
-			billingPeriod: [PluginBillingPeriod.MONTHLY, Validators.required],
-			autoRenew: [true],
-			paymentMethod: ['', Validators.required],
-			cardNumber: ['', [Validators.required, Validators.pattern(/^\d{16}$/)]],
-			expiryDate: ['', [Validators.required, Validators.pattern(/^(0[1-9]|1[0-2])\/\d{2}$/)]],
-			cvv: ['', [Validators.required, Validators.pattern(/^\d{3,4}$/)]],
-			billingName: ['', Validators.required],
-			billingEmail: ['', [Validators.required, Validators.email]],
-			acceptTerms: [false, Validators.requiredTrue]
+	/**
+	 * Setup listener to update card field validators based on payment method selection
+	 */
+	private setupPaymentMethodListener(): void {
+		this.subscriptionForm
+			.get('paymentMethod')
+			?.valueChanges.pipe(untilDestroyed(this))
+			.subscribe((paymentMethod) => {
+				this.formService.updateCardFieldValidators(this.subscriptionForm, paymentMethod);
+			});
+	}
+
+	/**
+	 * Setup reactive observable to find the current subscription plan
+	 * This ensures the plan is found even when plans are loaded asynchronously
+	 */
+	private setupCurrentPlan(): void {
+		if (!this.availablePlans$) {
+			console.warn('[PluginSubscriptionManager] availablePlans$ is not initialized');
+			return;
+		}
+
+		this.currentPlan$ = this.availablePlans$.pipe(
+			map((plans) => {
+				if (!this.currentSubscription?.planId) {
+					console.log('[PluginSubscriptionManager] No current subscription or planId');
+					return null;
+				}
+
+				console.log('[PluginSubscriptionManager] Searching for plan:', {
+					planId: this.currentSubscription.planId,
+					availablePlansCount: plans?.length || 0,
+					plans: plans?.map((p) => ({ id: p.id, name: p.name }))
+				});
+
+				const foundPlan = plans.find((p) => p.id === this.currentSubscription!.planId) || null;
+
+				if (!foundPlan) {
+					console.warn(
+						'[PluginSubscriptionManager] Plan not found for planId:',
+						this.currentSubscription.planId
+					);
+				} else {
+					console.log('[PluginSubscriptionManager] Found plan:', foundPlan.name);
+				}
+
+				return foundPlan;
+			}),
+			untilDestroyed(this)
+		);
+
+		// Subscribe to set the selectedPlan for use in non-template code
+		this.currentPlan$.subscribe((plan) => {
+			this.selectedPlan = plan;
 		});
 	}
 
-	private initializeAvailablePlans(): void {
-		this.availablePlans = [
-			{
-				type: PluginSubscriptionType.FREE,
-				name: 'Free',
-				description: 'Basic features for personal use',
-				price: 0,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				features: ['Basic plugin functionality', 'Community support', 'Limited usage', 'Standard updates']
-			},
-			{
-				type: PluginSubscriptionType.TRIAL,
-				name: 'Free Trial',
-				description: 'Try premium features for 14 days',
-				price: 0,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				trialDays: 14,
-				features: [
-					'All premium features',
-					'Priority support',
-					'Advanced configuration',
-					'Analytics dashboard',
-					'API access'
-				]
-			},
-			{
-				type: PluginSubscriptionType.BASIC,
-				name: 'Basic',
-				description: 'Essential features for small teams',
-				price: 9.99,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				features: [
-					'Enhanced plugin functionality',
-					'Email support',
-					'Advanced settings',
-					'Usage analytics',
-					'Team collaboration (up to 5 users)'
-				]
-			},
-			{
-				type: PluginSubscriptionType.PREMIUM,
-				name: 'Premium',
-				description: 'Advanced features for growing teams',
-				price: 19.99,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				isPopular: true,
-				isRecommended: true,
-				features: [
-					'All Basic features',
-					'Priority support',
-					'Advanced analytics',
-					'Custom integrations',
-					'Team collaboration (up to 25 users)',
-					'Custom branding',
-					'API access'
-				]
-			},
-			{
-				type: PluginSubscriptionType.ENTERPRISE,
-				name: 'Enterprise',
-				description: 'Complete solution for large organizations',
-				price: 49.99,
-				currency: 'USD',
-				billingPeriod: PluginBillingPeriod.MONTHLY,
-				features: [
-					'All Premium features',
-					'Dedicated support',
-					'Custom development',
-					'On-premise deployment',
-					'Unlimited users',
-					'Advanced security',
-					'SLA guarantee',
-					'Training & onboarding'
-				]
-			}
-		];
-	}
+	public selectPlan(plan: IPluginSubscriptionPlan): void {
+		console.log('[SubscriptionManager] Plan selected:', {
+			plan: plan,
+			type: plan.type,
+			hasCurrentSubscription: !!this.currentSubscription,
+			willShowForm: plan.type !== PluginSubscriptionType.FREE
+		});
 
-	private loadCurrentSubscription(): void {
-		if (this.currentSubscription) {
-			this.selectedPlan =
-				this.availablePlans.find((plan) => plan.type === this.currentSubscription.subscriptionType) || null;
-		}
-	}
-
-	public selectPlan(plan: ISubscriptionPlan): void {
 		this.selectedPlan = plan;
 		this.subscriptionForm.patchValue({
 			subscriptionType: plan.type,
 			billingPeriod: plan.billingPeriod
 		});
 
+		// If it's the current plan, do nothing
+		if (this.isCurrentPlan(plan)) {
+			console.log('[SubscriptionManager] Selected plan is current plan, no action needed');
+			return;
+		}
+
+		// If subscription exists and upgrading/downgrading, show billing form
+		if (this.currentSubscription) {
+			if (this.canUpgrade(plan) || this.canDowngrade(plan)) {
+				this.showBillingForm = true;
+				console.log('[SubscriptionManager] Billing form shown for plan change:', {
+					action: this.canUpgrade(plan) ? 'upgrade' : 'downgrade',
+					fromPlan: this.currentSubscription.subscriptionType,
+					toPlan: plan.type
+				});
+			}
+			return;
+		}
+
+		// New subscription flow
 		if (plan.type === PluginSubscriptionType.FREE) {
 			this.subscribeToPlan();
 		} else {
 			this.showBillingForm = true;
+			console.log('[SubscriptionManager] Billing form shown, form state:', {
+				formValid: this.subscriptionForm.valid,
+				paymentMethod: this.subscriptionForm.get('paymentMethod')?.value
+			});
 		}
 	}
 
 	public subscribeToPlan(): void {
-		if (!this.selectedPlan) return;
+		if (!this.selectedPlan || !this.plugin?.id) return;
 
 		if (this.selectedPlan.type !== PluginSubscriptionType.FREE && !this.subscriptionForm.valid) {
-			this.markFormGroupTouched();
+			console.log('[SubscriptionManager] Form validation failed:', {
+				formValid: this.subscriptionForm.valid,
+				formValue: this.subscriptionForm.value,
+				formErrors: this.formService.getFormValidationErrors(this.subscriptionForm)
+			});
+			this.formService.markFormGroupTouched(this.subscriptionForm);
 			return;
 		}
 
-		this.isLoading$.next(true);
+		// If subscription exists, handle upgrade/downgrade
+		if (this.currentSubscription) {
+			if (this.canUpgrade(this.selectedPlan)) {
+				this.upgradeSubscription(this.selectedPlan);
+			} else if (this.canDowngrade(this.selectedPlan)) {
+				this.downgradeSubscription(this.selectedPlan);
+			}
+			return;
+		}
 
-		// Simulate API call
-		setTimeout(() => {
-			this.isLoading$.next(false);
-			this.dialogRef.close({
-				success: true,
-				subscription: {
-					pluginId: this.plugin.id,
-					subscriptionType: this.selectedPlan.type,
-					billingPeriod: this.selectedPlan.billingPeriod,
-					price: this.selectedPlan.price,
-					currency: this.selectedPlan.currency,
-					autoRenew: this.subscriptionForm.get('autoRenew')?.value || true
-				}
-			});
-		}, 2000);
-	}
+		// New subscription flow
+		const subscriptionInput = {
+			pluginId: this.plugin.id,
+			planId: this.selectedPlan.id,
+			scope: 'user' as any,
+			autoRenew: this.subscriptionForm.get('autoRenew')?.value ?? true,
+			paymentMethodId: this.subscriptionForm.get('paymentMethod')?.value
+		};
 
-	public cancelSubscription(): void {
-		if (!this.currentSubscription) return;
+		this.facade.createSubscription(this.plugin.id, subscriptionInput);
 
-		this.dialogService
-			.open(this.getCancelConfirmationDialog(), {
-				context: {
-					title: 'Cancel Subscription',
-					message:
-						'Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your current billing period.',
-					confirmText: 'Cancel Subscription',
-					cancelText: 'Keep Subscription'
-				}
-			})
-			.onClose.subscribe((confirmed: boolean) => {
-				if (confirmed) {
-					this.isLoading$.next(true);
-					// Simulate API call
-					setTimeout(() => {
-						this.isLoading$.next(false);
+		this.facade.creating$.pipe(take(2), untilDestroyed(this)).subscribe((creating) => {
+			if (!creating) {
+				this.facade.error$.pipe(take(1), untilDestroyed(this)).subscribe((error) => {
+					if (!error) {
 						this.dialogRef.close({
 							success: true,
-							action: 'cancelled'
+							subscription: this.selectedPlan
 						});
-					}, 1000);
-				}
-			});
-	}
-
-	public upgradeSubscription(): void {
-		this.showBillingForm = true;
-	}
-
-	public downgradeSubscription(): void {
-		this.dialogService
-			.open(this.getDowngradeConfirmationDialog(), {
-				context: {
-					title: 'Downgrade Subscription',
-					message:
-						'Downgrading will reduce your available features. This change will take effect at the end of your current billing period.',
-					confirmText: 'Downgrade',
-					cancelText: 'Cancel'
-				}
-			})
-			.onClose.subscribe((confirmed: boolean) => {
-				if (confirmed) {
-					this.showBillingForm = true;
-				}
-			});
-	}
-
-	public getPlanPrice(plan: ISubscriptionPlan): string {
-		if (plan.price === 0) {
-			return plan.type === PluginSubscriptionType.TRIAL ? 'Free Trial' : 'Free';
-		}
-
-		const period =
-			plan.billingPeriod === PluginBillingPeriod.YEARLY
-				? 'year'
-				: plan.billingPeriod === PluginBillingPeriod.QUARTERLY
-				? 'quarter'
-				: 'month';
-
-		return `$${plan.price}/${period}`;
-	}
-
-	public getPlanSavings(plan: ISubscriptionPlan): string | null {
-		if (plan.billingPeriod === PluginBillingPeriod.YEARLY) {
-			const monthlyEquivalent = plan.price / 12;
-			const monthlySavings = (plan.price * 1.2) / 12 - monthlyEquivalent;
-			return `Save $${monthlySavings.toFixed(2)}/month`;
-		}
-		return null;
-	}
-
-	public isCurrentPlan(plan: ISubscriptionPlan): boolean {
-		return this.currentSubscription?.subscriptionType === plan.type;
-	}
-
-	public canUpgrade(plan: ISubscriptionPlan): boolean {
-		if (!this.currentSubscription) return plan.type !== PluginSubscriptionType.FREE;
-
-		const currentIndex = this.getSubscriptionTypeIndex(this.currentSubscription.subscriptionType);
-		const planIndex = this.getSubscriptionTypeIndex(plan.type);
-
-		return planIndex > currentIndex;
-	}
-
-	public canDowngrade(plan: ISubscriptionPlan): boolean {
-		if (!this.currentSubscription) return false;
-
-		const currentIndex = this.getSubscriptionTypeIndex(this.currentSubscription.subscriptionType);
-		const planIndex = this.getSubscriptionTypeIndex(plan.type);
-
-		return planIndex < currentIndex;
-	}
-
-	private getSubscriptionTypeIndex(type: PluginSubscriptionType): number {
-		const order = [
-			PluginSubscriptionType.FREE,
-			PluginSubscriptionType.TRIAL,
-			PluginSubscriptionType.BASIC,
-			PluginSubscriptionType.PREMIUM,
-			PluginSubscriptionType.ENTERPRISE
-		];
-		return order.indexOf(type);
-	}
-
-	private markFormGroupTouched(): void {
-		Object.keys(this.subscriptionForm.controls).forEach((key) => {
-			this.subscriptionForm.get(key)?.markAsTouched();
+					}
+				});
+			}
 		});
 	}
 
-	private getCancelConfirmationDialog(): any {
-		// Return a confirmation dialog component reference
-		// This would be implemented based on your dialog system
-		return null; // Placeholder
+	public cancelSubscription(): void {
+		if (!this.currentSubscription || !this.plugin?.id) return;
+
+		if (
+			confirm(
+				'Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your current billing period.'
+			)
+		) {
+			this.facade.cancelSubscription(this.plugin.id, this.currentSubscription.id);
+
+			this.facade.deleting$.pipe(take(2), untilDestroyed(this)).subscribe((deleting) => {
+				if (!deleting) {
+					this.dialogRef.close({
+						success: true,
+						action: 'cancelled'
+					});
+				}
+			});
+		}
 	}
 
-	private getDowngradeConfirmationDialog(): any {
-		// Return a confirmation dialog component reference
-		// This would be implemented based on your dialog system
-		return null; // Placeholder
+	public upgradeSubscription(plan?: IPluginSubscriptionPlan): void {
+		const targetPlan = plan || this.selectedPlan;
+		if (!targetPlan || !this.currentSubscription || !this.plugin?.id) return;
+
+		if (
+			confirm(
+				`Upgrade to ${targetPlan.name} for ${this.getPlanPrice(
+					targetPlan
+				)}? You'll be charged a prorated amount for the remainder of your current billing period.`
+			)
+		) {
+			console.log('[SubscriptionManager] Upgrading subscription to:', targetPlan.name);
+
+			// Update the subscription with new plan type and billing period
+			this.facade.updateSubscription(this.plugin.id, this.currentSubscription.id, {
+				subscriptionType: targetPlan.type,
+				billingPeriod: targetPlan.billingPeriod,
+				metadata: {
+					newPlanId: targetPlan.id,
+					newPlanName: targetPlan.name,
+					upgradeAction: 'immediate'
+				}
+			});
+
+			this.facade.updating$.pipe(take(2), untilDestroyed(this)).subscribe((updating) => {
+				if (!updating) {
+					this.facade.error$.pipe(take(1), untilDestroyed(this)).subscribe((error) => {
+						if (!error) {
+							this.dialogRef.close({
+								success: true,
+								action: 'upgraded',
+								subscription: targetPlan
+							});
+						}
+					});
+				}
+			});
+		}
 	}
+
+	public downgradeSubscription(plan?: IPluginSubscriptionPlan): void {
+		const targetPlan = plan || this.selectedPlan;
+		if (!targetPlan || !this.currentSubscription || !this.plugin?.id) return;
+
+		if (
+			confirm(
+				`Downgrade to ${targetPlan.name} for ${this.getPlanPrice(
+					targetPlan
+				)}? This change will take effect at the end of your current billing period. You'll retain access to your current features until then.`
+			)
+		) {
+			console.log('[SubscriptionManager] Downgrading subscription to:', targetPlan.name);
+
+			// Update the subscription with new plan type and billing period
+			this.facade.updateSubscription(this.plugin.id, this.currentSubscription.id, {
+				subscriptionType: targetPlan.type,
+				billingPeriod: targetPlan.billingPeriod,
+				metadata: {
+					newPlanId: targetPlan.id,
+					newPlanName: targetPlan.name,
+					downgradeAction: 'end-of-period'
+				}
+			});
+
+			this.facade.updating$.pipe(take(2), untilDestroyed(this)).subscribe((updating) => {
+				if (!updating) {
+					this.facade.error$.pipe(take(1), untilDestroyed(this)).subscribe((error) => {
+						if (!error) {
+							this.dialogRef.close({
+								success: true,
+								action: 'downgraded',
+								subscription: targetPlan
+							});
+						}
+					});
+				}
+			});
+		}
+	}
+
+	public getPlanPrice(plan: IPluginSubscriptionPlan): string {
+		return this.planService.formatPlanPrice(plan);
+	}
+
+	public getPlanSavings(plan: IPluginSubscriptionPlan): string | null {
+		return this.planService.calculatePlanSavings(plan);
+	}
+
+	public isCurrentPlan(plan: IPluginSubscriptionPlan): boolean {
+		return this.currentSubscription?.planId === plan.id;
+	}
+
+	public canUpgrade(plan: IPluginSubscriptionPlan): boolean {
+		if (!this.currentSubscription) return plan.type !== PluginSubscriptionType.FREE;
+		return this.planService.canUpgrade(this.currentSubscription.subscriptionType, plan);
+	}
+
+	public canDowngrade(plan: IPluginSubscriptionPlan): boolean {
+		if (!this.currentSubscription) return false;
+		return this.planService.canDowngrade(this.currentSubscription.subscriptionType, plan);
+	}
+
+	// Helper methods moved to services
 
 	public close(): void {
 		this.dialogRef.close();
 	}
 
 	public getStatusIcon(status: string): string {
-		switch (status?.toLowerCase()) {
-			case 'active':
-				return 'checkmark-circle-outline';
-			case 'trial':
-				return 'clock-outline';
-			case 'expired':
-				return 'alert-triangle-outline';
-			case 'cancelled':
-				return 'close-circle-outline';
-			case 'suspended':
-				return 'pause-circle-outline';
-			default:
-				return 'info-outline';
-		}
+		return this.statusService.getStatusIcon(status);
 	}
 }

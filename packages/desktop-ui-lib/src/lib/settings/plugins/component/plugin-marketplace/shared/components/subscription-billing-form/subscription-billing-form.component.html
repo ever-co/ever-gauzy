@@ -1,0 +1,143 @@
+<div class="billing-form">
+	<form [formGroup]="form" (ngSubmit)="onSubmit()">
+		<div class="form-header">
+			<h5>
+				<nb-icon icon="credit-card-outline"></nb-icon>
+				{{ getHeaderText() }}
+			</h5>
+			<p class="selected-plan-info">
+				{{ getDescriptionText() }} <strong>{{ plan.name }}</strong>
+				<ng-container *ngIf="isUpgrade">
+					<br /><small>You'll be charged a prorated amount for the remainder of your billing period.</small>
+				</ng-container>
+				<ng-container *ngIf="isDowngrade">
+					<br /><small>Change takes effect at the end of your current billing period.</small>
+				</ng-container>
+			</p>
+		</div>
+
+		<!-- Billing Cycle -->
+		<div class="form-section">
+			<h6>Billing Cycle</h6>
+			<nb-radio-group formControlName="billingPeriod" class="billing-period">
+				<nb-radio value="monthly"> Monthly - {{ plan.price | currency : plan.currency }}/month </nb-radio>
+				<nb-radio value="quarterly">
+					Quarterly - {{ plan.price * 3 * 0.95 | currency : plan.currency }}/quarter
+					<span class="savings">Save 5%</span>
+				</nb-radio>
+				<nb-radio value="yearly">
+					Yearly - {{ plan.price * 12 * 0.8 | currency : plan.currency }}/year
+					<span class="savings">Save 20%</span>
+				</nb-radio>
+			</nb-radio-group>
+		</div>
+
+		<!-- Payment Method -->
+		<div class="form-section" *ngIf="showPaymentSection">
+			<h6>Payment Method</h6>
+			<nb-radio-group formControlName="paymentMethod" class="payment-methods">
+				<nb-radio value="card">
+					<nb-icon icon="credit-card-outline"></nb-icon>
+					Credit/Debit Card
+				</nb-radio>
+				<nb-radio value="paypal">
+					<nb-icon icon="at-outline"></nb-icon>
+					PayPal
+				</nb-radio>
+			</nb-radio-group>
+		</div>
+
+		<!-- Card Details -->
+		<div class="form-section" *ngIf="showPaymentSection && isCardPaymentMethod()">
+			<h6>Card Details</h6>
+			<div class="card-form">
+				<div class="input-group">
+					<label>Card Number</label>
+					<nb-form-field>
+						<input nbInput formControlName="cardNumber" placeholder="1234 5678 9012 3456" maxlength="16" />
+					</nb-form-field>
+					<div class="error-message" *ngIf="hasError('cardNumber', 'required')">Card number is required</div>
+					<div class="error-message" *ngIf="hasError('cardNumber', 'pattern')">
+						Please enter a valid 16-digit card number
+					</div>
+				</div>
+
+				<div class="input-row">
+					<div class="input-group">
+						<label>Expiry Date</label>
+						<nb-form-field>
+							<input nbInput formControlName="expiryDate" placeholder="MM/YY" maxlength="5" />
+						</nb-form-field>
+						<div class="error-message" *ngIf="hasError('expiryDate', 'pattern')">Format: MM/YY</div>
+					</div>
+
+					<div class="input-group">
+						<label>CVV</label>
+						<nb-form-field>
+							<input nbInput formControlName="cvv" placeholder="123" maxlength="4" type="password" />
+						</nb-form-field>
+						<div class="error-message" *ngIf="hasError('cvv', 'pattern')">Invalid CVV</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Billing Contact -->
+		<div class="form-section">
+			<h6>Billing Contact</h6>
+			<div class="billing-contact">
+				<div class="input-group">
+					<label>Full Name</label>
+					<nb-form-field>
+						<input nbInput formControlName="billingName" placeholder="John Doe" />
+					</nb-form-field>
+					<div class="error-message" *ngIf="hasError('billingName', 'required')">
+						Billing name is required
+					</div>
+				</div>
+
+				<div class="input-group">
+					<label>Email Address</label>
+					<nb-form-field>
+						<input nbInput formControlName="billingEmail" placeholder="john@example.com" type="email" />
+					</nb-form-field>
+					<div class="error-message" *ngIf="hasError('billingEmail', 'required')">Email is required</div>
+					<div class="error-message" *ngIf="hasError('billingEmail', 'email')">
+						Please enter a valid email address
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Auto Renew -->
+		<div class="form-section">
+			<nb-checkbox formControlName="autoRenew"> Enable automatic renewal </nb-checkbox>
+			<p class="checkbox-help">Your subscription will automatically renew unless cancelled</p>
+		</div>
+
+		<!-- Terms -->
+		<div class="form-section">
+			<nb-checkbox formControlName="acceptTerms">
+				I agree to the <a href="#" target="_blank">Terms of Service</a> and
+				<a href="#" target="_blank">Privacy Policy</a>
+			</nb-checkbox>
+			<div class="error-message" *ngIf="hasError('acceptTerms', 'required')">
+				You must accept the terms to continue
+			</div>
+		</div>
+
+		<!-- Actions -->
+		<div class="form-actions">
+			<button type="button" nbButton ghost (click)="onCancel()" [disabled]="isLoading">Cancel</button>
+			<button
+				type="submit"
+				nbButton
+				[status]="getActionStatus()"
+				[disabled]="!form.valid || isLoading"
+				*gauzySpinnerButton="isLoading"
+			>
+				{{ getActionText() }}
+			</button>
+		</div>
+	</form>
+</div>

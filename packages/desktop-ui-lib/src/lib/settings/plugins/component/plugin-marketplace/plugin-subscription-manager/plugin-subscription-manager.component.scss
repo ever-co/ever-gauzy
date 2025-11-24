@@ -5,6 +5,8 @@
   padding: 24px;
   background: var(--card-background-color);
   border-radius: 12px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 /* Manager Header */
@@ -116,6 +118,57 @@
       background: var(--card-background-color);
       border-radius: 6px;
       border: 1px solid var(--border-color);
+
+      &.plan-details {
+        grid-column: 1 / -1;
+        flex-direction: column;
+        gap: 4px;
+
+        .value {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          strong {
+            font-size: 15px;
+            color: var(--primary-color);
+          }
+
+          .plan-description {
+            font-size: 12px;
+            color: var(--text-hint-color);
+            font-weight: normal;
+          }
+        }
+      }
+
+      &.features {
+        grid-column: 1 / -1;
+        flex-direction: column;
+
+        .features-list-small {
+          list-style: none;
+          padding: 0;
+          margin: 8px 0 0 0;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+
+          li {
+            font-size: 12px;
+            padding: 4px 10px;
+            background: var(--basic-background-color);
+            border-radius: 12px;
+            color: var(--text-basic-color);
+            border: 1px solid var(--border-color);
+
+            &.more-features {
+              color: var(--text-hint-color);
+              font-style: italic;
+            }
+          }
+        }
+      }
 
       .label {
         font-size: 13px;

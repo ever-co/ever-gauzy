@@ -1,0 +1,149 @@
+.billing-form {
+	.form-header {
+		margin-bottom: 2rem;
+
+		h5 {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			margin-bottom: 0.75rem;
+			font-size: 1.25rem;
+			font-weight: 600;
+		}
+
+		.selected-plan-info {
+			color: var(--text-hint-color);
+			margin: 0;
+			line-height: 1.6;
+
+			strong {
+				color: var(--text-basic-color);
+			}
+
+			small {
+				display: block;
+				margin-top: 0.5rem;
+				font-size: 0.875rem;
+				color: var(--color-info-500);
+			}
+		}
+	}
+
+	.form-section {
+		margin-bottom: 1.5rem;
+
+		h6 {
+			font-size: 1rem;
+			font-weight: 600;
+			margin-bottom: 0.75rem;
+		}
+
+		.billing-period,
+		.payment-methods {
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+
+			nb-radio {
+				display: flex;
+				align-items: center;
+				padding: 0.75rem;
+				border: 1px solid var(--border-basic-color-3);
+				border-radius: 4px;
+				transition: all 0.2s ease;
+
+				&:hover {
+					border-color: var(--color-primary-500);
+					background-color: var(--color-primary-transparent-100);
+				}
+
+				.savings {
+					margin-left: 0.5rem;
+					color: var(--color-success-500);
+					font-weight: 500;
+					font-size: 0.875rem;
+				}
+
+				nb-icon {
+					margin-right: 0.5rem;
+				}
+			}
+		}
+
+		.card-form {
+			.input-group {
+				margin-bottom: 1rem;
+
+				label {
+					display: block;
+					margin-bottom: 0.5rem;
+					font-weight: 500;
+					color: var(--text-basic-color);
+				}
+
+				.error-message {
+					color: var(--color-danger-500);
+					font-size: 0.875rem;
+					margin-top: 0.25rem;
+				}
+			}
+
+			.input-row {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 1rem;
+			}
+		}
+
+		.billing-contact {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+
+			.input-group {
+				label {
+					display: block;
+					margin-bottom: 0.5rem;
+					font-weight: 500;
+					color: var(--text-basic-color);
+				}
+
+				.error-message {
+					color: var(--color-danger-500);
+					font-size: 0.875rem;
+					margin-top: 0.25rem;
+				}
+			}
+		}
+
+		.checkbox-help {
+			margin: 0.5rem 0 0 1.75rem;
+			font-size: 0.875rem;
+			color: var(--text-hint-color);
+		}
+
+		.error-message {
+			color: var(--color-danger-500);
+			font-size: 0.875rem;
+			margin: 0.5rem 0 0 1.75rem;
+		}
+
+		a {
+			color: var(--color-primary-500);
+			text-decoration: none;
+
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+	}
+
+	.form-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 1rem;
+		margin-top: 2rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--border-basic-color-3);
+	}
+}

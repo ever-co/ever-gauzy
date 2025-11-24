@@ -114,6 +114,15 @@ import { PluginTagsService } from './services/plugin-tags.service';
 import { PluginUserAssignmentService } from './services/plugin-user-assignment.service';
 import { PluginService } from './services/plugin.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
+// Shared subscription components and services
+import {
+	SubscriptionBillingFormComponent,
+	SubscriptionFormService,
+	SubscriptionPlanCardComponent,
+	SubscriptionPlanService,
+	SubscriptionStatusBadgeComponent,
+	SubscriptionStatusService
+} from './component/plugin-marketplace/shared';
 
 @NgModule({
 	declarations: [
@@ -155,7 +164,11 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		GauzyFormComponent,
 		NpmFormComponent,
 		DialogCreateSourceComponent,
-		SourceContainerComponent
+		SourceContainerComponent,
+		// Shared subscription components
+		SubscriptionPlanCardComponent,
+		SubscriptionStatusBadgeComponent,
+		SubscriptionBillingFormComponent
 	],
 	imports: [
 		CommonModule,
@@ -209,6 +222,10 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginAnalyticsService,
 		PluginSecurityService,
 		PluginUserAssignmentService,
+		// Shared subscription services
+		SubscriptionPlanService,
+		SubscriptionFormService,
+		SubscriptionStatusService,
 		provideEffectsManager(),
 		provideEffects(
 			PluginEffects,

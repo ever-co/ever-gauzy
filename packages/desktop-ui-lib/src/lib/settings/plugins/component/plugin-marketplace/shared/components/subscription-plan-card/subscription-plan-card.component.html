@@ -1,0 +1,53 @@
+<div
+	class="plan-card"
+	[class.selected]="isSelected"
+	[class.current]="isCurrent"
+	[class.popular]="isPopular"
+	[class.recommended]="isRecommended"
+	[class.disabled]="disabled"
+	(click)="onPlanClick()"
+>
+	<!-- Plan badges -->
+	<div class="plan-badges">
+		<nb-badge *ngIf="isPopular" status="warning" text="Most Popular"></nb-badge>
+		<nb-badge *ngIf="isRecommended" status="success" text="Recommended"></nb-badge>
+		<nb-badge *ngIf="isCurrent" status="info" text="Current Plan"></nb-badge>
+	</div>
+
+	<!-- Plan header -->
+	<div class="plan-header">
+		<h6 class="plan-name">{{ plan.name }}</h6>
+		<div class="plan-price" *ngIf="priceLabel">
+			<span class="price-amount">{{ priceLabel }}</span>
+			<span class="trial-info" *ngIf="plan.trialDays">{{ plan.trialDays }} days free</span>
+		</div>
+		<div class="savings" *ngIf="savingsLabel">{{ savingsLabel }}</div>
+	</div>
+
+	<!-- Plan description -->
+	<p class="plan-description">{{ plan.description }}</p>
+
+	<!-- Plan features -->
+	<div class="plan-features">
+		<ul class="features-list">
+			<li class="feature-item" *ngFor="let feature of plan.features">
+				<nb-icon icon="checkmark-circle-outline" class="feature-check"></nb-icon>
+				{{ feature }}
+			</li>
+		</ul>
+	</div>
+
+	<!-- Plan action button -->
+	<div class="plan-action" *ngIf="showActions">
+		<button
+			nbButton
+			[status]="canUpgrade ? 'success' : canDowngrade ? 'warning' : isCurrent ? 'basic' : 'primary'"
+			[disabled]="isCurrent || disabled"
+			size="small"
+			fullWidth
+			(click)="onActionClick($event)"
+		>
+			{{ actionLabel }}
+		</button>
+	</div>
+</div>

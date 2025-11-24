@@ -10,13 +10,9 @@
 					<div class="subscription-card">
 						<!-- Status Badge -->
 						<div class="status-section">
-							<nb-badge
-								[status]="getStatusBadgeStatus(node.subscription.status)"
-								[text]="node.subscription.status | titlecase"
-							>
-							</nb-badge>
+							<gauzy-subscription-status-badge [status]="node.subscription.status">
+							</gauzy-subscription-status-badge>
 						</div>
-
 						<!-- Subscription Details -->
 						<div class="details-section">
 							<div class="detail-row">

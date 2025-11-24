@@ -63,7 +63,9 @@ hasExistingSubscription$ | async;
 			<!-- Current Subscription Alert -->
 			@if (hasExistingSubscription && currentSubscription) {
 			<nb-alert status="info" size="tiny" closable="false" class="current-subscription-alert">
-				<nb-icon icon="shield-outline"></nb-icon>
+				<gauzy-subscription-status-badge
+					[status]="currentSubscription.status"
+				></gauzy-subscription-status-badge>
 				<span>
 					You have an active
 					<strong>{{ currentSubscription.subscriptionType | titlecase }}</strong> subscription.
