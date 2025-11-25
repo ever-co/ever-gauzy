@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
-import { ID, IPluginSource } from '@gauzy/contracts';
+import { ID, IPluginSource, PluginOSArch, PluginOSType } from '@gauzy/contracts';
 
 export interface IPluginSourceState {
 	sources: IPluginSource[];
@@ -35,11 +35,6 @@ export class PluginSourceStore extends Store<IPluginSourceState> {
 		super(createInitialPluginSourceState());
 	}
 
-	// Loading states
-	public setLoading(loading: boolean): void {
-		this.setLoading(loading);
-	}
-
 	public setCreating(creating: boolean): void {
 		this.update({ creating });
 	}
@@ -57,18 +52,46 @@ export class PluginSourceStore extends Store<IPluginSourceState> {
 	}
 
 	// Source management
-	public setSources(sources: IPluginSource[], count?: number): void {
-		this.update({
-			sources,
-			count: count ?? sources.length
-		});
-	}
-
 	public addSource(source: IPluginSource): void {
 		this.update((state) => ({
 			sources: [...state.sources, source],
 			count: state.count + 1
 		}));
+	}
+
+	public setSources(
+		sources: IPluginSource[],
+		count: number,
+		os: {
+			platform: PluginOSType;
+			arch: PluginOSArch;
+		}
+	): void {
+		this.update((state) => {
+			if (!sources?.length) {
+				return {
+					sources: state.sources || [],
+					source: state.source,
+					count
+				};
+			}
+
+			const sourceMap = new Map<string, IPluginSource>((state.sources || []).map((item) => [item.id, item]));
+
+			sources.forEach((item) => sourceMap.set(item.id, item));
+
+			const sortedSources = Array.from(sourceMap.values()).sort((a, b) => {
+				if (a.operatingSystem === os.platform) return -1;
+				if (b.operatingSystem === os.platform) return 1;
+				return 0;
+			});
+
+			return {
+				sources: sortedSources,
+				source: state.source ?? sortedSources[0],
+				count
+			};
+		});
 	}
 
 	public updateSource(sourceId: ID, updates: Partial<IPluginSource>): void {
@@ -98,6 +121,6 @@ export class PluginSourceStore extends Store<IPluginSourceState> {
 
 	// Reset
 	public reset(): void {
-		this.update(createInitialPluginSourceState());
+		this.update({ sources: [] });
 	}
 }

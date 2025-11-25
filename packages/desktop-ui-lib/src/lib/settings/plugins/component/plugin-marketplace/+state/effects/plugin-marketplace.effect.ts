@@ -83,7 +83,7 @@ export class PluginMarketplaceEffects {
 							? response
 							: [];
 						const total = typeof response?.total === 'number' ? response.total : items.length;
-						const skip = (params as any)?.skip || 0;
+						const skip = params['skip'] || 0;
 
 						if (skip > 1) {
 							// Pagination: append plugins

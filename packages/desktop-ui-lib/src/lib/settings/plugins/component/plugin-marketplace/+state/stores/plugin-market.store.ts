@@ -224,6 +224,6 @@ export class PluginMarketplaceStore extends Store<IPluginMarketplaceState> {
 
 	// Reset
 	public reset(): void {
-		this.update(createInitialMarketplaceState());
+		this.update({ plugins: [] });
 	}
 }

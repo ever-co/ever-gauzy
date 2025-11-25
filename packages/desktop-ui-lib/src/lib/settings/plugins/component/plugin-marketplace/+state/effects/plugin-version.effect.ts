@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
+import { TranslateService } from '@ngx-translate/core';
 import { EMPTY, catchError, filter, finalize, map, mergeMap, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
+import { coalesceValue } from '../../../../../../utils';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginVersionActions } from '../actions/plugin-version.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginVersionStore } from '../stores/plugin-version.store';
-import { coalesceValue } from '../../../../../../utils';
-import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({ providedIn: 'root' })
 export class PluginVersionEffects {
@@ -30,14 +30,7 @@ export class PluginVersionEffects {
 			}),
 			switchMap(({ pluginId, params = {} }) =>
 				this.pluginService.getVersions(pluginId, params).pipe(
-					tap(({ items, total }) => {
-						// Merge with existing versions
-						const currentVersions = this.pluginVersionStore.getValue().versions || [];
-						const versionMap = new Map([...currentVersions, ...items].map((item) => [item.id, item]));
-						const mergedVersions = Array.from(versionMap.values());
-
-						this.pluginVersionStore.setVersions(mergedVersions, total);
-					}),
+					tap(({ items, total }) => this.pluginVersionStore.setVersions(items, total)),
 					finalize(() => this.pluginVersionStore.setLoading(false)), // Always stop loading
 					catchError((error) => {
 						this.toastrService.error(error.message || error); // Handle error properly

@@ -52,10 +52,11 @@ export class PluginVersionStore extends Store<IPluginVersionState> {
 
 	// Version management
 	public setVersions(versions: IPluginVersion[], count?: number): void {
-		this.update({
-			versions,
+		this.update((state) => ({
+			versions: [...new Map([...state.versions, ...versions].map((item) => [item.id, item])).values()],
+			version: state.version ?? state.versions[0] ?? versions[0],
 			count: count ?? versions.length
-		});
+		}));
 	}
 
 	public addVersion(version: IPluginVersion): void {
@@ -92,6 +93,6 @@ export class PluginVersionStore extends Store<IPluginVersionState> {
 
 	// Reset
 	public reset(): void {
-		this.update(createInitialPluginVersionState());
+		this.update({ versions: [], version: null });
 	}
 }

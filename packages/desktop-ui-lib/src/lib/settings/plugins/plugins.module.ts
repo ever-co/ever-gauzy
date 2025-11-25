@@ -117,6 +117,7 @@ import { PluginUserAssignmentService } from './services/plugin-user-assignment.s
 import { PluginService } from './services/plugin.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
+import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
 	SubscriptionBillingFormComponent,
 	SubscriptionFormService,
@@ -166,7 +167,7 @@ import {
 		NpmFormComponent,
 		DialogCreateSourceComponent,
 		SourceContainerComponent,
-		// Shared subscription components (note: SubscriptionPlanCardComponent removed - using lib-plan-card instead)
+		PluginSubscriptionHierarchyComponent,
 		SubscriptionStatusBadgeComponent,
 		SubscriptionBillingFormComponent
 	],

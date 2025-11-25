@@ -17,6 +17,7 @@ import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, combineLatest, EMPTY, Observable, Subject, tap } from 'rxjs';
 import { catchError, concatMap, filter, map, switchMap, take, takeUntil } from 'rxjs/operators';
+import { PluginSubscriptionQuery } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
@@ -31,13 +32,10 @@ import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginScope } from '../../../services/plugin-subscription-access.service';
-import {
-	IPluginSubscription as IPluginSubscriptionDetail,
-	PluginSubscriptionService
-} from '../../../services/plugin-subscription.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
+import { InstallationValidationChainBuilder } from '../services';
 import { SubscriptionDialogRouterService } from '../services/subscription-dialog-router.service';
 import { SubscriptionStatusService } from '../shared';
 import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
@@ -81,7 +79,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		private readonly translateService: TranslateService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly action: Actions,
-		private readonly subscriptionService: PluginSubscriptionService,
+		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder,
+		private readonly subscriptionQuery: PluginSubscriptionQuery,
 		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
@@ -379,23 +378,17 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	public installPlugin(isUpdate = false): void {
 		// Use the facade pattern and chain of responsibility for cleaner validation
-		import('../services/installation-validation-chain.builder').then(({ InstallationValidationChainBuilder }) => {
-			// Note: This is a temporary inline approach for demonstration
-			// In production, inject InstallationValidationChainBuilder in constructor
-
-			// For now, keep the existing working logic but with better structure
-			if (this.plugin.hasPlan) {
-				// For plugins with subscription plans, verify access first
-				if (isUpdate) {
-					this.handleUpdateWithSubscription(isUpdate);
-				} else {
-					this.handleNewInstallationWithSubscription(isUpdate);
-				}
+		if (this.plugin.hasPlan) {
+			// For plugins with subscription plans, verify access first
+			if (isUpdate) {
+				this.handleUpdateWithSubscription(isUpdate);
 			} else {
-				// Plugin doesn't require subscription - install directly
-				this.proceedWithInstallationValidation(isUpdate);
+				this.handleNewInstallationWithSubscription(isUpdate);
 			}
-		});
+		} else {
+			// Plugin doesn't require subscription - install directly
+			this.proceedWithInstallationValidation(isUpdate);
+		}
 	}
 
 	/**
@@ -513,8 +506,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	/**
 	 * Check if plugin has subscription to show hierarchy button
 	 */
-	public hasSubscription(): boolean {
-		return !!this.plugin.subscription;
+	public get hasSubscription$(): Observable<boolean> {
+		return this.subscriptionQuery.hasActiveSubscriptionForPlugin(this.pluginId);
 	}
 
 	/**
@@ -525,7 +518,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			.open(PluginSubscriptionHierarchyComponent, {
 				backdropClass: 'backdrop-blur',
 				context: {
-					subscriptions: [this.plugin?.subscription as any].filter(Boolean) as IPluginSubscriptionDetail[],
+					subscriptions: this.subscriptionQuery.subscriptions || [],
 					showActions: true
 				}
 			})
@@ -534,29 +527,43 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	private proceedWithInstallationValidation(isUpdate = false): void {
-		// Final access verification before proceeding with installation
-		// This ensures subscription status hasn't changed between checks
-		if (this.plugin.hasPlan) {
-			this.hasAccess$
-				.pipe(
-					take(1),
-					tap((hasAccess) => {
-						if (!hasAccess) {
-							// Access was revoked or subscription expired
-							this.toastrService.error(
-								this.translateService.instant('PLUGIN.SUBSCRIPTION.ACCESS_REVOKED')
-							);
-							return;
-						}
-						// Access confirmed, proceed with installation validation
-						this.openInstallationValidationDialog(isUpdate);
-					})
-				)
-				.subscribe();
-		} else {
-			// No subscription required, proceed directly
-			this.openInstallationValidationDialog(isUpdate);
-		}
+		// Run validation chain before proceeding with installation
+		this.installationValidationChainBuilder
+			.validate(this.plugin, isUpdate)
+			.pipe(
+				take(1),
+				tap((context) => {
+					// Check for validation errors
+					if (context.errors.length > 0) {
+						// Show all errors
+						context.errors.forEach((error) => {
+							this.toastrService.error(this.translateService.instant(error));
+						});
+						// Reset installation toggle
+						this.action.dispatch(
+							PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin })
+						);
+						return;
+					}
+
+					// Show warnings if any
+					if (context.warnings.length > 0) {
+						context.warnings.forEach((warning) => {
+							this.toastrService.warn(this.translateService.instant(warning));
+						});
+					}
+
+					// Validation passed, proceed with installation dialog
+					this.openInstallationValidationDialog(isUpdate);
+				}),
+				catchError((error) => {
+					console.error('[InstallationValidation] Validation chain error:', error);
+					this.toastrService.error(this.translateService.instant('PLUGIN.INSTALLATION.VALIDATION_ERROR'));
+					this.action.dispatch(PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin }));
+					return EMPTY;
+				})
+			)
+			.subscribe();
 	}
 
 	private openInstallationValidationDialog(isUpdate = false): void {

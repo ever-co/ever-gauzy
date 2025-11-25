@@ -254,7 +254,7 @@ export class PluginSubscriptionStore extends Store<IPluginSubscriptionState> {
 
 	// Reset methods
 	public reset(): void {
-		this.update(createInitialSubscriptionState());
+		this.update({ subscriptions: [], plans: [] });
 	}
 
 	public resetError(): void {

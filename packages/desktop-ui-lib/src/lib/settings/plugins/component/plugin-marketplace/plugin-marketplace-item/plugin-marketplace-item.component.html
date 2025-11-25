@@ -171,7 +171,7 @@ this.sourceQuery.creating$ | async;
 
 		<div class="action-buttons">
 			<!-- View Subscription Button (shown when plugin has subscription) -->
-			@if(hasSubscription()) {
+			@if(hasSubscription$ | async) {
 			<button
 				nbButton
 				type="button"

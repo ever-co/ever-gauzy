@@ -25,6 +25,7 @@ import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hie
 import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
 import { IPluginSubscriptionPlanSelectionResult } from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
 import { PluginUserManagementComponent } from '../plugin-user-management/plugin-user-management.component';
+import { InstallationValidationChainBuilder } from '../services';
 import { SubscriptionDialogRouterService } from '../services/subscription-dialog-router.service';
 
 @UntilDestroy()
@@ -53,9 +54,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly pluginService: PluginElectronService,
 		private readonly menuService: NbMenuService,
 		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService,
+		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		// Guard against undefined plugin
@@ -182,13 +184,46 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	private proceedWithInstallationValidation(isUpdate = false): void {
-		// Note: Access verification is handled in togglePlugin before reaching here
-		// For plugins with subscription plans, subscription dialog is shown first
-		// This method proceeds with installation validation after subscription is confirmed
-		const installation$ = this.createInstallationObservable(isUpdate);
-		installation$.subscribe({
-			error: (err) => this.handleInstallationError(err)
-		});
+		// Run validation chain before proceeding with installation
+		this.installationValidationChainBuilder
+			.validate(this.plugin, isUpdate)
+			.pipe(
+				take(1),
+				switchMap((context) => {
+					// Check for validation errors
+					if (context.errors.length > 0) {
+						// Show all errors
+						context.errors.forEach((error) => {
+							console.error('[InstallationValidation] Error:', error);
+						});
+						// Reset installation toggle
+						this.action.dispatch(
+							PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin })
+						);
+						this._isChecked$.next(false);
+						return EMPTY;
+					}
+
+					// Show warnings if any
+					if (context.warnings.length > 0) {
+						context.warnings.forEach((warning) => {
+							console.warn('[InstallationValidation] Warning:', warning);
+						});
+					}
+
+					// Validation passed, proceed with installation dialog
+					return this.createInstallationObservable(isUpdate);
+				}),
+				catchError((err) => {
+					this.handleInstallationError(err);
+					// Reset toggle on error
+					this.action.dispatch(PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin }));
+					this._isChecked$.next(false);
+					return EMPTY;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private createInstallationObservable(isUpdate: boolean): Observable<void> {
