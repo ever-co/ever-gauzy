@@ -16,7 +16,7 @@
 				<div class="subscription-info">
 					<h5>
 						Current Plan:
-						{{ currentSubscription.plan?.type ?? currentSubscription.plan.type | titlecase }}
+						{{ currentSubscription.plan?.type | titlecase }}
 					</h5>
 					<p class="subscription-status" [class]="currentSubscription.status">
 						<nb-icon [icon]="getStatusIcon(currentSubscription.status)"></nb-icon>
