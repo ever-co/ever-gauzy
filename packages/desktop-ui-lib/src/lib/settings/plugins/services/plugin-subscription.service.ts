@@ -521,10 +521,11 @@ export class PluginSubscriptionService {
 
 	// Helper Methods
 	public isSubscriptionActive(subscription: IPluginSubscription): boolean {
-		return (
-			subscription.status === PluginSubscriptionStatus.ACTIVE ||
-			subscription.status === PluginSubscriptionStatus.TRIAL
-		);
+		return [
+			PluginSubscriptionStatus.ACTIVE,
+			PluginSubscriptionStatus.TRIAL,
+			PluginSubscriptionStatus.PENDING
+		].includes(subscription.status);
 	}
 
 	public getSubscriptionStatusBadge(status: PluginSubscriptionStatus): {

@@ -24,7 +24,11 @@ export class GetExpiringSubscriptionsQueryHandler implements IQueryHandler<GetEx
 			const expiringSubscriptions = await this.pluginSubscriptionService.find({
 				where: {
 					// Only active and trial subscriptions that have an end date
-					status: In([PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL]),
+					status: In([
+						PluginSubscriptionStatus.ACTIVE,
+						PluginSubscriptionStatus.TRIAL,
+						PluginSubscriptionStatus.PENDING
+					]),
 					endDate: Between(today, futureDate)
 				},
 				relations: ['plugin', 'plan', 'subscriber', 'pluginTenant'],

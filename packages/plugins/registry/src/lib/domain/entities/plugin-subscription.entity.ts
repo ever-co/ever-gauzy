@@ -233,7 +233,11 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	 */
 	get isSubscriptionActive(): boolean {
 		return (
-			[PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL].includes(this.status) &&
+			[
+				PluginSubscriptionStatus.ACTIVE,
+				PluginSubscriptionStatus.TRIAL,
+				PluginSubscriptionStatus.PENDING
+			].includes(this.status) &&
 			(!this.endDate || this.endDate > new Date())
 		);
 	}

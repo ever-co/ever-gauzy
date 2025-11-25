@@ -158,7 +158,11 @@ export class PlanComparisonService {
 		subscription: IPluginSubscription,
 		plan: IPluginSubscriptionPlan
 	): IPlanComparisonResult {
-		const isActive = subscription.status === PluginSubscriptionStatus.ACTIVE;
+		const isActive = [
+			PluginSubscriptionStatus.ACTIVE,
+			PluginSubscriptionStatus.PENDING,
+			PluginSubscriptionStatus.TRIAL
+		].includes(subscription.status);
 
 		return {
 			actionType: PlanActionType.CURRENT,
@@ -243,7 +247,11 @@ export class PlanComparisonService {
 	 */
 	private canUpgradeFromCurrentPlan(subscription: IPluginSubscription): boolean {
 		// Can upgrade if subscription is active or trial
-		const allowedStatuses = [PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL];
+		const allowedStatuses = [
+			PluginSubscriptionStatus.ACTIVE,
+			PluginSubscriptionStatus.TRIAL,
+			PluginSubscriptionStatus.PENDING
+		];
 		return allowedStatuses.includes(subscription.status);
 	}
 

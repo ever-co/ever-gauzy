@@ -16,7 +16,11 @@ export class GetActivePluginSubscriptionQueryHandler implements IQueryHandler<Ge
 			const whereConditions: FindOptionsWhere<IPluginSubscription> = {
 				pluginId,
 				tenantId,
-				status: In([PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL])
+				status: In([
+					PluginSubscriptionStatus.ACTIVE,
+					PluginSubscriptionStatus.TRIAL,
+					PluginSubscriptionStatus.PENDING
+				])
 			};
 
 			// Add optional conditions

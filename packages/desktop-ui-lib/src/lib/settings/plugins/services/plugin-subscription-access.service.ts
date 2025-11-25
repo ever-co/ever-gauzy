@@ -328,7 +328,11 @@ export class PluginSubscriptionAccessService {
 		}
 
 		// If subscription exists and is active/trial, no payment needed
-		const activeStatuses = [PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL];
+		const activeStatuses = [
+			PluginSubscriptionStatus.ACTIVE,
+			PluginSubscriptionStatus.TRIAL,
+			PluginSubscriptionStatus.PENDING
+		];
 		return !activeStatuses.includes(response.subscription.status);
 	}
 

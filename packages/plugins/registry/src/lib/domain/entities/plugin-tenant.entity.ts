@@ -25,9 +25,8 @@ import { Plugin } from './plugin.entity';
  * Handles access control, usage limits, and tenant-specific customizations
  */
 @Index(['pluginId', 'tenantId', 'organizationId'], { unique: true })
-@Index(['enabled', 'scope', 'tenantId'])
-@Index(['scope', 'organizationId'])
-@Index(['isActive', 'isArchived'])
+@Index(['tenantId', 'scope', 'enabled'])
+@Index(['organizationId', 'scope'])
 @Index(['pluginId', 'enabled'])
 @MultiORMEntity('plugin_tenants')
 export class PluginTenant extends TenantOrganizationBaseEntity implements IPluginTenant {
@@ -566,7 +565,25 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	 * Enable plugin for tenant
 	 */
 	public enable(): void {
+		if (this.isArchived) {
+			throw new Error('Cannot enable an archived plugin tenant');
+		}
 		this.enabled = true;
+	}
+
+	/**
+	 * Mark plugin as archived (cannot be enabled unless restored)
+	 */
+	public archive(): void {
+		this.isArchived = true;
+		this.enabled = false;
+	}
+
+	/**
+	 * Restore plugin from archived state
+	 */
+	public restore(): void {
+		this.isArchived = false;
 	}
 
 	/**

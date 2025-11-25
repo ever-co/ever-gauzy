@@ -37,8 +37,11 @@ export class PluginSubscriptionEffects {
 							subscriptions.find(
 								(s) =>
 									s.pluginId === pluginId &&
-									(s.status === PluginSubscriptionStatus.ACTIVE ||
-										s.status === PluginSubscriptionStatus.TRIAL)
+									[
+										PluginSubscriptionStatus.ACTIVE,
+										PluginSubscriptionStatus.PENDING,
+										PluginSubscriptionStatus.TRIAL
+									].includes(s.status)
 							) || null;
 						this.pluginSubscriptionStore.setCurrentPluginSubscription(pluginId, currentSubscription);
 					}),

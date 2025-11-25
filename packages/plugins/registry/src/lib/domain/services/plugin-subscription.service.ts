@@ -1,6 +1,7 @@
 import { ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
+import { In } from 'typeorm';
 import { PluginScope, PluginSubscriptionStatus } from '../../shared/models';
 import { PluginSubscription } from '../entities';
 import { MikroOrmPluginSubscriptionRepository, TypeOrmPluginSubscriptionRepository } from '../repositories';
@@ -88,7 +89,7 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 			const childSubscription = await this.findOneByWhereOptions({
 				parentId: parentSubscriptionId,
 				subscriberId: userId,
-				status: PluginSubscriptionStatus.ACTIVE
+				status: In([PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.PENDING])
 			});
 
 			if (childSubscription) {

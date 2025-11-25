@@ -38,8 +38,11 @@ export class CreatePluginSubscriptionCommandHandler implements ICommandHandler<C
 			if (existingSubscription) {
 				// If user has an active or trial subscription, reject the creation
 				if (
-					existingSubscription.status === PluginSubscriptionStatus.ACTIVE ||
-					existingSubscription.status === PluginSubscriptionStatus.TRIAL
+					[
+						PluginSubscriptionStatus.ACTIVE,
+						PluginSubscriptionStatus.PENDING,
+						PluginSubscriptionStatus.TRIAL
+					].includes(existingSubscription.status)
 				) {
 					throw new BadRequestException(
 						'You already have an active subscription for this plugin. Please use upgrade or downgrade to change your plan.'

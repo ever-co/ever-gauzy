@@ -79,8 +79,12 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	public readonly activeSubscriptions$: Observable<IPluginSubscription[]> = this.subscriptions$.pipe(
 		map((subscriptions) => {
 			const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
-			return subscriptionsArray.filter(
-				(s) => s.status === PluginSubscriptionStatus.ACTIVE || s.status === PluginSubscriptionStatus.TRIAL
+			return subscriptionsArray.filter((s) =>
+				[
+					PluginSubscriptionStatus.ACTIVE,
+					PluginSubscriptionStatus.PENDING,
+					PluginSubscriptionStatus.TRIAL
+				].includes(s.status)
 			);
 		})
 	);
@@ -332,7 +336,11 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 					};
 				}
 
-				const isActive = subscription.status === PluginSubscriptionStatus.ACTIVE;
+				const isActive = [
+					PluginSubscriptionStatus.ACTIVE,
+					PluginSubscriptionStatus.PENDING,
+					PluginSubscriptionStatus.TRIAL
+				].includes(subscription.status);
 				const isTrial = subscription.status === PluginSubscriptionStatus.TRIAL;
 				const isExpired = subscription.status === PluginSubscriptionStatus.EXPIRED;
 
@@ -371,7 +379,13 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 				const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
 				return {
 					total: subscriptionsArray.length,
-					active: subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.ACTIVE).length,
+					active: subscriptionsArray.filter((s) =>
+						[
+							PluginSubscriptionStatus.ACTIVE,
+							PluginSubscriptionStatus.PENDING,
+							PluginSubscriptionStatus.TRIAL
+						].includes(s.status)
+					).length,
 					trial: subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.TRIAL).length,
 					expired: subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.EXPIRED).length,
 					cancelled: subscriptionsArray.filter((s) => s.status === PluginSubscriptionStatus.CANCELLED).length,

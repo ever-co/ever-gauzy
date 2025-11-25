@@ -36,32 +36,24 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 			throw new BadRequestException('Tenant ID is required');
 		}
 
+		if (!organizationId) {
+			throw new BadRequestException('Organization ID is required for ORGANIZATION scope subscription');
+		}
+
+		if (!userId) {
+			throw new BadRequestException('User ID is required for USER scope subscription');
+		}
+
 		// Check for existing subscription based on scope
 		const options: FindOptionsWhere<PluginSubscription> = {
 			pluginId: purchaseDto.pluginId
 		};
 
-		// Add scope-specific constraints
-		switch (purchaseDto.scope) {
-			case PluginScope.USER:
-				if (!userId) {
-					throw new BadRequestException('User ID is required for USER scope subscription');
-				}
-				options.scope = PluginScope.USER;
-				options.subscriberId = userId;
-				break;
-			case PluginScope.ORGANIZATION:
-				if (!organizationId) {
-					throw new BadRequestException('Organization ID is required for ORGANIZATION scope subscription');
-				}
-				options.organizationId = organizationId;
-				options.scope = PluginScope.ORGANIZATION;
-				break;
-			case PluginScope.TENANT:
-				options.tenantId = tenantId;
-				options.scope = PluginScope.TENANT;
-				break;
-		}
+		options.subscriberId = userId;
+
+		options.organizationId = organizationId;
+
+		options.tenantId = tenantId;
 
 		const { record: existingSubscription, success } =
 			await this.pluginSubscriptionService.findOneOrFailByWhereOptions(options);
@@ -69,7 +61,11 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 		if (success && existingSubscription) {
 			// If user has an active or trial subscription, reject the purchase
 			if (
-				[PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.TRIAL].includes(existingSubscription.status)
+				[
+					PluginSubscriptionStatus.ACTIVE,
+					PluginSubscriptionStatus.TRIAL,
+					PluginSubscriptionStatus.PENDING
+				].includes(existingSubscription.status)
 			) {
 				throw new BadRequestException(
 					'You already have an active subscription for this plugin. Please use upgrade or downgrade to change your plan.'
@@ -159,7 +155,7 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 			);
 			// Ensure scope is set correctly for free subscription if not USER
 			if (purchaseDto.scope !== PluginScope.USER) {
-				subscription.scope = purchaseDto.scope;
+				subscription.scope = PluginScope.USER;
 			}
 		}
 

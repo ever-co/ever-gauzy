@@ -322,6 +322,17 @@ export interface IPluginTenant extends IBasePerTenantAndOrganizationEntityModel 
 	disable?(): void;
 
 	/**
+	 * Archive plugin tenant configuration
+	 */
+	archive?(): void;
+
+	/**
+	 * Reinstate archived plugin tenant configuration
+	 * @throws Error if not archived
+	 */
+	restore?(): void;
+
+	/**
 	 * Toggle plugin enabled state
 	 * @returns New enabled state
 	 */
