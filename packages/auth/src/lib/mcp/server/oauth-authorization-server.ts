@@ -442,28 +442,31 @@ export class OAuth2AuthorizationServer {
 		this.app.use(session(sessionConfig));
 
 		// Debug middleware to log session details (placed AFTER session middleware)
-		this.app.use((req, res, next) => {
-			if (req.method === 'POST' || (req.method === 'GET' && req.path.includes('/login'))) {
-				const sessionId = (req as any).sessionID;
-				const cookies = req.cookies || {};
+		// Only enable in development
+		if (serverConfig.environment === 'development') {
+			this.app.use((req, res, next) => {
+				if (req.method === 'POST' || (req.method === 'GET' && req.path.includes('/login'))) {
+					const sessionId = (req as any).sessionID;
+					const cookies = req.cookies || {};
 
-				this.securityLogger.info(`${req.method} Request Details`, {
-					path: req.path,
-					protocol: req.protocol,
-					secure: req.secure,
-					ip: req.ip,
-					xForwardedProto: req.get('x-forwarded-proto'),
-					xForwardedHost: req.get('x-forwarded-host'),
-					host: req.get('host'),
-					hasSessionId: !!sessionId,
-					sessionIdPrefix: sessionId ? sessionId.substring(0, 8) : 'none',
-					cookieCount: Object.keys(cookies).length,
-					cookies: Object.keys(cookies),
-					trustProxy: this.app.get('trust proxy')
-				});
-			}
-			next();
-		});
+					this.securityLogger.debug(`${req.method} Request Details`, {
+						path: req.path,
+						protocol: req.protocol,
+						secure: req.secure,
+						ip: req.ip,
+						xForwardedProto: req.get('x-forwarded-proto'),
+						xForwardedHost: req.get('x-forwarded-host'),
+						host: req.get('host'),
+						hasSessionId: !!sessionId,
+						sessionIdPrefix: sessionId ? sessionId.substring(0, 8) : 'none',
+						cookieCount: Object.keys(cookies).length,
+						cookies: Object.keys(cookies),
+						trustProxy: this.app.get('trust proxy')
+					});
+				}
+				next();
+			});
+		}
 
 		// Log session configuration for debugging
 		this.securityLogger.info('Session configuration initialized', {
