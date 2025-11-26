@@ -24,7 +24,7 @@ async function bootstrap() {
 
 		// Configure trust proxy for production environments behind reverse proxies
 		// This allows Express to correctly identify client IPs from X-Forwarded-For headers
-		const baseUrl = process.env.MCP_BASE_URL || process.env.MCP_AUTH_JWT_ISSUER || `http://localhost:${process.env.MCP_AUTH_PORT || 3003}`;
+		const baseUrl = process.env.MCP_AUTH_BASE_URL || process.env.MCP_AUTH_JWT_ISSUER || `http://localhost:${process.env.MCP_AUTH_PORT || 3003}`;
 		const isHttps = baseUrl.startsWith('https');
 		const trustedProxies = process.env.MCP_TRUSTED_PROXIES?.split(',').map(p => p.trim()).filter(p => p.length > 0);
 

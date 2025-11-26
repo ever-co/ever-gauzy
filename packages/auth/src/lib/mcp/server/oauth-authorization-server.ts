@@ -372,7 +372,7 @@ export class OAuth2AuthorizationServer {
 		}
 
 		// Session management
-		// IMPORTANT: For proxied environments (Cloudflare, etc), we need to use 'auto' for secure
+		// IMPORTANT: For environments proxy (Cloudflare, etc), we need to use 'auto' for secure
 		// This allows Express to determine secure based on req.secure (which respects X-Forwarded-Proto)
 		const sessionConfig: session.SessionOptions = {
 			secret: this.config.sessionSecret,
@@ -508,12 +508,12 @@ export class OAuth2AuthorizationServer {
 			isHttps
 		});
 
-		// Use helmet without CSP first, then add our own dynamic CSP middleware
+		// Use helmet without CSP - we implement dynamic CSP below for proxy support
+  		// CodeQL: Intentionally disabled - custom dynamic CSP follows (lines 514-552)
 		this.app.use(helmet({
 			contentSecurityPolicy: false // Disable helmet's CSP, we'll set it dynamically
 		}));
 
-		// Dynamic CSP middleware that sets CSP based on actual request origin
 		// Dynamic CSP middleware that sets CSP based on actual request origin
 		this.app.use((req, res, next) => {
 			// Set CSP header with static 'self' for form-action
@@ -531,31 +531,13 @@ export class OAuth2AuthorizationServer {
 				`frame-ancestors 'none'`
 			].join('; ');
 
-			// Set CSP header
-			const csp = [
-				`default-src 'self'`,
-				`style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net`,
-				`font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net`,
-				`img-src 'self' data: https:`,
-				`script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com`,
-				`connect-src 'self' https://cloudflareinsights.com https://cdn.jsdelivr.net`,
-				`object-src 'none'`,
-				`base-uri 'self'`,
-				`form-action ${formActionDirective.join(' ')}`,
-				`frame-ancestors 'none'`
-			].join('; ');
-
 			res.setHeader('Content-Security-Policy', csp);
 
 			// Log CSP for debugging on auth pages (only for GET requests to avoid spam)
 			if ((req.path.includes('/authorize') || req.path.includes('/login')) && req.method === 'GET') {
 				this.securityLogger.info('Dynamic CSP set', {
 					path: req.path,
-					method: req.method,
-					requestOrigin,
-					protocol,
-					host,
-					formActionDirective
+					method: req.method
 				});
 			}
 
