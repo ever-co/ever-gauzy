@@ -511,14 +511,22 @@ export class OAuth2AuthorizationServer {
 		}));
 
 		// Dynamic CSP middleware that sets CSP based on actual request origin
+		// Dynamic CSP middleware that sets CSP based on actual request origin
 		this.app.use((req, res, next) => {
-			// Determine the actual origin from the request
-			const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-			const host = req.headers['x-forwarded-host'] || req.headers.host || req.hostname;
-			const requestOrigin = `${protocol}://${host}`;
-
-			// Build form-action directive with both 'self' and the actual origin
-			const formActionDirective = ["'self'", requestOrigin];
+			// Set CSP header with static 'self' for form-action
+			// Do NOT dynamically add request origin as it can be spoofed via X-Forwarded-Host
+			const csp = [
+				`default-src 'self'`,
+				`style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net`,
+				`font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net`,
+				`img-src 'self' data: https:`,
+				`script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com`,
+				`connect-src 'self' https://cloudflareinsights.com https://cdn.jsdelivr.net`,
+				`object-src 'none'`,
+				`base-uri 'self'`,
+				`form-action 'self'`,
+				`frame-ancestors 'none'`
+			].join('; ');
 
 			// Set CSP header
 			const csp = [
