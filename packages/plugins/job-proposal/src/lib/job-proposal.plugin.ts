@@ -71,7 +71,7 @@ export class JobProposalPlugin implements IOnPluginBootstrap, IOnPluginDestroy, 
 	 */
 	async onPluginDefaultSeed() {
 		try {
-			this._proposalSeederService.createDefaultProposals();
+			await this._proposalSeederService.createDefaultProposals();
 
 			if (this.logEnabled) {
 				console.log(chalk.green(`Default data seeded successfully for ${JobProposalPlugin.name}.`));
@@ -86,7 +86,7 @@ export class JobProposalPlugin implements IOnPluginBootstrap, IOnPluginDestroy, 
 	 */
 	async onPluginRandomSeed() {
 		try {
-			this._proposalSeederService.createRandomProposals();
+			await this._proposalSeederService.createRandomProposals();
 
 			if (this.logEnabled) {
 				console.log(chalk.green(`Random data seeded successfully for ${JobProposalPlugin.name}.`));
