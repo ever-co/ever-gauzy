@@ -52,4 +52,20 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 			.limit(1);
 		return activities;
 	}
+
+	public async findUnSyncedActivity(
+		remoteId: string,
+		organizationId: string,
+		tenantId: string,
+	): Promise<KbMouseActivityTO[]> {
+		const activities = await this._provider
+			.connection<KbMouseActivityTO>(TABLE_NAME_KB_MOUSE_ACTIVITY)
+			.where('tenantId', tenantId)
+			.andWhere('organizationId', organizationId)
+			.andWhere('remoteId', remoteId)
+			.andWhere('syncedActivity', false)
+			.andWhere('isOffline', true)
+			.orderBy('timeStart', 'asc')
+		return activities;
+	}
 }

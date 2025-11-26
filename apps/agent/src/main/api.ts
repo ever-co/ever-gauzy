@@ -287,6 +287,20 @@ export class ApiService {
 		return this.get(path, reqParams);
 	}
 
+	async serverCheck(): Promise<boolean> {
+		const path = '/api';
+		try {
+			const res = await this.get(path, {});
+			if (res) {
+				return true;
+			}
+			return false;
+		} catch (error) {
+			return false;
+		}
+
+	}
+
 	uploadImages(params: UploadParams, img: any): Promise<Partial<TResponseScreenshot>> {
 		const formData = new FormData();
 		formData.append('file', fs.createReadStream(img.filePath));
