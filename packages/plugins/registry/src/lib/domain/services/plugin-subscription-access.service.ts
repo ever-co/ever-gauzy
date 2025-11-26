@@ -220,7 +220,9 @@ class UserSubscriptionFinder implements ISubscriptionFinderStrategy {
 				whereOptions.status = PluginSubscriptionStatus.ACTIVE;
 			}
 
-			return await this.subscriptionService.findOneByWhereOptions(whereOptions);
+			const subscription = await this.subscriptionService.findOneOrFailByWhereOptions(whereOptions);
+
+			return subscription.success ? subscription.record : null;
 		} catch {
 			return null;
 		}
@@ -251,7 +253,8 @@ class OrganizationSubscriptionFinder implements ISubscriptionFinderStrategy {
 				whereOptions.status = PluginSubscriptionStatus.ACTIVE;
 			}
 
-			return await this.subscriptionService.findOneByWhereOptions(whereOptions);
+			const subscription = await this.subscriptionService.findOneOrFailByWhereOptions(whereOptions);
+			return subscription.success ? subscription.record : null;
 		} catch {
 			return null;
 		}
@@ -267,23 +270,19 @@ class TenantSubscriptionFinder implements ISubscriptionFinderStrategy {
 	constructor(private readonly subscriptionService: PluginSubscriptionService) {}
 
 	async findSubscription(context: ISubscriptionFindContext): Promise<IPluginSubscription | null> {
-		try {
-			const whereOptions: FindOptionsWhere<IPluginSubscription> = {
-				scope: PluginScope.TENANT,
-				pluginId: context.pluginId,
-				tenantId: context.tenantId,
-				subscriberId: context.userId,
-				organizationId: context.organizationId
-			};
+		const whereOptions: FindOptionsWhere<IPluginSubscription> = {
+			pluginId: context.pluginId,
+			tenantId: context.tenantId,
+			subscriberId: context.userId,
+			organizationId: context.organizationId
+		};
 
-			if (context.activeOnly !== false) {
-				whereOptions.status = PluginSubscriptionStatus.ACTIVE;
-			}
-
-			return await this.subscriptionService.findOneByWhereOptions(whereOptions);
-		} catch {
-			return null;
+		if (context.activeOnly !== false) {
+			whereOptions.status = PluginSubscriptionStatus.ACTIVE;
 		}
+
+		const subscription = await this.subscriptionService.findOneOrFailByWhereOptions(whereOptions);
+		return subscription.success ? subscription.record : null;
 	}
 }
 
@@ -595,11 +594,11 @@ export class PluginSubscriptionAccessService {
 				pluginId,
 				tenantId: '', // Will be resolved from user context
 				userId,
-				activeOnly: true
+				activeOnly: false
 			};
 
 			// Use entity static method for validation
-			const subscription = await this.subscriptionFinders.findSubscriptionByScope(PluginScope.USER, context);
+			const subscription = await this.subscriptionFinders.findSubscriptionByScope(PluginScope.TENANT, context);
 			return subscription ? subscription.grantsAccessToUser(userId) : false;
 		} catch {
 			return false;
@@ -632,7 +631,7 @@ export class PluginSubscriptionAccessService {
 				tenantId,
 				organizationId,
 				userId,
-				activeOnly: true
+				activeOnly: false
 			};
 
 			const subscription = await this.subscriptionFinders.findApplicableSubscription(context);
@@ -682,7 +681,7 @@ export class PluginSubscriptionAccessService {
 			tenantId,
 			organizationId,
 			userId,
-			activeOnly: true
+			activeOnly: false
 		};
 
 		return this.subscriptionFinders.findApplicableSubscription(context);
