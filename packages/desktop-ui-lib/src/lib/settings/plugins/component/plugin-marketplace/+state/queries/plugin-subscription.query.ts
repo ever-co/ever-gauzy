@@ -4,16 +4,16 @@ import { Observable, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
-	IPluginSubscription,
-	IPluginSubscriptionPlan,
-	PluginSubscriptionStatus,
-	PluginSubscriptionType
+    IPluginSubscription,
+    IPluginSubscriptionPlan,
+    PluginSubscriptionStatus,
+    PluginSubscriptionType
 } from '../../../../services/plugin-subscription.service';
 import { PlanActionType } from '../../plugin-subscription-plan-selection/services/plan-comparison.service';
 import { SubscriptionPlanService } from '../../shared';
 import { IPluginSubscriptionState, PluginSubscriptionStore } from '../stores/plugin-subscription.store';
-import { PluginPlanQuery } from './plugin-plan.query';
 import { PluginPlanComparisonQuery } from './plugin-plan-comparison.query';
+import { PluginPlanQuery } from './plugin-plan.query';
 
 @Injectable({ providedIn: 'root' })
 export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
@@ -111,7 +111,7 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	// Plan comparison observables (delegated)
 	public readonly planComparison$ = this.planComparisonQuery.planComparison$;
 	public readonly confirmationStep$ = this.planComparisonQuery.confirmationStep$;
-    
+
 	constructor(readonly pluginSubscriptionStore: PluginSubscriptionStore) {
 		super(pluginSubscriptionStore as any);
 	}

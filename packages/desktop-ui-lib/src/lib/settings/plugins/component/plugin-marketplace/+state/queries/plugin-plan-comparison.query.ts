@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { combineLatest, map, Observable } from 'rxjs';
-import { PluginPlanComparisonStore, IPluginPlanComparisonState } from '../stores/plugin-plan-comparison.store';
-import { PluginPlanQuery } from './plugin-plan.query';
 import { IPluginSubscriptionPlan } from '../../../../services/plugin-subscription.service';
+import { IPluginPlanComparisonState, PluginPlanComparisonStore } from '../stores/plugin-plan-comparison.store';
+import { PluginPlanQuery } from './plugin-plan.query';
 
 @Injectable({ providedIn: 'root' })
 export class PluginPlanComparisonQuery extends Query<IPluginPlanComparisonState> {

@@ -3,8 +3,8 @@ import { Query } from '@datorama/akita';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { IPluginSubscriptionPlan } from '../../../../services/plugin-subscription.service';
-import { PluginPlanStore, IPluginPlanState } from '../stores/plugin-plan.store';
 import { SubscriptionPlanService } from '../../shared';
+import { IPluginPlanState, PluginPlanStore } from '../stores/plugin-plan.store';
 
 @Injectable({ providedIn: 'root' })
 export class PluginPlanQuery extends Query<IPluginPlanState> {

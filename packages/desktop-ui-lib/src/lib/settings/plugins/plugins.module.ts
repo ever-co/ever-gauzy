@@ -5,30 +5,30 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
-	NbAlertModule,
-	NbBadgeModule,
-	NbButtonGroupModule,
-	NbButtonModule,
-	NbCardModule,
-	NbCheckboxModule,
-	NbContextMenuModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbFormFieldModule,
-	NbIconModule,
-	NbInfiniteListDirective,
-	NbInputModule,
-	NbListModule,
-	NbRadioModule,
-	NbRouteTabsetModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbStepperModule,
-	NbTabsetModule,
-	NbTagModule,
-	NbToggleModule,
-	NbTooltipModule,
-	NbUserModule
+    NbAlertModule,
+    NbBadgeModule,
+    NbButtonGroupModule,
+    NbButtonModule,
+    NbCardModule,
+    NbCheckboxModule,
+    NbContextMenuModule,
+    NbDatepickerModule,
+    NbDialogModule,
+    NbFormFieldModule,
+    NbIconModule,
+    NbInfiniteListDirective,
+    NbInputModule,
+    NbListModule,
+    NbRadioModule,
+    NbRouteTabsetModule,
+    NbSelectModule,
+    NbSpinnerModule,
+    NbStepperModule,
+    NbTabsetModule,
+    NbTagModule,
+    NbToggleModule,
+    NbTooltipModule,
+    NbUserModule
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
@@ -51,12 +51,12 @@ import { PluginUpdateComponent } from './component/plugin-list/plugin-update/plu
 import { AvailableUsersEffects } from './component/plugin-marketplace/+state/effects/available-users.effects';
 import { PluginInstallationEffects } from './component/plugin-marketplace/+state/effects/plugin-installation.effect';
 import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/effects/plugin-marketplace.effect';
+import { PluginPlanComparisonEffects } from './component/plugin-marketplace/+state/effects/plugin-plan-comparison.effect';
+import { PluginPlanEffects } from './component/plugin-marketplace/+state/effects/plugin-plan.effect';
 import { PluginSettingsEffects } from './component/plugin-marketplace/+state/effects/plugin-settings.effects';
 import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
 import { PluginSubscriptionAccessEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription-access.effects';
 import { PluginSubscriptionEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription.effect';
-import { PluginPlanEffects } from './component/plugin-marketplace/+state/effects/plugin-plan.effect';
-import { PluginPlanComparisonEffects } from './component/plugin-marketplace/+state/effects/plugin-plan-comparison.effect';
 import { PluginUserAssignmentEffects } from './component/plugin-marketplace/+state/effects/plugin-user-assignment.effects';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
 import { UserManagementFacade } from './component/plugin-marketplace/+state/facades/user-management.facade';
@@ -121,11 +121,11 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 // Shared subscription components and services
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
-	SubscriptionBillingFormComponent,
-	SubscriptionFormService,
-	SubscriptionPlanService,
-	SubscriptionStatusBadgeComponent,
-	SubscriptionStatusService
+    SubscriptionBillingFormComponent,
+    SubscriptionFormService,
+    SubscriptionPlanService,
+    SubscriptionStatusBadgeComponent,
+    SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 
 @NgModule({
