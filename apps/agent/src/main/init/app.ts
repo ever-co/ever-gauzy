@@ -207,7 +207,7 @@ function listenGrantAccess(pullActivities: PullActivities) {
 			clearInterval(grantCheckInterval);
 			pullActivities.startTracking();
 		}
-	}, 1000);
+	}, 3000);
 }
 
 function listenIO() {

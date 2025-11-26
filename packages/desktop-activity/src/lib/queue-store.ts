@@ -6,8 +6,8 @@ export class QueueStore {
 	private db: Database.Database;
 	private tableName: string;
 
-	constructor(options: { path: string }) {
-		this.tableName = 'task';
+	constructor(options: { path: string, tableName?: string }) {
+		this.tableName = options.tableName || 'task';
 		this.db = new Database(options.path);
 		this.db.pragma('journal_mode = WAL');
 		this.db.pragma('synchronous = NORMAL');

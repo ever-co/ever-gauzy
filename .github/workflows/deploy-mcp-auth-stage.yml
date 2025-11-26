@@ -63,6 +63,7 @@ jobs:
           DB_ORM: "${{ secrets.DB_ORM }}"
           DB_SYNCHRONIZE: "${{ secrets.DB_SYNCHRONIZE }}"
           MCP_AUTH_PORT: "3003"
+          MCP_AUTH_BASE_URL: "${{ secrets.MCP_AUTH_BASE_URL }}"
           MCP_AUTH_SESSION_SECRET: "${{ secrets.MCP_AUTH_SESSION_SECRET }}"
           MCP_AUTH_JWT_ISSUER: "${{ secrets.MCP_AUTH_JWT_ISSUER }}"
           MCP_AUTH_JWT_AUDIENCE: "${{ secrets.MCP_AUTH_JWT_AUDIENCE }}"
