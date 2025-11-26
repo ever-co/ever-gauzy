@@ -175,7 +175,8 @@ export class OAuth2AuthorizationServer {
 			// Don't set domain for ngrok URLs or other temporary proxy services
 			// These services provide unique subdomains and setting a root domain would break cookies
 			const isNgrok = hostname.endsWith('.ngrok.io') || hostname.endsWith('.ngrok-free.app') || hostname.endsWith('.ngrok-free.dev');
-			const isTemporaryProxy = isNgrok || hostname.includes('cloudflare-tunnel') || hostname.includes('localhost.run');
+			const isCloudflare = hostname.includes('cloudflare-tunnel') || hostname.endsWith('.trycloudflare.com');
+			const isTemporaryProxy = isNgrok || isCloudflare || hostname.endsWith('.localhost.run');
 
 			if (isTemporaryProxy) {
 				// For temporary proxy services, don't set domain - let browser handle it
@@ -240,7 +241,6 @@ export class OAuth2AuthorizationServer {
 				this.securityLogger.warn('CSRF using fallback identifier (no session)', {
 					hasIp: !!req.ip,
 					hasUserAgent: !!req.get('User-Agent'),
-					identifierLength: identifier.length,
 					protocol: req.protocol,
 					secure: req.secure
 				});
@@ -806,7 +806,7 @@ export class OAuth2AuthorizationServer {
 
 		// Sanitize returnUrl to avoid logging sensitive query params
 		const sanitizedReturnUrl = safeReturnUrl.split('?')[0];
-		this.securityLogger.info('Generated CSRF token for login form', {
+		this.securityLogger.debug('Generated CSRF token for login form', {
 			hasSessionId: !!sessionId,
 			sessionIdPrefix: sessionId ? sessionId.substring(0, 8) : 'none',
 			returnUrl: sanitizedReturnUrl,
