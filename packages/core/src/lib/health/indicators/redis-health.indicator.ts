@@ -96,7 +96,7 @@ export class RedisHealthIndicator extends HealthIndicator {
 			const parsedUrl = new URL(redisUrl);
 			const isTls = parsedUrl.protocol === 'rediss:';
 			const username = parsedUrl.username || REDIS_USER;
-			const password = parsedUrl.password || REDIS_PASSWORD;
+			const password = parsedUrl.password || REDIS_PASSWORD || undefined;
 			const host = parsedUrl.hostname || REDIS_HOST;
 			const port = parseInt(parsedUrl.port || REDIS_PORT || '6379', 10);
 
