@@ -620,23 +620,6 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 * Confirm plugin deletion
 	 */
 	private confirmDeletePlugin(): void {
-		this.dialog
-			.open(AlertComponent, {
-				backdropClass: 'backdrop-blur',
-				context: {
-					data: {
-						title: 'PLUGIN.DIALOG.DELETE.TITLE',
-						message: 'PLUGIN.DIALOG.DELETE.DESCRIPTION',
-						confirmText: 'PLUGIN.DIALOG.DELETE.CONFIRM',
-						status: 'danger'
-					}
-				}
-			})
-			.onClose.subscribe(async (isDelete: boolean) => {
-				if (isDelete) {
-					// Dispatch delete action
-					this.action.dispatch(PluginMarketplaceActions.delete(this.plugin.id));
-				}
-			});
+		this.action.dispatch(PluginMarketplaceActions.delete(this.plugin.id));
 	}
 }

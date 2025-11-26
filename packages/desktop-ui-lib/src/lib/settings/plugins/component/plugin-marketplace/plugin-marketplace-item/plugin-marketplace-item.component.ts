@@ -674,28 +674,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public delete(): void {
-		this.dialogService
-			.open(AlertComponent, {
-				context: {
-					data: {
-						message: 'PLUGIN.DIALOG.DELETE.DESCRIPTION',
-						title: 'PLUGIN.DIALOG.DELETE.TITLE',
-						confirmText: 'PLUGIN.DIALOG.DELETE.CONFIRM',
-						status: 'Danger'
-					}
-				}
-			})
-			.onClose.pipe(
-				take(1),
-				filter(Boolean),
-				tap(() => {
-					this.action.dispatch(
-						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
-					);
-					this.action.dispatch(PluginMarketplaceActions.delete(this.pluginId));
-				})
-			)
-			.subscribe();
+		this.action.dispatch(PluginMarketplaceActions.delete(this.pluginId));
 	}
 
 	public get plugin$(): Observable<IPlugin> {

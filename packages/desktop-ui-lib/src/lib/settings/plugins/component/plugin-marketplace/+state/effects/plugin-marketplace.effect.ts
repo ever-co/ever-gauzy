@@ -14,10 +14,24 @@
  */
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, catchError, debounceTime, distinctUntilChanged, filter, finalize, map, switchMap, tap } from 'rxjs';
+import {
+	EMPTY,
+	catchError,
+	debounceTime,
+	distinctUntilChanged,
+	exhaustMap,
+	filter,
+	finalize,
+	map,
+	switchMap,
+	take,
+	tap
+} from 'rxjs';
+import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../../services';
 import { coalesceValue } from '../../../../../../utils';
 import { PluginTagsService } from '../../../../services/plugin-tags.service';
@@ -34,7 +48,8 @@ export class PluginMarketplaceEffects {
 		private readonly pluginTagsService: PluginTagsService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
-		private readonly router: Router
+		private readonly router: Router,
+		private readonly dialogService: NbDialogService
 	) {}
 
 	upload$ = createEffect(() =>
@@ -153,23 +168,46 @@ export class PluginMarketplaceEffects {
 	delete$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginMarketplaceActions.delete),
+			exhaustMap(({ id }) =>
+				this.dialogService
+					.open(AlertComponent, {
+						context: {
+							data: {
+								message: 'PLUGIN.DIALOG.DELETE.DESCRIPTION',
+								title: 'PLUGIN.DIALOG.DELETE.TITLE',
+								confirmText: 'PLUGIN.DIALOG.DELETE.CONFIRM',
+								status: 'Danger'
+							}
+						}
+					})
+					.onClose.pipe(
+						take(1),
+						filter((confirm) => confirm === true),
+						map(() => id)
+					)
+			),
 			tap(() => {
 				this.pluginMarketplaceStore.setDeleting(true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.DELETING'));
 			}),
-			switchMap(({ id }) =>
+			switchMap((id) =>
 				this.pluginService.delete(id).pipe(
 					tap(() => {
 						this.router.navigate(['settings', 'marketplace-plugins']);
-						const currentPlugins = this.pluginMarketplaceStore.getValue().plugins;
-						const filteredPlugins = currentPlugins.filter((plugin) => plugin.id !== id);
-						this.pluginMarketplaceStore.setPlugins(filteredPlugins, filteredPlugins.length);
+
+						const plugins = this.pluginMarketplaceStore.getValue().plugins;
+						const updated = plugins.filter((p) => p.id !== id);
+
+						this.pluginMarketplaceStore.setPlugins(updated, updated.length);
 						this.pluginMarketplaceStore.selectPlugin(null);
+
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.DELETED'));
 					}),
-					finalize(() => this.pluginMarketplaceStore.setDeleting(false)),
+					finalize(() => {
+						this.pluginMarketplaceStore.setDeleting(false);
+					}),
 					catchError((error) => {
-						this.toastrService.error(error.message || error);
+						this.toastrService.error(error?.message || error);
 						return EMPTY;
 					})
 				)
