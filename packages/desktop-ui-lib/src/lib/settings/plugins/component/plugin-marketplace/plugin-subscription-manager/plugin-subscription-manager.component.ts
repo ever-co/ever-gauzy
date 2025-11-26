@@ -49,7 +49,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		public readonly formatter: PlanFormatterService
 	) {
 		this.subscriptionForm = this.formService.createSubscriptionForm();
-		this.isLoading$ = this.facade.isLoading$;
+		this.isLoading$ = this.facade.loading$;
 	}
 
 	ngOnInit(): void {

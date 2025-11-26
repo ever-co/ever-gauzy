@@ -11,7 +11,11 @@ import {
 } from '../../../services/plugin-subscription.service';
 import { PlanActionType } from '../plugin-subscription-plan-selection/services/plan-comparison.service';
 import { PluginSubscriptionActions } from './actions/plugin-subscription.action';
+import { PluginPlanActions } from './actions/plugin-plan.action';
+import { PluginPlanComparisonActions } from './actions/plugin-plan-comparison.action';
 import { PluginSubscriptionQuery } from './queries/plugin-subscription.query';
+import { PluginPlanQuery } from './queries/plugin-plan.query';
+import { PluginPlanComparisonQuery } from './queries/plugin-plan-comparison.query';
 
 /**
  * Facade service for plugin subscription state management
@@ -22,40 +26,47 @@ export class PluginSubscriptionFacade {
 	// Observables for components
 	public readonly subscriptions$ = this.query.subscriptions$;
 	public readonly selectedSubscription$ = this.query.selectedSubscription$;
-	public readonly plans$ = this.query.plans$;
-	public readonly selectedPlan$ = this.query.selectedPlan$;
 	public readonly loading$ = this.query.loading$;
 	public readonly creating$ = this.query.creating$;
 	public readonly updating$ = this.query.updating$;
 	public readonly deleting$ = this.query.deleting$;
 	public readonly error$ = this.query.error$;
-	public readonly isLoading$ = this.query.isLoading$;
 	public readonly showSubscriptionDialog$ = this.query.showSubscriptionDialog$;
 	public readonly selectedPluginId$ = this.query.selectedPluginId$;
 	public readonly confirmationStep$ = this.query.confirmationStep$;
 
+	// Plan observables (from PluginPlanQuery)
+	public readonly plans$ = this.planQuery.plans$;
+	public readonly selectedPlan$ = this.planQuery.selectedPlan$;
+	public readonly freePlans$ = this.planQuery.freePlans$;
+	public readonly paidPlans$ = this.planQuery.paidPlans$;
+	public readonly featuredPlans$ = this.planQuery.featuredPlans$;
+	public readonly currentPluginPlans$ = this.planQuery.currentPluginPlans$;
+
+	// Plan comparison observables (from PluginPlanComparisonQuery)
+	public readonly planComparison$ = this.planComparisonQuery.planComparison$;
+	public readonly currentPlanId$ = this.planComparisonQuery.currentPlanId$;
+	public readonly selectedPlanId$ = this.planComparisonQuery.selectedPlanId$;
+	public readonly actionType$ = this.planComparisonQuery.actionType$;
+	public readonly isValidAction$ = this.planComparisonQuery.isValidAction$;
+	public readonly requiresPayment$ = this.planComparisonQuery.requiresPayment$;
+	public readonly prorationAmount$ = this.planComparisonQuery.prorationAmount$;
+
 	// Current plugin subscription state
 	public readonly currentPluginSubscriptions$ = this.query.currentPluginSubscriptions$;
-	public readonly currentPluginPlans$ = this.query.currentPluginPlans$;
 
-	// Plan comparison observables
-	public readonly planComparison$ = this.query.planComparison$;
-	public readonly currentPlanId$ = this.query.currentPlanId$;
-	public readonly selectedPlanId$ = this.query.selectedPlanId$;
-	public readonly actionType$ = this.query.actionType$;
-	public readonly isValidAction$ = this.query.isValidAction$;
-	public readonly requiresPayment$ = this.query.requiresPayment$;
-	public readonly prorationAmount$ = this.query.prorationAmount$;
 
 	// Computed observables
 	public readonly activeSubscriptions$ = this.query.activeSubscriptions$;
 	public readonly expiredSubscriptions$ = this.query.expiredSubscriptions$;
 	public readonly trialSubscriptions$ = this.query.trialSubscriptions$;
-	public readonly freePlans$ = this.query.freePlans$;
-	public readonly paidPlans$ = this.query.paidPlans$;
-	public readonly featuredPlans$ = this.query.featuredPlans$;
 
-	constructor(private readonly query: PluginSubscriptionQuery, private readonly actions$: Actions) {}
+	constructor(
+		private readonly query: PluginSubscriptionQuery,
+		private readonly actions$: Actions,
+		private readonly planQuery: PluginPlanQuery,
+		private readonly planComparisonQuery: PluginPlanComparisonQuery
+	) {}
 
 	// Subscription Management
 	public loadPluginSubscriptions(pluginId: string): void {
@@ -63,7 +74,7 @@ export class PluginSubscriptionFacade {
 	}
 
 	public loadPluginPlans(pluginId: string): void {
-		this.actions$.dispatch(PluginSubscriptionActions.loadPluginPlans(pluginId));
+		this.actions$.dispatch(PluginPlanActions.loadPluginPlans(pluginId));
 	}
 
 	public createSubscription(pluginId: string, subscriptionData: IPluginSubscriptionCreateInput): void {
@@ -88,7 +99,7 @@ export class PluginSubscriptionFacade {
 	}
 
 	public selectPlan(plan: IPluginSubscriptionPlan | null): void {
-		this.actions$.dispatch(PluginSubscriptionActions.selectPlan(plan));
+		this.actions$.dispatch(PluginPlanActions.selectPlan(plan));
 	}
 
 	public showSubscriptionDialog(pluginId: string): void {
@@ -121,11 +132,11 @@ export class PluginSubscriptionFacade {
 	}
 
 	public getPlanById(planId: string): Observable<IPluginSubscriptionPlan | null> {
-		return this.query.getPlanById(planId);
+		return this.planQuery.getPlanById(planId);
 	}
 
 	public getPlansForPlugin(pluginId: string): Observable<IPluginSubscriptionPlan[]> {
-		return this.query.getPlansForPlugin(pluginId);
+		return this.planQuery.getPlansForPlugin(pluginId);
 	}
 
 	public getSubscriptionMetrics(): Observable<{
@@ -150,11 +161,11 @@ export class PluginSubscriptionFacade {
 	}
 
 	public get currentPlans(): IPluginSubscriptionPlan[] {
-		return this.query.plans;
+		return this.planQuery.plans;
 	}
 
 	public get currentSelectedPlan(): IPluginSubscriptionPlan | null {
-		return this.query.selectedPlan;
+		return this.planQuery.selectedPlan;
 	}
 
 	public get currentLoading(): boolean {
@@ -175,21 +186,21 @@ export class PluginSubscriptionFacade {
 
 	// Plan Management Methods
 	public createPlan(planData: Omit<IPluginSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | 'isActive'>): void {
-		this.actions$.dispatch(PluginSubscriptionActions.createPlan(planData));
+		this.actions$.dispatch(PluginPlanActions.createPlan(planData));
 	}
 
 	public updatePlan(planId: string, updates: Partial<IPluginSubscriptionPlan>): void {
-		this.actions$.dispatch(PluginSubscriptionActions.updatePlan(planId, updates));
+		this.actions$.dispatch(PluginPlanActions.updatePlan(planId, updates));
 	}
 
 	public deletePlan(planId: string): void {
-		this.actions$.dispatch(PluginSubscriptionActions.deletePlan(planId));
+		this.actions$.dispatch(PluginPlanActions.deletePlan(planId));
 	}
 
 	public bulkCreatePlans(
 		plansData: Array<Omit<IPluginSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | 'isActive'>>
 	): void {
-		this.actions$.dispatch(PluginSubscriptionActions.bulkCreatePlans(plansData));
+		this.actions$.dispatch(PluginPlanActions.bulkCreatePlans(plansData));
 	}
 
 	// Enhanced subscription flow management
@@ -198,7 +209,7 @@ export class PluginSubscriptionFacade {
 	}
 
 	public getCurrentPluginPlans(pluginId: string): Observable<IPluginSubscriptionPlan[]> {
-		return this.query.getCurrentPluginPlans(pluginId);
+		return this.planQuery.getCurrentPluginPlans(pluginId);
 	}
 
 	public getPlanComparisonForPlugin(pluginId: string): Observable<{
@@ -209,7 +220,7 @@ export class PluginSubscriptionFacade {
 		requiresPayment: boolean;
 		prorationAmount?: number;
 	}> {
-		return this.query.getPlanComparisonForPlugin(pluginId);
+		return this.planComparisonQuery.getPlanComparisonForPlugin(pluginId);
 	}
 
 	public getPluginSubscriptionStatus(pluginId: string): Observable<{
@@ -241,7 +252,7 @@ export class PluginSubscriptionFacade {
 		prorationAmount?: number
 	): void {
 		this.actions$.dispatch(
-			PluginSubscriptionActions.updatePlanComparison({
+			PluginPlanComparisonActions.updatePlanComparison({
 				currentPlanId,
 				selectedPlanId,
 				actionType,
@@ -253,13 +264,13 @@ export class PluginSubscriptionFacade {
 	}
 
 	public resetPlanComparison(): void {
-		this.actions$.dispatch(PluginSubscriptionActions.resetPlanComparison());
+		this.actions$.dispatch(PluginPlanComparisonActions.resetPlanComparison());
 	}
 
 	public setConfirmationStep(
 		step: 'selection' | 'confirmation' | 'payment' | 'processing' | 'completed' | null
 	): void {
-		this.actions$.dispatch(PluginSubscriptionActions.setConfirmationStep(step));
+		this.actions$.dispatch(PluginPlanComparisonActions.setConfirmationStep(step));
 	}
 
 	// Enhanced subscription actions

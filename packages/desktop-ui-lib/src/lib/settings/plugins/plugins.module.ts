@@ -55,6 +55,8 @@ import { PluginSettingsEffects } from './component/plugin-marketplace/+state/eff
 import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
 import { PluginSubscriptionAccessEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription-access.effects';
 import { PluginSubscriptionEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription.effect';
+import { PluginPlanEffects } from './component/plugin-marketplace/+state/effects/plugin-plan.effect';
+import { PluginPlanComparisonEffects } from './component/plugin-marketplace/+state/effects/plugin-plan-comparison.effect';
 import { PluginUserAssignmentEffects } from './component/plugin-marketplace/+state/effects/plugin-user-assignment.effects';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
 import { UserManagementFacade } from './component/plugin-marketplace/+state/facades/user-management.facade';
@@ -240,6 +242,8 @@ import {
 			PluginUserAssignmentEffects,
 			PluginSettingsEffects,
 			PluginSubscriptionEffects,
+			PluginPlanEffects,
+			PluginPlanComparisonEffects,
 			PluginSubscriptionAccessEffects,
 			AvailableUsersEffects
 		),

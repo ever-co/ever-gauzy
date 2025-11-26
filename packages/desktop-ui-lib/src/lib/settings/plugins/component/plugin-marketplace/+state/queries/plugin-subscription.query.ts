@@ -12,19 +12,19 @@ import {
 import { PlanActionType } from '../../plugin-subscription-plan-selection/services/plan-comparison.service';
 import { SubscriptionPlanService } from '../../shared';
 import { IPluginSubscriptionState, PluginSubscriptionStore } from '../stores/plugin-subscription.store';
+import { PluginPlanQuery } from './plugin-plan.query';
+import { PluginPlanComparisonQuery } from './plugin-plan-comparison.query';
 
 @Injectable({ providedIn: 'root' })
 export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	//Plan service
 	private readonly planService = inject(SubscriptionPlanService);
+	private readonly planQuery = inject(PluginPlanQuery);
+	private readonly planComparisonQuery = inject(PluginPlanComparisonQuery);
 	// Basic selectors
 	public readonly subscriptions$: Observable<IPluginSubscription[]> = this.select((state) => state.subscriptions);
 	public readonly selectedSubscription$: Observable<IPluginSubscription | null> = this.select(
 		(state) => state.selectedSubscription
-	);
-	public readonly plans$: Observable<IPluginSubscriptionPlan[]> = this.select((state) => state.plans);
-	public readonly selectedPlan$: Observable<IPluginSubscriptionPlan | null> = this.select(
-		(state) => state.selectedPlan
 	);
 
 	// Loading states
@@ -44,36 +44,12 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	// UI state
 	public readonly showSubscriptionDialog$: Observable<boolean> = this.select((state) => state.showSubscriptionDialog);
 	public readonly selectedPluginId$: Observable<string | null> = this.select((state) => state.selectedPluginId);
-	public readonly confirmationStep$: Observable<IPluginSubscriptionState['confirmationStep']> = this.select(
-		(state) => state.confirmationStep
-	);
 
 	// Current plugin subscription state
 	public readonly currentPluginSubscriptions$: Observable<Record<string, IPluginSubscription | null>> = this.select(
 		(state) => state.currentPluginSubscriptions
 	);
-	public readonly currentPluginPlans$: Observable<Record<string, IPluginSubscriptionPlan[]>> = this.select(
-		(state) => state.currentPluginPlans
-	);
 
-	// Plan comparison selectors
-	public readonly planComparison$: Observable<IPluginSubscriptionState['planComparison']> = this.select(
-		(state) => state.planComparison
-	);
-	public readonly currentPlanId$: Observable<string | null> = this.select(
-		(state) => state.planComparison.currentPlanId
-	);
-	public readonly selectedPlanId$: Observable<string | null> = this.select(
-		(state) => state.planComparison.selectedPlanId
-	);
-	public readonly actionType$: Observable<PlanActionType> = this.select((state) => state.planComparison.actionType);
-	public readonly isValidAction$: Observable<boolean> = this.select((state) => state.planComparison.isValidAction);
-	public readonly requiresPayment$: Observable<boolean> = this.select(
-		(state) => state.planComparison.requiresPayment
-	);
-	public readonly prorationAmount$: Observable<number | undefined> = this.select(
-		(state) => state.planComparison.prorationAmount
-	);
 
 	// Computed selectors
 	public readonly activeSubscriptions$: Observable<IPluginSubscription[]> = this.subscriptions$.pipe(
@@ -124,55 +100,23 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 		})
 	);
 
-	// Free vs paid plans
-	public readonly freePlans$: Observable<IPluginSubscriptionPlan[]> = this.plans$.pipe(
-		map((plans) => {
-			const plansArray = Array.isArray(plans) ? plans : [];
-			return plansArray.filter((p) => p.price === 0);
-		})
-	);
+	// Plan observables (delegated to PluginPlanQuery)
+	public readonly plans$ = this.planQuery.plans$;
+	public readonly selectedPlan$ = this.planQuery.selectedPlan$;
+	public readonly freePlans$ = this.planQuery.freePlans$;
+	public readonly paidPlans$ = this.planQuery.paidPlans$;
+	public readonly featuredPlans$ = this.planQuery.featuredPlans$;
+	public readonly currentPluginPlans$ = this.planQuery.currentPluginPlans$;
 
-	public readonly paidPlans$: Observable<IPluginSubscriptionPlan[]> = this.plans$.pipe(
-		map((plans) => {
-			const plansArray = Array.isArray(plans) ? plans : [];
-			return plansArray.filter((p) => Number(p.price) > 0);
-		})
-	);
-
-	// Featured/recommended plans
-	public readonly featuredPlans$: Observable<IPluginSubscriptionPlan[]> = this.plans$.pipe(
-		map((plans) => {
-			const plansArray = Array.isArray(plans) ? plans : [];
-			return plansArray.filter((p) => p.isPopular || p.isRecommended);
-		})
-	);
-
-	// Combined loading state
-	public readonly isLoading$: Observable<boolean> = this.select(
-		(state) => state.loading || state.creating || state.updating || state.deleting
-	);
-
+	// Plan comparison observables (delegated)
+	public readonly planComparison$ = this.planComparisonQuery.planComparison$;
+	public readonly confirmationStep$ = this.planComparisonQuery.confirmationStep$;
+    
 	constructor(readonly pluginSubscriptionStore: PluginSubscriptionStore) {
-		super(pluginSubscriptionStore);
+		super(pluginSubscriptionStore as any);
 	}
-
-	// Getters for current values
-	public get subscriptions(): IPluginSubscription[] {
-		const value = this.getValue().subscriptions;
-		return Array.isArray(value) ? value : [];
-	}
-
-	public get selectedSubscription(): IPluginSubscription | null {
-		return this.getValue().selectedSubscription;
-	}
-
-	public get plans(): IPluginSubscriptionPlan[] {
-		const value = this.getValue().plans;
-		return Array.isArray(value) ? value : [];
-	}
-
 	public get selectedPlan(): IPluginSubscriptionPlan | null {
-		return this.getValue().selectedPlan;
+		return this.planQuery.selectedPlan;
 	}
 
 	public get loading(): boolean {
@@ -191,20 +135,12 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 		return this.getValue().selectedPluginId;
 	}
 
-	public get currentPluginSubscriptions(): Record<string, IPluginSubscription | null> {
-		return this.getValue().currentPluginSubscriptions;
+	public get planComparison(): import('../stores/plugin-plan-comparison.store').IPluginPlanComparisonState['planComparison'] {
+		return this.planComparisonQuery.getValue().planComparison;
 	}
 
-	public get currentPluginPlans(): Record<string, IPluginSubscriptionPlan[]> {
-		return this.getValue().currentPluginPlans;
-	}
-
-	public get planComparison(): IPluginSubscriptionState['planComparison'] {
-		return this.getValue().planComparison;
-	}
-
-	public get confirmationStep(): IPluginSubscriptionState['confirmationStep'] {
-		return this.getValue().confirmationStep;
+	public get confirmationStep(): import('../stores/plugin-plan-comparison.store').IPluginPlanComparisonState['confirmationStep'] {
+		return this.planComparisonQuery.getValue().confirmationStep;
 	}
 
 	// Utility methods
@@ -218,39 +154,44 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	}
 
 	public getActiveSubscriptionForPlugin(pluginId: string): Observable<IPluginSubscription | null> {
-		return this.activeSubscriptions$.pipe(
+		return this.subscriptions$.pipe(
 			map((subscriptions) => {
 				const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
-				return subscriptionsArray.find((s) => s.pluginId === pluginId) || null;
+				return (
+					subscriptionsArray.find((s) => s.pluginId === pluginId && [
+						PluginSubscriptionStatus.ACTIVE,
+						PluginSubscriptionStatus.PENDING,
+						PluginSubscriptionStatus.TRIAL
+					].includes(s.status)) || null
+				);
 			})
 		);
-	}
-
-	public hasActiveSubscriptionForPlugin(pluginId: string): Observable<boolean> {
-		return this.getActiveSubscriptionForPlugin(pluginId).pipe(map((subscription) => !!subscription));
 	}
 
 	public getPlanById(planId: string): Observable<IPluginSubscriptionPlan | null> {
-		return this.plans$.pipe(
-			map((plans) => {
-				const plansArray = Array.isArray(plans) ? plans : [];
-				return plansArray.find((p) => p.id === planId) || null;
-			})
-		);
+		return this.planQuery.getPlanById(planId);
 	}
 
 	public getPlansForPlugin(pluginId: string): Observable<IPluginSubscriptionPlan[]> {
-		return this.plans$.pipe(
-			map((plans) => {
-				const plansArray = Array.isArray(plans) ? plans : [];
-				return plansArray.filter((p) => p.pluginId === pluginId);
-			})
-		);
+		return this.planQuery.getPlansForPlugin(pluginId);
 	}
 
 	// Enhanced utility methods for current subscription state
 	public getCurrentPluginSubscription(pluginId: string): Observable<IPluginSubscription | null> {
 		return this.currentPluginSubscriptions$.pipe(map((subscriptions) => subscriptions[pluginId] || null));
+	}
+
+	// Synchronous getters for convenience
+	public get subscriptions(): IPluginSubscription[] {
+		return this.getValue().subscriptions || [];
+	}
+
+	public get selectedSubscription(): IPluginSubscription | null {
+		return this.getValue().selectedSubscription;
+	}
+
+	public hasActiveSubscriptionForPlugin(pluginId: string): Observable<boolean> {
+		return this.getActiveSubscriptionForPlugin(pluginId).pipe(map((s) => !!s));
 	}
 
 	public getCurrentPluginPlans(pluginId: string): Observable<IPluginSubscriptionPlan[]> {

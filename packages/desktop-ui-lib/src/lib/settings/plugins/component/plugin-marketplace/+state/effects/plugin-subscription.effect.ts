@@ -1,15 +1,11 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { EMPTY, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, finalize, switchMap, tap } from 'rxjs';
 
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrNotificationService } from '../../../../../../services';
-import {
-	IPluginSubscriptionPlan,
-	PluginSubscriptionService,
-	PluginSubscriptionStatus
-} from '../../../../services/plugin-subscription.service';
+import { PluginSubscriptionService, PluginSubscriptionStatus } from '../../../../services/plugin-subscription.service';
 import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
 import { PluginSubscriptionStore } from '../stores/plugin-subscription.store';
 
@@ -57,27 +53,7 @@ export class PluginSubscriptionEffects {
 	);
 
 	// Load subscription plans for a plugin
-	loadPluginPlans$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.loadPluginPlans),
-			tap(() => this.pluginSubscriptionStore.setLoading(true)),
-			switchMap(({ pluginId }) =>
-				this.pluginSubscriptionService.getPluginPlans(pluginId).pipe(
-					tap((plans) => {
-						this.pluginSubscriptionStore.setPlans(plans);
-						// IMPORTANT: Also set plans for the specific plugin in currentPluginPlans
-						this.pluginSubscriptionStore.setCurrentPluginPlans(pluginId, plans);
-					}),
-					finalize(() => this.pluginSubscriptionStore.setLoading(false)),
-					catchError((error) => {
-						this.pluginSubscriptionStore.setErrorMessage(error.message || 'Failed to load plans');
-						this.toastrService.error(error.message || 'Failed to load plans');
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
+
 
 	// Create subscription
 	createSubscription$ = createEffect(() =>
@@ -237,14 +213,7 @@ export class PluginSubscriptionEffects {
 		)
 	);
 
-	selectPlan$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.selectPlan),
-			tap(({ plan }) => {
-				this.pluginSubscriptionStore.selectPlan(plan);
-			})
-		)
-	);
+
 
 	showSubscriptionDialog$ = createEffect(() =>
 		this.actions$.pipe(
@@ -282,156 +251,5 @@ export class PluginSubscriptionEffects {
 		)
 	);
 
-	// Plan comparison and confirmation step effects
-	updatePlanComparison$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.updatePlanComparison),
-			tap(({ comparison }) => {
-				this.pluginSubscriptionStore.updatePlanComparison(comparison);
-			})
-		)
-	);
 
-	resetPlanComparison$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.resetPlanComparison),
-			tap(() => {
-				this.pluginSubscriptionStore.resetPlanComparison();
-			})
-		)
-	);
-
-	setConfirmationStep$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.setConfirmationStep),
-			tap(({ step }) => {
-				this.pluginSubscriptionStore.setConfirmationStep(step);
-			})
-		)
-	);
-
-	// Plan CRUD Effects
-	createPlan$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.createPlan),
-			tap(() => {
-				this.pluginSubscriptionStore.setCreating(true);
-				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.CREATING'));
-			}),
-			switchMap(({ planData }) =>
-				this.pluginSubscriptionService.createPlan(planData as any).pipe(
-					tap((plan) => {
-						this.pluginSubscriptionStore.addPlan(plan);
-						this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.CREATED'));
-					}),
-					finalize(() => this.pluginSubscriptionStore.setCreating(false)),
-					catchError((error) => {
-						this.pluginSubscriptionStore.setErrorMessage(error.message || 'Failed to create plan');
-						this.toastrService.error(error.message || 'Failed to create plan');
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
-
-	updatePlan$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.updatePlan),
-			tap(() => {
-				this.pluginSubscriptionStore.setUpdating(true);
-				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.UPDATING'));
-			}),
-			switchMap(({ planId, updates }) =>
-				this.pluginSubscriptionService.updatePlan(planId, updates).pipe(
-					tap((plan) => {
-						this.pluginSubscriptionStore.updatePlan(planId, plan);
-						this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.UPDATED'));
-					}),
-					finalize(() => this.pluginSubscriptionStore.setUpdating(false)),
-					catchError((error) => {
-						this.pluginSubscriptionStore.setErrorMessage(error.message || 'Failed to update plan');
-						this.toastrService.error(error.message || 'Failed to update plan');
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
-
-	deletePlan$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.deletePlan),
-			tap(() => {
-				this.pluginSubscriptionStore.setDeleting(true);
-				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.DELETING'));
-			}),
-			switchMap(({ planId }) =>
-				this.pluginSubscriptionService.deletePlan(planId).pipe(
-					tap(() => {
-						this.pluginSubscriptionStore.removePlan(planId);
-						this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.DELETED'));
-					}),
-					finalize(() => this.pluginSubscriptionStore.setDeleting(false)),
-					catchError((error) => {
-						this.pluginSubscriptionStore.setErrorMessage(error.message || 'Failed to delete plan');
-						this.toastrService.error(error.message || 'Failed to delete plan');
-						return EMPTY;
-					})
-				)
-			)
-		)
-	);
-
-	bulkCreatePlans$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.bulkCreatePlans),
-			tap(() => {
-				this.pluginSubscriptionStore.setCreating(true);
-				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.BULK_CREATING'));
-			}),
-			switchMap(({ plansData }) => {
-				// Create plans sequentially to maintain order and handle errors individually
-				const createPlan$ = (planData: any) =>
-					this.pluginSubscriptionService.createPlan(planData).pipe(
-						catchError((error) => {
-							this.toastrService.error(
-								`Failed to create plan "${planData.name}": ${error.message || 'Unknown error'}`
-							);
-							return EMPTY; // Continue with other plans
-						})
-					);
-
-				// Use forkJoin to create all plans in parallel, or reduce for sequential
-				return plansData.reduce(
-					(acc$, planData) =>
-						acc$.pipe(
-							switchMap((createdPlans) =>
-								createPlan$(planData).pipe(
-									map((newPlan) => (newPlan ? [...createdPlans, newPlan] : createdPlans))
-								)
-							)
-						),
-					of([] as IPluginSubscriptionPlan[])
-				);
-			}),
-			tap((plans) => {
-				if (plans.length > 0) {
-					// Add all successfully created plans to store
-					plans.forEach((plan) => this.pluginSubscriptionStore.addPlan(plan));
-					this.toastrService.success(
-						this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.BULK_CREATED', {
-							count: plans.length
-						})
-					);
-				}
-			}),
-			finalize(() => this.pluginSubscriptionStore.setCreating(false)),
-			catchError((error) => {
-				this.pluginSubscriptionStore.setErrorMessage(error.message || 'Failed to create plans');
-				this.toastrService.error(error.message || 'Failed to create plans');
-				return EMPTY;
-			})
-		)
-	);
 }

@@ -144,6 +144,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	async checkInstallation(plugin: IPlugin): Promise<void> {
 		if (!plugin) return;
+		// TODO: Create actions and effects for checking installation state
 
 		try {
 			const installed = await this.checkPlugin(plugin);
@@ -158,6 +159,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	async checkPlugin(plugin: IPlugin): Promise<IPluginInstalled> {
+		//TODO: Create actions and effects for checking plugin installation state
 		if (!plugin) return;
 		try {
 			return this.pluginElectronService.checkInstallation(plugin.id);
@@ -234,6 +236,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	showAssignUsersDialog(): void {
 		if (!this.pluginId) return;
+		// TODO: Create actions and effects for showing assignment dialog
 		this.accessFacade.showAssignmentDialog(this.pluginId);
 	}
 
@@ -260,6 +263,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	navigateToEdit(): void {
 		if (!this.plugin) return;
+		//TODO: Create actions and effects for navigation
 
 		this.dialogService
 			.open(PluginMarketplaceUploadComponent, {
@@ -347,6 +351,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	updatePlugin(): void {
+		// TODO: Create actions and effects for updating plugin
 		this.installPlugin(true);
 	}
 
