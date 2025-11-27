@@ -1,12 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { BaseEntityEnum, ID, IEmployeeRecentVisit } from '@gauzy/contracts';
+import { FindOptionsWhere } from 'typeorm';
+import { BaseEntityEnum, ID, IEmployeeRecentVisit, IPagination } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { EmployeeRecentVisitEvent } from './events/employee-recent-visit.event';
 import { EmployeeRecentVisit } from './employee-recent-visit.entity';
 import { MikroOrmEmployeeRecentVisitRepository } from './repository/mikro-orm-employee-recent-visit.repository';
 import { TypeOrmEmployeeRecentVisitRepository } from './repository/type-orm-employee-recent-visit.repository';
+import { GetEmployeeRecentVisitsDTO } from './dto/get-employee-recent-visits.dto';
 
 @Injectable()
 export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeRecentVisit> {
@@ -70,9 +72,44 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 		}
 	}
 
-	// findEmployeeRecentVisits(options: IEmployeeRecentVisitFindInput): Promise<IEmployeeRecentVisit[]> {
-	//     return this.typeOrmEmployeeRecentVisitRepository.find(options);
-	// }
+	/**
+	 * Finds employee recent visits based on the provided options.
+	 *
+	 * @param options - The options for finding employee recent visits.
+	 * @returns A promise that resolves with the employee recent visits.
+	 * @throws BadRequestException when the finding employee recent visits fails.
+	 */
+	async findEmployeeRecentVisits(options: GetEmployeeRecentVisitsDTO): Promise<IPagination<IEmployeeRecentVisit>> {
+		try {
+			// Destructure the options
+			const { organizationId, entity, entityId, relations = [] } = options;
+
+			// Retrieve the current tenant ID from the request context
+			const tenantId = RequestContext.currentTenantId();
+
+			// Retrieve the current employee ID from the request context
+			const employeeId = RequestContext.currentEmployeeId();
+
+			// Build the where clause
+			const where: FindOptionsWhere<EmployeeRecentVisit> = {
+				...(organizationId && { organizationId }),
+				...(entity && { entity }),
+				...(entityId && { entityId }),
+				tenantId,
+				employeeId
+			};
+
+			// Retrieve the employee recent visits
+			return await this.findAll({
+				where,
+				...(relations && { relations }),
+				order: { visitedAt: 'DESC' }
+			});
+		} catch (error) {
+			console.log('Error while finding employee recent visits:', error);
+			throw new BadRequestException('Error while finding employee recent visits', error);
+		}
+	}
 
 	/**
 	 * Emits an event to create a new employee recent visit entry with the provided input.
