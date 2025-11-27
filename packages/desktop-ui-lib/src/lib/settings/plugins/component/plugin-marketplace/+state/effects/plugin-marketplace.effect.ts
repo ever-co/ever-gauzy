@@ -40,12 +40,16 @@ import { PluginService } from '../../../../services/plugin.service';
 import { PluginMarketplaceUploadComponent } from '../../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
+import { PluginSourceStore } from '../stores/plugin-source.store';
+import { PluginVersionStore } from '../stores/plugin-version.store';
 
 @Injectable({ providedIn: 'root' })
 export class PluginMarketplaceEffects {
 	constructor(
 		private readonly action$: Actions,
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
+		private readonly pluginVersionStore: PluginVersionStore,
+		private readonly pluginSourceStore: PluginSourceStore,
 		private readonly pluginService: PluginService,
 		private readonly pluginTagsService: PluginTagsService,
 		private readonly toastrService: ToastrNotificationService,
@@ -147,6 +151,7 @@ export class PluginMarketplaceEffects {
 	update$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginMarketplaceActions.update),
+			tap(({ plugin }) => this.selectPluginContext(plugin)),
 			exhaustMap(({ plugin }) =>
 				this.dialogService
 					.open(PluginMarketplaceUploadComponent, {
@@ -375,4 +380,12 @@ export class PluginMarketplaceEffects {
 			)
 		)
 	);
+
+	// Helper method to set plugin context in stores
+	private selectPluginContext(plugin: IPlugin): void {
+		this.pluginVersionStore.setPluginId(plugin.id);
+		this.pluginVersionStore.selectVersion(plugin.version);
+		this.pluginSourceStore.setPluginVersion(plugin.id, plugin.version.id);
+		this.pluginSourceStore.selectSource(plugin.source);
+	}
 }
