@@ -42,6 +42,7 @@ import { EntitySubscriptionService } from '../entity-subscription/entity-subscri
 import { MentionService } from '../mention/mention.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
+import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
@@ -63,7 +64,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly _entitySubscriptionService: EntitySubscriptionService,
 		private readonly _mentionService: MentionService,
 		private readonly _activityLogService: ActivityLogService,
-		private readonly _employeeNotificationService: EmployeeNotificationService
+		private readonly _employeeNotificationService: EmployeeNotificationService,
+		private readonly _employeeRecentVisitService: EmployeeRecentVisitService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -252,6 +254,15 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		if (params.includeRootEpic && task) {
 			task.rootEpic = await this.findParentUntilEpic(task.id);
 		}
+
+		// Register the last visited at date for the current employee
+		this._employeeRecentVisitService.emitSaveEmployeeRecentVisitEvent<Task>(
+			BaseEntityEnum.Task,
+			task.id,
+			task,
+			task.organizationId,
+			task.tenantId
+		);
 
 		return task;
 	}

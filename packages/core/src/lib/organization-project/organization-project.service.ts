@@ -20,6 +20,7 @@ import {
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { isNotEmpty } from '@gauzy/utils';
+import { RelationsQueryDTO } from '../shared/dto';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProjectEmployee } from '../core/entities/internal';
@@ -30,6 +31,7 @@ import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeService } from '../employee/employee.service';
+import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { OrganizationProject } from './organization-project.entity';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
@@ -48,7 +50,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
 		private readonly _entitySubscriptionService: EntitySubscriptionService,
-		private readonly _activityLogService: ActivityLogService
+		private readonly _activityLogService: ActivityLogService,
+		private readonly _employeeRecentVisitService: EmployeeRecentVisitService
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
 	}
@@ -235,6 +238,32 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			throw new HttpException(`Failed to update organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Find an organization project by ID.
+	 *
+	 * @param id - The ID of the organization project to find.
+	 * @param options - The options for finding the organization project.
+	 * @returns A promise that resolves with the organization project.
+	 */
+	async findById(id: ID, options?: RelationsQueryDTO): Promise<OrganizationProject> {
+		try {
+			const organizationProject = await this.findOneByIdString(id, options);
+
+			// Register the last visited at date for the current employee
+			this._employeeRecentVisitService.emitSaveEmployeeRecentVisitEvent<OrganizationProject>(
+				BaseEntityEnum.OrganizationProject,
+				organizationProject.id,
+				organizationProject,
+				organizationProject.organizationId,
+				organizationProject.tenantId
+			);
+
+			return organizationProject;
+		} catch (error) {
+			throw new HttpException(`Failed to find organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
