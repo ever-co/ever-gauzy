@@ -258,10 +258,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Register the last visited at date for the current employee
 		this._employeeRecentVisitService.emitSaveEmployeeRecentVisitEvent<Task>(
 			BaseEntityEnum.Task,
-			task.id,
+			task?.id,
 			task,
-			task.organizationId,
-			task.tenantId
+			task?.organizationId,
+			task?.tenantId ?? RequestContext.currentTenantId()
 		);
 
 		return task;

@@ -258,7 +258,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				organizationProject.id,
 				organizationProject,
 				organizationProject.organizationId,
-				organizationProject.tenantId
+				organizationProject.tenantId ?? RequestContext.currentTenantId()
 			);
 
 			return organizationProject;
