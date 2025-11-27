@@ -31,7 +31,6 @@ import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginScope } from '../../../services/plugin-subscription-access.service';
-import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
 import { InstallationValidationChainBuilder } from '../services';
@@ -257,37 +256,19 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	async updatePluginStatus(status: PluginStatus): Promise<void> {
 		if (!this.pluginId || !this.isOwner) return;
-		this.action.dispatch(PluginMarketplaceActions.update(this.pluginId, { status }));
+		this.action.dispatch(PluginMarketplaceActions.update({ ...this.plugin, status }));
 	}
 
 	navigateToEdit(): void {
-		if (!this.plugin) return;
-		//TODO: Create actions and effects for navigation
-
-		this.dialogService
-			.open(PluginMarketplaceUploadComponent, {
-				backdropClass: 'backdrop-blur',
-				context: { plugin: this.plugin }
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap((plugin: IPlugin) => {
-					this.action.dispatch(
-						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
-					);
-					this.action.dispatch(PluginMarketplaceActions.update(this.pluginId, plugin));
-				}),
-				takeUntil(this.destroy$)
-			)
-			.subscribe();
+		this.action.dispatch(PluginMarketplaceActions.update(this.plugin));
 	}
 
-	navigateBack(): void {
-		this.router.navigate(['/settings/marketplace-plugins']);
+	public async navigateBack(): Promise<void> {
+		await this.router.navigate(['/settings/marketplace-plugins']);
 	}
 
-	navigateToHistory(): void {
-		this.router.navigate(['settings', 'marketplace-plugins', this.pluginId, 'versions']);
+	public async navigateToHistory(): Promise<void> {
+		await this.router.navigate(['settings', 'marketplace-plugins', this.pluginId, 'versions']);
 	}
 
 	/**

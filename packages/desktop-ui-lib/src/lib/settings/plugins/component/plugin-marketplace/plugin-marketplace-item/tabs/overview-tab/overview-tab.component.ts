@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { IPlugin, IPluginVersion, PluginStatus } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
 import { Observable, Subject } from 'rxjs';
@@ -23,7 +23,6 @@ export class OverviewTabComponent implements OnInit, OnDestroy {
 	selectedVersion$: Observable<IPluginVersion>;
 
 	constructor(
-		private readonly route: ActivatedRoute,
 		private readonly router: Router,
 		private readonly store: Store,
 		private readonly actions: Actions,
@@ -51,7 +50,7 @@ export class OverviewTabComponent implements OnInit, OnDestroy {
 	updatePluginStatus(status: PluginStatus): void {
 		const pluginId = this.versionQuery.pluginId;
 		if (!pluginId || !this.isOwner) return;
-		this.actions.dispatch(PluginMarketplaceActions.update(pluginId, { status }));
+		this.actions.dispatch(PluginMarketplaceActions.update({ ...this.marketplaceQuery.plugin, status }));
 	}
 
 	getStatusLabel(status: PluginStatus): string {
@@ -67,11 +66,11 @@ export class OverviewTabComponent implements OnInit, OnDestroy {
 		return new Date(date).toLocaleString();
 	}
 
-	navigateToHistory(): void {
+	public async navigateToHistory(): Promise<void> {
 		const pluginId = this.versionQuery.pluginId;
 		if (!pluginId) return;
 
 		// Navigate to version history
-		this.router.navigate(['settings', 'marketplace-plugins', pluginId, 'versions']);
+		await this.router.navigate(['settings', 'marketplace-plugins', pluginId, 'versions']);
 	}
 }

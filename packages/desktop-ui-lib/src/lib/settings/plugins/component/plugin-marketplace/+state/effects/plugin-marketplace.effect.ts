@@ -14,6 +14,7 @@
  */
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { IPlugin } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
@@ -36,6 +37,7 @@ import { ToastrNotificationService } from '../../../../../../services';
 import { coalesceValue } from '../../../../../../utils';
 import { PluginTagsService } from '../../../../services/plugin-tags.service';
 import { PluginService } from '../../../../services/plugin.service';
+import { PluginMarketplaceUploadComponent } from '../../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 
@@ -145,14 +147,26 @@ export class PluginMarketplaceEffects {
 	update$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginMarketplaceActions.update),
+			exhaustMap(({ plugin }) =>
+				this.dialogService
+					.open(PluginMarketplaceUploadComponent, {
+						backdropClass: 'backdrop-blur',
+						context: { plugin }
+					})
+					.onClose.pipe(
+						take(1),
+						filter(Boolean),
+						tap((updated: IPlugin) => updated)
+					)
+			),
 			tap(() => {
 				this.pluginMarketplaceStore.setUpdating(true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UPDATING'));
 			}),
-			switchMap(({ id, plugin }) =>
-				this.pluginService.update(id, plugin).pipe(
+			switchMap((plugin) =>
+				this.pluginService.update(plugin.id, plugin).pipe(
 					tap((updatedPlugin) => {
-						this.pluginMarketplaceStore.updatePlugin(id, updatedPlugin);
+						this.pluginMarketplaceStore.updatePlugin(updatedPlugin.id, updatedPlugin);
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPDATED'));
 					}),
 					finalize(() => this.pluginMarketplaceStore.setUpdating(false)),

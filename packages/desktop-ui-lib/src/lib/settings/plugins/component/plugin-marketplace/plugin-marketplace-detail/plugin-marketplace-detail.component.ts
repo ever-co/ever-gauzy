@@ -18,7 +18,6 @@ import {
 	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
 import { DialogInstallationValidationComponent } from '../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
-import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginSettingsManagementComponent } from '../plugin-settings-management/plugin-settings-management.component';
 import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
@@ -321,19 +320,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public editPlugin(): void {
-		this.dialog
-			.open(PluginMarketplaceUploadComponent, {
-				backdropClass: 'backdrop-blur',
-				context: {
-					plugin: this.plugin
-				}
-			})
-			.onClose.pipe(
-				take(1),
-				filter(Boolean),
-				tap((plugin: IPlugin) => this.action.dispatch(PluginMarketplaceActions.update(this.plugin.id, plugin)))
-			)
-			.subscribe();
+		this.action.dispatch(PluginMarketplaceActions.update(this.plugin));
 	}
 
 	private uninstallPlugin(): void {
