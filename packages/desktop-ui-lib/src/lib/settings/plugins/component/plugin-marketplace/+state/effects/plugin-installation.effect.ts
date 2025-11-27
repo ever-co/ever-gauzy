@@ -1,9 +1,26 @@
 import { Injectable } from '@angular/core';
+import { ID } from '@gauzy/contracts';
+import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, catchError, concatMap, finalize, from, map, of, switchMap, tap } from 'rxjs';
+import {
+	EMPTY,
+	Observable,
+	catchError,
+	concatMap,
+	exhaustMap,
+	filter,
+	finalize,
+	from,
+	map,
+	of,
+	switchMap,
+	take,
+	tap
+} from 'rxjs';
 import { PluginActions } from '../../../+state/plugin.action';
+import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../../services';
 import {
 	ActivatePluginCommand,
@@ -34,7 +51,8 @@ export class PluginInstallationEffects {
 		private readonly downloadCommand: DownloadPluginCommand,
 		private readonly serverInstallCommand: ServerInstallPluginCommand,
 		private readonly completeInstallCommand: CompleteInstallationCommand,
-		private readonly activateCommand: ActivatePluginCommand
+		private readonly activateCommand: ActivatePluginCommand,
+		private readonly dialogService: NbDialogService
 	) {}
 
 	/**
@@ -406,91 +424,57 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.uninstall),
+
+				// Step 1 — Ask for confirmation
+				exhaustMap(({ pluginId, installedId }) =>
+					this.confirmUninstall().pipe(
+						tap((confirmed) => this.pluginInstallationStore.setToggle({ isChecked: !confirmed })),
+						filter(Boolean),
+						map(() => ({ marketplaceId: pluginId, id: installedId }))
+					)
+				),
+
+				// Step 2 — Start uninstall
 				tap(() => this.pluginInstallationStore.update({ uninstalling: true })),
-				concatMap(({ plugin }) => {
-					this.pluginElectronService.uninstall(plugin);
-					return this.pluginElectronService
-						.progress((message) => this.toastrService.info(message))
-						.pipe(
-							switchMap(({ message }) => {
-								const { marketplaceId: pluginId, installationId } = plugin || {};
+				concatMap((input) =>
+					this.handleUninstall(input).pipe(
+						finalize(() => this.pluginInstallationStore.update({ uninstalling: false })),
+						catchError((error) => {
+							this.toastrService.error(
+								error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL')
+							);
+							return EMPTY;
+						})
+					)
+				)
+			),
+		{ dispatch: true }
+	);
 
-								if (!pluginId) {
-									this.toastrService.success(
-										message || this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED')
-									);
-									return of(PluginActions.refresh());
-								}
-
-								// Handle server-side uninstallation
-								return this.pluginService
-									.uninstall(pluginId, installationId, 'User initiated uninstall')
-									.pipe(
-										tap(() => {
-											const plugins = this.pluginMarketplaceQuery.plugins;
-											const existingPluginIndex = plugins.findIndex((p) => p.id === pluginId);
-
-											let foundPlugin =
-												plugins[existingPluginIndex] || this.pluginInstallationQuery.plugin;
-
-											if (!foundPlugin) {
-												this.toastrService.info(
-													this.translateService.instant(
-														'PLUGIN.TOASTR.WARNING.PLUGIN_NOT_FOUND',
-														{
-															id: pluginId
-														}
-													)
-												);
-												return;
-											}
-
-											// Clean up any pending installation
-											this.pluginInstallationStore.removePendingInstallation(pluginId);
-
-											// Update plugin state
-											const updatedPlugin = { ...foundPlugin, installed: false };
-											const updatedPlugins = [...plugins];
-											if (existingPluginIndex !== -1) {
-												updatedPlugins[existingPluginIndex] = updatedPlugin;
-											}
-
-											this.pluginMarketplaceStore.update({
-												plugins: updatedPlugins,
-												plugin: updatedPlugin
-											});
-											this.pluginInstallationStore.setToggle({ isChecked: false });
-											this.toastrService.success(
-												message ||
-													this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED')
-											);
-										}),
-										map(() => PluginActions.refresh()),
-										catchError((error) => {
-											this.pluginInstallationStore.setToggle({ isChecked: true });
-											this.toastrService.error(
-												error?.message ||
-													this.translateService.instant(
-														'PLUGIN.TOASTR.ERROR.UNINSTALL_FAILED'
-													)
-											);
-											return EMPTY;
-										})
-									);
-							}),
-							finalize(() => this.pluginInstallationStore.update({ uninstalling: false })),
-							catchError((error) => {
-								this.toastrService.error(
-									error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL')
-								);
-								return EMPTY;
-							})
-						);
+	checkSuccess$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginInstallationActions.checkSuccess),
+				map(({ plugin: { marketplaceId, installed } }) => {
+					const plugin = this.pluginMarketplaceQuery.plugins.find((p) => p.id === marketplaceId);
+					this.pluginMarketplaceStore.updatePlugin(marketplaceId, { installed });
+					return PluginInstallationActions.toggle({ isChecked: installed, plugin });
 				})
 			),
 		{
 			dispatch: true
 		}
+	);
+
+	checkFailure$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginInstallationActions.checkFailure),
+			tap(({ error }) => {
+				this.toastrService.error(
+					error || this.translateService.instant('PLUGIN.TOASTR.ERROR.CHECK_INSTALLATION_FAILED')
+				);
+			})
+		)
 	);
 
 	/**
@@ -542,12 +526,92 @@ export class PluginInstallationEffects {
 		try {
 			const plugin = await this.pluginElectronService.checkInstallation(pluginId);
 			if (plugin) {
-				this.pluginElectronService.uninstall(plugin);
+				this.pluginElectronService.uninstall({ marketplaceId: pluginId });
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.REVERTING_INSTALLATION'));
 			}
 		} catch (err) {
 			// Plugin might not be installed yet, ignore the error
 			console.warn('Could not revert installation:', err);
 		}
+	}
+
+	private confirmUninstall(): Observable<boolean> {
+		return this.dialogService
+			.open(AlertComponent, {
+				backdropClass: 'backdrop-blur',
+				context: {
+					data: {
+						title: 'PLUGIN.DIALOG.UNINSTALL.TITLE',
+						message: 'PLUGIN.DIALOG.UNINSTALL.DESCRIPTION',
+						confirmText: 'PLUGIN.DIALOG.UNINSTALL.CONFIRM',
+						status: 'basic'
+					}
+				}
+			})
+			.onClose.pipe(take(1));
+	}
+
+	private handleUninstall(input: { marketplaceId: ID; id: ID }) {
+		this.pluginElectronService.uninstall(input);
+
+		return this.pluginElectronService
+			.progress<void, ID>((msg) => this.toastrService.info(msg))
+			.pipe(
+				switchMap(({ message, data: installationId }) =>
+					installationId
+						? this.handleServerUninstall(input.marketplaceId, installationId, message)
+						: this.handleLocalUninstall(message)
+				)
+			);
+	}
+
+	private handleLocalUninstall(message?: string) {
+		this.toastrService.success(message || this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'));
+
+		return of(PluginActions.refresh());
+	}
+
+	private handleServerUninstall(marketplaceId: ID, installationId: ID, message?: string) {
+		return this.pluginService.uninstall(marketplaceId, installationId, 'User initiated uninstall').pipe(
+			tap(() => this.updateMarketplaceAfterUninstall(marketplaceId, message)),
+			map(() => PluginActions.refresh()),
+			catchError((error) => {
+				this.pluginInstallationStore.setToggle({ isChecked: true });
+				this.toastrService.error(
+					error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL_FAILED')
+				);
+				return EMPTY;
+			})
+		);
+	}
+
+	private updateMarketplaceAfterUninstall(marketplaceId: ID, message?: string) {
+		const plugins = this.pluginMarketplaceQuery.plugins;
+		const idx = plugins.findIndex((p) => p.id === marketplaceId);
+
+		let found = plugins[idx] ?? this.pluginInstallationQuery.plugin;
+
+		if (!found) {
+			this.toastrService.info(
+				this.translateService.instant('PLUGIN.TOASTR.WARNING.PLUGIN_NOT_FOUND', {
+					id: marketplaceId
+				})
+			);
+			return;
+		}
+
+		this.pluginInstallationStore.removePendingInstallation(marketplaceId);
+
+		const updated = { ...found, installed: false };
+		const updatedPlugins = idx !== -1 ? [...plugins.slice(0, idx), updated, ...plugins.slice(idx + 1)] : plugins;
+
+		this.pluginMarketplaceStore.update({
+			plugins: updatedPlugins,
+			plugin: updated
+		});
+
+		this.pluginInstallationStore.setToggle({ isChecked: false });
+
+		this.toastrService.success(message || this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'));
 	}
 }

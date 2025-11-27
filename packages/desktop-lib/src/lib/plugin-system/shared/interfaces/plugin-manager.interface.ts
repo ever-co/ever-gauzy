@@ -1,6 +1,6 @@
 import { ID } from '@gauzy/contracts';
 import { MenuItemConstructorOptions } from 'electron';
-import { IPluginMetadata } from './plugin-metadata.interface';
+import { IPluginMetadata, IPluginMetadataFindOne } from './plugin-metadata.interface';
 
 export interface IPluginManager {
 	loadPlugins(): Promise<void>;
@@ -10,7 +10,7 @@ export interface IPluginManager {
 	activatePlugin(name: string): Promise<void>;
 	deactivatePlugin(name: string): Promise<void>;
 	completeInstallation(marketplaceId: string, installationId: string): Promise<void>;
-	uninstallPlugin(name: string): Promise<void>;
+	uninstallPlugin(input: IPluginMetadataFindOne): Promise<ID>;
 	getAllPlugins(): Promise<IPluginMetadata[]>;
 	getOnePlugin(name: string): Promise<IPluginMetadata>;
 	getMenuPlugins(): MenuItemConstructorOptions[];

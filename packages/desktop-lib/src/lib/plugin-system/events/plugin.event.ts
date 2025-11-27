@@ -5,7 +5,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { TranslateService } from '../../translation';
 import { PluginManager } from '../data-access/plugin-manager';
-import { IPluginManager, PluginChannel, PluginHandlerChannel } from '../shared';
+import { IPluginManager, IPluginMetadataFindOne, PluginChannel, PluginHandlerChannel } from '../shared';
 import { PluginEventManager } from './plugin-event.manager';
 
 class ElectronPluginListener {
@@ -181,15 +181,17 @@ class ElectronPluginListener {
 		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Deactivated' });
 	}
 
-	private async uninstallPlugin(event: IpcMainEvent, name: string): Promise<void> {
+	private async uninstallPlugin(event: IpcMainEvent, input: IPluginMetadataFindOne): Promise<void> {
 		event.reply(PluginChannel.STATUS, {
 			status: 'inProgress',
 			message: this.translateService.instant('PLUGIN.TOASTR.INFO.UNINSTALLING')
 		});
-		await this.pluginManager.uninstallPlugin(name);
+		const installationId = await this.pluginManager.uninstallPlugin(input);
+		console.log('Uninstalled plugin with installation ID:', installationId);
 		event.reply(PluginChannel.STATUS, {
 			status: 'success',
-			message: this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED')
+			message: this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'),
+			data: installationId
 		});
 	}
 }

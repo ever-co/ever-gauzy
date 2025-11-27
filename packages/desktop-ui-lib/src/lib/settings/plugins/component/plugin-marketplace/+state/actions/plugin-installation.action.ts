@@ -1,15 +1,32 @@
-import { IPlugin as IPluginMarketplace } from '@gauzy/contracts';
+import { ID, IPlugin as IPluginMarketplace } from '@gauzy/contracts';
 import { createAction } from '@ngneat/effects';
 import { IPlugin } from '../../../../services/plugin-loader.service';
 
 export class PluginInstallationActions {
 	// Main actions
 	public static install = createAction('[Plugin Installation] Install', <T>(config: T) => ({ config }));
-	public static uninstall = createAction('[Plugin Installation] Uninstall', (plugin: IPlugin) => ({ plugin }));
+	public static uninstall = createAction('[Plugin Installation] Uninstall', (pluginId: ID, installedId?: ID) => ({
+		pluginId,
+		installedId
+	}));
 	public static toggle = createAction(
 		'[Plugin Installation] Toggle',
 		(state: { isChecked?: boolean; plugin?: IPluginMarketplace }) => state
 	);
+
+	//Check Installation
+	public static check = createAction('[Plugin Installation] Check Installation', (marketplaceId: ID) => ({
+		marketplaceId
+	}));
+
+	public static checkSuccess = createAction(
+		'[Plugin Installation] Check Installation Success',
+		(plugin?: IPlugin) => ({ plugin })
+	);
+
+	public static checkFailure = createAction('[Plugin Installation] Check Installation Failed', (error: string) => ({
+		error
+	}));
 
 	// Step 1: Download
 	public static startDownload = createAction('[Plugin Installation] Start Download', <T>(config: T) => ({ config }));

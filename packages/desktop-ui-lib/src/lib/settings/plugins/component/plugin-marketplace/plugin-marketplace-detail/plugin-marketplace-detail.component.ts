@@ -10,7 +10,6 @@ import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.a
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
-import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
@@ -338,26 +337,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	private uninstallPlugin(): void {
-		this.dialog
-			.open(AlertComponent, {
-				backdropClass: 'backdrop-blur',
-				context: {
-					data: {
-						title: 'PLUGIN.DIALOG.UNINSTALL.TITLE',
-						message: 'PLUGIN.DIALOG.UNINSTALL.DESCRIPTION',
-						confirmText: 'PLUGIN.DIALOG.UNINSTALL.CONFIRM',
-						status: 'basic'
-					}
-				}
-			})
-			.onClose.subscribe(async (isUninstall: boolean) => {
-				const plugin = await this.checkInstallation(this.plugin);
-				if (isUninstall && !!plugin) {
-					this.action.dispatch(PluginInstallationActions.uninstall(plugin));
-				} else {
-					this._isChecked$.next(true);
-				}
-			});
+		this.action.dispatch(PluginInstallationActions.uninstall(this.plugin.id));
 	}
 
 	public get isOwner(): boolean {

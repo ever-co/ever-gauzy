@@ -6,7 +6,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { PluginMetadataService } from '../database/plugin-metadata.service';
 import { PluginEventManager } from '../events/plugin-event.manager';
-import { IPlugin, IPluginManager, IPluginMetadata, PluginDownloadContextType } from '../shared';
+import { IPlugin, IPluginManager, IPluginMetadata, IPluginMetadataFindOne, PluginDownloadContextType } from '../shared';
 import { lazyLoader } from '../shared/lazy-loader';
 import { DownloadContextFactory } from './download-context.factory';
 
@@ -141,20 +141,29 @@ export class PluginManager implements IPluginManager {
 		}
 	}
 
-	public async uninstallPlugin(name: string): Promise<void> {
-		const metadata = await this.pluginMetadataService.findOne({ name });
-		const plugin = this.plugins.get(name);
-		if (plugin) {
-			if (metadata.isActivate) {
-				await this.deactivatePlugin(name);
-			} else {
-				await plugin.dispose();
-			}
-			this.plugins.delete(name);
-			await this.pluginMetadataService.delete({ name });
-			await fs.rm(metadata.pathname, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
-			logger.info(`Uninstalling plugin ${name}`);
+	public async uninstallPlugin(input: IPluginMetadataFindOne): Promise<ID> {
+		const metadata = await this.pluginMetadataService.findOne(input);
+
+		if (!metadata) {
+			throw new Error(`Plugin not found`);
 		}
+
+		const plugin = this.plugins.get(metadata.name);
+
+		if (!plugin) {
+			throw new Error(`Plugin ${metadata.name} not found`);
+		}
+
+		if (metadata.isActivate) {
+			await this.deactivatePlugin(metadata.name);
+		} else {
+			await plugin.dispose();
+		}
+		this.plugins.delete(metadata.name);
+		await this.pluginMetadataService.delete({ id: metadata.id });
+		await fs.rm(metadata.pathname, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
+		logger.info(`Uninstalling plugin ${metadata.name}`);
+		return metadata.installationId;
 	}
 
 	public async loadPlugins(): Promise<void> {

@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { catchError, EMPTY, filter, finalize, from, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, filter, finalize, from, of, switchMap, tap } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginService } from '../../services/plugin.service';
+import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
 import { PluginActions } from './plugin.action';
 import { PluginStore } from './plugin.store';
 
@@ -142,6 +144,27 @@ export class PluginEffects {
 				return EMPTY;
 			})
 		)
+	);
+
+	checkInstallation$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginInstallationActions.check),
+				switchMap(({ marketplaceId }) =>
+					from(this.pluginElectronService.checkInstallation(marketplaceId)).pipe(
+						map((plugin) => PluginInstallationActions.checkSuccess(plugin)),
+						catchError((error) => {
+							this.toastrService.error(
+								error?.error?.message || error?.message || 'Failed to check installation status'
+							);
+							return of(PluginInstallationActions.checkFailure(error.message));
+						})
+					)
+				)
+			),
+		{
+			dispatch: true
+		}
 	);
 
 	private handleProgress(arg: { message?: string }): void {

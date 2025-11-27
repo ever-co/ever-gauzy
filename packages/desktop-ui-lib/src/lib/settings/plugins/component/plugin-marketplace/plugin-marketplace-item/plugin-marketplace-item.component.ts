@@ -27,7 +27,6 @@ import { PluginInstallationQuery } from '../+state/queries/plugin-installation.q
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { PluginSourceQuery } from '../+state/queries/plugin-source.query';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
-import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
@@ -131,7 +130,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	public loadPlugin(): void {
 		this.action.dispatch(
 			PluginMarketplaceActions.getOne(this.pluginId, {
-				relations: ['versions', 'versions.sources', 'uploadedBy'],
+				relations: ['versions', 'versions.sources', 'uploadedBy', 'subscriptions'],
 				order: { versions: { releaseDate: 'DESC' } }
 			})
 		);
@@ -356,29 +355,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public async uninstallPlugin(): Promise<void> {
-		this.dialogService
-			.open(AlertComponent, {
-				backdropClass: 'backdrop-blur',
-				context: {
-					data: {
-						title: 'PLUGIN.DIALOG.UNINSTALL.TITLE',
-						message: 'PLUGIN.DIALOG.UNINSTALL.DESCRIPTION',
-						confirmText: 'PLUGIN.DIALOG.UNINSTALL.CONFIRM',
-						status: 'basic'
-					}
-				}
-			})
-			.onClose.pipe(
-				take(1),
-				filter(Boolean),
-				concatMap(() => this.checkPlugin(this.plugin)),
-				filter(Boolean),
-				tap((plugin) => {
-					this.action.dispatch(PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin }));
-					this.action.dispatch(PluginInstallationActions.uninstall(plugin));
-				})
-			)
-			.subscribe();
+		this.action.dispatch(PluginInstallationActions.uninstall(this.pluginId));
 	}
 
 	public installPlugin(isUpdate = false): void {

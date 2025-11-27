@@ -42,8 +42,8 @@ export class PluginElectronService {
 		this.electronService.ipcRenderer.send('plugin::download', config);
 	}
 
-	public uninstall(plugin: IPlugin) {
-		this.electronService.ipcRenderer.send('plugin::uninstall', plugin.name);
+	public uninstall(input: { marketplaceId: ID; name?: string; id?: ID }) {
+		this.electronService.ipcRenderer.send('plugin::uninstall', input);
 	}
 
 	public completeInstallation(marketplaceId: string, installationId: string): void {
