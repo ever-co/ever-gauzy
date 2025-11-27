@@ -60,6 +60,7 @@ jobs:
 
           # OAuth 2.0 Authorization
           MCP_AUTH_ENABLED: "${{ secrets.MCP_AUTH_ENABLED }}"
+          MCP_AUTH_BASE_URL: "${{ secrets.MCP_AUTH_BASE_URL }}"
           MCP_AUTH_RESOURCE_URI: "${{ secrets.MCP_AUTH_RESOURCE_URI }}"
           MCP_AUTH_REQUIRED_SCOPES: "${{ secrets.MCP_AUTH_REQUIRED_SCOPES }}"
           MCP_AUTH_SERVERS: "${{ secrets.MCP_AUTH_SERVERS }}"
