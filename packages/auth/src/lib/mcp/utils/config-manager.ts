@@ -147,7 +147,7 @@ export class ConfigManager {
 			host: this.getEnvString('MCP_HTTP_HOST', 'localhost'),
 			port: this.getEnvNumber('MCP_HTTP_PORT', 3001),
 			mcpAuthUrl: this.getEnvString('MCP_AUTH_JWT_ISSUER', 'http://localhost:3003'),
-			baseUrl: this.getEnvString('MCP_BASE_URL', 'http://localhost:3001'),
+			baseUrl: this.getEnvString('MCP_AUTH_BASE_URL', 'http://localhost:3003'),
 			environment: this.getEnvEnvironment('NODE_ENV', 'development'),
 
 			// Security settings
@@ -278,10 +278,10 @@ export class ConfigManager {
 			try {
 				const u = new URL(config.baseUrl);
 				if (config.environment === 'production' && u.protocol !== 'https:') {
-					errors.push('MCP_BASE_URL must use https in production');
+					errors.push('MCP_AUTH_BASE_URL must use https in production');
 				}
 			} catch {
-				errors.push('MCP_BASE_URL must be a valid URL');
+				errors.push('MCP_AUTH_BASE_URL must be a valid URL');
 			}
 		}
 

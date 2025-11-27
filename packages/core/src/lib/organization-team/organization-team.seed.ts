@@ -17,6 +17,12 @@ export const createDefaultTeams = async (
 	const teams = DEFAULT_ORGANIZATION_TEAMS;
 	const { id: organizationId, tenantId } = organization;
 
+	// Load employees with user.role relation to check for admin users
+	const employeesWithRoles = await dataSource.manager.find(Employee, {
+		where: { organizationId, tenantId },
+		relations: ['user', 'user.role']
+	});
+
 	const organizationTeams: OrganizationTeam[] = [];
 	for (let i = 0; i < teams.length; i++) {
 		const team = new OrganizationTeam();
@@ -32,14 +38,19 @@ export const createDefaultTeams = async (
 		const employeeMap = new Map<string, { employee: IEmployee; isManager: boolean }>();
 
 		// First, add all members
-		employees
+		employeesWithRoles
 			.filter((e) => memberEmails.indexOf(e.user.email) > -1)
 			.forEach((emp) => {
-				employeeMap.set(emp.id, { employee: emp, isManager: false });
+				// Check if employee has ADMIN or SUPER_ADMIN role
+				const isAdminUser =
+					emp.user?.role?.name === RolesEnum.ADMIN || emp.user?.role?.name === RolesEnum.SUPER_ADMIN;
+
+				// Admins should always be managers in their teams
+				employeeMap.set(emp.id, { employee: emp, isManager: isAdminUser });
 			});
 
 		// Then, mark managers (this will update existing entries or add new ones)
-		employees
+		employeesWithRoles
 			.filter((e) => managerEmails.indexOf(e.user.email) > -1)
 			.forEach((emp) => {
 				const existing = employeeMap.get(emp.id);

@@ -172,6 +172,18 @@ export class OAuth2AuthorizationServer {
 				return undefined;
 			}
 
+			// Don't set domain for ngrok URLs or other temporary proxy services
+			// These services provide unique subdomains and setting a root domain would break cookies
+			const isNgrok = hostname.endsWith('.ngrok.io') || hostname.endsWith('.ngrok-free.app') || hostname.endsWith('.ngrok-free.dev');
+			const isCloudflare = hostname.includes('cloudflare-tunnel') || hostname.endsWith('.trycloudflare.com');
+			const isTemporaryProxy = isNgrok || isCloudflare || hostname.endsWith('.localhost.run');
+
+			if (isTemporaryProxy) {
+				// For temporary proxy services, don't set domain - let browser handle it
+				this.securityLogger.debug('Detected temporary proxy service, not setting cookie domain', { hostname });
+				return undefined;
+			}
+
 			// Return hostname for valid domain names
 			return hostname;
 		} catch (error) {
@@ -187,6 +199,7 @@ export class OAuth2AuthorizationServer {
 		const hostname = this.extractCookieDomain(isHttps);
 		let cookieDomain: string | undefined;
 
+		// Only set cookie domain if we have a valid hostname that's not a proxy service
 		if (hostname) {
 			const parts = hostname.split('.');
 			if (parts.length >= 2) {
@@ -197,6 +210,7 @@ export class OAuth2AuthorizationServer {
 		}
 
 		// Choose cookie name based on whether we're setting a domain
+		// For proxy services (ngrok), use __Host- prefix which doesn't allow domain attribute
 		const csrfCookieName = isHttps
 			? (cookieDomain ? '__Secure-mcp.x-csrf-token' : '__Host-mcp.x-csrf-token')
 			: 'mcp-csrf-token';
@@ -213,23 +227,34 @@ export class OAuth2AuthorizationServer {
 					return sessionId;
 				}
 
+				// For non-HTTPS development, use simple IP-based identifier
 				if (!isHttps) {
 					return `local-session-${req.ip || '127.0.0.1'}`;
 				}
 
-				// Production fallback (should rarely be used if sessions are working)
-				this.securityLogger.warn('CSRF protection falling back to IP-based identifier. Sessions may not be working correctly.');
+				// HTTPS fallback: Use a combination of IP and a hash of User-Agent
+				// This provides better session continuity when actual sessions aren't available
 				const ip = req.ip || req.connection.remoteAddress || 'unknown-ip';
 				const userAgent = req.get('User-Agent') || 'unknown-agent';
-				return `${ip}-${userAgent}`;
+				const identifier = `https-fallback-${ip}-${userAgent.substring(0, 50)}`;
+
+				this.securityLogger.warn('CSRF using fallback identifier (no session)', {
+					hasIp: !!req.ip,
+					hasUserAgent: !!req.get('User-Agent'),
+					protocol: req.protocol,
+					secure: req.secure
+				});
+
+				return identifier;
 			},
 			cookieName: csrfCookieName,
 			cookieOptions: {
 				httpOnly: true,
 				sameSite: 'lax',
+				// Set secure based on config - trust proxy will ensure cookies work correctly
 				secure: isHttps,
 				path: '/',
-				// Only set domain for HTTPS non-localhost environments
+				// Only set domain for HTTPS if we have a valid, non-proxy domain
 				...(cookieDomain && isHttps ? { domain: cookieDomain } : {}),
 			},
 			size: 64,
@@ -245,10 +270,11 @@ export class OAuth2AuthorizationServer {
 		// Log CSRF configuration for debugging
 		this.securityLogger.info('CSRF protection initialized', {
 			isHttps,
-			cookieDomain: cookieDomain || 'browser-default',
+			cookieDomain: cookieDomain || 'not-set',
 			cookieName: csrfCookieName,
 			secure: isHttps,
-			sameSite: 'lax'
+			sameSite: 'lax',
+			domainSet: !!cookieDomain
 		});
 	}
 
@@ -313,28 +339,29 @@ export class OAuth2AuthorizationServer {
 		// Configure trust proxy to honor X-Forwarded-For headers from trusted proxies
 		// This must be set before any middleware that uses req.ip or rate limiting
 		const serverConfig = this.configManager.getConfig();
+		const isHttps = this.config.baseUrl.startsWith('https');
+
 		if (serverConfig.trustedProxies && serverConfig.trustedProxies.length > 0) {
 			this.app.set('trust proxy', serverConfig.trustedProxies);
 			this.securityLogger.info(`Trust proxy enabled for: ${serverConfig.trustedProxies.join(', ')}`);
+		} else if (isHttps || serverConfig.environment === 'production') {
+			// For HTTPS or production environments, trust the first proxy
+			// This is safe for services like ngrok, Cloudflare, AWS ALB, etc.
+			this.app.set('trust proxy', 1);
+			this.securityLogger.info('Trust proxy enabled for first proxy (HTTPS/production mode)');
 		} else {
-			if (serverConfig.environment === 'production') {
-				this.securityLogger.warn('⚠️  Trusted proxies not configured in production. Trusting all proxies may allow IP spoofing.');
-				this.app.set('trust proxy', true);
-				this.securityLogger.info('Trust proxy enabled for all proxies (production mode)');
-			} else {
-				this.securityLogger.info('Trust proxy not configured (development mode)');
-			}
+			this.securityLogger.info('Trust proxy not configured (development mode)');
 		}
 
 		// Cookie parser
 		this.app.use(cookieParser());
 
 		// Extract domain from baseUrl for session cookie configuration
-		const isHttps = this.config.baseUrl.startsWith('https');
 		// Use root domain for session cookie to match CSRF cookie subdomain sharing
 		const hostname = this.extractCookieDomain(isHttps);
 		let sessionCookieDomain: string | undefined;
 
+		// Only set cookie domain if we have a valid hostname that's not a proxy service
 		if (hostname) {
 			const parts = hostname.split('.');
 			if (parts.length >= 2) {
@@ -345,20 +372,25 @@ export class OAuth2AuthorizationServer {
 		}
 
 		// Session management
+		// IMPORTANT: For environments proxy (Cloudflare, etc), we need to use 'auto' for secure
+		// This allows Express to determine secure based on req.secure (which respects X-Forwarded-Proto)
 		const sessionConfig: session.SessionOptions = {
 			secret: this.config.sessionSecret,
 			name: 'mcp-oauth-session',
 			resave: false,
 			saveUninitialized: false,
 			cookie: {
-				secure: isHttps,
+				// Use 'auto' to let express-session determine secure based on req.secure
+				// This works correctly with trust proxy and X-Forwarded-Proto header
+				secure: isHttps ? 'auto' : false,
 				httpOnly: true,
 				maxAge: 1000 * 60 * 60 * 24, // 24 hours
 				sameSite: 'lax',
-				// Set domain for production HTTPS environments
+				// Only set domain for HTTPS if we have a valid, non-proxy domain
 				...(sessionCookieDomain && isHttps ? { domain: sessionCookieDomain } : {}),
 			},
-			rolling: true
+			rolling: true,
+			proxy: isHttps || serverConfig.environment === 'production' // Trust proxy for session
 		};
 
 		// Add Redis store if URL is provided (prioritize REDIS_URL env var for production durability)
@@ -409,45 +441,108 @@ export class OAuth2AuthorizationServer {
 		}
 		this.app.use(session(sessionConfig));
 
+		// Debug middleware to log session details (placed AFTER session middleware)
+		// Only enable in development
+		if (serverConfig.environment === 'development') {
+			this.app.use((req, res, next) => {
+				if (req.method === 'POST' || (req.method === 'GET' && req.path.includes('/login'))) {
+					const sessionId = (req as any).sessionID;
+					const cookies = req.cookies || {};
+
+					this.securityLogger.debug(`${req.method} Request Details`, {
+						path: req.path,
+						protocol: req.protocol,
+						secure: req.secure,
+						ip: req.ip,
+						xForwardedProto: req.get('x-forwarded-proto'),
+						xForwardedHost: req.get('x-forwarded-host'),
+						host: req.get('host'),
+						hasSessionId: !!sessionId,
+						sessionIdPrefix: sessionId ? sessionId.substring(0, 8) : 'none',
+						cookieCount: Object.keys(cookies).length,
+						cookies: Object.keys(cookies),
+						trustProxy: this.app.get('trust proxy')
+					});
+				}
+				next();
+			});
+		}
+
 		// Log session configuration for debugging
 		this.securityLogger.info('Session configuration initialized', {
 			cookieName: sessionConfig.name,
-			cookieDomain: sessionCookieDomain || 'browser-default',
+			cookieDomain: sessionCookieDomain || 'not-set',
 			secure: sessionConfig.cookie?.secure,
 			sameSite: sessionConfig.cookie?.sameSite,
 			httpOnly: sessionConfig.cookie?.httpOnly,
-			hasStore: !!sessionConfig.store
+			hasStore: !!sessionConfig.store,
+			domainSet: !!sessionCookieDomain,
+			isHttps,
+			proxy: sessionConfig.proxy,
+			trustProxySetting: this.app.get('trust proxy')
 		});
 
 		// Security headers
 		// Extract origin from baseUrl for CSP (handles subdomain and scheme issues)
 		let baseUrlOrigin: string;
 		try {
-			baseUrlOrigin = new URL(this.config.baseUrl).origin;
-			this.securityLogger.debug(`CSP baseUrlOrigin: ${baseUrlOrigin}`);
+			const baseUrlObj = new URL(this.config.baseUrl);
+			baseUrlOrigin = baseUrlObj.origin;
+			this.securityLogger.info('CSP Configuration', {
+				baseUrl: this.config.baseUrl,
+				baseUrlOrigin,
+				protocol: baseUrlObj.protocol,
+				hostname: baseUrlObj.hostname,
+				port: baseUrlObj.port
+			});
 		} catch (error) {
 			this.securityLogger.error('Invalid baseUrl in configuration', { baseUrl: this.config.baseUrl, error });
 			throw new Error(`Failed to parse baseUrl: ${this.config.baseUrl}`);
 		}
 
+		// Dynamic CSP configuration for all environments
+		// We need to dynamically set CSP based on the actual request origin to support proxies
+		this.securityLogger.info('Configuring dynamic CSP for all environments', {
+			baseUrl: this.config.baseUrl,
+			baseUrlOrigin,
+			isHttps
+		});
+
+		// Use helmet without CSP - we implement dynamic CSP below for proxy support
+  		// CodeQL: Intentionally disabled - custom dynamic CSP follows (lines 514-552)
 		this.app.use(helmet({
-			contentSecurityPolicy: {
-				directives: {
-					defaultSrc: ["'self'"],
-					styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
-					fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
-					imgSrc: ["'self'", "data:", "https:"],
-					scriptSrc:  serverConfig.environment === 'production'
-						? ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com"]
-						:["'self'", "https://static.cloudflareinsights.com"],
-					connectSrc: ["'self'", "https://cloudflareinsights.com", "https://cdn.jsdelivr.net"],
-					objectSrc: ["'none'"],
-					baseUri: ["'self'"],
-					formAction: ["'self'", baseUrlOrigin],
-					frameAncestors: ["'none'"]
-				}
-			}
+			contentSecurityPolicy: false // Disable helmet's CSP, we'll set it dynamically
 		}));
+
+		// Dynamic CSP middleware that sets CSP based on actual request origin
+		this.app.use((req, res, next) => {
+			// Set CSP header with static 'self' for form-action
+			// Do NOT dynamically add request origin as it can be spoofed via X-Forwarded-Host
+			const csp = [
+				`default-src 'self'`,
+				`style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net`,
+				`font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net`,
+				`img-src 'self' data: https:`,
+				`script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com`,
+				`connect-src 'self' https://cloudflareinsights.com https://cdn.jsdelivr.net`,
+				`object-src 'none'`,
+				`base-uri 'self'`,
+				`form-action 'self'`,
+				`frame-ancestors 'none'`
+			].join('; ');
+
+			res.setHeader('Content-Security-Policy', csp);
+
+			// Log CSP for debugging on auth pages (only for GET requests to avoid spam)
+			if ((req.path.includes('/authorize') || req.path.includes('/login')) && req.method === 'GET') {
+				this.securityLogger.info('Dynamic CSP set', {
+					path: req.path,
+					method: req.method
+				});
+			}
+
+			next();
+		});
 
 		// Rate limiting
 		const authRateLimit = rateLimit({
@@ -696,14 +791,29 @@ export class OAuth2AuthorizationServer {
 		const rawReturnUrl = (req.query.return_url as string) || this.config.authorizationEndpoint;
 		const safeReturnUrl = this.normalizeReturnUrl(rawReturnUrl);
 
+		// Check session availability
+		const sessionId = (req as any).sessionID;
+		if (!sessionId) {
+			this.securityLogger.warn('No session ID available when loading login page', {
+				ip: req.ip,
+				userAgent: req.get('User-Agent'),
+				cookies: Object.keys(req.cookies || {})
+			});
+		}
+
 		// Generate CSRF token for the form
 		const csrfToken = this.generateToken(req, res);
-		const sessionId = (req as any).sessionID;
+
 		// Sanitize returnUrl to avoid logging sensitive query params
 		const sanitizedReturnUrl = safeReturnUrl.split('?')[0];
 		this.securityLogger.debug('Generated CSRF token for login form', {
 			hasSessionId: !!sessionId,
-			returnUrl: sanitizedReturnUrl
+			sessionIdPrefix: sessionId ? sessionId.substring(0, 8) : 'none',
+			returnUrl: sanitizedReturnUrl,
+			csrfTokenLength: csrfToken?.length || 0,
+			ip: req.ip,
+			protocol: req.protocol,
+			secure: req.secure
 		});
 
 		res.send(this.generateLoginForm(error, safeReturnUrl, csrfToken));
@@ -752,9 +862,20 @@ export class OAuth2AuthorizationServer {
 	private async handleLogin(req: Request, res: Response) {
 		try {
 			const sessionId = (req as any).sessionID;
-			this.securityLogger.debug('Processing login submission', {
+			const csrfTokenFromRequest = req.body._csrf || req.headers['x-csrf-token'];
+			const cookies = req.cookies || {};
+
+			this.securityLogger.info('Processing login submission', {
 				hasSessionId: !!sessionId,
-				ip: req.ip
+				sessionIdPrefix: sessionId ? sessionId.substring(0, 8) : 'none',
+				ip: req.ip,
+				protocol: req.protocol,
+				secure: req.secure,
+				hasCsrfToken: !!csrfTokenFromRequest,
+				csrfTokenLength: csrfTokenFromRequest?.length || 0,
+				cookies: Object.keys(cookies),
+				hasCsrfCookie: !!(cookies['__Host-mcp.x-csrf-token'] || cookies['__Secure-mcp.x-csrf-token'] || cookies['mcp-csrf-token']),
+				hasSessionCookie: !!cookies['mcp-oauth-session']
 			});
 			const { email, password, return_url } = req.body;
 			const returnUrl = return_url || this.config.authorizationEndpoint;
@@ -1466,6 +1587,7 @@ export class OAuth2AuthorizationServer {
 	 * Build login form HTML (simplified)
 	 */
 	private buildLoginFormHtml(errorMessage: string, returnUrl?: string, csrfToken?: string): string {
+		// Use relative URL for form action - works universally with CSP 'self'
 		return `
 			<!DOCTYPE html>
 			<html>
@@ -1685,6 +1807,7 @@ export class OAuth2AuthorizationServer {
 	 * Build consent form section
 	 */
 	private buildConsentForm(params: AuthorizeRequest, csrfToken?: string): string {
+		// Use relative URL for form action - works universally with CSP 'self'
 		return `
 			<form method="POST" action="${escapeHtml(this.config.authorizationEndpoint)}">
             	<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken || '')}" />

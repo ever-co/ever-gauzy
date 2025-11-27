@@ -252,15 +252,20 @@ export default function AppIpcMain() {
 		const pushActivities = PushActivities.getInstance();
 		const online = await isOnline({ timeout: 1200 }).catch(() => false);
 		if (online) {
-			const timerStatus = await apiService.timerStatus({
-				tenantId: authConfig.user.employee.tenantId,
-				organizationId: authConfig.user.employee.organizationId
-			});
-			timerStatus.startedAt = new Date(pushActivities.currentSessionStartTime);
-			if (pullActivities?.todayDuration) {
-				timerStatus.duration = pullActivities.todayDuration;
+			try {
+				const timerStatus = await apiService.timerStatus({
+					tenantId: authConfig.user.employee.tenantId,
+					organizationId: authConfig.user.employee.organizationId
+				});
+				timerStatus.startedAt = new Date(pushActivities.currentSessionStartTime);
+				if (pullActivities?.todayDuration) {
+					timerStatus.duration = pullActivities.todayDuration;
+				}
+				return timerStatus;
+			} catch (error) {
+				console.log('error get the last timer status');
 			}
-			return timerStatus;
+
 		}
 		return {
 			running: pullActivities.running,
