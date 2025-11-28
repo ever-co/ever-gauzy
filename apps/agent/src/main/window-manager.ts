@@ -11,7 +11,7 @@ import { app, BrowserWindow, screen } from 'electron';
 import { resolveHtmlPath, getInitialConfig, delaySync } from './util';
 import * as path from 'path';
 import { LocalStore } from '@gauzy/desktop-lib';
-import { ScreenCaptureWiindow } from './window/screen-capture-window';
+import { ScreenCaptureWindow } from './window/screen-capture-window';
 
 export enum WindowType {
 	settingWindow = 'settingWindow',
@@ -33,7 +33,7 @@ class AppWindow {
 	authWindow: AuthWindow | null;
 	settingWindow: BrowserWindow | null;
 	logWindow: BrowserWindow | null;
-	notificationWindow: ScreenCaptureWiindow | null;
+	notificationWindow: ScreenCaptureWindow | null;
 	alwaysOnWindow: AlwaysOn | null;
 	private windowReadyStatus: {
 		settingWindow: boolean;
@@ -253,7 +253,7 @@ class AppWindow {
 	async initScreenShotNotification() {
 		try {
 			if (!this.notificationWindow) {
-				this.notificationWindow = new ScreenCaptureWiindow(
+				this.notificationWindow = new ScreenCaptureWindow(
 					this.getUiPath('screen-capture'),
 					this.getPreloadPath(),
 					this.showNotificationWindow.bind(this)
@@ -267,17 +267,17 @@ class AppWindow {
 	}
 
 	async showNotificationWindow(thumbUrl: string) {
-		if (await this.isWindowReadyToShow(this.notificationWindow.browserWindow, WindowType.notificationWindow)) {
-			this.notificationWindow.browserWindow?.webContents?.send?.('show_popup_screen_capture', {
+		if (await this.isWindowReadyToShow(this.notificationWindow?.browserWindow, WindowType.notificationWindow)) {
+			this.notificationWindow?.browserWindow?.webContents?.send?.('show_popup_screen_capture', {
 				note: LocalStore.getStore('project')?.note, // Retrieves the note from the store
 				...(thumbUrl && { imgUrl: thumbUrl }) // Conditionally include the thumbnail URL if provided
 			});
-			this.notificationWindow.browserWindow?.once?.('show', () => {
+			this.notificationWindow?.browserWindow?.once?.('show', () => {
 				this.autoHideTimeout = setTimeout(() => {
 					this.hideNotificationWindow();
 				}, NOTIFICATION_HIDE_DELAY);
 			});
-			this.notificationWindow.browserWindow?.showInactive?.();
+			this.notificationWindow?.browserWindow?.showInactive?.();
 		}
 	}
 
@@ -294,7 +294,7 @@ class AppWindow {
 			clearTimeout(this.autoHideTimeout);
 			this.autoHideTimeout = null;
 		}
-		this.notificationWindow.browserWindow?.destroy?.();
+		this.notificationWindow?.browserWindow?.destroy?.();
 		this.notificationWindow = null;
 		this.windowReadyStatus[WindowType.notificationWindow] = false;
 	}

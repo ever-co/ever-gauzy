@@ -1,6 +1,6 @@
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
-export class ScreenCaptureWiindow extends ScreenCaptureNotification {
-	private showNotification: (thumbUrl: string) => void;
+export class ScreenCaptureWindow extends ScreenCaptureNotification {
+	private showNotification: (thumbUrl?: string) => void;
 	constructor(
 		path: string,
 		preloadPath: string,
