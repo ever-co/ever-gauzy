@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject } from 'rxjs';
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
 import { PluginSourceQuery } from '../../../+state/queries/plugin-source.query';
+import { PluginMarketplaceUtilsService } from '../../../plugin-marketplace-utils.service';
 
 @Component({
 	selector: 'gauzy-plugin-source-code-tab',
@@ -22,7 +23,8 @@ export class SourceCodeTabComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly translateService: TranslateService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
-		public readonly sourceQuery: PluginSourceQuery
+		public readonly sourceQuery: PluginSourceQuery,
+		private readonly utils: PluginMarketplaceUtilsService
 	) {
 		this.plugin$ = this.marketplaceQuery.plugin$;
 		this.selectedSource$ = this.sourceQuery.source$;
@@ -38,20 +40,10 @@ export class SourceCodeTabComponent implements OnInit, OnDestroy {
 	}
 
 	getSourceTypeLabel(type: PluginSourceType): string {
-		const labels: Record<PluginSourceType, string> = {
-			[PluginSourceType.CDN]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.CDN'),
-			[PluginSourceType.NPM]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.NPM'),
-			[PluginSourceType.GAUZY]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.GAUZY')
-		};
-		return labels[type] || type;
+		return this.utils.getSourceTypeLabel(type);
 	}
 
 	getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
-		const typeMap: Record<PluginSourceType, string> = {
-			[PluginSourceType.GAUZY]: 'primary',
-			[PluginSourceType.CDN]: 'info',
-			[PluginSourceType.NPM]: 'danger'
-		};
-		return typeMap[type] || 'basic';
+		return this.utils.getPluginSourceTypeBadgeStatus(type);
 	}
 }

@@ -1,16 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-	ICDNSource,
-	IGauzySource,
-	INPMSource,
-	IPlugin,
-	IPluginSource,
-	IPluginVersion,
-	PluginSourceType,
-	PluginStatus,
-	PluginType
-} from '@gauzy/contracts';
+import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogService, NbRouteTab } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -29,13 +19,12 @@ import { PluginSourceQuery } from '../+state/queries/plugin-source.query';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginScope } from '../../../services/plugin-subscription-access.service';
+import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
 import { InstallationValidationChainBuilder } from '../services';
 import { SubscriptionDialogRouterService } from '../services/subscription-dialog-router.service';
 import { SubscriptionStatusService } from '../shared';
-import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
-import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './dialog-installation-validation/dialog-installation-validation.component';
 
 @Component({
@@ -80,7 +69,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		public readonly versionQuery: PluginVersionQuery,
 		public readonly sourceQuery: PluginSourceQuery,
 		public readonly accessFacade: PluginSubscriptionAccessFacade,
-		public readonly statusService: SubscriptionStatusService
+		public readonly statusService: SubscriptionStatusService,
+		private readonly utils: PluginMarketplaceUtilsService
 	) {}
 
 	ngOnInit(): void {
@@ -135,70 +125,37 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		await this.router.navigate(['/settings/marketplace-plugins']);
 	}
 
-	// Utility methods with strong typing
+	// Delegate utility methods to PluginMarketplaceUtilsService
 	getSourceTypeLabel(type: PluginSourceType): string {
-		const labels: Record<PluginSourceType, string> = {
-			[PluginSourceType.CDN]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.CDN'),
-			[PluginSourceType.NPM]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.NPM'),
-			[PluginSourceType.GAUZY]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.GAUZY')
-		};
-		return labels[type] || type;
+		return this.utils.getSourceTypeLabel(type);
 	}
 
 	getStatusLabel(status: PluginStatus): string {
-		return this.translateService.instant(`PLUGIN.FORM.STATUSES.${status}`);
+		return this.utils.getStatusLabel(status);
 	}
 
 	getTypeLabel(type: PluginType): string {
-		return this.translateService.instant(`PLUGIN.FORM.TYPES.${type}`);
+		return this.utils.getTypeLabel(type);
 	}
 
 	getStatusBadgeStatus(status: PluginStatus): string {
-		const statusMap: Record<PluginStatus, string> = {
-			[PluginStatus.ACTIVE]: 'success',
-			[PluginStatus.INACTIVE]: 'warning',
-			[PluginStatus.DEPRECATED]: 'info',
-			[PluginStatus.ARCHIVED]: 'danger'
-		};
-		return statusMap[status] || 'basic';
+		return this.utils.getStatusBadgeStatus(status);
 	}
 
 	getPluginTypeBadgeStatus(type: PluginType): string {
-		const typeMap: Record<PluginType, string> = {
-			[PluginType.DESKTOP]: 'primary',
-			[PluginType.WEB]: 'info',
-			[PluginType.MOBILE]: 'success'
-		};
-		return typeMap[type] || 'basic';
+		return this.utils.getPluginTypeBadgeStatus(type);
 	}
 
 	getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
-		const typeMap: Record<PluginSourceType, string> = {
-			[PluginSourceType.GAUZY]: 'primary',
-			[PluginSourceType.CDN]: 'info',
-			[PluginSourceType.NPM]: 'danger'
-		};
-		return typeMap[type] || 'basic';
+		return this.utils.getPluginSourceTypeBadgeStatus(type);
 	}
 
 	getAccessLevelLabel(level: PluginScope): string {
-		const labels: Record<PluginScope, string> = {
-			[PluginScope.USER]: this.translateService.instant('PLUGIN.ACCESS.USER_LEVEL'),
-			[PluginScope.ORGANIZATION]: this.translateService.instant('PLUGIN.ACCESS.ORG_LEVEL'),
-			[PluginScope.TENANT]: this.translateService.instant('PLUGIN.ACCESS.TENANT_LEVEL'),
-			[PluginScope.GLOBAL]: this.translateService.instant('PLUGIN.ACCESS.GLOBAL_LEVEL')
-		};
-		return labels[level] || level;
+		return this.utils.getAccessLevelLabel(level);
 	}
 
 	getAccessLevelBadgeStatus(level: PluginScope): string {
-		const statusMap: Record<PluginScope, string> = {
-			[PluginScope.TENANT]: 'success',
-			[PluginScope.ORGANIZATION]: 'info',
-			[PluginScope.USER]: 'warning',
-			[PluginScope.GLOBAL]: 'primary'
-		};
-		return statusMap[level] || 'basic';
+		return this.utils.getAccessLevelBadgeStatus(level);
 	}
 
 	showAssignUsersDialog(): void {
@@ -208,19 +165,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	getSourceDetails(plugin: IPlugin): string {
-		switch (plugin.source.type) {
-			case PluginSourceType.CDN:
-				return (plugin.source as ICDNSource).url;
-			case PluginSourceType.NPM:
-				const npmSource = plugin.source as INPMSource;
-				return `${npmSource.scope ? npmSource.scope + '/' : ''}${npmSource.name}@${plugin.version.number}`;
-			case PluginSourceType.GAUZY:
-				return (
-					(plugin.source as IGauzySource).url || this.translateService.instant('PLUGIN.DETAILS.UPLOADED_FILE')
-				);
-			default:
-				return this.translateService.instant('PLUGIN.DETAILS.UNKNOWN_SOURCE');
-		}
+		return this.utils.getSourceDetails(plugin);
 	}
 
 	async updatePluginStatus(status: PluginStatus): Promise<void> {
@@ -291,8 +236,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	formatDate(date: Date | string | null): string {
-		if (!date) return 'N/A';
-		return new Date(date).toLocaleString();
+		return this.utils.formatDate(date);
 	}
 
 	public get isOwner(): boolean {
@@ -557,40 +501,11 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public addVersion(): void {
-		if (!this.plugin || !this.isOwner || !this.pluginId) return;
-
-		this.dialogService
-			.open(DialogCreateVersionComponent, {
-				backdropClass: 'backdrop-blur',
-				context: { plugin: this.plugin }
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap((version: IPluginVersion) => {
-					this.action.dispatch(
-						PluginInstallationActions.toggle({ isChecked: this.plugin.installed, pluginId: this.pluginId })
-					);
-					this.action.dispatch(PluginVersionActions.add(this.pluginId, version));
-				}),
-				takeUntil(this.destroy$)
-			)
-			.subscribe();
+		this.action.dispatch(PluginVersionActions.add(this.plugin));
 	}
 
 	public addSource(): void {
-		this.dialogService
-			.open(DialogCreateSourceComponent, {
-				backdropClass: 'backdrop-blur',
-				context: { plugin: this.plugin, version: this.selectedVersion }
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap(({ pluginId, versionId, sources }) => {
-					this.action.dispatch(PluginSourceActions.add(pluginId, versionId, sources));
-				}),
-				takeUntil(this.destroy$)
-			)
-			.subscribe();
+		this.action.dispatch(PluginSourceActions.add(this.plugin));
 	}
 
 	public delete(): void {

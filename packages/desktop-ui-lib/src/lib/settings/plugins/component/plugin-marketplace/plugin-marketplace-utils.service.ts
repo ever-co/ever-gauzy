@@ -1,0 +1,105 @@
+import { Injectable } from '@angular/core';
+import {
+	ICDNSource,
+	IGauzySource,
+	INPMSource,
+	IPlugin,
+	PluginSourceType,
+	PluginStatus,
+	PluginType
+} from '@gauzy/contracts';
+import { TranslateService } from '@ngx-translate/core';
+import { PluginScope } from '../services/plugin-subscription-access.service';
+
+@Injectable({
+	providedIn: 'root'
+})
+export class PluginMarketplaceUtilsService {
+	constructor(private readonly translateService: TranslateService) {}
+
+	getSourceTypeLabel(type: PluginSourceType): string {
+		const labels: Record<PluginSourceType, string> = {
+			[PluginSourceType.CDN]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.CDN'),
+			[PluginSourceType.NPM]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.NPM'),
+			[PluginSourceType.GAUZY]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.GAUZY')
+		};
+		return labels[type] || type;
+	}
+
+	getStatusLabel(status: PluginStatus): string {
+		return this.translateService.instant(`PLUGIN.FORM.STATUSES.${status}`);
+	}
+
+	getTypeLabel(type: PluginType): string {
+		return this.translateService.instant(`PLUGIN.FORM.TYPES.${type}`);
+	}
+
+	getStatusBadgeStatus(status: PluginStatus): string {
+		const statusMap: Record<PluginStatus, string> = {
+			[PluginStatus.ACTIVE]: 'success',
+			[PluginStatus.INACTIVE]: 'warning',
+			[PluginStatus.DEPRECATED]: 'info',
+			[PluginStatus.ARCHIVED]: 'danger'
+		};
+		return statusMap[status] || 'basic';
+	}
+
+	getPluginTypeBadgeStatus(type: PluginType): string {
+		const typeMap: Record<PluginType, string> = {
+			[PluginType.DESKTOP]: 'primary',
+			[PluginType.WEB]: 'info',
+			[PluginType.MOBILE]: 'success'
+		};
+		return typeMap[type] || 'basic';
+	}
+
+	getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
+		const typeMap: Record<PluginSourceType, string> = {
+			[PluginSourceType.GAUZY]: 'primary',
+			[PluginSourceType.CDN]: 'info',
+			[PluginSourceType.NPM]: 'danger'
+		};
+		return typeMap[type] || 'basic';
+	}
+
+	getAccessLevelLabel(level: PluginScope): string {
+		const labels: Record<PluginScope, string> = {
+			[PluginScope.USER]: this.translateService.instant('PLUGIN.ACCESS.USER_LEVEL'),
+			[PluginScope.ORGANIZATION]: this.translateService.instant('PLUGIN.ACCESS.ORG_LEVEL'),
+			[PluginScope.TENANT]: this.translateService.instant('PLUGIN.ACCESS.TENANT_LEVEL'),
+			[PluginScope.GLOBAL]: this.translateService.instant('PLUGIN.ACCESS.GLOBAL_LEVEL')
+		};
+		return labels[level] || level;
+	}
+
+	getAccessLevelBadgeStatus(level: PluginScope): string {
+		const statusMap: Record<PluginScope, string> = {
+			[PluginScope.TENANT]: 'success',
+			[PluginScope.ORGANIZATION]: 'info',
+			[PluginScope.USER]: 'warning',
+			[PluginScope.GLOBAL]: 'primary'
+		};
+		return statusMap[level] || 'basic';
+	}
+
+	getSourceDetails(plugin: IPlugin): string {
+		switch (plugin.source.type) {
+			case PluginSourceType.CDN:
+				return (plugin.source as ICDNSource).url;
+			case PluginSourceType.NPM:
+				const npmSource = plugin.source as INPMSource;
+				return `${npmSource.scope ? npmSource.scope + '/' : ''}${npmSource.name}@${plugin.version.number}`;
+			case PluginSourceType.GAUZY:
+				return (
+					(plugin.source as IGauzySource).url || this.translateService.instant('PLUGIN.DETAILS.UPLOADED_FILE')
+				);
+			default:
+				return this.translateService.instant('PLUGIN.DETAILS.UNKNOWN_SOURCE');
+		}
+	}
+
+	formatDate(date: Date | string | null): string {
+		if (!date) return 'N/A';
+		return new Date(date).toLocaleString();
+	}
+}

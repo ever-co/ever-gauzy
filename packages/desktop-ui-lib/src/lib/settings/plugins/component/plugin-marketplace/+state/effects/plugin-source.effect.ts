@@ -1,15 +1,31 @@
 import { Injectable } from '@angular/core';
+import { ID, IPlugin, IPluginSource, IPluginVersion } from '@gauzy/contracts';
+import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, catchError, filter, finalize, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs';
+import {
+	EMPTY,
+	Observable,
+	catchError,
+	exhaustMap,
+	filter,
+	finalize,
+	map,
+	mergeMap,
+	switchMap,
+	tap,
+	withLatestFrom
+} from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { coalesceValue } from '../../../../../../utils';
 import { PluginElectronService } from '../../../../services/plugin-electron.service';
 import { PluginService } from '../../../../services/plugin.service';
+import { DialogCreateSourceComponent } from '../../plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
 import { PluginSourceActions } from '../actions/plugin-source.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginSourceStore } from '../stores/plugin-source.store';
+import { PluginVersionStore } from '../stores/plugin-version.store';
 
 @Injectable({ providedIn: 'root' })
 export class PluginSourceEffects {
@@ -17,15 +33,19 @@ export class PluginSourceEffects {
 		private readonly action$: Actions,
 		private readonly pluginService: PluginService,
 		private readonly pluginSourceStore: PluginSourceStore,
+		private readonly pluginVersionStore: PluginVersionStore,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginElectronService: PluginElectronService,
-		private readonly translateService: TranslateService
+		private readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService
 	) {}
 
 	createMany$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.add),
+			tap(({ plugin }) => this.selectSourceContext(plugin)),
+			exhaustMap(({ plugin }) => this.createSourceDialog(plugin, plugin.versions[0])),
 			tap(() => {
 				this.pluginSourceStore.setCreating(true);
 				this.pluginMarketplaceStore.setUpload({ uploading: true });
@@ -160,4 +180,24 @@ export class PluginSourceEffects {
 			)
 		)
 	);
+
+	private createSourceDialog(
+		plugin: IPlugin,
+		version: IPluginVersion
+	): Observable<{ sources: IPluginSource[]; pluginId: ID; versionId: ID }> {
+		return this.dialogService
+			.open(DialogCreateSourceComponent, {
+				backdropClass: 'backdrop-blur',
+				context: { plugin, version }
+			})
+			.onClose.pipe(filter(Boolean));
+	}
+
+	// Helper method to set plugin context in stores
+	private selectSourceContext(plugin: IPlugin): void {
+		this.pluginVersionStore.setPluginId(plugin.id);
+		this.pluginMarketplaceStore.selectPlugin(plugin);
+		this.pluginVersionStore.selectVersion(plugin.versions[0]);
+		this.pluginSourceStore.setPluginVersion(plugin.id, plugin.versions[0].id);
+	}
 }

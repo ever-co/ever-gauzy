@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
+import { IPlugin, IPluginVersion } from '@gauzy/contracts';
+import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, catchError, filter, finalize, map, mergeMap, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, catchError, exhaustMap, filter, finalize, map, mergeMap, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { coalesceValue } from '../../../../../../utils';
 import { PluginService } from '../../../../services/plugin.service';
+import { DialogCreateVersionComponent } from '../../plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
 import { PluginVersionActions } from '../actions/plugin-version.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginVersionStore } from '../stores/plugin-version.store';
@@ -18,7 +21,8 @@ export class PluginVersionEffects {
 		private readonly pluginService: PluginService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
-		private readonly translateService: TranslateService
+		private readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService
 	) {}
 
 	getAll$ = createEffect(() =>
@@ -44,6 +48,10 @@ export class PluginVersionEffects {
 	createOne$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginVersionActions.add),
+			tap(({ plugin }) => this.pluginVersionStore.setPluginId(plugin.id)),
+			exhaustMap(({ plugin }) =>
+				this.createVersionDialog(plugin).pipe(map((version) => ({ pluginId: plugin.id, version })))
+			),
 			tap(() => {
 				this.pluginVersionStore.setCreating(true);
 				this.pluginMarketplaceStore.setUpload({ uploading: true });
@@ -197,4 +205,13 @@ export class PluginVersionEffects {
 			tap(() => this.pluginVersionStore.reset())
 		)
 	);
+
+	private createVersionDialog(plugin: IPlugin): Observable<IPluginVersion> {
+		return this.dialogService
+			.open(DialogCreateVersionComponent, {
+				backdropClass: 'backdrop-blur',
+				context: { plugin }
+			})
+			.onClose.pipe(filter(Boolean));
+	}
 }

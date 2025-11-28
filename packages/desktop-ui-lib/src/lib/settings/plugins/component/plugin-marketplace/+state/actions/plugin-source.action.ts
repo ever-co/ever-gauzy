@@ -1,15 +1,8 @@
-import { ID, IPluginSource } from '@gauzy/contracts';
+import { ID, IPlugin, IPluginSource } from '@gauzy/contracts';
 import { createAction } from '@ngneat/effects';
 
 export class PluginSourceActions {
-	public static add = createAction(
-		'[Plugin Source] Add',
-		(pluginId: ID, versionId: ID, sources: IPluginSource[]) => ({
-			pluginId,
-			versionId,
-			sources
-		})
-	);
+	public static add = createAction('[Plugin Source] Add', (plugin: IPlugin) => ({ plugin }));
 	public static getAll = createAction('[Plugin Source] Get All', <T>(pluginId: ID, versionId: ID, params?: T) => ({
 		params,
 		pluginId,

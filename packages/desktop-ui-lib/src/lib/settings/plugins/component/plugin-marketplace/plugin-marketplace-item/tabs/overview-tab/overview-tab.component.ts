@@ -7,6 +7,7 @@ import { PluginMarketplaceActions } from '../../../+state/actions/plugin-marketp
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
 import { PluginVersionQuery } from '../../../+state/queries/plugin-version.query';
 import { Store } from '../../../../../../../services';
+import { PluginMarketplaceUtilsService } from '../../../plugin-marketplace-utils.service';
 
 @Component({
 	selector: 'gauzy-plugin-overview-tab',
@@ -27,7 +28,8 @@ export class OverviewTabComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly actions: Actions,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
-		public readonly versionQuery: PluginVersionQuery
+		public readonly versionQuery: PluginVersionQuery,
+		public readonly utils: PluginMarketplaceUtilsService
 	) {
 		this.plugin$ = this.marketplaceQuery.plugin$;
 		this.selectedVersion$ = this.versionQuery.version$;
@@ -54,16 +56,15 @@ export class OverviewTabComponent implements OnInit, OnDestroy {
 	}
 
 	getStatusLabel(status: PluginStatus): string {
-		return `PLUGIN.FORM.STATUSES.${status}`;
+		return this.utils.getStatusLabel(status);
 	}
 
 	getTypeLabel(type: string): string {
-		return `PLUGIN.FORM.TYPES.${type}`;
+		return this.utils.getTypeLabel(type as any);
 	}
 
 	formatDate(date: Date | string | null): string {
-		if (!date) return 'N/A';
-		return new Date(date).toLocaleString();
+		return this.utils.formatDate(date);
 	}
 
 	public async navigateToHistory(): Promise<void> {

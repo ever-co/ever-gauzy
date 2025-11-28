@@ -14,6 +14,7 @@ import {
 	tap
 } from 'rxjs';
 import { PluginCategoryActions, PluginCategoryQuery } from '../+state';
+import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 import { IPluginFilter } from '../+state/stores/plugin-market.store';
 import { FilterStrategyService } from '../services/filter-strategy.service';
 import { ReactiveFilterStateService, ToggleCategoryCommand } from '../services/reactive-filter-state.service';
@@ -113,6 +114,7 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 		private readonly actions: Actions,
 		private readonly filterStrategyService: FilterStrategyService,
 		private readonly reactiveFilterService: ReactiveFilterStateService
+		private readonly utils: PluginMarketplaceUtilsService
 	) {
 		this.initializeForm();
 		this.setupFilterSections();
@@ -553,31 +555,11 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 	}
 
 	public getStatusBadgeStatus(status: PluginStatus): string {
-		switch (status) {
-			case PluginStatus.ACTIVE:
-				return 'success';
-			case PluginStatus.INACTIVE:
-				return 'warning';
-			case PluginStatus.DEPRECATED:
-				return 'info';
-			case PluginStatus.ARCHIVED:
-				return 'danger';
-			default:
-				return 'basic';
-		}
+		return this.utils.getStatusBadgeStatus(status);
 	}
 
 	public getTypeBadgeStatus(type: PluginType): string {
-		switch (type) {
-			case PluginType.DESKTOP:
-				return 'primary';
-			case PluginType.WEB:
-				return 'info';
-			case PluginType.MOBILE:
-				return 'warning';
-			default:
-				return 'basic';
-		}
+		return this.utils.getPluginTypeBadgeStatus(type);
 	}
 
 	public getCategoryIcon(category: string): string {

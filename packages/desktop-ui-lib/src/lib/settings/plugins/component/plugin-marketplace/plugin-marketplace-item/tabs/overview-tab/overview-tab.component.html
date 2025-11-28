@@ -49,7 +49,7 @@
 							[value]="status"
 							[disabled]="status === plugin.status"
 						>
-							{{ getStatusLabel(status) | translate }}
+							{{ getStatusLabel(status) }}
 						</nb-option>
 					</nb-select>
 					}@else {
@@ -60,7 +60,7 @@
 
 			<div class="info-item">
 				<div class="label">{{ 'PLUGIN.FORM.TYPE' | translate }}</div>
-				<div class="value">{{ getTypeLabel(plugin.type) | translate }}</div>
+				<div class="value">{{ getTypeLabel(plugin.type) }}</div>
 			</div>
 		</div>
 	</div>
