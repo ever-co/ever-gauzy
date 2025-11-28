@@ -67,7 +67,7 @@ spec:
             - name: DB_SYNCHRONIZE
               value: "$DB_SYNCHRONIZE"
             - name: NODE_ENV
-              value: "production"
+              value: "development"
             - name: MCP_AUTH_PORT
               value: "3003"
             - name: MCP_AUTH_BASE_URL
