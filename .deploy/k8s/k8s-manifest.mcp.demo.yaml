@@ -36,6 +36,8 @@ spec:
         - name: gauzy-demo-mcp
           image: registry.digitalocean.com/ever/gauzy-mcp-demo:latest
           env:
+            - name: NODE_ENV
+              value: 'development'
             - name: MCP_TRANSPORT
               value: '$MCP_TRANSPORT'
             - name: MCP_SERVER_MODE

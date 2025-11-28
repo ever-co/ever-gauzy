@@ -36,6 +36,8 @@ spec:
         - name: gauzy-stage-mcp
           image: registry.digitalocean.com/ever/gauzy-mcp-stage:latest
           env:
+            - name: NODE_ENV
+              value: 'production'
             - name: MCP_TRANSPORT
               value: '$MCP_TRANSPORT'
             - name: MCP_SERVER_MODE

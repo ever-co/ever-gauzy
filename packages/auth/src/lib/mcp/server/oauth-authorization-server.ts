@@ -1213,59 +1213,100 @@ export class OAuth2AuthorizationServer {
 	 * Handle authorization code grant
 	 */
 	private async handleAuthorizationCodeGrant(req: Request, res: Response, params: TokenRequest): Promise<void> {
-		// Validate required parameters
-		if (!params.code || !params.redirect_uri || !params.client_id) {
+		try {
+			// Validate required parameters
+			if (!params.code || !params.redirect_uri || !params.client_id) {
+				this.securityLogger.error('Token exchange: Missing required parameters', {
+					hasCode: !!params.code,
+					hasRedirectUri: !!params.redirect_uri,
+					hasClientId: !!params.client_id
+				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_request', 'Missing required parameters'),
+					400
+				);
+				return;
+			}
+
+			// Validate client
+			const client = await oAuth2ClientManager.validateClient(params.client_id, params.client_secret);
+			if (!client) {
+				this.securityLogger.error('Token exchange: Client authentication failed', {
+					clientId: params.client_id,
+					hasClientSecret: !!params.client_secret
+				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_client', 'Client authentication failed'),
+					401
+				);
+				return;
+			}
+
+			this.securityLogger.debug('Token exchange: Client validated', { clientId: params.client_id });
+
+			// Exchange authorization code
+			const authCode = oAuth2AuthorizationCodeManager.exchangeAuthorizationCode(
+				params.code,
+				params.client_id,
+				params.redirect_uri,
+				params.code_verifier
+			);
+
+			if (!authCode) {
+				this.securityLogger.error('Token exchange: Invalid authorization code', {
+					clientId: params.client_id,
+					redirectUri: params.redirect_uri,
+					hasCodeVerifier: !!params.code_verifier
+				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_grant', 'Invalid authorization code'),
+					400
+				);
+				return;
+			}
+
+			this.securityLogger.debug('Token exchange: Authorization code validated', {
+				clientId: params.client_id,
+				userId: authCode.userId,
+				scopes: authCode.scopes.join(' ')
+			});
+
+			// Generate tokens
+			const tokenPair = await this.tokenManager.generateTokenPair(
+				authCode.userId,
+				params.client_id,
+				authCode.scopes,
+				{ includeRefreshToken: true }
+			);
+
+			this.securityLogger.info('Token exchange: Success', {
+				clientId: params.client_id,
+				userId: authCode.userId,
+				scopes: authCode.scopes.join(' ')
+			});
+
+			this.responseBuilder.sendTokenResponse(res, {
+				access_token: tokenPair.accessToken,
+				token_type: tokenPair.tokenType,
+				expires_in: tokenPair.expiresIn,
+				refresh_token: tokenPair.refreshToken,
+				scope: tokenPair.scope
+			});
+		} catch (error: any) {
+			this.securityLogger.error('Token exchange: Unexpected error', {
+				error: error.message,
+				stack: error.stack,
+				clientId: params.client_id
+			});
 			this.errorHandler.handleOAuthError(
 				res,
-				BaseErrorHandler.createAuthError('invalid_request', 'Missing required parameters'),
-				400
+				BaseErrorHandler.createAuthError('server_error', 'Internal server error during token exchange'),
+				500
 			);
-			return;
 		}
-
-		// Validate client
-		const client = await oAuth2ClientManager.validateClient(params.client_id, params.client_secret);
-		if (!client) {
-			this.errorHandler.handleOAuthError(
-				res,
-				BaseErrorHandler.createAuthError('invalid_client', 'Client authentication failed'),
-				401
-			);
-			return;
-		}
-
-		// Exchange authorization code
-		const authCode = oAuth2AuthorizationCodeManager.exchangeAuthorizationCode(
-			params.code,
-			params.client_id,
-			params.redirect_uri,
-			params.code_verifier
-		);
-
-		if (!authCode) {
-			this.errorHandler.handleOAuthError(
-				res,
-				BaseErrorHandler.createAuthError('invalid_grant', 'Invalid authorization code'),
-				400
-			);
-			return;
-		}
-
-		// Generate tokens
-		const tokenPair = await this.tokenManager.generateTokenPair(
-			authCode.userId,
-			params.client_id,
-			authCode.scopes,
-			{ includeRefreshToken: true }
-		);
-
-		this.responseBuilder.sendTokenResponse(res, {
-			access_token: tokenPair.accessToken,
-			token_type: tokenPair.tokenType,
-			expires_in: tokenPair.expiresIn,
-			refresh_token: tokenPair.refreshToken,
-			scope: tokenPair.scope
-		});
 	}
 
 	/**
