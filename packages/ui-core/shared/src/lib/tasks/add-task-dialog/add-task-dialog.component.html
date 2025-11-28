@@ -82,38 +82,28 @@
 			</div>
 			<div class="row">
 				<div class="col-sm-12">
-					<nb-radio-group (valueChange)="onParticipantsChange($event)" [value]="participants">
-						<nb-radio class="nb-radio" [value]="taskParticipantEnum.EMPLOYEES"
-							>{{ 'TASKS_PAGE.TASK_MEMBERS' | translate }}
-						</nb-radio>
-						<nb-radio class="nb-radio" [value]="taskParticipantEnum.TEAMS"
-							>{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}
-						</nb-radio>
-					</nb-radio-group>
+					<div class="form-group">
+						<ga-employee-multi-select
+							[selectedEmployeeIds]="selectedMembers"
+							[allEmployees]="employees"
+							(selectedChange)="onMembersSelected($event)"
+						>
+						</ga-employee-multi-select>
+					</div>
 				</div>
 				<div class="col-sm-12">
 					<div class="form-group">
-						<ng-container *ngIf="participants === taskParticipantEnum.EMPLOYEES">
-							<ga-employee-multi-select
-								[selectedEmployeeIds]="selectedMembers"
-								[allEmployees]="employees"
-								(selectedChange)="onMembersSelected($event)"
-							>
-							</ga-employee-multi-select>
-						</ng-container>
-						<ng-container *ngIf="participants === taskParticipantEnum.TEAMS">
-							<label class="label">{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}</label>
-							<nb-select
-								formControlName="teams"
-								multiple
-								[selected]="selectedTeams"
-								(selectedChange)="onTeamsSelected($event)"
-								fullWidth
-								[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate"
-							>
-								<nb-option *ngFor="let team of teams" [value]="team.id"> {{ team.name }}</nb-option>
-							</nb-select>
-						</ng-container>
+						<label class="label">{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}</label>
+						<nb-select
+							formControlName="teams"
+							multiple
+							[selected]="selectedTeams"
+							(selectedChange)="onTeamsSelected($event)"
+							fullWidth
+							[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate"
+						>
+							<nb-option *ngFor="let team of teams" [value]="team.id"> {{ team.name }}</nb-option>
+						</nb-select>
 					</div>
 				</div>
 			</div>
