@@ -17,7 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 export class PluginMarketplaceUtilsService {
 	constructor(private readonly translateService: TranslateService) {}
 
-	getSourceTypeLabel(type: PluginSourceType): string {
+	public getSourceTypeLabel(type: PluginSourceType): string {
 		const labels: Record<PluginSourceType, string> = {
 			[PluginSourceType.CDN]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.CDN'),
 			[PluginSourceType.NPM]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.NPM'),
@@ -26,15 +26,15 @@ export class PluginMarketplaceUtilsService {
 		return labels[type] || type;
 	}
 
-	getStatusLabel(status: PluginStatus): string {
+	public getStatusLabel(status: PluginStatus): string {
 		return this.translateService.instant(`PLUGIN.FORM.STATUSES.${status}`);
 	}
 
-	getTypeLabel(type: PluginType): string {
+	public getTypeLabel(type: PluginType): string {
 		return this.translateService.instant(`PLUGIN.FORM.TYPES.${type}`);
 	}
 
-	getStatusBadgeStatus(status: PluginStatus): string {
+	public getStatusBadgeStatus(status: PluginStatus): string {
 		const statusMap: Record<PluginStatus, string> = {
 			[PluginStatus.ACTIVE]: 'success',
 			[PluginStatus.INACTIVE]: 'warning',
@@ -44,7 +44,7 @@ export class PluginMarketplaceUtilsService {
 		return statusMap[status] || 'basic';
 	}
 
-	getPluginTypeBadgeStatus(type: PluginType): string {
+	public getPluginTypeBadgeStatus(type: PluginType): string {
 		const typeMap: Record<PluginType, string> = {
 			[PluginType.DESKTOP]: 'primary',
 			[PluginType.WEB]: 'info',
@@ -53,7 +53,7 @@ export class PluginMarketplaceUtilsService {
 		return typeMap[type] || 'basic';
 	}
 
-	getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
+	public getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
 		const typeMap: Record<PluginSourceType, string> = {
 			[PluginSourceType.GAUZY]: 'primary',
 			[PluginSourceType.CDN]: 'info',
@@ -62,7 +62,7 @@ export class PluginMarketplaceUtilsService {
 		return typeMap[type] || 'basic';
 	}
 
-	getAccessLevelLabel(level: PluginScope): string {
+	public getAccessLevelLabel(level: PluginScope): string {
 		const labels: Record<PluginScope, string> = {
 			[PluginScope.USER]: this.translateService.instant('PLUGIN.ACCESS.USER_LEVEL'),
 			[PluginScope.ORGANIZATION]: this.translateService.instant('PLUGIN.ACCESS.ORG_LEVEL'),
@@ -71,7 +71,7 @@ export class PluginMarketplaceUtilsService {
 		return labels[level] || level;
 	}
 
-	getAccessLevelBadgeStatus(level: PluginScope): string {
+	public getAccessLevelBadgeStatus(level: PluginScope): string {
 		const statusMap: Record<PluginScope, string> = {
 			[PluginScope.TENANT]: 'success',
 			[PluginScope.ORGANIZATION]: 'info',
@@ -80,7 +80,7 @@ export class PluginMarketplaceUtilsService {
 		return statusMap[level] || 'basic';
 	}
 
-	getSourceDetails(plugin: IPlugin): string {
+	public getSourceDetails(plugin: IPlugin): string {
 		switch (plugin.source.type) {
 			case PluginSourceType.CDN:
 				return (plugin.source as ICDNSource).url;
@@ -96,7 +96,7 @@ export class PluginMarketplaceUtilsService {
 		}
 	}
 
-	formatDate(date: Date | string | null): string {
+	public formatDate(date: Date | string | null): string {
 		if (!date) return 'N/A';
 		return new Date(date).toLocaleString();
 	}

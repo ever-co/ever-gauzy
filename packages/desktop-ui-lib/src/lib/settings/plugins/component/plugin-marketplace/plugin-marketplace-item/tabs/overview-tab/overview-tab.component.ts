@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { IPlugin, IPluginVersion, PluginStatus, PluginType } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
@@ -16,7 +16,7 @@ import { PluginMarketplaceUtilsService } from '../../../plugin-marketplace-utils
 	styleUrls: ['./overview-tab.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class OverviewTabComponent implements OnInit, OnDestroy {
+export class OverviewTabComponent implements OnDestroy {
 	private readonly destroy$ = new Subject<void>();
 	readonly pluginStatus = PluginStatus;
 
@@ -35,35 +35,31 @@ export class OverviewTabComponent implements OnInit, OnDestroy {
 		this.selectedVersion$ = this.versionQuery.version$;
 	}
 
-	ngOnInit(): void {
-		// Plugin data is already loaded by parent component
-	}
-
 	ngOnDestroy(): void {
 		this.destroy$.next();
 		this.destroy$.complete();
 	}
 
-	get isOwner(): boolean {
+	public get isOwner(): boolean {
 		const plugin = this.marketplaceQuery.plugin;
 		return !!this.store.user && this.store.user?.id === plugin?.uploadedBy?.id;
 	}
 
-	updatePluginStatus(status: PluginStatus): void {
+	public updatePluginStatus(status: PluginStatus): void {
 		const pluginId = this.versionQuery.pluginId;
 		if (!pluginId || !this.isOwner) return;
 		this.actions.dispatch(PluginMarketplaceActions.update({ ...this.marketplaceQuery.plugin, status }));
 	}
 
-	getStatusLabel(status: PluginStatus): string {
+	public getStatusLabel(status: PluginStatus): string {
 		return this.utils.getStatusLabel(status);
 	}
 
-	getTypeLabel(type: PluginType): string {
+	public getTypeLabel(type: PluginType): string {
 		return this.utils.getTypeLabel(type);
 	}
 
-	formatDate(date: Date | string | null): string {
+	public formatDate(date: Date | string | null): string {
 		return this.utils.formatDate(date);
 	}
 
