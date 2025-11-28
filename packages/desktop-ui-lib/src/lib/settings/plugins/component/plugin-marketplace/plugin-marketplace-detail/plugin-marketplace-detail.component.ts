@@ -4,15 +4,13 @@ import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus 
 import { NbDialogService, NbMenuService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, from, map, Observable, of, switchMap, take, tap } from 'rxjs';
+import { catchError, EMPTY, filter, Observable, of, switchMap, take, tap } from 'rxjs';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { Store } from '../../../../../services';
-import { PluginElectronService } from '../../../services/plugin-electron.service';
-import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import {
 	IPluginSubscription as IPluginSubscriptionDetail,
 	PluginSubscriptionType
@@ -41,15 +39,12 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	@Input()
 	public viewMode: 'grid' | 'list' = 'grid';
 
-	private readonly _isChecked$ = new BehaviorSubject<boolean>(false);
-
 	private readonly router = inject(Router);
 
 	constructor(
 		private readonly dialog: NbDialogService,
 		private readonly store: Store,
 		private readonly action: Actions,
-		private readonly pluginService: PluginElectronService,
 		private readonly menuService: NbMenuService,
 		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService,
 		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder,
@@ -58,25 +53,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
-		// Guard against undefined plugin
-		if (!this.plugin) {
-			this._isChecked$.next(false);
-			return;
-		}
-
-		// Set selector position
-		this._isChecked$.next(this.plugin.installed);
-		// Set selector on installation
-		this.installationQuery.toggle$
-			.pipe(
-				filter(({ plugin }) => !!plugin && this.plugin.id === plugin.id),
-				tap(({ isChecked }) => this._isChecked$.next(isChecked)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		// Check local installation
-		this.check(this.plugin).subscribe((isChecked) => this._isChecked$.next(isChecked));
-
+		// Initialize installation status
+		this.action.dispatch(PluginInstallationActions.check(this.plugin.id));
 		// Listen to context menu item clicks
 		this.menuService
 			.onItemClick()
@@ -88,25 +66,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			.subscribe();
 	}
 
-	public check(plugin: IPlugin): Observable<boolean> {
-		return from(this.checkInstallation(plugin)).pipe(
-			map((installed) => !!installed), // Convert the result to a boolean directly
-			catchError(() => of(false)), // Ensure the stream continues even on error
-			untilDestroyed(this)
-		);
-	}
-
-	public async checkInstallation(plugin: IPlugin): Promise<IPluginInstalled> {
-		if (!plugin) return;
-		try {
-			return this.pluginService.checkInstallation(plugin.id);
-		} catch (error) {
-			return null;
-		}
-	}
-
 	public togglePlugin(checked: boolean): void {
-		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: checked, plugin: this.plugin }));
+		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: checked, pluginId: this.plugin.id }));
 		if (checked) {
 			// Check if plugin requires subscription
 			if (this.plugin.hasPlan) {
@@ -142,11 +103,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 						console.log('[PluginMarketplaceDetail] Subscription dialog closed without installation');
 						this.action.dispatch(
 							PluginInstallationActions.toggle({
-								isChecked: false,
-								plugin: this.plugin
+								pluginId: this.plugin.id,
+								isChecked: false
 							})
 						);
-						this._isChecked$.next(false);
 					}
 				}),
 				catchError((err) => {
@@ -155,10 +115,9 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 					this.action.dispatch(
 						PluginInstallationActions.toggle({
 							isChecked: false,
-							plugin: this.plugin
+							pluginId: this.plugin.id
 						})
 					);
-					this._isChecked$.next(false);
 					return EMPTY;
 				}),
 				untilDestroyed(this)
@@ -170,15 +129,6 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		// For plugins with subscription plans, this should only be called after subscription verification
 		// The togglePlugin method handles showing the subscription dialog first
 		this.proceedWithInstallationValidation(isUpdate);
-	}
-
-	private async checkSubscriptionRequirement(): Promise<boolean> {
-		if (!this.plugin) {
-			return false;
-		}
-
-		// Use the computed hasPlan property to check if subscription is required
-		return this.plugin.hasPlan;
 	}
 
 	private proceedWithInstallationValidation(isUpdate = false): void {
@@ -196,9 +146,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 						});
 						// Reset installation toggle
 						this.action.dispatch(
-							PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin })
+							PluginInstallationActions.toggle({ isChecked: false, pluginId: this.plugin.id })
 						);
-						this._isChecked$.next(false);
 						return EMPTY;
 					}
 
@@ -215,8 +164,9 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 				catchError((err) => {
 					this.handleInstallationError(err);
 					// Reset toggle on error
-					this.action.dispatch(PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin }));
-					this._isChecked$.next(false);
+					this.action.dispatch(
+						PluginInstallationActions.toggle({ isChecked: false, pluginId: this.plugin.id })
+					);
 					return EMPTY;
 				}),
 				untilDestroyed(this)
@@ -257,7 +207,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		this.action.dispatch(
 			PluginInstallationActions.toggle({
 				isChecked: false,
-				plugin: this.plugin
+				pluginId: this.plugin.id
 			})
 		);
 		return EMPTY;
@@ -273,7 +223,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		isUpdate = false,
 		authToken: string
 	): void {
-		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, plugin: this.plugin }));
+		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, pluginId: this.plugin.id }));
 		switch (source.type) {
 			case PluginSourceType.GAUZY:
 			case PluginSourceType.CDN:
@@ -308,10 +258,6 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			default:
 				break;
 		}
-	}
-
-	public get isChecked$(): Observable<boolean> {
-		return this._isChecked$.asObservable();
 	}
 
 	public async openPlugin(): Promise<void> {
@@ -484,8 +430,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		];
 
 		// Add plugin management options if installed
-		const isChecked = this._isChecked$.value;
-		if (isChecked) {
+		if (this.plugin.installed) {
 			items.push({
 				title: 'Settings',
 				icon: 'settings-outline',

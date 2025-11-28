@@ -310,7 +310,10 @@ export class PluginInstallationEffects {
 					downloading: false,
 					error
 				});
-				this.pluginInstallationStore.setToggle({ isChecked: false });
+				this.pluginInstallationStore.setToggle({
+					isChecked: false,
+					pluginId: this.pluginInstallationStore.getValue().currentPluginId
+				});
 				this.toastrService.error(error || this.translateService.instant('PLUGIN.TOASTR.ERROR.DOWNLOAD_FAILED'));
 			})
 		)
@@ -328,7 +331,10 @@ export class PluginInstallationEffects {
 					serverInstalling: false,
 					error
 				});
-				this.pluginInstallationStore.setToggle({ isChecked: false });
+				this.pluginInstallationStore.setToggle({
+					isChecked: false,
+					pluginId: this.pluginInstallationStore.getValue().currentPluginId
+				});
 				this.toastrService.error(
 					error || this.translateService.instant('PLUGIN.TOASTR.ERROR.SERVER_INSTALLATION_FAILED')
 				);
@@ -354,7 +360,10 @@ export class PluginInstallationEffects {
 					completingInstallation: false,
 					error
 				});
-				this.pluginInstallationStore.setToggle({ isChecked: false });
+				this.pluginInstallationStore.setToggle({
+					isChecked: false,
+					pluginId: this.pluginInstallationStore.getValue().currentPluginId
+				});
 				this.toastrService.error(
 					error || this.translateService.instant('PLUGIN.TOASTR.ERROR.INSTALLATION_FAILED')
 				);
@@ -428,7 +437,7 @@ export class PluginInstallationEffects {
 				// Step 1 — Ask for confirmation
 				exhaustMap(({ pluginId, installedId }) =>
 					this.confirmUninstall().pipe(
-						tap((confirmed) => this.pluginInstallationStore.setToggle({ isChecked: !confirmed })),
+						tap((confirmed) => this.pluginInstallationStore.setToggle({ isChecked: !confirmed, pluginId })),
 						filter(Boolean),
 						map(() => ({ marketplaceId: pluginId, id: installedId }))
 					)
@@ -456,9 +465,11 @@ export class PluginInstallationEffects {
 			this.action$.pipe(
 				ofType(PluginInstallationActions.checkSuccess),
 				map(({ plugin: { marketplaceId, installed } }) => {
-					const plugin = this.pluginMarketplaceQuery.plugins.find((p) => p.id === marketplaceId);
 					this.pluginMarketplaceStore.updatePlugin(marketplaceId, { installed });
-					return PluginInstallationActions.toggle({ isChecked: installed, plugin });
+					return PluginInstallationActions.toggle({
+						isChecked: installed,
+						pluginId: marketplaceId
+					});
 				})
 			),
 		{
@@ -466,15 +477,24 @@ export class PluginInstallationEffects {
 		}
 	);
 
-	checkFailure$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginInstallationActions.checkFailure),
-			tap(({ error }) => {
-				this.toastrService.error(
-					error || this.translateService.instant('PLUGIN.TOASTR.ERROR.CHECK_INSTALLATION_FAILED')
-				);
-			})
-		)
+	checkFailure$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginInstallationActions.checkFailure),
+				tap(({ error, marketplaceId }) => {
+					this.toastrService.error(
+						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.CHECK_INSTALLATION_FAILED')
+					);
+					this.pluginMarketplaceStore.updatePlugin(marketplaceId, { installed: false });
+					return PluginInstallationActions.toggle({
+						pluginId: marketplaceId,
+						isChecked: false
+					});
+				})
+			),
+		{
+			dispatch: true
+		}
 	);
 
 	/**
@@ -483,8 +503,11 @@ export class PluginInstallationEffects {
 	toggle$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginInstallationActions.toggle),
-			tap(({ isChecked, plugin }) => {
-				this.pluginInstallationStore.setToggle({ isChecked, plugin });
+			tap(({ isChecked, pluginId }) => {
+				this.pluginInstallationStore.setToggle({
+					pluginId,
+					isChecked
+				});
 			})
 		)
 	);
@@ -576,7 +599,7 @@ export class PluginInstallationEffects {
 			tap(() => this.updateMarketplaceAfterUninstall(marketplaceId, message)),
 			map(() => PluginActions.refresh()),
 			catchError((error) => {
-				this.pluginInstallationStore.setToggle({ isChecked: true });
+				this.pluginInstallationStore.setToggle({ isChecked: true, pluginId: marketplaceId });
 				this.toastrService.error(
 					error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL_FAILED')
 				);
@@ -589,7 +612,7 @@ export class PluginInstallationEffects {
 		const plugins = this.pluginMarketplaceQuery.plugins;
 		const idx = plugins.findIndex((p) => p.id === marketplaceId);
 
-		let found = plugins[idx] ?? this.pluginInstallationQuery.plugin;
+		let found = plugins[idx];
 
 		if (!found) {
 			this.toastrService.info(
@@ -610,7 +633,7 @@ export class PluginInstallationEffects {
 			plugin: updated
 		});
 
-		this.pluginInstallationStore.setToggle({ isChecked: false });
+		this.pluginInstallationStore.setToggle({ isChecked: false, pluginId: marketplaceId });
 
 		this.toastrService.success(message || this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'));
 	}

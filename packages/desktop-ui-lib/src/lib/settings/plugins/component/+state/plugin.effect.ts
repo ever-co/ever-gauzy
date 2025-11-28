@@ -18,7 +18,7 @@ export class PluginEffects {
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly pluginService: PluginService,
 		private readonly toastrService: ToastrNotificationService
-	) {}
+	) { }
 
 	getAllPlugins$ = createEffect(() =>
 		this.action$.pipe(
@@ -157,7 +157,7 @@ export class PluginEffects {
 							this.toastrService.error(
 								error?.error?.message || error?.message || 'Failed to check installation status'
 							);
-							return of(PluginInstallationActions.checkFailure(error.message));
+							return of(PluginInstallationActions.checkFailure(error.message, marketplaceId));
 						})
 					)
 				)

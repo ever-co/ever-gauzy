@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { Observable } from 'rxjs';
 
-import { IPlugin } from '@gauzy/contracts';
+import { ID } from '@gauzy/contracts';
 import {
 	IPendingInstallation,
 	IPluginInstallationState,
@@ -37,7 +37,7 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 	);
 
 	// Toggle and error observables
-	public readonly toggle$: Observable<IPluginInstallationState['toggle']> = this.select((state) => state.toggle);
+	public readonly toggles$: Observable<IPluginInstallationState['toggles']> = this.select((state) => state.toggles);
 	public readonly error$: Observable<string> = this.select((state) => state.error);
 
 	// Combined loading state
@@ -56,12 +56,16 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 		super(pluginInstallationStore);
 	}
 
-	public get plugin(): IPlugin {
-		return this.getValue().toggle.plugin;
+	public checked(pluginId: ID): boolean {
+		const toggle = this.getValue().toggles.find((t) => t.pluginId === pluginId);
+		return toggle ? toggle.isChecked : false;
 	}
 
-	public get checked(): boolean {
-		return this.getValue().toggle.isChecked;
+	public checked$(pluginId: ID): Observable<boolean> {
+		return this.select((state) => {
+			const toggle = state.toggles.find((t) => t.pluginId === pluginId);
+			return toggle ? toggle.isChecked : false;
+		});
 	}
 
 	public get isLoading(): boolean {

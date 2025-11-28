@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
-import { IPlugin } from '@gauzy/contracts';
+import { ID } from '@gauzy/contracts';
+
+export interface IToggleState {
+	isChecked: boolean;
+	pluginId: ID;
+}
 
 export interface IPendingInstallation {
 	pluginId: string;
@@ -33,12 +38,8 @@ export interface IPluginInstallationState {
 	// Pending installations (for multi-step tracking)
 	pendingInstallations: Record<string, IPendingInstallation>;
 
-	// Toggle state (for UI)
-	toggle: {
-		isChecked: boolean;
-		plugin: IPlugin;
-	};
-
+	// Toggles state (for UI)
+	toggles: IToggleState[];
 	// Error state
 	error?: string;
 }
@@ -56,10 +57,7 @@ export function createInitialInstallationState(): IPluginInstallationState {
 		currentPluginId: null,
 		currentInstallationId: null,
 		pendingInstallations: {},
-		toggle: {
-			isChecked: false,
-			plugin: null
-		},
+		toggles: [],
 		error: null
 	};
 }
@@ -71,14 +69,14 @@ export class PluginInstallationStore extends Store<IPluginInstallationState> {
 		super(createInitialInstallationState());
 	}
 
-	public setToggle({ isChecked, plugin }: Partial<IPluginInstallationState['toggle']>): void {
+	public setToggle({ isChecked, pluginId }: IToggleState): void {
 		this.update((state) => ({
 			...state,
-			toggle: {
-				...state.toggle,
-				isChecked: isChecked ?? state.toggle.isChecked,
-				plugin: plugin ?? state.toggle.plugin
-			}
+			toggles: state.toggles.map((toggle) => ({
+				...toggle,
+				isChecked: isChecked ?? toggle.isChecked ?? false,
+				pluginId: pluginId ?? toggle.pluginId ?? null
+			}))
 		}));
 	}
 

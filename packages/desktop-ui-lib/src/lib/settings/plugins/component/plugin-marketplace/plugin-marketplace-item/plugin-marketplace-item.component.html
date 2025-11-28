@@ -1,13 +1,37 @@
-@let plugin = plugin$ | async; @let editing = marketplaceQuery.updating$ | async; @let toggle =
-installationQuery.toggle$ | async; @let isSelected = toggle.plugin?.id === plugin?.id; @let installing =
-installationQuery.installing$ |async; @let uninstalling = installationQuery.uninstalling$ |async; @let deleting =
-marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async; @let needUpdate = needUpdate$ | async;
-@let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
-installing || uninstalling || deleting || adding; @let selectedVersion = versionQuery.version$ | async; @let uploading =
-marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ | async; @let sources =
-this.sourceQuery.sources$ | async; @let selectedSource = this.sourceQuery.source$ | async; @let creatingSource =
-this.sourceQuery.creating$ | async;
+<!-- Async bindings for plugin data and various states -->
+@let plugin = plugin$ | async;
+<!-- Async binding for editing state -->
+@let editing = marketplaceQuery.updating$ | async;
+<!-- Check if the plugin is selected and disabled state for toggles -->
+@let isSelected = installationQuery.checked$(plugin?.id)| async;
+<!-- Determine if the plugin is currently being installed or uninstalled -->
+@let installing = installationQuery.installing$ |async;
+<!-- Determine if the plugin is currently being uninstalled -->
+@let uninstalling = installationQuery.uninstalling$ |async;
+<!-- Deleting state for plugins -->
+@let deleting = marketplaceQuery.deleting$ | async;
+<!-- Adding state for versions -->
+@let adding = versionQuery.creating$ | async;
+<!-- Update needed state -->
+@let needUpdate = plugin.installed && plugin.version?.number !== selectedVersionNumber;
+<!-- Loading state -->
+@let loading = marketplaceQuery.isLoading$ | async;
+<!-- Disabled state combining various conditions -->
+@let disabled = editing || installing || uninstalling || deleting || adding;
+<!-- Selected version state -->
+@let selectedVersion = versionQuery.version$ | async;
+<!-- Uploading state -->
+@let uploading = marketplaceQuery.uploading$ | async;
+<!-- Progress state -->
+@let progress = marketplaceQuery.progress$ | async;
+<!-- Sources state -->
+@let sources = this.sourceQuery.sources$ | async;
+<!-- Selected source state -->
+@let selectedSource = this.sourceQuery.source$ | async;
+<!-- Creating source state -->
+@let creatingSource = this.sourceQuery.creating$ | async;
 
+<!-- Main template -->
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
 		<div class="d-flex align-items-center">
@@ -65,7 +89,7 @@ this.sourceQuery.creating$ | async;
 		<div class="plugin-content">
 			<!-- Quick Actions -->
 			<div class="quick-actions">
-				@if(installed) {
+				@if(plugin.installed) {
 				<div class="d-flex align-items-center">
 					<nb-icon icon="checkmark-circle-2-outline" status="success" class="mr-2"></nb-icon>
 					<span class="text-success">{{ 'PLUGIN.DETAILS.INSTALLED' | translate }}</span>

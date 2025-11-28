@@ -15,8 +15,8 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogService, NbRouteTab } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, combineLatest, EMPTY, Observable, Subject, tap } from 'rxjs';
-import { catchError, concatMap, filter, map, switchMap, take, takeUntil } from 'rxjs/operators';
+import { combineLatest, EMPTY, Observable, Subject, tap } from 'rxjs';
+import { catchError, filter, map, switchMap, take, takeUntil } from 'rxjs/operators';
 import { PluginSubscriptionQuery } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
@@ -28,8 +28,6 @@ import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.que
 import { PluginSourceQuery } from '../+state/queries/plugin-source.query';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { Store, ToastrNotificationService } from '../../../../../services';
-import { PluginElectronService } from '../../../services/plugin-electron.service';
-import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginScope } from '../../../services/plugin-subscription-access.service';
 import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
@@ -49,8 +47,6 @@ import { DialogInstallationValidationComponent } from './dialog-installation-val
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private readonly destroy$ = new Subject<void>();
-	installed$ = new BehaviorSubject<boolean>(false);
-	needUpdate$ = new BehaviorSubject<boolean>(false);
 
 	// Enum for template use
 	readonly pluginStatus = PluginStatus;
@@ -71,7 +67,6 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private readonly router = inject(Router);
 
 	constructor(
-		private readonly pluginElectronService: PluginElectronService,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		private readonly translateService: TranslateService,
@@ -106,10 +101,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 					// Build tabs based on permissions
 					this.tabs$ = this.buildTabs$();
 				}),
-				concatMap((plugin) => {
+				tap((plugin) => {
 					this.action.dispatch(PluginVersionActions.selectVersion(plugin.version));
 					this.action.dispatch(PluginSourceActions.selectSource(plugin.source));
-					return this.checkInstallation(plugin);
+					this.action.dispatch(PluginInstallationActions.check(plugin.id));
 				}),
 				catchError((error) => this.handleError(error)),
 				takeUntil(this.destroy$)
@@ -138,32 +133,6 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private async handleError(error: any): Promise<void> {
 		this.toastrService.error(error);
 		await this.router.navigate(['/settings/marketplace-plugins']);
-	}
-
-	async checkInstallation(plugin: IPlugin): Promise<void> {
-		if (!plugin) return;
-		// TODO: Create actions and effects for checking installation state
-
-		try {
-			const installed = await this.checkPlugin(plugin);
-			this.installed$.next(!!installed);
-
-			if (installed && plugin.versions) {
-				this.needUpdate$.next(installed.version !== plugin.version.number);
-			}
-		} catch (error) {
-			this.installed$.next(false);
-		}
-	}
-
-	async checkPlugin(plugin: IPlugin): Promise<IPluginInstalled> {
-		//TODO: Create actions and effects for checking plugin installation state
-		if (!plugin) return;
-		try {
-			return this.pluginElectronService.checkInstallation(plugin.id);
-		} catch (error) {
-			return null;
-		}
 	}
 
 	// Utility methods with strong typing
@@ -424,15 +393,6 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	private async checkSubscriptionRequirement(): Promise<boolean> {
-		if (!this.plugin) {
-			return false;
-		}
-
-		// Use the computed hasPlan property to check if subscription is required
-		return this.plugin.hasPlan;
-	}
-
 	/**
 	 * Show appropriate subscription dialog based on user's current subscription status.
 	 * Users with active subscriptions are routed to PluginSubscriptionManager.
@@ -504,7 +464,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 						});
 						// Reset installation toggle
 						this.action.dispatch(
-							PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin })
+							PluginInstallationActions.toggle({ isChecked: false, pluginId: this.plugin.id })
 						);
 						return;
 					}
@@ -522,7 +482,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				catchError((error) => {
 					console.error('[InstallationValidation] Validation chain error:', error);
 					this.toastrService.error(this.translateService.instant('PLUGIN.INSTALLATION.VALIDATION_ERROR'));
-					this.action.dispatch(PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin }));
+					this.action.dispatch(
+						PluginInstallationActions.toggle({ isChecked: false, pluginId: this.plugin.id })
+					);
 					return EMPTY;
 				})
 			)
@@ -553,7 +515,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		isUpdate = false,
 		authToken: string
 	): void {
-		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, plugin: this.plugin }));
+		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, pluginId: this.plugin.id }));
 		switch (source.type) {
 			case PluginSourceType.GAUZY:
 			case PluginSourceType.CDN:
@@ -606,7 +568,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				filter(Boolean),
 				tap((version: IPluginVersion) => {
 					this.action.dispatch(
-						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
+						PluginInstallationActions.toggle({ isChecked: this.plugin.installed, pluginId: this.pluginId })
 					);
 					this.action.dispatch(PluginVersionActions.add(this.pluginId, version));
 				}),
@@ -645,10 +607,6 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	public get pluginId(): string {
 		return this.versionQuery.pluginId;
-	}
-
-	private get isInstalled(): boolean {
-		return this.installed$.value;
 	}
 
 	private get selectedVersion(): IPluginVersion {

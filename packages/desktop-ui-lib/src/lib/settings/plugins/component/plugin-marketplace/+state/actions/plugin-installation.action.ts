@@ -11,7 +11,7 @@ export class PluginInstallationActions {
 	}));
 	public static toggle = createAction(
 		'[Plugin Installation] Toggle',
-		(state: { isChecked?: boolean; plugin?: IPluginMarketplace }) => state
+		(state: { isChecked?: boolean; pluginId?: ID }) => state
 	);
 
 	//Check Installation
@@ -24,9 +24,13 @@ export class PluginInstallationActions {
 		(plugin?: IPlugin) => ({ plugin })
 	);
 
-	public static checkFailure = createAction('[Plugin Installation] Check Installation Failed', (error: string) => ({
-		error
-	}));
+	public static checkFailure = createAction(
+		'[Plugin Installation] Check Installation Failed',
+		(error: string, marketplaceId: ID) => ({
+			error,
+			marketplaceId
+		})
+	);
 
 	// Step 1: Download
 	public static startDownload = createAction('[Plugin Installation] Start Download', <T>(config: T) => ({ config }));
