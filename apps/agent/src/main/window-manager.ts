@@ -274,12 +274,12 @@ class AppWindow {
 				note: LocalStore.getStore('project')?.note, // Retrieves the note from the store
 				...(thumbUrl && { imgUrl: thumbUrl }) // Conditionally include the thumbnail URL if provided
 			});
-			this.notificationWindow.browserWindow.once('show', () => {
+			this.notificationWindow.browserWindow?.once?.('show', () => {
 				setTimeout(() => {
 					this.hideNotificationWindow();
 				}, 3000);
 			});
-			this.notificationWindow.browserWindow.showInactive();
+			this.notificationWindow.browserWindow?.showInactive?.();
 		}
 	}
 
