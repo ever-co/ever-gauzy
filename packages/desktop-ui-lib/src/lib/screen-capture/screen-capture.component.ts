@@ -33,7 +33,7 @@ export class ScreenCaptureComponent implements OnInit {
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.on(
 			'show_popup_screen_capture',
-			(event, arg) => {
+			(_, arg) => {
 				this._ngZone.run(() => {
 					this.note = arg.note;
 					this._screenCaptureUrl$.next(
@@ -42,11 +42,13 @@ export class ScreenCaptureComponent implements OnInit {
 				});
 			}
 		);
-		try {
-			this.electronService.ipcRenderer.invoke('capture_window_init');
-		} catch (error) {
-			console.log('event handler not initialize');
-		}
+		this.sendRendererReady();
+	}
+
+	private async sendRendererReady() {
+		await this.electronService.ipcRenderer.invoke('capture_window_init').catch(() =>
+			console.error('Page initialize not implemented in main process')
+		);
 	}
 
 	public get screenCaptureUrl$(): Observable<SafeUrl> {

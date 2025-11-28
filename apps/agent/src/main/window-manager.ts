@@ -23,6 +23,8 @@ export enum WindowType {
 	about = 'aboutWindow'
 }
 
+const NOTIFICATION_HIDE_DELAY = 3000;
+
 class AppWindow {
 	aboutWindow: BrowserWindow | null;
 	splashScreenWindow: SplashScreen;
@@ -39,6 +41,7 @@ class AppWindow {
 		dashboard: boolean;
 	};
 	private static instance: AppWindow;
+    private autoHideTimeout: NodeJS.Timeout | null = null;
 	constructor(rootPath: string) {
 		this.windowReadyStatus = {
 			settingWindow: false,
@@ -275,9 +278,9 @@ class AppWindow {
 				...(thumbUrl && { imgUrl: thumbUrl }) // Conditionally include the thumbnail URL if provided
 			});
 			this.notificationWindow.browserWindow?.once?.('show', () => {
-				setTimeout(() => {
+				this.autoHideTimeout = setTimeout(() => {
 					this.hideNotificationWindow();
-				}, 3000);
+				}, NOTIFICATION_HIDE_DELAY);
 			});
 			this.notificationWindow.browserWindow?.showInactive?.();
 		}
@@ -292,6 +295,10 @@ class AppWindow {
 	}
 
 	hideNotificationWindow() {
+		if (this.autoHideTimeout) {
+			clearTimeout(this.autoHideTimeout);
+			this.autoHideTimeout = null;
+		}
 		this.notificationWindow.browserWindow?.destroy?.();
 		this.notificationWindow = null;
 		this.windowReadyStatus[WindowType.notification] = false;

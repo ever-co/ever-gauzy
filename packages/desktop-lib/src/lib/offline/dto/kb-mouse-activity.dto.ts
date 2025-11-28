@@ -23,7 +23,7 @@ export type TActiveWindows = {
 		url?: string;
 		title: string;
 		platform?: string;
-	}[]
+	}
 }
 
 export interface KbMouseActivityTO {

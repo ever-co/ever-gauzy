@@ -24,7 +24,7 @@ export class AgentLogger {
 	}
 
 	cacheLog(logObj: Record<string, unknown>) {
-		if (this.logsArrBuffer.length > MAX_LOG) {
+		if (this.logsArrBuffer.length >= MAX_LOG) {
 			this.logsArrBuffer.shift();
 		}
 		this.logsArrBuffer.push(logObj);
