@@ -36,6 +36,8 @@ spec:
         - name: gauzy-demo-mcp
           image: registry.digitalocean.com/ever/gauzy-mcp-demo:latest
           env:
+            - name: NODE_ENV
+              value: 'development'
             - name: MCP_TRANSPORT
               value: '$MCP_TRANSPORT'
             - name: MCP_SERVER_MODE
@@ -56,6 +58,8 @@ spec:
 
             - name: MCP_AUTH_ENABLED
               value: '$MCP_AUTH_ENABLED'
+            - name: MCP_AUTH_BASE_URL
+              value: '$MCP_AUTH_BASE_URL'
             - name: MCP_AUTH_RESOURCE_URI
               value: '$MCP_AUTH_RESOURCE_URI'
             - name: MCP_AUTH_REQUIRED_SCOPES

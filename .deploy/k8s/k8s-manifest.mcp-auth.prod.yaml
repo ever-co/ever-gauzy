@@ -66,6 +66,8 @@ spec:
               value: "$DB_ORM"
             - name: DB_SYNCHRONIZE
               value: "$DB_SYNCHRONIZE"
+            - name: NODE_ENV
+              value: "production"
             - name: MCP_AUTH_PORT
               value: "3003"
             - name: MCP_AUTH_BASE_URL
@@ -107,6 +109,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/proxy-set-headers: "ingress-nginx/custom-headers"
 spec:
   ingressClassName: nginx
   rules:
