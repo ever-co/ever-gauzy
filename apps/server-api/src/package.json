@@ -43,7 +43,8 @@
 			"../../../dist/packages/plugins/soundshot",
 			"../../../dist/packages/plugins/registry",
 			"../../../dist/packages/ui-config",
-			"../../../dist/packages/utils"
+			"../../../dist/packages/utils",
+			"../../../dist/packages/plugins/integration-activepieces"
 		]
 	},
 	"build": {
@@ -178,6 +179,7 @@
 		"@gauzy/plugin-posthog": "file:../../../dist/packages/plugins/posthog",
 		"@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
 		"@gauzy/plugin-soundshot": "file:../../../dist/packages/plugins/soundshot",
+		"@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@sentry/electron": "6.9.0",
@@ -208,7 +210,8 @@
 		"twing": "^5.0.2",
 		"underscore": "^1.13.3",
 		"undici": "^6.10.2",
-		"custom-electron-titlebar": "^4.2.8"
+		"custom-electron-titlebar": "^4.2.8",
+		"@as-integrations/express5": "^1.1.2"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",
