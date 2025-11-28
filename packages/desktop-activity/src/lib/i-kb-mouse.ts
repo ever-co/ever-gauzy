@@ -65,14 +65,14 @@ export type TimeSlotActivities = {
 	metaData: Record<string, unknown>[] | unknown[]
 }
 
-export type TAcitivityType = 'URL' | 'APP';
+export type TActivityType = 'URL' | 'APP';
 
 export type TWindowActivities = {
 	name: string;
 	duration: number;
 	dateStart: Date;
 	dateEnd: Date;
-	type: TAcitivityType;
+	type: TActivityType;
 	meta: {
 		url?: string;
 		title: string;

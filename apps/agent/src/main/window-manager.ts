@@ -38,7 +38,6 @@ class AppWindow {
 		notificationWindow: boolean;
 		dashboard: boolean;
 	};
-	private isLogWindowReady: boolean;
 	private static instance: AppWindow;
 	constructor(rootPath: string) {
 		this.windowReadyStatus = {
@@ -46,7 +45,6 @@ class AppWindow {
 			notificationWindow: false,
 			dashboard: false
 		};
-		this.isLogWindowReady = false;
 		if (!AppWindow.instance) {
 			AppWindow.instance = this;
 			this.rootPath = rootPath;
@@ -271,8 +269,8 @@ class AppWindow {
 	}
 
 	async showNotificationWindow(thumbUrl: string) {
-		if (await this.isWindowReadyToShow(this.notificationWindow?.browserWindow, WindowType.notification)) {
-			this.notificationWindow?.browserWindow?.webContents?.send?.('show_popup_screen_capture', {
+		if (await this.isWindowReadyToShow(this.notificationWindow.browserWindow, WindowType.notification)) {
+			this.notificationWindow.browserWindow?.webContents?.send?.('show_popup_screen_capture', {
 				note: LocalStore.getStore('project')?.note, // Retrieves the note from the store
 				...(thumbUrl && { imgUrl: thumbUrl }) // Conditionally include the thumbnail URL if provided
 			});
@@ -294,7 +292,7 @@ class AppWindow {
 	}
 
 	hideNotificationWindow() {
-		this.notificationWindow?.browserWindow?.destroy?.();
+		this.notificationWindow.browserWindow?.destroy?.();
 		this.notificationWindow = null;
 		this.windowReadyStatus[WindowType.notification] = false;
 	}
