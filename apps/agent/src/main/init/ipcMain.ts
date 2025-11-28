@@ -318,7 +318,7 @@ export default function AppIpcMain() {
 	});
 
 	ipcMain.handle('capture_window_init', () => {
-		appWindow.setWindowIsReady(WindowType.notification);
+		appWindow.setWindowIsReady(WindowType.notificationWindow);
 	});
 
 

@@ -5,22 +5,22 @@ import {
 	AuthWindow,
 	createSettingsWindow,
 	createServerWindow,
-	ScreenCaptureNotification,
 	AlwaysOn
 } from '@gauzy/desktop-window';
 import { app, BrowserWindow, screen } from 'electron';
 import { resolveHtmlPath, getInitialConfig, delaySync } from './util';
 import * as path from 'path';
 import { LocalStore } from '@gauzy/desktop-lib';
+import { ScreenCaptureWiindow } from './window/screen-capture-window';
 
 export enum WindowType {
-	setting = 'settingWindow',
-	notification = 'notificationWindow',
-	dashboard = 'dashboardWindow',
-	auth = 'authWindow',
-	setup = 'setupWindow',
-	splash = 'splashWindow',
-	about = 'aboutWindow'
+	settingWindow = 'settingWindow',
+	notificationWindow = 'notificationWindow',
+	dashboardWindow = 'dashboardWindow',
+	authWindow = 'authWindow',
+	setupWindow = 'setupWindow',
+	splashWindow = 'splashWindow',
+	aboutWindow = 'aboutWindow'
 }
 
 const NOTIFICATION_HIDE_DELAY = 3000;
@@ -33,12 +33,12 @@ class AppWindow {
 	authWindow: AuthWindow | null;
 	settingWindow: BrowserWindow | null;
 	logWindow: BrowserWindow | null;
-	notificationWindow: ScreenCaptureNotification | null;
+	notificationWindow: ScreenCaptureWiindow | null;
 	alwaysOnWindow: AlwaysOn | null;
 	private windowReadyStatus: {
 		settingWindow: boolean;
 		notificationWindow: boolean;
-		dashboard: boolean;
+		dashboardWindow: boolean;
 	};
 	private static instance: AppWindow;
     private autoHideTimeout: NodeJS.Timeout | null = null;
@@ -46,7 +46,7 @@ class AppWindow {
 		this.windowReadyStatus = {
 			settingWindow: false,
 			notificationWindow: false,
-			dashboard: false
+			dashboardWindow: false
 		};
 		if (!AppWindow.instance) {
 			AppWindow.instance = this;
@@ -226,7 +226,7 @@ class AppWindow {
 	}
 
 	async logWindowShow() {
-		if (await this.isWindowReadyToShow(this.logWindow, WindowType.dashboard)) {
+		if (await this.isWindowReadyToShow(this.logWindow, WindowType.dashboardWindow)) {
 			this.logWindow.show();
 		}
 	}
@@ -253,17 +253,12 @@ class AppWindow {
 	async initScreenShotNotification() {
 		try {
 			if (!this.notificationWindow) {
-				this.notificationWindow = new ScreenCaptureNotification(
+				this.notificationWindow = new ScreenCaptureWiindow(
 					this.getUiPath('screen-capture'),
-					this.getPreloadPath()
+					this.getPreloadPath(),
+					this.showNotificationWindow.bind(this)
 				);
 				await this.notificationWindow.loadURL();
-
-				this.notificationWindow.show = (thumbUrl: string) => {
-					this.showNotificationWindow(thumbUrl);
-				}
-				this.notificationWindow.hide = () => { };
-
 				return;
 			}
 		} catch (error) {
@@ -272,7 +267,7 @@ class AppWindow {
 	}
 
 	async showNotificationWindow(thumbUrl: string) {
-		if (await this.isWindowReadyToShow(this.notificationWindow.browserWindow, WindowType.notification)) {
+		if (await this.isWindowReadyToShow(this.notificationWindow.browserWindow, WindowType.notificationWindow)) {
 			this.notificationWindow.browserWindow?.webContents?.send?.('show_popup_screen_capture', {
 				note: LocalStore.getStore('project')?.note, // Retrieves the note from the store
 				...(thumbUrl && { imgUrl: thumbUrl }) // Conditionally include the thumbnail URL if provided
@@ -288,7 +283,7 @@ class AppWindow {
 
 	async isWindowReadyToShow(window: BrowserWindow, windowType: WindowType) {
 		await delaySync(200);
-		if (!window?.webContents?.isLoading?.() && (windowType !== WindowType.notification || this.windowReadyStatus[windowType])) {
+		if (!window?.webContents?.isLoading?.() && (windowType !== WindowType.notificationWindow || this.windowReadyStatus[windowType])) {
 			return true;
 		}
 		return this.isWindowReadyToShow(window, windowType);
@@ -301,7 +296,7 @@ class AppWindow {
 		}
 		this.notificationWindow.browserWindow?.destroy?.();
 		this.notificationWindow = null;
-		this.windowReadyStatus[WindowType.notification] = false;
+		this.windowReadyStatus[WindowType.notificationWindow] = false;
 	}
 
 	closeSettingWindow() {
