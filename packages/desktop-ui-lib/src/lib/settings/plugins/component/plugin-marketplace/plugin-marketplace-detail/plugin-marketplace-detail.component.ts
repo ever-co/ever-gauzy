@@ -1,28 +1,20 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus } from '@gauzy/contracts';
-import { NbDialogService, NbMenuService } from '@nebular/theme';
+import { IPlugin, PluginStatus } from '@gauzy/contracts';
+import { NbMenuService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { catchError, EMPTY, filter, Observable, of, switchMap, take, tap } from 'rxjs';
+import { filter, tap } from 'rxjs';
+import { PluginSettingsActions, PluginSubscriptionActions } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
+import { PluginUserAssignmentActions } from '../+state/actions/plugin-user-assignment.actions';
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { Store } from '../../../../../services';
-import {
-	IPluginSubscription as IPluginSubscriptionDetail,
-	PluginSubscriptionType
-} from '../../../services/plugin-subscription.service';
-import { DialogInstallationValidationComponent } from '../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
-import { PluginSettingsManagementComponent } from '../plugin-settings-management/plugin-settings-management.component';
-import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
-import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
-import { IPluginSubscriptionPlanSelectionResult } from '../plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
-import { PluginUserManagementComponent } from '../plugin-user-management/plugin-user-management.component';
-import { InstallationValidationChainBuilder } from '../services';
-import { SubscriptionDialogRouterService } from '../services/subscription-dialog-router.service';
+import { PluginSubscriptionType } from '../../../services/plugin-subscription.service';
+import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 
 @UntilDestroy()
 @Component({
@@ -42,12 +34,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	private readonly router = inject(Router);
 
 	constructor(
-		private readonly dialog: NbDialogService,
+		private readonly utils: PluginMarketplaceUtilsService,
 		private readonly store: Store,
 		private readonly action: Actions,
 		private readonly menuService: NbMenuService,
-		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService,
-		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery
 	) {}
@@ -67,199 +57,19 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public togglePlugin(checked: boolean): void {
-		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: checked, pluginId: this.plugin.id }));
 		if (checked) {
-			// Check if plugin requires subscription
-			if (this.plugin.hasPlan) {
-				// Plugin has subscription plans - must subscribe before installation
-				this.showSubscriptionDialog();
-			} else {
-				// Plugin doesn't require subscription - install directly
-				this.installPlugin();
-			}
+			this.installPlugin();
 		} else {
 			this.uninstallPlugin();
 		}
 	}
 
-	/**
-	 * Show appropriate subscription dialog based on user's current subscription status.
-	 * Users with active subscriptions are routed to PluginSubscriptionManager.
-	 * Users without active subscriptions are routed to PluginSubscriptionPlanSelection.
-	 */
-	private showSubscriptionDialog(): void {
-		this.action.dispatch(PluginMarketplaceActions.setSelectedPlugin(this.plugin));
-		this.subscriptionDialogRouter
-			.openSubscriptionDialog(this.plugin)
-			.pipe(
-				take(1),
-				tap((result: IPluginSubscriptionPlanSelectionResult | any) => {
-					if (result?.proceedWithInstallation) {
-						// If subscription was created or it's a free plugin, proceed with installation
-						console.log('[PluginMarketplaceDetail] Proceeding with installation after subscription');
-						this.installPlugin();
-					} else {
-						// User cancelled or there was an error, reset the toggle
-						console.log('[PluginMarketplaceDetail] Subscription dialog closed without installation');
-						this.action.dispatch(
-							PluginInstallationActions.toggle({
-								pluginId: this.plugin.id,
-								isChecked: false
-							})
-						);
-					}
-				}),
-				catchError((err) => {
-					console.error('[PluginMarketplaceDetail] Subscription dialog error:', err);
-					// Reset toggle on error
-					this.action.dispatch(
-						PluginInstallationActions.toggle({
-							isChecked: false,
-							pluginId: this.plugin.id
-						})
-					);
-					return EMPTY;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+	public installPlugin(): void {
+		// Installation orchestration moved to effects; dispatch install intent
+		this.action.dispatch(PluginMarketplaceActions.install(this.plugin));
 	}
 
-	public installPlugin(isUpdate = false): void {
-		// For plugins with subscription plans, this should only be called after subscription verification
-		// The togglePlugin method handles showing the subscription dialog first
-		this.proceedWithInstallationValidation(isUpdate);
-	}
-
-	private proceedWithInstallationValidation(isUpdate = false): void {
-		// Run validation chain before proceeding with installation
-		this.installationValidationChainBuilder
-			.validate(this.plugin, isUpdate)
-			.pipe(
-				take(1),
-				switchMap((context) => {
-					// Check for validation errors
-					if (context.errors.length > 0) {
-						// Show all errors
-						context.errors.forEach((error) => {
-							console.error('[InstallationValidation] Error:', error);
-						});
-						// Reset installation toggle
-						this.action.dispatch(
-							PluginInstallationActions.toggle({ isChecked: false, pluginId: this.plugin.id })
-						);
-						return EMPTY;
-					}
-
-					// Show warnings if any
-					if (context.warnings.length > 0) {
-						context.warnings.forEach((warning) => {
-							console.warn('[InstallationValidation] Warning:', warning);
-						});
-					}
-
-					// Validation passed, proceed with installation dialog
-					return this.createInstallationObservable(isUpdate);
-				}),
-				catchError((err) => {
-					this.handleInstallationError(err);
-					// Reset toggle on error
-					this.action.dispatch(
-						PluginInstallationActions.toggle({ isChecked: false, pluginId: this.plugin.id })
-					);
-					return EMPTY;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	private createInstallationObservable(isUpdate: boolean): Observable<void> {
-		return this.dialog
-			.open(DialogInstallationValidationComponent, {
-				context: { pluginId: this.plugin.id },
-				backdropClass: 'backdrop-blur'
-			})
-			.onClose.pipe(
-				take(1),
-				switchMap((data) => this.handleDialogResponse(data, isUpdate)),
-				catchError((err) => {
-					this.handleInstallationError(err);
-					return EMPTY;
-				})
-			);
-	}
-
-	private handleDialogResponse(data: any, isUpdate: boolean): Observable<void> {
-		if (!data) {
-			return this.handleDialogCloseWithoutData();
-		}
-
-		return of(data).pipe(
-			filter(Boolean),
-			tap(({ version, source, authToken }) => {
-				this.preparePluginInstallation(version, source, isUpdate, authToken);
-			})
-		);
-	}
-
-	private handleDialogCloseWithoutData(): Observable<never> {
-		this.action.dispatch(
-			PluginInstallationActions.toggle({
-				isChecked: false,
-				pluginId: this.plugin.id
-			})
-		);
-		return EMPTY;
-	}
-
-	private handleInstallationError(err: any): void {
-		console.error('Plugin installation failed:', err);
-	}
-
-	public preparePluginInstallation(
-		version: IPluginVersion,
-		source: IPluginSource,
-		isUpdate = false,
-		authToken: string
-	): void {
-		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, pluginId: this.plugin.id }));
-		switch (source.type) {
-			case PluginSourceType.GAUZY:
-			case PluginSourceType.CDN:
-				this.action.dispatch(
-					PluginInstallationActions.install({
-						url: source.url,
-						contextType: 'cdn',
-						marketplaceId: this.plugin.id,
-						versionId: version.id
-					})
-				);
-				break;
-			case PluginSourceType.NPM:
-				this.action.dispatch(
-					PluginInstallationActions.install({
-						...{
-							pkg: {
-								name: source.name,
-								version: isUpdate ? this.plugin.version.number : version.number
-							},
-							registry: {
-								privateURL: source.registry,
-								authToken
-							}
-						},
-						contextType: 'npm',
-						marketplaceId: this.plugin.id,
-						versionId: version.id
-					})
-				);
-				break;
-			default:
-				break;
-		}
-	}
-
+	// Installation validation and dialog orchestration moved to effects.
 	public async openPlugin(): Promise<void> {
 		this.action.dispatch(PluginVersionActions.selectVersion(this.plugin.version));
 		await this.router.navigate([`/settings/marketplace-plugins/${this.plugin.id}`]);
@@ -281,135 +91,42 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 * Get the color status for plugin status badge
 	 */
 	public getStatusColor(status: PluginStatus): string {
-		switch (status) {
-			case PluginStatus.ACTIVE:
-				return 'success';
-			case PluginStatus.INACTIVE:
-				return 'warning';
-			case PluginStatus.DEPRECATED:
-				return 'danger';
-			case PluginStatus.ARCHIVED:
-				return 'basic';
-			default:
-				return 'basic';
-		}
+		return this.utils.getStatusBadgeStatus(status);
 	}
 
 	/**
 	 * Get the appropriate icon for subscription type
 	 */
 	public getSubscriptionIcon(type: PluginSubscriptionType): string {
-		switch (type) {
-			case PluginSubscriptionType.FREE:
-				return 'gift-outline';
-			case PluginSubscriptionType.TRIAL:
-				return 'clock-outline';
-			case PluginSubscriptionType.BASIC:
-				return 'person-outline';
-			case PluginSubscriptionType.PREMIUM:
-				return 'star-outline';
-			case PluginSubscriptionType.ENTERPRISE:
-				return 'briefcase-outline';
-			default:
-				return 'info-outline';
-		}
+		return this.utils.getSubscriptionIcon(type);
 	}
 
 	/**
 	 * Open plugin settings dialog
 	 */
 	public openSettings(): void {
-		this.dialog
-			.open(PluginSettingsManagementComponent, {
-				backdropClass: 'backdrop-blur',
-				closeOnEsc: false,
-				context: {
-					plugin: this.plugin,
-					// TODO: Get actual installation ID
-					installationId: this.plugin.id, // This should be the actual installation ID
-					scope: 'global', // or determine based on context
-					organizationId: this.store.selectedOrganization?.id,
-					tenantId: this.store.user?.tenantId
-				}
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap(() => {
-					console.log('Settings updated for plugin:', this.plugin.name);
-					// Could dispatch an action to refresh plugin data if needed
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.action.dispatch(PluginSettingsActions.openSettings({ plugin: this.plugin }));
 	}
 
 	/**
 	 * Open subscription manager dialog (alternative to plan selection)
 	 */
 	public manageSubscription(): void {
-		this.dialog
-			.open(PluginSubscriptionManagerComponent, {
-				backdropClass: 'backdrop-blur',
-				closeOnEsc: false,
-				context: {
-					plugin: this.plugin,
-					currentSubscription: (this.plugin?.subscription as any) || null
-				}
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap((result) => {
-					console.log('Subscription updated:', result);
-					// Reload plugin data to get updated subscription
-					this.action.dispatch(
-						PluginMarketplaceActions.getOne(this.plugin.id, { relations: ['subscriptions'] })
-					);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.action.dispatch(PluginSubscriptionActions.openSubscriptionManagement(this.plugin));
 	}
 
 	/**
 	 * Open subscription hierarchy view (admin feature)
 	 */
 	public viewSubscriptionHierarchy(): void {
-		this.dialog
-			.open(PluginSubscriptionHierarchyComponent, {
-				backdropClass: 'backdrop-blur',
-				closeOnEsc: true,
-				context: {
-					subscriptions: [this.plugin?.subscription as any].filter(Boolean) as IPluginSubscriptionDetail[],
-					showActions: true
-				}
-			})
-			.onClose.pipe(filter(Boolean), untilDestroyed(this))
-			.subscribe();
+		this.action.dispatch(PluginSubscriptionActions.openHierarchySubscriptions(this.plugin));
 	}
 
 	/**
 	 * Open user assignment dialog
 	 */
 	public manageUsers(): void {
-		this.dialog
-			.open(PluginUserManagementComponent, {
-				backdropClass: 'backdrop-blur',
-				closeOnEsc: false,
-				context: {
-					plugin: this.plugin,
-					// TODO: Get actual installation ID
-					installationId: this.plugin.id // This should be the actual installation ID
-				}
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap(() => {
-					console.log('Users managed for plugin:', this.plugin.name);
-					// Could dispatch an action to refresh plugin data if needed
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.action.dispatch(PluginUserAssignmentActions.manageUsers({ plugin: this.plugin }));
 	}
 
 	/**

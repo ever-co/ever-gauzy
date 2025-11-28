@@ -3,11 +3,11 @@ import { Actions } from '@ngneat/effects-ng';
 import { Observable } from 'rxjs';
 
 import {
-    IPluginSubscription,
-    IPluginSubscriptionCreateInput,
-    IPluginSubscriptionPlan,
-    IPluginSubscriptionUpdateInput,
-    PluginSubscriptionType
+	IPluginSubscription,
+	IPluginSubscriptionCreateInput,
+	IPluginSubscriptionPlan,
+	IPluginSubscriptionUpdateInput,
+	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
 import { PlanActionType } from '../plugin-subscription-plan-selection/services/plan-comparison.service';
 import { PluginPlanComparisonActions } from './actions/plugin-plan-comparison.action';
@@ -66,7 +66,7 @@ export class PluginSubscriptionFacade {
 		private readonly actions$: Actions,
 		private readonly planQuery: PluginPlanQuery,
 		private readonly planComparisonQuery: PluginPlanComparisonQuery
-	) {}
+	) { }
 
 	// Subscription Management
 	public loadPluginSubscriptions(pluginId: string): void {
@@ -100,14 +100,6 @@ export class PluginSubscriptionFacade {
 
 	public selectPlan(plan: IPluginSubscriptionPlan | null): void {
 		this.actions$.dispatch(PluginPlanActions.selectPlan(plan));
-	}
-
-	public showSubscriptionDialog(pluginId: string): void {
-		this.actions$.dispatch(PluginSubscriptionActions.showSubscriptionDialog(pluginId));
-	}
-
-	public hideSubscriptionDialog(): void {
-		this.actions$.dispatch(PluginSubscriptionActions.hideSubscriptionDialog());
 	}
 
 	public resetError(): void {

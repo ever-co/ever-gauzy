@@ -1,21 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-	IPlugin,
-	IPluginSource,
-	IPluginVersion,
-	PluginScope,
-	PluginSourceType,
-	PluginStatus,
-	PluginType
-} from '@gauzy/contracts';
+import { ID, IPlugin, PluginScope, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDialogService, NbRouteTab } from '@nebular/theme';
+import { NbRouteTab } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, EMPTY, Observable, Subject, tap } from 'rxjs';
-import { catchError, filter, map, switchMap, take, takeUntil } from 'rxjs/operators';
-import { PluginSubscriptionQuery } from '../+state';
+import { combineLatest, Observable, Subject, tap } from 'rxjs';
+import { catchError, filter, map, takeUntil } from 'rxjs/operators';
+import { PluginSubscriptionActions, PluginSubscriptionQuery } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
@@ -25,14 +17,10 @@ import { PluginInstallationQuery } from '../+state/queries/plugin-installation.q
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { PluginSourceQuery } from '../+state/queries/plugin-source.query';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
+import { PluginQuery } from '../../+state/plugin.query';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
-import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
-import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';
-import { InstallationValidationChainBuilder } from '../services';
-import { SubscriptionDialogRouterService } from '../services/subscription-dialog-router.service';
-import { SubscriptionStatusService } from '../shared';
-import { DialogInstallationValidationComponent } from './dialog-installation-validation/dialog-installation-validation.component';
+// Installation and subscription side-effects moved to effects
 
 @Component({
 	selector: 'gauzy-plugin-marketplace-item',
@@ -63,20 +51,17 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private readonly router = inject(Router);
 
 	constructor(
-		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		private readonly translateService: TranslateService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly action: Actions,
-		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder,
 		private readonly subscriptionQuery: PluginSubscriptionQuery,
-		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
+		public readonly pluginQuery: PluginQuery,
 		public readonly versionQuery: PluginVersionQuery,
 		public readonly sourceQuery: PluginSourceQuery,
 		public readonly accessFacade: PluginSubscriptionAccessFacade,
-		public readonly statusService: SubscriptionStatusService,
 		private readonly utils: PluginMarketplaceUtilsService
 	) {}
 
@@ -133,19 +118,19 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	// Delegate utility methods to PluginMarketplaceUtilsService
-	getSourceTypeLabel(type: PluginSourceType): string {
+	public getSourceTypeLabel(type: PluginSourceType): string {
 		return this.utils.getSourceTypeLabel(type);
 	}
 
-	getStatusLabel(status: PluginStatus): string {
+	public getStatusLabel(status: PluginStatus): string {
 		return this.utils.getStatusLabel(status);
 	}
 
-	getTypeLabel(type: PluginType): string {
+	public getTypeLabel(type: PluginType): string {
 		return this.utils.getTypeLabel(type);
 	}
 
-	getStatusBadgeStatus(status: PluginStatus): string {
+	public getStatusBadgeStatus(status: PluginStatus): string {
 		return this.utils.getStatusBadgeStatus(status);
 	}
 
@@ -153,7 +138,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return this.utils.getPluginTypeBadgeStatus(type);
 	}
 
-	getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
+	public getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
 		return this.utils.getPluginSourceTypeBadgeStatus(type);
 	}
 
@@ -161,26 +146,25 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return this.utils.getAccessLevelLabel(level);
 	}
 
-	getAccessLevelBadgeStatus(level: PluginScope): string {
+	public getAccessLevelBadgeStatus(level: PluginScope): string {
 		return this.utils.getAccessLevelBadgeStatus(level);
 	}
 
-	showAssignUsersDialog(): void {
+	public showAssignUsersDialog(): void {
 		if (!this.pluginId) return;
-		// TODO: Create actions and effects for showing assignment dialog
 		this.accessFacade.showAssignmentDialog(this.pluginId);
 	}
 
-	getSourceDetails(plugin: IPlugin): string {
+	public getSourceDetails(plugin: IPlugin): string {
 		return this.utils.getSourceDetails(plugin);
 	}
 
-	async updatePluginStatus(status: PluginStatus): Promise<void> {
+	public async updatePluginStatus(status: PluginStatus): Promise<void> {
 		if (!this.pluginId || !this.isOwner) return;
 		this.action.dispatch(PluginMarketplaceActions.update({ ...this.plugin, status }));
 	}
 
-	navigateToEdit(): void {
+	public navigateToEdit(): void {
 		this.action.dispatch(PluginMarketplaceActions.update(this.plugin));
 	}
 
@@ -242,7 +226,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		);
 	}
 
-	formatDate(date: Date | string | null): string {
+	public formatDate(date: Date | string | null): string {
 		return this.utils.formatDate(date);
 	}
 
@@ -250,131 +234,27 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return !!this.store.user && this.store.user?.id === this.plugin?.uploadedBy?.id;
 	}
 
-	updatePlugin(): void {
-		// TODO: Create actions and effects for updating plugin
-		this.installPlugin(true);
+	public installUpdate(): void {
+		// Trigger install update flow via actions/effects
+		this.action.dispatch(PluginMarketplaceActions.installUpdate(this.plugin));
 	}
 
 	public async uninstallPlugin(): Promise<void> {
 		this.action.dispatch(PluginInstallationActions.uninstall(this.pluginId));
 	}
 
-	public installPlugin(isUpdate = false): void {
-		// Use the facade pattern and chain of responsibility for cleaner validation
-		if (this.plugin.hasPlan) {
-			// For plugins with subscription plans, verify access first
-			if (isUpdate) {
-				this.handleUpdateWithSubscription(isUpdate);
-			} else {
-				this.handleNewInstallationWithSubscription(isUpdate);
-			}
-		} else {
-			// Plugin doesn't require subscription - install directly
-			this.proceedWithInstallationValidation(isUpdate);
-		}
-	}
-
-	/**
-	 * Handles update installation for plugins with subscriptions
-	 * Follows Single Responsibility Principle
-	 */
-	private handleUpdateWithSubscription(isUpdate: boolean): void {
-		this.hasAccess$
-			.pipe(
-				take(1),
-				tap((hasAccess) => {
-					if (hasAccess) {
-						this.proceedWithInstallationValidation(isUpdate);
-					} else {
-						this.toastrService.warn(
-							this.translateService.instant('PLUGIN.SUBSCRIPTION.RESUBSCRIBE_REQUIRED')
-						);
-						this.showSubscriptionSelectionDialog()
-							.pipe(
-								filter((result) => !!result?.proceedWithInstallation),
-								tap(() => this.proceedWithInstallationValidation(isUpdate))
-							)
-							.subscribe();
-					}
-				})
-			)
-			.subscribe();
-	}
-
-	/**
-	 * Handles new installation for plugins with subscriptions
-	 * Follows Single Responsibility Principle
-	 */
-	private handleNewInstallationWithSubscription(isUpdate: boolean): void {
-		this.hasAccess$
-			.pipe(
-				take(1),
-				switchMap((hasAccess) => {
-					if (hasAccess) {
-						// User has active subscription
-						this.proceedWithInstallationValidation(isUpdate);
-						return EMPTY;
-					}
-
-					// No subscription - must subscribe first
-					this.toastrService.info(
-						this.translateService.instant('PLUGIN.SUBSCRIPTION.REQUIRED_FOR_INSTALLATION')
-					);
-
-					return this.showSubscriptionSelectionDialog().pipe(
-						filter((result) => !!result?.proceedWithInstallation),
-						switchMap(() => this.hasAccess$.pipe(take(1))),
-						tap((hasAccessNow) => {
-							if (hasAccessNow) {
-								this.proceedWithInstallationValidation(isUpdate);
-							} else {
-								this.toastrService.error(
-									this.translateService.instant('PLUGIN.SUBSCRIPTION.ACCESS_NOT_GRANTED')
-								);
-							}
-						})
-					);
-				}),
-				catchError((error) => {
-					console.error('[InstallPlugin] Error during installation:', error);
-					this.toastrService.error(this.translateService.instant('PLUGIN.INSTALLATION.ERROR'));
-					return EMPTY;
-				})
-			)
-			.subscribe();
-	}
-
-	/**
-	 * Show appropriate subscription dialog based on user's current subscription status.
-	 * Users with active subscriptions are routed to PluginSubscriptionManager.
-	 * Users without active subscriptions are routed to PluginSubscriptionPlanSelection.
-	 */
-	private showSubscriptionSelectionDialog(): Observable<{ proceedWithInstallation: boolean }> {
-		return this.subscriptionDialogRouter.openSubscriptionDialog(this.plugin);
+	public installPlugin(): void {
+		// Trigger the install flow via actions; effects will handle dialogs/validation
+		this.action.dispatch(PluginMarketplaceActions.install(this.plugin));
 	}
 
 	/**
 	 * Alternative subscription management dialog (simpler UI)
+	 * NOTE: Subscription management is handled via effects; components should dispatch actions.
 	 */
 	public manageSubscription(): void {
-		this.dialogService
-			.open(PluginSubscriptionManagerComponent, {
-				backdropClass: 'backdrop-blur',
-				closeOnEsc: false,
-				context: {
-					plugin: this.plugin,
-					currentSubscription: (this.plugin?.subscription as any) || null
-				}
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap((result) => {
-					console.log('Subscription updated:', result);
-					this.loadPlugin();
-				}),
-				takeUntil(this.destroy$)
-			)
-			.subscribe();
+		// Dispatch an action or use facade to open/manage subscriptions via effects
+		this.action.dispatch(PluginSubscriptionActions.openSubscriptionManagement(this.plugin));
 	}
 
 	/**
@@ -385,126 +265,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * View subscription hierarchy (admin feature)
+	 * View subscription hierarchy (admin feature) — route through actions/effects
 	 */
 	public viewSubscriptionHierarchy(): void {
-		this.dialogService
-			.open(PluginSubscriptionHierarchyComponent, {
-				backdropClass: 'backdrop-blur',
-				context: {
-					subscriptions: this.subscriptionQuery.subscriptions || [],
-					showActions: true
-				}
-			})
-			.onClose.pipe(takeUntil(this.destroy$))
-			.subscribe();
-	}
-
-	private proceedWithInstallationValidation(isUpdate = false): void {
-		// Run validation chain before proceeding with installation
-		this.installationValidationChainBuilder
-			.validate(this.plugin, isUpdate)
-			.pipe(
-				take(1),
-				tap((context) => {
-					// Check for validation errors
-					if (context.errors.length > 0) {
-						// Show all errors
-						context.errors.forEach((error) => {
-							this.toastrService.error(this.translateService.instant(error));
-						});
-						// Reset installation toggle
-						this.action.dispatch(
-							PluginInstallationActions.toggle({ isChecked: false, pluginId: this.plugin.id })
-						);
-						return;
-					}
-
-					// Show warnings if any
-					if (context.warnings.length > 0) {
-						context.warnings.forEach((warning) => {
-							this.toastrService.warn(this.translateService.instant(warning));
-						});
-					}
-
-					// Validation passed, proceed with installation dialog
-					this.openInstallationValidationDialog(isUpdate);
-				}),
-				catchError((error) => {
-					console.error('[InstallationValidation] Validation chain error:', error);
-					this.toastrService.error(this.translateService.instant('PLUGIN.INSTALLATION.VALIDATION_ERROR'));
-					this.action.dispatch(
-						PluginInstallationActions.toggle({ isChecked: false, pluginId: this.plugin.id })
-					);
-					return EMPTY;
-				})
-			)
-			.subscribe();
-	}
-
-	private openInstallationValidationDialog(isUpdate = false): void {
-		this.dialogService
-			.open(DialogInstallationValidationComponent, {
-				context: {
-					pluginId: this.pluginId
-				},
-				backdropClass: 'backdrop-blur'
-			})
-			.onClose.pipe(
-				take(1),
-				filter(Boolean),
-				tap(({ version, source, authToken }) =>
-					this.preparePluginInstallation(version, source, isUpdate, authToken)
-				)
-			)
-			.subscribe();
-	}
-
-	preparePluginInstallation(
-		version: IPluginVersion,
-		source: IPluginSource,
-		isUpdate = false,
-		authToken: string
-	): void {
-		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, pluginId: this.plugin.id }));
-		switch (source.type) {
-			case PluginSourceType.GAUZY:
-			case PluginSourceType.CDN:
-				this.action.dispatch(
-					PluginInstallationActions.install({
-						url: source.url,
-						contextType: 'cdn',
-						marketplaceId: this.pluginId,
-						versionId: version.id
-					})
-				);
-				break;
-			case PluginSourceType.NPM:
-				this.action.dispatch(
-					PluginInstallationActions.install({
-						...{
-							pkg: {
-								name: source.name,
-								version: isUpdate ? this.plugin.version.number : version.number
-							},
-							registry: {
-								privateURL: source.registry,
-								authToken
-							}
-						},
-						contextType: 'npm',
-						marketplaceId: this.pluginId,
-						versionId: version.id
-					})
-				);
-				break;
-			default:
-				break;
-		}
-	}
-
-	public get selectedVersionNumber(): string {
-		return this.selectedVersion.number;
+		this.action.dispatch(PluginSubscriptionActions.openHierarchySubscriptions(this.plugin));
 	}
 
 	public addVersion(): void {
@@ -531,7 +295,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return this.versionQuery.pluginId;
 	}
 
-	private get selectedVersion(): IPluginVersion {
-		return this.versionQuery.version;
+	public get installedVersionId$(): Observable<ID> {
+		return this.pluginQuery.currentPluginVersionId(this.pluginId);
 	}
 }

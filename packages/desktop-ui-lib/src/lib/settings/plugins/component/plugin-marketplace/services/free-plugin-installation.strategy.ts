@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
-import { Observable, of } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { IInstallationPreparationResult, IPluginInstallationStrategy } from './plugin-installation-strategy.interface';
 
 /**
@@ -16,7 +16,7 @@ export class FreePluginInstallationStrategy implements IPluginInstallationStrate
 	 * Validates free plugin installation
 	 * Free plugins can always be installed
 	 */
-	validateInstallation(plugin: IPlugin): Observable<IInstallationPreparationResult> {
+	public validateInstallation(plugin: IPlugin): Observable<IInstallationPreparationResult> {
 		return of({
 			canProceed: true,
 			requiresSubscription: false,
@@ -28,15 +28,15 @@ export class FreePluginInstallationStrategy implements IPluginInstallationStrate
 	 * Prepares free plugin for installation
 	 * No preparation needed for free plugins
 	 */
-	prepareForInstallation(plugin: IPlugin): Observable<void> {
-		return of(void 0);
+	public prepareForInstallation(plugin: IPlugin): Observable<void> {
+		return EMPTY;
 	}
 
 	/**
 	 * Checks if this strategy handles the plugin
 	 * Handles plugins without subscription plans
 	 */
-	canHandle(plugin: IPlugin): boolean {
+	public canHandle(plugin: IPlugin): boolean {
 		return !plugin.hasPlan;
 	}
 }

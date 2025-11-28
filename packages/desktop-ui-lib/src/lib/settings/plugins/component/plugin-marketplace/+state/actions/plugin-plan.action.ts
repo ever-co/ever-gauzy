@@ -22,7 +22,9 @@ export class PluginPlanActions {
 		plan
 	}));
 
-	public static showPlans = createAction('[Plugin Plan] Show Plan Subscriptions', (pluginId: ID) => ({ pluginId }));
+	public static openPlanSubscriptions = createAction('[Plugin Plan] Open Plan Subscriptions', (pluginId: ID) => ({
+		pluginId
+	}));
 
 	// Plan CRUD Actions
 	public static createPlan = createAction(

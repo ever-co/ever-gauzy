@@ -3,8 +3,8 @@
 
 import { Injectable } from '@angular/core';
 import { QueryEntity } from '@datorama/akita';
+import { PluginScope } from '@gauzy/contracts';
 import { Observable, map } from 'rxjs';
-import { PluginScope } from '../../../../services/plugin-subscription-access.service';
 import {
 	IPluginAccessState,
 	IPluginSubscriptionAccessEntityState,

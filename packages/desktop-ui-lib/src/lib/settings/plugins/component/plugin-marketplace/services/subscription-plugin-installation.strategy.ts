@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
+import { PluginSubscriptionActions } from '../+state';
 import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
 import { ToastrNotificationService } from '../../../../../services';
 import { IInstallationPreparationResult, IPluginInstallationStrategy } from './plugin-installation-strategy.interface';
-import { SubscriptionDialogRouterService } from './subscription-dialog-router.service';
 
 /**
  * Strategy for installing plugins that require subscriptions
@@ -20,10 +20,9 @@ import { SubscriptionDialogRouterService } from './subscription-dialog-router.se
 export class SubscriptionPluginInstallationStrategy implements IPluginInstallationStrategy {
 	constructor(
 		private readonly accessFacade: PluginSubscriptionAccessFacade,
-		private readonly dialogService: NbDialogService,
+		private readonly actions: Actions,
 		private readonly translateService: TranslateService,
-		private readonly toastrService: ToastrNotificationService,
-		private readonly subscriptionDialogRouter: SubscriptionDialogRouterService
+		private readonly toastrService: ToastrNotificationService
 	) {}
 
 	/**
@@ -45,54 +44,18 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 	 * Prepares plugin for installation by ensuring subscription exists
 	 * Shows subscription dialog if needed
 	 */
-	prepareForInstallation(plugin: IPlugin): Observable<void> {
+	prepareForInstallation(plugin: IPlugin) {
 		return this.validateInstallation(plugin).pipe(
 			switchMap((result) => {
 				if (result.canProceed) {
 					// Already has access, no preparation needed
-					return new Observable<void>((observer) => {
-						observer.next();
-						observer.complete();
-					});
+					return EMPTY;
 				}
 
 				// No access - show appropriate subscription dialog based on user's subscription status
 				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.REQUIRED_FOR_INSTALLATION'));
 
-				return new Observable<void>((observer) => {
-					this.subscriptionDialogRouter
-						.openSubscriptionDialog(plugin)
-						.pipe(take(1))
-						.subscribe({
-							next: (subscriptionResult) => {
-								if (subscriptionResult?.proceedWithInstallation) {
-									// Verify access was granted after subscription
-									this.accessFacade
-										.hasAccess$(plugin.id)
-										.pipe(take(1))
-										.subscribe({
-											next: (hasAccess) => {
-												if (hasAccess) {
-													observer.next();
-													observer.complete();
-												} else {
-													this.toastrService.error(
-														this.translateService.instant(
-															'PLUGIN.SUBSCRIPTION.ACCESS_NOT_GRANTED'
-														)
-													);
-													observer.error(new Error('Access not granted after subscription'));
-												}
-											},
-											error: (err) => observer.error(err)
-										});
-								} else {
-									observer.error(new Error('User cancelled subscription'));
-								}
-							},
-							error: (err) => observer.error(err)
-						});
-				});
+				return of(this.actions.dispatch(PluginSubscriptionActions.openSubscriptionManagement(plugin)));
 			})
 		);
 	}

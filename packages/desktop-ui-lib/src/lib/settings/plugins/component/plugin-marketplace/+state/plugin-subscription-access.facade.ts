@@ -6,12 +6,12 @@ import { Actions } from '@ngneat/effects-ng';
 import { Observable } from 'rxjs';
 import {
 	IAssignPluginSubscription,
-	IRevokePluginSubscriptionAssignment,
-	PluginScope
+	IRevokePluginSubscriptionAssignment
 } from '../../../services/plugin-subscription-access.service';
 import { PluginSubscriptionAccessActions } from './actions/plugin-subscription-access.actions';
 import { PluginSubscriptionAccessQuery } from './queries/plugin-subscription-access.query';
 import { IPluginAccessState } from './stores/plugin-subscription-access.store';
+import { PluginScope } from '@gauzy/contracts';
 
 /**
  * Facade service for plugin subscription access management
@@ -48,7 +48,7 @@ export class PluginSubscriptionAccessFacade {
 	/** Observable of bulk check progress */
 	bulkCheckInProgress$ = this.query.isBulkCheckInProgress$();
 
-	constructor(private readonly actions: Actions, private readonly query: PluginSubscriptionAccessQuery) {}
+	constructor(private readonly actions: Actions, private readonly query: PluginSubscriptionAccessQuery) { }
 
 	// ============================================================================
 	// Access Check Methods

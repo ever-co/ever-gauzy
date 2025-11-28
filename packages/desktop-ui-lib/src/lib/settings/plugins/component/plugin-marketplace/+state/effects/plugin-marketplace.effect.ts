@@ -21,6 +21,7 @@ import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	EMPTY,
+	Observable,
 	catchError,
 	debounceTime,
 	distinctUntilChanged,
@@ -61,11 +62,12 @@ export class PluginMarketplaceEffects {
 	upload$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginMarketplaceActions.upload),
+			exhaustMap(() => this.uploadDialog()),
 			tap(() => {
 				this.pluginMarketplaceStore.setUpload({ uploading: true });
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UPLOADING'));
 			}),
-			switchMap(({ plugin }) =>
+			switchMap((plugin) =>
 				this.pluginService.upload(plugin).pipe(
 					tap((res) => this.pluginMarketplaceStore.setUpload({ progress: coalesceValue(res?.progress, 0) })),
 					filter((res) => Boolean(res?.plugin)), // Ensure plugin is not null/undefined
@@ -380,6 +382,15 @@ export class PluginMarketplaceEffects {
 			)
 		)
 	);
+
+	private uploadDialog(): Observable<IPlugin> {
+		return this.dialogService
+			.open(PluginMarketplaceUploadComponent, {
+				backdropClass: 'backdrop-blur',
+				closeOnEsc: false
+			})
+			.onClose.pipe(take(1), filter(Boolean));
+	}
 
 	// Helper method to set plugin context in stores
 	private selectPluginContext(plugin: IPlugin): void {

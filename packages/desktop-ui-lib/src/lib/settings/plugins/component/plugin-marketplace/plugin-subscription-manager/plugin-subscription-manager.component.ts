@@ -1,16 +1,18 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { IPlugin, PluginScope } from '@gauzy/contracts';
-import { NbDialogRef, NbDialogService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
+import { PluginInstallationQuery } from '../+state';
+import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSubscriptionFacade } from '../+state/plugin-subscription.facade';
 import {
 	IPluginSubscription,
 	IPluginSubscriptionPlan,
 	PluginBillingPeriod,
-	PluginSubscriptionService,
 	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
 import { IPlanViewModel, PlanFormatterService } from '../plugin-subscription-plan-selection';
@@ -46,7 +48,9 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		public readonly planService: SubscriptionPlanService,
 		private readonly formService: SubscriptionFormService,
 		public readonly statusService: SubscriptionStatusService,
-		public readonly formatter: PlanFormatterService
+		public readonly formatter: PlanFormatterService,
+		public readonly installationQuery: PluginInstallationQuery,
+		private readonly actions: Actions
 	) {
 		this.subscriptionForm = this.formService.createSubscriptionForm();
 		this.isLoading$ = this.facade.loading$;
@@ -65,6 +69,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 			);
 
 			// If no current subscription passed, try to load it
+
 			this.facade
 				.getCurrentPluginSubscription(this.plugin.id)
 				.pipe(take(1), untilDestroyed(this))
@@ -336,7 +341,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 
 	public canUpgrade(plan: IPluginSubscriptionPlan): boolean {
 		if (!this.currentSubscription) return plan.type !== PluginSubscriptionType.FREE;
-		const currentPlan = this.currentSubscription.plan
+		const currentPlan = this.currentSubscription.plan;
 		return currentPlan ? this.planService.canUpgrade(currentPlan, plan) : false;
 	}
 
@@ -344,6 +349,10 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		if (!this.currentSubscription) return false;
 		const currentPlan = this.currentSubscription.plan;
 		return currentPlan ? this.planService.canDowngrade(currentPlan, plan) : false;
+	}
+
+	public install(): void {
+		this.actions.dispatch(PluginMarketplaceActions.install(this.plugin));
 	}
 
 	// Helper methods moved to services

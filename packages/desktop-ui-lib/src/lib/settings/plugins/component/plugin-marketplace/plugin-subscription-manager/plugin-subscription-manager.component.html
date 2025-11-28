@@ -1,3 +1,5 @@
+@let checked = installationQuery.checked$(plugin?.id) | async; @let installing = installationQuery.installing$ | async;
+
 <div class="subscription-manager">
 	<div class="manager-header">
 		<h4 class="manager-title">
@@ -24,10 +26,23 @@
 					</p>
 				</div>
 				<div class="subscription-actions">
+					@if(!plugin.installed && checked) {
+					<button
+						nbButton
+						[disabled]="installing"
+						status="success"
+						size="small"
+						(click)="install()"
+						[disabled]="isLoading$ | async"
+					>
+						{{ installing ? 'Installing...' : 'Install Plugin' }}
+					</button>
+					}
 					<button
 						nbButton
 						status="warning"
 						size="small"
+						[disabled]="installing"
 						(click)="cancelSubscription()"
 						[disabled]="isLoading$ | async"
 					>

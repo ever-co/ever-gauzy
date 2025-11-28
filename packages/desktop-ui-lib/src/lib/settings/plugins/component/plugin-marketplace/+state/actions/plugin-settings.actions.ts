@@ -1,3 +1,4 @@
+import { IPlugin } from '@gauzy/contracts';
 import { createAction, props } from '@ngneat/effects';
 import { IPluginSetting, IPluginSettingGroup, PluginSettingScope } from '../../../../services/plugin-settings.service';
 import {
@@ -28,6 +29,10 @@ export const PluginSettingsActions = {
 		'[Plugin Settings] Load Grouped Settings Failure',
 		props<{ error: string }>()
 	),
+
+	//Open settings dialog
+	openSettings: createAction('[Plugin Settings] Open Settings', props<{ plugin: IPlugin }>()),
+	closeSettings: createAction('[Plugin Settings] Close Settings'),
 
 	// Create setting
 	createSetting: createAction('[Plugin Settings] Create Setting', props<CreatePluginSettingRequest>()),

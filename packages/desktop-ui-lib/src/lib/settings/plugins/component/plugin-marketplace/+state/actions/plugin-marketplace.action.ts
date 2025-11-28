@@ -14,7 +14,7 @@ export interface IPaymentMethod {
 
 export class PluginMarketplaceActions {
 	// Core plugin actions
-	public static upload = createAction('[Plugin Marketplace] Upload', (plugin: IPlugin) => ({ plugin }));
+	public static upload = createAction('[Plugin Marketplace] Upload');
 	public static getAll = createAction('[Plugin Marketplace] Get All', <T>(params?: T) => ({ params }));
 	public static getOne = createAction('[Plugin Marketplace] Get One', <T>(id: ID, params?: T) => ({ id, params }));
 	public static update = createAction('[Plugin Marketplace] Update', (plugin: IPlugin) => ({
@@ -27,9 +27,14 @@ export class PluginMarketplaceActions {
 	public static search = createAction('[Plugin Marketplace] Search', (query: string) => ({ query }));
 
 	// Installation actions
-	public static install = createAction('[Plugin Marketplace] Install Plugin', (pluginId: ID, versionId: ID) => ({
-		pluginId,
-		versionId
+	public static install = createAction('[Plugin Marketplace] Install Plugin', (plugin, isUpdate = false) => ({
+		plugin,
+		isUpdate
+	}));
+
+	// Install update action
+	public static installUpdate = createAction('[Plugin Marketplace] Install Update', (plugin: IPlugin) => ({
+		plugin
 	}));
 
 	public static uninstall = createAction(

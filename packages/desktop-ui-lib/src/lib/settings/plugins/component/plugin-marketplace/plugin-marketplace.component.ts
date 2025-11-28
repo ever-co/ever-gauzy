@@ -1,15 +1,13 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IPlugin } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, debounceTime, distinctUntilChanged, filter, map, tap } from 'rxjs';
+import { combineLatest, debounceTime, distinctUntilChanged, map, tap } from 'rxjs';
 import { Store } from '../../../../services';
 import { PluginMarketplaceActions } from './+state/actions/plugin-marketplace.action';
 import { PluginMarketplaceQuery } from './+state/queries/plugin-marketplace.query';
 import { IPluginFilter, PluginMarketplaceStore } from './+state/stores/plugin-market.store';
-import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/plugin-marketplace-upload.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -211,17 +209,7 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 	}
 
 	public upload(): void {
-		this.dialog
-			.open(PluginMarketplaceUploadComponent, {
-				backdropClass: 'backdrop-blur',
-				closeOnEsc: false
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap((plugin: IPlugin) => this.action.dispatch(PluginMarketplaceActions.upload(plugin))),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.action.dispatch(PluginMarketplaceActions.upload());
 	}
 
 	ngOnDestroy(): void {

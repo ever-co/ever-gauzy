@@ -3,10 +3,8 @@
 
 import { Injectable } from '@angular/core';
 import { EntityState, EntityStore, StoreConfig } from '@datorama/akita';
-import {
-    IPluginSubscriptionAccessResponse,
-    PluginScope
-} from '../../../../services/plugin-subscription-access.service';
+import { PluginScope } from '@gauzy/contracts';
+import { IPluginSubscriptionAccessResponse } from '../../../../services/plugin-subscription-access.service';
 
 /**
  * Plugin access state entity
@@ -98,7 +96,10 @@ export function createInitialAccessState(): IPluginSubscriptionAccessEntityState
  */
 @StoreConfig({ name: '_plugin_subscription_access', idKey: 'pluginId' })
 @Injectable({ providedIn: 'root' })
-export class PluginSubscriptionAccessStore extends EntityStore<IPluginSubscriptionAccessEntityState, IPluginAccessState> {
+export class PluginSubscriptionAccessStore extends EntityStore<
+	IPluginSubscriptionAccessEntityState,
+	IPluginAccessState
+> {
 	constructor() {
 		super(createInitialAccessState());
 	}

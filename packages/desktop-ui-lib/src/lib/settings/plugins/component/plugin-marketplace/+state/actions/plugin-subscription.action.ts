@@ -1,7 +1,11 @@
-import { ID } from '@gauzy/contracts';
+import { IPlugin } from '@gauzy/contracts';
 // Plugin Subscription Actions for @ngneat/effects
 import { createAction } from '@ngneat/effects';
-import { IPluginSubscription, IPluginSubscriptionCreateInput, IPluginSubscriptionUpdateInput } from '../../../../services/plugin-subscription.service';
+import {
+	IPluginSubscription,
+	IPluginSubscriptionCreateInput,
+	IPluginSubscriptionUpdateInput
+} from '../../../../services/plugin-subscription.service';
 
 export class PluginSubscriptionActions {
 	// Load Plugin Subscriptions
@@ -19,7 +23,6 @@ export class PluginSubscriptionActions {
 		'[Plugin Subscription] Load Plugin Subscriptions Failure',
 		(error: string) => ({ error })
 	);
-
 
 	// Create Subscription
 	public static createSubscription = createAction(
@@ -135,10 +138,11 @@ export class PluginSubscriptionActions {
 		(subscription: IPluginSubscription | null) => ({ subscription })
 	);
 
-
-	public static showSubscriptionDialog = createAction(
-		'[Plugin Subscription] Show Subscription Dialog',
-		(pluginId: string) => ({ pluginId })
+	public static openSubscriptionManagement = createAction(
+		'[Plugin Subscription] Manage Subscription Dialog',
+		(plugin: IPlugin) => ({
+			plugin
+		})
 	);
 
 	public static hideSubscriptionDialog = createAction('[Plugin Subscription] Hide Subscription Dialog');
@@ -153,11 +157,10 @@ export class PluginSubscriptionActions {
 		(pluginId: string, subscription: IPluginSubscription | null) => ({ pluginId, subscription })
 	);
 
-	public static showSubscriptions = createAction(
-		'[Plugin Dialog] Show Subscriptions',
-		(pluginId: ID, subscriptionId: ID) => ({
-			subscriptionId,
-			pluginId
+	public static openHierarchySubscriptions = createAction(
+		'[Plugin Subscription] Hierarchy Subscriptions',
+		(plugin: IPlugin) => ({
+			plugin
 		})
 	);
 }

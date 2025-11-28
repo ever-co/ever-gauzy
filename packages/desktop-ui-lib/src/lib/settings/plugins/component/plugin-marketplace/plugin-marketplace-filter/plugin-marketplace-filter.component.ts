@@ -113,7 +113,7 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 		private readonly pluginCategoryQuery: PluginCategoryQuery,
 		private readonly actions: Actions,
 		private readonly filterStrategyService: FilterStrategyService,
-		private readonly reactiveFilterService: ReactiveFilterStateService
+		private readonly reactiveFilterService: ReactiveFilterStateService,
 		private readonly utils: PluginMarketplaceUtilsService
 	) {
 		this.initializeForm();

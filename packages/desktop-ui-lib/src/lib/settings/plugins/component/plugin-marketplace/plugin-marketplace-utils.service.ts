@@ -7,6 +7,7 @@ import {
 	PluginScope,
 	PluginSourceType,
 	PluginStatus,
+	PluginSubscriptionType,
 	PluginType
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
@@ -42,6 +43,23 @@ export class PluginMarketplaceUtilsService {
 			[PluginStatus.ARCHIVED]: 'danger'
 		};
 		return statusMap[status] || 'basic';
+	}
+
+	public getSubscriptionIcon(type: PluginSubscriptionType): string {
+		switch (type) {
+			case PluginSubscriptionType.FREE:
+				return 'gift-outline';
+			case PluginSubscriptionType.TRIAL:
+				return 'clock-outline';
+			case PluginSubscriptionType.BASIC:
+				return 'person-outline';
+			case PluginSubscriptionType.PREMIUM:
+				return 'star-outline';
+			case PluginSubscriptionType.ENTERPRISE:
+				return 'briefcase-outline';
+			default:
+				return 'info-outline';
+		}
 	}
 
 	public getPluginTypeBadgeStatus(type: PluginType): string {

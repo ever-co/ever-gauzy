@@ -3,13 +3,15 @@
 <!-- Determine if the plugin is currently being installed or uninstalled -->
 @let uninstalling = installationQuery.uninstalling$ | async;
 <!-- Check if the plugin is selected and disabled state for toggles -->
-@let isSelected = installationQuery.checked$(plugin?.id)| async;
+@let checked = installationQuery.checked$(plugin?.id)| async;
 <!-- Disabled state when installing or uninstalling -->
 @let disabled = installing || uninstalling;
 <!-- Disabled state when installing or uninstalling -->
-@let showProgress = disabled && isSelected;
+@let showProgress = disabled && checked;
 <!-- Check if the current user is the owner of the plugin -->
 @let editing = marketplaceQuery.updating$ | async;
+<!-- Check if plugin is installed -->
+@let installed = plugin?.installed && checked;
 <!-- Main template -->
 @if(plugin) {
 <div
@@ -158,7 +160,7 @@
 				size="small"
 				class="action-btn settings-btn"
 				(click)="openSettings()"
-				[disabled]="!plugin.installed"
+				[disabled]="!installed"
 				[nbTooltip]="'PLUGIN.ACTIONS.SETTINGS' | translate"
 			>
 				<nb-icon icon="settings-outline"></nb-icon>
@@ -172,7 +174,7 @@
 				size="small"
 				class="action-btn users-btn"
 				(click)="manageUsers()"
-				[disabled]="!plugin.installed"
+				[disabled]="!installed"
 				[nbTooltip]="'PLUGIN.ACTIONS.MANAGE_USERS' | translate"
 			>
 				<nb-icon icon="people-outline"></nb-icon>
@@ -187,7 +189,7 @@
 				size="small"
 				class="action-btn edit-btn"
 				(click)="editPlugin()"
-				*gauzySpinnerButton="editing && isSelected"
+				*gauzySpinnerButton="editing && checked"
 				[nbTooltip]="'PLUGIN.ACTIONS.EDIT' | translate"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
@@ -220,12 +222,12 @@
 			} @else {
 			<div class="installation-wrapper">
 				<!-- Show subscription requirement if needed -->
-				@if(plugin.hasPlan && !plugin.installed) {
+				@if(plugin.hasPlan && !installed) {
 				<div class="subscription-required">
 					<nb-icon icon="card-outline" class="subscription-icon"></nb-icon>
 					<span class="subscription-text">Subscription Required</span>
 				</div>
-				} @else if(!plugin.hasPlan && !plugin.installed) {
+				} @else if(!plugin.hasPlan && !installed) {
 				<div class="free-plugin">
 					<nb-icon icon="gift-outline" class="free-icon" status="success"></nb-icon>
 					<span class="free-text">Free</span>
@@ -235,14 +237,13 @@
 				<div class="toggle-wrapper">
 					<nb-toggle
 						[disabled]="disabled"
-						[checked]="plugin.installed"
+						[checked]="installed"
 						(checkedChange)="togglePlugin($event)"
 						class="install-toggle"
 					>
 					</nb-toggle>
 					<span class="toggle-label">
-						@if(plugin.installed) { Installed } @else if(plugin.hasPlan) { Subscribe & Install } @else {
-						Install }
+						@if(installed) { Installed } @else if(plugin.hasPlan) { Subscribe & Install } @else { Install }
 					</span>
 				</div>
 			</div>

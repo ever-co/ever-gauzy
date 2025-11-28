@@ -1,4 +1,4 @@
-import { ID } from '@gauzy/contracts';
+import { ID, IPlugin } from '@gauzy/contracts';
 import { createAction, props } from '@ngneat/effects';
 import {
 	BulkAssignPluginUsersRequest,
@@ -89,6 +89,9 @@ export const PluginUserAssignmentActions = {
 		'[Plugin User Assignment] Check User Access Failure',
 		props<{ error: string }>()
 	),
+
+	// Open user assignment dialog
+	manageUsers: createAction('[Plugin User Assignment] Manage Users', props<{ plugin: IPlugin }>()),
 
 	// UI state management
 	selectPlugin: createAction(

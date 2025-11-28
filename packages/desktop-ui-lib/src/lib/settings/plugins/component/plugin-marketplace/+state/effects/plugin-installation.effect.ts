@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ID } from '@gauzy/contracts';
+import { ID, IPluginSource, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
@@ -30,8 +30,10 @@ import {
 } from '../../../../domain/commands';
 import { PluginElectronService } from '../../../../services/plugin-electron.service';
 import { PluginService } from '../../../../services/plugin.service';
+import { DialogInstallationValidationComponent } from '../../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
+import { InstallationValidationChainBuilder } from '../../services';
 import { PluginInstallationActions } from '../actions/plugin-installation.action';
-import { PluginInstallationQuery } from '../queries/plugin-installation.query';
+import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginMarketplaceQuery } from '../queries/plugin-marketplace.query';
 import { PluginInstallationStore } from '../stores/plugin-installation.store';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
@@ -43,7 +45,6 @@ export class PluginInstallationEffects {
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginMarketplaceQuery: PluginMarketplaceQuery,
 		private readonly pluginInstallationStore: PluginInstallationStore,
-		private readonly pluginInstallationQuery: PluginInstallationQuery,
 		private readonly pluginService: PluginService,
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly toastrService: ToastrNotificationService,
@@ -52,8 +53,96 @@ export class PluginInstallationEffects {
 		private readonly serverInstallCommand: ServerInstallPluginCommand,
 		private readonly completeInstallCommand: CompleteInstallationCommand,
 		private readonly activateCommand: ActivatePluginCommand,
-		private readonly dialogService: NbDialogService
+		private readonly dialogService: NbDialogService,
+		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder
 	) {}
+
+	/**
+	 * Handle install requests coming from marketplace actions.
+	 * Moves validation and dialog orchestration out of components into effects.
+	 */
+	installFromMarketplace$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginMarketplaceActions.install),
+				exhaustMap(({ plugin, isUpdate }) =>
+					this.installationValidationChainBuilder.validate(plugin, isUpdate).pipe(
+						take(1),
+						switchMap((context) => {
+							if (context.errors.length > 0) {
+								context.errors.forEach((err) =>
+									this.toastrService.error(this.translateService.instant(err))
+								);
+
+								return of(
+									PluginInstallationActions.toggle({
+										isChecked: false,
+										pluginId: context.plugin.id
+									})
+								);
+							}
+
+							const dialogRef = this.dialogService.open(DialogInstallationValidationComponent, {
+								context: { pluginId: context.plugin.id },
+								backdropClass: 'backdrop-blur'
+							});
+
+							return dialogRef.onClose.pipe(
+								take(1),
+								filter(Boolean),
+								map(({ version, source, authToken }) =>
+									this.sourceInstallAction(context.plugin.id, version, source, authToken)
+								)
+							);
+						})
+					)
+				)
+			),
+		{ dispatch: true }
+	);
+
+	private sourceInstallAction(pluginId: string, version: IPluginVersion, source: IPluginSource, authToken?: string) {
+		switch (source.type) {
+			case PluginSourceType.GAUZY:
+			case PluginSourceType.CDN:
+				return PluginInstallationActions.install({
+					contextType: 'cdn',
+					marketplaceId: pluginId,
+					versionId: version.id,
+					url: source.url
+				});
+
+			case PluginSourceType.NPM:
+				return PluginInstallationActions.install({
+					contextType: 'npm',
+					marketplaceId: pluginId,
+					versionId: version.id,
+					pkg: {
+						name: source.name,
+						version: version.number
+					},
+					registry: {
+						privateURL: source.registry,
+						authToken
+					}
+				});
+
+			default:
+				return PluginInstallationActions.toggle({
+					isChecked: false,
+					pluginId
+				});
+		}
+	}
+
+	installUpdate$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginMarketplaceActions.installUpdate),
+				map(({ plugin }) => PluginMarketplaceActions.install(plugin, true))
+			),
+		{ dispatch: true }
+	);
 
 	/**
 	 * Main installation orchestrator
@@ -482,9 +571,11 @@ export class PluginInstallationEffects {
 			this.action$.pipe(
 				ofType(PluginInstallationActions.checkFailure),
 				tap(({ error, marketplaceId }) => {
-					this.toastrService.error(
-						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.CHECK_INSTALLATION_FAILED')
-					);
+					if (error) {
+						this.toastrService.error(
+							error || this.translateService.instant('PLUGIN.TOASTR.ERROR.CHECK_INSTALLATION_FAILED')
+						);
+					}
 					this.pluginMarketplaceStore.updatePlugin(marketplaceId, { installed: false });
 					return PluginInstallationActions.toggle({
 						pluginId: marketplaceId,

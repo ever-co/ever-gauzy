@@ -18,7 +18,7 @@ export class PluginEffects {
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly pluginService: PluginService,
 		private readonly toastrService: ToastrNotificationService
-	) { }
+	) {}
 
 	getAllPlugins$ = createEffect(() =>
 		this.action$.pipe(
@@ -152,7 +152,11 @@ export class PluginEffects {
 				ofType(PluginInstallationActions.check),
 				switchMap(({ marketplaceId }) =>
 					from(this.pluginElectronService.checkInstallation(marketplaceId)).pipe(
-						map((plugin) => PluginInstallationActions.checkSuccess(plugin)),
+						map((plugin) =>
+							plugin
+								? PluginInstallationActions.checkSuccess(plugin)
+								: PluginInstallationActions.checkFailure(null, marketplaceId)
+						),
 						catchError((error) => {
 							this.toastrService.error(
 								error?.error?.message || error?.message || 'Failed to check installation status'

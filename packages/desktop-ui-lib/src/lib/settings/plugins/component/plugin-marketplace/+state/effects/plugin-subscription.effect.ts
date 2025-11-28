@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { EMPTY, catchError, finalize, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, concatMap, exhaustMap, filter, finalize, switchMap, take, tap } from 'rxjs';
 
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrNotificationService } from '../../../../../../services';
 import { PluginSubscriptionService, PluginSubscriptionStatus } from '../../../../services/plugin-subscription.service';
+import { PluginSubscriptionManagerComponent } from '../../plugin-subscription-manager/plugin-subscription-manager.component';
 import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
 import { PluginSubscriptionStore } from '../stores/plugin-subscription.store';
 
@@ -16,7 +18,8 @@ export class PluginSubscriptionEffects {
 		private readonly pluginSubscriptionService: PluginSubscriptionService,
 		private readonly pluginSubscriptionStore: PluginSubscriptionStore,
 		private readonly toastrService: ToastrNotificationService,
-		private readonly translateService: TranslateService
+		private readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService
 	) {}
 
 	// Load subscriptions for a plugin
@@ -53,7 +56,6 @@ export class PluginSubscriptionEffects {
 	);
 
 	// Load subscription plans for a plugin
-
 
 	// Create subscription
 	createSubscription$ = createEffect(() =>
@@ -203,32 +205,32 @@ export class PluginSubscriptionEffects {
 		)
 	);
 
+	openSubscriptionDialog$ = createEffect(() =>
+		this.actions$.pipe(
+			ofType(PluginSubscriptionActions.openSubscriptionManagement),
+			tap(() => this.pluginSubscriptionStore.setLoading(true)),
+			concatMap(({ plugin }) =>
+				this.pluginSubscriptionService.getCurrentSubscription(plugin.id).pipe(
+					tap((subscription) => {
+						this.pluginSubscriptionStore.selectSubscription(subscription);
+						this.pluginSubscriptionStore.setLoading(false);
+					}),
+					exhaustMap((currentSubscription) =>
+						this.dialogService
+							.open(PluginSubscriptionManagerComponent, { context: { plugin, currentSubscription } })
+							.onClose.pipe(take(1), filter(Boolean))
+					)
+				)
+			)
+		)
+	);
+
 	// UI Actions
 	selectSubscription$ = createEffect(() =>
 		this.actions$.pipe(
 			ofType(PluginSubscriptionActions.selectSubscription),
 			tap(({ subscription }) => {
 				this.pluginSubscriptionStore.selectSubscription(subscription);
-			})
-		)
-	);
-
-
-
-	showSubscriptionDialog$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.showSubscriptionDialog),
-			tap(({ pluginId }) => {
-				this.pluginSubscriptionStore.setShowSubscriptionDialog(true, pluginId);
-			})
-		)
-	);
-
-	hideSubscriptionDialog$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.hideSubscriptionDialog),
-			tap(() => {
-				this.pluginSubscriptionStore.setShowSubscriptionDialog(false);
 			})
 		)
 	);
@@ -250,6 +252,4 @@ export class PluginSubscriptionEffects {
 			})
 		)
 	);
-
-
 }
