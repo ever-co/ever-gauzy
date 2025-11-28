@@ -1,19 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { PluginScope } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import { Observable } from 'rxjs';
 import { IPluginSubscription, PluginSubscriptionStatus } from './plugin-subscription.service';
-
-/**
- * Plugin scope enumeration
- * Determines the level at which a plugin subscription operates
- */
-export enum PluginScope {
-	USER = 'user',
-	ORGANIZATION = 'organization',
-	TENANT = 'tenant',
-	GLOBAL = 'global'
-}
 
 /**
  * Subscription access response DTO
@@ -298,11 +288,6 @@ export class PluginSubscriptionAccessService {
 				text: 'Tenant Access',
 				color: 'primary',
 				icon: 'globe-outline'
-			},
-			[PluginScope.GLOBAL]: {
-				text: 'Global Access',
-				color: 'warning',
-				icon: 'shield-checkmark-outline'
 			}
 		};
 
@@ -346,8 +331,7 @@ export class PluginSubscriptionAccessService {
 		const scopeMap = {
 			[PluginScope.USER]: 'User',
 			[PluginScope.ORGANIZATION]: 'Organization',
-			[PluginScope.TENANT]: 'Tenant',
-			[PluginScope.GLOBAL]: 'Global'
+			[PluginScope.TENANT]: 'Tenant'
 		};
 
 		return scopeMap[scope] || scope;

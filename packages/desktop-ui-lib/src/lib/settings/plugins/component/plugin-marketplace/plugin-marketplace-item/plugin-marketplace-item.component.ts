@@ -1,6 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
+import {
+	IPlugin,
+	IPluginSource,
+	IPluginVersion,
+	PluginScope,
+	PluginSourceType,
+	PluginStatus,
+	PluginType
+} from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogService, NbRouteTab } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -18,7 +26,6 @@ import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.que
 import { PluginSourceQuery } from '../+state/queries/plugin-source.query';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { Store, ToastrNotificationService } from '../../../../../services';
-import { PluginScope } from '../../../services/plugin-subscription-access.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 import { PluginSubscriptionHierarchyComponent } from '../plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import { PluginSubscriptionManagerComponent } from '../plugin-subscription-manager/plugin-subscription-manager.component';

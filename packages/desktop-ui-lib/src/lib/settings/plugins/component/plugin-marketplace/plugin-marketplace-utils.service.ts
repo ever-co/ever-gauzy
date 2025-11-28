@@ -4,12 +4,12 @@ import {
 	IGauzySource,
 	INPMSource,
 	IPlugin,
+	PluginScope,
 	PluginSourceType,
 	PluginStatus,
 	PluginType
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { PluginScope } from '../services/plugin-subscription-access.service';
 
 @Injectable({
 	providedIn: 'root'
@@ -66,8 +66,7 @@ export class PluginMarketplaceUtilsService {
 		const labels: Record<PluginScope, string> = {
 			[PluginScope.USER]: this.translateService.instant('PLUGIN.ACCESS.USER_LEVEL'),
 			[PluginScope.ORGANIZATION]: this.translateService.instant('PLUGIN.ACCESS.ORG_LEVEL'),
-			[PluginScope.TENANT]: this.translateService.instant('PLUGIN.ACCESS.TENANT_LEVEL'),
-			[PluginScope.GLOBAL]: this.translateService.instant('PLUGIN.ACCESS.GLOBAL_LEVEL')
+			[PluginScope.TENANT]: this.translateService.instant('PLUGIN.ACCESS.TENANT_LEVEL')
 		};
 		return labels[level] || level;
 	}
@@ -76,8 +75,7 @@ export class PluginMarketplaceUtilsService {
 		const statusMap: Record<PluginScope, string> = {
 			[PluginScope.TENANT]: 'success',
 			[PluginScope.ORGANIZATION]: 'info',
-			[PluginScope.USER]: 'warning',
-			[PluginScope.GLOBAL]: 'primary'
+			[PluginScope.USER]: 'primary'
 		};
 		return statusMap[level] || 'basic';
 	}

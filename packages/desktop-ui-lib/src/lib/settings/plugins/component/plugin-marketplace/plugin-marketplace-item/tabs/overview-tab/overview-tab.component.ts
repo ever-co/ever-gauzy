@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IPlugin, IPluginVersion, PluginStatus } from '@gauzy/contracts';
+import { IPlugin, IPluginVersion, PluginStatus, PluginType } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
 import { Observable, Subject } from 'rxjs';
 import { PluginMarketplaceActions } from '../../../+state/actions/plugin-marketplace.action';
@@ -59,8 +59,8 @@ export class OverviewTabComponent implements OnInit, OnDestroy {
 		return this.utils.getStatusLabel(status);
 	}
 
-	getTypeLabel(type: string): string {
-		return this.utils.getTypeLabel(type as any);
+	getTypeLabel(type: PluginType): string {
+		return this.utils.getTypeLabel(type);
 	}
 
 	formatDate(date: Date | string | null): string {
