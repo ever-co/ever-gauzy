@@ -1,13 +1,21 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ID, IPlugin, PluginScope, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
+import {
+	ID,
+	IPlugin,
+	IPluginSubscription,
+	PluginScope,
+	PluginSourceType,
+	PluginStatus,
+	PluginType
+} from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbRouteTab } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, Observable, Subject, tap } from 'rxjs';
 import { catchError, filter, map, takeUntil } from 'rxjs/operators';
-import { PluginSubscriptionActions, PluginSubscriptionQuery } from '../+state';
+import { PluginSubscriptionActions } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
@@ -49,13 +57,12 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	private readonly route = inject(ActivatedRoute);
 	private readonly router = inject(Router);
+	private readonly action = inject(Actions);
 
 	constructor(
 		private readonly store: Store,
 		private readonly translateService: TranslateService,
 		private readonly toastrService: ToastrNotificationService,
-		private readonly action: Actions,
-		private readonly subscriptionQuery: PluginSubscriptionQuery,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
 		public readonly pluginQuery: PluginQuery,
@@ -106,7 +113,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	public loadPlugin(): void {
 		this.action.dispatch(
 			PluginMarketplaceActions.getOne(this.pluginId, {
-				relations: ['versions', 'versions.sources', 'uploadedBy', 'subscriptions'],
+				relations: ['versions', 'versions.sources', 'uploadedBy', 'subscriptions', 'subscriptions.plan'],
 				order: { versions: { releaseDate: 'DESC' } }
 			})
 		);
@@ -258,10 +265,19 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	/**
+	 * Get current subscription
+	 */
+	public get currentSubscription$(): Observable<IPluginSubscription> {
+		return this.accessFacade.getPluginAccess$(this.pluginId).pipe(map((access) => access?.subscription));
+	}
+
+	/**
 	 * Check if plugin has subscription to show hierarchy button
 	 */
 	public get hasSubscription$(): Observable<boolean> {
-		return this.subscriptionQuery.hasActiveSubscriptionForPlugin(this.pluginId);
+		return this.accessFacade
+			.getPluginAccess$(this.pluginId)
+			.pipe(map((plugin) => plugin && plugin.hasAccess && !!plugin.subscription));
 	}
 
 	/**

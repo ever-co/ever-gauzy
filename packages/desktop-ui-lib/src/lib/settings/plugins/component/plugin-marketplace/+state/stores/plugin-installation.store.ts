@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
 import { ID } from '@gauzy/contracts';
+import * as _ from 'lodash';
 
 export interface IToggleState {
 	isChecked: boolean;
@@ -70,14 +71,21 @@ export class PluginInstallationStore extends Store<IPluginInstallationState> {
 	}
 
 	public setToggle({ isChecked, pluginId }: IToggleState): void {
-		this.update((state) => ({
-			...state,
-			toggles: state.toggles.map((toggle) => ({
-				...toggle,
-				isChecked: isChecked ?? toggle.isChecked ?? false,
-				pluginId: pluginId ?? toggle.pluginId ?? null
-			}))
-		}));
+		if (!pluginId) return; // pluginId is required
+
+		this.update((state) => {
+			// Convert array to key-value map
+			const toggleMap = _.keyBy(state.toggles, 'pluginId');
+
+			// Update or insert the toggle
+			toggleMap[pluginId] = {
+				pluginId,
+				isChecked: isChecked ?? toggleMap[pluginId]?.isChecked ?? false
+			};
+
+			// Convert back to array
+			return { ...state, toggles: _.values(toggleMap) };
+		});
 	}
 
 	/**

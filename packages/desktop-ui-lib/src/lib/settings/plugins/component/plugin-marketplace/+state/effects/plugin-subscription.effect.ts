@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { EMPTY, catchError, concatMap, exhaustMap, filter, finalize, switchMap, take, tap } from 'rxjs';
+import { EMPTY, catchError, concatMap, exhaustMap, filter, finalize, map, switchMap, take, tap } from 'rxjs';
 
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,8 +29,9 @@ export class PluginSubscriptionEffects {
 			tap(() => this.pluginSubscriptionStore.setLoading(true)),
 			switchMap(({ pluginId }) =>
 				this.pluginSubscriptionService.getPluginSubscriptions(pluginId).pipe(
-					tap((subscriptions) => {
+					map((subscriptions) => {
 						this.pluginSubscriptionStore.setSubscriptions(subscriptions);
+						this.pluginSubscriptionStore.selectSubscription(subscriptions[0]);
 						// Also set the current subscription for this specific plugin
 						const currentSubscription =
 							subscriptions.find(
@@ -65,7 +66,7 @@ export class PluginSubscriptionEffects {
 				this.pluginSubscriptionStore.setCreating(true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.CREATING'));
 			}),
-			switchMap(({ pluginId, subscriptionData }) =>
+			switchMap(({ subscriptionData }) =>
 				this.pluginSubscriptionService.createSubscription(subscriptionData).pipe(
 					tap((subscription) => {
 						this.pluginSubscriptionStore.addSubscription(subscription);
@@ -212,6 +213,7 @@ export class PluginSubscriptionEffects {
 			concatMap(({ plugin }) =>
 				this.pluginSubscriptionService.getCurrentSubscription(plugin.id).pipe(
 					tap((subscription) => {
+						this.pluginSubscriptionStore.setCurrentPluginSubscription(plugin.id, subscription);
 						this.pluginSubscriptionStore.selectSubscription(subscription);
 						this.pluginSubscriptionStore.setLoading(false);
 					}),

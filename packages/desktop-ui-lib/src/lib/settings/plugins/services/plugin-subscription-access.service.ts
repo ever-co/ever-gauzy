@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { PluginScope } from '@gauzy/contracts';
+import { IPluginSubscription, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import { Observable } from 'rxjs';
-import { IPluginSubscription, PluginSubscriptionStatus } from './plugin-subscription.service';
 
 /**
  * Subscription access response DTO

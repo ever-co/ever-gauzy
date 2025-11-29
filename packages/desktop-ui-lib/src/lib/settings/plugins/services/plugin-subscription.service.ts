@@ -233,7 +233,7 @@ export class PluginSubscriptionService {
 	}
 
 	public getCurrentSubscription(pluginId: string): Observable<IPluginSubscription> {
-		return this.http.get<IPluginSubscription>(`${this.subscriptionsEndPoint}/${pluginId}/subscriptions/me}`);
+		return this.http.get<IPluginSubscription>(`${this.subscriptionsEndPoint}/${pluginId}/subscriptions/me`);
 	}
 
 	public getUserSubscriptions(userId?: string): Observable<IPluginSubscription[]> {

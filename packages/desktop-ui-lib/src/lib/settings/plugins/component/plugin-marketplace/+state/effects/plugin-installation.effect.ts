@@ -65,6 +65,7 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginMarketplaceActions.install),
+				tap(({ plugin }) => this.pluginInstallationStore.setToggle({ pluginId: plugin.id, isChecked: true })),
 				exhaustMap(({ plugin, isUpdate }) =>
 					this.installationValidationChainBuilder.validate(plugin, isUpdate).pipe(
 						take(1),
@@ -89,6 +90,14 @@ export class PluginInstallationEffects {
 
 							return dialogRef.onClose.pipe(
 								take(1),
+								tap((data) => {
+									if (!data) {
+										this.pluginInstallationStore.setToggle({
+											pluginId: context.plugin.id,
+											isChecked: false
+										});
+									}
+								}),
 								filter(Boolean),
 								map(({ version, source, authToken }) =>
 									this.sourceInstallAction(context.plugin.id, version, source, authToken)
@@ -377,9 +386,13 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.activationCompleted),
-				concatMap(() => {
+				concatMap(({ plugin }) => {
 					this.handleSuccess();
-					return [PluginActions.selectPlugin(null), PluginActions.refresh()];
+					return [
+						PluginInstallationActions.check(plugin.id),
+						PluginActions.selectPlugin(null),
+						PluginActions.refresh()
+					];
 				})
 			),
 		{
@@ -553,12 +566,14 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.checkSuccess),
-				map(({ plugin: { marketplaceId, installed } }) => {
+				concatMap(({ plugin: { marketplaceId, installed } }) => {
 					this.pluginMarketplaceStore.updatePlugin(marketplaceId, { installed });
-					return PluginInstallationActions.toggle({
-						isChecked: installed,
-						pluginId: marketplaceId
-					});
+					return of(
+						PluginInstallationActions.toggle({
+							isChecked: installed,
+							pluginId: marketplaceId
+						})
+					);
 				})
 			),
 		{
@@ -570,17 +585,19 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.checkFailure),
-				tap(({ error, marketplaceId }) => {
+				concatMap(({ error, marketplaceId }) => {
 					if (error) {
 						this.toastrService.error(
 							error || this.translateService.instant('PLUGIN.TOASTR.ERROR.CHECK_INSTALLATION_FAILED')
 						);
 					}
 					this.pluginMarketplaceStore.updatePlugin(marketplaceId, { installed: false });
-					return PluginInstallationActions.toggle({
-						pluginId: marketplaceId,
-						isChecked: false
-					});
+					return of(
+						PluginInstallationActions.toggle({
+							pluginId: marketplaceId,
+							isChecked: false
+						})
+					);
 				})
 			),
 		{

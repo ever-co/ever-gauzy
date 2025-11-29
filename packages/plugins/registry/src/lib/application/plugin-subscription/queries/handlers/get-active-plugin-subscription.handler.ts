@@ -40,7 +40,7 @@ export class GetActivePluginSubscriptionQueryHandler implements IQueryHandler<Ge
 			});
 
 			// Additional validation: check if subscription is not expired
-			if (subscription?.endDate && subscription.endDate <= new Date()) {
+			if (subscription.isExpired) {
 				return null;
 			}
 

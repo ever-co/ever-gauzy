@@ -3,7 +3,7 @@
 
 import { Injectable } from '@angular/core';
 import { EntityState, EntityStore, StoreConfig } from '@datorama/akita';
-import { PluginScope } from '@gauzy/contracts';
+import { IPluginSubscription, PluginScope } from '@gauzy/contracts';
 import { IPluginSubscriptionAccessResponse } from '../../../../services/plugin-subscription-access.service';
 
 /**
@@ -17,6 +17,7 @@ export interface IPluginAccessState {
 	canAssign: boolean;
 	requiresSubscription: boolean;
 	subscriptionId?: string;
+	subscription?: IPluginSubscription;
 	lastChecked: Date;
 	loading: boolean;
 	error?: string;
@@ -115,6 +116,7 @@ export class PluginSubscriptionAccessStore extends EntityStore<
 			canAssign: response.canAssign || false,
 			requiresSubscription: response.requiresSubscription,
 			subscriptionId: response.subscription?.id,
+			subscription: response.subscription,
 			lastChecked: new Date(),
 			loading: false,
 			error: undefined

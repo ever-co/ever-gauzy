@@ -1,6 +1,5 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, debounceTime, distinctUntilChanged, map, tap } from 'rxjs';
@@ -23,7 +22,6 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 	public isMobile = false;
 
 	constructor(
-		private readonly dialog: NbDialogService,
 		private readonly route: ActivatedRoute,
 		private readonly action: Actions,
 		private readonly marketplaceStore: PluginMarketplaceStore,
@@ -76,21 +74,12 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 	public load(): void {
 		const filters = this.query.appliedFilters;
 		const params = this.buildQueryParams(filters);
-
-		console.log('Loading plugins with params:', {
-			...params,
-			skip: this.skip,
-			take: this.take,
-			relations: ['uploadedBy'],
-			order: this.buildOrderParams(filters)
-		});
-
 		this.action.dispatch(
 			PluginMarketplaceActions.getAll({
 				...params,
 				skip: this.skip,
 				take: this.take,
-				relations: ['uploadedBy'],
+				relations: ['versions', 'versions.sources', 'uploadedBy', 'subscriptions', 'subscriptions.plan'],
 				order: this.buildOrderParams(filters)
 			})
 		);

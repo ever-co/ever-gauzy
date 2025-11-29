@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { catchError, EMPTY, filter, finalize, from, of, switchMap, tap } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { concatMap, map } from 'rxjs/operators';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginService } from '../../services/plugin.service';
@@ -150,7 +150,7 @@ export class PluginEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.check),
-				switchMap(({ marketplaceId }) =>
+				concatMap(({ marketplaceId }) =>
 					from(this.pluginElectronService.checkInstallation(marketplaceId)).pipe(
 						map((plugin) =>
 							plugin

@@ -34,6 +34,8 @@
 @let selectedSource = this.sourceQuery.source$ | async;
 <!-- Creating source state -->
 @let creatingSource = this.sourceQuery.creating$ | async;
+<!-- Get current subscription -->
+@let subscription = currentSubscription$ | async;
 
 <!-- Main template -->
 <nb-card class="content-active first plugin-details-card">
@@ -49,8 +51,8 @@
 				></nb-badge>
 				<!-- Subscription Status Badge -->
 				<gauzy-subscription-status-badge
-					*ngIf="plugin?.subscription"
-					[status]="plugin.subscription.status"
+					*ngIf="subscription"
+					[status]="subscription.status"
 					class="mr-2"
 				></gauzy-subscription-status-badge>
 				<nb-badge

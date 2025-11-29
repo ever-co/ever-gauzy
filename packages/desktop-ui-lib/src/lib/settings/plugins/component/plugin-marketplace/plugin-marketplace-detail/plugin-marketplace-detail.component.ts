@@ -32,11 +32,11 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	public viewMode: 'grid' | 'list' = 'grid';
 
 	private readonly router = inject(Router);
+	private readonly action = inject(Actions);
 
 	constructor(
 		private readonly utils: PluginMarketplaceUtilsService,
 		private readonly store: Store,
-		private readonly action: Actions,
 		private readonly menuService: NbMenuService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery

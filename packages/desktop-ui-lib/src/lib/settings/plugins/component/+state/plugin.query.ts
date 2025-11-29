@@ -33,12 +33,9 @@ export class PluginQuery extends Query<IPluginState> {
 		return this.getValue().deactivating;
 	}
 
-	public currentPluginVersionId(pluginId: ID): Observable<ID> {
+	public currentPluginVersionId(pluginId: ID): Observable<ID | null> {
 		return this.plugins$.pipe(
-			map((plugins) => {
-				const plugin = plugins.find((p) => p.marketplaceId === pluginId);
-				return plugin.versionId;
-			})
+			map((plugins) => plugins.find((p) => p.marketplaceId === pluginId)?.versionId ?? null)
 		);
 	}
 }

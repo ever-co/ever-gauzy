@@ -131,6 +131,28 @@ export class PluginSubscriptionController {
 		);
 	}
 
+	@ApiOperation({ summary: "Get current user's active subscription for plugin" })
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: "Current user's active plugin subscription retrieved successfully",
+		type: PluginSubscription
+	})
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
+	@Public()
+	@Get('me')
+	async getCurrentSubscription(
+		@Param('pluginId', ParseUUIDPipe) pluginId: string
+	): Promise<PluginSubscription | null> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const subscriberId = RequestContext.currentUserId();
+
+		return await this.queryBus.execute(
+			new GetActivePluginSubscriptionQuery(pluginId, tenantId, organizationId, subscriberId)
+		);
+	}
+
 	@ApiOperation({ summary: 'Get plugin subscription by ID' })
 	@ApiResponse({
 		status: HttpStatus.OK,
