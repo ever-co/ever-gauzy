@@ -34,7 +34,8 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
 			// Retrieve the current employee's ID from the request context
-			const employeeId = RequestContext.currentEmployeeId() ?? input.employeeId;
+			const employeeId =
+				RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? input.employeeId;
 
 			if (!employeeId) {
 				throw new BadRequestException('Employee not found');
@@ -44,7 +45,7 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 			const now = new Date();
 
 			// 1. Check if the current entityType and entityId pair already exists for the current employee
-			const existingEntry = await this.findOneByOptions({
+			const existingEntry = await this.typeOrmEmployeeRecentVisitRepository.findOne({
 				where: { entity, entityId, employeeId, organizationId, tenantId }
 			});
 
