@@ -166,6 +166,7 @@ import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TagTypeModule } from '../tag-type/tag-type.module';
 import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
+import { EmployeeRecentVisitModule } from '../employee-recent-visit/employee-recent-visit.module';
 
 const { unleashConfig } = environment;
 
@@ -505,7 +506,8 @@ if (environment.THROTTLE_ENABLED) {
 		DashboardWidgetModule,
 		EmployeeNotificationModule,
 		EmployeeNotificationSettingModule,
-		TenantApiKeyModule
+		TenantApiKeyModule,
+		EmployeeRecentVisitModule
 	],
 	controllers: [AppController],
 	providers: [
