@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { IPlugin, IPluginSource, PluginSourceType } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject } from 'rxjs';
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
 import { PluginSourceQuery } from '../../../+state/queries/plugin-source.query';
@@ -21,7 +20,6 @@ export class SourceCodeTabComponent implements OnInit, OnDestroy {
 	selectedSource$: Observable<IPluginSource>;
 
 	constructor(
-		private readonly translateService: TranslateService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly sourceQuery: PluginSourceQuery,
 		private readonly utils: PluginMarketplaceUtilsService

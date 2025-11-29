@@ -90,11 +90,6 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 					// Build tabs based on permissions
 					this.tabs$ = this.buildTabs$();
 				}),
-				tap((plugin) => {
-					this.action.dispatch(PluginVersionActions.selectVersion(plugin.version));
-					this.action.dispatch(PluginSourceActions.selectSource(plugin.source));
-					this.action.dispatch(PluginInstallationActions.check(plugin.id));
-				}),
 				catchError((error) => this.handleError(error)),
 				takeUntil(this.destroy$)
 			)
