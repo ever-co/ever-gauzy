@@ -253,13 +253,17 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			const organizationProject = await this.findOneByIdString(id, options);
 
 			// Register the last visited at date for the current employee
-			this._employeeRecentVisitService.emitSaveEmployeeRecentVisitEvent<OrganizationProject>(
-				BaseEntityEnum.OrganizationProject,
-				organizationProject.id,
-				organizationProject,
-				organizationProject.organizationId,
-				organizationProject.tenantId ?? RequestContext.currentTenantId()
-			);
+			try {
+				await this._employeeRecentVisitService.emitSaveEmployeeRecentVisitEvent<OrganizationProject>(
+					BaseEntityEnum.OrganizationProject,
+					organizationProject.id,
+					organizationProject,
+					organizationProject.organizationId,
+					organizationProject.tenantId ?? RequestContext.currentTenantId()
+				);
+			} catch (error) {
+				console.error('[Project] Error emitting employee recent visit event:', error);
+			}
 
 			return organizationProject;
 		} catch (error) {

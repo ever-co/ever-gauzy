@@ -15,11 +15,11 @@ export class GetEmployeeRecentVisitsDTO extends IntersectionType(
 	@ApiPropertyOptional({ enum: BaseEntityEnum })
 	@IsOptional()
 	@IsEnum(BaseEntityEnum)
-	entity: BaseEntityEnum;
+	entity?: BaseEntityEnum;
 
 	// Filter by entityId (example: projectId, taskId, OrganizationProjectId)
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	entityId: ID;
+	entityId?: ID;
 }

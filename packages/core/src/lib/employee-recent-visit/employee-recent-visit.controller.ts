@@ -10,7 +10,7 @@ import { GetEmployeeRecentVisitsDTO } from './dto/get-employee-recent-visits.dto
 @Permissions()
 @Controller('/employee-recent-visit')
 export class EmployeeRecentVisitController {
-	constructor(readonly _employeeRecentVisitService: EmployeeRecentVisitService) {}
+	constructor(private readonly _employeeRecentVisitService: EmployeeRecentVisitService) {}
 
 	/**
 	 * Retrieves employee recent visits based on query parameters.

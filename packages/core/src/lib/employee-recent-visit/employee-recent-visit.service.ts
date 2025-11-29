@@ -37,6 +37,10 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 			// Retrieve the current employee's ID from the request context
 			const employeeId = RequestContext.currentEmployeeId() ?? input.employeeId;
 
+			if (!employeeId) {
+				throw new BadRequestException('Employee not found');
+			}
+
 			// Get the current date and time
 			const now = new Date();
 
