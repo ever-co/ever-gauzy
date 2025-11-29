@@ -51,20 +51,7 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 				return await this.save(existingEntry);
 			}
 
-			// 2. Retrieve the employee recent visits for the current employee
-			const employeeRecentVisits = await this.findAll({
-				where: { employeeId, organizationId, tenantId },
-				order: { visitedAt: 'ASC' }
-			});
-
-			// 3. If the number of entries is greater than 10, remove the oldest entry
-			if (employeeRecentVisits.total >= 10) {
-				// Remove the oldest entry
-				const oldestEntry = employeeRecentVisits.items[0];
-				await this.delete(oldestEntry.id);
-			}
-
-			// Create the employee recent visit entry using the provided input along with the employeeId and tenantId
+			// 2. Create the employee recent visit entry using the provided input along with the employeeId and tenantId
 			return await super.create({ ...input, employeeId, tenantId });
 		} catch (error) {
 			console.log('Error while creating employee recent visit:', error);
@@ -73,16 +60,16 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 	}
 
 	/**
-	 * Finds employee recent visits based on the provided options.
+	 * Finds employee recent visits based on the provided filters.
 	 *
-	 * @param options - The options for finding employee recent visits.
+	 * @param filters - The filters for finding employee recent visits.
 	 * @returns A promise that resolves with the employee recent visits.
 	 * @throws BadRequestException when the finding employee recent visits fails.
 	 */
-	async findEmployeeRecentVisits(options: GetEmployeeRecentVisitsDTO): Promise<IPagination<IEmployeeRecentVisit>> {
+	async findEmployeeRecentVisits(filters: GetEmployeeRecentVisitsDTO): Promise<IPagination<IEmployeeRecentVisit>> {
 		try {
 			// Destructure the options
-			const { organizationId, entity, entityId, relations = [] } = options;
+			const { organizationId, entity, entityId, relations = [] } = filters;
 
 			// Retrieve the current tenant ID from the request context
 			const tenantId = RequestContext.currentTenantId();
@@ -99,11 +86,18 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 				employeeId
 			};
 
+			const take = filters.take ? filters.take : 100; // Default take value if not provided
+
+			// Pagination: ensure `filters.skip` is a positive integer starting from 1
+			const skip = filters.skip && Number.isInteger(filters.skip) && filters.skip > 0 ? filters.skip : 1;
+
 			// Retrieve the employee recent visits
 			return await this.findAll({
 				where,
 				...(relations && { relations }),
-				order: { visitedAt: 'DESC' }
+				order: { visitedAt: 'DESC' },
+				take,
+				skip: take * (skip - 1) // Calculate offset (skip) based on validated skip value
 			});
 		} catch (error) {
 			console.log('Error while finding employee recent visits:', error);
