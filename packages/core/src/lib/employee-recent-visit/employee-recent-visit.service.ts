@@ -22,7 +22,6 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 
 	/**
 	 * Creates a new employee recent visit entry with the provided input, while associating it with the current employee and tenant.
-	 * This method ensure that only 10 entries are stored for each employee.
 	 *
 	 * @param input - The data required to create an employee recent visit entry.
 	 * @returns The created employee recent visit entry.
