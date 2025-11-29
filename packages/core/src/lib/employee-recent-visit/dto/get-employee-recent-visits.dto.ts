@@ -9,7 +9,7 @@ import { EmployeeRecentVisit } from '../employee-recent-visit.entity';
 export class GetEmployeeRecentVisitsDTO extends IntersectionType(
 	TenantOrganizationBaseDTO,
 	PickType(BaseQueryDTO<EmployeeRecentVisit>, ['skip', 'take', 'relations']),
-	PickType(EmployeeRecentVisit, ['isActive', 'isArchived'])
+	PickType(EmployeeRecentVisit, ['isActive', 'isArchived', 'employeeId'])
 ) {
 	// Filter by entity (example: Organization, Task, OrganizationProject, OrganizationTeam)
 	@ApiPropertyOptional({ enum: BaseEntityEnum })

@@ -79,7 +79,7 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 			const tenantId = RequestContext.currentTenantId();
 
 			// Retrieve the current employee ID from the request context
-			const employeeId = RequestContext.currentEmployeeId();
+			const employeeId = RequestContext.currentEmployeeId() ?? filters.employeeId;
 
 			// Build the where clause
 			const where: FindOptionsWhere<EmployeeRecentVisit> = {
