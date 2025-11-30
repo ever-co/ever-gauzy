@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Query } from '@datorama/akita';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { ID } from '@gauzy/contracts';
+import { PluginQuery } from '../../../+state/plugin.query';
+import { IPlugin } from '../../../../services/plugin-loader.service';
 import {
 	IPendingInstallation,
 	IPluginInstallationState,
@@ -36,8 +38,6 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 		(state) => state.pendingInstallations
 	);
 
-	// Toggle and error observables
-	public readonly toggles$: Observable<IPluginInstallationState['toggles']> = this.select((state) => state.toggles);
 	public readonly error$: Observable<string> = this.select((state) => state.error);
 
 	// Combined loading state
@@ -52,20 +52,16 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 			state.deactivating
 	);
 
-	constructor(readonly pluginInstallationStore: PluginInstallationStore) {
+	constructor(readonly pluginInstallationStore: PluginInstallationStore, readonly pluginQuery: PluginQuery) {
 		super(pluginInstallationStore);
 	}
 
-	public checked(pluginId: ID): boolean {
-		const toggle = this.getValue().toggles.find((t) => t.pluginId === pluginId);
-		return toggle ? toggle.isChecked : false;
-	}
-
-	public checked$(pluginId: ID): Observable<boolean> {
-		return this.select((state) => {
-			const toggle = state.toggles.find((t) => t.pluginId === pluginId);
-			return toggle ? toggle.isChecked : false;
-		});
+	public installed$(pluginId: ID): Observable<boolean> {
+		return this.pluginQuery.plugins$.pipe(
+			map((plugins: IPlugin[]) => {
+				return plugins.some((p) => p.marketplaceId === pluginId);
+			})
+		);
 	}
 
 	public get isLoading(): boolean {

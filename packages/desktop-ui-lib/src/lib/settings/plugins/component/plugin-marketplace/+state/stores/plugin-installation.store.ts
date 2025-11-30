@@ -1,12 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
-import { ID } from '@gauzy/contracts';
-import * as _ from 'lodash';
-
-export interface IToggleState {
-	isChecked: boolean;
-	pluginId: ID;
-}
 
 export interface IPendingInstallation {
 	pluginId: string;
@@ -39,8 +32,6 @@ export interface IPluginInstallationState {
 	// Pending installations (for multi-step tracking)
 	pendingInstallations: Record<string, IPendingInstallation>;
 
-	// Toggles state (for UI)
-	toggles: IToggleState[];
 	// Error state
 	error?: string;
 }
@@ -58,7 +49,6 @@ export function createInitialInstallationState(): IPluginInstallationState {
 		currentPluginId: null,
 		currentInstallationId: null,
 		pendingInstallations: {},
-		toggles: [],
 		error: null
 	};
 }
@@ -68,24 +58,6 @@ export function createInitialInstallationState(): IPluginInstallationState {
 export class PluginInstallationStore extends Store<IPluginInstallationState> {
 	constructor() {
 		super(createInitialInstallationState());
-	}
-
-	public setToggle({ isChecked, pluginId }: IToggleState): void {
-		if (!pluginId) return; // pluginId is required
-
-		this.update((state) => {
-			// Convert array to key-value map
-			const toggleMap = _.keyBy(state.toggles, 'pluginId');
-
-			// Update or insert the toggle
-			toggleMap[pluginId] = {
-				pluginId,
-				isChecked: isChecked ?? toggleMap[pluginId]?.isChecked ?? false
-			};
-
-			// Convert back to array
-			return { ...state, toggles: _.values(toggleMap) };
-		});
 	}
 
 	/**

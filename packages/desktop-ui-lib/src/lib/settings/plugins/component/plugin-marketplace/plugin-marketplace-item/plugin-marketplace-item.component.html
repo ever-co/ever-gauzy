@@ -5,19 +5,17 @@
 <!-- Async binding for editing state -->
 @let editing = marketplaceQuery.updating$ | async;
 <!-- Check if the plugin is selected and disabled state for toggles -->
-@let checked = installationQuery.checked$(plugin?.id)| async;
-<!-- Check if the plugin is installed -->
-@let installed = plugin?.installed && checked;
+@let installed = installationQuery.installed$(plugin?.id) | async;
 <!-- Determine if the plugin is currently being installed or uninstalled -->
-@let installing = installationQuery.installing$ |async;
+@let installing = installationQuery.installing$ | async;
 <!-- Determine if the plugin is currently being uninstalled -->
-@let uninstalling = installationQuery.uninstalling$ |async;
+@let uninstalling = installationQuery.uninstalling$ | async;
 <!-- Deleting state for plugins -->
 @let deleting = marketplaceQuery.deleting$ | async;
 <!-- Adding state for versions -->
 @let adding = versionQuery.creating$ | async;
 <!-- Update needed state -->
-@let needUpdate = installed && plugin.versionId !== installedVersionId;
+@let needUpdate = installed && plugin.version.id !== installedVersionId;
 <!-- Loading state -->
 @let loading = marketplaceQuery.isLoading$ | async;
 <!-- Disabled state combining various conditions -->
@@ -109,7 +107,7 @@
 					(click)="installUpdate()"
 					class="ml-3 action primary"
 				>
-					<nb-icon *gauzySpinnerButton="installing" icon="sync-outline" class="mr-1"></nb-icon>
+					<nb-icon *gauzySpinnerButton="installing && installed" icon="sync-outline" class="mr-1"></nb-icon>
 					{{ 'BUTTONS.UPDATE' | translate }}
 				</button>
 				}
@@ -122,7 +120,7 @@
 					class="ml-2 action danger"
 				>
 					<nb-icon
-						*gauzySpinnerButton="uninstalling && checked"
+						*gauzySpinnerButton="uninstalling && installed"
 						status="danger"
 						icon="slash-outline"
 					></nb-icon>
@@ -142,7 +140,7 @@
 					[nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_WITH_SUBSCRIPTION' | translate"
 				>
 					<nb-icon
-						*gauzySpinnerButton="installing && checked"
+						*gauzySpinnerButton="installing && installed"
 						icon="cloud-download-outline"
 						class="mr-1"
 					></nb-icon>
@@ -159,7 +157,7 @@
 					(click)="installPlugin()"
 					[nbTooltip]="'PLUGIN.TOOLTIP.SUBSCRIBE_TO_INSTALL' | translate"
 				>
-					<nb-icon *gauzySpinnerButton="installing && checked" icon="lock-outline" class="mr-1"></nb-icon>
+					<nb-icon *gauzySpinnerButton="installing && installed" icon="lock-outline" class="mr-1"></nb-icon>
 					{{ 'PLUGIN.BUTTONS.SUBSCRIBE_AND_INSTALL' | translate }}
 				</button>
 				} } @else {
@@ -174,7 +172,7 @@
 					[nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_FREE' | translate"
 				>
 					<nb-icon
-						*gauzySpinnerButton="installing && checked"
+						*gauzySpinnerButton="installing && installed"
 						icon="cloud-download-outline"
 						class="mr-1"
 					></nb-icon>
@@ -240,7 +238,7 @@
 				(click)="addVersion()"
 				class="mr-2 action primary soft"
 			>
-				<nb-icon *gauzySpinnerButton="adding && checked" icon="plus-outline" class="mr-1"></nb-icon>
+				<nb-icon *gauzySpinnerButton="adding && installed" icon="plus-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.ADD_VERSION' | translate }}
 				@if(uploading && adding){
 				<span> {{ progress | percent : '1.2-2' }} </span>
@@ -256,7 +254,7 @@
 				(click)="addSource()"
 				class="mr-2 action info"
 			>
-				<nb-icon *gauzySpinnerButton="creatingSource && checked" icon="plus-outline" class="mr-1"></nb-icon>
+				<nb-icon *gauzySpinnerButton="creatingSource && installed" icon="plus-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.ADD_MORE_SOURCES' | translate }}
 				@if(uploading && creatingSource){
 				<span> {{ progress | percent : '1.2-2' }} </span>
@@ -272,7 +270,7 @@
 				(click)="navigateToEdit()"
 				class="mr-2 action secondary"
 			>
-				<nb-icon *gauzySpinnerButton="editing && checked" icon="edit-2-outline" class="mr-1"></nb-icon>
+				<nb-icon *gauzySpinnerButton="editing && installed" icon="edit-2-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 
@@ -285,7 +283,7 @@
 				size="small"
 				(click)="delete()"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
-				*gauzySpinnerButton="deleting && checked"
+				*gauzySpinnerButton="deleting && installed"
 			>
 				<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
 			</button>

@@ -65,7 +65,6 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginMarketplaceActions.install),
-				tap(({ plugin }) => this.pluginInstallationStore.setToggle({ pluginId: plugin.id, isChecked: true })),
 				exhaustMap(({ plugin, isUpdate }) =>
 					this.installationValidationChainBuilder.validate(plugin, isUpdate).pipe(
 						take(1),
@@ -74,13 +73,7 @@ export class PluginInstallationEffects {
 								context.errors.forEach((err) =>
 									this.toastrService.error(this.translateService.instant(err))
 								);
-
-								return of(
-									PluginInstallationActions.toggle({
-										isChecked: false,
-										pluginId: context.plugin.id
-									})
-								);
+								return of(PluginActions.refresh());
 							}
 
 							const dialogRef = this.dialogService.open(DialogInstallationValidationComponent, {
@@ -90,17 +83,15 @@ export class PluginInstallationEffects {
 
 							return dialogRef.onClose.pipe(
 								take(1),
-								tap((data) => {
-									if (!data) {
-										this.pluginInstallationStore.setToggle({
-											pluginId: context.plugin.id,
-											isChecked: false
-										});
-									}
-								}),
-								filter(Boolean),
-								map(({ version, source, authToken }) =>
-									this.sourceInstallAction(context.plugin.id, version, source, authToken)
+								map((input) =>
+									input
+										? this.sourceInstallAction(
+												context.plugin.id,
+												input.version,
+												input.source,
+												input.authToken
+										  )
+										: PluginActions.refresh()
 								)
 							);
 						})
@@ -137,10 +128,7 @@ export class PluginInstallationEffects {
 				});
 
 			default:
-				return PluginInstallationActions.toggle({
-					isChecked: false,
-					pluginId
-				});
+				return PluginActions.refresh();
 		}
 	}
 
@@ -386,13 +374,9 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.activationCompleted),
-				concatMap(({ plugin }) => {
+				concatMap(() => {
 					this.handleSuccess();
-					return [
-						PluginInstallationActions.check(plugin.id),
-						PluginActions.selectPlugin(null),
-						PluginActions.refresh()
-					];
+					return [PluginActions.selectPlugin(null), PluginActions.refresh()];
 				})
 			),
 		{
@@ -403,105 +387,113 @@ export class PluginInstallationEffects {
 	/**
 	 * Handle download failures
 	 */
-	handleDownloadFailure$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginInstallationActions.downloadFailed),
-			tap(({ error }) => {
-				this.pluginInstallationStore.update({
-					installing: false,
-					downloading: false,
-					error
-				});
-				this.pluginInstallationStore.setToggle({
-					isChecked: false,
-					pluginId: this.pluginInstallationStore.getValue().currentPluginId
-				});
-				this.toastrService.error(error || this.translateService.instant('PLUGIN.TOASTR.ERROR.DOWNLOAD_FAILED'));
-			})
-		)
+	handleDownloadFailure$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginInstallationActions.downloadFailed),
+				concatMap(({ error }) => {
+					this.pluginInstallationStore.update({
+						installing: false,
+						downloading: false,
+						error
+					});
+					this.toastrService.error(
+						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.DOWNLOAD_FAILED')
+					);
+					return of(PluginActions.refresh());
+				})
+			),
+		{ dispatch: true }
 	);
 
 	/**
 	 * Handle server installation failures with rollback
 	 */
-	handleServerInstallationFailure$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginInstallationActions.serverInstallationFailed),
-			tap(({ error }) => {
-				this.pluginInstallationStore.update({
-					installing: false,
-					serverInstalling: false,
-					error
-				});
-				this.pluginInstallationStore.setToggle({
-					isChecked: false,
-					pluginId: this.pluginInstallationStore.getValue().currentPluginId
-				});
-				this.toastrService.error(
-					error || this.translateService.instant('PLUGIN.TOASTR.ERROR.SERVER_INSTALLATION_FAILED')
-				);
+	handleServerInstallationFailure$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginInstallationActions.serverInstallationFailed),
+				concatMap(({ error }) => {
+					this.pluginInstallationStore.update({
+						installing: false,
+						serverInstalling: false,
+						error
+					});
+					this.toastrService.error(
+						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.SERVER_INSTALLATION_FAILED')
+					);
 
-				// Trigger rollback - find the downloaded plugin and remove it
-				const currentPluginId = this.pluginInstallationStore.getValue().currentPluginId;
-				if (currentPluginId) {
-					this.revertFailedInstallation(currentPluginId);
-				}
-			})
-		)
+					// Trigger rollback - find the downloaded plugin and remove it
+					const currentPluginId = this.pluginInstallationStore.getValue().currentPluginId;
+					if (currentPluginId) {
+						this.revertFailedInstallation(currentPluginId);
+					}
+
+					return of(PluginActions.refresh());
+				})
+			),
+		{ dispatch: true }
 	);
 
 	/**
 	 * Handle installation completion failures
 	 */
-	handleInstallationFailure$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginInstallationActions.installationFailed),
-			tap(({ error }) => {
-				this.pluginInstallationStore.update({
-					installing: false,
-					completingInstallation: false,
-					error
-				});
-				this.pluginInstallationStore.setToggle({
-					isChecked: false,
-					pluginId: this.pluginInstallationStore.getValue().currentPluginId
-				});
-				this.toastrService.error(
-					error || this.translateService.instant('PLUGIN.TOASTR.ERROR.INSTALLATION_FAILED')
-				);
-			})
-		)
+	handleInstallationFailure$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginInstallationActions.installationFailed),
+				concatMap(({ error }) => {
+					this.pluginInstallationStore.update({
+						installing: false,
+						completingInstallation: false,
+						error
+					});
+					this.toastrService.error(
+						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.INSTALLATION_FAILED')
+					);
+
+					return of(PluginActions.refresh());
+				})
+			),
+		{ dispatch: true }
 	);
 
 	/**
 	 * Handle activation failures
 	 */
-	handleActivationFailure$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginInstallationActions.activationFailed),
-			tap(({ error }) => {
-				this.pluginInstallationStore.update({
-					installing: false,
-					activating: false,
-					error
-				});
-				this.toastrService.error(
-					error || this.translateService.instant('PLUGIN.TOASTR.ERROR.ACTIVATION_FAILED')
-				);
-			})
-		)
+	handleActivationFailure$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginInstallationActions.activationFailed),
+				concatMap(({ error }) => {
+					this.pluginInstallationStore.update({
+						installing: false,
+						activating: false,
+						error
+					});
+					this.toastrService.error(
+						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.ACTIVATION_FAILED')
+					);
+
+					return of(PluginActions.refresh());
+				})
+			),
+		{ dispatch: true }
 	);
 
 	/**
 	 * Clear error state
 	 */
-	clearError$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginInstallationActions.clearError),
-			tap(() => {
-				this.pluginInstallationStore.update({ error: null });
-			})
-		)
+	clearError$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginInstallationActions.clearError),
+				concatMap(() => {
+					this.pluginInstallationStore.update({ error: null });
+					return of(PluginActions.refresh());
+				})
+			),
+		{ dispatch: true }
 	);
 
 	/**
@@ -539,7 +531,6 @@ export class PluginInstallationEffects {
 				// Step 1 — Ask for confirmation
 				exhaustMap(({ pluginId, installedId }) =>
 					this.confirmUninstall().pipe(
-						tap((confirmed) => this.pluginInstallationStore.setToggle({ isChecked: !confirmed, pluginId })),
 						filter(Boolean),
 						map(() => ({ marketplaceId: pluginId, id: installedId }))
 					)
@@ -560,64 +551,6 @@ export class PluginInstallationEffects {
 				)
 			),
 		{ dispatch: true }
-	);
-
-	checkSuccess$ = createEffect(
-		() =>
-			this.action$.pipe(
-				ofType(PluginInstallationActions.checkSuccess),
-				concatMap(({ plugin: { marketplaceId, installed } }) => {
-					this.pluginMarketplaceStore.updatePlugin(marketplaceId, { installed });
-					return of(
-						PluginInstallationActions.toggle({
-							isChecked: installed,
-							pluginId: marketplaceId
-						})
-					);
-				})
-			),
-		{
-			dispatch: true
-		}
-	);
-
-	checkFailure$ = createEffect(
-		() =>
-			this.action$.pipe(
-				ofType(PluginInstallationActions.checkFailure),
-				concatMap(({ error, marketplaceId }) => {
-					if (error) {
-						this.toastrService.error(
-							error || this.translateService.instant('PLUGIN.TOASTR.ERROR.CHECK_INSTALLATION_FAILED')
-						);
-					}
-					this.pluginMarketplaceStore.updatePlugin(marketplaceId, { installed: false });
-					return of(
-						PluginInstallationActions.toggle({
-							pluginId: marketplaceId,
-							isChecked: false
-						})
-					);
-				})
-			),
-		{
-			dispatch: true
-		}
-	);
-
-	/**
-	 * Effect for toggling plugin state in UI
-	 */
-	toggle$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginInstallationActions.toggle),
-			tap(({ isChecked, pluginId }) => {
-				this.pluginInstallationStore.setToggle({
-					pluginId,
-					isChecked
-				});
-			})
-		)
 	);
 
 	/**
@@ -707,7 +640,6 @@ export class PluginInstallationEffects {
 			tap(() => this.updateMarketplaceAfterUninstall(marketplaceId, message)),
 			map(() => PluginActions.refresh()),
 			catchError((error) => {
-				this.pluginInstallationStore.setToggle({ isChecked: true, pluginId: marketplaceId });
 				this.toastrService.error(
 					error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL_FAILED')
 				);
@@ -740,8 +672,6 @@ export class PluginInstallationEffects {
 			plugins: updatedPlugins,
 			plugin: updated
 		});
-
-		this.pluginInstallationStore.setToggle({ isChecked: false, pluginId: marketplaceId });
 
 		this.toastrService.success(message || this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'));
 	}

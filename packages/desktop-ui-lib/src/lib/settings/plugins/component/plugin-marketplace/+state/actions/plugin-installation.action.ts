@@ -9,28 +9,6 @@ export class PluginInstallationActions {
 		pluginId,
 		installedId
 	}));
-	public static toggle = createAction(
-		'[Plugin Installation] Toggle',
-		(state: { isChecked?: boolean; pluginId?: ID }) => state
-	);
-
-	//Check Installation
-	public static check = createAction('[Plugin Installation] Check Installation', (marketplaceId: ID) => ({
-		marketplaceId
-	}));
-
-	public static checkSuccess = createAction(
-		'[Plugin Installation] Check Installation Success',
-		(plugin?: IPlugin) => ({ plugin })
-	);
-
-	public static checkFailure = createAction(
-		'[Plugin Installation] Check Installation Failed',
-		(error: string, marketplaceId: ID) => ({
-			error,
-			marketplaceId
-		})
-	);
 
 	// Step 1: Download
 	public static startDownload = createAction('[Plugin Installation] Start Download', <T>(config: T) => ({ config }));

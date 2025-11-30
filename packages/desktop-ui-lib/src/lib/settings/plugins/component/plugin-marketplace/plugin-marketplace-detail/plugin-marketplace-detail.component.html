@@ -3,15 +3,13 @@
 <!-- Determine if the plugin is currently being installed or uninstalled -->
 @let uninstalling = installationQuery.uninstalling$ | async;
 <!-- Check if the plugin is selected and disabled state for toggles -->
-@let checked = installationQuery.checked$(plugin?.id)| async;
+@let installed = installationQuery.installed$(plugin?.id) | async;
 <!-- Disabled state when installing or uninstalling -->
 @let disabled = installing || uninstalling;
 <!-- Disabled state when installing or uninstalling -->
-@let showProgress = disabled && checked;
+@let showProgress = disabled && installed;
 <!-- Check if the current user is the owner of the plugin -->
 @let editing = marketplaceQuery.updating$ | async;
-<!-- Check if plugin is installed -->
-@let installed = plugin?.installed && checked;
 <!-- Main template -->
 @if(plugin) {
 <div
@@ -189,7 +187,7 @@
 				size="small"
 				class="action-btn edit-btn"
 				(click)="editPlugin()"
-				*gauzySpinnerButton="editing && checked"
+				*gauzySpinnerButton="editing"
 				[nbTooltip]="'PLUGIN.ACTIONS.EDIT' | translate"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>

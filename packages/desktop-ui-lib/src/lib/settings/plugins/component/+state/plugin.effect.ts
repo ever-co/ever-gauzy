@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { catchError, EMPTY, filter, finalize, from, of, switchMap, tap } from 'rxjs';
-import { concatMap, map } from 'rxjs/operators';
+import { catchError, EMPTY, filter, finalize, from, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginService } from '../../services/plugin.service';
-import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
 import { PluginActions } from './plugin.action';
 import { PluginStore } from './plugin.store';
 
@@ -18,7 +16,7 @@ export class PluginEffects {
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly pluginService: PluginService,
 		private readonly toastrService: ToastrNotificationService
-	) {}
+	) { }
 
 	getAllPlugins$ = createEffect(() =>
 		this.action$.pipe(
@@ -144,31 +142,6 @@ export class PluginEffects {
 				return EMPTY;
 			})
 		)
-	);
-
-	checkInstallation$ = createEffect(
-		() =>
-			this.action$.pipe(
-				ofType(PluginInstallationActions.check),
-				concatMap(({ marketplaceId }) =>
-					from(this.pluginElectronService.checkInstallation(marketplaceId)).pipe(
-						map((plugin) =>
-							plugin
-								? PluginInstallationActions.checkSuccess(plugin)
-								: PluginInstallationActions.checkFailure(null, marketplaceId)
-						),
-						catchError((error) => {
-							this.toastrService.error(
-								error?.error?.message || error?.message || 'Failed to check installation status'
-							);
-							return of(PluginInstallationActions.checkFailure(error.message, marketplaceId));
-						})
-					)
-				)
-			),
-		{
-			dispatch: true
-		}
 	);
 
 	private handleProgress(arg: { message?: string }): void {

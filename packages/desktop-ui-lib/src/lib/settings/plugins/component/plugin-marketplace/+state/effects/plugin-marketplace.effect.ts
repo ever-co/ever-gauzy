@@ -29,7 +29,6 @@ import {
 	filter,
 	finalize,
 	map,
-	of,
 	switchMap,
 	take,
 	tap
@@ -40,7 +39,6 @@ import { coalesceValue } from '../../../../../../utils';
 import { PluginTagsService } from '../../../../services/plugin-tags.service';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginMarketplaceUploadComponent } from '../../plugin-marketplace-upload/plugin-marketplace-upload.component';
-import { PluginInstallationActions } from '../actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginSourceActions } from '../actions/plugin-source.action';
 import { PluginVersionActions } from '../actions/plugin-version.action';
@@ -145,7 +143,6 @@ export class PluginMarketplaceEffects {
 						map((plugin) => {
 							this.pluginMarketplaceStore.selectPlugin(plugin);
 							return [
-								PluginInstallationActions.check(plugin.id),
 								PluginVersionActions.selectVersion(plugin.version),
 								PluginSourceActions.selectSource(plugin.source)
 							];
@@ -153,7 +150,7 @@ export class PluginMarketplaceEffects {
 						finalize(() => this.pluginMarketplaceStore.setLoading(false)), // Always stop loading
 						catchError((error) => {
 							this.toastrService.error(error.message || error); // Handle error properly
-							return of(PluginInstallationActions.check(id)); // Return a fallback value to keep the stream alive
+							return EMPTY;
 						})
 					)
 				)

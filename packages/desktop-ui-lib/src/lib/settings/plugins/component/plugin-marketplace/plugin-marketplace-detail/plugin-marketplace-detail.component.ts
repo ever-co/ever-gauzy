@@ -43,8 +43,6 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
-		// Initialize installation status
-		this.action.dispatch(PluginInstallationActions.check(this.plugin.id));
 		// Listen to context menu item clicks
 		this.menuService
 			.onItemClick()
