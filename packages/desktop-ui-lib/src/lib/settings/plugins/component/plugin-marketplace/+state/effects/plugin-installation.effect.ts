@@ -383,10 +383,10 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.activationCompleted),
-				concatMap(({ plugin }) => {
+				concatMap(({ plugin: { marketplaceId } }) => {
 					this.handleSuccess();
 					return [
-						PluginToggleActions.toggle({ pluginId: plugin.id, enabled: true }),
+						PluginToggleActions.toggle({ pluginId: marketplaceId, enabled: true }),
 						PluginActions.selectPlugin(null),
 						PluginActions.refresh()
 					];

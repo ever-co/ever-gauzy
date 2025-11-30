@@ -8,6 +8,7 @@ import { filter, tap } from 'rxjs';
 import { PluginSettingsActions, PluginSubscriptionActions } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
+import { PluginToggleActions } from '../+state/actions/plugin-toggle.action';
 import { PluginUserAssignmentActions } from '../+state/actions/plugin-user-assignment.actions';
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
@@ -51,6 +52,16 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			.pipe(
 				filter(({ tag }) => tag === `plugin-more-actions-${this.plugin.id}`),
 				tap(({ item }) => this.onContextMenuItemSelect(item)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.installationQuery
+			.installed$(this.plugin.id)
+			.pipe(
+				tap((enabled) =>
+					this.action.dispatch(PluginToggleActions.toggle({ pluginId: this.plugin.id, enabled }))
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
