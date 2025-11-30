@@ -2,10 +2,12 @@
 @let checked = toggleQuery.isEnabled$(plugin?.id) | async;
 <!-- Get the current plugin details -->
 @let currentPlugin = marketplaceQuery.plugin$ | async;
+<!-- current plugin installing-->
+@let installationPluginId = installationQuery.currentPluginId$ | async;
 <!-- Is Selected-->
 @let isSelected = currentPlugin?.id === plugin?.id;
 <!-- Template for Plugin Marketplace Detail Component -->
-@let installing = installationQuery.installing$ | async;
+@let installing = (installationQuery.installing$ | async) && installationPluginId === plugin?.id;
 <!-- Determine if the plugin is currently being installed or uninstalled -->
 @let uninstalling = installationQuery.uninstalling$ | async;
 <!-- Check if the plugin is selected and disabled state for toggles -->
