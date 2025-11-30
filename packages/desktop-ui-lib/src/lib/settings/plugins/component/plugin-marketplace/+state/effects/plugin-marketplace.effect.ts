@@ -391,6 +391,29 @@ export class PluginMarketplaceEffects {
 		)
 	);
 
+	setContextPlugin$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(
+				PluginMarketplaceActions.install,
+				PluginMarketplaceActions.update,
+				PluginMarketplaceActions.uninstall
+			),
+			tap((action) => {
+				switch (action.type) {
+					case PluginMarketplaceActions.update.type:
+					case PluginMarketplaceActions.install.type:
+						this.selectPluginContext(action.plugin);
+						break;
+					case PluginMarketplaceActions.uninstall.type:
+						this.selectPluginContext(
+							this.pluginMarketplaceStore.getValue().plugins.find((p) => p.id === action.pluginId)!
+						);
+						break;
+				}
+			})
+		)
+	);
+
 	private uploadDialog(): Observable<IPlugin> {
 		return this.dialogService
 			.open(PluginMarketplaceUploadComponent, {
@@ -402,6 +425,8 @@ export class PluginMarketplaceEffects {
 
 	// Helper method to set plugin context in stores
 	private selectPluginContext(plugin: IPlugin): void {
+		if (!plugin) return;
+		this.pluginMarketplaceStore.selectPlugin(plugin);
 		this.pluginVersionStore.setPluginId(plugin.id);
 		this.pluginVersionStore.selectVersion(plugin.version);
 		this.pluginSourceStore.setPluginVersion(plugin.id, plugin.version.id);

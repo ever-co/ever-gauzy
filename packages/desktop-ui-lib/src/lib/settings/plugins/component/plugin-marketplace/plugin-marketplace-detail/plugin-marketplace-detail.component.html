@@ -1,3 +1,9 @@
+<!-- check-->
+@let checked = toggleQuery.isEnabled$(plugin?.id) | async;
+<!-- Get the current plugin details -->
+@let currentPlugin = marketplaceQuery.plugin$ | async;
+<!-- Is Selected-->
+@let isSelected = currentPlugin?.id === plugin?.id;
 <!-- Template for Plugin Marketplace Detail Component -->
 @let installing = installationQuery.installing$ | async;
 <!-- Determine if the plugin is currently being installed or uninstalled -->
@@ -7,7 +13,7 @@
 <!-- Disabled state when installing or uninstalling -->
 @let disabled = installing || uninstalling;
 <!-- Disabled state when installing or uninstalling -->
-@let showProgress = disabled && installed;
+@let showProgress = disabled && isSelected;
 <!-- Check if the current user is the owner of the plugin -->
 @let editing = marketplaceQuery.updating$ | async;
 <!-- Main template -->
@@ -187,7 +193,7 @@
 				size="small"
 				class="action-btn edit-btn"
 				(click)="editPlugin()"
-				*gauzySpinnerButton="editing"
+				*gauzySpinnerButton="editing && isSelected"
 				[nbTooltip]="'PLUGIN.ACTIONS.EDIT' | translate"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
@@ -235,7 +241,7 @@
 				<div class="toggle-wrapper">
 					<nb-toggle
 						[disabled]="disabled"
-						[checked]="installed"
+						[checked]="checked || installed"
 						(checkedChange)="togglePlugin($event)"
 						class="install-toggle"
 					>

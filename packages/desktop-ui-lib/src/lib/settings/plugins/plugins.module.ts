@@ -5,30 +5,30 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
-    NbAlertModule,
-    NbBadgeModule,
-    NbButtonGroupModule,
-    NbButtonModule,
-    NbCardModule,
-    NbCheckboxModule,
-    NbContextMenuModule,
-    NbDatepickerModule,
-    NbDialogModule,
-    NbFormFieldModule,
-    NbIconModule,
-    NbInfiniteListDirective,
-    NbInputModule,
-    NbListModule,
-    NbRadioModule,
-    NbRouteTabsetModule,
-    NbSelectModule,
-    NbSpinnerModule,
-    NbStepperModule,
-    NbTabsetModule,
-    NbTagModule,
-    NbToggleModule,
-    NbTooltipModule,
-    NbUserModule
+	NbAlertModule,
+	NbBadgeModule,
+	NbButtonGroupModule,
+	NbButtonModule,
+	NbCardModule,
+	NbCheckboxModule,
+	NbContextMenuModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbFormFieldModule,
+	NbIconModule,
+	NbInfiniteListDirective,
+	NbInputModule,
+	NbListModule,
+	NbRadioModule,
+	NbRouteTabsetModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbStepperModule,
+	NbTabsetModule,
+	NbTagModule,
+	NbToggleModule,
+	NbTooltipModule,
+	NbUserModule
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
@@ -119,13 +119,14 @@ import { PluginUserAssignmentService } from './services/plugin-user-assignment.s
 import { PluginService } from './services/plugin.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
+import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
-    SubscriptionBillingFormComponent,
-    SubscriptionFormService,
-    SubscriptionPlanService,
-    SubscriptionStatusBadgeComponent,
-    SubscriptionStatusService
+	SubscriptionBillingFormComponent,
+	SubscriptionFormService,
+	SubscriptionPlanService,
+	SubscriptionStatusBadgeComponent,
+	SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 
 @NgModule({
@@ -245,7 +246,8 @@ import {
 			PluginPlanEffects,
 			PluginPlanComparisonEffects,
 			PluginSubscriptionAccessEffects,
-			AvailableUsersEffects
+			AvailableUsersEffects,
+			PluginToggleEffects
 		),
 		PluginQuery,
 		PluginStore,

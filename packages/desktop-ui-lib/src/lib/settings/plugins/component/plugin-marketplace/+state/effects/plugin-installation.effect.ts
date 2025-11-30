@@ -10,7 +10,6 @@ import {
 	catchError,
 	concatMap,
 	exhaustMap,
-	filter,
 	finalize,
 	from,
 	map,
@@ -34,9 +33,12 @@ import { DialogInstallationValidationComponent } from '../../plugin-marketplace-
 import { InstallationValidationChainBuilder } from '../../services';
 import { PluginInstallationActions } from '../actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
+import { PluginToggleActions } from '../actions/plugin-toggle.action';
+import { PluginInstallationQuery } from '../queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../queries/plugin-marketplace.query';
 import { PluginInstallationStore } from '../stores/plugin-installation.store';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
+import { PluginToggleStore } from '../stores/plugin-toggle.store';
 
 @Injectable({ providedIn: 'root' })
 export class PluginInstallationEffects {
@@ -45,6 +47,8 @@ export class PluginInstallationEffects {
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginMarketplaceQuery: PluginMarketplaceQuery,
 		private readonly pluginInstallationStore: PluginInstallationStore,
+		private readonly pluginInstallationQuery: PluginInstallationQuery,
+		private readonly pluginToggleStore: PluginToggleStore,
 		private readonly pluginService: PluginService,
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly toastrService: ToastrNotificationService,
@@ -65,34 +69,39 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginMarketplaceActions.install),
-				exhaustMap(({ plugin, isUpdate }) =>
+				tap(({ plugin }) => this.pluginToggleStore.setToggle(plugin.id, true)),
+				concatMap(({ plugin, isUpdate }) =>
 					this.installationValidationChainBuilder.validate(plugin, isUpdate).pipe(
-						take(1),
-						switchMap((context) => {
+						exhaustMap((context) => {
+							// 1 — Validation errors
 							if (context.errors.length > 0) {
 								context.errors.forEach((err) =>
 									this.toastrService.error(this.translateService.instant(err))
 								);
-								return of(PluginActions.refresh());
+								return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
 							}
 
+							// 2 — Open confirmation dialog
 							const dialogRef = this.dialogService.open(DialogInstallationValidationComponent, {
 								context: { pluginId: context.plugin.id },
 								backdropClass: 'backdrop-blur'
 							});
 
+							// 3 — Handle dialog result
 							return dialogRef.onClose.pipe(
 								take(1),
-								map((input) =>
-									input
-										? this.sourceInstallAction(
-												context.plugin.id,
-												input.version,
-												input.source,
-												input.authToken
-										  )
-										: PluginActions.refresh()
-								)
+								map((result) => {
+									if (!result) {
+										return PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false });
+									}
+
+									return this.sourceInstallAction(
+										context.plugin.id,
+										result.version,
+										result.source,
+										result.authToken
+									);
+								})
 							);
 						})
 					)
@@ -128,7 +137,7 @@ export class PluginInstallationEffects {
 				});
 
 			default:
-				return PluginActions.refresh();
+				return PluginToggleActions.toggle({ pluginId, enabled: false });
 		}
 	}
 
@@ -374,9 +383,13 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.activationCompleted),
-				concatMap(() => {
+				concatMap(({ plugin }) => {
 					this.handleSuccess();
-					return [PluginActions.selectPlugin(null), PluginActions.refresh()];
+					return [
+						PluginToggleActions.toggle({ pluginId: plugin.id, enabled: true }),
+						PluginActions.selectPlugin(null),
+						PluginActions.refresh()
+					];
 				})
 			),
 		{
@@ -400,7 +413,12 @@ export class PluginInstallationEffects {
 					this.toastrService.error(
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.DOWNLOAD_FAILED')
 					);
-					return of(PluginActions.refresh());
+					return of(
+						PluginToggleActions.toggle({
+							pluginId: this.pluginInstallationQuery.currentPluginId,
+							enabled: false
+						})
+					);
 				})
 			),
 		{ dispatch: true }
@@ -429,7 +447,12 @@ export class PluginInstallationEffects {
 						this.revertFailedInstallation(currentPluginId);
 					}
 
-					return of(PluginActions.refresh());
+					return of(
+						PluginToggleActions.toggle({
+							pluginId: this.pluginInstallationQuery.currentPluginId,
+							enabled: false
+						})
+					);
 				})
 			),
 		{ dispatch: true }
@@ -452,7 +475,12 @@ export class PluginInstallationEffects {
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.INSTALLATION_FAILED')
 					);
 
-					return of(PluginActions.refresh());
+					return of(
+						PluginToggleActions.toggle({
+							pluginId: this.pluginInstallationQuery.currentPluginId,
+							enabled: false
+						})
+					);
 				})
 			),
 		{ dispatch: true }
@@ -475,7 +503,12 @@ export class PluginInstallationEffects {
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.ACTIVATION_FAILED')
 					);
 
-					return of(PluginActions.refresh());
+					return of(
+						PluginToggleActions.toggle({
+							pluginId: this.pluginInstallationQuery.currentPluginId,
+							enabled: false
+						})
+					);
 				})
 			),
 		{ dispatch: true }
@@ -527,25 +560,45 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.uninstall),
-
-				// Step 1 — Ask for confirmation
+				// Immediately disable the plugin toggle
+				tap(({ pluginId }) => this.pluginToggleStore.setToggle(pluginId, false)),
+				// Prevent concurrent uninstall flows
 				exhaustMap(({ pluginId, installedId }) =>
 					this.confirmUninstall().pipe(
-						filter(Boolean),
-						map(() => ({ marketplaceId: pluginId, id: installedId }))
-					)
-				),
+						switchMap((confirmed) => {
+							if (!confirmed) {
+								return of(
+									PluginToggleActions.toggle({
+										pluginId,
+										enabled: true
+									})
+								);
+							}
 
-				// Step 2 — Start uninstall
-				tap(() => this.pluginInstallationStore.update({ uninstalling: true })),
-				concatMap((input) =>
-					this.handleUninstall(input).pipe(
-						finalize(() => this.pluginInstallationStore.update({ uninstalling: false })),
-						catchError((error) => {
-							this.toastrService.error(
-								error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL')
+							// Begin uninstall
+							this.pluginInstallationStore.update({ uninstalling: true });
+
+							return this.handleUninstall({ marketplaceId: pluginId, id: installedId }).pipe(
+								map(() =>
+									PluginToggleActions.toggle({
+										pluginId,
+										enabled: false
+									})
+								),
+								catchError((error) => {
+									this.toastrService.error(
+										error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL')
+									);
+									return of(
+										PluginToggleActions.toggle({
+											pluginId,
+											enabled: true
+										})
+									);
+								}),
+
+								finalize(() => this.pluginInstallationStore.update({ uninstalling: false }))
 							);
-							return EMPTY;
 						})
 					)
 				)

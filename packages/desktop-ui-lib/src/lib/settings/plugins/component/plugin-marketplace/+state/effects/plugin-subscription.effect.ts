@@ -1,20 +1,29 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { EMPTY, catchError, concatMap, exhaustMap, filter, finalize, map, switchMap, take, tap } from 'rxjs';
+import { EMPTY, catchError, concatMap, exhaustMap, finalize, map, of, switchMap, take, tap } from 'rxjs';
 
+import { IPlugin } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { PluginActions } from '../../../+state/plugin.action';
 import { ToastrNotificationService } from '../../../../../../services';
-import { PluginSubscriptionService, PluginSubscriptionStatus } from '../../../../services/plugin-subscription.service';
+import {
+	IPluginSubscription,
+	PluginSubscriptionService,
+	PluginSubscriptionStatus
+} from '../../../../services/plugin-subscription.service';
 import { PluginSubscriptionManagerComponent } from '../../plugin-subscription-manager/plugin-subscription-manager.component';
+import { PluginPlanActions } from '../actions/plugin-plan.action';
 import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
+import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginSubscriptionStore } from '../stores/plugin-subscription.store';
 
 @Injectable({ providedIn: 'root' })
 export class PluginSubscriptionEffects {
 	constructor(
 		private readonly actions$: Actions,
+		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginSubscriptionService: PluginSubscriptionService,
 		private readonly pluginSubscriptionStore: PluginSubscriptionStore,
 		private readonly toastrService: ToastrNotificationService,
@@ -32,7 +41,6 @@ export class PluginSubscriptionEffects {
 					map((subscriptions) => {
 						this.pluginSubscriptionStore.setSubscriptions(subscriptions);
 						this.pluginSubscriptionStore.selectSubscription(subscriptions[0]);
-						// Also set the current subscription for this specific plugin
 						const currentSubscription =
 							subscriptions.find(
 								(s) =>
@@ -206,25 +214,37 @@ export class PluginSubscriptionEffects {
 		)
 	);
 
-	openSubscriptionDialog$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginSubscriptionActions.openSubscriptionManagement),
-			tap(() => this.pluginSubscriptionStore.setLoading(true)),
-			concatMap(({ plugin }) =>
-				this.pluginSubscriptionService.getCurrentSubscription(plugin.id).pipe(
-					tap((subscription) => {
-						this.pluginSubscriptionStore.setCurrentPluginSubscription(plugin.id, subscription);
-						this.pluginSubscriptionStore.selectSubscription(subscription);
-						this.pluginSubscriptionStore.setLoading(false);
-					}),
-					exhaustMap((currentSubscription) =>
-						this.dialogService
-							.open(PluginSubscriptionManagerComponent, { context: { plugin, currentSubscription } })
-							.onClose.pipe(take(1), filter(Boolean))
+	openSubscriptionDialog$ = createEffect(
+		() =>
+			this.actions$.pipe(
+				ofType(PluginSubscriptionActions.openSubscriptionManagement),
+				tap(() => this.pluginSubscriptionStore.setLoading(true)),
+				// Prevent concurrent dialog flows
+				concatMap(({ plugin }) =>
+					this.pluginSubscriptionService.getCurrentSubscription(plugin.id).pipe(
+						tap((subscription) => this.setContext(plugin, subscription)),
+						exhaustMap((subscription) => {
+							if (!subscription) {
+								return of(PluginPlanActions.openPlanSubscriptions(plugin.id));
+							}
+
+							return this.dialogService
+								.open(PluginSubscriptionManagerComponent, {
+									context: { plugin, currentSubscription: subscription }
+								})
+								.onClose.pipe(
+									take(1),
+									switchMap((confirmed) => (confirmed ? EMPTY : of(PluginActions.refresh())))
+								);
+						}),
+						catchError((err) => {
+							this.pluginSubscriptionStore.setLoading(false);
+							return of(PluginPlanActions.openPlanSubscriptions(plugin.id));
+						})
 					)
 				)
-			)
-		)
+			),
+		{ dispatch: true }
 	);
 
 	// UI Actions
@@ -254,4 +274,11 @@ export class PluginSubscriptionEffects {
 			})
 		)
 	);
+
+	private setContext(plugin: IPlugin, subscription: IPluginSubscription) {
+		this.pluginMarketplaceStore.selectPlugin(plugin);
+		this.pluginSubscriptionStore.setCurrentPluginSubscription(plugin.id, subscription);
+		this.pluginSubscriptionStore.selectSubscription(subscription);
+		this.pluginSubscriptionStore.setLoading(false);
+	}
 }

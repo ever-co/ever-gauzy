@@ -148,7 +148,7 @@ export class PluginSubscriptionController {
 		const organizationId = RequestContext.currentOrganizationId();
 		const subscriberId = RequestContext.currentUserId();
 
-		return await this.queryBus.execute(
+		return this.queryBus.execute(
 			new GetActivePluginSubscriptionQuery(pluginId, tenantId, organizationId, subscriberId)
 		);
 	}

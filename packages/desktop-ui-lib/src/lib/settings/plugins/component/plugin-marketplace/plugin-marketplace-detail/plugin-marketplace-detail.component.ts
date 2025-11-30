@@ -12,6 +12,7 @@ import { PluginUserAssignmentActions } from '../+state/actions/plugin-user-assig
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
+import { PluginToggleQuery } from '../+state/queries/plugin-toggle.query';
 import { Store } from '../../../../../services';
 import { PluginSubscriptionType } from '../../../services/plugin-subscription.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
@@ -39,7 +40,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly store: Store,
 		private readonly menuService: NbMenuService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
-		public readonly installationQuery: PluginInstallationQuery
+		public readonly installationQuery: PluginInstallationQuery,
+		public readonly toggleQuery: PluginToggleQuery
 	) {}
 
 	ngOnInit(): void {
