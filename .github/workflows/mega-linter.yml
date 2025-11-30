@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build:
     name: MegaLinter
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubicloud-standard-4
     steps:
       # Git Checkout
       - name: Checkout Code
@@ -61,8 +61,8 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: '[MegaLinter] Apply linters automatic fixes'
-          title: '[MegaLinter] Apply linters automatic fixes'
+          commit-message: "[MegaLinter] Apply linters automatic fixes"
+          title: "[MegaLinter] Apply linters automatic fixes"
           labels: bot
           base: ${{ github.head_ref }}
 
@@ -82,4 +82,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           branch: ${{ github.event.pull_request.head.ref || github.head_ref || github.ref }}
-          commit_message: '[MegaLinter] Apply linters fixes'
+          commit_message: "[MegaLinter] Apply linters fixes"

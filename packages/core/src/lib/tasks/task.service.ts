@@ -147,8 +147,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				});
 			}
 
-			// Synchronize mentions
-			if (data.description) {
+			// Synchronize mentions (only if mentionEmployeeIds is provided)
+			if (data.description && mentionEmployeeIds) {
 				try {
 					await this._mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionEmployeeIds);
 				} catch (error) {

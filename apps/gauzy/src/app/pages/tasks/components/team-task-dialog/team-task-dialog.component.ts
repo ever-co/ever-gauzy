@@ -17,6 +17,7 @@ import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { richTextCKEditorConfig } from '@gauzy/ui-core/shared';
 import {
+	EmployeesService,
 	ErrorHandlingService,
 	OrganizationProjectModuleService,
 	OrganizationProjectsService,
@@ -43,10 +44,10 @@ const initialTaskValue = {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-team-task-dialog',
-    templateUrl: './team-task-dialog.component.html',
-    styleUrls: ['./team-task-dialog.component.scss'],
-    standalone: false
+	selector: 'ngx-team-task-dialog',
+	templateUrl: './team-task-dialog.component.html',
+	styleUrls: ['./team-task-dialog.component.scss'],
+	standalone: false
 })
 export class TeamTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	selectedTaskId: string;
@@ -76,7 +77,8 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly organizationTeamsService: OrganizationTeamsService,
-		private organizationProjectModuleService: OrganizationProjectModuleService
+		private readonly organizationProjectModuleService: OrganizationProjectModuleService,
+		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
 	}
@@ -122,6 +124,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 
 		await this.loadProjects();
 		await this.loadTeams();
+		await this.loadEmployees();
 		await this.loadAvailableModules();
 
 		this.form
@@ -150,17 +153,11 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 		taskPriority
 	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
+		// Load both members and teams - now supporting dual assignment
+		this.selectedMembers = (members || []).map((member) => member.id);
 		this.selectedTeams = (teams || []).map((team) => team.id);
 		this.selectedModules = (modules || []).map((module) => module.id);
-		// employee id of logged in user, if value is null, disable the save button
-		// this.teamIds = null;
-		// if (this.store.user) {
-		// 	this.teamIds = this.store.user || null;
-		// }
-		// // select default id of logged in user
-		// if (teams === null) {
-		// 	this.selectedTeams = [this.employeeId];
-		// }
+
 		this.form.patchValue({
 			title,
 			project,
@@ -173,7 +170,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 			estimateHours: duration.hours(),
 			estimateMinutes: duration.minutes(),
 			dueDate: dueDate ? new Date(dueDate) : null,
-			members,
+			members: this.selectedMembers,
 			description,
 			tags,
 			teams: this.selectedTeams,
@@ -200,6 +197,14 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 
 	onSave() {
 		if (this.form.valid) {
+			// Set members (employees) - now supporting dual assignment
+			this.form
+				.get('members')
+				.setValue(
+					(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e)
+				);
+
+			// Set teams
 			this.form
 				.get('teams')
 				.setValue(
@@ -224,6 +229,25 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 
 	selectedProject(project: IOrganizationProject) {
 		this.form.patchValue({ project });
+	}
+
+	async loadEmployees() {
+		const { organizationId, tenantId } = this;
+		if (!organizationId) {
+			return;
+		}
+
+		const { items = [] } = await firstValueFrom(
+			this.employeesService.getAll(['user'], {
+				organizationId,
+				tenantId
+			})
+		);
+		this.employees = items;
+	}
+
+	onMembersSelected(members: string[]) {
+		this.selectedMembers = members;
 	}
 
 	async loadTeams() {

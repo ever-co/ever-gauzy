@@ -1,24 +1,17 @@
-import {
-	AfterViewInit,
-	Component,
-	NgZone,
-	OnInit,
-	Renderer2,
-	HostBinding,
-	OnDestroy
-} from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { firstValueFrom } from 'rxjs';
+import { AfterViewInit, Component, HostBinding, NgZone, OnDestroy, OnInit, Renderer2 } from '@angular/core';
 import {
 	ActivityWatchElectronService,
 	AuthStrategy,
 	ElectronService,
 	LanguageElectronService,
 	Store,
-	TimeTrackerDateManager
+	TimeTrackerDateManager,
+	TokenRefreshService
 } from '@gauzy/desktop-ui-lib';
+import { NbToastrService } from '@nebular/theme';
+import { UntilDestroy } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 import { AppService } from './app.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -31,7 +24,7 @@ import { AppService } from './app.service';
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 	@HostBinding('class.login-small-height') isLoginPage = false;
 	@HostBinding('class.setup-max-height') isSetupPage = false;
-	private pingHostInterval: NodeJS.Timeout
+	private pingHostInterval: NodeJS.Timeout;
 
 	constructor(
 		private electronService: ElectronService,
@@ -43,7 +36,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		private _ngZone: NgZone,
 		private _renderer: Renderer2,
 		readonly activityWatchElectronService: ActivityWatchElectronService,
-		readonly languageElectronService: LanguageElectronService
+		readonly languageElectronService: LanguageElectronService,
+		private readonly tokenRefreshService: TokenRefreshService
 	) {
 		activityWatchElectronService.setupActivitiesCollection();
 	}
@@ -55,8 +49,12 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
 		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
 
-
 		this.electronService.ipcRenderer.send('app_is_init');
+
+		// Start token refresh timer if user is authenticated
+		if (this.store.token && this.store.refreshToken) {
+			this.tokenRefreshService.start();
+		}
 	}
 
 	ngOnDestroy(): void {
@@ -88,7 +86,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 					}
 				}
 			}, 1000);
-		})
+		});
 	}
 
 	handleRestart(event: any, arg: any) {
@@ -109,7 +107,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 					}
 				}
 			}, 3000);
-		})
+		});
 	}
 
 	handleLogout(_: unknown, arg: any) {
@@ -121,7 +119,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 			} catch (error) {
 				console.log('ERROR', error);
 			}
-		})
+		});
 	}
 
 	handleAuthSuccess(_: unknown, arg: any) {
@@ -132,9 +130,12 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 				this.store.organizationId = arg.organizationId;
 				this.store.tenantId = arg.tenantId;
 				this.store.user = arg.user;
-			} catch (error) {
 
-			}
+				// Start token refresh timer on authentication
+				if (arg.token && this.store.refreshToken) {
+					this.tokenRefreshService.start();
+				}
+			} catch (error) {}
 		});
 	}
 
@@ -147,7 +148,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 			} catch (error) {
 				console.log('ERROR', error);
 			}
-		})
+		});
 	}
 
 	ngAfterViewInit(): void {
@@ -176,6 +177,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 					tenantId: jwtParsed.tenantId,
 					organizationId: user?.employee?.organizationId
 				});
+
+				// Start token refresh timer after social auth
+				if (arg.token && this.store.refreshToken) {
+					this.tokenRefreshService.start();
+				}
 			} else {
 				this.toastrService.show('Your account is not an employee', `Warning`, {
 					status: 'danger'
@@ -201,7 +207,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.isSetupPage = location.hash.startsWith('#/setup');
 	}
 
-
 	async checkAuthValidation() {
 		const hashPage = location.hash;
 		if (hashPage.includes('auth')) {
@@ -210,7 +215,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 				if (!mainAuth?.token) {
 					await firstValueFrom(this.authStrategy.logout());
 				}
-			} catch(error) {
+			} catch (error) {
 				console.error('Failed to check main auth:', error);
 			}
 		}

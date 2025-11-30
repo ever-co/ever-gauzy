@@ -184,6 +184,7 @@
 		"underscore": "^1.13.3",
 		"undici": "^6.10.2",
 		"custom-electron-titlebar": "^4.2.8",
+		"@as-integrations/express5": "^1.1.2",
 		"call-bind-apply-helpers": "^1.0.2",
 		"cheerio-select": "^2.1.0",
 		"@as-integrations/express5": "^1.1.2"

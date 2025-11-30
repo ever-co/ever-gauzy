@@ -9,7 +9,7 @@ on:
 
 jobs:
   deploy-stage:
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubicloud-standard-4
 
     environment: stage
 

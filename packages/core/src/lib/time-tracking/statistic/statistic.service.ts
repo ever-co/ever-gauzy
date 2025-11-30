@@ -48,6 +48,7 @@ import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-em
 import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activity.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
+import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -62,7 +63,8 @@ export class StatisticService {
 		private readonly typeOrmActivityRepository: TypeOrmActivityRepository,
 		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		private readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {}
 
 	/**
@@ -155,18 +157,15 @@ export class StatisticService {
 
 		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
-		const user = RequestContext.currentUser(); // Retrieve the current user
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			[], // projectIds
+			isOnlyMeSelected
 		);
-
-		// Set employeeIds based on user conditions and permissions
-		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
-			employeeIds = [user.employeeId];
-		}
 
 		let weekActivities = {
 			overall: 0,
@@ -291,20 +290,15 @@ export class StatisticService {
 
 		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
-		const user = RequestContext.currentUser(); // Retrieve the current user
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			[], // projectIds
+			isOnlyMeSelected
 		);
-
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
-			employeeIds = [user.employeeId];
-		}
 
 		// Get average activity and total duration of the work for today.
 		let todayActivities = {
@@ -432,7 +426,6 @@ export class StatisticService {
 
 		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
-		const user = RequestContext.currentUser(); // Retrieve the current user
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
 		// Get the start and end date for the weekly statistics
@@ -441,15 +434,14 @@ export class StatisticService {
 			moment.utc(endDate || moment().endOf('week'))
 		);
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		// Filter employeeIds based on permissions and manager access
+		// Note: getMembers() doesn't have onlyMe parameter, so we pass false
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			projectIds,
+			false // onlyMe
 		);
-
-		// Set employeeIds based on user conditions and permissions
-		if (user.employeeId || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
-			employeeIds = [user.employeeId];
-		}
 
 		// Create a query builder for the Employee entity
 		const query = this.typeOrmEmployeeRepository.createQueryBuilder();
@@ -780,17 +772,11 @@ export class StatisticService {
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
-		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
-		);
-
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
 		// Retrieves the database type from the configuration service.
@@ -799,12 +785,13 @@ export class StatisticService {
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
-			employeeIds = [user.employeeId];
-		}
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			projectIds,
+			isOnlyMeSelected
+		);
 
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 
@@ -996,22 +983,27 @@ export class StatisticService {
 			end = range.end;
 		}
 
-		/*
-		 *  Get employees id of the organization or get current employee id
-		 */
+		// Set employeeIds based on permissions and request
+		// Special handling for getTasks: if organizationTeamId or ORG_MEMBER_LAST_LOG_VIEW permission exists,
+		// allow empty employeeIds to fetch all team members
 		if (
 			user &&
 			user.employeeId &&
-			(onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
+			!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+			!onlyMe &&
+			!isNotEmpty(employeeIds) &&
+			(isNotEmpty(organizationTeamId) || RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW))
 		) {
-			if (
-				isNotEmpty(organizationTeamId) ||
-				RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW)
-			) {
-				employeeIds = [...employeeIds];
-			} else {
-				employeeIds = [user.employeeId];
-			}
+			// Special case: Keep empty employeeIds to fetch all team members
+			// This will be filtered by organizationTeamId in the query
+		} else {
+			// Standard filtering using ManagedEmployeeService
+			employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+				employeeIds,
+				teamIds,
+				[], // projectIds
+				onlyMe
+			);
 		}
 
 		if (todayStart && todayEnd) {
@@ -1540,7 +1532,6 @@ export class StatisticService {
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
-		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
@@ -1548,20 +1539,16 @@ export class StatisticService {
 			moment.utc(endDate || moment().endOf('week'))
 		);
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		);
-
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
-			employeeIds = [user.employeeId];
-		}
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			projectIds,
+			isOnlyMeSelected
+		);
 
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
@@ -1652,17 +1639,11 @@ export class StatisticService {
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
-		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
-		);
-
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
 		// Retrieves the database type from the configuration service.
@@ -1671,12 +1652,13 @@ export class StatisticService {
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
-			employeeIds = [user.employeeId];
-		}
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			projectIds,
+			isOnlyMeSelected
+		);
 
 		const query = this.typeOrmActivityRepository.createQueryBuilder();
 		query
@@ -1804,7 +1786,6 @@ export class StatisticService {
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
-		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		const { start, end } = getDateRangeFormat(
@@ -1812,20 +1793,16 @@ export class StatisticService {
 			moment.utc(endDate || moment().endOf('week'))
 		);
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		);
-
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
-			employeeIds = [user.employeeId];
-		}
+		// Filter employeeIds based on permissions and manager access
+		employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			employeeIds,
+			teamIds,
+			projectIds,
+			isOnlyMeSelected
+		);
 
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder();
 		query.innerJoin(`${query.alias}.employee`, 'employee');
