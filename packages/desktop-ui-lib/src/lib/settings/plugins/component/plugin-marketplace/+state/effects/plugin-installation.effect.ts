@@ -4,20 +4,7 @@ import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	EMPTY,
-	Observable,
-	catchError,
-	concatMap,
-	exhaustMap,
-	finalize,
-	from,
-	map,
-	of,
-	switchMap,
-	take,
-	tap
-} from 'rxjs';
+import { Observable, catchError, concatMap, exhaustMap, finalize, from, map, of, switchMap, take, tap } from 'rxjs';
 import { PluginActions } from '../../../+state/plugin.action';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../../services';
@@ -579,12 +566,13 @@ export class PluginInstallationEffects {
 							this.pluginInstallationStore.update({ uninstalling: true });
 
 							return this.handleUninstall({ marketplaceId: pluginId, id: installedId }).pipe(
-								map(() =>
+								map((isUninstalled) => [
 									PluginToggleActions.toggle({
 										pluginId,
-										enabled: false
-									})
-								),
+										enabled: !isUninstalled
+									}),
+									PluginActions.refresh()
+								]),
 								catchError((error) => {
 									this.toastrService.error(
 										error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL')
@@ -682,21 +670,20 @@ export class PluginInstallationEffects {
 			);
 	}
 
-	private handleLocalUninstall(message?: string) {
+	private handleLocalUninstall(message?: string): Observable<boolean> {
 		this.toastrService.success(message || this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'));
-
-		return of(PluginActions.refresh());
+		return of(true);
 	}
 
-	private handleServerUninstall(marketplaceId: ID, installationId: ID, message?: string) {
+	private handleServerUninstall(marketplaceId: ID, installationId: ID, message?: string): Observable<boolean> {
 		return this.pluginService.uninstall(marketplaceId, installationId, 'User initiated uninstall').pipe(
 			tap(() => this.updateMarketplaceAfterUninstall(marketplaceId, message)),
-			map(() => PluginActions.refresh()),
+			map(() => true),
 			catchError((error) => {
 				this.toastrService.error(
 					error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL_FAILED')
 				);
-				return EMPTY;
+				return of(false);
 			})
 		);
 	}
