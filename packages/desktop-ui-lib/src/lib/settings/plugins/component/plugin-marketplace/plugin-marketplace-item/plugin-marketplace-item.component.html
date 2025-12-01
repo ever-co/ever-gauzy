@@ -2,24 +2,22 @@
 @let plugin = plugin$ | async;
 <!-- Get the current plugin details -->
 @let currentPlugin = marketplaceQuery.plugin$ | async;
-<!-- current plugin installing-->
-@let installationPluginId = installationQuery.currentPluginId$ | async;
 <!-- Is Selected-->
 @let isSelected = currentPlugin?.id === plugin?.id;
 <!-- Installed version -->
 @let installedVersionId = installedVersionId$ | async;
 <!-- Async binding for editing state -->
-@let editing = marketplaceQuery.updating$ | async;
+@let editing = marketplaceQuery.updating$(plugin?.id) | async;
 <!-- Check if the plugin is selected and disabled state for toggles -->
 @let installed = installationQuery.installed$(plugin?.id) | async;
 <!-- Determine if the plugin is currently being installed or uninstalled -->
-@let installing = (installationQuery.installing$ | async) && installationPluginId === plugin?.id;
+@let installing = installationQuery.installing$(plugin?.id) | async;
 <!-- Determine if the plugin is currently being uninstalled -->
-@let uninstalling = installationQuery.uninstalling$ | async;
+@let uninstalling = installationQuery.uninstalling$(plugin?.id) | async;
 <!-- Deleting state for plugins -->
-@let deleting = marketplaceQuery.deleting$ | async;
+@let deleting = marketplaceQuery.deleting$(plugin?.id) | async;
 <!-- Adding state for versions -->
-@let adding = versionQuery.creating$ | async;
+@let adding = versionQuery.creating$(plugin?.id) | async;
 <!-- Update needed state -->
 @let needUpdate = installed && plugin.version.id !== installedVersionId;
 <!-- Loading state -->
@@ -29,15 +27,15 @@
 <!-- Selected version state -->
 @let selectedVersion = versionQuery.version$ | async;
 <!-- Uploading state -->
-@let uploading = marketplaceQuery.uploading$ | async;
+@let uploading = marketplaceQuery.uploading$(plugin?.id) | async;
 <!-- Progress state -->
-@let progress = marketplaceQuery.progress$ | async;
+@let progress = marketplaceQuery.uploadProgress$(plugin?.id) | async;
 <!-- Sources state -->
 @let sources = this.sourceQuery.sources$ | async;
 <!-- Selected source state -->
 @let selectedSource = this.sourceQuery.source$ | async;
 <!-- Creating source state -->
-@let creatingSource = this.sourceQuery.creating$ | async;
+@let creatingSource = this.sourceQuery.creating$(plugin?.id) | async;
 <!-- Get current subscription -->
 @let subscription = currentSubscription$ | async;
 

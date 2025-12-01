@@ -46,14 +46,19 @@ export class PluginSourceEffects {
 			ofType(PluginSourceActions.add),
 			tap(({ plugin }) => this.selectSourceContext(plugin)),
 			exhaustMap(({ plugin }) => this.createSourceDialog(plugin, plugin.versions[0])),
-			tap(() => {
-				this.pluginSourceStore.setCreating(true);
-				this.pluginMarketplaceStore.setUpload({ uploading: true });
+			tap(({ pluginId }) => {
+				this.pluginSourceStore.setCreating(pluginId, true);
+				this.pluginMarketplaceStore.setUpload(pluginId, { uploading: true, progress: 0 });
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.ADDING'));
 			}),
 			switchMap(({ pluginId, versionId, sources }) =>
 				this.pluginService.addSources(pluginId, versionId, sources).pipe(
-					tap((res) => this.pluginMarketplaceStore.setUpload({ progress: coalesceValue(res?.progress, 0) })),
+					tap((res) =>
+						this.pluginMarketplaceStore.setUpload(pluginId, {
+							uploading: true,
+							progress: coalesceValue(res?.progress, 0)
+						})
+					),
 					filter((res) => Boolean(res?.sources)),
 					map((res) => res.sources),
 					withLatestFrom(this.pluginElectronService.getOS()),
@@ -67,8 +72,8 @@ export class PluginSourceEffects {
 						return EMPTY;
 					}),
 					finalize(() => {
-						this.pluginMarketplaceStore.setUpload({ uploading: false });
-						this.pluginSourceStore.setCreating(false);
+						this.pluginMarketplaceStore.setUpload(pluginId, { uploading: false, progress: 0 });
+						this.pluginSourceStore.setCreating(pluginId, false);
 					})
 				)
 			)
@@ -117,8 +122,8 @@ export class PluginSourceEffects {
 	delete$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.delete),
-			tap(() => {
-				this.pluginSourceStore.setDeleting(true);
+			tap(({ pluginId }) => {
+				this.pluginSourceStore.setDeleting(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.DELETING'));
 			}),
 			mergeMap(({ pluginId, versionId, sourceId }) =>
@@ -142,7 +147,7 @@ export class PluginSourceEffects {
 						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.DELETE'));
 						return EMPTY;
 					}),
-					finalize(() => this.pluginSourceStore.setDeleting(false))
+					finalize(() => this.pluginSourceStore.setDeleting(pluginId, false))
 				)
 			)
 		)
@@ -151,8 +156,8 @@ export class PluginSourceEffects {
 	restore$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.restore),
-			tap(() => {
-				this.pluginSourceStore.setRestoring(true);
+			tap(({ pluginId }) => {
+				this.pluginSourceStore.setRestoring(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.RESTORING'));
 			}),
 			mergeMap(({ pluginId, versionId, sourceId }) =>
@@ -175,7 +180,7 @@ export class PluginSourceEffects {
 						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.RESTORE'));
 						return EMPTY;
 					}),
-					finalize(() => this.pluginSourceStore.setRestoring(false))
+					finalize(() => this.pluginSourceStore.setRestoring(pluginId, false))
 				)
 			)
 		)

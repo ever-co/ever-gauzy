@@ -9,10 +9,10 @@ import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/pl
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-add-plugin',
-    templateUrl: './add-plugin.component.html',
-    styleUrls: ['./add-plugin.component.scss'],
-    standalone: false
+	selector: 'ngx-add-plugin',
+	templateUrl: './add-plugin.component.html',
+	styleUrls: ['./add-plugin.component.scss'],
+	standalone: false
 })
 export class AddPluginComponent {
 	private readonly dialogRef = inject(NbDialogRef<AddPluginComponent>);
@@ -75,6 +75,6 @@ export class AddPluginComponent {
 	}
 
 	public get installing$(): Observable<boolean> {
-		return this.query.installing$;
+		return this.query.installing$(this.query.config['marketplaceId']);
 	}
 }

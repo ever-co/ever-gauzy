@@ -16,8 +16,9 @@ export class PluginInstallationActions {
 		'[Plugin Installation] Download Completed',
 		(plugin: IPlugin, message?: string) => ({ plugin, message })
 	);
-	public static downloadFailed = createAction('[Plugin Installation] Download Failed', (error: string) => ({
-		error
+	public static downloadFailed = createAction('[Plugin Installation] Download Failed', (error: string, pluginId?: string) => ({
+		error,
+		pluginId
 	}));
 
 	// Step 2: Server Installation
@@ -31,7 +32,7 @@ export class PluginInstallationActions {
 	);
 	public static serverInstallationFailed = createAction(
 		'[Plugin Installation] Server Installation Failed',
-		(error: string) => ({ error })
+		(error: string, pluginId?: string) => ({ error, pluginId })
 	);
 
 	// Step 3: Complete Installation
@@ -43,8 +44,9 @@ export class PluginInstallationActions {
 		'[Plugin Installation] Installation Completed',
 		(marketplaceId: IPluginMarketplace['id']) => ({ marketplaceId })
 	);
-	public static installationFailed = createAction('[Plugin Installation] Installation Failed', (error: string) => ({
-		error
+	public static installationFailed = createAction('[Plugin Installation] Installation Failed', (error: string, pluginId?: string) => ({
+		error,
+		pluginId
 	}));
 
 	// Step 4: Activation
@@ -56,11 +58,12 @@ export class PluginInstallationActions {
 		'[Plugin Installation] Activation Completed',
 		(plugin: IPlugin, message?: string) => ({ plugin, message })
 	);
-	public static activationFailed = createAction('[Plugin Installation] Activation Failed', (error: string) => ({
-		error
+	public static activationFailed = createAction('[Plugin Installation] Activation Failed', (error: string, pluginId?: string) => ({
+		error,
+		pluginId
 	}));
 
 	// Cleanup
-	public static clearError = createAction('[Plugin Installation] Clear Error');
-	public static reset = createAction('[Plugin Installation] Reset State');
+	public static clearError = createAction('[Plugin Installation] Clear Error', (pluginId?: string) => ({ pluginId }));
+	public static reset = createAction('[Plugin Installation] Reset State', (pluginId?: string) => ({ pluginId }));
 }

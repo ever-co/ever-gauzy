@@ -48,44 +48,95 @@ export abstract class InstallationValidator {
 	 */
 	validate(context: IInstallationValidationContext): Observable<IInstallationValidationContext> {
 		return new Observable<IInstallationValidationContext>((observer) => {
-			this.doValidate(context).subscribe({
-				next: (result) => {
-					// Update context with validation result
-					if (!result.canProceed) {
-						if (result.error) {
-							context.errors.push(result.error);
-						}
-						// Stop chain if cannot proceed
-						observer.next(context);
-						observer.complete();
-						return;
-					}
+			let subscription;
 
-					if (result.warning) {
-						context.warnings.push(result.warning);
-					}
-
-					if (result.metadata) {
-						context.metadata = { ...context.metadata, ...result.metadata };
-					}
-
-					// Continue to next validator if exists
-					if (this.nextValidator) {
-						this.nextValidator.validate(context).subscribe({
-							next: (finalContext) => {
-								observer.next(finalContext);
+			try {
+				subscription = this.doValidate(context).subscribe({
+					next: (result) => {
+						try {
+							// Update context with validation result
+							if (!result.canProceed) {
+								if (result.error) {
+									context.errors.push(result.error);
+								}
+								// Stop chain if cannot proceed
+								context.metadata.stoppedAt = this.constructor.name;
+								observer.next(context);
 								observer.complete();
-							},
-							error: (err) => observer.error(err)
-						});
-					} else {
-						// End of chain
+								return;
+							}
+
+							if (result.warning) {
+								context.warnings.push(result.warning);
+							}
+
+							if (result.metadata) {
+								context.metadata = { ...context.metadata, ...result.metadata };
+							}
+
+							// Continue to next validator if exists
+							if (this.nextValidator) {
+								const nextSubscription = this.nextValidator.validate(context).subscribe({
+									next: (finalContext) => {
+										observer.next(finalContext);
+										observer.complete();
+									},
+									error: (err) => {
+										console.error(`[${this.constructor.name}] Chain continuation error:`, err);
+										context.errors.push(
+											`PLUGIN.VALIDATION.CHAIN_ERROR: ${err?.message || 'Unknown error'}`
+										);
+										context.metadata.chainError = true;
+										observer.next(context);
+										observer.complete();
+									}
+								});
+
+								// Cleanup next validator subscription
+								return () => {
+									if (nextSubscription) {
+										nextSubscription.unsubscribe();
+									}
+								};
+							} else {
+								// End of chain - mark completion
+								context.metadata.validationCompleted = new Date().toISOString();
+								context.metadata.completedAt = this.constructor.name;
+								observer.next(context);
+								observer.complete();
+							}
+						} catch (syncError) {
+							console.error(`[${this.constructor.name}] Synchronous validation error:`, syncError);
+							context.errors.push(
+								`PLUGIN.VALIDATION.SYNC_ERROR: ${syncError?.message || 'Unknown error'}`
+							);
+							context.metadata.syncError = true;
+							observer.next(context);
+							observer.complete();
+						}
+					},
+					error: (err) => {
+						console.error(`[${this.constructor.name}] Validation error:`, err);
+						context.errors.push(`PLUGIN.VALIDATION.ERROR: ${err?.message || 'Unknown error'}`);
+						context.metadata.asyncError = true;
 						observer.next(context);
 						observer.complete();
 					}
-				},
-				error: (err) => observer.error(err)
-			});
+				});
+			} catch (error) {
+				console.error(`[${this.constructor.name}] Failed to start validation:`, error);
+				context.errors.push(`PLUGIN.VALIDATION.START_ERROR: ${error?.message || 'Unknown error'}`);
+				context.metadata.startError = true;
+				observer.next(context);
+				observer.complete();
+			}
+
+			// Cleanup on unsubscribe
+			return () => {
+				if (subscription) {
+					subscription.unsubscribe();
+				}
+			};
 		});
 	}
 

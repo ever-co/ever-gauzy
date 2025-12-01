@@ -21,25 +21,65 @@ export class AccessValidator extends InstallationValidator {
 	}
 
 	protected doValidate(context: IInstallationValidationContext): Observable<IValidationStepResult> {
+		// Validate input context
+		if (!context || !context.plugin) {
+			return of({
+				canProceed: false,
+				error: 'PLUGIN.VALIDATION.INVALID_CONTEXT',
+				metadata: { accessValidated: false, validationError: true }
+			});
+		}
+
+		const { plugin } = context;
+
+		// Validate plugin ID
+		if (!plugin.id) {
+			return of({
+				canProceed: false,
+				error: 'PLUGIN.VALIDATION.MISSING_PLUGIN_ID',
+				metadata: { accessValidated: false, missingPluginId: true }
+			});
+		}
+
 		// Free plugins don't need access validation
-		if (!context.plugin.hasPlan) {
+		if (!plugin.hasPlan) {
 			return of({
 				canProceed: true,
-				metadata: { accessValidated: true, requiresSubscription: false }
+				metadata: {
+					accessValidated: true,
+					requiresSubscription: false,
+					pluginType: 'free'
+				}
 			});
 		}
 
 		// Check access for subscription-based plugins
-		return this.accessGuard.checkPluginAccess(context.plugin).pipe(
-			map((accessResult) => ({
-				canProceed: accessResult.hasAccess,
-				error: accessResult.hasAccess ? undefined : 'Access denied: Active subscription required',
-				metadata: {
-					accessValidated: true,
-					hasAccess: accessResult.hasAccess,
-					requiresSubscription: true
+		return this.accessGuard.checkPluginAccess(plugin).pipe(
+			map((accessResult) => {
+				if (!accessResult) {
+					return {
+						canProceed: false,
+						error: 'PLUGIN.VALIDATION.ACCESS_CHECK_FAILED',
+						metadata: {
+							accessValidated: false,
+							checkFailed: true
+						}
+					};
 				}
-			}))
+
+				return {
+					canProceed: accessResult.hasAccess,
+					error: accessResult.hasAccess ? undefined : 'PLUGIN.VALIDATION.ACCESS_DENIED',
+					metadata: {
+						accessValidated: true,
+						hasAccess: accessResult.hasAccess,
+						requiresSubscription: true,
+						pluginType: 'subscription',
+						accessReason: accessResult.reason,
+						accessLevel: accessResult.accessLevel
+					}
+				};
+			})
 		);
 	}
 }

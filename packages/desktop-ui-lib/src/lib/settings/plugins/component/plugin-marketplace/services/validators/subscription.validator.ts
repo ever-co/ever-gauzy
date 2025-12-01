@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import {
 	IInstallationValidationContext,
@@ -21,45 +21,84 @@ export class SubscriptionValidator extends InstallationValidator {
 	}
 
 	protected doValidate(context: IInstallationValidationContext): Observable<IValidationStepResult> {
+		// Validate input context
+		if (!context || !context.plugin) {
+			return of({
+				canProceed: false,
+				error: 'PLUGIN.VALIDATION.INVALID_CONTEXT',
+				metadata: { subscriptionValidated: false, validationError: true }
+			});
+		}
+
 		const { plugin } = context;
 
 		// Check if subscription is required
-		if (!this.installationFacade.requiresSubscription(plugin)) {
-			return new Observable<IValidationStepResult>((observer) => {
-				observer.next({
+		try {
+			if (!this.installationFacade.requiresSubscription(plugin)) {
+				console.log(`[SubscriptionValidator] Plugin ${plugin.name} does not require subscription`);
+				return of({
 					canProceed: true,
-					metadata: { subscriptionRequired: false }
+					metadata: {
+						subscriptionRequired: false,
+						subscriptionValidated: true,
+						pluginType: 'free'
+					}
 				});
-				observer.complete();
+			}
+		} catch (error) {
+			console.error('[SubscriptionValidator] Error checking subscription requirement:', error);
+			return of({
+				canProceed: false,
+				error: `PLUGIN.VALIDATION.SUBSCRIPTION_CHECK_ERROR: ${error?.message || 'Unknown error'}`,
+				metadata: { subscriptionValidated: false, checkError: true }
 			});
 		}
+
+		console.log(`[SubscriptionValidator] Validating subscription for plugin ${plugin.name}`);
 
 		// Validate subscription
 		return this.installationFacade.validateInstallation(plugin).pipe(
 			switchMap((validationResult) => {
+				if (!validationResult) {
+					return of({
+						canProceed: false,
+						error: 'PLUGIN.VALIDATION.SUBSCRIPTION_VALIDATION_FAILED',
+						metadata: { subscriptionValidated: false, validationFailed: true }
+					});
+				}
+
 				if (!validationResult.canProceed) {
+					console.log(
+						`[SubscriptionValidator] Subscription needed for ${plugin.name} - preparing installation`
+					);
+
 					// Need to get subscription - prepare for installation
 					return this.installationFacade.prepareForInstallation(plugin).pipe(
-						map(() => ({
-							canProceed: true,
-							metadata: {
-								subscriptionRequired: true,
-								subscriptionObtained: true
-							}
-						}))
+						map(() => {
+							console.log(`[SubscriptionValidator] Installation prepared for ${plugin.name}`);
+							return {
+								canProceed: true,
+								metadata: {
+									subscriptionRequired: true,
+									subscriptionObtained: true,
+									subscriptionValidated: true,
+									preparationCompleted: new Date().toISOString()
+								}
+							};
+						})
 					);
 				}
 
 				// Already has subscription
-				return new Observable<IValidationStepResult>((observer) => {
-					observer.next({
-						canProceed: true,
-						metadata: {
-							subscriptionRequired: true,
-							hasActiveSubscription: true
-						}
-					});
-					observer.complete();
+				console.log(`[SubscriptionValidator] Plugin ${plugin.name} has active subscription`);
+				return of({
+					canProceed: true,
+					metadata: {
+						subscriptionRequired: true,
+						hasActiveSubscription: true,
+						subscriptionValidated: true,
+						validationReason: validationResult.reason
+					}
 				});
 			})
 		);

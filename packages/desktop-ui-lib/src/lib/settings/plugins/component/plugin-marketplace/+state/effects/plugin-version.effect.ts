@@ -52,14 +52,19 @@ export class PluginVersionEffects {
 			exhaustMap(({ plugin }) =>
 				this.createVersionDialog(plugin).pipe(map((version) => ({ pluginId: plugin.id, version })))
 			),
-			tap(() => {
-				this.pluginVersionStore.setCreating(true);
-				this.pluginMarketplaceStore.setUpload({ uploading: true });
+			tap(({ pluginId }) => {
+				this.pluginVersionStore.setCreating(pluginId, true);
+				this.pluginMarketplaceStore.setUpload(pluginId, { uploading: true, progress: 0 });
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.ADDING'));
 			}),
 			switchMap(({ pluginId, version }) =>
 				this.pluginService.addVersion(pluginId, version).pipe(
-					tap((res) => this.pluginMarketplaceStore.setUpload({ progress: coalesceValue(res?.progress, 0) })),
+					tap((res) =>
+						this.pluginMarketplaceStore.setUpload(pluginId, {
+							uploading: true,
+							progress: coalesceValue(res?.progress, 0)
+						})
+					),
 					filter((res) => Boolean(res?.version)), // Filter out null or undefined responses
 					map((res) => res.version),
 					tap((created) => {
@@ -72,8 +77,8 @@ export class PluginVersionEffects {
 						);
 					}),
 					finalize(() => {
-						this.pluginMarketplaceStore.setUpload({ uploading: false });
-						this.pluginVersionStore.setCreating(false);
+						this.pluginMarketplaceStore.setUpload(pluginId, { uploading: false, progress: 0 });
+						this.pluginVersionStore.setCreating(pluginId, false);
 					}), // Always stop loading
 					catchError((error) => {
 						this.toastrService.error(error.message || error); // Handle error properly
@@ -87,8 +92,8 @@ export class PluginVersionEffects {
 	update$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginVersionActions.update),
-			tap(() => {
-				this.pluginVersionStore.setUpdating(true);
+			tap(({ pluginId }) => {
+				this.pluginVersionStore.setUpdating(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.UPDATING'));
 			}),
 			switchMap(({ pluginId, versionId, version }) =>
@@ -102,7 +107,7 @@ export class PluginVersionEffects {
 							})
 						);
 					}),
-					finalize(() => this.pluginVersionStore.setUpdating(false)),
+					finalize(() => this.pluginVersionStore.setUpdating(pluginId, false)),
 					catchError((error) => {
 						this.toastrService.error(error.message || error);
 						return EMPTY;
@@ -115,8 +120,8 @@ export class PluginVersionEffects {
 	delete$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginVersionActions.delete),
-			tap(() => {
-				this.pluginVersionStore.setDeleting(true);
+			tap(({ pluginId }) => {
+				this.pluginVersionStore.setDeleting(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.DELETING'));
 			}),
 			mergeMap(({ pluginId, versionId }) =>
@@ -135,7 +140,7 @@ export class PluginVersionEffects {
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.DELETED')
 						);
 					}),
-					finalize(() => this.pluginVersionStore.setDeleting(false)),
+					finalize(() => this.pluginVersionStore.setDeleting(pluginId, false)),
 					catchError((error) => {
 						this.toastrService.error(error.message || error);
 						return EMPTY;
@@ -148,8 +153,8 @@ export class PluginVersionEffects {
 	restore$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginVersionActions.restore),
-			tap(() => {
-				this.pluginVersionStore.setRestoring(true);
+			tap(({ pluginId }) => {
+				this.pluginVersionStore.setRestoring(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.RESTORING'));
 			}),
 			mergeMap(({ pluginId, versionId }) =>
@@ -172,7 +177,7 @@ export class PluginVersionEffects {
 						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.VERSION.RESTORE'));
 						return EMPTY;
 					}),
-					finalize(() => this.pluginVersionStore.setRestoring(false))
+					finalize(() => this.pluginVersionStore.setRestoring(pluginId, false))
 				)
 			)
 		)

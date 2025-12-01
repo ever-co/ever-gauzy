@@ -4,7 +4,20 @@ import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, catchError, concatMap, exhaustMap, finalize, from, map, of, switchMap, take, tap } from 'rxjs';
+import {
+	EMPTY,
+	Observable,
+	catchError,
+	concatMap,
+	exhaustMap,
+	finalize,
+	from,
+	map,
+	of,
+	switchMap,
+	take,
+	tap
+} from 'rxjs';
 import { PluginActions } from '../../../+state/plugin.action';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../../services';
@@ -21,7 +34,6 @@ import { InstallationValidationChainBuilder } from '../../services';
 import { PluginInstallationActions } from '../actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginToggleActions } from '../actions/plugin-toggle.action';
-import { PluginInstallationQuery } from '../queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../queries/plugin-marketplace.query';
 import { PluginInstallationStore } from '../stores/plugin-installation.store';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
@@ -34,7 +46,6 @@ export class PluginInstallationEffects {
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginMarketplaceQuery: PluginMarketplaceQuery,
 		private readonly pluginInstallationStore: PluginInstallationStore,
-		private readonly pluginInstallationQuery: PluginInstallationQuery,
 		private readonly pluginToggleStore: PluginToggleStore,
 		private readonly pluginService: PluginService,
 		private readonly pluginElectronService: PluginElectronService,
@@ -147,7 +158,11 @@ export class PluginInstallationEffects {
 			this.action$.pipe(
 				ofType(PluginInstallationActions.install),
 				map(({ config }) => {
-					this.pluginInstallationStore.update({ installing: true, error: null });
+					const pluginId = config?.['marketplaceId'];
+					if (pluginId) {
+						this.pluginInstallationStore.setInstalling(pluginId, true);
+						this.pluginInstallationStore.setErrorMessage(pluginId, null);
+					}
 					// Dispatch download start action to trigger download effect
 					return PluginInstallationActions.startDownload(config);
 				})
@@ -165,7 +180,12 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.startDownload),
-				tap(() => this.pluginInstallationStore.update({ downloading: true })),
+				tap(({ config }) => {
+					const pluginId = config?.['marketplaceId'];
+					if (pluginId) {
+						this.pluginInstallationStore.setDownloading(pluginId, true);
+					}
+				}),
 				switchMap(({ config }) =>
 					this.downloadCommand.execute({ config }).pipe(
 						tap(({ message }) => {
@@ -174,10 +194,18 @@ export class PluginInstallationEffects {
 							);
 						}),
 						map(({ plugin, message }) => PluginInstallationActions.downloadCompleted(plugin, message)),
-						finalize(() => this.pluginInstallationStore.update({ downloading: false })),
-						catchError((error) =>
-							of(PluginInstallationActions.downloadFailed(error?.message || 'Download failed'))
-						)
+						finalize(() => {
+							const pluginId = config?.['marketplaceId'];
+							if (pluginId) {
+								this.pluginInstallationStore.setDownloading(pluginId, false);
+							}
+						}),
+						catchError((error) => {
+							const pluginId = config?.['marketplaceId'];
+							return of(
+								PluginInstallationActions.downloadFailed(error?.message || 'Download failed', pluginId)
+							);
+						})
 					)
 				)
 			),
@@ -217,7 +245,7 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.startServerInstallation),
-				tap(() => this.pluginInstallationStore.update({ serverInstalling: true })),
+				tap(({ pluginId }) => this.pluginInstallationStore.setServerInstalling(pluginId, true)),
 				switchMap(({ pluginId, versionId }) =>
 					this.serverInstallCommand.execute({ pluginId, versionId }).pipe(
 						tap(({ installationId }) => {
@@ -229,7 +257,7 @@ export class PluginInstallationEffects {
 						map(({ installationId }) =>
 							PluginInstallationActions.serverInstallationCompleted(installationId, pluginId)
 						),
-						finalize(() => this.pluginInstallationStore.update({ serverInstalling: false })),
+						finalize(() => this.pluginInstallationStore.setServerInstalling(pluginId, false)),
 						catchError((error) =>
 							of(
 								PluginInstallationActions.serverInstallationFailed(
@@ -269,7 +297,7 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.startCompleteInstallation),
-				tap(() => this.pluginInstallationStore.update({ completingInstallation: true })),
+				tap(({ marketplaceId }) => this.pluginInstallationStore.setCompletingInstallation(marketplaceId, true)),
 				switchMap(({ marketplaceId, installationId }) =>
 					this.completeInstallCommand.execute({ marketplaceId, installationId }).pipe(
 						tap(() => {
@@ -282,9 +310,10 @@ export class PluginInstallationEffects {
 						map(() => {
 							return PluginInstallationActions.installationCompleted(marketplaceId);
 						}),
-						finalize(() =>
-							this.pluginInstallationStore.update({ completingInstallation: false, installing: false })
-						),
+						finalize(() => {
+							this.pluginInstallationStore.setCompletingInstallation(marketplaceId, false);
+							this.pluginInstallationStore.setInstalling(marketplaceId, false);
+						}),
 						catchError((error) =>
 							of(
 								PluginInstallationActions.installationFailed(
@@ -342,7 +371,7 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.startActivation),
-				tap(() => this.pluginInstallationStore.update({ activating: true })),
+				tap(({ marketplaceId }) => this.pluginInstallationStore.setActivating(marketplaceId, true)),
 				switchMap(({ installationId, marketplaceId }) => {
 					return this.activateCommand.execute({ marketplaceId, installationId }).pipe(
 						tap(({ message }) => {
@@ -351,9 +380,17 @@ export class PluginInstallationEffects {
 							);
 						}),
 						map(({ plugin, message }) => PluginInstallationActions.activationCompleted(plugin, message)),
-						finalize(() => this.pluginInstallationStore.update({ activating: false, installing: false })),
+						finalize(() => {
+							this.pluginInstallationStore.setActivating(marketplaceId, false);
+							this.pluginInstallationStore.setInstalling(marketplaceId, false);
+						}),
 						catchError((error) =>
-							of(PluginInstallationActions.activationFailed(error?.message || 'Activation failed'))
+							of(
+								PluginInstallationActions.activationFailed(
+									error?.message || 'Activation failed',
+									marketplaceId
+								)
+							)
 						)
 					);
 				})
@@ -371,7 +408,7 @@ export class PluginInstallationEffects {
 			this.action$.pipe(
 				ofType(PluginInstallationActions.activationCompleted),
 				concatMap(({ plugin: { marketplaceId } }) => {
-					this.handleSuccess();
+					this.handleSuccess('Installation done', marketplaceId);
 					return [
 						PluginToggleActions.toggle({ pluginId: marketplaceId, enabled: true }),
 						PluginActions.selectPlugin(null),
@@ -391,21 +428,23 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.downloadFailed),
-				concatMap(({ error }) => {
-					this.pluginInstallationStore.update({
-						installing: false,
-						downloading: false,
-						error
-					});
+				concatMap(({ error, pluginId }) => {
+					if (pluginId) {
+						this.pluginInstallationStore.setInstalling(pluginId, false);
+						this.pluginInstallationStore.setDownloading(pluginId, false);
+						this.pluginInstallationStore.setErrorMessage(pluginId, error);
+					}
 					this.toastrService.error(
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.DOWNLOAD_FAILED')
 					);
-					return of(
-						PluginToggleActions.toggle({
-							pluginId: this.pluginInstallationQuery.currentPluginId,
-							enabled: false
-						})
-					);
+					return pluginId
+						? of(
+								PluginToggleActions.toggle({
+									pluginId,
+									enabled: false
+								})
+						  )
+						: EMPTY;
 				})
 			),
 		{ dispatch: true }
@@ -418,28 +457,26 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.serverInstallationFailed),
-				concatMap(({ error }) => {
-					this.pluginInstallationStore.update({
-						installing: false,
-						serverInstalling: false,
-						error
-					});
+				concatMap(({ error, pluginId }) => {
+					if (pluginId) {
+						this.pluginInstallationStore.setInstalling(pluginId, false);
+						this.pluginInstallationStore.setServerInstalling(pluginId, false);
+						this.pluginInstallationStore.setErrorMessage(pluginId, error);
+						// Trigger rollback - find the downloaded plugin and remove it
+						this.revertFailedInstallation(pluginId);
+					}
 					this.toastrService.error(
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.SERVER_INSTALLATION_FAILED')
 					);
 
-					// Trigger rollback - find the downloaded plugin and remove it
-					const currentPluginId = this.pluginInstallationStore.getValue().currentPluginId;
-					if (currentPluginId) {
-						this.revertFailedInstallation(currentPluginId);
-					}
-
-					return of(
-						PluginToggleActions.toggle({
-							pluginId: this.pluginInstallationQuery.currentPluginId,
-							enabled: false
-						})
-					);
+					return pluginId
+						? of(
+								PluginToggleActions.toggle({
+									pluginId,
+									enabled: false
+								})
+						  )
+						: EMPTY;
 				})
 			),
 		{ dispatch: true }
@@ -452,22 +489,24 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.installationFailed),
-				concatMap(({ error }) => {
-					this.pluginInstallationStore.update({
-						installing: false,
-						completingInstallation: false,
-						error
-					});
+				concatMap(({ error, pluginId }) => {
+					if (pluginId) {
+						this.pluginInstallationStore.setInstalling(pluginId, false);
+						this.pluginInstallationStore.setCompletingInstallation(pluginId, false);
+						this.pluginInstallationStore.setErrorMessage(pluginId, error);
+					}
 					this.toastrService.error(
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.INSTALLATION_FAILED')
 					);
 
-					return of(
-						PluginToggleActions.toggle({
-							pluginId: this.pluginInstallationQuery.currentPluginId,
-							enabled: false
-						})
-					);
+					return pluginId
+						? of(
+								PluginToggleActions.toggle({
+									pluginId,
+									enabled: false
+								})
+						  )
+						: EMPTY;
 				})
 			),
 		{ dispatch: true }
@@ -480,22 +519,24 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.activationFailed),
-				concatMap(({ error }) => {
-					this.pluginInstallationStore.update({
-						installing: false,
-						activating: false,
-						error
-					});
+				concatMap(({ error, pluginId }) => {
+					if (pluginId) {
+						this.pluginInstallationStore.setInstalling(pluginId, false);
+						this.pluginInstallationStore.setActivating(pluginId, false);
+						this.pluginInstallationStore.setErrorMessage(pluginId, error);
+					}
 					this.toastrService.error(
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.ACTIVATION_FAILED')
 					);
 
-					return of(
-						PluginToggleActions.toggle({
-							pluginId: this.pluginInstallationQuery.currentPluginId,
-							enabled: false
-						})
-					);
+					return pluginId
+						? of(
+								PluginToggleActions.toggle({
+									pluginId,
+									enabled: false
+								})
+						  )
+						: EMPTY;
 				})
 			),
 		{ dispatch: true }
@@ -508,8 +549,10 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.clearError),
-				concatMap(() => {
-					this.pluginInstallationStore.update({ error: null });
+				concatMap(({ pluginId }) => {
+					if (pluginId) {
+						this.pluginInstallationStore.setErrorMessage(pluginId, null);
+					}
 					return of(PluginActions.refresh());
 				})
 			),
@@ -522,19 +565,8 @@ export class PluginInstallationEffects {
 	reset$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginInstallationActions.reset),
-			tap(() => {
-				this.pluginInstallationStore.update({
-					downloading: false,
-					installing: false,
-					serverInstalling: false,
-					completingInstallation: false,
-					activating: false,
-					uninstalling: false,
-					deactivating: false,
-					currentPluginId: null,
-					currentInstallationId: null,
-					error: null
-				});
+			tap(({ pluginId }) => {
+				this.pluginInstallationStore.resetStates(pluginId);
 			})
 		)
 	);
@@ -563,7 +595,7 @@ export class PluginInstallationEffects {
 							}
 
 							// Begin uninstall
-							this.pluginInstallationStore.update({ uninstalling: true });
+							this.pluginInstallationStore.setUninstalling(pluginId, true);
 
 							return this.handleUninstall({ marketplaceId: pluginId, id: installedId }).pipe(
 								map((isUninstalled) => [
@@ -585,7 +617,7 @@ export class PluginInstallationEffects {
 									);
 								}),
 
-								finalize(() => this.pluginInstallationStore.update({ uninstalling: false }))
+								finalize(() => this.pluginInstallationStore.setUninstalling(pluginId, false))
 							);
 						})
 					)
@@ -619,9 +651,11 @@ export class PluginInstallationEffects {
 	/**
 	 * Helper: Handle successful operation
 	 */
-	private handleSuccess(message?: string): void {
+	private handleSuccess(message?: string, pluginId?: string): void {
 		if (message) this.toastrService.success(message);
-		this.pluginInstallationStore.update({ error: null });
+		if (pluginId) {
+			this.pluginInstallationStore.setErrorMessage(pluginId, null);
+		}
 	}
 
 	/**

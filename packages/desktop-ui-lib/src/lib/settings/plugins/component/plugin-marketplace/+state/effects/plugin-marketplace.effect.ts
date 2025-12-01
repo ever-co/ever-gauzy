@@ -65,13 +65,18 @@ export class PluginMarketplaceEffects {
 		this.action$.pipe(
 			ofType(PluginMarketplaceActions.upload),
 			exhaustMap(() => this.uploadDialog()),
-			tap(() => {
-				this.pluginMarketplaceStore.setUpload({ uploading: true });
+			tap((plugin) => {
+				this.pluginMarketplaceStore.setUpload(plugin.id, { uploading: true, progress: 0 });
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UPLOADING'));
 			}),
 			switchMap((plugin) =>
 				this.pluginService.upload(plugin).pipe(
-					tap((res) => this.pluginMarketplaceStore.setUpload({ progress: coalesceValue(res?.progress, 0) })),
+					tap((res) =>
+						this.pluginMarketplaceStore.setUpload(plugin.id, {
+							uploading: true,
+							progress: coalesceValue(res?.progress, 0)
+						})
+					),
 					filter((res) => Boolean(res?.plugin)), // Ensure plugin is not null/undefined
 					map((res) => res.plugin),
 					tap((uploaded) => {
@@ -82,7 +87,7 @@ export class PluginMarketplaceEffects {
 						);
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPLOADED'));
 					}),
-					finalize(() => this.pluginMarketplaceStore.setUpload({ uploading: false })), // Always stop loading
+					finalize(() => this.pluginMarketplaceStore.setUpload(plugin.id, { uploading: false, progress: 0 })), // Always stop loading
 					catchError((error) => {
 						this.toastrService.error(
 							error.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UPLOAD')
@@ -174,8 +179,8 @@ export class PluginMarketplaceEffects {
 						tap((updated: IPlugin) => updated)
 					)
 			),
-			tap(() => {
-				this.pluginMarketplaceStore.setUpdating(true);
+			tap((plugin) => {
+				this.pluginMarketplaceStore.setUpdating(plugin.id, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UPDATING'));
 			}),
 			switchMap((plugin) =>
@@ -184,7 +189,7 @@ export class PluginMarketplaceEffects {
 						this.pluginMarketplaceStore.updatePlugin(updatedPlugin.id, updatedPlugin);
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPDATED'));
 					}),
-					finalize(() => this.pluginMarketplaceStore.setUpdating(false)),
+					finalize(() => this.pluginMarketplaceStore.setUpdating(plugin.id, false)),
 					catchError((error) => {
 						this.toastrService.error(error.message || error);
 						return EMPTY;
@@ -215,8 +220,8 @@ export class PluginMarketplaceEffects {
 						map(() => id)
 					)
 			),
-			tap(() => {
-				this.pluginMarketplaceStore.setDeleting(true);
+			tap((id) => {
+				this.pluginMarketplaceStore.setDeleting(id, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.DELETING'));
 			}),
 			switchMap((id) =>
@@ -233,7 +238,7 @@ export class PluginMarketplaceEffects {
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.DELETED'));
 					}),
 					finalize(() => {
-						this.pluginMarketplaceStore.setDeleting(false);
+						this.pluginMarketplaceStore.setDeleting(id, false);
 					}),
 					catchError((error) => {
 						this.toastrService.error(error?.message || error);

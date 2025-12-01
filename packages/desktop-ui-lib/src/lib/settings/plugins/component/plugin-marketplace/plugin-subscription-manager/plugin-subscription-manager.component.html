@@ -1,7 +1,7 @@
 <!-- Installed and Installing Status -->
 @let installed = installationQuery.installed$(plugin?.id) | async;
 <!-- Loading State -->
-@let installing = installationQuery.installing$ |async;
+@let installing = installationQuery.installing$(plugin?.id) |async;
 
 <div class="subscription-manager">
 	<div class="manager-header">

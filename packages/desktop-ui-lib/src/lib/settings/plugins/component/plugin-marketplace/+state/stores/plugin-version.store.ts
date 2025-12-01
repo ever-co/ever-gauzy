@@ -3,10 +3,10 @@ import { Store, StoreConfig } from '@datorama/akita';
 import { ID, IPluginVersion } from '@gauzy/contracts';
 
 export interface IPluginVersionState {
-	creating: boolean;
-	updating: boolean;
-	deleting: boolean;
-	restoring: boolean;
+	creating: Record<string, boolean>;
+	updating: Record<string, boolean>;
+	deleting: Record<string, boolean>;
+	restoring: Record<string, boolean>;
 	versions: IPluginVersion[];
 	version: IPluginVersion;
 	pluginId: ID;
@@ -15,10 +15,10 @@ export interface IPluginVersionState {
 
 export function createInitialPluginVersionState(): IPluginVersionState {
 	return {
-		creating: false,
-		updating: false,
-		deleting: false,
-		restoring: false,
+		creating: {},
+		updating: {},
+		deleting: {},
+		restoring: {},
 		versions: [],
 		version: null,
 		pluginId: null,
@@ -34,20 +34,40 @@ export class PluginVersionStore extends Store<IPluginVersionState> {
 	}
 
 	// Loading states
-	public setCreating(creating: boolean): void {
-		this.update({ creating });
+	public setCreating(pluginId: string, creating: boolean): void {
+		this.update((state) => ({
+			creating: {
+				...state.creating,
+				[pluginId]: creating
+			}
+		}));
 	}
 
-	public setUpdating(updating: boolean): void {
-		this.update({ updating });
+	public setUpdating(pluginId: string, updating: boolean): void {
+		this.update((state) => ({
+			updating: {
+				...state.updating,
+				[pluginId]: updating
+			}
+		}));
 	}
 
-	public setDeleting(deleting: boolean): void {
-		this.update({ deleting });
+	public setDeleting(pluginId: string, deleting: boolean): void {
+		this.update((state) => ({
+			deleting: {
+				...state.deleting,
+				[pluginId]: deleting
+			}
+		}));
 	}
 
-	public setRestoring(restoring: boolean): void {
-		this.update({ restoring });
+	public setRestoring(pluginId: string, restoring: boolean): void {
+		this.update((state) => ({
+			restoring: {
+				...state.restoring,
+				[pluginId]: restoring
+			}
+		}));
 	}
 
 	// Version management

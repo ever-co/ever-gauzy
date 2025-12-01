@@ -14,11 +14,6 @@ export class PluginMarketplaceQuery extends Query<IPluginMarketplaceState> {
 	public readonly filteredCount$: Observable<number> = this.select((state) => state.filteredCount);
 	public readonly filters$: Observable<IPluginFilter> = this.select((state) => state.filters);
 	public readonly appliedFilters$: Observable<IPluginFilter> = this.select((state) => state.appliedFilters);
-	public readonly deleting$: Observable<boolean> = this.select((state) => state.deleting);
-	public readonly updating$: Observable<boolean> = this.select((state) => state.updating);
-	public readonly uploading$: Observable<boolean> = this.select((state) => state.upload.uploading);
-	public readonly progress$: Observable<number> = this.select((state) => state.upload.progress);
-
 	// UI state
 	public readonly showAdvancedFilters$: Observable<boolean> = this.select((state) => state.ui.showAdvancedFilters);
 	public readonly collapsedFilters$: Observable<boolean> = this.select((state) => state.ui.collapsedFilters);
@@ -30,6 +25,28 @@ export class PluginMarketplaceQuery extends Query<IPluginMarketplaceState> {
 		super(pluginMarketplaceStore);
 	}
 
+	// Per-plugin observables
+	public deleting$(pluginId: string): Observable<boolean> {
+		return this.select((state) => state.deleting[pluginId] ?? false);
+	}
+
+	public updating$(pluginId: string): Observable<boolean> {
+		return this.select((state) => state.updating[pluginId] ?? false);
+	}
+
+	public uploading$(pluginId?: string): Observable<boolean> {
+		return this.select((state) => state.upload[pluginId]?.uploading ?? false);
+	}
+
+	public uploadProgress$(pluginId?: string): Observable<number> {
+		return this.select((state) => state.upload[pluginId]?.progress ?? 0);
+	}
+
+	public error$(pluginId: string): Observable<string | null> {
+		return this.select((state) => state.error[pluginId] ?? null);
+	}
+
+	// Synchronous getters
 	public get plugin(): IPlugin {
 		return this.getValue().plugin;
 	}
@@ -64,5 +81,25 @@ export class PluginMarketplaceQuery extends Query<IPluginMarketplaceState> {
 
 	public get selectedView(): 'grid' | 'list' {
 		return this.getValue().ui.selectedView;
+	}
+
+	public isDeleting(pluginId: string): boolean {
+		return this.getValue().deleting[pluginId] ?? false;
+	}
+
+	public isUpdating(pluginId: string): boolean {
+		return this.getValue().updating[pluginId] ?? false;
+	}
+
+	public isUploading(pluginId: string): boolean {
+		return this.getValue().upload[pluginId]?.uploading ?? false;
+	}
+
+	public getUploadProgress(pluginId: string): number {
+		return this.getValue().upload[pluginId]?.progress ?? 0;
+	}
+
+	public getError(pluginId: string): string | null {
+		return this.getValue().error[pluginId] ?? null;
 	}
 }

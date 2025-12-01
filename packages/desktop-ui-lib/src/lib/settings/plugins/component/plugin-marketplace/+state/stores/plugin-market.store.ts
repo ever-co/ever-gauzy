@@ -23,8 +23,8 @@ export interface IPluginFilter {
 export interface IPluginMarketplaceState {
 	// Loading states
 	loading: boolean;
-	updating: boolean;
-	deleting: boolean;
+	updating: Record<string, boolean>; // per plugin ID
+	deleting: Record<string, boolean>; // per plugin ID
 
 	// Plugin data
 	plugins: IPlugin[];
@@ -41,11 +41,14 @@ export interface IPluginMarketplaceState {
 	// Tags (marketplace-specific metadata)
 	tags: any[];
 
-	// Upload state
-	upload: {
-		uploading: boolean;
-		progress: number;
-	};
+	// Upload state (per plugin ID for updates)
+	upload: Record<
+		string,
+		{
+			uploading: boolean;
+			progress: number;
+		}
+	>;
 
 	// UI state
 	ui: {
@@ -54,15 +57,15 @@ export interface IPluginMarketplaceState {
 		selectedView: 'grid' | 'list';
 	};
 
-	// Error handling
-	error: string | null;
+	// Error handling (per plugin ID)
+	error: Record<string, string>;
 }
 
 export function createInitialMarketplaceState(): IPluginMarketplaceState {
 	return {
 		loading: false,
-		updating: false,
-		deleting: false,
+		updating: {},
+		deleting: {},
 		plugins: [],
 		plugin: null,
 		count: 0,
@@ -72,16 +75,13 @@ export function createInitialMarketplaceState(): IPluginMarketplaceState {
 		appliedFilters: {},
 		searchQuery: '',
 		tags: [],
-		upload: {
-			uploading: false,
-			progress: 0
-		},
+		upload: {},
 		ui: {
 			showAdvancedFilters: false,
 			collapsedFilters: false,
 			selectedView: 'grid'
 		},
-		error: null
+		error: {}
 	};
 }
 
@@ -92,12 +92,12 @@ export class PluginMarketplaceStore extends Store<IPluginMarketplaceState> {
 		super(createInitialMarketplaceState());
 	}
 
-	public setUpload(action: Partial<IPluginMarketplaceState['upload']>): void {
+	public setUpload(pluginId: string, action: { uploading: boolean; progress: number }): void {
 		this.update((state) => ({
 			...state,
 			upload: {
 				...state.upload,
-				...action
+				[pluginId]: action
 			}
 		}));
 	}
@@ -153,21 +153,43 @@ export class PluginMarketplaceStore extends Store<IPluginMarketplaceState> {
 		this.update({ loading });
 	}
 
-	public setUpdating(updating: boolean): void {
-		this.update({ updating });
+	public setUpdating(pluginId: string, updating: boolean): void {
+		this.update((state) => ({
+			updating: {
+				...state.updating,
+				[pluginId]: updating
+			}
+		}));
 	}
 
-	public setDeleting(deleting: boolean): void {
-		this.update({ deleting });
+	public setDeleting(pluginId: string, deleting: boolean): void {
+		this.update((state) => ({
+			deleting: {
+				...state.deleting,
+				[pluginId]: deleting
+			}
+		}));
 	}
 
 	// Error handling
-	public setErrorMessage(error: string | null): void {
-		this.update({ error });
+	public setErrorMessage(pluginId: string, error: string | null): void {
+		this.update((state) => ({
+			error: {
+				...state.error,
+				[pluginId]: error
+			}
+		}));
 	}
 
-	public clearError(): void {
-		this.update({ error: null });
+	public clearError(pluginId?: string): void {
+		if (pluginId) {
+			this.update((state) => {
+				const { [pluginId]: removed, ...remaining } = state.error;
+				return { error: remaining };
+			});
+		} else {
+			this.update({ error: {} });
+		}
 	}
 
 	// Plugin management

@@ -9,47 +9,41 @@ export interface IPendingInstallation {
 }
 
 export interface IPluginInstallationState {
-	// Download state
-	downloading: boolean;
-	downloadProgress?: number;
+	// Download state (per plugin ID)
+	downloading: Record<string, boolean>;
+	downloadProgress: Record<string, number>;
 
-	// Installation states
-	installing: boolean;
-	serverInstalling: boolean;
-	completingInstallation: boolean;
+	// Installation states (per plugin ID)
+	installing: Record<string, boolean>;
+	serverInstalling: Record<string, boolean>;
+	completingInstallation: Record<string, boolean>;
 
-	// Activation states
-	activating: boolean;
+	// Activation states (per plugin ID)
+	activating: Record<string, boolean>;
 
-	// Uninstallation states
-	uninstalling: boolean;
-	deactivating: boolean;
-
-	// Current operation tracking
-	currentPluginId?: string;
-	currentInstallationId?: string;
+	// Uninstallation states (per plugin ID)
+	uninstalling: Record<string, boolean>;
+	deactivating: Record<string, boolean>;
 
 	// Pending installations (for multi-step tracking)
 	pendingInstallations: Record<string, IPendingInstallation>;
 
-	// Error state
-	error?: string;
+	// Error state (per plugin ID)
+	error: Record<string, string>;
 }
 
 export function createInitialInstallationState(): IPluginInstallationState {
 	return {
-		downloading: false,
-		downloadProgress: 0,
-		installing: false,
-		serverInstalling: false,
-		completingInstallation: false,
-		activating: false,
-		uninstalling: false,
-		deactivating: false,
-		currentPluginId: null,
-		currentInstallationId: null,
+		downloading: {},
+		downloadProgress: {},
+		installing: {},
+		serverInstalling: {},
+		completingInstallation: {},
+		activating: {},
+		uninstalling: {},
+		deactivating: {},
 		pendingInstallations: {},
-		error: null
+		error: {}
 	};
 }
 
@@ -74,9 +68,7 @@ export class PluginInstallationStore extends Store<IPluginInstallationState> {
 					versionId,
 					timestamp: Date.now()
 				}
-			},
-			currentPluginId: pluginId,
-			currentInstallationId: installationId
+			}
 		}));
 	}
 
@@ -88,77 +80,105 @@ export class PluginInstallationStore extends Store<IPluginInstallationState> {
 			const { [pluginId]: removed, ...remaining } = state.pendingInstallations;
 			return {
 				...state,
-				pendingInstallations: remaining,
-				currentPluginId: null,
-				currentInstallationId: null
+				pendingInstallations: remaining
 			};
 		});
 	}
 
 	/**
-	 * Sets the download progress
+	 * Sets the download progress for a specific plugin
 	 */
-	public setDownloadProgress(progress: number): void {
-		this.update({ downloadProgress: progress });
+	public setDownloadProgress(pluginId: string, progress: number): void {
+		this.update((state) => ({
+			downloadProgress: {
+				...state.downloadProgress,
+				[pluginId]: progress
+			}
+		}));
 	}
 
 	/**
-	 * Sets the downloading state
+	 * Sets the downloading state for a specific plugin
 	 */
-	public setDownloading(downloading: boolean): void {
-		this.update({ downloading });
+	public setDownloading(pluginId: string, downloading: boolean): void {
+		this.update((state) => ({
+			downloading: {
+				...state.downloading,
+				[pluginId]: downloading
+			}
+		}));
 	}
 
 	/**
-	 * Sets the installing state
+	 * Sets the installing state for a specific plugin
 	 */
-	public setInstalling(installing: boolean): void {
-		this.update({ installing });
+	public setInstalling(pluginId: string, installing: boolean): void {
+		this.update((state) => ({
+			installing: {
+				...state.installing,
+				[pluginId]: installing
+			}
+		}));
 	}
 
 	/**
-	 * Sets the server installing state
+	 * Sets the server installing state for a specific plugin
 	 */
-	public setServerInstalling(serverInstalling: boolean): void {
-		this.update({ serverInstalling });
+	public setServerInstalling(pluginId: string, serverInstalling: boolean): void {
+		this.update((state) => ({
+			serverInstalling: {
+				...state.serverInstalling,
+				[pluginId]: serverInstalling
+			}
+		}));
 	}
 
 	/**
-	 * Sets the completing installation state
+	 * Sets the completing installation state for a specific plugin
 	 */
-	public setCompletingInstallation(completingInstallation: boolean): void {
-		this.update({ completingInstallation });
+	public setCompletingInstallation(pluginId: string, completingInstallation: boolean): void {
+		this.update((state) => ({
+			completingInstallation: {
+				...state.completingInstallation,
+				[pluginId]: completingInstallation
+			}
+		}));
 	}
 
 	/**
-	 * Sets the activating state
+	 * Sets the activating state for a specific plugin
 	 */
-	public setActivating(activating: boolean): void {
-		this.update({ activating });
+	public setActivating(pluginId: string, activating: boolean): void {
+		this.update((state) => ({
+			activating: {
+				...state.activating,
+				[pluginId]: activating
+			}
+		}));
 	}
 
 	/**
-	 * Sets the uninstalling state
+	 * Sets the uninstalling state for a specific plugin
 	 */
-	public setUninstalling(uninstalling: boolean): void {
-		this.update({ uninstalling });
+	public setUninstalling(pluginId: string, uninstalling: boolean): void {
+		this.update((state) => ({
+			uninstalling: {
+				...state.uninstalling,
+				[pluginId]: uninstalling
+			}
+		}));
 	}
 
 	/**
-	 * Sets the deactivating state
+	 * Sets the deactivating state for a specific plugin
 	 */
-	public setDeactivating(deactivating: boolean): void {
-		this.update({ deactivating });
-	}
-
-	/**
-	 * Sets the current plugin being operated on
-	 */
-	public setCurrentPlugin(pluginId: string | null, installationId?: string | null): void {
-		this.update({
-			currentPluginId: pluginId,
-			currentInstallationId: installationId ?? null
-		});
+	public setDeactivating(pluginId: string, deactivating: boolean): void {
+		this.update((state) => ({
+			deactivating: {
+				...state.deactivating,
+				[pluginId]: deactivating
+			}
+		}));
 	}
 
 	/**
@@ -176,36 +196,67 @@ export class PluginInstallationStore extends Store<IPluginInstallationState> {
 	}
 
 	/**
-	 * Sets error state
+	 * Sets error state for a specific plugin
 	 */
-	public setErrorMessage(error: string | null): void {
-		this.update({ error });
+	public setErrorMessage(pluginId: string, error: string | null): void {
+		this.update((state) => ({
+			error: {
+				...state.error,
+				[pluginId]: error
+			}
+		}));
 	}
 
 	/**
-	 * Clears error state
+	 * Clears error state for a specific plugin or all plugins
 	 */
-	public clearError(): void {
-		this.update({ error: null });
+	public clearError(pluginId?: string): void {
+		if (pluginId) {
+			this.update((state) => {
+				const { [pluginId]: removed, ...remaining } = state.error;
+				return { error: remaining };
+			});
+		} else {
+			this.update({ error: {} });
+		}
 	}
 
 	/**
-	 * Resets all installation states
+	 * Resets installation states for a specific plugin or all plugins
 	 */
-	public resetStates(): void {
-		this.update({
-			downloading: false,
-			downloadProgress: 0,
-			installing: false,
-			serverInstalling: false,
-			completingInstallation: false,
-			activating: false,
-			uninstalling: false,
-			deactivating: false,
-			currentPluginId: null,
-			currentInstallationId: null,
-			error: null
-		});
+	public resetStates(pluginId?: string): void {
+		if (pluginId) {
+			this.update((state) => {
+				const cleanRecord = (record: Record<string, any>) => {
+					const { [pluginId]: removed, ...remaining } = record;
+					return remaining;
+				};
+
+				return {
+					downloading: cleanRecord(state.downloading),
+					downloadProgress: cleanRecord(state.downloadProgress),
+					installing: cleanRecord(state.installing),
+					serverInstalling: cleanRecord(state.serverInstalling),
+					completingInstallation: cleanRecord(state.completingInstallation),
+					activating: cleanRecord(state.activating),
+					uninstalling: cleanRecord(state.uninstalling),
+					deactivating: cleanRecord(state.deactivating),
+					error: cleanRecord(state.error)
+				};
+			});
+		} else {
+			this.update({
+				downloading: {},
+				downloadProgress: {},
+				installing: {},
+				serverInstalling: {},
+				completingInstallation: {},
+				activating: {},
+				uninstalling: {},
+				deactivating: {},
+				error: {}
+			});
+		}
 	}
 
 	/**

@@ -2,22 +2,20 @@
 @let checked = toggleQuery.isEnabled$(plugin?.id) | async;
 <!-- Get the current plugin details -->
 @let currentPlugin = marketplaceQuery.plugin$ | async;
-<!-- current plugin installing-->
-@let installationPluginId = installationQuery.currentPluginId$ | async;
 <!-- Is Selected-->
 @let isSelected = currentPlugin?.id === plugin?.id;
 <!-- Template for Plugin Marketplace Detail Component -->
-@let installing = (installationQuery.installing$ | async) && installationPluginId === plugin?.id;
+@let installing = installationQuery.installing$(plugin?.id) | async;
 <!-- Determine if the plugin is currently being installed or uninstalled -->
-@let uninstalling = installationQuery.uninstalling$ | async;
+@let uninstalling = installationQuery.uninstalling$(plugin?.id) | async;
 <!-- Check if the plugin is selected and disabled state for toggles -->
 @let installed = installationQuery.installed$(plugin?.id) | async;
 <!-- Disabled state when installing or uninstalling -->
 @let disabled = installing || uninstalling;
 <!-- Disabled state when installing or uninstalling -->
-@let showProgress = disabled && isSelected;
+@let showProgress = disabled;
 <!-- Check if the current user is the owner of the plugin -->
-@let editing = marketplaceQuery.updating$ | async;
+@let editing = marketplaceQuery.updating$(plugin?.id) | async;
 <!-- Main template -->
 @if(plugin) {
 <div
