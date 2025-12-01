@@ -35,10 +35,15 @@ export class PluginMarketplaceQuery extends Query<IPluginMarketplaceState> {
 	}
 
 	public uploading$(pluginId?: string): Observable<boolean> {
-		return this.select((state) => state.upload[pluginId]?.uploading ?? false);
+		return this.select((state) => {
+			if (!pluginId) {
+				return Object.values(state.upload).some((val) => val.uploading);
+			}
+			return state.upload[pluginId]?.uploading ?? false;
+		});
 	}
 
-	public uploadProgress$(pluginId?: string): Observable<number> {
+	public uploadProgress$(pluginId: string = 'default'): Observable<number> {
 		return this.select((state) => state.upload[pluginId]?.progress ?? 0);
 	}
 

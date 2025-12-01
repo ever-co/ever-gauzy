@@ -65,14 +65,14 @@ export class PluginMarketplaceEffects {
 		this.action$.pipe(
 			ofType(PluginMarketplaceActions.upload),
 			exhaustMap(() => this.uploadDialog()),
-			tap((plugin) => {
-				this.pluginMarketplaceStore.setUpload(plugin.id, { uploading: true, progress: 0 });
+			tap(() => {
+				this.pluginMarketplaceStore.setUpload('default', { uploading: true, progress: 0 });
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.UPLOADING'));
 			}),
 			switchMap((plugin) =>
 				this.pluginService.upload(plugin).pipe(
 					tap((res) =>
-						this.pluginMarketplaceStore.setUpload(plugin.id, {
+						this.pluginMarketplaceStore.setUpload('default', {
 							uploading: true,
 							progress: coalesceValue(res?.progress, 0)
 						})
@@ -87,7 +87,7 @@ export class PluginMarketplaceEffects {
 						);
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UPLOADED'));
 					}),
-					finalize(() => this.pluginMarketplaceStore.setUpload(plugin.id, { uploading: false, progress: 0 })), // Always stop loading
+					finalize(() => this.pluginMarketplaceStore.setUpload('default', { uploading: false, progress: 0 })), // Always stop loading
 					catchError((error) => {
 						this.toastrService.error(
 							error.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UPLOAD')

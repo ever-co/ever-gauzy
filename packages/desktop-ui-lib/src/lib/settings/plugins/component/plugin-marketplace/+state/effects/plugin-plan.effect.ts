@@ -1,14 +1,20 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { EMPTY, catchError, exhaustMap, filter, finalize, map, of, switchMap, take, tap } from 'rxjs';
+import { EMPTY, catchError, exhaustMap, finalize, map, of, switchMap, take, tap } from 'rxjs';
 
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrNotificationService } from '../../../../../../services';
 import { IPluginSubscriptionPlan, PluginSubscriptionService } from '../../../../services/plugin-subscription.service';
-import { PluginSubscriptionPlanSelectionComponent } from '../../plugin-subscription-plan-selection';
+import {
+	IPluginSubscriptionPlanSelectionResult,
+	PluginSubscriptionPlanSelectionComponent
+} from '../../plugin-subscription-plan-selection';
+import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginPlanActions } from '../actions/plugin-plan.action';
+import { PluginToggleActions } from '../actions/plugin-toggle.action';
+import { PluginMarketplaceQuery } from '../queries/plugin-marketplace.query';
 import { PluginPlanStore } from '../stores/plugin-plan.store';
 
 @Injectable({ providedIn: 'root' })
@@ -16,6 +22,7 @@ export class PluginPlanEffects {
 	constructor(
 		private readonly actions$: Actions,
 		private readonly pluginSubscriptionService: PluginSubscriptionService,
+		private readonly pluginMarketplaceQuery: PluginMarketplaceQuery,
 		private readonly pluginPlanStore: PluginPlanStore,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
@@ -178,8 +185,26 @@ export class PluginPlanEffects {
 			ofType(PluginPlanActions.openPlanSubscriptions),
 			exhaustMap(({ pluginId }) =>
 				this.dialogService
-					.open(PluginSubscriptionPlanSelectionComponent, { context: { pluginId } })
-					.onClose.pipe(take(1), filter(Boolean))
+					.open(PluginSubscriptionPlanSelectionComponent, {
+						context: { pluginId }
+					})
+					.onClose.pipe(
+						take(1),
+						switchMap((result: IPluginSubscriptionPlanSelectionResult | null) => {
+							const proceed = result?.proceedWithInstallation === true;
+							if (!proceed) {
+								return of(PluginToggleActions.toggle({ pluginId, enabled: false }));
+							}
+
+							const plugin = this.pluginMarketplaceQuery.plugins.find((p) => p.id === pluginId);
+							if (!plugin) {
+								return of(PluginToggleActions.toggle({ pluginId, enabled: false }));
+							}
+
+							return of(PluginMarketplaceActions.install(plugin));
+						}),
+						catchError(() => of(PluginToggleActions.toggle({ pluginId, enabled: false })))
+					)
 			)
 		)
 	);

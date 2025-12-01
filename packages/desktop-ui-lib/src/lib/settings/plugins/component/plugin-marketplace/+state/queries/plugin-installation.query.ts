@@ -45,8 +45,13 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 		return this.select((state) => state.downloadProgress[pluginId] ?? 0);
 	}
 
-	public installing$(pluginId: string): Observable<boolean> {
-		return this.select((state) => state.installing[pluginId] ?? false);
+	public installing$(pluginId?: string): Observable<boolean> {
+		return this.select((state) => {
+			if (!pluginId) {
+				return Object.values(state.installing).some((val) => val);
+			}
+			return state.installing[pluginId] ?? false;
+		});
 	}
 
 	public serverInstalling$(pluginId: string): Observable<boolean> {
@@ -61,8 +66,13 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 		return this.select((state) => state.activating[pluginId] ?? false);
 	}
 
-	public uninstalling$(pluginId: string): Observable<boolean> {
-		return this.select((state) => state.uninstalling[pluginId] ?? false);
+	public uninstalling$(pluginId?: string): Observable<boolean> {
+		return this.select((state) => {
+			if (!pluginId) {
+				return Object.values(state.uninstalling).some((val) => val);
+			}
+			return state.uninstalling[pluginId] ?? false;
+		});
 	}
 
 	public deactivating$(pluginId: string): Observable<boolean> {

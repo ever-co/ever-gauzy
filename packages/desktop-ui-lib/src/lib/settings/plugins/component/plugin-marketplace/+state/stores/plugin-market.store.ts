@@ -92,7 +92,7 @@ export class PluginMarketplaceStore extends Store<IPluginMarketplaceState> {
 		super(createInitialMarketplaceState());
 	}
 
-	public setUpload(pluginId: string, action: { uploading: boolean; progress: number }): void {
+	public setUpload(pluginId: string = 'default', action: { uploading: boolean; progress: number }): void {
 		this.update((state) => ({
 			...state,
 			upload: {

@@ -18,7 +18,6 @@ import {
 } from 'rxjs';
 import { PluginSubscriptionFacade } from '../+state';
 import { PluginSubscriptionActions } from '../+state/actions/plugin-subscription.action';
-import { PluginSubscriptionQuery } from '../+state/queries/plugin-subscription.query';
 import {
 	IPluginSubscription,
 	IPluginSubscriptionCreateInput,
@@ -27,7 +26,7 @@ import {
 	PluginSubscriptionService,
 	PluginSubscriptionType
 } from '../../../services/plugin-subscription.service';
-import { SubscriptionFormService, SubscriptionPlanService, SubscriptionStatusService } from '../shared';
+import { SubscriptionPlanService, SubscriptionStatusService } from '../shared';
 import { IPlanViewModel, ISubscriptionPreviewViewModel } from './models/plan-view.model';
 import { IPlanComparisonResult, PlanActionType, PlanComparisonService } from './services/plan-comparison.service';
 import { PlanFormatterService } from './services/plan-formatter.service';
@@ -123,13 +122,11 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 	constructor(
 		private readonly dialogRef: NbDialogRef<PluginSubscriptionPlanSelectionComponent>,
 		private readonly subscriptionService: PluginSubscriptionService,
-		private readonly pluginSubscriptionQuery: PluginSubscriptionQuery,
 		private readonly actions$: Actions,
 		private readonly planFormatter: PlanFormatterService,
 		private readonly facade: PluginSubscriptionFacade,
 		private readonly planComparison: PlanComparisonService,
 		public readonly planService: SubscriptionPlanService,
-		private readonly formService: SubscriptionFormService,
 		public readonly statusService: SubscriptionStatusService
 	) {
 		this.initializeForm();
@@ -659,7 +656,11 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 	}
 
 	public onCancel(): void {
-		this.dialogRef.close(null);
+		this.dialogRef.close({
+			subscriptionPlan: null!,
+			subscriptionInput: null!,
+			proceedWithInstallation: false
+		});
 	}
 
 	public onSkipSubscription(): void {

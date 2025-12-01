@@ -27,10 +27,13 @@ export class PluginMarketplaceActions {
 	public static search = createAction('[Plugin Marketplace] Search', (query: string) => ({ query }));
 
 	// Installation actions
-	public static install = createAction('[Plugin Marketplace] Install Plugin', (plugin, isUpdate = false) => ({
-		plugin,
-		isUpdate
-	}));
+	public static install = createAction(
+		'[Plugin Marketplace] Install Plugin',
+		(plugin: IPlugin, isUpdate = false) => ({
+			plugin,
+			isUpdate
+		})
+	);
 
 	// Install update action
 	public static installUpdate = createAction('[Plugin Marketplace] Install Update', (plugin: IPlugin) => ({
