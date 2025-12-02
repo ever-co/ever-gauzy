@@ -140,8 +140,9 @@ export class PluginSubscriptionActions {
 
 	public static openSubscriptionManagement = createAction(
 		'[Plugin Subscription] Manage Subscription Dialog',
-		(plugin: IPlugin) => ({
-			plugin
+		(plugin: IPlugin, clicked: boolean = false) => ({
+			plugin,
+			clicked
 		})
 	);
 

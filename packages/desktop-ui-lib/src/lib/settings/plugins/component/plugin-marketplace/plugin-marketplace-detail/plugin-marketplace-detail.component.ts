@@ -123,7 +123,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 * Open subscription manager dialog (alternative to plan selection)
 	 */
 	public manageSubscription(): void {
-		this.action.dispatch(PluginSubscriptionActions.openSubscriptionManagement(this.plugin));
+		this.action.dispatch(PluginSubscriptionActions.openSubscriptionManagement(this.plugin, true));
 	}
 
 	/**

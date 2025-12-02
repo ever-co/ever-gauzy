@@ -14,8 +14,10 @@ import {
 	PluginSubscriptionStatus
 } from '../../../../services/plugin-subscription.service';
 import { PluginSubscriptionManagerComponent } from '../../plugin-subscription-manager/plugin-subscription-manager.component';
+import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginPlanActions } from '../actions/plugin-plan.action';
 import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
+import { PluginToggleActions } from '../actions/plugin-toggle.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginSubscriptionStore } from '../stores/plugin-subscription.store';
 
@@ -219,28 +221,14 @@ export class PluginSubscriptionEffects {
 			this.actions$.pipe(
 				ofType(PluginSubscriptionActions.openSubscriptionManagement),
 				tap(() => this.pluginSubscriptionStore.setLoading(true)),
-				// Prevent concurrent dialog flows
-				concatMap(({ plugin }) =>
-					this.pluginSubscriptionService.getCurrentSubscription(plugin.id).pipe(
-						tap((subscription) => this.setContext(plugin, subscription)),
-						exhaustMap((subscription) => {
-							if (!subscription) {
-								return of(PluginPlanActions.openPlanSubscriptions(plugin.id));
-							}
 
-							return this.dialogService
-								.open(PluginSubscriptionManagerComponent, {
-									context: { plugin, currentSubscription: subscription }
-								})
-								.onClose.pipe(
-									take(1),
-									switchMap((confirmed) => (confirmed ? EMPTY : of(PluginActions.refresh())))
-								);
-						}),
-						catchError((err) => {
-							this.pluginSubscriptionStore.setLoading(false);
-							return of(PluginPlanActions.openPlanSubscriptions(plugin.id));
-						})
+				// Ensure sequential dialogs
+				concatMap(({ plugin, clicked }) =>
+					this.pluginSubscriptionService.getCurrentSubscription(plugin.id).pipe(
+						tap((s) => this.setContext(plugin, s)),
+						exhaustMap((subscription) => this.handleSubscriptionFlow(plugin, subscription, clicked)),
+						catchError(() => of(PluginPlanActions.openPlanSubscriptions(plugin.id))),
+						finalize(() => this.pluginSubscriptionStore.setLoading(false))
 					)
 				)
 			),
@@ -275,6 +263,54 @@ export class PluginSubscriptionEffects {
 		)
 	);
 
+	/**
+	 *
+	 * @param plugin
+	 * @param subscription
+	 * @param clicked
+	 * @returns
+	 */
+	private handleSubscriptionFlow(plugin: IPlugin, currentSubscription: IPluginSubscription | null, clicked: boolean) {
+		// No subscription → open plan selector
+		if (!currentSubscription) {
+			return of(PluginPlanActions.openPlanSubscriptions(plugin.id));
+		}
+
+		// Subscription present → open manager dialog
+		return this.dialogService
+			.open(PluginSubscriptionManagerComponent, {
+				context: { plugin, currentSubscription }
+			})
+			.onClose.pipe(
+				take(1),
+				map((result) => this.resolveDialogResult(result, plugin, clicked))
+			);
+	}
+
+	/**
+	 *
+	 * @param result
+	 * @param plugin
+	 * @param clicked
+	 * @returns
+	 */
+	private resolveDialogResult(result: { success?: boolean } | null, plugin: IPlugin, clicked: boolean) {
+		if (result?.success) {
+			return PluginMarketplaceActions.install(plugin);
+		}
+
+		if (clicked) {
+			return PluginActions.refresh();
+		}
+
+		return PluginToggleActions.auto(plugin.id);
+	}
+
+	/**
+	 *
+	 * @param plugin
+	 * @param subscription
+	 */
 	private setContext(plugin: IPlugin, subscription: IPluginSubscription) {
 		this.pluginMarketplaceStore.selectPlugin(plugin);
 		this.pluginSubscriptionStore.setCurrentPluginSubscription(plugin.id, subscription);

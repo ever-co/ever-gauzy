@@ -15,4 +15,11 @@ export class PluginToggleEffects {
 			tap(({ pluginId, enabled }) => this.pluginToggleStore.setToggle(pluginId, enabled))
 		)
 	);
+
+	public auto$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginToggleActions.auto),
+			tap(({ pluginId }) => this.pluginToggleStore.setAutoToggle(pluginId))
+		)
+	);
 }

@@ -29,7 +29,7 @@ export class PluginMarketplaceActions {
 	// Installation actions
 	public static install = createAction(
 		'[Plugin Marketplace] Install Plugin',
-		(plugin: IPlugin, isUpdate = false) => ({
+		(plugin: IPlugin, isUpdate: boolean = false) => ({
 			plugin,
 			isUpdate
 		})

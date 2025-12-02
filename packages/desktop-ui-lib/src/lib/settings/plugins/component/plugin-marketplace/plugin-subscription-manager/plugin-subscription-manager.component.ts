@@ -358,7 +358,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	// Helper methods moved to services
 
 	public close(): void {
-		this.dialogRef.close();
+		this.dialogRef.close({ success: false });
 	}
 
 	public getStatusIcon(status: string): string {
