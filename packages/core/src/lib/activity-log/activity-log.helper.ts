@@ -61,3 +61,33 @@ export function activityLogUpdatedFieldsAndValues<T>(originalValues: T, updated:
 
 	return { updatedFields, previousValues, updatedValues };
 }
+
+/**
+ * Serializes JSON fields to strings for SQLite databases.
+ * This prevents the "Too many parameter values" error by reducing bind parameters.
+ *
+ * @param input - The activity log input with potential JSON fields
+ * @returns The input with JSON fields serialized to strings
+ */
+export function serializeActivityLogForSqlite<T extends Record<string, any>>(input: T): Record<string, any> {
+	const jsonFields = [
+		'data',
+		'updatedFields',
+		'previousValues',
+		'updatedValues',
+		'previousEntities',
+		'updatedEntities'
+	];
+
+	const serialized: Record<string, any> = { ...input };
+
+	for (const field of jsonFields) {
+		if (serialized[field] !== undefined && serialized[field] !== null) {
+			if (typeof serialized[field] === 'object') {
+				serialized[field] = JSON.stringify(serialized[field]);
+			}
+		}
+	}
+
+	return serialized;
+}
