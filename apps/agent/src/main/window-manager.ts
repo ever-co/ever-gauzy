@@ -5,12 +5,25 @@ import {
 	AuthWindow,
 	createSettingsWindow,
 	createServerWindow,
-	ScreenCaptureNotification,
 	AlwaysOn
 } from '@gauzy/desktop-window';
 import { app, BrowserWindow, screen } from 'electron';
-import { resolveHtmlPath, getInitialConfig } from './util';
+import { resolveHtmlPath, getInitialConfig, delaySync } from './util';
 import * as path from 'path';
+import { LocalStore } from '@gauzy/desktop-lib';
+import { ScreenCaptureWindow } from './window/screen-capture-window';
+
+export enum WindowType {
+	settingWindow = 'settingWindow',
+	notificationWindow = 'notificationWindow',
+	dashboardWindow = 'dashboardWindow',
+	authWindow = 'authWindow',
+	setupWindow = 'setupWindow',
+	splashWindow = 'splashWindow',
+	aboutWindow = 'aboutWindow'
+}
+
+const NOTIFICATION_HIDE_DELAY = 3000;
 
 class AppWindow {
 	aboutWindow: BrowserWindow | null;
@@ -20,10 +33,21 @@ class AppWindow {
 	authWindow: AuthWindow | null;
 	settingWindow: BrowserWindow | null;
 	logWindow: BrowserWindow | null;
-	notificationWindow: ScreenCaptureNotification | null;
+	notificationWindow: ScreenCaptureWindow | null;
 	alwaysOnWindow: AlwaysOn | null;
+	private windowReadyStatus: {
+		settingWindow: boolean;
+		notificationWindow: boolean;
+		dashboardWindow: boolean;
+	};
 	private static instance: AppWindow;
+    private autoHideTimeout: NodeJS.Timeout | null = null;
 	constructor(rootPath: string) {
+		this.windowReadyStatus = {
+			settingWindow: false,
+			notificationWindow: false,
+			dashboardWindow: false
+		};
 		if (!AppWindow.instance) {
 			AppWindow.instance = this;
 			this.rootPath = rootPath;
@@ -190,16 +214,20 @@ class AppWindow {
 				this.logWindow.setMinimumSize(Math.min(initialWidth, width), Math.min(initialHeight, height));
 				this.logWindow.setResizable(true);
 				this.logWindow.on('close', () => {
-					this.logWindow.hide();
-				});
-
-				this.logWindow.on('hide', () => {
+					this.logWindow.destroy();
 					this.dockHideHandle();
+					this.logWindow = null;
 				});
 			}
 		} catch (error) {
 			console.error('Failed to initialize log window', error);
 			throw new Error(`Log window initialization failed ${error.message}`);
+		}
+	}
+
+	async logWindowShow() {
+		if (await this.isWindowReadyToShow(this.logWindow, WindowType.dashboardWindow)) {
+			this.logWindow.show();
 		}
 	}
 
@@ -225,9 +253,10 @@ class AppWindow {
 	async initScreenShotNotification() {
 		try {
 			if (!this.notificationWindow) {
-				this.notificationWindow = new ScreenCaptureNotification(
+				this.notificationWindow = new ScreenCaptureWindow(
 					this.getUiPath('screen-capture'),
-					this.getPreloadPath()
+					this.getPreloadPath(),
+					this.showNotificationWindow.bind(this)
 				);
 				await this.notificationWindow.loadURL();
 				return;
@@ -235,6 +264,39 @@ class AppWindow {
 		} catch (error) {
 			console.error('Failed to initialize screenshot notification', error);
 		}
+	}
+
+	async showNotificationWindow(thumbUrl: string) {
+		if (await this.isWindowReadyToShow(this.notificationWindow?.browserWindow, WindowType.notificationWindow)) {
+			this.notificationWindow?.browserWindow?.webContents?.send?.('show_popup_screen_capture', {
+				note: LocalStore.getStore('project')?.note, // Retrieves the note from the store
+				...(thumbUrl && { imgUrl: thumbUrl }) // Conditionally include the thumbnail URL if provided
+			});
+			this.notificationWindow?.browserWindow?.once?.('show', () => {
+				this.autoHideTimeout = setTimeout(() => {
+					this.hideNotificationWindow();
+				}, NOTIFICATION_HIDE_DELAY);
+			});
+			this.notificationWindow?.browserWindow?.showInactive?.();
+		}
+	}
+
+	async isWindowReadyToShow(window: BrowserWindow, windowType: WindowType) {
+		await delaySync(200);
+		if (!window?.webContents?.isLoading?.() && (windowType !== WindowType.notificationWindow || this.windowReadyStatus[windowType])) {
+			return true;
+		}
+		return this.isWindowReadyToShow(window, windowType);
+	}
+
+	hideNotificationWindow() {
+		if (this.autoHideTimeout) {
+			clearTimeout(this.autoHideTimeout);
+			this.autoHideTimeout = null;
+		}
+		this.notificationWindow?.browserWindow?.destroy?.();
+		this.notificationWindow = null;
+		this.windowReadyStatus[WindowType.notificationWindow] = false;
 	}
 
 	closeSettingWindow() {
@@ -250,6 +312,10 @@ class AppWindow {
 			this.logWindow.close();
 			this.logWindow = null;
 		}
+	}
+
+	setWindowIsReady(windowType: WindowType) {
+		this.windowReadyStatus[windowType] = true;
 	}
 }
 

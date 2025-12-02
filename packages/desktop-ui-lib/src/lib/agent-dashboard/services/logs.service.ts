@@ -90,4 +90,11 @@ export class LogService {
 		});
 		this.queue$.next(dataSync);
 	}
+
+	async loadLogs() {
+		const cacheLogs: Record<string, any>[] = await this.electronService.ipcRenderer.invoke('load_logs');
+		for (const logContent of cacheLogs) {
+			this.handleLogStream(logContent);
+		}
+	}
 }

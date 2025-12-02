@@ -91,7 +91,7 @@ export class AgentMenu {
 					enabled: true,
 					async click() {
 						await appWindow.initLogWindow();
-						appWindow.logWindow.show();
+						appWindow.logWindowShow();
 					}
 				},
 				{
