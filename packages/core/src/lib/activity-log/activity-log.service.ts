@@ -13,7 +13,11 @@ import {
 import { isNotNullOrUndefined } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from './activity-log.helper';
+import {
+	activityLogUpdatedFieldsAndValues,
+	generateActivityLogDescription,
+	sanitizeEntityForActivityLog
+} from './activity-log.helper';
 import { ActivityLogEvent } from './events/activity-log.event';
 import { GetActivityLogsDTO, allowedOrderDirections, allowedOrderFields } from './dto/get-activity-logs.dto';
 import { ActivityLog } from './activity-log.entity';
@@ -158,6 +162,9 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 			jsonFields = Object.assign({}, { updatedFields, previousValues, updatedValues });
 		}
 
+		// Sanitize data to prevent SQLite "Too many parameter values" error
+		const sanitizedData = sanitizeEntityForActivityLog(data);
+
 		// Emit the event to log the activity
 		this._eventBus.publish(
 			new ActivityLogEvent({
@@ -166,7 +173,7 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 				action: actionType,
 				actorType: actor,
 				description: generateActivityLogDescription(actionType, entity, entityName),
-				data,
+				data: sanitizedData,
 				organizationId,
 				tenantId,
 				...jsonFields
