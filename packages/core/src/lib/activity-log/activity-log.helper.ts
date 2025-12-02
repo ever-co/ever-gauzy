@@ -1,5 +1,4 @@
 import { ActionTypeEnum, BaseEntityEnum, IActivityLogUpdatedValues } from '@gauzy/contracts';
-import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 
 const ActivityTemplates = {
 	[ActionTypeEnum.Created]: `{action} a new {entity} called "{entityName}"`,
@@ -64,61 +63,31 @@ export function activityLogUpdatedFieldsAndValues<T>(originalValues: T, updated:
 }
 
 /**
- * @description Sanitizes entity data for activity logging to prevent SQLite's
- * "Too many parameter values" error (SQLITE_MAX_VARIABLE_NUMBER = 999).
+ * Serializes JSON fields to strings for SQLite databases.
+ * This prevents the "Too many parameter values" error by reducing bind parameters.
  *
- * For SQLite/BetterSQLite3 only:
- * - Replaces relation arrays (objects with 'id') with arrays of IDs
- * - Keeps only primitive values and dates
- * - Skips nested relation objects (already have xxxId fields)
- *
- * @template T - The entity type
- * @param {T} entity - The entity to sanitize
- * @returns {T | Record<string, any>} - Original entity for non-SQLite DBs, sanitized object for SQLite
+ * @param input - The activity log input with potential JSON fields
+ * @returns The input with JSON fields serialized to strings
  */
-export function sanitizeEntityForActivityLog<T>(entity: T): T | Record<string, any> {
-	// Only sanitize for SQLite/BetterSQLite3
-	if (!isSqlite() && !isBetterSqlite3()) {
-		return entity;
+export function serializeActivityLogForSqlite<T extends Record<string, any>>(input: T): Record<string, any> {
+	const jsonFields = [
+		'data',
+		'updatedFields',
+		'previousValues',
+		'updatedValues',
+		'previousEntities',
+		'updatedEntities'
+	];
+
+	const serialized: Record<string, any> = { ...input };
+
+	for (const field of jsonFields) {
+		if (serialized[field] !== undefined && serialized[field] !== null) {
+			if (typeof serialized[field] === 'object') {
+				serialized[field] = JSON.stringify(serialized[field]);
+			}
+		}
 	}
 
-	if (!entity || typeof entity !== 'object') {
-		return entity;
-	}
-
-	const sanitized: Record<string, any> = {};
-
-	for (const [key, value] of Object.entries(entity as Record<string, any>)) {
-		// Skip null/undefined values
-		if (value === null || value === undefined) {
-			sanitized[key] = value;
-			continue;
-		}
-
-		// If it's an array of objects with 'id' property, extract only the IDs
-		if (
-			Array.isArray(value) &&
-			value.length > 0 &&
-			typeof value[0] === 'object' &&
-			value[0] !== null &&
-			'id' in value[0]
-		) {
-			sanitized[`${key}Ids`] = value.map((item) => item.id);
-			continue;
-		}
-
-		// Skip relation objects (entity likely already has a xxxId field for this)
-		if (typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date) && 'id' in value) {
-			continue;
-		}
-
-		// Keep primitive values and dates
-		if (typeof value !== 'object' || value instanceof Date) {
-			sanitized[key] = value;
-		}
-
-		// Skip other complex objects to reduce bind parameters
-	}
-
-	return sanitized;
+	return serialized;
 }
