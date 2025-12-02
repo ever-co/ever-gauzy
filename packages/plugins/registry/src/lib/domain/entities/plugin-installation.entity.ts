@@ -9,7 +9,7 @@ import {
 } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, ValidateIf } from 'class-validator';
-import { JoinColumn, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { IPluginInstallation, PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
@@ -18,6 +18,7 @@ import { PluginVersion } from './plugin-version.entity';
 import { Plugin } from './plugin.entity';
 
 @MultiORMEntity('plugin_installations', { mikroOrmRepository: () => MikroOrmPluginInstallationRepository })
+@Index(['pluginId', 'versionId', 'installedById'], { unique: true })
 export class PluginInstallation extends TenantOrganizationBaseEntity implements IPluginInstallation {
 	@ApiProperty({ type: () => Plugin, description: 'Installed the plugin' })
 	@MultiORMManyToOne(() => Plugin, { onDelete: 'CASCADE' })
