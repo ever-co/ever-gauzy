@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginService } from '../../../../domain';
 import { DeletePluginCommand } from '../delete-plugin.command';
@@ -14,7 +14,7 @@ export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginC
 	 * @throws NotFoundException if the plugin doesn't exist
 	 * @throws BadRequestException if the deletion fails
 	 */
-	public async execute(command: DeletePluginCommand): Promise<void> {
+	public async execute(command: DeletePluginCommand) {
 		const { pluginId } = command;
 
 		// Validate plugin ID
@@ -31,7 +31,12 @@ export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginC
 			}
 
 			// Delete the plugin
-			await this.pluginService.delete(pluginId);
+			await this.pluginService.softDelete(pluginId);
+
+			return {
+				message: `Plugin with ID ${pluginId} has been deleted successfully`,
+				status: HttpStatus.OK
+			};
 		} catch (error) {
 			// Rethrow specific errors
 			if (error instanceof NotFoundException || error instanceof BadRequestException) {
