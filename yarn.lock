@@ -456,9 +456,9 @@
     yargs "^17.2.1"
 
 "@angular/compiler@^19.2.10":
-  version "19.2.10"
-  resolved "https://registry.yarnpkg.com/@angular/compiler/-/compiler-19.2.10.tgz#857b5363e9f045e3c1e4e25650eae8691e1d5708"
-  integrity sha512-XI4VVaTHIsvDu25b/hOqFBIub4RoEVqVrBYo1rKRF9NI+mxg2Wy30qyJ7rYGbF7qUPomC54pen0qQgw359YhMA==
+  version "19.2.17"
+  resolved "https://registry.yarnpkg.com/@angular/compiler/-/compiler-19.2.17.tgz#e74a321e2d20f52bbd809498e4a810028e16020f"
+  integrity sha512-qo8psYASAlDiQ8fAL8i/E2JfWH2nPTpZDKKZxSWvgBVA8o+zUEjYAJu6/k6btnu+4Qcb425T0rmM/zao6EU9Aw==
   dependencies:
     tslib "^2.3.0"
 
