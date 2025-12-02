@@ -1,12 +1,11 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { DataSource } from 'typeorm';
 import { PluginService } from '../../../../domain';
 import { DeletePluginCommand } from '../delete-plugin.command';
 
 @CommandHandler(DeletePluginCommand)
 export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginCommand> {
-	constructor(private readonly pluginService: PluginService, private readonly dataSource: DataSource) {}
+	constructor(private readonly pluginService: PluginService) {}
 
 	/**
 	 * Executes the delete plugin command
@@ -16,7 +15,6 @@ export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginC
 	 * @throws BadRequestException if the deletion fails
 	 */
 	public async execute(command: DeletePluginCommand): Promise<void> {
-		// Extract plugin ID from command
 		const { pluginId } = command;
 
 		// Validate plugin ID
@@ -24,13 +22,8 @@ export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginC
 			throw new BadRequestException('Plugin ID is required');
 		}
 
-		// Start a transaction
-		const queryRunner = this.dataSource.createQueryRunner();
-		await queryRunner.connect();
-		await queryRunner.startTransaction();
-
 		try {
-			// Verify that the plugin exists
+			// Verify that the plugin exists before attempting deletion
 			const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
 
 			if (!plugin.success) {
@@ -39,23 +32,14 @@ export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginC
 
 			// Delete the plugin
 			await this.pluginService.delete(pluginId);
-
-			// Commit the transaction
-			await queryRunner.commitTransaction();
 		} catch (error) {
-			// Rollback the transaction on error
-			await queryRunner.rollbackTransaction();
-
 			// Rethrow specific errors
-			if (error instanceof NotFoundException) {
+			if (error instanceof NotFoundException || error instanceof BadRequestException) {
 				throw error;
 			}
 
-			// Wrap other errors
+			// Wrap unexpected errors
 			throw new BadRequestException(`Failed to delete plugin: ${error.message}`);
-		} finally {
-			// Release resources
-			await queryRunner.release();
 		}
 	}
 }
