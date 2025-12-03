@@ -1,6 +1,6 @@
 import { ID, IPluginAccess, IUser } from '@gauzy/contracts';
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, In } from 'typeorm';
 import { PluginScope } from '../../shared/models/plugin-scope.model';
 import {
 	IPluginSubscription,
@@ -32,15 +32,6 @@ interface IAccessValidationContext {
 	userRoles?: any[];
 	pluginTenant?: IPluginTenant;
 	subscription?: IPluginSubscription;
-}
-
-/**
- * Strategy interface for finding subscriptions at different scopes
- * Enhanced with domain-driven design principles
- */
-interface ISubscriptionFinderStrategy {
-	readonly scope: PluginScope;
-	findSubscription(context: ISubscriptionFindContext): Promise<IPluginSubscription | null>;
 }
 
 /**
@@ -85,10 +76,13 @@ interface IQuotaInformation {
 
 /**
  * Plugin enabled specification - checks if plugin is enabled for tenant
+ * Note: If no pluginTenant exists yet, we allow access (will be created on first use)
  */
 class PluginEnabledSpecification implements IAccessSpecification {
 	isSatisfiedBy(context: IAccessValidationContext): boolean {
-		return context.pluginTenant?.isAvailable() || false;
+		// If no pluginTenant configuration exists, allow access (default behavior)
+		if (!context.pluginTenant) return true;
+		return context.pluginTenant.isAvailable();
 	}
 
 	getFailureReason(): string {
@@ -98,10 +92,12 @@ class PluginEnabledSpecification implements IAccessSpecification {
 
 /**
  * Plugin approval specification - checks if plugin is approved when required
+ * Note: If no pluginTenant exists yet, we allow access (no approval required by default)
  */
 class PluginApprovalSpecification implements IAccessSpecification {
 	isSatisfiedBy(context: IAccessValidationContext): boolean {
-		if (!context.pluginTenant) return false;
+		// If no pluginTenant configuration exists, no approval is required
+		if (!context.pluginTenant) return true;
 
 		// If approval is not required, specification is satisfied
 		if (!context.pluginTenant.needsApprovalForInstallation()) {
@@ -198,95 +194,6 @@ class AccessValidator {
 }
 
 /**
- * Enhanced subscription finder for user scope using entity methods
- */
-class UserSubscriptionFinder implements ISubscriptionFinderStrategy {
-	readonly scope = PluginScope.USER;
-
-	constructor(private readonly subscriptionService: PluginSubscriptionService) {}
-
-	async findSubscription(context: ISubscriptionFindContext): Promise<IPluginSubscription | null> {
-		if (!context.userId) return null;
-
-		try {
-			const whereOptions: FindOptionsWhere<IPluginSubscription> = {
-				pluginId: context.pluginId,
-				tenantId: context.tenantId,
-				subscriberId: context.userId,
-				scope: PluginScope.USER
-			};
-
-			if (context.activeOnly !== false) {
-				whereOptions.status = PluginSubscriptionStatus.ACTIVE;
-			}
-
-			const subscription = await this.subscriptionService.findOneOrFailByWhereOptions(whereOptions);
-
-			return subscription.success ? subscription.record : null;
-		} catch {
-			return null;
-		}
-	}
-}
-
-/**
- * Enhanced organization subscription finder using entity methods
- */
-class OrganizationSubscriptionFinder implements ISubscriptionFinderStrategy {
-	readonly scope = PluginScope.ORGANIZATION;
-
-	constructor(private readonly subscriptionService: PluginSubscriptionService) {}
-
-	async findSubscription(context: ISubscriptionFindContext): Promise<IPluginSubscription | null> {
-		if (!context.organizationId) return null;
-
-		try {
-			const whereOptions: FindOptionsWhere<IPluginSubscription> = {
-				pluginId: context.pluginId,
-				tenantId: context.tenantId,
-				organizationId: context.organizationId,
-				subscriberId: context.userId,
-				scope: PluginScope.ORGANIZATION
-			};
-
-			if (context.activeOnly !== false) {
-				whereOptions.status = PluginSubscriptionStatus.ACTIVE;
-			}
-
-			const subscription = await this.subscriptionService.findOneOrFailByWhereOptions(whereOptions);
-			return subscription.success ? subscription.record : null;
-		} catch {
-			return null;
-		}
-	}
-}
-
-/**
- * Enhanced tenant subscription finder using entity methods
- */
-class TenantSubscriptionFinder implements ISubscriptionFinderStrategy {
-	readonly scope = PluginScope.TENANT;
-
-	constructor(private readonly subscriptionService: PluginSubscriptionService) {}
-
-	async findSubscription(context: ISubscriptionFindContext): Promise<IPluginSubscription | null> {
-		const whereOptions: FindOptionsWhere<IPluginSubscription> = {
-			pluginId: context.pluginId,
-			tenantId: context.tenantId,
-			subscriberId: context.userId,
-			organizationId: context.organizationId
-		};
-
-		if (context.activeOnly !== false) {
-			whereOptions.status = PluginSubscriptionStatus.ACTIVE;
-		}
-
-		const subscription = await this.subscriptionService.findOneOrFailByWhereOptions(whereOptions);
-		return subscription.success ? subscription.record : null;
-	}
-}
-
-/**
  * Factory for creating subscription access contexts
  * Enhanced with domain logic from entities
  */
@@ -338,7 +245,7 @@ class SubscriptionAccessContextFactory {
 			subscription: null,
 			pluginTenant,
 			accessLevel: pluginTenant?.scope || null,
-			canAssign: await this.determineAssignmentPermissions(pluginTenant.id, null, userId),
+			canAssign: pluginTenant ? await this.determineAssignmentPermissions(pluginTenant.id, null, userId) : false,
 			canActivate: await this.determineActivationPermissions(pluginTenant, null, userId),
 			canManage: await this.determineManagementPermissions(pluginTenant, null, userId),
 			requiresSubscription: false,
@@ -386,9 +293,10 @@ class SubscriptionAccessContextFactory {
 			subscription,
 			pluginTenant,
 			accessLevel,
-			canAssign: hasAccess
-				? await this.determineAssignmentPermissions(pluginTenant.id, subscription, userId)
-				: false,
+			canAssign:
+				hasAccess && pluginTenant
+					? await this.determineAssignmentPermissions(pluginTenant.id, subscription, userId)
+					: false,
 			canActivate: hasAccess
 				? await this.determineActivationPermissions(pluginTenant, subscription, userId)
 				: false,
@@ -513,66 +421,16 @@ class SubscriptionAccessContextFactory {
 }
 
 /**
- * Subscription finder registry using Registry pattern
- */
-class SubscriptionFinderRegistry {
-	private readonly finders = new Map<PluginScope, ISubscriptionFinderStrategy>();
-
-	constructor(
-		userFinder: ISubscriptionFinderStrategy,
-		organizationFinder: ISubscriptionFinderStrategy,
-		tenantFinder: ISubscriptionFinderStrategy
-	) {
-		this.finders.set(PluginScope.USER, userFinder);
-		this.finders.set(PluginScope.ORGANIZATION, organizationFinder);
-		this.finders.set(PluginScope.TENANT, tenantFinder);
-	}
-
-	/**
-	 * Find subscriptions in priority order using Chain of Responsibility pattern
-	 */
-	async findApplicableSubscription(context: ISubscriptionFindContext): Promise<IPluginSubscription | null> {
-		// Priority order: USER > ORGANIZATION > TENANT
-		const priorityOrder = [PluginScope.USER, PluginScope.ORGANIZATION, PluginScope.TENANT];
-
-		for (const scope of priorityOrder) {
-			const finder = this.finders.get(scope);
-			if (!finder) continue;
-
-			const subscription = await finder.findSubscription(context);
-			if (subscription && subscription.isSubscriptionActive) {
-				return subscription;
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Find subscription by specific scope
-	 */
-	async findSubscriptionByScope(
-		scope: PluginScope,
-		context: ISubscriptionFindContext
-	): Promise<IPluginSubscription | null> {
-		const finder = this.finders.get(scope);
-		return finder ? await finder.findSubscription(context) : null;
-	}
-}
-
-/**
  * Domain service for plugin access management following SOLID principles
  *
  * SOLID Compliance:
  * - SRP: Single responsibility for plugin access validation
  * - OCP: Open for extension via strategies and specifications
- * - LSP: All strategies implement the same interface contract
  * - ISP: Interfaces are focused and specific to their purpose
  * - DIP: Depends on abstractions (interfaces) not concretions
  */
 @Injectable()
 export class PluginSubscriptionAccessService {
-	private readonly subscriptionFinders: SubscriptionFinderRegistry;
 	private readonly accessContextFactory: SubscriptionAccessContextFactory;
 
 	constructor(
@@ -580,34 +438,61 @@ export class PluginSubscriptionAccessService {
 		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService,
 		private readonly pluginTenantService: PluginTenantService
 	) {
-		// Initialize strategy registry using Factory pattern
-		this.subscriptionFinders = new SubscriptionFinderRegistry(
-			new UserSubscriptionFinder(this.pluginSubscriptionService),
-			new OrganizationSubscriptionFinder(this.pluginSubscriptionService),
-			new TenantSubscriptionFinder(this.pluginSubscriptionService)
-		);
-
 		// Initialize context factory
 		this.accessContextFactory = new SubscriptionAccessContextFactory(this.pluginTenantService);
 	}
 
 	/**
-	 * Validate if a user has access to a plugin based on their assignments
-	 * Enhanced with entity domain logic
+	 * Find subscription by context parameters
+	 * Simplified finder that queries the subscription service directly without scope filtering
 	 */
-	async validatePluginUserAccess(pluginId: ID, userId?: ID): Promise<boolean> {
-		if (!userId) return false;
-
+	private async findSubscriptionByContext(context: ISubscriptionFindContext): Promise<IPluginSubscription | null> {
 		try {
-			const context: ISubscriptionFindContext = {
-				pluginId,
-				tenantId: '', // Will be resolved from user context
-				userId,
-				activeOnly: false
+			const whereOptions: FindOptionsWhere<IPluginSubscription> = {
+				pluginId: context.pluginId,
+				tenantId: context.tenantId
 			};
 
-			// Use entity static method for validation
-			const subscription = await this.subscriptionFinders.findSubscriptionByScope(PluginScope.TENANT, context);
+			// Add optional filters if provided
+			if (context.organizationId) {
+				whereOptions.organizationId = context.organizationId;
+			}
+
+			if (context.userId) {
+				whereOptions.subscriberId = context.userId;
+			}
+
+			if (context.activeOnly !== false) {
+				whereOptions.status = In([
+					PluginSubscriptionStatus.ACTIVE,
+					PluginSubscriptionStatus.TRIAL,
+					PluginSubscriptionStatus.PENDING
+				]);
+			}
+
+			const subscription = await this.pluginSubscriptionService.findOneOrFailByWhereOptions(whereOptions);
+			return subscription.success ? subscription.record : null;
+		} catch {
+			return null;
+		}
+	}
+
+	/**
+	 * Validate if a user has access to a plugin based on their subscription
+	 * This checks for subscriptions assigned to this specific user
+	 * Note: For full access validation including org/tenant subscriptions, use validatePluginAccess()
+	 */
+	async validatePluginUserAccess(pluginId: ID, tenantId: ID, userId?: ID): Promise<boolean> {
+		if (!userId || !tenantId) return false;
+
+		try {
+			const subscription = await this.findSubscriptionByContext({
+				pluginId,
+				tenantId,
+				userId,
+				activeOnly: true
+			});
+
 			return subscription ? subscription.grantsAccessToUser(userId) : false;
 		} catch {
 			return false;
@@ -635,15 +520,14 @@ export class PluginSubscriptionAccessService {
 			}
 
 			// For paid plugins, validate subscription + plugin tenant access
-			const context: ISubscriptionFindContext = {
+			const subscription = await this.findSubscriptionByContext({
 				pluginId,
 				tenantId,
 				organizationId,
 				userId,
-				activeOnly: false
-			};
+				activeOnly: true
+			});
 
-			const subscription = await this.subscriptionFinders.findApplicableSubscription(context);
 			const paidContext = await this.accessContextFactory.createPaidAccessContext(
 				subscription,
 				pluginId,
@@ -676,8 +560,8 @@ export class PluginSubscriptionAccessService {
 	}
 
 	/**
-	 * Find the most specific applicable subscription for a user
-	 * Enhanced with Chain of Responsibility pattern
+	 * Find the applicable subscription for a user
+	 * Searches for a subscription matching the provided context parameters
 	 */
 	async findApplicableSubscription(
 		pluginId: ID,
@@ -685,15 +569,13 @@ export class PluginSubscriptionAccessService {
 		organizationId?: ID,
 		userId?: ID
 	): Promise<IPluginSubscription | null> {
-		const context: ISubscriptionFindContext = {
+		return this.findSubscriptionByContext({
 			pluginId,
 			tenantId,
 			organizationId,
 			userId,
-			activeOnly: false
-		};
-
-		return this.subscriptionFinders.findApplicableSubscription(context);
+			activeOnly: true
+		});
 	}
 
 	/**
