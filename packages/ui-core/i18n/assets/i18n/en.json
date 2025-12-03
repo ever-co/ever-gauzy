@@ -236,8 +236,8 @@
 			"EVENT_TYPE": "You have not created any event types.",
 			"PRODUCT_TYPE_NO_DATA": "You have not created any product types.",
 			"TEAM_DASHBOARD": "You don't have any teams.",
-			"PLUGIN": "You haven't install any plugin.",
-			"PLUGIN_MARKETPLACE": "Plugin not found",
+			"PLUGIN": "There are no plugins available.",
+			"PLUGIN_MARKETPLACE": "No plugins available to display.",
 			"HISTORY": "There's no history"
 		},
 		"TRANSACTION_TYPE": "Type",
@@ -5548,7 +5548,8 @@
 		"BUTTONS": {
 			"ASSIGN_USERS": "Assign Users",
 			"ASSIGN_FIRST_USER": "Assign Your First User",
-			"SUBSCRIBE_AND_INSTALL": "Subscribe & Install"
+			"SUBSCRIBE_AND_INSTALL": "Subscribe & Install",
+			"VIEW_SUBSCRIPTION": "View Subscription"
 		},
 		"LOADING": "Loading plugin...",
 		"ACCESS": {
@@ -5602,6 +5603,14 @@
 				"LOAD_AVAILABLE": "Failed to load available users",
 				"ASSIGN": "Failed to assign user(s)",
 				"UNASSIGN": "Failed to unassign user"
+			},
+			"ERRORS": {
+				"LOAD_FAILED": "Failed to load assigned users",
+				"LOAD_MORE_FAILED": "Failed to load more assigned users",
+				"ASSIGN_FAILED": "Failed to assign user(s)",
+				"UNASSIGN_FAILED": "Failed to unassign user",
+				"LOAD_USERS_FAILED": "Failed to load available users",
+				"LOAD_MORE_USERS_FAILED": "Failed to load more available users"
 			}
 		},
 		"SETTINGS": {
@@ -5702,6 +5711,25 @@
 					"DELETE": "Failed to delete category"
 				}
 			}
+		},
+		"VALIDATION": {
+			"INVALID_PLUGIN": "Invalid plugin",
+			"CHAIN_BUILD_ERROR": "Chain build error",
+			"INVALID_CONTEXT": "Invalid context",
+			"MISSING_PLUGIN_ID": "Missing plugin ID",
+			"ACCESS_CHECK_FAILED": "Access check failed",
+			"ACCESS_DENIED": "Access denied",
+			"MISSING_REQUIRED_FIELDS": "Missing required fields",
+			"PLUGIN_NOT_ACTIVE": "Plugin is not active",
+			"NO_VERSIONS_AVAILABLE": "No versions available",
+			"VERSION_INFO_MISSING": "Version information missing",
+			"CANNOT_UPDATE_NOT_INSTALLED": "Cannot update plugin that is not installed",
+			"SUBSCRIPTION_CHECK_ERROR": "Subscription check error",
+			"SUBSCRIPTION_VALIDATION_FAILED": "Subscription validation failed",
+			"CHAIN_ERROR": "Chain error",
+			"SYNC_ERROR": "Sync error",
+			"ERROR": "Validation error",
+			"START_ERROR": "Start error"
 		}
 	},
 	"SERVER_DOWN": {
