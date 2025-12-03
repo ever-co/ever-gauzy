@@ -8,7 +8,6 @@ import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategoriesController } from './expense-categories.controller';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmExpenseCategoryRepository } from './repository/type-orm-expense-category.repository';
-import { MikroOrmExpenseCategoryRepository } from './repository/mikro-orm-expense-category.repository';
 
 @Module({
 	imports: [
@@ -18,12 +17,7 @@ import { MikroOrmExpenseCategoryRepository } from './repository/mikro-orm-expens
 		CqrsModule
 	],
 	controllers: [ExpenseCategoriesController],
-	providers: [
-		ExpenseCategoriesService,
-		TypeOrmExpenseCategoryRepository,
-		MikroOrmExpenseCategoryRepository,
-		...CommandHandlers
-	],
-	exports: [ExpenseCategoriesService, TypeOrmExpenseCategoryRepository, MikroOrmExpenseCategoryRepository]
+	providers: [ExpenseCategoriesService, TypeOrmExpenseCategoryRepository, ...CommandHandlers],
+	exports: [ExpenseCategoriesService, TypeOrmExpenseCategoryRepository, MikroOrmModule]
 })
 export class ExpenseCategoriesModule {}

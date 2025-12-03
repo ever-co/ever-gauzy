@@ -7,7 +7,6 @@ import { EmployeeAvailabilityService } from './employee-availability.service';
 import { EmployeeAvailabilityController } from './employee-availability.controller';
 import { EmployeeAvailability } from './employee-availability.entity';
 import { TypeOrmEmployeeAvailabilityRepository } from './repository/type-orm-employee-availability.repository';
-import { MikroOrmEmployeeAvailabilityRepository } from './repository/micro-orm-employee-availability.repository';
 
 @Module({
 	imports: [
@@ -15,12 +14,7 @@ import { MikroOrmEmployeeAvailabilityRepository } from './repository/micro-orm-e
 		MikroOrmModule.forFeature([EmployeeAvailability]),
 		CqrsModule
 	],
-	providers: [
-		EmployeeAvailabilityService,
-		TypeOrmEmployeeAvailabilityRepository,
-		MikroOrmEmployeeAvailabilityRepository,
-		...CommandHandlers
-	],
+	providers: [EmployeeAvailabilityService, TypeOrmEmployeeAvailabilityRepository, ...CommandHandlers],
 	controllers: [EmployeeAvailabilityController]
 })
 export class EmployeeAvailabilityModule {}
