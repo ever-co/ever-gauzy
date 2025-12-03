@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { IPlugin } from '@gauzy/contracts';
-import { NB_DIALOG_CONFIG, NbDialogRef, NbDialogService } from '@nebular/theme';
+import { NB_DIALOG_CONFIG, NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -74,7 +74,6 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy {
 	constructor(
 		@Inject(NB_DIALOG_CONFIG) public data: PluginSettingsDialogData,
 		private readonly dialogRef: NbDialogRef<PluginSettingsManagementComponent>,
-		private readonly dialogService: NbDialogService,
 		private readonly formBuilder: FormBuilder,
 		private readonly pluginSettingsService: PluginSettingsService,
 		private readonly query: PluginSettingsQuery,

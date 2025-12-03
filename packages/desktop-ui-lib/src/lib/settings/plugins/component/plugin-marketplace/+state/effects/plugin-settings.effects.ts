@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
+import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { catchError, map, of, switchMap, tap } from 'rxjs';
+import { catchError, exhaustMap, map, of, switchMap, tap } from 'rxjs';
 import { PluginSettingsService } from '../../../../services/plugin-settings.service';
+import { PluginSettingsManagementComponent } from '../../plugin-settings-management/plugin-settings-management.component';
 import { PluginSettingsActions } from '../actions/plugin-settings.actions';
 import { PluginSettingsStore } from '../stores/plugin-settings.store';
 
@@ -11,6 +13,7 @@ export class PluginSettingsEffects {
 	constructor(
 		private readonly actions$: Actions,
 		private readonly pluginSettingsService: PluginSettingsService,
+		private readonly dialogService: NbDialogService,
 		private readonly store: PluginSettingsStore
 	) {}
 
@@ -567,6 +570,23 @@ export class PluginSettingsEffects {
 				tap(({ settingKey, errors }) => {
 					this.store.setValidationError(settingKey, errors);
 				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	openSettings$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.openSettings),
+				exhaustMap(
+					({ plugin }) =>
+						this.dialogService.open(PluginSettingsManagementComponent, {
+							context: {
+								plugin
+							}
+						}).onClose
+				)
 			);
 		},
 		{ dispatch: false }

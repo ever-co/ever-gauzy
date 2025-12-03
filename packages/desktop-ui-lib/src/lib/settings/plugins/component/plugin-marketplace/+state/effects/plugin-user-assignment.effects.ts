@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
+import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, finalize, map, of, switchMap, tap } from 'rxjs';
+import { catchError, exhaustMap, finalize, map, of, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services/toastr-notification.service';
 import { PluginUserAssignmentService } from '../../../../services/plugin-user-assignment.service';
+import { PluginUserManagementComponent } from '../../plugin-user-management/plugin-user-management.component';
 import { PluginUserAssignmentActions } from '../actions/plugin-user-assignment.actions';
 import { PluginUserAssignmentStore } from '../stores/plugin-user-assignment.store';
 
@@ -33,7 +35,8 @@ export class PluginUserAssignmentEffects {
 		private readonly pluginUserAssignmentService: PluginUserAssignmentService,
 		private readonly store: PluginUserAssignmentStore,
 		private readonly toastrService: ToastrNotificationService,
-		private readonly translateService: TranslateService
+		private readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService
 	) {}
 
 	/**
@@ -399,6 +402,24 @@ export class PluginUserAssignmentEffects {
 					this.toastrService.error(error);
 					console.error('Plugin user assignment operation failed:', error);
 				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	openUserManagementDialog$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.manageUsers),
+				exhaustMap(
+					({ plugin }) =>
+						// Open the dialog using NbDialogService
+						this.dialogService.open(PluginUserManagementComponent, {
+							context: {
+								plugin
+							}
+						}).onClose
+				)
 			);
 		},
 		{ dispatch: false }
