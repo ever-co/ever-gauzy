@@ -13,6 +13,7 @@ import {
 	DeleteResult,
 	MoreThan
 } from 'typeorm';
+import { MikroORM } from '@mikro-orm/core';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
@@ -47,7 +48,8 @@ export class UserService extends TenantAwareCrudService<User> {
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		private readonly _configService: ConfigService,
 		private readonly _employeeService: EmployeeService,
-		private readonly _taskService: TaskService
+		private readonly _taskService: TaskService,
+		private readonly orm: MikroORM
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
 	}
@@ -57,9 +59,19 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * This method utilizes the base `count` method from the parent class
 	 * to quickly return the total number of records without additional filters or conditions.
 	 *
+	 * During bootstrap, MikroORM's EntityManager context may not be initialized (no HTTP request context).
+	 * In this case, we create a forked EntityManager to perform the count operation safely.
+	 * See: https://github.com/ever-co/ever-gauzy/issues/8700
+	 *
 	 * @returns {Promise<number>} - A promise that resolves to the total count of records.
 	 */
 	public async countFast(): Promise<number> {
+		// For MikroORM, use a forked EntityManager to ensure proper context
+		// This is necessary during bootstrap when no HTTP request context exists
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			const em = this.orm.em.fork();
+			return await em.count(User);
+		}
 		return await super.count();
 	}
 
