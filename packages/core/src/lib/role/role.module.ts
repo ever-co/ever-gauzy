@@ -8,7 +8,6 @@ import { RoleController } from './role.controller';
 import { RolePermissionModule } from './../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
-import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
 
 @Module({
 	imports: [
@@ -18,7 +17,7 @@ import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
 		forwardRef(() => RolePermissionModule)
 	],
 	controllers: [RoleController],
-	providers: [RoleService, TypeOrmRoleRepository, MikroOrmRoleRepository, ...CommandHandlers],
-	exports: [RoleService, TypeOrmRoleRepository, MikroOrmRoleRepository]
+	providers: [RoleService, TypeOrmRoleRepository, ...CommandHandlers],
+	exports: [RoleService, TypeOrmRoleRepository, MikroOrmModule]
 })
 export class RoleModule {}

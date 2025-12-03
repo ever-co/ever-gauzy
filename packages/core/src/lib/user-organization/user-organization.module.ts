@@ -13,7 +13,6 @@ import { UserOrganizationController } from './user-organization.controller';
 import { UserOrganization } from './user-organization.entity';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmUserOrganizationRepository } from './repository/type-orm-user-organization.repository';
-import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-organization.repository';
 
 @Module({
 	imports: [
@@ -28,12 +27,7 @@ import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-
 		forwardRef(() => RoleModule)
 	],
 	controllers: [UserOrganizationController],
-	providers: [
-		UserOrganizationService,
-		TypeOrmUserOrganizationRepository,
-		MikroOrmUserOrganizationRepository,
-		...CommandHandlers
-	],
-	exports: [UserOrganizationService, TypeOrmUserOrganizationRepository, MikroOrmUserOrganizationRepository]
+	providers: [UserOrganizationService, TypeOrmUserOrganizationRepository, ...CommandHandlers],
+	exports: [UserOrganizationService, TypeOrmUserOrganizationRepository, MikroOrmModule]
 })
 export class UserOrganizationModule {}

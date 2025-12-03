@@ -14,7 +14,6 @@ import { EmployeeService } from './employee.service';
 import { ManagedEmployeeService } from './managed-employee.service';
 import { Employee } from './employee.entity';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
-import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { OrganizationProjectEmployee } from '../organization-project/organization-project-employee.entity';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
@@ -37,7 +36,6 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-pr
 		EmployeeService,
 		ManagedEmployeeService,
 		TypeOrmEmployeeRepository,
-		MikroOrmEmployeeRepository,
 		TypeOrmOrganizationTeamEmployeeRepository,
 		TypeOrmOrganizationProjectEmployeeRepository,
 		...CommandHandlers
@@ -46,9 +44,9 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-pr
 		EmployeeService,
 		ManagedEmployeeService,
 		TypeOrmEmployeeRepository,
-		MikroOrmEmployeeRepository,
 		TypeOrmOrganizationTeamEmployeeRepository,
-		TypeOrmOrganizationProjectEmployeeRepository
+		TypeOrmOrganizationProjectEmployeeRepository,
+		MikroOrmModule
 	]
 })
 export class EmployeeModule {}
