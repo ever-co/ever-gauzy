@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { IPlugin, IUser } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChanged, filter, Observable, tap } from 'rxjs';
+import { distinctUntilChanged, filter, Observable } from 'rxjs';
 import {
 	PluginUserAssignmentFacade,
 	UserManagementViewModel
@@ -91,6 +91,11 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	 */
 	readonly assignedUsers$: Observable<PluginUserAssignment[]>;
 
+	/**
+	 * Current plugin tenant ID from facade
+	 */
+	readonly currentPluginTenantId$: Observable<string | null>;
+
 	// ============================================================================
 	// CONSTRUCTOR & LIFECYCLE
 	// ============================================================================
@@ -109,6 +114,7 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 		this.hasMore$ = this.userAssignmentFacade.hasMore$;
 		this.error$ = this.userAssignmentFacade.error$;
 		this.assignedUsers$ = this.userAssignmentFacade.assignments$;
+		this.currentPluginTenantId$ = this.userAssignmentFacade.currentPluginTenantId$;
 	}
 
 	/**
@@ -152,17 +158,17 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Handle plugin change event
-	 * Loads assignments and updates permission checks
+	 * Loads allowed users from plugin tenant and updates permission checks
 	 * @param plugin - The plugin that changed
 	 */
 	private handlePluginChange(plugin: IPlugin): void {
-		console.log('Plugin changed in user-management-tab, loading assignments for plugin:', plugin.id);
+		console.log('Plugin changed in user-management-tab, loading allowed users for plugin:', plugin.id);
 
 		// Clear previous assignments first to avoid showing stale data
 		this.userAssignmentFacade.clearAssignments();
 
-		// Load all assignments for this plugin (not installation-specific)
-		this.userAssignmentFacade.loadAssignmentsForPlugin(plugin.id, false);
+		// Load allowed users for this plugin (facade handles plugin tenant resolution internally)
+		this.userAssignmentFacade.loadAllowedUsersForPlugin(plugin.id, 'allowed');
 
 		// Update canAssign observable
 		this.canAssign$ = this.accessFacade.canAssign$(plugin.id);
@@ -187,8 +193,8 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Handle user unassignment action
-	 * Removes user assignment from plugin installation
+	 * Handle user unassignment (remove from allowed users)
+	 * Removes user from the plugin tenant's allowed users list
 	 * @param assignment - The assignment to remove
 	 */
 	onUnassignUser(assignment: PluginUserAssignment): void {
@@ -197,29 +203,20 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		const plugin = this.marketplaceQuery.plugin;
-		if (!plugin) {
-			console.warn('Cannot unassign user: plugin not found');
+		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
+		if (!pluginTenantId) {
+			console.warn('Cannot unassign user: plugin tenant ID not found');
 			return;
 		}
 
-		console.log('Unassigning user:', assignment.userId, 'from plugin:', plugin.id);
+		console.log('Removing user:', assignment.userId, 'from allowed users list');
 
-		// Delegate to facade
-		this.userAssignmentFacade.unassignUser(plugin.id, assignment.userId);
-
-		// Wait for the unassignment operation to complete, then reload
-		this.loading$
-			.pipe(
-				filter((loading) => !loading),
-				tap(() => {
-					console.log('Unassignment complete, reloading assignments for plugin:', plugin.id);
-					// Reload assignments to reflect the changes
-					this.userAssignmentFacade.loadAssignmentsForPlugin(plugin.id, false);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		// Remove from allowed users using plugin tenant
+		this.userAssignmentFacade.removeAllowedUsersFromPluginTenant(
+			pluginTenantId,
+			[assignment.userId],
+			'Removed by user'
+		);
 	}
 
 	// ============================================================================
@@ -251,10 +248,11 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Get formatted assignment date
+	 * Returns null if no valid date is available
 	 * @param assignment - Plugin user assignment
-	 * @returns Date object for formatting in template
+	 * @returns Date object for formatting in template, or null if invalid
 	 */
-	getAssignmentDate(assignment: PluginUserAssignment): Date {
+	getAssignmentDate(assignment: PluginUserAssignment): Date | null {
 		return this.userAssignmentFacade.getAssignmentDate(assignment);
 	}
 
@@ -291,11 +289,13 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	 * Load more assignments for infinite scroll
 	 */
 	onLoadMore(): void {
-		const plugin = this.marketplaceQuery.plugin;
-		if (!plugin) {
+		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
+		if (!pluginTenantId) {
+			console.warn('Cannot load more: plugin tenant ID not found');
 			return;
 		}
 
-		this.userAssignmentFacade.loadMoreAssignments(plugin.id, false);
+		// TODO: Implement proper pagination with skip/take
+		this.userAssignmentFacade.loadPluginTenantUsers(pluginTenantId, 'allowed');
 	}
 }

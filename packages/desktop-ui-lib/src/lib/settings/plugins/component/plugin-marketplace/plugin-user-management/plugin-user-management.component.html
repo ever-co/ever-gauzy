@@ -188,7 +188,11 @@ getSelectedUsers() | async; @let loading = loading$ | async; @let totalCount = g
 								<div class="assignment-meta">
 									<div class="meta-item">
 										<nb-icon icon="calendar-outline"></nb-icon>
-										<span>Assigned {{ getAssignmentDate(assignment) | date : 'short' }}</span>
+										<span
+											>Assigned @if (getAssignmentDate(assignment); as assignedDate) {
+											{{ assignedDate | date : 'short' }}
+											} @else { N/A }
+										</span>
 									</div>
 									@if(assignment.reason) {
 									<div class="meta-item">

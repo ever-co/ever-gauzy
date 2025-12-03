@@ -41,7 +41,7 @@ export class PluginUserAssignmentEffects {
 
 	/**
 	 * Load assignments effect with pagination support
-	 * Handles loading user assignments for a plugin or specific installation
+	 * Handles loading allowed users from plugin tenant
 	 */
 	loadAssignments$ = createEffect(
 		() => {
@@ -52,26 +52,45 @@ export class PluginUserAssignmentEffects {
 					const currentSkip = skip !== undefined ? skip : this.store.getValue().pagination.skip;
 					const currentTake = take !== undefined ? take : this.store.getValue().pagination.take;
 
-					// Use the main endpoint GET /plugins/:pluginId/users
-					return this.pluginUserAssignmentService
-						.getPluginUserAssignments(pluginId, includeInactive, currentTake, currentSkip)
-						.pipe(
-							map((response) =>
-								PluginUserAssignmentActions.loadAssignmentsSuccess({
-									assignments: response.items,
-									total: response.total,
-									append: append || false
-								})
-							),
-							catchError((error) => {
-								const errorMessage = this.translateService.instant(
-									'PLUGIN.USER_MANAGEMENT.ERRORS.LOAD_FAILED',
-									{ message: error.message || 'Unknown error' }
-								);
-								return of(PluginUserAssignmentActions.loadAssignmentsFailure({ error: errorMessage }));
-							}),
-							finalize(() => this.store.setLoading(false))
-						);
+					// First get the plugin tenant, then load users from it
+					return this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
+						switchMap((pluginTenant) =>
+							this.pluginUserAssignmentService
+								.getPluginTenantUsers(pluginTenant.id, 'allowed', currentTake, currentSkip)
+								.pipe(
+									map((response) =>
+										PluginUserAssignmentActions.loadAssignmentsSuccess({
+											assignments: response.items.map((item) => ({
+												id: item.id,
+												userId: item.id,
+												pluginSubscriptionId: '',
+												assignedAt: item.assignedAt,
+												assignedBy: '',
+												isActive: item.accessType === 'allowed',
+												reason: '',
+												user: {
+													id: item.id,
+													firstName: item.firstName,
+													lastName: item.lastName,
+													email: item.email,
+													imageUrl: item.imageUrl
+												}
+											})),
+											total: response.total,
+											append: append || false
+										})
+									)
+								)
+						),
+						catchError((error) => {
+							const errorMessage = this.translateService.instant(
+								'PLUGIN.USER_MANAGEMENT.ERRORS.LOAD_FAILED',
+								{ message: error.message || 'Unknown error' }
+							);
+							return of(PluginUserAssignmentActions.loadAssignmentsFailure({ error: errorMessage }));
+						}),
+						finalize(() => this.store.setLoading(false))
+					);
 				})
 			);
 		},
@@ -93,13 +112,34 @@ export class PluginUserAssignmentEffects {
 				switchMap(({ pluginId, includeInactive }) => {
 					const { skip, take } = this.store.getValue().pagination;
 
-					// Use the main endpoint GET /plugins/:pluginId/users
-					return this.pluginUserAssignmentService.loadNextPage(pluginId, take, skip, includeInactive).pipe(
-						map((response) =>
-							PluginUserAssignmentActions.loadMoreAssignmentsSuccess({
-								assignments: response.items,
-								total: response.total
-							})
+					// First get the plugin tenant, then load more users from it
+					return this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
+						switchMap((pluginTenant) =>
+							this.pluginUserAssignmentService
+								.getPluginTenantUsers(pluginTenant.id, 'allowed', take, skip)
+								.pipe(
+									map((response) =>
+										PluginUserAssignmentActions.loadMoreAssignmentsSuccess({
+											assignments: response.items.map((item) => ({
+												id: item.id,
+												userId: item.id,
+												pluginSubscriptionId: '',
+												assignedAt: item.assignedAt,
+												assignedBy: '',
+												isActive: item.accessType === 'allowed',
+												reason: '',
+												user: {
+													id: item.id,
+													firstName: item.firstName,
+													lastName: item.lastName,
+													email: item.email,
+													imageUrl: item.imageUrl
+												}
+											})),
+											total: response.total
+										})
+									)
+								)
 						),
 						catchError((error) => {
 							const errorMessage = this.translateService.instant(
@@ -118,8 +158,8 @@ export class PluginUserAssignmentEffects {
 
 	/**
 	 * Assign users effect
-	 * Uses subscription-based access control for user assignment
-	 * Creates child USER-scoped subscriptions for the assigned users
+	 * Uses plugin tenant-based access control for user assignment
+	 * First gets/creates plugin tenant, then adds users to allowed list
 	 */
 	assignUsers$ = createEffect(
 		() => {
@@ -127,27 +167,46 @@ export class PluginUserAssignmentEffects {
 				ofType(PluginUserAssignmentActions.assignUsers),
 				tap(() => this.store.setLoading(true)),
 				switchMap(({ pluginId, userIds, reason }) =>
-					this.pluginUserAssignmentService.assignUsers(pluginId, userIds, reason).pipe(
-						map((response) => {
-							// Show success notification
-							this.toastrService.success(
-								this.translateService.instant('PLUGIN.USER_MANAGEMENT.SUCCESS.USERS_ASSIGNED', {
-									count: response.assignedUsers
-								})
-							);
+					// First, get or create the plugin tenant
+					this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
+						switchMap((pluginTenant) =>
+							// Then allow the users to the plugin tenant
+							this.pluginUserAssignmentService
+								.allowUsersToPluginTenant(pluginTenant.id, userIds, reason)
+								.pipe(
+									map((response) => {
+										// Show success notification
+										this.toastrService.success(
+											this.translateService.instant(
+												'PLUGIN.USER_MANAGEMENT.SUCCESS.USERS_ASSIGNED',
+												{
+													count: response.affectedUserIds?.length || userIds.length
+												}
+											)
+										);
 
-							// Reload assignments to reflect changes
-							return PluginUserAssignmentActions.loadAssignments({
-								pluginId,
-								includeInactive: false,
-								take: this.store.getValue().pagination.take,
-								skip: 0
-							});
-						}),
+										// Reload plugin tenant users to reflect changes
+										return PluginUserAssignmentActions.loadPluginTenantUsers({
+											pluginTenantId: pluginTenant.id,
+											type: 'allowed'
+										});
+									}),
+									catchError((error) => {
+										const errorMessage = this.translateService.instant(
+											'PLUGIN.USER_MANAGEMENT.ERRORS.ASSIGN_FAILED',
+											{ message: error.error?.message || error.message || 'Unknown error' }
+										);
+										this.toastrService.error(errorMessage);
+										return of(
+											PluginUserAssignmentActions.assignUsersFailure({ error: errorMessage })
+										);
+									})
+								)
+						),
 						catchError((error) => {
 							const errorMessage = this.translateService.instant(
 								'PLUGIN.USER_MANAGEMENT.ERRORS.ASSIGN_FAILED',
-								{ message: error.error?.message || error.message || 'Unknown error' }
+								{ message: error.error?.message || error.message || 'Failed to get plugin tenant' }
 							);
 							this.toastrService.error(errorMessage);
 							return of(PluginUserAssignmentActions.assignUsersFailure({ error: errorMessage }));
@@ -162,8 +221,7 @@ export class PluginUserAssignmentEffects {
 
 	/**
 	 * Unassign user effect
-	 * Uses subscription-based revocation to remove user access
-	 * Cancels the child USER-scoped subscription
+	 * Uses plugin tenant-based removal from allowed users list
 	 */
 	unassignUser$ = createEffect(
 		() => {
@@ -171,33 +229,53 @@ export class PluginUserAssignmentEffects {
 				ofType(PluginUserAssignmentActions.unassignUser),
 				tap(() => this.store.setLoading(true)),
 				switchMap(({ pluginId, userId }) =>
-					this.pluginUserAssignmentService
-						.revokeUsers(pluginId, [userId], 'User unassigned by administrator')
-						.pipe(
-							map((response) => {
-								// Show success notification
-								this.toastrService.success(
-									this.translateService.instant('PLUGIN.USER_MANAGEMENT.SUCCESS.USER_UNASSIGNED')
-								);
+					// First, get the plugin tenant
+					this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
+						switchMap((pluginTenant) =>
+							// Then remove the user from allowed list
+							this.pluginUserAssignmentService
+								.removeAllowedUsersFromPluginTenant(
+									pluginTenant.id,
+									[userId],
+									'User unassigned by administrator'
+								)
+								.pipe(
+									map((response) => {
+										// Show success notification
+										this.toastrService.success(
+											this.translateService.instant(
+												'PLUGIN.USER_MANAGEMENT.SUCCESS.USER_UNASSIGNED'
+											)
+										);
 
-								// Reload assignments to reflect changes
-								return PluginUserAssignmentActions.loadAssignments({
-									pluginId,
-									includeInactive: false,
-									take: this.store.getValue().pagination.take,
-									skip: 0
-								});
-							}),
-							catchError((error) => {
-								const errorMessage = this.translateService.instant(
-									'PLUGIN.USER_MANAGEMENT.ERRORS.UNASSIGN_FAILED',
-									{ message: error.error?.message || error.message || 'Unknown error' }
-								);
-								this.toastrService.error(errorMessage);
-								return of(PluginUserAssignmentActions.unassignUserFailure({ error: errorMessage }));
-							}),
-							finalize(() => this.store.setLoading(false))
-						)
+										// Reload plugin tenant users to reflect changes
+										return PluginUserAssignmentActions.loadPluginTenantUsers({
+											pluginTenantId: pluginTenant.id,
+											type: 'allowed'
+										});
+									}),
+									catchError((error) => {
+										const errorMessage = this.translateService.instant(
+											'PLUGIN.USER_MANAGEMENT.ERRORS.UNASSIGN_FAILED',
+											{ message: error.error?.message || error.message || 'Unknown error' }
+										);
+										this.toastrService.error(errorMessage);
+										return of(
+											PluginUserAssignmentActions.unassignUserFailure({ error: errorMessage })
+										);
+									})
+								)
+						),
+						catchError((error) => {
+							const errorMessage = this.translateService.instant(
+								'PLUGIN.USER_MANAGEMENT.ERRORS.UNASSIGN_FAILED',
+								{ message: error.error?.message || error.message || 'Failed to get plugin tenant' }
+							);
+							this.toastrService.error(errorMessage);
+							return of(PluginUserAssignmentActions.unassignUserFailure({ error: errorMessage }));
+						}),
+						finalize(() => this.store.setLoading(false))
+					)
 				)
 			);
 		},
@@ -392,6 +470,323 @@ export class PluginUserAssignmentEffects {
 							}
 						}).onClose
 				)
+			);
+		},
+		{ dispatch: false }
+	);
+
+	// ============================================================================
+	// PLUGIN TENANT USER MANAGEMENT EFFECTS
+	// ============================================================================
+
+	/**
+	 * Load allowed users for a plugin effect
+	 * Resolves plugin tenant ID first, then loads allowed users
+	 * This is the main entry point for components that only know the plugin ID
+	 */
+	loadAllowedUsersForPlugin$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.loadAllowedUsersForPlugin),
+				tap(() => this.store.setLoading(true)),
+				switchMap(({ pluginId, take, skip, searchTerm }) => {
+					// First get the plugin tenant ID
+					return this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
+						switchMap((pluginTenant) =>
+							// Then load the users from that plugin tenant
+							this.pluginUserAssignmentService
+								.getPluginTenantUsers(pluginTenant.id, 'allowed', take, skip, searchTerm)
+								.pipe(
+									map((response) =>
+										PluginUserAssignmentActions.loadAllowedUsersForPluginSuccess({
+											items: response.items.map((item) => ({
+												id: item.id,
+												userId: item.id,
+												pluginSubscriptionId: '',
+												assignedAt: item.assignedAt,
+												assignedBy: '',
+												isActive: item.accessType === 'allowed',
+												reason: '',
+												user: {
+													id: item.id,
+													firstName: item.firstName,
+													lastName: item.lastName,
+													email: item.email,
+													imageUrl: item.imageUrl
+												}
+											})),
+											total: response.total,
+											pluginTenantId: pluginTenant.id
+										})
+									)
+								)
+						),
+						catchError((error) => {
+							const errorMessage =
+								error.error?.message || error.message || 'Failed to load allowed users';
+							return of(
+								PluginUserAssignmentActions.loadAllowedUsersForPluginFailure({ error: errorMessage })
+							);
+						}),
+						finalize(() => this.store.setLoading(false))
+					);
+				})
+			);
+		},
+		{ dispatch: true }
+	);
+
+	/**
+	 * Handle load allowed users for plugin success
+	 * Updates the store with the assignments and stores the plugin tenant ID
+	 */
+	handleLoadAllowedUsersForPluginSuccess$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.loadAllowedUsersForPluginSuccess),
+				tap(({ items, total, pluginTenantId }) => {
+					this.store.setAssignments(items, total);
+					// Store the plugin tenant ID for future operations
+					this.store.setCurrentPluginTenantId(pluginTenantId);
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	/**
+	 * Load plugin tenant users effect
+	 * Handles loading allowed/denied users for a plugin tenant
+	 */
+	loadPluginTenantUsers$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.loadPluginTenantUsers),
+				tap(() => this.store.setLoading(true)),
+				switchMap(({ pluginTenantId, take, skip, searchTerm }) =>
+					this.pluginUserAssignmentService
+						.getPluginTenantUsers(pluginTenantId, 'allowed', take, skip, searchTerm)
+						.pipe(
+							map((response) =>
+								PluginUserAssignmentActions.loadPluginTenantUsersSuccess({
+									items: response.items.map((item) => ({
+										id: item.id,
+										userId: item.id,
+										pluginSubscriptionId: '',
+										assignedAt: item.assignedAt,
+										assignedBy: '',
+										isActive: item.accessType === 'allowed',
+										reason: '',
+										user: {
+											id: item.id,
+											firstName: item.firstName,
+											lastName: item.lastName,
+											email: item.email,
+											imageUrl: item.imageUrl
+										}
+									})),
+									total: response.total
+								})
+							),
+							catchError((error) => {
+								const errorMessage =
+									error.error?.message || error.message || 'Failed to load plugin tenant users';
+								return of(
+									PluginUserAssignmentActions.loadPluginTenantUsersFailure({ error: errorMessage })
+								);
+							}),
+							finalize(() => this.store.setLoading(false))
+						)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	/**
+	 * Handle load plugin tenant users success
+	 */
+	handleLoadPluginTenantUsersSuccess$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.loadPluginTenantUsersSuccess),
+				tap(({ items, total }) => {
+					this.store.setAssignments(items, total);
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	/**
+	 * Allow users to plugin tenant effect
+	 */
+	allowUsersToPluginTenant$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.allowUsersToPluginTenant),
+				tap(() => this.store.setLoading(true)),
+				switchMap(({ pluginTenantId, userIds, reason }) =>
+					this.pluginUserAssignmentService.allowUsersToPluginTenant(pluginTenantId, userIds, reason).pipe(
+						map((response) =>
+							PluginUserAssignmentActions.allowUsersToPluginTenantSuccess({
+								message: response.message,
+								affectedUserIds: response.affectedUserIds
+							})
+						),
+						catchError((error) => {
+							const errorMessage = error.error?.message || error.message || 'Failed to allow users';
+							return of(
+								PluginUserAssignmentActions.allowUsersToPluginTenantFailure({ error: errorMessage })
+							);
+						}),
+						finalize(() => this.store.setLoading(false))
+					)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	/**
+	 * Deny users from plugin tenant effect
+	 */
+	denyUsersFromPluginTenant$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.denyUsersFromPluginTenant),
+				tap(() => this.store.setLoading(true)),
+				switchMap(({ pluginTenantId, userIds, reason }) =>
+					this.pluginUserAssignmentService.denyUsersFromPluginTenant(pluginTenantId, userIds, reason).pipe(
+						map((response) =>
+							PluginUserAssignmentActions.denyUsersFromPluginTenantSuccess({
+								message: response.message,
+								affectedUserIds: response.affectedUserIds
+							})
+						),
+						catchError((error) => {
+							const errorMessage = error.error?.message || error.message || 'Failed to deny users';
+							return of(
+								PluginUserAssignmentActions.denyUsersFromPluginTenantFailure({ error: errorMessage })
+							);
+						}),
+						finalize(() => this.store.setLoading(false))
+					)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	/**
+	 * Remove allowed users from plugin tenant effect
+	 */
+	removeAllowedUsersFromPluginTenant$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.removeAllowedUsersFromPluginTenant),
+				tap(() => this.store.setLoading(true)),
+				switchMap(({ pluginTenantId, userIds, reason }) =>
+					this.pluginUserAssignmentService
+						.removeAllowedUsersFromPluginTenant(pluginTenantId, userIds, reason)
+						.pipe(
+							map((response) =>
+								PluginUserAssignmentActions.removeAllowedUsersFromPluginTenantSuccess({
+									message: response.message,
+									affectedUserIds: response.affectedUserIds
+								})
+							),
+							catchError((error) => {
+								const errorMessage =
+									error.error?.message || error.message || 'Failed to remove allowed users';
+								return of(
+									PluginUserAssignmentActions.removeAllowedUsersFromPluginTenantFailure({
+										error: errorMessage
+									})
+								);
+							}),
+							finalize(() => this.store.setLoading(false))
+						)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	/**
+	 * Remove denied users from plugin tenant effect
+	 */
+	removeDeniedUsersFromPluginTenant$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.removeDeniedUsersFromPluginTenant),
+				tap(() => this.store.setLoading(true)),
+				switchMap(({ pluginTenantId, userIds, reason }) =>
+					this.pluginUserAssignmentService
+						.removeDeniedUsersFromPluginTenant(pluginTenantId, userIds, reason)
+						.pipe(
+							map((response) =>
+								PluginUserAssignmentActions.removeDeniedUsersFromPluginTenantSuccess({
+									message: response.message,
+									affectedUserIds: response.affectedUserIds
+								})
+							),
+							catchError((error) => {
+								const errorMessage =
+									error.error?.message || error.message || 'Failed to remove denied users';
+								return of(
+									PluginUserAssignmentActions.removeDeniedUsersFromPluginTenantFailure({
+										error: errorMessage
+									})
+								);
+							}),
+							finalize(() => this.store.setLoading(false))
+						)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	/**
+	 * Show plugin tenant user management success notifications
+	 */
+	showPluginTenantUserSuccessNotifications$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(
+					PluginUserAssignmentActions.allowUsersToPluginTenantSuccess,
+					PluginUserAssignmentActions.denyUsersFromPluginTenantSuccess,
+					PluginUserAssignmentActions.removeAllowedUsersFromPluginTenantSuccess,
+					PluginUserAssignmentActions.removeDeniedUsersFromPluginTenantSuccess
+				),
+				tap((action) => {
+					const message = (action as any).message || 'Operation completed successfully';
+					this.toastrService.success(message);
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	/**
+	 * Show plugin tenant user management error notifications
+	 */
+	showPluginTenantUserErrorNotifications$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(
+					PluginUserAssignmentActions.loadPluginTenantUsersFailure,
+					PluginUserAssignmentActions.allowUsersToPluginTenantFailure,
+					PluginUserAssignmentActions.denyUsersFromPluginTenantFailure,
+					PluginUserAssignmentActions.removeAllowedUsersFromPluginTenantFailure,
+					PluginUserAssignmentActions.removeDeniedUsersFromPluginTenantFailure
+				),
+				tap(({ error }) => {
+					this.store.setErrorMessage(error);
+					this.toastrService.error(error);
+					console.error('Plugin tenant user management operation failed:', error);
+				})
 			);
 		},
 		{ dispatch: false }

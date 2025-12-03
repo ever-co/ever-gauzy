@@ -98,6 +98,7 @@ import {
 	DeletePluginTenantCommandHandler,
 	DisablePluginTenantCommandHandler,
 	EnablePluginTenantCommandHandler,
+	ManagePluginTenantUsersCommandHandler,
 	UpdatePluginTenantCommandHandler,
 	UpdatePluginTenantConfigurationCommandHandler
 } from './plugin-tenant/commands/handlers';
@@ -105,10 +106,12 @@ import {
 	CheckPluginTenantAccessHandler,
 	GetAllPluginTenantsHandler,
 	GetPluginTenantByIdHandler,
+	GetPluginTenantByPluginHandler,
 	GetPluginTenantQuotaInfoHandler,
-	GetPluginTenantStatisticsHandler,
 	GetPluginTenantsByPluginHandler,
-	GetPluginTenantsByTenantHandler
+	GetPluginTenantsByTenantHandler,
+	GetPluginTenantStatisticsHandler,
+	GetPluginTenantUsersHandler
 } from './plugin-tenant/queries/handlers';
 import {
 	AssignPluginSubscriptionUsersCommandHandler,
@@ -220,6 +223,7 @@ const commands = [
 	DeletePluginTenantCommandHandler,
 	DisablePluginTenantCommandHandler,
 	EnablePluginTenantCommandHandler,
+	ManagePluginTenantUsersCommandHandler,
 	UpdatePluginTenantCommandHandler,
 	UpdatePluginTenantConfigurationCommandHandler
 ];
@@ -266,10 +270,12 @@ const queries = [
 	CheckPluginTenantAccessHandler,
 	GetAllPluginTenantsHandler,
 	GetPluginTenantByIdHandler,
+	GetPluginTenantByPluginHandler,
 	GetPluginTenantQuotaInfoHandler,
 	GetPluginTenantStatisticsHandler,
 	GetPluginTenantsByPluginHandler,
-	GetPluginTenantsByTenantHandler
+	GetPluginTenantsByTenantHandler,
+	GetPluginTenantUsersHandler
 ];
 
 export const handlers = [...commands, ...queries];

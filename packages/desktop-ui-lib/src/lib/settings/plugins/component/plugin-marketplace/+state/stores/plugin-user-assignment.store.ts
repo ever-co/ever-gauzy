@@ -9,6 +9,7 @@ export interface PluginUserAssignmentState {
 	error: string | null;
 	selectedPluginId: string | null;
 	selectedSubscriptionId: string | null;
+	currentPluginTenantId: string | null; // Current plugin tenant ID for user operations
 	// Pagination metadata using standard TypeORM naming
 	pagination: {
 		skip: number; // Offset (how many to skip)
@@ -62,6 +63,7 @@ function createInitialState(): PluginUserAssignmentState {
 		error: null,
 		selectedPluginId: null,
 		selectedSubscriptionId: null,
+		currentPluginTenantId: null,
 		pagination: {
 			skip: 0,
 			take: 20,
@@ -161,6 +163,10 @@ export class PluginUserAssignmentStore extends Store<PluginUserAssignmentState> 
 
 	selectPlugin(pluginId: string, subscriptionId?: string): void {
 		this.update({ selectedPluginId: pluginId, selectedSubscriptionId: subscriptionId || null });
+	}
+
+	setCurrentPluginTenantId(pluginTenantId: string | null): void {
+		this.update({ currentPluginTenantId: pluginTenantId });
 	}
 
 	clearSelection(): void {

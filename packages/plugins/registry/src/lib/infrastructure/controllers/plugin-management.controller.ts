@@ -4,6 +4,7 @@ import {
 	FileStorageFactory,
 	PermissionGuard,
 	Permissions,
+	RequestContext,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -13,6 +14,7 @@ import {
 	Body,
 	Controller,
 	Delete,
+	Get,
 	Param,
 	Patch,
 	Post,
@@ -20,7 +22,7 @@ import {
 	UseGuards,
 	UseInterceptors
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
 	ApiBearerAuth,
 	ApiBody,
@@ -31,11 +33,16 @@ import {
 	ApiSecurity,
 	ApiTags
 } from '@nestjs/swagger';
-import { CreatePluginCommand, DeletePluginCommand, UpdatePluginCommand } from '../../application';
+import {
+	CreatePluginCommand,
+	DeletePluginCommand,
+	GetPluginTenantByPluginQuery,
+	UpdatePluginCommand
+} from '../../application';
 import { LazyAnyFileInterceptor, PluginOwnerGuard } from '../../core';
+import { Plugin } from '../../domain';
 import { CreatePluginDTO, FileDTO, IPlugin, IPluginSource, UpdatePluginDTO } from '../../shared';
 import { GauzyStorageProvider, UploadedPluginStorage } from '../storage';
-import { Plugin } from '../../domain';
 
 @ApiTags('Plugin Management')
 @ApiBearerAuth('Bearer')
@@ -43,7 +50,7 @@ import { Plugin } from '../../domain';
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/plugins')
 export class PluginManagementController {
-	constructor(private readonly commandBus: CommandBus) {}
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	/**
 	 * Creates a new plugin in the system.
@@ -356,5 +363,40 @@ export class PluginManagementController {
 	@Delete(':id')
 	public async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
 		return this.commandBus.execute(new DeletePluginCommand(id));
+	}
+
+	/**
+	 * Retrieves plugin tenant ID for a specific plugin.
+	 * If the plugin tenant doesn't exist, it will be created.
+	 */
+	@ApiOperation({
+		summary: 'Get plugin tenant by plugin ID',
+		description:
+			'Retrieves or creates a plugin tenant relationship for a specific plugin. Returns the plugin tenant ID.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin tenant retrieved or created successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input provided.'
+	})
+	@Get(':id/tenant')
+	public async getPluginTenant(@Param('id', UUIDValidationPipe) id: ID): Promise<{ id: ID; pluginId: ID }> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		return this.queryBus.execute(new GetPluginTenantByPluginQuery(id, tenantId, organizationId));
 	}
 }

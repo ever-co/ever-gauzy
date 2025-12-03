@@ -5,6 +5,7 @@ export * from './create-plugin-tenant.dto';
 export * from './create-plugin.dto';
 export * from './file.dto';
 export * from './install-plugin.dto';
+export * from './manage-plugin-tenant-users.dto';
 export * from './plugin-category-query.dto';
 export * from './plugin-publish.dto';
 export * from './plugin-query-options.dto';

@@ -417,10 +417,16 @@ export class UserManagementFacade {
 
 	/**
 	 * Get assignment date
+	 * Returns null if assignedAt is not a valid date value
 	 * @param assignment - Plugin user assignment
 	 */
-	getAssignmentDate(assignment: PluginUserAssignment): Date {
-		return new Date(assignment.assignedAt);
+	getAssignmentDate(assignment: PluginUserAssignment): Date | null {
+		if (!assignment?.assignedAt) {
+			return null;
+		}
+		const date = new Date(assignment.assignedAt);
+		// Check for Invalid Date
+		return isNaN(date.getTime()) ? null : date;
 	}
 
 	// ============================================================================

@@ -366,10 +366,16 @@ export class PluginUserAssignmentFacade {
 
 	/**
 	 * Format assignment date
+	 * Returns null if assignedAt is not a valid date value
 	 * @param assignment - Plugin user assignment
 	 */
-	getAssignmentDate(assignment: PluginUserAssignment): Date {
-		return new Date(assignment.assignedAt);
+	getAssignmentDate(assignment: PluginUserAssignment): Date | null {
+		if (!assignment?.assignedAt) {
+			return null;
+		}
+		const date = new Date(assignment.assignedAt);
+		// Check for Invalid Date
+		return isNaN(date.getTime()) ? null : date;
 	}
 
 	/**
@@ -389,5 +395,140 @@ export class PluginUserAssignmentFacade {
 			status: assignment.isActive ? 'success' : 'warning',
 			text: assignment.isActive ? 'PLUGIN.USER_MANAGEMENT.ACTIVE' : 'PLUGIN.USER_MANAGEMENT.INACTIVE'
 		};
+	}
+
+	// ============================================================================
+	// PLUGIN TENANT USER MANAGEMENT
+	// ============================================================================
+
+	/**
+	 * Get current plugin tenant ID
+	 */
+	get currentPluginTenantId$(): Observable<string | null> {
+		return this.query.currentPluginTenantId$;
+	}
+
+	/**
+	 * Get current plugin tenant ID (synchronous)
+	 */
+	get currentPluginTenantId(): string | null {
+		return this.query.currentPluginTenantId;
+	}
+
+	/**
+	 * Load allowed users for a plugin
+	 * This resolves the plugin tenant internally and loads the allowed users
+	 * @param pluginId - Plugin identifier
+	 * @param type - Type of users to load ('allowed', 'denied', 'all')
+	 * @param take - Number of records to take
+	 * @param skip - Number of records to skip
+	 * @param searchTerm - Optional search term
+	 */
+	loadAllowedUsersForPlugin(
+		pluginId: ID,
+		type: 'allowed' | 'denied' | 'all' = 'allowed',
+		take?: number,
+		skip?: number,
+		searchTerm?: string
+	): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.loadAllowedUsersForPlugin({
+				pluginId,
+				type,
+				take,
+				skip,
+				searchTerm
+			})
+		);
+	}
+
+	/**
+	 * Load plugin tenant users (allowed/denied)
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param type - Type of users to load ('allowed', 'denied', 'all')
+	 * @param take - Number of records to take
+	 * @param skip - Number of records to skip
+	 * @param searchTerm - Optional search term
+	 */
+	loadPluginTenantUsers(
+		pluginTenantId: ID,
+		type: 'allowed' | 'denied' | 'all' = 'all',
+		take?: number,
+		skip?: number,
+		searchTerm?: string
+	): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.loadPluginTenantUsers({
+				pluginTenantId,
+				type,
+				take,
+				skip,
+				searchTerm
+			})
+		);
+	}
+
+	/**
+	 * Allow users access to a plugin tenant
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userIds - Array of user IDs to allow
+	 * @param reason - Optional reason for the operation
+	 */
+	allowUsersToPluginTenant(pluginTenantId: ID, userIds: string[], reason?: string): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.allowUsersToPluginTenant({
+				pluginTenantId,
+				userIds,
+				reason
+			})
+		);
+	}
+
+	/**
+	 * Deny users access to a plugin tenant
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userIds - Array of user IDs to deny
+	 * @param reason - Optional reason for the operation
+	 */
+	denyUsersFromPluginTenant(pluginTenantId: ID, userIds: string[], reason?: string): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.denyUsersFromPluginTenant({
+				pluginTenantId,
+				userIds,
+				reason
+			})
+		);
+	}
+
+	/**
+	 * Remove users from allowed list for a plugin tenant
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userIds - Array of user IDs to remove
+	 * @param reason - Optional reason for the operation
+	 */
+	removeAllowedUsersFromPluginTenant(pluginTenantId: ID, userIds: string[], reason?: string): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.removeAllowedUsersFromPluginTenant({
+				pluginTenantId,
+				userIds,
+				reason
+			})
+		);
+	}
+
+	/**
+	 * Remove users from denied list for a plugin tenant
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userIds - Array of user IDs to remove
+	 * @param reason - Optional reason for the operation
+	 */
+	removeDeniedUsersFromPluginTenant(pluginTenantId: ID, userIds: string[], reason?: string): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.removeDeniedUsersFromPluginTenant({
+				pluginTenantId,
+				userIds,
+				reason
+			})
+		);
 	}
 }

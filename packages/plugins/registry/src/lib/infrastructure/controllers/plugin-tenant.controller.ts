@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { GetPluginTenantUsersResult, ManagePluginTenantUsersResult } from '../../application/plugin-tenant';
 import {
 	ApprovePluginTenantCommand,
 	BulkUpdatePluginTenantCommand,
@@ -23,6 +24,7 @@ import {
 	DeletePluginTenantCommand,
 	DisablePluginTenantCommand,
 	EnablePluginTenantCommand,
+	ManagePluginTenantUsersCommand,
 	UpdatePluginTenantCommand,
 	UpdatePluginTenantConfigurationCommand
 } from '../../application/plugin-tenant/commands';
@@ -31,9 +33,11 @@ import {
 	GetAllPluginTenantsQuery,
 	GetPluginTenantByIdQuery,
 	GetPluginTenantQuotaInfoQuery,
-	GetPluginTenantStatisticsQuery,
 	GetPluginTenantsByPluginQuery,
-	GetPluginTenantsByTenantQuery
+	GetPluginTenantsByTenantQuery,
+	GetPluginTenantStatisticsQuery,
+	GetPluginTenantUsersQuery,
+	PluginTenantUserType
 } from '../../application/plugin-tenant/queries';
 import {
 	IPluginTenant,
@@ -43,6 +47,7 @@ import {
 } from '../../shared';
 import {
 	CreatePluginTenantDTO,
+	ManagePluginTenantUsersDTO,
 	PluginTenantApprovalDTO,
 	PluginTenantBulkOperationDTO,
 	PluginTenantConfigurationDTO,
@@ -233,6 +238,72 @@ export class PluginTenantController {
 	@Get(':id/quota')
 	async getQuotaInfo(@Param('id') id: string): Promise<IPluginTenantQuotaInfo> {
 		return this.queryBus.execute(new GetPluginTenantQuotaInfoQuery(id));
+	}
+
+	/**
+	 * Get users for a plugin tenant (allowed, denied, or all)
+	 */
+	@ApiOperation({
+		summary: 'Get Plugin Tenant Users',
+		description: 'Retrieves users assigned to a plugin tenant with their access type (allowed/denied)'
+	})
+	@ApiParam({ name: 'id', type: 'string', description: 'Plugin Tenant ID' })
+	@ApiQuery({
+		name: 'type',
+		required: false,
+		enum: ['allowed', 'denied', 'all'],
+		description: 'Type of users to retrieve'
+	})
+	@ApiQuery({ name: 'skip', required: false, type: Number, description: 'Number of records to skip' })
+	@ApiQuery({ name: 'take', required: false, type: Number, description: 'Number of records to take' })
+	@ApiQuery({ name: 'searchTerm', required: false, type: String, description: 'Search term for filtering users' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Users retrieved successfully',
+		type: Object
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin tenant not found'
+	})
+	@Get(':id/users')
+	async getPluginTenantUsers(
+		@Param('id') id: string,
+		@Query('type') type: PluginTenantUserType = 'all',
+		@Query('skip') skip?: number,
+		@Query('take') take?: number,
+		@Query('searchTerm') searchTerm?: string
+	): Promise<GetPluginTenantUsersResult> {
+		return this.queryBus.execute(new GetPluginTenantUsersQuery(id, type, skip, take, searchTerm));
+	}
+
+	/**
+	 * Manage users for a plugin tenant (allow, deny, remove)
+	 */
+	@ApiOperation({
+		summary: 'Manage Plugin Tenant Users',
+		description: 'Add or remove users from allowed/denied lists for a plugin tenant'
+	})
+	@ApiParam({ name: 'id', type: 'string', description: 'Plugin Tenant ID' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'User management operation completed successfully',
+		type: Object
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input data'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin tenant or users not found'
+	})
+	@Post(':id/users')
+	async managePluginTenantUsers(
+		@Param('id') id: string,
+		@Body() dto: ManagePluginTenantUsersDTO
+	): Promise<ManagePluginTenantUsersResult> {
+		return this.commandBus.execute(new ManagePluginTenantUsersCommand(id, dto.userIds, dto.operation, dto.reason));
 	}
 
 	/**

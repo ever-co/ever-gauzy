@@ -100,8 +100,10 @@ hasMore$ | async; @let loadingMore = loadingMore$ | async; @if (plugin && viewMo
 							<div class="metadata-item">
 								<nb-icon icon="calendar-outline" class="metadata-icon"></nb-icon>
 								<span class="metadata-text">
-									{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_ON' | translate }}:
-									{{ getAssignmentDate(assignment) | date : 'medium' }}
+									{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_ON' | translate }}: @if
+									(getAssignmentDate(assignment); as assignedDate) {
+									{{ assignedDate | date : 'medium' }}
+									} @else { N/A }
 								</span>
 							</div>
 							@if (assignment.reason) {

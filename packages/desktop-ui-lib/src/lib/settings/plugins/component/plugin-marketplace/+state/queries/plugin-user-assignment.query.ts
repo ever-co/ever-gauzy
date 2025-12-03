@@ -20,6 +20,7 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 	error$ = this.select((state) => state.error);
 	selectedPluginId$ = this.select((state) => state.selectedPluginId);
 	selectedSubscriptionId$ = this.select((state) => state.selectedSubscriptionId);
+	currentPluginTenantId$ = this.select((state) => state.currentPluginTenantId);
 	pagination$ = this.select((state) => state.pagination);
 	// Pagination selectors
 	currentSkip$ = this.select((state) => state.pagination.skip);
@@ -46,6 +47,10 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 
 	get selectedSubscriptionId(): string | null {
 		return this.getValue().selectedSubscriptionId;
+	}
+
+	get currentPluginTenantId(): string | null {
+		return this.getValue().currentPluginTenantId;
 	}
 
 	get pagination() {

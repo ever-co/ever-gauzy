@@ -4,5 +4,6 @@ export * from './create-plugin-tenant.handler';
 export * from './delete-plugin-tenant.handler';
 export * from './disable-plugin-tenant.handler';
 export * from './enable-plugin-tenant.handler';
+export * from './manage-plugin-tenant-users.handler';
 export * from './update-plugin-tenant-configuration.handler';
 export * from './update-plugin-tenant.handler';

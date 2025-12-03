@@ -349,10 +349,11 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Get assignment date
+	 * Returns null if no valid date is available
 	 * Delegates to facade
 	 * @param assignment - Plugin user assignment
 	 */
-	public getAssignmentDate(assignment: PluginUserAssignment): Date {
+	public getAssignmentDate(assignment: PluginUserAssignment): Date | null {
 		return this.facade.getAssignmentDate(assignment);
 	}
 

@@ -105,5 +105,105 @@ export const PluginUserAssignmentActions = {
 	// Pagination management
 	setSkip: createAction('[Plugin User Assignment] Set Skip', props<{ skip: number }>()),
 	setTake: createAction('[Plugin User Assignment] Set Take', props<{ take: number }>()),
-	resetPagination: createAction('[Plugin User Assignment] Reset Pagination')
+	resetPagination: createAction('[Plugin User Assignment] Reset Pagination'),
+
+	// ============================================================================
+	// Plugin Tenant User Management Actions
+	// ============================================================================
+
+	// Load allowed users for a plugin (resolves plugin tenant internally)
+	loadAllowedUsersForPlugin: createAction(
+		'[Plugin User Assignment] Load Allowed Users For Plugin',
+		props<{
+			pluginId: ID;
+			type?: 'allowed' | 'denied' | 'all';
+			take?: number;
+			skip?: number;
+			searchTerm?: string;
+		}>()
+	),
+	loadAllowedUsersForPluginSuccess: createAction(
+		'[Plugin User Assignment] Load Allowed Users For Plugin Success',
+		props<{ items: PluginUserAssignment[]; total: number; pluginTenantId: string }>()
+	),
+	loadAllowedUsersForPluginFailure: createAction(
+		'[Plugin User Assignment] Load Allowed Users For Plugin Failure',
+		props<{ error: string }>()
+	),
+
+	// Load plugin tenant users (allowed/denied)
+	loadPluginTenantUsers: createAction(
+		'[Plugin User Assignment] Load Plugin Tenant Users',
+		props<{
+			pluginTenantId: ID;
+			type?: 'allowed' | 'denied' | 'all';
+			take?: number;
+			skip?: number;
+			searchTerm?: string;
+		}>()
+	),
+	loadPluginTenantUsersSuccess: createAction(
+		'[Plugin User Assignment] Load Plugin Tenant Users Success',
+		props<{ items: PluginUserAssignment[]; total: number }>()
+	),
+	loadPluginTenantUsersFailure: createAction(
+		'[Plugin User Assignment] Load Plugin Tenant Users Failure',
+		props<{ error: string }>()
+	),
+
+	// Allow users to plugin tenant
+	allowUsersToPluginTenant: createAction(
+		'[Plugin User Assignment] Allow Users To Plugin Tenant',
+		props<{ pluginTenantId: ID; userIds: string[]; reason?: string }>()
+	),
+	allowUsersToPluginTenantSuccess: createAction(
+		'[Plugin User Assignment] Allow Users To Plugin Tenant Success',
+		props<{ message: string; affectedUserIds: string[] }>()
+	),
+	allowUsersToPluginTenantFailure: createAction(
+		'[Plugin User Assignment] Allow Users To Plugin Tenant Failure',
+		props<{ error: string }>()
+	),
+
+	// Deny users from plugin tenant
+	denyUsersFromPluginTenant: createAction(
+		'[Plugin User Assignment] Deny Users From Plugin Tenant',
+		props<{ pluginTenantId: ID; userIds: string[]; reason?: string }>()
+	),
+	denyUsersFromPluginTenantSuccess: createAction(
+		'[Plugin User Assignment] Deny Users From Plugin Tenant Success',
+		props<{ message: string; affectedUserIds: string[] }>()
+	),
+	denyUsersFromPluginTenantFailure: createAction(
+		'[Plugin User Assignment] Deny Users From Plugin Tenant Failure',
+		props<{ error: string }>()
+	),
+
+	// Remove allowed users from plugin tenant
+	removeAllowedUsersFromPluginTenant: createAction(
+		'[Plugin User Assignment] Remove Allowed Users From Plugin Tenant',
+		props<{ pluginTenantId: ID; userIds: string[]; reason?: string }>()
+	),
+	removeAllowedUsersFromPluginTenantSuccess: createAction(
+		'[Plugin User Assignment] Remove Allowed Users From Plugin Tenant Success',
+		props<{ message: string; affectedUserIds: string[] }>()
+	),
+	removeAllowedUsersFromPluginTenantFailure: createAction(
+		'[Plugin User Assignment] Remove Allowed Users From Plugin Tenant Failure',
+		props<{ error: string }>()
+	),
+
+	// Remove denied users from plugin tenant
+	removeDeniedUsersFromPluginTenant: createAction(
+		'[Plugin User Assignment] Remove Denied Users From Plugin Tenant',
+		props<{ pluginTenantId: ID; userIds: string[]; reason?: string }>()
+	),
+	removeDeniedUsersFromPluginTenantSuccess: createAction(
+		'[Plugin User Assignment] Remove Denied Users From Plugin Tenant Success',
+		props<{ message: string; affectedUserIds: string[] }>()
+	),
+	removeDeniedUsersFromPluginTenantFailure: createAction(
+		'[Plugin User Assignment] Remove Denied Users From Plugin Tenant Failure',
+		props<{ error: string }>()
+	)
 };
