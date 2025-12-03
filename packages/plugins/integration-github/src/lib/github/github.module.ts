@@ -32,8 +32,6 @@ import { OrganizationGithubRepositoryIssue } from './repository/issue/github-rep
 import { GithubRepositoryIssueService } from './repository/issue/github-repository-issue.service';
 import { TypeOrmOrganizationGithubRepositoryRepository } from './repository/repository/type-orm-organization-github-repository.repository';
 import { TypeOrmOrganizationGithubRepositoryIssueRepository } from './repository/issue/repository/type-orm-github-repository-issue.repository';
-import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/repository/mikro-orm-organization-github-repository.repository';
-import { MikroOrmOrganizationGithubRepositoryIssueRepository } from './repository/issue/repository/mikro-orm-github-repository-issue.repository';
 
 // Import the Probot configuration module
 const { github } = environment;
@@ -42,14 +40,8 @@ const { github } = environment;
 	imports: [
 		HttpModule,
 		ConfigModule,
-		TypeOrmModule.forFeature([
-			OrganizationGithubRepository,
-			OrganizationGithubRepositoryIssue
-		]),
-		MikroOrmModule.forFeature([
-			OrganizationGithubRepository,
-			OrganizationGithubRepositoryIssue
-		]),
+		TypeOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
+		MikroOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
 		// Probot Configuration
 		ProbotModule.forRoot({
 			isGlobal: true,
@@ -71,8 +63,7 @@ const { github } = environment;
 		forwardRef(() => IntegrationModule),
 		forwardRef(() => IntegrationTenantModule),
 		forwardRef(() => IntegrationSettingModule),
-		forwardRef(() => IntegrationMapModule),
-
+		forwardRef(() => IntegrationMapModule)
 	],
 	controllers: [
 		GitHubAuthorizationController,
@@ -94,9 +85,7 @@ const { github } = environment;
 		GithubRepositoryIssueService,
 		// Define repositories heres
 		TypeOrmOrganizationGithubRepositoryRepository,
-		MikroOrmOrganizationGithubRepositoryRepository,
 		TypeOrmOrganizationGithubRepositoryIssueRepository,
-		MikroOrmOrganizationGithubRepositoryIssueRepository,
 		// Define handlers heres
 		...CommandHandlers
 	],

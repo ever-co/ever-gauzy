@@ -20,7 +20,6 @@ import { ZapierAuthorizationController } from './zapier-authorization.controller
 import { ZapierWebhookService } from './zapier-webhook.service';
 import { ZapierWebhookController } from './zapier-webhook.controller';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
-import { MikroOrmZapierWebhookSubscriptionRepository } from './repository/mikro-orm-zapier-webhook-subscription.repository';
 import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-orm-zapier-webhook-subscription.repository';
 import { EventHandlers } from './handlers';
 
@@ -41,13 +40,7 @@ import { EventHandlers } from './handlers';
 		MikroOrmModule.forFeature([ZapierWebhookSubscription])
 	],
 	controllers: [ZapierAuthorizationController, ZapierController, ZapierWebhookController],
-	providers: [
-		ZapierService,
-		ZapierWebhookService,
-		MikroOrmZapierWebhookSubscriptionRepository,
-		TypeOrmZapierWebhookSubscriptionRepository,
-		...EventHandlers
-	],
+	providers: [ZapierService, ZapierWebhookService, TypeOrmZapierWebhookSubscriptionRepository, ...EventHandlers],
 	exports: [ZapierService, ZapierWebhookService]
 })
 export class ZapierModule {}
