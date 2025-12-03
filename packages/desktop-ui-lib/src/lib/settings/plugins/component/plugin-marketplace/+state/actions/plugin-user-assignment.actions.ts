@@ -68,7 +68,7 @@ export const PluginUserAssignmentActions = {
 	// Get user assignment details
 	getUserAssignmentDetails: createAction(
 		'[Plugin User Assignment] Get User Assignment Details',
-		props<{ pluginId: ID; installationId: ID; userId: ID }>()
+		props<{ pluginId: ID; userId: ID }>()
 	),
 	getUserAssignmentDetailsSuccess: createAction(
 		'[Plugin User Assignment] Get User Assignment Details Success',
@@ -96,7 +96,7 @@ export const PluginUserAssignmentActions = {
 	// UI state management
 	selectPlugin: createAction(
 		'[Plugin User Assignment] Select Plugin',
-		props<{ pluginId: string; installationId: string }>()
+		props<{ pluginId: string; subscriptionId?: string }>()
 	),
 	clearSelection: createAction('[Plugin User Assignment] Clear Selection'),
 	clearAssignments: createAction('[Plugin User Assignment] Clear Assignments'),

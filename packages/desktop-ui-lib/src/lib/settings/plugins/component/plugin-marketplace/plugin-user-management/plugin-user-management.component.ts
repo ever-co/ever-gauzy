@@ -11,7 +11,7 @@ import { Store } from '../../../../../services';
 
 export interface PluginUserManagementDialogData {
 	plugin: IPlugin;
-	installationId: string;
+	subscriptionId?: string;
 }
 
 /**
@@ -43,7 +43,7 @@ export interface PluginUserManagementDialogData {
 })
 export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	public plugin: IPlugin;
-	public installationId: string;
+	public subscriptionId?: string;
 	public assignmentForm: FormGroup;
 	public searchForm: FormGroup;
 
@@ -70,7 +70,7 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 		private readonly store: Store
 	) {
 		this.plugin = this.data.plugin;
-		this.installationId = this.data.installationId;
+		this.subscriptionId = this.data.subscriptionId;
 	}
 
 	ngOnInit(): void {
@@ -128,7 +128,7 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	 */
 	private loadInitialData(): void {
 		// Load assigned users
-		this.facade.loadAssignedUsers(this.plugin.id, this.installationId, false);
+		this.facade.loadAssignedUsers(this.plugin.id, this.subscriptionId, false);
 
 		// Load available users with organization context
 		this.store.selectedOrganization$
@@ -242,7 +242,7 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 						this.facade.clearSelection();
 
 						// Reload assigned users
-						this.facade.loadAssignedUsers(this.plugin.id, this.installationId, false);
+						this.facade.loadAssignedUsers(this.plugin.id, this.subscriptionId, false);
 					}),
 					untilDestroyed(this)
 				)
@@ -279,7 +279,7 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 						.pipe(
 							filter((loading) => !loading),
 							tap(() => {
-								this.facade.loadAssignedUsers(this.plugin.id, this.installationId, false);
+								this.facade.loadAssignedUsers(this.plugin.id, this.subscriptionId, false);
 							}),
 							untilDestroyed(this)
 						)

@@ -48,42 +48,30 @@ export class PluginUserAssignmentEffects {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.loadAssignments),
 				tap(() => this.store.setLoading(true)),
-				switchMap(({ pluginId, installationId, includeInactive, take, skip, append }) => {
+				switchMap(({ pluginId, includeInactive, take, skip, append }) => {
 					const currentSkip = skip !== undefined ? skip : this.store.getValue().pagination.skip;
 					const currentTake = take !== undefined ? take : this.store.getValue().pagination.take;
 
-					// Choose appropriate API based on whether installationId is provided
-					const pluginUserAssignmentRequest = installationId
-						? this.pluginUserAssignmentService.getPluginUserAssignments(
-								pluginId,
-								installationId,
-								includeInactive,
-								currentTake,
-								currentSkip
-						  )
-						: this.pluginUserAssignmentService.getAllPluginUserAssignments(
-								{ pluginId, includeInactive },
-								currentTake,
-								currentSkip
-						  );
-
-					return pluginUserAssignmentRequest.pipe(
-						map((response) =>
-							PluginUserAssignmentActions.loadAssignmentsSuccess({
-								assignments: response.items,
-								total: response.total,
-								append: append || false
-							})
-						),
-						catchError((error) => {
-							const errorMessage = this.translateService.instant(
-								'PLUGIN.USER_MANAGEMENT.ERRORS.LOAD_FAILED',
-								{ message: error.message || 'Unknown error' }
-							);
-							return of(PluginUserAssignmentActions.loadAssignmentsFailure({ error: errorMessage }));
-						}),
-						finalize(() => this.store.setLoading(false))
-					);
+					// Use the main endpoint GET /plugins/:pluginId/users
+					return this.pluginUserAssignmentService
+						.getPluginUserAssignments(pluginId, includeInactive, currentTake, currentSkip)
+						.pipe(
+							map((response) =>
+								PluginUserAssignmentActions.loadAssignmentsSuccess({
+									assignments: response.items,
+									total: response.total,
+									append: append || false
+								})
+							),
+							catchError((error) => {
+								const errorMessage = this.translateService.instant(
+									'PLUGIN.USER_MANAGEMENT.ERRORS.LOAD_FAILED',
+									{ message: error.message || 'Unknown error' }
+								);
+								return of(PluginUserAssignmentActions.loadAssignmentsFailure({ error: errorMessage }));
+							}),
+							finalize(() => this.store.setLoading(false))
+						);
 				})
 			);
 		},
@@ -102,25 +90,11 @@ export class PluginUserAssignmentEffects {
 					this.store.setLoadingMore(true);
 					this.store.incrementSkip();
 				}),
-				switchMap(({ pluginId, installationId, includeInactive }) => {
+				switchMap(({ pluginId, includeInactive }) => {
 					const { skip, take } = this.store.getValue().pagination;
 
-					// Choose appropriate API based on whether installationId is provided
-					const pluginUserAssignmentRequest = installationId
-						? this.pluginUserAssignmentService.loadNextPage(
-								pluginId,
-								installationId,
-								take,
-								skip,
-								includeInactive
-						  )
-						: this.pluginUserAssignmentService.getAllPluginUserAssignments(
-								{ pluginId, includeInactive },
-								take,
-								skip
-						  );
-
-					return pluginUserAssignmentRequest.pipe(
+					// Use the main endpoint GET /plugins/:pluginId/users
+					return this.pluginUserAssignmentService.loadNextPage(pluginId, take, skip, includeInactive).pipe(
 						map((response) =>
 							PluginUserAssignmentActions.loadMoreAssignmentsSuccess({
 								assignments: response.items,
@@ -165,7 +139,6 @@ export class PluginUserAssignmentEffects {
 							// Reload assignments to reflect changes
 							return PluginUserAssignmentActions.loadAssignments({
 								pluginId,
-								installationId: '',
 								includeInactive: false,
 								take: this.store.getValue().pagination.take,
 								skip: 0
@@ -210,7 +183,6 @@ export class PluginUserAssignmentEffects {
 								// Reload assignments to reflect changes
 								return PluginUserAssignmentActions.loadAssignments({
 									pluginId,
-									installationId: '',
 									includeInactive: false,
 									take: this.store.getValue().pagination.take,
 									skip: 0
@@ -236,8 +208,8 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.bulkAssignUsers),
-				switchMap(({ pluginInstallationIds, userIds, reason }) =>
-					this.pluginUserAssignmentService.createBatch({ pluginInstallationIds, userIds, reason }).pipe(
+				switchMap(({ pluginSubscriptionIds, userIds, reason }) =>
+					this.pluginUserAssignmentService.createBatch({ pluginSubscriptionIds, userIds, reason }).pipe(
 						map((assignments) => PluginUserAssignmentActions.bulkAssignUsersSuccess({ assignments })),
 						catchError((error) =>
 							of(
@@ -257,8 +229,8 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.getUserAssignmentDetails),
-				switchMap(({ pluginId, installationId, userId }) =>
-					this.pluginUserAssignmentService.getUserAssignmentDetails(pluginId, installationId, userId).pipe(
+				switchMap(({ pluginId, userId }) =>
+					this.pluginUserAssignmentService.getUserAssignmentDetails(pluginId, userId).pipe(
 						map(({ hasAccess, assignment }) =>
 							PluginUserAssignmentActions.getUserAssignmentDetailsSuccess({ hasAccess, assignment })
 						),

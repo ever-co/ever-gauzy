@@ -1,10 +1,9 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PluginInstallationService } from '../../../../domain/services/plugin-installation.service';
 import { PluginSubscriptionAccessService } from '../../../../domain/services/plugin-subscription-access.service';
 import { PluginSubscriptionService } from '../../../../domain/services/plugin-subscription.service';
-import { PluginUserAssignmentService } from '../../../../domain/services/plugin-user-assignment.service';
-import { PluginInstallationStatus } from '../../../../shared/models/plugin-installation.model';
+import { PluginTenantService } from '../../../../domain/services/plugin-tenant.service';
+import { PluginUserAssignmentService, UserAssignmentRecord } from '../../../../domain/services/plugin-user-assignment.service';
 import { RevokePluginSubscriptionUsersCommand } from '../../commands/revoke-plugin-subscription-users.command';
 
 @CommandHandler(RevokePluginSubscriptionUsersCommand)
@@ -15,7 +14,7 @@ export class RevokePluginSubscriptionUsersCommandHandler
 		private readonly subscriptionAccessService: PluginSubscriptionAccessService,
 		private readonly subscriptionService: PluginSubscriptionService,
 		private readonly userAssignmentService: PluginUserAssignmentService,
-		private readonly pluginInstallationService: PluginInstallationService
+		private readonly pluginTenantService: PluginTenantService
 	) {}
 
 	/**
@@ -24,8 +23,9 @@ export class RevokePluginSubscriptionUsersCommandHandler
 	 * Process:
 	 * 1. Validate revocation permission
 	 * 2. Find parent subscription
-	 * 3. Revoke child subscriptions (set status to CANCELLED)
-	 * 4. Remove user assignments
+	 * 3. Find PluginTenant for tracking
+	 * 4. Revoke child subscriptions (set status to CANCELLED)
+	 * 5. Remove user assignments from PluginTenant
 	 */
 	async execute(command: RevokePluginSubscriptionUsersCommand): Promise<{ message: string; revokedUsers: number }> {
 		const { pluginId, revokeDto, tenantId, organizationId, requestingUserId } = command;
@@ -50,27 +50,26 @@ export class RevokePluginSubscriptionUsersCommandHandler
 				throw new ForbiddenException('No valid parent subscription found for revocation');
 			}
 
+			// Find the PluginTenant for this plugin
+			const pluginTenant = await this.pluginTenantService.findByPluginAndTenant(
+				pluginId,
+				tenantId,
+				organizationId
+			);
+
+			if (!pluginTenant) {
+				throw new NotFoundException('Plugin tenant configuration not found');
+			}
+
 			// Revoke child subscriptions for the users
 			const revokedSubscriptions = await this.subscriptionService.revokeChildSubscriptions(
 				parentSubscription.id,
 				revokeDto.userIds
 			);
 
-			// Find the plugin installation
-			const pluginInstallation = await this.pluginInstallationService.findOneByWhereOptions({
-				pluginId,
-				tenantId,
-				organizationId,
-				status: PluginInstallationStatus.INSTALLED
-			});
-
-			if (!pluginInstallation) {
-				throw new BadRequestException('Plugin installation not found');
-			}
-
-			// Revoke users from the plugin
-			const revocations = await this.userAssignmentService.unassignUsersFromPlugin(
-				pluginInstallation.id,
+			// Revoke users from the plugin using the PluginTenant ID
+			const revocations: UserAssignmentRecord[] = await this.userAssignmentService.unassignUsersFromPlugin(
+				pluginTenant.id,
 				revokeDto.userIds,
 				revokeDto.revocationReason
 			);
@@ -80,7 +79,7 @@ export class RevokePluginSubscriptionUsersCommandHandler
 				revokedUsers: revocations.length
 			};
 		} catch (error) {
-			if (error instanceof ForbiddenException || error instanceof BadRequestException) {
+			if (error instanceof ForbiddenException || error instanceof BadRequestException || error instanceof NotFoundException) {
 				throw error;
 			}
 			throw new BadRequestException(`Failed to revoke users from plugin subscription: ${error.message}`);

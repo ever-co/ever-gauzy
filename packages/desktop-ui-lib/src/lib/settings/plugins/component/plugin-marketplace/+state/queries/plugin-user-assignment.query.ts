@@ -19,7 +19,7 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 	loadingMore$ = this.select((state) => state.loadingMore);
 	error$ = this.select((state) => state.error);
 	selectedPluginId$ = this.select((state) => state.selectedPluginId);
-	selectedInstallationId$ = this.select((state) => state.selectedInstallationId);
+	selectedSubscriptionId$ = this.select((state) => state.selectedSubscriptionId);
 	pagination$ = this.select((state) => state.pagination);
 	// Pagination selectors
 	currentSkip$ = this.select((state) => state.pagination.skip);
@@ -44,8 +44,8 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 		return this.getValue().selectedPluginId;
 	}
 
-	get selectedInstallationId(): string | null {
-		return this.getValue().selectedInstallationId;
+	get selectedSubscriptionId(): string | null {
+		return this.getValue().selectedSubscriptionId;
 	}
 
 	get pagination() {
@@ -72,10 +72,10 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 		return this.getValue().loadingMore;
 	}
 
-	// Get assignments for specific installation
-	getAssignmentsForInstallation(installationId: string): Observable<PluginUserAssignment[]> {
+	// Get assignments for specific subscription
+	getAssignmentsForSubscription(subscriptionId: string): Observable<PluginUserAssignment[]> {
 		return this.assignments$.pipe(
-			map((assignments) => assignments.filter((assignment) => assignment.pluginInstallationId === installationId))
+			map((assignments) => assignments.filter((assignment) => assignment.pluginSubscriptionId === subscriptionId))
 		);
 	}
 
@@ -92,37 +92,37 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 	}
 
 	// Check if user has assignment
-	hasUserAssignment(userId: string, installationId: string): Observable<boolean> {
+	hasUserAssignment(userId: string, subscriptionId: string): Observable<boolean> {
 		return this.assignments$.pipe(
 			map((assignments) =>
 				assignments.some(
 					(assignment) =>
 						assignment.userId === userId &&
-						assignment.pluginInstallationId === installationId &&
+						assignment.pluginSubscriptionId === subscriptionId &&
 						assignment.isActive
 				)
 			)
 		);
 	}
 
-	// Get assignment count for installation
-	getAssignmentCount(installationId: string): Observable<number> {
+	// Get assignment count for subscription
+	getAssignmentCount(subscriptionId: string): Observable<number> {
 		return this.assignments$.pipe(
 			map(
 				(assignments) =>
 					assignments.filter(
-						(assignment) => assignment.pluginInstallationId === installationId && assignment.isActive
+						(assignment) => assignment.pluginSubscriptionId === subscriptionId && assignment.isActive
 					).length
 			)
 		);
 	}
 
-	// Get users assigned to installation
-	getAssignedUsers(installationId: string): Observable<any[]> {
+	// Get users assigned to subscription
+	getAssignedUsers(subscriptionId: string): Observable<any[]> {
 		return this.assignments$.pipe(
 			map((assignments) =>
 				assignments
-					.filter((assignment) => assignment.pluginInstallationId === installationId && assignment.isActive)
+					.filter((assignment) => assignment.pluginSubscriptionId === subscriptionId && assignment.isActive)
 					.map((assignment) => assignment.user)
 					.filter(Boolean)
 			)
@@ -141,8 +141,8 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 
 	// Get selection state
 	hasSelection(): Observable<boolean> {
-		return this.select(['selectedPluginId', 'selectedInstallationId']).pipe(
-			map(({ selectedPluginId, selectedInstallationId }) => !!selectedPluginId && !!selectedInstallationId)
+		return this.select(['selectedPluginId', 'selectedSubscriptionId']).pipe(
+			map(({ selectedPluginId, selectedSubscriptionId }) => !!selectedPluginId || !!selectedSubscriptionId)
 		);
 	}
 }

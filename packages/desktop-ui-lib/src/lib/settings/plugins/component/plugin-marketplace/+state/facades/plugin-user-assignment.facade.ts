@@ -145,6 +145,7 @@ export class PluginUserAssignmentFacade {
 
 	/**
 	 * Load all assignments for a plugin
+	 * Backend: GET /plugins/:pluginId/users
 	 * @param pluginId - Plugin identifier
 	 * @param includeInactive - Whether to include inactive assignments
 	 */
@@ -152,23 +153,6 @@ export class PluginUserAssignmentFacade {
 		this.actions.dispatch(
 			PluginUserAssignmentActions.loadAssignments({
 				pluginId,
-				installationId: '', // Empty to load all installations
-				includeInactive
-			})
-		);
-	}
-
-	/**
-	 * Load assignments for specific installation
-	 * @param pluginId - Plugin identifier
-	 * @param installationId - Installation identifier
-	 * @param includeInactive - Whether to include inactive assignments
-	 */
-	loadAssignmentsForInstallation(pluginId: ID, installationId: ID, includeInactive = false): void {
-		this.actions.dispatch(
-			PluginUserAssignmentActions.loadAssignments({
-				pluginId,
-				installationId,
 				includeInactive
 			})
 		);
@@ -176,15 +160,14 @@ export class PluginUserAssignmentFacade {
 
 	/**
 	 * Load more assignments (for infinite scroll)
+	 * Backend: GET /plugins/:pluginId/users
 	 * @param pluginId - Plugin identifier
-	 * @param installationId - Installation identifier
 	 * @param includeInactive - Whether to include inactive assignments
 	 */
-	loadMoreAssignments(pluginId: ID, installationId: ID, includeInactive = false): void {
+	loadMoreAssignments(pluginId: ID, includeInactive = false): void {
 		this.actions.dispatch(
 			PluginUserAssignmentActions.loadMoreAssignments({
 				pluginId,
-				installationId,
 				includeInactive
 			})
 		);
@@ -211,11 +194,9 @@ export class PluginUserAssignmentFacade {
 	 * Unassign a user from plugin (revoke subscription)
 	 * Uses subscription-based revocation to cancel child USER-scoped subscription
 	 * @param pluginId - Plugin identifier
-	 * @param installationId - Installation identifier (kept for backward compatibility, not used)
 	 * @param userId - User identifier
 	 */
-	unassignUser(pluginId: ID, installationId: ID, userId: ID): void {
-		// Note: installationId parameter is kept for backward compatibility but not used in subscription-based approach
+	unassignUser(pluginId: ID, userId: ID): void {
 		this.actions.dispatch(
 			PluginUserAssignmentActions.unassignUser({
 				pluginId,
@@ -225,15 +206,15 @@ export class PluginUserAssignmentFacade {
 	}
 
 	/**
-	 * Bulk assign users to multiple installations
-	 * @param pluginInstallationIds - Array of installation identifiers
+	 * Bulk assign users to multiple subscriptions
+	 * @param pluginSubscriptionIds - Array of subscription identifiers
 	 * @param userIds - Array of user identifiers
 	 * @param reason - Optional reason for assignment
 	 */
-	bulkAssignUsers(pluginInstallationIds: string[], userIds: string[], reason?: string): void {
+	bulkAssignUsers(pluginSubscriptionIds: string[], userIds: string[], reason?: string): void {
 		this.actions.dispatch(
 			PluginUserAssignmentActions.bulkAssignUsers({
-				pluginInstallationIds,
+				pluginSubscriptionIds,
 				userIds,
 				reason
 			})
@@ -242,15 +223,14 @@ export class PluginUserAssignmentFacade {
 
 	/**
 	 * Get user assignment details
+	 * Backend: GET /users/:userId/plugins/:pluginId/access
 	 * @param pluginId - Plugin identifier
-	 * @param installationId - Installation identifier
 	 * @param userId - User identifier
 	 */
-	getUserAssignmentDetails(pluginId: ID, installationId: ID, userId: ID): void {
+	getUserAssignmentDetails(pluginId: ID, userId: ID): void {
 		this.actions.dispatch(
 			PluginUserAssignmentActions.getUserAssignmentDetails({
 				pluginId,
-				installationId,
 				userId
 			})
 		);
@@ -260,11 +240,9 @@ export class PluginUserAssignmentFacade {
 	 * Check if user has access to plugin
 	 * Uses subscription-based access check
 	 * @param pluginId - Plugin identifier
-	 * @param installationId - Installation identifier (kept for backward compatibility, not used)
 	 * @param userId - User identifier
 	 */
-	checkUserAccess(pluginId: ID, installationId: ID, userId: ID): void {
-		// Note: installationId parameter is kept for backward compatibility but not used in subscription-based approach
+	checkUserAccess(pluginId: ID, userId: ID): void {
 		this.actions.dispatch(
 			PluginUserAssignmentActions.checkUserAccess({
 				pluginId,
@@ -278,11 +256,11 @@ export class PluginUserAssignmentFacade {
 	// ============================================================================
 
 	/**
-	 * Get assignments for specific installation
-	 * @param installationId - Installation identifier
+	 * Get assignments for specific subscription
+	 * @param subscriptionId - Subscription identifier
 	 */
-	getAssignmentsForInstallation$(installationId: string): Observable<PluginUserAssignment[]> {
-		return this.query.getAssignmentsForInstallation(installationId);
+	getAssignmentsForSubscription$(subscriptionId: string): Observable<PluginUserAssignment[]> {
+		return this.query.getAssignmentsForSubscription(subscriptionId);
 	}
 
 	/**
@@ -294,28 +272,28 @@ export class PluginUserAssignmentFacade {
 	}
 
 	/**
-	 * Check if user has assignment for installation
+	 * Check if user has assignment for subscription
 	 * @param userId - User identifier
-	 * @param installationId - Installation identifier
+	 * @param subscriptionId - Subscription identifier
 	 */
-	hasUserAssignment$(userId: string, installationId: string): Observable<boolean> {
-		return this.query.hasUserAssignment(userId, installationId);
+	hasUserAssignment$(userId: string, subscriptionId: string): Observable<boolean> {
+		return this.query.hasUserAssignment(userId, subscriptionId);
 	}
 
 	/**
-	 * Get assignment count for installation
-	 * @param installationId - Installation identifier
+	 * Get assignment count for subscription
+	 * @param subscriptionId - Subscription identifier
 	 */
-	getAssignmentCount$(installationId: string): Observable<number> {
-		return this.query.getAssignmentCount(installationId);
+	getAssignmentCount$(subscriptionId: string): Observable<number> {
+		return this.query.getAssignmentCount(subscriptionId);
 	}
 
 	/**
-	 * Get assigned users for installation
-	 * @param installationId - Installation identifier
+	 * Get assigned users for subscription
+	 * @param subscriptionId - Subscription identifier
 	 */
-	getAssignedUsers$(installationId: string): Observable<any[]> {
-		return this.query.getAssignedUsers(installationId);
+	getAssignedUsers$(subscriptionId: string): Observable<any[]> {
+		return this.query.getAssignedUsers(subscriptionId);
 	}
 
 	// ============================================================================
@@ -323,12 +301,12 @@ export class PluginUserAssignmentFacade {
 	// ============================================================================
 
 	/**
-	 * Select a plugin and installation for context
+	 * Select a plugin and subscription for context
 	 * @param pluginId - Plugin identifier
-	 * @param installationId - Installation identifier
+	 * @param subscriptionId - Subscription identifier (optional)
 	 */
-	selectContext(pluginId: string, installationId: string): void {
-		this.store.selectPlugin(pluginId, installationId);
+	selectContext(pluginId: string, subscriptionId?: string): void {
+		this.store.selectPlugin(pluginId, subscriptionId);
 	}
 
 	/**

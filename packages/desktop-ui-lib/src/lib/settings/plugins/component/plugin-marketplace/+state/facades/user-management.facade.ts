@@ -279,16 +279,16 @@ export class UserManagementFacade {
 	// ============================================================================
 
 	/**
-	 * Load assigned users for plugin installation
+	 * Load assigned users for plugin subscription
 	 * @param pluginId - Plugin ID
-	 * @param installationId - Installation ID
+	 * @param subscriptionId - Subscription ID (optional)
 	 * @param includeInactive - Include inactive assignments
 	 */
-	loadAssignedUsers(pluginId: ID, installationId: ID, includeInactive = false): void {
+	loadAssignedUsers(pluginId: ID, subscriptionId?: ID, includeInactive = false): void {
 		this.actions.dispatch(
 			PluginUserAssignmentActions.loadAssignments({
 				pluginId,
-				installationId,
+				subscriptionId,
 				includeInactive,
 				skip: 0,
 				take: 20

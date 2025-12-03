@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 export interface PluginUserAssignment {
 	id: string;
 	userId: string;
-	pluginInstallationId: string;
+	pluginSubscriptionId: string;
 	assignedAt: Date;
 	assignedBy: string;
 	isActive: boolean;
@@ -20,7 +20,7 @@ export interface AssignPluginUsersDTO {
 }
 
 export interface BulkPluginUserAssignmentDTO {
-	pluginInstallationIds: string[];
+	pluginSubscriptionIds: string[];
 	userIds: string[];
 	reason?: string;
 }
@@ -28,7 +28,7 @@ export interface BulkPluginUserAssignmentDTO {
 export interface PluginUserAssignmentQueryDTO {
 	pluginId?: string;
 	userId?: string;
-	pluginInstallationId?: string;
+	pluginSubscriptionId?: string;
 	includeInactive?: boolean;
 }
 
@@ -75,11 +75,11 @@ export class PluginUserAssignmentService {
 	}
 
 	/**
-	 * Get all user assignments for a plugin installation with pagination
+	 * Get all user assignments for a plugin with pagination
+	 * Backend: GET /plugins/:pluginId/users
 	 */
 	getPluginUserAssignments(
 		pluginId: ID,
-		installationId: ID,
 		includeInactive = false,
 		take?: number,
 		skip?: number
@@ -95,46 +95,44 @@ export class PluginUserAssignmentService {
 			params = params.set('skip', skip.toString());
 		}
 
-		return this.http.get<IPagination<PluginUserAssignment>>(
-			`/api/plugins/${pluginId}/installations/${installationId}/users`,
-			{ params }
-		);
+		return this.http.get<IPagination<PluginUserAssignment>>(`/api/plugins/${pluginId}/users`, { params });
 	}
 
 	/**
 	 * Get user assignment details including access status
+	 * Backend: GET /users/:userId/plugins/:pluginId/access
 	 */
 	getUserAssignmentDetails(
 		pluginId: ID,
-		installationId: ID,
 		userId: ID
 	): Observable<{ hasAccess: boolean; assignment?: PluginUserAssignment }> {
 		return this.http.get<{ hasAccess: boolean; assignment?: PluginUserAssignment }>(
-			`/api/plugins/${pluginId}/installations/${installationId}/users/${userId}`
+			`/api/users/${userId}/plugins/${pluginId}/access`
 		);
 	}
 
 	/**
 	 * Get all plugin assignments for a user with pagination
+	 * Backend: GET /users/:userId/plugins
 	 */
 	getUserPluginAssignments(
 		userId: ID,
 		includeInactive = false,
-		page?: number,
-		limit?: number
+		take?: number,
+		skip?: number
 	): Observable<IPagination<PluginUserAssignment>> {
 		let params = new HttpParams();
 		if (includeInactive) {
 			params = params.set('includeInactive', 'true');
 		}
-		if (page !== undefined) {
-			params = params.set('page', page.toString());
+		if (take !== undefined) {
+			params = params.set('take', take.toString());
 		}
-		if (limit !== undefined) {
-			params = params.set('limit', limit.toString());
+		if (skip !== undefined) {
+			params = params.set('skip', skip.toString());
 		}
 
-		return this.http.get<IPagination<PluginUserAssignment>>(`/api/users/${userId}/plugin-assignments`, { params });
+		return this.http.get<IPagination<PluginUserAssignment>>(`/api/users/${userId}/plugins`, { params });
 	}
 
 	/**
@@ -161,8 +159,8 @@ export class PluginUserAssignmentService {
 			if (queryDto.userId) {
 				params = params.set('userId', queryDto.userId);
 			}
-			if (queryDto.pluginInstallationId) {
-				params = params.set('pluginInstallationId', queryDto.pluginInstallationId);
+			if (queryDto.pluginSubscriptionId) {
+				params = params.set('pluginSubscriptionId', queryDto.pluginSubscriptionId);
 			}
 			if (queryDto.includeInactive) {
 				params = params.set('includeInactive', 'true');
@@ -227,14 +225,14 @@ export class PluginUserAssignmentService {
 
 	/**
 	 * Load next page of assignments (for infinite scroll)
+	 * Backend: GET /plugins/:pluginId/users
 	 */
 	loadNextPage(
 		pluginId: ID,
-		installationId: ID,
 		take: number,
 		skip: number,
 		includeInactive = false
 	): Observable<IPagination<PluginUserAssignment>> {
-		return this.getPluginUserAssignments(pluginId, installationId, includeInactive, take, skip);
+		return this.getPluginUserAssignments(pluginId, includeInactive, take, skip);
 	}
 }

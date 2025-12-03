@@ -206,7 +206,7 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 		console.log('Unassigning user:', assignment.userId, 'from plugin:', plugin.id);
 
 		// Delegate to facade
-		this.userAssignmentFacade.unassignUser(plugin.id, assignment.pluginInstallationId, assignment.userId);
+		this.userAssignmentFacade.unassignUser(plugin.id, assignment.userId);
 
 		// Wait for the unassignment operation to complete, then reload
 		this.loading$
@@ -296,6 +296,6 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		this.userAssignmentFacade.loadMoreAssignments(plugin.id, '', false);
+		this.userAssignmentFacade.loadMoreAssignments(plugin.id, false);
 	}
 }

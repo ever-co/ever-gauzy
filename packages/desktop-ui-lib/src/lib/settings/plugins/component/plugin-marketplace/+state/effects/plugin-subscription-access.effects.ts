@@ -259,14 +259,14 @@ export class PluginSubscriptionAccessEffects {
 					return;
 				}
 
-				// Get the plugin installation ID (you may need to adapt this based on your store structure)
-				// For now, we'll use the pluginId as installationId or get it from the plugin object
-				const installationId = plugin.id; // This should be the actual installation ID
+				// Get the subscription ID from the access store
+				const pluginAccess = this.subscriptionAccessStore.getValue().entities?.[pluginId];
+				const subscriptionId = pluginAccess?.subscriptionId;
 
 				// Prepare dialog data
 				const dialogData: PluginUserManagementDialogData = {
 					plugin,
-					installationId
+					subscriptionId
 				};
 
 				// Update store to reflect dialog is open (setAssignmentDialog handles selectedPluginId too)

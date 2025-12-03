@@ -8,7 +8,7 @@ export interface PluginUserAssignmentState {
 	loadingMore: boolean; // For infinite scroll loading state
 	error: string | null;
 	selectedPluginId: string | null;
-	selectedInstallationId: string | null;
+	selectedSubscriptionId: string | null;
 	// Pagination metadata using standard TypeORM naming
 	pagination: {
 		skip: number; // Offset (how many to skip)
@@ -21,7 +21,7 @@ export interface PluginUserAssignmentState {
 export interface PluginUserAssignment {
 	id: string;
 	userId: string;
-	pluginInstallationId: string;
+	pluginSubscriptionId: string;
 	assignedAt: Date;
 	assignedBy: string;
 	isActive: boolean;
@@ -31,25 +31,25 @@ export interface PluginUserAssignment {
 
 export interface AssignPluginUsersRequest {
 	pluginId: ID;
-	installationId: ID;
+	subscriptionId?: ID;
 	userIds: string[];
 	reason?: string;
 }
 
 export interface UnassignPluginUserRequest {
 	pluginId: ID;
-	installationId: ID;
+	subscriptionId?: ID;
 	userId: ID;
 }
 
 export interface GetPluginUserAssignmentsRequest {
 	pluginId: ID;
-	installationId?: ID; // Optional: if not provided, returns all assignments for the plugin
+	subscriptionId?: ID; // Optional: if not provided, returns all assignments for the plugin
 	includeInactive?: boolean;
 }
 
 export interface BulkAssignPluginUsersRequest {
-	pluginInstallationIds: string[];
+	pluginSubscriptionIds: string[];
 	userIds: string[];
 	reason?: string;
 }
@@ -61,7 +61,7 @@ function createInitialState(): PluginUserAssignmentState {
 		loadingMore: false,
 		error: null,
 		selectedPluginId: null,
-		selectedInstallationId: null,
+		selectedSubscriptionId: null,
 		pagination: {
 			skip: 0,
 			take: 20,
@@ -145,9 +145,9 @@ export class PluginUserAssignmentStore extends Store<PluginUserAssignmentState> 
 		this.update({ assignments: mergedAssignments, error: null });
 	}
 
-	removeAssignment(userId: string, installationId: string): void {
+	removeAssignment(userId: string, subscriptionId: string): void {
 		const assignments = this.getValue().assignments.filter(
-			(a) => !(a.userId === userId && a.pluginInstallationId === installationId)
+			(a) => !(a.userId === userId && a.pluginSubscriptionId === subscriptionId)
 		);
 		this.update({ assignments });
 	}
@@ -159,12 +159,12 @@ export class PluginUserAssignmentStore extends Store<PluginUserAssignmentState> 
 		this.update({ assignments });
 	}
 
-	selectPlugin(pluginId: string, installationId: string): void {
-		this.update({ selectedPluginId: pluginId, selectedInstallationId: installationId });
+	selectPlugin(pluginId: string, subscriptionId?: string): void {
+		this.update({ selectedPluginId: pluginId, selectedSubscriptionId: subscriptionId || null });
 	}
 
 	clearSelection(): void {
-		this.update({ selectedPluginId: null, selectedInstallationId: null });
+		this.update({ selectedPluginId: null, selectedSubscriptionId: null });
 	}
 
 	clearAssignments(): void {
