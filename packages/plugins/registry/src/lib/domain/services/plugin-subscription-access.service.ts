@@ -338,7 +338,7 @@ class SubscriptionAccessContextFactory {
 			subscription: null,
 			pluginTenant,
 			accessLevel: pluginTenant?.scope || null,
-			canAssign: await this.determineAssignmentPermissions(pluginTenant, null, userId),
+			canAssign: await this.determineAssignmentPermissions(pluginTenant.id, null, userId),
 			canActivate: await this.determineActivationPermissions(pluginTenant, null, userId),
 			canManage: await this.determineManagementPermissions(pluginTenant, null, userId),
 			requiresSubscription: false,
@@ -387,7 +387,7 @@ class SubscriptionAccessContextFactory {
 			pluginTenant,
 			accessLevel,
 			canAssign: hasAccess
-				? await this.determineAssignmentPermissions(pluginTenant, subscription, userId)
+				? await this.determineAssignmentPermissions(pluginTenant.id, subscription, userId)
 				: false,
 			canActivate: hasAccess
 				? await this.determineActivationPermissions(pluginTenant, subscription, userId)
@@ -426,11 +426,20 @@ class SubscriptionAccessContextFactory {
 	 * Determine assignment permissions using entity domain logic
 	 */
 	private async determineAssignmentPermissions(
-		pluginTenant: IPluginTenant | null,
+		pluginTenantId: ID,
 		subscription: IPluginSubscription | null,
 		userId?: ID
 	): Promise<boolean> {
-		if (!pluginTenant || !userId) return false;
+		if (!pluginTenantId || !userId) return false;
+
+		const { record: pluginTenant, success } = await this.pluginTenantService.findOneOrFailByIdString(
+			pluginTenantId,
+			{
+				relations: ['allowedUsers', 'deniedUsers', 'allowedRoles']
+			}
+		);
+
+		if (!success) return false;
 
 		// Check if subscription allows assignment using entity method
 		const subscriptionAllowsAssignment = subscription ? subscription.hasAssignmentPermissions() : false;
