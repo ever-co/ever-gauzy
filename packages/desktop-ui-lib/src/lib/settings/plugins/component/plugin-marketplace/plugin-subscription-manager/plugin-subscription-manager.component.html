@@ -2,7 +2,15 @@
 @let installed = installationQuery.installed$(plugin?.id) | async;
 <!-- Loading State -->
 @let installing = installationQuery.installing$(plugin?.id) |async;
-
+<!-- Current Subscription -->
+@let canChangePlan = !currentSubscription.parentId;
+<!-- Loading -->
+@let isLoading = isLoading$ | async;
+<!-- disabled State -->
+@let disabled = installing || isLoading;
+<!-- Current Plan -->
+@let currentPlan = currentPlan$ | async;
+<!-- Subscription Manager Container -->
 <div class="subscription-manager">
 	<div class="manager-header">
 		<h4 class="manager-title">
@@ -16,100 +24,159 @@
 
 	<!-- Current Subscription Status -->
 	<div class="current-subscription" *ngIf="currentSubscription">
-		<div class="subscription-card current">
+		<div
+			class="subscription-card current"
+			[class.trial]="currentSubscription.isInTrial"
+			[class.expiring]="currentSubscription.isExpiringSoon"
+		>
+			<!-- Status Ribbon -->
+			@if(currentSubscription.isInTrial) {
+			<div class="status-ribbon trial">
+				<nb-icon icon="clock-outline"></nb-icon>
+				Trial Period
+			</div>
+			} @else if(currentSubscription.isExpiringSoon) {
+			<div class="status-ribbon expiring">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
+				Expiring Soon
+			</div>
+			}
+
 			<div class="subscription-header">
 				<div class="subscription-info">
-					<h5>
-						Current Plan:
-						{{ currentSubscription.plan?.type | titlecase }}
-					</h5>
-					<p class="subscription-status" [class]="currentSubscription.status">
-						<nb-icon [icon]="getStatusIcon(currentSubscription.status)"></nb-icon>
-						{{ currentSubscription.status | titlecase }}
-					</p>
-				</div>
-				<div class="subscription-actions">
-					@if(!installed) {
-					<button
-						nbButton
-						[disabled]="installing"
-						status="success"
-						size="small"
-						(click)="install()"
-						[disabled]="isLoading$ | async"
-					>
-						{{ installing ? 'Installing...' : 'Install Plugin' }}
-					</button>
-					}
-					<button
-						nbButton
-						status="warning"
-						size="small"
-						[disabled]="installing"
-						(click)="cancelSubscription()"
-						[disabled]="isLoading$ | async"
-					>
-						Cancel
-					</button>
-				</div>
-			</div>
-
-			<div class="subscription-details">
-				<!-- Current Plan Details -->
-				@if(isLoading$ | async) {
-				<div class="detail-item plan-details loading">
-					<span class="label">Plan:</span>
-					<span class="value">
-						<nb-spinner size="tiny"></nb-spinner>
-						Loading plan details...
-					</span>
-				</div>
-				} @else { @if(currentPlan$ | async; as currentPlan) {
-				<div class="detail-item plan-details">
-					<span class="label">Plan:</span>
-					<span class="value">
-						<strong>{{ currentPlan.name }}</strong>
-						@if(currentPlan.description) {
-						<small class="plan-description">{{ currentPlan.description }}</small>
+					<div class="plan-badge-wrapper">
+						<span class="plan-type-badge" [class]="currentSubscription.plan?.type">
+							{{ currentSubscription.plan?.type | titlecase }}
+						</span>
+						@if(installed) {
+						<span class="installed-badge">
+							<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+							Installed
+						</span>
 						}
-					</span>
+					</div>
+					<h5 class="plan-title">
+						@if(isLoading) {
+						<nb-spinner size="tiny"></nb-spinner>
+						} @else if(currentPlan) {
+						{{ currentPlan.name }}
+						} @else { Current Plan }
+					</h5>
+					@if(currentPlan) { @if(currentPlan.description) {
+					<p class="plan-description">{{ currentPlan.description }}</p>
+					} }
+					<div class="subscription-status-wrapper">
+						<span class="subscription-status" [class]="currentSubscription.status">
+							<nb-icon [icon]="getStatusIcon(currentSubscription.status)"></nb-icon>
+							{{ currentSubscription.status | titlecase }}
+						</span>
+					</div>
 				</div>
-				} @else if(currentSubscription.planId) {
-				<div class="detail-item plan-details warning">
-					<span class="label">Plan:</span>
-					<span class="value">
-						<nb-icon icon="alert-triangle-outline"></nb-icon>
-						Plan not found (ID: {{ currentSubscription.planId }})
-					</span>
-				</div>
-				} } @if(currentSubscription.amount){
-				<div class="detail-item">
-					<span class="label">Price:</span>
-					<span class="value"
-						>{{
+
+				<!-- Price Display -->
+				@if(currentSubscription.amount) {
+				<div class="subscription-price">
+					<span class="price-amount">
+						{{
 							currentSubscription.plan?.price ?? currentSubscription.amount
 								| currency : currentSubscription.plan?.currency ?? currentSubscription.currency
-						}}/{{ currentSubscription.plan?.billingPeriod ?? currentSubscription.billingPeriod }}</span
-					>
+						}}
+					</span>
+					<span class="price-period">
+						/ {{ currentSubscription.plan?.billingPeriod ?? currentSubscription.billingPeriod }}
+					</span>
 				</div>
 				}
-				<div class="detail-item" *ngIf="currentSubscription.nextBillingDate">
-					<span class="label">Next Billing:</span>
-					<span class="value">{{ currentSubscription.nextBillingDate | date : 'mediumDate' }}</span>
+			</div>
+
+			<!-- Subscription Details Grid -->
+			<div class="subscription-details-grid">
+				@if(currentSubscription.nextBillingDate) {
+				<div class="detail-card">
+					<div class="detail-icon">
+						<nb-icon icon="calendar-outline"></nb-icon>
+					</div>
+					<div class="detail-content">
+						<span class="detail-label">Next Billing</span>
+						<span class="detail-value">{{
+							currentSubscription.nextBillingDate | date : 'mediumDate'
+						}}</span>
+					</div>
 				</div>
-				<div class="detail-item" *ngIf="currentSubscription.isInTrial">
-					<span class="label">Trial Ends:</span>
-					<span class="value warning">{{ currentSubscription.trialEndDate | date : 'mediumDate' }}</span>
+				} @if(currentSubscription.isInTrial) {
+				<div class="detail-card warning">
+					<div class="detail-icon">
+						<nb-icon icon="clock-outline"></nb-icon>
+					</div>
+					<div class="detail-content">
+						<span class="detail-label">Trial Ends</span>
+						<span class="detail-value">{{ currentSubscription.trialEndDate | date : 'mediumDate' }}</span>
+					</div>
 				</div>
-				<div class="detail-item" *ngIf="currentSubscription.isExpiringSoon">
-					<span class="label">Expires:</span>
-					<span class="value danger">{{ currentSubscription.endDate | date : 'mediumDate' }}</span>
+				} @if(currentSubscription.isExpiringSoon) {
+				<div class="detail-card danger">
+					<div class="detail-icon">
+						<nb-icon icon="alert-triangle-outline"></nb-icon>
+					</div>
+					<div class="detail-content">
+						<span class="detail-label">Expires On</span>
+						<span class="detail-value">{{ currentSubscription.endDate | date : 'mediumDate' }}</span>
+					</div>
 				</div>
+				} @if(currentSubscription.startDate) {
+				<div class="detail-card">
+					<div class="detail-icon">
+						<nb-icon icon="flag-outline"></nb-icon>
+					</div>
+					<div class="detail-content">
+						<span class="detail-label">Started</span>
+						<span class="detail-value">{{ currentSubscription.startDate | date : 'mediumDate' }}</span>
+					</div>
+				</div>
+				}
+			</div>
+
+			<!-- Warning Banner for Plan Not Found -->
+			@if(!(isLoading) && !(currentPlan) && currentSubscription.planId) {
+			<div class="warning-banner">
+				<nb-icon icon="alert-triangle-outline"></nb-icon>
+				<span>Plan details not found (ID: {{ currentSubscription.planId }})</span>
+			</div>
+			}
+
+			<!-- Action Buttons -->
+			<div class="subscription-actions">
+				@if(!installed) {
+				<button
+					nbButton
+					status="basic"
+					size="small"
+					class="action warning action-btn install-btn"
+					[disabled]="disabled"
+					(click)="install()"
+				>
+					<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline" class="mr-1"></nb-icon>
+					{{ 'BUTTONS.INSTALL' | translate }}
+				</button>
+				}
+				<button
+					nbButton
+					outline
+					status="danger"
+					size="medium"
+					class="action-btn cancel-btn"
+					(click)="cancelSubscription()"
+					[disabled]="disabled"
+				>
+					<nb-icon icon="close-circle-outline"></nb-icon>
+					Cancel Subscription
+				</button>
 			</div>
 		</div>
 	</div>
 
 	<!-- Available Plans -->
+	@if(canChangePlan){
 	<div class="available-plans">
 		<h5 class="plans-title">
 			{{ currentSubscription ? 'Change Plan' : 'Choose a Plan' }}
@@ -136,7 +203,7 @@
 		<gauzy-subscription-billing-form
 			[form]="subscriptionForm"
 			[plan]="selectedPlan"
-			[isLoading]="isLoading$ | async"
+			[isLoading]="isLoading"
 			[isUpgrade]="currentSubscription && canUpgrade(selectedPlan)"
 			[isDowngrade]="currentSubscription && canDowngrade(selectedPlan)"
 			(formSubmit)="subscribeToPlan()"
@@ -144,5 +211,5 @@
 		>
 		</gauzy-subscription-billing-form>
 	</div>
-	}
+	} }
 </div>

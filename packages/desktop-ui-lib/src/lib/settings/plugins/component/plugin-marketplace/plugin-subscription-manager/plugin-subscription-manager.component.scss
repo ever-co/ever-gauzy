@@ -92,10 +92,10 @@
   .subscription-card {
     background: var(--background-basic-color-1);
     border: 2px solid var(--color-primary-500);
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: 0 4px 20px rgba(64, 123, 255, 0.15);
-    transition: all 0.3s ease;
+    border-radius: 20px;
+    padding: 0;
+    box-shadow: 0 4px 24px rgba(64, 123, 255, 0.12);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 
@@ -105,57 +105,188 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
+      height: 6px;
       background: linear-gradient(90deg, var(--color-primary-500), var(--color-success-500));
     }
 
     &.current {
-      background: linear-gradient(135deg,
+      background: linear-gradient(145deg,
         var(--background-basic-color-1) 0%,
-        var(--color-primary-transparent-100) 100%
+        var(--color-primary-transparent-100) 50%,
+        var(--background-basic-color-1) 100%
       );
     }
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(64, 123, 255, 0.25);
+    &.trial {
+      border-color: var(--color-warning-400);
+
+      &::before {
+        background: linear-gradient(90deg, var(--color-warning-500), var(--color-warning-300));
+      }
     }
+
+    &.expiring {
+      border-color: var(--color-danger-400);
+
+      &::before {
+        background: linear-gradient(90deg, var(--color-danger-500), var(--color-danger-300));
+        animation: pulseGradient 2s ease-in-out infinite;
+      }
+    }
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(64, 123, 255, 0.2);
+    }
+  }
+
+  /* Status Ribbon */
+  .status-ribbon {
+    position: absolute;
+    top: 20px;
+    right: -35px;
+    padding: 6px 40px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transform: rotate(45deg);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 10;
+
+    nb-icon {
+      font-size: 12px;
+    }
+
+    &.trial {
+      background: var(--color-warning-500);
+      color: white;
+      box-shadow: 0 2px 8px rgba(255, 170, 0, 0.4);
+    }
+
+    &.expiring {
+      background: var(--color-danger-500);
+      color: white;
+      box-shadow: 0 2px 8px rgba(255, 61, 113, 0.4);
+      animation: ribbonPulse 2s ease-in-out infinite;
+    }
+  }
+
+  @keyframes pulseGradient {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  @keyframes ribbonPulse {
+    0%, 100% { transform: rotate(45deg) scale(1); }
+    50% { transform: rotate(45deg) scale(1.02); }
   }
 
   .subscription-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 24px;
+    padding: 28px 28px 20px;
+    gap: 20px;
 
     .subscription-info {
       flex: 1;
+      min-width: 0;
 
-      h5 {
-        margin: 0 0 12px 0;
-        font-size: 20px;
+      .plan-badge-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .plan-type-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 11px;
         font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: var(--color-primary-transparent-200);
+        color: var(--color-primary-600);
+        border: 1px solid var(--color-primary-300);
+
+        &.premium, &.pro {
+          background: linear-gradient(135deg, var(--color-warning-transparent-200), var(--color-warning-transparent-100));
+          color: var(--color-warning-700);
+          border-color: var(--color-warning-400);
+        }
+
+        &.enterprise {
+          background: linear-gradient(135deg, var(--color-info-transparent-200), var(--color-info-transparent-100));
+          color: var(--color-info-700);
+          border-color: var(--color-info-400);
+        }
+
+        &.free {
+          background: var(--background-basic-color-3);
+          color: var(--text-hint-color);
+          border-color: var(--border-basic-color-4);
+        }
+      }
+
+      .installed-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 16px;
+        font-size: 11px;
+        font-weight: 600;
+        background: var(--color-success-transparent-200);
+        color: var(--color-success-700);
+        border: 1px solid var(--color-success-400);
+
+        nb-icon {
+          font-size: 14px;
+        }
+      }
+
+      .plan-title {
+        margin: 0 0 8px 0;
+        font-size: 26px;
+        font-weight: 800;
         color: var(--text-basic-color);
+        line-height: 1.2;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
 
-        &::before {
-          content: '✦';
-          color: var(--color-primary-500);
-          font-size: 16px;
+        nb-spinner {
+          margin-right: 4px;
         }
+      }
+
+      .plan-description {
+        margin: 0 0 16px 0;
+        font-size: 14px;
+        color: var(--text-hint-color);
+        line-height: 1.5;
+        max-width: 400px;
+      }
+
+      .subscription-status-wrapper {
+        display: flex;
+        align-items: center;
       }
 
       .subscription-status {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        font-size: 14px;
+        gap: 6px;
+        font-size: 13px;
         font-weight: 600;
-        margin: 0;
-        padding: 6px 14px;
-        border-radius: 20px;
+        padding: 8px 16px;
+        border-radius: 24px;
         background: var(--background-basic-color-2);
         transition: all 0.3s ease;
 
@@ -163,202 +294,244 @@
           color: var(--color-success-700);
           background: var(--color-success-transparent-200);
           border: 1px solid var(--color-success-400);
+
+          nb-icon {
+            color: var(--color-success-500);
+          }
         }
 
         &.trial {
           color: var(--color-warning-700);
           background: var(--color-warning-transparent-200);
           border: 1px solid var(--color-warning-400);
+
+          nb-icon {
+            color: var(--color-warning-500);
+          }
         }
 
         &.expired, &.cancelled {
           color: var(--color-danger-700);
           background: var(--color-danger-transparent-200);
           border: 1px solid var(--color-danger-400);
+
+          nb-icon {
+            color: var(--color-danger-500);
+          }
+        }
+
+        &.pending {
+          color: var(--color-info-700);
+          background: var(--color-info-transparent-200);
+          border: 1px solid var(--color-info-400);
+
+          nb-icon {
+            color: var(--color-info-500);
+          }
         }
 
         nb-icon {
-          font-size: 18px;
-          animation: statusPulse 2s ease-in-out infinite;
-        }
-      }
-    }
-
-    .subscription-actions {
-      button {
-        font-weight: 600;
-        transition: all 0.3s ease;
-
-        &:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(255, 170, 0, 0.3);
-        }
-      }
-    }
-  }
-
-  @keyframes statusPulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.6;
-    }
-  }
-
-  .subscription-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-
-    .detail-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: 14px 16px;
-      background: var(--background-basic-color-2);
-      border-radius: 10px;
-      border: 1px solid var(--border-basic-color-3);
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: var(--background-basic-color-3);
-        border-color: var(--color-primary-400);
-        transform: translateX(4px);
-      }
-
-      &.plan-details {
-        grid-column: 1 / -1;
-        flex-direction: column;
-        gap: 8px;
-        background: linear-gradient(135deg, var(--background-basic-color-2) 0%, var(--color-primary-transparent-100) 100%);
-        border: 2px solid var(--color-primary-300);
-
-        &.loading {
-          .value {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: var(--text-hint-color);
-          }
-        }
-
-        &.warning {
-          background: linear-gradient(135deg, var(--background-basic-color-2) 0%, var(--color-warning-transparent-100) 100%);
-          border-color: var(--color-warning-300);
-
-          .value {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--color-warning-700);
-
-            nb-icon {
-              font-size: 18px;
-            }
-          }
-        }
-
-        .label {
-          font-size: 13px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .value {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-
-          strong {
-            font-size: 18px;
-            color: var(--color-primary-600);
-            font-weight: 700;
-          }
-
-          .plan-description {
-            font-size: 13px;
-            color: var(--text-hint-color);
-            font-weight: normal;
-            line-height: 1.5;
-          }
-        }
-      }
-
-      &.features {
-        grid-column: 1 / -1;
-        flex-direction: column;
-        background: var(--background-basic-color-2);
-
-        .features-list-small {
-          list-style: none;
-          padding: 0;
-          margin: 12px 0 0 0;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-
-          li {
-            font-size: 13px;
-            padding: 6px 14px;
-            background: var(--background-basic-color-1);
-            border-radius: 16px;
-            color: var(--text-basic-color);
-            border: 1px solid var(--border-basic-color-4);
-            transition: all 0.2s ease;
-            font-weight: 500;
-
-            &:hover {
-              background: var(--color-primary-transparent-100);
-              border-color: var(--color-primary-400);
-              transform: translateY(-2px);
-            }
-
-            &.more-features {
-              color: var(--text-hint-color);
-              font-style: italic;
-              border-style: dashed;
-            }
-          }
-        }
-      }
-
-      .label {
-        font-size: 13px;
-        color: var(--text-hint-color);
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-
-        &::before {
-          content: '•';
-          color: var(--color-primary-500);
           font-size: 16px;
         }
       }
+    }
 
-      .value {
+    .subscription-price {
+      text-align: right;
+      flex-shrink: 0;
+
+      .price-amount {
+        display: block;
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--color-primary-600);
+        line-height: 1;
+      }
+
+      .price-period {
+        display: block;
         font-size: 14px;
-        color: var(--text-basic-color);
-        font-weight: 700;
-        text-align: right;
+        color: var(--text-hint-color);
+        font-weight: 500;
+        margin-top: 4px;
+      }
+    }
+  }
 
-        &.warning {
+  /* Details Grid */
+  .subscription-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    padding: 0 28px 20px;
+  }
+
+  .detail-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: var(--background-basic-color-2);
+    border-radius: 12px;
+    border: 1px solid var(--border-basic-color-3);
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: var(--background-basic-color-3);
+      border-color: var(--color-primary-300);
+      transform: translateY(-2px);
+    }
+
+    .detail-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--color-primary-transparent-100);
+      flex-shrink: 0;
+
+      nb-icon {
+        font-size: 22px;
+        color: var(--color-primary-500);
+      }
+    }
+
+    .detail-content {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .detail-value {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-basic-color);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &.warning {
+      background: var(--color-warning-transparent-100);
+      border-color: var(--color-warning-300);
+
+      .detail-icon {
+        background: var(--color-warning-transparent-200);
+
+        nb-icon {
           color: var(--color-warning-600);
-          display: flex;
-          align-items: center;
-          gap: 6px;
         }
+      }
 
-        &.danger {
+      .detail-value {
+        color: var(--color-warning-700);
+      }
+    }
+
+    &.danger {
+      background: var(--color-danger-transparent-100);
+      border-color: var(--color-danger-300);
+      animation: dangerPulse 2s ease-in-out infinite;
+
+      .detail-icon {
+        background: var(--color-danger-transparent-200);
+
+        nb-icon {
           color: var(--color-danger-600);
-          display: flex;
-          align-items: center;
-          gap: 6px;
         }
+      }
+
+      .detail-value {
+        color: var(--color-danger-700);
+      }
+    }
+  }
+
+  @keyframes dangerPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 61, 113, 0.2); }
+    50% { box-shadow: 0 0 0 4px rgba(255, 61, 113, 0.1); }
+  }
+
+  /* Warning Banner */
+  .warning-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 28px 20px;
+    padding: 14px 18px;
+    background: var(--color-warning-transparent-100);
+    border: 1px solid var(--color-warning-300);
+    border-radius: 10px;
+    color: var(--color-warning-700);
+    font-size: 13px;
+    font-weight: 500;
+
+    nb-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+  }
+
+  /* Action Buttons */
+  .subscription-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 20px 28px 28px;
+    border-top: 1px solid var(--border-basic-color-3);
+    background: var(--background-basic-color-2);
+    border-radius: 0 0 18px 18px;
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      nb-icon {
+        font-size: 18px;
+      }
+
+      nb-spinner {
+        margin-right: 4px;
+      }
+
+      &.install-btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 180px;
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0, 214, 143, 0.35);
+        }
+      }
+
+      &.cancel-btn {
+        &:hover:not(:disabled) {
+          background: var(--color-danger-transparent-100);
+          transform: translateY(-2px);
+        }
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
     }
   }
@@ -744,19 +917,72 @@
   .current-subscription {
     margin-bottom: 32px;
 
-    .subscription-card {
-      padding: 20px;
+    .status-ribbon {
+      padding: 4px 30px;
+      font-size: 10px;
+      right: -40px;
+      top: 16px;
     }
 
     .subscription-header {
       flex-direction: column;
-      gap: 16px;
+      padding: 24px 20px 16px;
+      gap: 20px;
 
-      .subscription-actions {
+      .subscription-info {
+        .plan-title {
+          font-size: 22px;
+        }
+
+        .plan-description {
+          max-width: 100%;
+        }
+      }
+
+      .subscription-price {
+        text-align: left;
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+
+        .price-amount {
+          font-size: 28px;
+        }
+      }
+    }
+
+    .subscription-details-grid {
+      padding: 0 20px 16px;
+      grid-template-columns: 1fr;
+    }
+
+    .detail-card {
+      padding: 14px;
+
+      .detail-icon {
+        width: 40px;
+        height: 40px;
+
+        nb-icon {
+          font-size: 20px;
+        }
+      }
+    }
+
+    .warning-banner {
+      margin: 0 20px 16px;
+    }
+
+    .subscription-actions {
+      padding: 16px 20px 24px;
+      flex-direction: column;
+
+      .action-btn {
         width: 100%;
+        justify-content: center;
 
-        button {
-          width: 100%;
+        &.install-btn {
+          min-width: auto;
         }
       }
     }
@@ -843,41 +1069,103 @@
   }
 
   .current-subscription {
-    .subscription-card {
-      padding: 16px;
+    .status-ribbon {
+      display: none;
     }
 
     .subscription-header {
+      padding: 20px 16px 12px;
+
       .subscription-info {
-        h5 {
-          font-size: 16px;
+        .plan-badge-wrapper {
+          gap: 6px;
+          margin-bottom: 10px;
+        }
+
+        .plan-type-badge,
+        .installed-badge {
+          font-size: 10px;
+          padding: 3px 10px;
+        }
+
+        .plan-title {
+          font-size: 18px;
+          margin-bottom: 6px;
+        }
+
+        .plan-description {
+          font-size: 13px;
+          margin-bottom: 12px;
         }
 
         .subscription-status {
           font-size: 12px;
-          padding: 4px 10px;
+          padding: 6px 12px;
+
+          nb-icon {
+            font-size: 14px;
+          }
+        }
+      }
+
+      .subscription-price {
+        .price-amount {
+          font-size: 24px;
+        }
+
+        .price-period {
+          font-size: 12px;
         }
       }
     }
-  }
 
-  .subscription-details {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    .subscription-details-grid {
+      padding: 0 16px 12px;
+      gap: 8px;
+    }
 
-    .detail-item {
+    .detail-card {
       padding: 12px;
+      gap: 10px;
 
-      .label {
-        font-size: 12px;
+      .detail-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+
+        nb-icon {
+          font-size: 18px;
+        }
       }
 
-      .value {
+      .detail-label {
+        font-size: 10px;
+      }
+
+      .detail-value {
         font-size: 13px;
       }
+    }
 
-      &.plan-details {
-        .value strong {
+    .warning-banner {
+      margin: 0 16px 12px;
+      padding: 12px 14px;
+      font-size: 12px;
+
+      nb-icon {
+        font-size: 18px;
+      }
+    }
+
+    .subscription-actions {
+      padding: 14px 16px 20px;
+      gap: 10px;
+
+      .action-btn {
+        padding: 10px 20px;
+        font-size: 13px;
+
+        nb-icon {
           font-size: 16px;
         }
       }
