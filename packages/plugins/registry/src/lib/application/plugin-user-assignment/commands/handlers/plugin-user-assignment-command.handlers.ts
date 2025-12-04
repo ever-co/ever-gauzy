@@ -16,7 +16,6 @@ export class AssignUsersToPluginCommandHandler implements ICommandHandler<Assign
 	async execute(command: AssignUsersToPluginCommand): Promise<any> {
 		const { pluginId, userIds, reason } = command;
 
-		// TODO: Implement proper logic with plugin installation service
 		const assignments = await this.userAssignmentService.assignUsersToPlugin(pluginId, userIds, reason);
 
 		return {

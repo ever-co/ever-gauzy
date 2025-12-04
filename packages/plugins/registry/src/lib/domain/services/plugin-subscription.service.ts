@@ -1,8 +1,8 @@
-import { ID } from '@gauzy/contracts';
+import { ID, PluginScope } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { In } from 'typeorm';
-import { PluginScope, PluginSubscriptionStatus } from '../../shared/models';
+import { PluginSubscriptionStatus } from '../../shared/models';
 import { PluginSubscription } from '../entities';
 import { MikroOrmPluginSubscriptionRepository, TypeOrmPluginSubscriptionRepository } from '../repositories';
 
@@ -29,37 +29,49 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		tenantId: ID,
 		organizationId?: ID
 	): Promise<PluginSubscription[]> {
+		const logger = new Logger(PluginSubscriptionService.name);
 		// Find the parent subscription
-		const parentSubscription = await this.findOneByIdString(parentSubscriptionId);
-		if (!parentSubscription) {
+		const { success, record: parent } = await this.findOneOrFailByIdString(parentSubscriptionId, {
+			relations: ['plugin', 'pluginTenant']
+		});
+		if (!success) {
 			throw new Error('Parent subscription not found');
 		}
+
+		if (!parent.pluginId) {
+			throw new Error('Parent subscription pluginId is missing');
+		}
+		if (!parent.pluginTenantId) {
+			throw new Error('Parent subscription pluginTenantId is missing');
+		}
+
+		logger.log(JSON.stringify(parent));
 
 		const childSubscriptions: PluginSubscription[] = [];
 
 		for (const userId of userIds) {
 			// Check if child subscription already exists
-			const existingChild = await this.findOneByWhereOptions({
+			const existingChild = await this.findOneOrFailByWhereOptions({
 				parentId: parentSubscriptionId,
 				subscriberId: userId,
 				tenantId,
 				organizationId
 			});
 
-			if (!existingChild) {
+			if (!existingChild.success) {
 				// Create child subscription
 				const childSubscription = await this.create({
-					pluginId: parentSubscription.pluginId,
-					pluginTenantId: parentSubscription.pluginTenantId,
-					planId: parentSubscription.planId,
+					pluginId: parent.pluginId,
+					pluginTenantId: parent.pluginTenantId,
+					planId: parent.planId,
 					parentId: parentSubscriptionId,
 					subscriberId: userId,
 					tenantId,
 					organizationId,
-					status: parentSubscription.status,
+					status: parent.status,
 					scope: PluginScope.USER, // Child subscriptions are always USER-scoped
 					startDate: new Date(),
-					endDate: parentSubscription.endDate,
+					endDate: parent.endDate,
 					autoRenew: false, // Child subscriptions don't auto-renew
 					metadata: {
 						createdFrom: 'assignment',
@@ -71,6 +83,8 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 				childSubscriptions.push(childSubscription);
 			}
 		}
+
+		if (childSubscriptions.length > 0) await this.save(childSubscriptions);
 
 		return childSubscriptions;
 	}

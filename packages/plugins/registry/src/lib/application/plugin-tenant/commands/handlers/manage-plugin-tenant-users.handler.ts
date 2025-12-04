@@ -1,9 +1,9 @@
 import { IUser } from '@gauzy/contracts';
-import { UserService } from '@gauzy/core';
+import { RequestContext, UserService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
-import { PluginTenantService } from '../../../../domain';
+import { PluginSubscriptionAccessService, PluginSubscriptionService, PluginTenantService } from '../../../../domain';
 import { IPluginTenant } from '../../../../shared';
 import { ManagePluginTenantUsersCommand } from '../manage-plugin-tenant-users.command';
 
@@ -22,7 +22,12 @@ export interface ManagePluginTenantUsersResult {
 export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<ManagePluginTenantUsersCommand> {
 	private readonly logger = new Logger(ManagePluginTenantUsersCommandHandler.name);
 
-	constructor(private readonly pluginTenantService: PluginTenantService, private readonly userService: UserService) {}
+	constructor(
+		private readonly pluginTenantService: PluginTenantService,
+		private readonly userService: UserService,
+		private readonly pluginSubscriptionService: PluginSubscriptionService,
+		private readonly pluginSubscriptionAccessService: PluginSubscriptionAccessService
+	) {}
 
 	/**
 	 * Executes the manage plugin tenant users command
@@ -105,8 +110,37 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 				throw new BadRequestException(`Unknown operation: ${operation}`);
 		}
 
-		// Save the updated plugin tenant
-		const updatedPluginTenant = await this.pluginTenantService.save(pluginTenant);
+		// Save the updated plugin tenant first to persist allowed/denied users
+		await this.pluginTenantService.save(pluginTenant);
+
+		const organizationId = RequestContext.currentOrganizationId();
+		const tenantId = RequestContext.currentTenantId();
+
+		const subscription = await this.pluginSubscriptionAccessService.findApplicableSubscription(
+			pluginTenant.pluginId,
+			tenantId,
+			organizationId
+		);
+
+		if (!subscription) {
+			throw new NotFoundException(`Subscription for Plugin Tenant ID "${pluginTenantId}" not found`);
+		}
+
+		// After allowed users are saved, create child subscriptions from parent
+		switch (operation) {
+			case 'allow':
+				await this.pluginSubscriptionService.createChildSubscriptions(
+					subscription.id,
+					affectedUserIds,
+					tenantId,
+					organizationId
+				);
+				break;
+			case 'deny':
+			case 'remove-allowed':
+				await this.pluginSubscriptionService.revokeChildSubscriptions(subscription.id, affectedUserIds);
+				break;
+		}
 
 		// Fetch with full relations
 		const result = await this.pluginTenantService.findOneByIdString(pluginTenantId, {

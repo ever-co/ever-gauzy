@@ -46,8 +46,7 @@ export class AssignPluginSubscriptionUsersCommandHandler
 			const parentSubscription = await this.subscriptionAccessService.findApplicableSubscription(
 				pluginId,
 				tenantId,
-				organizationId,
-				requestingUserId
+				organizationId
 			);
 
 			if (!parentSubscription) {

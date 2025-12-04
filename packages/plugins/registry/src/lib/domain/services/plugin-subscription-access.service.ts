@@ -460,6 +460,11 @@ export class PluginSubscriptionAccessService {
 
 			if (context.userId) {
 				whereOptions.subscriberId = context.userId;
+			} else {
+				// If no user ID is provided, we are looking for organization/tenant level subscriptions
+				// We should exclude user-specific subscriptions (which have a subscriberId)
+				// However, some org subscriptions might have a subscriberId (the purchaser), so we rely on scope
+				whereOptions.scope = In([PluginScope.ORGANIZATION, PluginScope.TENANT]);
 			}
 
 			if (context.activeOnly !== false) {
@@ -584,7 +589,7 @@ export class PluginSubscriptionAccessService {
 	 */
 	async canAssignSubscriptions(pluginId: ID, tenantId: ID, organizationId?: ID, userId?: ID): Promise<boolean> {
 		try {
-			const subscription = await this.findApplicableSubscription(pluginId, tenantId, organizationId, userId);
+			const subscription = await this.findApplicableSubscription(pluginId, tenantId, organizationId);
 
 			if (!subscription) return false;
 

@@ -60,7 +60,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 
 	@ApiProperty({ type: Date, description: 'Start date of subscription' })
 	@IsDate({ message: 'Start date must be a valid date' })
-	@MultiORMColumn()
+	@MultiORMColumn({ default: () => 'CURRENT_TIMESTAMP' })
 	startDate: Date;
 
 	@ApiPropertyOptional({ type: Date, description: 'End date of subscription' })
@@ -743,7 +743,11 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	static createChildSubscription(parentSubscription: IPluginSubscription, subscriberId: string): PluginSubscription {
 		// Validate parent subscription can create children
 		const canCreate =
-			parentSubscription.status === PluginSubscriptionStatus.ACTIVE &&
+			[
+				PluginSubscriptionStatus.ACTIVE,
+				PluginSubscriptionStatus.TRIAL,
+				PluginSubscriptionStatus.PENDING
+			].includes(parentSubscription.status) &&
 			[PluginScope.TENANT, PluginScope.ORGANIZATION].includes(parentSubscription.scope);
 
 		if (!canCreate) {
