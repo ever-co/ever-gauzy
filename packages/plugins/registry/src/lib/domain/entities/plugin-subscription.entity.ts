@@ -571,8 +571,10 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	canBeManagedByUser(userId: string, organizationId?: string): boolean {
 		if (!userId) return false;
 
-		// User can manage if they are the direct subscriber
-		if (this.subscriberId === userId) return true;
+		// User scope subscriptions cannot be managed by others
+		if (this.scope === PluginScope.USER) {
+			return this.subscriberId === userId && !this.parentId;
+		}
 
 		// For organization scope, check if user belongs to the organization
 		if (this.scope === PluginScope.ORGANIZATION) {
@@ -973,7 +975,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		return (
 			[PluginScope.ORGANIZATION, PluginScope.TENANT].includes(subscription.scope) &&
 			PluginSubscription.isActiveAndAccessible(subscription) &&
-			!subscription.parent
+			!subscription.parentId
 		);
 	}
 
