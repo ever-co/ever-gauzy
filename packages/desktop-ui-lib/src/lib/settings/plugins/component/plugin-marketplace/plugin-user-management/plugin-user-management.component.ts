@@ -127,21 +127,15 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	 * Delegates to facade for business logic
 	 */
 	private loadInitialData(): void {
+		const organizationId = this.store.organizationId;
+		const tenantId = this.store.tenantId;
 		// Load assigned users
 		this.facade.loadAssignedUsers(this.plugin.id, this.subscriptionId, false);
 
 		// Load available users with organization context
-		this.store.selectedOrganization$
-			.pipe(
-				filter((org) => !!org),
-				tap((org) => {
-					console.log('[PluginUserManagementComponent] Loading available users for org:', org.id);
-					this.facade.setOrganizationContext(org.id, org.tenantId);
-					this.facade.loadAvailableUsers(org.id, org.tenantId, 0, 20);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		console.log('[PluginUserManagementComponent] Loading available users for org:', organizationId);
+		this.facade.setOrganizationContext(organizationId, tenantId);
+		this.facade.loadAvailableUsers(organizationId, tenantId, 0, 20);
 	}
 
 	/**
@@ -299,16 +293,10 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	 * Delegates to facade
 	 */
 	public onLoadMoreAvailableUsers(): void {
-		this.store.selectedOrganization$
-			.pipe(
-				filter((org) => !!org),
-				tap((org) => {
-					console.log('[PluginUserManagementComponent] Loading more users');
-					this.facade.loadMoreAvailableUsers(org.id, org.tenantId);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		const organizationId = this.store.organizationId;
+		const tenantId = this.store.tenantId;
+		console.log('[PluginUserManagementComponent] Loading more users');
+		this.facade.loadMoreAvailableUsers(organizationId, tenantId);
 	}
 
 	// ============================================================================
