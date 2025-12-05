@@ -31,14 +31,14 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 		// Get current tenant and organization context
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
-		const currentUser = RequestContext.currentUser();
+		const subscriberId = RequestContext.currentUserId();
 
 		// Find the existing subscription with proper tenant/organization filtering
 		const subscription = await this.pluginSubscriptionService.findOneByIdString(id, {
 			where: {
 				tenantId,
 				...(organizationId && { organizationId }),
-				...(currentUser.employeeId && { subscriberId: currentUser.employeeId })
+				...(subscriberId && { subscriberId })
 			},
 			relations: ['plan', 'plugin', 'pluginTenant']
 		});
