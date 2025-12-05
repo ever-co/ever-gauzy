@@ -63,7 +63,8 @@
 		"asarUnpack": [
 			"node_modules/@sentry/electron",
 			"node_modules/better-sqlite3",
-			"node_modules/@sentry/profiling-node/lib"
+			"node_modules/@sentry/profiling-node/lib",
+			"node_modules/@gauzy/core/src/lib/i18n"
 		],
 		"directories": {
 			"buildResources": "icons",

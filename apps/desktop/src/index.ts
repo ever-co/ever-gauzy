@@ -277,6 +277,7 @@ async function startServer(value, restart = false) {
 	};
 
 	process.env.IS_ELECTRON = 'true';
+	process.env.ELECTRON_RESOURCES_PATH = process.resourcesPath;
 
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
