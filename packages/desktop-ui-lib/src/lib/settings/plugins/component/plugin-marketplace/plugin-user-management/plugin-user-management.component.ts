@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IPlugin, IUser } from '@gauzy/contracts';
 import { NB_DIALOG_CONFIG, NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, distinctUntilChanged, filter, map, Observable, startWith, tap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map, Observable, startWith, switchMap, take, tap } from 'rxjs';
 import { UserManagementDialogViewModel, UserManagementFacade } from '../+state/facades/user-management.facade';
 import { PluginUserAssignment } from '../+state/stores/plugin-user-assignment.store';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
@@ -229,6 +229,7 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 			this.facade.loadingAssignedUsers$
 				.pipe(
 					filter((loading) => !loading),
+					take(1),
 					tap(() => {
 						this.submitting = false;
 						// Reset form on success
@@ -265,19 +266,17 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 			})
 			.onClose.pipe(
 				filter(Boolean),
-				tap(() => {
+				take(1),
+				switchMap(() => {
 					this.facade.unassignUser(this.plugin.id, assignment.userId);
 
 					// Wait for completion and reload
-					this.facade.loadingAssignedUsers$
-						.pipe(
-							filter((loading) => !loading),
-							tap(() => {
-								this.facade.loadAssignedUsers(this.plugin.id, this.subscriptionId, false);
-							}),
-							untilDestroyed(this)
-						)
-						.subscribe();
+					return this.facade.loadingAssignedUsers$.pipe(
+						filter((loading) => !loading),
+						tap(() => {
+							this.facade.loadAssignedUsers(this.plugin.id, this.subscriptionId, false);
+						})
+					);
 				}),
 				untilDestroyed(this)
 			)
