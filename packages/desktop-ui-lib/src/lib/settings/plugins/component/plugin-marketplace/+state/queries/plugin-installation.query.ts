@@ -105,6 +105,15 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 		);
 	}
 
+	public installationId$(pluginId: ID): Observable<ID | null> {
+		return this.pluginQuery.plugins$.pipe(
+			map((plugins: IPlugin[]) => {
+				const plugin = plugins.find((p) => p.marketplaceId === pluginId);
+				return plugin ? plugin.id : null;
+			})
+		);
+	}
+
 	// Synchronous getters
 	public get isLoading(): boolean {
 		const state = this.getValue();

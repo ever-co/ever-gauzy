@@ -18,6 +18,7 @@ import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginPlanActions } from '../actions/plugin-plan.action';
 import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
 import { PluginToggleActions } from '../actions/plugin-toggle.action';
+import { PluginInstallationQuery } from '../queries/plugin-installation.query';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginSubscriptionStore } from '../stores/plugin-subscription.store';
 
@@ -28,6 +29,7 @@ export class PluginSubscriptionEffects {
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginSubscriptionService: PluginSubscriptionService,
 		private readonly pluginSubscriptionStore: PluginSubscriptionStore,
+		private readonly pluginInstallationQuery: PluginInstallationQuery,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
 		private readonly dialogService: NbDialogService
@@ -283,7 +285,7 @@ export class PluginSubscriptionEffects {
 			})
 			.onClose.pipe(
 				take(1),
-				map((result) => this.resolveDialogResult(result, plugin, clicked))
+				switchMap((result) => this.resolveDialogResult(result, plugin, clicked))
 			);
 	}
 
@@ -294,16 +296,36 @@ export class PluginSubscriptionEffects {
 	 * @param clicked
 	 * @returns
 	 */
-	private resolveDialogResult(result: { success?: boolean } | null, plugin: IPlugin, clicked: boolean) {
-		if (result?.success) {
-			return PluginMarketplaceActions.install(plugin);
+	private resolveDialogResult(
+		result: { success?: boolean; action?: string } | null,
+		plugin: IPlugin,
+		clicked: boolean
+	) {
+		const { success, action } = result || {};
+
+		if (!success) {
+			return of(clicked ? PluginActions.refresh() : PluginToggleActions.auto(plugin.id));
 		}
 
-		if (clicked) {
-			return PluginActions.refresh();
+		switch (action) {
+			case 'subscribed':
+				return of(PluginMarketplaceActions.install(plugin));
+			case 'upgraded':
+			case 'downgraded':
+				return of(PluginMarketplaceActions.update(plugin));
+			case 'cancelled':
+				return this.pluginInstallationQuery
+					.installationId$(plugin.id)
+					.pipe(
+						map((installationId) =>
+							installationId
+								? PluginMarketplaceActions.uninstall(plugin.id, installationId)
+								: PluginActions.refresh()
+						)
+					);
+			default:
+				return of(PluginToggleActions.auto(plugin.id));
 		}
-
-		return PluginToggleActions.auto(plugin.id);
 	}
 
 	/**

@@ -234,6 +234,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 					if (!error) {
 						this.dialogRef.close({
 							success: true,
+							action: 'subscribed',
 							subscription: this.selectedPlan
 						});
 					}
@@ -358,7 +359,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	// Helper methods moved to services
 
 	public close(): void {
-		this.dialogRef.close({ success: false });
+		this.dialogRef.close({ success: false, action: 'closed' });
 	}
 
 	public getStatusIcon(status: string): string {

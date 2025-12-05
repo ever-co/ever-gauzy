@@ -256,7 +256,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	 */
 	public manageSubscription(): void {
 		// Dispatch an action or use facade to open/manage subscriptions via effects
-		this.action.dispatch(PluginSubscriptionActions.openSubscriptionManagement(this.plugin));
+		this.action.dispatch(PluginSubscriptionActions.openSubscriptionManagement(this.plugin, true));
 	}
 
 	/**
