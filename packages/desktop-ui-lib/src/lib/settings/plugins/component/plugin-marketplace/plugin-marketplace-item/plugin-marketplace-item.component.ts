@@ -171,7 +171,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public async navigateBack(): Promise<void> {
-		await this.router.navigate(['/settings/marketplace-plugins']);
+		await this.router.navigate(['settings', 'marketplace-plugins']);
 	}
 
 	public async navigateToHistory(): Promise<void> {
