@@ -1,7 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
-import { FindManyOptions, FindOptionsWhere, In, IsNull, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
+import {
+	FindManyOptions,
+	FindOptionsWhere,
+	In,
+	IsNull,
+	LessThan,
+	MoreThanOrEqual,
+	Raw,
+	SelectQueryBuilder
+} from 'typeorm';
 import { addDays } from 'date-fns';
 import { pick } from 'underscore';
 import { ConfigService, environment } from '@gauzy/config';
@@ -38,6 +47,7 @@ import {
 	parseTypeORMFindToMikroOrm,
 	retryQuery
 } from './../core/utils';
+import { LIKE_OPERATOR } from './../core/util';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';
@@ -694,6 +704,39 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 */
 	public async findAllInvites(options: BaseQueryDTO<any>) {
 		try {
+			// Extract special filters from where clause to handle separately
+			const { isExpired, email, invitedByUser, ...restWhere } = options?.where || {};
+
+			// Build expireDate filter based on isExpired value
+			// Convert string to boolean if needed (values may come as "true"/"false" strings from query params)
+			let expireDateFilter = {};
+			const isExpiredBool = isExpired === true || isExpired === 'true';
+			const isNotExpiredBool = isExpired === false || isExpired === 'false';
+			if (isExpiredBool) {
+				// Filter expired invites (expireDate < now)
+				expireDateFilter = { expireDate: LessThan(new Date()) };
+			} else if (isNotExpiredBool) {
+				// Filter non-expired invites (expireDate >= now)
+				expireDateFilter = { expireDate: MoreThanOrEqual(new Date()) };
+			}
+
+			// Build email filter with LIKE operator for partial matching
+			const emailFilter = email
+				? { email: Raw((alias) => `${alias} ${LIKE_OPERATOR} :email`, { email: `%${email}%` }) }
+				: {};
+
+			// Build invitedByUser filter with LIKE operator for partial matching on firstName/lastName
+			let invitedByUserFilter = {};
+			if (invitedByUser) {
+				invitedByUserFilter = {
+					invitedByUser: {
+						firstName: Raw((alias) => `${alias} ${LIKE_OPERATOR} :invitedByUser`, {
+							invitedByUser: `%${invitedByUser}%`
+						})
+					}
+				};
+			}
+
 			return await super.findAll({
 				...(options && options.skip
 					? {
@@ -710,48 +753,104 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							relations: options.relations
 					  }
 					: {}),
-				where: {
-					tenantId: RequestContext.currentTenantId(),
-					...(isNotEmpty(options) && isNotEmpty(options.where) ? options.where : {}),
-					// Role filter with array support (converts single value to array)
-					...(isNotEmpty(options) && isNotEmpty(options.where)
-						? isNotEmpty(options.where.role)
-							? {
-									role: {
-										name: In(
-											Array.isArray(options.where.role)
-												? options.where.role
-												: [options.where.role]
-										)
-									}
-							  }
-							: {} // No default filter
-						: {}),
-					/**
-					 * Organization invites filter by specific projects
-					 */
-					...(isNotEmpty(options) && isNotEmpty(options.where)
-						? isNotEmpty(options.where.projects)
-							? {
-									projects: {
-										id: In(options.where.projects.id)
-									}
-							  }
-							: {}
-						: {}),
-					/**
-					 * Organization invites filter by specific teams
-					 */
-					...(isNotEmpty(options) && isNotEmpty(options.where)
-						? isNotEmpty(options.where.teams)
-							? {
-									teams: {
-										id: In(options.where.teams.id)
-									}
-							  }
-							: {}
-						: {})
-				}
+				where: [
+					// First condition: search in firstName
+					{
+						tenantId: RequestContext.currentTenantId(),
+						...(isNotEmpty(options) && isNotEmpty(restWhere) ? restWhere : {}),
+						...expireDateFilter,
+						...emailFilter,
+						...invitedByUserFilter,
+						// Role filter with array support (converts single value to array)
+						...(isNotEmpty(options) && isNotEmpty(restWhere)
+							? isNotEmpty(restWhere.role)
+								? {
+										role: {
+											name: In(Array.isArray(restWhere.role) ? restWhere.role : [restWhere.role])
+										}
+								  }
+								: {} // No default filter
+							: {}),
+						/**
+						 * Organization invites filter by specific projects
+						 */
+						...(isNotEmpty(options) && isNotEmpty(restWhere)
+							? isNotEmpty(restWhere.projects)
+								? {
+										projects: {
+											id: In(restWhere.projects.id)
+										}
+								  }
+								: {}
+							: {}),
+						/**
+						 * Organization invites filter by specific teams
+						 */
+						...(isNotEmpty(options) && isNotEmpty(restWhere)
+							? isNotEmpty(restWhere.teams)
+								? {
+										teams: {
+											id: In(restWhere.teams.id)
+										}
+								  }
+								: {}
+							: {})
+					},
+					// Second condition: search in lastName (only if invitedByUser filter is set)
+					...(invitedByUser
+						? [
+								{
+									tenantId: RequestContext.currentTenantId(),
+									...(isNotEmpty(options) && isNotEmpty(restWhere) ? restWhere : {}),
+									...expireDateFilter,
+									...emailFilter,
+									invitedByUser: {
+										lastName: Raw((alias) => `${alias} ${LIKE_OPERATOR} :invitedByUser`, {
+											invitedByUser: `%${invitedByUser}%`
+										})
+									},
+									// Role filter with array support (converts single value to array)
+									...(isNotEmpty(options) && isNotEmpty(restWhere)
+										? isNotEmpty(restWhere.role)
+											? {
+													role: {
+														name: In(
+															Array.isArray(restWhere.role)
+																? restWhere.role
+																: [restWhere.role]
+														)
+													}
+											  }
+											: {} // No default filter
+										: {}),
+									/**
+									 * Organization invites filter by specific projects
+									 */
+									...(isNotEmpty(options) && isNotEmpty(restWhere)
+										? isNotEmpty(restWhere.projects)
+											? {
+													projects: {
+														id: In(restWhere.projects.id)
+													}
+											  }
+											: {}
+										: {}),
+									/**
+									 * Organization invites filter by specific teams
+									 */
+									...(isNotEmpty(options) && isNotEmpty(restWhere)
+										? isNotEmpty(restWhere.teams)
+											? {
+													teams: {
+														id: In(restWhere.teams.id)
+													}
+											  }
+											: {}
+										: {})
+								}
+						  ]
+						: [])
+				]
 			});
 		} catch (error) {
 			throw new BadRequestException(error);
