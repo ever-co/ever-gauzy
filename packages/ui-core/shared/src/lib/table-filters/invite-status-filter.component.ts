@@ -21,10 +21,6 @@ import { InviteStatusEnum } from '@gauzy/contracts';
 export class InviteStatusFilterComponent extends DefaultFilter {
 	protected inviteStatuses = Object.values(InviteStatusEnum);
 
-	constructor() {
-		super();
-	}
-
 	/**
 	 * Handles the status selection change.
 	 * When the user clears the selection, value will be null/undefined which resets the filter.
