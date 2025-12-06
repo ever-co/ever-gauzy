@@ -1,6 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
-import { ConfigModule } from '@gauzy/config';
+import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import {
 	IntegrationModule,

@@ -344,8 +344,7 @@ if (environment.THROTTLE_ENABLED) {
 		I18nModule.forRoot({
 			fallbackLanguage: LanguagesEnum.ENGLISH,
 			loaderOptions: {
-				path: environment.isElectron && environment.electronResourcesPath ? path.resolve(environment.electronResourcesPath, 'app.asar.unpacked/node_modules/@gauzy/core/src/lib/i18n')
-				: path.resolve(__dirname, '../i18n/'),
+				path: path.resolve(__dirname, '../i18n/'),
 				watch: !environment.production
 			},
 			resolvers: [new HeaderResolver(['language'])]

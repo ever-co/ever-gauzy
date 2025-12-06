@@ -7,4 +7,4 @@ export interface ScreenshotTO {
 	synced?: boolean;
 }
 
-export const TABLE_NAME_SCREENSHOT: string = 'desktop_screenshot';
+export const TABLE_NAME_SCREENSHOT: string = 'screenshot';

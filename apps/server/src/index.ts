@@ -341,7 +341,6 @@ const getEnvApi = () => {
 	const provider = config.db === 'better-sqlite' ? 'better-sqlite3' : config.db;
 	return {
 		IS_ELECTRON: 'true',
-		ELECTRON_RESOURCES_PATH: process.resourcesPath,
 		DB_PATH: sqlite3filename,
 		DB_TYPE: provider,
 		...(provider === 'postgres' && {
