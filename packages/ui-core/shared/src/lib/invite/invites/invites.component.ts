@@ -392,10 +392,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (value: string) => {
-						this.setFilter({ field: 'invitedByUser', search: value });
-						return value.length > 0;
-					}
+					filterFunction: this._getFilterFunction('invitedByUser')
 				},
 				createdDate: {
 					title: this.getTranslation('SM_TABLE.CREATED'),
