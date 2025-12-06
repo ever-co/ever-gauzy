@@ -334,7 +334,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() options: RelationsQueryDTO
 	): Promise<IOrganizationProject> {
-		return await this.organizationProjectService.findOneByIdString(id, options);
+		return await this.organizationProjectService.findById(id, options);
 	}
 
 	/**

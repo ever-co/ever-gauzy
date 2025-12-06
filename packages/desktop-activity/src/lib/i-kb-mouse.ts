@@ -62,18 +62,20 @@ export type TimeSlotActivities = {
 	employeeId: string,
 	source: TimeLogSourceEnum,
 	recordedAt: Date,
-	metaData: Record<string, unknown>[] | unknown[]
-
+	metaData: Record<string, unknown> | unknown
 }
+
+export type TActivityType = 'URL' | 'APP';
 
 export type TWindowActivities = {
 	name: string;
 	duration: number;
 	dateStart: Date;
 	dateEnd: Date;
+	type: TActivityType;
 	meta: {
 		url?: string;
 		title: string;
 		platform?: string;
-	}[]
+	}
 }

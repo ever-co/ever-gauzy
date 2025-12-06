@@ -367,7 +367,7 @@ class PushActivities {
 			taskId: null,
 			date: moment(activities.timeStart).utc().format('YYYY-MM-DD'),
 			time: moment(activities.timeStart).utc().format('HH:mm:ss'),
-			type: ActivityType.APP,
+			type: windowActivity.type === 'APP' ? ActivityType.APP : ActivityType.URL,
 			organizationContactId: null,
 			organizationId: auth?.user?.employee?.organizationId,
 			source: TimeLogSourceEnum.DESKTOP,

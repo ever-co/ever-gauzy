@@ -1,5 +1,6 @@
 export * from './expense-category-filter.component';
 export * from './input-filter.component';
+export * from './invite-status-filter.component';
 export * from './organization-contact-filter.component';
 export * from './organization-team-filter.component';
 export * from './payment-method-filter.component';
