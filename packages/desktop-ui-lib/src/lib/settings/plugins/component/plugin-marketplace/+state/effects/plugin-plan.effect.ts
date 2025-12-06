@@ -180,32 +180,47 @@ export class PluginPlanEffects {
 		)
 	);
 
-	openPlanSubscriptionDialog$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PluginPlanActions.openPlanSubscriptions),
-			exhaustMap(({ pluginId }) =>
-				this.dialogService
-					.open(PluginSubscriptionPlanSelectionComponent, {
-						context: { pluginId }
-					})
-					.onClose.pipe(
-						take(1),
-						switchMap((result: IPluginSubscriptionPlanSelectionResult | null) => {
-							const proceed = result?.proceedWithInstallation === true;
-							if (!proceed) {
-								return of(PluginToggleActions.toggle({ pluginId, enabled: false }));
-							}
+	openPlanSubscriptionDialog$ = createEffect(
+		() =>
+			this.actions$.pipe(
+				ofType(PluginPlanActions.openPlanSubscriptions),
 
-							const plugin = this.pluginMarketplaceQuery.plugins.find((p) => p.id === pluginId);
-							if (!plugin) {
-								return of(PluginToggleActions.toggle({ pluginId, enabled: false }));
-							}
+				// Resolve plugin safely
+				map(({ pluginId }) => {
+					const plugin = this.pluginMarketplaceQuery.plugins.find((p) => p.id === pluginId);
+					return { pluginId, plugin };
+				}),
 
-							return of(PluginMarketplaceActions.install(plugin));
-						}),
-						catchError(() => of(PluginToggleActions.toggle({ pluginId, enabled: false })))
-					)
-			)
-		)
+				// Short-circuit if plugin doesn't exist
+				exhaustMap(({ pluginId, plugin }) => {
+					if (!plugin) {
+						return of(PluginToggleActions.toggle({ pluginId, enabled: false }));
+					}
+
+					// Open selection dialog
+					return this.dialogService
+						.open(PluginSubscriptionPlanSelectionComponent, { context: { plugin, pluginId } })
+						.onClose.pipe(
+							take(1),
+
+							// Determine next action based on user response
+							map((result: IPluginSubscriptionPlanSelectionResult | null) => {
+								const proceed = result?.proceedWithInstallation === true;
+
+								if (!proceed) {
+									return PluginToggleActions.toggle({ pluginId, enabled: false });
+								}
+
+								return PluginMarketplaceActions.install(plugin);
+							}),
+
+							// Recover from dialog failure
+							catchError(() => of(PluginToggleActions.toggle({ pluginId, enabled: false })))
+						);
+				})
+			),
+		{
+			dispatch: true
+		}
 	);
 }

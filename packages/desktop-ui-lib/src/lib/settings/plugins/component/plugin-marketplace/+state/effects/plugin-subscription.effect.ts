@@ -302,9 +302,10 @@ export class PluginSubscriptionEffects {
 		clicked: boolean
 	) {
 		const { success, action } = result || {};
+		const refreshOrToggle = () => of(clicked ? PluginActions.refresh() : PluginToggleActions.auto(plugin.id));
 
 		if (!success) {
-			return of(clicked ? PluginActions.refresh() : PluginToggleActions.auto(plugin.id));
+			return refreshOrToggle();
 		}
 
 		switch (action) {
@@ -312,7 +313,15 @@ export class PluginSubscriptionEffects {
 				return of(PluginMarketplaceActions.install(plugin));
 			case 'upgraded':
 			case 'downgraded':
-				return of(PluginMarketplaceActions.update(plugin));
+				return this.pluginInstallationQuery
+					.installationId$(plugin.id)
+					.pipe(
+						map((installationId) =>
+							installationId
+								? PluginMarketplaceActions.update(plugin)
+								: PluginMarketplaceActions.install(plugin)
+						)
+					);
 			case 'cancelled':
 				return this.pluginInstallationQuery
 					.installationId$(plugin.id)
@@ -323,6 +332,8 @@ export class PluginSubscriptionEffects {
 								: PluginActions.refresh()
 						)
 					);
+			case 'closed':
+				return refreshOrToggle();
 			default:
 				return of(PluginToggleActions.auto(plugin.id));
 		}
