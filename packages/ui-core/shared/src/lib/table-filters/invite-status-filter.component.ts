@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { Component } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { InviteStatusEnum } from '@gauzy/contracts';
 
@@ -18,23 +18,20 @@ import { InviteStatusEnum } from '@gauzy/contracts';
 	`,
 	standalone: false
 })
-export class InviteStatusFilterComponent extends DefaultFilter implements OnChanges {
-	public inviteStatuses = Object.values(InviteStatusEnum);
+export class InviteStatusFilterComponent extends DefaultFilter {
+	protected inviteStatuses = Object.values(InviteStatusEnum);
 
 	constructor() {
 		super();
 	}
 
 	/**
-	 * @param changes
+	 * Handles the status selection change.
+	 * When the user clears the selection, value will be null/undefined which resets the filter.
+	 *
+	 * @param value - The selected invite status or null/undefined when cleared
 	 */
-	ngOnChanges(changes: SimpleChanges) {}
-
-	/**
-	 * @param value
-	 */
-	onChange(value: InviteStatusEnum) {
-		this.column.filterFunction(value, this.column.id);
+	onChange(value: InviteStatusEnum | null | undefined): void {
+		this.column.filterFunction(value ?? null, this.column.id);
 	}
 }
-
