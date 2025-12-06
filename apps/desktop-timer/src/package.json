@@ -165,5 +165,15 @@
 		"custom-electron-titlebar": "^4.2.8",
 		"call-bind-apply-helpers": "^1.0.2",
 		"cheerio-select": "^2.1.0"
+	},
+	"resolutions": {
+		"@gauzy/contracts": "file:../../../dist/packages/contracts",
+		"@gauzy/constants": "file:../../../dist/packages/constants",
+		"@gauzy/common": "file:../../../dist/packages/common",
+		"@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
+		"@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
+		"@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
+		"@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
+		"@gauzy/ui-config": "file:../../../dist/packages/ui-config"
 	}
 }
