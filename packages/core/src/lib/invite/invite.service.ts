@@ -724,11 +724,17 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			// Build role filter with array support (converts single value to array)
 			const roleFilter = isNotEmpty(role) ? { role: { name: In(Array.isArray(role) ? role : [role]) } } : {};
 
-			// Build projects filter
-			const projectsFilter = isNotEmpty(projects) ? { projects: { id: In(projects.id) } } : {};
+			// Build projects filter with defensive array handling
+			const projectIds = projects?.id ?? projects;
+			const projectsFilter = isNotEmpty(projectIds)
+				? { projects: { id: In(Array.isArray(projectIds) ? projectIds : [projectIds]) } }
+				: {};
 
-			// Build teams filter
-			const teamsFilter = isNotEmpty(teams) ? { teams: { id: In(teams.id) } } : {};
+			// Build teams filter with defensive array handling
+			const teamIds = teams?.id ?? teams;
+			const teamsFilter = isNotEmpty(teamIds)
+				? { teams: { id: In(Array.isArray(teamIds) ? teamIds : [teamIds]) } }
+				: {};
 
 			/**
 			 * Builds the base where condition shared by all filter variations.
