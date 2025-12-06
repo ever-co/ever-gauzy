@@ -1,13 +1,15 @@
 import AppWindow from "./window-manager";
 import * as moment from 'moment';
 import * as path from 'node:path';
+const MAX_LOG = 200;
 
 export class AgentLogger {
 	static instance: AgentLogger;
 	private appWindow: AppWindow;
+	private logsArrBuffer: Record<string, unknown>[];
 	constructor() {
 		this.appWindow = AppWindow.getInstance(path.join(__dirname, '..'));
-		this.appWindow.initLogWindow()
+		this.logsArrBuffer = [];
 	}
 
 	static getInstance(): AgentLogger {
@@ -21,17 +23,31 @@ export class AgentLogger {
 		return `${moment().format('YYYY-MM-DD HH:mm:ss')} ${type}: ${message}`;
 	}
 
+	cacheLog(logObj: Record<string, unknown>) {
+		if (this.logsArrBuffer.length >= MAX_LOG) {
+			this.logsArrBuffer.shift();
+		}
+		this.logsArrBuffer.push(logObj);
+	}
+
+	public get loadLogs(): Record<string, unknown>[] {
+		return this.logsArrBuffer;
+	}
+
 	showMessage(message: string, type: string, time: Date) {
-		if (this.appWindow?.logWindow && !this.appWindow.logWindow.isDestroyed()) {
+		const logObj = {
+			dateTime: time,
+			msg: message,
+			type
+		};
+		this.cacheLog(logObj);
+		if (this.appWindow?.logWindow && !this.appWindow?.logWindow?.isDestroyed()) {
 			try {
 				this.appWindow.logWindow.webContents.send('DASHBOARD_EVENT', {
 					type: 'log_state',
-					data: {
-						dateTime: time,
-						msg: message,
-						type
-					}
+					data: logObj
 				});
+
 			} catch (error) {
 				console.error('Log window error', error);
 			}

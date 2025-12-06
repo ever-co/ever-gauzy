@@ -17,7 +17,7 @@ import {
 } from '@gauzy/desktop-lib';
 import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting } from '../util';
 import { startServer } from './app';
-import AppWindow from '../window-manager';
+import AppWindow, { WindowType } from '../window-manager';
 import * as moment from 'moment';
 import * as path from 'node:path';
 import PullActivities from '../workers/pull-activities';
@@ -27,11 +27,13 @@ import { ApiService } from '../api';
 const rootPath = path.join(__dirname, '../..');
 import { QueueAudit, AuditStatus } from '../queue/audit-queue';
 import * as isOnline from 'is-online';
+import { AgentLogger } from '../agent-logger';
 
 const userService = new UserService();
 const appWindow = AppWindow.getInstance(rootPath);
 const apiService = ApiService.getInstance();
 const provider = ProviderFactory.instance;
+const agentLogger = AgentLogger.getInstance();
 
 
 function getGlobalVariable(configs?: {
@@ -310,6 +312,16 @@ export default function AppIpcMain() {
 		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
 		app.exit(0);
 	});
+
+	ipcMain.handle('load_logs', () => {
+		return agentLogger.loadLogs;
+	});
+
+	ipcMain.handle('capture_window_init', () => {
+		appWindow.setWindowIsReady(WindowType.notificationWindow);
+	});
+
+
 
 	pluginListeners();
 }
