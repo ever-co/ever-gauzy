@@ -705,37 +705,102 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	public async findAllInvites(options: BaseQueryDTO<any>) {
 		try {
 			// Extract special filters from where clause to handle separately
-			const { isExpired, email, invitedByUser, ...restWhere } = options?.where || {};
+			// These fields need custom handling and should not be spread directly from restWhere
+			const { isExpired, email, invitedByUser, role, projects, teams, ...restWhere } = options?.where || {};
 
-			// Build expireDate filter based on isExpired value
-			// Convert string to boolean if needed (values may come as "true"/"false" strings from query params)
-			let expireDateFilter = {};
+			/**
+			 * Build expireDate filter based on isExpired value.
+			 * Values may come as "true"/"false" strings from query params or as actual booleans,
+			 * so we check for both types to ensure proper handling.
+			 */
 			const isExpiredBool = isExpired === true || isExpired === 'true';
 			const isNotExpiredBool = isExpired === false || isExpired === 'false';
-			if (isExpiredBool) {
-				// Filter expired invites (expireDate < now)
-				expireDateFilter = { expireDate: LessThan(new Date()) };
-			} else if (isNotExpiredBool) {
-				// Filter non-expired invites (expireDate >= now)
-				expireDateFilter = { expireDate: MoreThanOrEqual(new Date()) };
-			}
 
 			// Build email filter with LIKE operator for partial matching
 			const emailFilter = email
 				? { email: Raw((alias) => `${alias} ${LIKE_OPERATOR} :email`, { email: `%${email}%` }) }
 				: {};
 
-			// Build invitedByUser filter with LIKE operator for partial matching on firstName/lastName
-			let invitedByUserFilter = {};
-			if (invitedByUser) {
-				invitedByUserFilter = {
-					invitedByUser: {
-						firstName: Raw((alias) => `${alias} ${LIKE_OPERATOR} :invitedByUser`, {
-							invitedByUser: `%${invitedByUser}%`
-						})
+			// Build role filter with array support (converts single value to array)
+			const roleFilter = isNotEmpty(role) ? { role: { name: In(Array.isArray(role) ? role : [role]) } } : {};
+
+			// Build projects filter
+			const projectsFilter = isNotEmpty(projects) ? { projects: { id: In(projects.id) } } : {};
+
+			// Build teams filter
+			const teamsFilter = isNotEmpty(teams) ? { teams: { id: In(teams.id) } } : {};
+
+			/**
+			 * Builds the base where condition shared by all filter variations.
+			 * This reduces code duplication when handling firstName/lastName search.
+			 */
+			const buildBaseCondition = () => ({
+				tenantId: RequestContext.currentTenantId(),
+				...(isNotEmpty(restWhere) ? restWhere : {}),
+				...emailFilter,
+				...roleFilter,
+				...projectsFilter,
+				...teamsFilter
+			});
+
+			/**
+			 * Builds invitedByUser filter condition for a specific field (firstName or lastName).
+			 */
+			const buildInvitedByUserCondition = (field: 'firstName' | 'lastName') => ({
+				invitedByUser: {
+					[field]: Raw((alias) => `${alias} ${LIKE_OPERATOR} :invitedByUser`, {
+						invitedByUser: `%${invitedByUser}%`
+					})
+				}
+			});
+
+			/**
+			 * Build where conditions array.
+			 * When filtering by invitedByUser, we need OR conditions to search both firstName and lastName.
+			 * When filtering for non-expired invites, we also include invites with null expireDate (Never expire).
+			 */
+			const buildWhereConditions = () => {
+				const conditions = [];
+				const baseCondition = buildBaseCondition();
+
+				if (isExpiredBool) {
+					// Filter expired invites (expireDate < now)
+					const expiredCondition = { ...baseCondition, expireDate: LessThan(new Date()) };
+
+					if (invitedByUser) {
+						// Search in both firstName and lastName
+						conditions.push({ ...expiredCondition, ...buildInvitedByUserCondition('firstName') });
+						conditions.push({ ...expiredCondition, ...buildInvitedByUserCondition('lastName') });
+					} else {
+						conditions.push(expiredCondition);
 					}
-				};
-			}
+				} else if (isNotExpiredBool) {
+					// Filter non-expired invites (expireDate >= now OR expireDate is null for "Never expire")
+					const notExpiredCondition = { ...baseCondition, expireDate: MoreThanOrEqual(new Date()) };
+					const neverExpireCondition = { ...baseCondition, expireDate: IsNull() };
+
+					if (invitedByUser) {
+						// Search in both firstName and lastName for both conditions
+						conditions.push({ ...notExpiredCondition, ...buildInvitedByUserCondition('firstName') });
+						conditions.push({ ...notExpiredCondition, ...buildInvitedByUserCondition('lastName') });
+						conditions.push({ ...neverExpireCondition, ...buildInvitedByUserCondition('firstName') });
+						conditions.push({ ...neverExpireCondition, ...buildInvitedByUserCondition('lastName') });
+					} else {
+						conditions.push(notExpiredCondition);
+						conditions.push(neverExpireCondition);
+					}
+				} else {
+					// No expireDate filter
+					if (invitedByUser) {
+						conditions.push({ ...baseCondition, ...buildInvitedByUserCondition('firstName') });
+						conditions.push({ ...baseCondition, ...buildInvitedByUserCondition('lastName') });
+					} else {
+						conditions.push(baseCondition);
+					}
+				}
+
+				return conditions;
+			};
 
 			return await super.findAll({
 				...(options && options.skip
@@ -753,104 +818,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							relations: options.relations
 					  }
 					: {}),
-				where: [
-					// First condition: search in firstName
-					{
-						tenantId: RequestContext.currentTenantId(),
-						...(isNotEmpty(options) && isNotEmpty(restWhere) ? restWhere : {}),
-						...expireDateFilter,
-						...emailFilter,
-						...invitedByUserFilter,
-						// Role filter with array support (converts single value to array)
-						...(isNotEmpty(options) && isNotEmpty(restWhere)
-							? isNotEmpty(restWhere.role)
-								? {
-										role: {
-											name: In(Array.isArray(restWhere.role) ? restWhere.role : [restWhere.role])
-										}
-								  }
-								: {} // No default filter
-							: {}),
-						/**
-						 * Organization invites filter by specific projects
-						 */
-						...(isNotEmpty(options) && isNotEmpty(restWhere)
-							? isNotEmpty(restWhere.projects)
-								? {
-										projects: {
-											id: In(restWhere.projects.id)
-										}
-								  }
-								: {}
-							: {}),
-						/**
-						 * Organization invites filter by specific teams
-						 */
-						...(isNotEmpty(options) && isNotEmpty(restWhere)
-							? isNotEmpty(restWhere.teams)
-								? {
-										teams: {
-											id: In(restWhere.teams.id)
-										}
-								  }
-								: {}
-							: {})
-					},
-					// Second condition: search in lastName (only if invitedByUser filter is set)
-					...(invitedByUser
-						? [
-								{
-									tenantId: RequestContext.currentTenantId(),
-									...(isNotEmpty(options) && isNotEmpty(restWhere) ? restWhere : {}),
-									...expireDateFilter,
-									...emailFilter,
-									invitedByUser: {
-										lastName: Raw((alias) => `${alias} ${LIKE_OPERATOR} :invitedByUser`, {
-											invitedByUser: `%${invitedByUser}%`
-										})
-									},
-									// Role filter with array support (converts single value to array)
-									...(isNotEmpty(options) && isNotEmpty(restWhere)
-										? isNotEmpty(restWhere.role)
-											? {
-													role: {
-														name: In(
-															Array.isArray(restWhere.role)
-																? restWhere.role
-																: [restWhere.role]
-														)
-													}
-											  }
-											: {} // No default filter
-										: {}),
-									/**
-									 * Organization invites filter by specific projects
-									 */
-									...(isNotEmpty(options) && isNotEmpty(restWhere)
-										? isNotEmpty(restWhere.projects)
-											? {
-													projects: {
-														id: In(restWhere.projects.id)
-													}
-											  }
-											: {}
-										: {}),
-									/**
-									 * Organization invites filter by specific teams
-									 */
-									...(isNotEmpty(options) && isNotEmpty(restWhere)
-										? isNotEmpty(restWhere.teams)
-											? {
-													teams: {
-														id: In(restWhere.teams.id)
-													}
-											  }
-											: {}
-										: {})
-								}
-						  ]
-						: [])
-				]
+				where: buildWhereConditions()
 			});
 		} catch (error) {
 			throw new BadRequestException(error);
