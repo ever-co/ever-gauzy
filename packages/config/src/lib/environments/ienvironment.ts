@@ -130,6 +130,7 @@ export interface IEnvironment {
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;
 	gauzySeedPath?: string;
+	electronResourcesPath?: string;
 
 	/**
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
