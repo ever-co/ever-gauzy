@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
+import { catchError, defer, map, Observable, of, tap } from 'rxjs';
 import { IInstallationValidationContext, InstallationValidator } from './installation-validator.abstract';
 import { AccessValidator } from './validators/access.validator';
 import { PluginStatusValidator } from './validators/plugin-status.validator';
@@ -68,17 +68,13 @@ export class InstallationValidationChainBuilder {
 	 * @returns Observable with validation context containing errors/warnings
 	 */
 	validate(plugin: IPlugin, isUpdate: boolean = false): Observable<IInstallationValidationContext> {
-		// Validate input
 		if (!plugin) {
-			return new Observable<IInstallationValidationContext>((observer) => {
-				observer.next({
-					plugin: null,
-					isUpdate,
-					errors: ['PLUGIN.VALIDATION.INVALID_PLUGIN'],
-					warnings: [],
-					metadata: { validationFailed: true }
-				});
-				observer.complete();
+			return of({
+				plugin: null,
+				isUpdate,
+				errors: ['PLUGIN.VALIDATION.INVALID_PLUGIN'],
+				warnings: [],
+				metadata: { validationFailed: true }
 			});
 		}
 
@@ -93,17 +89,13 @@ export class InstallationValidationChainBuilder {
 			}
 		};
 
-		try {
-			const chain = isUpdate ? this.buildForUpdate() : this.buildForNewInstallation();
-			return chain.validate(context);
-		} catch (error) {
-			return new Observable<IInstallationValidationContext>((observer) => {
+		return defer(() => (isUpdate ? this.buildForUpdate() : this.buildForNewInstallation()).validate(context)).pipe(
+			catchError((error) => {
 				context.errors.push(`PLUGIN.VALIDATION.CHAIN_BUILD_ERROR: ${error?.message || 'Unknown error'}`);
 				context.metadata.buildError = true;
-				observer.next(context);
-				observer.complete();
-			});
-		}
+				return of(context);
+			})
+		);
 	}
 
 	/**
@@ -113,31 +105,21 @@ export class InstallationValidationChainBuilder {
 	 * @returns Observable<boolean>
 	 */
 	canProceedWithInstallation(plugin: IPlugin, isUpdate: boolean = false): Observable<boolean> {
-		return new Observable<boolean>((observer) => {
-			if (!plugin) {
-				observer.next(false);
-				observer.complete();
-				return;
-			}
+		if (!plugin) {
+			return of(false);
+		}
 
-			const subscription = this.validate(plugin, isUpdate).subscribe({
-				next: (context) => {
-					const canProceed = context.errors.length === 0;
-					if (!canProceed) {
-						console.warn('[ValidationChainBuilder] Validation failed:', context.errors);
-					}
-					observer.next(canProceed);
-					observer.complete();
-				},
-				error: (err) => {
-					console.error('[ValidationChainBuilder] Validation error:', err);
-					observer.next(false);
-					observer.complete();
+		return this.validate(plugin, isUpdate).pipe(
+			tap((context) => {
+				if (context.errors.length) {
+					console.warn('[ValidationChainBuilder] Validation failed:', context.errors);
 				}
-			});
-
-			// Cleanup on unsubscribe
-			return () => subscription.unsubscribe();
-		});
+			}),
+			map((context) => context.errors.length === 0),
+			catchError((err) => {
+				console.error('[ValidationChainBuilder] Validation error:', err);
+				return of(false);
+			})
+		);
 	}
 }
