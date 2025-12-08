@@ -39,7 +39,7 @@ export class PluginInstallationContext {
 	 */
 	validate(plugin: IPlugin): Observable<IInstallationPreparationResult> {
 		const strategy = this.getStrategyForPlugin(plugin);
-		return strategy.validateInstallation(plugin);
+		return strategy.validate(plugin);
 	}
 
 	/**
@@ -50,7 +50,7 @@ export class PluginInstallationContext {
 	 */
 	prepare(plugin: IPlugin): Observable<void> {
 		const strategy = this.getStrategyForPlugin(plugin);
-		return strategy.prepareForInstallation(plugin);
+		return strategy.prepare(plugin);
 	}
 
 	/**

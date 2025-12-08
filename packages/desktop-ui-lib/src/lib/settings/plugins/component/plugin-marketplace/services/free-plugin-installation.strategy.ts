@@ -16,7 +16,7 @@ export class FreePluginInstallationStrategy implements IPluginInstallationStrate
 	 * Validates free plugin installation
 	 * Free plugins can always be installed
 	 */
-	public validateInstallation(plugin: IPlugin): Observable<IInstallationPreparationResult> {
+	public validate(plugin: IPlugin): Observable<IInstallationPreparationResult> {
 		return of({
 			canProceed: true,
 			requiresSubscription: false,
@@ -28,7 +28,7 @@ export class FreePluginInstallationStrategy implements IPluginInstallationStrate
 	 * Prepares free plugin for installation
 	 * No preparation needed for free plugins
 	 */
-	public prepareForInstallation(plugin: IPlugin): Observable<void> {
+	public prepare(plugin: IPlugin): Observable<void> {
 		return EMPTY;
 	}
 

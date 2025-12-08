@@ -24,7 +24,7 @@ export interface IPluginInstallationStrategy {
 	 * @param plugin Plugin to validate
 	 * @returns Observable with validation result
 	 */
-	validateInstallation(plugin: IPlugin): Observable<IInstallationPreparationResult>;
+	validate(plugin: IPlugin): Observable<IInstallationPreparationResult>;
 
 	/**
 	 * Prepares the plugin for installation
@@ -32,7 +32,7 @@ export interface IPluginInstallationStrategy {
 	 * @param plugin Plugin to prepare
 	 * @returns Observable that completes when preparation is done
 	 */
-	prepareForInstallation(plugin: IPlugin): Observable<void>;
+	prepare(plugin: IPlugin): Observable<void>;
 
 	/**
 	 * Checks if this strategy can handle the given plugin

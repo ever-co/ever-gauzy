@@ -28,7 +28,7 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 	/**
 	 * Validates if user has active subscription for the plugin
 	 */
-	validateInstallation(plugin: IPlugin): Observable<IInstallationPreparationResult> {
+	validate(plugin: IPlugin): Observable<IInstallationPreparationResult> {
 		return this.accessFacade.hasAccess$(plugin.id).pipe(
 			take(1),
 			map((hasAccess) => ({
@@ -44,8 +44,8 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 	 * Prepares plugin for installation by ensuring subscription exists
 	 * Shows subscription dialog if needed
 	 */
-	prepareForInstallation(plugin: IPlugin) {
-		return this.validateInstallation(plugin).pipe(
+	prepare(plugin: IPlugin) {
+		return this.validate(plugin).pipe(
 			switchMap((result) => {
 				if (result.canProceed) {
 					// Already has access, no preparation needed
