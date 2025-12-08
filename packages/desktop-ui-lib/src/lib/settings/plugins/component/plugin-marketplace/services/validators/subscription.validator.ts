@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { concatMap, map, switchMap } from 'rxjs/operators';
 import {
 	IInstallationValidationContext,
 	InstallationValidator,
@@ -58,7 +58,7 @@ export class SubscriptionValidator extends InstallationValidator {
 
 		// Validate subscription
 		return this.installation.validate(plugin).pipe(
-			switchMap((validationResult) => {
+			concatMap((validationResult) => {
 				if (!validationResult) {
 					return of({
 						canProceed: false,
