@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, Observable, of } from 'rxjs';
+import { EMPTY, Observable } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
 import { PluginSubscriptionActions } from '../+state';
 import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
@@ -43,8 +43,10 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 	/**
 	 * Prepares plugin for installation by ensuring subscription exists
 	 * Shows subscription dialog if needed
+	 * Note: This opens the subscription dialog but doesn't wait for subscription creation.
+	 * User must complete subscription and retry installation.
 	 */
-	prepare(plugin: IPlugin) {
+	prepare(plugin: IPlugin): Observable<void> {
 		return this.validate(plugin).pipe(
 			switchMap((result) => {
 				if (result.canProceed) {
@@ -52,10 +54,14 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 					return EMPTY;
 				}
 
-				// No access - show appropriate subscription dialog based on user's subscription status
+				// No access - show subscription dialog
+				// User must complete subscription flow and retry installation
 				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.REQUIRED_FOR_INSTALLATION'));
+				this.actions.dispatch(PluginSubscriptionActions.openSubscriptionManagement(plugin));
 
-				return of(this.actions.dispatch(PluginSubscriptionActions.openSubscriptionManagement(plugin)));
+				// Return EMPTY to complete the stream - installation will be blocked
+				// User needs to retry after subscribing
+				return EMPTY;
 			})
 		);
 	}

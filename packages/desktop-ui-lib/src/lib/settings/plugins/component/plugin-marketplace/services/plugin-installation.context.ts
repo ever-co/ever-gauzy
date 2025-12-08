@@ -55,8 +55,10 @@ export class PluginInstallationContext {
 
 	/**
 	 * Validates and prepares plugin for installation in one call
+	 * If subscription is required but missing, opens subscription dialog and returns failure.
+	 * User must complete subscription and retry installation.
 	 * @param plugin Plugin to validate and prepare
-	 * @returns Observable that completes when ready for installation
+	 * @returns Observable with validation result
 	 */
 	validateAndPrepare(plugin: IPlugin): Observable<IInstallationPreparationResult> {
 		return this.validate(plugin).pipe(
@@ -65,10 +67,13 @@ export class PluginInstallationContext {
 			}),
 			switchMap((result) => {
 				if (!result.canProceed && result.requiresSubscription) {
-					// Need to prepare (get subscription)
-					return this.prepare(plugin).pipe(switchMap(() => this.validate(plugin)));
+					// Open subscription dialog - but don't wait for subscription
+					// User will need to complete subscription and retry installation
+					return this.prepare(plugin).pipe(
+						switchMap(() => of(result)) // Return original result (canProceed: false)
+					);
 				}
-				// Already can proceed
+				// Already can proceed or doesn't require subscription
 				return of(result);
 			})
 		);

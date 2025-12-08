@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { concatMap, map, switchMap } from 'rxjs/operators';
+import { concatMap, switchMap } from 'rxjs/operators';
 import {
 	IInstallationValidationContext,
 	InstallationValidator,
@@ -69,22 +69,26 @@ export class SubscriptionValidator extends InstallationValidator {
 
 				if (!validationResult.canProceed) {
 					console.log(
-						`[SubscriptionValidator] Subscription needed for ${plugin.name} - preparing installation`
+						`[SubscriptionValidator] Subscription needed for ${plugin.name} - opening subscription dialog`
 					);
 
-					// Need to get subscription - prepare for installation
+					// Open subscription dialog - user must complete subscription and retry
+					// We don't wait for subscription creation as it's an async user action
 					return this.installation.prepare(plugin).pipe(
-						map(() => {
-							console.log(`[SubscriptionValidator] Installation prepared for ${plugin.name}`);
-							return {
-								canProceed: true,
+						switchMap(() => {
+							// prepare() completes after opening dialog
+							// Block installation - user needs to subscribe first
+							console.log(`[SubscriptionValidator] Subscription dialog opened for ${plugin.name}`);
+							return of({
+								canProceed: false,
+								error: 'PLUGIN.SUBSCRIPTION.REQUIRED',
 								metadata: {
 									subscriptionRequired: true,
-									subscriptionObtained: true,
-									subscriptionValidated: true,
-									preparationCompleted: new Date().toISOString()
+									subscriptionDialogOpened: true,
+									subscriptionValidated: false,
+									userMustSubscribe: true
 								}
-							};
+							});
 						})
 					);
 				}
