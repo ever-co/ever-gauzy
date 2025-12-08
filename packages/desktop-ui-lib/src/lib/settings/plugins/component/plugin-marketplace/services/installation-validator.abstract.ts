@@ -1,5 +1,6 @@
 import { IPlugin } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 /**
  * Context passed through the validation chain
@@ -9,7 +10,7 @@ export interface IInstallationValidationContext {
 	isUpdate: boolean;
 	errors: string[];
 	warnings: string[];
-	metadata: Record<string, any>;
+	metadata: Record<string, unknown>;
 }
 
 /**
@@ -19,132 +20,59 @@ export interface IValidationStepResult {
 	canProceed: boolean;
 	error?: string;
 	warning?: string;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 }
 
 /**
- * Abstract validator in the chain of responsibility
- * Follows Chain of Responsibility Pattern
- * Follows Open/Closed Principle - new validators can be added without changing existing ones
- * Follows Single Responsibility - each validator checks one aspect
+ * Abstract validator implementing Chain of Responsibility pattern
  */
 export abstract class InstallationValidator {
-	protected nextValidator: InstallationValidator | null = null;
+	protected next: InstallationValidator | null = null;
 
-	/**
-	 * Sets the next validator in the chain
-	 * @param validator Next validator
-	 * @returns The next validator for fluent chaining
-	 */
 	setNext(validator: InstallationValidator): InstallationValidator {
-		this.nextValidator = validator;
+		this.next = validator;
 		return validator;
 	}
 
-	/**
-	 * Validates the installation context
-	 * @param context Validation context
-	 * @returns Observable with validation result
-	 */
 	validate(context: IInstallationValidationContext): Observable<IInstallationValidationContext> {
-		return new Observable<IInstallationValidationContext>((observer) => {
-			let subscription;
-
-			try {
-				subscription = this.doValidate(context).subscribe({
-					next: (result) => {
-						try {
-							// Update context with validation result
-							if (!result.canProceed) {
-								if (result.error) {
-									context.errors.push(result.error);
-								}
-								// Stop chain if cannot proceed
-								context.metadata.stoppedAt = this.constructor.name;
-								observer.next(context);
-								observer.complete();
-								return;
-							}
-
-							if (result.warning) {
-								context.warnings.push(result.warning);
-							}
-
-							if (result.metadata) {
-								context.metadata = { ...context.metadata, ...result.metadata };
-							}
-
-							// Continue to next validator if exists
-							if (this.nextValidator) {
-								const nextSubscription = this.nextValidator.validate(context).subscribe({
-									next: (finalContext) => {
-										observer.next(finalContext);
-										observer.complete();
-									},
-									error: (err) => {
-										console.error(`[${this.constructor.name}] Chain continuation error:`, err);
-										context.errors.push(
-											`PLUGIN.VALIDATION.CHAIN_ERROR: ${err?.message || 'Unknown error'}`
-										);
-										context.metadata.chainError = true;
-										observer.next(context);
-										observer.complete();
-									}
-								});
-
-								// Cleanup next validator subscription
-								return () => {
-									if (nextSubscription) {
-										nextSubscription.unsubscribe();
-									}
-								};
-							} else {
-								// End of chain - mark completion
-								context.metadata.validationCompleted = new Date().toISOString();
-								context.metadata.completedAt = this.constructor.name;
-								observer.next(context);
-								observer.complete();
-							}
-						} catch (syncError) {
-							console.error(`[${this.constructor.name}] Synchronous validation error:`, syncError);
-							context.errors.push(
-								`PLUGIN.VALIDATION.SYNC_ERROR: ${syncError?.message || 'Unknown error'}`
-							);
-							context.metadata.syncError = true;
-							observer.next(context);
-							observer.complete();
-						}
-					},
-					error: (err) => {
-						console.error(`[${this.constructor.name}] Validation error:`, err);
-						context.errors.push(`PLUGIN.VALIDATION.ERROR: ${err?.message || 'Unknown error'}`);
-						context.metadata.asyncError = true;
-						observer.next(context);
-						observer.complete();
-					}
-				});
-			} catch (error) {
-				console.error(`[${this.constructor.name}] Failed to start validation:`, error);
-				context.errors.push(`PLUGIN.VALIDATION.START_ERROR: ${error?.message || 'Unknown error'}`);
-				context.metadata.startError = true;
-				observer.next(context);
-				observer.complete();
-			}
-
-			// Cleanup on unsubscribe
-			return () => {
-				if (subscription) {
-					subscription.unsubscribe();
-				}
-			};
-		});
+		return this.doValidate(context).pipe(
+			map((result) => this.applyResult(context, result)),
+			switchMap(([ctx, canProceed]) => (canProceed ? this.proceed(ctx) : of(ctx))),
+			catchError((err) => this.fail(context, 'ERROR', err))
+		);
 	}
 
-	/**
-	 * Performs the actual validation logic
-	 * To be implemented by concrete validators
-	 * @param context Validation context
-	 * @returns Observable with step result
-	 */
+	private applyResult(
+		context: IInstallationValidationContext,
+		{ canProceed, error, warning, metadata }: IValidationStepResult
+	): [IInstallationValidationContext, boolean] {
+		if (!canProceed && error) {
+			context.errors.push(error);
+			context.metadata.stoppedAt = this.constructor.name;
+		}
+		if (warning) context.warnings.push(warning);
+		if (metadata) Object.assign(context.metadata, metadata);
+		return [context, canProceed];
+	}
+
+	private proceed(context: IInstallationValidationContext): Observable<IInstallationValidationContext> {
+		if (!this.next) {
+			context.metadata.validationCompleted = new Date().toISOString();
+			context.metadata.completedAt = this.constructor.name;
+			return of(context);
+		}
+		return this.next.validate(context).pipe(catchError((err) => this.fail(context, 'CHAIN_ERROR', err)));
+	}
+
+	private fail(
+		context: IInstallationValidationContext,
+		type: string,
+		err: Error
+	): Observable<IInstallationValidationContext> {
+		context.errors.push(`PLUGIN.VALIDATION.${type}: ${err?.message ?? 'Unknown error'}`);
+		context.metadata[`${type.toLowerCase()}Error`] = true;
+		return of(context);
+	}
+
 	protected abstract doValidate(context: IInstallationValidationContext): Observable<IValidationStepResult>;
 }
