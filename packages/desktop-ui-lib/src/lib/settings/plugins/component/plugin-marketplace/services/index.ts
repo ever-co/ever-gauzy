@@ -33,7 +33,7 @@ export * from './validators/subscription.validator';
 
 // Facades and Builders
 export * from './installation-validation-chain.builder';
-export * from './plugin-installation.facade';
+export * from './plugin-installation.context';
 
 // Guards
 export * from './plugin-access.guard';

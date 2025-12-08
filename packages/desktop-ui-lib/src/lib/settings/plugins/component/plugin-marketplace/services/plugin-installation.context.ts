@@ -21,7 +21,7 @@ import { SubscriptionPluginInstallationStrategy } from './subscription-plugin-in
 @Injectable({
 	providedIn: 'root'
 })
-export class PluginInstallationFacade {
+export class PluginInstallationContext {
 	private readonly strategies: IPluginInstallationStrategy[];
 
 	constructor(
@@ -37,7 +37,7 @@ export class PluginInstallationFacade {
 	 * @param plugin Plugin to validate
 	 * @returns Observable with validation result
 	 */
-	validateInstallation(plugin: IPlugin): Observable<IInstallationPreparationResult> {
+	validate(plugin: IPlugin): Observable<IInstallationPreparationResult> {
 		const strategy = this.getStrategyForPlugin(plugin);
 		return strategy.validateInstallation(plugin);
 	}
@@ -48,7 +48,7 @@ export class PluginInstallationFacade {
 	 * @param plugin Plugin to prepare
 	 * @returns Observable that completes when ready for installation
 	 */
-	prepareForInstallation(plugin: IPlugin): Observable<void> {
+	prepare(plugin: IPlugin): Observable<void> {
 		const strategy = this.getStrategyForPlugin(plugin);
 		return strategy.prepareForInstallation(plugin);
 	}
@@ -59,14 +59,14 @@ export class PluginInstallationFacade {
 	 * @returns Observable that completes when ready for installation
 	 */
 	validateAndPrepare(plugin: IPlugin): Observable<IInstallationPreparationResult> {
-		return this.validateInstallation(plugin).pipe(
+		return this.validate(plugin).pipe(
 			tap((result) => {
-				console.log('[PluginInstallationFacade] Validation result:', result);
+				console.log('[PluginInstallationContext] Validation result:', result);
 			}),
 			switchMap((result) => {
 				if (!result.canProceed && result.requiresSubscription) {
 					// Need to prepare (get subscription)
-					return this.prepareForInstallation(plugin).pipe(switchMap(() => this.validateInstallation(plugin)));
+					return this.prepare(plugin).pipe(switchMap(() => this.validate(plugin)));
 				}
 				// Already can proceed
 				return of(result);

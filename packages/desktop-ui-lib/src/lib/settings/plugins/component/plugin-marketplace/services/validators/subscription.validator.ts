@@ -6,7 +6,7 @@ import {
 	InstallationValidator,
 	IValidationStepResult
 } from '../installation-validator.abstract';
-import { PluginInstallationFacade } from '../plugin-installation.facade';
+import { PluginInstallationContext } from '../plugin-installation.context';
 
 /**
  * Validates subscription requirements before installation
@@ -16,7 +16,7 @@ import { PluginInstallationFacade } from '../plugin-installation.facade';
 	providedIn: 'root'
 })
 export class SubscriptionValidator extends InstallationValidator {
-	constructor(private readonly installationFacade: PluginInstallationFacade) {
+	constructor(private readonly installation: PluginInstallationContext) {
 		super();
 	}
 
@@ -34,7 +34,7 @@ export class SubscriptionValidator extends InstallationValidator {
 
 		// Check if subscription is required
 		try {
-			if (!this.installationFacade.requiresSubscription(plugin)) {
+			if (!this.installation.requiresSubscription(plugin)) {
 				console.log(`[SubscriptionValidator] Plugin ${plugin.name} does not require subscription`);
 				return of({
 					canProceed: true,
@@ -57,7 +57,7 @@ export class SubscriptionValidator extends InstallationValidator {
 		console.log(`[SubscriptionValidator] Validating subscription for plugin ${plugin.name}`);
 
 		// Validate subscription
-		return this.installationFacade.validateInstallation(plugin).pipe(
+		return this.installation.validate(plugin).pipe(
 			switchMap((validationResult) => {
 				if (!validationResult) {
 					return of({
@@ -73,7 +73,7 @@ export class SubscriptionValidator extends InstallationValidator {
 					);
 
 					// Need to get subscription - prepare for installation
-					return this.installationFacade.prepareForInstallation(plugin).pipe(
+					return this.installation.prepare(plugin).pipe(
 						map(() => {
 							console.log(`[SubscriptionValidator] Installation prepared for ${plugin.name}`);
 							return {
