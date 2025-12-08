@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, take, tap } from 'rxjs/operators';
 import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
 
@@ -100,12 +100,9 @@ export class PluginAccessGuard {
 	 */
 	checkPluginAccess(plugin: IPlugin): Observable<IPluginAccessResult> {
 		if (!plugin || !plugin.id) {
-			return new Observable<IPluginAccessResult>((observer) => {
-				observer.next({
-					hasAccess: false,
-					reason: this.translateService.instant('PLUGIN.ACCESS.INVALID_PLUGIN')
-				});
-				observer.complete();
+			return of({
+				hasAccess: false,
+				reason: this.translateService.instant('PLUGIN.ACCESS.INVALID_PLUGIN')
 			});
 		}
 

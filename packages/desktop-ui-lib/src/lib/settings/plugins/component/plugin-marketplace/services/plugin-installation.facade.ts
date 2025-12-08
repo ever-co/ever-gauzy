@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { FreePluginInstallationStrategy } from './free-plugin-installation.strategy';
 import { IInstallationPreparationResult, IPluginInstallationStrategy } from './plugin-installation-strategy.interface';
@@ -69,10 +69,7 @@ export class PluginInstallationFacade {
 					return this.prepareForInstallation(plugin).pipe(switchMap(() => this.validateInstallation(plugin)));
 				}
 				// Already can proceed
-				return new Observable<IInstallationPreparationResult>((observer) => {
-					observer.next(result);
-					observer.complete();
-				});
+				return of(result);
 			})
 		);
 	}
