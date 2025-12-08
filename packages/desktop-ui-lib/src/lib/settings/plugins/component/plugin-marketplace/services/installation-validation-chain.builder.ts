@@ -67,7 +67,7 @@ export class InstallationValidationChainBuilder {
 	 * @param isUpdate Whether this is an update
 	 * @returns Observable with validation context containing errors/warnings
 	 */
-	validate(plugin: IPlugin, isUpdate: boolean = false): Observable<IInstallationValidationContext> {
+	private validate(plugin: IPlugin, isUpdate: boolean = false): Observable<IInstallationValidationContext> {
 		if (!plugin) {
 			return of({
 				plugin: null,

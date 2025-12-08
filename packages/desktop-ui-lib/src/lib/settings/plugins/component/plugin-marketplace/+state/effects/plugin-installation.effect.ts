@@ -62,51 +62,81 @@ export class PluginInstallationEffects {
 	/**
 	 * Handle install requests coming from marketplace actions.
 	 * Moves validation and dialog orchestration out of components into effects.
+	 *
+	 * Flow:
+	 * 1. Enable toggle optimistically
+	 * 2. Validate installation requirements
+	 * 3. Show confirmation dialog if valid
+	 * 4. Dispatch appropriate installation action based on source type
+	 *
+	 * Uses exhaustMap to prevent concurrent installations of the same plugin.
 	 */
 	installFromMarketplace$ = createEffect(
 		() =>
 			this.action$.pipe(
 				ofType(PluginMarketplaceActions.install),
+				// Optimistically enable toggle
 				tap(({ plugin }) => this.pluginToggleStore.setToggle(plugin.id, true)),
-				concatMap(({ plugin, isUpdate }) =>
-					this.installationValidationChainBuilder.validate(plugin, isUpdate).pipe(
-						exhaustMap((context) => {
-							// 1 — Validation errors
-							if (context.errors.length > 0) {
-								context.errors.forEach((err) =>
-									this.toastrService.error(this.translateService.instant(err))
-								);
+				// Prevent concurrent installations - exhaust until current completes
+				exhaustMap(({ plugin, isUpdate }) =>
+					this.installationValidationChainBuilder.canProceedWithInstallation(plugin, isUpdate).pipe(
+						// Flatten validation result into dialog flow
+						switchMap((canProceed) => {
+							// Early exit if validation fails
+							if (!canProceed) {
 								return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
 							}
-
-							// 2 — Open confirmation dialog
-							const dialogRef = this.dialogService.open(DialogInstallationValidationComponent, {
-								context: { pluginId: context.plugin.id },
-								backdropClass: 'backdrop-blur'
-							});
-
-							// 3 — Handle dialog result
-							return dialogRef.onClose.pipe(
-								take(1),
-								map((result) => {
-									if (!result) {
-										return PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false });
+							// Open confirmation dialog and wait for user decision
+							return this.openInstallationDialog(plugin.id).pipe(
+								// Map dialog result to installation action or cancellation
+								switchMap((dialogResult) => {
+									// User cancelled - disable toggle
+									if (!dialogResult) {
+										return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
 									}
 
-									return this.sourceInstallAction(
-										context.plugin.id,
-										result.version,
-										result.source,
-										result.authToken
+									// User confirmed - dispatch source-specific installation
+									const action = this.sourceInstallAction(
+										plugin.id,
+										dialogResult.version,
+										dialogResult.source,
+										dialogResult.authToken
 									);
+									return of(action);
 								})
 							);
+						}),
+						// Handle validation or dialog errors gracefully
+						catchError((error) => {
+							console.error('Installation flow error:', error);
+							this.toastrService.error(
+								this.translateService.instant('PLUGIN.TOASTR.ERROR.INSTALLATION_FLOW_FAILED')
+							);
+							return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
 						})
 					)
 				)
 			),
 		{ dispatch: true }
 	);
+
+	/**
+	 * Opens installation confirmation dialog and returns the result.
+	 * Extracted for better testability and separation of concerns.
+	 */
+	private openInstallationDialog(pluginId: string): Observable<{
+		version: IPluginVersion;
+		source: IPluginSource;
+		authToken?: string;
+	} | null> {
+		const dialogRef = this.dialogService.open(DialogInstallationValidationComponent, {
+			context: { pluginId },
+			backdropClass: 'backdrop-blur'
+		});
+
+		// Dialog already manages its own lifecycle, but we ensure single emission
+		return dialogRef.onClose.pipe(take(1));
+	}
 
 	private sourceInstallAction(pluginId: string, version: IPluginVersion, source: IPluginSource, authToken?: string) {
 		switch (source.type) {
