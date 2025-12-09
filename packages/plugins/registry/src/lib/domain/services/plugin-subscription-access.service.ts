@@ -375,7 +375,7 @@ class SubscriptionAccessContextFactory {
 		// Check if subscription can be activated using entity method
 		if (subscription) {
 			const isDirectSubscriber = subscription.subscriberId === userId;
-			const isParentSubscription = !subscription.isInheritedSubscription();
+			const isParentSubscription = !subscription.isInherited();
 			return (isDirectSubscriber || isParentSubscription) && subscription.isSubscriptionActive;
 		}
 

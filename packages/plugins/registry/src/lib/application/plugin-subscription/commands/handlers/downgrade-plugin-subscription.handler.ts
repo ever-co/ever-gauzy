@@ -107,7 +107,7 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 		previousPlanId?: string
 	): Promise<PluginSubscription[]> {
 		// Skip if this is a child subscription (no cascade needed)
-		if (!subscription.isInheritedSubscription()) {
+		if (!subscription.isInherited()) {
 			return [];
 		}
 

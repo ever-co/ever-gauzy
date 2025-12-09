@@ -330,7 +330,7 @@ export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntity
 	/**
 	 * Checks if subscription is inherited (child subscription)
 	 */
-	isInheritedSubscription?(): boolean;
+	isInherited?(): boolean;
 
 	/**
 	 * Checks if this subscription can assign access to other users
@@ -493,7 +493,7 @@ export interface IPluginSubscriptionStatics {
 	/**
 	 * Specification to check if subscription is inherited from parent
 	 */
-	isInheritedSubscription(subscription: IPluginSubscription): boolean;
+	isInherited(subscription: IPluginSubscription): boolean;
 
 	/**
 	 * Specification to check if subscription needs billing attention

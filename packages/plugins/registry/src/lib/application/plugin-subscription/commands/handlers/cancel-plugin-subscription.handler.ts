@@ -93,23 +93,23 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 	/**
 	 * Cancels all active child subscriptions when a parent subscription is cancelled.
 	 *
-	 * @param parentSubscription - The parent subscription being cancelled
+	 * @param subscription - The parent subscription being cancelled
 	 * @param reason - The cancellation reason to propagate to children
 	 * @returns Array of cancelled child subscriptions
 	 */
 	private async cancelChildSubscriptions(
-		parentSubscription: PluginSubscription,
+		subscription: PluginSubscription,
 		reason?: string
 	): Promise<PluginSubscription[]> {
 		// Skip if this is a child subscription (no cascade needed)
-		if (!parentSubscription.isInheritedSubscription()) {
+		if (!subscription.isInherited()) {
 			return [];
 		}
 
 		// Find all active child subscriptions
 		const activeChildren = await this.pluginSubscriptionService.find({
 			where: {
-				parentId: parentSubscription.id,
+				parentId: subscription.id,
 				status: In([
 					PluginSubscriptionStatus.ACTIVE,
 					PluginSubscriptionStatus.TRIAL,
@@ -132,7 +132,7 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 					child.metadata = {
 						...child.metadata,
 						cancelledByParent: true,
-						parentSubscriptionId: parentSubscription.id,
+						parentSubscriptionId: subscription.id,
 						parentCancellationReason: reason
 					};
 					cancelledChildren.push(child);

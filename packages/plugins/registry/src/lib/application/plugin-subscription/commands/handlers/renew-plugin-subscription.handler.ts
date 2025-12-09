@@ -114,7 +114,7 @@ export class RenewPluginSubscriptionCommandHandler implements ICommandHandler<Re
 		newEndDate: Date
 	): Promise<PluginSubscription[]> {
 		// Skip if this is a child subscription (no cascade needed)
-		if (!subscription.isInheritedSubscription()) {
+		if (!subscription.isInherited()) {
 			return [];
 		}
 

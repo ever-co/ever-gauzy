@@ -598,15 +598,15 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	/**
 	 * Checks if subscription is inherited (child subscription)
 	 */
-	isInheritedSubscription(): boolean {
-		return !!this.parent && !!this.parentId;
+	isInherited(): boolean {
+		return !!this.parentId;
 	}
 
 	/**
 	 * Checks if this subscription can assign access to other users
 	 */
 	canAssignToUsers(): boolean {
-		return this.hasAssignmentPermissions() && !this.isInheritedSubscription();
+		return this.hasAssignmentPermissions() && !this.isInherited();
 	}
 
 	/**
@@ -1007,7 +1007,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	/**
 	 * Specification to check if subscription is inherited from parent
 	 */
-	static isInheritedSubscription(subscription: IPluginSubscription): boolean {
+	static isInherited(subscription: IPluginSubscription): boolean {
 		return !!subscription.parent && !!subscription.parentId && subscription.scope === PluginScope.USER;
 	}
 
