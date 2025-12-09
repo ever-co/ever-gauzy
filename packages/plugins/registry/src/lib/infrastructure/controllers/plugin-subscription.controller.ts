@@ -1,4 +1,3 @@
-import { Public } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import {
@@ -40,6 +39,7 @@ import {
 } from '../../shared';
 
 @ApiTags('Plugin Subscriptions')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugins/:pluginId/subscriptions')
 export class PluginSubscriptionController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
@@ -81,7 +81,6 @@ export class PluginSubscriptionController {
 		type: [PluginSubscription]
 	})
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Public()
 	@Get()
 	async findAll(
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
@@ -160,7 +159,6 @@ export class PluginSubscriptionController {
 	})
 	@ApiParam({ name: 'id', description: 'Plugin subscription ID' })
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Public()
 	@Get(':id')
 	async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<PluginSubscription> {
 		return await this.queryBus.execute(
@@ -177,7 +175,6 @@ export class PluginSubscriptionController {
 	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
 	@ApiParam({ name: 'id', description: 'Plugin subscription ID', type: String, format: 'uuid' })
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Patch(':id')
 	async updateStatus(
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
