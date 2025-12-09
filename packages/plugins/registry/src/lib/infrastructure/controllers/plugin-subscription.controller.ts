@@ -139,7 +139,6 @@ export class PluginSubscriptionController {
 		type: PluginSubscription
 	})
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
-	@Public()
 	@Get('me')
 	async getCurrentSubscription(
 		@Param('pluginId', ParseUUIDPipe) pluginId: string
