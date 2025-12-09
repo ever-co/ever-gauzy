@@ -592,13 +592,15 @@ export class PluginInstallationEffects {
 	/**
 	 * Reset installation state
 	 */
-	reset$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginInstallationActions.reset),
-			tap(({ pluginId }) => {
-				this.pluginInstallationStore.resetStates(pluginId);
-			})
-		)
+	reset$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginInstallationActions.reset),
+				tap(({ pluginId }) => {
+					this.pluginInstallationStore.resetStates(pluginId);
+				})
+			),
+		{ dispatch: false }
 	);
 
 	/**
@@ -628,13 +630,15 @@ export class PluginInstallationEffects {
 							this.pluginInstallationStore.setUninstalling(pluginId, true);
 
 							return this.handleUninstall({ marketplaceId: pluginId, id: installedId }).pipe(
-								map((isUninstalled) => [
-									PluginToggleActions.toggle({
-										pluginId,
-										enabled: !isUninstalled
-									}),
-									PluginActions.refresh()
-								]),
+								switchMap((isUninstalled) =>
+									of(
+										PluginToggleActions.toggle({
+											pluginId,
+											enabled: !isUninstalled
+										}),
+										PluginActions.refresh()
+									)
+								),
 								catchError((error) => {
 									this.toastrService.error(
 										error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.UNINSTALL')
@@ -646,7 +650,6 @@ export class PluginInstallationEffects {
 										})
 									);
 								}),
-
 								finalize(() => this.pluginInstallationStore.setUninstalling(pluginId, false))
 							);
 						})
