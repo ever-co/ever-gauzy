@@ -20,33 +20,6 @@
 	},
 	"main": "index.js",
 	"bin": "api/main.js",
-	"workspaces": {
-		"packages": [
-			"../../../dist/packages/auth",
-			"../../../dist/packages/common",
-			"../../../dist/packages/config",
-			"../../../dist/packages/constants",
-			"../../../dist/packages/contracts",
-			"../../../dist/packages/core",
-			"../../../dist/packages/desktop-core",
-			"../../../dist/packages/desktop-activity",
-			"../../../dist/packages/desktop-lib",
-			"../../../dist/packages/desktop-window",
-			"../../../dist/packages/plugin",
-			"../../../dist/packages/plugins/integration-ai",
-			"../../../dist/packages/plugins/job-proposal",
-			"../../../dist/packages/plugins/videos",
-			"../../../dist/packages/plugins/integration-zapier",
-			"../../../dist/packages/plugins/posthog",
-			"../../../dist/packages/plugins/registry",
-			"../../../dist/packages/plugins/camshot",
-			"../../../dist/packages/plugins/soundshot",
-			"../../../dist/packages/plugins/registry",
-			"../../../dist/packages/ui-config",
-			"../../../dist/packages/utils",
-			"../../../dist/packages/plugins/integration-activepieces"
-		]
-	},
 	"build": {
 		"npmArgs": [
 			"--production"
@@ -105,7 +78,6 @@
 			}
 		},
 		"win": {
-			"publisherName": "Ever",
 			"target": [
 				{
 					"target": "nsis",
@@ -154,6 +126,7 @@
 		"@gauzy/config": "file:../../../dist/packages/config",
 		"@gauzy/constants": "file:../../../dist/packages/constants",
 		"@gauzy/contracts": "file:../../../dist/packages/contracts",
+		"@gauzy/common": "file:../../../dist/packages/common",
 		"@gauzy/core": "file:../../../dist/packages/core",
 		"@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
 		"@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
@@ -212,7 +185,45 @@
 		"underscore": "^1.13.3",
 		"undici": "^6.10.2",
 		"custom-electron-titlebar": "^4.2.8",
-		"@as-integrations/express5": "^1.1.2"
+		"@as-integrations/express5": "^1.1.2",
+		"call-bind-apply-helpers": "^1.0.2",
+		"cheerio-select": "^2.1.0"
+	},
+	"resolutions": {
+		"@gauzy/auth": "file:../../../dist/packages/auth",
+		"@gauzy/config": "file:../../../dist/packages/config",
+		"@gauzy/constants": "file:../../../dist/packages/constants",
+		"@gauzy/contracts": "file:../../../dist/packages/contracts",
+		"@gauzy/common": "file:../../../dist/packages/common",
+		"@gauzy/core": "file:../../../dist/packages/core",
+		"@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
+		"@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
+		"@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
+		"@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
+		"@gauzy/plugin": "file:../../../dist/packages/plugin",
+		"@gauzy/plugin-changelog": "file:../../../dist/packages/plugins/changelog",
+		"@gauzy/plugin-integration-ai": "file:../../../dist/packages/plugins/integration-ai",
+		"@gauzy/plugin-integration-github": "file:../../../dist/packages/plugins/integration-github",
+		"@gauzy/plugin-integration-hubstaff": "file:../../../dist/packages/plugins/integration-hubstaff",
+		"@gauzy/plugin-integration-jira": "file:../../../dist/packages/plugins/integration-jira",
+		"@gauzy/plugin-integration-make-com": "file:../../../dist/packages/plugins/integration-make-com",
+		"@gauzy/plugin-integration-upwork": "file:../../../dist/packages/plugins/integration-upwork",
+		"@gauzy/plugin-integration-wakatime": "file:../../../dist/packages/plugins/integration-wakatime",
+		"@gauzy/plugin-jitsu-analytics": "file:../../../dist/packages/plugins/jitsu-analytics",
+		"@gauzy/plugin-job-proposal": "file:../../../dist/packages/plugins/job-proposal",
+		"@gauzy/plugin-job-search": "file:../../../dist/packages/plugins/job-search",
+		"@gauzy/plugin-knowledge-base": "file:../../../dist/packages/plugins/knowledge-base",
+		"@gauzy/plugin-product-reviews": "file:../../../dist/packages/plugins/product-reviews",
+		"@gauzy/plugin-sentry": "file:../../../dist/packages/plugins/sentry-tracing",
+		"@gauzy/plugin-videos": "file:../../../dist/packages/plugins/videos",
+		"@gauzy/plugin-registry": "file:../../../dist/packages/plugins/registry",
+		"@gauzy/plugin-integration-zapier": "file:../../../dist/packages/plugins/integration-zapier",
+		"@gauzy/plugin-posthog": "file:../../../dist/packages/plugins/posthog",
+		"@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
+		"@gauzy/plugin-soundshot": "file:../../../dist/packages/plugins/soundshot",
+		"@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
+		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
+		"@gauzy/utils": "file:../../../dist/packages/utils"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",
