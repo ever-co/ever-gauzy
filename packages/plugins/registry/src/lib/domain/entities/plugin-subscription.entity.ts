@@ -344,21 +344,26 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	 * Validates if the subscription can be upgraded
 	 */
 	canBeUpgraded(): boolean {
-		return this.status === PluginSubscriptionStatus.ACTIVE && !!this.planId;
+		return this.status === PluginSubscriptionStatus.ACTIVE && !!this.planId && !this.parentId;
 	}
 
 	/**
 	 * Validates if the subscription can be downgraded
 	 */
 	canBeDowngraded(): boolean {
-		return this.status === PluginSubscriptionStatus.ACTIVE && !!this.planId;
+		return this.status === PluginSubscriptionStatus.ACTIVE && !!this.planId && !this.parentId;
 	}
 
 	/**
 	 * Validates if trial can be extended
 	 */
 	canExtendTrial(): boolean {
-		return this.status === PluginSubscriptionStatus.TRIAL && this.trialEndDate && this.trialEndDate > new Date();
+		return (
+			this.status === PluginSubscriptionStatus.TRIAL &&
+			this.trialEndDate &&
+			this.trialEndDate > new Date() &&
+			!this.parentId
+		);
 	}
 
 	/**
@@ -367,7 +372,8 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	canCreateChildSubscriptions(): boolean {
 		return (
 			this.status === PluginSubscriptionStatus.ACTIVE &&
-			[PluginScope.TENANT, PluginScope.ORGANIZATION].includes(this.scope)
+			[PluginScope.TENANT, PluginScope.ORGANIZATION].includes(this.scope) &&
+			!this.parentId
 		);
 	}
 
