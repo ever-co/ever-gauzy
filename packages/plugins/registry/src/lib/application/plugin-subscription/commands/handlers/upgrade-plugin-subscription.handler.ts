@@ -91,25 +91,25 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 	/**
 	 * Upgrades all active child subscriptions when a parent subscription is upgraded.
 	 *
-	 * @param parentSubscription - The parent subscription being upgraded
+	 * @param subscription - The parent subscription being upgraded
 	 * @param newPlanId - The new plan ID to apply to children
 	 * @param previousPlanId - The previous plan ID for metadata tracking
 	 * @returns Array of upgraded child subscriptions
 	 */
 	private async upgradeChildSubscriptions(
-		parentSubscription: PluginSubscription,
+		subscription: PluginSubscription,
 		newPlanId: string,
 		previousPlanId?: string
 	): Promise<PluginSubscription[]> {
 		// Skip if this is a child subscription (no cascade needed)
-		if (parentSubscription.parentId) {
+		if (!subscription.isInheritedSubscription()) {
 			return [];
 		}
 
 		// Find all active child subscriptions
-		const activeChildren = await this.pluginSubscriptionService.findAll({
+		const activeChildren = await this.pluginSubscriptionService.find({
 			where: {
-				parentId: parentSubscription.id,
+				parentId: subscription.id,
 				status: In([
 					PluginSubscriptionStatus.ACTIVE,
 					PluginSubscriptionStatus.TRIAL,
@@ -118,13 +118,13 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 			}
 		});
 
-		if (!activeChildren.items || activeChildren.items.length === 0) {
+		if (!activeChildren || activeChildren.length === 0) {
 			return [];
 		}
 
 		const upgradedChildren: PluginSubscription[] = [];
 
-		for (const child of activeChildren.items) {
+		for (const child of activeChildren) {
 			try {
 				// Update child's plan to match parent
 				child.planId = newPlanId;
@@ -132,7 +132,7 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 					...child.metadata,
 					previousPlanId,
 					upgradedByParent: true,
-					parentSubscriptionId: parentSubscription.id,
+					parentSubscriptionId: subscription.id,
 					upgradedAt: new Date().toISOString()
 				};
 				child.updatedAt = new Date();
