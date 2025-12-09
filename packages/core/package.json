@@ -110,7 +110,7 @@
 		"atlassian-connect-express": "^8.5.0",
 		"axios": "^1.9.0",
 		"bcrypt": "^5.1.1",
-		"better-sqlite3": "9.6.0",
+		"better-sqlite3": "12.2.0",
 		"cache-manager": "^6.4.2",
 		"cacheable": "^2.1.1",
 		"@keyv/redis": "^5.1.3",
