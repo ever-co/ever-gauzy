@@ -106,7 +106,7 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 			return [];
 		}
 
-		// Find all active child subscriptions
+		// Find all active child subscriptions with required relations
 		const activeChildren = await this.pluginSubscriptionService.find({
 			where: {
 				parentId: subscription.id,
@@ -115,7 +115,8 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 					PluginSubscriptionStatus.TRIAL,
 					PluginSubscriptionStatus.PENDING
 				])
-			}
+			},
+			relations: ['plan', 'plugin', 'pluginTenant']
 		});
 
 		if (!activeChildren || activeChildren.length === 0) {
@@ -142,9 +143,9 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 			}
 		}
 
-		// Batch save all cancelled children
+		// Save all cancelled children individually (service.save doesn't support arrays)
 		if (cancelledChildren.length > 0) {
-			await this.pluginSubscriptionService.save(cancelledChildren);
+			await Promise.all(cancelledChildren.map((child) => this.pluginSubscriptionService.save(child)));
 		}
 
 		return cancelledChildren;

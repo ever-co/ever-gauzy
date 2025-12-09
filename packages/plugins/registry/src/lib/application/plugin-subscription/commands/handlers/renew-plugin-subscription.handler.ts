@@ -150,9 +150,9 @@ export class RenewPluginSubscriptionCommandHandler implements ICommandHandler<Re
 			}
 		}
 
-		// Batch save all renewed children
+		// Save all renewed children individually (service.save doesn't support arrays)
 		if (renewedChildren.length > 0) {
-			await this.pluginSubscriptionService.save(renewedChildren);
+			await Promise.all(renewedChildren.map((child) => this.pluginSubscriptionService.save(child)));
 		}
 
 		return renewedChildren;

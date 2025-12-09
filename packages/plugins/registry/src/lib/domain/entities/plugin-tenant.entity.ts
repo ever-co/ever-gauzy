@@ -758,28 +758,22 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	public static create(params: Partial<IPluginTenant>): PluginTenant {
 		const pluginTenant = new PluginTenant();
 
-		// Required fields
-		pluginTenant.pluginId = params.pluginId;
+		// Apply all params first, then override with defaults for undefined values
+		Object.assign(pluginTenant, params);
 
-		// Configuration with defaults
-		pluginTenant.scope = params.scope ?? PluginScope.USER;
-		pluginTenant.enabled = params.enabled ?? true;
-		pluginTenant.autoInstall = params.autoInstall ?? false;
-		pluginTenant.requiresApproval = params.requiresApproval ?? true;
-		pluginTenant.isMandatory = params.isMandatory ?? false;
-		pluginTenant.isDataCompliant = params.isDataCompliant ?? true;
+		// Apply defaults only for undefined values (nullish coalescing)
+		pluginTenant.scope ??= PluginScope.USER;
+		pluginTenant.enabled ??= true;
+		pluginTenant.autoInstall ??= false;
+		pluginTenant.requiresApproval ??= true;
+		pluginTenant.isMandatory ??= false;
+		pluginTenant.isDataCompliant ??= true;
 
-		// Limits
-		pluginTenant.maxInstallations = params.maxInstallations;
-		pluginTenant.maxActiveUsers = params.maxActiveUsers;
-		pluginTenant.currentInstallations = 0;
-		pluginTenant.currentActiveUsers = 0;
+		// Always reset counters for new instances
+		pluginTenant.currentInstallations = params.currentInstallations ?? 0;
+		pluginTenant.currentActiveUsers = params.currentActiveUsers ?? 0;
 
-		// Access controls
-		pluginTenant.allowedRoles = params.allowedRoles;
-		pluginTenant.allowedUsers = params.allowedUsers;
-
-		return Object.assign(pluginTenant, params);
+		return pluginTenant;
 	}
 
 	/**

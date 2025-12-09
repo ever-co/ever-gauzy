@@ -142,9 +142,9 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 			}
 		}
 
-		// Batch save all upgraded children
+		// Save all upgraded children individually (service.save doesn't support arrays)
 		if (upgradedChildren.length > 0) {
-			await this.pluginSubscriptionService.save(upgradedChildren);
+			await Promise.all(upgradedChildren.map((child) => this.pluginSubscriptionService.save(child)));
 		}
 
 		return upgradedChildren;

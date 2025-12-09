@@ -29,7 +29,7 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 	 * @returns The plugin tenant ID
 	 */
 	async findOrCreate(input: Partial<PluginTenant>): Promise<string> {
-		const { pluginId, tenantId, organizationId } = input;
+		const { pluginId, tenantId, organizationId, scope } = input;
 		this.validatePluginTenantInput(pluginId, tenantId);
 
 		// First try to find existing plugin tenant
@@ -55,6 +55,7 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 			isDataCompliant: true,
 			approvedById: currentUser?.id,
 			approvedAt: new Date(),
+			scope,
 			...input
 		};
 

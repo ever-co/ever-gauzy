@@ -147,9 +147,9 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 			}
 		}
 
-		// Batch save all downgraded children
+		// Save all downgraded children individually (service.save doesn't support arrays)
 		if (downgradedChildren.length > 0) {
-			await this.pluginSubscriptionService.save(downgradedChildren);
+			await Promise.all(downgradedChildren.map((child) => this.pluginSubscriptionService.save(child)));
 		}
 
 		return downgradedChildren;

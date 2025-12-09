@@ -8,6 +8,8 @@ import { MikroOrmPluginSubscriptionRepository, TypeOrmPluginSubscriptionReposito
 
 @Injectable()
 export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubscription> {
+	private readonly logger = new Logger(PluginSubscriptionService.name);
+
 	constructor(
 		public readonly typeOrmPluginSubscriptionRepository: TypeOrmPluginSubscriptionRepository,
 		public readonly mikroOrmPluginSubscriptionRepository: MikroOrmPluginSubscriptionRepository
@@ -29,38 +31,44 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		tenantId: ID,
 		organizationId?: ID
 	): Promise<PluginSubscription[]> {
-		const logger = new Logger(PluginSubscriptionService.name);
 		// Find the parent subscription
 		const { success, record: parent } = await this.findOneOrFailByIdString(parentSubscriptionId, {
 			relations: ['plugin', 'pluginTenant']
 		});
-		if (!success) {
+
+		if (!success || !parent) {
 			throw new Error('Parent subscription not found');
 		}
 
 		if (!parent.pluginId) {
 			throw new Error('Parent subscription pluginId is missing');
 		}
+
 		if (!parent.pluginTenantId) {
 			throw new Error('Parent subscription pluginTenantId is missing');
 		}
 
-		logger.log(JSON.stringify(parent));
-
-		const childSubscriptions: PluginSubscription[] = [];
-
-		for (const userId of userIds) {
-			// Check if child subscription already exists
-			const existingChild = await this.findOneOrFailByWhereOptions({
+		// Find existing child subscriptions in a single query
+		const existingChildren = await this.find({
+			where: {
 				parentId: parentSubscriptionId,
-				subscriberId: userId,
-				tenantId,
-				organizationId
-			});
+				subscriberId: In(userIds),
+				tenantId
+			},
+			select: ['subscriberId']
+		});
 
-			if (!existingChild.success) {
-				// Create child subscription
-				const childSubscription = await this.create({
+		const existingUserIds = new Set(existingChildren.map((child) => child.subscriberId));
+		const newUserIds = userIds.filter((userId) => !existingUserIds.has(userId));
+
+		if (newUserIds.length === 0) {
+			return [];
+		}
+
+		// Create child subscriptions in parallel (create() already persists)
+		const createdChildren = await Promise.all(
+			newUserIds.map((userId) =>
+				this.create({
 					pluginId: parent.pluginId,
 					pluginTenantId: parent.pluginTenantId,
 					planId: parent.planId,
@@ -69,24 +77,22 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 					tenantId,
 					organizationId,
 					status: parent.status,
-					scope: PluginScope.USER, // Child subscriptions are always USER-scoped
+					scope: PluginScope.USER,
 					startDate: new Date(),
 					endDate: parent.endDate,
-					autoRenew: false, // Child subscriptions don't auto-renew
+					autoRenew: false,
 					metadata: {
 						createdFrom: 'assignment',
-						parentSubscriptionId: parentSubscriptionId,
+						parentSubscriptionId,
 						assignedAt: new Date().toISOString()
 					}
-				});
+				})
+			)
+		);
 
-				childSubscriptions.push(childSubscription);
-			}
-		}
+		this.logger.log(`Created ${createdChildren.length} child subscriptions for parent ${parentSubscriptionId}`);
 
-		if (childSubscriptions.length > 0) await this.save(childSubscriptions);
-
-		return childSubscriptions;
+		return createdChildren;
 	}
 
 	/**
