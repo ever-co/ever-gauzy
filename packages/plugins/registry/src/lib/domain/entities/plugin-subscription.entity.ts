@@ -344,14 +344,14 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	 * Validates if the subscription can be upgraded
 	 */
 	canBeUpgraded(): boolean {
-		return this.status === PluginSubscriptionStatus.ACTIVE && !!this.planId && !this.parentId;
+		return this.status === PluginSubscriptionStatus.ACTIVE && !!this.planId && !this.isInherited();
 	}
 
 	/**
 	 * Validates if the subscription can be downgraded
 	 */
 	canBeDowngraded(): boolean {
-		return this.status === PluginSubscriptionStatus.ACTIVE && !!this.planId && !this.parentId;
+		return this.status === PluginSubscriptionStatus.ACTIVE && !!this.planId && !this.isInherited();
 	}
 
 	/**
@@ -362,7 +362,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 			this.status === PluginSubscriptionStatus.TRIAL &&
 			this.trialEndDate &&
 			this.trialEndDate > new Date() &&
-			!this.parentId
+			!this.isInherited()
 		);
 	}
 
@@ -373,7 +373,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		return (
 			this.status === PluginSubscriptionStatus.ACTIVE &&
 			[PluginScope.TENANT, PluginScope.ORGANIZATION].includes(this.scope) &&
-			!this.parentId
+			!this.isInherited()
 		);
 	}
 
