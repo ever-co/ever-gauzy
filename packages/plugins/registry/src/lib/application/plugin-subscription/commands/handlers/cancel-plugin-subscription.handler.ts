@@ -102,7 +102,7 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 		reason?: string
 	): Promise<PluginSubscription[]> {
 		// Skip if this is a child subscription (no cascade needed)
-		if (parentSubscription.parentId) {
+		if (!parentSubscription.isInheritedSubscription()) {
 			return [];
 		}
 
