@@ -70,7 +70,7 @@
 		"@types/jest": "29.5.14",
 		"@types/moment-duration-format": "^2.2.3",
 		"@types/node": "^20.14.9",
-		"electron": "^30.0.1",
+		"electron": "^38.1.2",
 		"jest-preset-angular": "14.5.5"
 	},
 	"keywords": [

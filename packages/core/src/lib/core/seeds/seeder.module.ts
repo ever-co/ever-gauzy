@@ -27,7 +27,8 @@ export class SeederModule {
 	 */
 	static forPlugins(): DynamicModule {
 		const i18nLoaderOptions = {
-			path: path.resolve(__dirname, '../../i18n/'),
+			path: environment.isElectron && environment.electronResourcesPath ? path.resolve(environment.electronResourcesPath, 'app.asar.unpacked/node_modules/@gauzy/core/src/lib/i18n')
+				: path.resolve(__dirname, '../../i18n/'),
 			watch: !environment.production
 		};
 

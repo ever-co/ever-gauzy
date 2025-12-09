@@ -42,31 +42,24 @@ export async function configureRedisSession(app: any): Promise<void> {
 
 	if (process.env.REDIS_ENABLED === 'true') {
 		try {
+			const { REDIS_URL, REDIS_HOST, REDIS_PORT, REDIS_USER, REDIS_PASSWORD, REDIS_TLS } = process.env;
+
 			const url =
-				process.env.REDIS_URL ||
-				(process.env.REDIS_TLS === 'true'
-					? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
-					: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+				REDIS_URL ||
+				(() => {
+					const redisProtocol = REDIS_TLS === 'true' ? 'rediss' : 'redis';
+					const auth = REDIS_USER && REDIS_PASSWORD ? `${REDIS_USER}:${REDIS_PASSWORD}@` : '';
+					return `${redisProtocol}://${auth}${REDIS_HOST}:${REDIS_PORT}`;
+				})();
 
 			console.log('REDIS_URL: ', url);
 
-			let host, port, username, password;
-
-			const isTls = url.startsWith('rediss://');
-
-			// Remove protocol part from URL
-			let authPart = url.split('://')[1];
-
-			if (authPart.includes('@')) {
-				// Split user:password and host:port
-				const [userPass, hostPort] = authPart.split('@');
-				[username, password] = userPass.split(':');
-				[host, port] = hostPort.split(':');
-			} else {
-				[host, port] = authPart.split(':');
-			}
-
-			port = parseInt(port, 10);
+			const parsedUrl = new URL(url);
+			const isTls = parsedUrl.protocol === 'rediss:';
+			const username = parsedUrl.username || REDIS_USER;
+			const password = parsedUrl.password || REDIS_PASSWORD || undefined;
+			const host = parsedUrl.hostname || REDIS_HOST;
+			const port = parseInt(parsedUrl.port || REDIS_PORT || '6379', 10);
 
 			const redisConnectionOptions = {
 				url,

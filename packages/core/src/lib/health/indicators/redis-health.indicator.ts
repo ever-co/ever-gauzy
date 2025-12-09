@@ -68,23 +68,37 @@ export class RedisHealthIndicator extends HealthIndicator {
 			return false;
 		}
 
+		// Build Redis URL from environment variables
+		const { REDIS_URL, REDIS_HOST, REDIS_PORT, REDIS_USER, REDIS_PASSWORD, REDIS_TLS } = process.env;
+
+		if (!REDIS_URL && (!REDIS_HOST || !REDIS_PORT)) {
+			console.warn(
+				'Redis is enabled but neither REDIS_URL nor REDIS_HOST/REDIS_PORT are configured. Redis Health Client is not enabled.'
+			);
+
+			return false;
+		}
 		console.log('Starting Redis for Health Check...');
 
-		// Construct Redis URL dynamically
-		const redisProtocol = process.env.REDIS_TLS === 'true' ? 'rediss' : 'redis';
-		const { REDIS_URL, REDIS_USER, REDIS_PASSWORD, REDIS_HOST, REDIS_PORT } = process.env;
-
+		// Construct Redis URL
 		const redisUrl =
-			REDIS_URL || `${redisProtocol}://${REDIS_USER || ''}:${REDIS_PASSWORD || ''}@${REDIS_HOST}:${REDIS_PORT}`;
+			REDIS_URL ||
+			(() => {
+				const redisProtocol = REDIS_TLS === 'true' ? 'rediss' : 'redis';
+				const auth = REDIS_USER && REDIS_PASSWORD ? `${REDIS_USER}:${REDIS_PASSWORD}@` : '';
+				return `${redisProtocol}://${auth}${REDIS_HOST}:${REDIS_PORT}`;
+			})();
 
 		console.log('REDIS_URL:', redisUrl);
 
 		try {
 			// Parse Redis URL
-			const isTls = redisUrl.startsWith('rediss://');
-			const [authPart, hostPort] = redisUrl.split('://')[1].split('@');
-			const [username, password] = authPart?.split(':') || [];
-			const [host, port] = hostPort?.split(':') || [];
+			const parsedUrl = new URL(redisUrl);
+			const isTls = parsedUrl.protocol === 'rediss:';
+			const username = parsedUrl.username || REDIS_USER;
+			const password = parsedUrl.password || REDIS_PASSWORD || undefined;
+			const host = parsedUrl.hostname || REDIS_HOST;
+			const port = parseInt(parsedUrl.port || REDIS_PORT || '6379', 10);
 
 			const redisConnectionOptions = {
 				url: redisUrl,
@@ -94,7 +108,7 @@ export class RedisHealthIndicator extends HealthIndicator {
 				socket: {
 					tls: isTls, // enable TLS only when using rediss:// (kept in sync)
 					host,
-					port: parseInt(port),
+					port,
 					passphrase: password,
 					keepAlive: 10_000, // enable TCP keepalive (initial delay in ms)
 					reconnectStrategy: (retries: number) => Math.min(1000 * Math.pow(2, retries), 5000),

@@ -114,8 +114,9 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 					entity.data = JSON.parse(entity.data);
 				}
 
-				// Parse `updatedValues`, `previousValues`, `updatedEntities`, `previousEntities` if they are strings
+				// Parse `updatedFields`, `updatedValues`, `previousValues`, `updatedEntities`, `previousEntities` if they are strings
 				this.deserializeFields(entity, [
+					'updatedFields',
 					'updatedValues',
 					'previousValues',
 					'updatedEntities',
@@ -126,6 +127,7 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 			// Log the error and reset the data to an empty object if JSON parsing fails
 			console.error('Error parsing JSON data in afterEntityLoad:', error);
 			entity.data = {};
+			entity.updatedFields = [];
 			['updatedValues', 'previousValues', 'updatedEntities', 'previousEntities'].forEach((field) => {
 				entity[field] = {};
 			});

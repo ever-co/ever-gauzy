@@ -11,9 +11,14 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { isNotNullOrUndefined } from '@gauzy/utils';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from './activity-log.helper';
+import {
+	activityLogUpdatedFieldsAndValues,
+	generateActivityLogDescription,
+	serializeActivityLogForSqlite
+} from './activity-log.helper';
 import { ActivityLogEvent } from './events/activity-log.event';
 import { GetActivityLogsDTO, allowedOrderDirections, allowedOrderFields } from './dto/get-activity-logs.dto';
 import { ActivityLog } from './activity-log.entity';
@@ -45,8 +50,15 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 			// Retrieve the current employee's ID from the request context
 			const employeeId = RequestContext.currentEmployeeId() ?? input.employeeId;
 
-			// Create the activity log entry using the provided input along with the employeeId and tenantId
-			return await super.create({ ...input, employeeId, tenantId });
+			// Prepare input data - serialize JSON fields for SQLite to prevent "Too many parameter values" error
+			let preparedInput: Record<string, any> = { ...input, employeeId, tenantId };
+
+			if (isSqlite() || isBetterSqlite3()) {
+				preparedInput = serializeActivityLogForSqlite(preparedInput);
+			}
+
+			// Create the activity log entry using the prepared input
+			return await super.create(preparedInput);
 		} catch (error) {
 			console.log('Error while creating activity log:', error);
 			throw new BadRequestException('Error while creating activity log', error);

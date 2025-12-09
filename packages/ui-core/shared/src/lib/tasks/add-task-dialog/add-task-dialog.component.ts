@@ -17,7 +17,6 @@ import {
 	ISelectedEmployee,
 	ITag,
 	ITask,
-	TaskParticipantEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -32,10 +31,10 @@ import { richTextCKEditorConfig } from '../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-add-task-dialog',
-    templateUrl: './add-task-dialog.component.html',
-    styleUrls: ['./add-task-dialog.component.scss'],
-    standalone: false
+	selector: 'ngx-add-task-dialog',
+	templateUrl: './add-task-dialog.component.html',
+	styleUrls: ['./add-task-dialog.component.scss'],
+	standalone: false
 })
 export class AddTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	employees: IEmployee[] = [];
@@ -46,8 +45,6 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	selectedTask: ITask;
 	availableModules: IOrganizationProjectModule[] = [];
 	organization: IOrganization;
-	taskParticipantEnum = TaskParticipantEnum;
-	participants = TaskParticipantEnum.EMPLOYEES;
 	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	@Input() createTask = false;
 	/*
@@ -180,13 +177,10 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			} = this.selectedTask;
 			const duration = moment.duration(estimate, 'seconds');
 
+			// Load both members and teams - now supporting dual assignment
 			this.selectedMembers = (members || []).map((member) => member.id);
 			this.selectedTeams = (teams || []).map((team) => team.id);
 			this.selectedModules = (modules || []).map((module) => module.id);
-
-			if (teams && teams.length > 0) {
-				this.participants = TaskParticipantEnum.TEAMS;
-			}
 
 			this.form.patchValue({
 				title,
@@ -214,19 +208,17 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 
 	onSave() {
 		if (this.form.valid) {
-			// Reset both fields to ensure only one is sent based on the selection
-			this.form.get('members').setValue([]);
-			this.form.get('teams').setValue([]);
-
-			if (this.participants === TaskParticipantEnum.EMPLOYEES) {
-				this.form.get('members').setValue(
-					(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e) // Only valid employees
+			// Set both members and teams - now supporting dual assignment
+			this.form
+				.get('members')
+				.setValue(
+					(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e)
 				);
-			} else if (this.participants === TaskParticipantEnum.TEAMS) {
-				this.form.get('teams').setValue(
-					(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
+			this.form
+				.get('teams')
+				.setValue(
+					(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e)
 				);
-			}
 
 			const selectedModules = this.selectedModules || [];
 			const mappedModules = selectedModules
@@ -292,10 +284,6 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 
 		const { items = [] } = await this.organizationTeamsService.getAll(['members'], { organizationId, tenantId });
 		this.teams = items;
-	}
-
-	onParticipantsChange(participants: TaskParticipantEnum) {
-		this.participants = participants;
 	}
 
 	onTeamsSelected(teamsSelection: string[]) {

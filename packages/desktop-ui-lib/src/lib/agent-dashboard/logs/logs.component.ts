@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewChecked, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewChecked, OnDestroy, OnInit } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { LogEntry } from '../models/logs.models';
 import { LogService } from '../services/logs.service';
@@ -9,7 +9,7 @@ import { LogService } from '../services/logs.service';
 	styleUrls: ['./logs.component.scss'],
 	standalone: false
 })
-export class LogsPageComponent implements AfterViewChecked, OnDestroy {
+export class LogsPageComponent implements AfterViewChecked, OnDestroy, OnInit {
 	@ViewChild('logContainer') private logContainer: ElementRef;
 	logs$: Observable<LogEntry[]> = this.svc.logsStream$;
 	level: string = 'all';
@@ -26,6 +26,7 @@ export class LogsPageComponent implements AfterViewChecked, OnDestroy {
 		});
 	}
 
+
 	ngAfterViewChecked() {
 		if (this.autoScroll && !this.isUserScrolling) {
 			this.scrollToBottom();
@@ -36,6 +37,10 @@ export class LogsPageComponent implements AfterViewChecked, OnDestroy {
 		if (this.logsSubscription) {
 			this.logsSubscription.unsubscribe();
 		}
+	}
+
+	ngOnInit(): void {
+	    this.svc.loadLogs();
 	}
 
 	scrollToBottom(): void {

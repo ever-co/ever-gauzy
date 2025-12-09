@@ -528,6 +528,7 @@
 		"travelerdev",
 		"trufflehog",
 		"trufflesecurity",
+		"trycloudflare",
 		"tsbuildinfo",
 		"tsconfigs",
 		"twing",
@@ -535,6 +536,7 @@
 		"typeorm",
 		"typeOrm",
 		"typeORM",
+		"ubicloud",
 		"Udemy",
 		"ulimits",
 		"unassigning",
@@ -723,6 +725,7 @@
 		"soundshots",
 		"runtimes",
 		"localtime",
+		"STARTTLS",
 		"Behaviour"
 	],
 	"useGitignore": true,
