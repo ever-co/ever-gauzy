@@ -57,8 +57,13 @@ export class PlanComparisonService {
 		}
 
 		// Current subscription exists
-		const currentType = currentSubscription.plan.type;
+		const currentType = currentSubscription.plan?.type;
 		const selectedType = selectedPlan.type;
+
+		// If current plan is undefined, treat as new subscription
+		if (!currentType) {
+			return this.createNewSubscriptionResult(selectedPlan);
+		}
 
 		// Same plan type - current plan
 		if (currentType === selectedType && this.isSamePlan(currentSubscription, selectedPlan)) {
@@ -90,9 +95,9 @@ export class PlanComparisonService {
 		}
 
 		// Fall back to type and billing period comparison
-		const currentType = subscription.plan.type;
-		const currentBillingPeriod = subscription.plan.billingPeriod;
-		const currentAmount = subscription.plan.price;
+		const currentType = subscription.plan?.type;
+		const currentBillingPeriod = subscription.plan?.billingPeriod;
+		const currentAmount = subscription.plan?.price;
 
 		if (!currentType || !currentBillingPeriod) {
 			return false;
@@ -336,7 +341,7 @@ export class PlanComparisonService {
 	private getFeatureDifferences(subscription: IPluginSubscription, newPlan: IPluginSubscriptionPlan): string[] {
 		// This would ideally compare current subscription features with new plan features
 		// For now, we'll return generic warnings based on plan types
-		const currentType = subscription.plan.type;
+		const currentType = subscription.plan?.type;
 
 		if (!currentType) {
 			return [];

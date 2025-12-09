@@ -4,10 +4,10 @@ import { Observable, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
-    IPluginSubscription,
-    IPluginSubscriptionPlan,
-    PluginSubscriptionStatus,
-    PluginSubscriptionType
+	IPluginSubscription,
+	IPluginSubscriptionPlan,
+	PluginSubscriptionStatus,
+	PluginSubscriptionType
 } from '../../../../services/plugin-subscription.service';
 import { PlanActionType } from '../../plugin-subscription-plan-selection/services/plan-comparison.service';
 import { SubscriptionPlanService } from '../../shared';
@@ -49,7 +49,6 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	public readonly currentPluginSubscriptions$: Observable<Record<string, IPluginSubscription | null>> = this.select(
 		(state) => state.currentPluginSubscriptions
 	);
-
 
 	// Computed selectors
 	public readonly activeSubscriptions$: Observable<IPluginSubscription[]> = this.subscriptions$.pipe(
@@ -158,11 +157,15 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 			map((subscriptions) => {
 				const subscriptionsArray = Array.isArray(subscriptions) ? subscriptions : [];
 				return (
-					subscriptionsArray.find((s) => s.pluginId === pluginId && [
-						PluginSubscriptionStatus.ACTIVE,
-						PluginSubscriptionStatus.PENDING,
-						PluginSubscriptionStatus.TRIAL
-					].includes(s.status)) || null
+					subscriptionsArray.find(
+						(s) =>
+							s.pluginId === pluginId &&
+							[
+								PluginSubscriptionStatus.ACTIVE,
+								PluginSubscriptionStatus.PENDING,
+								PluginSubscriptionStatus.TRIAL
+							].includes(s.status)
+					) || null
 				);
 			})
 		);
@@ -298,7 +301,7 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 					isActive,
 					isTrial,
 					isExpired,
-					currentPlanType: subscription.plan.type,
+					currentPlanType: subscription.plan?.type ?? null,
 					daysRemaining
 				};
 			})
