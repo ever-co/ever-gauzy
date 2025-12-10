@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
-import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
-import { PluginSubscriptionActions } from '../+state';
 import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
 import { ToastrNotificationService } from '../../../../../services';
 import { IInstallationPreparationResult, IPluginInstallationStrategy } from './plugin-installation-strategy.interface';
@@ -20,7 +18,6 @@ import { IInstallationPreparationResult, IPluginInstallationStrategy } from './p
 export class SubscriptionPluginInstallationStrategy implements IPluginInstallationStrategy {
 	constructor(
 		private readonly accessFacade: PluginSubscriptionAccessFacade,
-		private readonly actions: Actions,
 		private readonly translateService: TranslateService,
 		private readonly toastrService: ToastrNotificationService
 	) {}
