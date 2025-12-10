@@ -141,7 +141,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		);
 
 		// Subscribe to set the selectedPlan for use in non-template code
-		this.currentPlan$.subscribe((plan) => {
+		this.currentPlan$.pipe(untilDestroyed(this)).subscribe((plan) => {
 			this.selectedPlan = plan;
 		});
 	}
@@ -172,7 +172,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		if (this.currentSubscription) {
 			if (this.canUpgrade(plan) || this.canDowngrade(plan)) {
 				this.showBillingForm = true;
-				const currentType = this.currentSubscription.plan?.type || this.currentSubscription.plan.type;
+				const currentType = this.currentSubscription.plan?.type;
 				console.log('[SubscriptionManager] Billing form shown for plan change:', {
 					action: this.canUpgrade(plan) ? 'upgrade' : 'downgrade',
 					fromPlan: currentType,

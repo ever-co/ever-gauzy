@@ -3,7 +3,7 @@
 <!-- Loading State -->
 @let installing = installationQuery.installing$(plugin?.id) |async;
 <!-- Current Subscription -->
-@let canChangePlan = !currentSubscription.parentId;
+@let canChangePlan = !currentSubscription?.parentId;
 <!-- Loading -->
 @let isLoading = isLoading$ | async;
 <!-- disabled State -->
