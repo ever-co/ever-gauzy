@@ -31,7 +31,6 @@ export class PluginSubscriptionFacade {
 	public readonly updating$ = this.query.updating$;
 	public readonly deleting$ = this.query.deleting$;
 	public readonly error$ = this.query.error$;
-	public readonly showSubscriptionDialog$ = this.query.showSubscriptionDialog$;
 	public readonly selectedPluginId$ = this.query.selectedPluginId$;
 	public readonly confirmationStep$ = this.query.confirmationStep$;
 
@@ -55,7 +54,6 @@ export class PluginSubscriptionFacade {
 	// Current plugin subscription state
 	public readonly currentPluginSubscriptions$ = this.query.currentPluginSubscriptions$;
 
-
 	// Computed observables
 	public readonly activeSubscriptions$ = this.query.activeSubscriptions$;
 	public readonly expiredSubscriptions$ = this.query.expiredSubscriptions$;
@@ -66,7 +64,7 @@ export class PluginSubscriptionFacade {
 		private readonly actions$: Actions,
 		private readonly planQuery: PluginPlanQuery,
 		private readonly planComparisonQuery: PluginPlanComparisonQuery
-	) { }
+	) {}
 
 	// Subscription Management
 	public loadPluginSubscriptions(pluginId: string): void {
@@ -166,10 +164,6 @@ export class PluginSubscriptionFacade {
 
 	public get currentError(): string | null {
 		return this.query.error;
-	}
-
-	public get currentShowDialog(): boolean {
-		return this.query.showSubscriptionDialog;
 	}
 
 	public get currentSelectedPluginId(): string | null {

@@ -146,8 +146,6 @@ export class PluginSubscriptionActions {
 		})
 	);
 
-	public static hideSubscriptionDialog = createAction('[Plugin Subscription] Hide Subscription Dialog');
-
 	public static resetError = createAction('[Plugin Subscription] Reset Error');
 
 	public static resetState = createAction('[Plugin Subscription] Reset State');

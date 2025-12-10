@@ -27,7 +27,6 @@ export interface IPluginSubscriptionState {
 	} | null;
 
 	// UI state
-	showSubscriptionDialog: boolean;
 	selectedPluginId: string | null;
 }
 
@@ -42,7 +41,6 @@ export function createInitialSubscriptionState(): IPluginSubscriptionState {
 		error: null,
 		currentPluginSubscriptions: {},
 		analytics: null,
-		showSubscriptionDialog: false,
 		selectedPluginId: null
 	};
 }
@@ -124,23 +122,6 @@ export class PluginSubscriptionStore extends Store<IPluginSubscriptionState> {
 				[pluginId]: subscription
 			}
 		}));
-	}
-
-	// Current plugin plans are managed by PluginPlanStore
-
-	// Plan comparison responsibilities moved to PluginPlanComparisonStore
-
-	// Subscription flow management
-	// Confirmation step handled in PluginPlanComparisonStore
-
-	// resetPlanComparison moved to PluginPlanComparisonStore
-
-	// UI state
-	public setShowSubscriptionDialog(show: boolean, pluginId?: string): void {
-		this.update({
-			showSubscriptionDialog: show,
-			selectedPluginId: pluginId || null
-		});
 	}
 
 	// Reset methods

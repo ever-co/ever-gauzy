@@ -88,7 +88,6 @@ export class PluginSubscriptionEffects {
 						map((subscription) => {
 							this.pluginSubscriptionStore.addSubscription(subscription);
 							this.pluginSubscriptionStore.selectSubscription(subscription);
-							this.pluginSubscriptionStore.setShowSubscriptionDialog(false);
 							this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.CREATED'));
 							return PluginSubscriptionActions.createSubscriptionSuccess(subscription);
 						}),
@@ -175,7 +174,6 @@ export class PluginSubscriptionEffects {
 						map((subscription) => {
 							this.pluginSubscriptionStore.updateSubscription(subscriptionId, subscription);
 							this.pluginSubscriptionStore.selectSubscription(subscription);
-							this.pluginSubscriptionStore.setShowSubscriptionDialog(false);
 							this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.UPGRADED'));
 							return PluginSubscriptionActions.upgradeSubscriptionSuccess(subscription);
 						}),
@@ -206,7 +204,6 @@ export class PluginSubscriptionEffects {
 						map((subscription) => {
 							this.pluginSubscriptionStore.updateSubscription(subscriptionId, subscription);
 							this.pluginSubscriptionStore.selectSubscription(subscription);
-							this.pluginSubscriptionStore.setShowSubscriptionDialog(false);
 							this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.DOWNGRADED'));
 							return PluginSubscriptionActions.downgradeSubscriptionSuccess(subscription);
 						}),
@@ -301,18 +298,6 @@ export class PluginSubscriptionEffects {
 		{ dispatch: false }
 	);
 
-	// Hide subscription dialog
-	hideSubscriptionDialog$ = createEffect(
-		() =>
-			this.actions$.pipe(
-				ofType(PluginSubscriptionActions.hideSubscriptionDialog),
-				tap(() => {
-					this.pluginSubscriptionStore.setShowSubscriptionDialog(false);
-				})
-			),
-		{ dispatch: false }
-	);
-
 	// Set current plugin subscription
 	setCurrentPluginSubscription$ = createEffect(
 		() =>
@@ -336,7 +321,6 @@ export class PluginSubscriptionEffects {
 						tap((subscriptions) => {
 							this.pluginSubscriptionStore.setSubscriptions(subscriptions);
 							this.pluginMarketplaceStore.selectPlugin(plugin);
-							this.pluginSubscriptionStore.setShowSubscriptionDialog(true, plugin.id);
 						}),
 						map((subscriptions) => PluginSubscriptionActions.loadPluginSubscriptionsSuccess(subscriptions)),
 						finalize(() => this.pluginSubscriptionStore.setLoading(false)),

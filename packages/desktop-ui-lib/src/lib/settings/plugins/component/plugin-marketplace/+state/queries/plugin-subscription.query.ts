@@ -42,7 +42,6 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 	);
 
 	// UI state
-	public readonly showSubscriptionDialog$: Observable<boolean> = this.select((state) => state.showSubscriptionDialog);
 	public readonly selectedPluginId$: Observable<string | null> = this.select((state) => state.selectedPluginId);
 
 	// Current plugin subscription state
@@ -124,10 +123,6 @@ export class PluginSubscriptionQuery extends Query<IPluginSubscriptionState> {
 
 	public get error(): string | null {
 		return this.getValue().error;
-	}
-
-	public get showSubscriptionDialog(): boolean {
-		return this.getValue().showSubscriptionDialog;
 	}
 
 	public get selectedPluginId(): string | null {
