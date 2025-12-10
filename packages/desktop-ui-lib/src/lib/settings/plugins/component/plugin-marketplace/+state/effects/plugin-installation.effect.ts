@@ -38,6 +38,7 @@ import { PluginMarketplaceQuery } from '../queries/plugin-marketplace.query';
 import { PluginInstallationStore } from '../stores/plugin-installation.store';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginToggleStore } from '../stores/plugin-toggle.store';
+import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
 
 @Injectable({ providedIn: 'root' })
 export class PluginInstallationEffects {
@@ -84,7 +85,10 @@ export class PluginInstallationEffects {
 						switchMap((canProceed) => {
 							// Early exit if validation fails
 							if (!canProceed) {
-								return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
+								return of(
+									PluginSubscriptionActions.openSubscriptionManagement(plugin),
+									PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false })
+								);
 							}
 							// Open confirmation dialog and wait for user decision
 							return this.openInstallationDialog(plugin.id).pipe(

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
 import { PluginSubscriptionActions } from '../+state';
 import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
@@ -48,20 +48,13 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 	 */
 	prepare(plugin: IPlugin): Observable<void> {
 		return this.validate(plugin).pipe(
-			switchMap((result) => {
-				if (result.canProceed) {
-					// Already has access, no preparation needed
-					return EMPTY;
-				}
-
-				// No access - show subscription dialog
-				// User must complete subscription flow and retry installation
-				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.REQUIRED_FOR_INSTALLATION'));
-				this.actions.dispatch(PluginSubscriptionActions.openSubscriptionManagement(plugin));
-
-				// Return EMPTY to complete the stream - installation will be blocked
-				// User needs to retry after subscribing
-				return EMPTY;
+			switchMap(({ canProceed }) => {
+				if (!canProceed)
+					this.toastrService.info(
+						this.translateService.instant('PLUGIN.SUBSCRIPTION.REQUIRED_FOR_INSTALLATION')
+					);
+				// Emit a value so upstream validators continue and emit their result
+				return of(void 0);
 			})
 		);
 	}
