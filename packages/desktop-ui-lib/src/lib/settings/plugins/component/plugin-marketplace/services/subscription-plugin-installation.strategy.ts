@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
-import { map, switchMap, take } from 'rxjs/operators';
-import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
+import { catchError, map, switchMap, take } from 'rxjs/operators';
 import { ToastrNotificationService } from '../../../../../services';
+import { PluginSubscriptionAccessService } from '../../../services/plugin-subscription-access.service';
 import { IInstallationPreparationResult, IPluginInstallationStrategy } from './plugin-installation-strategy.interface';
 
 /**
@@ -17,7 +17,7 @@ import { IInstallationPreparationResult, IPluginInstallationStrategy } from './p
 })
 export class SubscriptionPluginInstallationStrategy implements IPluginInstallationStrategy {
 	constructor(
-		private readonly accessFacade: PluginSubscriptionAccessFacade,
+		private readonly accessService: PluginSubscriptionAccessService,
 		private readonly translateService: TranslateService,
 		private readonly toastrService: ToastrNotificationService
 	) {}
@@ -26,14 +26,23 @@ export class SubscriptionPluginInstallationStrategy implements IPluginInstallati
 	 * Validates if user has active subscription for the plugin
 	 */
 	validate(plugin: IPlugin): Observable<IInstallationPreparationResult> {
-		return this.accessFacade.hasAccess$(plugin.id).pipe(
+		return this.accessService.checkAccess(plugin.id).pipe(
 			take(1),
-			map((hasAccess) => ({
+			map(({ hasAccess }) => ({
 				canProceed: hasAccess,
 				requiresSubscription: true,
 				hasActiveSubscription: hasAccess,
 				reason: hasAccess ? 'Active subscription found' : 'No active subscription - user must subscribe first'
-			}))
+			})),
+			catchError((error) => {
+				console.error('[SubscriptionPluginInstallationStrategy] Error checking subscription:', error);
+				return of({
+					canProceed: false,
+					requiresSubscription: true,
+					hasActiveSubscription: false,
+					reason: `PLUGIN.VALIDATION.SUBSCRIPTION_CHECK_ERROR: ${error?.message || 'Unknown error'}`
+				});
+			})
 		);
 	}
 

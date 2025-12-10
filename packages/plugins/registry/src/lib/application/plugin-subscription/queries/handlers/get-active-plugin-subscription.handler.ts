@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindOptionsWhere, In } from 'typeorm';
 import { PluginSubscriptionService } from '../../../../domain';
@@ -70,7 +71,7 @@ export class GetActivePluginSubscriptionQueryHandler implements IQueryHandler<Ge
 		});
 
 		if (!success) {
-			return null;
+			throw new NotFoundException('No active plugin subscription found.');
 		}
 
 		return record;

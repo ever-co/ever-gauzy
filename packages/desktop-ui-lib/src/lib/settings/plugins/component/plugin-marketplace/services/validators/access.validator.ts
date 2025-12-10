@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
+import { PluginSubscriptionAccessService } from '../../../../services/plugin-subscription-access.service';
 import {
 	IInstallationValidationContext,
 	InstallationValidator,
 	IValidationStepResult
 } from '../installation-validator.abstract';
-import { PluginAccessGuard } from '../plugin-access.guard';
 
 /**
  * Validates plugin access before installation
@@ -16,7 +16,7 @@ import { PluginAccessGuard } from '../plugin-access.guard';
 	providedIn: 'root'
 })
 export class AccessValidator extends InstallationValidator {
-	constructor(private readonly accessGuard: PluginAccessGuard) {
+	constructor(private readonly accessService: PluginSubscriptionAccessService) {
 		super();
 	}
 
@@ -54,7 +54,7 @@ export class AccessValidator extends InstallationValidator {
 		}
 
 		// Check access for subscription-based plugins
-		return this.accessGuard.checkPluginAccess(plugin).pipe(
+		return this.accessService.checkAccess(plugin.id).pipe(
 			map((accessResult) => {
 				if (!accessResult) {
 					return {
@@ -75,10 +75,18 @@ export class AccessValidator extends InstallationValidator {
 						hasAccess: accessResult.hasAccess,
 						requiresSubscription: true,
 						pluginType: 'subscription',
-						accessReason: accessResult.reason,
+						accessReason: 'Subscription access check',
 						accessLevel: accessResult.accessLevel
 					}
 				};
+			}),
+			catchError((error) => {
+				console.error('[AccessValidator] Error checking access:', error);
+				return of({
+					canProceed: false,
+					error: `PLUGIN.VALIDATION.ACCESS_CHECK_ERROR: ${error?.message || 'Unknown error'}`,
+					metadata: { accessValidated: false, checkError: true }
+				});
 			})
 		);
 	}
