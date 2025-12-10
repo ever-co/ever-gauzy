@@ -38,8 +38,8 @@ jobs:
       - name: Configure node-gyp to use VS 2022
         shell: powershell
         run: |
-          npm config set msvs_version 2022
-          echo "GYP_MSVS_VERSION=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "GYP_MSVS_VERSION=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "npm_config_msvs_version=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Fix node-gyp and Python
         run: python3 -m pip install packaging setuptools
