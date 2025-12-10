@@ -29,7 +29,7 @@ jobs:
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
         run: |
-          choco install -y visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive --norestart --timeout 21600"
+          choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive --norestart"
 
       # ✅ Help node-gyp pick VS 2022 explicitly
       - name: Configure node-gyp to use VS 2022
