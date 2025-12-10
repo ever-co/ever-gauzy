@@ -25,16 +25,10 @@ export class GetActivePluginSubscriptionQueryHandler implements IQueryHandler<Ge
 	async execute(query: GetActivePluginSubscriptionQuery): Promise<IPluginSubscription | null> {
 		const { pluginId, tenantId, organizationId, subscriberId } = query;
 
-		try {
-			const whereConditions = this.buildWhereConditions(pluginId, tenantId, organizationId, subscriberId);
-			const subscription = await this.findSubscription(whereConditions);
+		const whereConditions = this.buildWhereConditions(pluginId, tenantId, organizationId, subscriberId);
+		const subscription = await this.findSubscription(whereConditions);
 
-			return this.validateSubscription(subscription);
-		} catch (error) {
-			// Log error for debugging purposes in production
-			console.error('Error fetching active plugin subscription:', error);
-			return null;
-		}
+		return this.validateSubscription(subscription);
 	}
 
 	/**
@@ -69,11 +63,17 @@ export class GetActivePluginSubscriptionQueryHandler implements IQueryHandler<Ge
 	private async findSubscription(
 		whereConditions: FindOptionsWhere<IPluginSubscription>
 	): Promise<IPluginSubscription | null> {
-		return await this.pluginSubscriptionService.findOneByOptions({
+		const { success, record } = await this.pluginSubscriptionService.findOneOrFailByOptions({
 			where: whereConditions,
 			order: { createdAt: 'DESC' },
 			relations: ['plugin', 'plan', 'subscriber', 'parent']
 		});
+
+		if (!success) {
+			return null;
+		}
+
+		return record;
 	}
 
 	/**
