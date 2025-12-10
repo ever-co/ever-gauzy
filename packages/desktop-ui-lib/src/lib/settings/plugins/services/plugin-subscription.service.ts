@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { IPagination, IUser, PluginScope } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
-import { BehaviorSubject, map, Observable, of, shareReplay, tap } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 
 // Plugin subscription interfaces
 export interface IPluginSubscription {
@@ -187,10 +187,6 @@ export class PluginSubscriptionService {
 	private readonly plansEndPoint = `${API_PREFIX}/plugin-plans`;
 	private readonly billingEndPoint = `${API_PREFIX}/plugin-billing`;
 	private readonly paymentsEndPoint = `${API_PREFIX}/plugin-payments`;
-
-	private readonly subscriptionsCache$ = new BehaviorSubject<IPluginSubscription[]>([]);
-	private readonly plansCache$ = new BehaviorSubject<IPluginSubscriptionPlan[]>([]);
-
 	constructor(private readonly http: HttpClient) {}
 
 	/**
@@ -262,14 +258,10 @@ export class PluginSubscriptionService {
 			metadata: subscription.metadata
 		};
 
-		return this.http
-			.post<IPluginSubscription>(`${this.subscriptionsEndPoint}/${subscription.pluginId}/subscriptions`, payload)
-			.pipe(
-				tap((newSubscription) => {
-					const current = this.subscriptionsCache$.value;
-					this.subscriptionsCache$.next([newSubscription, ...current]);
-				})
-			);
+		return this.http.post<IPluginSubscription>(
+			`${this.subscriptionsEndPoint}/${subscription.pluginId}/subscriptions`,
+			payload
+		);
 	}
 
 	public updateSubscription(
@@ -277,30 +269,17 @@ export class PluginSubscriptionService {
 		id: string,
 		subscription: IPluginSubscriptionUpdateInput
 	): Observable<IPluginSubscription> {
-		return this.http
-			.put<IPluginSubscription>(`${this.subscriptionsEndPoint}/${pluginId}/subscriptions/${id}`, subscription)
-			.pipe(
-				tap((updatedSubscription) => {
-					const current = this.subscriptionsCache$.value;
-					const updated = current.map((s) => (s.id === id ? updatedSubscription : s));
-					this.subscriptionsCache$.next(updated);
-				})
-			);
+		return this.http.put<IPluginSubscription>(
+			`${this.subscriptionsEndPoint}/${pluginId}/subscriptions/${id}`,
+			subscription
+		);
 	}
 
 	public cancelSubscription(pluginId: string, id: string, reason?: string): Observable<IPluginSubscription> {
-		return this.http
-			.patch<IPluginSubscription>(`${this.subscriptionsEndPoint}/${pluginId}/subscriptions/${id}`, {
-				status: 'cancelled',
-				reason
-			})
-			.pipe(
-				tap((cancelledSubscription) => {
-					const current = this.subscriptionsCache$.value;
-					const updated = current.map((s) => (s.id === id ? cancelledSubscription : s));
-					this.subscriptionsCache$.next(updated);
-				})
-			);
+		return this.http.patch<IPluginSubscription>(`${this.subscriptionsEndPoint}/${pluginId}/subscriptions/${id}`, {
+			status: 'cancelled',
+			reason
+		});
 	}
 
 	public renewSubscription(pluginId: string, id: string): Observable<IPluginSubscription> {
@@ -332,16 +311,9 @@ export class PluginSubscriptionService {
 
 	// Subscription Plans
 	public getAllPlans<T>(params = {} as T): Observable<IPagination<IPluginSubscriptionPlan>> {
-		return this.http
-			.get<IPagination<IPluginSubscriptionPlan>>(this.plansEndPoint, {
-				params: toParams(params)
-			})
-			.pipe(
-				tap((response) => {
-					this.plansCache$.next(response.items);
-				}),
-				shareReplay(1)
-			);
+		return this.http.get<IPagination<IPluginSubscriptionPlan>>(this.plansEndPoint, {
+			params: toParams(params)
+		});
 	}
 
 	public getPlan(id: string): Observable<IPluginSubscriptionPlan> {
@@ -355,32 +327,15 @@ export class PluginSubscriptionService {
 	}
 
 	public createPlan(plan: IPluginPlanCreateInput): Observable<IPluginSubscriptionPlan> {
-		return this.http.post<IPluginSubscriptionPlan>(this.plansEndPoint, plan).pipe(
-			tap((newPlan) => {
-				const current = this.plansCache$.value;
-				this.plansCache$.next([newPlan, ...current]);
-			})
-		);
+		return this.http.post<IPluginSubscriptionPlan>(this.plansEndPoint, plan);
 	}
 
 	public updatePlan(id: string, plan: Partial<IPluginPlanCreateInput>): Observable<IPluginSubscriptionPlan> {
-		return this.http.put<IPluginSubscriptionPlan>(`${this.plansEndPoint}/${id}`, plan).pipe(
-			tap((updatedPlan) => {
-				const current = this.plansCache$.value;
-				const updated = current.map((p) => (p.id === id ? updatedPlan : p));
-				this.plansCache$.next(updated);
-			})
-		);
+		return this.http.put<IPluginSubscriptionPlan>(`${this.plansEndPoint}/${id}`, plan);
 	}
 
 	public deletePlan(id: string): Observable<void> {
-		return this.http.delete<void>(`${this.plansEndPoint}/${id}`).pipe(
-			tap(() => {
-				const current = this.plansCache$.value;
-				const filtered = current.filter((p) => p.id !== id);
-				this.plansCache$.next(filtered);
-			})
-		);
+		return this.http.delete<void>(`${this.plansEndPoint}/${id}`);
 	}
 
 	// Billing Operations
@@ -507,20 +462,6 @@ export class PluginSubscriptionService {
 			trialDays?: number;
 			nextBillingDate: Date;
 		}>(`${this.subscriptionsEndPoint}/preview`, { planId, promoCode });
-	}
-
-	// Cache Management
-	public getSubscriptionsFromCache(): Observable<IPluginSubscription[]> {
-		return this.subscriptionsCache$.asObservable();
-	}
-
-	public getPlansFromCache(): Observable<IPluginSubscriptionPlan[]> {
-		return this.plansCache$.asObservable();
-	}
-
-	public clearCache(): void {
-		this.subscriptionsCache$.next([]);
-		this.plansCache$.next([]);
 	}
 
 	// Helper Methods

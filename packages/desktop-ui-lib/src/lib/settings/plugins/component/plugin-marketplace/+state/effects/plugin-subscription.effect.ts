@@ -137,7 +137,7 @@ export class PluginSubscriptionEffects {
 			this.actions$.pipe(
 				ofType(PluginSubscriptionActions.cancelSubscription),
 				tap(() => this.pluginSubscriptionStore.setUpdating(true)),
-				switchMap(({ pluginId, subscriptionId }) =>
+				concatMap(({ pluginId, subscriptionId }) =>
 					this.pluginSubscriptionService.cancelSubscription(pluginId, subscriptionId).pipe(
 						map((subscription) => {
 							// Update subscription in the subscriptions array
@@ -146,7 +146,6 @@ export class PluginSubscriptionEffects {
 							this.pluginSubscriptionStore.setCurrentPluginSubscription(pluginId, subscription);
 							// Update selected subscription if it's the one being cancelled
 							this.pluginSubscriptionStore.selectSubscription(subscription);
-							this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.CANCELLED'));
 							return PluginSubscriptionActions.cancelSubscriptionSuccess(subscription);
 						}),
 						finalize(() => this.pluginSubscriptionStore.setUpdating(false)),
@@ -433,6 +432,7 @@ export class PluginSubscriptionEffects {
 		() =>
 			this.actions$.pipe(
 				ofType(PluginSubscriptionActions.cancelSubscriptionSuccess),
+				tap(() => this.toastrService.success(this.translateService.instant('PLUGIN.SUBSCRIPTION.CANCELLED'))),
 				map(() => PluginActions.refresh())
 			),
 		{ dispatch: true }
