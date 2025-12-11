@@ -17,7 +17,8 @@ Your UI must always be:
 
 Goals
 • Deliver highly professional UI with correct spacing, tone, and hierarchy.
-• Use Gauzy theme variables for text and backgrounds.
+• Use Gauzy theme variables for text, backgrounds, and borders.
+• Implement dynamic, modern border-radius based on var(--border-radius).
 • Avoid nb-theme(...) — always use var(--...).
 • Prefer Nebular components over custom HTML/CSS.
 • Build clear, task-oriented UX flows.
@@ -30,6 +31,7 @@ General UI Principles
 • Follow Gauzy color tokens for text & background.
 • Ensure ARIA compliance and keyboard navigation.
 • Avoid clutter; emphasize clarity and structure.
+• Use dynamic border-radius scaling for elevated components (cards, dialogs, buttons) using calc(var(--border-radius) \* factor).
 
 ⸻
 
@@ -43,8 +45,11 @@ Background
 • var(--gauzy-card-1) — white card background
 • var(--gauzy-card-2) — transparent card background
 
+Border Radius
+• var(--border-radius) — base radius for all elements; scale dynamically with calc() or Angular host bindings.
+
 Usage Rules
-• Always prefer gauge variables over custom colors.
+• Always prefer Gauzy variables over custom colors.
 • Avoid nb-theme(color-basic-...).
 • Avoid hardcoded #fff, #000, or palette colors.
 • Always use var(--token-name).
@@ -54,7 +59,6 @@ Usage Rules
 Nebular Best Practices
 
 Core Components
-
 Prefer:
 NbCard, NbList, NbListItem, NbButton, NbButtonGroup,
 NbIcon, NbEvaIcons, NbInput, NbSelect, NbToggle,
@@ -62,7 +66,6 @@ NbStepper, NbAccordion, NbTabset, NbUser,
 NbTreeGrid, NbDialog, NbToastrService.
 
 Layout
-
 Use:
 <nb-layout>, <nb-layout-header>, <nb-layout-column>,
 <nb-sidebar>, <nb-menu>, <nb-layout-footer>.
@@ -70,7 +73,7 @@ Use:
 Theming Rules
 • Replace nb-theme(...) with var(--...).
 • Use Gauzy theme tokens first.
-• Do not hardcode spacing or colors.
+• Do not hardcode spacing, colors, or radius.
 • Custom CSS only when layout precision requires.
 
 Architecture
@@ -78,6 +81,7 @@ Architecture
 • Use OnPush change detection.
 • Keep templates simple.
 • Components must follow SRP and be reusable.
+• Apply dynamic border-radius per component hierarchy (floating/elevated elements get larger radius).
 
 ⸻
 
@@ -85,27 +89,29 @@ When Asked to Design UI/UX
 
 Always deliver:
 
-1.  User goals
-2.  UX flow
-3.  Information architecture
-4.  Text-based wireframe
-5.  Nebular + Gauzy component plan
-6.  Angular component diagram
-7.  Optional NgRx state flow
-8.  Loading / empty / error UX
-9.  Responsive layout rules
+1. User goals
+2. UX flow
+3. Information architecture
+4. Text-based wireframe
+5. Nebular + Gauzy component plan
+6. Angular component diagram
+7. Optional Akita state flow
+8. Loading / empty / error UX
+9. Responsive layout rules
+10. Border-radius scaling plan for elevated components
 
 ⸻
 
 When Writing Angular + Nebular Code
-• Provide .ts, .html, .scss (or no SCSS if theme tokens are enough).
+• Provide .ts, .html, .scss (or no SCSS if theme tokens are sufficient).
 • Use Nebular components everywhere.
 • Prefer <nb-skeleton> for loading.
 • Use nbIcon with Eva icons.
 • Use Gauzy theme variables for colors, background, text, borders.
+• Use var(--border-radius) with dynamic scaling for cards, buttons, inputs, dialogs.
 • Templates must be free of unnecessary logic.
 • Use type-safe interfaces.
-• Use OnPush.
+• Use OnPush change detection.
 
 ⸻
 
@@ -114,11 +120,12 @@ Component Style Guidelines
 • Use var(--gauzy-card-1) or var(--gauzy-card-2) for card backgrounds.
 • Use var(--gauzy-text-color-1) for primary text, var(--gauzy-text-color-2) for secondary.
 • Use NbList / NbListItem for groups.
-• Use NbButtonGroup for actions.
-• Use NbInput with labels.
+• Use NbButtonGroup for actions with scaled border-radius.
+• Use NbInput with labels and base border-radius.
 • Use NbSelect instead of custom dropdowns.
 • Prefer "medium" and "large" icon sizes.
 • Maintain spacing/alignment using Nebular layout grid.
+• Apply dynamic border-radius scaling for elevated/floating components (cards, dialogs, primary buttons).
 
 ⸻
 
@@ -130,16 +137,17 @@ Polished Component Patterns
 • Context switching with NbTabset.
 • Collapsible details with NbAccordion.
 • Lists and trees using Nebular data components.
+• Elevated elements use dynamic border-radius for modern, layered feel.
 
 ⸻
 
 When Improving Existing UI
-
 You should:
 • Refactor layout to use Gauzy theme variables.
 • Replace all nb-theme(...) calls with var(--...).
-• Improve spacing and structure.
+• Improve spacing, hierarchy, and structure.
 • Replace custom elements with Nebular equivalents.
+• Apply dynamic border-radius scaling to cards, dialogs, buttons, and elevated components.
 • Simplify the UX flow if possible.
 
 ⸻
@@ -147,16 +155,13 @@ You should:
 Output Format
 
 UI/UX Request
-
-→ Provide conceptual design, wireframe, component plan.
+→ Provide conceptual design, wireframe, component plan, and border-radius scaling plan.
 
 Code Request
-
-→ Provide Angular component (TS + HTML + SCSS using var(--...)).
+→ Provide Angular component (TS + HTML + SCSS using var(--...) and dynamic border-radius).
 
 Refactor Request
-
-→ Provide improved version + reasoning.
+→ Provide improved version + reasoning including updated radius and layout.
 
 ⸻
 
