@@ -4,8 +4,8 @@ import { IPlugin, PluginScope } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { Observable, combineLatest } from 'rxjs';
+import { filter, map, pairwise, shareReplay, startWith, take, tap } from 'rxjs/operators';
 import { PluginInstallationQuery } from '../+state';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSubscriptionFacade } from '../+state/plugin-subscription.facade';
@@ -34,9 +34,11 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	public availablePlans$: Observable<IPluginSubscriptionPlan[]>;
 	public planViewModels$: Observable<IPlanViewModel[]>;
 	public currentPlan$: Observable<IPluginSubscriptionPlan | null>;
+	public currentSubscription$: Observable<IPluginSubscription | null>;
 	public selectedPlanViewModel: IPlanViewModel | null = null;
 	public selectedPlan: IPluginSubscriptionPlan | null = null;
 	public showBillingForm = false;
+	private currentResolvedPlan: IPluginSubscriptionPlan | null = null;
 
 	// Enum references for template
 	public PluginSubscriptionType = PluginSubscriptionType;
@@ -62,20 +64,17 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 			this.facade.loadPluginPlans(this.plugin.id);
 			this.availablePlans$ = this.facade.getCurrentPluginPlans(this.plugin.id);
 
+			// Current subscription stream (shared)
+			this.currentSubscription$ = this.facade.getCurrentPluginSubscription(this.plugin.id).pipe(
+				tap((subscription) => (this.currentSubscription = subscription)),
+				shareReplay(1)
+			);
+
 			// Transform plans to view models
 			this.planViewModels$ = this.availablePlans$.pipe(
 				map((plans) => this.formatter.transformToViewModels(plans)),
 				untilDestroyed(this)
 			);
-
-			// If no current subscription passed, try to load it
-
-			this.facade
-				.getCurrentPluginSubscription(this.plugin.id)
-				.pipe(take(1), untilDestroyed(this))
-				.subscribe((subscription) => {
-					this.currentSubscription = subscription;
-				});
 
 			// Reactively compute the current plan from subscription and available plans
 			this.setupCurrentPlan();
@@ -107,33 +106,18 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	 */
 	private setupCurrentPlan(): void {
 		if (!this.availablePlans$) {
-			console.warn('[PluginSubscriptionManager] availablePlans$ is not initialized');
 			return;
 		}
 
-		this.currentPlan$ = this.availablePlans$.pipe(
-			map((plans) => {
-				if (!this.currentSubscription?.planId) {
-					console.log('[PluginSubscriptionManager] No current subscription or planId');
+		this.currentPlan$ = combineLatest([this.availablePlans$, this.currentSubscription$]).pipe(
+			map(([plans, subscription]) => {
+				this.currentSubscription = subscription;
+
+				if (!subscription?.planId) {
 					return null;
 				}
 
-				console.log('[PluginSubscriptionManager] Searching for plan:', {
-					planId: this.currentSubscription.planId,
-					availablePlansCount: plans?.length || 0,
-					plans: plans?.map((p) => ({ id: p.id, name: p.name }))
-				});
-
-				const foundPlan = plans.find((p) => p.id === this.currentSubscription!.planId) || null;
-
-				if (!foundPlan) {
-					console.warn(
-						'[PluginSubscriptionManager] Plan not found for planId:',
-						this.currentSubscription.planId
-					);
-				} else {
-					console.log('[PluginSubscriptionManager] Found plan:', foundPlan.name);
-				}
+				const foundPlan = plans.find((p) => p.id === subscription.planId) || null;
 
 				return foundPlan;
 			}),
@@ -143,17 +127,16 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		// Subscribe to set the selectedPlan for use in non-template code
 		this.currentPlan$.pipe(untilDestroyed(this)).subscribe((plan) => {
 			this.selectedPlan = plan;
+			this.currentResolvedPlan = plan;
 		});
 	}
 
+	/**
+	 * Handle plan selection with better UX feedback
+	 * Validates the plan and shows appropriate forms or actions
+	 */
 	public onPlanSelected(planViewModel: IPlanViewModel): void {
 		const plan = planViewModel.originalPlan;
-		console.log('[SubscriptionManager] Plan selected:', {
-			plan: plan,
-			type: plan.type,
-			hasCurrentSubscription: !!this.currentSubscription,
-			willShowForm: plan.type !== PluginSubscriptionType.FREE
-		});
 
 		this.selectedPlanViewModel = planViewModel;
 		this.selectedPlan = plan;
@@ -164,7 +147,6 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 
 		// If it's the current plan, do nothing
 		if (this.isCurrentPlan(plan)) {
-			console.log('[SubscriptionManager] Selected plan is current plan, no action needed');
 			return;
 		}
 
@@ -172,12 +154,6 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		if (this.currentSubscription) {
 			if (this.canUpgrade(plan) || this.canDowngrade(plan)) {
 				this.showBillingForm = true;
-				const currentType = this.currentSubscription.plan?.type;
-				console.log('[SubscriptionManager] Billing form shown for plan change:', {
-					action: this.canUpgrade(plan) ? 'upgrade' : 'downgrade',
-					fromPlan: currentType,
-					toPlan: plan.type
-				});
 			}
 			return;
 		}
@@ -187,10 +163,6 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 			this.subscribeToPlan();
 		} else {
 			this.showBillingForm = true;
-			console.log('[SubscriptionManager] Billing form shown, form state:', {
-				formValid: this.subscriptionForm.valid,
-				paymentMethod: this.subscriptionForm.get('paymentMethod')?.value
-			});
 		}
 	}
 
@@ -198,11 +170,6 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		if (!this.selectedPlan || !this.plugin?.id) return;
 
 		if (this.selectedPlan.type !== PluginSubscriptionType.FREE && !this.subscriptionForm.valid) {
-			console.log('[SubscriptionManager] Form validation failed:', {
-				formValid: this.subscriptionForm.valid,
-				formValue: this.subscriptionForm.value,
-				formErrors: this.formService.getFormValidationErrors(this.subscriptionForm)
-			});
 			this.formService.markFormGroupTouched(this.subscriptionForm);
 			return;
 		}
@@ -228,8 +195,15 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 
 		this.facade.createSubscription(this.plugin.id, subscriptionInput);
 
-		this.facade.creating$.pipe(take(2), untilDestroyed(this)).subscribe((creating) => {
-			if (!creating) {
+		this.facade.creating$
+			.pipe(
+				startWith(false),
+				pairwise(),
+				filter(([prev, curr]) => prev && !curr),
+				take(1),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
 				this.facade.error$.pipe(take(1), untilDestroyed(this)).subscribe((error) => {
 					if (!error) {
 						this.dialogRef.close({
@@ -239,28 +213,37 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 						});
 					}
 				});
-			}
-		});
+			});
 	}
 
 	public cancelSubscription(): void {
 		if (!this.currentSubscription || !this.plugin?.id) return;
 
-		if (
-			confirm(
-				'Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your current billing period.'
-			)
-		) {
+		// Improved confirmation message with better UX
+		const confirmMessage = `Are you sure you want to cancel your subscription to "${this.plugin.name}"?
+You will lose access to premium features at the end of your current billing period on ${
+			this.currentSubscription.endDate
+				? new Date(this.currentSubscription.endDate).toLocaleDateString()
+				: 'the end of the current period'
+		}.`;
+
+		if (confirm(confirmMessage)) {
 			this.facade.cancelSubscription(this.plugin.id, this.currentSubscription.id);
 
-			this.facade.deleting$.pipe(take(2), untilDestroyed(this)).subscribe((deleting) => {
-				if (!deleting) {
+			this.facade.deleting$
+				.pipe(
+					startWith(false),
+					pairwise(),
+					filter(([prev, curr]) => prev && !curr),
+					take(1),
+					untilDestroyed(this)
+				)
+				.subscribe(() => {
 					this.dialogRef.close({
 						success: true,
 						action: 'cancelled'
 					});
-				}
-			});
+				});
 		}
 	}
 
@@ -268,20 +251,23 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		const targetPlan = plan || this.selectedPlan;
 		if (!targetPlan || !this.currentSubscription || !this.plugin?.id) return;
 
-		if (
-			confirm(
-				`Upgrade to ${targetPlan.name} for ${this.getPlanPrice(
-					targetPlan
-				)}? You'll be charged a prorated amount for the remainder of your current billing period.`
-			)
-		) {
-			console.log('[SubscriptionManager] Upgrading subscription to:', targetPlan.name);
+		const priceInfo = this.getPlanPrice(targetPlan);
+		const confirmMessage = `Upgrade to ${targetPlan.name} for ${priceInfo}?
+You'll be charged a prorated amount for the remainder of your current billing period.`;
 
+		if (confirm(confirmMessage)) {
 			// Update the subscription with new plan type and billing period
 			this.facade.upgradeSubscription(this.plugin.id, this.currentSubscription.id, targetPlan.id);
 
-			this.facade.updating$.pipe(take(2), untilDestroyed(this)).subscribe((updating) => {
-				if (!updating) {
+			this.facade.updating$
+				.pipe(
+					startWith(false),
+					pairwise(),
+					filter(([prev, curr]) => prev && !curr),
+					take(1),
+					untilDestroyed(this)
+				)
+				.subscribe(() => {
 					this.facade.error$.pipe(take(1), untilDestroyed(this)).subscribe((error) => {
 						if (!error) {
 							this.dialogRef.close({
@@ -291,8 +277,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 							});
 						}
 					});
-				}
-			});
+				});
 		}
 	}
 
@@ -300,20 +285,23 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		const targetPlan = plan || this.selectedPlan;
 		if (!targetPlan || !this.currentSubscription || !this.plugin?.id) return;
 
-		if (
-			confirm(
-				`Downgrade to ${targetPlan.name} for ${this.getPlanPrice(
-					targetPlan
-				)}? This change will take effect at the end of your current billing period. You'll retain access to your current features until then.`
-			)
-		) {
-			console.log('[SubscriptionManager] Downgrading subscription to:', targetPlan.name);
+		const priceInfo = this.getPlanPrice(targetPlan);
+		const confirmMessage = `Downgrade to ${targetPlan.name} for ${priceInfo}?
+This change will take effect at the end of your current billing period. You'll retain access to your current features until then.`;
 
+		if (confirm(confirmMessage)) {
 			// Update the subscription with new plan type and billing period
 			this.facade.downgradeSubscription(this.plugin.id, this.currentSubscription.id, targetPlan.id);
 
-			this.facade.updating$.pipe(take(2), untilDestroyed(this)).subscribe((updating) => {
-				if (!updating) {
+			this.facade.updating$
+				.pipe(
+					startWith(false),
+					pairwise(),
+					filter(([prev, curr]) => prev && !curr),
+					take(1),
+					untilDestroyed(this)
+				)
+				.subscribe(() => {
 					this.facade.error$.pipe(take(1), untilDestroyed(this)).subscribe((error) => {
 						if (!error) {
 							this.dialogRef.close({
@@ -323,8 +311,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 							});
 						}
 					});
-				}
-			});
+				});
 		}
 	}
 
@@ -342,13 +329,13 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 
 	public canUpgrade(plan: IPluginSubscriptionPlan): boolean {
 		if (!this.currentSubscription) return plan.type !== PluginSubscriptionType.FREE;
-		const currentPlan = this.currentSubscription.plan;
+		const currentPlan = this.currentSubscription.plan ?? this.currentResolvedPlan;
 		return currentPlan ? this.planService.canUpgrade(currentPlan, plan) : false;
 	}
 
 	public canDowngrade(plan: IPluginSubscriptionPlan): boolean {
 		if (!this.currentSubscription) return false;
-		const currentPlan = this.currentSubscription.plan;
+		const currentPlan = this.currentSubscription.plan ?? this.currentResolvedPlan;
 		return currentPlan ? this.planService.canDowngrade(currentPlan, plan) : false;
 	}
 
