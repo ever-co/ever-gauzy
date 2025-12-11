@@ -2,119 +2,49 @@
 	position: relative;
 	display: flex;
 	flex-direction: column;
-	padding: 1.75rem;
-	border: 2px solid var(--border-basic-color-3);
-	border-radius: 16px;
-	background: var(--background-basic-color-1);
+	gap: 1rem;
+	padding: 1.5rem;
+	border: 1px solid var(--border-basic-color-3);
+	border-radius: calc(var(--border-radius) * 2);
+	background: var(--gauzy-card-1);
 	cursor: pointer;
-	transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+	transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 	height: 100%;
 	min-height: 420px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	box-shadow: var(--gauzy-shadow);
 
 	&:hover:not(.disabled):not(.current-plan) {
 		border-color: var(--color-primary-default);
-		transform: translateY(-6px) scale(1.01);
-		box-shadow: 0 16px 32px rgba(0, 0, 0, 0.16),
-					0 4px 8px rgba(51, 102, 255, 0.12);
+		transform: translateY(-4px);
+		box-shadow: var(--gauzy-shadow), 0 10px 26px rgba(0, 0, 0, 0.08);
 	}
 
 	&:focus-visible {
 		outline: 3px solid var(--color-primary-default);
-		outline-offset: 3px;
-		box-shadow: 0 0 0 6px rgba(51, 102, 255, 0.15);
+		outline-offset: 4px;
+		box-shadow: var(--gauzy-shadow);
 	}
 
 	&.selected {
 		border-color: var(--color-primary-default);
-		border-width: 3px;
-		background: linear-gradient(135deg,
-					rgba(51, 102, 255, 0.03),
-					var(--background-basic-color-1),
-					var(--background-basic-color-2));
-		box-shadow: 0 12px 32px rgba(51, 102, 255, 0.3),
-					0 0 0 5px rgba(51, 102, 255, 0.12),
-					0 0 20px rgba(51, 102, 255, 0.15);
-		animation: selectedPulse 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-		transform: scale(1.03);
-
-		&:hover:not(.disabled) {
-			box-shadow: 0 12px 32px rgba(51, 102, 255, 0.35),
-						0 0 0 4px rgba(51, 102, 255, 0.15);
-			transform: scale(1.02) translateY(-2px);
-		}
-
-		// Add selection indicator
-		&::after {
-			content: '';
-			position: absolute;
-			top: 1rem;
-			right: 1rem;
-			width: 28px;
-			height: 28px;
-			background: var(--color-primary-default);
-			border-radius: 50%;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			box-shadow: 0 2px 8px rgba(51, 102, 255, 0.4);
-		}
-
-		&::before {
-			content: '✓';
-			position: absolute;
-			top: 1.35rem;
-			right: 1.5rem;
-			color: white;
-			font-size: 1rem;
-			font-weight: bold;
-			z-index: 1;
-		}
+		background: linear-gradient(
+			135deg,
+			rgba(var(--color-primary-500-rgb, 51, 102, 255), 0.05),
+			var(--gauzy-card-1)
+		);
+		box-shadow: var(--gauzy-shadow), 0 0 0 3px rgba(var(--color-primary-500-rgb, 51, 102, 255), 0.15);
+		animation: selectedPulse 0.45s ease;
 	}
 
 	&.current-plan {
 		border-color: var(--color-success-default);
-		border-width: 3px;
-		background: linear-gradient(135deg,
-					rgba(0, 214, 143, 0.05),
-					var(--background-basic-color-1),
-					var(--background-basic-color-2));
+		background: linear-gradient(
+			135deg,
+			rgba(var(--color-success-500-rgb, 0, 214, 143), 0.08),
+			var(--gauzy-card-1)
+		);
 		cursor: not-allowed;
-		box-shadow: 0 4px 16px rgba(0, 214, 143, 0.2),
-					0 0 0 4px rgba(0, 214, 143, 0.08);
-
-		&:hover {
-			transform: none;
-			box-shadow: 0 4px 16px rgba(0, 214, 143, 0.2),
-						0 0 0 4px rgba(0, 214, 143, 0.08);
-		}
-
-		// Current plan indicator
-		&::after {
-			content: '';
-			position: absolute;
-			top: 1rem;
-			right: 1rem;
-			width: 28px;
-			height: 28px;
-			background: var(--color-success-default);
-			border-radius: 50%;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			box-shadow: 0 2px 8px rgba(0, 214, 143, 0.4);
-		}
-
-		&::before {
-			content: '★';
-			position: absolute;
-			top: 1.35rem;
-			right: 1.5rem;
-			color: white;
-			font-size: 1rem;
-			font-weight: bold;
-			z-index: 1;
-		}
+		box-shadow: var(--gauzy-shadow), 0 0 0 3px rgba(0, 214, 143, 0.12);
 	}
 
 	&.disabled {
@@ -124,24 +54,11 @@
 		&:hover {
 			transform: none;
 			border-color: var(--border-basic-color-3);
-			box-shadow: none;
+			box-shadow: var(--gauzy-shadow);
 		}
 	}
 
-	&.popular::before {
-		content: '';
-		position: absolute;
-		top: -2px;
-		left: -2px;
-		right: -2px;
-		bottom: -2px;
-		background: linear-gradient(135deg, var(--color-warning-default), var(--color-danger-default));
-		border-radius: 12px;
-		z-index: -1;
-		opacity: 0.4;
-		animation: gradientShift 3s ease infinite;
-	}
-
+	&.popular::before,
 	&.recommended::before {
 		content: '';
 		position: absolute;
@@ -149,26 +66,32 @@
 		left: -2px;
 		right: -2px;
 		bottom: -2px;
-		background: linear-gradient(135deg, var(--color-info-default), var(--color-primary-default));
-		border-radius: 12px;
+		border-radius: calc(var(--border-radius) * 2.2);
 		z-index: -1;
 		opacity: 0.4;
-		animation: gradientShift 3s ease infinite;
+		animation: gradientShift 6s ease infinite;
+	}
+
+	&.popular::before {
+		background: linear-gradient(135deg, var(--color-warning-default), var(--color-danger-default));
+	}
+
+	&.recommended::before {
+		background: linear-gradient(135deg, var(--color-info-default), var(--color-primary-default));
 	}
 
 	&.free {
 		border-color: var(--color-success-default);
-		background: linear-gradient(to bottom, var(--background-basic-color-1), rgba(var(--color-success-default-rgb), 0.05));
+		background: linear-gradient(to bottom, var(--gauzy-card-1), rgba(var(--color-success-default-rgb), 0.05));
 	}
 }
 
-// Animations
 @keyframes selectedPulse {
 	0% {
 		transform: scale(1);
 	}
 	50% {
-		transform: scale(1.02);
+		transform: scale(1.01);
 	}
 	100% {
 		transform: scale(1);
@@ -188,79 +111,95 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 1rem;
 	flex-wrap: wrap;
-	gap: 0.5rem;
+	gap: 0.75rem;
 
-	.plan-type {
+	.plan-title {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.75rem;
 		flex: 1;
 
-		nb-icon {
+		.plan-icon {
 			font-size: 1.5rem;
 			color: var(--color-primary-default);
 		}
 
-		.plan-name {
-			font-size: 1.25rem;
-			font-weight: 600;
-			color: var(--text-basic-color);
+		.plan-title-text {
+			display: flex;
+			flex-direction: column;
+			gap: 0.15rem;
+
+			.plan-name {
+				font-size: 1.25rem;
+				font-weight: 700;
+				color: var(--gauzy-text-color-1);
+			}
+
+			.plan-subtitle {
+				font-size: 0.875rem;
+				color: var(--gauzy-text-color-2);
+			}
 		}
 	}
 
-	.plan-badge {
-		flex-shrink: 0;
-	}
+	.plan-badges {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		justify-content: flex-end;
 
-	.popular-badge,
-	.recommended-badge {
-		flex-shrink: 0;
+		.plan-badge,
+		.current-plan-badge,
+		.popular-badge,
+		.recommended-badge {
+			flex-shrink: 0;
+		}
 	}
 }
 
 .plan-pricing {
-	margin-bottom: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
 	padding-bottom: 1rem;
 	border-bottom: 1px solid var(--border-basic-color-3);
 
 	.price-display {
 		display: flex;
 		align-items: baseline;
-		gap: 0.25rem;
-		margin-bottom: 0.5rem;
+		gap: 0.4rem;
 
 		.price-amount {
 			font-size: 2rem;
 			font-weight: 700;
-			color: var(--text-basic-color);
+			color: var(--gauzy-text-color-1);
 		}
 
 		.price-period {
 			font-size: 1rem;
-			color: var(--text-hint-color);
+			color: var(--gauzy-text-color-2);
 		}
 	}
 
 	.setup-fee {
 		font-size: 0.875rem;
-		color: var(--text-hint-color);
-		margin-bottom: 0.25rem;
+		color: var(--gauzy-text-color-2);
 	}
 
 	.discount {
-		margin-top: 0.5rem;
+		margin-top: 0.25rem;
 	}
 
 	.trial-info {
-		display: flex;
+		display: inline-flex;
 		align-items: center;
-		gap: 0.25rem;
-		margin-top: 0.5rem;
-		padding: 0.5rem;
-		background: var(--background-basic-color-2);
-		border-radius: 6px;
+		gap: 0.35rem;
+		margin-top: 0.35rem;
+		padding: 0.5rem 0.75rem;
+		background: var(--gauzy-card-2);
+		border-radius: calc(var(--border-radius) * 1.25);
 		font-size: 0.875rem;
 		color: var(--color-info-default);
 
@@ -271,39 +210,41 @@
 }
 
 .plan-description {
-	margin-bottom: 1rem;
+	color: var(--gauzy-text-color-2);
+	font-size: 0.95rem;
+	line-height: 1.5;
 
 	p {
 		margin: 0;
-		font-size: 0.875rem;
-		color: var(--text-hint-color);
-		line-height: 1.5;
 	}
 }
 
 .plan-features {
-	margin-bottom: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
 	flex: 1;
 
 	.features-title {
 		font-size: 0.875rem;
-		font-weight: 600;
-		margin-bottom: 0.75rem;
-		color: var(--text-basic-color);
+		font-weight: 700;
+		color: var(--gauzy-text-color-1);
 	}
 
 	.features-list {
 		list-style: none;
 		padding: 0;
 		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
 
 		.feature-item {
 			display: flex;
 			align-items: flex-start;
 			gap: 0.5rem;
-			margin-bottom: 0.5rem;
-			font-size: 0.875rem;
-			color: var(--text-basic-color);
+			font-size: 0.9rem;
+			color: var(--gauzy-text-color-1);
 
 			nb-icon {
 				margin-top: 0.125rem;
@@ -320,27 +261,31 @@
 }
 
 .plan-limitations {
-	margin-bottom: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-bottom: 0.5rem;
 
 	.limitations-title {
 		font-size: 0.875rem;
-		font-weight: 600;
-		margin-bottom: 0.75rem;
-		color: var(--text-basic-color);
+		font-weight: 700;
+		color: var(--gauzy-text-color-1);
 	}
 
 	.limitations-list {
 		list-style: none;
 		padding: 0;
 		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
 
 		.limitation-item {
 			display: flex;
 			align-items: flex-start;
 			gap: 0.5rem;
-			margin-bottom: 0.5rem;
 			font-size: 0.875rem;
-			color: var(--text-hint-color);
+			color: var(--gauzy-text-color-2);
 
 			nb-icon {
 				margin-top: 0.125rem;
@@ -358,12 +303,17 @@
 
 .plan-selection {
 	display: flex;
+	align-items: center;
 	justify-content: center;
 	padding-top: 1rem;
 	border-top: 1px solid var(--border-basic-color-3);
 
 	.selection-icon {
 		font-size: 2rem;
-		transition: all 0.3s ease;
+		transition: transform 0.25s ease;
+	}
+
+	.current-plan-icon {
+		color: var(--color-success-default);
 	}
 }

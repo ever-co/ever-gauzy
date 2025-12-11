@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import {
 	IPlugin,
@@ -24,6 +24,7 @@ import { SubscriptionFormService, SubscriptionPlanService, SubscriptionStatusSer
 	selector: 'lib-plugin-subscription-manager',
 	templateUrl: './plugin-subscription-manager.component.html',
 	styleUrls: ['./plugin-subscription-manager.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: false
 })
 export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {

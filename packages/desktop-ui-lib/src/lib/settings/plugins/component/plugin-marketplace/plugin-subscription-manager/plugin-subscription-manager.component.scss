@@ -2,13 +2,12 @@
 .subscription-manager {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 32px;
-  background: var(--background-basic-color-1);
-  border-radius: 16px;
   max-height: 90vh;
   width: 900px;
   overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border: none;
+  box-shadow: var(--gauzy-shadow);
+  border-radius: calc(var(--border-radius) * 1.5);
 
   /* Custom scrollbar */
   &::-webkit-scrollbar {
@@ -16,58 +15,65 @@
   }
 
   &::-webkit-scrollbar-track {
-    background: var(--background-basic-color-2);
+    background: var(--gauzy-card-2);
     border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--border-basic-color-4);
+    background: var(--gauzy-text-color-2);
     border-radius: 4px;
     transition: background 0.2s ease;
+    opacity: 0.3;
 
     &:hover {
-      background: var(--color-primary-400);
+      opacity: 0.5;
     }
+  }
+
+  ::ng-deep nb-card-body {
+    padding: 24px;
   }
 }
 
 /* Manager Header */
 .manager-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid var(--border-basic-color-3);
+  border-bottom: none;
 
-  .manager-title {
-    margin: 0;
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .title-group {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: var(--text-basic-color);
+  }
+
+  .manager-title {
+    margin: 0;
+    color: var(--gauzy-text-color-1);
     font-size: 24px;
     font-weight: 700;
     letter-spacing: -0.5px;
+  }
 
-    nb-icon {
-      color: var(--color-primary-500);
-      font-size: 28px;
-      animation: iconPulse 2s ease-in-out infinite;
-    }
+  nb-icon {
+    font-size: 28px;
   }
 
   .close-btn {
     min-width: 40px;
     height: 40px;
-    border-radius: 20px;
+    border-radius: calc(var(--border-radius) * 1.25);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
 
     &:hover {
-      background: var(--color-danger-transparent-200);
       transform: rotate(90deg);
     }
 
@@ -75,6 +81,12 @@
       font-size: 20px;
     }
   }
+}
+
+.manager-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 @keyframes iconPulse {
@@ -88,17 +100,20 @@
 
 /* Current Subscription */
 .current-subscription {
-  margin-bottom: 40px;
+  border: none;
+  box-shadow: var(--gauzy-shadow);
+  border-radius: calc(var(--border-radius) * 1.5);
+
+  ::ng-deep nb-card-body {
+    padding: 0;
+  }
 
   .subscription-card {
-    background: var(--background-basic-color-1);
-    border: 2px solid var(--color-primary-500);
-    border-radius: 20px;
+    background: var(--gauzy-card-1);
     padding: 0;
-    box-shadow: 0 4px 24px rgba(64, 123, 255, 0.12);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    border-radius: calc(var(--border-radius) * 1.5);
 
     &::before {
       content: '';
@@ -106,38 +121,25 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 6px;
+      height: 4px;
       background: linear-gradient(90deg, var(--color-primary-500), var(--color-success-500));
     }
 
     &.current {
-      background: linear-gradient(145deg,
-        var(--background-basic-color-1) 0%,
-        var(--color-primary-transparent-100) 50%,
-        var(--background-basic-color-1) 100%
-      );
+      background: var(--gauzy-card-1);
     }
 
     &.trial {
-      border-color: var(--color-warning-400);
-
       &::before {
         background: linear-gradient(90deg, var(--color-warning-500), var(--color-warning-300));
       }
     }
 
     &.expiring {
-      border-color: var(--color-danger-400);
-
       &::before {
         background: linear-gradient(90deg, var(--color-danger-500), var(--color-danger-300));
         animation: pulseGradient 2s ease-in-out infinite;
       }
-    }
-
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(64, 123, 255, 0.2);
     }
   }
 
@@ -256,7 +258,7 @@
         margin: 0 0 8px 0;
         font-size: 26px;
         font-weight: 800;
-        color: var(--text-basic-color);
+        color: var(--gauzy-text-color-1);
         line-height: 1.2;
         display: flex;
         align-items: center;
@@ -270,7 +272,7 @@
       .plan-description {
         margin: 0 0 16px 0;
         font-size: 14px;
-        color: var(--text-hint-color);
+        color: var(--gauzy-text-color-2);
         line-height: 1.5;
         max-width: 400px;
       }
@@ -288,7 +290,7 @@
         font-weight: 600;
         padding: 8px 16px;
         border-radius: 24px;
-        background: var(--background-basic-color-2);
+        background: var(--gauzy-card-2);
         transition: all 0.3s ease;
 
         &.active {
@@ -352,7 +354,7 @@
       .price-period {
         display: block;
         font-size: 14px;
-        color: var(--text-hint-color);
+        color: var(--gauzy-text-color-2);
         font-weight: 500;
         margin-top: 4px;
       }
@@ -372,13 +374,13 @@
     align-items: center;
     gap: 14px;
     padding: 16px;
-    background: var(--background-basic-color-2);
-    border-radius: 12px;
-    border: 1px solid var(--border-basic-color-3);
+    background: var(--gauzy-card-2);
+    border-radius: calc(var(--border-radius) * 1.25);
+    border: 1px solid var(--gauzy-card-2);
     transition: all 0.3s ease;
 
     &:hover {
-      background: var(--background-basic-color-3);
+      background: var(--gauzy-card-1);
       border-color: var(--color-primary-300);
       transform: translateY(-2px);
     }
@@ -389,7 +391,7 @@
       justify-content: center;
       width: 44px;
       height: 44px;
-      border-radius: 12px;
+      border-radius: calc(var(--border-radius) * 1.25);
       background: var(--color-primary-transparent-100);
       flex-shrink: 0;
 
@@ -408,7 +410,7 @@
     .detail-label {
       font-size: 11px;
       font-weight: 600;
-      color: var(--text-hint-color);
+      color: var(--gauzy-text-color-2);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 2px;
@@ -417,7 +419,7 @@
     .detail-value {
       font-size: 15px;
       font-weight: 700;
-      color: var(--text-basic-color);
+      color: var(--gauzy-text-color-1);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -490,9 +492,9 @@
     flex-wrap: wrap;
     gap: 12px;
     padding: 20px 28px 28px;
-    border-top: 1px solid var(--border-basic-color-3);
-    background: var(--background-basic-color-2);
-    border-radius: 0 0 18px 18px;
+	border-radius: 0 0 calc(var(--border-radius) * 1.25) calc(var(--border-radius) * 1.25);
+    border-top: 1px solid var(--gauzy-card-2);
+    background: var(--gauzy-card-2);
 
     .action-btn {
       display: inline-flex;
@@ -501,7 +503,7 @@
       padding: 12px 24px;
       font-weight: 600;
       font-size: 14px;
-      border-radius: 12px;
+      border-radius: calc(var(--border-radius) * 1.25);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
       nb-icon {
@@ -540,26 +542,22 @@
 
 /* Available Plans */
 .available-plans {
-  margin-bottom: 40px;
+  border: none;
+  box-shadow: var(--gauzy-shadow);
+  border-radius: calc(var(--border-radius) * 1.25);
+
+  ::ng-deep nb-card-header {
+    border-bottom: none;
+  }
 
   .plans-title {
-    margin: 0 0 24px 0;
+    margin: 0;
     font-size: 20px;
     font-weight: 700;
-    color: var(--text-basic-color);
+    color: var(--gauzy-text-color-1);
     display: flex;
     align-items: center;
     gap: 12px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid var(--border-basic-color-3);
-
-    &::before {
-      content: '';
-      width: 4px;
-      height: 24px;
-      background: linear-gradient(180deg, var(--color-primary-500), var(--color-success-500));
-      border-radius: 2px;
-    }
   }
 
   .plans-grid {
@@ -568,13 +566,41 @@
     gap: 24px;
     margin-top: 24px;
   }
+
+  .empty-plans-state {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    background: var(--gauzy-card-2);
+    border: 1px solid var(--gauzy-card-2);
+    border-radius: calc(var(--border-radius) * 1.25);
+    color: var(--gauzy-text-color-1);
+
+    nb-icon {
+      font-size: 28px;
+      color: var(--gauzy-text-color-2);
+    }
+
+    .empty-title {
+      margin: 0;
+      font-weight: 700;
+      color: var(--gauzy-text-color-1);
+    }
+
+    .empty-subtitle {
+      margin: 4px 0 0 0;
+      color: var(--gauzy-text-color-2);
+      font-size: 13px;
+    }
+  }
 }
 
 /* Plan Card */
 .plan-card {
-  background: var(--card-background-color);
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
+  background: var(--gauzy-card-1);
+  border: 2px solid var(--gauzy-card-2);
+  border-radius: calc(var(--border-radius) * 1.25);
   padding: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -583,28 +609,22 @@
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    border-color: var(--primary-color);
+    box-shadow: var(--gauzy-shadow);
+    border-color: var(--color-primary-400);
   }
 
   &.selected {
-    border-color: var(--primary-color);
-    background: linear-gradient(135deg,
-      var(--card-background-color) 0%,
-      rgba(64, 123, 255, 0.08) 100%
-    );
+    border-color: var(--color-primary-500);
+    background: var(--gauzy-card-1);
   }
 
   &.current {
-    border-color: var(--success-color);
-    background: linear-gradient(135deg,
-      var(--card-background-color) 0%,
-      rgba(0, 214, 143, 0.05) 100%
-    );
+    border-color: var(--color-success-500);
+    background: var(--gauzy-card-1);
   }
 
   &.popular {
-    border-color: var(--warning-color);
+    border-color: var(--color-warning-500);
 
     &::before {
       content: '';
@@ -613,12 +633,12 @@
       left: 0;
       right: 0;
       height: 4px;
-      background: var(--warning-color);
+      background: var(--color-warning-500);
     }
   }
 
   &.recommended {
-    border-color: var(--success-color);
+    border-color: var(--color-success-500);
 
     &::after {
       content: '✓';
@@ -627,7 +647,7 @@
       right: 12px;
       width: 24px;
       height: 24px;
-      background: var(--success-color);
+      background: var(--color-success-500);
       color: white;
       border-radius: 50%;
       display: flex;
@@ -654,7 +674,7 @@
     margin: 0 0 8px 0;
     font-size: 20px;
     font-weight: 600;
-    color: var(--text-primary-color);
+    color: var(--gauzy-text-color-1);
   }
 
   .plan-price {
@@ -682,7 +702,7 @@
 }
 
 .plan-description {
-  color: var(--text-hint-color);
+  color: var(--gauzy-text-color-2);
   font-size: 14px;
   line-height: 1.4;
   margin: 0 0 16px 0;
@@ -702,7 +722,7 @@
       gap: 8px;
       margin-bottom: 8px;
       font-size: 13px;
-      color: var(--text-basic-color);
+      color: var(--gauzy-text-color-1);
 
       .feature-check {
         color: var(--success-color);
@@ -722,39 +742,23 @@
 
 /* Billing Form */
 .billing-form {
-  background: var(--background-basic-color-2);
-  border-radius: 16px;
-  padding: 32px;
-  border: 2px solid var(--border-basic-color-3);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: none;
+  box-shadow: var(--gauzy-shadow);
+  border-radius: calc(var(--border-radius) * 1.25);
   animation: slideInUp 0.4s ease-out;
 
-  .form-header {
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid var(--border-basic-color-3);
+  ::ng-deep nb-card-header {
+    border-bottom: none;
+  }
 
-    h5 {
-      margin: 0 0 12px 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text-basic-color);
-
-      nb-icon {
-        color: var(--color-primary-500);
-        font-size: 24px;
-      }
-    }
-
-    .selected-plan-info {
-      margin: 0;
-      font-size: 15px;
-      color: var(--text-hint-color);
-      line-height: 1.6;
-    }
+  .billing-title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gauzy-text-color-1);
   }
 
   @keyframes slideInUp {
@@ -775,7 +779,7 @@
       margin: 0 0 12px 0;
       font-size: 14px;
       font-weight: 600;
-      color: var(--text-primary-color);
+      color: var(--gauzy-text-color-1);
     }
 
     .billing-period, .payment-methods {
@@ -788,13 +792,13 @@
         align-items: center;
         gap: 8px;
         padding: 12px;
-        border: 1px solid var(--border-color);
+        border: 1px solid var(--gauzy-card-2);
         border-radius: 6px;
         transition: all 0.2s ease;
 
         &:hover {
-          background: var(--card-background-color);
-          border-color: var(--primary-color);
+          background: var(--gauzy-card-1);
+          border-color: var(--color-primary-400);
         }
 
         .savings {
@@ -820,7 +824,7 @@
           margin-bottom: 6px;
           font-size: 13px;
           font-weight: 500;
-          color: var(--text-basic-color);
+          color: var(--gauzy-text-color-1);
         }
 
         .error-message {
@@ -848,7 +852,7 @@
           margin-bottom: 6px;
           font-size: 13px;
           font-weight: 500;
-          color: var(--text-basic-color);
+          color: var(--gauzy-text-color-1);
         }
 
         .error-message {
@@ -861,18 +865,18 @@
 
     .checkbox-help {
       font-size: 12px;
-      color: var(--text-hint-color);
+      color: var(--gauzy-text-color-2);
       margin: 8px 0 0 24px;
     }
 
     .error-message {
       font-size: 12px;
-      color: var(--danger-color);
+      color: var(--color-danger-500);
       margin-top: 4px;
     }
 
     a {
-      color: var(--primary-color);
+      color: var(--color-primary-500);
       text-decoration: none;
 
       &:hover {
@@ -887,15 +891,19 @@
     justify-content: flex-end;
     margin-top: 32px;
     padding-top: 16px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--gauzy-card-2);
   }
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .subscription-manager {
-    padding: 20px;
-    border-radius: 12px;
+    width: 100%;
+    max-width: 100%;
+
+    ::ng-deep nb-card-body {
+      padding: 20px;
+    }
   }
 
   .manager-header {
@@ -1045,8 +1053,11 @@
 
 @media (max-width: 480px) {
   .subscription-manager {
-    padding: 16px;
     max-height: 95vh;
+
+    ::ng-deep nb-card-body {
+      padding: 16px;
+    }
   }
 
   .manager-header {
@@ -1197,20 +1208,12 @@
   }
 
   .billing-form {
-    padding: 16px;
+    .billing-title {
+      font-size: 16px;
+      gap: 8px;
 
-    .form-header {
-      h5 {
-        font-size: 16px;
-        gap: 8px;
-
-        nb-icon {
-          font-size: 18px;
-        }
-      }
-
-      .selected-plan-info {
-        font-size: 13px;
+      nb-icon {
+        font-size: 18px;
       }
     }
   }

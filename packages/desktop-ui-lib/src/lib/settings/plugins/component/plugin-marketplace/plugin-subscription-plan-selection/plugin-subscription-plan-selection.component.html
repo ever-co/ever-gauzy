@@ -176,7 +176,25 @@ hasExistingSubscription$ | async;
 					}
 				</div>
 
-				@if (planViewModels && planViewModels.length > 0) {
+				@if (hasFreePlans || hasPaidPlans) {
+				<div class="plan-availability" role="status" aria-live="polite">
+					@if (hasFreePlans) {
+					<div class="pill free">
+						<nb-icon icon="checkmark-outline"></nb-icon>
+						<span>Free option available</span>
+					</div>
+					} @if (hasPaidPlans) {
+					<div class="pill paid">
+						<nb-icon icon="award-outline"></nb-icon>
+						<span>Paid plans unlock premium features</span>
+					</div>
+					}
+					<div class="pill hint">
+						<nb-icon icon="bulb-outline"></nb-icon>
+						<span>Select a card to update the billing preview below.</span>
+					</div>
+				</div>
+				} @if (planViewModels && planViewModels.length > 0) {
 				<div
 					class="plans-grid"
 					[class.single-plan]="planViewModels.length === 1"

@@ -1,4 +1,4 @@
-<div
+<nb-card
 	class="plan-card"
 	[class.selected]="isSelected"
 	[class.current-plan]="isCurrentPlan"
@@ -15,24 +15,27 @@
 		'Select ' + plan.name + ' plan for ' + plan.formattedPrice + ' per ' + plan.formattedBillingPeriod
 	"
 >
-	<!-- Plan Header -->
 	<div class="plan-header">
-		<div class="plan-type">
-			<nb-icon [icon]="plan.icon"></nb-icon>
-			<span class="plan-name">{{ plan.name }}</span>
+		<div class="plan-title">
+			<nb-icon [icon]="plan.icon" class="plan-icon"></nb-icon>
+			<div class="plan-title-text">
+				<span class="plan-name">{{ plan.name }}</span>
+				<span class="plan-subtitle">{{ plan.type | titlecase }}</span>
+			</div>
 		</div>
-		<nb-badge [status]="plan.colorStatus" [text]="plan.type | titlecase" class="plan-badge"> </nb-badge>
+		<div class="plan-badges" aria-label="Plan highlights">
+			<nb-badge [status]="plan.colorStatus" [text]="plan.type | titlecase" class="plan-badge"> </nb-badge>
 
-		@if (isCurrentPlan) {
-		<nb-badge status="success" text="Current Plan" class="current-plan-badge"></nb-badge>
-		} @else if (plan.isPopular) {
-		<nb-badge status="warning" text="Popular" class="popular-badge"></nb-badge>
-		} @else if (plan.isRecommended) {
-		<nb-badge status="info" text="Recommended" class="recommended-badge"></nb-badge>
-		}
+			@if (isCurrentPlan) {
+			<nb-badge status="success" text="Current Plan" class="current-plan-badge"></nb-badge>
+			} @else if (plan.isPopular) {
+			<nb-badge status="warning" text="Popular" class="popular-badge"></nb-badge>
+			} @else if (plan.isRecommended) {
+			<nb-badge status="info" text="Recommended" class="recommended-badge"></nb-badge>
+			}
+		</div>
 	</div>
 
-	<!-- Plan Pricing -->
 	<div class="plan-pricing">
 		@if (plan.isFree) {
 		<div class="price-display">
@@ -57,14 +60,12 @@
 		}
 	</div>
 
-	<!-- Plan Description -->
 	<div class="plan-description">
 		<p>{{ plan.description }}</p>
 	</div>
 
-	<!-- Plan Features -->
 	<div class="plan-features">
-		<h6 class="features-title">Features included:</h6>
+		<h6 class="features-title">Features included</h6>
 		<ul class="features-list">
 			@for (feature of plan.features; track feature) {
 			<li class="feature-item">
@@ -75,10 +76,9 @@
 		</ul>
 	</div>
 
-	<!-- Plan Limitations -->
 	@if (hasLimitations()) {
 	<div class="plan-limitations">
-		<h6 class="limitations-title">Limitations:</h6>
+		<h6 class="limitations-title">Limitations</h6>
 		<ul class="limitations-list">
 			@for (limitation of getLimitationEntries(); track limitation[0]) {
 			<li class="limitation-item">
@@ -91,10 +91,7 @@
 			}
 		</ul>
 	</div>
-	}
-
-	<!-- Selection Indicator -->
-	@if (showSelection) {
+	} @if (showSelection) {
 	<div class="plan-selection">
 		@if (isCurrentPlan) {
 		<nb-icon icon="shield-outline" status="success" class="selection-icon current-plan-icon"> </nb-icon>
@@ -108,4 +105,4 @@
 		}
 	</div>
 	}
-</div>
+</nb-card>
