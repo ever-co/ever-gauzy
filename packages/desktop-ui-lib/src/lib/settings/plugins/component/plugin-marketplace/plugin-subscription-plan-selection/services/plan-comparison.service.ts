@@ -277,12 +277,12 @@ export class PlanComparisonService {
 	): number {
 		const newPrice = this.parsePriceAsNumber(newPlan.price);
 
-		if (!currentSubscription.nextBillingDate) {
+		if (!currentSubscription.endDate) {
 			return newPrice; // Full price if no billing date
 		}
 
 		const now = new Date();
-		const nextBilling = new Date(currentSubscription.nextBillingDate);
+		const nextBilling = new Date(currentSubscription.endDate);
 		const daysRemaining = Math.ceil((nextBilling.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
 		if (daysRemaining <= 0) {

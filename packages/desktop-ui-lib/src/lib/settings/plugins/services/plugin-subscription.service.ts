@@ -1,182 +1,40 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IPagination, IUser, PluginScope } from '@gauzy/contracts';
+import {
+	IPagination,
+	IPluginBilling,
+	IPluginPayment,
+	IPluginPlanCreateInput,
+	IPluginSubscription,
+	IPluginSubscriptionCreateInput,
+	IPluginSubscriptionPlan,
+	IPluginSubscriptionUpdateInput,
+	PluginBillingPeriod,
+	PluginSubscriptionStatus,
+	PluginSubscriptionType
+} from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { map, Observable, of } from 'rxjs';
 
-// Plugin subscription interfaces
-export interface IPluginSubscription {
-	id: string;
-	pluginId: string;
-	planId?: string;
-	plan?: IPluginSubscriptionPlan;
-	scope: PluginScope;
-	subscriberId: string;
-	subscriber?: IUser;
-	status: PluginSubscriptionStatus;
-	startDate: Date | string;
-	endDate?: Date | string | null;
-	trialEndDate?: Date | string | null;
-	nextBillingDate?: Date | string;
-	autoRenew: boolean;
-	parentId?: string | null;
-	pluginTenantId?: string;
-	pluginTenant?: any;
-	externalSubscriptionId?: string | null;
-	paymentMethodId?: string;
-	lastPaymentDate?: Date | string;
-	lastPaymentAmount?: number;
-	cancelledAt?: Date | string | null;
-	cancellationReason?: string | null;
-	metadata?: Record<string, any> | null;
-	// Base entity fields
-	isActive: boolean;
-	isArchived: boolean;
-	archivedAt?: Date | string | null;
-	createdAt: Date | string;
-	updatedAt: Date | string;
-	deletedAt?: Date | string | null;
-	createdByUserId?: string;
-	updatedByUserId?: string;
-	deletedByUserId?: string | null;
-	tenantId: string;
-	organizationId?: string;
-	cancelReason?: string;
-}
-
-export interface IPluginSubscriptionPlan {
-	id: string;
-	pluginId: string;
-	type: PluginSubscriptionType;
-	scope?: PluginScope | 'global'; // Allow legacy global scope while backend expects contracts enum
-	name: string;
-	description: string;
-	price: number | string; // API returns string
-	currency: string;
-	billingPeriod: PluginBillingPeriod;
-	features: string[];
-	limitations?: Record<string, any>;
-	isPopular?: boolean;
-	isRecommended?: boolean;
-	trialDays?: number;
-	setupFee?: number | string; // API returns string
-	discountPercentage?: number | string; // API returns string
-	isActive: boolean;
-	sortOrder?: number;
-	metadata?: Record<string, any> | null;
-	// Base entity fields
-	isArchived: boolean;
-	archivedAt?: Date | string | null;
-	createdAt: Date | string;
-	updatedAt: Date | string;
-	deletedAt?: Date | string | null;
-	createdById?: string;
-	createdByUserId?: string;
-	updatedByUserId?: string;
-	deletedByUserId?: string | null;
-}
-
-export interface IPluginBilling {
-	id: string;
-	subscriptionId: string;
-	amount: number;
-	currency: string;
-	status: BillingStatus;
-	billingDate: Date;
-	paidDate?: Date;
-	dueDate: Date;
-	invoiceNumber: string;
-	paymentMethodId?: string;
-	transactionId?: string;
-	failureReason?: string;
-	retryCount: number;
-	metadata?: Record<string, any>;
-}
-
-export interface IPluginPayment {
-	id: string;
-	subscriptionId: string;
-	billingId?: string;
-	amount: number;
-	currency: string;
-	status: PaymentStatus;
-	paymentMethod: PaymentMethod;
-	transactionId: string;
-	gatewayResponse?: Record<string, any>;
-	processedAt: Date;
-	refundedAt?: Date;
-	refundAmount?: number;
-	refundReason?: string;
-}
-
-export enum PluginSubscriptionType {
-	FREE = 'free',
-	TRIAL = 'trial',
-	BASIC = 'basic',
-	PREMIUM = 'premium',
-	ENTERPRISE = 'enterprise',
-	CUSTOM = 'custom'
-}
-
-export enum PluginBillingPeriod {
-	DAILY = 'daily',
-	WEEKLY = 'weekly',
-	MONTHLY = 'monthly',
-	QUARTERLY = 'quarterly',
-	YEARLY = 'yearly',
-	ONE_TIME = 'one-time'
-}
-
-export enum PluginSubscriptionStatus {
-	ACTIVE = 'active',
-	CANCELLED = 'cancelled',
-	EXPIRED = 'expired',
-	TRIAL = 'trial',
-	PAST_DUE = 'past_due',
-	SUSPENDED = 'suspended',
-	PENDING = 'pending'
-}
-
-export enum BillingStatus {
-	PENDING = 'pending',
-	PAID = 'paid',
-	FAILED = 'failed',
-	CANCELLED = 'cancelled',
-	REFUNDED = 'refunded'
-}
-
-export enum PaymentStatus {
-	PENDING = 'pending',
-	COMPLETED = 'completed',
-	FAILED = 'failed',
-	CANCELLED = 'cancelled',
-	REFUNDED = 'refunded'
-}
-
-export enum PaymentMethod {
-	CREDIT_CARD = 'credit_card',
-	DEBIT_CARD = 'debit_card',
-	PAYPAL = 'paypal',
-	STRIPE = 'stripe',
-	BANK_TRANSFER = 'bank_transfer',
-	CRYPTOCURRENCY = 'cryptocurrency'
-}
-
-// Input interfaces
-export interface IPluginSubscriptionCreateInput {
-	pluginId: string;
-	planId?: string;
-	scope: PluginScope;
-	autoRenew?: boolean;
-	paymentMethod?: string;
-	paymentMethodId?: string;
-	promoCode?: string;
-	metadata?: Record<string, any>;
-}
-
-export type IPluginSubscriptionUpdateInput = Partial<IPluginSubscriptionCreateInput>;
-
-export type IPluginPlanCreateInput = Partial<IPluginSubscriptionPlan>;
+// Re-export all types for backward compatibility with existing code
+export {
+	BillingStatus,
+	IPlugin,
+	IPluginBilling,
+	IPluginPayment,
+	IPluginPlanCreateInput,
+	IPluginSubscription,
+	IPluginSubscriptionCreateInput,
+	IPluginSubscriptionPlan,
+	IPluginSubscriptionUpdateInput,
+	IUser,
+	PaymentMethod,
+	PaymentStatus,
+	PluginBillingPeriod,
+	PluginScope,
+	PluginSubscriptionStatus,
+	PluginSubscriptionType
+} from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'

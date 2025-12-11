@@ -8,7 +8,14 @@ import {
 	ValidatorFn,
 	Validators
 } from '@angular/forms';
-import { IPlugin, IPluginSource, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
+import {
+	IPlugin,
+	IPluginPlanCreateInput,
+	IPluginSource,
+	PluginSourceType,
+	PluginStatus,
+	PluginType
+} from '@gauzy/contracts';
 import { NbDateService, NbDialogRef, NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -19,7 +26,7 @@ import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { patterns } from '../../../../../constants';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../services';
-import { IPluginPlanCreateInput, PluginSubscriptionService } from '../../../services/plugin-subscription.service';
+import { PluginSubscriptionService } from '../../../services/plugin-subscription.service';
 import { SourceContext } from './plugin-source/creator/source.context';
 import { PluginSubscriptionPlanCreatorComponent } from './plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
 

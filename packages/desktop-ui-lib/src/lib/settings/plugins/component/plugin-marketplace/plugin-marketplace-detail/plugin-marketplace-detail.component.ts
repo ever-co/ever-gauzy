@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IPlugin, PluginStatus } from '@gauzy/contracts';
+import { IPlugin, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts';
 import { NbMenuService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -15,7 +15,6 @@ import { PluginInstallationQuery } from '../+state/queries/plugin-installation.q
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { PluginToggleQuery } from '../+state/queries/plugin-toggle.query';
 import { Store } from '../../../../../services';
-import { PluginSubscriptionType } from '../../../services/plugin-subscription.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 
 @UntilDestroy()

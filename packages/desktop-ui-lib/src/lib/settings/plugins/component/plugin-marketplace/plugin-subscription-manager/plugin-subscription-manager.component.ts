@@ -1,6 +1,13 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { IPlugin, PluginScope } from '@gauzy/contracts';
+import {
+	IPlugin,
+	IPluginSubscription,
+	IPluginSubscriptionPlan,
+	PluginBillingPeriod,
+	PluginScope,
+	PluginSubscriptionType
+} from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -9,12 +16,6 @@ import { filter, map, pairwise, shareReplay, startWith, take, tap } from 'rxjs/o
 import { PluginInstallationQuery } from '../+state';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSubscriptionFacade } from '../+state/plugin-subscription.facade';
-import {
-	IPluginSubscription,
-	IPluginSubscriptionPlan,
-	PluginBillingPeriod,
-	PluginSubscriptionType
-} from '../../../services/plugin-subscription.service';
 import { IPlanViewModel, PlanFormatterService } from '../plugin-subscription-plan-selection';
 import { SubscriptionFormService, SubscriptionPlanService, SubscriptionStatusService } from '../shared';
 
@@ -38,6 +39,7 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	public selectedPlanViewModel: IPlanViewModel | null = null;
 	public selectedPlan: IPluginSubscriptionPlan | null = null;
 	public showBillingForm = false;
+	public now = new Date();
 	private currentResolvedPlan: IPluginSubscriptionPlan | null = null;
 
 	// Enum references for template
@@ -344,6 +346,28 @@ This change will take effect at the end of your current billing period. You'll r
 	}
 
 	// Helper methods moved to services
+
+	/**
+	 * Check if subscription is in trial period
+	 */
+	public isInTrial(subscription: IPluginSubscription): boolean {
+		if (!subscription) return false;
+		return (
+			subscription.status === 'trial' ||
+			(subscription.trialEndDate && new Date(subscription.trialEndDate) > new Date())
+		);
+	}
+
+	/**
+	 * Check if subscription is expiring soon (within 7 days)
+	 */
+	public isExpiringSoon(subscription: IPluginSubscription): boolean {
+		if (!subscription || !subscription.endDate) return false;
+		const endDate = new Date(subscription.endDate).getTime();
+		const now = new Date().getTime();
+		const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+		return endDate - now < sevenDaysInMs && endDate - now > 0;
+	}
 
 	public close(): void {
 		this.dialogRef.close({ success: false, action: 'closed' });

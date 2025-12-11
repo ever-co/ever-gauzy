@@ -1,6 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { IPlugin, PluginScope } from '@gauzy/contracts';
+import {
+	IPlugin,
+	IPluginSubscription,
+	IPluginSubscriptionCreateInput,
+	IPluginSubscriptionPlan,
+	PluginBillingPeriod,
+	PluginScope,
+	PluginSubscriptionType
+} from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -18,14 +26,7 @@ import {
 } from 'rxjs';
 import { PluginSubscriptionFacade } from '../+state';
 import { PluginSubscriptionActions } from '../+state/actions/plugin-subscription.action';
-import {
-	IPluginSubscription,
-	IPluginSubscriptionCreateInput,
-	IPluginSubscriptionPlan,
-	PluginBillingPeriod,
-	PluginSubscriptionService,
-	PluginSubscriptionType
-} from '../../../services/plugin-subscription.service';
+import { PluginSubscriptionService } from '../../../services/plugin-subscription.service';
 import { SubscriptionPlanService, SubscriptionStatusService } from '../shared';
 import { IPlanViewModel, ISubscriptionPreviewViewModel } from './models/plan-view.model';
 import { IPlanComparisonResult, PlanActionType, PlanComparisonService } from './services/plan-comparison.service';

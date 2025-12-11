@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { CurrenciesEnum, PluginScope } from '@gauzy/contracts';
-import { IPluginSubscription, PluginSubscriptionStatus } from '../../../services/plugin-subscription.service';
+import { CurrenciesEnum, IPluginSubscription, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { SubscriptionStatusService } from '../shared';
 
 interface SubscriptionNode {

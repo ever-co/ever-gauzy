@@ -26,16 +26,16 @@
 	<div class="current-subscription" *ngIf="currentSubscription">
 		<div
 			class="subscription-card current"
-			[class.trial]="currentSubscription.isInTrial"
-			[class.expiring]="currentSubscription.isExpiringSoon"
+			[class.trial]="currentSubscription && isInTrial(currentSubscription)"
+			[class.expiring]="currentSubscription && isExpiringSoon(currentSubscription)"
 		>
 			<!-- Status Ribbon -->
-			@if(currentSubscription.isInTrial) {
+			@if(currentSubscription && isInTrial(currentSubscription)) {
 			<div class="status-ribbon trial">
 				<nb-icon icon="clock-outline"></nb-icon>
 				Trial Period
 			</div>
-			} @else if(currentSubscription.isExpiringSoon) {
+			} @else if(currentSubscription && isExpiringSoon(currentSubscription)) {
 			<div class="status-ribbon expiring">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				Expiring Soon
@@ -45,8 +45,8 @@
 			<div class="subscription-header">
 				<div class="subscription-info">
 					<div class="plan-badge-wrapper">
-						<span class="plan-type-badge" [class]="currentSubscription.plan?.type">
-							{{ currentSubscription.plan?.type | titlecase }}
+						<span class="plan-type-badge" [class]="currentPlan?.type">
+							{{ currentPlan?.type | titlecase }}
 						</span>
 						@if(installed) {
 						<span class="installed-badge">
@@ -74,36 +74,29 @@
 				</div>
 
 				<!-- Price Display -->
-				@if(currentSubscription.amount) {
+				@if(currentPlan?.price) {
 				<div class="subscription-price">
 					<span class="price-amount">
-						{{
-							currentSubscription.plan?.price ?? currentSubscription.amount
-								| currency : currentSubscription.plan?.currency ?? currentSubscription.currency
-						}}
+						{{ currentPlan.price | currency : currentPlan.currency }}
 					</span>
-					<span class="price-period">
-						/ {{ currentSubscription.plan?.billingPeriod ?? currentSubscription.billingPeriod }}
-					</span>
+					<span class="price-period"> / {{ currentPlan.billingPeriod | titlecase }} </span>
 				</div>
 				}
 			</div>
 
 			<!-- Subscription Details Grid -->
 			<div class="subscription-details-grid">
-				@if(currentSubscription.nextBillingDate) {
+				@if(currentSubscription.endDate) {
 				<div class="detail-card">
 					<div class="detail-icon">
 						<nb-icon icon="calendar-outline"></nb-icon>
 					</div>
 					<div class="detail-content">
 						<span class="detail-label">Next Billing</span>
-						<span class="detail-value">{{
-							currentSubscription.nextBillingDate | date : 'mediumDate'
-						}}</span>
+						<span class="detail-value">{{ currentSubscription.endDate | date : 'mediumDate' }}</span>
 					</div>
 				</div>
-				} @if(currentSubscription.isInTrial) {
+				} @if(currentSubscription && isInTrial(currentSubscription) && currentSubscription.trialEndDate) {
 				<div class="detail-card warning">
 					<div class="detail-icon">
 						<nb-icon icon="clock-outline"></nb-icon>
@@ -113,7 +106,7 @@
 						<span class="detail-value">{{ currentSubscription.trialEndDate | date : 'mediumDate' }}</span>
 					</div>
 				</div>
-				} @if(currentSubscription.isExpiringSoon) {
+				} @if(currentSubscription && isExpiringSoon(currentSubscription) && currentSubscription.endDate) {
 				<div class="detail-card danger">
 					<div class="detail-icon">
 						<nb-icon icon="alert-triangle-outline"></nb-icon>

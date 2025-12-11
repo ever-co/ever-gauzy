@@ -51,22 +51,96 @@ export enum PluginOSArch {
 /**
  * Plugin subscription information
  */
-export interface IPluginSubscription {
-	id?: string;
-	pluginId?: string;
-	subscriptionType: PluginSubscriptionType;
+export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntityModel {
+	pluginId: string;
+	planId?: string;
+	plan?: IPluginSubscriptionPlan;
+	scope: PluginScope;
+	subscriberId: string;
+	subscriber?: IUser;
 	status: PluginSubscriptionStatus;
-	billingPeriod: PluginBillingPeriod;
-	price: number;
-	currency: string;
-	isInTrial?: boolean;
-	isExpiringSoon?: boolean;
-	daysUntilExpiration?: number;
-	features?: string[];
-	startDate?: Date;
-	endDate?: Date;
-	nextBillingDate?: Date;
+	startDate: Date | string;
+	endDate?: Date | string | null;
+	trialEndDate?: Date | string | null;
+	autoRenew: boolean;
+	parentId?: string | null;
+	pluginTenantId?: string;
+	plugin?: IPlugin;
+	externalSubscriptionId?: string | null;
+	cancelledAt?: Date | string | null;
+	cancellationReason?: string | null;
+	metadata?: Record<string, any> | null;
+	parent?: IPluginSubscription | null;
 }
+
+export interface IPluginSubscriptionPlan extends IBasePerTenantAndOrganizationEntityModel {
+	pluginId: string;
+	type: PluginSubscriptionType;
+	name: string;
+	description: string;
+	price: number | string;
+	currency: string;
+	billingPeriod: PluginBillingPeriod;
+	features: string[];
+	limitations?: Record<string, any>;
+	isPopular?: boolean;
+	isRecommended?: boolean;
+	trialDays?: number;
+	setupFee?: number | string;
+	discountPercentage?: number | string;
+	isActive: boolean;
+	sortOrder?: number;
+	metadata?: Record<string, any> | null;
+	createdByUserId?: string;
+	updatedByUserId?: string | null;
+	deletedByUserId?: string | null;
+}
+
+export interface IPluginBilling extends IBasePerTenantAndOrganizationEntityModel {
+	subscriptionId: string;
+	amount: number;
+	currency: string;
+	status: BillingStatus;
+	billingDate: Date;
+	paidDate?: Date;
+	dueDate: Date;
+	invoiceNumber: string;
+	paymentMethodId?: string;
+	transactionId?: string;
+	failureReason?: string;
+	retryCount: number;
+	metadata?: Record<string, any>;
+}
+
+export interface IPluginPayment extends IBasePerTenantAndOrganizationEntityModel {
+	subscriptionId: string;
+	billingId?: string;
+	amount: number;
+	currency: string;
+	status: PaymentStatus;
+	paymentMethod: PaymentMethod;
+	transactionId: string;
+	gatewayResponse?: Record<string, any>;
+	processedAt: Date;
+	refundedAt?: Date;
+	refundAmount?: number;
+	refundReason?: string;
+}
+
+export interface IPluginSubscriptionCreateInput {
+	pluginId: string;
+	planId?: string;
+	scope: PluginScope;
+	autoRenew?: boolean;
+	paymentMethod?: string;
+	paymentMethodId?: string;
+	promoCode?: string;
+	metadata?: Record<string, any>;
+}
+
+export type IPluginSubscriptionUpdateInput = Partial<IPluginSubscriptionCreateInput>;
+
+export type IPluginPlanCreateInput = Partial<IPluginSubscriptionPlan>;
 
 export enum PluginSubscriptionType {
 	FREE = 'free',
@@ -94,6 +168,31 @@ export enum PluginBillingPeriod {
 	QUARTERLY = 'quarterly',
 	YEARLY = 'yearly',
 	ONE_TIME = 'one-time'
+}
+
+export enum BillingStatus {
+	PENDING = 'pending',
+	PAID = 'paid',
+	FAILED = 'failed',
+	CANCELLED = 'cancelled',
+	REFUNDED = 'refunded'
+}
+
+export enum PaymentStatus {
+	PENDING = 'pending',
+	COMPLETED = 'completed',
+	FAILED = 'failed',
+	CANCELLED = 'cancelled',
+	REFUNDED = 'refunded'
+}
+
+export enum PaymentMethod {
+	CREDIT_CARD = 'credit_card',
+	DEBIT_CARD = 'debit_card',
+	PAYPAL = 'paypal',
+	STRIPE = 'stripe',
+	BANK_TRANSFER = 'bank_transfer',
+	CRYPTOCURRENCY = 'cryptocurrency'
 }
 
 /**
