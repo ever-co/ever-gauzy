@@ -48,6 +48,9 @@ Background
 Border Radius
 • var(--border-radius) — base radius for all elements; scale dynamically with calc() or Angular host bindings.
 
+Box Shadow
+• var(--gauzy-shadow) — use for cards and elevated elements.
+
 Usage Rules
 • Always prefer Gauzy variables over custom colors.
 • Avoid nb-theme(color-basic-...).
