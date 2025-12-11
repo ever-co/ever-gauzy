@@ -7,8 +7,10 @@
 	<!-- Filter Header -->
 	<div class="filter-header">
 		<div class="header-content">
-			<div class="filter-title">
+			<div class="header-icon-container">
 				<nb-icon icon="funnel-outline"></nb-icon>
+			</div>
+			<div class="filter-title">
 				<h4>Filters</h4>
 				<div class="active-filters-badge" *ngIf="activeCount as count">
 					<nb-badge
@@ -77,7 +79,10 @@
 					<div class="section-content" *ngIf="filterSections[0]?.expanded" [attr.id]="'section-search-content'">
 						<!-- Search Input -->
 						<div class="form-group">
-							<label class="form-label">Search Plugins</label>
+							<label class="form-label">
+								<nb-icon icon="search-outline"></nb-icon>
+								Search Plugins
+							</label>
 							<nb-form-field>
 								<nb-icon nbPrefix icon="search-outline"></nb-icon>
 								<input
@@ -106,7 +111,10 @@
 
 						<!-- Sort Options -->
 						<div class="form-group">
-							<label class="form-label">Sort By</label>
+							<label class="form-label">
+								<nb-icon icon="swap-outline"></nb-icon>
+								Sort By
+							</label>
 							<div class="sort-controls">
 								<nb-select formControlName="sortBy" placeholder="Sort by...">
 									@for(option of sortOptions; track option) {
@@ -247,7 +255,10 @@
 					<div class="section-content" *ngIf="filterSections[2]?.expanded" [attr.id]="'section-properties-content'">
 						<!-- Plugin Status -->
 						<fieldset class="form-group form-fieldset">
-							<legend class="form-label">Status</legend>
+							<legend class="form-label">
+								<nb-icon icon="activity-outline"></nb-icon>
+								Status
+							</legend>
 							<div class="checkbox-group">
 								@for(status of statusOptions; track status) {
 									<div class="checkbox-item">
@@ -267,7 +278,10 @@
 
 						<!-- Plugin Type -->
 						<fieldset class="form-group form-fieldset">
-							<legend class="form-label">Type</legend>
+							<legend class="form-label">
+								<nb-icon icon="pricetags-outline"></nb-icon>
+								Type
+							</legend>
 							<div class="checkbox-group">
 								@for(type of typeOptions; track type) {
 									<div class="checkbox-item">
@@ -287,7 +301,10 @@
 
 						<!-- Special Properties -->
 						<div class="form-group">
-							<label class="form-label">Special Properties</label>
+							<label class="form-label">
+								<nb-icon icon="flash-outline"></nb-icon>
+								Special Properties
+							</label>
 							<div class="checkbox-group">
 								<div class="checkbox-item">
 									<nb-checkbox formControlName="featured">

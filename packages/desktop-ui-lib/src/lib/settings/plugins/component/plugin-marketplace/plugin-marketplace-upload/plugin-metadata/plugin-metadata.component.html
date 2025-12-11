@@ -1,7 +1,19 @@
 <lib-form-section [formGroup]="form" title="{{ 'PLUGIN.FORM.METADATA.TITLE' | translate }}">
+	<!-- Header Info -->
+	<div class="metadata-header">
+		<div class="header-icon-wrapper">
+			<nb-icon icon="info-outline" status="info"></nb-icon>
+		</div>
+		<p class="header-description">{{ 'PLUGIN.FORM.METADATA.DESCRIPTION' | translate }}</p>
+	</div>
+
+	<!-- Author & License Row -->
 	<lib-form-row>
 		<nb-form-field class="form-group">
-			<label class="label" for="metadata-author">{{ 'PLUGIN.FORM.METADATA.AUTHOR' | translate }}</label>
+			<label class="label">
+				<nb-icon icon="person-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.METADATA.AUTHOR' | translate }}
+			</label>
 			<input
 				nbInput
 				fullWidth
@@ -10,13 +22,19 @@
 				placeholder="{{ 'PLUGIN.FORM.METADATA.AUTHOR_PLACEHOLDER' | translate }}"
 				[status]="getFieldError('author') ? 'danger' : 'basic'"
 			/>
-			<nb-hint *ngIf="getFieldError('author', 'maxlength')" status="danger">
+			@if(getFieldError('author', 'maxlength')) {
+			<nb-hint status="danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.AUTHOR_TOO_LONG' | translate }}
 			</nb-hint>
+			}
 		</nb-form-field>
 
 		<nb-form-field class="form-group">
-			<label class="label" for="metadata-license">{{ 'PLUGIN.FORM.METADATA.LICENSE' | translate }}</label>
+			<label class="label">
+				<nb-icon icon="file-text-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.METADATA.LICENSE' | translate }}
+			</label>
 			<input
 				nbInput
 				fullWidth
@@ -25,43 +43,89 @@
 				placeholder="{{ 'PLUGIN.FORM.METADATA.LICENSE_PLACEHOLDER' | translate }}"
 				[status]="getFieldError('license') ? 'danger' : 'basic'"
 			/>
-			<nb-hint *ngIf="getFieldError('license', 'maxlength')" status="danger">
+			@if(getFieldError('license', 'maxlength')) {
+			<nb-hint status="danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.LICENSE_TOO_LONG' | translate }}
 			</nb-hint>
+			} @if(form.get('license')?.valid && form.get('license')?.value) {
+			<nb-hint status="success">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Valid license specified
+			</nb-hint>
+			}
 		</nb-form-field>
 	</lib-form-row>
 
-	<lib-form-row>
-		<nb-form-field class="form-group">
-			<label class="label" for="metadata-homepage">{{ 'PLUGIN.FORM.METADATA.HOMEPAGE' | translate }}</label>
-			<input
-				nbInput
-				fullWidth
-				id="metadata-homepage"
-				formControlName="homepage"
-				type="url"
-				placeholder="{{ 'PLUGIN.FORM.METADATA.HOMEPAGE_PLACEHOLDER' | translate }}"
-				[status]="getFieldError('homepage') ? 'danger' : 'basic'"
-			/>
-			<nb-hint *ngIf="getFieldError('homepage', 'pattern')" status="danger">
-				{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
-			</nb-hint>
-		</nb-form-field>
+	<!-- URLs Section -->
+	<div class="urls-section">
+		<div class="section-header">
+			<nb-icon icon="link-2-outline" status="primary"></nb-icon>
+			<h6 class="section-title">{{ 'PLUGIN.FORM.METADATA.URLS_SECTION' | translate }}</h6>
+		</div>
 
-		<nb-form-field class="form-group">
-			<label class="label" for="metadata-repository">{{ 'PLUGIN.FORM.METADATA.REPOSITORY' | translate }}</label>
-			<input
-				nbInput
-				fullWidth
-				id="metadata-repository"
-				formControlName="repository"
-				type="url"
-				placeholder="{{ 'PLUGIN.FORM.METADATA.REPOSITORY_PLACEHOLDER' | translate }}"
-				[status]="getFieldError('repository') ? 'danger' : 'basic'"
-			/>
-			<nb-hint *ngIf="getFieldError('repository', 'pattern')" status="danger">
-				{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
-			</nb-hint>
-		</nb-form-field>
-	</lib-form-row>
+		<lib-form-row>
+			<nb-form-field class="form-group">
+				<label class="label">
+					<nb-icon icon="globe-outline" class="label-icon"></nb-icon>
+					{{ 'PLUGIN.FORM.METADATA.HOMEPAGE' | translate }}
+				</label>
+				<input
+					nbInput
+					fullWidth
+					id="metadata-homepage"
+					formControlName="homepage"
+					type="url"
+					placeholder="{{ 'PLUGIN.FORM.METADATA.HOMEPAGE_PLACEHOLDER' | translate }}"
+					[status]="getFieldError('homepage') ? 'danger' : 'basic'"
+				/>
+				@if(getFieldError('homepage', 'pattern')) {
+				<nb-hint status="danger">
+					<nb-icon icon="alert-circle-outline"></nb-icon>
+					{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
+				</nb-hint>
+				} @if(form.get('homepage')?.valid && form.get('homepage')?.value) {
+				<nb-hint status="success">
+					<nb-icon icon="checkmark-circle-outline"></nb-icon>
+					Valid URL
+				</nb-hint>
+				}
+			</nb-form-field>
+
+			<nb-form-field class="form-group">
+				<label class="label">
+					<nb-icon icon="code-outline" class="label-icon"></nb-icon>
+					{{ 'PLUGIN.FORM.METADATA.REPOSITORY' | translate }}
+				</label>
+				<input
+					nbInput
+					fullWidth
+					id="metadata-repository"
+					formControlName="repository"
+					type="url"
+					placeholder="{{ 'PLUGIN.FORM.METADATA.REPOSITORY_PLACEHOLDER' | translate }}"
+					[status]="getFieldError('repository') ? 'danger' : 'basic'"
+				/>
+				@if(getFieldError('repository', 'pattern')) {
+				<nb-hint status="danger">
+					<nb-icon icon="alert-circle-outline"></nb-icon>
+					{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
+				</nb-hint>
+				} @if(form.get('repository')?.valid && form.get('repository')?.value) {
+				<nb-hint status="success">
+					<nb-icon icon="checkmark-circle-outline"></nb-icon>
+					Valid repository URL
+				</nb-hint>
+				}
+			</nb-form-field>
+		</lib-form-row>
+	</div>
+
+	<!-- Optional Info Alert -->
+	<nb-alert status="info" size="small" class="metadata-info-alert">
+		<div class="alert-content">
+			<nb-icon icon="bulb-outline"></nb-icon>
+			<span>{{ 'PLUGIN.FORM.METADATA.OPTIONAL_INFO' | translate }}</span>
+		</div>
+	</nb-alert>
 </lib-form-section>

@@ -24,10 +24,15 @@
 	}
 
 	<div class="creator-header">
-		<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
-		<div>
+		<div class="header-icon">
+			<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+		</div>
+		<div class="header-content">
 			<h6>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TITLE' | translate }}</h6>
 			<p class="text-hint">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION' | translate }}</p>
+		</div>
+		<div class="header-badge" *ngIf="plans?.length > 0">
+			<nb-badge [text]="plans.length + ' Plan' + (plans.length !== 1 ? 's' : '')" status="primary"></nb-badge>
 		</div>
 	</div>
 
@@ -152,37 +157,64 @@
 
 					<!-- Plan Name and Description -->
 					<div class="form-row">
-						<nb-form-field class="form-group">
+						<nb-form-field
+							class="form-group"
+							[class.has-success]="planGroup.get('name')?.valid && planGroup.get('name')?.touched"
+						>
 							<label class="label">
 								<nb-icon icon="text-outline" status="primary"></nb-icon>
 								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME' | translate }} *
 							</label>
-							<input
-								nbInput
-								fullWidth
-								formControlName="name"
-								placeholder="{{
-									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME_PLACEHOLDER' | translate
-								}}"
-							/>
+							<div class="input-wrapper">
+								<input
+									nbInput
+									fullWidth
+									formControlName="name"
+									placeholder="{{
+										'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME_PLACEHOLDER' | translate
+									}}"
+								/>
+								<nb-icon
+									*ngIf="planGroup.get('name')?.valid && planGroup.get('name')?.touched"
+									icon="checkmark-circle-2"
+									status="success"
+									class="success-icon"
+								></nb-icon>
+							</div>
 						</nb-form-field>
 					</div>
 
 					<div class="form-row">
-						<nb-form-field class="form-group">
+						<nb-form-field
+							class="form-group"
+							[class.has-success]="
+								planGroup.get('description')?.valid && planGroup.get('description')?.touched
+							"
+						>
 							<label class="label">
 								<nb-icon icon="file-text-outline" status="primary"></nb-icon>
 								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PLAN_DESCRIPTION' | translate }} *
 							</label>
-							<textarea
-								nbInput
-								fullWidth
-								formControlName="description"
-								rows="3"
-								placeholder="{{
-									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION_PLACEHOLDER' | translate
-								}}"
-							></textarea>
+							<div class="input-wrapper">
+								<textarea
+									nbInput
+									fullWidth
+									formControlName="description"
+									rows="3"
+									placeholder="{{
+										'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION_PLACEHOLDER' | translate
+									}}"
+								></textarea>
+								<nb-icon
+									*ngIf="planGroup.get('description')?.valid && planGroup.get('description')?.touched"
+									icon="checkmark-circle-2"
+									status="success"
+									class="success-icon"
+								></nb-icon>
+							</div>
+							<span class="char-count" *ngIf="planGroup.get('description')?.value">
+								{{ planGroup.get('description')?.value.length }} characters
+							</span>
 						</nb-form-field>
 					</div>
 
@@ -245,19 +277,29 @@
 
 					<!-- Price Preview -->
 					<div class="price-preview" *ngIf="planGroup.get('price')?.value >= 0">
-						<nb-alert status="info" size="small">
-							<nb-icon icon="eye-outline"></nb-icon>
-							<strong>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PRICE_PREVIEW' | translate }}:</strong>
-							<span *ngIf="planGroup.get('price')?.value === 0">
+						<div class="preview-card">
+							<div class="preview-label">
+								<nb-icon icon="eye-outline" status="info"></nb-icon>
+								<span>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PRICE_PREVIEW' | translate }}</span>
+							</div>
+							<div class="preview-value" *ngIf="planGroup.get('price')?.value === 0">
 								<nb-icon icon="gift-outline" status="success"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FREE' | translate }}
-							</span>
-							<span *ngIf="planGroup.get('price')?.value > 0">
+								<span class="price-text free">{{
+									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FREE' | translate
+								}}</span>
+							</div>
+							<div class="preview-value" *ngIf="planGroup.get('price')?.value > 0">
 								<nb-icon icon="credit-card-outline" status="primary"></nb-icon>
-								{{ formatCurrency(planGroup.get('price')?.value, planGroup.get('currency')?.value) }}
-								/ {{ formatBillingPeriod(planGroup.get('billingPeriod')?.value) }}
-							</span>
-						</nb-alert>
+								<span class="price-text">
+									{{
+										formatCurrency(planGroup.get('price')?.value, planGroup.get('currency')?.value)
+									}}
+									<span class="period-text"
+										>/ {{ formatBillingPeriod(planGroup.get('billingPeriod')?.value) }}</span
+									>
+								</span>
+							</div>
+						</div>
 					</div>
 
 					<!-- Features -->

@@ -2,8 +2,19 @@
 <!-- form -->
 <nb-card class="dialog-card" status="basic">
 	<nb-card-header class="mb-0">
-		<h5 class="title">{{ (isEdit ? 'POP_UPS.EDIT' : 'PLUGIN.FORM.TITLE') | translate }}</h5>
-		<span class="cancel"><i (click)="dismiss()" class="fas fa-times"></i></span>
+		<div class="header-content">
+			<div class="header-icon">
+				<nb-icon [icon]="isEdit ? 'edit-outline' : 'plus-circle-outline'" status="primary"></nb-icon>
+			</div>
+			<div class="header-text">
+				<h5 class="title">{{ (isEdit ? 'POP_UPS.EDIT' : 'PLUGIN.FORM.TITLE') | translate }}</h5>
+				<p class="subtitle" *ngIf="!isEdit">Create and publish your plugin to the marketplace</p>
+				<p class="subtitle" *ngIf="isEdit">Update your plugin information and version</p>
+			</div>
+		</div>
+		<button nbButton ghost size="small" class="close-button" (click)="dismiss()">
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
 	</nb-card-header>
 
 	<nb-card-body>
@@ -80,13 +91,19 @@
 				<nb-step [label]="'PLUGIN.FORM.SUBSCRIPTION_PLANS' | translate">
 					<div class="subscription-step-content">
 						<div class="subscription-toggle">
+							<div class="toggle-header">
+								<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+								<h6>Monetization Options</h6>
+							</div>
 							<nb-checkbox
 								formControlName="requiresSubscription"
 								(checkedChange)="toggleSubscriptions($event)"
+								class="subscription-checkbox"
 							>
 								{{ 'PLUGIN.FORM.ENABLE_SUBSCRIPTIONS' | translate }}
 							</nb-checkbox>
 							<p class="subscription-description">
+								<nb-icon icon="info-outline" status="info"></nb-icon>
 								{{ 'PLUGIN.FORM.SUBSCRIPTION_DESCRIPTION' | translate }}
 							</p>
 						</div>
@@ -130,11 +147,17 @@
 				<!-- Step 6: Review & Submit -->
 				<nb-step [label]="'PLUGIN.FORM.REVIEW' | translate">
 					<div class="review-step-content">
-						<h6>{{ 'PLUGIN.FORM.REVIEW_TITLE' | translate }}</h6>
+						<div class="review-header">
+							<nb-icon icon="checkmark-circle-outline" status="success"></nb-icon>
+							<h6>{{ 'PLUGIN.FORM.REVIEW_TITLE' | translate }}</h6>
+						</div>
 
 						<!-- Plugin Information Summary -->
 						<div class="review-section">
-							<h6>{{ 'PLUGIN.FORM.PLUGIN_INFORMATION' | translate }}</h6>
+							<div class="section-header">
+								<nb-icon icon="cube-outline" status="primary"></nb-icon>
+								<h6>{{ 'PLUGIN.FORM.PLUGIN_INFORMATION' | translate }}</h6>
+							</div>
 							<div class="review-item">
 								<strong>{{ 'PLUGIN.FORM.NAME' | translate }}:</strong>
 								<span>{{ pluginForm.get('name')?.value }}</span>

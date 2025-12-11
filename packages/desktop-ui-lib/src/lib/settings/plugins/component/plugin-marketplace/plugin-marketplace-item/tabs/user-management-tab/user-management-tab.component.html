@@ -5,24 +5,29 @@ hasMore$ | async; @let loadingMore = loadingMore$ | async; @if (plugin && viewMo
 <div class="user-management-tab-content">
 	<!-- Header Section -->
 	<div class="header-section mb-4">
-		<div class="d-flex justify-content-between align-items-center">
-			<div class="header-info">
-				<h6 class="section-title mb-1">{{ 'PLUGIN.USER_MANAGEMENT.TITLE' | translate }}</h6>
-				<p class="section-description text-hint mb-0">
-					{{ 'PLUGIN.USER_MANAGEMENT.DESCRIPTION' | translate }}
-				</p>
+		<div class="header-card">
+			<div class="header-left">
+				<div class="header-icon">
+					<nb-icon icon="people-outline" status="primary"></nb-icon>
+				</div>
+				<div class="header-info">
+					<h6 class="section-title">{{ 'PLUGIN.USER_MANAGEMENT.TITLE' | translate }}</h6>
+					<p class="section-description">
+						{{ 'PLUGIN.USER_MANAGEMENT.DESCRIPTION' | translate }}
+					</p>
+				</div>
 			</div>
 			@if (canAssign) {
 			<button
 				nbButton
 				status="primary"
-				size="small"
+				size="medium"
 				(click)="showAssignmentDialog()"
 				class="assign-users-btn"
 				[disabled]="viewModel.loading"
 			>
-				<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
-				{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
+				<nb-icon icon="person-add-outline"></nb-icon>
+				<span>{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}</span>
 			</button>
 			}
 		</div>
@@ -31,15 +36,20 @@ hasMore$ | async; @let loadingMore = loadingMore$ | async; @if (plugin && viewMo
 	<!-- Stats Summary -->
 	@if (viewModel.hasAssignments) {
 	<div class="stats-card mb-4">
-		<div class="stat-item">
-			<nb-icon icon="people-outline" status="primary"></nb-icon>
+		<div class="stat-item total-stat">
+			<div class="stat-icon">
+				<nb-icon icon="people-outline" status="primary"></nb-icon>
+			</div>
 			<div class="stat-content">
 				<span class="stat-label">{{ 'PLUGIN.USER_MANAGEMENT.TOTAL_ASSIGNED' | translate }}</span>
 				<span class="stat-value">{{ viewModel.totalAssignmentsCount }}</span>
 			</div>
 		</div>
-		<div class="stat-item">
-			<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
+		<div class="stat-divider"></div>
+		<div class="stat-item active-stat">
+			<div class="stat-icon">
+				<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
+			</div>
 			<div class="stat-content">
 				<span class="stat-label">{{ 'PLUGIN.USER_MANAGEMENT.ACTIVE_USERS' | translate }}</span>
 				<span class="stat-value">{{ viewModel.activeAssignmentsCount }}</span>
@@ -62,7 +72,10 @@ hasMore$ | async; @let loadingMore = loadingMore$ | async; @if (plugin && viewMo
 
 	<!-- Assigned Users List with Infinite Scroll -->
 	<div class="assigned-users-section">
-		<h6 class="section-title mb-3">{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_USERS' | translate }}</h6>
+		<div class="section-header">
+			<nb-icon icon="list-outline" status="primary"></nb-icon>
+			<h6 class="section-title">{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_USERS' | translate }}</h6>
+		</div>
 
 		<!-- Loading State -->
 		@if (viewModel.loading) {
@@ -86,37 +99,42 @@ hasMore$ | async; @let loadingMore = loadingMore$ | async; @if (plugin && viewMo
 				@for (assignment of viewModel.assignments; track trackByAssignmentId($index, assignment); let isLast =
 				$last) {
 				<div class="user-assignment-item">
-					<div class="user-info">
-						<nb-user
-							[picture]="getUserAvatar(assignment.user)"
-							[name]="getUserDisplayName(assignment)"
-							[title]="assignment.user?.email || 'N/A'"
-							size="medium"
-						></nb-user>
-					</div>
-
-					<div class="assignment-metadata">
-						<div class="metadata-row">
-							<div class="metadata-item">
-								<nb-icon icon="calendar-outline" class="metadata-icon"></nb-icon>
-								<span class="metadata-text">
-									{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_ON' | translate }}: @if
-									(getAssignmentDate(assignment); as assignedDate) {
-									{{ assignedDate | date : 'medium' }}
-									} @else { N/A }
-								</span>
-							</div>
-							@if (assignment.reason) {
-							<div class="metadata-item">
-								<nb-icon icon="message-circle-outline" class="metadata-icon"></nb-icon>
-								<span class="metadata-text">{{ assignment.reason }}</span>
-							</div>
-							}
+					<div class="user-card">
+						<div class="user-info">
+							<nb-user
+								[picture]="getUserAvatar(assignment.user)"
+								[name]="getUserDisplayName(assignment)"
+								[title]="assignment.user?.email || 'N/A'"
+								size="large"
+							></nb-user>
 						</div>
 
-						<div class="status-badge">
-							@let statusBadge = getStatusBadge(assignment);
-							<nb-badge [status]="statusBadge.status" [text]="statusBadge.text | translate"></nb-badge>
+						<div class="assignment-metadata">
+							<div class="metadata-row">
+								<div class="metadata-item">
+									<nb-icon icon="calendar-outline" class="metadata-icon"></nb-icon>
+									<span class="metadata-text">
+										{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_ON' | translate }}: @if
+										(getAssignmentDate(assignment); as assignedDate) {
+										{{ assignedDate | date : 'medium' }}
+										} @else { N/A }
+									</span>
+								</div>
+								@if (assignment.reason) {
+								<div class="metadata-item">
+									<nb-icon icon="message-circle-outline" class="metadata-icon"></nb-icon>
+									<span class="metadata-text">{{ assignment.reason }}</span>
+								</div>
+								}
+							</div>
+
+							<div class="status-badge">
+								@let statusBadge = getStatusBadge(assignment);
+								<nb-badge
+									[status]="statusBadge.status"
+									[text]="statusBadge.text | translate"
+								></nb-badge>
+							</div>
 						</div>
 					</div>
 

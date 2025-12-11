@@ -3,12 +3,16 @@ getSelectedUsers() | async; @let loading = loading$ | async; @let totalCount = g
 
 <nb-card class="plugin-user-management">
 	<nb-card-header class="d-flex justify-content-between align-items-center">
+		<div class="header-icon-container">
+			<nb-icon icon="people-outline"></nb-icon>
+		</div>
 		<div class="header-info">
 			<h5 class="card-title mb-1">Manage Users - {{ plugin.name }}</h5>
 			<p class="card-subtitle text-hint mb-0">Assign and manage user access to this plugin installation</p>
 		</div>
 		<div class="header-stats">
 			<nb-badge [status]="totalCount && totalCount > 0 ? 'success' : 'basic'" class="assignment-count">
+				<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
 				{{ totalCount || 0 }} assigned
 			</nb-badge>
 		</div>
@@ -35,7 +39,10 @@ getSelectedUsers() | async; @let loading = loading$ | async; @let totalCount = g
 					<!-- Selected Users Preview -->
 					@if(selectedUsers && selectedUsers.length > 0) {
 					<div class="selected-users mb-3">
-						<h6 class="section-title">Selected Users ({{ selectedUsers.length }})</h6>
+						<div class="section-header">
+							<nb-icon icon="checkmark-square-outline" class="section-icon"></nb-icon>
+							<h6 class="section-title">Selected Users ({{ selectedUsers.length }})</h6>
+						</div>
 						<div class="selected-users-list">
 							@for(user of selectedUsers; track user.id) {
 							<div class="selected-user-chip">
@@ -64,7 +71,10 @@ getSelectedUsers() | async; @let loading = loading$ | async; @let totalCount = g
 
 					<!-- Available Users List -->
 					<div class="available-users">
-						<h6 class="section-title">Available Users</h6>
+						<div class="section-header">
+							<nb-icon icon="people-outline" class="section-icon"></nb-icon>
+							<h6 class="section-title">Available Users</h6>
+						</div>
 
 						@if(loadingAvailableUsers$ | async) {
 						<div class="loading-state">

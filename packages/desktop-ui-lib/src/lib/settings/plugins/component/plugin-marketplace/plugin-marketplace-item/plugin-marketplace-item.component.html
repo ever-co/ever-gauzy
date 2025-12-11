@@ -41,47 +41,54 @@
 
 <!-- Main template -->
 <nb-card class="content-active first plugin-details-card">
-	<nb-card-header class="d-flex align-items-center justify-content-between">
-		<div class="d-flex align-items-center">
-			<h5 class="mb-0">{{ plugin?.name || ('SM_TABLE.NO_DATA.LOADING' | translate) }}</h5>
-			<div class="ml-3">
-				<nb-badge
-					*ngIf="plugin"
-					[status]="getStatusBadgeStatus(plugin.status)"
-					[text]="getStatusLabel(plugin.status)"
-					class="mr-2 position-relative"
-				></nb-badge>
-				<!-- Subscription Status Badge -->
-				<gauzy-subscription-status-badge
-					*ngIf="subscription"
-					[status]="subscription.status"
-					class="mr-2"
-				></gauzy-subscription-status-badge>
-				<nb-badge
-					*ngIf="plugin"
-					[status]="getPluginTypeBadgeStatus(plugin.type)"
-					[text]="getTypeLabel(plugin.type)"
-					class="mr-2 position-relative"
-				></nb-badge>
-				<nb-badge
-					*ngIf="plugin && !plugin.hasPlan"
-					status="success"
-					text="Free"
-					class="position-relative"
-				></nb-badge>
-				<!-- Access Level Badge -->
-				<nb-badge
-					*ngIf="accessLevel$ | async as accessLevel"
-					[status]="getAccessLevelBadgeStatus(accessLevel)"
-					[text]="getAccessLevelLabel(accessLevel)"
-					class="mr-2 position-relative"
-				>
-				</nb-badge>
+	<nb-card-header>
+		<div class="header-content">
+			<div class="header-left">
+				<div class="icon-container">
+					<nb-icon icon="cube-outline"></nb-icon>
+				</div>
+				<div class="header-info">
+					<h5 class="title mb-2">{{ plugin?.name || ('SM_TABLE.NO_DATA.LOADING' | translate) }}</h5>
+					<div class="badge-container">
+						<nb-badge
+							*ngIf="plugin"
+							[status]="getStatusBadgeStatus(plugin.status)"
+							[text]="getStatusLabel(plugin.status)"
+							class="mr-2"
+						></nb-badge>
+						<!-- Subscription Status Badge -->
+						<gauzy-subscription-status-badge
+							*ngIf="subscription"
+							[status]="subscription.status"
+							class="mr-2"
+						></gauzy-subscription-status-badge>
+						<nb-badge
+							*ngIf="plugin"
+							[status]="getPluginTypeBadgeStatus(plugin.type)"
+							[text]="getTypeLabel(plugin.type)"
+							class="mr-2"
+						></nb-badge>
+						<nb-badge
+							*ngIf="plugin && !plugin.hasPlan"
+							status="success"
+							text="Free"
+							class="mr-2"
+						></nb-badge>
+						<!-- Access Level Badge -->
+						<nb-badge
+							*ngIf="accessLevel$ | async as accessLevel"
+							[status]="getAccessLevelBadgeStatus(accessLevel)"
+							[text]="getAccessLevelLabel(accessLevel)"
+							class="mr-2"
+						>
+						</nb-badge>
+					</div>
+				</div>
 			</div>
+			<button nbButton ghost size="small" (click)="navigateBack()" class="close-button">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
 		</div>
-		<button nbButton ghost size="small" (click)="navigateBack()">
-			<nb-icon icon="close-outline"></nb-icon>
-		</button>
 	</nb-card-header>
 
 	<nb-card-body>
@@ -96,93 +103,109 @@
 		}@else {
 		<div class="plugin-content">
 			<!-- Quick Actions -->
-			<div class="quick-actions">
+			<div class="quick-actions-card">
 				@if(installed) {
-				<div class="d-flex align-items-center">
-					<nb-icon icon="checkmark-circle-2-outline" status="success" class="mr-2"></nb-icon>
-					<span class="text-success">{{ 'PLUGIN.DETAILS.INSTALLED' | translate }}</span>
+				<div class="installed-status">
+					<div class="status-indicator">
+						<nb-icon icon="checkmark-circle-2-outline" class="status-icon"></nb-icon>
+						<span class="status-text">{{ 'PLUGIN.DETAILS.INSTALLED' | translate }}</span>
+					</div>
+					<div class="action-buttons-group">
+						@if(needUpdate) {
+						<button
+							nbButton
+							status="primary"
+							size="medium"
+							[disabled]="disabled"
+							(click)="installUpdate()"
+							class="update-button"
+						>
+							<nb-icon
+								*gauzySpinnerButton="installing && isSelected"
+								icon="sync-outline"
+								class="mr-1"
+							></nb-icon>
+							{{ 'BUTTONS.UPDATE' | translate }}
+						</button>
+						}
+						<button
+							nbButton
+							outline
+							status="danger"
+							size="medium"
+							[disabled]="disabled"
+							(click)="uninstallPlugin()"
+							class="uninstall-button"
+						>
+							<nb-icon
+								*gauzySpinnerButton="uninstalling && isSelected"
+								icon="slash-outline"
+								class="mr-1"
+							></nb-icon>
+							{{ 'BUTTONS.UNINSTALL' | translate }}
+						</button>
+					</div>
 				</div>
-				@if(needUpdate) {
-				<button
-					nbButton
-					status="basic"
-					size="small"
-					[disabled]="disabled"
-					(click)="installUpdate()"
-					class="ml-3 action primary"
-				>
-					<nb-icon *gauzySpinnerButton="installing && isSelected" icon="sync-outline" class="mr-1"></nb-icon>
-					{{ 'BUTTONS.UPDATE' | translate }}
-				</button>
-				}
-				<button
-					nbButton
-					status="basic"
-					size="small"
-					[disabled]="disabled"
-					(click)="uninstallPlugin()"
-					class="ml-2 action danger"
-				>
-					<nb-icon
-						*gauzySpinnerButton="uninstalling && isSelected"
-						status="danger"
-						icon="slash-outline"
-					></nb-icon>
-					{{ 'BUTTONS.UNINSTALL' | translate }}
-				</button>
-				}@else {
-				<!-- Install button with subscription check -->
-				@if(plugin.hasPlan) { @if(hasAccess$ | async) {
-				<!-- User has active subscription -->
-				<button
-					nbButton
-					status="basic"
-					size="small"
-					class="action success"
-					[disabled]="disabled"
-					(click)="installPlugin()"
-					[nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_WITH_SUBSCRIPTION' | translate"
-				>
-					<nb-icon
-						*gauzySpinnerButton="installing && isSelected"
-						icon="cloud-download-outline"
-						class="mr-1"
-					></nb-icon>
-					{{ 'BUTTONS.INSTALL' | translate }}
-				</button>
 				} @else {
-				<!-- User needs to subscribe first -->
-				<button
-					nbButton
-					status="basic"
-					size="small"
-					class="action warning"
-					[disabled]="disabled"
-					(click)="installPlugin()"
-					[nbTooltip]="'PLUGIN.TOOLTIP.SUBSCRIBE_TO_INSTALL' | translate"
-				>
-					<nb-icon *gauzySpinnerButton="installing && isSelected" icon="lock-outline" class="mr-1"></nb-icon>
-					{{ 'PLUGIN.BUTTONS.SUBSCRIBE_AND_INSTALL' | translate }}
-				</button>
-				} } @else {
-				<!-- Free plugin - no subscription required -->
-				<button
-					nbButton
-					status="basic"
-					size="small"
-					class="action success"
-					[disabled]="disabled"
-					(click)="installPlugin()"
-					[nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_FREE' | translate"
-				>
-					<nb-icon
-						*gauzySpinnerButton="installing && isSelected"
-						icon="cloud-download-outline"
-						class="mr-1"
-					></nb-icon>
-					{{ 'BUTTONS.INSTALL' | translate }}
-				</button>
-				} }
+				<div class="install-options">
+					<!-- Install button with subscription check -->
+					@if(plugin.hasPlan) { @if(hasAccess$ | async) {
+					<!-- User has active subscription -->
+					<button
+						nbButton
+						status="success"
+						size="medium"
+						class="install-button"
+						[disabled]="disabled"
+						(click)="installPlugin()"
+						[nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_WITH_SUBSCRIPTION' | translate"
+					>
+						<nb-icon
+							*gauzySpinnerButton="installing && isSelected"
+							icon="cloud-download-outline"
+							class="mr-1"
+						></nb-icon>
+						{{ 'BUTTONS.INSTALL' | translate }}
+					</button>
+					} @else {
+					<!-- User needs to subscribe first -->
+					<button
+						nbButton
+						status="warning"
+						size="medium"
+						class="subscribe-button"
+						[disabled]="disabled"
+						(click)="installPlugin()"
+						[nbTooltip]="'PLUGIN.TOOLTIP.SUBSCRIBE_TO_INSTALL' | translate"
+					>
+						<nb-icon
+							*gauzySpinnerButton="installing && isSelected"
+							icon="lock-outline"
+							class="mr-1"
+						></nb-icon>
+						{{ 'PLUGIN.BUTTONS.SUBSCRIBE_AND_INSTALL' | translate }}
+					</button>
+					} } @else {
+					<!-- Free plugin - no subscription required -->
+					<button
+						nbButton
+						status="success"
+						size="medium"
+						class="install-button"
+						[disabled]="disabled"
+						(click)="installPlugin()"
+						[nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_FREE' | translate"
+					>
+						<nb-icon
+							*gauzySpinnerButton="installing && isSelected"
+							icon="cloud-download-outline"
+							class="mr-1"
+						></nb-icon>
+						{{ 'BUTTONS.INSTALL' | translate }}
+					</button>
+					}
+				</div>
+				}
 			</div>
 
 			<!-- Plugin Info Tabs with Lazy Loading -->
@@ -195,103 +218,123 @@
 		}
 	</nb-card-body>
 
-	<nb-card-footer class="d-flex justify-content-between">
-		<button nbButton type="button" size="small" class="action secondary" status="basic" (click)="navigateBack()">
-			<nb-icon icon="arrow-back-outline" class="mr-1"></nb-icon>
-			{{ 'BUTTONS.BACK' | translate | titlecase }}
-		</button>
+	<nb-card-footer>
+		<div class="footer-content">
+			<button
+				nbButton
+				type="button"
+				outline
+				status="primary"
+				size="medium"
+				class="back-button"
+				(click)="navigateBack()"
+			>
+				<nb-icon icon="arrow-back-outline" class="mr-1"></nb-icon>
+				{{ 'BUTTONS.BACK' | translate | titlecase }}
+			</button>
 
-		<div class="action-buttons">
-			<!-- View Subscription Button (shown when plugin has subscription) -->
-			@if(hasSubscription$ | async) {
-			<button
-				nbButton
-				type="button"
-				size="small"
-				status="info"
-				[disabled]="disabled"
-				(click)="viewSubscriptionHierarchy()"
-				class="mr-2 action"
-				[nbTooltip]="'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate"
-			>
-				<nb-icon icon="credit-card-outline" class="mr-1"></nb-icon>
-				{{ 'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate }}
-			</button>
-			}
-			<!-- Assign Users Button (for users with canAssign permission) -->
-			@if(canAssign$ | async) {
-			<button
-				nbButton
-				type="button"
-				size="small"
-				status="info"
-				[disabled]="disabled"
-				(click)="showAssignUsersDialog()"
-				class="mr-2 action"
-			>
-				<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
-				{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
-			</button>
-			} @if(isOwner) {
-			<button
-				nbButton
-				type="button"
-				size="small"
-				status="basic"
-				[disabled]="disabled"
-				(click)="addVersion()"
-				class="mr-2 action primary soft"
-			>
-				<nb-icon *gauzySpinnerButton="adding && isSelected" icon="plus-outline" class="mr-1"></nb-icon>
-				{{ 'BUTTONS.ADD_VERSION' | translate }}
-				@if(uploading && adding){
-				<span> {{ progress | percent : '1.2-2' }} </span>
+			<div class="footer-actions">
+				<!-- View Subscription Button (shown when plugin has subscription) -->
+				@if(hasSubscription$ | async) {
+				<button
+					nbButton
+					type="button"
+					outline
+					size="medium"
+					status="info"
+					[disabled]="disabled"
+					(click)="viewSubscriptionHierarchy()"
+					class="subscription-button"
+					[nbTooltip]="'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate"
+				>
+					<nb-icon icon="credit-card-outline" class="mr-1"></nb-icon>
+					{{ 'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate }}
+				</button>
 				}
-			</button>
+				<!-- Assign Users Button (for users with canAssign permission) -->
+				@if(canAssign$ | async) {
+				<button
+					nbButton
+					type="button"
+					outline
+					size="medium"
+					status="info"
+					[disabled]="disabled"
+					(click)="showAssignUsersDialog()"
+					class="assign-button"
+				>
+					<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
+					{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
+				</button>
+				} @if(isOwner) {
+				<button
+					nbButton
+					type="button"
+					outline
+					size="medium"
+					status="primary"
+					[disabled]="disabled"
+					(click)="addVersion()"
+					class="add-version-button"
+				>
+					<nb-icon *gauzySpinnerButton="adding && isSelected" icon="plus-outline" class="mr-1"></nb-icon>
+					{{ 'BUTTONS.ADD_VERSION' | translate }}
+					@if(uploading && adding){
+					<span> {{ progress | percent : '1.2-2' }} </span>
+					}
+				</button>
 
-			<button
-				nbButton
-				type="button"
-				status="basic"
-				[disabled]="disabled"
-				size="small"
-				(click)="addSource()"
-				class="mr-2 action info"
-			>
-				<nb-icon *gauzySpinnerButton="creatingSource && isSelected" icon="plus-outline" class="mr-1"></nb-icon>
-				{{ 'BUTTONS.ADD_MORE_SOURCES' | translate }}
-				@if(uploading && creatingSource){
-				<span> {{ progress | percent : '1.2-2' }} </span>
+				<button
+					nbButton
+					type="button"
+					outline
+					status="info"
+					[disabled]="disabled"
+					size="medium"
+					(click)="addSource()"
+					class="add-source-button"
+				>
+					<nb-icon
+						*gauzySpinnerButton="creatingSource && isSelected"
+						icon="plus-outline"
+						class="mr-1"
+					></nb-icon>
+					{{ 'BUTTONS.ADD_MORE_SOURCES' | translate }}
+					@if(uploading && creatingSource){
+					<span> {{ progress | percent : '1.2-2' }} </span>
+					}
+				</button>
+
+				<button
+					nbButton
+					type="button"
+					outline
+					status="primary"
+					[disabled]="disabled"
+					size="medium"
+					(click)="navigateToEdit()"
+					class="edit-button"
+				>
+					<nb-icon *gauzySpinnerButton="editing && isSelected" icon="edit-2-outline" class="mr-1"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+
+				<button
+					nbButton
+					type="button"
+					outline
+					status="danger"
+					[disabled]="disabled"
+					size="medium"
+					(click)="delete()"
+					class="delete-button"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					*gauzySpinnerButton="deleting && isSelected"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
 				}
-			</button>
-
-			<button
-				nbButton
-				type="button"
-				status="basic"
-				[disabled]="disabled"
-				size="small"
-				(click)="navigateToEdit()"
-				class="mr-2 action secondary"
-			>
-				<nb-icon *gauzySpinnerButton="editing && isSelected" icon="edit-2-outline" class="mr-1"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-
-			<button
-				nbButton
-				type="button"
-				status="basic"
-				class="action"
-				[disabled]="disabled"
-				size="small"
-				(click)="delete()"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-				*gauzySpinnerButton="deleting && isSelected"
-			>
-				<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
-			</button>
-			}
+			</div>
 		</div>
 	</nb-card-footer>
 </nb-card>

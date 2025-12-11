@@ -1,8 +1,13 @@
 <div class="dialog-container">
 	<nb-card>
 		<nb-card-header class="d-flex justify-content-between align-items-center">
-			<h5 class="mb-0">{{ 'PLUGIN.ASSIGNMENT_DIALOG.TITLE' | translate }}</h5>
-			<button nbButton ghost size="small" (click)="close()" [disabled]="loading$ | async">
+			<div class="header-content">
+				<div class="header-icon-container">
+					<nb-icon icon="person-add-outline"></nb-icon>
+				</div>
+				<h5 class="mb-0">{{ 'PLUGIN.ASSIGNMENT_DIALOG.TITLE' | translate }}</h5>
+			</div>
+			<button nbButton ghost size="small" (click)="close()" [disabled]="loading$ | async" class="close-btn">
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
 		</nb-card-header>
@@ -12,6 +17,7 @@
 				<!-- User Selection -->
 				<div class="form-group">
 					<label class="label">
+						<nb-icon icon="people-outline" class="label-icon"></nb-icon>
 						{{ 'PLUGIN.ASSIGNMENT_DIALOG.SELECT_USERS' | translate }}
 						<span class="text-danger">*</span>
 					</label>
@@ -34,6 +40,7 @@
 					</nb-select>
 
 					<div class="form-help-text" *ngIf="selectedCount > 0">
+						<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
 						{{ 'PLUGIN.ASSIGNMENT_DIALOG.SELECTED_COUNT' | translate : { count: selectedCount } }}
 					</div>
 
@@ -47,6 +54,7 @@
 				<!-- Reason (Optional) -->
 				<div class="form-group">
 					<label class="label">
+						<nb-icon icon="message-circle-outline" class="label-icon"></nb-icon>
 						{{ 'PLUGIN.ASSIGNMENT_DIALOG.REASON' | translate }}
 						<span class="text-muted">({{ 'PLUGIN.ASSIGNMENT_DIALOG.OPTIONAL' | translate }})</span>
 					</label>
@@ -61,7 +69,10 @@
 					>
 					</textarea>
 
-					<div class="form-help-text">{{ form.get('reason')?.value?.length || 0 }} / 500</div>
+					<div class="form-help-text">
+						<nb-icon icon="edit-outline" class="help-icon"></nb-icon>
+						{{ form.get('reason')?.value?.length || 0 }} / 500
+					</div>
 
 					<div class="form-error" *ngIf="form.get('reason')?.invalid && form.get('reason')?.touched">
 						<span *ngIf="form.get('reason')?.errors?.['maxlength']">

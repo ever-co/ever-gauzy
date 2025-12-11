@@ -5,10 +5,15 @@
 <nb-card class="plugin-settings-management">
 	<nb-card-header class="d-flex justify-content-between align-items-center">
 		<div class="header-info">
-			<h5 class="card-title mb-1">Plugin Settings - {{ plugin.name }}</h5>
-			<p class="card-subtitle text-hint mb-0">
-				Configure and manage plugin settings and preferences
-			</p>
+			<div class="header-icon-container">
+				<nb-icon icon="settings-2-outline"></nb-icon>
+			</div>
+			<div class="header-content">
+				<h5 class="card-title mb-1">Plugin Settings - {{ plugin.name }}</h5>
+				<p class="card-subtitle text-hint mb-0">
+					Configure and manage plugin settings and preferences
+				</p>
+			</div>
 		</div>
 		<div class="header-actions">
 			<button
@@ -27,6 +32,10 @@
 	<nb-card-body>
 		<!-- Search and Filter Controls -->
 		<form [formGroup]="searchForm" class="filter-controls mb-4">
+			<div class="controls-header">
+				<nb-icon icon="options-2-outline" class="controls-icon"></nb-icon>
+				<span class="controls-label">Search & Filter</span>
+			</div>
 			<div class="row">
 				<div class="col-md-8">
 					<nb-form-field>
@@ -233,7 +242,9 @@
 			</form>
 		} @else {
 			<div class="empty-state">
-				<nb-icon icon="settings-outline" class="empty-icon"></nb-icon>
+				<div class="empty-icon-container">
+					<nb-icon icon="settings-outline" class="empty-icon"></nb-icon>
+				</div>
 				<p class="empty-text">No settings found</p>
 				<small class="empty-hint">
 					No settings match your current search criteria or this plugin has no configurable settings.

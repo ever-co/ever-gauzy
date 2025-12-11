@@ -3,6 +3,10 @@
 	<!-- Description -->
 	@if(plugin.description) {
 	<div class="description-container mb-4">
+		<div class="description-header">
+			<nb-icon icon="file-text-outline" status="primary"></nb-icon>
+			<h6>About this plugin</h6>
+		</div>
 		<p
 			[readMore]="256"
 			[readMoreText]="'BUTTONS.READ_MORE' | translate"
@@ -16,18 +20,29 @@
 
 	<!-- Basic Information -->
 	<div class="info-card mb-4">
-		<h6 class="section-title mb-3">{{ 'PLUGIN.FORM.BASIC_INFO' | translate }}</h6>
+		<div class="card-header">
+			<nb-icon icon="info-outline" status="primary"></nb-icon>
+			<h6 class="section-title">{{ 'PLUGIN.FORM.BASIC_INFO' | translate }}</h6>
+		</div>
 
 		<div class="info-grid">
 			@if(selectedVersion) {
 			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.FORM.VERSION' | translate }}</div>
-				<div class="value">{{ selectedVersion.number }}</div>
+				<div class="label">
+					<nb-icon icon="code-outline" status="info"></nb-icon>
+					{{ 'PLUGIN.FORM.VERSION' | translate }}
+				</div>
+				<div class="value">
+					<nb-badge text="v{{ selectedVersion.number }}" status="info"></nb-badge>
+				</div>
 			</div>
 			}
 
 			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.FORM.STATUS' | translate }}</div>
+				<div class="label">
+					<nb-icon icon="activity-outline" status="success"></nb-icon>
+					{{ 'PLUGIN.FORM.STATUS' | translate }}
+				</div>
 				<div class="value">
 					@if(isOwner) {
 					<nb-select
@@ -53,73 +68,110 @@
 						</nb-option>
 					</nb-select>
 					}@else {
-					{{ 'PLUGIN.FORM.STATUSES.' + plugin.status | translate }}
+					<nb-badge
+						[text]="'PLUGIN.FORM.STATUSES.' + plugin.status | translate"
+						[status]="plugin.status === pluginStatus.ACTIVE ? 'success' : 'warning'"
+					></nb-badge>
 					}
 				</div>
 			</div>
 
 			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.FORM.TYPE' | translate }}</div>
-				<div class="value">{{ getTypeLabel(plugin.type) }}</div>
+				<div class="label">
+					<nb-icon icon="layers-outline" status="primary"></nb-icon>
+					{{ 'PLUGIN.FORM.TYPE' | translate }}
+				</div>
+				<div class="value">
+					<nb-badge [text]="getTypeLabel(plugin.type)" status="basic"></nb-badge>
+				</div>
 			</div>
 		</div>
 	</div>
 
 	<!-- What's new -->
 	@if(selectedVersion; as version) {
-	<div class="info-card mb-4">
-		<div class="d-flex align-items-center mb-3">
-			<h6 class="section-title m-0">{{ 'CHANGELOG_MENU.HEADER' | translate }}</h6>
-			<button nbButton ghost status="basic" class="ml-2 mr-2" (click)="navigateToHistory()">
-				<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+	<div class="info-card changelog-card mb-4">
+		<div class="card-header with-action">
+			<div class="header-left">
+				<nb-icon icon="book-open-outline" status="primary"></nb-icon>
+				<h6 class="section-title">{{ 'CHANGELOG_MENU.HEADER' | translate }}</h6>
+			</div>
+			<button nbButton ghost size="small" status="primary" (click)="navigateToHistory()">
+				<span>View All</span>
+				<nb-icon icon="arrow-forward-outline"></nb-icon>
 			</button>
 		</div>
-		<div class="info-version full-width d-flex justify-content-between">
-			<div class="label">Version {{ version.number }}</div>
-			<div class="value">{{ version.createdAt | humanize }}</div>
+		<div class="version-info">
+			<div class="version-badge">
+				<nb-icon icon="git-branch-outline" status="info"></nb-icon>
+				<span class="version-number">Version {{ version.number }}</span>
+			</div>
+			<div class="version-date">
+				<nb-icon icon="clock-outline"></nb-icon>
+				<span>{{ version.createdAt | humanize }}</span>
+			</div>
 		</div>
-		<p
-			[readMore]="128"
-			[readMoreText]="'BUTTONS.READ_MORE' | translate"
-			[readLessText]="'BUTTONS.READ_LESS' | translate"
-			class="plugin-description"
-		>
-			{{ version.changelog }}
-		</p>
+		<div class="changelog-content">
+			<p
+				[readMore]="128"
+				[readMoreText]="'BUTTONS.READ_MORE' | translate"
+				[readLessText]="'BUTTONS.READ_LESS' | translate"
+				class="changelog-text"
+			>
+				{{ version.changelog }}
+			</p>
+		</div>
 	</div>
 	}
 
 	<!-- Metadata Section -->
 	<div class="info-card mb-4">
-		<h6 class="section-title mb-3">{{ 'PLUGIN.FORM.METADATA.TITLE' | translate }}</h6>
+		<div class="card-header">
+			<nb-icon icon="book-outline" status="primary"></nb-icon>
+			<h6 class="section-title">{{ 'PLUGIN.FORM.METADATA.TITLE' | translate }}</h6>
+		</div>
 
 		<div class="info-grid">
 			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.FORM.METADATA.AUTHOR' | translate }}</div>
+				<div class="label">
+					<nb-icon icon="person-outline" status="info"></nb-icon>
+					{{ 'PLUGIN.FORM.METADATA.AUTHOR' | translate }}
+				</div>
 				<div class="value">{{ plugin.author || 'N/A' }}</div>
 			</div>
 
 			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.FORM.METADATA.LICENSE' | translate }}</div>
-				<div class="value">{{ plugin.license || 'N/A' }}</div>
+				<div class="label">
+					<nb-icon icon="shield-outline" status="warning"></nb-icon>
+					{{ 'PLUGIN.FORM.METADATA.LICENSE' | translate }}
+				</div>
+				<div class="value">
+					<nb-badge [text]="plugin.license || 'N/A'" status="basic"></nb-badge>
+				</div>
 			</div>
 
 			@if(plugin.homepage) {
 			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.FORM.METADATA.HOMEPAGE' | translate }}</div>
+				<div class="label">
+					<nb-icon icon="globe-outline" status="info"></nb-icon>
+					{{ 'PLUGIN.FORM.METADATA.HOMEPAGE' | translate }}
+				</div>
 				<div class="value">
 					<a [href]="plugin.homepage" target="_blank" rel="noopener noreferrer" class="external-link">
-						{{ plugin.homepage }}
+						<span class="link-text">{{ plugin.homepage }}</span>
 						<nb-icon icon="external-link-outline" class="link-icon"></nb-icon>
 					</a>
 				</div>
 			</div>
 			} @if(plugin.repository) {
 			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.FORM.METADATA.REPOSITORY' | translate }}</div>
+				<div class="label">
+					<nb-icon icon="code-outline" status="info"></nb-icon>
+					{{ 'PLUGIN.FORM.METADATA.REPOSITORY' | translate }}
+				</div>
 				<div class="value">
 					<a [href]="plugin.repository" target="_blank" rel="noopener noreferrer" class="external-link">
-						{{ plugin.repository }}
+						<span class="link-text">{{ plugin.repository }}</span>
 						<nb-icon icon="external-link-outline" class="link-icon"></nb-icon>
 					</a>
 				</div>
@@ -129,30 +181,48 @@
 	</div>
 
 	<!-- Usage Statistics Section -->
-	<div class="info-card">
-		<h6 class="section-title mb-3">{{ 'PLUGIN.DETAILS.USAGE_STATS' | translate }}</h6>
+	<div class="info-card stats-card">
+		<div class="card-header">
+			<nb-icon icon="bar-chart-outline" status="primary"></nb-icon>
+			<h6 class="section-title">{{ 'PLUGIN.DETAILS.USAGE_STATS' | translate }}</h6>
+		</div>
 
 		<div class="info-grid">
-			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.DETAILS.DOWNLOAD_COUNT' | translate }}</div>
-				<div class="value">{{ plugin.downloadCount }}</div>
+			<div class="info-item stat-item">
+				<div class="label">
+					<nb-icon icon="download-outline" status="success"></nb-icon>
+					{{ 'PLUGIN.DETAILS.DOWNLOAD_COUNT' | translate }}
+				</div>
+				<div class="value stat-value">
+					<span class="stat-number">{{ plugin.downloadCount }}</span>
+					<span class="stat-label">downloads</span>
+				</div>
 			</div>
 
 			@if(plugin.lastDownloadedAt) {
 			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.DETAILS.LAST_DOWNLOADED' | translate }}</div>
+				<div class="label">
+					<nb-icon icon="clock-outline" status="info"></nb-icon>
+					{{ 'PLUGIN.DETAILS.LAST_DOWNLOADED' | translate }}
+				</div>
 				<div class="value">{{ formatDate(plugin.lastDownloadedAt) }}</div>
 			</div>
 			} @if(plugin.uploadedBy) {
 			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.DETAILS.UPLOADED_BY' | translate }}</div>
+				<div class="label">
+					<nb-icon icon="person-outline" status="info"></nb-icon>
+					{{ 'PLUGIN.DETAILS.UPLOADED_BY' | translate }}
+				</div>
 				<div class="value">
-					{{ plugin.uploadedBy.name }}
+					<nb-badge [text]="plugin.uploadedBy.name" status="basic"></nb-badge>
 				</div>
 			</div>
 			} @if(plugin.uploadedAt) {
 			<div class="info-item">
-				<div class="label">{{ 'PLUGIN.DETAILS.UPLOADED_AT' | translate }}</div>
+				<div class="label">
+					<nb-icon icon="calendar-outline" status="info"></nb-icon>
+					{{ 'PLUGIN.DETAILS.UPLOADED_AT' | translate }}
+				</div>
 				<div class="value">{{ formatDate(plugin.uploadedAt) }}</div>
 			</div>
 			}

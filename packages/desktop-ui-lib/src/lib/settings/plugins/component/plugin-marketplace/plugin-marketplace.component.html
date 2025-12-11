@@ -24,22 +24,27 @@ selectedView = query.selectedView$ | async;
 	<div class="content-panel">
 		<!-- Results Header -->
 		<div class="results-header" *ngIf="available || isLoading">
+			<div class="header-icon-container">
+				<nb-icon icon="shopping-bag-outline"></nb-icon>
+			</div>
+
 			<div class="results-info">
 				<h6 class="results-title">Plugin Marketplace</h6>
 				<div class="results-stats" *ngIf="!isLoading">
+					<nb-icon icon="layers-outline" class="stats-icon"></nb-icon>
 					<span class="stats-text"> Showing {{ filteredCount || 0 }} of {{ totalCount || 0 }} plugins </span>
 				</div>
 			</div>
 
 			<div class="results-actions">
 				<!-- View Toggle -->
-				<nb-button-group>
+				<nb-button-group class="view-toggle">
 					<button
 						nbButton
 						[status]="selectedView === 'grid' ? 'primary' : 'basic'"
 						(click)="setViewMode('grid')"
 						nbTooltip="Grid view"
-						size="small"
+						size="medium"
 					>
 						<nb-icon icon="grid-outline"></nb-icon>
 					</button>
@@ -48,7 +53,7 @@ selectedView = query.selectedView$ | async;
 						[status]="selectedView === 'list' ? 'primary' : 'basic'"
 						(click)="setViewMode('list')"
 						nbTooltip="List view"
-						size="small"
+						size="medium"
 					>
 						<nb-icon icon="list-outline"></nb-icon>
 					</button>
@@ -60,10 +65,11 @@ selectedView = query.selectedView$ | async;
 					[status]="showAdvancedFilters ? 'primary' : 'basic'"
 					(click)="toggleAdvancedFilters()"
 					nbTooltip="Toggle advanced filters"
-					size="small"
+					size="medium"
+					class="filter-toggle-btn"
 				>
 					<nb-icon icon="options-outline"></nb-icon>
-					Advanced
+					<span class="btn-text">Advanced</span>
 				</button>
 			</div>
 		</div>
@@ -126,10 +132,11 @@ selectedView = query.selectedView$ | async;
 					status="primary"
 					nbButton
 					[disabled]="isOffline"
+					class="upload-fab"
 				>
 					<nb-icon *gauzySpinnerButton="uploading" icon="cloud-upload-outline"></nb-icon>
 					@if (uploading) {
-					<span>{{ progress | percent : '1.2-2' }}</span>
+					<span class="upload-progress">{{ progress | percent : '1.2-2' }}</span>
 					}
 				</button>
 			</div>

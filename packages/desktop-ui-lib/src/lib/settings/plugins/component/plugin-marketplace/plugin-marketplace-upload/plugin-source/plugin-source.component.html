@@ -1,36 +1,71 @@
 <lib-form-section *ngIf="form" [formGroup]="form" title="{{ 'PLUGIN.FORM.SOURCE' | translate }}">
-	<lib-form-row>
-		<nb-form-field *ngIf="form.get('operatingSystem')" class="form-group">
-			<label class="label" for="source-os">{{ 'PLUGIN.FORM.OPERATING_SYSTEM' | translate }} *</label>
-			<nb-select
-				fullWidth
-				id="source-os"
-				formControlName="operatingSystem"
-				[status]="getFieldError('operatingSystem') ? 'danger' : 'basic'"
-			>
-				@for(os of sourceOs; track os) {
-				<nb-option [value]="os">
-					{{ os | translate | titlecase }}
-				</nb-option>
+	<!-- Platform Configuration -->
+	<div class="platform-section">
+		<div class="section-header">
+			<nb-icon icon="monitor-outline" status="info"></nb-icon>
+			<h6 class="section-title">{{ 'PLUGIN.FORM.PLATFORM_CONFIG' | translate }}</h6>
+		</div>
+
+		<lib-form-row>
+			<nb-form-field *ngIf="form.get('operatingSystem')" class="form-group">
+				<label class="label">
+					<nb-icon icon="monitor-outline" class="label-icon"></nb-icon>
+					{{ 'PLUGIN.FORM.OPERATING_SYSTEM' | translate }}
+					<span class="required-indicator">*</span>
+				</label>
+				<nb-select
+					fullWidth
+					id="source-os"
+					formControlName="operatingSystem"
+					[status]="getFieldError('operatingSystem') ? 'danger' : 'basic'"
+				>
+					@for(os of sourceOs; track os) {
+					<nb-option [value]="os">
+						<div class="select-option-content">
+							<nb-icon icon="monitor-outline"></nb-icon>
+							<span>{{ os | translate | titlecase }}</span>
+						</div>
+					</nb-option>
+					}
+				</nb-select>
+				@if(form.get('operatingSystem')?.valid && form.get('operatingSystem')?.value) {
+				<nb-hint status="success">
+					<nb-icon icon="checkmark-circle-outline"></nb-icon>
+					OS selected: {{ form.get('operatingSystem')?.value | translate | titlecase }}
+				</nb-hint>
 				}
-			</nb-select>
-		</nb-form-field>
-		<nb-form-field *ngIf="form.get('architecture')" class="form-group">
-			<label class="label" for="source-arch">{{ 'PLUGIN.FORM.ARCHITECTURE' | translate }} *</label>
-			<nb-select
-				fullWidth
-				id="source-arch"
-				formControlName="architecture"
-				[status]="getFieldError('architecture') ? 'danger' : 'basic'"
-			>
-				@for(arch of sourceArchs; track arch) {
-				<nb-option [value]="arch">
-					{{ arch | translate }}
-				</nb-option>
+			</nb-form-field>
+
+			<nb-form-field *ngIf="form.get('architecture')" class="form-group">
+				<label class="label">
+					<nb-icon icon="cpu-outline" class="label-icon"></nb-icon>
+					{{ 'PLUGIN.FORM.ARCHITECTURE' | translate }}
+					<span class="required-indicator">*</span>
+				</label>
+				<nb-select
+					fullWidth
+					id="source-arch"
+					formControlName="architecture"
+					[status]="getFieldError('architecture') ? 'danger' : 'basic'"
+				>
+					@for(arch of sourceArchs; track arch) {
+					<nb-option [value]="arch">
+						<div class="select-option-content">
+							<nb-icon icon="cpu-outline"></nb-icon>
+							<span>{{ arch | translate }}</span>
+						</div>
+					</nb-option>
+					}
+				</nb-select>
+				@if(form.get('architecture')?.valid && form.get('architecture')?.value) {
+				<nb-hint status="success">
+					<nb-icon icon="checkmark-circle-outline"></nb-icon>
+					Architecture: {{ form.get('architecture')?.value | translate }}
+				</nb-hint>
 				}
-			</nb-select>
-		</nb-form-field>
-	</lib-form-row>
+			</nb-form-field>
+		</lib-form-row>
+	</div>
 
 	<!-- Source-specific fields -->
 	<div class="source-container">

@@ -1,47 +1,84 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
 	<nb-card class="dialog-card" status="basic">
 		<nb-card-header class="mb-0">
-			<div class="header-title">
-				<nb-icon icon="cube-outline" class="header-icon"></nb-icon>
-				<h5 class="title m-0">{{ 'PLUGIN.DIALOG.INSTALLATION.TITLE' | translate }}</h5>
+			<div class="header-content">
+				<div class="header-left">
+					<div class="icon-container">
+						<nb-icon icon="download-outline"></nb-icon>
+					</div>
+					<div class="header-info">
+						<h5 class="title m-0">{{ 'PLUGIN.DIALOG.INSTALLATION.TITLE' | translate }}</h5>
+					</div>
+				</div>
+				<button nbButton ghost size="small" (click)="dismiss()" class="close-button">
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
 			</div>
-			<button nbButton ghost size="small" (click)="dismiss()" class="close-button">
-				<nb-icon icon="close-outline"></nb-icon>
-			</button>
 		</nb-card-header>
 
 		<nb-card-body class="py-3">
-			<div class="form-group">
-				<gauzy-version-selector [pluginId]="pluginId"></gauzy-version-selector>
-			</div>
-			<div class="form-group">
-				<gauzy-source-selector [pluginId]="pluginId" [versionId]="versionId$ | async"></gauzy-source-selector>
-			</div>
-			<div *ngIf="showAuthToken" class="form-group">
-				<input nbInput fullWidth type="password" id="authToken" formControlName="authToken"
-					[placeholder]="'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate" [status]="
-						form.controls['authToken'].invalid && form.controls['authToken'].touched ? 'danger' : 'basic'
-					" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-				<!-- <small class="text-hint"> -->
-				<!-- 	{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN_HELP' | translate }} -->
-				<!-- </small> -->
-				<ng-container *ngIf="form.controls['authToken'].invalid && form.controls['authToken'].touched">
-					<p class="text-danger mt-1 mb-0 small">
-						<nb-icon icon="alert-circle-outline"></nb-icon>
-						{{ 'PLUGIN.DIALOG.INSTALLATION.VALIDATION.REQUIRED' | translate }}
-					</p>
-				</ng-container>
+			<div class="form-section">
+				<div class="field-wrapper">
+					<div class="field-header mb-2">
+						<nb-icon icon="layers-outline" class="field-icon"></nb-icon>
+						<label class="field-label">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
+					</div>
+					<gauzy-version-selector [pluginId]="pluginId"></gauzy-version-selector>
+				</div>
+
+				<div class="field-wrapper">
+					<div class="field-header mb-2">
+						<nb-icon icon="code-outline" class="field-icon"></nb-icon>
+						<label class="field-label">{{ 'PLUGIN.FORM.SOURCE' | translate }}</label>
+					</div>
+					<gauzy-source-selector
+						[pluginId]="pluginId"
+						[versionId]="versionId$ | async"
+					></gauzy-source-selector>
+				</div>
+
+				<div *ngIf="showAuthToken" class="field-wrapper">
+					<div class="field-header mb-2">
+						<nb-icon icon="lock-outline" class="field-icon"></nb-icon>
+						<label class="field-label">{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate }}</label>
+					</div>
+					<input
+						nbInput
+						fullWidth
+						type="password"
+						id="authToken"
+						formControlName="authToken"
+						[placeholder]="'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate"
+						[status]="
+							form.controls['authToken'].invalid && form.controls['authToken'].touched
+								? 'danger'
+								: 'basic'
+						"
+						autocomplete="off"
+						autocorrect="off"
+						autocapitalize="off"
+						spellcheck="false"
+					/>
+					<ng-container *ngIf="form.controls['authToken'].invalid && form.controls['authToken'].touched">
+						<p class="error-message mt-2 mb-0">
+							<nb-icon icon="alert-circle-outline"></nb-icon>
+							<span>{{ 'PLUGIN.DIALOG.INSTALLATION.VALIDATION.REQUIRED' | translate }}</span>
+						</p>
+					</ng-container>
+				</div>
 			</div>
 		</nb-card-body>
 
-		<nb-card-footer class="d-flex justify-content-end align-items-center">
-			<button nbButton type="button" appearance="outline" status="basic" (click)="dismiss()">
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-			<button nbButton type="submit" status="primary" [disabled]="form.invalid">
-				<nb-icon icon="arrow-forward-outline"></nb-icon>
-				{{ 'BUTTONS.CONTINUE' | translate }}
-			</button>
+		<nb-card-footer class="dialog-footer">
+			<div class="footer-actions">
+				<button nbButton type="button" outline status="basic" (click)="dismiss()" class="cancel-button">
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button nbButton type="submit" status="primary" [disabled]="form.invalid" class="submit-button">
+					{{ 'BUTTONS.CONTINUE' | translate }}
+					<nb-icon icon="arrow-forward-outline" class="ml-1"></nb-icon>
+				</button>
+			</div>
 		</nb-card-footer>
 	</nb-card>
 </form>

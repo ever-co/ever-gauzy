@@ -1,8 +1,23 @@
 <lib-form-section *ngIf="form" [formGroup]="form" class="source-content">
-	<!-- NPM fields here -->
+	<!-- NPM Header -->
+	<div class="npm-header">
+		<div class="header-icon-wrapper">
+			<nb-icon icon="npm" pack="eva"></nb-icon>
+		</div>
+		<div class="header-content">
+			<h6 class="header-title">{{ 'PLUGIN.FORM.NPM.TITLE' | translate }}</h6>
+			<p class="header-description">{{ 'PLUGIN.FORM.NPM.DESCRIPTION' | translate }}</p>
+		</div>
+	</div>
+
+	<!-- Package Name -->
 	<lib-form-row *ngIf="form.get('name')">
 		<nb-form-field class="form-group full-width">
-			<label class="label" for="npm-name">{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }} *</label>
+			<label class="label">
+				<nb-icon icon="cube-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }}
+				<span class="required-indicator">*</span>
+			</label>
 			<input
 				nbInput
 				fullWidth
@@ -11,18 +26,34 @@
 				placeholder="@scope/package-name"
 				[status]="getFieldError('name') ? 'danger' : 'basic'"
 			/>
-			<nb-hint *ngIf="getFieldError('name', 'required')" status="danger">
+			@if(getFieldError('name', 'required')) {
+			<nb-hint status="danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.PACKAGE_NAME_REQUIRED' | translate }}
 			</nb-hint>
-			<nb-hint *ngIf="getFieldError('name', 'pattern')" status="danger">
+			}
+			@if(getFieldError('name', 'pattern')) {
+			<nb-hint status="danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.INVALID_PACKAGE_NAME' | translate }}
 			</nb-hint>
+			}
+			@if(form.get('name')?.valid && form.get('name')?.value) {
+			<nb-hint status="success">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Valid NPM package name
+			</nb-hint>
+			}
 		</nb-form-field>
 	</lib-form-row>
 
+	<!-- Registry & Scope -->
 	<lib-form-row>
 		<nb-form-field *ngIf="form.get('registry')" class="form-group">
-			<label class="label" for="npm-registry">{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}</label>
+			<label class="label">
+				<nb-icon icon="globe-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}
+			</label>
 			<input
 				nbInput
 				fullWidth
@@ -31,13 +62,25 @@
 				placeholder="https://registry.npmjs.org"
 				[status]="getFieldError('registry') ? 'danger' : 'basic'"
 			/>
-			<nb-hint *ngIf="getFieldError('registry', 'pattern')" status="danger">
+			@if(getFieldError('registry', 'pattern')) {
+			<nb-hint status="danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
 			</nb-hint>
+			}
+			@if(form.get('registry')?.valid && form.get('registry')?.value) {
+			<nb-hint status="success">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Valid registry URL
+			</nb-hint>
+			}
 		</nb-form-field>
 
 		<nb-form-field *ngIf="form.get('scope')" class="form-group">
-			<label class="label" for="npm-scope">{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}</label>
+			<label class="label">
+				<nb-icon icon="at-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}
+			</label>
 			<input
 				nbInput
 				fullWidth
@@ -46,15 +89,28 @@
 				placeholder="@organization"
 				[status]="getFieldError('scope') ? 'danger' : 'basic'"
 			/>
-			<nb-hint *ngIf="getFieldError('scope', 'pattern')" status="danger">
+			@if(getFieldError('scope', 'pattern')) {
+			<nb-hint status="danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.INVALID_SCOPE' | translate }}
 			</nb-hint>
+			}
 		</nb-form-field>
 	</lib-form-row>
+
+	<!-- Private Package Toggle -->
 	<lib-form-row *ngIf="form.get('private')">
-		<div class="form-group full-width">
-			<label class="label" for="npm-auth-token">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</label>
-			<nb-toggle formControlName="private">{{ 'PLUGIN.FORM.VALIDATION.REQUIRED' | translate }} </nb-toggle>
+		<div class="form-group full-width toggle-group">
+			<div class="toggle-container">
+				<div class="toggle-label">
+					<nb-icon icon="lock-outline" class="label-icon"></nb-icon>
+					<div>
+						<label class="label">{{ 'PLUGIN.FORM.NPM.PRIVATE_PACKAGE' | translate }}</label>
+						<p class="toggle-description">{{ 'PLUGIN.FORM.NPM.PRIVATE_PACKAGE_DESC' | translate }}</p>
+					</div>
+				</div>
+				<nb-toggle formControlName="private" status="primary"></nb-toggle>
+			</div>
 		</div>
 	</lib-form-row>
 </lib-form-section>

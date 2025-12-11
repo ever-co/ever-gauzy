@@ -11,4 +11,32 @@ import { BasePluginFormComponent } from '../base-plugin-form/base-plugin-form.co
 export class PluginBasicInformationComponent extends BasePluginFormComponent {
 	@Input() pluginTypes: string[];
 	@Input() pluginStatuses: string[];
+
+	/**
+	 * Get badge color based on plugin status
+	 */
+	getStatusBadgeColor(status: string): string {
+		const statusColorMap: Record<string, string> = {
+			active: 'success',
+			inactive: 'warning',
+			deprecated: 'danger',
+			beta: 'info',
+			alpha: 'basic'
+		};
+		return statusColorMap[status?.toLowerCase()] || 'basic';
+	}
+
+	/**
+	 * Get hint color based on plugin status
+	 */
+	getStatusHintColor(status: string): string {
+		const statusHintMap: Record<string, string> = {
+			active: 'success',
+			inactive: 'warning',
+			deprecated: 'danger',
+			beta: 'info',
+			alpha: 'basic'
+		};
+		return statusHintMap[status?.toLowerCase()] || 'basic';
+	}
 }
