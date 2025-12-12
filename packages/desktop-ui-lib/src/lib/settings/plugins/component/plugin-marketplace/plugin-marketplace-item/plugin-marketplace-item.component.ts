@@ -278,8 +278,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	/**
 	 * View subscription hierarchy (admin feature) — route through actions/effects
 	 */
-	public viewSubscriptionHierarchy(): void {
-		this.action.dispatch(PluginSubscriptionActions.openHierarchySubscriptions(this.plugin));
+	public viewSubscription(): void {
+		this.action.dispatch(PluginSubscriptionActions.openSubscriptionManagement(this.plugin));
 	}
 
 	public addVersion(): void {

@@ -243,7 +243,7 @@
 					size="medium"
 					status="info"
 					[disabled]="disabled"
-					(click)="viewSubscriptionHierarchy()"
+					(click)="viewSubscription()"
 					class="subscription-button"
 					[nbTooltip]="'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate"
 				>
@@ -289,9 +289,10 @@
 						outline
 						size="medium"
 						status="info"
+						fullWidth
 						[disabled]="disabled"
 						(click)="showAssignUsersDialog()"
-						class="assign-button"
+						class="assign-button action-button"
 					>
 						<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
 						{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
