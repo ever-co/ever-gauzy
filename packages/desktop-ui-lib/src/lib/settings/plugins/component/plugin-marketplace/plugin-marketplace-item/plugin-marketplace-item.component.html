@@ -251,22 +251,6 @@
 					{{ 'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate }}
 				</button>
 				}
-				<!-- Assign Users Button (for users with canAssign permission) -->
-				@if(canAssign$ | async) {
-				<button
-					nbButton
-					type="button"
-					outline
-					size="medium"
-					status="info"
-					[disabled]="disabled"
-					(click)="showAssignUsersDialog()"
-					class="assign-button"
-				>
-					<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
-					{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
-				</button>
-				}
 				<!-- Owner Management Actions in Popover -->
 				@if(isOwner) {
 				<button
@@ -294,80 +278,98 @@
 <!-- Owner Actions Popover Template -->
 <ng-template #ownerActionsTemplate>
 	<nb-card class="owner-actions-popover">
-		<nb-card-body>
-			<nb-list class="action-list">
-				<nb-list-item class="action-item">
+		<nb-card-body class="p-0">
+			<nb-list class="action-list p-0">
+				@if(canAssign$ | async) {
+				<nb-list-item class="action-item p-0">
+					<!-- Assign Users Button (for users with canAssign permission) -->
+					<button
+						nbButton
+						type="button"
+						outline
+						size="medium"
+						status="info"
+						[disabled]="disabled"
+						(click)="showAssignUsersDialog()"
+						class="assign-button"
+					>
+						<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
+						{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
+					</button>
+				</nb-list-item>
+				}
+				<nb-list-item class="action-item p-0">
 					<button
 						nbButton
 						fullWidth
-						ghost
+						outline
 						status="primary"
 						[disabled]="disabled"
 						(click)="addVersion()"
 						class="action-button"
 					>
-						<nb-icon *gauzySpinnerButton="adding && isSelected" icon="plus-outline" class="mr-2"></nb-icon>
-						<span class="action-label">{{ 'BUTTONS.ADD_VERSION' | translate }}</span>
+						<div class="button-content">
+							<nb-icon *gauzySpinnerButton="adding && isSelected" icon="plus-outline"></nb-icon>
+							<span class="action-label">{{ 'BUTTONS.ADD_VERSION' | translate }}</span>
+						</div>
 						@if(uploading && adding){
-						<span class="ml-auto progress-text"> {{ progress | percent : '1.2-2' }} </span>
+						<span class="progress-text">{{ progress | percent : '1.2-2' }}</span>
 						}
 					</button>
 				</nb-list-item>
 
-				<nb-list-item class="action-item">
+				<nb-list-item class="action-item p-0">
 					<button
 						nbButton
 						fullWidth
-						ghost
+						outline
 						status="info"
 						[disabled]="disabled"
 						(click)="addSource()"
 						class="action-button"
 					>
-						<nb-icon
-							*gauzySpinnerButton="creatingSource && isSelected"
-							icon="plus-outline"
-							class="mr-2"
-						></nb-icon>
-						<span class="action-label">{{ 'BUTTONS.ADD_MORE_SOURCES' | translate }}</span>
+						<div class="button-content">
+							<nb-icon *gauzySpinnerButton="creatingSource && isSelected" icon="plus-outline"></nb-icon>
+							<span class="action-label">{{ 'BUTTONS.ADD_MORE_SOURCES' | translate }}</span>
+						</div>
 						@if(uploading && creatingSource){
-						<span class="ml-auto progress-text"> {{ progress | percent : '1.2-2' }} </span>
+						<span class="progress-text">{{ progress | percent : '1.2-2' }}</span>
 						}
 					</button>
 				</nb-list-item>
 
-				<nb-list-item class="action-item">
+				<nb-list-item class="action-item p-0">
 					<button
 						nbButton
 						fullWidth
-						ghost
+						outline
 						status="primary"
 						[disabled]="disabled"
 						(click)="navigateToEdit()"
 						class="action-button"
 					>
-						<nb-icon
-							*gauzySpinnerButton="editing && isSelected"
-							icon="edit-2-outline"
-							class="mr-2"
-						></nb-icon>
-						<span class="action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
+						<div class="button-content">
+							<nb-icon *gauzySpinnerButton="editing && isSelected" icon="edit-2-outline"></nb-icon>
+							<span class="action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
+						</div>
 					</button>
 				</nb-list-item>
 
-				<nb-list-item class="action-item">
+				<nb-list-item class="action-item p-0">
 					<button
 						nbButton
 						fullWidth
-						ghost
+						outline
 						status="danger"
 						[disabled]="disabled"
 						(click)="delete()"
 						class="action-button"
 						*gauzySpinnerButton="deleting && isSelected"
 					>
-						<nb-icon icon="trash-2-outline" class="mr-2"></nb-icon>
-						<span class="action-label">{{ 'BUTTONS.DELETE' | translate }}</span>
+						<div class="button-content">
+							<nb-icon icon="trash-2-outline"></nb-icon>
+							<span class="action-label">{{ 'BUTTONS.DELETE' | translate }}</span>
+						</div>
 					</button>
 				</nb-list-item>
 			</nb-list>

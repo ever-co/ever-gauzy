@@ -217,6 +217,7 @@ nb-tag-list {
               flex-wrap: wrap;
               gap: 0.5rem;
               margin-top: 0.5rem;
+			  position: relative;
             }
           }
         }
@@ -531,6 +532,13 @@ nb-tag-list {
     }
     .value {
       color: var(--gauzy-text-color-1);
+	  width: 100%;
+	  a {
+		width: 100%;
+		span {
+			width: auto;
+		}
+	  }
     }
   }
 
@@ -540,6 +548,87 @@ nb-tag-list {
 
   .action-buttons {
     display: flex;
+  }
+
+  // Owner Actions Popover Styles
+  .owner-actions-popover {
+    max-width: 240px;
+    margin: 0;
+    box-shadow: var(--gauzy-shadow);
+    border-radius: calc(var(--border-radius) * 1.5);
+
+    nb-card-body {
+      padding: 0;
+    }
+
+    .action-list {
+      margin: 0 !important;
+      padding: 0 !important;
+
+      .action-item {
+        padding: 0 !important;
+        margin: 0 !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .action-button {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          border: none;
+          border-radius: 0;
+          text-align: left;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+          transition: all 0.2s ease;
+
+          &:first-child {
+            border-radius: calc(var(--border-radius) * 1.5) calc(var(--border-radius) * 1.5) 0 0;
+          }
+
+          &:last-child {
+            border-radius: 0 0 calc(var(--border-radius) * 1.5) calc(var(--border-radius) * 1.5);
+          }
+
+          .button-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+
+            nb-icon {
+              font-size: 1.125rem;
+              flex-shrink: 0;
+            }
+
+            .action-label {
+              font-size: 0.875rem;
+              font-weight: 500;
+              white-space: nowrap;
+            }
+          }
+
+          .progress-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            flex-shrink: 0;
+          }
+
+          &:hover:not([disabled]) {
+            background-color: rgba(0, 0, 0, 0.04);
+          }
+
+          &[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -560,4 +649,19 @@ nb-tag-list {
       text-transform: uppercase;
     }
   }
+}
+
+
+::ng-deep {
+	 nb-badge {
+		font-size: 0.75rem;
+		padding: 0.375rem;
+		border-radius: calc(var(--border-radius) * 1);
+		position: relative !important;
+	}
+
+	[nbButton] {
+   		 justify-content: flex-start;
+		 border-radius: calc(var(--border-radius) * 1.2);
+    }
 }

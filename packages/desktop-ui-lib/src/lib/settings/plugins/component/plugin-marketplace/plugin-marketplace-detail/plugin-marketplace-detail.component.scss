@@ -500,7 +500,7 @@
 /* Plugin Metrics */
 .plugin-metrics {
   display: flex;
-  gap: 24px;
+  gap: 1rem;
   margin-bottom: 24px;
   flex-wrap: wrap;
   padding: 16px;
@@ -639,6 +639,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
+	flex-wrap: wrap;
 
     .free-plugin,
     .subscription-required {
