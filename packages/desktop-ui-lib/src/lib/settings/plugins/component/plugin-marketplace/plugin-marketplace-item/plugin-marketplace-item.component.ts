@@ -15,7 +15,7 @@ import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, Observable, Subject, tap } from 'rxjs';
 import { catchError, filter, map, takeUntil } from 'rxjs/operators';
-import { PluginSubscriptionActions } from '../+state';
+import { PluginSubscriptionActions, PluginSubscriptionQuery } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
@@ -68,6 +68,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		public readonly pluginQuery: PluginQuery,
 		public readonly versionQuery: PluginVersionQuery,
 		public readonly sourceQuery: PluginSourceQuery,
+		public readonly subscriptionQuery: PluginSubscriptionQuery,
 		public readonly accessFacade: PluginSubscriptionAccessFacade,
 		private readonly utils: PluginMarketplaceUtilsService
 	) {}

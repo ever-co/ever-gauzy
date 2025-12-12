@@ -38,6 +38,8 @@
 @let creatingSource = this.sourceQuery.creating$(plugin?.id) | async;
 <!-- Get current subscription -->
 @let subscription = currentSubscription$ | async;
+<!-- Subscription is loading -->
+@let subscriptionLoading = subscriptionQuery.isLoading$ | async;
 
 <!-- Main template -->
 <nb-card class="content-active first plugin-details-card">
@@ -247,7 +249,11 @@
 					class="subscription-button"
 					[nbTooltip]="'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate"
 				>
-					<nb-icon icon="credit-card-outline" class="mr-1"></nb-icon>
+					<nb-icon
+						*gauzySpinnerButton="subscriptionLoading"
+						icon="credit-card-outline"
+						class="mr-1"
+					></nb-icon>
 					{{ 'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate }}
 				</button>
 				}
