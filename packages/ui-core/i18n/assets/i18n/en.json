@@ -5259,6 +5259,8 @@
 			"BASIC_INFO": "Basic Information",
 			"NAME": "Plugin Name",
 			"NAME_PLACEHOLDER": "Enter plugin name",
+			"VERSION_TITLE": "Version Information",
+			"VERSION_DESCRIPTION": "Specify version details and changelog",
 			"VALIDATION": {
 				"NAME_REQUIRED": "Plugin name is required",
 				"NAME_TOO_LONG": "Plugin name is too long",
@@ -5485,26 +5487,28 @@
 		"TOASTR": {
 			"SUCCESS": {
 				"VERSION": {
-					"CREATED": "Create plugin version v{{version}} successfully!",
-					"UPDATED": "Update plugin version v{{version}} successfully!",
-					"DELETED": "Delete plugin version successfully!",
-					"RESTORED": "Restore plugin version successfully!"
+					"CREATED": "Plugin version v{{version}} created successfully!",
+					"UPDATED": "Plugin version v{{version}} updated successfully!",
+					"DELETED": "Plugin version deleted successfully!",
+					"RESTORED": "Plugin version restored successfully!"
 				},
 				"SOURCE": {
 					"ADD": "Plugin source created successfully!",
-					"CREATED": "Create plugin source successfully!",
-					"UPDATED": "Update plugin source successfully!",
-					"DELETE": "Delete plugin source successfully!",
-					"DELETED": "Delete plugin source successfully!",
-					"RESTORE": "Restore plugin source successfully!",
-					"RESTORED": "Restore plugin source successfully!"
+					"CREATED": "Plugin source created successfully!",
+					"UPDATED": "Plugin source updated successfully!",
+					"DELETE": "Plugin source deleted successfully!",
+					"DELETED": "Plugin source deleted successfully!",
+					"RESTORE": "Plugin source restored successfully!",
+					"RESTORED": "Plugin source restored successfully!"
 				},
-				"UPLOADED": "Upload plugin successfully!",
-				"UPDATED": "Update plugin successfully!",
-				"DELETED": "Delete plugin successfully!",
-				"INSTALLED": "Install plugin successfully!",
-				"UNINSTALLED": "Uninstall plugin successfully!",
-				"SUBSCRIBED": "Subscription successful"
+				"UPLOADED": "Plugin uploaded successfully!",
+				"UPDATED": "Plugin updated successfully!",
+				"DELETED": "Plugin deleted successfully!",
+				"INSTALLED": "Plugin installed successfully!",
+				"UNINSTALLED": "Plugin uninstalled successfully!",
+				"SUBSCRIBED": "Subscription successful",
+				"INSTALLATION_COMPLETED": "Plugin installation completed successfully",
+				"ACTIVATION_COMPLETED": "Plugin activation completed successfully"
 			},
 			"INFO": {
 				"VERSION": {
@@ -5515,18 +5519,20 @@
 				},
 				"SOURCE": {
 					"ADDING": "Adding new source...",
-					"UPDATING": "Updating plugin version...",
-					"DELETING": "Deleting plugin version...",
-					"RESTORING": "Restoring plugin version..."
+					"UPDATING": "Updating plugin source...",
+					"DELETING": "Deleting plugin source...",
+					"RESTORING": "Restoring plugin source..."
 				},
 				"UPLOADING": "Uploading plugin...",
-				"UPDATING": "Updating plugin version...",
+				"UPDATING": "Updating plugin...",
 				"DELETING": "Deleting plugin...",
 				"INSTALLING": "Installing plugin...",
 				"UNINSTALLING": "Uninstalling plugin...",
 				"SUBSCRIBING": "Processing subscription...",
 				"DOWNLOAD_COMPLETED": "Download completed",
-				"SERVER_INSTALLATION_COMPLETED": "Server installation completed"
+				"SERVER_INSTALLATION_COMPLETED": "Server installation completed",
+				"ACTIVATING": "Activating plugin...",
+				"REVERTING_INSTALLATION": "Reverting installation..."
 			},
 			"ERROR": {
 				"VERSION": {
@@ -5534,6 +5540,7 @@
 				},
 				"SOURCE": {
 					"ADD": "Failed to add plugin source. Please try again!",
+					"GET": "Failed to get plugin source. Please try again!",
 					"DELETE": "Failed to delete plugin source. Please try again!",
 					"RESTORE": "Failed to restore plugin source. Please try again!"
 				},
@@ -5541,15 +5548,27 @@
 				"NOT_FOUND": "Plugin with ID {{ id }} not found.",
 				"INSTALL": "Failed to install plugin. Please try again!",
 				"UNINSTALL": "Failed to uninstall plugin. Please try again!",
+				"UNINSTALL_FAILED": "Plugin uninstallation failed",
 				"REVERT_INSTALLATION": "Failed to revert installation!",
-				"INVALID_PLUGIN_DATA": "Invalid plugin data"
+				"INVALID_PLUGIN_DATA": "Invalid plugin data",
+				"INSTALLATION_FAILED": "Plugin installation failed",
+				"INSTALLATION_FLOW_FAILED": "Installation flow failed",
+				"ACTIVATION_FAILED": "Plugin activation failed",
+				"DOWNLOAD_FAILED": "Plugin download failed",
+				"SERVER_INSTALLATION_FAILED": "Server installation failed",
+				"COMPLETE_INSTALLATION": "Failed to complete installation"
+			},
+			"WARNING": {
+				"PLUGIN_NOT_FOUND": "Plugin not found: {{name}}"
 			}
 		},
 		"BUTTONS": {
 			"ASSIGN_USERS": "Assign Users",
 			"ASSIGN_FIRST_USER": "Assign Your First User",
 			"SUBSCRIBE_AND_INSTALL": "Subscribe & Install",
-			"VIEW_SUBSCRIPTION": "View Subscription"
+			"VIEW_SUBSCRIPTION": "View Subscription",
+			"MANAGE": "Manage",
+			"MANAGE_PLUGIN": "Manage Plugin"
 		},
 		"LOADING": "Loading plugin...",
 		"ACCESS": {
@@ -5563,14 +5582,32 @@
 			"GLOBAL_LEVEL": "Global Level"
 		},
 		"SUBSCRIPTION": {
+			"REQUIRED": "Subscription is required",
 			"REQUIRED_FOR_INSTALLATION": "A subscription is required to install this plugin",
 			"ACCESS_NOT_GRANTED": "Subscription access was not granted",
 			"RESUBSCRIBE_REQUIRED": "Subscription expired. Please resubscribe to continue using this plugin",
 			"ACCESS_REVOKED": "Your subscription access has been revoked",
 			"LOADING": "Loading subscription...",
 			"CREATING": "Creating subscription...",
+			"CREATED": "Subscription created successfully",
 			"UPDATING": "Updating subscription...",
-			"DELETING": "Deleting subscription..."
+			"UPDATED": "Subscription updated successfully",
+			"DELETING": "Deleting subscription...",
+			"CANCELLED": "Subscription cancelled",
+			"UPGRADED": "Subscription upgraded successfully",
+			"UPGRADING": "Upgrading subscription...",
+			"DOWNGRADED": "Subscription downgraded successfully",
+			"DOWNGRADING": "Downgrading subscription...",
+			"PLAN": {
+				"CREATING": "Creating subscription plan...",
+				"CREATED": "Subscription plan created successfully",
+				"UPDATING": "Updating subscription plan...",
+				"UPDATED": "Subscription plan updated successfully",
+				"DELETING": "Deleting subscription plan...",
+				"DELETED": "Subscription plan deleted successfully",
+				"BULK_CREATING": "Creating subscription plans...",
+				"BULK_CREATED": "{{count}} subscription plan(s) created successfully"
+			}
 		},
 		"INSTALLATION": {
 			"ERROR": "Failed to install plugin"
