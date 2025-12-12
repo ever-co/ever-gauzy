@@ -5257,10 +5257,16 @@
 		"FORM": {
 			"TITLE": "Upload Plugin",
 			"BASIC_INFO": "Basic Information",
+			"BASIC_INFO_TITLE": "Plugin Details",
+			"BASIC_INFO_DESCRIPTION": "Provide essential information about your plugin",
 			"NAME": "Plugin Name",
 			"NAME_PLACEHOLDER": "Enter plugin name",
+			"STATUS_INFO_TITLE": "Status Information",
+			"STATUS_INFO_DESCRIPTION": "The status determines the plugin's visibility and availability in the marketplace",
 			"VERSION_TITLE": "Version Information",
 			"VERSION_DESCRIPTION": "Specify version details and changelog",
+			"VERSION_INFO": "Version information is used to track updates and compatibility",
+			"PLATFORM_CONFIG": "Platform Configuration",
 			"VALIDATION": {
 				"NAME_REQUIRED": "Plugin name is required",
 				"NAME_TOO_LONG": "Plugin name is too long",
@@ -5311,15 +5317,23 @@
 				"GAUZY": "Gauzy"
 			},
 			"CDN": {
+				"TITLE": "CDN Configuration",
+				"DESCRIPTION": "Provide CDN details for your plugin distribution",
 				"URL": "CDN URL",
 				"INTEGRITY": "Integrity",
-				"CROSS_ORIGIN": "Cross Origin"
+				"CROSS_ORIGIN": "Cross Origin",
+				"SECURITY": "Security Settings",
+				"SECURITY_INFO": "These security settings help ensure the integrity of your plugin"
 			},
 			"NPM": {
+				"TITLE": "NPM Configuration",
+				"DESCRIPTION": "Configure NPM package details for your plugin",
 				"PACKAGE_NAME": "NPM Package Name",
 				"REGISTRY": "NPM Registry",
 				"SCOPE": "Scope",
-				"AUTH_TOKEN": "Authentication Token"
+				"AUTH_TOKEN": "Authentication Token",
+				"PRIVATE_PACKAGE": "Private Package",
+				"PRIVATE_PACKAGE_DESC": "Enable this if your plugin is hosted on a private NPM registry"
 			},
 			"FILE_UPLOAD": {
 				"DRAG_DROP": "Drag & Drop your file here",
@@ -5330,6 +5344,7 @@
 			},
 			"METADATA": {
 				"TITLE": "Metadata",
+				"DESCRIPTION": "Additional information about your plugin",
 				"AUTHOR": "Author",
 				"AUTHOR_PLACEHOLDER": "Enter author name",
 				"LICENSE": "License",
@@ -5337,7 +5352,15 @@
 				"HOMEPAGE": "Homepage",
 				"HOMEPAGE_PLACEHOLDER": "Enter homepage URL",
 				"REPOSITORY": "Repository",
-				"REPOSITORY_PLACEHOLDER": "Enter repository URL"
+				"REPOSITORY_PLACEHOLDER": "Enter repository URL",
+				"URLS_SECTION": "URLs",
+				"OPTIONAL_INFO": "All metadata fields are optional but recommended for better discovery"
+			},
+			"GAUZY": {
+				"TITLE": "Gauzy Plugin Upload",
+				"DESCRIPTION": "Upload your plugin file directly to Gauzy",
+				"UPLOAD_INFO_TITLE": "Upload Information",
+				"UPLOAD_INFO_DESC": "Upload your plugin as a .zip file. The file will be securely stored and distributed through Gauzy."
 			},
 			"OR": "Or",
 			"RELEASE_DATE": "Release Date",
@@ -5403,12 +5426,14 @@
 			"UPLOADED_BY": "Uploaded By",
 			"UPLOADED_AT": "Uploaded At",
 			"SECURITY_INFO": "Security Information",
+			"SECURITY_DESCRIPTION": "Verify the integrity and authenticity of this plugin",
 			"CHECKSUM": "Checksum",
 			"SIGNATURE": "Signature",
 			"INSTALLED": "Installed",
 			"HIDDEN_FOR_SECURITY": "Hidden for security reasons",
 			"OVERVIEW": "Overview",
 			"SOURCE_CODE": "Source Code",
+			"SOURCE_CONFIGURATION": "Source Configuration",
 			"SETTINGS": "Settings",
 			"USER_MANAGEMENT": "User Management",
 			"UPLOADED_FILE": "Uploaded File",

@@ -265,6 +265,7 @@ nb-tag-list {
         align-items: center;
         gap: 1rem;
         flex-wrap: wrap;
+        width: 100%;
 
         .back-button {
           border-radius: calc(var(--border-radius) * 1.25);
@@ -634,7 +635,7 @@ nb-tag-list {
 
 :host ::ng-deep nb-route-tabset .route-tab .tab-link {
   display: flex !important;
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  border-radius: var(--border-radius);
 
   nb-icon {
     margin-bottom: unset;
