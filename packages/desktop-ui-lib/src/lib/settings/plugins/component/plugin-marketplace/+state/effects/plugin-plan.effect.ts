@@ -187,7 +187,10 @@ export class PluginPlanEffects {
 
 				// Resolve plugin safely
 				map(({ pluginId }) => {
-					const plugin = this.pluginMarketplaceQuery.plugins.find((p) => p.id === pluginId);
+					let plugin = this.pluginMarketplaceQuery.plugins.find((p) => p.id === pluginId);
+					if (!plugin && this.pluginMarketplaceQuery.plugin?.id === pluginId) {
+						plugin = this.pluginMarketplaceQuery.plugin;
+					}
 					return { pluginId, plugin };
 				}),
 

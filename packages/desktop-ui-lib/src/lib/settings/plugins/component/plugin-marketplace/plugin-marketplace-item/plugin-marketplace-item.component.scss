@@ -664,5 +664,10 @@ nb-tag-list {
 	[nbButton] {
    		 justify-content: flex-start;
 		 border-radius: calc(var(--border-radius) * 1.2);
+
+		 &.action-button {
+			border-radius: calc(var(--border-radius) * 1.2) !important;
+			transition: all 0.2s ease;
+	    }
     }
 }

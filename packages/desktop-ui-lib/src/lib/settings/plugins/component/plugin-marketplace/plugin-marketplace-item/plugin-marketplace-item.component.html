@@ -39,7 +39,7 @@
 <!-- Get current subscription -->
 @let subscription = currentSubscription$ | async;
 <!-- Subscription is loading -->
-@let subscriptionLoading = subscriptionQuery.isLoading$ | async;
+@let subscriptionLoading = subscriptionQuery.loading$ | async;
 
 <!-- Main template -->
 <nb-card class="content-active first plugin-details-card">
@@ -181,7 +181,7 @@
 						[nbTooltip]="'PLUGIN.TOOLTIP.SUBSCRIBE_TO_INSTALL' | translate"
 					>
 						<nb-icon
-							*gauzySpinnerButton="installing && isSelected"
+							*gauzySpinnerButton="(installing && isSelected) || subscriptionLoading"
 							icon="lock-outline"
 							class="mr-1"
 						></nb-icon>
