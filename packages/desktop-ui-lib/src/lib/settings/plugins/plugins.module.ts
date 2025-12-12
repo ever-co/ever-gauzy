@@ -19,6 +19,7 @@ import {
 	NbInfiniteListDirective,
 	NbInputModule,
 	NbListModule,
+	NbPopoverModule,
 	NbRadioModule,
 	NbRouteTabsetModule,
 	NbSelectModule,
@@ -212,7 +213,8 @@ import {
 		NbEvaIconsModule,
 		DragDropModule,
 		NbTagModule,
-		InfiniteScrollDirective
+		InfiniteScrollDirective,
+		NbPopoverModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [

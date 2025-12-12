@@ -266,7 +266,9 @@
 					<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
 					{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
 				</button>
-				} @if(isOwner) {
+				}
+				<!-- Owner Management Actions in Popover -->
+				@if(isOwner) {
 				<button
 					nbButton
 					type="button"
@@ -274,67 +276,101 @@
 					size="medium"
 					status="primary"
 					[disabled]="disabled"
-					(click)="addVersion()"
-					class="add-version-button"
+					[nbPopover]="ownerActionsTemplate"
+					nbPopoverPlacement="top"
+					nbPopoverTrigger="click"
+					class="owner-actions-button"
+					[nbTooltip]="'PLUGIN.BUTTONS.MANAGE_PLUGIN' | translate"
 				>
-					<nb-icon *gauzySpinnerButton="adding && isSelected" icon="plus-outline" class="mr-1"></nb-icon>
-					{{ 'BUTTONS.ADD_VERSION' | translate }}
-					@if(uploading && adding){
-					<span> {{ progress | percent : '1.2-2' }} </span>
-					}
-				</button>
-
-				<button
-					nbButton
-					type="button"
-					outline
-					status="info"
-					[disabled]="disabled"
-					size="medium"
-					(click)="addSource()"
-					class="add-source-button"
-				>
-					<nb-icon
-						*gauzySpinnerButton="creatingSource && isSelected"
-						icon="plus-outline"
-						class="mr-1"
-					></nb-icon>
-					{{ 'BUTTONS.ADD_MORE_SOURCES' | translate }}
-					@if(uploading && creatingSource){
-					<span> {{ progress | percent : '1.2-2' }} </span>
-					}
-				</button>
-
-				<button
-					nbButton
-					type="button"
-					outline
-					status="primary"
-					[disabled]="disabled"
-					size="medium"
-					(click)="navigateToEdit()"
-					class="edit-button"
-				>
-					<nb-icon *gauzySpinnerButton="editing && isSelected" icon="edit-2-outline" class="mr-1"></nb-icon>
-					{{ 'BUTTONS.EDIT' | translate }}
-				</button>
-
-				<button
-					nbButton
-					type="button"
-					outline
-					status="danger"
-					[disabled]="disabled"
-					size="medium"
-					(click)="delete()"
-					class="delete-button"
-					[nbTooltip]="'BUTTONS.DELETE' | translate"
-					*gauzySpinnerButton="deleting && isSelected"
-				>
-					<nb-icon icon="trash-2-outline"></nb-icon>
+					<nb-icon icon="more-horizontal-outline" class="mr-1"></nb-icon>
+					{{ 'PLUGIN.BUTTONS.MANAGE' | translate }}
 				</button>
 				}
 			</div>
 		</div>
 	</nb-card-footer>
 </nb-card>
+
+<!-- Owner Actions Popover Template -->
+<ng-template #ownerActionsTemplate>
+	<nb-card class="owner-actions-popover">
+		<nb-card-body>
+			<nb-list class="action-list">
+				<nb-list-item class="action-item">
+					<button
+						nbButton
+						fullWidth
+						ghost
+						status="primary"
+						[disabled]="disabled"
+						(click)="addVersion()"
+						class="action-button"
+					>
+						<nb-icon *gauzySpinnerButton="adding && isSelected" icon="plus-outline" class="mr-2"></nb-icon>
+						<span class="action-label">{{ 'BUTTONS.ADD_VERSION' | translate }}</span>
+						@if(uploading && adding){
+						<span class="ml-auto progress-text"> {{ progress | percent : '1.2-2' }} </span>
+						}
+					</button>
+				</nb-list-item>
+
+				<nb-list-item class="action-item">
+					<button
+						nbButton
+						fullWidth
+						ghost
+						status="info"
+						[disabled]="disabled"
+						(click)="addSource()"
+						class="action-button"
+					>
+						<nb-icon
+							*gauzySpinnerButton="creatingSource && isSelected"
+							icon="plus-outline"
+							class="mr-2"
+						></nb-icon>
+						<span class="action-label">{{ 'BUTTONS.ADD_MORE_SOURCES' | translate }}</span>
+						@if(uploading && creatingSource){
+						<span class="ml-auto progress-text"> {{ progress | percent : '1.2-2' }} </span>
+						}
+					</button>
+				</nb-list-item>
+
+				<nb-list-item class="action-item">
+					<button
+						nbButton
+						fullWidth
+						ghost
+						status="primary"
+						[disabled]="disabled"
+						(click)="navigateToEdit()"
+						class="action-button"
+					>
+						<nb-icon
+							*gauzySpinnerButton="editing && isSelected"
+							icon="edit-2-outline"
+							class="mr-2"
+						></nb-icon>
+						<span class="action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
+					</button>
+				</nb-list-item>
+
+				<nb-list-item class="action-item">
+					<button
+						nbButton
+						fullWidth
+						ghost
+						status="danger"
+						[disabled]="disabled"
+						(click)="delete()"
+						class="action-button"
+						*gauzySpinnerButton="deleting && isSelected"
+					>
+						<nb-icon icon="trash-2-outline" class="mr-2"></nb-icon>
+						<span class="action-label">{{ 'BUTTONS.DELETE' | translate }}</span>
+					</button>
+				</nb-list-item>
+			</nb-list>
+		</nb-card-body>
+	</nb-card>
+</ng-template>

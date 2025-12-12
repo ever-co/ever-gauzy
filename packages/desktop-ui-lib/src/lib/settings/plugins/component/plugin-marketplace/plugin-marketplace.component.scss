@@ -48,8 +48,9 @@
 .results-header {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
+	align-items: flex-start;
 	margin-bottom: 1.5rem;
+	flex-wrap: wrap;
 	padding: 1.5rem;
 	background: var(--gauzy-card-1);
 	border: 1px solid var(--border-basic-color-3);
