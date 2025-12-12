@@ -635,7 +635,7 @@ nb-tag-list {
 
 :host ::ng-deep nb-route-tabset .route-tab .tab-link {
   display: flex !important;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius) !important;
 
   nb-icon {
     margin-bottom: unset;
