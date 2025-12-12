@@ -513,4 +513,9 @@ nb-button-group {
    		 justify-content: flex-start;
 		 border-radius: calc(var(--border-radius) * 1.2);
     }
+
+
+   nb-dialog-container nb-card {
+    max-height: unset !important;
+   }
 }
