@@ -36,17 +36,17 @@
 				[status]="getFieldError('number') ? 'danger' : 'basic'"
 			/>
 			@if(getFieldError('number', 'required')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.VERSION_REQUIRED' | translate }}
 			</nb-hint>
 			} @if(getFieldError('number', 'pattern')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.VERSION_FORMAT' | translate }}
 			</nb-hint>
 			} @if(form.get('number')?.valid && form.get('number')?.value) {
-			<nb-hint status="success">
+			<nb-hint class="hint-success">
 				<nb-icon icon="checkmark-circle-outline"></nb-icon>
 				Valid semantic version
 			</nb-hint>
@@ -71,17 +71,17 @@
 			/>
 			<nb-datepicker #datepicker [max]="max"></nb-datepicker>
 			@if(getFieldError('releaseDate', 'required')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.RELEASE_DATE_REQUIRED' | translate }}
 			</nb-hint>
 			} @if(getFieldError('releaseDate', 'futureDate')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.FUTURE_DATE' | translate }}
 			</nb-hint>
 			} @if(form.get('releaseDate')?.valid && form.get('releaseDate')?.value) {
-			<nb-hint status="success">
+			<nb-hint class="hint-success">
 				<nb-icon icon="checkmark-circle-outline"></nb-icon>
 				Release date set
 			</nb-hint>
@@ -113,17 +113,17 @@
 					rows="5"
 				></textarea>
 				@if(getFieldError('changelog', 'required')) {
-				<nb-hint status="danger">
+				<nb-hint class="hint-danger">
 					<nb-icon icon="alert-circle-outline"></nb-icon>
 					{{ 'PLUGIN.FORM.VALIDATION.CHANGELOG_REQUIRED' | translate }}
 				</nb-hint>
 				} @if(getFieldError('changelog', 'minlength')) {
-				<nb-hint status="danger">
+				<nb-hint class="hint-danger">
 					<nb-icon icon="alert-circle-outline"></nb-icon>
 					{{ 'PLUGIN.FORM.VALIDATION.CHANGELOG_TOO_SHORT' | translate }}
 				</nb-hint>
 				} @if(form.get('changelog')?.value) {
-				<nb-hint status="basic">
+				<nb-hint class="hint-basic">
 					<nb-icon icon="text-outline"></nb-icon>
 					{{ form.get('changelog')?.value?.length || 0 }} characters
 				</nb-hint>

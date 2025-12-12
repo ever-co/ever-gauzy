@@ -29,7 +29,7 @@
 					}
 				</nb-select>
 				@if(form.get('operatingSystem')?.valid && form.get('operatingSystem')?.value) {
-				<nb-hint status="success">
+				<nb-hint class="hint-success">
 					<nb-icon icon="checkmark-circle-outline"></nb-icon>
 					OS selected: {{ form.get('operatingSystem')?.value | translate | titlecase }}
 				</nb-hint>
@@ -58,7 +58,7 @@
 					}
 				</nb-select>
 				@if(form.get('architecture')?.valid && form.get('architecture')?.value) {
-				<nb-hint status="success">
+				<nb-hint class="hint-success">
 					<nb-icon icon="checkmark-circle-outline"></nb-icon>
 					Architecture: {{ form.get('architecture')?.value | translate }}
 				</nb-hint>

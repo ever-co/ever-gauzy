@@ -27,17 +27,17 @@
 				[status]="getFieldError('name') ? 'danger' : 'basic'"
 			/>
 			@if(getFieldError('name', 'required')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.NAME_REQUIRED' | translate }}
 			</nb-hint>
 			} @if(getFieldError('name', 'maxlength')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.NAME_TOO_LONG' | translate }}
 			</nb-hint>
 			} @if(form.get('name')?.valid && form.get('name')?.value) {
-			<nb-hint status="success">
+			<nb-hint class="hint-success">
 				<nb-icon icon="checkmark-circle-outline"></nb-icon>
 				Great! Plugin name is valid
 			</nb-hint>
@@ -65,7 +65,7 @@
 				</nb-option>
 			</nb-select>
 			@if(form.get('type')?.valid && form.get('type')?.value) {
-			<nb-hint status="success">
+			<nb-hint class="hint-success">
 				<nb-icon icon="checkmark-circle-outline"></nb-icon>
 				Plugin type selected
 			</nb-hint>
@@ -89,15 +89,12 @@
 			>
 				<nb-option *ngFor="let status of pluginStatuses" [value]="status">
 					<div class="select-option-content">
-						<nb-badge
-							[text]="'PLUGIN.FORM.STATUSES.' + status | translate"
-							[status]="getStatusBadgeColor(status)"
-						></nb-badge>
+						{{ 'PLUGIN.FORM.STATUSES.' + status | translate }}
 					</div>
 				</nb-option>
 			</nb-select>
 			@if(form.get('status')?.valid && form.get('status')?.value) {
-			<nb-hint [status]="getStatusHintColor(form.get('status')?.value)">
+			<nb-hint [class]="'hint-' + getStatusHintColor(form.get('status')?.value)">
 				<nb-icon icon="checkmark-circle-outline"></nb-icon>
 				Status: {{ 'PLUGIN.FORM.STATUSES.' + form.get('status')?.value | translate }}
 			</nb-hint>
@@ -132,12 +129,12 @@
 				rows="4"
 			></textarea>
 			@if(getFieldError('description', 'maxlength')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.DESCRIPTION_TOO_LONG' | translate }}
 			</nb-hint>
 			} @if(form.get('description')?.value) {
-			<nb-hint status="basic">
+			<nb-hint class="hint-basic">
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ form.get('description')?.value?.length || 0 }} characters
 			</nb-hint>

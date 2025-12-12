@@ -27,19 +27,17 @@
 				[status]="getFieldError('name') ? 'danger' : 'basic'"
 			/>
 			@if(getFieldError('name', 'required')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.PACKAGE_NAME_REQUIRED' | translate }}
 			</nb-hint>
-			}
-			@if(getFieldError('name', 'pattern')) {
-			<nb-hint status="danger">
+			} @if(getFieldError('name', 'pattern')) {
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.INVALID_PACKAGE_NAME' | translate }}
 			</nb-hint>
-			}
-			@if(form.get('name')?.valid && form.get('name')?.value) {
-			<nb-hint status="success">
+			} @if(form.get('name')?.valid && form.get('name')?.value) {
+			<nb-hint class="hint-success">
 				<nb-icon icon="checkmark-circle-outline"></nb-icon>
 				Valid NPM package name
 			</nb-hint>
@@ -63,13 +61,12 @@
 				[status]="getFieldError('registry') ? 'danger' : 'basic'"
 			/>
 			@if(getFieldError('registry', 'pattern')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
 			</nb-hint>
-			}
-			@if(form.get('registry')?.valid && form.get('registry')?.value) {
-			<nb-hint status="success">
+			} @if(form.get('registry')?.valid && form.get('registry')?.value) {
+			<nb-hint class="hint-success">
 				<nb-icon icon="checkmark-circle-outline"></nb-icon>
 				Valid registry URL
 			</nb-hint>
@@ -90,7 +87,7 @@
 				[status]="getFieldError('scope') ? 'danger' : 'basic'"
 			/>
 			@if(getFieldError('scope', 'pattern')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.INVALID_SCOPE' | translate }}
 			</nb-hint>

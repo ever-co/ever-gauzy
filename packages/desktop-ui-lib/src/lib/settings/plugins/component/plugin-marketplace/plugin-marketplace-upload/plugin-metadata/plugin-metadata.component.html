@@ -23,7 +23,7 @@
 				[status]="getFieldError('author') ? 'danger' : 'basic'"
 			/>
 			@if(getFieldError('author', 'maxlength')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.AUTHOR_TOO_LONG' | translate }}
 			</nb-hint>
@@ -44,12 +44,12 @@
 				[status]="getFieldError('license') ? 'danger' : 'basic'"
 			/>
 			@if(getFieldError('license', 'maxlength')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.LICENSE_TOO_LONG' | translate }}
 			</nb-hint>
 			} @if(form.get('license')?.valid && form.get('license')?.value) {
-			<nb-hint status="success">
+			<nb-hint class="hint-success">
 				<nb-icon icon="checkmark-circle-outline"></nb-icon>
 				Valid license specified
 			</nb-hint>
@@ -80,12 +80,12 @@
 					[status]="getFieldError('homepage') ? 'danger' : 'basic'"
 				/>
 				@if(getFieldError('homepage', 'pattern')) {
-				<nb-hint status="danger">
+				<nb-hint class="hint-danger">
 					<nb-icon icon="alert-circle-outline"></nb-icon>
 					{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
 				</nb-hint>
 				} @if(form.get('homepage')?.valid && form.get('homepage')?.value) {
-				<nb-hint status="success">
+				<nb-hint class="hint-success">
 					<nb-icon icon="checkmark-circle-outline"></nb-icon>
 					Valid URL
 				</nb-hint>
@@ -107,12 +107,12 @@
 					[status]="getFieldError('repository') ? 'danger' : 'basic'"
 				/>
 				@if(getFieldError('repository', 'pattern')) {
-				<nb-hint status="danger">
+				<nb-hint class="hint-danger">
 					<nb-icon icon="alert-circle-outline"></nb-icon>
 					{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
 				</nb-hint>
 				} @if(form.get('repository')?.valid && form.get('repository')?.value) {
-				<nb-hint status="success">
+				<nb-hint class="hint-success">
 					<nb-icon icon="checkmark-circle-outline"></nb-icon>
 					Valid repository URL
 				</nb-hint>

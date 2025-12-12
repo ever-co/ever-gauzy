@@ -28,17 +28,17 @@
 				[status]="getFieldError('url') ? 'danger' : 'basic'"
 			/>
 			@if(getFieldError('url', 'required')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.URL_REQUIRED' | translate }}
 			</nb-hint>
 			} @if(getFieldError('url', 'pattern')) {
-			<nb-hint status="danger">
+			<nb-hint class="hint-danger">
 				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
 			</nb-hint>
 			} @if(form.get('url')?.valid && form.get('url')?.value) {
-			<nb-hint status="success">
+			<nb-hint class="hint-success">
 				<nb-icon icon="checkmark-circle-outline"></nb-icon>
 				Valid CDN URL
 			</nb-hint>
@@ -61,7 +61,7 @@
 				</label>
 				<input nbInput fullWidth id="cdn-integrity" formControlName="integrity" placeholder="sha384-..." />
 				@if(form.get('integrity')?.value) {
-				<nb-hint status="info">
+				<nb-hint class="hint-info">
 					<nb-icon icon="info-outline"></nb-icon>
 					SRI hash for resource integrity
 				</nb-hint>
@@ -75,7 +75,7 @@
 				</label>
 				<input nbInput fullWidth id="cdn-crossorigin" formControlName="crossOrigin" placeholder="anonymous" />
 				@if(form.get('crossOrigin')?.value) {
-				<nb-hint status="info">
+				<nb-hint class="hint-info">
 					<nb-icon icon="info-outline"></nb-icon>
 					CORS attribute: {{ form.get('crossOrigin')?.value }}
 				</nb-hint>
