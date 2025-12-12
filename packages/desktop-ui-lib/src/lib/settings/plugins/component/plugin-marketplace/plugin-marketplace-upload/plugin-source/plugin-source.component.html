@@ -7,7 +7,7 @@
 		</div>
 
 		<lib-form-row>
-			<nb-form-field *ngIf="form.get('operatingSystem')" class="form-group">
+			<div *ngIf="form.get('operatingSystem')" class="form-group">
 				<label class="label">
 					<nb-icon icon="monitor-outline" class="label-icon"></nb-icon>
 					{{ 'PLUGIN.FORM.OPERATING_SYSTEM' | translate }}
@@ -34,9 +34,9 @@
 					OS selected: {{ form.get('operatingSystem')?.value | translate | titlecase }}
 				</nb-hint>
 				}
-			</nb-form-field>
+			</div>
 
-			<nb-form-field *ngIf="form.get('architecture')" class="form-group">
+			<div *ngIf="form.get('architecture')" class="form-group">
 				<label class="label">
 					<nb-icon icon="cpu-outline" class="label-icon"></nb-icon>
 					{{ 'PLUGIN.FORM.ARCHITECTURE' | translate }}
@@ -63,7 +63,7 @@
 					Architecture: {{ form.get('architecture')?.value | translate }}
 				</nb-hint>
 				}
-			</nb-form-field>
+			</div>
 		</lib-form-row>
 	</div>
 

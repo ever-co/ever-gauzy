@@ -13,13 +13,13 @@
 	<!-- Version & Release Date Row -->
 	<lib-form-row>
 		@if(isEdit && pluginId){
-		<nb-form-field class="form-group">
+		<div class="form-group">
 			<label class="label">
 				<nb-icon icon="hash-outline" class="label-icon"></nb-icon>
 				{{ 'PLUGIN.FORM.VERSION' | translate }}
 			</label>
 			<gauzy-version-selector [pluginId]="pluginId"></gauzy-version-selector>
-		</nb-form-field>
+		</div>
 		}@else {
 		<nb-form-field class="form-group">
 			<label class="label">

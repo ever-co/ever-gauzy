@@ -44,7 +44,7 @@
 			}
 		</nb-form-field>
 
-		<nb-form-field class="form-group">
+		<div class="form-group">
 			<label class="label">
 				<nb-icon icon="layers-outline" class="label-icon"></nb-icon>
 				{{ 'PLUGIN.FORM.TYPE' | translate }}
@@ -70,12 +70,12 @@
 				Plugin type selected
 			</nb-hint>
 			}
-		</nb-form-field>
+		</div>
 	</lib-form-row>
 
 	<!-- Status Row -->
 	<lib-form-row>
-		<nb-form-field class="form-group">
+		<div class="form-group">
 			<label class="label">
 				<nb-icon icon="radio-button-on-outline" class="label-icon"></nb-icon>
 				{{ 'PLUGIN.FORM.STATUS' | translate }}
@@ -102,7 +102,7 @@
 				Status: {{ 'PLUGIN.FORM.STATUSES.' + form.get('status')?.value | translate }}
 			</nb-hint>
 			}
-		</nb-form-field>
+		</div>
 
 		<div class="form-group status-info-card">
 			<div class="info-card-content">
