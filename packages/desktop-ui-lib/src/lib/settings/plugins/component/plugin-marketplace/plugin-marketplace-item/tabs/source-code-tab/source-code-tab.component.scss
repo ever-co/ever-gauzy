@@ -97,6 +97,7 @@
 				.value {
 					color: var(--gauzy-text-color-1);
 					font-size: 0.9375rem;
+					width: 100%;;
 
 					&.code-block {
 						display: flex;
@@ -155,6 +156,7 @@
 						color: var(--color-primary-default);
 						text-decoration: none;
 						transition: all 0.2s ease;
+						width: 100%;
 
 						&:hover {
 							background: var(--color-primary-default);
