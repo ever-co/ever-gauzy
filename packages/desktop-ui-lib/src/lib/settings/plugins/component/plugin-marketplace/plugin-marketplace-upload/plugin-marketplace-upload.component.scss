@@ -759,7 +759,7 @@ $transition-speed: 0.2s;
     transition: all 0.2s ease;
     border-radius: calc(var(--border-radius) * 1.25);
 
-    &[status="success"] {
+    &[status='success'] {
       padding: 0.75rem 1.5rem;
       font-weight: 600;
       box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
@@ -770,7 +770,7 @@ $transition-speed: 0.2s;
       }
     }
 
-    &[status="primary"] {
+    &[status='primary'] {
       box-shadow: 0 4px 12px rgba(61, 153, 245, 0.3);
 
       &:hover {
@@ -886,4 +886,8 @@ $transition-speed: 0.2s;
       font-size: 0.875rem;
     }
   }
+}
+
+[nbButton] {
+  justify-content: center !important;
 }
