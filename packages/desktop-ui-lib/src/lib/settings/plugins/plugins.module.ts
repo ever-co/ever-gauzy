@@ -76,6 +76,8 @@ import { PluginUserAssignmentStore } from './component/plugin-marketplace/+state
 import { PluginCreateSettingDialogComponent } from './component/plugin-marketplace/plugin-create-setting-dialog/plugin-create-setting-dialog.component';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
 import { PluginMarketplaceFilterComponent } from './component/plugin-marketplace/plugin-marketplace-filter/plugin-marketplace-filter.component';
+import { CategorySelectorComponent } from './component/plugin-marketplace/plugin-marketplace-item/category-selector/category-selector.component';
+import { CreateCategoryDialogComponent } from './component/plugin-marketplace/plugin-marketplace-item/create-category-dialog/create-category-dialog.component';
 import { DialogCreateSourceComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
@@ -121,6 +123,7 @@ import { PluginUserAssignmentService } from './services/plugin-user-assignment.s
 import { PluginService } from './services/plugin.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
+import { PluginCategoryEffects } from './component/plugin-marketplace/+state';
 import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
@@ -167,6 +170,8 @@ import {
 		VersionHistoryComponent,
 		VersionSelectorComponent,
 		SourceSelectorComponent,
+		CategorySelectorComponent,
+		CreateCategoryDialogComponent,
 		DialogInstallationValidationComponent,
 		CdnFormComponent,
 		GauzyFormComponent,
@@ -251,7 +256,8 @@ import {
 			PluginPlanComparisonEffects,
 			PluginSubscriptionAccessEffects,
 			AvailableUsersEffects,
-			PluginToggleEffects
+			PluginToggleEffects,
+			PluginCategoryEffects
 		),
 		PluginQuery,
 		PluginStore,

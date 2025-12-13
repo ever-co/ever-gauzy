@@ -5,16 +5,11 @@ import { IPluginCategoryTree } from '../../../../services/plugin-category.servic
 
 /**
  * Extended plugin category interface with full properties
+ * Note: slug, color, order, parentId are now in the base interface
  */
 export interface IPluginCategory extends IPluginCategoryBase {
-	slug?: string;
-	color?: string;
-	order?: number;
-	parentId?: ID;
 	isActive?: boolean;
 	metadata?: Record<string, any>;
-	createdAt?: string;
-	updatedAt?: string;
 }
 
 export interface IPluginCategoryFilter {

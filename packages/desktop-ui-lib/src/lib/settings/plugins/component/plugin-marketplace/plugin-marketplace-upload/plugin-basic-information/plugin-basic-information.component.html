@@ -73,7 +73,7 @@
 		</div>
 	</lib-form-row>
 
-	<!-- Status Row -->
+	<!-- Status & Category Row -->
 	<lib-form-row>
 		<div class="form-group">
 			<label class="label">
@@ -101,7 +101,24 @@
 			}
 		</div>
 
-		<div class="form-group status-info-card">
+		<div class="form-group">
+			<label class="label">
+				<nb-icon icon="folder-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.CATEGORY' | translate }}
+			</label>
+			<gauzy-category-selector></gauzy-category-selector>
+			@if(form.get('categoryId')?.value) {
+			<nb-hint class="hint-success">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Category selected
+			</nb-hint>
+			}
+		</div>
+	</lib-form-row>
+
+	<!-- Status Info Card Row -->
+	<lib-form-row>
+		<div class="form-group status-info-card full-width">
 			<div class="info-card-content">
 				<nb-icon icon="bulb-outline" status="warning"></nb-icon>
 				<div class="info-text">

@@ -1,0 +1,26 @@
+.category-selector-container {
+	width: 100%;
+
+	.category-option {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+
+		.category-icon {
+			font-size: 1.125rem;
+			color: var(--gauzy-text-color-2);
+		}
+
+		.category-name {
+			flex: 1;
+			color: var(--gauzy-text-color-1);
+		}
+
+		.category-color {
+			width: 1rem;
+			height: 1rem;
+			border-radius: calc(var(--border-radius) * 0.5);
+			border: 1px solid var(--border-basic-color-3);
+		}
+	}
+}

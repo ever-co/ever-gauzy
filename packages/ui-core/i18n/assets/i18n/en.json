@@ -5261,6 +5261,7 @@
 			"BASIC_INFO_DESCRIPTION": "Provide essential information about your plugin",
 			"NAME": "Plugin Name",
 			"NAME_PLACEHOLDER": "Enter plugin name",
+			"CATEGORY": "Category",
 			"STATUS_INFO_TITLE": "Status Information",
 			"STATUS_INFO_DESCRIPTION": "The status determines the plugin's visibility and availability in the marketplace",
 			"VERSION_TITLE": "Version Information",

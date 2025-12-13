@@ -1,18 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsString,
-	IsNotEmpty,
-	IsOptional,
-	IsUUID,
-	IsNumber,
-	IsBoolean,
-	MaxLength,
-	MinLength,
-	Matches,
-	Min,
-	Max
-} from 'class-validator';
 import { Transform } from 'class-transformer';
+import {
+	IsBoolean,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUUID,
+	Matches,
+	Max,
+	MaxLength,
+	Min,
+	MinLength
+} from 'class-validator';
 
 export class CreatePluginCategoryDTO {
 	@ApiProperty({
@@ -104,19 +104,4 @@ export class CreatePluginCategoryDTO {
 	@IsOptional()
 	@IsUUID(4, { message: 'Parent ID must be a valid UUID' })
 	readonly parentId?: string;
-
-	@ApiProperty({
-		description: 'Tenant ID',
-		example: 'uuid-string'
-	})
-	@IsUUID(4, { message: 'Tenant ID must be a valid UUID' })
-	readonly tenantId: string;
-
-	@ApiPropertyOptional({
-		description: 'Organization ID',
-		example: 'uuid-string'
-	})
-	@IsOptional()
-	@IsUUID(4, { message: 'Organization ID must be a valid UUID' })
-	readonly organizationId?: string;
 }

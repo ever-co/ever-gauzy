@@ -50,9 +50,9 @@ export class PluginCategoryController {
 		type: 'IPluginCategory'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@Post()
 	@UseValidationPipe({ whitelist: true })
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Post()
 	async create(@Body() input: CreatePluginCategoryDTO): Promise<IPluginCategory> {
 		// Ensure order has a default value if not provided
 		const inputWithDefaults = {

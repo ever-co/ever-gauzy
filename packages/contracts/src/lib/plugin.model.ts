@@ -259,6 +259,7 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	isVerified?: boolean; // Whether the plugin is verified by Gauzy
 
 	// Categories and tags
+	categoryId?: ID; // Plugin category ID
 	category?: IPluginCategory; // Plugin category
 	tags?: IPluginTag[]; // Plugin tags
 }
@@ -266,11 +267,15 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 /**
  * Plugin category interface
  */
-export interface IPluginCategory {
-	id: string;
+export interface IPluginCategory extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description?: string;
+	slug?: string;
+	color?: string;
 	icon?: string;
+	order?: number;
+	parentId?: ID;
+	parent?: IPluginCategory;
 }
 
 /**

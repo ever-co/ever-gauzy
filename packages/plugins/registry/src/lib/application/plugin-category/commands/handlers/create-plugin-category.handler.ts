@@ -13,26 +13,24 @@ export class CreatePluginCategoryHandler implements ICommandHandler<CreatePlugin
 
 		try {
 			// Validate slug uniqueness
-			const existingCategory = await this.pluginCategoryService.findOneByWhereOptions({
-				slug: input.slug,
-				tenantId: input.tenantId,
-				organizationId: input.organizationId
+			const { success } = await this.pluginCategoryService.findOneOrFailByWhereOptions({
+				slug: input.slug
 			});
 
-			if (existingCategory) {
+			if (success) {
 				throw new ConflictException(`Plugin category with slug '${input.slug}' already exists`);
 			}
 
 			// Validate parent category if provided
 			if (input.parentId) {
-				const parentCategory = await this.pluginCategoryService.findOneByIdString(input.parentId);
-				if (!parentCategory) {
+				const { success } = await this.pluginCategoryService.findOneOrFailByIdString(input.parentId);
+				if (!success) {
 					throw new BadRequestException(`Parent category with ID '${input.parentId}' not found`);
 				}
 			}
 
 			// Create the category using domain service
-			return this.pluginCategoryService.create(input);
+			return this.pluginCategoryService.save(input);
 		} catch (error) {
 			if (error instanceof ConflictException || error instanceof BadRequestException) {
 				throw error;
