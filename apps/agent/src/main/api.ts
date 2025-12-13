@@ -359,6 +359,19 @@ export class ApiService {
 		return false;
 	}
 
+	async isAuthenticated(): Promise<Boolean> {
+		const path = '/api/auth/authenticated';
+		try {
+			const res = await this.get(path, {});
+			if (res) {
+				return true;
+			}
+			return false;
+		} catch (error) {
+			return false;
+		}
+	}
+
 	async request(
 		path: string,
 		options: {
