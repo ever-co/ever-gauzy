@@ -1,5 +1,15 @@
-@let assignedUsers = assignedUsers$ | async; @let filteredUsers = filteredAvailableUsers$ | async; @let selectedUsers =
-getSelectedUsers() | async; @let loading = loading$ | async; @let totalCount = getTotalAssignedCount() | async;
+<!-- Assigned Users -->
+@let assignedUsers = assignedUsers$ | async;
+<!-- Available Users -->
+@let filteredUsers = filteredAvailableUsers$ | async;
+<!-- Selected Users -->
+@let selectedUsers = getSelectedUsers() | async;
+<!-- Loading state -->
+@let loading = loading$ | async;
+<!-- Total Assigned Count -->
+@let totalCount = getTotalAssignedCount() | async;
+<!-- Derived State -->
+@let isAssignedAvailable = totalCount && totalCount > 0;
 
 <nb-card class="plugin-user-management">
 	<nb-card-header class="d-flex justify-content-between align-items-center">
@@ -10,12 +20,14 @@ getSelectedUsers() | async; @let loading = loading$ | async; @let totalCount = g
 			<h5 class="card-title mb-1">Manage Users - {{ plugin.name }}</h5>
 			<p class="card-subtitle text-hint mb-0">Assign and manage user access to this plugin installation</p>
 		</div>
+		@if(isAssignedAvailable) {
 		<div class="header-stats">
-			<nb-badge [status]="totalCount && totalCount > 0 ? 'success' : 'basic'" class="assignment-count">
+			<nb-badge status="success" class="assignment-count">
 				<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
 				{{ totalCount || 0 }} assigned
 			</nb-badge>
 		</div>
+		}
 	</nb-card-header>
 
 	<nb-card-body>
