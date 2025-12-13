@@ -87,6 +87,10 @@
 					position: relative;
 					margin-left: 0.25rem;
 
+					nb-badge {
+						position: absolute !important;
+					}
+
 					::ng-deep nb-badge {
 						animation: pulse-badge 2s ease-in-out infinite;
 					}

@@ -461,6 +461,14 @@
 // Tab content spacing
 ::ng-deep nb-tab {
 	padding: 1rem 0;
+
+	.tabset nb-badge {
+		position: absolute !important;
+	}
+
+	&.content-active {
+		background-color: var(--gauzy-card-2);
+	}
 }
 
 // Nebular form field styling
