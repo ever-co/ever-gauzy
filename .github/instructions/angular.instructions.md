@@ -1,5 +1,5 @@
 ---
-applyTo: '**/*.ts, **/*.scss, **/*.html'
+applyTo: '**/*.component.ts, **/*.component.scss, **/*.component.html'
 ---
 
 # Persona
