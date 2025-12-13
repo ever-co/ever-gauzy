@@ -509,3 +509,7 @@
     transform: rotate(360deg);
   }
 }
+
+[nbButton] {
+  border-radius: calc(var(--border-radius) * 1.2) !important;
+}

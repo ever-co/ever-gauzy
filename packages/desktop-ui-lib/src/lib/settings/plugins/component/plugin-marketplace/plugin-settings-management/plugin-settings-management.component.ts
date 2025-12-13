@@ -391,6 +391,27 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	public onDeleteSetting(settingId: string, settingKey: string): void {
+		if (confirm(`Are you sure you want to delete the setting "${settingKey}"? This action cannot be undone.`)) {
+			this.actions.dispatch(
+				PluginSettingsActions.deleteSetting({
+					settingId
+				})
+			);
+		}
+	}
+
+	public onCreateSetting(): void {
+		// Open a dialog or form to create a new setting
+		// This would require a separate component for the creation form
+		// For now, we'll dispatch an action that could be handled by a dialog
+		this.actions.dispatch(
+			PluginSettingsActions.openCreateSettingDialog({
+				pluginId: this.plugin.id
+			})
+		);
+	}
+
 	public close(): void {
 		this.dialogRef.close();
 	}

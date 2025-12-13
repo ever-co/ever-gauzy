@@ -1,31 +1,37 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import {
-    Body,
-    Controller,
-    Get,
-    HttpStatus,
-    Param,
-    ParseUUIDPipe,
-    Patch,
-    Post,
-    Put,
-    Query,
-    UseGuards
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpStatus,
+	Param,
+	ParseUUIDPipe,
+	Patch,
+	Post,
+	Put,
+	Query,
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
-    CreatePluginSettingCommand,
-    GetPluginSettingByIdQuery,
-    GetPluginSettingsByPluginIdQuery
+	BulkUpdatePluginSettingsCommand,
+	CreatePluginSettingCommand,
+	DeletePluginSettingCommand,
+	GetPluginSettingByIdQuery,
+	GetPluginSettingsByCategoryQuery,
+	GetPluginSettingsByKeyQuery,
+	GetPluginSettingsByPluginIdQuery,
+	UpdatePluginSettingCommand
 } from '../../application';
 import { PluginSetting, PluginSettingService } from '../../domain';
 import {
-    BulkUpdatePluginSettingsDTO,
-    CreatePluginSettingDTO,
-    IPluginSetting,
-    PluginSettingQueryDTO
+	BulkUpdatePluginSettingsDTO,
+	CreatePluginSettingDTO,
+	IPluginSetting,
+	PluginSettingQueryDTO
 } from '../../shared';
 
 @ApiTags('Plugin Settings')
@@ -98,18 +104,34 @@ export class PluginSettingController {
 		@Query() query: PluginSettingQueryDTO
 	): Promise<IPluginSetting[]> {
 		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
 
 		// Handle category filter
 		if (query.category) {
-			return this.pluginSettingService.findByCategory(pluginId, query.category, query.pluginTenantId, [
-				'plugin',
-				'pluginTenant'
-			]);
+			return await this.queryBus.execute(
+				new GetPluginSettingsByCategoryQuery(
+					pluginId,
+					query.category,
+					query.pluginTenantId,
+					['plugin', 'pluginTenant'],
+					tenantId,
+					organizationId
+				)
+			);
 		}
 
 		// Handle key filter
 		if (query.key) {
-			const setting = await this.pluginSettingService.getSettingValue(pluginId, query.key, query.pluginTenantId);
+			const setting = await this.queryBus.execute(
+				new GetPluginSettingsByKeyQuery(
+					pluginId,
+					query.key,
+					query.pluginTenantId,
+					['plugin', 'pluginTenant'],
+					tenantId,
+					organizationId
+				)
+			);
 			return setting ? [setting] : [];
 		}
 
@@ -152,12 +174,13 @@ export class PluginSettingController {
 		@Param('pluginId', ParseUUIDPipe) pluginId: string,
 		@Body() bulkUpdateDto: BulkUpdatePluginSettingsDTO
 	): Promise<PluginSetting[]> {
-		const settingsWithTenantId = bulkUpdateDto.settings.map((setting) => ({
-			...setting,
-			pluginTenantId: bulkUpdateDto.pluginTenantId
-		}));
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const userId = RequestContext.currentUserId();
 
-		return this.pluginSettingService.bulkUpdateSettings(pluginId, settingsWithTenantId);
+		return await this.commandBus.execute(
+			new BulkUpdatePluginSettingsCommand(bulkUpdateDto, tenantId, organizationId, userId)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update plugin setting and validate' })
@@ -187,12 +210,22 @@ export class PluginSettingController {
 		@Param('id', ParseUUIDPipe) id: string,
 		@Body() updateData: { value: any; [key: string]: any }
 	): Promise<{ setting: IPluginSetting; validation: { valid: boolean; errors?: string[] } }> {
-		const setting = await this.pluginSettingService.findOneByIdString(id);
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const userId = RequestContext.currentUserId();
+
+		// Get current setting for validation
+		const setting = await this.queryBus.execute(
+			new GetPluginSettingByIdQuery(id, ['plugin', 'pluginTenant'], tenantId, organizationId)
+		);
+
 		const isValid = await this.pluginSettingService.validateSetting(setting, updateData.value);
 
 		// Update the setting if validation passes
 		if (isValid) {
-			const updatedSetting = await this.pluginSettingService.update(id, updateData);
+			const updatedSetting = await this.commandBus.execute(
+				new UpdatePluginSettingCommand(id, updateData, tenantId, organizationId, userId)
+			);
 			return {
 				setting: updatedSetting as IPluginSetting,
 				validation: { valid: true }
@@ -206,5 +239,26 @@ export class PluginSettingController {
 				}
 			};
 		}
+	}
+
+	@ApiOperation({ summary: 'Delete plugin setting' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin setting deleted successfully'
+	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'id', description: 'Plugin setting ID', type: String, format: 'uuid' })
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
+	@Delete(':id')
+	async delete(
+		@Param('pluginId', ParseUUIDPipe) pluginId: string,
+		@Param('id', ParseUUIDPipe) id: string
+	): Promise<{ deleted: boolean; id: string }> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const userId = RequestContext.currentUserId();
+
+		await this.commandBus.execute(new DeletePluginSettingCommand(id, tenantId, organizationId, userId));
+		return { deleted: true, id };
 	}
 }

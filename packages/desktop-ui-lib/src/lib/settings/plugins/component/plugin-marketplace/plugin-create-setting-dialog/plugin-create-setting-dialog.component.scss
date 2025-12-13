@@ -1,0 +1,95 @@
+.plugin-create-setting-dialog {
+  width: 700px;
+  background: var(--gauzy-card-1);
+  border-radius: calc(var(--border-radius) * 1.5);
+  box-shadow: var(--gauzy-shadow);
+
+  ::ng-deep nb-card-header {
+    background: linear-gradient(135deg, rgba(143, 155, 179, 0.05) 0%, rgba(143, 155, 179, 0.02) 100%);
+    border-bottom: 1px solid var(--border-basic-color-3);
+    padding: 1.5rem;
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .header-icon {
+      font-size: 1.75rem;
+      color: var(--color-success-default);
+    }
+
+    .card-title {
+      color: var(--gauzy-text-color-1);
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin: 0;
+    }
+  }
+
+  ::ng-deep nb-card-body {
+    padding: 1.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+
+    .label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--gauzy-text-color-1);
+      font-weight: 600;
+      font-size: 0.875rem;
+
+      .required {
+        color: var(--color-danger-default);
+        margin-left: 0.25rem;
+      }
+    }
+
+    .form-text {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--gauzy-text-color-2);
+    }
+  }
+
+  .checkbox-group {
+    display: flex;
+    gap: 1.5rem;
+
+    ::ng-deep nb-checkbox {
+      .custom-checkbox {
+        border-radius: calc(var(--border-radius) * 0.5);
+      }
+    }
+  }
+
+  ::ng-deep nb-card-footer {
+    background: var(--background-basic-color-2);
+    border-top: 1px solid var(--border-basic-color-3);
+    padding: 1rem 1.5rem;
+  }
+
+  ::ng-deep {
+    input,
+    textarea,
+    nb-select {
+      border-radius: calc(var(--border-radius) * 1);
+      transition: all 0.3s ease;
+
+      &:focus {
+        border-color: var(--color-primary-default);
+        box-shadow: 0 0 0 3px rgba(51, 102, 255, 0.1);
+      }
+    }
+
+    nb-option {
+      &:hover {
+        background: rgba(51, 102, 255, 0.1);
+      }
+    }
+  }
+}

@@ -73,6 +73,7 @@ import { PluginSettingsStore } from './component/plugin-marketplace/+state/store
 import { PluginSubscriptionAccessStore } from './component/plugin-marketplace/+state/stores/plugin-subscription-access.store';
 import { PluginSubscriptionStore } from './component/plugin-marketplace/+state/stores/plugin-subscription.store';
 import { PluginUserAssignmentStore } from './component/plugin-marketplace/+state/stores/plugin-user-assignment.store';
+import { PluginCreateSettingDialogComponent } from './component/plugin-marketplace/plugin-create-setting-dialog/plugin-create-setting-dialog.component';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
 import { PluginMarketplaceFilterComponent } from './component/plugin-marketplace/plugin-marketplace-filter/plugin-marketplace-filter.component';
 import { DialogCreateSourceComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
@@ -143,6 +144,7 @@ import {
 		PluginMarketplaceFilterComponent,
 		PluginSettingsManagerComponent,
 		PluginSettingsManagementComponent,
+		PluginCreateSettingDialogComponent,
 		PluginSubscriptionManagerComponent,
 		PluginSubscriptionPlanSelectionComponent,
 		PlanCardComponent,

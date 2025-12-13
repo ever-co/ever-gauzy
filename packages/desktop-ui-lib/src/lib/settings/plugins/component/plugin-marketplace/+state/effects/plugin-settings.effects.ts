@@ -4,6 +4,7 @@ import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { catchError, exhaustMap, map, of, switchMap, tap } from 'rxjs';
 import { PluginSettingsService } from '../../../../services/plugin-settings.service';
+import { PluginCreateSettingDialogComponent } from '../../plugin-create-setting-dialog/plugin-create-setting-dialog.component';
 import { PluginSettingsManagementComponent } from '../../plugin-settings-management/plugin-settings-management.component';
 import { PluginSettingsActions } from '../actions/plugin-settings.actions';
 import { PluginSettingsStore } from '../stores/plugin-settings.store';
@@ -73,7 +74,7 @@ export class PluginSettingsEffects {
 				ofType(PluginSettingsActions.createSetting),
 				tap(() => this.store.setSaving(true)),
 				switchMap(({ pluginId, setting }) =>
-					this.pluginSettingsService.createPluginSetting(pluginId, setting).pipe(
+					this.pluginSettingsService.createSetting(setting).pipe(
 						map((newSetting) => {
 							this.store.setSaving(false);
 							return PluginSettingsActions.createSettingSuccess({ setting: newSetting });
@@ -584,6 +585,25 @@ export class PluginSettingsEffects {
 						this.dialogService.open(PluginSettingsManagementComponent, {
 							context: {
 								plugin
+							}
+						}).onClose
+				)
+			);
+		},
+		{ dispatch: false }
+	);
+
+	openCreateSettingDialog$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.openCreateSettingDialog),
+				exhaustMap(
+					({ pluginId }) =>
+						this.dialogService.open(PluginCreateSettingDialogComponent, {
+							context: {
+								data: {
+									pluginId
+								}
 							}
 						}).onClose
 				)

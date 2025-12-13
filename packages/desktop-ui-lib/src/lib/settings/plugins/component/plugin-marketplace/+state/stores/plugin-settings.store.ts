@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { EntityState, EntityStore, StoreConfig } from '@datorama/akita';
-import { IPluginSetting, IPluginSettingGroup, PluginSettingScope } from '../../../../services/plugin-settings.service';
+import {
+	IPluginSetting,
+	IPluginSettingCreateInput,
+	IPluginSettingGroup,
+	PluginSettingScope
+} from '../../../../services/plugin-settings.service';
 
 export interface PluginSettingsState extends EntityState<IPluginSetting> {
 	settingsGroups: IPluginSettingGroup[];
@@ -30,7 +35,7 @@ export interface LoadPluginSettingsRequest {
 
 export interface CreatePluginSettingRequest {
 	pluginId: string;
-	setting: IPluginSetting;
+	setting: IPluginSettingCreateInput;
 }
 
 export interface UpdatePluginSettingRequest {

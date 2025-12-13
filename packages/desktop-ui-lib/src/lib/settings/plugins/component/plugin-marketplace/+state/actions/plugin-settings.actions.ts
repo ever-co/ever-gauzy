@@ -34,6 +34,12 @@ export const PluginSettingsActions = {
 	openSettings: createAction('[Plugin Settings] Open Settings', props<{ plugin: IPlugin }>()),
 	closeSettings: createAction('[Plugin Settings] Close Settings'),
 
+	// Open create setting dialog
+	openCreateSettingDialog: createAction(
+		'[Plugin Settings] Open Create Setting Dialog',
+		props<{ pluginId: string }>()
+	),
+
 	// Create setting
 	createSetting: createAction('[Plugin Settings] Create Setting', props<CreatePluginSettingRequest>()),
 	createSettingSuccess: createAction(
