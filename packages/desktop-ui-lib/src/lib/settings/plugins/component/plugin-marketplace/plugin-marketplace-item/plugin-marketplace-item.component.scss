@@ -159,8 +159,6 @@ nb-tag-list {
   display: block;
 
   .plugin-details-card {
-    background: var(--gauzy-card-1);
-    border-radius: calc(var(--border-radius) * 1.5);
     box-shadow: var(--gauzy-shadow);
 
     nb-card-header {
@@ -252,6 +250,7 @@ nb-tag-list {
     nb-card-body {
       padding: 1.5rem;
       background: var(--gauzy-card-2);
+	  border-radius: 0;
     }
 
     nb-card-footer {

@@ -499,6 +499,10 @@ nb-button-group {
 	ngx-no-data-message {
 		width: 100%;
 	}
+
+	.plugin-list {
+		border-radius: calc(var(--border-radius)* 2.25);
+	}
 }
 
 ::ng-deep {

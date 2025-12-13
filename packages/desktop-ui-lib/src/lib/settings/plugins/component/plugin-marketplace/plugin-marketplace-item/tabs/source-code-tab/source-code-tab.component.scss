@@ -30,6 +30,10 @@
 			padding: 1.5rem;
 			border-bottom: 1px solid var(--border-basic-color-3);
 
+			&:first-child {
+				border-radius: calc(1rem - 1px) calc(1rem - 1px) 0 0;
+			}
+
 			.header-left {
 				display: flex;
 				align-items: flex-start;
