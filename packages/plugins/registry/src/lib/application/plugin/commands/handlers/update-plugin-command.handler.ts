@@ -77,7 +77,8 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 				author: input.author,
 				license: input.license,
 				homepage: input.homepage,
-				requiresSubscription: input.requiresSubscription
+				requiresSubscription: input.requiresSubscription,
+				...(input?.categoryId && { categoryId: input.categoryId })
 			};
 			await this.pluginService.update(id, pluginUpdate);
 

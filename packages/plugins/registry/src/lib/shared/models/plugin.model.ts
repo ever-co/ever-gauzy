@@ -53,6 +53,7 @@ export interface IPlugin extends BaseEntityModel {
 
 	source?: IPluginSource; // Optional reference to the plugin's source
 	requiresSubscription?: boolean; // Flag indicating if subscription plans are enable
+	categoryId?: ID; // Optional category ID for the plugin
 
 	installed: boolean; // Flag indicating if the plugin is installed
 	hasPlan: boolean; // Flag indicating if the plugin has at least one subscription plan
