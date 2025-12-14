@@ -368,7 +368,7 @@ export class ApiService {
 		return false;
 	}
 
-	async isAuthenticated(): Promise<Boolean> {
+	async isAuthenticated(): Promise<boolean> {
 		const path = '/api/auth/authenticated';
 		try {
 			const res = await this.get(path, {});
@@ -388,7 +388,7 @@ export class ApiService {
 
 	async updateTaskStatus(taskId: string, task: TUpdateTaskStatusReq) {
 		const path = `/api/tasks/${taskId}`;
-		await this.getTasksStatusses({
+		await this.getTasksStatuses({
 			tenantId: task.tenantId,
 			organizationId: task.organizationId
 		});
@@ -401,7 +401,7 @@ export class ApiService {
 		});
 	}
 
-	async getTasksStatusses({
+	async getTasksStatuses({
 		tenantId,
 		organizationId
 	}: { tenantId: string, organizationId: string }): Promise<void> {
@@ -409,11 +409,11 @@ export class ApiService {
 			return;
 		}
 		const path = `/api/task-statuses`;
-		const taskStatusses: Partial<IPagination<ITaskStatus>> = await this.get(path, {
+		const taskStatuses: Partial<IPagination<ITaskStatus>> = await this.get(path, {
 			tenantId,
 			organizationId
 		});
-		this.statusProgress = taskStatusses.items?.find((i) => i.value === TaskStatusEnum.IN_PROGRESS);
+		this.statusProgress = taskStatuses.items?.find((i) => i.value === TaskStatusEnum.IN_PROGRESS);
 	}
 
 	async request(

@@ -115,8 +115,10 @@ export class DesktopIconGenerator
 		for (const color of colors) {
 			for (const scale of scales) {
 				const size = REF_SIZE * scale;
-				const icon =
-					scale === scales[0] ? color === 'gray' ? 'icon_gray.png' : 'icon.png' : color === 'gray' ? `icon@${scale}x_gray.png` : `icon@${scale}x.png`;
+				const suffix = color === 'gray' ? '_gray' : '';
+				const scalePart = scale === scales[0] ? '' : `@${scale}x`;
+
+				const icon = `icon${scalePart}${suffix}.png`;
 				await new Promise((resolve) => {
 					const imgJimp = originalImage
 						.clone()

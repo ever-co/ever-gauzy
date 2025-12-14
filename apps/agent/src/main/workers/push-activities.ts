@@ -89,7 +89,9 @@ class PushActivities {
 		(async () => {
 			try {
 				await this.syncTimer(job);
-				await this.updateTaskStatus();
+				if (!job.data?.isStopped) {
+					await this.updateTaskStatus();
+				}
 				return cb(null);
 			} catch (error) {
 				job.attempts += 1;
@@ -284,7 +286,7 @@ class PushActivities {
 		try {
 			const authConfig = getAuthConfig();
 			const projectConfig = getProjectConfig();
-			if (!projectConfig.taskId) {
+			if (!projectConfig?.taskId) {
 				return;
 			}
 			const taskStatus = await this.apiService.getTask(projectConfig.taskId);
@@ -298,7 +300,7 @@ class PushActivities {
 				title: taskStatus.title
 			});
 		} catch (error) {
-			console.error('Failed update task status');
+			console.error('Failed update task status', error);
 		}
 
 	}
@@ -462,9 +464,9 @@ class PushActivities {
 			recordedAt: moment(activities.timeStart).toISOString(),
 			activities: this.getActivities(activities, overall, auth),
 			employeeId: auth?.user?.employee?.id,
-			...(projectConfig.projectId ? { projectId: projectConfig.projectId } : {}),
-			...(projectConfig.taskId ? { taskId: projectConfig.taskId } : {}),
-			...(projectConfig.organizationContactId ? { organizationContactId: projectConfig.organizationContactId } : {})
+			...(projectConfig?.projectId ? { projectId: projectConfig?.projectId } : {}),
+			...(projectConfig?.taskId ? { taskId: projectConfig?.taskId } : {}),
+			...(projectConfig?.organizationContactId ? { organizationContactId: projectConfig?.organizationContactId } : {})
 		};
 	}
 

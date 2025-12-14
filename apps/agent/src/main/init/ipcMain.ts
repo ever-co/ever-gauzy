@@ -323,10 +323,11 @@ export default function AppIpcMain() {
 
 	ipcMain.handle('TASK_SELECTED', (_, data: { taskId: string; organizationId: string; projectId: string }) => {
 		updateProject({
-			taskId: data.taskId,
-			organizationId: data.organizationId,
-			projectId: data.projectId
+			taskId: data.taskId ?? null,
+			organizationId: data.organizationId ?? null,
+			projectId: data.projectId ?? null
 		});
+		return true;
 	});
 
 	pluginListeners();
