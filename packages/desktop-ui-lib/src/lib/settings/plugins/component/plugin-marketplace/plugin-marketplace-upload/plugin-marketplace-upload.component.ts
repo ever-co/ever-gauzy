@@ -26,7 +26,6 @@ import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { patterns } from '../../../../../constants';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../services';
-import { PluginSubscriptionService } from '../../../services/plugin-subscription.service';
 import { SourceContext } from './plugin-source/creator/source.context';
 import { PluginSubscriptionPlanCreatorComponent } from './plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
 
@@ -65,8 +64,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		private readonly sourceContext: SourceContext,
 		private readonly versionQuery: PluginVersionQuery,
 		private readonly dialog: NbDialogService,
-		private readonly action: Actions,
-		private readonly subscriptionService: PluginSubscriptionService
+		private readonly action: Actions
 	) {
 		this.today = dateService.today();
 	}

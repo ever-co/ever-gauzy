@@ -25,7 +25,8 @@ export class PluginFormDataBuilder {
 			license: plugin.license,
 			homepage: plugin.homepage,
 			repository: plugin.repository,
-			requiresSubscription: plugin.requiresSubscription
+			requiresSubscription: plugin.requiresSubscription,
+			categoryId: plugin.categoryId
 		};
 
 		this.appendFiltered(pluginData);
