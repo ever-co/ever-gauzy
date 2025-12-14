@@ -24,10 +24,10 @@ import { SearchTermStore } from '../search/+state/search-term.store';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-task-table',
-    templateUrl: './task-table.component.html',
-    styleUrls: ['./task-table.component.scss'],
-    standalone: false
+	selector: 'ngx-task-table',
+	templateUrl: './task-table.component.html',
+	styleUrls: ['./task-table.component.scss'],
+	standalone: false
 })
 export class TaskTableComponent implements OnInit, AfterViewInit {
 	private _smartTable: Angular2SmartTableComponent;
@@ -61,7 +61,7 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 		private readonly searchTermStore: SearchTermStore,
 		private readonly taskCacheService: TaskCacheService,
 		private readonly store: Store
-	) {}
+	) { }
 	ngOnInit(): void {
 		combineLatest([
 			this.teamSelectorService.selected$,
@@ -99,6 +99,19 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 		} else {
 			const selectedRow = selectionEvent.data;
 			this.handleSelectedTaskChange(selectedRow.id);
+			this.handleTimerTaskSelected(selectedRow);
+		}
+	}
+
+	private async handleTimerTaskSelected(task: Record<string, any>) {
+		try {
+			await this.electronService.ipcRenderer.invoke('TASK_SELECTED', {
+				projectId: task.taskStatus?.projectId,
+				taskId: task.id,
+				organizationId: task.organizationId
+			});
+		} catch (error) {
+			console.error('Event task selected uninitialized');
 		}
 	}
 

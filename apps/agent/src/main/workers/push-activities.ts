@@ -18,7 +18,7 @@ import {
 	ITimerCallbackPayload
 } from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
-import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
+import { getAuthConfig, TAuthConfig, getInitialConfig, getProjectConfig } from '../util';
 import * as moment from 'moment';
 import { AgentLogger } from '../agent-logger';
 import { environment } from '../../environments/environment';
@@ -26,6 +26,7 @@ import * as fs from 'node:fs';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 import { WorkerQueue } from '../queue/worker-queue';
+import { TaskStatusEnum } from '@gauzy/contracts';
 
 type TParamsActivities = Omit<TimeSlotActivities, 'recordedAt'> & { recordedAt: string };
 
@@ -88,6 +89,7 @@ class PushActivities {
 		(async () => {
 			try {
 				await this.syncTimer(job);
+				await this.updateTaskStatus();
 				return cb(null);
 			} catch (error) {
 				job.attempts += 1;
@@ -278,6 +280,29 @@ class PushActivities {
 		);
 	}
 
+	async updateTaskStatus() {
+		try {
+			const authConfig = getAuthConfig();
+			const projectConfig = getProjectConfig();
+			if (!projectConfig.taskId) {
+				return;
+			}
+			const taskStatus = await this.apiService.getTask(projectConfig.taskId);
+			if (taskStatus.status === TaskStatusEnum.IN_PROGRESS) {
+				return;
+			}
+			return this.apiService.updateTaskStatus(projectConfig.taskId, {
+				tenantId: authConfig.user.employee.tenantId,
+				organizationId: authConfig.user.employee.organizationId,
+				status: TaskStatusEnum.IN_PROGRESS,
+				title: taskStatus.title
+			});
+		} catch (error) {
+			console.error('Failed update task status');
+		}
+
+	}
+
 	async saveImage(recordedAt: string, images: string[], timeSlotId?: string) {
 		try {
 			const auth = getAuthConfig();
@@ -423,6 +448,7 @@ class PushActivities {
 		if (!isAuthenticated) {
 			return;
 		}
+		const projectConfig = getProjectConfig();
 		const overall = this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration);
 		const duration = this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd));
 		return {
@@ -435,7 +461,10 @@ class PushActivities {
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
 			activities: this.getActivities(activities, overall, auth),
-			employeeId: auth?.user?.employee?.id
+			employeeId: auth?.user?.employee?.id,
+			...(projectConfig.projectId ? { projectId: projectConfig.projectId } : {}),
+			...(projectConfig.taskId ? { taskId: projectConfig.taskId } : {}),
+			...(projectConfig.organizationContactId ? { organizationContactId: projectConfig.organizationContactId } : {})
 		};
 	}
 

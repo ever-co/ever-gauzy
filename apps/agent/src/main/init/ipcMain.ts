@@ -15,7 +15,7 @@ import {
 	pluginListeners,
 	ProviderFactory,
 } from '@gauzy/desktop-lib';
-import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting } from '../util';
+import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting, updateProject } from '../util';
 import { startServer } from './app';
 import AppWindow, { WindowType } from '../window-manager';
 import * as moment from 'moment';
@@ -321,7 +321,13 @@ export default function AppIpcMain() {
 		appWindow.setWindowIsReady(WindowType.notificationWindow);
 	});
 
-
+	ipcMain.handle('TASK_SELECTED', (_, data: { taskId: string; organizationId: string; projectId: string }) => {
+		updateProject({
+			taskId: data.taskId,
+			organizationId: data.organizationId,
+			projectId: data.projectId
+		});
+	});
 
 	pluginListeners();
 }
