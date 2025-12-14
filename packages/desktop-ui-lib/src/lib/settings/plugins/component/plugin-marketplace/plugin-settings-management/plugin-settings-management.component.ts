@@ -305,7 +305,14 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 
 			// Convert form values to bulk update format
 			const settingsUpdates = Object.entries(formValue).map(([key, value]) => ({ key, value }));
+
+			// If there are no settings to update, skip the request
+			if (settingsUpdates.length === 0) {
+				this.submitting = false;
+				return;
+			}
 			const updates = {
+				pluginId: this.plugin.id,
 				settings: settingsUpdates,
 				pluginTenantId: this.data.tenantId
 			};

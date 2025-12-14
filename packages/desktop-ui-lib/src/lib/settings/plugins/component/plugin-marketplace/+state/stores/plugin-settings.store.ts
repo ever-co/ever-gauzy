@@ -52,6 +52,7 @@ export interface UpdatePluginSettingRequest {
 export interface BulkUpdatePluginSettingsRequest {
 	pluginId: string;
 	updates: {
+		pluginId?: string;
 		settings: Array<{
 			key: string;
 			value: any;

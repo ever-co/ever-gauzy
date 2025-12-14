@@ -186,6 +186,7 @@ export interface CreatePluginSettingDTO {
 }
 
 export interface BulkUpdatePluginSettingsDTO {
+	pluginId?: string;
 	settings: Array<{
 		key: string;
 		value: any;
