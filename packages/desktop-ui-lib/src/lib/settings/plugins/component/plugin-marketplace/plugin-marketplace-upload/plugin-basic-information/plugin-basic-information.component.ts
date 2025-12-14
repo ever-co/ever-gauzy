@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit, ViewChild } from '@angular/core';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, tap } from 'rxjs';
-import { PluginCategoryActions, PluginCategoryQuery } from '../../+state';
+import { distinctUntilChanged, filter, map, tap } from 'rxjs';
+import { PluginCategoryQuery } from '../../+state';
 import { CategorySelectorComponent } from '../../plugin-marketplace-item/category-selector/category-selector.component';
 import { BasePluginFormComponent } from '../base-plugin-form/base-plugin-form.component';
 
@@ -23,25 +23,26 @@ export class PluginBasicInformationComponent extends BasePluginFormComponent imp
 	private readonly actions = inject(Actions);
 
 	ngOnInit(): void {
-		// Listen to category selection changes and update form
+		this.syncCategoryWithForm();
+	}
+
+	public syncCategoryWithForm(): void {
+		const categoryControl = this.form.get('categoryId');
+
+		if (!categoryControl) {
+			throw new Error('categoryId control is required');
+		}
+
 		this.categoryQuery.selectedCategory$
 			.pipe(
 				filter((category) => !!category),
-				tap((category) => {
-					this.form?.get('categoryId')?.setValue(category.id);
-				}),
+				map(({ id }) => id),
+				distinctUntilChanged(),
+				filter((categoryId) => categoryId !== categoryControl.value),
+				tap((categoryId) => categoryControl.setValue(categoryId, { emitEvent: false })),
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		// Set initial category if editing
-		const initialCategoryId = this.form?.get('categoryId')?.value;
-		if (initialCategoryId) {
-			const category = this.categoryQuery.getCategoryById(initialCategoryId);
-			if (category) {
-				this.actions.dispatch(PluginCategoryActions.selectCategory(category));
-			}
-		}
 	}
 
 	/**
