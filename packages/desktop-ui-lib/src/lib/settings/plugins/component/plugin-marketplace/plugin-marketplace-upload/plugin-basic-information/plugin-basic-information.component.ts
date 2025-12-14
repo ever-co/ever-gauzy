@@ -36,7 +36,7 @@ export class PluginBasicInformationComponent extends BasePluginFormComponent imp
 				filter((category) => !!category),
 				map(({ id }) => id),
 				distinctUntilChanged(),
-				filter((categoryId) => categoryId !== categoryControl.value),
+				filter((categoryId) => categoryControl.value && categoryId !== categoryControl.value),
 				tap((categoryId) => categoryControl.setValue(categoryId, { emitEvent: false })),
 				untilDestroyed(this)
 			)
