@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { AfterViewInit, ChangeDetectionStrategy, Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { IPlugin } from '@gauzy/contracts';
 import { NB_DIALOG_CONFIG, NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -15,7 +15,7 @@ import {
 	switchMap,
 	tap
 } from 'rxjs';
-import { PluginSettingsActions, PluginSettingsQuery } from '../+state';
+import { PluginCategoryQuery, PluginSettingsActions, PluginSettingsQuery } from '../+state';
 import {
 	IPluginSetting,
 	IPluginSettingGroup,
@@ -23,6 +23,7 @@ import {
 	PluginSettingsService,
 	PluginSettingType
 } from '../../../services/plugin-settings.service';
+import { CategorySelectorComponent } from '../plugin-marketplace-item/category-selector/category-selector.component';
 
 export interface PluginSettingsDialogData {
 	plugin: IPlugin;
@@ -41,7 +42,7 @@ export interface PluginSettingsDialogData {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: false
 })
-export class PluginSettingsManagementComponent implements OnInit, OnDestroy {
+export class PluginSettingsManagementComponent implements OnInit, OnDestroy, AfterViewInit {
 	public plugin: IPlugin;
 	public settingsForm: FormGroup;
 	public searchForm: FormGroup;
@@ -71,13 +72,16 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy {
 	// Setting types enum for template
 	public readonly PluginSettingType = PluginSettingType;
 
+	@ViewChild(CategorySelectorComponent) categorySelector: CategorySelectorComponent;
+
 	constructor(
 		@Inject(NB_DIALOG_CONFIG) public data: PluginSettingsDialogData,
 		private readonly dialogRef: NbDialogRef<PluginSettingsManagementComponent>,
 		private readonly formBuilder: FormBuilder,
 		private readonly pluginSettingsService: PluginSettingsService,
 		private readonly query: PluginSettingsQuery,
-		private readonly actions: Actions
+		private readonly actions: Actions,
+		private readonly categoryQuery: PluginCategoryQuery
 	) {
 		this.plugin = this.data.plugin;
 		this.initializeForms();
@@ -98,6 +102,27 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy {
 		this.subscribeToSettingsChanges();
 	}
 
+	ngAfterViewInit(): void {
+		this.syncCategoryWithForm();
+	}
+
+	private syncCategoryWithForm(): void {
+		this.categoryQuery.selectedCategory$
+			.pipe(
+				filter(Boolean),
+				map((category) => category.id),
+				filter((categoryId) => categoryId !== this.categoryId.value),
+				distinctUntilChanged(),
+				tap((categoryId) => this.categoryId.setValue(categoryId, { emitEvent: false })),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	public get categoryId(): FormControl<string> {
+		return this.searchForm.get('categoryId') as FormControl<string>;
+	}
+
 	ngOnDestroy(): void {
 		this.searchTerm$.complete();
 		this.selectedCategory$.complete();
@@ -108,7 +133,7 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy {
 		this.settingsForm = this.formBuilder.group({});
 		this.searchForm = this.formBuilder.group({
 			searchTerm: [''],
-			category: ['all']
+			categoryId: [null]
 		});
 	}
 
@@ -223,7 +248,7 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy {
 
 		// Handle category filter changes
 		this.searchForm
-			.get('category')
+			.get('categoryId')
 			?.valueChanges.pipe(
 				startWith('all'),
 				distinctUntilChanged(),

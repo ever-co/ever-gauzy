@@ -58,15 +58,9 @@
 					</nb-form-field>
 				</div>
 				<div class="col-md-4">
-					<nb-form-field>
-						<nb-icon nbPrefix icon="funnel-outline"></nb-icon>
-						<nb-select placeholder="All Categories" formControlName="category" class="category-select">
-							<nb-option value="all">All Categories</nb-option>
-							@for(category of categories; track category) { @if(category !== 'all') {
-							<nb-option [value]="category">{{ category | titlecase }}</nb-option>
-							} }
-						</nb-select>
-					</nb-form-field>
+					<div class="form-group">
+						<gauzy-category-selector [categoryId]="categoryId?.value"></gauzy-category-selector>
+					</div>
 				</div>
 			</div>
 		</form>

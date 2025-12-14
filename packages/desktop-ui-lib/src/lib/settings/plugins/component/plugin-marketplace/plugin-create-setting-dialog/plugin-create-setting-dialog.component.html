@@ -72,13 +72,7 @@
 				<div class="col-md-4">
 					<div class="form-group">
 						<label for="category" class="label">Category</label>
-						<input
-							nbInput
-							fullWidth
-							id="category"
-							formControlName="category"
-							placeholder="e.g., general, api, security"
-						/>
+						<gauzy-category-selector [categoryId]="categoryId?.value"></gauzy-category-selector>
 					</div>
 				</div>
 			</div>

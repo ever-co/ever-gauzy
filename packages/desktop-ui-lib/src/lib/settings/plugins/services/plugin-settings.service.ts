@@ -113,7 +113,7 @@ export interface IPluginSettingCreateInput {
 	type: PluginSettingType;
 	label: string;
 	description?: string;
-	category?: string;
+	categoryId?: string;
 	isRequired?: boolean;
 	isEncrypted?: boolean;
 	isVisible?: boolean;

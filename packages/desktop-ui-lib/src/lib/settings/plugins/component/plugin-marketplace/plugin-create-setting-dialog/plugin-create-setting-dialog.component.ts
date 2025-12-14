@@ -1,15 +1,17 @@
-import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AfterViewInit, ChangeDetectionStrategy, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { NB_DIALOG_CONFIG, NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { asyncScheduler } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { asyncScheduler, distinctUntilChanged, filter, map, tap } from 'rxjs';
 import { PluginSettingsActions } from '../+state/actions/plugin-settings.actions';
+import { PluginCategoryQuery } from '../+state/queries/plugin-category.query';
 import {
 	IPluginSettingCreateInput,
 	PluginSettingScope,
 	PluginSettingType
 } from '../../../services/plugin-settings.service';
+import { CategorySelectorComponent } from '../plugin-marketplace-item/category-selector/category-selector.component';
 
 export interface CreatePluginSettingDialogData {
 	pluginId: string;
@@ -26,7 +28,7 @@ export interface CreatePluginSettingDialogData {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: false
 })
-export class PluginCreateSettingDialogComponent implements OnInit {
+export class PluginCreateSettingDialogComponent implements OnInit, AfterViewInit {
 	public createForm: FormGroup;
 	public submitting = false;
 	public data: CreatePluginSettingDialogData;
@@ -34,11 +36,14 @@ export class PluginCreateSettingDialogComponent implements OnInit {
 	public readonly settingTypes = Object.values(PluginSettingType);
 	public readonly settingScopes = Object.values(PluginSettingScope);
 
+	@ViewChild(CategorySelectorComponent) categorySelector: CategorySelectorComponent;
+
 	constructor(
 		@Inject(NB_DIALOG_CONFIG) config: { data: CreatePluginSettingDialogData },
 		private readonly dialogRef: NbDialogRef<PluginCreateSettingDialogComponent>,
 		private readonly formBuilder: FormBuilder,
-		private readonly actions: Actions
+		private readonly actions: Actions,
+		private readonly categoryQuery: PluginCategoryQuery
 	) {
 		this.data = config.data;
 		this.initializeForm();
@@ -48,6 +53,10 @@ export class PluginCreateSettingDialogComponent implements OnInit {
 		// Any additional initialization
 	}
 
+	ngAfterViewInit(): void {
+		this.syncCategoryWithForm();
+	}
+
 	private initializeForm(): void {
 		this.createForm = this.formBuilder.group({
 			key: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)]],
@@ -55,13 +64,30 @@ export class PluginCreateSettingDialogComponent implements OnInit {
 			description: [''],
 			type: [PluginSettingType.STRING, Validators.required],
 			scope: [PluginSettingScope.GLOBAL, Validators.required],
-			category: ['general'],
+			categoryId: [null],
 			value: [''],
 			defaultValue: [''],
 			isRequired: [false],
 			isEncrypted: [false],
 			isVisible: [true]
 		});
+	}
+
+	private syncCategoryWithForm(): void {
+		this.categoryQuery.selectedCategory$
+			.pipe(
+				filter(Boolean),
+				map((category) => category.id),
+				filter((categoryId) => categoryId !== this.categoryId.value),
+				distinctUntilChanged(),
+				tap((categoryId) => this.categoryId.setValue(categoryId, { emitEvent: false })),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	public get categoryId(): FormControl<string> {
+		return this.createForm.get('categoryId') as FormControl<string>;
 	}
 
 	public onSubmit(): void {
@@ -76,7 +102,7 @@ export class PluginCreateSettingDialogComponent implements OnInit {
 				description: formValue.description,
 				type: formValue.type,
 				scope: formValue.scope,
-				category: formValue.category,
+				categoryId: formValue.categoryId,
 				value: formValue.value || formValue.defaultValue,
 				isRequired: formValue.isRequired,
 				isEncrypted: formValue.isEncrypted,

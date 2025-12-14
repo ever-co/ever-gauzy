@@ -85,10 +85,12 @@
 	</div>
 
 	<!-- Plugin Categories -->
-	<div class="plugin-categories" *ngIf="plugin.category">
-		<nb-icon icon="folder-outline" class="category-icon"></nb-icon>
-		<nb-badge status="primary" class="category-badge" [text]="plugin.category.name"> </nb-badge>
+	@if(plugin.category; as category) {
+	<div class="plugin-categories" [style.color]="category.color">
+		<nb-icon [icon]="category.icon" class="category-icon"></nb-icon>
+		<nb-badge status="primary" class="category-badge" [text]="category.name"> </nb-badge>
 	</div>
+	}
 
 	<!-- Plugin Tags -->
 	<div class="plugin-tags" *ngIf="plugin.tags && plugin.tags.length > 0">
