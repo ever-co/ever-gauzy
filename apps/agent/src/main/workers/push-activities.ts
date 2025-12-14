@@ -294,8 +294,8 @@ class PushActivities {
 				return;
 			}
 			return this.apiService.updateTaskStatus(projectConfig.taskId, {
-				tenantId: authConfig.user.employee.tenantId,
-				organizationId: authConfig.user.employee.organizationId,
+				tenantId: authConfig?.user?.employee?.tenantId,
+				organizationId: authConfig?.user?.employee?.organizationId,
 				status: TaskStatusEnum.IN_PROGRESS,
 				title: taskStatus.title
 			});
