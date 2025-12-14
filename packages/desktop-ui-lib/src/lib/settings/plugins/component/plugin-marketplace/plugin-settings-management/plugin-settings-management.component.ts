@@ -1,20 +1,20 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectionStrategy,
+	ChangeDetectorRef,
+	Component,
+	inject,
+	Inject,
+	OnDestroy,
+	OnInit,
+	ViewChild
+} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { IPlugin } from '@gauzy/contracts';
 import { NB_DIALOG_CONFIG, NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	BehaviorSubject,
-	debounceTime,
-	distinctUntilChanged,
-	filter,
-	map,
-	Observable,
-	startWith,
-	switchMap,
-	tap
-} from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map, Observable, startWith, switchMap, take, tap } from 'rxjs';
 import { PluginCategoryQuery, PluginSettingsActions, PluginSettingsQuery } from '../+state';
 import {
 	IPluginSetting,
@@ -51,37 +51,43 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 	public organizationId?: string;
 	public tenantId?: string;
 
-	// State observables
-	public settingsGroups$ = this.query.settingsGroups$;
-	public filteredGroups$ = this.query.settingsByCategory$;
-	public categories$ = this.query.categories$;
-	public loading$ = this.query.isLoading$;
-	public saving$ = this.query.isSaving$;
-	public validating$ = this.query.isValidating$;
-	public validationErrors$ = this.query.validationErrors$;
-	public hasUnsavedChanges$ = this.query.hasUnsavedChanges$;
-	public isFormValid$ = this.query.isFormValid$;
-
-	// Local state for search
-	private readonly searchTerm$ = new BehaviorSubject<string>('');
-	private readonly selectedCategory$ = new BehaviorSubject<string>('all');
-
 	// Loading state
 	public submitting = false;
+	public Array = Array;
 
 	// Setting types enum for template
 	public readonly PluginSettingType = PluginSettingType;
 
 	@ViewChild(CategorySelectorComponent) categorySelector: CategorySelectorComponent;
 
+	// Use inject for dependencies following Angular 20 best practices
+	private readonly formBuilder = inject(FormBuilder);
+	private readonly pluginSettingsService = inject(PluginSettingsService);
+	private readonly query = inject(PluginSettingsQuery);
+	private readonly actions = inject(Actions);
+	private readonly categoryQuery = inject(PluginCategoryQuery);
+	private readonly cdr = inject(ChangeDetectorRef);
+
+	// State observables (defined after inject to ensure query is available)
+	public readonly settingsGroups$ = this.query.settingsGroups$;
+	public readonly filteredGroups$ = this.query.filteredGroups$;
+	public readonly categories$ = this.query.categories$;
+	public readonly loading$ = this.query.isLoading$;
+	public readonly saving$ = this.query.isSaving$;
+	public readonly validating$ = this.query.isValidating$;
+	public readonly validationErrors$ = this.query.validationErrors$;
+	public readonly hasUnsavedChanges$ = this.query.hasUnsavedChanges$;
+	public readonly isFormValid$ = this.query.isFormValid$;
+
+	// Edit mode state from Akita
+	public readonly editingSettings$ = this.query.editingSettings$;
+	public readonly savingSettings$ = this.query.savingSettings$;
+	public readonly editForms$ = this.query.editForms$;
+	public readonly editingSettingsCount$ = this.query.getEditingSettingsCount$();
+
 	constructor(
 		@Inject(NB_DIALOG_CONFIG) public data: PluginSettingsDialogData,
-		private readonly dialogRef: NbDialogRef<PluginSettingsManagementComponent>,
-		private readonly formBuilder: FormBuilder,
-		private readonly pluginSettingsService: PluginSettingsService,
-		private readonly query: PluginSettingsQuery,
-		private readonly actions: Actions,
-		private readonly categoryQuery: PluginCategoryQuery
+		private readonly dialogRef: NbDialogRef<PluginSettingsManagementComponent>
 	) {
 		this.plugin = this.data.plugin;
 		this.initializeForms();
@@ -124,8 +130,7 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 	}
 
 	ngOnDestroy(): void {
-		this.searchTerm$.complete();
-		this.selectedCategory$.complete();
+		this.actions.dispatch(PluginSettingsActions.clearEditState());
 		this.actions.dispatch(PluginSettingsActions.clearSelection());
 	}
 
@@ -239,7 +244,6 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 				debounceTime(300),
 				distinctUntilChanged(),
 				tap((term) => {
-					this.searchTerm$.next(term || '');
 					this.actions.dispatch(PluginSettingsActions.setSearchTerm({ searchTerm: term || '' }));
 				}),
 				untilDestroyed(this)
@@ -253,7 +257,6 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 				startWith('all'),
 				distinctUntilChanged(),
 				tap((category) => {
-					this.selectedCategory$.next(category || 'all');
 					this.actions.dispatch(
 						PluginSettingsActions.setSelectedCategory({ selectedCategory: category || 'all' })
 					);
@@ -420,6 +423,7 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 		if (confirm(`Are you sure you want to delete the setting "${settingKey}"? This action cannot be undone.`)) {
 			this.actions.dispatch(
 				PluginSettingsActions.deleteSetting({
+					pluginId: this.plugin.id,
 					settingId
 				})
 			);
@@ -437,7 +441,80 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 		);
 	}
 
+	public onEditSetting(settingKey: string): void {
+		const currentValue = this.settingsForm.get(settingKey)?.value;
+		this.actions.dispatch(
+			PluginSettingsActions.startEditSetting({
+				settingKey,
+				currentValue
+			})
+		);
+	}
+
+	public onSaveSettingEdit(settingKey: string): void {
+		this.query
+			.getEditFormData$(settingKey)
+			.pipe(
+				take(1),
+				filter((formData) => !!formData)
+			)
+			.subscribe((formData) => {
+				const newValue = formData.value;
+				// Update the main form
+				this.settingsForm.get(settingKey)?.setValue(newValue);
+				// Dispatch save action
+				this.actions.dispatch(
+					PluginSettingsActions.saveSettingEdit({
+						settingKey,
+						newValue
+					})
+				);
+			});
+	}
+
+	public onCancelSettingEdit(settingKey: string): void {
+		this.actions.dispatch(PluginSettingsActions.cancelSettingEdit({ settingKey }));
+	}
+
+	public getEditFormValue(settingKey: string): Observable<any> {
+		return this.query.getEditFormValue$(settingKey);
+	}
+
+	public updateEditFormValue(settingKey: string, value: any): void {
+		this.actions.dispatch(PluginSettingsActions.updateEditFormValue({ settingKey, value }));
+	}
+
+	public isSettingBeingEdited(settingKey: string): Observable<boolean> {
+		return this.query.isSettingBeingEdited$(settingKey);
+	}
+
+	public getOptionLabel(setting: IPluginSetting, value: any): string {
+		if (!setting.options) {
+			return value?.toString() || '';
+		}
+		const option = setting.options.find((opt) => opt.value === value);
+		return option?.label || value?.toString() || '';
+	}
+
+	public trackBySettingKey(index: number, setting: IPluginSetting): string {
+		return setting.key;
+	}
+
+	public trackByGroupCategory(index: number, group: IPluginSettingGroup): string {
+		return group.category;
+	}
+
 	public close(): void {
-		this.dialogRef.close();
+		this.query
+			.hasAnyEditingSettings$()
+			.pipe(take(1))
+			.subscribe((hasEdits) => {
+				if (hasEdits) {
+					if (!confirm('You have unsaved edits. Are you sure you want to close?')) {
+						return;
+					}
+				}
+				this.dialogRef.close();
+			});
 	}
 }

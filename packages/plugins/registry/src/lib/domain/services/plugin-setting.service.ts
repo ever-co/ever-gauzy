@@ -1,14 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { TenantAwareCrudService } from '@gauzy/core';
-import { PluginSetting } from '../entities/plugin-setting.entity';
-import { TypeOrmPluginSettingRepository } from '../repositories/type-orm-plugin-setting.repository';
-import { MikroOrmPluginSettingRepository } from '../repositories/mikro-orm-plugin-setting.repository';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import {
 	IPluginSetting,
 	IPluginSettingCreateInput,
 	IPluginSettingUpdateInput
 } from '../../shared/models/plugin-setting.model';
+import { PluginSetting } from '../entities/plugin-setting.entity';
+import { MikroOrmPluginSettingRepository } from '../repositories/mikro-orm-plugin-setting.repository';
+import { TypeOrmPluginSettingRepository } from '../repositories/type-orm-plugin-setting.repository';
 
 @Injectable()
 export class PluginSettingService extends TenantAwareCrudService<PluginSetting> {
@@ -82,7 +82,13 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 		const result = await this.findAll({
 			where,
 			relations,
-			order: { category: 'ASC', order: 'ASC', key: 'ASC' }
+			order: {
+				category: {
+					name: 'ASC'
+				},
+				order: 'ASC',
+				key: 'ASC'
+			}
 		} as FindManyOptions);
 
 		return result.items || [];
@@ -108,7 +114,13 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 		const result = await this.findAll({
 			where,
 			relations,
-			order: { category: 'ASC', order: 'ASC', key: 'ASC' }
+			order: {
+				category: {
+					name: 'ASC'
+				},
+				order: 'ASC',
+				key: 'ASC'
+			}
 		} as FindManyOptions);
 
 		return result.items || [];

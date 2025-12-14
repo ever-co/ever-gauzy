@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { NB_DIALOG_CONFIG, NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -38,12 +38,14 @@ export class PluginCreateSettingDialogComponent implements OnInit, AfterViewInit
 
 	@ViewChild(CategorySelectorComponent) categorySelector: CategorySelectorComponent;
 
+	// Use inject for dependencies following Angular 20 best practices
+	private readonly formBuilder = inject(FormBuilder);
+	private readonly actions = inject(Actions);
+	private readonly categoryQuery = inject(PluginCategoryQuery);
+
 	constructor(
 		@Inject(NB_DIALOG_CONFIG) config: { data: CreatePluginSettingDialogData },
-		private readonly dialogRef: NbDialogRef<PluginCreateSettingDialogComponent>,
-		private readonly formBuilder: FormBuilder,
-		private readonly actions: Actions,
-		private readonly categoryQuery: PluginCategoryQuery
+		private readonly dialogRef: NbDialogRef<PluginCreateSettingDialogComponent>
 	) {
 		this.data = config.data;
 		this.initializeForm();

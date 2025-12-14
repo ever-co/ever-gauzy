@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { catchError, exhaustMap, map, of, switchMap, tap } from 'rxjs';
@@ -15,6 +15,7 @@ export class PluginSettingsEffects {
 		private readonly actions$: Actions,
 		private readonly pluginSettingsService: PluginSettingsService,
 		private readonly dialogService: NbDialogService,
+		private readonly toastrService: NbToastrService,
 		private readonly store: PluginSettingsStore
 	) {}
 
@@ -147,8 +148,8 @@ export class PluginSettingsEffects {
 			return this.actions$.pipe(
 				ofType(PluginSettingsActions.deleteSetting),
 				tap(() => this.store.setSaving(true)),
-				switchMap(({ settingId }) =>
-					this.pluginSettingsService.deleteSetting(settingId).pipe(
+				switchMap(({ pluginId, settingId }) =>
+					this.pluginSettingsService.deleteSetting(pluginId, settingId).pipe(
 						map(() => {
 							this.store.setSaving(false);
 							return PluginSettingsActions.deleteSettingSuccess({ settingId });
@@ -171,8 +172,19 @@ export class PluginSettingsEffects {
 			return this.actions$.pipe(
 				ofType(PluginSettingsActions.validateSettings),
 				tap(() => this.store.setValidating(true)),
-				switchMap(({ pluginId, settings }) =>
-					this.pluginSettingsService.validateSettingsSchema(pluginId, settings).pipe(
+				switchMap(({ pluginId, settings }) => {
+					// Convert array format to Record if needed
+					let settingsRecord: Record<string, any>;
+					if (Array.isArray(settings)) {
+						settingsRecord = {};
+						for (const item of settings) {
+							settingsRecord[item.key] = item.value;
+						}
+					} else {
+						settingsRecord = settings;
+					}
+
+					return this.pluginSettingsService.validateSettingsSchema(pluginId, settingsRecord).pipe(
 						map(({ valid, errors }) => {
 							this.store.setValidating(false);
 							return PluginSettingsActions.validateSettingsSuccess({ valid, errors });
@@ -185,8 +197,8 @@ export class PluginSettingsEffects {
 								})
 							);
 						})
-					)
-				)
+					);
+				})
 			);
 		},
 		{ dispatch: true }
@@ -305,6 +317,11 @@ export class PluginSettingsEffects {
 				ofType(PluginSettingsActions.loadGroupedSettingsSuccess),
 				tap(({ settingsGroups }) => {
 					this.store.setSettingsGroups(settingsGroups);
+					// Also flatten and store in entity store for filtering
+					const flattenedSettings = settingsGroups.flatMap((group) => group.settings);
+					if (flattenedSettings.length > 0) {
+						this.store.set(flattenedSettings);
+					}
 				})
 			);
 		},
@@ -317,6 +334,7 @@ export class PluginSettingsEffects {
 				ofType(PluginSettingsActions.createSettingSuccess),
 				tap(({ setting }) => {
 					this.store.addSetting(setting);
+					this.toastrService.success('Setting created successfully', 'Success');
 				})
 			);
 		},
@@ -331,8 +349,10 @@ export class PluginSettingsEffects {
 					this.store.updateSetting(setting.id, setting);
 					if (validation && !validation.valid && validation.errors) {
 						this.store.setValidationError(setting.key, validation.errors);
+						this.toastrService.warning('Setting updated with validation errors', 'Warning');
 					} else {
 						this.store.setValidationError(setting.key, []);
+						this.toastrService.success('Setting updated successfully', 'Success');
 					}
 				})
 			);
@@ -347,6 +367,7 @@ export class PluginSettingsEffects {
 				tap(({ settings }) => {
 					this.store.setSettings(settings);
 					this.store.clearUnsavedChanges();
+					this.toastrService.success('Settings updated successfully', 'Success');
 				})
 			);
 		},
@@ -359,6 +380,7 @@ export class PluginSettingsEffects {
 				ofType(PluginSettingsActions.deleteSettingSuccess),
 				tap(({ settingId }) => {
 					this.store.removeSetting(settingId);
+					this.toastrService.success('Setting deleted successfully', 'Success');
 				})
 			);
 		},
@@ -375,6 +397,12 @@ export class PluginSettingsEffects {
 						validationErrors[key] = fieldErrors;
 					});
 					this.store.setValidationErrors(validationErrors);
+
+					if (errors.length > 0) {
+						this.toastrService.warning('Validation failed for some settings', 'Validation');
+					} else {
+						this.toastrService.success('All settings are valid', 'Validation');
+					}
 				})
 			);
 		},
@@ -400,6 +428,41 @@ export class PluginSettingsEffects {
 				tap(({ settings }) => {
 					this.store.setSettings(settings);
 					this.store.clearValidationErrors();
+					this.toastrService.success('Settings reset successfully', 'Success');
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	exportSettingsSuccess$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.exportSettingsSuccess),
+				tap(() => {
+					this.toastrService.success('Settings exported successfully', 'Success');
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	importSettingsSuccess$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.importSettingsSuccess),
+				tap(({ imported, skipped, errors }) => {
+					if (errors && errors.length > 0) {
+						this.toastrService.warning(
+							`Imported ${imported} settings. Skipped ${skipped}. Errors: ${errors.length}`,
+							'Import Completed with Warnings'
+						);
+					} else {
+						this.toastrService.success(
+							`Imported ${imported} settings. Skipped ${skipped}.`,
+							'Import Successful'
+						);
+					}
 				})
 			);
 		},
@@ -418,6 +481,7 @@ export class PluginSettingsEffects {
 					PluginSettingsActions.bulkUpdateSettingsFailure,
 					PluginSettingsActions.deleteSettingFailure,
 					PluginSettingsActions.validateSettingsFailure,
+					PluginSettingsActions.validateSettingFailure,
 					PluginSettingsActions.resetSettingsFailure,
 					PluginSettingsActions.exportSettingsFailure,
 					PluginSettingsActions.importSettingsFailure
@@ -425,6 +489,7 @@ export class PluginSettingsEffects {
 				tap((action) => {
 					this.store.setErrorMessage(action.error);
 					console.error('Plugin settings operation failed:', action.error);
+					this.toastrService.danger(action.error, 'Error');
 				})
 			);
 		},
@@ -607,6 +672,81 @@ export class PluginSettingsEffects {
 							}
 						}).onClose
 				)
+			);
+		},
+		{ dispatch: false }
+	);
+
+	// Edit mode effects
+	startEditSetting$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.startEditSetting),
+				tap(({ settingKey, currentValue }) => {
+					this.store.startEditSetting(settingKey, currentValue);
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	updateEditFormValue$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.updateEditFormValue),
+				tap(({ settingKey, value }) => {
+					this.store.updateEditFormValue(settingKey, value);
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	saveSettingEdit$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.saveSettingEdit),
+				tap(({ settingKey }) => {
+					this.store.saveSettingEdit(settingKey);
+				}),
+				map(({ settingKey }) => PluginSettingsActions.saveSettingEditSuccess({ settingKey }))
+			);
+		},
+		{ dispatch: true }
+	);
+
+	saveSettingEditSuccess$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.saveSettingEditSuccess),
+				tap(({ settingKey }) => {
+					this.store.completeSavingSettingEdit(settingKey);
+					this.store.markUnsavedChanges();
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	cancelSettingEdit$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.cancelSettingEdit),
+				tap(({ settingKey }) => {
+					this.store.cancelSettingEdit(settingKey);
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	clearEditState$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginSettingsActions.clearEditState),
+				tap(() => {
+					this.store.clearEditState();
+				})
 			);
 		},
 		{ dispatch: false }

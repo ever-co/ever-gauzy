@@ -22,7 +22,10 @@ export class PluginSettingsQuery extends QueryEntity<PluginSettingsState, IPlugi
 	readonly selectedCategory$ = this.select((state) => state.ui.selectedCategory);
 	readonly showAdvancedSettings$ = this.select((state) => state.ui.showAdvancedSettings);
 	readonly hasUnsavedChanges$ = this.select((state) => state.ui.hasUnsavedChanges);
-
+	// Edit mode selectors
+	readonly editingSettings$ = this.select((state) => state.edit.editingSettings);
+	readonly savingSettings$ = this.select((state) => state.edit.savingSettings);
+	readonly editForms$ = this.select((state) => state.edit.editForms);
 	// Loading states
 	readonly isLoading$ = this.select((state) => state.loading);
 	readonly isSaving$ = this.select((state) => state.saving);
@@ -79,7 +82,7 @@ export class PluginSettingsQuery extends QueryEntity<PluginSettingsState, IPlugi
 		})
 	);
 
-	readonly settingsByCategory$ = this.filteredSettings$.pipe(
+	readonly settingsByCategory$: Observable<IPluginSettingGroup[]> = this.filteredSettings$.pipe(
 		map((settings) => {
 			const grouped = settings.reduce((acc, setting) => {
 				const category = setting.category || 'general';
@@ -90,13 +93,78 @@ export class PluginSettingsQuery extends QueryEntity<PluginSettingsState, IPlugi
 				return acc;
 			}, {} as Record<string, IPluginSetting[]>);
 
-			return Object.entries(grouped).map(([category, settings]) => ({
+			return Object.entries(grouped).map(([category, categorySettings]) => ({
 				category,
-				settings,
-				count: settings.length
+				label: this.formatCategoryLabel(category),
+				description: '',
+				icon: this.getCategoryIcon(category),
+				order: 0,
+				settings: categorySettings
 			}));
 		})
 	);
+
+	// Filtered groups from stored settingsGroups
+	readonly filteredGroups$: Observable<IPluginSettingGroup[]> = combineLatest([
+		this.settingsGroups$,
+		this.searchTerm$,
+		this.selectedCategory$,
+		this.showAdvancedSettings$
+	]).pipe(
+		map(([groups, searchTerm, selectedCategory, showAdvanced]) => {
+			return groups
+				.map((group) => {
+					let filteredSettings = group.settings;
+
+					// Filter by search term
+					if (searchTerm?.trim()) {
+						const term = searchTerm.toLowerCase();
+						filteredSettings = filteredSettings.filter(
+							(setting) =>
+								setting.key.toLowerCase().includes(term) ||
+								setting.label?.toLowerCase().includes(term) ||
+								setting.description?.toLowerCase().includes(term) ||
+								setting.category?.toLowerCase().includes(term)
+						);
+					}
+
+					// Filter by category
+					if (selectedCategory && selectedCategory !== 'all') {
+						filteredSettings = filteredSettings.filter((setting) => setting.category === selectedCategory);
+					}
+
+					// Filter by advanced settings visibility
+					if (!showAdvanced) {
+						filteredSettings = filteredSettings.filter((setting) => setting.isVisible !== false);
+					}
+
+					return {
+						...group,
+						settings: filteredSettings
+					};
+				})
+				.filter((group) => group.settings.length > 0); // Only return groups with settings
+		})
+	);
+
+	private formatCategoryLabel(category: string): string {
+		return category
+			.split('_')
+			.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+			.join(' ');
+	}
+
+	private getCategoryIcon(category: string): string {
+		const icons: Record<string, string> = {
+			general: 'settings-2-outline',
+			security: 'shield-outline',
+			api: 'code-outline',
+			notification: 'bell-outline',
+			display: 'monitor-outline',
+			advanced: 'options-2-outline'
+		};
+		return icons[category.toLowerCase()] || 'folder-outline';
+	}
 
 	readonly settingsStatistics$ = this.filteredSettings$.pipe(
 		map((settings) => {
@@ -313,5 +381,30 @@ export class PluginSettingsQuery extends QueryEntity<PluginSettingsState, IPlugi
 				hasUnsavedChanges: hasUnsaved
 			}))
 		);
+	}
+
+	// Edit mode helpers
+	isSettingBeingEdited$(settingKey: string): Observable<boolean> {
+		return this.editingSettings$.pipe(map((editingSettings) => editingSettings.has(settingKey)));
+	}
+
+	isSettingBeingSaved$(settingKey: string): Observable<boolean> {
+		return this.savingSettings$.pipe(map((savingSettings) => savingSettings.has(settingKey)));
+	}
+
+	getEditFormValue$(settingKey: string): Observable<any | undefined> {
+		return this.editForms$.pipe(map((editForms) => editForms[settingKey]?.value));
+	}
+
+	getEditFormData$(settingKey: string): Observable<{ value: any; originalValue: any; isDirty: boolean } | undefined> {
+		return this.editForms$.pipe(map((editForms) => editForms[settingKey]));
+	}
+
+	hasAnyEditingSettings$(): Observable<boolean> {
+		return this.editingSettings$.pipe(map((editingSettings) => editingSettings.size > 0));
+	}
+
+	getEditingSettingsCount$(): Observable<number> {
+		return this.editingSettings$.pipe(map((editingSettings) => editingSettings.size));
 	}
 }

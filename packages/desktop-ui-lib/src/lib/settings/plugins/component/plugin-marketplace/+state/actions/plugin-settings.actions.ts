@@ -71,7 +71,7 @@ export const PluginSettingsActions = {
 	),
 
 	// Delete setting
-	deleteSetting: createAction('[Plugin Settings] Delete Setting', props<{ settingId: string }>()),
+	deleteSetting: createAction('[Plugin Settings] Delete Setting', props<{ pluginId: string; settingId: string }>()),
 	deleteSettingSuccess: createAction('[Plugin Settings] Delete Setting Success', props<{ settingId: string }>()),
 	deleteSettingFailure: createAction('[Plugin Settings] Delete Setting Failure', props<{ error: string }>()),
 
@@ -157,5 +157,33 @@ export const PluginSettingsActions = {
 	setValidationError: createAction(
 		'[Plugin Settings] Set Validation Error',
 		props<{ settingKey: string; errors: string[] }>()
-	)
+
+	),
+
+	// Edit mode management
+	startEditSetting: createAction(
+		'[Plugin Settings] Start Edit Setting',
+		props<{ settingKey: string; currentValue: any }>()
+	),
+	updateEditFormValue: createAction(
+		'[Plugin Settings] Update Edit Form Value',
+		props<{ settingKey: string; value: any }>()
+	),
+	saveSettingEdit: createAction(
+		'[Plugin Settings] Save Setting Edit',
+		props<{ settingKey: string; newValue: any }>()
+	),
+	saveSettingEditSuccess: createAction(
+		'[Plugin Settings] Save Setting Edit Success',
+		props<{ settingKey: string }>()
+	),
+	saveSettingEditFailure: createAction(
+		'[Plugin Settings] Save Setting Edit Failure',
+		props<{ settingKey: string; error: string }>()
+	),
+	cancelSettingEdit: createAction(
+		'[Plugin Settings] Cancel Setting Edit',
+		props<{ settingKey: string }>()
+	),
+	clearEditState: createAction('[Plugin Settings] Clear Edit State')
 };

@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
-import { BehaviorSubject, map, Observable, shareReplay, tap } from 'rxjs';
+import { map, Observable, shareReplay } from 'rxjs';
 
 // Plugin settings interfaces
 export interface IPluginSetting {
@@ -206,21 +206,11 @@ export interface PluginSettingQueryDTO {
 export class PluginSettingsService {
 	private readonly endPoint = `${API_PREFIX}/plugins`;
 
-	private readonly settingsCache$ = new BehaviorSubject<Map<string, IPluginSetting[]>>(new Map());
-	private readonly templatesCache$ = new BehaviorSubject<Map<string, IPluginSettingTemplate[]>>(new Map());
-
 	constructor(private readonly http: HttpClient) {}
 
 	// Plugin Settings CRUD Operations
 	public createPluginSetting(pluginId: string, setting: IPluginSetting): Observable<IPluginSetting> {
-		return this.http.post<IPluginSetting>(`${this.endPoint}/${pluginId}/settings`, setting).pipe(
-			tap((newSetting) => {
-				const cache = this.settingsCache$.value;
-				const pluginSettings = cache.get(pluginId) || [];
-				cache.set(pluginId, [...pluginSettings, newSetting]);
-				this.settingsCache$.next(cache);
-			})
-		);
+		return this.http.post<IPluginSetting>(`${this.endPoint}/${pluginId}/settings`, setting).pipe();
 	}
 
 	public getPluginSettings(pluginId: string, query?: PluginSettingQueryDTO): Observable<IPluginSetting[]> {
@@ -235,14 +225,9 @@ export class PluginSettingsService {
 			params = params.set('pluginTenantId', query.pluginTenantId);
 		}
 
-		return this.http.get<IPluginSetting[]>(`${this.endPoint}/${pluginId}/settings`, { params }).pipe(
-			tap((settings) => {
-				const cache = this.settingsCache$.value;
-				cache.set(pluginId, settings);
-				this.settingsCache$.next(cache);
-			}),
-			shareReplay(1)
-		);
+		return this.http
+			.get<IPluginSetting[]>(`${this.endPoint}/${pluginId}/settings`, { params })
+			.pipe(shareReplay(1));
 	}
 
 	public getPluginSettingById(pluginId: string, id: string): Observable<IPluginSetting> {
@@ -268,26 +253,12 @@ export class PluginSettingsService {
 	}
 
 	public createSetting(setting: IPluginSettingCreateInput): Observable<IPluginSetting> {
-		return this.http.post<IPluginSetting>(this.endPoint, setting).pipe(
-			tap((newSetting) => {
-				const cache = this.settingsCache$.value;
-				const pluginSettings = cache.get(newSetting.pluginId) || [];
-				cache.set(newSetting.pluginId, [...pluginSettings, newSetting]);
-				this.settingsCache$.next(cache);
-			})
-		);
+		const { pluginId, ...settingData } = setting;
+		return this.http.post<IPluginSetting>(`${this.endPoint}/${pluginId}/settings`, settingData);
 	}
 
 	public updateSetting(id: string, setting: IPluginSettingUpdateInput): Observable<IPluginSetting> {
-		return this.http.put<IPluginSetting>(`${this.endPoint}/${id}`, setting).pipe(
-			tap((updatedSetting) => {
-				const cache = this.settingsCache$.value;
-				const pluginSettings = cache.get(updatedSetting.pluginId) || [];
-				const updatedSettings = pluginSettings.map((s) => (s.id === id ? updatedSetting : s));
-				cache.set(updatedSetting.pluginId, updatedSettings);
-				this.settingsCache$.next(cache);
-			})
-		);
+		return this.http.put<IPluginSetting>(`${this.endPoint}/${id}`, setting);
 	}
 
 	public setSettingValue(
@@ -305,35 +276,11 @@ export class PluginSettingsService {
 		if (organizationId) params.organizationId = organizationId;
 		if (userId) params.userId = userId;
 
-		return this.http.post<IPluginSetting>(`${this.endPoint}/plugin/${pluginId}/value`, params).pipe(
-			tap((setting) => {
-				const cache = this.settingsCache$.value;
-				const pluginSettings = cache.get(pluginId) || [];
-				const existingIndex = pluginSettings.findIndex((s) => s.key === key);
-
-				if (existingIndex >= 0) {
-					pluginSettings[existingIndex] = setting;
-				} else {
-					pluginSettings.push(setting);
-				}
-
-				cache.set(pluginId, pluginSettings);
-				this.settingsCache$.next(cache);
-			})
-		);
+		return this.http.post<IPluginSetting>(`${this.endPoint}/plugin/${pluginId}/value`, params);
 	}
 
-	public deleteSetting(id: string): Observable<void> {
-		return this.http.delete<void>(`${this.endPoint}/${id}`).pipe(
-			tap(() => {
-				const cache = this.settingsCache$.value;
-				cache.forEach((settings, pluginId) => {
-					const filtered = settings.filter((s) => s.id !== id);
-					cache.set(pluginId, filtered);
-				});
-				this.settingsCache$.next(cache);
-			})
-		);
+	public deleteSetting(pluginId: string, settingId: string): Observable<{ deleted: boolean; id: string }> {
+		return this.http.delete<{ deleted: boolean; id: string }>(`${this.endPoint}/${pluginId}/settings/${settingId}`);
 	}
 
 	// Bulk Operations
@@ -341,13 +288,7 @@ export class PluginSettingsService {
 		pluginId: string,
 		bulkUpdateDto: BulkUpdatePluginSettingsDTO
 	): Observable<IPluginSetting[]> {
-		return this.http.patch<IPluginSetting[]>(`${this.endPoint}/${pluginId}/settings`, bulkUpdateDto).pipe(
-			tap((updatedSettings) => {
-				const cache = this.settingsCache$.value;
-				cache.set(pluginId, updatedSettings);
-				this.settingsCache$.next(cache);
-			})
-		);
+		return this.http.patch<IPluginSetting[]>(`${this.endPoint}/${pluginId}/settings`, bulkUpdateDto);
 	}
 
 	public updateAndValidatePluginSetting(
@@ -355,20 +296,10 @@ export class PluginSettingsService {
 		id: string,
 		updateData: { value: any; [key: string]: any }
 	): Observable<{ setting: IPluginSetting; validation: { valid: boolean; errors?: string[] } }> {
-		return this.http
-			.put<{ setting: IPluginSetting; validation: { valid: boolean; errors?: string[] } }>(
-				`${this.endPoint}/${pluginId}/settings/${id}`,
-				updateData
-			)
-			.pipe(
-				tap(({ setting }) => {
-					const cache = this.settingsCache$.value;
-					const pluginSettings = cache.get(pluginId) || [];
-					const updatedSettings = pluginSettings.map((s) => (s.id === id ? setting : s));
-					cache.set(pluginId, updatedSettings);
-					this.settingsCache$.next(cache);
-				})
-			);
+		return this.http.put<{ setting: IPluginSetting; validation: { valid: boolean; errors?: string[] } }>(
+			`${this.endPoint}/${pluginId}/settings/${id}`,
+			updateData
+		);
 	}
 
 	public resetSettingsToDefault(
@@ -384,36 +315,16 @@ export class PluginSettingsService {
 		if (organizationId) params.organizationId = organizationId;
 		if (userId) params.userId = userId;
 
-		return this.http.post<IPluginSetting[]>(`${this.endPoint}/plugin/${pluginId}/reset`, params).pipe(
-			tap((resetSettings) => {
-				const cache = this.settingsCache$.value;
-				cache.set(pluginId, resetSettings);
-				this.settingsCache$.next(cache);
-			})
-		);
+		return this.http.post<IPluginSetting[]>(`${this.endPoint}/plugin/${pluginId}/reset`, params);
 	}
 
 	// Setting Templates
 	public getPluginSettingTemplates(pluginId: string): Observable<IPluginSettingTemplate[]> {
-		return this.http.get<IPluginSettingTemplate[]>(`${this.endPoint}/${pluginId}/templates`).pipe(
-			tap((templates) => {
-				const cache = this.templatesCache$.value;
-				cache.set(pluginId, templates);
-				this.templatesCache$.next(cache);
-			}),
-			shareReplay(1)
-		);
+		return this.http.get<IPluginSettingTemplate[]>(`${this.endPoint}/${pluginId}/templates`);
 	}
 
 	public createSettingTemplate(template: IPluginSettingTemplateCreateInput): Observable<IPluginSettingTemplate> {
-		return this.http.post<IPluginSettingTemplate>(`${this.endPoint}/${template.pluginId}/templates`, template).pipe(
-			tap((newTemplate) => {
-				const cache = this.templatesCache$.value;
-				const pluginTemplates = cache.get(newTemplate.pluginId) || [];
-				cache.set(newTemplate.pluginId, [...pluginTemplates, newTemplate]);
-				this.templatesCache$.next(cache);
-			})
-		);
+		return this.http.post<IPluginSettingTemplate>(`${this.endPoint}/${template.pluginId}/templates`, template);
 	}
 
 	public updateSettingTemplate(
@@ -421,27 +332,11 @@ export class PluginSettingsService {
 		id: string,
 		template: Partial<IPluginSettingTemplateCreateInput>
 	): Observable<IPluginSettingTemplate> {
-		return this.http.put<IPluginSettingTemplate>(`${this.endPoint}/${pluginId}/templates/${id}`, template).pipe(
-			tap((updatedTemplate) => {
-				const cache = this.templatesCache$.value;
-				const pluginTemplates = cache.get(updatedTemplate.pluginId) || [];
-				const updatedTemplates = pluginTemplates.map((t) => (t.id === id ? updatedTemplate : t));
-				cache.set(updatedTemplate.pluginId, updatedTemplates);
-				this.templatesCache$.next(cache);
-			})
-		);
+		return this.http.put<IPluginSettingTemplate>(`${this.endPoint}/${pluginId}/templates/${id}`, template);
 	}
 
 	public deleteSettingTemplate(pluginId: string, id: string): Observable<void> {
-		return this.http.delete<void>(`${this.endPoint}/${pluginId}/templates/${id}`).pipe(
-			tap(() => {
-				const cache = this.templatesCache$.value;
-				const pluginTemplates = cache.get(pluginId) || [];
-				const filtered = pluginTemplates.filter((t) => t.id !== id);
-				cache.set(pluginId, filtered);
-				this.templatesCache$.next(cache);
-			})
-		);
+		return this.http.delete<void>(`${this.endPoint}/${pluginId}/templates/${id}`);
 	}
 
 	// Import/Export
@@ -521,29 +416,6 @@ export class PluginSettingsService {
 			valid: boolean;
 			errors: Array<{ key: string; errors: string[] }>;
 		}>(`${this.endPoint}/plugin/${pluginId}/validate-schema`, { settings });
-	}
-
-	// Cache Management
-	public getSettingsFromCache(pluginId: string): Observable<IPluginSetting[]> {
-		return this.settingsCache$.pipe(map((cache) => cache.get(pluginId) || []));
-	}
-
-	public getTemplatesFromCache(pluginId: string): Observable<IPluginSettingTemplate[]> {
-		return this.templatesCache$.pipe(map((cache) => cache.get(pluginId) || []));
-	}
-
-	public clearCache(pluginId?: string): void {
-		if (pluginId) {
-			const settingsCache = this.settingsCache$.value;
-			const templatesCache = this.templatesCache$.value;
-			settingsCache.delete(pluginId);
-			templatesCache.delete(pluginId);
-			this.settingsCache$.next(settingsCache);
-			this.templatesCache$.next(templatesCache);
-		} else {
-			this.settingsCache$.next(new Map());
-			this.templatesCache$.next(new Map());
-		}
 	}
 
 	// Utility Methods

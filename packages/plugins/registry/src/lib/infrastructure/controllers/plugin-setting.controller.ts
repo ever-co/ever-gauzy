@@ -137,7 +137,7 @@ export class PluginSettingController {
 
 		// Default: get all settings
 		return await this.queryBus.execute(
-			new GetPluginSettingsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant'], tenantId, null)
+			new GetPluginSettingsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant'], tenantId, organizationId)
 		);
 	}
 

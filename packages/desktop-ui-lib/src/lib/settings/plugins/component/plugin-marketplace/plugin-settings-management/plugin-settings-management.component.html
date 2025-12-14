@@ -1,66 +1,65 @@
 @let filteredGroups = filteredGroups$ | async; @let categories = categories$ | async; @let loading = loading$ | async;
+@let saving = saving$ | async; @let hasUnsavedChanges = hasUnsavedChanges$ | async; @let editingSettings =
+editingSettings$ | async; @let editForms = editForms$ | async; @let editingCount = editingSettingsCount$ | async; @let
+savingSettings = savingSettings$ | async;
 
 <nb-card class="plugin-settings-management">
-	<nb-card-header class="d-flex justify-content-between align-items-center">
-		<div class="header-info">
-			<div class="header-icon-container">
-				<nb-icon icon="settings-2-outline"></nb-icon>
+	<nb-card-header>
+		<div class="header-wrapper">
+			<div class="header-info">
+				<div class="header-icon-container">
+					<nb-icon icon="settings-2-outline"></nb-icon>
+				</div>
+				<div class="header-content">
+					<h5 class="card-title">{{ plugin.name }}</h5>
+					<p class="card-subtitle">Configure and manage plugin settings</p>
+				</div>
 			</div>
-			<div class="header-content">
-				<h5 class="card-title mb-1">Plugin Settings - {{ plugin.name }}</h5>
-				<p class="card-subtitle text-hint mb-0">Configure and manage plugin settings and preferences</p>
+			<div class="header-actions">
+				<button
+					nbButton
+					ghost
+					size="small"
+					status="success"
+					(click)="onCreateSetting()"
+					nbTooltip="Create a new setting"
+					*gauzySpinnerButton="saving"
+				>
+					<nb-icon icon="plus-outline"></nb-icon>
+					<span>New Setting</span>
+				</button>
+				<button
+					nbButton
+					ghost
+					size="small"
+					status="warning"
+					(click)="onResetSettings()"
+					nbTooltip="Reset all settings to default values"
+					*gauzySpinnerButton="saving"
+				>
+					<nb-icon icon="refresh-outline"></nb-icon>
+					<span>Reset</span>
+				</button>
 			</div>
-		</div>
-		<div class="header-actions">
-			<button
-				nbButton
-				ghost
-				size="small"
-				status="success"
-				(click)="onCreateSetting()"
-				nbTooltip="Create a new setting"
-				class="me-2"
-			>
-				<nb-icon icon="plus-outline"></nb-icon>
-				New Setting
-			</button>
-			<button
-				nbButton
-				ghost
-				size="small"
-				status="warning"
-				(click)="onResetSettings()"
-				nbTooltip="Reset all settings to default values"
-			>
-				<nb-icon icon="refresh-outline"></nb-icon>
-				Reset
-			</button>
 		</div>
 	</nb-card-header>
 
 	<nb-card-body>
 		<!-- Search and Filter Controls -->
-		<form [formGroup]="searchForm" class="filter-controls mb-4">
+		<form [formGroup]="searchForm" class="filter-controls">
 			<div class="controls-header">
-				<nb-icon icon="options-2-outline" class="controls-icon"></nb-icon>
+				<nb-icon icon="funnel-outline" class="controls-icon"></nb-icon>
 				<span class="controls-label">Search & Filter</span>
 			</div>
-			<div class="row">
-				<div class="col-md-8">
+			<div class="controls-grid">
+				<div class="search-field">
 					<nb-form-field>
 						<nb-icon nbPrefix icon="search-outline"></nb-icon>
-						<input
-							nbInput
-							placeholder="Search settings by name, key, or description..."
-							formControlName="searchTerm"
-							class="search-input"
-						/>
+						<input nbInput placeholder="Search settings..." formControlName="searchTerm" fullWidth />
 					</nb-form-field>
 				</div>
-				<div class="col-md-4">
-					<div class="form-group">
-						<gauzy-category-selector [categoryId]="categoryId?.value"></gauzy-category-selector>
-					</div>
+				<div class="category-field">
+					<gauzy-category-selector [categoryId]="categoryId?.value"></gauzy-category-selector>
 				</div>
 			</div>
 		</form>
@@ -69,222 +68,305 @@
 		@if(loading) {
 		<div class="loading-state">
 			<nb-spinner size="large"></nb-spinner>
-			<span class="loading-text">Loading plugin settings...</span>
+			<p class="loading-text">Loading plugin settings...</p>
 		</div>
 		} @else if(filteredGroups && filteredGroups.length > 0) {
-		<form [formGroup]="settingsForm" class="settings-form">
-			@for(group of filteredGroups; track group.category) {
+		<div class="settings-form">
+			@for(group of filteredGroups; track trackByGroupCategory($index, group)) {
 			<nb-card class="settings-group-card">
-				<nb-card-header class="group-header">
-					<div class="group-info">
-						<nb-icon [icon]="group.icon || 'settings-outline'" class="group-icon"></nb-icon>
-						<div>
-							<h6 class="group-title">{{ group.label }}</h6>
-							@if(group.description) {
-							<p class="group-description">{{ group.description }}</p>
-							}
+				<nb-card-header>
+					<div class="group-header">
+						<div class="group-info">
+							<div class="group-icon-wrapper">
+								<nb-icon [icon]="group.icon || 'settings-outline'"></nb-icon>
+							</div>
+							<div class="group-content">
+								<h6 class="group-title">{{ group.label }}</h6>
+								@if(group.description) {
+								<p class="group-description">{{ group.description }}</p>
+								}
+							</div>
 						</div>
+						<nb-badge
+							status="basic"
+							[text]="group.settings.length + ' setting' + (group.settings.length !== 1 ? 's' : '')"
+						></nb-badge>
 					</div>
-					<nb-badge
-						status="basic"
-						class="settings-count"
-						[text]="group.settings.length + ' setting' + (group.settings.length !== 1 ? 's' : '')"
-					>
-					</nb-badge>
 				</nb-card-header>
 
-				<nb-card-body class="group-body">
-					<div class="settings-grid">
-						@for(setting of group.settings; track setting.key) {
-						<div class="setting-item" [class.has-error]="hasSettingError(setting.key)">
+				<nb-card-body>
+					<cdk-virtual-scroll-viewport [itemSize]="120" class="settings-viewport">
+						@for(setting of group.settings; track trackBySettingKey($index, setting)) {
+						<div
+							class="setting-item"
+							[class.is-editing]="editingSettings && editingSettings.has(setting.key)"
+							[class.has-error]="hasSettingError(setting.key) | async"
+						>
 							<div class="setting-header">
 								<div class="setting-info">
-									<label class="setting-label" [for]="setting.key">
+									<div class="setting-label-wrapper">
 										<nb-icon
 											[icon]="getSettingTypeIcon(setting.type)"
-											class="setting-type-icon"
+											class="setting-icon"
 										></nb-icon>
-										{{ setting.label }}
-										@if(setting.isRequired) {
-										<span class="required-indicator">*</span>
-										}
-									</label>
+										<label class="setting-label" [for]="setting.key">
+											{{ setting.label }}
+											@if(setting.isRequired) {
+											<span class="required-indicator">*</span>
+											}
+										</label>
+										<nb-badge
+											status="basic"
+											size="tiny"
+											[text]="formatSettingType(setting.type)"
+										></nb-badge>
+									</div>
 									@if(setting.description) {
 									<p class="setting-description">{{ setting.description }}</p>
 									}
 								</div>
-								<div class="setting-meta">
-									<nb-badge
-										status="basic"
+								<div class="setting-actions">
+									@if(!(editingSettings && editingSettings.has(setting.key))) {
+									<button
+										nbButton
+										ghost
 										size="tiny"
-										[text]="formatSettingType(setting.type)"
-										class="type-badge"
+										status="info"
+										(click)="onEditSetting(setting.key)"
+										nbTooltip="Edit setting"
 									>
-									</nb-badge>
+										<nb-icon icon="edit-outline"></nb-icon>
+									</button>
 									<button
 										nbButton
 										ghost
 										size="tiny"
 										status="danger"
 										(click)="onDeleteSetting(setting.id, setting.key)"
-										nbTooltip="Delete this setting"
-										class="delete-setting-btn"
+										nbTooltip="Delete setting"
+										*gauzySpinnerButton="saving"
 									>
 										<nb-icon icon="trash-2-outline"></nb-icon>
 									</button>
+									} @else {
+									<button
+										nbButton
+										ghost
+										size="tiny"
+										status="success"
+										(click)="onSaveSettingEdit(setting.key)"
+										nbTooltip="Save changes"
+										*gauzySpinnerButton="savingSettings && savingSettings.has(setting.key)"
+									>
+										<nb-icon icon="checkmark-outline"></nb-icon>
+									</button>
+									<button
+										nbButton
+										ghost
+										size="tiny"
+										status="basic"
+										(click)="onCancelSettingEdit(setting.key)"
+										nbTooltip="Cancel"
+									>
+										<nb-icon icon="close-outline"></nb-icon>
+									</button>
+									}
 								</div>
 							</div>
 
 							<div class="setting-control">
-								<!-- Boolean Toggle -->
-								@if(isBooleanType(setting.type)) {
-								<nb-toggle [formControlName]="setting.key" [id]="setting.key"> </nb-toggle>
-								}
-
-								<!-- Select Dropdown -->
-								@else if(isSelectType(setting.type)) {
-								<nb-select
-									[formControlName]="setting.key"
-									[id]="setting.key"
-									[placeholder]="'Select ' + setting.label"
-								>
-									@for(option of setting.options; track option.value) {
-									<nb-option [value]="option.value" [disabled]="option.disabled">
-										@if(option.icon) {
-										<nb-icon [icon]="option.icon"></nb-icon>
+								@if(!(editingSettings && editingSettings.has(setting.key))) {
+								<!-- View Mode -->
+								<div class="setting-value-display" (click)="onEditSetting(setting.key)">
+									@if(isBooleanType(setting.type)) {
+									<nb-badge
+										[status]="settingsForm.get(setting.key)?.value ? 'success' : 'basic'"
+										[text]="settingsForm.get(setting.key)?.value ? 'Enabled' : 'Disabled'"
+									></nb-badge>
+									} @else if(isSelectType(setting.type) || isMultiSelectType(setting.type)) {
+									<div class="selected-options">
+										@let currentValue = settingsForm.get(setting.key)?.value;
+										@if(Array.isArray(currentValue)) { @for(val of currentValue; track val) {
+										<nb-badge status="info" [text]="getOptionLabel(setting, val)"></nb-badge>
+										} } @else {
+										<span class="value-text">{{
+											getOptionLabel(setting, currentValue) || currentValue || '—'
+										}}</span>
 										}
-										{{ option.label }}
-										@if(option.description) {
-										<small class="option-description">{{ option.description }}</small>
-										}
-									</nb-option>
+									</div>
+									} @else {
+									<span class="value-text">{{ settingsForm.get(setting.key)?.value || '—' }}</span>
 									}
-								</nb-select>
-								}
-
-								<!-- Multi-Select -->
-								@else if(isMultiSelectType(setting.type)) {
-								<nb-select
-									[formControlName]="setting.key"
-									[id]="setting.key"
-									[placeholder]="'Select ' + setting.label"
-									multiple
-								>
-									@for(option of setting.options; track option.value) {
-									<nb-option [value]="option.value" [disabled]="option.disabled">
-										{{ option.label }}
-									</nb-option>
-									}
-								</nb-select>
-								}
-
-								<!-- Textarea -->
-								@else if(isTextAreaType(setting.type)) {
-								<textarea
-									nbInput
-									fullWidth
-									[formControlName]="setting.key"
-									[id]="setting.key"
-									[placeholder]="setting.description || 'Enter ' + setting.label"
-									rows="4"
-								>
-								</textarea>
-								}
-
-								<!-- Number/Range Input -->
-								@else if(isNumberType(setting.type)) {
-								<input
-									nbInput
-									fullWidth
-									[type]="getInputType(setting.type)"
-									[formControlName]="setting.key"
-									[id]="setting.key"
-									[placeholder]="setting.description || 'Enter ' + setting.label"
-									[min]="setting.validation?.min"
-									[max]="setting.validation?.max"
-								/>
-								}
-
-								<!-- Date/Time Input -->
-								@else if(isDateType(setting.type)) {
-								<input
-									nbInput
-									fullWidth
-									[type]="getInputType(setting.type)"
-									[formControlName]="setting.key"
-									[id]="setting.key"
-								/>
-								}
-
-								<!-- Default Text Input -->
-								@else {
-								<input
-									nbInput
-									fullWidth
-									[type]="getInputType(setting.type)"
-									[formControlName]="setting.key"
-									[id]="setting.key"
-									[placeholder]="setting.description || 'Enter ' + setting.label"
-									[minlength]="setting.validation?.minLength"
-									[maxlength]="setting.validation?.maxLength"
-								/>
-								}
-
-								<!-- Validation Error Message -->
-								@if(hasSettingError(setting.key)) {
-								<div class="error-message">
-									<nb-icon icon="alert-circle-outline"></nb-icon>
-									{{ getSettingErrorMessage(setting.key) }}
+									<nb-icon icon="edit-2-outline" class="edit-hint"></nb-icon>
 								</div>
-								}
-							</div>
+								} @else {
+								<!-- Edit Mode -->
+								@let editForm = getEditForm(setting.key);
+								<form [formGroup]="editForm" class="edit-form">
+									<!-- Boolean Toggle -->
+									@if(isBooleanType(setting.type)) {
+									<nb-toggle formControlName="value" [id]="setting.key"></nb-toggle>
+									}
 
-							<!-- Setting Metadata -->
-							@if(setting.defaultValue !== undefined) {
-							<div class="setting-footer">
-								<small class="default-value"> Default: {{ setting.defaultValue }} </small>
+									<!-- Select Dropdown -->
+									@else if(isSelectType(setting.type)) {
+									<nb-select
+										formControlName="value"
+										[id]="setting.key"
+										[placeholder]="'Select ' + setting.label"
+										fullWidth
+									>
+										@for(option of setting.options; track option.value) {
+										<nb-option [value]="option.value" [disabled]="option.disabled">
+											@if(option.icon) {
+											<nb-icon [icon]="option.icon"></nb-icon>
+											}
+											{{ option.label }}
+											@if(option.description) {
+											<small class="option-hint">{{ option.description }}</small>
+											}
+										</nb-option>
+										}
+									</nb-select>
+									}
+
+									<!-- Multi-Select -->
+									@else if(isMultiSelectType(setting.type)) {
+									<nb-select
+										formControlName="value"
+										[id]="setting.key"
+										[placeholder]="'Select ' + setting.label"
+										multiple
+										fullWidth
+									>
+										@for(option of setting.options; track option.value) {
+										<nb-option [value]="option.value" [disabled]="option.disabled">
+											{{ option.label }}
+										</nb-option>
+										}
+									</nb-select>
+									}
+
+									<!-- Textarea -->
+									@else if(isTextAreaType(setting.type)) {
+									<textarea
+										nbInput
+										fullWidth
+										formControlName="value"
+										[id]="setting.key"
+										[placeholder]="setting.description || 'Enter ' + setting.label"
+										rows="4"
+									></textarea>
+									}
+
+									<!-- Number/Range Input -->
+									@else if(isNumberType(setting.type)) {
+									<input
+										nbInput
+										fullWidth
+										[type]="getInputType(setting.type)"
+										formControlName="value"
+										[id]="setting.key"
+										[placeholder]="setting.description || 'Enter ' + setting.label"
+										[min]="setting.validation?.min"
+										[max]="setting.validation?.max"
+									/>
+									}
+
+									<!-- Date/Time Input -->
+									@else if(isDateType(setting.type)) {
+									<input
+										nbInput
+										fullWidth
+										[type]="getInputType(setting.type)"
+										formControlName="value"
+										[id]="setting.key"
+									/>
+									}
+
+									<!-- Default Text Input -->
+									@else {
+									<input
+										nbInput
+										fullWidth
+										[type]="getInputType(setting.type)"
+										formControlName="value"
+										[id]="setting.key"
+										[placeholder]="setting.description || 'Enter ' + setting.label"
+										[minlength]="setting.validation?.minLength"
+										[maxlength]="setting.validation?.maxLength"
+									/>
+									}
+
+									<!-- Validation Error Message -->
+									@if(hasSettingError(setting.key) | async) {
+									<div class="error-message">
+										<nb-icon icon="alert-circle-outline"></nb-icon>
+										{{ getSettingErrorMessage(setting.key) | async }}
+									</div>
+									}
+								</form>
+
+								<!-- Setting Metadata -->
+								@if(setting.defaultValue !== undefined) {
+								<div class="setting-footer">
+									<small class="default-value">Default: {{ setting.defaultValue }}</small>
+								</div>
+								} }
 							</div>
-							}
 						</div>
 						}
-					</div>
+					</cdk-virtual-scroll-viewport>
 				</nb-card-body>
 			</nb-card>
 			}
-		</form>
+		</div>
 		} @else {
 		<div class="empty-state">
-			<div class="empty-icon-container">
-				<nb-icon icon="settings-outline" class="empty-icon"></nb-icon>
+			<div class="empty-icon-wrapper">
+				<nb-icon icon="inbox-outline"></nb-icon>
 			</div>
-			<p class="empty-text">No settings found</p>
-			<small class="empty-hint">
-				No settings match your current search criteria or this plugin has no configurable settings.
-			</small>
+			<h6 class="empty-title">No settings found</h6>
+			<p class="empty-hint">
+				No settings match your search criteria or this plugin has no configurable settings.
+			</p>
 		</div>
 		}
 	</nb-card-body>
 
-	<nb-card-footer class="d-flex justify-content-between align-items-center">
-		<div class="form-info">
-			@if(settingsForm.dirty) {
-			<small class="unsaved-changes">
-				<nb-icon icon="alert-triangle-outline" status="warning"></nb-icon>
-				You have unsaved changes
-			</small>
-			}
-		</div>
-		<div class="form-actions">
-			<button nbButton ghost status="basic" (click)="close()" class="me-2">Cancel</button>
-			<button
-				nbButton
-				status="primary"
-				[disabled]="!settingsForm.valid || !settingsForm.dirty || submitting"
-				(click)="onSaveSettings()"
-			>
-				<nb-icon *gauzySpinnerButton="submitting" icon="save-outline"></nb-icon>
-				Save Settings
-			</button>
+	<nb-card-footer>
+		<div class="footer-wrapper">
+			<div class="footer-info">
+				@if(editingCount && editingCount > 0) {
+				<div class="status-message editing">
+					<nb-icon icon="edit-outline"></nb-icon>
+					<span>Editing {{ editingCount }} setting{{ editingCount !== 1 ? 's' : '' }}</span>
+				</div>
+				} @else if(hasUnsavedChanges) {
+				<div class="status-message unsaved">
+					<nb-icon icon="alert-circle-outline"></nb-icon>
+					<span>You have unsaved changes</span>
+				</div>
+				} @else if(saving) {
+				<div class="status-message saving">
+					<nb-icon icon="sync-outline"></nb-icon>
+					<span>Saving changes...</span>
+				</div>
+				}
+			</div>
+			<div class="footer-actions">
+				<button nbButton ghost status="basic" (click)="close()">Close</button>
+				<button
+					nbButton
+					status="primary"
+					(click)="onSaveSettings()"
+					[disabled]="!hasUnsavedChanges || saving || settingsForm.invalid"
+					*gauzySpinnerButton="saving; text: 'Saving...'"
+				>
+					<nb-icon icon="save-outline"></nb-icon>
+					<span>Save All Changes</span>
+				</button>
+			</div>
 		</div>
 	</nb-card-footer>
 </nb-card>

@@ -14,6 +14,11 @@ export interface PluginSettingsState extends EntityState<IPluginSetting> {
 	validating: boolean;
 	errorMessage: string | null;
 	validationErrors: Record<string, string[]>;
+	edit: {
+		editingSettings: Set<string>;
+		savingSettings: Set<string>;
+		editForms: Record<string, { value: any; originalValue: any; isDirty: boolean }>;
+	};
 	ui: {
 		selectedPluginId: string | null;
 		selectedScope: PluginSettingScope | null;
@@ -58,7 +63,7 @@ export interface BulkUpdatePluginSettingsRequest {
 
 export interface ValidatePluginSettingsRequest {
 	pluginId: string;
-	settings: Record<string, any>;
+	settings: Array<{ key: string; value: any }> | Record<string, any>;
 }
 
 export interface ResetPluginSettingsRequest {
@@ -80,6 +85,11 @@ export class PluginSettingsStore extends EntityStore<PluginSettingsState> {
 			errorMessage: null,
 			validationErrors: {},
 			settingsGroups: [],
+			edit: {
+				editingSettings: new Set<string>(),
+				savingSettings: new Set<string>(),
+				editForms: {}
+			},
 			ui: {
 				selectedPluginId: null,
 				selectedScope: null,
@@ -254,6 +264,98 @@ export class PluginSettingsStore extends EntityStore<PluginSettingsState> {
 		this.update({ errorMessage: null });
 	}
 
+	// Edit mode management
+	startEditSetting(settingKey: string, currentValue: any): void {
+		const editingSettings = new Set(this.getValue().edit.editingSettings);
+		editingSettings.add(settingKey);
+		const editForms = { ...this.getValue().edit.editForms };
+		editForms[settingKey] = {
+			value: currentValue,
+			originalValue: currentValue,
+			isDirty: false
+		};
+		this.update({
+			edit: {
+				...this.getValue().edit,
+				editingSettings,
+				editForms
+			}
+		});
+	}
+
+	updateEditFormValue(settingKey: string, value: any): void {
+		const editForms = { ...this.getValue().edit.editForms };
+		if (editForms[settingKey]) {
+			editForms[settingKey] = {
+				...editForms[settingKey],
+				value,
+				isDirty: value !== editForms[settingKey].originalValue
+			};
+			this.update({
+				edit: {
+					...this.getValue().edit,
+					editForms
+				}
+			});
+		}
+	}
+
+	saveSettingEdit(settingKey: string): void {
+		const editingSettings = new Set(this.getValue().edit.editingSettings);
+		const savingSettings = new Set(this.getValue().edit.savingSettings);
+		const editForms = { ...this.getValue().edit.editForms };
+
+		editingSettings.delete(settingKey);
+		savingSettings.add(settingKey);
+		delete editForms[settingKey];
+
+		this.update({
+			edit: {
+				...this.getValue().edit,
+				editingSettings,
+				savingSettings,
+				editForms
+			}
+		});
+	}
+
+	completeSavingSettingEdit(settingKey: string): void {
+		const savingSettings = new Set(this.getValue().edit.savingSettings);
+		savingSettings.delete(settingKey);
+		this.update({
+			edit: {
+				...this.getValue().edit,
+				savingSettings
+			}
+		});
+	}
+
+	cancelSettingEdit(settingKey: string): void {
+		const editingSettings = new Set(this.getValue().edit.editingSettings);
+		const editForms = { ...this.getValue().edit.editForms };
+
+		editingSettings.delete(settingKey);
+		delete editForms[settingKey];
+
+		this.update({
+			edit: {
+				...this.getValue().edit,
+				editingSettings,
+				editForms
+			}
+		});
+	}
+
+	clearEditState(): void {
+		this.update({
+			edit: {
+				editingSettings: new Set<string>(),
+				savingSettings: new Set<string>(),
+				editForms: {}
+			}
+		});
+	}
+
 	reset(): void {
 		this.remove();
 		this.update({
@@ -263,6 +365,11 @@ export class PluginSettingsStore extends EntityStore<PluginSettingsState> {
 			errorMessage: null,
 			validationErrors: {},
 			settingsGroups: [],
+			edit: {
+				editingSettings: new Set<string>(),
+				savingSettings: new Set<string>(),
+				editForms: {}
+			},
 			ui: {
 				selectedPluginId: null,
 				selectedScope: null,
