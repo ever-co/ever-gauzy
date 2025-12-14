@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit, ViewChild } from '@angular/core';
-import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChanged, filter, map, tap } from 'rxjs';
 import { PluginCategoryQuery } from '../../+state';
@@ -20,7 +19,6 @@ export class PluginBasicInformationComponent extends BasePluginFormComponent imp
 	@ViewChild(CategorySelectorComponent) categorySelector: CategorySelectorComponent;
 
 	private readonly categoryQuery = inject(PluginCategoryQuery);
-	private readonly actions = inject(Actions);
 
 	ngOnInit(): void {
 		this.syncCategoryWithForm();
