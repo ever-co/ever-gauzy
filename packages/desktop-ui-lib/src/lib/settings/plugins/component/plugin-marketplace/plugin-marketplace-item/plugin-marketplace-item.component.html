@@ -50,7 +50,14 @@
 					<nb-icon icon="cube-outline"></nb-icon>
 				</div>
 				<div class="header-info">
-					<h5 class="title mb-2">{{ plugin?.name || ('SM_TABLE.NO_DATA.LOADING' | translate) }}</h5>
+					<h5 class="title">{{ plugin?.name || ('SM_TABLE.NO_DATA.LOADING' | translate) }}</h5>
+					<!-- Category Section -->
+					@if(plugin?.category; as category) {
+					<div class="category-container mb-2" [style.color]="category.color">
+						<nb-icon [icon]="category.icon" class="mr-1"></nb-icon>
+						<span>{{ category.name }}</span>
+					</div>
+					}
 					<div class="badge-container">
 						<nb-badge
 							*ngIf="plugin"

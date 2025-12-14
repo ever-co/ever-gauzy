@@ -174,7 +174,7 @@ nb-tag-list {
 
         .header-left {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 1rem;
           flex: 1;
           min-width: 0;
@@ -210,12 +210,23 @@ nb-tag-list {
               overflow: hidden;
             }
 
+            .category-container {
+              display: flex;
+              align-items: center;
+              font-size: 0.875rem;
+              font-weight: 500;
+
+              nb-icon {
+                font-size: 1rem;
+              }
+            }
+
             .badge-container {
               display: flex;
               flex-wrap: wrap;
               gap: 0.5rem;
               margin-top: 0.5rem;
-			  position: relative;
+              position: relative;
             }
           }
         }
@@ -250,7 +261,7 @@ nb-tag-list {
     nb-card-body {
       padding: 1.5rem;
       background: var(--gauzy-card-2);
-	  border-radius: 0;
+      border-radius: 0;
     }
 
     nb-card-footer {
@@ -532,13 +543,13 @@ nb-tag-list {
     }
     .value {
       color: var(--gauzy-text-color-1);
-	  width: 100%;
-	  a {
-		width: 100%;
-		span {
-			width: auto;
-		}
-	  }
+      width: 100%;
+      a {
+        width: 100%;
+        span {
+          width: auto;
+        }
+      }
     }
   }
 
@@ -583,8 +594,8 @@ nb-tag-list {
           align-items: center;
           justify-content: space-between;
           gap: 0.5rem;
-		  border-radius: calc(var(--border-radius) * 1.2) !important;
-		  transition: all 0.2s ease;
+          border-radius: calc(var(--border-radius) * 1.2) !important;
+          transition: all 0.2s ease;
 
           &:first-child {
             border-radius: calc(var(--border-radius) * 1.5) calc(var(--border-radius) * 1.5) 0 0;
@@ -651,22 +662,21 @@ nb-tag-list {
   }
 }
 
-
 ::ng-deep {
-	 nb-badge {
-		font-size: 0.75rem;
-		padding: 0.375rem;
-		border-radius: calc(var(--border-radius) * 1);
-		position: relative !important;
-	}
+  nb-badge {
+    font-size: 0.75rem;
+    padding: 0.375rem;
+    border-radius: calc(var(--border-radius) * 1);
+    position: relative !important;
+  }
 
-	[nbButton] {
-   		 justify-content: flex-start;
-		 border-radius: calc(var(--border-radius) * 1.2);
+  [nbButton] {
+    justify-content: flex-start;
+    border-radius: calc(var(--border-radius) * 1.2);
 
-		 &.action-button {
-			border-radius: calc(var(--border-radius) * 1.2) !important;
-			transition: all 0.2s ease;
-	    }
+    &.action-button {
+      border-radius: calc(var(--border-radius) * 1.2) !important;
+      transition: all 0.2s ease;
     }
+  }
 }
