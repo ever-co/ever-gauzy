@@ -109,7 +109,14 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	public loadPlugin(): void {
 		this.action.dispatch(
 			PluginMarketplaceActions.getOne(this.pluginId, {
-				relations: ['versions', 'versions.sources', 'uploadedBy', 'subscriptions', 'subscriptions.plan'],
+				relations: [
+					'versions',
+					'versions.sources',
+					'category',
+					'uploadedBy',
+					'subscriptions',
+					'subscriptions.plan'
+				],
 				order: { versions: { releaseDate: 'DESC' } }
 			})
 		);

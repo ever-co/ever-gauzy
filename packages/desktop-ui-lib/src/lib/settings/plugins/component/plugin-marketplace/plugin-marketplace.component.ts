@@ -79,7 +79,14 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 				...params,
 				skip: this.skip,
 				take: this.take,
-				relations: ['versions', 'versions.sources', 'uploadedBy', 'subscriptions', 'subscriptions.plan'],
+				relations: [
+					'versions',
+					'versions.sources',
+					'category',
+					'uploadedBy',
+					'subscriptions',
+					'subscriptions.plan'
+				],
 				order: this.buildOrderParams(filters)
 			})
 		);
