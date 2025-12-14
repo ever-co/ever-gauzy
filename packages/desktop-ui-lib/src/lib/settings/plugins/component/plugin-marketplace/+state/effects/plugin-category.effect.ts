@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
+import { IPluginCategory } from '@gauzy/contracts';
+import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, catchError, finalize, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, exhaustMap, filter, finalize, map, switchMap, take, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { PluginCategoryService } from '../../../../services/plugin-category.service';
+import { CreateCategoryDialogComponent } from '../../plugin-marketplace-item/create-category-dialog/create-category-dialog.component';
 import { PluginCategoryActions } from '../actions/plugin-category.action';
 import { PluginCategoryStore } from '../stores/plugin-category.store';
 
@@ -17,7 +19,7 @@ export class PluginCategoryEffects {
 		private readonly pluginCategoryService: PluginCategoryService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
-		private readonly router: Router
+		private readonly dialogService: NbDialogService
 	) {}
 
 	// Load all categories
@@ -185,6 +187,26 @@ export class PluginCategoryEffects {
 				)
 			)
 		)
+	);
+
+	createInline$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginCategoryActions.createCategoryInline),
+				tap(() => this.pluginCategoryStore.deselectCategory()),
+				exhaustMap(({ name }) =>
+					this.dialogService
+						.open(CreateCategoryDialogComponent, {
+							context: { name }
+						})
+						.onClose.pipe(
+							take(1),
+							filter(Boolean),
+							map((newCategory: IPluginCategory) => PluginCategoryActions.selectCategory(newCategory))
+						)
+				)
+			),
+		{ dispatch: true }
 	);
 
 	// Update category

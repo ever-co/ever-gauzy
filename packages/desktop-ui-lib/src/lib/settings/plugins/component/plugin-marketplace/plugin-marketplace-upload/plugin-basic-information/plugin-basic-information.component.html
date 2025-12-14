@@ -106,8 +106,8 @@
 				<nb-icon icon="folder-outline" class="label-icon"></nb-icon>
 				{{ 'PLUGIN.FORM.CATEGORY' | translate }}
 			</label>
-			<gauzy-category-selector></gauzy-category-selector>
-			@if(form.get('categoryId')?.value) {
+			<gauzy-category-selector [categoryId]="category?.value"></gauzy-category-selector>
+			@if(category?.value) {
 			<nb-hint class="hint-success">
 				<nb-icon icon="checkmark-circle-outline"></nb-icon>
 				Category selected

@@ -1,12 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { IPluginCategory } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChanged, filter, take, tap } from 'rxjs';
+import { distinctUntilChanged, tap } from 'rxjs';
 import { PluginCategoryActions } from '../../+state/actions/plugin-category.action';
 import { PluginCategoryQuery } from '../../+state/queries/plugin-category.query';
-import { CreateCategoryDialogComponent } from '../create-category-dialog/create-category-dialog.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,18 +14,21 @@ import { CreateCategoryDialogComponent } from '../create-category-dialog/create-
 	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CategorySelectorComponent implements OnInit {
+export class CategorySelectorComponent implements OnInit, OnChanges {
 	private skip = 0;
 	private hasNext = false;
 	private readonly take = 20;
 
 	@Input() public allowCreate = true;
+	@Input() public categoryId: IPluginCategory['id'];
 
-	constructor(
-		private readonly actions: Actions,
-		public readonly query: PluginCategoryQuery,
-		private readonly dialogService: NbDialogService
-	) {}
+	constructor(private readonly actions: Actions, public readonly query: PluginCategoryQuery) {}
+
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['categoryId']) {
+			this.onCategoryChange(this.categoryId);
+		}
+	}
 
 	ngOnInit(): void {
 		this.load();
@@ -69,20 +70,7 @@ export class CategorySelectorComponent implements OnInit {
 	}
 
 	public onAddCategory = (name: string): void => {
-		this.dialogService
-			.open(CreateCategoryDialogComponent, {
-				context: { name }
-			})
-			.onClose.pipe(
-				take(1),
-				filter(Boolean),
-				tap((newCategory: IPluginCategory) => {
-					// Select the newly created category
-					this.actions.dispatch(PluginCategoryActions.selectCategory(newCategory));
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.actions.dispatch(PluginCategoryActions.createCategoryInline(name));
 	};
 
 	public get unlockInfiniteList(): boolean {

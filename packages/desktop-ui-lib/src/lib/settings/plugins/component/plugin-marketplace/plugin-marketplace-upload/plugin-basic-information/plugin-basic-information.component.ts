@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject, Input, ViewChild } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChanged, filter, map, tap } from 'rxjs';
 import { PluginCategoryQuery } from '../../+state';
@@ -13,34 +14,40 @@ import { BasePluginFormComponent } from '../base-plugin-form/base-plugin-form.co
 	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PluginBasicInformationComponent extends BasePluginFormComponent implements OnInit {
+export class PluginBasicInformationComponent extends BasePluginFormComponent implements AfterViewInit {
 	@Input() pluginTypes: string[];
 	@Input() pluginStatuses: string[];
 	@ViewChild(CategorySelectorComponent) categorySelector: CategorySelectorComponent;
 
 	private readonly categoryQuery = inject(PluginCategoryQuery);
 
-	ngOnInit(): void {
+	ngAfterViewInit(): void {
+		this.initializeForm();
 		this.syncCategoryWithForm();
 	}
 
-	public syncCategoryWithForm(): void {
-		const categoryControl = this.form.get('categoryId');
-
-		if (!categoryControl) {
-			throw new Error('categoryId control is required');
+	private initializeForm(): void {
+		const categoryId = this.category.value;
+		if (categoryId) {
+			this.categorySelector.onCategoryChange(categoryId);
 		}
+	}
 
+	private syncCategoryWithForm(): void {
 		this.categoryQuery.selectedCategory$
 			.pipe(
-				filter((category) => !!category),
-				map(({ id }) => id),
+				filter(Boolean),
+				map((category) => category.id),
+				filter((categoryId) => categoryId !== this.category.value),
 				distinctUntilChanged(),
-				filter((categoryId) => categoryControl.value && categoryId !== categoryControl.value),
-				tap((categoryId) => categoryControl.setValue(categoryId, { emitEvent: false })),
+				tap((categoryId) => this.category.setValue(categoryId, { emitEvent: false })),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	public get category(): FormControl<string> {
+		return this.form.get('categoryId') as FormControl<string>;
 	}
 
 	/**

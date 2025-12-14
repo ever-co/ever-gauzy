@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NB_DIALOG_CONFIG, NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { asyncScheduler, filter, take, tap } from 'rxjs';
+import { asyncScheduler, filter, pairwise, tap } from 'rxjs';
 import { IPluginCategoryCreateInput, PluginCategoryActions } from '../../+state/actions/plugin-category.action';
 import { PluginCategoryQuery } from '../../+state/queries/plugin-category.query';
 
@@ -63,11 +63,19 @@ export class CreateCategoryDialogComponent implements OnInit {
 	ngOnInit(): void {
 		// Set name if provided
 		this.categoryForm.patchValue({ name: this.name });
-		// Listen for successful category creation
+		// Listen for form submission  errors
+		this.query.error$
+			.pipe(
+				filter((error) => !!error && this.submitting),
+				tap(() => (this.submitting = false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		// Listen for successful category creation (transition from creating=true to creating=false)
 		this.query.isCreating$
 			.pipe(
-				filter((isCreating) => !isCreating && !this.submitting),
-				take(1),
+				pairwise(),
+				filter(([wasCreating, isCreating]) => wasCreating && !isCreating),
 				tap(() => {
 					const newCategory = this.query.categories[this.query.categories.length - 1];
 					if (newCategory) {

@@ -44,6 +44,9 @@ export class PluginCategoryActions {
 			category
 		})
 	);
+	public static createCategoryInline = createAction('[Plugin Category] Create Category Inline', (name: string) => ({
+		name
+	}));
 	public static selectCategoryById = createAction('[Plugin Category] Select Category By Id', (id: ID) => ({ id }));
 	public static deselectCategory = createAction('[Plugin Category] Deselect Category');
 
