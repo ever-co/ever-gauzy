@@ -267,7 +267,7 @@ export class PluginSettingsStore extends EntityStore<PluginSettingsState> {
 
 	// Edit mode management
 	startEditSetting(settingKey: string, currentValue: any): void {
-		const editingSettings = new Set(this.getValue().edit.editingSettings);
+		const editingSettings = this.getValue().edit.editingSettings;
 		editingSettings.add(settingKey);
 		const editForms = { ...this.getValue().edit.editForms };
 		editForms[settingKey] = {
@@ -302,8 +302,8 @@ export class PluginSettingsStore extends EntityStore<PluginSettingsState> {
 	}
 
 	saveSettingEdit(settingKey: string): void {
-		const editingSettings = new Set(this.getValue().edit.editingSettings);
-		const savingSettings = new Set(this.getValue().edit.savingSettings);
+		const editingSettings = this.getValue().edit.editingSettings;
+		const savingSettings = this.getValue().edit.savingSettings;
 		const editForms = { ...this.getValue().edit.editForms };
 
 		editingSettings.delete(settingKey);
@@ -321,7 +321,7 @@ export class PluginSettingsStore extends EntityStore<PluginSettingsState> {
 	}
 
 	completeSavingSettingEdit(settingKey: string): void {
-		const savingSettings = new Set(this.getValue().edit.savingSettings);
+		const savingSettings = this.getValue().edit.savingSettings;
 		savingSettings.delete(settingKey);
 		this.update({
 			edit: {
@@ -332,7 +332,7 @@ export class PluginSettingsStore extends EntityStore<PluginSettingsState> {
 	}
 
 	cancelSettingEdit(settingKey: string): void {
-		const editingSettings = new Set(this.getValue().edit.editingSettings);
+		const editingSettings = this.getValue().edit.editingSettings;
 		const editForms = { ...this.getValue().edit.editForms };
 
 		editingSettings.delete(settingKey);
