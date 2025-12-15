@@ -67,8 +67,23 @@ savingSettings = savingSettings$ | async;
 		<!-- Settings Form -->
 		@if(loading) {
 		<div class="loading-state">
-			<nb-spinner size="large"></nb-spinner>
-			<p class="loading-text">Loading plugin settings...</p>
+			<div class="skeleton-header">
+				<nb-skeleton shape="rectangle" size="large" width="200px"></nb-skeleton>
+			</div>
+			<div class="skeleton-group">
+				<div class="skeleton-item">
+					<nb-skeleton shape="rectangle" size="small" width="30%"></nb-skeleton>
+					<nb-skeleton shape="rectangle" size="medium" width="100%"></nb-skeleton>
+				</div>
+				<div class="skeleton-item">
+					<nb-skeleton shape="rectangle" size="small" width="40%"></nb-skeleton>
+					<nb-skeleton shape="rectangle" size="medium" width="100%"></nb-skeleton>
+				</div>
+				<div class="skeleton-item">
+					<nb-skeleton shape="rectangle" size="small" width="25%"></nb-skeleton>
+					<nb-skeleton shape="rectangle" size="medium" width="100%"></nb-skeleton>
+				</div>
+			</div>
 		</div>
 		} @else if(filteredGroups && filteredGroups.length > 0) {
 		<div class="settings-form">
