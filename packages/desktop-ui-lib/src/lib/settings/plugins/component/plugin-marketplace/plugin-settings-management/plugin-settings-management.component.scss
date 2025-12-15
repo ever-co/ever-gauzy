@@ -92,7 +92,13 @@
     padding: 16px;
     background: var(--gauzy-card-2);
     border-radius: calc(var(--border-radius) * 1.5);
-    margin-bottom: 16px;
+
+    &.body-content {
+      border-radius: 0;
+      flex-direction: column;
+      display: flex;
+      gap: 1rem;
+    }
 
     .controls-header {
       display: flex;

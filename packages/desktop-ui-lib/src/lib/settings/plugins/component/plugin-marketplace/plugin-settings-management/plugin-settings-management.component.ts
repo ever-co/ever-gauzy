@@ -55,6 +55,9 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 	public submitting = false;
 	public Array = Array;
 
+	private readonly editFormsMap = new Map<string, FormGroup>();
+	private readonly settingsLookup = new Map<string, IPluginSetting>();
+
 	// Setting types enum for template
 	public readonly PluginSettingType = PluginSettingType;
 
@@ -170,14 +173,45 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 	private buildSettingsForm(groups: IPluginSettingGroup[]): void {
 		const formControls: Record<string, any> = {};
 
+		this.settingsLookup.clear();
+
 		groups.forEach((group) => {
 			group.settings.forEach((setting) => {
 				const validators = this.buildValidators(setting);
 				formControls[setting.key] = [setting.value, validators];
+				this.settingsLookup.set(setting.key, setting);
 			});
 		});
 
 		this.settingsForm = this.formBuilder.group(formControls);
+	}
+
+	public getEditForm(settingKey: string): FormGroup {
+		const existing = this.editFormsMap.get(settingKey);
+		if (existing) {
+			return existing;
+		}
+
+		const setting = this.settingsLookup.get(settingKey);
+		const validators = setting ? this.buildValidators(setting) : [];
+		const storedValue = this.query.getValue().edit.editForms[settingKey]?.value;
+		const initialValue = storedValue !== undefined ? storedValue : this.settingsForm.get(settingKey)?.value;
+
+		const form = this.formBuilder.group({
+			value: [initialValue, validators]
+		});
+
+		form.valueChanges
+			.pipe(
+				map((formValue) => formValue?.value),
+				distinctUntilChanged(),
+				tap((value) => this.updateEditFormValue(settingKey, value)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.editFormsMap.set(settingKey, form);
+		return form;
 	}
 
 	private buildValidators(setting: IPluginSetting): ValidatorFn[] {
@@ -476,11 +510,13 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 						newValue
 					})
 				);
+				this.editFormsMap.delete(settingKey);
 			});
 	}
 
 	public onCancelSettingEdit(settingKey: string): void {
 		this.actions.dispatch(PluginSettingsActions.cancelSettingEdit({ settingKey }));
+		this.editFormsMap.delete(settingKey);
 	}
 
 	public getEditFormValue(settingKey: string): Observable<any> {
