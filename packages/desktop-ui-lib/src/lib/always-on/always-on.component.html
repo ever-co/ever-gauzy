@@ -13,12 +13,11 @@
 								<span class="current-session">{{ (counter$ | async)?.current }}</span>
 								<span class="today-time">Today {{ (counter$ | async)?.today }}</span>
 							</div>
+							<div class="status" [ngClass]="{ offline: isOffline$ | async }"></div>
 							<button nbButton size="tiny" class="timer-btn" [status]="running ? 'danger' : 'success'"
 								shape="round" [disabled]="loading" (click)="toggleTimer()">
 								<fa-icon [icon]="running ? pause : play"></fa-icon>
 							</button>
-							<span nbButton class="billable-btn" size="tiny" status="basic"><fa-icon
-									[icon]="stopwatch"></fa-icon></span>
 						</div>
 
 					</nb-card-body>

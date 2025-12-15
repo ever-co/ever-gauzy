@@ -42,7 +42,8 @@ FROM node:20.18.1-alpine3.19 AS dependencies
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
-RUN apk add --no-cache python3 make g++ \
+RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
+    && npm install --quiet node-gyp@10.2.0 -g \
     && npm install yarn -g --force
 RUN mkdir /srv/gauzy-mcp-auth && chown -R node:node /srv/gauzy-mcp-auth
 
@@ -100,7 +101,8 @@ RUN yarn build:mcp-auth:prod
 # Only prod dependencies
 FROM node:20.18.1-alpine3.19 AS proddependencies
 
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
+    && npm install --quiet node-gyp@10.2.0 -g
 
 USER node:node
 

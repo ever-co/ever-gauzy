@@ -5,6 +5,9 @@ import {
 	TranslateService
 } from '@gauzy/desktop-lib';
 import AppWindow from './window-manager';
+import * as isOnline from 'is-online';
+import { ApiService } from './api';
+const apiService = ApiService.getInstance();
 function getAuthConfig() {
 	const authConfig: {
 		userId: string;
@@ -27,6 +30,15 @@ export async function checkUserAuthentication(rootPath: string): Promise<boolean
 		})
 		await appWindow.authWindow.loadURL();
 		appWindow.authWindow.show();
+		return false;
+	}
+	const online = await isOnline({ timeout: 1200 }).catch(() => false);
+	if (!online) {
+		return true;
+	}
+
+	const isAuthenticated = await apiService.isAuthenticated();
+	if (!isAuthenticated) {
 		return false;
 	}
 	return true;

@@ -143,15 +143,20 @@ button {
 	text-align: left;
 
 	.current-session {
-		font-size: 18px;
+		font-size: 16px;
 		font-weight: bold;
 		line-height: 1.2;
+		position: absolute;
+		top: 7px;
 	}
 
 	.today-time {
-		font-size: 12px;
+		font-size: 10px;
 		opacity: 0.7;
 		margin-top: 2px;
+		position: absolute;
+		top: 20px;
+		font-weight: bolder;
 	}
 }
 
