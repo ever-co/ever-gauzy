@@ -139,7 +139,9 @@ export class PluginService {
 	}
 
 	public restoreVersion(pluginId: ID, versionId: ID): Observable<void> {
-		return this.http.post<void>(`${this.endPoint}/${pluginId}/versions/${versionId}`, {});
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/versions/${versionId}/status`, {
+			status: 'restored'
+		});
 	}
 
 	public getSources<T>(pluginId: ID, versionId: ID, params: T): Observable<IPagination<IPluginSource>> {

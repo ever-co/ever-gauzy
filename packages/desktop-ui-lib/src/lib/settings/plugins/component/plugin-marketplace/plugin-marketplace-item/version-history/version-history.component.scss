@@ -327,3 +327,10 @@
     }
   }
 }
+
+nb-badge {
+  font-size: 0.75rem;
+  padding: 0.375rem;
+  border-radius: calc(var(--border-radius) * 1);
+  position: relative !important;
+}
