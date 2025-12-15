@@ -1,4 +1,3 @@
-import { Public } from '@gauzy/common';
 import { HttpStatus, ID, IPagination, PluginSourceType } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
@@ -54,7 +53,6 @@ export class PluginVersionController {
 		description: 'No plugin versions found matching the provided criteria.'
 	})
 	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized access.' })
-	@Public()
 	@Get()
 	public async findAllVersions(
 		@Param('pluginId', UUIDValidationPipe) id: ID,

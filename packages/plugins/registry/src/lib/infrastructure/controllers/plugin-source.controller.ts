@@ -1,4 +1,3 @@
-import { Public } from '@gauzy/common';
 import { HttpStatus, ID, IPagination, PluginSourceType } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
@@ -51,7 +50,6 @@ export class PluginSourceController {
 		description: 'No plugin sources found matching the provided criteria.'
 	})
 	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized access.' })
-	@Public()
 	@Get()
 	public async findAllSources(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,

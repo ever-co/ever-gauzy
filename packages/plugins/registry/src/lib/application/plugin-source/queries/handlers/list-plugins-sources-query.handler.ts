@@ -28,7 +28,7 @@ export class ListPluginSourcesQueryHandler implements IQueryHandler<ListPluginSo
 	public async execute(query: ListPluginSourcesQuery): Promise<IPagination<IPluginSource>> {
 		try {
 			const { pluginId, versionId, params } = query;
-			const employeeId = RequestContext.currentEmployeeId();
+			const userId = RequestContext.currentUserId();
 
 			// Validate required parameters
 			if (!pluginId) {
@@ -65,7 +65,7 @@ export class ListPluginSourcesQueryHandler implements IQueryHandler<ListPluginSo
 			};
 
 			// Validate plugin ownership
-			const withDeleted = await this.pluginService.validatePluginOwnership(pluginId, employeeId);
+			const withDeleted = await this.pluginService.validatePluginOwnership(pluginId, userId);
 
 			// Execute paginated query
 			return this.pluginSourceService.paginate({

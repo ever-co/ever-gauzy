@@ -77,7 +77,6 @@ export class PluginCategoryController {
 		status: HttpStatus.OK,
 		description: 'Plugin categories retrieved successfully'
 	})
-	@Public()
 	@Get()
 	async findAll(
 		@Query('format') format?: 'tree' | 'flat',

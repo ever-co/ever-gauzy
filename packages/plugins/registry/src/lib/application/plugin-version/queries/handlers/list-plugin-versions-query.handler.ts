@@ -21,9 +21,9 @@ export class ListPluginVersionsQueryHandler implements IQueryHandler<ListPluginV
 	public async execute(query: ListPluginVersionsQuery): Promise<IPagination<IPluginVersion>> {
 		const { pluginId, params } = query;
 		const { where } = params;
-		const employeeId = RequestContext.currentEmployeeId();
+		const userId = RequestContext.currentUserId();
 
-		const withDeleted = await this.pluginService.validatePluginOwnership(pluginId, employeeId);
+		const withDeleted = await this.pluginService.validatePluginOwnership(pluginId, userId);
 
 		return this.pluginVersionService.paginate({
 			...params,
