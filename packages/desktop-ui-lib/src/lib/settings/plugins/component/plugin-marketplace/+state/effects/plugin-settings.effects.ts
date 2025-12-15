@@ -74,7 +74,7 @@ export class PluginSettingsEffects {
 			return this.actions$.pipe(
 				ofType(PluginSettingsActions.createSetting),
 				tap(() => this.store.setSaving(true)),
-				switchMap(({ pluginId, setting }) =>
+				switchMap(({ setting }) =>
 					this.pluginSettingsService.createSetting(setting).pipe(
 						map((newSetting) => {
 							this.store.setSaving(false);
