@@ -111,7 +111,7 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 				organizationId: task.organizationId
 			});
 		} catch (error) {
-			console.error('Event task selected uninitialized');
+			console.error('Failed to send TASK_SELECTED event:', error);
 		}
 	}
 
