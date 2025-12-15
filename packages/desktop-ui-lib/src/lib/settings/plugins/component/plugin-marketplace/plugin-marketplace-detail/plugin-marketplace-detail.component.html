@@ -159,7 +159,8 @@
 	<!-- Plugin Actions -->
 	<div class="plugin-actions">
 		<div class="action-buttons">
-			<!-- Settings button -->
+			<!-- Settings button (owner only) -->
+			@if(isOwner) {
 			<button
 				nbButton
 				ghost
@@ -187,8 +188,6 @@
 			</button>
 			}
 
-			<!-- Edit button (owner only) -->
-			@if(isOwner) {
 			<button
 				nbButton
 				ghost

@@ -157,7 +157,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		];
 
 		// Add plugin management options if installed
-		if (this.plugin.installed) {
+		if (this.plugin.installed && this.isOwner) {
 			items.push({
 				title: 'Settings',
 				icon: 'settings-outline',
@@ -171,10 +171,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 					icon: 'credit-card-outline',
 					data: { action: 'manage-subscription' }
 				});
-			}
-
-			// Only show user management for plugins with plans (subscription-based)
-			if (this.plugin.hasPlan) {
+				// Only show user management for plugins with plans (subscription-based)
 				items.push({
 					title: 'Manage Users',
 					icon: 'people-outline',
