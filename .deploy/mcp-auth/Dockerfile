@@ -64,7 +64,8 @@ COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
-    && yarn postinstall.manual \
+    && node ./.scripts/postinstall.js \
+    && npm rebuild bcrypt better-sqlite3 --build-from-source \
     && yarn cache clean
 
 COPY --chown=node:node apps/mcp-auth ./apps/mcp-auth
@@ -114,7 +115,8 @@ COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
-    && yarn postinstall.manual \
+    && node ./.scripts/postinstall.js \
+    && npm rebuild bcrypt better-sqlite3 --build-from-source \
     && yarn cache clean
 
 # PROD

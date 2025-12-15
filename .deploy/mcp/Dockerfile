@@ -111,6 +111,7 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
     && node ./.scripts/postinstall.js \
+    && npm rebuild bcrypt --build-from-source \
     && yarn cache clean
 
 COPY --chown=node:node apps/mcp ./apps/mcp
@@ -159,7 +160,8 @@ COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
-    && yarn postinstall.manual \
+    && node ./.scripts/postinstall.js \
+    && npm rebuild bcrypt --build-from-source \
     && yarn cache clean
 
 # PROD

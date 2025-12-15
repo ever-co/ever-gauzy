@@ -173,7 +173,7 @@ COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && node ./.scripts/postinstall.js && npm rebuild bcrypt better-sqlite3 --build-from-source && yarn cache clean
 
 FROM node:20.18.1-alpine3.19 AS prodDependencies
 
@@ -236,7 +236,7 @@ COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn postinstall.manual && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && node ./.scripts/postinstall.js && npm rebuild bcrypt better-sqlite3 --build-from-source && yarn cache clean
 
 # We remove Angular modules as it's not used in APIs
 RUN rm -r node_modules/@angular
