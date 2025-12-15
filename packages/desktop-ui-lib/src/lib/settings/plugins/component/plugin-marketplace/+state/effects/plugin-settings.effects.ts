@@ -334,6 +334,39 @@ export class PluginSettingsEffects {
 				ofType(PluginSettingsActions.createSettingSuccess),
 				tap(({ setting }) => {
 					this.store.addSetting(setting);
+
+					// Update settingsGroups to ensure filteredGroups$ reflects the change
+					const currentGroups = this.store.getValue().settingsGroups;
+					const updatedGroups = currentGroups.map((group) => {
+						// Add setting to matching group based on category
+						if (
+							group.category === setting.category ||
+							(setting.category === undefined && group.category === 'General')
+						) {
+							return {
+								...group,
+								settings: [...group.settings, setting]
+							};
+						}
+						return group;
+					});
+
+					// Create new group if no matching group exists
+					const hasMatchingGroup = updatedGroups.some((group) =>
+						group.settings.some((s) => s.id === setting.id)
+					);
+					if (!hasMatchingGroup) {
+						updatedGroups.push({
+							category: setting.category || 'General',
+							label: setting.category || 'General',
+							description: '',
+							icon: '',
+							order: updatedGroups.length,
+							settings: [setting]
+						});
+					}
+
+					this.store.setSettingsGroups(updatedGroups);
 					this.toastrService.success('Setting created successfully', 'Success');
 				})
 			);
@@ -380,6 +413,17 @@ export class PluginSettingsEffects {
 				ofType(PluginSettingsActions.deleteSettingSuccess),
 				tap(({ settingId }) => {
 					this.store.removeSetting(settingId);
+
+					// Update settingsGroups to ensure filteredGroups$ reflects the change
+					const currentGroups = this.store.getValue().settingsGroups;
+					const updatedGroups = currentGroups
+						.map((group) => ({
+							...group,
+							settings: group.settings.filter((setting) => setting.id !== settingId)
+						}))
+						.filter((group) => group.settings.length > 0); // Remove empty groups
+
+					this.store.setSettingsGroups(updatedGroups);
 					this.toastrService.success('Setting deleted successfully', 'Success');
 				})
 			);
