@@ -1,3 +1,4 @@
+import { isMySQL, isPostgres } from '@gauzy/config';
 import { IUser } from '@gauzy/contracts';
 import {
 	MultiORMColumn,
@@ -95,7 +96,7 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 	@ApiPropertyOptional({ type: Object, description: 'Subscription metadata for additional data' })
 	@IsOptional()
 	@IsObject({ message: 'Metadata must be an object' })
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	metadata?: Record<string, any>;
 
 	@ApiPropertyOptional({ type: String, description: 'External subscription ID from payment provider' })

@@ -1,3 +1,4 @@
+import { isBetterSqlite3 } from '@gauzy/config';
 import { ID, ITag } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -117,7 +118,7 @@ export class PluginTag extends TenantOrganizationBaseEntity implements IPluginTa
 	})
 	@IsOptional()
 	@MultiORMColumn({
-		type: 'timestamp',
+		type: isBetterSqlite3 ? 'text' : 'timestamp',
 		nullable: true,
 		default: () => 'CURRENT_TIMESTAMP'
 	})

@@ -1,3 +1,4 @@
+import { isMySQL, isPostgres } from '@gauzy/config';
 import { CurrenciesEnum, IUser } from '@gauzy/contracts';
 import { BaseEntity, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany, User } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -80,7 +81,7 @@ export class PluginSubscriptionPlan extends BaseEntity implements IPluginSubscri
 	@ApiPropertyOptional({ type: Object, description: 'Plan limitations and quotas' })
 	@IsOptional()
 	@IsObject({ message: 'Limitations must be an object' })
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	limitations?: Record<string, any>;
 
 	@ApiProperty({ type: Boolean, description: 'Whether the plan is active and available for purchase' })
@@ -124,7 +125,7 @@ export class PluginSubscriptionPlan extends BaseEntity implements IPluginSubscri
 	@ApiPropertyOptional({ type: String, description: 'Plan metadata (JSON string)' })
 	@IsOptional()
 	@IsObject({ message: 'Metadata must be an object' })
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	metadata?: Record<string, any>;
 
 	@ApiPropertyOptional({ type: Number, description: 'Sort order for displaying plans' })

@@ -1,3 +1,4 @@
+import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
 import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -63,7 +64,7 @@ export class PluginBilling extends TenantOrganizationBaseEntity implements IPlug
 
 	@ApiPropertyOptional({ type: Object, description: 'Billing metadata' })
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	metadata?: Record<string, any>;
 
 	/*

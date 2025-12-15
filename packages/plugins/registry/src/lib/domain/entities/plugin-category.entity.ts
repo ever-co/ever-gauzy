@@ -1,3 +1,4 @@
+import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
 import { MultiORMColumn, MultiORMEntity, MultiORMOneToMany, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -68,7 +69,7 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@ApiPropertyOptional({ type: Object, description: 'Category metadata (JSON object)' })
 	@IsOptional()
 	@IsObject({ message: 'Metadata must be a valid JSON object' })
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	metadata?: Record<string, any>;
 
 	/*

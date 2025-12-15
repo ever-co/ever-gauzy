@@ -1,3 +1,4 @@
+import { isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IRole, IUser } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -163,7 +164,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		}
 	})
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	tenantConfiguration?: Record<string, any>;
 
 	@ApiPropertyOptional({
@@ -175,7 +176,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		}
 	})
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	preferences?: Record<string, any>;
 
 	/**
@@ -187,7 +188,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	})
 	@IsOptional()
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'timestamp', nullable: true })
+	@MultiORMColumn({ type: isBetterSqlite3() ? 'text' : 'timestamp', nullable: true })
 	approvedAt?: Date;
 
 	@ApiPropertyOptional({
