@@ -15,6 +15,7 @@
 						<input
 							nbInput
 							fullWidth
+							fieldSize="medium"
 							id="key"
 							formControlName="key"
 							placeholder="e.g., api_key, max_connections"
@@ -29,7 +30,14 @@
 				<div class="col-md-6">
 					<div class="form-group">
 						<label for="label" class="label">Display Label <span class="required">*</span></label>
-						<input nbInput fullWidth id="label" formControlName="label" placeholder="e.g., API Key" />
+						<input
+							nbInput
+							fullWidth
+							fieldSize="medium"
+							id="label"
+							formControlName="label"
+							placeholder="e.g., API Key"
+						/>
 					</div>
 				</div>
 			</div>
@@ -39,6 +47,7 @@
 				<textarea
 					nbInput
 					fullWidth
+					fieldSize="medium"
 					id="description"
 					formControlName="description"
 					placeholder="Describe what this setting controls..."
@@ -50,7 +59,13 @@
 				<div class="col-md-4">
 					<div class="form-group">
 						<label for="type" class="label">Type <span class="required">*</span></label>
-						<nb-select fullWidth id="type" formControlName="type" placeholder="Select type">
+						<nb-select
+							fullWidth
+							fieldSize="medium"
+							id="type"
+							formControlName="type"
+							placeholder="Select type"
+						>
 							@for (type of settingTypes; track type) {
 							<nb-option [value]="type">{{ type | titlecase }}</nb-option>
 							}
@@ -61,7 +76,13 @@
 				<div class="col-md-4">
 					<div class="form-group">
 						<label for="scope" class="label">Scope <span class="required">*</span></label>
-						<nb-select fullWidth id="scope" formControlName="scope" placeholder="Select scope">
+						<nb-select
+							fullWidth
+							fieldSize="medium"
+							id="scope"
+							formControlName="scope"
+							placeholder="Select scope"
+						>
 							@for (scope of settingScopes; track scope) {
 							<nb-option [value]="scope">{{ scope | titlecase }}</nb-option>
 							}
@@ -81,7 +102,14 @@
 				<div class="col-md-6">
 					<div class="form-group">
 						<label for="value" class="label">Initial Value</label>
-						<input nbInput fullWidth id="value" formControlName="value" placeholder="Enter initial value" />
+						<input
+							nbInput
+							fullWidth
+							fieldSize="medium"
+							id="value"
+							formControlName="value"
+							placeholder="Enter initial value"
+						/>
 					</div>
 				</div>
 
@@ -91,6 +119,7 @@
 						<input
 							nbInput
 							fullWidth
+							fieldSize="medium"
 							id="defaultValue"
 							formControlName="defaultValue"
 							placeholder="Enter default value"
@@ -112,7 +141,14 @@
 
 	<nb-card-footer class="d-flex justify-content-end">
 		<button nbButton ghost status="basic" (click)="cancel()" class="me-2">Cancel</button>
-		<button nbButton status="primary" [disabled]="!createForm.valid || submitting" (click)="onSubmit()">
+		<button
+			nbButton
+			status="primary"
+			[disabled]="!createForm.valid || submitting"
+			[nbSpinner]="submitting"
+			nbSpinnerStatus="control"
+			(click)="onSubmit()"
+		>
 			<nb-icon icon="checkmark-outline"></nb-icon>
 			Create Setting
 		</button>
