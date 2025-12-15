@@ -61,9 +61,10 @@ COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
-    && npm rebuild bcrypt better-sqlite3 --build-from-source \
+    && yarn postinstall.manual \
     && yarn cache clean
 
 COPY --chown=node:node apps/mcp-auth ./apps/mcp-auth
@@ -110,9 +111,10 @@ WORKDIR /srv/gauzy-mcp-auth
 
 COPY --chown=node:node --from=build /srv/gauzy-mcp-auth/dist .
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
-    && npm rebuild bcrypt better-sqlite3 --build-from-source \
+    && yarn postinstall.manual \
     && yarn cache clean
 
 # PROD

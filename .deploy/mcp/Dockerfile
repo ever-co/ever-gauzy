@@ -107,9 +107,10 @@ COPY --chown=node:node packages/constants/package.json ./packages/constants/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
-    && npm rebuild bcrypt --build-from-source \
+    && yarn postinstall.manual \
     && yarn cache clean
 
 COPY --chown=node:node apps/mcp ./apps/mcp
@@ -155,9 +156,10 @@ WORKDIR /srv/gauzy-mcp
 
 COPY --chown=node:node --from=build /srv/gauzy-mcp/dist .
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
-    && npm rebuild bcrypt --build-from-source \
+    && yarn postinstall.manual \
     && yarn cache clean
 
 # PROD
