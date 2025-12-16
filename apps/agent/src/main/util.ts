@@ -50,6 +50,12 @@ export type TInitialConfig = {
 	isSetup: boolean
 }
 
+export type TProjectConfig = {
+	projectId: string | null;
+	taskId: string | null;
+	organizationContactId: string | null;
+}
+
 export function resolveHtmlPath(htmlFileName: string, hash: string) {
 	if (process.env.NODE_ENV === 'development') {
 		const port = process.env.PORT || 4200;
@@ -81,6 +87,11 @@ export function delaySync(duration: number) {
 export function getAuthConfig(): TAuthConfig {
 	const auth: TAuthConfig = LocalStore.getStore('auth');
 	return auth;
+}
+
+export function getProjectConfig(): TProjectConfig {
+	const project: TProjectConfig = LocalStore.getStore('project');
+	return project;
 }
 
 export function getScreen() {
@@ -117,6 +128,17 @@ export function getAppSetting(): Partial<TAppSetting> {
 export function getInitialConfig(): Partial<TInitialConfig> {
 	const initialConfig = (LocalStore.getStore('configs') ?? {}) as Partial<TInitialConfig>;
 	return initialConfig;
+}
+
+export function updateProject(project: {
+	projectId: string;
+	taskId: string;
+	organizationId: string;
+}) {
+	LocalStore.updateConfigProject({
+		projectId: project.projectId,
+		taskId: project.taskId
+	});
 }
 
 export function getScreenshotSoundPath(): string {

@@ -88,7 +88,8 @@ FROM node:20.18.1-alpine3.19 AS dependencies
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
-RUN apk add --no-cache python3 make g++ \
+RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
+    && npm install --quiet node-gyp@10.2.0 -g \
     && npm install yarn -g --force
 
 RUN mkdir /srv/gauzy-mcp && chown -R node:node /srv/gauzy-mcp
@@ -106,8 +107,10 @@ COPY --chown=node:node packages/constants/package.json ./packages/constants/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
+    && node ./.scripts/postinstall.js \
     && npm rebuild bcrypt --build-from-source \
     && yarn cache clean
 
@@ -145,7 +148,8 @@ RUN yarn build:mcp:prod
 # Only prod dependencies
 FROM node:20.18.1-alpine3.19 AS proddependencies
 
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
+    && npm install --quiet node-gyp@10.2.0 -g
 
 USER node:node
 
@@ -153,8 +157,10 @@ WORKDIR /srv/gauzy-mcp
 
 COPY --chown=node:node --from=build /srv/gauzy-mcp/dist .
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
+    && node ./.scripts/postinstall.js \
     && npm rebuild bcrypt --build-from-source \
     && yarn cache clean
 
