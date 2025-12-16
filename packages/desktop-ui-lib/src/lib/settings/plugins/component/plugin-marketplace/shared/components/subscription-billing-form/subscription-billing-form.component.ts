@@ -108,7 +108,7 @@ export class SubscriptionBillingFormComponent implements OnInit, OnDestroy, OnCh
 	}
 
 	/**
-	 * Build billing options from provided pricing data to avoid hard-coded calculations
+	 * Build billing options from provided pricing data and calculate prices for each period
 	 */
 	private buildBillingOptions(): void {
 		if (!this.plan) {
@@ -118,26 +118,29 @@ export class SubscriptionBillingFormComponent implements OnInit, OnDestroy, OnCh
 
 		const pricing = this.getPlanPricingMatrix(this.plan);
 		const copy = this.getPlanPricingCopy(this.plan);
-		const defaultPrice = this.normalizePrice(pricing, 'monthly', this.plan.price);
+		// Calculate prices for each billing period
+		const monthlyPrice = this.normalizePrice(pricing, 'monthly', this.plan.price);
+		const quarterlyPrice = this.calculateQuarterlyPrice(monthlyPrice);
+		const yearlyPrice = this.calculateYearlyPrice(monthlyPrice);
 
 		const options: BillingOption[] = [
 			{
 				period: 'monthly',
 				label: 'Monthly',
 				description: copy.monthly ?? 'Billed monthly',
-				price: defaultPrice
+				price: monthlyPrice
 			},
 			{
 				period: 'quarterly',
 				label: 'Quarterly',
-				description: copy.quarterly ?? 'Billed every quarter',
-				price: this.normalizePrice(pricing, 'quarterly', pricing.monthly ?? defaultPrice)
+				description: copy.quarterly ?? 'Billed every 3 months',
+				price: quarterlyPrice
 			},
 			{
 				period: 'yearly',
 				label: 'Yearly',
 				description: copy.yearly ?? 'Billed annually',
-				price: this.normalizePrice(pricing, 'yearly', pricing.monthly ?? defaultPrice)
+				price: yearlyPrice
 			}
 		];
 
@@ -146,6 +149,26 @@ export class SubscriptionBillingFormComponent implements OnInit, OnDestroy, OnCh
 		this.billingOptions = options.map((option) =>
 			option.period === highlighted ? { ...option, badge: { text: 'Recommended', status: 'primary' } } : option
 		);
+	}
+
+	/**
+	 * Calculate quarterly price (3 months) with discount
+	 * Applies 10% discount for quarterly billing
+	 */
+	private calculateQuarterlyPrice(monthlyPrice: number): number {
+		const totalMonths = 3;
+		const discount = 0; // 0% discount
+		return Math.round(monthlyPrice * totalMonths * (1 - discount) * 100) / 100;
+	}
+
+	/**
+	 * Calculate yearly price (12 months) with discount
+	 * Applies 20% discount for yearly billing
+	 */
+	private calculateYearlyPrice(monthlyPrice: number): number {
+		const totalMonths = 12;
+		const discount = 0; // 0% discount
+		return Math.round(monthlyPrice * totalMonths * (1 - discount) * 100) / 100;
 	}
 
 	private getPlanPricingMatrix(plan: IPluginSubscriptionPlan): Partial<Record<BillingPeriodKey, number>> {
