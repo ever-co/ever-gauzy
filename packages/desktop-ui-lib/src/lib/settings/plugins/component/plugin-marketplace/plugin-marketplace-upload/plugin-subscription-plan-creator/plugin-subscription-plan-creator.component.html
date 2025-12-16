@@ -21,8 +21,7 @@
 		<nb-icon icon="alert-circle-outline"></nb-icon>
 		{{ error }}
 	</nb-alert>
-	}
-
+	} @if(!dialogMode) {
 	<div class="creator-header">
 		<div class="header-icon">
 			<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
@@ -35,8 +34,7 @@
 			<nb-badge [text]="plans.length + ' Plan' + (plans.length !== 1 ? 's' : '')" status="primary"></nb-badge>
 		</div>
 	</div>
-
-	@if(plansForm) {
+	} @if(plansForm) {
 	<form [formGroup]="plansForm" class="plans-form">
 		<div formArrayName="plans" class="plans-array">
 			<!-- Plan Cards -->

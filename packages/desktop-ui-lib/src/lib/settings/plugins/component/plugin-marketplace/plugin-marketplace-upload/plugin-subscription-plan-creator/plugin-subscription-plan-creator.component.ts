@@ -56,6 +56,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 
 	@Input() allowMultiplePlans = true;
 	@Input() requireAtLeastOnePlan = false;
+	@Input() dialogMode = false;
 
 	@Output() plansChanged = new EventEmitter<IPluginPlanCreateInput[]>();
 	@Output() validationStateChanged = new EventEmitter<boolean>();

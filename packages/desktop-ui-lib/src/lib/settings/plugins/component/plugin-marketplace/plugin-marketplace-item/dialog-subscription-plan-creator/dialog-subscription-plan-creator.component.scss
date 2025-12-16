@@ -2,6 +2,8 @@
   background: var(--gauzy-card-1);
   border-radius: calc(var(--border-radius) * 1.25);
   box-shadow: var(--gauzy-shadow);
+  width: 80vw;
+  height: 90vh;
 }
 
 .header-content {
@@ -47,4 +49,8 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+}
+
+[nbButton] {
+  border-radius: calc(var(--border-radius) * 1.2);
 }
