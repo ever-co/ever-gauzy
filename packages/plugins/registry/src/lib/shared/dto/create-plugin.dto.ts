@@ -12,6 +12,7 @@ import {
 	IsUUID,
 	ValidateNested
 } from 'class-validator';
+import { CreatePluginSubscriptionPlanDTO } from './plugin-subscription-plan.dto';
 import { PluginVersionDTO } from './plugin-version.dto';
 
 export class CreatePluginDTO {
@@ -94,5 +95,7 @@ export class CreatePluginDTO {
 	@ApiPropertyOptional({ type: Array, description: 'Subscription plans for the plugin' })
 	@IsOptional()
 	@IsArray({ message: 'Subscription plans must be an array' })
-	subscriptionPlans?: any[];
+	@ValidateNested({ each: true })
+	@Type(() => CreatePluginSubscriptionPlanDTO)
+	subscriptionPlans?: Array<CreatePluginSubscriptionPlanDTO>;
 }

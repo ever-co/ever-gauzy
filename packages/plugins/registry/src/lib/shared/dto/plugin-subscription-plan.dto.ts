@@ -22,6 +22,8 @@ import { PluginBillingPeriod, PluginSubscriptionType } from '../../shared/models
 const transformToBoolean = ({ value }: { value: any }): boolean | undefined => {
 	if (value === 'true' || value === true) return true;
 	if (value === 'false' || value === false) return false;
+	if (value === '1' || value === 1) return true;
+	if (value === '0' || value === 0) return false;
 	return value;
 };
 
@@ -130,8 +132,8 @@ export class CreatePluginSubscriptionPlanDTO extends BaseSubscriptionPlanFieldsD
 	@IsObject({ message: 'Limitations must be an object' })
 	limitations?: Record<string, any>;
 
-	@ApiProperty({ type: Boolean, description: 'Is plan active' })
-	@IsNotEmpty({ message: 'IsActive is required' })
+	@ApiPropertyOptional({ type: Boolean, description: 'Is plan active' })
+	@IsOptional()
 	@IsBoolean({ message: 'IsActive must be a boolean' })
 	@Transform(transformToBoolean)
 	isActive: boolean;
@@ -148,10 +150,10 @@ export class CreatePluginSubscriptionPlanDTO extends BaseSubscriptionPlanFieldsD
 	@Transform(transformToOptionalNumber)
 	sortOrder?: number;
 
-	@ApiProperty({ type: String, description: 'Plugin ID' })
-	@IsNotEmpty({ message: 'Plugin ID is required' })
+	@ApiPropertyOptional({ type: String, description: 'Plugin ID' })
 	@IsUUID(4, { message: 'Plugin ID must be a valid UUID' })
-	pluginId: ID;
+	@IsOptional()
+	pluginId?: ID;
 }
 
 /**

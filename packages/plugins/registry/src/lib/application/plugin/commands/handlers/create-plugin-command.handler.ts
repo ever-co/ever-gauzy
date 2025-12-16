@@ -26,35 +26,35 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 	 */
 	public async execute(command: CreatePluginCommand): Promise<IPlugin> {
 		const { input } = command;
+		const { subscriptionPlans = [], ...pluginInput } = input;
 
 		// Validate input
 		if (
-			!input ||
-			!input.version ||
-			(input.version.sources && input.version.sources.length === 0 && !input.version)
+			!pluginInput ||
+			!pluginInput.version ||
+			(pluginInput.version.sources && pluginInput.version.sources.length === 0 && !pluginInput.version)
 		) {
 			throw new BadRequestException('Invalid plugin data: Source requires version information');
 		}
 
-		// Use a transaction to ensure data consistency
 		const queryRunner = this.dataSource.createQueryRunner();
 		await queryRunner.connect();
 		await queryRunner.startTransaction();
 
 		try {
-			// Create the plugin
-			const plugin = Plugin.create(input);
+			// Create the plugin (subscriptionPlans are handled separately below)
+			const plugin = Plugin.create(pluginInput);
 			// Check if has plans
-			const requiresSubscription = input.subscriptionPlans && input.subscriptionPlans.length > 0;
+			const requiresSubscription = subscriptionPlans && subscriptionPlans.length > 0;
 			// Requires subscription if plans are provided
 			plugin.requiresSubscription = requiresSubscription;
 			// Save the plugin
 			const savedPlugin = await this.pluginService.save(plugin);
 
 			// Process source and version if provided
-			if (input.version.sources.length > 0) {
-				const savedSource = await this.sourceService.createSources(input.version.sources);
-				await this.versionService.createVersion(input.version, savedPlugin, savedSource);
+			if (pluginInput.version.sources.length > 0) {
+				const savedSource = await this.sourceService.createSources(pluginInput.version.sources);
+				await this.versionService.createVersion(pluginInput.version, savedPlugin, savedSource);
 			}
 
 			// Create subscription plans if provided
@@ -63,7 +63,7 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 				const organizationId = RequestContext.currentOrganizationId();
 				const user = RequestContext.currentUser();
 
-				for (const planData of input.subscriptionPlans) {
+				for (const planData of subscriptionPlans) {
 					const planWithPluginId = {
 						...planData,
 						pluginId: savedPlugin.id
