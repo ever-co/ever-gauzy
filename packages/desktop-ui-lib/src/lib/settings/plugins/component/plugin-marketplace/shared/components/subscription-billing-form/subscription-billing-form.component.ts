@@ -167,7 +167,7 @@ export class SubscriptionBillingFormComponent implements OnInit, OnDestroy, OnCh
 		const highlighted = this.getPlanHighlightedPeriod(this.plan);
 
 		this.billingOptions = options.map((option) =>
-			option.period === highlighted ? { ...option, badge: { text: 'Recommended', status: 'primary' } } : option
+			option.period === highlighted ? { ...option, badge: { text: 'Current', status: 'primary' } } : option
 		);
 	}
 
