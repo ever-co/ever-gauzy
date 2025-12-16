@@ -132,7 +132,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
 		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
+			`CREATE UNIQUE INDEX IF NOT EXISTS "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
 		);
 		await queryRunner.query(`CREATE TYPE "public"."plugin_sources_type_enum" AS ENUM('CDN', 'NPM', 'GAUZY')`);
 		await queryRunner.query(
@@ -290,7 +290,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`CREATE INDEX "IDX_d0a1444aa92229d7f1af237184" ON "plugins" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_c61c7032e7b3afd352d82bc4b4" ON "plugins" ("isArchived") `);
 		await queryRunner.query(`CREATE INDEX "IDX_4bf89f98c41969e23e3f9974d5" ON "plugins" ("uploadedById") `);
-		await queryRunner.query(`CREATE UNIQUE INDEX "plugin_name_unique" ON "plugins" ("name") `);
+		await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "plugin_name_unique" ON "plugins" ("name") `);
 		await queryRunner.query(
 			`CREATE TYPE "public"."plugin_subscription_plans_type_enum" AS ENUM('free', 'trial', 'basic', 'premium', 'enterprise', 'custom')`
 		);
@@ -1082,7 +1082,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
 		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
+			`CREATE UNIQUE INDEX IF NOT EXISTS "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
 		);
 		await queryRunner.query(
 			`CREATE TABLE "plugin_sources" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "type" varchar CHECK( "type" IN ('CDN','NPM','GAUZY') ) NOT NULL DEFAULT ('GAUZY'), "operatingSystem" varchar CHECK( "operatingSystem" IN ('LINUX','MAC','WINDOWS','UNIVERSAL') ) NOT NULL DEFAULT ('UNIVERSAL'), "architecture" varchar CHECK( "architecture" IN ('X64','ARM') ) NOT NULL DEFAULT ('X64'), "url" varchar, "integrity" varchar, "crossOrigin" varchar, "name" varchar, "registry" varchar, "private" boolean DEFAULT (0), "scope" varchar, "filePath" varchar, "fileName" varchar, "fileSize" integer, "mimeType" varchar, "fileKey" varchar, "versionId" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ))`
@@ -1222,7 +1222,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`CREATE INDEX "IDX_d0a1444aa92229d7f1af237184" ON "plugins" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_c61c7032e7b3afd352d82bc4b4" ON "plugins" ("isArchived") `);
 		await queryRunner.query(`CREATE INDEX "IDX_4bf89f98c41969e23e3f9974d5" ON "plugins" ("uploadedById") `);
-		await queryRunner.query(`CREATE UNIQUE INDEX "plugin_name_unique" ON "plugins" ("name") `);
+		await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "plugin_name_unique" ON "plugins" ("name") `);
 		await queryRunner.query(
 			`CREATE TABLE "plugin_subscription_plans" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" text, "type" varchar CHECK( "type" IN ('free','trial','basic','premium','enterprise','custom') ) NOT NULL DEFAULT ('free'), "price" decimal(10,2) NOT NULL DEFAULT (0), "currency" varchar(3) NOT NULL DEFAULT ('USD'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time','usage_based') ) NOT NULL DEFAULT ('monthly'), "features" text NOT NULL, "limitations" text, "isPopular" boolean NOT NULL DEFAULT (0), "isRecommended" boolean NOT NULL DEFAULT (0), "trialDays" integer, "setupFee" decimal(10,2), "discountPercentage" decimal(5,2), "metadata" text, "sortOrder" integer NOT NULL DEFAULT (0), "pluginId" varchar NOT NULL, "createdById" varchar)`
 		);
@@ -1633,7 +1633,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_f806bae81cd490404a1888ad5b"`);
 		await queryRunner.query(`DROP INDEX "IDX_ab6e29cd444226f80bf0c0c1db"`);
 		await queryRunner.query(`DROP INDEX "IDX_8adf7a9181e968bcafc71236c8"`);
-		await queryRunner.query(`DROP INDEX "version_number_unique"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "version_number_unique"`);
 		await queryRunner.query(
 			`CREATE TABLE "temporary_plugin_versions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "number" varchar NOT NULL, "changelog" varchar NOT NULL, "checksum" varchar, "signature" varchar, "releaseDate" datetime, "downloadCount" integer DEFAULT (0), "pluginId" varchar, CONSTRAINT "FK_485db4d1cc977cc3d499824d958" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_0b36b5701e9890a395ded76cb57" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_e06094816e67e584dea754cc81c" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_650ccf2e7394509f7ad8448e323" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_f806bae81cd490404a1888ad5b9" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_8adf7a9181e968bcafc71236c80" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
@@ -1660,7 +1660,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
 		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
+			`CREATE UNIQUE INDEX IF NOT EXISTS "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
 		);
 		await queryRunner.query(`DROP INDEX "IDX_09a383d6f2858d49c064ca4cda"`);
 		await queryRunner.query(`DROP INDEX "IDX_0404416b5c1cd48ae87fe81834"`);
@@ -1895,7 +1895,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`CREATE INDEX "IDX_d0a1444aa92229d7f1af237184" ON "plugins" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_c61c7032e7b3afd352d82bc4b4" ON "plugins" ("isArchived") `);
 		await queryRunner.query(`CREATE INDEX "IDX_4bf89f98c41969e23e3f9974d5" ON "plugins" ("uploadedById") `);
-		await queryRunner.query(`CREATE UNIQUE INDEX "plugin_name_unique" ON "plugins" ("name") `);
+		await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "plugin_name_unique" ON "plugins" ("name") `);
 		await queryRunner.query(`DROP INDEX "IDX_646aa1161ac9861061842e05c2"`);
 		await queryRunner.query(`DROP INDEX "IDX_b874f9ee9c04061b4892926388"`);
 		await queryRunner.query(`DROP INDEX "IDX_6f401b811d14d8b06db0fbea30"`);
@@ -2384,7 +2384,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(
 			`CREATE INDEX "IDX_646aa1161ac9861061842e05c2" ON "plugin_subscription_plans" ("createdByUserId") `
 		);
-		await queryRunner.query(`DROP INDEX "plugin_name_unique"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "plugin_name_unique"`);
 		await queryRunner.query(`DROP INDEX "IDX_4bf89f98c41969e23e3f9974d5"`);
 		await queryRunner.query(`DROP INDEX "IDX_c61c7032e7b3afd352d82bc4b4"`);
 		await queryRunner.query(`DROP INDEX "IDX_d0a1444aa92229d7f1af237184"`);
@@ -2399,7 +2399,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`INSERT INTO "plugins"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "status", "categoryId", "author", "license", "homepage", "repository", "uploadedById", "uploadedAt", "requiresSubscription", "lastDownloadedAt") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "status", "categoryId", "author", "license", "homepage", "repository", "uploadedById", "uploadedAt", "requiresSubscription", "lastDownloadedAt" FROM "temporary_plugins"`
 		);
 		await queryRunner.query(`DROP TABLE "temporary_plugins"`);
-		await queryRunner.query(`CREATE UNIQUE INDEX "plugin_name_unique" ON "plugins" ("name") `);
+		await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "plugin_name_unique" ON "plugins" ("name") `);
 		await queryRunner.query(`CREATE INDEX "IDX_4bf89f98c41969e23e3f9974d5" ON "plugins" ("uploadedById") `);
 		await queryRunner.query(`CREATE INDEX "IDX_c61c7032e7b3afd352d82bc4b4" ON "plugins" ("isArchived") `);
 		await queryRunner.query(`CREATE INDEX "IDX_d0a1444aa92229d7f1af237184" ON "plugins" ("isActive") `);
@@ -2618,7 +2618,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(
 			`CREATE INDEX "IDX_09a383d6f2858d49c064ca4cda" ON "plugin_sources" ("createdByUserId") `
 		);
-		await queryRunner.query(`DROP INDEX "version_number_unique"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "version_number_unique"`);
 		await queryRunner.query(`DROP INDEX "IDX_8adf7a9181e968bcafc71236c8"`);
 		await queryRunner.query(`DROP INDEX "IDX_ab6e29cd444226f80bf0c0c1db"`);
 		await queryRunner.query(`DROP INDEX "IDX_f806bae81cd490404a1888ad5b"`);
@@ -2637,7 +2637,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		);
 		await queryRunner.query(`DROP TABLE "temporary_plugin_versions"`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
+			`CREATE UNIQUE INDEX IF NOT EXISTS "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
@@ -2971,7 +2971,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_b874f9ee9c04061b4892926388"`);
 		await queryRunner.query(`DROP INDEX "IDX_646aa1161ac9861061842e05c2"`);
 		await queryRunner.query(`DROP TABLE "plugin_subscription_plans"`);
-		await queryRunner.query(`DROP INDEX "plugin_name_unique"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "plugin_name_unique"`);
 		await queryRunner.query(`DROP INDEX "IDX_4bf89f98c41969e23e3f9974d5"`);
 		await queryRunner.query(`DROP INDEX "IDX_c61c7032e7b3afd352d82bc4b4"`);
 		await queryRunner.query(`DROP INDEX "IDX_d0a1444aa92229d7f1af237184"`);
@@ -3042,7 +3042,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_0404416b5c1cd48ae87fe81834"`);
 		await queryRunner.query(`DROP INDEX "IDX_09a383d6f2858d49c064ca4cda"`);
 		await queryRunner.query(`DROP TABLE "plugin_sources"`);
-		await queryRunner.query(`DROP INDEX "version_number_unique"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "version_number_unique"`);
 		await queryRunner.query(`DROP INDEX "IDX_8adf7a9181e968bcafc71236c8"`);
 		await queryRunner.query(`DROP INDEX "IDX_ab6e29cd444226f80bf0c0c1db"`);
 		await queryRunner.query(`DROP INDEX "IDX_f806bae81cd490404a1888ad5b"`);
@@ -3699,7 +3699,11 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX \`IDX_0404416b5c1cd48ae87fe81834\` ON \`plugin_sources\``);
 		await queryRunner.query(`DROP INDEX \`IDX_09a383d6f2858d49c064ca4cda\` ON \`plugin_sources\``);
 		await queryRunner.query(`DROP TABLE \`plugin_sources\``);
-		await queryRunner.query(`DROP INDEX \`version_number_unique\` ON \`plugin_versions\``);
+		try {
+			await queryRunner.query(`DROP INDEX \`version_number_unique\` ON \`plugin_versions\``);
+		} catch (error) {
+			// Index may not exist, ignore error
+		}
 		await queryRunner.query(`DROP INDEX \`IDX_8adf7a9181e968bcafc71236c8\` ON \`plugin_versions\``);
 		await queryRunner.query(`DROP INDEX \`IDX_ab6e29cd444226f80bf0c0c1db\` ON \`plugin_versions\``);
 		await queryRunner.query(`DROP INDEX \`IDX_f806bae81cd490404a1888ad5b\` ON \`plugin_versions\``);
