@@ -3,11 +3,11 @@ import { Actions } from '@ngneat/effects-ng';
 import { Observable } from 'rxjs';
 
 import {
-    IPluginSubscription,
-    IPluginSubscriptionCreateInput,
-    IPluginSubscriptionPlan,
-    IPluginSubscriptionUpdateInput,
-    PluginSubscriptionType
+	IPluginSubscription,
+	IPluginSubscriptionCreateInput,
+	IPluginSubscriptionPlan,
+	IPluginSubscriptionUpdateInput,
+	PluginSubscriptionType
 } from '@gauzy/contracts';
 import { PlanActionType } from '../plugin-subscription-plan-selection/services/plan-comparison.service';
 import { PluginPlanComparisonActions } from './actions/plugin-plan-comparison.action';
@@ -98,6 +98,10 @@ export class PluginSubscriptionFacade {
 
 	public selectPlan(plan: IPluginSubscriptionPlan | null): void {
 		this.actions$.dispatch(PluginPlanActions.selectPlan(plan));
+	}
+
+	public openPlanCreator(pluginId: string): void {
+		this.actions$.dispatch(PluginPlanActions.openPlanCreator(pluginId));
 	}
 
 	public resetError(): void {

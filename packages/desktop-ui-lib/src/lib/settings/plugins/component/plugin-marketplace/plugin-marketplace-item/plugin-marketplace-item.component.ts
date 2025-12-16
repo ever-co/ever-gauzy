@@ -18,6 +18,7 @@ import { catchError, filter, map, takeUntil } from 'rxjs/operators';
 import { PluginSubscriptionActions, PluginSubscriptionQuery } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
+import { PluginPlanActions } from '../+state/actions/plugin-plan.action';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
@@ -292,6 +293,14 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	public addVersion(): void {
 		this.action.dispatch(PluginVersionActions.add(this.plugin));
+	}
+
+	public openPlanCreator(): void {
+		if (!this.pluginId) {
+			return;
+		}
+
+		this.action.dispatch(PluginPlanActions.openPlanCreator(this.pluginId));
 	}
 
 	public addSource(): void {

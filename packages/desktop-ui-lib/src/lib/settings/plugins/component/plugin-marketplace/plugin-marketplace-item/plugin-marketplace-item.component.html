@@ -317,6 +317,22 @@
 						nbButton
 						fullWidth
 						outline
+						status="info"
+						[disabled]="disabled"
+						(click)="openPlanCreator()"
+						class="action-button"
+					>
+						<div class="button-content">
+							<nb-icon icon="pricetags-outline" class="mr-1"></nb-icon>
+							<span class="action-label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS' | translate }}</span>
+						</div>
+					</button>
+				</nb-list-item>
+				<nb-list-item class="action-item p-0">
+					<button
+						nbButton
+						fullWidth
+						outline
 						status="primary"
 						[disabled]="disabled"
 						(click)="addVersion()"

@@ -5,31 +5,31 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
-    NbAlertModule,
-    NbBadgeModule,
-    NbButtonGroupModule,
-    NbButtonModule,
-    NbCardModule,
-    NbCheckboxModule,
-    NbContextMenuModule,
-    NbDatepickerModule,
-    NbDialogModule,
-    NbFormFieldModule,
-    NbIconModule,
-    NbInfiniteListDirective,
-    NbInputModule,
-    NbListModule,
-    NbPopoverModule,
-    NbRadioModule,
-    NbRouteTabsetModule,
-    NbSelectModule,
-    NbSpinnerModule,
-    NbStepperModule,
-    NbTabsetModule,
-    NbTagModule,
-    NbToggleModule,
-    NbTooltipModule,
-    NbUserModule
+	NbAlertModule,
+	NbBadgeModule,
+	NbButtonGroupModule,
+	NbButtonModule,
+	NbCardModule,
+	NbCheckboxModule,
+	NbContextMenuModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbFormFieldModule,
+	NbIconModule,
+	NbInfiniteListDirective,
+	NbInputModule,
+	NbListModule,
+	NbPopoverModule,
+	NbRadioModule,
+	NbRouteTabsetModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbStepperModule,
+	NbTabsetModule,
+	NbTagModule,
+	NbToggleModule,
+	NbTooltipModule,
+	NbUserModule
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
@@ -81,6 +81,7 @@ import { CreateCategoryDialogComponent } from './component/plugin-marketplace/pl
 import { DialogCreateSourceComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
+import { DialogSubscriptionPlanCreatorComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-subscription-plan-creator/dialog-subscription-plan-creator.component';
 import { PluginMarketplaceItemComponent } from './component/plugin-marketplace/plugin-marketplace-item/plugin-marketplace-item.component';
 import { SourceSelectorComponent } from './component/plugin-marketplace/plugin-marketplace-item/source-selector/source-selector.component';
 import { VersionHistoryComponent } from './component/plugin-marketplace/plugin-marketplace-item/version-history/version-history.component';
@@ -127,16 +128,16 @@ import { PluginCategoryEffects } from './component/plugin-marketplace/+state';
 import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
-    BillingContactSectionComponent,
-    BillingCycleSectionComponent,
-    CardDetailsSectionComponent,
-    PaymentMethodSectionComponent,
-    SubscriptionBillingFormComponent,
-    SubscriptionConsentSectionComponent,
-    SubscriptionFormService,
-    SubscriptionPlanService,
-    SubscriptionStatusBadgeComponent,
-    SubscriptionStatusService
+	BillingContactSectionComponent,
+	BillingCycleSectionComponent,
+	CardDetailsSectionComponent,
+	PaymentMethodSectionComponent,
+	SubscriptionBillingFormComponent,
+	SubscriptionConsentSectionComponent,
+	SubscriptionFormService,
+	SubscriptionPlanService,
+	SubscriptionStatusBadgeComponent,
+	SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 
 @NgModule({
@@ -178,6 +179,7 @@ import {
 		CategorySelectorComponent,
 		CreateCategoryDialogComponent,
 		DialogInstallationValidationComponent,
+		DialogSubscriptionPlanCreatorComponent,
 		CdnFormComponent,
 		GauzyFormComponent,
 		NpmFormComponent,

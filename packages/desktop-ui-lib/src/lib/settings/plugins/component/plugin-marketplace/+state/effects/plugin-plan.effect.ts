@@ -7,6 +7,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrNotificationService } from '../../../../../../services';
 import { IPluginSubscriptionPlan, PluginSubscriptionService } from '../../../../services/plugin-subscription.service';
+import { DialogSubscriptionPlanCreatorComponent } from '../../plugin-marketplace-item/dialog-subscription-plan-creator/dialog-subscription-plan-creator.component';
 import {
 	IPluginSubscriptionPlanSelectionResult,
 	PluginSubscriptionPlanSelectionComponent
@@ -225,5 +226,35 @@ export class PluginPlanEffects {
 		{
 			dispatch: true
 		}
+	);
+
+	openPlanCreatorDialog$ = createEffect(
+		() =>
+			this.actions$.pipe(
+				ofType(PluginPlanActions.openPlanCreator),
+				map(({ pluginId }) => {
+					let plugin = this.pluginMarketplaceQuery.plugins.find((item) => item.id === pluginId);
+					if (!plugin && this.pluginMarketplaceQuery.plugin?.id === pluginId) {
+						plugin = this.pluginMarketplaceQuery.plugin;
+					}
+
+					return { pluginId, plugin };
+				}),
+				exhaustMap(({ pluginId, plugin }) => {
+					if (!plugin) {
+						this.toastrService.error('Unable to open subscription plans for this plugin.');
+						return EMPTY;
+					}
+
+					return this.dialogService
+						.open(DialogSubscriptionPlanCreatorComponent, {
+							context: { plugin, pluginId },
+							autoFocus: true,
+							closeOnBackdropClick: false
+						})
+						.onClose.pipe(take(1), catchError(() => EMPTY));
+				})
+			),
+		{ dispatch: false }
 	);
 }

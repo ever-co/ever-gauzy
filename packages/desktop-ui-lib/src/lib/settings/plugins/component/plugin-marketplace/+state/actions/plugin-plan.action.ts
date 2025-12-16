@@ -26,6 +26,10 @@ export class PluginPlanActions {
 		pluginId
 	}));
 
+	public static openPlanCreator = createAction('[Plugin Plan] Open Plan Creator Dialog', (pluginId: ID) => ({
+		pluginId
+	}));
+
 	// Plan CRUD Actions
 	public static createPlan = createAction(
 		'[Plugin Plan] Create Plan',
