@@ -90,7 +90,8 @@ LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
 RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
     && npm install --quiet node-gyp@10.2.0 -g \
-    && npm install yarn -g --force
+    && npm install yarn -g --force \
+    && npm install --quiet ts-node@10.9.2 -g
 
 RUN mkdir /srv/gauzy-mcp && chown -R node:node /srv/gauzy-mcp
 
@@ -110,8 +111,7 @@ COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
-    && node ./.scripts/postinstall.js \
-    && npm rebuild bcrypt --build-from-source \
+    && yarn postinstall.manual \
     && yarn cache clean
 
 COPY --chown=node:node apps/mcp ./apps/mcp
@@ -149,7 +149,8 @@ RUN yarn build:mcp:prod
 FROM node:20.18.1-alpine3.19 AS proddependencies
 
 RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
-    && npm install --quiet node-gyp@10.2.0 -g
+    && npm install --quiet node-gyp@10.2.0 -g \
+    && npm install --quiet ts-node@10.9.2 -g
 
 USER node:node
 
@@ -160,8 +161,7 @@ COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
-    && node ./.scripts/postinstall.js \
-    && npm rebuild bcrypt --build-from-source \
+    && yarn postinstall.manual \
     && yarn cache clean
 
 # PROD
