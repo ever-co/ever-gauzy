@@ -295,7 +295,7 @@ export class PlanComparisonService {
 		if (!currentPlan) {
 			return newPrice; // no plan info, fallback to full price
 		}
-		const currentAmount = currentPlan.price ? this.parsePriceAsNumber(currentPlan.price) : currentPlan.price || 0;
+		const currentAmount = this.parsePriceAsNumber(currentPlan.price) || 0;
 		const currentBillingPeriod = currentPlan.billingPeriod;
 
 		if (!currentBillingPeriod) {
