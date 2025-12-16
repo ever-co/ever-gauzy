@@ -66,8 +66,12 @@ spec:
               value: "$DB_ORM"
             - name: DB_SYNCHRONIZE
               value: "$DB_SYNCHRONIZE"
+            - name: NODE_ENV
+              value: "development"
             - name: MCP_AUTH_PORT
               value: "3003"
+            - name: MCP_AUTH_BASE_URL
+              value: "$MCP_AUTH_BASE_URL"
             - name: MCP_AUTH_SESSION_SECRET
               value: "$MCP_AUTH_SESSION_SECRET"
             - name: MCP_AUTH_JWT_ISSUER
@@ -77,7 +81,7 @@ spec:
             - name: MCP_TRUSTED_PROXIES
               value: "$MCP_TRUSTED_PROXIES"
             - name: REDIS_ENABLED
-              value: '$REDIS_ENABLED'
+              value: "$REDIS_ENABLED"
             - name: REDIS_URL
               value: "$REDIS_URL"
             - name: REDIS_HOST
@@ -104,6 +108,8 @@ metadata:
   namespace: default
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/proxy-set-headers: "ingress-nginx/custom-headers"
 spec:
   ingressClassName: nginx
   rules:

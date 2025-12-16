@@ -15,9 +15,9 @@ import {
 	pluginListeners,
 	ProviderFactory,
 } from '@gauzy/desktop-lib';
-import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting } from '../util';
+import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting, updateProject } from '../util';
 import { startServer } from './app';
-import AppWindow from '../window-manager';
+import AppWindow, { WindowType } from '../window-manager';
 import * as moment from 'moment';
 import * as path from 'node:path';
 import PullActivities from '../workers/pull-activities';
@@ -27,11 +27,13 @@ import { ApiService } from '../api';
 const rootPath = path.join(__dirname, '../..');
 import { QueueAudit, AuditStatus } from '../queue/audit-queue';
 import * as isOnline from 'is-online';
+import { AgentLogger } from '../agent-logger';
 
 const userService = new UserService();
 const appWindow = AppWindow.getInstance(rootPath);
 const apiService = ApiService.getInstance();
 const provider = ProviderFactory.instance;
+const agentLogger = AgentLogger.getInstance();
 
 
 function getGlobalVariable(configs?: {
@@ -250,15 +252,20 @@ export default function AppIpcMain() {
 		const pushActivities = PushActivities.getInstance();
 		const online = await isOnline({ timeout: 1200 }).catch(() => false);
 		if (online) {
-			const timerStatus = await apiService.timerStatus({
-				tenantId: authConfig.user.employee.tenantId,
-				organizationId: authConfig.user.employee.organizationId
-			});
-			timerStatus.startedAt = new Date(pushActivities.currentSessionStartTime);
-			if (pullActivities?.todayDuration) {
-				timerStatus.duration = pullActivities.todayDuration;
+			try {
+				const timerStatus = await apiService.timerStatus({
+					tenantId: authConfig.user.employee.tenantId,
+					organizationId: authConfig.user.employee.organizationId
+				});
+				timerStatus.startedAt = new Date(pushActivities.currentSessionStartTime);
+				if (pullActivities?.todayDuration) {
+					timerStatus.duration = pullActivities.todayDuration;
+				}
+				return timerStatus;
+			} catch (error) {
+				console.log('error get the last timer status');
 			}
-			return timerStatus;
+
 		}
 		return {
 			running: pullActivities.running,
@@ -304,6 +311,23 @@ export default function AppIpcMain() {
 		appWindow.notificationWindow?.close?.();
 		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
 		app.exit(0);
+	});
+
+	ipcMain.handle('load_logs', () => {
+		return agentLogger.loadLogs;
+	});
+
+	ipcMain.handle('capture_window_init', () => {
+		appWindow.setWindowIsReady(WindowType.notificationWindow);
+	});
+
+	ipcMain.handle('TASK_SELECTED', (_, data: { taskId: string; organizationId: string; projectId: string }) => {
+		updateProject({
+			taskId: data.taskId ?? null,
+			organizationId: data.organizationId ?? null,
+			projectId: data.projectId ?? null
+		});
+		return true;
 	});
 
 	pluginListeners();

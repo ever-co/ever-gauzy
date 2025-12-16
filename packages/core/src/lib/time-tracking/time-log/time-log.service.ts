@@ -47,6 +47,7 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from '../../organization-project/repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
+import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TimeLog } from './time-log.entity';
 
 @Injectable()
@@ -57,7 +58,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {
 		super(typeOrmTimeLogRepository, mikroOrmTimeLogRepository);
 	}
@@ -109,10 +111,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		});
 
-		// Set up the where clause using the provided filter function
-		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request);
-		});
+		// Apply filters to the query
+		await this.getFilterTimeLogQuery(query, request);
 
 		const timeLogs = await query.getMany();
 
@@ -172,9 +172,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		});
 		// Apply additional conditions to the query based on request filters
-		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request);
-		});
+		await this.getFilterTimeLogQuery(query, request);
 
 		// Execute the query and retrieve time logs
 		const logs = await query.getMany();
@@ -927,7 +925,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request - The criteria for filtering TimeLogs.
 	 * @returns The modified query.
 	 */
-	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput) {
+	async getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput) {
 		const { organizationId, projectIds = [], teamIds = [], taskIds = [] } = request;
 		let { employeeIds = [] } = request;
 
@@ -943,8 +941,24 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const isOnlyMeSelected: boolean = request.onlyMe;
 
 		// Set employeeIds based on permissions and request
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+		if (user.employeeId && isOnlyMeSelected) {
+			// Case 1: User explicitly requests "Only Me"
 			employeeIds = [user.employeeId];
+		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
+			// Case 2: User doesn't have global permission → Check if manager of requested employees
+			if (isNotEmpty(employeeIds)) {
+				// Verify if user can manage ALL requested employees in the specified teams
+				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
+
+				if (!canManageAll) {
+					// User is NOT manager of all requested employees → Override with currentEmployeeId
+					employeeIds = [user.employeeId];
+				}
+				// Otherwise → Keep the requested employeeIds (no override)
+			} else {
+				// No specific employeeIds requested → Override with currentEmployeeId
+				employeeIds = [user.employeeId];
+			}
 		}
 
 		// Filters records based on the timesheetId.
@@ -1219,14 +1233,29 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
-		// If user don't have permission to change selected employee, filter by current employee ID
-		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			const employeeId = RequestContext.currentEmployeeId();
-			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
-		}
-
 		// Get the time logs from the database
 		const timeLogs = await query.getMany();
+
+		if (isEmpty(timeLogs)) {
+			throw new NotAcceptableException('No time logs found with the provided IDs');
+		}
+
+		// If user doesn't have permission to change selected employee, check manager access
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			// Extract unique employeeIds and teamIds from the fetched time logs
+			const uniqueEmployeeIds = [...new Set(timeLogs.map((log) => log.employeeId))];
+			const uniqueTeamIds = [...new Set(timeLogs.map((log) => log.organizationTeamId).filter(Boolean))];
+
+			// Check if user can manage all employees in the time logs
+			const canManageAll = await this._managedEmployeeService.canManageEmployees(
+				uniqueEmployeeIds,
+				uniqueTeamIds
+			);
+
+			if (!canManageAll) {
+				throw new NotAcceptableException('You do not have permission to delete time logs for these employees');
+			}
+		}
 
 		// Invoke the command bus to delete the time logs
 		return await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, forceDelete));

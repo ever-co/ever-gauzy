@@ -2,6 +2,7 @@
 
 # Variables
 ARG MCP_AUTH_PORT=3003
+ARG MCP_AUTH_BASE_URL
 ARG MCP_AUTH_SESSION_SECRET
 ARG MCP_AUTH_JWT_ISSUER
 ARG MCP_AUTH_JWT_AUDIENCE
@@ -41,8 +42,10 @@ FROM node:20.18.1-alpine3.19 AS dependencies
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
-RUN apk add --no-cache python3 make g++ \
-    && npm install yarn -g --force
+RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
+    && npm install --quiet node-gyp@10.2.0 -g \
+    && npm install yarn -g --force \
+    && npm install --quiet ts-node@10.9.2 -g
 RUN mkdir /srv/gauzy-mcp-auth && chown -R node:node /srv/gauzy-mcp-auth
 
 USER node:node
@@ -59,9 +62,10 @@ COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
-    && npm rebuild bcrypt better-sqlite3 --build-from-source \
+    && yarn postinstall.manual \
     && yarn cache clean
 
 COPY --chown=node:node apps/mcp-auth ./apps/mcp-auth
@@ -99,7 +103,9 @@ RUN yarn build:mcp-auth:prod
 # Only prod dependencies
 FROM node:20.18.1-alpine3.19 AS proddependencies
 
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
+    && npm install --quiet node-gyp@10.2.0 -g \
+    && npm install --quiet ts-node@10.9.2 -g
 
 USER node:node
 
@@ -107,9 +113,10 @@ WORKDIR /srv/gauzy-mcp-auth
 
 COPY --chown=node:node --from=build /srv/gauzy-mcp-auth/dist .
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
-    && npm rebuild bcrypt better-sqlite3 --build-from-source \
+    && yarn postinstall.manual \
     && yarn cache clean
 
 # PROD
@@ -121,6 +128,7 @@ RUN yarn cache clean
 
 # Variables
 ENV MCP_AUTH_PORT=${MCP_AUTH_PORT:-3003}
+ENV MCP_AUTH_BASE_URL=${MCP_AUTH_BASE_URL}
 ENV MCP_AUTH_SESSION_SECRET=${MCP_AUTH_SESSION_SECRET}
 ENV MCP_AUTH_JWT_ISSUER=${MCP_AUTH_JWT_ISSUER}
 ENV MCP_AUTH_JWT_AUDIENCE=${MCP_AUTH_JWT_AUDIENCE}

@@ -5,6 +5,7 @@ import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
 import { User, UserService } from './offline';
 import { TranslateService } from './translation';
+import * as path from 'node:path';
 import TitleOptions = Electron.TitleOptions;
 
 export class TrayIcon {
@@ -17,7 +18,10 @@ export class TrayIcon {
 		const options: TitleOptions = { fontType: 'monospacedDigit' };
 		const appConfig = LocalStore.getStore('configs');
 		console.log('icon path', iconPath);
-		const iconNativePath = nativeImage.createFromPath(iconPath);
+		const iconDir = path.dirname(iconPath);
+		const grayIcon = path.join(iconDir, 'icon_gray.png');
+		const normalIcon = path.join(iconDir, 'icon.png');
+		const iconNativePath = nativeImage.createFromPath(grayIcon);
 		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
 		this.tray.setTitle('--:--:--', options);
@@ -275,6 +279,7 @@ export class TrayIcon {
 			this.contextMenu[2].enabled = false;
 			this.contextMenu[0].visible = true;
 			this.contextMenu[3].enabled = true;
+			this.tray.setImage(nativeImage.createFromPath(normalIcon));
 			this.build();
 		});
 
@@ -282,6 +287,7 @@ export class TrayIcon {
 			this.contextMenu[2].enabled = true;
 			this.contextMenu[0].visible = false;
 			this.contextMenu[3].enabled = false;
+			this.tray.setImage(nativeImage.createFromPath(grayIcon));
 			this.build();
 		});
 
