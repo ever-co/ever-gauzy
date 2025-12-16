@@ -148,7 +148,7 @@ export class SubscriptionBillingFormComponent implements OnInit, OnDestroy, OnCh
 				period: 'monthly',
 				label: 'Monthly',
 				description: copy.monthly ?? 'Billed monthly',
-				price: monthlyPrice
+				price: Math.round(monthlyPrice * (1 - this.discount) * 100) / 100
 			},
 			{
 				period: 'quarterly',
@@ -173,22 +173,24 @@ export class SubscriptionBillingFormComponent implements OnInit, OnDestroy, OnCh
 
 	/**
 	 * Calculate quarterly price (3 months) with discount
-	 * Applies 10% discount for quarterly billing
+	 * Applies discount for quarterly billing
 	 */
 	private calculateQuarterlyPrice(monthlyPrice: number): number {
 		const totalMonths = 3;
-		const discount = 0; // 0% discount
-		return Math.round(monthlyPrice * totalMonths * (1 - discount) * 100) / 100;
+		return Math.round(monthlyPrice * totalMonths * (1 - this.discount) * 100) / 100;
 	}
 
 	/**
 	 * Calculate yearly price (12 months) with discount
-	 * Applies 20% discount for yearly billing
+	 * Applies discount for yearly billing
 	 */
 	private calculateYearlyPrice(monthlyPrice: number): number {
 		const totalMonths = 12;
-		const discount = 0; // 0% discount
-		return Math.round(monthlyPrice * totalMonths * (1 - discount) * 100) / 100;
+		return Math.round(monthlyPrice * totalMonths * (1 - this.discount) * 100) / 100;
+	}
+
+	private get discount(): number {
+		return Number(this.plan?.discountPercentage || 0) / 100;
 	}
 
 	private getPlanPricingMatrix(plan: IPluginSubscriptionPlan): Partial<Record<BillingPeriodKey, number>> {
