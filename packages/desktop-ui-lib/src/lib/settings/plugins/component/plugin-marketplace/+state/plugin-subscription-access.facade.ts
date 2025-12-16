@@ -2,6 +2,7 @@
 // Provides a high-level API for components to interact with subscription access state
 
 import { Injectable } from '@angular/core';
+import { PluginScope } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
 import { Observable } from 'rxjs';
 import {
@@ -11,7 +12,6 @@ import {
 import { PluginSubscriptionAccessActions } from './actions/plugin-subscription-access.actions';
 import { PluginSubscriptionAccessQuery } from './queries/plugin-subscription-access.query';
 import { IPluginAccessState } from './stores/plugin-subscription-access.store';
-import { PluginScope } from '@gauzy/contracts';
 
 /**
  * Facade service for plugin subscription access management
@@ -48,7 +48,7 @@ export class PluginSubscriptionAccessFacade {
 	/** Observable of bulk check progress */
 	bulkCheckInProgress$ = this.query.isBulkCheckInProgress$();
 
-	constructor(private readonly actions: Actions, private readonly query: PluginSubscriptionAccessQuery) { }
+	constructor(private readonly actions: Actions, private readonly query: PluginSubscriptionAccessQuery) {}
 
 	// ============================================================================
 	// Access Check Methods
@@ -226,6 +226,15 @@ export class PluginSubscriptionAccessFacade {
 	 */
 	canAssign$(pluginId: string): Observable<boolean> {
 		return this.query.canAssign$(pluginId);
+	}
+
+	/**
+	 * Check if user can configure the plugin (observable)
+	 * @param pluginId Plugin ID
+	 * @returns Observable of boolean
+	 */
+	canConfig$(pluginId: string): Observable<boolean> {
+		return this.query.canConfig$(pluginId);
 	}
 
 	/**

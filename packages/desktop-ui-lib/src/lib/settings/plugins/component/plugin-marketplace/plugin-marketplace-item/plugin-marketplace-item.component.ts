@@ -85,7 +85,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 					// Initialize access observables
 					this.hasAccess$ = this.accessFacade.hasAccess$(plugin.id);
 					this.canAssign$ = this.accessFacade.canAssign$(plugin.id);
-					this.canConfigure$ = this.accessFacade.hasAccess$(plugin.id); // Using hasAccess for now
+					this.canConfigure$ = this.accessFacade.canConfig$(plugin.id); // Using hasAccess for now
 					this.accessLevel$ = this.accessFacade.getAccessLevel$(plugin.id);
 
 					// Build tabs based on permissions
