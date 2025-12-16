@@ -26,16 +26,12 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 	 */
 	public async execute(command: CreatePluginCommand): Promise<IPlugin> {
 		const { input } = command;
-		const { subscriptionPlans = [], ...pluginInput } = input;
 
-		// Validate input
-		if (
-			!pluginInput ||
-			!pluginInput.version ||
-			(pluginInput.version.sources && pluginInput.version.sources.length === 0 && !pluginInput.version)
-		) {
+		if (!input || !input.version || (Array.isArray(input.version.sources) && input.version.sources.length === 0)) {
 			throw new BadRequestException('Invalid plugin data: Source requires version information');
 		}
+
+		const { subscriptionPlans = [], ...pluginInput } = input;
 
 		const queryRunner = this.dataSource.createQueryRunner();
 		await queryRunner.connect();

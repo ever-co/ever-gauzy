@@ -97,7 +97,8 @@ export class PluginBillingController {
 			searchOptions.status = statusMap[status];
 		}
 
-		if (searchOptions && Object.keys(searchOptions).length > 0) {
+		const hasFilters = Object.keys(searchOptions).length > 0;
+		if (hasFilters) {
 			const result = await this.pluginBillingService.findBillings(searchOptions);
 			return {
 				items: result,
