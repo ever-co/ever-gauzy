@@ -69,7 +69,7 @@ export class PluginFormDataBuilder {
 
 	public appendSubscriptionPlans(plans: IPluginPlanCreateInput[]): this {
 		if (plans && plans.length > 0) {
-			const plansData = plans.map((plan) => this.buildSubscriptionPlanData(plan));
+			const plansData = plans.filter(Boolean).map((plan) => this.buildSubscriptionPlanData(plan));
 			this.appendFiltered(plansData, 'subscriptionPlans');
 		}
 		return this;
@@ -102,7 +102,7 @@ export class PluginFormDataBuilder {
 
 	private buildSubscriptionPlanData(plan: IPluginPlanCreateInput) {
 		return {
-			...(plan?.id && { id: plan?.id }),
+			...(plan.id && { id: plan.id }),
 			type: plan.type,
 			name: plan.name,
 			description: plan.description,

@@ -36,14 +36,6 @@ const transformToOptionalNumber = ({ value }: { value: any }): number | undefine
 };
 
 /**
- * Helper function to transform string to number (with default 0)
- */
-const transformToNumber = ({ value }: { value: any }): number => {
-	if (value === '' || value === null || value === undefined) return 0;
-	return Number(value);
-};
-
-/**
  * Base class for subscription plan fields with transformations
  */
 class BaseSubscriptionPlanFieldsDTO {

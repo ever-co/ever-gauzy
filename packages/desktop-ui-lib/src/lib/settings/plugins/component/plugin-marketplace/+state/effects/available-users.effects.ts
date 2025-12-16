@@ -76,8 +76,11 @@ export class AvailableUsersEffects {
 								.filter((userOrg: IUserOrganization) => userOrg.isActive && userOrg.user)
 								.map((userOrg: IUserOrganization) => userOrg.user);
 
+							// Apply pagination using currentSkip/currentTake
+							const paginatedUsers = allUsers.slice(currentSkip, currentSkip + currentTake);
+
 							return AvailableUsersActions.loadUsersSuccess({
-								users: allUsers,
+								users: paginatedUsers,
 								total: response.total
 							});
 						}),

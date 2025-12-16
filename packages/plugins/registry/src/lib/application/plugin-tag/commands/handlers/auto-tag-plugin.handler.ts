@@ -26,7 +26,7 @@ export class AutoTagPluginHandler implements ICommandHandler<AutoTagPluginComman
 			this.logger.log(`Auto-tagging plugin: ${command.pluginId}`);
 
 			const { pluginId, pluginData, options = {} } = command;
-			const { createMissingTags = true, overwriteExisting = false, tenantId, organizationId } = options;
+			const { createMissingTags = true, tenantId, organizationId } = options;
 
 			// Extract potential tag names from plugin data
 			const extractedTags = this.extractTagsFromPluginData(pluginData);

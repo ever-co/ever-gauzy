@@ -192,7 +192,7 @@ export class RequestContext {
 		const user: IUser | null = RequestContext.currentUser();
 		return (
 			user?.employee?.organizationId ||
-			(RequestContext?.currentRequest()?.headers['organization-id'] as ID) ||
+			(RequestContext.currentRequest()?.headers['organization-id'] as ID) ||
 			null
 		);
 	}

@@ -146,7 +146,6 @@ export class PluginSettingsManagementComponent implements OnInit, OnDestroy, Aft
 	}
 
 	private loadSettings(): void {
-		const scope = this.data.scope || PluginSettingScope.GLOBAL;
 		const query = {
 			pluginTenantId: this.data.tenantId
 		};

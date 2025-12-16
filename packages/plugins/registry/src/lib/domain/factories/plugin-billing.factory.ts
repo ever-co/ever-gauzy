@@ -202,7 +202,7 @@ export class PluginBillingFactory {
 			currency: plan.currency || 'USD',
 			billingDate,
 			dueDate,
-			status: hasTrial ? PluginBillingStatus.PENDING : PluginBillingStatus.PENDING,
+			status: PluginBillingStatus.PENDING,
 			billingPeriod: plan.billingPeriod,
 			billingPeriodStart,
 			billingPeriodEnd,

@@ -68,16 +68,16 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 				}
 			} // Update plugin with only provided fields
 			const pluginUpdate: Partial<IPlugin> = {
-				name: input.name,
-				type: input.type,
-				status: input.status,
-				description: input.description,
-				isActive: input.isActive,
-				repository: input.repository,
-				author: input.author,
-				license: input.license,
-				homepage: input.homepage,
-				requiresSubscription: input.requiresSubscription,
+				name: input?.name,
+				type: input?.type,
+				status: input?.status,
+				description: input?.description,
+				isActive: input?.isActive,
+				repository: input?.repository,
+				author: input?.author,
+				license: input?.license,
+				homepage: input?.homepage,
+				requiresSubscription: input?.requiresSubscription,
 				...(input?.categoryId && { categoryId: input.categoryId })
 			};
 			await this.pluginService.update(id, pluginUpdate);

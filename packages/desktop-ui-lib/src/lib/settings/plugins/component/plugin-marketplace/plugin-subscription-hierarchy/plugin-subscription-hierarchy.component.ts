@@ -57,7 +57,7 @@ export class PluginSubscriptionHierarchyComponent implements OnInit {
 
 	formatAmount(subscription: IPluginSubscription): string {
 		// Handle both plan.price and subscription.amount
-		const amount = subscription.plan.price || 0;
+		const amount = subscription.plan?.price || 0;
 		const currency = subscription.plan?.currency || CurrenciesEnum.USD;
 		return `${currency} ${amount}`;
 	}

@@ -38,10 +38,10 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 	 * @throws NotFoundException if plugin tenant or users not found
 	 */
 	public async execute(command: ManagePluginTenantUsersCommand): Promise<ManagePluginTenantUsersResult> {
-		const { pluginTenantId, userIds, operation, reason } = command;
+		const { pluginTenantId, userIds, operation } = command;
 
 		this.logger.log(
-			`Executing ${operation} operation for plugin tenant ${pluginTenantId} with ${userIds.length} users`
+			`Executing ${operation} operation for plugin tenant ${pluginTenantId} with ${userIds ? userIds.length : 0} users`
 		);
 
 		// Validate input

@@ -1,28 +1,28 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
-	IPlugin,
-	IPluginSubscription,
-	IPluginSubscriptionCreateInput,
-	IPluginSubscriptionPlan,
-	PluginBillingPeriod,
-	PluginScope,
-	PluginSubscriptionType
+    IPlugin,
+    IPluginSubscription,
+    IPluginSubscriptionCreateInput,
+    IPluginSubscriptionPlan,
+    PluginBillingPeriod,
+    PluginScope,
+    PluginSubscriptionType
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
-	BehaviorSubject,
-	combineLatest,
-	filter,
-	firstValueFrom,
-	map,
-	Observable,
-	startWith,
-	switchMap,
-	take,
-	tap
+    BehaviorSubject,
+    combineLatest,
+    filter,
+    firstValueFrom,
+    map,
+    Observable,
+    startWith,
+    switchMap,
+    take,
+    tap
 } from 'rxjs';
 import { PluginSubscriptionFacade } from '../+state';
 import { PluginSubscriptionActions } from '../+state/actions/plugin-subscription.action';
@@ -153,7 +153,7 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 
 		// Clean up keyboard event listener
 		if (typeof window !== 'undefined') {
-			window.removeEventListener('keydown', this.handleKeyboardShortcut.bind(this));
+			window.removeEventListener('keydown', this.boundKeyboardHandler);
 		}
 	}
 
@@ -297,8 +297,6 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 			map(([planViewModel, formValues]) => {
 				if (!planViewModel) return null;
 
-				const promoCode = (formValues as any).promoCode;
-				// TODO: Calculate discount based on promo code validation
 				const promoDiscount = 0;
 
 				return this.planFormatter.createPreviewViewModel(planViewModel.originalPlan, promoDiscount);
@@ -819,7 +817,7 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 		}
 
 		const currentPlan = currentSubscription.plan;
-		if (currentPlan.id === plan.id) {
+		if (currentPlan?.id === plan.id) {
 			return `${plan.name} plan - Your current active plan`;
 		}
 
@@ -837,10 +835,12 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 	 * Escape - Close dialog
 	 * Ctrl/Cmd + Enter - Submit form (if valid)
 	 */
+	private readonly boundKeyboardHandler = (event: KeyboardEvent) => this.handleKeyboardShortcut(event);
+
 	private setupKeyboardShortcuts(): void {
 		// Using HostListener would be better, but adding via constructor for now
 		if (typeof window !== 'undefined') {
-			window.addEventListener('keydown', this.handleKeyboardShortcut.bind(this));
+			window.addEventListener('keydown', this.boundKeyboardHandler);
 		}
 	}
 

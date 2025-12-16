@@ -9,7 +9,7 @@ export class ListPluginSubscriptionPlansQueryHandler implements IQueryHandler<Li
 	constructor(private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService) {}
 
 	async execute(query: ListPluginSubscriptionPlansQuery): Promise<IPluginSubscriptionPlan[]> {
-		const { queryDto, relations } = query;
+		const { queryDto } = query;
 
 		try {
 			// Convert DTO to find input format

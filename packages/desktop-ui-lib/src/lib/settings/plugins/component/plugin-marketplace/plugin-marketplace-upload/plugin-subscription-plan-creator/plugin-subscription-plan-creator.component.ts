@@ -508,10 +508,14 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 
 		const planValue = plan.value as IPluginPlanCreateInput;
 		const normalizedPlanValue = this.formBuilderService.normalizePlanValue(planValue);
+		if (!normalizedPlanValue) {
+			console.warn('Cannot update: Normalized plan value is undefined', { index, planId });
+			return;
+		}
 
 		// Build the update payload directly from form value
 		const updates: Partial<IPluginPlanCreateInput> = {
-			...(normalizedPlanValue?.id && { id: normalizedPlanValue.id }),
+			...(normalizedPlanValue.id && { id: normalizedPlanValue.id }),
 			type: normalizedPlanValue.type,
 			name: normalizedPlanValue.name,
 			description: normalizedPlanValue.description,

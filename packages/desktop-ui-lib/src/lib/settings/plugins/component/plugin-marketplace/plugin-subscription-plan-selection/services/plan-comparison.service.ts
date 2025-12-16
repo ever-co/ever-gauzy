@@ -291,10 +291,12 @@ export class PlanComparisonService {
 
 		// Calculate daily rates
 		// Use plan.price if available, otherwise fall back to subscription.amount
-		const currentAmount = currentSubscription.plan?.price
-			? this.parsePriceAsNumber(currentSubscription.plan.price)
-			: currentSubscription.plan.price || 0;
-		const currentBillingPeriod = currentSubscription.plan?.billingPeriod || currentSubscription.plan.billingPeriod;
+		const currentPlan = currentSubscription.plan;
+		if (!currentPlan) {
+			return newPrice; // no plan info, fallback to full price
+		}
+		const currentAmount = currentPlan.price ? this.parsePriceAsNumber(currentPlan.price) : currentPlan.price || 0;
+		const currentBillingPeriod = currentPlan.billingPeriod;
 
 		if (!currentBillingPeriod) {
 			return newPrice; // Can't calculate proration without billing period

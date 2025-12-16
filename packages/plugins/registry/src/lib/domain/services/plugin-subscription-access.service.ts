@@ -130,22 +130,6 @@ class UserAccessSpecification implements IAccessSpecification {
 }
 
 /**
- * Subscription validity specification - uses entity domain logic
- */
-class SubscriptionValiditySpecification implements IAccessSpecification {
-	isSatisfiedBy(context: IAccessValidationContext): boolean {
-		if (!context.subscription) return false;
-
-		// Use static domain method from PluginSubscription entity
-		return context.subscription.isSubscriptionActive;
-	}
-
-	getFailureReason(): string {
-		return 'Subscription is not active or has expired';
-	}
-}
-
-/**
  * Quota availability specification - uses entity domain logic
  */
 class QuotaAvailabilitySpecification implements IAccessSpecification {
