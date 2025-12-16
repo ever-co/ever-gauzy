@@ -36,8 +36,10 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 		const existingPluginTenant = await this.findByPluginAndTenant(pluginId, tenantId, organizationId);
 		if (existingPluginTenant) {
 			this.logger.debug(`Found existing plugin tenant: ${existingPluginTenant.id}`);
-			existingPluginTenant.scope = scope ?? existingPluginTenant.scope;
-			await this.save(existingPluginTenant);
+			if (scope && scope !== existingPluginTenant.scope) {
+				existingPluginTenant.scope = scope;
+				await this.save(existingPluginTenant);
+			}
 			return existingPluginTenant.id;
 		}
 
