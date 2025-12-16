@@ -31,38 +31,50 @@
 :host ::ng-deep nb-card-body {
   padding: 20px 24px 24px;
 }
-.options-stack {
+.payment-options {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-::ng-deep nb-radio.payment-card {
-  label {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--gauzy-card-2);
-    border-radius: calc(var(--border-radius) * 1.25);
-    padding: 14px 16px;
-    gap: 12px;
-    background: var(--gauzy-card-1);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
+.payment-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 2px solid var(--gauzy-card-2);
+  border-radius: calc(var(--border-radius) * 1.25);
+  padding: 16px 18px;
+  gap: 12px;
+  background: var(--gauzy-card-1);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-  &:hover label {
+  &:hover {
     border-color: var(--gauzy-text-color-2);
     box-shadow: var(--gauzy-shadow);
+    transform: translateY(-1px);
   }
 
-  &.checked label {
+  &.selected {
     border-color: var(--color-primary-400);
-    box-shadow: var(--gauzy-shadow);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1), var(--gauzy-shadow);
     background: var(--gauzy-card-2);
+    transform: translateY(-1px);
+
+    .payment-copy .title {
+      color: var(--color-primary-400);
+    }
   }
 
-  label:focus-within {
+  &:focus-visible {
     outline: 2px solid var(--color-primary-400);
     outline-offset: 2px;
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
@@ -75,7 +87,7 @@
 
 .payment-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
   gap: 12px;
 }
@@ -145,4 +157,33 @@
 
 .shield {
   margin-left: auto;
+}
+
+.selection-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--gauzy-card-1);
+  animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  nb-icon {
+    font-size: 24px;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
