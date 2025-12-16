@@ -276,7 +276,9 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 			return;
 		}
 
-		const planValue = this.plans.at(index).value as IPluginPlanCreateInput;
+		const planValue = this.formBuilderService.normalizePlanValue(
+			this.plans.at(index).value as IPluginPlanCreateInput
+		);
 		const duplicatedPlan: Partial<IPluginPlanCreateInput> = {
 			...planValue,
 			name: `${planValue.name} (Copy)`
@@ -293,12 +295,29 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	}
 
 	/**
+	 * Gets the limitations FormArray for a specific plan
+	 */
+	public getPlanLimitations(planIndex: number): FormArray {
+		const plan = this.plans.at(planIndex) as FormGroup;
+		return plan.get('limitations') as FormArray;
+	}
+
+	/**
 	 * Adds a new feature to a plan
 	 */
 	public addFeature(planIndex: number): void {
 		const features = this.getPlanFeatures(planIndex);
 		const featureControl = this.formBuilderService.createFeatureControl();
 		features.push(featureControl);
+		this.emitChanges();
+	}
+
+	/**
+	 * Adds a new limitation to a plan
+	 */
+	public addLimitation(planIndex: number): void {
+		const limitations = this.getPlanLimitations(planIndex);
+		limitations.push(this.formBuilderService.createLimitationGroup());
 		this.emitChanges();
 	}
 
@@ -311,6 +330,19 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 			features.removeAt(featureIndex);
 			this.emitChanges();
 		}
+	}
+
+	/**
+	 * Removes a limitation from a plan
+	 */
+	public removeLimitation(planIndex: number, limitationIndex: number): void {
+		const limitations = this.getPlanLimitations(planIndex);
+		if (limitationIndex < 0 || limitationIndex >= limitations.length) {
+			return;
+		}
+
+		limitations.removeAt(limitationIndex);
+		this.emitChanges();
 	}
 
 	/**
@@ -337,7 +369,6 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 				price: presetValue.price,
 				currency: presetValue.currency,
 				billingPeriod: presetValue.billingPeriod,
-				limitations: presetValue.limitations,
 				trialDays: presetValue.trialDays,
 				setupFee: presetValue.setupFee,
 				discountPercentage: presetValue.discountPercentage,
@@ -356,6 +387,12 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 				features.push(this.formBuilderService.createFeatureControl(feature));
 			});
 		}
+
+		// Update limitations array with presets
+		this.formBuilderService.resetLimitationsArray(
+			this.getPlanLimitations(planIndex),
+			presetValue.limitations as Record<string, any>
+		);
 
 		this.emitChanges();
 	}
@@ -469,23 +506,24 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 		}
 
 		const planValue = plan.value as IPluginPlanCreateInput;
+		const normalizedPlanValue = this.formBuilderService.normalizePlanValue(planValue);
 
 		// Build the update payload directly from form value
 		const updates: Partial<IPluginPlanCreateInput> = {
-			...(planValue?.id && { id: planValue.id }),
-			type: planValue.type,
-			name: planValue.name,
-			description: planValue.description,
-			price: Number(planValue.price),
-			currency: planValue.currency,
-			billingPeriod: planValue.billingPeriod,
-			features: planValue.features || [],
-			limitations: planValue.limitations,
-			trialDays: planValue.trialDays,
-			setupFee: Number(planValue.setupFee),
-			discountPercentage: Number(planValue.discountPercentage),
-			isPopular: planValue.isPopular,
-			isRecommended: planValue.isRecommended
+			...(normalizedPlanValue?.id && { id: normalizedPlanValue.id }),
+			type: normalizedPlanValue.type,
+			name: normalizedPlanValue.name,
+			description: normalizedPlanValue.description,
+			price: Number(normalizedPlanValue.price),
+			currency: normalizedPlanValue.currency,
+			billingPeriod: normalizedPlanValue.billingPeriod,
+			features: normalizedPlanValue.features || [],
+			limitations: normalizedPlanValue.limitations,
+			trialDays: normalizedPlanValue.trialDays,
+			setupFee: Number(normalizedPlanValue.setupFee),
+			discountPercentage: Number(normalizedPlanValue.discountPercentage),
+			isPopular: normalizedPlanValue.isPopular,
+			isRecommended: normalizedPlanValue.isRecommended
 		};
 
 		console.log('Updating existing plan:', { planId, index, updates });

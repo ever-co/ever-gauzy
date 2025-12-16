@@ -21,6 +21,13 @@ import {
 export class SubscriptionPlanFormBuilderService {
 	constructor(private readonly formBuilder: FormBuilder) {}
 
+	private readonly baseLimitations: Record<string, number | null> = {
+		maxUsers: null,
+		maxProjects: null,
+		apiCallsPerMonth: null,
+		storageLimit: null
+	};
+
 	/**
 	 * Creates the main plans form with an empty FormArray
 	 */
@@ -40,8 +47,8 @@ export class SubscriptionPlanFormBuilderService {
 		// Extract features array - handle both input and plan types
 		const features = this.extractFeatures(plan);
 
-		// Create limitations FormGroup
-		const limitationsGroup = this.createLimitationsFormGroup(plan?.limitations);
+		// Create limitations FormArray
+		const limitationsArray = this.createLimitationsFormArray(plan?.limitations);
 
 		// Create features FormArray
 		const featuresArray = this.createFeaturesFormArray(features);
@@ -56,7 +63,7 @@ export class SubscriptionPlanFormBuilderService {
 			currency: new FormControl(plan?.currency ?? 'USD', [Validators.required]),
 			billingPeriod: new FormControl(plan?.billingPeriod ?? PluginBillingPeriod.MONTHLY, [Validators.required]),
 			features: featuresArray,
-			limitations: limitationsGroup,
+			limitations: limitationsArray,
 			trialDays: new FormControl(plan?.trialDays ?? 0, [Validators.min(0), Validators.max(365)]),
 			setupFee: new FormControl(plan?.setupFee ?? 0, [Validators.min(0)]),
 			discountPercentage: new FormControl(plan?.discountPercentage ?? 0, [
@@ -90,14 +97,42 @@ export class SubscriptionPlanFormBuilderService {
 	}
 
 	/**
-	 * Creates a FormGroup for plan limitations
+	 * Creates a FormArray for plan limitations
 	 */
-	public createLimitationsFormGroup(limitations?: Record<string, any>): FormGroup {
+	public createLimitationsFormArray(
+		limitations?: Record<string, any> | Array<{ key: string; value: any }>
+	): FormArray {
+		const limitationsArray = this.formBuilder.array<FormGroup>([]);
+		this.resetLimitationsArray(limitationsArray, limitations ?? this.baseLimitations);
+		return limitationsArray;
+	}
+
+	/**
+	 * Resets and repopulates a limitations FormArray
+	 */
+	public resetLimitationsArray(
+		target: FormArray,
+		limitations?: Record<string, any> | Array<{ key: string; value: any }>
+	): void {
+		target.clear();
+
+		const entries = this.toLimitationEntries(limitations);
+
+		if (entries.length === 0) {
+			target.push(this.createLimitationGroup());
+			return;
+		}
+
+		entries.forEach(({ key, value }) => target.push(this.createLimitationGroup(key, value)));
+	}
+
+	/**
+	 * Creates a limitation item FormGroup
+	 */
+	public createLimitationGroup(key: string = '', value: any = null): FormGroup {
 		return this.formBuilder.group({
-			maxUsers: new FormControl(limitations?.maxUsers ?? null),
-			maxProjects: new FormControl(limitations?.maxProjects ?? null),
-			apiCallsPerMonth: new FormControl(limitations?.apiCallsPerMonth ?? null),
-			storageLimit: new FormControl(limitations?.storageLimit ?? null)
+			key: new FormControl(key),
+			value: new FormControl(value)
 		});
 	}
 
@@ -236,10 +271,54 @@ export class SubscriptionPlanFormBuilderService {
 		return [];
 	}
 
-	/**
-	 * Validates if a plan data is complete and valid
-	 */
-	public isPlanDataValid(plan: Partial<IPluginPlanCreateInput>): boolean {
+	private toLimitationEntries(
+		limitations?: Record<string, any> | Array<{ key: string; value: any }>
+	): Array<{ key: string; value: any }> {
+		if (Array.isArray(limitations)) {
+			return limitations.map((entry) => ({
+				key: entry?.key ?? '',
+				value: entry?.value ?? null
+			}));
+		}
+
+		if (limitations && typeof limitations === 'object') {
+			return Object.entries(limitations).map(([key, value]) => ({ key, value }));
+		}
+
+		return [];
+	}
+
+	private normalizeLimitations(limitations: any): Record<string, any> {
+		const entries = this.toLimitationEntries(limitations);
+
+		return entries.reduce((acc, entry) => {
+			const normalizedKey = typeof entry?.key === 'string' ? entry.key.trim() : '';
+			if (normalizedKey) {
+				acc[normalizedKey] = entry?.value ?? null;
+			}
+			return acc;
+		}, {} as Record<string, any>);
+	}
+
+	private normalizeFeatures(features: any): string[] {
+		if (!Array.isArray(features)) {
+			return [];
+		}
+
+		return features
+			.map((feature) => (typeof feature === 'string' ? feature.trim() : ''))
+			.filter((feature): feature is string => !!feature);
+	}
+
+	public normalizePlanValue(plan: Partial<IPluginPlanCreateInput>): IPluginPlanCreateInput {
+		return {
+			...plan,
+			features: this.normalizeFeatures(plan?.features),
+			limitations: this.normalizeLimitations(plan?.limitations)
+		} as IPluginPlanCreateInput;
+	}
+
+	private isNormalizedPlanValid(plan: IPluginPlanCreateInput): boolean {
 		return !!(
 			plan.name?.trim() &&
 			plan.description?.trim() &&
@@ -255,6 +334,13 @@ export class SubscriptionPlanFormBuilderService {
 	}
 
 	/**
+	 * Validates if a plan data is complete and valid
+	 */
+	public isPlanDataValid(plan: Partial<IPluginPlanCreateInput>): boolean {
+		return this.isNormalizedPlanValid(this.normalizePlanValue(plan));
+	}
+
+	/**
 	 * Extracts valid plan data from form values
 	 * Filters out incomplete or invalid plans
 	 */
@@ -263,6 +349,8 @@ export class SubscriptionPlanFormBuilderService {
 			return [];
 		}
 
-		return formValue.plans.filter((plan) => this.isPlanDataValid(plan));
+		return formValue.plans
+			.map((plan) => this.normalizePlanValue(plan))
+			.filter((plan) => this.isNormalizedPlanValid(plan));
 	}
 }

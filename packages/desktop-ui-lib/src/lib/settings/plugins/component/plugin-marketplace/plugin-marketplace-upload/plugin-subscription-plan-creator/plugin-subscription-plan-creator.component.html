@@ -361,71 +361,73 @@
 					</div>
 
 					<!-- Limitations -->
-					<div class="form-section" formGroupName="limitations">
-						<label class="label section-title">
-							<nb-icon icon="lock-outline" status="warning"></nb-icon>
-							{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.LIMITATIONS' | translate }}
-						</label>
-						<div class="limitations-grid">
-							<nb-form-field class="form-group">
-								<label class="label">
-									<nb-icon icon="people-outline"></nb-icon>
-									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.MAX_USERS' | translate }}
-								</label>
-								<input
-									nbInput
-									fullWidth
-									type="number"
-									formControlName="maxUsers"
-									min="1"
-									placeholder="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.UNLIMITED' | translate }}"
-								/>
-							</nb-form-field>
+					<div class="form-section" formArrayName="limitations">
+						<div class="section-header">
+							<label class="label">
+								<nb-icon icon="lock-outline" status="warning"></nb-icon>
+								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.LIMITATIONS' | translate }}
+							</label>
+							<button
+								type="button"
+								nbButton
+								ghost
+								size="small"
+								status="warning"
+								nbTooltip="Add a limitation"
+								nbTooltipPlacement="top"
+								(click)="addLimitation(planIndex)"
+							>
+								<nb-icon icon="plus-circle-outline"></nb-icon>
+								Add limitation
+							</button>
+						</div>
+						<div class="limitations-list">
+							<div
+								*ngFor="
+									let limitationControl of getPlanLimitations(planIndex).controls;
+									let limitationIndex = index
+								"
+								class="limitation-item"
+								[formGroupName]="limitationIndex"
+							>
+								<nb-form-field class="form-group">
+									<label class="label">
+										<nb-icon icon="edit-2-outline"></nb-icon>
+										Limitation name
+									</label>
+									<input nbInput fullWidth formControlName="key" placeholder="e.g. maxUsers" />
+								</nb-form-field>
 
-							<nb-form-field class="form-group">
-								<label class="label">
-									<nb-icon icon="folder-outline"></nb-icon>
-									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.MAX_PROJECTS' | translate }}
-								</label>
-								<input
-									nbInput
-									fullWidth
-									type="number"
-									formControlName="maxProjects"
-									min="1"
-									placeholder="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.UNLIMITED' | translate }}"
-								/>
-							</nb-form-field>
+								<nb-form-field class="form-group">
+									<label class="label">
+										<nb-icon icon="hash-outline"></nb-icon>
+										Value
+									</label>
+									<input
+										nbInput
+										fullWidth
+										formControlName="value"
+										placeholder="{{
+											'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.UNLIMITED' | translate
+										}}"
+									/>
+								</nb-form-field>
 
-							<nb-form-field class="form-group">
-								<label class="label">
-									<nb-icon icon="activity-outline"></nb-icon>
-									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.API_CALLS' | translate }}
-								</label>
-								<input
-									nbInput
-									fullWidth
-									type="number"
-									formControlName="apiCallsPerMonth"
-									min="1"
-									placeholder="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.UNLIMITED' | translate }}"
-								/>
-							</nb-form-field>
-
-							<nb-form-field class="form-group">
-								<label class="label">
-									<nb-icon icon="hard-drive-outline"></nb-icon>
-									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.STORAGE_LIMIT' | translate }}
-								</label>
-								<input
-									nbInput
-									fullWidth
-									type="number"
-									formControlName="storageLimit"
-									min="1"
-									placeholder="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.UNLIMITED' | translate }}"
-								/>
-							</nb-form-field>
+								<div class="limitation-actions">
+									<button
+										type="button"
+										nbButton
+										ghost
+										size="small"
+										status="danger"
+										nbTooltip="Remove limitation"
+										nbTooltipPlacement="top"
+										(click)="removeLimitation(planIndex, limitationIndex)"
+									>
+										<nb-icon icon="close-circle-outline"></nb-icon>
+									</button>
+								</div>
+							</div>
 						</div>
 					</div>
 
