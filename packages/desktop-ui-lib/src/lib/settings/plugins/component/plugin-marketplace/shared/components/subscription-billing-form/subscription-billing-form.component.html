@@ -48,7 +48,7 @@
 				type="button"
 				nbButton
 				ghost
-				size="large"
+				size="medium"
 				(click)="onCancel()"
 				[disabled]="isLoading"
 				class="cancel-button"
@@ -60,7 +60,7 @@
 			<button
 				type="submit"
 				nbButton
-				size="large"
+				size="medium"
 				[status]="getActionStatus()"
 				[disabled]="!form.valid || isLoading"
 				*gauzySpinnerButton="isLoading"
