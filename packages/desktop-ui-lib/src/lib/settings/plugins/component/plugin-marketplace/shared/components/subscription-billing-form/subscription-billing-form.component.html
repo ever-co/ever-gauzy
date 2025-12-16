@@ -26,7 +26,7 @@
 			[currency]="plan.currency"
 		></gauzy-billing-cycle-section>
 
-		@if (showPaymentSection) {
+		@if (showPaymentSection && !isFreePlan) {
 		<div class="two-column">
 			<gauzy-payment-method-section
 				[form]="form"

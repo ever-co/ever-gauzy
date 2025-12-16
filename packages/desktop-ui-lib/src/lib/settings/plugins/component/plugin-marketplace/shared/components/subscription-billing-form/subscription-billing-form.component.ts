@@ -11,6 +11,7 @@ import {
 	inject
 } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { PluginSubscriptionType } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IPluginSubscriptionPlan, PluginBillingPeriod } from '../../../../../services/plugin-subscription.service';
 import { SubscriptionFormService } from '../../services/subscription-form.service';
@@ -108,11 +109,30 @@ export class SubscriptionBillingFormComponent implements OnInit, OnDestroy, OnCh
 	}
 
 	/**
+	 * Check if the current plan is free
+	 */
+	protected get isFreePlan(): boolean {
+		return !this.plan || this.plan.type === PluginSubscriptionType.FREE || Number(this.plan?.price) === 0;
+	}
+
+	/**
 	 * Build billing options from provided pricing data and calculate prices for each period
 	 */
 	private buildBillingOptions(): void {
 		if (!this.plan) {
 			this.billingOptions = [];
+			return;
+		}
+
+		if (this.isFreePlan) {
+			this.billingOptions = [
+				{
+					period: 'monthly',
+					label: 'Free',
+					description: 'Free forever',
+					price: 0
+				}
+			];
 			return;
 		}
 
@@ -261,6 +281,7 @@ export class SubscriptionBillingFormComponent implements OnInit, OnDestroy, OnCh
 	 * Get action button text based on flow type
 	 */
 	protected getActionText(): string {
+		if (this.isFreePlan) return 'Get Started';
 		if (this.isUpgrade) return 'Upgrade Now';
 		if (this.isDowngrade) return 'Downgrade Now';
 		return 'Subscribe Now';
