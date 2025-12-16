@@ -93,7 +93,12 @@
 						<span class="price-amount">
 							{{ currentPlan.price | currency : currentPlan.currency }}
 						</span>
-						<span class="price-period"> / {{ currentPlan.billingPeriod | titlecase }} </span>
+						<span class="price-period">
+							/ @switch (currentPlan.billingPeriod) { @case ('monthly') { month } @case ('quarterly') {
+							quarter } @case ('yearly') { year } @default {
+							{{ currentPlan.billingPeriod | titlecase }}
+							} }
+						</span>
 					</div>
 					}
 				</div>

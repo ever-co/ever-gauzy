@@ -1,342 +1,47 @@
 <div class="billing-form">
-	<form [formGroup]="form" (ngSubmit)="onSubmit()" role="form" aria-label="Subscription billing form">
-		<div class="form-header">
-			<h5>
+	<header class="form-header">
+		<div class="title-block">
+			<div class="icon-ring">
 				<nb-icon icon="credit-card-outline" aria-hidden="true"></nb-icon>
-				{{ getHeaderText() }}
-			</h5>
-			<p class="selected-plan-info">
-				{{ getDescriptionText() }} <strong>{{ plan.name }}</strong>
-				@if (isUpgrade) {
-				<small class="info-text upgrade-notice">
-					<nb-icon icon="arrow-upward-outline" aria-hidden="true"></nb-icon>
-					You'll be charged a prorated amount for the remainder of your billing period.
-				</small>
-				} @if (isDowngrade) {
-				<small class="info-text downgrade-notice">
-					<nb-icon icon="arrow-downward-outline" aria-hidden="true"></nb-icon>
-					Change takes effect at the end of your current billing period.
-				</small>
-				}
-			</p>
+			</div>
+			<div class="title-copy">
+				<p class="eyebrow">{{ getHeaderText() }}</p>
+				<h4 class="plan-name">{{ plan.name }}</h4>
+				<p class="subtitle">{{ getDescriptionText() }}</p>
+			</div>
 		</div>
+		<div class="pill-row" aria-live="polite">
+			@if (isUpgrade) {
+			<nb-badge status="success" text="Upgrade"></nb-badge>
+			} @if (isDowngrade) {
+			<nb-badge status="warning" text="Downgrade"></nb-badge>
+			}
+		</div>
+	</header>
 
-		<nb-card class="form-section billing-cycle-section">
-			<nb-card-header>
-				<h6>
-					<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
-					Billing Cycle
-				</h6>
-				<p class="section-hint">Choose how often you'd like to be billed</p>
-			</nb-card-header>
-			<nb-card-body>
-				<nb-radio-group
-					formControlName="billingPeriod"
-					class="billing-period"
-					aria-label="Select billing period"
-				>
-					<nb-radio value="monthly" class="billing-option">
-						<div class="option-content">
-							<div class="option-header">
-								<nb-icon icon="calendar-outline" status="info"></nb-icon>
-								<span class="option-title">Monthly</span>
-							</div>
-							<div class="option-price">{{ plan.price | currency : plan.currency }}/month</div>
-						</div>
-					</nb-radio>
-					<nb-radio value="quarterly" class="billing-option">
-						<div class="option-content">
-							<div class="option-header">
-								<nb-icon icon="calendar-outline" status="success"></nb-icon>
-								<span class="option-title">Quarterly</span>
-								<nb-badge status="success" text="Save 5%" class="savings-badge"></nb-badge>
-							</div>
-							<div class="option-price">{{ quarterlyPrice | currency : plan.currency }}/quarter</div>
-							<div class="option-detail">
-								{{ quarterlyDetail | currency : plan.currency }} billed every 3 months
-							</div>
-						</div>
-					</nb-radio>
-					<nb-radio value="yearly" class="billing-option recommended">
-						<div class="option-content">
-							<div class="option-header">
-								<nb-icon icon="calendar-outline" status="warning"></nb-icon>
-								<span class="option-title">Yearly</span>
-								<nb-badge status="warning" text="Save 20%" class="savings-badge"></nb-badge>
-								<nb-badge status="primary" text="Best Value" class="recommended-badge"></nb-badge>
-							</div>
-							<div class="option-price">{{ yearlyPrice | currency : plan.currency }}/year</div>
-							<div class="option-detail">
-								{{ yearlyDetail | currency : plan.currency }} billed annually
-							</div>
-						</div>
-					</nb-radio>
-				</nb-radio-group>
-			</nb-card-body>
-		</nb-card>
+	<form [formGroup]="form" (ngSubmit)="onSubmit()" role="form" class="form" aria-label="Subscription billing form">
+		<gauzy-billing-cycle-section
+			[form]="form"
+			[billingOptions]="billingOptions"
+			[currency]="plan.currency"
+		></gauzy-billing-cycle-section>
 
 		@if (showPaymentSection) {
-		<nb-card class="form-section payment-method-section">
-			<nb-card-header>
-				<h6>
-					<nb-icon icon="credit-card-outline" aria-hidden="true"></nb-icon>
-					Payment Method
-				</h6>
-				<p class="section-hint">Secure payment processing with industry-standard encryption</p>
-			</nb-card-header>
-			<nb-card-body>
-				<nb-radio-group
-					formControlName="paymentMethod"
-					class="payment-methods"
-					aria-label="Select payment method"
-				>
-					<nb-radio value="card" class="payment-option">
-						<div class="payment-option-content">
-							<nb-icon icon="credit-card-outline" status="primary"></nb-icon>
-							<div class="payment-info">
-								<span class="payment-title">Credit/Debit Card</span>
-								<span class="payment-subtitle">Visa, Mastercard, American Express</span>
-							</div>
-							<nb-icon icon="shield-outline" status="success" class="secure-icon"></nb-icon>
-						</div>
-					</nb-radio>
-					<nb-radio value="paypal" class="payment-option">
-						<div class="payment-option-content">
-							<nb-icon icon="at-outline" status="info"></nb-icon>
-							<div class="payment-info">
-								<span class="payment-title">PayPal</span>
-								<span class="payment-subtitle">Fast and secure checkout</span>
-							</div>
-							<nb-icon icon="shield-outline" status="success" class="secure-icon"></nb-icon>
-						</div>
-					</nb-radio>
-				</nb-radio-group>
-			</nb-card-body>
-		</nb-card>
-		} @if (showPaymentSection && isCardPaymentMethod()) {
-		<nb-card class="form-section card-details-section">
-			<nb-card-header>
-				<h6>
-					<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
-					Card Details
-				</h6>
-			</nb-card-header>
-			<nb-card-body>
-				<div class="card-form">
-					<div class="input-group">
-						<label for="cardNumber">
-							Card Number
-							<span class="required-indicator" aria-label="required">*</span>
-						</label>
-						<nb-form-field
-							[class.has-error]="hasError('cardNumber', 'required') || hasError('cardNumber', 'pattern')"
-						>
-							<input
-								nbInput
-								id="cardNumber"
-								formControlName="cardNumber"
-								placeholder="1234 5678 9012 3456"
-								maxlength="19"
-								type="text"
-								autocomplete="cc-number"
-								aria-required="true"
-								aria-describedby="cardNumber-error"
-							/>
-							@if (!hasError('cardNumber', 'required') && !hasError('cardNumber', 'pattern')) {
-							<nb-icon nbSuffix icon="credit-card-outline" aria-hidden="true"></nb-icon>
-							}
-						</nb-form-field>
-						@if (hasError('cardNumber', 'required')) {
-						<div class="error-message" id="cardNumber-error" role="alert">
-							<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
-							Card number is required
-						</div>
-						} @if (hasError('cardNumber', 'pattern')) {
-						<div class="error-message" id="cardNumber-error" role="alert">
-							<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
-							Please enter a valid card number
-						</div>
-						}
-					</div>
+		<div class="two-column">
+			<gauzy-payment-method-section
+				[form]="form"
+				[paymentMethods]="paymentMethods"
+			></gauzy-payment-method-section>
 
-					<div class="input-row">
-						<div class="input-group">
-							<label for="expiryDate">
-								Expiry Date
-								<span class="required-indicator" aria-label="required">*</span>
-							</label>
-							<nb-form-field [class.has-error]="hasError('expiryDate', 'pattern')">
-								<input
-									nbInput
-									id="expiryDate"
-									formControlName="expiryDate"
-									placeholder="MM/YY"
-									maxlength="5"
-									autocomplete="cc-exp"
-									aria-required="true"
-									aria-describedby="expiryDate-error"
-								/>
-							</nb-form-field>
-							@if (hasError('expiryDate', 'pattern')) {
-							<div class="error-message" id="expiryDate-error" role="alert">
-								<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
-								Format: MM/YY
-							</div>
-							}
-						</div>
-
-						<div class="input-group">
-							<label for="cvv">
-								CVV
-								<span class="required-indicator" aria-label="required">*</span>
-								<nb-icon
-									icon="question-mark-circle-outline"
-									nbTooltip="3 or 4 digit security code on the back of your card"
-									class="help-icon"
-									aria-label="CVV help"
-								></nb-icon>
-							</label>
-							<nb-form-field [class.has-error]="hasError('cvv', 'pattern')">
-								<input
-									nbInput
-									id="cvv"
-									formControlName="cvv"
-									placeholder="123"
-									maxlength="4"
-									type="password"
-									autocomplete="cc-csc"
-									aria-required="true"
-									aria-describedby="cvv-error"
-								/>
-							</nb-form-field>
-							@if (hasError('cvv', 'pattern')) {
-							<div class="error-message" id="cvv-error" role="alert">
-								<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
-								Invalid CVV
-							</div>
-							}
-						</div>
-					</div>
-				</div>
-			</nb-card-body>
-		</nb-card>
+			@if (isCardPaymentMethod()) {
+			<gauzy-card-details-section [form]="form" [hasError]="hasError"></gauzy-card-details-section>
+			}
+		</div>
 		}
 
-		<nb-card class="form-section billing-contact-section">
-			<nb-card-header>
-				<h6>
-					<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
-					Billing Contact
-				</h6>
-				<p class="section-hint">We'll send your receipt and billing information to this email</p>
-			</nb-card-header>
-			<nb-card-body>
-				<div class="billing-contact">
-					<div class="input-group">
-						<label for="billingName">
-							Full Name
-							<span class="required-indicator" aria-label="required">*</span>
-						</label>
-						<nb-form-field [class.has-error]="hasError('billingName', 'required')">
-							<nb-icon nbPrefix icon="person-outline" aria-hidden="true"></nb-icon>
-							<input
-								nbInput
-								id="billingName"
-								formControlName="billingName"
-								placeholder="John Doe"
-								autocomplete="name"
-								aria-required="true"
-								aria-describedby="billingName-error"
-							/>
-						</nb-form-field>
-						@if (hasError('billingName', 'required')) {
-						<div class="error-message" id="billingName-error" role="alert">
-							<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
-							Billing name is required
-						</div>
-						}
-					</div>
+		<gauzy-billing-contact-section [form]="form" [hasError]="hasError"></gauzy-billing-contact-section>
 
-					<div class="input-group">
-						<label for="billingEmail">
-							Email Address
-							<span class="required-indicator" aria-label="required">*</span>
-						</label>
-						<nb-form-field
-							[class.has-error]="
-								hasError('billingEmail', 'required') || hasError('billingEmail', 'email')
-							"
-						>
-							<nb-icon nbPrefix icon="email-outline" aria-hidden="true"></nb-icon>
-							<input
-								nbInput
-								id="billingEmail"
-								formControlName="billingEmail"
-								placeholder="john@example.com"
-								type="email"
-								autocomplete="email"
-								aria-required="true"
-								aria-describedby="billingEmail-error"
-							/>
-						</nb-form-field>
-						@if (hasError('billingEmail', 'required')) {
-						<div class="error-message" id="billingEmail-error" role="alert">
-							<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
-							Email is required
-						</div>
-						} @if (hasError('billingEmail', 'email')) {
-						<div class="error-message" id="billingEmail-error" role="alert">
-							<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
-							Please enter a valid email address
-						</div>
-						}
-					</div>
-				</div>
-			</nb-card-body>
-		</nb-card>
-
-		<nb-card class="form-section auto-renew-section">
-			<nb-card-body>
-				<div class="checkbox-wrapper">
-					<nb-checkbox formControlName="autoRenew">
-						<div class="checkbox-content">
-							<nb-icon icon="refresh-outline" aria-hidden="true"></nb-icon>
-							<span>Enable automatic renewal</span>
-						</div>
-					</nb-checkbox>
-					<p class="checkbox-help">
-						<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
-						Your subscription will automatically renew at the end of each billing period. You can cancel
-						anytime.
-					</p>
-				</div>
-			</nb-card-body>
-		</nb-card>
-
-		<nb-card class="form-section terms-section">
-			<nb-card-body>
-				<div class="checkbox-wrapper" [class.has-error]="hasError('acceptTerms', 'required')">
-					<nb-checkbox formControlName="acceptTerms" aria-required="true">
-						<div class="checkbox-content">
-							I agree to the
-							<a href="#" target="_blank" (click)="$event.stopPropagation()" rel="noopener"
-								>Terms of Service</a
-							>
-							and
-							<a href="#" target="_blank" (click)="$event.stopPropagation()" rel="noopener"
-								>Privacy Policy</a
-							>
-						</div>
-					</nb-checkbox>
-					@if (hasError('acceptTerms', 'required')) {
-					<div class="error-message" role="alert">
-						<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
-						You must accept the terms to continue
-					</div>
-					}
-				</div>
-			</nb-card-body>
-		</nb-card>
+		<gauzy-subscription-consent-section [form]="form" [hasError]="hasError"></gauzy-subscription-consent-section>
 
 		<div class="form-actions">
 			<button

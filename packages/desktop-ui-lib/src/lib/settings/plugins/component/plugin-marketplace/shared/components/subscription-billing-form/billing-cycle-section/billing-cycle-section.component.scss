@@ -1,0 +1,91 @@
+:host ::ng-deep nb-card.form-section {
+  border-radius: calc(var(--border-radius) * 1.25);
+  background: var(--gauzy-card-1);
+  border: 1px solid var(--gauzy-card-2);
+  box-shadow: none;
+}
+
+:host ::ng-deep nb-card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--gauzy-card-2);
+}
+
+:host ::ng-deep nb-card-body {
+  padding: 20px 24px 24px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  h6 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .hint {
+    margin: 4px 0 0;
+    color: var(--gauzy-text-color-2);
+    font-size: 13px;
+  }
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+::ng-deep nb-radio.option-card {
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid var(--gauzy-card-2);
+    border-radius: calc(var(--border-radius) * 1.25);
+    background: var(--gauzy-card-1);
+    padding: 14px 16px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  &:hover label {
+    border-color: var(--gauzy-text-color-2);
+    box-shadow: var(--gauzy-shadow);
+  }
+}
+
+.option-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+
+  .label {
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+  }
+}
+
+.price-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+
+  .price {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .suffix {
+    color: var(--gauzy-text-color-2);
+    font-size: 13px;
+  }
+}
+
+.description {
+  margin: 0;
+  color: var(--gauzy-text-color-2);
+  font-size: 13px;
+}
