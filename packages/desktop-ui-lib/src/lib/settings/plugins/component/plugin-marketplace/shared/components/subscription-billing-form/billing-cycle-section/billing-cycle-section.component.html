@@ -11,21 +11,27 @@
 	<nb-card-body>
 		<nb-radio-group formControlName="billingPeriod" class="options-grid" aria-label="Select billing period">
 			@for (option of billingOptions; track option.period) {
-			<nb-radio [value]="option.period" class="option-card">
-				<div class="option-header">
-					<span class="label">{{ option.label }}</span>
-					@if (option.badge) {
-					<nb-badge [status]="option.badge.status" [text]="option.badge.text"></nb-badge>
-					}
+			<nb-radio
+				[value]="option.period"
+				class="option-card"
+				[class.selected]="form.get('billingPeriod')?.value === option.period"
+			>
+				<div class="option-content">
+					<div class="option-header">
+						<span class="label">{{ option.label }}</span>
+						@if (option.badge) {
+						<nb-badge [status]="option.badge.status" [text]="option.badge.text"></nb-badge>
+						}
+					</div>
+					<div class="price-line">
+						<span class="price">{{ option.price | currency : currency }}</span>
+						<span class="suffix">
+							/ @switch (option.period) { @case ('monthly') { month } @case ('quarterly') { quarter }
+							@case ('yearly') { year } @default { option.period } }
+						</span>
+					</div>
+					<p class="description">{{ option.description }}</p>
 				</div>
-				<div class="price-line">
-					<span class="price">{{ option.price | currency : currency }}</span>
-					<span class="suffix">
-						/ @switch (option.period) { @case ('monthly') { month } @case ('quarterly') { quarter } @case
-						('yearly') { year } @default { option.period } }
-					</span>
-				</div>
-				<p class="description">{{ option.description }}</p>
 			</nb-radio>
 			}
 		</nb-radio-group>
