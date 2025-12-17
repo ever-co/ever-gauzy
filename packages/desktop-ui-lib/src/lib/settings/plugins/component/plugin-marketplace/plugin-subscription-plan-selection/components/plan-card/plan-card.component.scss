@@ -12,7 +12,7 @@
   height: 100%;
   min-height: 420px;
   box-shadow: var(--gauzy-shadow);
-  max-height: fit-content;
+  max-height: unset;
 
   &:hover:not(.disabled):not(.current-plan) {
     border-color: var(--color-primary-default);
