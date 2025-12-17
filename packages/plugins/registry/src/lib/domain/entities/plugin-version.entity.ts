@@ -21,11 +21,13 @@ import { PluginInstallation } from './plugin-installation.entity';
 import { PluginSource } from './plugin-source.entity';
 import { Plugin } from './plugin.entity';
 
-@Index(
-	'version_number_unique',
-	isMySQL ? ['number', 'pluginId', 'organizationId'] : ['number', 'pluginId', 'tenantId', 'organizationId'],
-	{ unique: true }
-)
+@Index(isMySQL ? ['pluginId', 'organizationId', 'number'] : ['pluginId', 'tenantId', 'organizationId', 'number'], {
+	unique: true
+})
+@Index(['tenantId', 'organizationId'])
+@Index(['pluginId', 'releaseDate'])
+@Index(['number'])
+@Index(['downloadCount'])
 @MultiORMEntity('plugin_versions', { mikroOrmRepository: () => MikroOrmPluginVersionRepository })
 export class PluginVersion extends TenantOrganizationBaseEntity implements IPluginVersion {
 	@ApiProperty({

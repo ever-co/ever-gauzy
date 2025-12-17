@@ -41,10 +41,15 @@ import { Plugin } from './plugin.entity';
 @Index(['pluginId', 'tenantId', 'organizationId'], { unique: false })
 @Index(['subscriberId', 'tenantId'], { unique: false })
 @Index(['status', 'endDate'], { unique: false })
-@Index(['pluginId', 'subscriberId'], { unique: true })
+@Index(['status', 'tenantId'], { unique: false })
+@Index(['pluginId', 'subscriberId', 'tenantId'], {
+	unique: true,
+	where: '"subscriberId" IS NOT NULL'
+})
 @Index(['planId'], { unique: false })
 @Index(['externalSubscriptionId'], { unique: false })
 @Index(['parentId'], { unique: false })
+@Index(['scope', 'tenantId'], { unique: false })
 export class PluginSubscription extends TenantOrganizationBaseEntity implements IPluginSubscription {
 	@ApiProperty({ enum: PluginSubscriptionStatus, description: 'Subscription status' })
 	@IsEnum(PluginSubscriptionStatus, { message: 'Invalid subscription status' })

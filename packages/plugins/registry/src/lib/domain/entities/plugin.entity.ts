@@ -27,7 +27,9 @@ import { PluginTag } from './plugin-tag.entity';
 import { PluginTenant } from './plugin-tenant.entity';
 import { PluginVersion } from './plugin-version.entity';
 
-@Index('plugin_name_unique', ['name'], { unique: true })
+@Index(['name'], { unique: true })
+@Index(['status', 'type'])
+@Index(['status', 'isFeatured'])
 @MultiORMEntity('plugins')
 export class Plugin extends BaseEntity implements IPlugin {
 	@ApiProperty({ type: String, description: 'Plugin name' })
@@ -44,11 +46,13 @@ export class Plugin extends BaseEntity implements IPlugin {
 
 	@ApiProperty({ enum: PluginType, description: 'Type of the plugin' })
 	@IsEnum(PluginType, { message: 'Invalid plugin type' })
+	@ColumnIndex()
 	@MultiORMColumn({ type: 'simple-enum', enum: PluginType, default: PluginType.DESKTOP })
 	type: PluginType;
 
 	@ApiProperty({ enum: PluginStatus, description: 'Status of the plugin' })
 	@IsEnum(PluginStatus, { message: 'Invalid plugin status' })
+	@ColumnIndex()
 	@MultiORMColumn({ type: 'simple-enum', enum: PluginStatus, default: PluginStatus.ACTIVE })
 	status: PluginStatus;
 
@@ -64,6 +68,7 @@ export class Plugin extends BaseEntity implements IPlugin {
 	@IsOptional()
 	@IsUUID()
 	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
+	@ColumnIndex()
 	@RelationId((plugin: Plugin) => plugin.category)
 	categoryId?: string;
 
@@ -130,11 +135,13 @@ export class Plugin extends BaseEntity implements IPlugin {
 
 	@ApiProperty({ type: Boolean, description: 'Whether the plugin is featured', default: false })
 	@IsOptional()
+	@ColumnIndex()
 	@MultiORMColumn({ default: false })
 	isFeatured?: boolean;
 
 	@ApiProperty({ type: Boolean, description: 'Whether the plugin is verified by Gauzy', default: false })
 	@IsOptional()
+	@ColumnIndex()
 	@MultiORMColumn({ default: false })
 	isVerified?: boolean;
 

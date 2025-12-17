@@ -1,28 +1,28 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
-    IPlugin,
-    IPluginSubscription,
-    IPluginSubscriptionCreateInput,
-    IPluginSubscriptionPlan,
-    PluginBillingPeriod,
-    PluginScope,
-    PluginSubscriptionType
+	IPlugin,
+	IPluginSubscription,
+	IPluginSubscriptionCreateInput,
+	IPluginSubscriptionPlan,
+	PluginBillingPeriod,
+	PluginScope,
+	PluginSubscriptionType
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
-    BehaviorSubject,
-    combineLatest,
-    filter,
-    firstValueFrom,
-    map,
-    Observable,
-    startWith,
-    switchMap,
-    take,
-    tap
+	BehaviorSubject,
+	combineLatest,
+	filter,
+	firstValueFrom,
+	map,
+	Observable,
+	startWith,
+	switchMap,
+	take,
+	tap
 } from 'rxjs';
 import { PluginSubscriptionFacade } from '../+state';
 import { PluginSubscriptionActions } from '../+state/actions/plugin-subscription.action';
@@ -135,13 +135,7 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 	}
 
 	ngOnInit(): void {
-		console.log('[PluginSubscriptionSelection] ngOnInit - Plugin data:', {
-			plugin: this.plugin?.name,
-			pluginId: this.pluginId,
-			subscription: this.plugin?.subscription
-		});
-
-		// Initialize observables after @Input properties are set
+		// Initialize observables
 		this.initializeObservables();
 		this.loadSubscriptionPlans();
 		this.initializeSubscriptionPreview();

@@ -18,7 +18,9 @@ import { PluginVersion } from './plugin-version.entity';
 import { Plugin } from './plugin.entity';
 
 @MultiORMEntity('plugin_installations', { mikroOrmRepository: () => MikroOrmPluginInstallationRepository })
-@Index(['pluginId', 'versionId', 'installedById'], { unique: true })
+@Index(['pluginId', 'tenantId', 'organizationId'], { unique: true })
+@Index(['tenantId', 'organizationId', 'isActivated'])
+@Index(['pluginId', 'isActivated'])
 export class PluginInstallation extends TenantOrganizationBaseEntity implements IPluginInstallation {
 	@ApiProperty({ type: () => Plugin, description: 'Installed the plugin' })
 	@MultiORMManyToOne(() => Plugin, { onDelete: 'CASCADE' })

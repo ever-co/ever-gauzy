@@ -9,13 +9,15 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
-import { JoinColumn, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin-source.repository';
 import { PluginVersion } from './plugin-version.entity';
 
 @MultiORMEntity('plugin_sources', { mikroOrmRepository: () => MikroOrmPluginSourceRepository })
+@Index(['versionId', 'operatingSystem', 'architecture', 'tenantId', 'organizationId'], { unique: true })
+@Index(['tenantId', 'organizationId'])
 export class PluginSource extends TenantOrganizationBaseEntity implements IPluginSource {
 	@MultiORMColumn({
 		type: 'simple-enum',
