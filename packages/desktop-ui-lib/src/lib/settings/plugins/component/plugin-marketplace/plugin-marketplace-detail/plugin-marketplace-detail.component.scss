@@ -502,6 +502,10 @@
     font-weight: 600;
     color: var(--gauzy-text-color-1);
 
+    div.first {
+      gap: 0.5rem;
+    }
+
     nb-icon {
       color: var(--color-primary-default);
       font-size: 18px;
