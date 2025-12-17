@@ -507,6 +507,16 @@ nb-button-group {
     height: calc(100vh - 24.125rem);
     padding: 1rem;
     background-color: var(--gauzy-card-2);
+
+    &.unavailable {
+      height: auto;
+    }
+
+    &.loading {
+      .no-data {
+        height: 100%;
+      }
+    }
   }
 }
 

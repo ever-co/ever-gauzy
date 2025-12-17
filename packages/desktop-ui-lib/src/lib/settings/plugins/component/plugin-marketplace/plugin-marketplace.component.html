@@ -83,6 +83,8 @@ selectedView = query.selectedView$ | async;
 			class="plugin-list"
 			[class.grid-view]="selectedView === 'grid'"
 			[class.list-view]="selectedView === 'list'"
+			[class.unavailable]="!available && !isLoading"
+			[class.loading]="isLoading"
 		>
 			@if (available) {
 			<!-- Debug info - remove in production -->
