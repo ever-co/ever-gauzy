@@ -251,7 +251,7 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	lastDownloadedAt?: Date; // Optional date when the plugin was last downloaded
 
 	// Subscription information
-	subscription?: IPluginSubscription; // Current subscription information if applicable
+	subscriptions?: IPluginSubscription[]; // Current subscription information if applicable
 	requiresSubscription?: boolean; // Whether this plugin requires a subscription
 
 	// Security and verification

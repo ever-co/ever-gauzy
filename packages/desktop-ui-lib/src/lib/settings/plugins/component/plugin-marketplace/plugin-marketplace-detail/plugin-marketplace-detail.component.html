@@ -16,6 +16,8 @@
 @let showProgress = disabled;
 <!-- Check if the current user is the owner of the plugin -->
 @let editing = marketplaceQuery.updating$(plugin?.id) | async;
+<!-- Subscription  -->
+@let subscription = plugin.subscriptions[0];
 <!-- Main template -->
 @if(plugin) {
 <div
@@ -53,7 +55,9 @@
 			</div>
 			<div class="plugin-meta">
 				<span class="plugin-version">v{{ plugin.version?.number || '1.0.0' }}</span>
-				<span class="plugin-author" *ngIf="plugin.author">by {{ plugin.author }}</span>
+				@if(plugin.author) {
+				<span class="plugin-author">by {{ plugin.author }}</span>
+				}
 				<span class="download-count">
 					<nb-icon icon="download-outline"></nb-icon>
 					{{ plugin.downloadCount | number }} downloads
@@ -93,7 +97,8 @@
 	}
 
 	<!-- Plugin Tags -->
-	<div class="plugin-tags" *ngIf="plugin.tags && plugin.tags.length > 0">
+	@if(plugin.tags?.length) {
+	<div class="plugin-tags">
 		<div class="tags-container">
 			@for(tag of plugin.tags.slice(0, 5); track tag.id) {
 			<nb-badge status="basic" class="tag-badge" [class.featured]="tag.isFeatured" [text]="tag.name"> </nb-badge>
@@ -102,40 +107,45 @@
 			}
 		</div>
 	</div>
+	}
 
 	<!-- Subscription Information -->
-	<div class="plugin-subscription" *ngIf="plugin.subscription">
+	@if(subscription) {
+	<div class="plugin-subscription">
 		<div class="subscription-info">
 			<div class="subscription-type">
-				<nb-icon [icon]="getSubscriptionIcon(plugin.Subscription.plan.type)"></nb-icon>
-				<span>{{ plugin.Subscription.plan.type | titlecase }}</span>
-				@if((plugin.subscription.plan?.price ?? plugin.subscription.price) && (plugin.subscription.plan?.price
-				?? plugin.subscription.price) > 0) {
-				<span class="price">{{
-					plugin.subscription.plan?.price ?? plugin.subscription.price
-						| currency : plugin.subscription.plan?.currency ?? plugin.subscription.currency
-				}}</span>
-				<span class="billing-period"
-					>/{{
-						(plugin.subscription.plan?.billingPeriod ?? plugin.subscription.billingPeriod)?.toLowerCase()
-					}}</span
-				>
+				<nb-icon [icon]="getSubscriptionIcon(subscription.plan?.type)"></nb-icon>
+				<span>{{ subscription.plan?.name || (subscription.plan?.type | titlecase) }}</span>
+				@if(subscription.plan?.price > 0) {
+				<span class="price">{{ subscription.plan?.price | currency : subscription.plan?.currency }}</span>
+				<span class="billing-period">/{{ subscription.plan?.billingPeriod?.toLowerCase() }}</span>
 				}
 			</div>
 
-			@if(plugin.subscription.isInTrial) {
-			<nb-badge status="warning" class="trial-badge">
-				<nb-icon icon="time-outline"></nb-icon>
-				Trial {{ plugin.subscription.daysUntilExpiration }} days left
-			</nb-badge>
-			} @if(plugin.subscription.isExpiringSoon && !plugin.subscription.isInTrial) {
-			<nb-badge status="danger" class="expiring-badge">
-				<nb-icon icon="alert-triangle-outline"></nb-icon>
-				Expires in {{ plugin.subscription.daysUntilExpiration }} days
-			</nb-badge>
-			}
+			<div class="subscription-status">
+				<nb-badge
+					[status]="
+						subscription.status === 'active'
+							? 'success'
+							: subscription.status === 'pending'
+							? 'warning'
+							: 'basic'
+					"
+					class="status-badge"
+					[text]="subscription.status | titlecase"
+				>
+				</nb-badge>
+
+				@if(subscription.trialEndDate) {
+				<nb-badge status="info" class="trial-badge">
+					<nb-icon icon="time-outline"></nb-icon>
+					Trial
+				</nb-badge>
+				}
+			</div>
 		</div>
 	</div>
+	}
 
 	<!-- Plugin Metrics and Info -->
 	<div class="plugin-metrics">
@@ -144,16 +154,19 @@
 			<span class="metric-label">Updated</span>
 			<span class="metric-value">{{ plugin.updatedAt | date : 'short' }}</span>
 		</div>
-		<div class="metric-item" *ngIf="plugin.license">
+		@if(plugin.license) {
+		<div class="metric-item">
 			<nb-icon icon="file-text-outline"></nb-icon>
 			<span class="metric-label">License</span>
 			<span class="metric-value">{{ plugin.license }}</span>
 		</div>
-		<div class="metric-item" *ngIf="plugin.version?.releaseDate">
+		} @if(plugin.version?.releaseDate) {
+		<div class="metric-item">
 			<nb-icon icon="layers-outline"></nb-icon>
 			<span class="metric-label">Released</span>
 			<span class="metric-value">{{ plugin.version.releaseDate | date : 'short' }}</span>
 		</div>
+		}
 	</div>
 
 	<!-- Plugin Actions -->
@@ -174,7 +187,7 @@
 			</button>
 
 			<!-- User assignment button (only for plugins with plans) -->
-			@if(plugin.hasPlan) {
+			@if(plugin.hasPlan && subscription.scope !== 'user') {
 			<button
 				nbButton
 				ghost

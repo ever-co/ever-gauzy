@@ -18,10 +18,7 @@
 
   &.featured {
     border-color: var(--color-warning-default);
-    background: linear-gradient(135deg,
-      var(--gauzy-card-1) 0%,
-      rgba(255, 193, 7, 0.08) 100%
-    );
+    background: linear-gradient(135deg, var(--gauzy-card-1) 0%, rgba(255, 193, 7, 0.08) 100%);
 
     &::before {
       content: '⭐';
@@ -41,91 +38,104 @@
 
   // List view compact layout
   &.list-view {
-    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 4px 24px;
+    padding: 16px 24px;
     margin-bottom: 12px;
+    align-items: center;
 
     .plugin-header {
-      flex-direction: row;
-      align-items: center;
-      margin-bottom: 0;
-      gap: 16px;
-    }
-
-    .plugin-title-section {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .plugin-name {
+      grid-column: 1;
+      grid-row: 1;
       margin-bottom: 4px;
-      font-size: 16px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      gap: 16px;
+      align-items: center;
 
-    .security-badges {
-      margin-left: 4px;
-    }
+      .plugin-title-section {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 0;
 
-    .plugin-meta {
-      margin-top: 0;
-      gap: 12px;
-      font-size: 12px;
+        .plugin-name {
+          margin-bottom: 0;
+          font-size: 16px;
+        }
 
-      .plugin-version {
-        padding: 2px 6px;
-        font-size: 11px;
+        .plugin-meta {
+          margin-top: 0;
+
+          .plugin-version {
+            padding: 2px 8px;
+            font-size: 11px;
+          }
+        }
+      }
+
+      .plugin-status-section {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+
+        .status-badge,
+        .type-badge,
+        .free-badge {
+          padding: 4px 8px;
+          font-size: 10px;
+        }
       }
     }
 
     .plugin-description {
-      display: none;
+      grid-column: 1;
+      grid-row: 2;
+      display: block;
+      margin-bottom: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      font-size: 13px;
+      color: var(--gauzy-text-color-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      // Hide read more link if present
+      ::ng-deep a.read-more-link {
+        display: none;
+      }
     }
 
-    .plugin-categories {
-      display: none;
-    }
-
-    .plugin-tags {
-      display: none;
-    }
-
-    .plugin-subscription {
-      display: none;
-    }
-
+    .plugin-categories,
+    .plugin-tags,
+    .plugin-subscription,
     .plugin-metrics {
       display: none;
     }
 
-    .plugin-status-section {
-      flex-direction: row;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .status-badge,
-    .type-badge,
-    .free-badge {
-      font-size: 10px;
-      padding: 3px 6px;
-    }
-
     .plugin-actions {
+      grid-column: 2;
+      grid-row: 1 / -1;
       border-top: none;
       padding-top: 0;
       margin-top: 0;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
       gap: 12px;
 
       .action-buttons {
-        gap: 6px;
+        gap: 8px;
 
         .action-btn {
-          min-width: 32px;
+          width: 32px;
           height: 32px;
-          border-radius: 16px;
+          min-width: 32px;
+          border-radius: 50%;
 
           nb-icon {
             font-size: 14px;
@@ -137,40 +147,25 @@
         flex-shrink: 0;
 
         .installation-wrapper {
-          flex-direction: row;
-          gap: 8px;
-        }
-
-        .free-plugin,
-        .subscription-required {
-          padding: 4px 8px;
-          font-size: 11px;
-
-          .free-icon,
-          .subscription-icon {
-            font-size: 12px;
-          }
-
-          .free-text,
-          .subscription-text {
+          .free-plugin,
+          .subscription-required {
             display: none;
           }
-        }
 
-        .toggle-wrapper {
-          flex-direction: row;
-          gap: 6px;
+          .toggle-wrapper {
+            padding: 4px 10px;
 
-          .toggle-label {
-            font-size: 12px;
+            .toggle-label {
+              font-size: 11px;
+            }
           }
         }
       }
     }
 
     &:hover {
-      transform: translateY(0);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
   }
 
@@ -179,7 +174,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 320px;
+    min-height: 380px;
 
     .plugin-header {
       flex-shrink: 0;
@@ -187,6 +182,7 @@
 
     .plugin-description {
       flex-shrink: 0;
+      flex-grow: 1;
     }
 
     .plugin-categories,
@@ -199,7 +195,7 @@
     .plugin-actions {
       margin-top: auto;
       flex-shrink: 0;
-	  flex-wrap: wrap-reverse;
+      flex-wrap: wrap;
     }
   }
 }
@@ -307,7 +303,9 @@
   gap: 6px;
 }
 
-.status-badge, .type-badge, .free-badge {
+.status-badge,
+.type-badge,
+.free-badge {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -468,7 +466,15 @@
     }
   }
 
-  .trial-badge, .expiring-badge {
+  .subscription-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-badge,
+  .trial-badge,
+  .expiring-badge {
     font-size: 11px;
     padding: 6px 12px;
     border-radius: calc(var(--border-radius) * 2);
@@ -482,6 +488,10 @@
     nb-icon {
       font-size: 14px;
     }
+  }
+
+  .status-badge {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .trial-badge {
@@ -639,7 +649,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
-	flex-wrap: wrap;
+    flex-wrap: wrap;
 
     .free-plugin,
     .subscription-required {
