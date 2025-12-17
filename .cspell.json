@@ -740,7 +740,14 @@
 		"runtimes",
 		"localtime",
 		"STARTTLS",
-		"Behaviour"
+		"Behaviour",
+		"freemium",
+		"FREEMIUM",
+		"srgb",
+		"prepopulate",
+		"prepopulates",
+		"prepopulation",
+		"Liskov"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
