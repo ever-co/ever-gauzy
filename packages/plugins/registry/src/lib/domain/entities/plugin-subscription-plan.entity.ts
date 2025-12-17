@@ -1,5 +1,10 @@
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { CurrenciesEnum, IUser } from '@gauzy/contracts';
+import {
+	CurrenciesEnum,
+	IUser,
+	PluginBillingPeriod,
+	PluginSubscriptionType
+} from '@gauzy/contracts';
 import { BaseEntity, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany, User } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -15,12 +20,7 @@ import {
 	Min
 } from 'class-validator';
 import { Index, JoinColumn, Relation, RelationId } from 'typeorm';
-import type { IPluginSubscription } from '../../shared/models/plugin-subscription.model';
-import {
-	IPluginSubscriptionPlan,
-	PluginBillingPeriod,
-	PluginSubscriptionType
-} from '../../shared/models/plugin-subscription.model';
+import type { IPluginSubscription, IPluginSubscriptionPlan } from '../../shared/';
 import type { IPlugin } from '../../shared/models/plugin.model';
 import { PluginSubscription } from './plugin-subscription.entity';
 import { Plugin } from './plugin.entity';

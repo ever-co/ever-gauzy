@@ -1,11 +1,11 @@
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { ID } from '@gauzy/contracts';
+import { ID, PluginBillingPeriod, PluginBillingStatus } from '@gauzy/contracts';
 import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { JoinColumn, Relation, RelationId } from 'typeorm';
-import { IPluginBilling, PluginBillingStatus } from '../../shared/models/plugin-billing.model';
-import { IPluginSubscription, PluginBillingPeriod } from '../../shared/models/plugin-subscription.model';
+import { IPluginBilling } from '../../shared/models/plugin-billing.model';
+import { IPluginSubscription } from '../../shared/models/plugin-subscription.model';
 import { PluginSubscription } from './plugin-subscription.entity';
 
 @MultiORMEntity('plugin_billings')

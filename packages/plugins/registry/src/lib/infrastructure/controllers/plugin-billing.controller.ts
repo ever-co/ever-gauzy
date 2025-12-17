@@ -1,4 +1,4 @@
-import { IPagination } from '@gauzy/contracts';
+import { IPagination, PluginBillingStatus } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import {
 	Body,
@@ -18,12 +18,7 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags }
 import { PluginBillingService } from '../../domain/services/plugin-billing.service';
 import { CreatePluginBillingDTO } from '../../shared/dto/create-plugin-billing.dto';
 import { UpdatePluginBillingDTO } from '../../shared/dto/update-plugin-billing.dto';
-import {
-	IPluginBilling,
-	IPluginBillingFindInput,
-	IPluginBillingSummary,
-	PluginBillingStatus
-} from '../../shared/models';
+import { IPluginBilling, IPluginBillingFindInput, IPluginBillingSummary } from '../../shared/models';
 
 @ApiTags('Plugin Billing')
 @ApiBearerAuth()

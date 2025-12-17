@@ -1,5 +1,5 @@
 import { isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
-import { ID, IRole, IUser } from '@gauzy/contracts';
+import { ID, IRole, IUser, PluginScope } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -15,7 +15,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsUUID, Min, ValidateIf } from 'class-validator';
 import { Index, JoinTable, Relation, RelationId } from 'typeorm';
-import { IPlugin, IPluginSetting, IPluginSubscription, IPluginTenant, PluginScope } from '../../shared';
+import { IPlugin, IPluginSetting, IPluginSubscription, IPluginTenant } from '../../shared';
 import { PluginSetting } from './plugin-setting.entity';
 import { PluginSubscription } from './plugin-subscription.entity';
 import { Plugin } from './plugin.entity';

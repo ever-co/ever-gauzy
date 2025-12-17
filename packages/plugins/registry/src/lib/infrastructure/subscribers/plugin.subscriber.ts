@@ -1,4 +1,4 @@
-import { ID } from '@gauzy/contracts';
+import { ID, PluginInstallationStatus } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { Logger } from '@nestjs/common';
 import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
@@ -7,7 +7,6 @@ import { PluginInstallationService } from '../../domain/services/plugin-installa
 import { PluginSourceService } from '../../domain/services/plugin-source.service';
 import { PluginSubscriptionPlanService } from '../../domain/services/plugin-subscription-plan.service';
 import { PluginVersionService } from '../../domain/services/plugin-version.service';
-import { PluginInstallationStatus } from '../../shared/models';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 
 @EventSubscriber()

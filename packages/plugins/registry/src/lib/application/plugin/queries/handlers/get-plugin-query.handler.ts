@@ -21,6 +21,6 @@ export class GetPluginQueryHandler implements IQueryHandler<GetPluginQuery> {
 		}
 
 		// Step 3: Return the plugin entity
-		return plugin.record;
+		return plugin.record as IPlugin;
 	}
 }

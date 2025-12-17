@@ -2,7 +2,6 @@ export * from './file-processing.interface';
 export * from './plugin-billing.model';
 export * from './plugin-category.model';
 export * from './plugin-installation.model';
-export * from './plugin-scope.model';
 export * from './plugin-setting.model';
 export * from './plugin-source.model';
 export * from './plugin-subscription.model';

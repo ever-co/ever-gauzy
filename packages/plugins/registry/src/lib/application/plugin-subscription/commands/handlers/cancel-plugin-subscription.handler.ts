@@ -1,10 +1,11 @@
+import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import { PluginSubscriptionService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
-import { IPluginSubscription, PluginSubscriptionStatus } from '../../../../shared';
+import { IPluginSubscription } from '../../../../shared';
 import { CancelPluginSubscriptionCommand } from '../cancel-plugin-subscription.command';
 
 @CommandHandler(CancelPluginSubscriptionCommand)

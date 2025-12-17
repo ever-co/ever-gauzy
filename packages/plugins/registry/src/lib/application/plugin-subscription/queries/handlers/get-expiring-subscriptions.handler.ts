@@ -1,7 +1,8 @@
+import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Between, In } from 'typeorm';
 import { PluginSubscriptionService } from '../../../../domain';
-import { IPluginSubscription, PluginSubscriptionStatus } from '../../../../shared';
+import { IPluginSubscription } from '../../../../shared';
 import { GetExpiringSubscriptionsQuery } from '../get-expiring-subscriptions.query';
 
 @QueryHandler(GetExpiringSubscriptionsQuery)

@@ -1,8 +1,7 @@
-import { IPagination } from '@gauzy/contracts';
+import { IPagination, PluginScope } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere } from 'typeorm';
-import { PluginScope } from '../../shared/models/plugin-scope.model';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import { PluginTenant } from '../entities/plugin-tenant.entity';
 import { MikroOrmPluginTenantRepository } from '../repositories/tenant/mikro-orm-plugin-tenant.repository';

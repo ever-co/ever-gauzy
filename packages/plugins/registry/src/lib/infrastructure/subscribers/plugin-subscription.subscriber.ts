@@ -1,7 +1,7 @@
+import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { Logger } from '@nestjs/common';
 import { DataSource, EntitySubscriberInterface, EventSubscriber } from 'typeorm';
 import { PluginSubscription } from '../../domain/entities/plugin-subscription.entity';
-import { PluginSubscriptionStatus } from '../../shared/models/plugin-subscription.model';
 
 @EventSubscriber()
 export class PluginSubscriptionSubscriber implements EntitySubscriberInterface<PluginSubscription> {

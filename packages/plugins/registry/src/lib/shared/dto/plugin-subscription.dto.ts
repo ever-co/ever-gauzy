@@ -1,4 +1,10 @@
-import { ID } from '@gauzy/contracts';
+import {
+	ID,
+	PluginBillingPeriod,
+	PluginScope,
+	PluginSubscriptionStatus,
+	PluginSubscriptionType
+} from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsBoolean,
@@ -12,13 +18,6 @@ import {
 	IsUUID,
 	Min
 } from 'class-validator';
-import { PluginScope } from '../../shared/models/plugin-scope.model';
-import {
-	PluginBillingPeriod,
-	PluginSubscriptionStatus,
-	PluginSubscriptionType
-} from '../../shared/models/plugin-subscription.model';
-
 /**
  * Create Plugin Subscription DTO
  */

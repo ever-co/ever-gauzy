@@ -1,4 +1,4 @@
-import { ID, IRole, IUser } from '@gauzy/contracts';
+import { ID, IRole, IUser, PluginScope } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -15,7 +15,6 @@ import {
 	ValidateIf,
 	ValidateNested
 } from 'class-validator';
-import { PluginScope } from '../models/plugin-scope.model';
 
 export class CreatePluginTenantDTO {
 	/*

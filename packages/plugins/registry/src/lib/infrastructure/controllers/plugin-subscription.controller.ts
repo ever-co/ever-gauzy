@@ -1,4 +1,4 @@
-import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionsEnum, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import {
 	Body,
@@ -31,12 +31,7 @@ import {
 	UpgradePluginSubscriptionCommand
 } from '../../application';
 import { PluginSubscription } from '../../domain';
-import {
-	PluginSubscriptionQueryDTO,
-	PluginSubscriptionStatus,
-	PurchasePluginSubscriptionDTO,
-	UpdatePluginSubscriptionDTO
-} from '../../shared';
+import { PluginSubscriptionQueryDTO, PurchasePluginSubscriptionDTO, UpdatePluginSubscriptionDTO } from '../../shared';
 
 @ApiTags('Plugin Subscriptions')
 @UseGuards(TenantPermissionGuard, PermissionGuard)

@@ -1,6 +1,6 @@
+import { PluginSettingDataType } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { PluginSettingDataType } from '../../shared/models/plugin-setting.model';
 
 /**
  * Create Plugin Setting DTO

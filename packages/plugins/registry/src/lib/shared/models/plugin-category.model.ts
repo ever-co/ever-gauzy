@@ -1,47 +1,11 @@
-import type { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
+import type { ID, IPluginCategory as PluginCategoryModel } from '@gauzy/contracts';
 import type { IPlugin } from './plugin.model';
-import type { IPluginSetting } from './plugin-setting.model';
 
 /**
  * Plugin Category Domain Model
  * Represents a categorization system for plugins
  */
-export interface IPluginCategory extends IBasePerTenantAndOrganizationEntityModel {
-	// Category name (unique within tenant/organization)
-	name: string;
-
-	// Category description
-	description?: string;
-
-	// Category slug for URL-friendly identification
-	slug: string;
-
-	// Category color for UI representation
-	color?: string;
-
-	// Category icon identifier
-	icon?: string;
-
-	// Display order for sorting
-	order: number;
-
-	// Parent category for hierarchical structure
-	parent?: IPluginCategory;
-
-	parentId?: ID;
-
-	// Child categories
-	children?: IPluginCategory[];
-
-	// Plugins in this category
-	plugins?: IPlugin[];
-
-	// Default settings for plugins in this category
-	settings?: IPluginSetting[];
-
-	// Category metadata (JSON object for flexibility)
-	metadata?: Record<string, any>;
-}
+export interface IPluginCategory extends PluginCategoryModel {}
 
 /**
  * Plugin Category Creation Input

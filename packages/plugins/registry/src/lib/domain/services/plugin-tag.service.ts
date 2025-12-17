@@ -49,7 +49,7 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 	 * @returns Promise<IPluginTag>
 	 * @throws BadRequestException if relationship already exists
 	 */
-	async create(entity: IPluginTagCreateInput): Promise<IPluginTag> {
+	async createTag(entity: IPluginTagCreateInput): Promise<IPluginTag> {
 		// Check if the relationship already exists
 		const existingRelation = await this.findOneByWhereOptions({
 			pluginId: entity.pluginId,

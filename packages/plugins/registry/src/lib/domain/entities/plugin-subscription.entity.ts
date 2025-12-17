@@ -1,5 +1,11 @@
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { IUser } from '@gauzy/contracts';
+import {
+	IPluginSubscriptionPlan,
+	IUser,
+	PluginBillingStatus,
+	PluginScope,
+	PluginSubscriptionStatus
+} from '@gauzy/contracts';
 import {
 	MultiORMColumn,
 	MultiORMEntity,
@@ -21,13 +27,8 @@ import {
 	ValidateIf
 } from 'class-validator';
 import { Index, JoinColumn, Relation, RelationId, Tree, TreeChildren, TreeParent } from 'typeorm';
-import { IPluginBilling, PluginBillingStatus } from '../../shared/models';
-import { PluginScope } from '../../shared/models/plugin-scope.model';
-import {
-	IPluginSubscription,
-	IPluginSubscriptionPlan,
-	PluginSubscriptionStatus
-} from '../../shared/models/plugin-subscription.model';
+import type { IPluginBilling } from '../../shared/models';
+import type { IPluginSubscription } from '../../shared/models/plugin-subscription.model';
 import type { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import type { IPlugin } from '../../shared/models/plugin.model';
 import { PluginBilling } from './plugin-billing.entity';

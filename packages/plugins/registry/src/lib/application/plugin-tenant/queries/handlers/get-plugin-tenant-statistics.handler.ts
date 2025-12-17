@@ -1,8 +1,9 @@
+import { PluginScope } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { PluginTenant, PluginTenantService } from '../../../../domain';
-import { IPluginTenantStatistics, PluginScope } from '../../../../shared';
+import { IPluginTenantStatistics } from '../../../../shared';
 import { GetPluginTenantStatisticsQuery } from '../get-plugin-tenant-statistics.query';
 
 @QueryHandler(GetPluginTenantStatisticsQuery)

@@ -1,6 +1,6 @@
+import { PluginBillingPeriod, PluginBillingStatus } from '@gauzy/contracts';
 import { Injectable, Logger } from '@nestjs/common';
-import { IPluginBillingCreateInput, PluginBillingStatus } from '../../shared/models/plugin-billing.model';
-import { PluginBillingPeriod } from '../../shared/models/plugin-subscription.model';
+import { IPluginBillingCreateInput } from '../../shared/models/plugin-billing.model';
 
 /**
  * Factory for creating plugin billing records

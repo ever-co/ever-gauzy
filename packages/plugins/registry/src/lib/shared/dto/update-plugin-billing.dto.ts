@@ -1,8 +1,8 @@
+import { PluginBillingStatus } from '@gauzy/contracts';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import { IPluginBillingUpdateInput } from '../models';
-import { PluginBillingStatus } from '../models/plugin-billing.model';
 
 export class UpdatePluginBillingDTO implements IPluginBillingUpdateInput {
 	@ApiPropertyOptional({

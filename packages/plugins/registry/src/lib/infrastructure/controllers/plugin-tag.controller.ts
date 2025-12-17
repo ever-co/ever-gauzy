@@ -1,6 +1,6 @@
 import { Public } from '@gauzy/common';
 import { ID, IPagination } from '@gauzy/contracts';
-import { CrudController, PermissionGuard, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import { PermissionGuard, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import {
 	Body,
 	Controller,
@@ -47,10 +47,8 @@ import { IPluginTag, IPluginTagBulkCreateResponse } from '../../shared/models/pl
  */
 @ApiTags('Plugin Tags')
 @Controller('plugin-tags')
-export class PluginTagController extends CrudController<PluginTag> {
-	constructor(private readonly pluginTagService: PluginTagService) {
-		super(pluginTagService);
-	}
+export class PluginTagController {
+	constructor(private readonly pluginTagService: PluginTagService) {}
 
 	/**
 	 * Get all plugin-tag relationships with optional filtering

@@ -1,3 +1,4 @@
+import { PluginBillingStatus } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
 import { Between, LessThan, UpdateResult } from 'typeorm';
@@ -6,8 +7,7 @@ import {
 	IPluginBillingCreateInput,
 	IPluginBillingFindInput,
 	IPluginBillingSummary,
-	IPluginBillingUpdateInput,
-	PluginBillingStatus
+	IPluginBillingUpdateInput
 } from '../../shared/models/plugin-billing.model';
 import { PluginBilling } from '../entities/plugin-billing.entity';
 import { MikroOrmPluginBillingRepository, TypeOrmPluginBillingRepository } from '../repositories';

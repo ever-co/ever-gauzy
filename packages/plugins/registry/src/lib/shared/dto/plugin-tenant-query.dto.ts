@@ -1,8 +1,7 @@
-import { ID } from '@gauzy/contracts';
+import { ID, PluginScope } from '@gauzy/contracts';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, IsUUID } from 'class-validator';
-import { PluginScope } from '../models/plugin-scope.model';
 
 export class PluginTenantQueryDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Plugin ID to filter by' })

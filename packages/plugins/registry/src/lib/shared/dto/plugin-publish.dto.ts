@@ -1,7 +1,7 @@
-import { IsString, IsOptional, IsNumber, IsArray, IsBoolean, ValidateNested, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
+import { PluginBillingPeriod, PluginPricingType } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PluginPricingType, PluginBillingPeriod } from '../models/plugin.model';
+import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class PluginPricingDTO {
 	@ApiProperty({ description: 'Pricing type' })

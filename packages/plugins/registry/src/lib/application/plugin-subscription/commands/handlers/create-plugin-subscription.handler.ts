@@ -1,7 +1,8 @@
+import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginSubscriptionService } from '../../../../domain';
-import { IPluginSubscription, PluginSubscriptionStatus } from '../../../../shared';
+import { IPluginSubscription } from '../../../../shared';
 import { CreatePluginSubscriptionCommand } from '../create-plugin-subscription.command';
 
 @CommandHandler(CreatePluginSubscriptionCommand)

@@ -1,3 +1,4 @@
+import { PluginBillingStatus } from '@gauzy/contracts';
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import {
@@ -6,7 +7,6 @@ import {
 	PluginBillingPaidEvent,
 	PluginBillingService
 } from '../../../../domain';
-import { PluginBillingStatus } from '../../../../shared';
 import { PluginBillingProcessPaymentCommand } from '../plugin-billing-process-payment.command';
 
 /**

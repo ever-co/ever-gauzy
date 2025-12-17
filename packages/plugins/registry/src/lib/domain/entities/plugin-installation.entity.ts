@@ -1,4 +1,4 @@
-import { ID, IEmployee } from '@gauzy/contracts';
+import { ID, IEmployee, PluginInstallationStatus } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	Employee,
@@ -10,7 +10,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, ValidateIf } from 'class-validator';
 import { Index, JoinColumn, RelationId } from 'typeorm';
-import { IPluginInstallation, PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
+import { IPluginInstallation } from '../../shared/models/plugin-installation.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { MikroOrmPluginInstallationRepository } from '../repositories/mikro-orm-plugin-installation.repository';

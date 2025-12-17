@@ -1,8 +1,7 @@
-import { ID, PluginScope } from '@gauzy/contracts';
+import { ID, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { Injectable, Logger } from '@nestjs/common';
 import { In } from 'typeorm';
-import { PluginSubscriptionStatus } from '../../shared/models';
 import { PluginSubscription } from '../entities';
 import { MikroOrmPluginSubscriptionRepository, TypeOrmPluginSubscriptionRepository } from '../repositories';
 

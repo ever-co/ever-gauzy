@@ -1,8 +1,9 @@
+import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { NotFoundException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindOptionsWhere, In } from 'typeorm';
 import { PluginSubscriptionService } from '../../../../domain';
-import { IPluginSubscription, PluginSubscriptionStatus } from '../../../../shared';
+import { IPluginSubscription } from '../../../../shared';
 import { GetActivePluginSubscriptionQuery } from '../get-active-plugin-subscription.query';
 
 @QueryHandler(GetActivePluginSubscriptionQuery)

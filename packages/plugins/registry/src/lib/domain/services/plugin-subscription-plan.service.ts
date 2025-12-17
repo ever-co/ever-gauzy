@@ -1,4 +1,4 @@
-import { ID } from '@gauzy/contracts';
+import { ID, PluginSubscriptionType } from '@gauzy/contracts';
 import { CrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions, MoreThan } from 'typeorm';
@@ -6,8 +6,7 @@ import {
 	IPluginSubscriptionPlan,
 	IPluginSubscriptionPlanCreateInput,
 	IPluginSubscriptionPlanFindInput,
-	IPluginSubscriptionPlanUpdateInput,
-	PluginSubscriptionType
+	IPluginSubscriptionPlanUpdateInput
 } from '../../shared/models/plugin-subscription.model';
 import { PluginSubscriptionPlan } from '../entities/plugin-subscription-plan.entity';
 import { MikroOrmPluginSubscriptionPlanRepository, TypeOrmPluginSubscriptionPlanRepository } from '../repositories';

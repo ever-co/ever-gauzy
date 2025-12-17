@@ -2,6 +2,7 @@ import { CrudService } from '@gauzy/core';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { AutoTagPluginCommand } from '../../application';
+import { IPlugin } from '../../shared';
 import { Plugin } from '../entities';
 import { MikroOrmPluginRepository, TypeOrmPluginRepository } from '../repositories';
 
@@ -23,7 +24,7 @@ export class PluginService extends CrudService<Plugin> {
 	 * @param entity - Plugin creation data
 	 * @returns Promise<Plugin>
 	 */
-	public async create(entity: Partial<Plugin>): Promise<Plugin> {
+	public async createWithAutoTagging(entity: Partial<IPlugin>): Promise<IPlugin> {
 		try {
 			this.logger.log(`Creating plugin: ${entity.name}`);
 
@@ -42,9 +43,7 @@ export class PluginService extends CrudService<Plugin> {
 						},
 						{
 							createMissingTags: true,
-							overwriteExisting: false,
-							tenantId: (entity as any).tenantId,
-							organizationId: (entity as any).organizationId
+							overwriteExisting: false
 						}
 					)
 				);
@@ -54,7 +53,7 @@ export class PluginService extends CrudService<Plugin> {
 				this.logger.warn(`Auto-tagging failed for plugin ${plugin.id}: ${taggingError.message}`);
 			}
 
-			return plugin;
+			return plugin as IPlugin;
 		} catch (error) {
 			this.logger.error(`Failed to create plugin: ${error.message}`, error.stack);
 			throw error;

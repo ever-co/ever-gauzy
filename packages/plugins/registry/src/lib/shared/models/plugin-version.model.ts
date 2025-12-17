@@ -1,27 +1,12 @@
-import type { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
-import type { IPluginInstallation } from './plugin-installation.model';
+import type { ID, IPluginVersion as PluginVersionModel } from '@gauzy/contracts';
 import type { IPluginSource, IPluginSourceUpdate } from './plugin-source.model';
-import type { IPlugin } from './plugin.model';
 
 export interface IPluginVersionUpdate extends Partial<Pick<IPluginVersion, 'number' | 'changelog' | 'releaseDate'>> {
 	id: ID;
 	sources?: IPluginSourceUpdate[];
 }
 
-export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel {
-	number: string; // SemVer formatted string
-	changelog: string; // Description of changes in the version
-	releaseDate?: Date; // Optional ISO 8601 formatted date
-	downloadCount?: number; // Optional, defaults to 0
-	plugin?: IPlugin; // Associated plugin entity
-	pluginId?: ID; // Optional ID of the associated plugin
-
-	sources?: IPluginSource[]; // Associated plugin IBasePerTenantAndOrganizationEntityModel
-	installations?: IPluginInstallation[];
-	// Security and integrity
-	checksum?: string; // Verification hash
-	signature?: string; // Digital signature for verification
-
+export interface IPluginVersion extends PluginVersionModel {
 	// Business Logic Methods
 	isValidSemVer(): boolean;
 	compareVersion(other: IPluginVersion): number;

@@ -128,6 +128,16 @@ export class Plugin extends BaseEntity implements IPlugin {
 	@MultiORMColumn({ default: false })
 	requiresSubscription?: boolean;
 
+	@ApiProperty({ type: Boolean, description: 'Whether the plugin is featured', default: false })
+	@IsOptional()
+	@MultiORMColumn({ default: false })
+	isFeatured?: boolean;
+
+	@ApiProperty({ type: Boolean, description: 'Whether the plugin is verified by Gauzy', default: false })
+	@IsOptional()
+	@MultiORMColumn({ default: false })
+	isVerified?: boolean;
+
 	// Computed source
 	source: IPluginSource;
 

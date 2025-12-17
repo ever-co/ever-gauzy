@@ -1,32 +1,11 @@
-import type { IBasePerTenantAndOrganizationEntityModel, ID, ITag } from '@gauzy/contracts';
-import type { IPlugin } from './plugin.model';
+import type { IBasePerTenantAndOrganizationEntityModel, ID, IPluginTag as PluginTagModel } from '@gauzy/contracts';
 
 /**
  * Interface representing a Plugin-Tag relationship entity.
  * This interface defines the many-to-many relationship between plugins and tags,
  * allowing plugins to be categorized and filtered by multiple tags.
  */
-export interface IPluginTag extends IBasePerTenantAndOrganizationEntityModel {
-	/**
-	 * The plugin associated with this tag relationship
-	 */
-	plugin: IPlugin;
-
-	/**
-	 * ID reference to the plugin
-	 */
-	pluginId: ID;
-
-	/**
-	 * The tag associated with this plugin relationship
-	 */
-	tag: ITag;
-
-	/**
-	 * ID reference to the tag
-	 */
-	tagId: ID;
-}
+export interface IPluginTag extends PluginTagModel {}
 
 /**
  * Input interface for creating a new plugin-tag relationship.
@@ -51,27 +30,7 @@ export interface IPluginTagUpdateInput extends Partial<IPluginTagCreateInput> {}
  * Input interface for finding plugin-tag relationships with optional filters.
  * Used for querying plugin-tag associations.
  */
-export interface IPluginTagFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	/**
-	 * Filter by plugin ID
-	 */
-	pluginId?: ID;
-
-	/**
-	 * Filter by tag ID
-	 */
-	tagId?: ID;
-
-	/**
-	 * Filter by multiple plugin IDs
-	 */
-	pluginIds?: ID[];
-
-	/**
-	 * Filter by multiple tag IDs
-	 */
-	tagIds?: ID[];
-}
+export type IPluginTagFindInput = Partial<IPluginTagUpdateInput>;
 
 /**
  * Input interface for bulk operations on plugin-tag relationships.

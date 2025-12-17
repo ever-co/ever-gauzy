@@ -1,6 +1,6 @@
+import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { PluginSubscriptionStatus } from '../../../shared/models/plugin-subscription.model';
 import { PluginSubscriptionService } from '../../services/plugin-subscription.service';
 import { PluginBillingFailedEvent } from '../plugin-billing-failed.event';
 

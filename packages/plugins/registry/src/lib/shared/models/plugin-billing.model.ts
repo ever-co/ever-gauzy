@@ -1,57 +1,11 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
-import type { IPluginSubscription } from './plugin-subscription.model';
+import { ID, IPluginBilling as PluginBillingModel } from '@gauzy/contracts';
 
 /**
  * Interface for plugin billing records
  */
-export interface IPluginBilling extends IBasePerTenantAndOrganizationEntityModel {
-	// Associated subscription
-	subscription: IPluginSubscription;
-	subscriptionId: ID;
-
-	// Billing amount
-	amount: number;
-
-	// Currency code
-	currency: string;
-
-	// Billing date
-	billingDate: Date;
-
-	// Due date for payment
-	dueDate: Date;
-
-	// Billing status
-	status: PluginBillingStatus;
-
-	// Billing period information
-	billingPeriod: PluginBillingPeriod;
-	billingPeriodStart: Date;
-	billingPeriodEnd: Date;
-
-	// Billing description/notes
-	description?: string;
-
-	// Billing metadata
-	metadata?: Record<string, any>;
-}
-
-/**
- * Enum for plugin billing status
- */
-export enum PluginBillingStatus {
-	PENDING = 'pending',
-	PROCESSED = 'processed',
-	PAID = 'paid',
-	OVERDUE = 'overdue',
-	FAILED = 'failed',
-	CANCELLED = 'cancelled',
-	REFUNDED = 'refunded',
-	PARTIALLY_PAID = 'partially_paid'
-}
+export interface IPluginBilling extends PluginBillingModel {}
 
 // Import billing period from subscription model
-import { PluginBillingPeriod } from './plugin-subscription.model';
 
 /**
  * Interface for creating plugin billing records

@@ -1,14 +1,25 @@
 /**
  * Base interface for tenant and organization-scoped entities
  */
-import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
+import { IPayment } from './payment.model';
+import { IRole } from './role.model';
+import { ITag } from './tag.model';
 import { IUser } from './user.model';
 
 export enum PluginScope {
 	TENANT = 'tenant',
 	ORGANIZATION = 'organization',
 	USER = 'user'
+}
+
+export enum PluginSettingDataType {
+	STRING = 'string',
+	NUMBER = 'number',
+	BOOLEAN = 'boolean',
+	JSON = 'json',
+	FILE = 'file'
 }
 
 /**
@@ -49,66 +60,215 @@ export enum PluginOSArch {
 }
 
 /**
+ * Enum for plugin billing status
+ */
+export enum PluginBillingStatus {
+	PENDING = 'pending',
+	PROCESSED = 'processed',
+	PAID = 'paid',
+	OVERDUE = 'overdue',
+	FAILED = 'failed',
+	CANCELLED = 'cancelled',
+	REFUNDED = 'refunded',
+	PARTIALLY_PAID = 'partially_paid'
+}
+
+/**
  * Plugin subscription information
  */
 export interface IPluginSubscription extends IBasePerTenantAndOrganizationEntityModel {
-	pluginId: string;
-	planId?: string;
-	plan?: IPluginSubscriptionPlan;
-	scope: PluginScope;
-	subscriberId: string;
-	subscriber?: IUser;
+	// Subscription status
 	status: PluginSubscriptionStatus;
-	startDate: Date | string;
-	endDate?: Date | string | null;
-	trialEndDate?: Date | string | null;
+
+	// Subscription scope (tenant, organization, user)
+	scope: PluginScope;
+
+	// Start date of subscription
+	startDate: Date;
+
+	// End date of subscription (null for active subscriptions)
+	endDate?: Date;
+
+	// Trial period end date (if applicable)
+	trialEndDate?: Date;
+
+	// Whether auto-renewal is enabled
 	autoRenew: boolean;
-	parentId?: string | null;
-	pluginTenantId?: string;
-	plugin?: IPlugin;
-	externalSubscriptionId?: string | null;
-	cancelledAt?: Date | string | null;
-	cancellationReason?: string | null;
-	metadata?: Record<string, any> | null;
-	parent?: IPluginSubscription | null;
+
+	// External subscription ID from payment provider
+	externalSubscriptionId?: string;
+
+	// Cancellation date (if cancelled)
+	cancelledAt?: Date;
+
+	// Cancellation reason
+	cancellationReason?: string;
+
+	// The plugin this subscription is for
+	plugin: IPlugin;
+	pluginId: ID;
+
+	// The plugin tenant relationship
+	pluginTenant: IPluginTenant;
+	pluginTenantId: ID;
+
+	// User who subscribed (for user-level subscriptions)
+	subscriber?: IUser;
+	subscriberId?: ID;
+
+	// Subscription metadata for additional data
+	metadata?: Record<string, any>;
+
+	// Subscription plan (if subscription is based on a specific plan)
+	plan?: IPluginSubscriptionPlan;
+	planId?: ID;
+
+	// Parent-child subscription relationships for hierarchical management
+	parent?: IPluginSubscription;
+	parentId?: ID;
+	children?: IPluginSubscription[];
+
+	// Billing records for this subscription
+	billings?: IPluginBilling[];
+
+	// Payment records for this subscription (when payment system is implemented)
+	payments?: IPayment[];
 }
 
-export interface IPluginSubscriptionPlan extends IBasePerTenantAndOrganizationEntityModel {
-	pluginId: string;
-	type: PluginSubscriptionType;
+export interface IPluginSubscriptionPlan extends IBaseEntityModel {
+	// Plan name
 	name: string;
-	description: string;
-	price: number | string;
+
+	// Plan description
+	description?: string;
+
+	// Subscription type/plan level
+	type: PluginSubscriptionType;
+
+	// Plan price
+	price: number;
+
+	// Currency code (e.g., USD, EUR)
 	currency: string;
+
+	// Billing period
 	billingPeriod: PluginBillingPeriod;
+
+	// Plan features list
 	features: string[];
+
+	// Plan limitations and quotas
 	limitations?: Record<string, any>;
-	isPopular?: boolean;
-	isRecommended?: boolean;
-	trialDays?: number;
-	setupFee?: number | string;
-	discountPercentage?: number | string;
+
+	// Whether the plan is active and available for purchase
 	isActive: boolean;
+
+	// Whether this plan is marked as popular
+	isPopular?: boolean;
+
+	// Whether this plan is recommended
+	isRecommended?: boolean;
+
+	// Trial period duration in days
+	trialDays?: number;
+
+	// Setup fee for the plan
+	setupFee?: number;
+
+	// Discount percentage for the plan
+	discountPercentage?: number;
+
+	// Plan metadata
+	metadata?: Record<string, any>;
+
+	// Sort order for displaying plans
 	sortOrder?: number;
-	metadata?: Record<string, any> | null;
-	createdByUserId?: string;
-	updatedByUserId?: string | null;
-	deletedByUserId?: string | null;
+
+	// The plugin this plan belongs to
+	plugin?: IPlugin;
+	pluginId: ID;
+
+	// User who created this plan
+	createdBy?: IUser;
+	createdById?: ID;
+
+	// Subscriptions using this plan
+	subscriptions?: IPluginSubscription[];
+}
+
+export interface IPluginSetting extends IBasePerTenantAndOrganizationEntityModel {
+	// Setting key/name
+	key: string;
+
+	// Setting value
+	value: string;
+
+	// Data type of the setting
+	dataType: PluginSettingDataType;
+
+	// Default value for the setting
+	defaultValue?: string;
+
+	// Whether the setting is required
+	isRequired: boolean;
+
+	// Whether the setting is encrypted/sensitive
+	isEncrypted: boolean;
+
+	// Setting description/help text
+	description?: string;
+
+	// Display order for UI
+	order?: number;
+
+	// The plugin this setting belongs to
+	plugin: IPlugin;
+
+	// Foreign key to the plugin
+	pluginId: ID;
+
+	// Optional plugin tenant relationship for tenant-specific settings
+	pluginTenant?: IPluginTenant;
+
+	// Foreign key to the plugin tenant
+	pluginTenantId?: string;
+
+	// Plugin Category relationship (for default category settings)
+	category?: IPluginCategory;
+
+	// Foreign key to the category
+	categoryId?: string;
 }
 
 export interface IPluginBilling extends IBasePerTenantAndOrganizationEntityModel {
-	subscriptionId: string;
+	// Associated subscription
+	subscription: IPluginSubscription;
+	subscriptionId: ID;
+
+	// Billing amount
 	amount: number;
+
+	// Currency code
 	currency: string;
-	status: BillingStatus;
+
+	// Billing date
 	billingDate: Date;
-	paidDate?: Date;
+
+	// Due date for payment
 	dueDate: Date;
-	invoiceNumber: string;
-	paymentMethodId?: string;
-	transactionId?: string;
-	failureReason?: string;
-	retryCount: number;
+
+	// Billing status
+	status: PluginBillingStatus;
+
+	// Billing period information
+	billingPeriod: PluginBillingPeriod;
+	billingPeriodStart: Date;
+	billingPeriodEnd: Date;
+
+	// Billing description/notes
+	description?: string;
+
+	// Billing metadata
 	metadata?: Record<string, any>;
 }
 
@@ -223,9 +383,200 @@ export interface IGauzySource extends IPluginSource {
 }
 
 /**
+ * IPluginTenant Interface
+ * Defines the contract for plugin installation and configuration at tenant/organization level
+ */
+export interface IPluginTenant extends IBasePerTenantAndOrganizationEntityModel {
+	/*
+	|--------------------------------------------------------------------------
+	| Core Properties
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Whether the plugin is enabled for this tenant
+	 */
+	enabled: boolean;
+
+	/**
+	 * Scope of the plugin (USER, ORGANIZATION, TENANT)
+	 */
+	scope: PluginScope;
+
+	/*
+	|--------------------------------------------------------------------------
+	| Access Control & Permissions
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Whether plugin can be installed automatically without user action
+	 */
+	autoInstall?: boolean;
+
+	/**
+	 * Whether plugin requires admin approval before installation
+	 */
+	requiresApproval?: boolean;
+
+	/**
+	 * Whether plugin is mandatory for all users in scope
+	 */
+	isMandatory?: boolean;
+
+	/*
+	|--------------------------------------------------------------------------
+	| Usage Limits & Quotas
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Maximum number of installations allowed (-1 for unlimited, null for no limit)
+	 */
+	maxInstallations?: number;
+
+	/**
+	 * Maximum number of active users allowed (-1 for unlimited, null for no limit)
+	 */
+	maxActiveUsers?: number;
+
+	/**
+	 * Current number of installations
+	 */
+	currentInstallations?: number;
+
+	/**
+	 * Current number of active users
+	 */
+	currentActiveUsers?: number;
+
+	/*
+	|--------------------------------------------------------------------------
+	| Tenant-Specific Configuration
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Tenant-specific plugin configuration overrides
+	 */
+	tenantConfiguration?: Record<string, any>;
+
+	/**
+	 * Plugin preferences and UI customizations for this tenant
+	 */
+	preferences?: Record<string, any>;
+
+	/*
+	|--------------------------------------------------------------------------
+	| Compliance & Security
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Timestamp when the plugin was approved for this tenant
+	 */
+	approvedAt?: Date;
+
+	/**
+	 * ID of the user who approved the plugin for this tenant
+	 */
+	approvedById?: ID;
+
+	/**
+	 * Whether plugin data handling complies with tenant data policies
+	 */
+	isDataCompliant?: boolean;
+
+	/**
+	 * List of compliance certifications applicable to this tenant
+	 */
+	complianceCertifications?: string[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| Relationships
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Plugin ID
+	 */
+	pluginId: ID;
+
+	/**
+	 * The plugin this configuration applies to
+	 */
+	plugin?: IPlugin;
+
+	/**
+	 * User who approved the plugin for this tenant
+	 */
+	approvedBy?: IUser;
+
+	/**
+	 * Roles explicitly allowed to access this plugin
+	 */
+	allowedRoles?: IRole[];
+
+	/**
+	 * Users explicitly allowed to access this plugin
+	 */
+	allowedUsers?: IUser[];
+
+	/**
+	 * Users explicitly denied access to this plugin
+	 */
+	deniedUsers?: IUser[];
+
+	/**
+	 * Plugin settings specific to this tenant
+	 */
+	settings?: IPluginSetting[];
+
+	/**
+	 * Active subscriptions for this plugin tenant
+	 */
+	subscriptions?: IPluginSubscription[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| Virtual Properties
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Whether any quota (installations or users) is exceeded
+	 */
+	isQuotaExceeded?: boolean;
+
+	/**
+	 * Whether any limits are configured
+	 */
+	hasLimits?: boolean;
+
+	/**
+	 * Percentage of installation quota used (0-100)
+	 */
+	installationUtilization?: number;
+
+	/**
+	 * Percentage of user quota used (0-100)
+	 */
+	userUtilization?: number;
+}
+
+export enum PluginPricingType {
+	FREE = 'free',
+	ONE_TIME = 'one_time',
+	SUBSCRIPTION = 'subscription',
+	FREEMIUM = 'freemium',
+	USAGE_BASED = 'usage_based'
+}
+
+/**
  * Main plugin interface definition
  */
-export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
+export interface IPlugin extends IBaseEntityModel {
 	name: string; // Plugin name
 	description?: string; // Optional description
 	type: PluginType; // Type of the plugin
@@ -281,11 +632,26 @@ export interface IPluginCategory extends IBasePerTenantAndOrganizationEntityMode
 /**
  * Plugin tag interface
  */
-export interface IPluginTag {
-	id: string;
-	name: string;
-	color?: string;
-	isFeatured?: boolean;
+export interface IPluginTag extends IBasePerTenantAndOrganizationEntityModel {
+	/**
+	 * The plugin associated with this tag relationship
+	 */
+	plugin: IPlugin;
+
+	/**
+	 * ID reference to the plugin
+	 */
+	pluginId: ID;
+
+	/**
+	 * The tag associated with this plugin relationship
+	 */
+	tag: ITag;
+
+	/**
+	 * ID reference to the tag
+	 */
+	tagId: ID;
 }
 
 /**

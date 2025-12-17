@@ -1,8 +1,9 @@
+import { PluginInstallationStatus, PluginScope } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginInstallation, PluginInstallationService, PluginSubscriptionAccessService } from '../../../../domain';
-import { IPluginInstallation, PluginInstallationStatus, PluginScope } from '../../../../shared';
+import { IPluginInstallation } from '../../../../shared';
 import { InstallPluginCommand } from '../../commands/install-plugin.command';
 
 /**

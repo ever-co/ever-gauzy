@@ -1,8 +1,8 @@
+import { PluginBillingPeriod, PluginBillingStatus } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
-import { IPluginBillingCreateInput, PluginBillingPeriod } from '../models';
-import { PluginBillingStatus } from '../models/plugin-billing.model';
+import { IPluginBillingCreateInput } from '../models';
 
 export class CreatePluginBillingDTO implements IPluginBillingCreateInput {
 	@ApiProperty({

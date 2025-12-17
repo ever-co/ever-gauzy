@@ -1,9 +1,10 @@
+import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import { PluginSubscriptionService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
-import { IPluginSubscription, PluginSubscriptionStatus } from '../../../../shared';
+import { IPluginSubscription } from '../../../../shared';
 import { UpgradePluginSubscriptionCommand } from '../upgrade-plugin-subscription.command';
 
 @CommandHandler(UpgradePluginSubscriptionCommand)

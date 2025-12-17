@@ -1,4 +1,4 @@
-import { ID, IUser } from '@gauzy/contracts';
+import { ID, IUser, PluginSettingDataType } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -11,7 +11,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, ValidateIf } from 'class-validator';
 import { Index, JoinColumn, Relation, RelationId } from 'typeorm';
 import { IPluginCategory } from '../../shared/models/plugin-category.model';
-import { IPluginSetting, PluginSettingDataType } from '../../shared/models/plugin-setting.model';
+import { IPluginSetting } from '../../shared/models/plugin-setting.model';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { PluginCategory } from './plugin-category.entity';

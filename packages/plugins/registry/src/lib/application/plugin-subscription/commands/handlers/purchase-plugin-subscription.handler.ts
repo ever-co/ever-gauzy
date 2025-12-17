@@ -1,9 +1,10 @@
+import { PluginBillingPeriod, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { PluginSubscriptionPlanService, PluginSubscriptionService, PluginTenantService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
-import { IPluginSubscription, PluginBillingPeriod, PluginScope, PluginSubscriptionStatus } from '../../../../shared';
+import { IPluginSubscription } from '../../../../shared';
 import { PurchasePluginSubscriptionCommand } from '../purchase-plugin-subscription.command';
 
 @CommandHandler(PurchasePluginSubscriptionCommand)
@@ -210,7 +211,6 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 				// For one-time payments, set end date far in the future
 				endDate.setFullYear(endDate.getFullYear() + 99);
 				break;
-			case PluginBillingPeriod.USAGE_BASED:
 			default:
 				// Default to monthly for usage-based and unknown billing periods
 				endDate.setMonth(endDate.getMonth() + 1);

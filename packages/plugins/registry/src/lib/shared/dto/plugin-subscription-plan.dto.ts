@@ -1,4 +1,4 @@
-import { CurrenciesEnum, ID } from '@gauzy/contracts';
+import { CurrenciesEnum, ID, PluginBillingPeriod, PluginSubscriptionType } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
@@ -14,7 +14,6 @@ import {
 	MaxLength,
 	Min
 } from 'class-validator';
-import { PluginBillingPeriod, PluginSubscriptionType } from '../../shared/models/plugin-subscription.model';
 
 /**
  * Helper function to transform string to boolean
