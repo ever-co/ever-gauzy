@@ -17,7 +17,7 @@
 <!-- Check if the current user is the owner of the plugin -->
 @let editing = marketplaceQuery.updating$(plugin?.id) | async;
 <!-- Subscription  -->
-@let subscription = plugin.subscriptions[0];
+@let subscription = plugin?.subscriptions?.[0];
 <!-- Main template -->
 @if(plugin) {
 <div
@@ -114,11 +114,15 @@
 	<div class="plugin-subscription">
 		<div class="subscription-info">
 			<div class="subscription-type">
-				<nb-icon [icon]="getSubscriptionIcon(subscription.plan?.type)"></nb-icon>
-				<span>{{ subscription.plan?.name || (subscription.plan?.type | titlecase) }}</span>
+				<div class="d-flex align-items-center">
+					<nb-icon [icon]="getSubscriptionIcon(subscription.plan?.type)"></nb-icon>
+					<span>{{ subscription.plan?.name || (subscription.plan?.type | titlecase) }}</span>
+				</div>
 				@if(subscription.plan?.price > 0) {
-				<span class="price">{{ subscription.plan?.price | currency : subscription.plan?.currency }}</span>
-				<span class="billing-period">/{{ subscription.plan?.billingPeriod?.toLowerCase() }}</span>
+				<div class="d-flex align-items-center">
+					<span class="price">{{ subscription.plan?.price | currency : subscription.plan?.currency }}</span>
+					<span class="billing-period">/{{ subscription.plan?.billingPeriod?.toLowerCase() }}</span>
+				</div>
 				}
 			</div>
 
