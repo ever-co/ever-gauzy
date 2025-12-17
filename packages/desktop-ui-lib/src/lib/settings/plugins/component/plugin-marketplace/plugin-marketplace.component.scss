@@ -28,6 +28,8 @@
   height: fit-content;
   max-height: calc(100vh - 12.75rem);
   overflow: auto;
+  position: sticky;
+  top: 0;
 
   @media (max-width: 768px) {
     position: relative;
@@ -195,7 +197,7 @@
   overflow: auto;
   flex: 1;
 
-  &.grid-view {
+  .grid-view {
     // Grid view: plugins will be displayed in cards
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -501,7 +503,10 @@ nb-button-group {
 
   .plugin-list {
     border-radius: calc(var(--border-radius) * 2.25);
-    max-height: none !important;
+    overflow: auto;
+    height: calc(100vh - 24.125rem);
+    padding: 1rem;
+    background-color: var(--gauzy-card-2);
   }
 }
 

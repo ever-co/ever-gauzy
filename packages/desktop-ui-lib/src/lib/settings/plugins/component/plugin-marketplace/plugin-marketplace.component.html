@@ -4,7 +4,7 @@ query.uploadProgress$() | async; @let isOffline = store.isOffline$ | async; @let
 @let filteredCount = query.filteredCount$ | async; @let showAdvancedFilters = query.showAdvancedFilters$ | async; @let
 selectedView = query.selectedView$ | async;
 
-<div class="marketplace-container">
+<div class="marketplace-container content-active first">
 	<!-- Filter Panel -->
 	<div class="filter-panel">
 		<lib-plugin-marketplace-filter
@@ -80,7 +80,7 @@ selectedView = query.selectedView$ | async;
 			[threshold]="500"
 			[throttleTime]="300"
 			(bottomThreshold)="loadMore()"
-			class="content-active first plugin-list"
+			class="plugin-list"
 			[class.grid-view]="selectedView === 'grid'"
 			[class.list-view]="selectedView === 'list'"
 		>
