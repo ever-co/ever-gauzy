@@ -65,7 +65,7 @@ export class PluginPlanActions {
 
 	public static bulkCreatePlans = createAction(
 		'[Plugin Plan] Bulk Create Plans',
-		(plansData: Array<Omit<IPluginSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | 'isActive'>>) => ({
+		(plansData: Array<Partial<IPluginSubscriptionPlan>>) => ({
 			plansData
 		})
 	);

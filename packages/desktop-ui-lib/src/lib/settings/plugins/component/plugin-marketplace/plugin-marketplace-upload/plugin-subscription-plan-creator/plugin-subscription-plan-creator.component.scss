@@ -756,9 +756,7 @@
     transform: translateY(0);
   }
 }
-::ng-deep {
-  [button] {
-    justify-content: center;
-    border-radius: calc(var(--border-radius) * 1.2) !important;
-  }
+[nbButton] {
+  justify-content: center;
+  border-radius: calc(var(--border-radius) * 1.2) !important;
 }

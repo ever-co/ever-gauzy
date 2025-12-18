@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { IPlugin, IPluginPlanCreateInput } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { PluginSubscriptionFacade } from '../../+state/plugin-subscription.facade';
+import { filter, pairwise, take } from 'rxjs';
+import { PluginPlanActions } from '../../+state/actions/plugin-plan.action';
+import { PluginPlanQuery } from '../../+state/queries/plugin-plan.query';
 
 @Component({
 	selector: 'lib-dialog-subscription-plan-creator',
@@ -17,7 +19,7 @@ export class DialogSubscriptionPlanCreatorComponent {
 	isPlanValid = true;
 
 	private readonly dialogRef = inject(NbDialogRef<DialogSubscriptionPlanCreatorComponent>);
-	private readonly subscriptionFacade = inject(PluginSubscriptionFacade);
+	private readonly planQuery = inject(PluginPlanQuery);
 
 	onClose(): void {
 		this.dialogRef.close();
@@ -32,10 +34,13 @@ export class DialogSubscriptionPlanCreatorComponent {
 	}
 
 	onSaved(): void {
-		//TODO: Add logic to save new plans
-		if (this.pluginId) {
-			this.subscriptionFacade.loadPluginPlans(this.pluginId);
-		}
-		this.dialogRef.close(true);
+		PluginPlanActions.bulkCreatePlans(this.plans);
+		this.planQuery.creating$
+			.pipe(
+				pairwise(),
+				filter(([wasCreating, isCreating]) => wasCreating && !isCreating),
+				take(1)
+			)
+			.subscribe(() => this.dialogRef.close(true));
 	}
 }

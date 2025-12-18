@@ -187,9 +187,7 @@ export class PluginSubscriptionFacade {
 		this.actions$.dispatch(PluginPlanActions.deletePlan(planId));
 	}
 
-	public bulkCreatePlans(
-		plansData: Array<Omit<IPluginSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | 'isActive'>>
-	): void {
+	public bulkCreatePlans(plansData: Array<Partial<IPluginSubscriptionPlan>>): void {
 		this.actions$.dispatch(PluginPlanActions.bulkCreatePlans(plansData));
 	}
 
