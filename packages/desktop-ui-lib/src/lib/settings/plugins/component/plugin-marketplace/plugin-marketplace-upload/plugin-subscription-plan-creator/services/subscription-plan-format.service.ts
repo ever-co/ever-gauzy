@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { PluginBillingPeriod } from '../../../../../services/plugin-subscription.service';
+import { PlanFormatterService } from '../../../plugin-subscription-plan-selection';
 
 /**
  * Service for formatting subscription plan data
@@ -10,7 +11,7 @@ import { PluginBillingPeriod } from '../../../../../services/plugin-subscription
 @Injectable({
 	providedIn: 'root'
 })
-export class SubscriptionPlanFormatService {
+export class SubscriptionPlanFormatService extends PlanFormatterService {
 	/**
 	 * Formats a number as currency using browser's Intl API
 	 */

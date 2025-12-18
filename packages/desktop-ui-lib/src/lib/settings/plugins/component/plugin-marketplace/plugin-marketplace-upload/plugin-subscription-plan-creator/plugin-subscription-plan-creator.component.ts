@@ -10,7 +10,7 @@ import {
 	Output
 } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
-import { Observable, of, Subject } from 'rxjs';
+import { asyncScheduler, Observable, of, Subject } from 'rxjs';
 import { filter, take, takeUntil } from 'rxjs/operators';
 import { PluginSubscriptionFacade } from '../../+state/plugin-subscription.facade';
 import {
@@ -64,11 +64,21 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	public plansForm!: FormGroup;
 	private destroy$ = new Subject<void>();
 	private isInitialized = false;
-	private plansLoaded = false;
+	public plansLoaded = false;
 
 	// Track existing plan IDs to differentiate between new and existing plans
 	private existingPlanIds = new Set<string>();
 	private planIdMap = new Map<number, string>(); // Maps form array index to plan ID
+
+	// Track loading state per plan
+	private planLoadingState = new Map<number, boolean>();
+
+	// Track advanced options expansion state
+	private advancedOptionsExpanded = new Set<number>();
+
+	// Success message subject
+	private successMessageSubject = new Subject<string>();
+	public readonly successMessage$ = this.successMessageSubject.asObservable();
 
 	// Expose enums to template
 	public readonly PluginSubscriptionType = PluginSubscriptionType;
@@ -223,10 +233,11 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	 * Uses the form builder service for plan creation
 	 */
 	public addPlan(plan?: Partial<IPluginPlanCreateInput>): void {
-		if (!this.allowMultiplePlans && this.plans.length > 0) {
-			return;
-		}
+		if (!this.canAddPlan()) return;
+		this.createPlan(plan);
+	}
 
+	public createPlan(plan?: Partial<IPluginPlanCreateInput>): void {
 		const planGroup = this.formBuilderService.createPlanFormGroup(plan);
 		this.plans.push(planGroup);
 		this.emitChanges();
@@ -466,7 +477,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	 * Checks if a plan can be added based on configuration
 	 */
 	public canAddPlan(): boolean {
-		return this.allowMultiplePlans || this.plans.length === 0;
+		return this.allowMultiplePlans && this.hasPlans();
 	}
 
 	/**
@@ -533,8 +544,25 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 
 		console.log('Updating existing plan:', { planId, index, updates });
 
+		// Set loading state for this plan
+		this.setPlanLoading(index, true);
+
 		// Dispatch update action through facade
 		this.subscriptionFacade.updatePlan(planId, updates as any);
+
+		// Listen for update completion
+		this.subscriptionFacade.updating$
+			.pipe(
+				filter((loading) => !loading),
+				take(1),
+				takeUntil(this.destroy$)
+			)
+			.subscribe(() => {
+				this.setPlanLoading(index, false);
+				this.showSuccessMessage('Plan updated successfully');
+				// Mark form as pristine after successful update
+				plan.markAsPristine();
+			});
 	}
 
 	/**
@@ -653,5 +681,103 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 				...plan,
 				pluginId: this.pluginId || plan.pluginId
 			}));
+	}
+
+	/**
+	 * Checks if a specific plan is currently loading
+	 */
+	public isPlanLoading(index: number): boolean {
+		return this.planLoadingState.get(index) || false;
+	}
+
+	/**
+	 * Sets the loading state for a specific plan
+	 */
+	private setPlanLoading(index: number, loading: boolean): void {
+		this.planLoadingState.set(index, loading);
+		this.cdr.markForCheck();
+	}
+
+	/**
+	 * Toggles advanced options for a plan
+	 */
+	public toggleAdvancedOptions(index: number): void {
+		if (this.advancedOptionsExpanded.has(index)) {
+			this.advancedOptionsExpanded.delete(index);
+		} else {
+			this.advancedOptionsExpanded.add(index);
+		}
+	}
+
+	/**
+	 * Checks if advanced options are expanded for a plan
+	 */
+	public isAdvancedOptionsExpanded(index: number): boolean {
+		return this.advancedOptionsExpanded.has(index);
+	}
+
+	/**
+	 * Selects a plan type and applies presets
+	 */
+	public selectPlanType(planIndex: number, type: PluginSubscriptionType): void {
+		const plan = this.plans.at(planIndex) as FormGroup;
+		plan.patchValue({ type }, { emitEvent: false });
+		this.onPlanTypeChange(planIndex);
+	}
+
+	/**
+	 * Clears the success message
+	 */
+	public clearSuccessMessage(): void {
+		this.successMessageSubject.next('');
+	}
+
+	/**
+	 * Shows a success message
+	 */
+	private showSuccessMessage(message: string): void {
+		this.successMessageSubject.next(message);
+		// Auto-clear after 5 seconds
+		asyncScheduler.schedule(() => this.clearSuccessMessage(), 5000);
+	}
+
+	/**
+	 * Determines if additional options should be shown for a plan
+	 * Hides additional options for free plans since they're not relevant
+	 */
+	public shouldShowAdditionalOptions(planIndex: number): boolean {
+		const plan = this.plans.at(planIndex) as FormGroup;
+		if (!plan) {
+			return false;
+		}
+
+		const planType = plan.get('type')?.value;
+		const planPrice = plan.get('price')?.value;
+
+		// Hide additional options for free plans or when price is 0/null
+		if (
+			planType === PluginSubscriptionType.FREE ||
+			planPrice === 0 ||
+			planPrice === null ||
+			planPrice === undefined
+		) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Gets the appropriate icon for a plan type
+	 */
+	public getPlanTypeIcon(type: PluginSubscriptionType): string {
+		return this.formatService.getPlanTypeIcon(type);
+	}
+
+	/**
+	 * Checks if the plans array has any items
+	 */
+	public hasPlans(): boolean {
+		return this.plans && this.plans.length > 0;
 	}
 }

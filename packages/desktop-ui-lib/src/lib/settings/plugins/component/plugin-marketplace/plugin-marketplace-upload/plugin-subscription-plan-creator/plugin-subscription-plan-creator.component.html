@@ -1,38 +1,48 @@
-<div
-	class="subscription-plan-creator"
-	[class.loading]="(loading$ | async) || (creating$ | async) || (updating$ | async) || (deleting$ | async)"
->
-	<!-- Loading Overlay -->
-	@if((loading$ | async) || (creating$ | async) || (updating$ | async) || (deleting$ | async)) {
-	<div class="loading-overlay">
-		<nb-spinner status="primary" size="large"></nb-spinner>
-		<p class="loading-text">
-			@if(loading$ | async) { {{ 'PLUGIN.SUBSCRIPTION.LOADING' | translate }} } @else if(creating$ | async) {
-			{{ 'PLUGIN.SUBSCRIPTION.CREATING' | translate }} } @else if(updating$ | async) {
-			{{ 'PLUGIN.SUBSCRIPTION.UPDATING' | translate }} } @else if(deleting$ | async) {
-			{{ 'PLUGIN.SUBSCRIPTION.DELETING' | translate }} }
-		</p>
-	</div>
-	}
-
+<div class="subscription-plan-creator">
 	<!-- Error Alert -->
 	@if(error$ | async; as error) {
-	<nb-alert status="danger" closable (close)="subscriptionFacade.resetError()">
-		<nb-icon icon="alert-circle-outline"></nb-icon>
-		{{ error }}
+	<nb-alert status="danger" closable (close)="subscriptionFacade.resetError()" class="error-alert">
+		<div class="alert-content">
+			<nb-icon icon="alert-circle-outline"></nb-icon>
+			<div>
+				<strong>Error</strong>
+				<p>{{ error }}</p>
+			</div>
+		</div>
+	</nb-alert>
+	}
+
+	<!-- Success Alert -->
+	@if(successMessage$ | async; as message) {
+	<nb-alert status="success" closable (close)="clearSuccessMessage()" class="success-alert">
+		<div class="alert-content">
+			<nb-icon icon="checkmark-circle-outline"></nb-icon>
+			<div>
+				<strong>Success</strong>
+				<p>{{ message }}</p>
+			</div>
+		</div>
 	</nb-alert>
 	} @if(!dialogMode) {
 	<div class="creator-header">
-		<div class="header-icon">
-			<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+		<div class="header-main">
+			<div class="header-icon">
+				<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+			</div>
+			<div class="header-content">
+				<h6>Subscription Plans</h6>
+				<p class="text-hint">Create pricing plans for your plugin</p>
+			</div>
+			<div class="header-badge" *ngIf="plans?.length > 0">
+				<nb-badge [text]="plans.length + ' Plan' + (plans.length !== 1 ? 's' : '')" status="primary"></nb-badge>
+			</div>
 		</div>
-		<div class="header-content">
-			<h6>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TITLE' | translate }}</h6>
-			<p class="text-hint">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION' | translate }}</p>
+		@if(plans?.length === 0 && plansLoaded) {
+		<div class="header-hint">
+			<nb-icon icon="bulb-outline" status="info"></nb-icon>
+			<span>Start by adding your first subscription plan to monetize your plugin</span>
 		</div>
-		<div class="header-badge" *ngIf="plans?.length > 0">
-			<nb-badge [text]="plans.length + ' Plan' + (plans.length !== 1 ? 's' : '')" status="primary"></nb-badge>
-		</div>
+		}
 	</div>
 	} @if(plansForm) {
 	<form [formGroup]="plansForm" class="plans-form">
@@ -42,51 +52,50 @@
 				*ngFor="let planGroup of plans.controls; let planIndex = index"
 				[formGroupName]="planIndex"
 				class="plan-card"
+				[class.is-loading]="isPlanLoading(planIndex)"
 			>
 				<div class="plan-card-header">
 					<div class="plan-title">
+						@if(isPlanLoading(planIndex)) {
+						<nb-spinner size="small" status="primary"></nb-spinner>
+						} @else {
 						<nb-icon icon="layers-outline" status="primary"></nb-icon>
-						<span>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PLAN' | translate }} {{ planIndex + 1 }}</span>
-						<!-- Indicator for existing vs new plans -->
-						<nb-badge
-							*ngIf="isExistingPlan(planIndex)"
-							text="Existing"
-							status="basic"
-							position="top left"
-						></nb-badge>
-						<nb-badge
-							*ngIf="!isExistingPlan(planIndex)"
-							text="New"
-							status="primary"
-							position="top left"
-						></nb-badge>
-						<nb-badge
-							*ngIf="planGroup.get('isPopular')?.value"
-							text="Popular"
-							status="success"
-							position="top right"
-						></nb-badge>
-						<nb-badge
-							*ngIf="planGroup.get('isRecommended')?.value"
-							text="Recommended"
-							status="info"
-							position="top right"
-						></nb-badge>
+						}
+						<span>{{ planGroup.get('name')?.value || 'Plan ' + (planIndex + 1) }}</span>
+						<div class="badges-group">
+							<nb-badge
+								*ngIf="isExistingPlan(planIndex) && !planGroup.dirty"
+								text="Saved"
+								status="success"
+							></nb-badge>
+							<nb-badge *ngIf="planGroup.dirty" text="Unsaved" status="warning"></nb-badge>
+							<nb-badge
+								*ngIf="planGroup.get('isPopular')?.value"
+								text="Popular"
+								status="success"
+							></nb-badge>
+							<nb-badge
+								*ngIf="planGroup.get('isRecommended')?.value"
+								text="Recommended"
+								status="info"
+							></nb-badge>
+						</div>
 					</div>
 					<div class="plan-actions">
-						<!-- Update button for existing plans -->
+						<!-- Save button for dirty plans -->
 						<button
-							*ngIf="isExistingPlan(planIndex)"
+							*ngIf="isExistingPlan(planIndex) && planGroup.dirty"
 							type="button"
 							nbButton
-							ghost
-							size="small"
 							status="primary"
-							nbTooltip="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.UPDATE_PLAN' | translate }}"
+							size="small"
+							nbTooltip="Save changes"
 							nbTooltipPlacement="top"
 							(click)="updateExistingPlan(planIndex)"
+							[disabled]="isPlanLoading(planIndex) || planGroup.invalid"
 						>
 							<nb-icon icon="save-outline"></nb-icon>
+							Save
 						</button>
 						<!-- Duplicate button -->
 						<button
@@ -95,28 +104,26 @@
 							nbButton
 							ghost
 							size="small"
-							status="info"
-							nbTooltip="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DUPLICATE_PLAN' | translate }}"
+							status="basic"
+							nbTooltip="Duplicate this plan"
 							nbTooltipPlacement="top"
 							(click)="duplicatePlan(planIndex)"
+							[disabled]="isPlanLoading(planIndex)"
 						>
 							<nb-icon icon="copy-outline"></nb-icon>
 						</button>
-						<!-- Delete button (shows confirmation for existing plans) -->
+						<!-- Delete button -->
 						<button
 							*ngIf="canRemovePlan()"
 							type="button"
 							nbButton
 							ghost
 							size="small"
-							[status]="isExistingPlan(planIndex) ? 'danger' : 'basic'"
-							nbTooltip="{{
-								isExistingPlan(planIndex)
-									? ('PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DELETE_PLAN' | translate)
-									: ('PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.REMOVE_PLAN' | translate)
-							}}"
+							status="danger"
+							nbTooltip="{{ isExistingPlan(planIndex) ? 'Delete plan permanently' : 'Remove plan' }}"
 							nbTooltipPlacement="top"
 							(click)="removePlan(planIndex)"
+							[disabled]="isPlanLoading(planIndex)"
 						>
 							<nb-icon icon="trash-2-outline"></nb-icon>
 						</button>
@@ -124,170 +131,143 @@
 				</div>
 
 				<div class="plan-card-body">
-					<!-- Plan Type -->
-					<div class="form-row">
-						<nb-form-field class="form-group">
-							<label class="label">
-								<nb-icon icon="grid-outline" status="primary"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TYPE' | translate }} *
-							</label>
-							<nb-select
-								fullWidth
-								formControlName="type"
-								placeholder="{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.SELECT_TYPE' | translate }}"
-								(selectionChange)="onPlanTypeChange(planIndex)"
+					<!-- Plan Type Selection -->
+					<div class="form-section type-selector">
+						<label class="section-label">
+							<nb-icon icon="grid-outline" status="primary"></nb-icon>
+							Plan Type *
+						</label>
+						<div class="type-options">
+							<button
+								*ngFor="let type of PluginSubscriptionType | keyvalue"
+								type="button"
+								class="type-option"
+								[class.selected]="planGroup.get('type')?.value === type.value"
+								(click)="selectPlanType(planIndex, type.value)"
 							>
-								<nb-option *ngFor="let type of PluginSubscriptionType | keyvalue" [value]="type.value">
-									<nb-icon
-										[icon]="
-											type.value === 'FREE'
-												? 'gift-outline'
-												: type.value === 'PAID'
-												? 'credit-card-outline'
-												: 'infinity-outline'
-										"
-									></nb-icon>
-									{{ type.value | titlecase }}
-								</nb-option>
-							</nb-select>
-						</nb-form-field>
+								<nb-icon [icon]="getPlanTypeIcon(type.value)"></nb-icon>
+								<span>{{ type.value | titlecase }}</span>
+							</button>
+						</div>
 					</div>
 
-					<!-- Plan Name and Description -->
-					<div class="form-row">
+					<!-- Basic Information -->
+					<div class="form-section basic-info">
+						<label class="section-label">
+							<nb-icon icon="edit-2-outline" status="primary"></nb-icon>
+							Basic Information
+						</label>
+
 						<nb-form-field
 							class="form-group"
+							[class.has-error]="planGroup.get('name')?.invalid && planGroup.get('name')?.touched"
 							[class.has-success]="planGroup.get('name')?.valid && planGroup.get('name')?.touched"
 						>
 							<label class="label">
-								<nb-icon icon="text-outline" status="primary"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME' | translate }} *
+								Plan Name *
+								<span class="hint-text">This name will be displayed to customers</span>
 							</label>
 							<div class="input-wrapper">
 								<input
 									nbInput
 									fullWidth
 									formControlName="name"
-									placeholder="{{
-										'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NAME_PLACEHOLDER' | translate
-									}}"
+									placeholder="e.g., Basic, Pro, Enterprise"
 								/>
-								<nb-icon
-									*ngIf="planGroup.get('name')?.valid && planGroup.get('name')?.touched"
-									icon="checkmark-circle-2"
-									status="success"
-									class="success-icon"
-								></nb-icon>
+								@if(planGroup.get('name')?.valid && planGroup.get('name')?.touched) {
+								<nb-icon icon="checkmark-circle-2" status="success" class="status-icon"></nb-icon>
+								} @if(planGroup.get('name')?.invalid && planGroup.get('name')?.touched) {
+								<nb-icon icon="alert-circle-outline" status="danger" class="status-icon"></nb-icon>
+								}
 							</div>
+							@if(planGroup.get('name')?.invalid && planGroup.get('name')?.touched) {
+							<span class="error-text">Plan name is required</span>
+							}
 						</nb-form-field>
-					</div>
 
-					<div class="form-row">
 						<nb-form-field
 							class="form-group"
+							[class.has-error]="
+								planGroup.get('description')?.invalid && planGroup.get('description')?.touched
+							"
 							[class.has-success]="
 								planGroup.get('description')?.valid && planGroup.get('description')?.touched
 							"
 						>
 							<label class="label">
-								<nb-icon icon="file-text-outline" status="primary"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PLAN_DESCRIPTION' | translate }} *
+								Description *
+								<span class="hint-text">Describe what this plan offers</span>
 							</label>
-							<div class="input-wrapper">
-								<textarea
-									nbInput
-									fullWidth
-									formControlName="description"
-									rows="3"
-									placeholder="{{
-										'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DESCRIPTION_PLACEHOLDER' | translate
-									}}"
-								></textarea>
-								<nb-icon
-									*ngIf="planGroup.get('description')?.valid && planGroup.get('description')?.touched"
-									icon="checkmark-circle-2"
-									status="success"
-									class="success-icon"
-								></nb-icon>
+							<textarea
+								nbInput
+								fullWidth
+								formControlName="description"
+								rows="3"
+								placeholder="Provide a clear description of the plan's value and benefits"
+							></textarea>
+							<div class="field-footer">
+								@if(planGroup.get('description')?.invalid && planGroup.get('description')?.touched) {
+								<span class="error-text">Description is required</span>
+								}
+								<span class="char-count" *ngIf="planGroup.get('description')?.value">
+									{{ planGroup.get('description')?.value.length }}/500
+								</span>
 							</div>
-							<span class="char-count" *ngIf="planGroup.get('description')?.value">
-								{{ planGroup.get('description')?.value.length }} characters
-							</span>
 						</nb-form-field>
 					</div>
 
 					<!-- Pricing -->
-					<div class="form-row pricing-row">
-						<nb-form-field class="form-group price-group">
-							<label class="label">
-								<nb-icon icon="pricetags-outline" status="success"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PRICE' | translate }} *
-							</label>
-							<input
-								nbInput
-								fullWidth
-								type="number"
-								formControlName="price"
-								min="0"
-								step="0.01"
-								placeholder="0.00"
-							/>
-						</nb-form-field>
+					<div class="form-section pricing-section">
+						<label class="section-label">
+							<nb-icon icon="pricetags-outline" status="success"></nb-icon>
+							Pricing
+						</label>
 
-						<nb-form-field class="form-group currency-group">
-							<label class="label">
-								<nb-icon icon="trending-up-outline" status="success"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.CURRENCY' | translate }} *
-							</label>
-							<nb-select fullWidth formControlName="currency">
-								<nb-option value="USD">
-									<nb-icon icon="dollar-sign-outline"></nb-icon>
-									USD ($)
-								</nb-option>
-								<nb-option value="EUR">
-									<nb-icon icon="euro-outline"></nb-icon>
-									EUR (€)
-								</nb-option>
-								<nb-option value="GBP">
-									<nb-icon icon="pound-outline"></nb-icon>
-									GBP (£)
-								</nb-option>
-								<nb-option value="JPY">
-									<nb-icon icon="yen-outline"></nb-icon>
-									JPY (¥)
-								</nb-option>
-							</nb-select>
-						</nb-form-field>
+						<div class="pricing-grid">
+							<nb-form-field class="form-group">
+								<label class="label">Price *</label>
+								<input
+									nbInput
+									fullWidth
+									type="number"
+									formControlName="price"
+									min="0"
+									step="0.01"
+									placeholder="0.00"
+								/>
+							</nb-form-field>
 
-						<nb-form-field class="form-group billing-group">
-							<label class="label">
-								<nb-icon icon="calendar-outline" status="success"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.BILLING_PERIOD' | translate }} *
-							</label>
-							<nb-select fullWidth formControlName="billingPeriod">
-								<nb-option *ngFor="let period of PluginBillingPeriod | keyvalue" [value]="period.value">
-									<nb-icon icon="clock-outline"></nb-icon>
-									{{ formatBillingPeriod(period.value) | titlecase }}
-								</nb-option>
-							</nb-select>
-						</nb-form-field>
-					</div>
+							<nb-form-field class="form-group">
+								<label class="label">Currency *</label>
+								<nb-select fullWidth formControlName="currency">
+									<nb-option value="USD">USD ($)</nb-option>
+									<nb-option value="EUR">EUR (€)</nb-option>
+									<nb-option value="GBP">GBP (£)</nb-option>
+									<nb-option value="JPY">JPY (¥)</nb-option>
+								</nb-select>
+							</nb-form-field>
 
-					<!-- Price Preview -->
-					<div class="price-preview" *ngIf="planGroup.get('price')?.value >= 0">
-						<div class="preview-card">
-							<div class="preview-label">
-								<nb-icon icon="eye-outline" status="info"></nb-icon>
-								<span>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.PRICE_PREVIEW' | translate }}</span>
-							</div>
+							<nb-form-field class="form-group">
+								<label class="label">Billing Period *</label>
+								<nb-select fullWidth formControlName="billingPeriod">
+									<nb-option
+										*ngFor="let period of PluginBillingPeriod | keyvalue"
+										[value]="period.value"
+									>
+										{{ formatBillingPeriod(period.value) | titlecase }}
+									</nb-option>
+								</nb-select>
+							</nb-form-field>
+						</div>
+
+						<!-- Price Preview -->
+						<div class="price-preview" *ngIf="planGroup.get('price')?.value >= 0">
+							<div class="preview-label">Preview:</div>
 							<div class="preview-value" *ngIf="planGroup.get('price')?.value === 0">
 								<nb-icon icon="gift-outline" status="success"></nb-icon>
-								<span class="price-text free">{{
-									'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FREE' | translate
-								}}</span>
+								<span class="price-text free">Free</span>
 							</div>
 							<div class="preview-value" *ngIf="planGroup.get('price')?.value > 0">
-								<nb-icon icon="credit-card-outline" status="primary"></nb-icon>
 								<span class="price-text">
 									{{
 										formatCurrency(planGroup.get('price')?.value, planGroup.get('currency')?.value)
@@ -301,26 +281,11 @@
 					</div>
 
 					<!-- Features -->
-					<div class="form-section">
-						<div class="section-header">
-							<label class="label">
-								<nb-icon icon="checkmark-square-outline" status="success"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FEATURES' | translate }} *
-							</label>
-							<button
-								type="button"
-								nbButton
-								ghost
-								size="small"
-								status="success"
-								nbTooltip="Add a new feature"
-								nbTooltipPlacement="top"
-								(click)="addFeature(planIndex)"
-							>
-								<nb-icon icon="plus-circle-outline"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.ADD_FEATURE' | translate }}
-							</button>
-						</div>
+					<div class="form-section features-section">
+						<label class="section-label">
+							<nb-icon icon="checkmark-square-outline" status="success"></nb-icon>
+							Features *
+						</label>
 
 						<div class="features-list">
 							<div
@@ -331,16 +296,12 @@
 								class="feature-item"
 							>
 								<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
-								<nb-form-field class="feature-input">
-									<input
-										nbInput
-										fullWidth
-										[formControl]="featureControl"
-										placeholder="{{
-											'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.FEATURE_PLACEHOLDER' | translate
-										}}"
-									/>
-								</nb-form-field>
+								<input
+									nbInput
+									fullWidth
+									[formControl]="featureControl"
+									placeholder="Enter a feature (e.g., Unlimited projects)"
+								/>
 								<button
 									*ngIf="getPlanFeatures(planIndex).length > 1"
 									type="button"
@@ -348,37 +309,35 @@
 									ghost
 									size="small"
 									status="danger"
-									nbTooltip="Remove feature"
-									nbTooltipPlacement="top"
 									(click)="removeFeature(planIndex, featureIndex)"
 								>
-									<nb-icon icon="close-circle-outline"></nb-icon>
+									<nb-icon icon="close-outline"></nb-icon>
 								</button>
 							</div>
-						</div>
-					</div>
 
-					<!-- Limitations -->
-					<div class="form-section" formArrayName="limitations">
-						<div class="section-header">
-							<label class="label">
-								<nb-icon icon="lock-outline" status="warning"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.LIMITATIONS' | translate }}
-							</label>
+							<!-- Add Feature Button at Bottom -->
 							<button
 								type="button"
 								nbButton
 								ghost
-								size="small"
-								status="warning"
-								nbTooltip="Add a limitation"
-								nbTooltipPlacement="top"
-								(click)="addLimitation(planIndex)"
+								fullWidth
+								status="success"
+								class="add-item-button"
+								(click)="addFeature(planIndex)"
 							>
-								<nb-icon icon="plus-circle-outline"></nb-icon>
-								Add limitation
+								<nb-icon icon="plus-outline"></nb-icon>
+								Add Feature
 							</button>
 						</div>
+					</div>
+
+					<!-- Limitations -->
+					<div class="form-section limitations-section" formArrayName="limitations">
+						<label class="section-label">
+							<nb-icon icon="lock-outline" status="warning"></nb-icon>
+							Limitations
+						</label>
+
 						<div class="limitations-list">
 							<div
 								*ngFor="
@@ -389,113 +348,129 @@
 								[formGroupName]="limitationIndex"
 							>
 								<nb-form-field class="form-group">
-									<label class="label">
-										<nb-icon icon="edit-2-outline"></nb-icon>
-										Limitation name
-									</label>
-									<input nbInput fullWidth formControlName="key" placeholder="e.g. maxUsers" />
+									<input nbInput fullWidth formControlName="key" placeholder="e.g., maxUsers" />
 								</nb-form-field>
 
 								<nb-form-field class="form-group">
+									<input nbInput fullWidth formControlName="value" placeholder="e.g., 10" />
+								</nb-form-field>
+
+								<button
+									type="button"
+									nbButton
+									ghost
+									size="small"
+									status="danger"
+									(click)="removeLimitation(planIndex, limitationIndex)"
+								>
+									<nb-icon icon="close-outline"></nb-icon>
+								</button>
+							</div>
+
+							<!-- Add Limitation Button at Bottom -->
+							<button
+								type="button"
+								nbButton
+								ghost
+								fullWidth
+								status="warning"
+								class="add-item-button"
+								(click)="addLimitation(planIndex)"
+							>
+								<nb-icon icon="plus-outline"></nb-icon>
+								Add Limitation
+							</button>
+						</div>
+					</div>
+
+					<!-- Additional Options (Collapsible) - Hidden for Free Plans -->
+					@if(shouldShowAdditionalOptions(planIndex)) {
+					<div class="form-section collapsible-section">
+						<button type="button" class="section-toggle" (click)="toggleAdvancedOptions(planIndex)">
+							<nb-icon icon="settings-2-outline" status="info"></nb-icon>
+							<span>Additional Options</span>
+							<nb-icon
+								[icon]="
+									isAdvancedOptionsExpanded(planIndex) ? 'chevron-up-outline' : 'chevron-down-outline'
+								"
+								class="toggle-icon"
+							></nb-icon>
+						</button>
+
+						@if(isAdvancedOptionsExpanded(planIndex)) {
+						<div class="options-content">
+							<div class="options-grid">
+								<nb-form-field class="form-group">
 									<label class="label">
-										<nb-icon icon="hash-outline"></nb-icon>
-										Value
+										<nb-icon icon="clock-outline"></nb-icon>
+										Trial Days
 									</label>
 									<input
 										nbInput
 										fullWidth
-										formControlName="value"
-										placeholder="{{
-											'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.UNLIMITED' | translate
-										}}"
+										type="number"
+										formControlName="trialDays"
+										min="0"
+										max="365"
+										placeholder="0"
 									/>
 								</nb-form-field>
 
-								<div class="limitation-actions">
-									<button
-										type="button"
-										nbButton
-										ghost
-										size="small"
-										status="danger"
-										nbTooltip="Remove limitation"
-										nbTooltipPlacement="top"
-										(click)="removeLimitation(planIndex, limitationIndex)"
-									>
-										<nb-icon icon="close-circle-outline"></nb-icon>
-									</button>
-								</div>
+								<nb-form-field class="form-group">
+									<label class="label">
+										<nb-icon icon="credit-card-outline"></nb-icon>
+										Setup Fee
+									</label>
+									<input
+										nbInput
+										fullWidth
+										type="number"
+										formControlName="setupFee"
+										min="0"
+										step="0.01"
+										placeholder="0.00"
+									/>
+								</nb-form-field>
+
+								<nb-form-field class="form-group">
+									<label class="label">
+										<nb-icon icon="percent-outline"></nb-icon>
+										Discount %
+									</label>
+									<input
+										nbInput
+										fullWidth
+										type="number"
+										formControlName="discountPercentage"
+										min="0"
+										max="100"
+										placeholder="0"
+									/>
+								</nb-form-field>
+							</div>
+
+							<div class="checkboxes-row">
+								<nb-checkbox formControlName="isPopular">
+									<nb-icon icon="star-outline" status="success"></nb-icon>
+									Mark as Popular
+								</nb-checkbox>
+								<nb-checkbox formControlName="isRecommended">
+									<nb-icon icon="award-outline" status="info"></nb-icon>
+									Mark as Recommended
+								</nb-checkbox>
 							</div>
 						</div>
+						}
 					</div>
+					}
 
-					<!-- Additional Options -->
-					<div class="form-section">
-						<label class="label section-title">
-							<nb-icon icon="settings-2-outline" status="info"></nb-icon>
-							{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.ADDITIONAL_OPTIONS' | translate }}
-						</label>
-						<div class="options-grid">
-							<nb-form-field class="form-group">
-								<label class="label">
-									<nb-icon icon="clock-outline"></nb-icon>
-									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TRIAL_DAYS' | translate }}
-								</label>
-								<input
-									nbInput
-									fullWidth
-									type="number"
-									formControlName="trialDays"
-									min="0"
-									max="365"
-									placeholder="0"
-								/>
-							</nb-form-field>
-
-							<nb-form-field class="form-group">
-								<label class="label">
-									<nb-icon icon="credit-card-outline"></nb-icon>
-									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.SETUP_FEE' | translate }}
-								</label>
-								<input
-									nbInput
-									fullWidth
-									type="number"
-									formControlName="setupFee"
-									min="0"
-									step="0.01"
-									placeholder="0.00"
-								/>
-							</nb-form-field>
-
-							<nb-form-field class="form-group">
-								<label class="label">
-									<nb-icon icon="percent-outline"></nb-icon>
-									{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.DISCOUNT' | translate }}
-								</label>
-								<input
-									nbInput
-									fullWidth
-									type="number"
-									formControlName="discountPercentage"
-									min="0"
-									max="100"
-									placeholder="0"
-								/>
-							</nb-form-field>
-						</div>
-
-						<div class="checkboxes-row">
-							<nb-checkbox formControlName="isPopular">
-								<nb-icon icon="star-outline" status="success"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.POPULAR' | translate }}
-							</nb-checkbox>
-							<nb-checkbox formControlName="isRecommended">
-								<nb-icon icon="award-outline" status="info"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.RECOMMENDED' | translate }}
-							</nb-checkbox>
-						</div>
+					<!-- Validation Summary -->
+					@if(planGroup.invalid && planGroup.touched) {
+					<div class="validation-summary">
+						<nb-icon icon="alert-circle-outline" status="warning"></nb-icon>
+						<span>Please fill in all required fields to complete this plan</span>
 					</div>
+					}
 				</div>
 			</div>
 
@@ -509,43 +484,30 @@
 					size="large"
 					(click)="addPlan()"
 					class="add-plan-button"
-					nbTooltip="Create a new subscription plan"
-					nbTooltipPlacement="top"
 				>
 					<nb-icon icon="plus-circle-outline"></nb-icon>
-					{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.ADD_PLAN' | translate }}
+					Add Another Plan
 				</button>
 			</div>
 
 			<!-- No Plans Message -->
-			<div *ngIf="plans.length === 0" class="no-plans-message">
-				<nb-alert status="warning" size="medium" closable="false">
-					<div style="display: flex; align-items: center; gap: 1rem">
-						<nb-icon icon="alert-circle-outline" style="font-size: 2rem"></nb-icon>
-						<div>
-							<strong>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NO_PLANS' | translate }}</strong>
-							<p style="margin: 0.5rem 0 0 0; opacity: 0.8">
-								Get started by creating your first subscription plan
-							</p>
-						</div>
-					</div>
-				</nb-alert>
+			<div *ngIf="!hasPlans()" class="no-plans-message">
+				<div class="empty-state">
+					<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+					<h6>No subscription plans yet</h6>
+					<p>Create your first plan to start monetizing your plugin</p>
+					<button type="button" nbButton status="primary" size="large" (click)="createPlan()">
+						<nb-icon icon="plus-outline"></nb-icon>
+						Create First Plan
+					</button>
+				</div>
 			</div>
 		</div>
 	</form>
-	}@else {
-	<div class="no-plans-message">
-		<nb-alert status="warning" size="medium" closable="false">
-			<div style="display: flex; align-items: center; gap: 1rem">
-				<nb-icon icon="alert-circle-outline" style="font-size: 2rem"></nb-icon>
-				<div>
-					<strong>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.NO_PLANS' | translate }}</strong>
-					<p style="margin: 0.5rem 0 0 0; opacity: 0.8">
-						Initialize the form to start creating subscription plans
-					</p>
-				</div>
-			</div>
-		</nb-alert>
+	} @else {
+	<div class="loading-state">
+		<nb-spinner status="primary" size="large"></nb-spinner>
+		<p>Initializing plan creator...</p>
 	</div>
 	}
 </div>
