@@ -49,11 +49,8 @@ jobs:
       - name: Install latest version of NPM
         run: 'npm install -g npm@10.9.4'
 
-      - name: Install node-gyp package
-        run: 'npm install --quiet -g node-gyp@10.2.0'
-
-      - name: Install globally ts-node package
-        run: 'npm install --quiet -g ts-node@10.9.2'
+      - name: Install globally node-gyp, ts-node and nx packages
+        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
 
       - name: Configure npm python for node-gyp
         shell: powershell
@@ -109,23 +106,57 @@ jobs:
           Write-Output "PATH environment variable is:"
           Write-Output $path
 
-      - name: Add Yarn/Node to GITHUB_PATH
+      - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
         shell: powershell
         run: |
-          # Get yarn and node directories and add them to GITHUB_PATH
-          # This ensures they're available in ALL subsequent steps and subprocesses
+          # Get yarn and node directories
           $yarnPath = (Get-Command yarn).Source | Split-Path -Parent
           $nodePath = (Get-Command node).Source | Split-Path -Parent
+
+          # Get npm global prefix (where global packages are installed)
+          $npmGlobalBin = npm config get prefix
+
+          # Get the workspace's node_modules/.bin for local binaries (cross-env, ts-node, etc.)
+          $localBin = Join-Path $PWD "node_modules\.bin"
+
+          # Add all paths to GITHUB_PATH for subprocess inheritance
+          echo $localBin >> $env:GITHUB_PATH
+          echo $npmGlobalBin >> $env:GITHUB_PATH
           echo $yarnPath >> $env:GITHUB_PATH
           if ($nodePath -ne $yarnPath) {
             echo $nodePath >> $env:GITHUB_PATH
           }
-          Write-Host "Added to GITHUB_PATH: $yarnPath"
-          Write-Host "Node path: $nodePath"
+
+          Write-Host "Added to GITHUB_PATH:"
+          Write-Host "  Local bin: $localBin"
+          Write-Host "  npm global: $npmGlobalBin"
+          Write-Host "  Yarn path: $yarnPath"
+          Write-Host "  Node path: $nodePath"
+
+          # Verify the binaries exist
+          Write-Host ""
+          Write-Host "Checking local binaries:"
+          if (Test-Path "$localBin\cross-env.cmd") { Write-Host "  cross-env: found" } else { Write-Host "  cross-env: NOT FOUND" }
+          if (Test-Path "$localBin\ts-node.cmd") { Write-Host "  ts-node: found" } else { Write-Host "  ts-node: NOT FOUND" }
+          if (Test-Path "$localBin\nx.cmd") { Write-Host "  nx: found" } else { Write-Host "  nx: NOT FOUND" }
 
       - name: Build Desktop Timer App
-        shell: cmd
+        shell: powershell
         run: |
+          # Print PATH for debugging
+          Write-Host "=== Current PATH ==="
+          $env:PATH -split ';' | ForEach-Object { Write-Host "  $_" }
+          Write-Host ""
+          Write-Host "=== Command locations ==="
+          Write-Host "Node: $((Get-Command node -ErrorAction SilentlyContinue).Source)"
+          Write-Host "Yarn: $((Get-Command yarn -ErrorAction SilentlyContinue).Source)"
+          Write-Host "npx: $((Get-Command npx -ErrorAction SilentlyContinue).Source)"
+          Write-Host "ts-node: $((Get-Command ts-node -ErrorAction SilentlyContinue).Source)"
+          Write-Host "cross-env: $((Get-Command cross-env -ErrorAction SilentlyContinue).Source)"
+          Write-Host "nx: $((Get-Command nx -ErrorAction SilentlyContinue).Source)"
+          Write-Host ""
+          Write-Host "=== Starting build ==="
+          # Run the build
           yarn build:desktop-timer:windows:release:gh
         env:
           USE_HARD_LINKS: false
