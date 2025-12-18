@@ -2,7 +2,7 @@ name: Desktop Build Windows Fixing
 
 on:
   push:
-    branches: [develop, temp]
+    branches: [win]
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
