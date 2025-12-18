@@ -222,7 +222,7 @@
 							<nb-icon icon="pricetags-outline" status="success"></nb-icon>
 							Pricing
 						</label>
-
+						@if(planGroup.get('type')?.value !== PluginSubscriptionType.FREE) {
 						<div class="pricing-grid">
 							<nb-form-field class="form-group">
 								<label class="label">Price *</label>
@@ -259,6 +259,7 @@
 								</nb-select>
 							</nb-form-field>
 						</div>
+						}
 
 						<!-- Price Preview -->
 						<div class="price-preview" *ngIf="planGroup.get('price')?.value >= 0">

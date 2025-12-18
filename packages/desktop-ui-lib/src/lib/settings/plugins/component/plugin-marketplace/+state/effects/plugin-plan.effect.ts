@@ -140,7 +140,7 @@ export class PluginPlanEffects {
 				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.BULK_CREATING'));
 			}),
 			switchMap(({ plansData }) => {
-				const createPlan$ = (planData: any) =>
+				const createPlan$ = (planData) =>
 					this.pluginSubscriptionService.createPlan(planData).pipe(
 						catchError((error) => {
 							this.toastrService.error(
@@ -252,7 +252,10 @@ export class PluginPlanEffects {
 							autoFocus: true,
 							closeOnBackdropClick: false
 						})
-						.onClose.pipe(take(1), catchError(() => EMPTY));
+						.onClose.pipe(
+							take(1),
+							catchError(() => EMPTY)
+						);
 				})
 			),
 		{ dispatch: false }

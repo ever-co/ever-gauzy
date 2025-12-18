@@ -170,9 +170,8 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 					this.prepopulatePlans(plans);
 				}
 				this.plansLoaded = true;
-				this.cdr.markForCheck();
-				// Emit initial state after loading
 				this.emitChanges();
+				this.cdr.markForCheck();
 			});
 	}
 
@@ -721,7 +720,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	 */
 	public selectPlanType(planIndex: number, type: PluginSubscriptionType): void {
 		const plan = this.plans.at(planIndex) as FormGroup;
-		plan.patchValue({ type }, { emitEvent: false });
+		plan.patchValue({ type, ...(type === PluginSubscriptionType.FREE && { price: 0 }) }, { emitEvent: false });
 		this.onPlanTypeChange(planIndex);
 	}
 
