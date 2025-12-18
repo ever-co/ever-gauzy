@@ -23,7 +23,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 20.18.1
+          node-version: 22.21.1
           cache: 'yarn'
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
@@ -47,7 +47,7 @@ jobs:
           arch: x64
 
       - name: Install latest version of NPM
-        run: 'npm install -g npm@9'
+        run: 'npm install -g npm@10.9.4'
 
       - name: Install node-gyp package
         run: 'npm install --quiet -g node-gyp@10.2.0'
