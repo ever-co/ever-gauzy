@@ -185,7 +185,7 @@ export class SubscriptionPlanFormBuilderService {
 				billingPeriod: PluginBillingPeriod.MONTHLY,
 				features: ['Basic functionality', 'Email support'],
 				limitations: {
-					maxUsers: 5,
+					maxUsers: 1,
 					maxProjects: 3,
 					apiCallsPerMonth: 1000
 				}
@@ -202,13 +202,13 @@ export class SubscriptionPlanFormBuilderService {
 			},
 			[PluginSubscriptionType.BASIC]: {
 				name: 'Basic Plan',
-				description: 'Essential features for small teams',
+				description: 'Essential features for professionals',
 				price: 9.99,
 				currency: 'USD',
 				billingPeriod: PluginBillingPeriod.MONTHLY,
 				features: ['Core functionality', 'Email support', 'Basic analytics'],
 				limitations: {
-					maxUsers: 10,
+					maxUsers: 1,
 					maxProjects: 10,
 					apiCallsPerMonth: 5000
 				}

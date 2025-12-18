@@ -397,8 +397,8 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 		switch (planType) {
 			case PluginSubscriptionType.FREE:
 			case PluginSubscriptionType.TRIAL:
-				return PluginScope.USER;
 			case PluginSubscriptionType.BASIC:
+				return PluginScope.USER;
 			case PluginSubscriptionType.PREMIUM:
 				return PluginScope.ORGANIZATION;
 			case PluginSubscriptionType.ENTERPRISE:
