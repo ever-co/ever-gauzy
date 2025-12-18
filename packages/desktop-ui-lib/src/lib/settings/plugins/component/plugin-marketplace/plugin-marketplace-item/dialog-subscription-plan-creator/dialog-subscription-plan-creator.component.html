@@ -1,3 +1,5 @@
+@let creating = creating$ | async;
+
 <nb-card class="dialog-card">
 	<nb-card-header>
 		<div class="header-content">
@@ -32,7 +34,8 @@
 			<button nbButton outline status="basic" size="medium" (click)="onClose()">
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
-			<button nbButton status="primary" size="medium" (click)="onSaved()" [disabled]="!isPlanValid">
+			<button nbButton status="primary" size="medium" (click)="onSaved()" [disabled]="!isPlanValid || creating">
+				<nb-icon *gauzySpinner="creating" icon="save-outline"></nb-icon>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</div>

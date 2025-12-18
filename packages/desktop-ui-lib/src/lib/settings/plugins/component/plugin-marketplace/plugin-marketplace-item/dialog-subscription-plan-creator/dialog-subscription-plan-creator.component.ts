@@ -13,29 +13,33 @@ import { PluginPlanQuery } from '../../+state/queries/plugin-plan.query';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DialogSubscriptionPlanCreatorComponent {
-	plugin!: IPlugin;
-	pluginId!: string;
-	plans: IPluginPlanCreateInput[] = [];
-	isPlanValid = true;
+	public readonly plugin!: IPlugin;
+	public readonly pluginId!: string;
+	public plans: IPluginPlanCreateInput[] = [];
+	public isPlanValid = true;
 
 	private readonly dialogRef = inject(NbDialogRef<DialogSubscriptionPlanCreatorComponent>);
 	private readonly planQuery = inject(PluginPlanQuery);
 
-	onClose(): void {
+	public onClose(): void {
 		this.dialogRef.close();
 	}
 
-	onPlansChange(plans: IPluginPlanCreateInput[]): void {
+	public onPlansChange(plans: IPluginPlanCreateInput[]): void {
 		this.plans = plans;
 	}
 
-	onValidationChange(isValid: boolean): void {
+	public onValidationChange(isValid: boolean): void {
 		this.isPlanValid = isValid;
 	}
 
-	onSaved(): void {
+	public get creating$() {
+		return this.planQuery.creating$;
+	}
+
+	public onSaved(): void {
 		PluginPlanActions.bulkCreatePlans(this.plans);
-		this.planQuery.creating$
+		this.creating$
 			.pipe(
 				pairwise(),
 				filter(([wasCreating, isCreating]) => wasCreating && !isCreating),
