@@ -35,10 +35,10 @@
 			"executor": "nx:run-commands",
 			"configurations": {
 				"production": {
-					"commands": ["npx yarn nx build ui-config --configuration=production"]
+					"commands": ["npx nx build ui-config --configuration=production"]
 				},
 				"development": {
-					"commands": ["npx yarn nx build ui-config --configuration=development"]
+					"commands": ["npx nx build ui-config --configuration=development"]
 				}
 			},
 			"defaultConfiguration": "production"
