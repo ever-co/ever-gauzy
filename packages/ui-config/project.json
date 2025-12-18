@@ -33,10 +33,10 @@
 			"executor": "nx:run-commands",
 			"configurations": {
 				"production": {
-					"commands": ["yarn run config:prod"]
+					"commands": ["npx yarn run config:prod"]
 				},
 				"development": {
-					"commands": ["yarn run config:dev"]
+					"commands": ["npx yarn run config:dev"]
 				}
 			},
 			"defaultConfiguration": "production"
@@ -51,10 +51,10 @@
 			],
 			"configurations": {
 				"production": {
-					"command": "cross-env NODE_ENV=production yarn ts-node packages/ui-config/scripts/replace-env-files.ts"
+					"command": "cross-env NODE_ENV=production npx yarn ts-node packages/ui-config/scripts/replace-env-files.ts"
 				},
 				"development": {
-					"command": "cross-env NODE_ENV=development yarn ts-node packages/ui-config/scripts/replace-env-files.ts"
+					"command": "cross-env NODE_ENV=development npx yarn ts-node packages/ui-config/scripts/replace-env-files.ts"
 				}
 			},
 			"defaultConfiguration": "production"
