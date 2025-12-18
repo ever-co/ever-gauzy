@@ -2,8 +2,8 @@ import { DatabaseTypeEnum } from '@gauzy/config';
 import * as chalk from 'chalk';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreatePluginMarketplaceTables1765816256172 implements MigrationInterface {
-	name = 'CreatePluginMarketplaceTables1765816256172';
+export class CreatePluginMarketplaceTables1766045577607 implements MigrationInterface {
+	name = 'CreatePluginMarketplaceTables1766045577607';
 
 	/**
 	 * Up Migration
@@ -61,114 +61,10 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(`ALTER TABLE "employee_job_preset" DROP CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2"`);
 		await queryRunner.query(
-			`CREATE TYPE "public"."plugin_installations_status_enum" AS ENUM('INSTALLED', 'UNINSTALLED', 'FAILED', 'IN_PROGRESS')`
-		);
-		await queryRunner.query(
-			`CREATE TABLE "plugin_installations" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "pluginId" uuid, "versionId" uuid, "installedById" uuid, "installedAt" TIMESTAMP, "uninstalledAt" TIMESTAMP, "status" "public"."plugin_installations_status_enum" NOT NULL DEFAULT 'IN_PROGRESS', "isActivated" boolean NOT NULL DEFAULT false, "activatedAt" TIMESTAMP, "deactivatedAt" TIMESTAMP, CONSTRAINT "PK_af29f092b24666b0ceacead453c" PRIMARY KEY ("id"))`
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_842e5e5f94c4008a42d4b5f44a" ON "plugin_installations" ("createdByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7e9b8b3eebb881753e07b73f6c" ON "plugin_installations" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af" ON "plugin_installations" ("deletedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_d742ed346264f4c9d9225265d7" ON "plugin_installations" ("isActive") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_3e63eed07bcc0e3e36d9183cca" ON "plugin_installations" ("isArchived") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_dff9e6c763c8c33b07f330e6a1" ON "plugin_installations" ("tenantId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_8aafffefdce2eb11079ec2aa75" ON "plugin_installations" ("organizationId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_547e4b71ae81ee772fa4ab79e6" ON "plugin_installations" ("pluginId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_acac58b213936ea488d0a8d1a3" ON "plugin_installations" ("versionId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_32c3f7a738ec8b40d6375b2933" ON "plugin_installations" ("installedById") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_28624735b4e3ace75883521a57" ON "plugin_installations" ("installedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_c92ea21dfcfd889730e2214c8f" ON "plugin_installations" ("uninstalledAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_5e6b80341a4ed75ae7c4af6897" ON "plugin_installations" ("activatedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_3c3ce338e7716d853220d8b176" ON "plugin_installations" ("deactivatedAt") `
-		);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX "IDX_6b7ef18c0cb54d547e40f30fb8" ON "plugin_installations" ("pluginId", "versionId", "installedById") `
-		);
-		await queryRunner.query(
-			`CREATE TABLE "plugin_versions" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "number" character varying NOT NULL, "changelog" character varying NOT NULL, "checksum" character varying, "signature" character varying, "releaseDate" TIMESTAMP, "downloadCount" integer DEFAULT '0', "pluginId" uuid, CONSTRAINT "PK_d45355357c416a54832493a865a" PRIMARY KEY ("id"))`
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_485db4d1cc977cc3d499824d95" ON "plugin_versions" ("createdByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_0b36b5701e9890a395ded76cb5" ON "plugin_versions" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_e06094816e67e584dea754cc81" ON "plugin_versions" ("deletedByUserId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_e6d49799b916946e5cd5399385" ON "plugin_versions" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_a16869769b9a219acb157bb2b3" ON "plugin_versions" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_650ccf2e7394509f7ad8448e32" ON "plugin_versions" ("tenantId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_f806bae81cd490404a1888ad5b" ON "plugin_versions" ("organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
-		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX IF NOT EXISTS "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
-		);
-		await queryRunner.query(`CREATE TYPE "public"."plugin_sources_type_enum" AS ENUM('CDN', 'NPM', 'GAUZY')`);
-		await queryRunner.query(
-			`CREATE TYPE "public"."plugin_sources_operatingsystem_enum" AS ENUM('LINUX', 'MAC', 'WINDOWS', 'UNIVERSAL')`
-		);
-		await queryRunner.query(`CREATE TYPE "public"."plugin_sources_architecture_enum" AS ENUM('X64', 'ARM')`);
-		await queryRunner.query(
-			`CREATE TYPE "public"."plugin_sources_storageprovider_enum" AS ENUM('LOCAL', 'S3', 'WASABI', 'CLOUDINARY', 'DIGITALOCEAN')`
-		);
-		await queryRunner.query(
-			`CREATE TABLE "plugin_sources" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "type" "public"."plugin_sources_type_enum" NOT NULL DEFAULT 'GAUZY', "operatingSystem" "public"."plugin_sources_operatingsystem_enum" NOT NULL DEFAULT 'UNIVERSAL', "architecture" "public"."plugin_sources_architecture_enum" NOT NULL DEFAULT 'X64', "url" character varying, "integrity" character varying, "crossOrigin" character varying, "name" character varying, "registry" character varying, "private" boolean DEFAULT false, "scope" character varying, "filePath" character varying, "fileName" character varying, "fileSize" integer, "mimeType" character varying, "fileKey" character varying, "versionId" uuid, "storageProvider" "public"."plugin_sources_storageprovider_enum", CONSTRAINT "PK_f3b8f3deb563db7010fb5a7b6c0" PRIMARY KEY ("id"))`
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_09a383d6f2858d49c064ca4cda" ON "plugin_sources" ("createdByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_0404416b5c1cd48ae87fe81834" ON "plugin_sources" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_c90b796bd033e54e3719213a0c" ON "plugin_sources" ("deletedByUserId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_cb9a1e5640b8e07a9a63b51245" ON "plugin_sources" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_0ab83b39cc676ee2097714fb3b" ON "plugin_sources" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_19d9135639e3b40ec0dca1c926" ON "plugin_sources" ("tenantId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7c6dc1cdd58690b7179d76184b" ON "plugin_sources" ("organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_55bee446d2c470e5d6b066a27a" ON "plugin_sources" ("versionId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_d658bc853b354445cf2a0d6fb7" ON "plugin_sources" ("storageProvider") `
-		);
-		await queryRunner.query(
 			`CREATE TYPE "public"."plugin_tenants_scope_enum" AS ENUM('tenant', 'organization', 'user')`
 		);
 		await queryRunner.query(
-			`CREATE TABLE "plugin_tenants" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "pluginId" uuid NOT NULL, "enabled" boolean NOT NULL DEFAULT true, "scope" "public"."plugin_tenants_scope_enum" NOT NULL DEFAULT 'user', "autoInstall" boolean NOT NULL DEFAULT false, "requiresApproval" boolean NOT NULL DEFAULT true, "isMandatory" boolean NOT NULL DEFAULT false, "maxInstallations" integer, "maxActiveUsers" integer, "currentInstallations" integer NOT NULL DEFAULT '0', "currentActiveUsers" integer NOT NULL DEFAULT '0', "tenantConfiguration" jsonb, "preferences" jsonb, "approvedAt" TIMESTAMP, "isDataCompliant" boolean NOT NULL DEFAULT true, "complianceCertifications" text, "approvedById" uuid NOT NULL, CONSTRAINT "PK_994378ab16d5ce4bb7793a3ffab" PRIMARY KEY ("id"))`
+			`CREATE TABLE "plugin_tenants" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "pluginId" uuid NOT NULL, "enabled" boolean NOT NULL DEFAULT true, "scope" "public"."plugin_tenants_scope_enum" NOT NULL DEFAULT 'user', "autoInstall" boolean NOT NULL DEFAULT false, "requiresApproval" boolean NOT NULL DEFAULT true, "isMandatory" boolean NOT NULL DEFAULT false, "maxInstallations" integer, "maxActiveUsers" integer, "currentInstallations" integer NOT NULL DEFAULT '0', "currentActiveUsers" integer NOT NULL DEFAULT '0', "tenantConfiguration" jsonb, "preferences" jsonb, "approvedAt" TIMESTAMP, "isDataCompliant" boolean NOT NULL DEFAULT true, "complianceCertifications" text, "approvedById" uuid, CONSTRAINT "PK_994378ab16d5ce4bb7793a3ffab" PRIMARY KEY ("id"))`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_f209a8620f1677ed2c82c4cd2e" ON "plugin_tenants" ("createdByUserId") `
@@ -277,25 +173,155 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX "IDX_676e7c749905331c36b1707ba8" ON "plugin_tags" ("pluginId", "tagId") `
 		);
+		await queryRunner.query(
+			`CREATE TYPE "public"."plugin_installations_status_enum" AS ENUM('INSTALLED', 'UNINSTALLED', 'FAILED', 'IN_PROGRESS')`
+		);
+		await queryRunner.query(
+			`CREATE TABLE "plugin_installations" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "pluginId" uuid, "versionId" uuid, "installedById" uuid, "installedAt" TIMESTAMP, "uninstalledAt" TIMESTAMP, "status" "public"."plugin_installations_status_enum" NOT NULL DEFAULT 'IN_PROGRESS', "isActivated" boolean NOT NULL DEFAULT false, "activatedAt" TIMESTAMP, "deactivatedAt" TIMESTAMP, CONSTRAINT "PK_af29f092b24666b0ceacead453c" PRIMARY KEY ("id"))`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_842e5e5f94c4008a42d4b5f44a" ON "plugin_installations" ("createdByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_7e9b8b3eebb881753e07b73f6c" ON "plugin_installations" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af" ON "plugin_installations" ("deletedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_d742ed346264f4c9d9225265d7" ON "plugin_installations" ("isActive") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_3e63eed07bcc0e3e36d9183cca" ON "plugin_installations" ("isArchived") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_dff9e6c763c8c33b07f330e6a1" ON "plugin_installations" ("tenantId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_8aafffefdce2eb11079ec2aa75" ON "plugin_installations" ("organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_547e4b71ae81ee772fa4ab79e6" ON "plugin_installations" ("pluginId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_acac58b213936ea488d0a8d1a3" ON "plugin_installations" ("versionId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_32c3f7a738ec8b40d6375b2933" ON "plugin_installations" ("installedById") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_28624735b4e3ace75883521a57" ON "plugin_installations" ("installedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c92ea21dfcfd889730e2214c8f" ON "plugin_installations" ("uninstalledAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_5e6b80341a4ed75ae7c4af6897" ON "plugin_installations" ("activatedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_3c3ce338e7716d853220d8b176" ON "plugin_installations" ("deactivatedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_173e0668b17afd3696abf3c518" ON "plugin_installations" ("installedById", "pluginId") `
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_1569d8ca526d958d82483e15c7" ON "plugin_installations" ("pluginId", "tenantId", "organizationId", "installedById") `
+		);
+		await queryRunner.query(`CREATE TYPE "public"."plugin_sources_type_enum" AS ENUM('CDN', 'NPM', 'GAUZY')`);
+		await queryRunner.query(
+			`CREATE TYPE "public"."plugin_sources_operatingsystem_enum" AS ENUM('LINUX', 'MAC', 'WINDOWS', 'UNIVERSAL')`
+		);
+		await queryRunner.query(`CREATE TYPE "public"."plugin_sources_architecture_enum" AS ENUM('X64', 'ARM')`);
+		await queryRunner.query(
+			`CREATE TYPE "public"."plugin_sources_storageprovider_enum" AS ENUM('LOCAL', 'S3', 'WASABI', 'CLOUDINARY', 'DIGITALOCEAN')`
+		);
+		await queryRunner.query(
+			`CREATE TABLE "plugin_sources" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "type" "public"."plugin_sources_type_enum" NOT NULL DEFAULT 'GAUZY', "operatingSystem" "public"."plugin_sources_operatingsystem_enum" NOT NULL DEFAULT 'UNIVERSAL', "architecture" "public"."plugin_sources_architecture_enum" NOT NULL DEFAULT 'X64', "url" character varying, "integrity" character varying, "crossOrigin" character varying, "name" character varying, "registry" character varying, "private" boolean DEFAULT false, "scope" character varying, "filePath" character varying, "fileName" character varying, "fileSize" integer, "mimeType" character varying, "fileKey" character varying, "versionId" uuid, "storageProvider" "public"."plugin_sources_storageprovider_enum", CONSTRAINT "PK_f3b8f3deb563db7010fb5a7b6c0" PRIMARY KEY ("id"))`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_09a383d6f2858d49c064ca4cda" ON "plugin_sources" ("createdByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_0404416b5c1cd48ae87fe81834" ON "plugin_sources" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c90b796bd033e54e3719213a0c" ON "plugin_sources" ("deletedByUserId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_cb9a1e5640b8e07a9a63b51245" ON "plugin_sources" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_0ab83b39cc676ee2097714fb3b" ON "plugin_sources" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_19d9135639e3b40ec0dca1c926" ON "plugin_sources" ("tenantId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_7c6dc1cdd58690b7179d76184b" ON "plugin_sources" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_55bee446d2c470e5d6b066a27a" ON "plugin_sources" ("versionId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_d658bc853b354445cf2a0d6fb7" ON "plugin_sources" ("storageProvider") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_af8978fbf37560525c19ec7048" ON "plugin_sources" ("tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_6fae6d0ddfd7177abcb4befd72" ON "plugin_sources" ("versionId", "operatingSystem", "architecture", "tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE TABLE "plugin_versions" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "number" character varying NOT NULL, "changelog" character varying NOT NULL, "checksum" character varying, "signature" character varying, "releaseDate" TIMESTAMP, "downloadCount" integer DEFAULT '0', "pluginId" uuid, CONSTRAINT "PK_d45355357c416a54832493a865a" PRIMARY KEY ("id"))`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_485db4d1cc977cc3d499824d95" ON "plugin_versions" ("createdByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_0b36b5701e9890a395ded76cb5" ON "plugin_versions" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_e06094816e67e584dea754cc81" ON "plugin_versions" ("deletedByUserId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_e6d49799b916946e5cd5399385" ON "plugin_versions" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_a16869769b9a219acb157bb2b3" ON "plugin_versions" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_650ccf2e7394509f7ad8448e32" ON "plugin_versions" ("tenantId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_f806bae81cd490404a1888ad5b" ON "plugin_versions" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
+		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_6fa0eda3add1fb070ba172a44e" ON "plugin_versions" ("downloadCount") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_e632aa70ea7b7e5c5fdbfba41b" ON "plugin_versions" ("number") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_e1e7cf1589d06ac02a12e41db0" ON "plugin_versions" ("pluginId", "releaseDate") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_f5c8259c0d815486f31878864d" ON "plugin_versions" ("tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_39d060301c8a36b51da6e4aec3" ON "plugin_versions" ("pluginId", "organizationId", "number") `
+		);
 		await queryRunner.query(`CREATE TYPE "public"."plugins_type_enum" AS ENUM('DESKTOP', 'WEB', 'MOBILE')`);
 		await queryRunner.query(
 			`CREATE TYPE "public"."plugins_status_enum" AS ENUM('ACTIVE', 'INACTIVE', 'DEPRECATED', 'ARCHIVED')`
 		);
 		await queryRunner.query(
-			`CREATE TABLE "plugins" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "name" character varying NOT NULL, "description" character varying, "type" "public"."plugins_type_enum" NOT NULL DEFAULT 'DESKTOP', "status" "public"."plugins_status_enum" NOT NULL DEFAULT 'ACTIVE', "categoryId" uuid, "author" character varying, "license" character varying, "homepage" character varying, "repository" character varying, "uploadedById" uuid, "uploadedAt" TIMESTAMP, "requiresSubscription" boolean NOT NULL DEFAULT false, "lastDownloadedAt" TIMESTAMP, CONSTRAINT "PK_bb3d17826b76295957a253ba73e" PRIMARY KEY ("id"))`
+			`CREATE TABLE "plugins" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "name" character varying NOT NULL, "description" character varying, "type" "public"."plugins_type_enum" NOT NULL DEFAULT 'DESKTOP', "status" "public"."plugins_status_enum" NOT NULL DEFAULT 'ACTIVE', "categoryId" uuid, "author" character varying, "license" character varying, "homepage" character varying, "repository" character varying, "uploadedById" uuid, "uploadedAt" TIMESTAMP, "requiresSubscription" boolean NOT NULL DEFAULT false, "isFeatured" boolean NOT NULL DEFAULT false, "isVerified" boolean NOT NULL DEFAULT false, "lastDownloadedAt" TIMESTAMP, CONSTRAINT "PK_bb3d17826b76295957a253ba73e" PRIMARY KEY ("id"))`
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_cc5b64091fbfdcdbd23d6da80e" ON "plugins" ("createdByUserId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_61357761fc6b140180b104dc8d" ON "plugins" ("updatedByUserId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_3210c015451d02d015a23eedad" ON "plugins" ("deletedByUserId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_d0a1444aa92229d7f1af237184" ON "plugins" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_c61c7032e7b3afd352d82bc4b4" ON "plugins" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_35ee1cb5098e17e30ee5cbc705" ON "plugins" ("type") `);
+		await queryRunner.query(`CREATE INDEX "IDX_100eef6409ee96d0673ee510e6" ON "plugins" ("status") `);
+		await queryRunner.query(`CREATE INDEX "IDX_16d0aed6fcc311379f5c75bbd2" ON "plugins" ("categoryId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_4bf89f98c41969e23e3f9974d5" ON "plugins" ("uploadedById") `);
-		await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "plugin_name_unique" ON "plugins" ("name") `);
+		await queryRunner.query(`CREATE INDEX "IDX_15ca158f27ab3296915b7d1b38" ON "plugins" ("isFeatured") `);
+		await queryRunner.query(`CREATE INDEX "IDX_123f1b37f4826f6241446a8416" ON "plugins" ("isVerified") `);
+		await queryRunner.query(`CREATE INDEX "IDX_c0fab3c6709a93bca88eb100a9" ON "plugins" ("status", "isFeatured") `);
+		await queryRunner.query(`CREATE INDEX "IDX_6c8d4a0f437cfae296ef43ce13" ON "plugins" ("status", "type") `);
+		await queryRunner.query(`CREATE UNIQUE INDEX "IDX_0479844f05c1132f8929cab1c8" ON "plugins" ("name") `);
 		await queryRunner.query(
 			`CREATE TYPE "public"."plugin_subscription_plans_type_enum" AS ENUM('free', 'trial', 'basic', 'premium', 'enterprise', 'custom')`
 		);
 		await queryRunner.query(
-			`CREATE TYPE "public"."plugin_subscription_plans_billingperiod_enum" AS ENUM('daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'one-time', 'usage_based')`
+			`CREATE TYPE "public"."plugin_subscription_plans_billingperiod_enum" AS ENUM('daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'one-time')`
 		);
 		await queryRunner.query(
 			`CREATE TABLE "plugin_subscription_plans" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "name" character varying NOT NULL, "description" text, "type" "public"."plugin_subscription_plans_type_enum" NOT NULL DEFAULT 'free', "price" numeric(10,2) NOT NULL DEFAULT '0', "currency" character varying(3) NOT NULL DEFAULT 'USD', "billingPeriod" "public"."plugin_subscription_plans_billingperiod_enum" NOT NULL DEFAULT 'monthly', "features" text NOT NULL, "limitations" jsonb, "isPopular" boolean NOT NULL DEFAULT false, "isRecommended" boolean NOT NULL DEFAULT false, "trialDays" integer, "setupFee" numeric(10,2), "discountPercentage" numeric(5,2), "metadata" jsonb, "sortOrder" integer NOT NULL DEFAULT '0', "pluginId" uuid NOT NULL, "createdById" uuid, CONSTRAINT "PK_50d5a1a9d691b355206aa1991d9" PRIMARY KEY ("id"))`
@@ -325,7 +351,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE INDEX "IDX_082f6cba880ecd144b28284376" ON "plugin_subscription_plans" ("pluginId", "type") `
 		);
 		await queryRunner.query(
-			`CREATE TYPE "public"."plugin_subscriptions_status_enum" AS ENUM('active', 'trial', 'expired', 'cancelled', 'suspended', 'pending')`
+			`CREATE TYPE "public"."plugin_subscriptions_status_enum" AS ENUM('active', 'cancelled', 'expired', 'trial', 'past_due', 'suspended', 'pending')`
 		);
 		await queryRunner.query(
 			`CREATE TYPE "public"."plugin_subscriptions_scope_enum" AS ENUM('tenant', 'organization', 'user')`
@@ -355,6 +381,9 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE INDEX "IDX_9bbac226cce476576134c5726e" ON "plugin_subscriptions" ("organizationId") `
 		);
 		await queryRunner.query(
+			`CREATE INDEX "IDX_7afeffe18364cae48efd454e4d" ON "plugin_subscriptions" ("scope", "tenantId") `
+		);
+		await queryRunner.query(
 			`CREATE INDEX "IDX_39a16aca760fc7a3cef39d5563" ON "plugin_subscriptions" ("parentId") `
 		);
 		await queryRunner.query(
@@ -362,7 +391,10 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_4e8a9f4ee7df8c39d0314063e7" ON "plugin_subscriptions" ("planId") `);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "IDX_5e454c743af9400e3fe1814039" ON "plugin_subscriptions" ("pluginId", "subscriberId") `
+			`CREATE UNIQUE INDEX "IDX_18db53b62833e1bdb9949b5827" ON "plugin_subscriptions" ("pluginId", "subscriberId", "tenantId") WHERE "subscriberId" IS NOT NULL`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_448990d16086477ee1c5f08968" ON "plugin_subscriptions" ("status", "tenantId") `
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_fed0c61e1d142e1c448a45e5a0" ON "plugin_subscriptions" ("status", "endDate") `
@@ -377,7 +409,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE TYPE "public"."plugin_billings_status_enum" AS ENUM('pending', 'processed', 'paid', 'overdue', 'failed', 'cancelled', 'refunded', 'partially_paid')`
 		);
 		await queryRunner.query(
-			`CREATE TYPE "public"."plugin_billings_billingperiod_enum" AS ENUM('daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'one-time', 'usage_based')`
+			`CREATE TYPE "public"."plugin_billings_billingperiod_enum" AS ENUM('daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'one-time')`
 		);
 		await queryRunner.query(
 			`CREATE TABLE "plugin_billings" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "amount" numeric(10,2) NOT NULL, "currency" character varying NOT NULL DEFAULT 'USD', "billingDate" TIMESTAMP NOT NULL, "dueDate" TIMESTAMP NOT NULL, "status" "public"."plugin_billings_status_enum" NOT NULL DEFAULT 'pending', "billingPeriod" "public"."plugin_billings_billingperiod_enum" NOT NULL, "billingPeriodStart" TIMESTAMP NOT NULL, "billingPeriodEnd" TIMESTAMP NOT NULL, "description" text, "metadata" jsonb, "subscriptionId" uuid NOT NULL, CONSTRAINT "PK_53bbb94a70e4a89818bca2de680" PRIMARY KEY ("id"))`
@@ -443,66 +475,6 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE INDEX "IDX_9c7a67d94dc7edfc580657a52d" ON "plugin_subscriptions_closure" ("id_descendant") `
 		);
 		await queryRunner.query(`ALTER TABLE "organization_project" ALTER COLUMN "status" SET DEFAULT 'open'`);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_842e5e5f94c4008a42d4b5f44a6" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_7e9b8b3eebb881753e07b73f6c6" FOREIGN KEY ("updatedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_a45f5c2aba22d4fa4eb8fa85af8" FOREIGN KEY ("deletedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_dff9e6c763c8c33b07f330e6a19" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_8aafffefdce2eb11079ec2aa755" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_547e4b71ae81ee772fa4ab79e60" FOREIGN KEY ("pluginId") REFERENCES "plugins"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_acac58b213936ea488d0a8d1a30" FOREIGN KEY ("versionId") REFERENCES "plugin_versions"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_32c3f7a738ec8b40d6375b2933c" FOREIGN KEY ("installedById") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_485db4d1cc977cc3d499824d958" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_0b36b5701e9890a395ded76cb57" FOREIGN KEY ("updatedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_e06094816e67e584dea754cc81c" FOREIGN KEY ("deletedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_650ccf2e7394509f7ad8448e323" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_f806bae81cd490404a1888ad5b9" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_8adf7a9181e968bcafc71236c80" FOREIGN KEY ("pluginId") REFERENCES "plugins"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_09a383d6f2858d49c064ca4cda9" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_0404416b5c1cd48ae87fe81834a" FOREIGN KEY ("updatedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_c90b796bd033e54e3719213a0ce" FOREIGN KEY ("deletedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_19d9135639e3b40ec0dca1c9261" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_7c6dc1cdd58690b7179d76184be" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE`
-		);
-		await queryRunner.query(
-			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_55bee446d2c470e5d6b066a27a2" FOREIGN KEY ("versionId") REFERENCES "plugin_versions"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
-		);
 		await queryRunner.query(
 			`ALTER TABLE "plugin_tenants" ADD CONSTRAINT "FK_f209a8620f1677ed2c82c4cd2e4" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
@@ -591,6 +563,66 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`ALTER TABLE "plugin_tags" ADD CONSTRAINT "FK_df3d0fc648c9e0544ca11df9d2e" FOREIGN KEY ("tagId") REFERENCES "tag"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
+			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_842e5e5f94c4008a42d4b5f44a6" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_7e9b8b3eebb881753e07b73f6c6" FOREIGN KEY ("updatedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_a45f5c2aba22d4fa4eb8fa85af8" FOREIGN KEY ("deletedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_dff9e6c763c8c33b07f330e6a19" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_8aafffefdce2eb11079ec2aa755" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_547e4b71ae81ee772fa4ab79e60" FOREIGN KEY ("pluginId") REFERENCES "plugins"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_acac58b213936ea488d0a8d1a30" FOREIGN KEY ("versionId") REFERENCES "plugin_versions"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_installations" ADD CONSTRAINT "FK_32c3f7a738ec8b40d6375b2933c" FOREIGN KEY ("installedById") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_09a383d6f2858d49c064ca4cda9" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_0404416b5c1cd48ae87fe81834a" FOREIGN KEY ("updatedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_c90b796bd033e54e3719213a0ce" FOREIGN KEY ("deletedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_19d9135639e3b40ec0dca1c9261" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_7c6dc1cdd58690b7179d76184be" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_sources" ADD CONSTRAINT "FK_55bee446d2c470e5d6b066a27a2" FOREIGN KEY ("versionId") REFERENCES "plugin_versions"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_485db4d1cc977cc3d499824d958" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_0b36b5701e9890a395ded76cb57" FOREIGN KEY ("updatedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_e06094816e67e584dea754cc81c" FOREIGN KEY ("deletedByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_650ccf2e7394509f7ad8448e323" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_f806bae81cd490404a1888ad5b9" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "plugin_versions" ADD CONSTRAINT "FK_8adf7a9181e968bcafc71236c80" FOREIGN KEY ("pluginId") REFERENCES "plugins"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
 			`ALTER TABLE "plugins" ADD CONSTRAINT "FK_cc5b64091fbfdcdbd23d6da80ee" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
@@ -672,19 +704,19 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`ALTER TABLE "employee_job_preset" ADD CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
-			`ALTER TABLE "plugin_tenant_allowed_roles" ADD CONSTRAINT "FK_12c6c6c88720dfb785a0e066bb6" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants"("id") ON DELETE SET NULL ON UPDATE CASCADE`
+			`ALTER TABLE "plugin_tenant_allowed_roles" ADD CONSTRAINT "FK_12c6c6c88720dfb785a0e066bb6" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
 			`ALTER TABLE "plugin_tenant_allowed_roles" ADD CONSTRAINT "FK_0c355caddd182f2e7099d359119" FOREIGN KEY ("roleId") REFERENCES "role"("id") ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
-			`ALTER TABLE "plugin_tenant_allowed_users" ADD CONSTRAINT "FK_358b3ee7d6cac92234c829e3844" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants"("id") ON DELETE SET NULL ON UPDATE CASCADE`
+			`ALTER TABLE "plugin_tenant_allowed_users" ADD CONSTRAINT "FK_358b3ee7d6cac92234c829e3844" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
 			`ALTER TABLE "plugin_tenant_allowed_users" ADD CONSTRAINT "FK_99cab633947d311b29e5e3d9f16" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
-			`ALTER TABLE "plugin_tenant_denied_users" ADD CONSTRAINT "FK_27e45daf821a522cf6c7b794bce" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants"("id") ON DELETE SET NULL ON UPDATE CASCADE`
+			`ALTER TABLE "plugin_tenant_denied_users" ADD CONSTRAINT "FK_27e45daf821a522cf6c7b794bce" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
 			`ALTER TABLE "plugin_tenant_denied_users" ADD CONSTRAINT "FK_17fc7d5ec9f51d9716c79b50ae8" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE`
@@ -776,6 +808,26 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`ALTER TABLE "plugins" DROP CONSTRAINT "FK_3210c015451d02d015a23eedad4"`);
 		await queryRunner.query(`ALTER TABLE "plugins" DROP CONSTRAINT "FK_61357761fc6b140180b104dc8d5"`);
 		await queryRunner.query(`ALTER TABLE "plugins" DROP CONSTRAINT "FK_cc5b64091fbfdcdbd23d6da80ee"`);
+		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_8adf7a9181e968bcafc71236c80"`);
+		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_f806bae81cd490404a1888ad5b9"`);
+		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_650ccf2e7394509f7ad8448e323"`);
+		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_e06094816e67e584dea754cc81c"`);
+		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_0b36b5701e9890a395ded76cb57"`);
+		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_485db4d1cc977cc3d499824d958"`);
+		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_55bee446d2c470e5d6b066a27a2"`);
+		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_7c6dc1cdd58690b7179d76184be"`);
+		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_19d9135639e3b40ec0dca1c9261"`);
+		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_c90b796bd033e54e3719213a0ce"`);
+		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_0404416b5c1cd48ae87fe81834a"`);
+		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_09a383d6f2858d49c064ca4cda9"`);
+		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_32c3f7a738ec8b40d6375b2933c"`);
+		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_acac58b213936ea488d0a8d1a30"`);
+		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_547e4b71ae81ee772fa4ab79e60"`);
+		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_8aafffefdce2eb11079ec2aa755"`);
+		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_dff9e6c763c8c33b07f330e6a19"`);
+		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_a45f5c2aba22d4fa4eb8fa85af8"`);
+		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_7e9b8b3eebb881753e07b73f6c6"`);
+		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_842e5e5f94c4008a42d4b5f44a6"`);
 		await queryRunner.query(`ALTER TABLE "plugin_tags" DROP CONSTRAINT "FK_df3d0fc648c9e0544ca11df9d2e"`);
 		await queryRunner.query(`ALTER TABLE "plugin_tags" DROP CONSTRAINT "FK_05292c8750270ff028ab2fec140"`);
 		await queryRunner.query(`ALTER TABLE "plugin_tags" DROP CONSTRAINT "FK_8bcd0243b780191a391b348f582"`);
@@ -805,26 +857,6 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`ALTER TABLE "plugin_tenants" DROP CONSTRAINT "FK_06f10073cd6e84a19b6f604ddd1"`);
 		await queryRunner.query(`ALTER TABLE "plugin_tenants" DROP CONSTRAINT "FK_0b5cc71673410a449491fb3db93"`);
 		await queryRunner.query(`ALTER TABLE "plugin_tenants" DROP CONSTRAINT "FK_f209a8620f1677ed2c82c4cd2e4"`);
-		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_55bee446d2c470e5d6b066a27a2"`);
-		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_7c6dc1cdd58690b7179d76184be"`);
-		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_19d9135639e3b40ec0dca1c9261"`);
-		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_c90b796bd033e54e3719213a0ce"`);
-		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_0404416b5c1cd48ae87fe81834a"`);
-		await queryRunner.query(`ALTER TABLE "plugin_sources" DROP CONSTRAINT "FK_09a383d6f2858d49c064ca4cda9"`);
-		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_8adf7a9181e968bcafc71236c80"`);
-		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_f806bae81cd490404a1888ad5b9"`);
-		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_650ccf2e7394509f7ad8448e323"`);
-		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_e06094816e67e584dea754cc81c"`);
-		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_0b36b5701e9890a395ded76cb57"`);
-		await queryRunner.query(`ALTER TABLE "plugin_versions" DROP CONSTRAINT "FK_485db4d1cc977cc3d499824d958"`);
-		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_32c3f7a738ec8b40d6375b2933c"`);
-		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_acac58b213936ea488d0a8d1a30"`);
-		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_547e4b71ae81ee772fa4ab79e60"`);
-		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_8aafffefdce2eb11079ec2aa755"`);
-		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_dff9e6c763c8c33b07f330e6a19"`);
-		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_a45f5c2aba22d4fa4eb8fa85af8"`);
-		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_7e9b8b3eebb881753e07b73f6c6"`);
-		await queryRunner.query(`ALTER TABLE "plugin_installations" DROP CONSTRAINT "FK_842e5e5f94c4008a42d4b5f44a6"`);
 		await queryRunner.query(`ALTER TABLE "organization_project" ALTER COLUMN "status" DROP DEFAULT`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_9c7a67d94dc7edfc580657a52d"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_31cca01b2ea11308a44475563b"`);
@@ -854,10 +886,12 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "public"."IDX_eb3b9c7cfe7aa86bca589aee9e"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_af82eaa17a59e0cf0fac16d7fe"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_fed0c61e1d142e1c448a45e5a0"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_5e454c743af9400e3fe1814039"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_448990d16086477ee1c5f08968"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_18db53b62833e1bdb9949b5827"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_4e8a9f4ee7df8c39d0314063e7"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_bbd6dc08c0c91724e5d26202fa"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_39a16aca760fc7a3cef39d5563"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_7afeffe18364cae48efd454e4d"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_9bbac226cce476576134c5726e"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_7f792e3c1891f728f9e5256142"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_b5163f874ce5bc6b63c8e8631a"`);
@@ -879,8 +913,15 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP TABLE "plugin_subscription_plans"`);
 		await queryRunner.query(`DROP TYPE "public"."plugin_subscription_plans_billingperiod_enum"`);
 		await queryRunner.query(`DROP TYPE "public"."plugin_subscription_plans_type_enum"`);
-		await queryRunner.query(`DROP INDEX "public"."plugin_name_unique"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_0479844f05c1132f8929cab1c8"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_6c8d4a0f437cfae296ef43ce13"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_c0fab3c6709a93bca88eb100a9"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_123f1b37f4826f6241446a8416"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_15ca158f27ab3296915b7d1b38"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_4bf89f98c41969e23e3f9974d5"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_16d0aed6fcc311379f5c75bbd2"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_100eef6409ee96d0673ee510e6"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_35ee1cb5098e17e30ee5cbc705"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_c61c7032e7b3afd352d82bc4b4"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_d0a1444aa92229d7f1af237184"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_3210c015451d02d015a23eedad"`);
@@ -889,6 +930,55 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP TABLE "plugins"`);
 		await queryRunner.query(`DROP TYPE "public"."plugins_status_enum"`);
 		await queryRunner.query(`DROP TYPE "public"."plugins_type_enum"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_39d060301c8a36b51da6e4aec3"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_f5c8259c0d815486f31878864d"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_e1e7cf1589d06ac02a12e41db0"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_e632aa70ea7b7e5c5fdbfba41b"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_6fa0eda3add1fb070ba172a44e"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_8adf7a9181e968bcafc71236c8"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_ab6e29cd444226f80bf0c0c1db"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_f806bae81cd490404a1888ad5b"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_650ccf2e7394509f7ad8448e32"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_a16869769b9a219acb157bb2b3"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_e6d49799b916946e5cd5399385"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_e06094816e67e584dea754cc81"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_0b36b5701e9890a395ded76cb5"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_485db4d1cc977cc3d499824d95"`);
+		await queryRunner.query(`DROP TABLE "plugin_versions"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_6fae6d0ddfd7177abcb4befd72"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_af8978fbf37560525c19ec7048"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_d658bc853b354445cf2a0d6fb7"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_55bee446d2c470e5d6b066a27a"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_7c6dc1cdd58690b7179d76184b"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_19d9135639e3b40ec0dca1c926"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_0ab83b39cc676ee2097714fb3b"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_cb9a1e5640b8e07a9a63b51245"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_c90b796bd033e54e3719213a0c"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_0404416b5c1cd48ae87fe81834"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_09a383d6f2858d49c064ca4cda"`);
+		await queryRunner.query(`DROP TABLE "plugin_sources"`);
+		await queryRunner.query(`DROP TYPE "public"."plugin_sources_storageprovider_enum"`);
+		await queryRunner.query(`DROP TYPE "public"."plugin_sources_architecture_enum"`);
+		await queryRunner.query(`DROP TYPE "public"."plugin_sources_operatingsystem_enum"`);
+		await queryRunner.query(`DROP TYPE "public"."plugin_sources_type_enum"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_1569d8ca526d958d82483e15c7"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_173e0668b17afd3696abf3c518"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_3c3ce338e7716d853220d8b176"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_5e6b80341a4ed75ae7c4af6897"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_c92ea21dfcfd889730e2214c8f"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_28624735b4e3ace75883521a57"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_32c3f7a738ec8b40d6375b2933"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_acac58b213936ea488d0a8d1a3"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_547e4b71ae81ee772fa4ab79e6"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_8aafffefdce2eb11079ec2aa75"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_dff9e6c763c8c33b07f330e6a1"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_3e63eed07bcc0e3e36d9183cca"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_d742ed346264f4c9d9225265d7"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_a45f5c2aba22d4fa4eb8fa85af"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_7e9b8b3eebb881753e07b73f6c"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_842e5e5f94c4008a42d4b5f44a"`);
+		await queryRunner.query(`DROP TABLE "plugin_installations"`);
+		await queryRunner.query(`DROP TYPE "public"."plugin_installations_status_enum"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_676e7c749905331c36b1707ba8"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_cddb5e04a93a957dc4d56522b7"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_17c923b300710a13f6dfade59b"`);
@@ -944,48 +1034,6 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "public"."IDX_f209a8620f1677ed2c82c4cd2e"`);
 		await queryRunner.query(`DROP TABLE "plugin_tenants"`);
 		await queryRunner.query(`DROP TYPE "public"."plugin_tenants_scope_enum"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_d658bc853b354445cf2a0d6fb7"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_55bee446d2c470e5d6b066a27a"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_7c6dc1cdd58690b7179d76184b"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_19d9135639e3b40ec0dca1c926"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_0ab83b39cc676ee2097714fb3b"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_cb9a1e5640b8e07a9a63b51245"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_c90b796bd033e54e3719213a0c"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_0404416b5c1cd48ae87fe81834"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_09a383d6f2858d49c064ca4cda"`);
-		await queryRunner.query(`DROP TABLE "plugin_sources"`);
-		await queryRunner.query(`DROP TYPE "public"."plugin_sources_storageprovider_enum"`);
-		await queryRunner.query(`DROP TYPE "public"."plugin_sources_architecture_enum"`);
-		await queryRunner.query(`DROP TYPE "public"."plugin_sources_operatingsystem_enum"`);
-		await queryRunner.query(`DROP TYPE "public"."plugin_sources_type_enum"`);
-		await queryRunner.query(`DROP INDEX "public"."version_number_unique"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_8adf7a9181e968bcafc71236c8"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_ab6e29cd444226f80bf0c0c1db"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_f806bae81cd490404a1888ad5b"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_650ccf2e7394509f7ad8448e32"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_a16869769b9a219acb157bb2b3"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_e6d49799b916946e5cd5399385"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_e06094816e67e584dea754cc81"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_0b36b5701e9890a395ded76cb5"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_485db4d1cc977cc3d499824d95"`);
-		await queryRunner.query(`DROP TABLE "plugin_versions"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_6b7ef18c0cb54d547e40f30fb8"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_3c3ce338e7716d853220d8b176"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_5e6b80341a4ed75ae7c4af6897"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_c92ea21dfcfd889730e2214c8f"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_28624735b4e3ace75883521a57"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_32c3f7a738ec8b40d6375b2933"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_acac58b213936ea488d0a8d1a3"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_547e4b71ae81ee772fa4ab79e6"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_8aafffefdce2eb11079ec2aa75"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_dff9e6c763c8c33b07f330e6a1"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_3e63eed07bcc0e3e36d9183cca"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_d742ed346264f4c9d9225265d7"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_a45f5c2aba22d4fa4eb8fa85af"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_7e9b8b3eebb881753e07b73f6c"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_842e5e5f94c4008a42d4b5f44a"`);
-		await queryRunner.query(`DROP TABLE "plugin_installations"`);
-		await queryRunner.query(`DROP TYPE "public"."plugin_installations_status_enum"`);
 		await queryRunner.query(
 			`ALTER TABLE "employee_job_preset" ADD CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
 		);
@@ -1014,100 +1062,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
 		);
 		await queryRunner.query(
-			`CREATE TABLE "plugin_installations" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar, "versionId" varchar, "installedById" varchar, "installedAt" datetime, "uninstalledAt" datetime, "status" varchar CHECK( "status" IN ('INSTALLED','UNINSTALLED','FAILED','IN_PROGRESS') ) NOT NULL DEFAULT ('IN_PROGRESS'), "isActivated" boolean NOT NULL DEFAULT (0), "activatedAt" datetime, "deactivatedAt" datetime)`
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_842e5e5f94c4008a42d4b5f44a" ON "plugin_installations" ("createdByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7e9b8b3eebb881753e07b73f6c" ON "plugin_installations" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af" ON "plugin_installations" ("deletedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_d742ed346264f4c9d9225265d7" ON "plugin_installations" ("isActive") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_3e63eed07bcc0e3e36d9183cca" ON "plugin_installations" ("isArchived") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_dff9e6c763c8c33b07f330e6a1" ON "plugin_installations" ("tenantId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_8aafffefdce2eb11079ec2aa75" ON "plugin_installations" ("organizationId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_547e4b71ae81ee772fa4ab79e6" ON "plugin_installations" ("pluginId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_acac58b213936ea488d0a8d1a3" ON "plugin_installations" ("versionId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_32c3f7a738ec8b40d6375b2933" ON "plugin_installations" ("installedById") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_28624735b4e3ace75883521a57" ON "plugin_installations" ("installedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_c92ea21dfcfd889730e2214c8f" ON "plugin_installations" ("uninstalledAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_5e6b80341a4ed75ae7c4af6897" ON "plugin_installations" ("activatedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_3c3ce338e7716d853220d8b176" ON "plugin_installations" ("deactivatedAt") `
-		);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX "IDX_6b7ef18c0cb54d547e40f30fb8" ON "plugin_installations" ("pluginId", "versionId", "installedById") `
-		);
-		await queryRunner.query(
-			`CREATE TABLE "plugin_versions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "number" varchar NOT NULL, "changelog" varchar NOT NULL, "checksum" varchar, "signature" varchar, "releaseDate" datetime, "downloadCount" integer DEFAULT (0), "pluginId" varchar)`
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_485db4d1cc977cc3d499824d95" ON "plugin_versions" ("createdByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_0b36b5701e9890a395ded76cb5" ON "plugin_versions" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_e06094816e67e584dea754cc81" ON "plugin_versions" ("deletedByUserId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_e6d49799b916946e5cd5399385" ON "plugin_versions" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_a16869769b9a219acb157bb2b3" ON "plugin_versions" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_650ccf2e7394509f7ad8448e32" ON "plugin_versions" ("tenantId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_f806bae81cd490404a1888ad5b" ON "plugin_versions" ("organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
-		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX IF NOT EXISTS "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
-		);
-		await queryRunner.query(
-			`CREATE TABLE "plugin_sources" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "type" varchar CHECK( "type" IN ('CDN','NPM','GAUZY') ) NOT NULL DEFAULT ('GAUZY'), "operatingSystem" varchar CHECK( "operatingSystem" IN ('LINUX','MAC','WINDOWS','UNIVERSAL') ) NOT NULL DEFAULT ('UNIVERSAL'), "architecture" varchar CHECK( "architecture" IN ('X64','ARM') ) NOT NULL DEFAULT ('X64'), "url" varchar, "integrity" varchar, "crossOrigin" varchar, "name" varchar, "registry" varchar, "private" boolean DEFAULT (0), "scope" varchar, "filePath" varchar, "fileName" varchar, "fileSize" integer, "mimeType" varchar, "fileKey" varchar, "versionId" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ))`
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_09a383d6f2858d49c064ca4cda" ON "plugin_sources" ("createdByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_0404416b5c1cd48ae87fe81834" ON "plugin_sources" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_c90b796bd033e54e3719213a0c" ON "plugin_sources" ("deletedByUserId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_cb9a1e5640b8e07a9a63b51245" ON "plugin_sources" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_0ab83b39cc676ee2097714fb3b" ON "plugin_sources" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_19d9135639e3b40ec0dca1c926" ON "plugin_sources" ("tenantId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7c6dc1cdd58690b7179d76184b" ON "plugin_sources" ("organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_55bee446d2c470e5d6b066a27a" ON "plugin_sources" ("versionId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_d658bc853b354445cf2a0d6fb7" ON "plugin_sources" ("storageProvider") `
-		);
-		await queryRunner.query(
-			`CREATE TABLE "plugin_tenants" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar NOT NULL, "enabled" boolean NOT NULL DEFAULT (1), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('user'), "autoInstall" boolean NOT NULL DEFAULT (0), "requiresApproval" boolean NOT NULL DEFAULT (1), "isMandatory" boolean NOT NULL DEFAULT (0), "maxInstallations" integer, "maxActiveUsers" integer, "currentInstallations" integer NOT NULL DEFAULT (0), "currentActiveUsers" integer NOT NULL DEFAULT (0), "tenantConfiguration" text, "preferences" text, "approvedAt" text, "isDataCompliant" boolean NOT NULL DEFAULT (1), "complianceCertifications" text, "approvedById" varchar NOT NULL)`
+			`CREATE TABLE "plugin_tenants" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar NOT NULL, "enabled" boolean NOT NULL DEFAULT (1), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('user'), "autoInstall" boolean NOT NULL DEFAULT (0), "requiresApproval" boolean NOT NULL DEFAULT (1), "isMandatory" boolean NOT NULL DEFAULT (0), "maxInstallations" integer, "maxActiveUsers" integer, "currentInstallations" integer NOT NULL DEFAULT (0), "currentActiveUsers" integer NOT NULL DEFAULT (0), "tenantConfiguration" text, "preferences" text, "approvedAt" text, "isDataCompliant" boolean NOT NULL DEFAULT (1), "complianceCertifications" text, "approvedById" varchar)`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_f209a8620f1677ed2c82c4cd2e" ON "plugin_tenants" ("createdByUserId") `
@@ -1214,17 +1169,136 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE UNIQUE INDEX "IDX_676e7c749905331c36b1707ba8" ON "plugin_tags" ("pluginId", "tagId") `
 		);
 		await queryRunner.query(
-			`CREATE TABLE "plugins" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" varchar, "type" varchar CHECK( "type" IN ('DESKTOP','WEB','MOBILE') ) NOT NULL DEFAULT ('DESKTOP'), "status" varchar CHECK( "status" IN ('ACTIVE','INACTIVE','DEPRECATED','ARCHIVED') ) NOT NULL DEFAULT ('ACTIVE'), "categoryId" varchar, "author" varchar, "license" varchar, "homepage" varchar, "repository" varchar, "uploadedById" varchar, "uploadedAt" datetime, "requiresSubscription" boolean NOT NULL DEFAULT (0), "lastDownloadedAt" datetime)`
+			`CREATE TABLE "plugin_installations" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar(36), "versionId" varchar(36), "installedById" varchar(36), "installedAt" datetime, "uninstalledAt" datetime, "status" varchar CHECK( "status" IN ('INSTALLED','UNINSTALLED','FAILED','IN_PROGRESS') ) NOT NULL DEFAULT ('IN_PROGRESS'), "isActivated" boolean NOT NULL DEFAULT (0), "activatedAt" datetime, "deactivatedAt" datetime)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_842e5e5f94c4008a42d4b5f44a" ON "plugin_installations" ("createdByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_7e9b8b3eebb881753e07b73f6c" ON "plugin_installations" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af" ON "plugin_installations" ("deletedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_d742ed346264f4c9d9225265d7" ON "plugin_installations" ("isActive") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_3e63eed07bcc0e3e36d9183cca" ON "plugin_installations" ("isArchived") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_dff9e6c763c8c33b07f330e6a1" ON "plugin_installations" ("tenantId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_8aafffefdce2eb11079ec2aa75" ON "plugin_installations" ("organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_547e4b71ae81ee772fa4ab79e6" ON "plugin_installations" ("pluginId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_acac58b213936ea488d0a8d1a3" ON "plugin_installations" ("versionId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_32c3f7a738ec8b40d6375b2933" ON "plugin_installations" ("installedById") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_28624735b4e3ace75883521a57" ON "plugin_installations" ("installedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c92ea21dfcfd889730e2214c8f" ON "plugin_installations" ("uninstalledAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_5e6b80341a4ed75ae7c4af6897" ON "plugin_installations" ("activatedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_3c3ce338e7716d853220d8b176" ON "plugin_installations" ("deactivatedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_173e0668b17afd3696abf3c518" ON "plugin_installations" ("installedById", "pluginId") `
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_1569d8ca526d958d82483e15c7" ON "plugin_installations" ("pluginId", "tenantId", "organizationId", "installedById") `
+		);
+		await queryRunner.query(
+			`CREATE TABLE "plugin_sources" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "type" varchar CHECK( "type" IN ('CDN','NPM','GAUZY') ) NOT NULL DEFAULT ('GAUZY'), "operatingSystem" varchar CHECK( "operatingSystem" IN ('LINUX','MAC','WINDOWS','UNIVERSAL') ) NOT NULL DEFAULT ('UNIVERSAL'), "architecture" varchar CHECK( "architecture" IN ('X64','ARM') ) NOT NULL DEFAULT ('X64'), "url" varchar, "integrity" varchar, "crossOrigin" varchar, "name" varchar, "registry" varchar, "private" boolean DEFAULT (0), "scope" varchar, "filePath" varchar, "fileName" varchar, "fileSize" integer, "mimeType" varchar, "fileKey" varchar, "versionId" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ))`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_09a383d6f2858d49c064ca4cda" ON "plugin_sources" ("createdByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_0404416b5c1cd48ae87fe81834" ON "plugin_sources" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c90b796bd033e54e3719213a0c" ON "plugin_sources" ("deletedByUserId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_cb9a1e5640b8e07a9a63b51245" ON "plugin_sources" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_0ab83b39cc676ee2097714fb3b" ON "plugin_sources" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_19d9135639e3b40ec0dca1c926" ON "plugin_sources" ("tenantId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_7c6dc1cdd58690b7179d76184b" ON "plugin_sources" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_55bee446d2c470e5d6b066a27a" ON "plugin_sources" ("versionId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_d658bc853b354445cf2a0d6fb7" ON "plugin_sources" ("storageProvider") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_af8978fbf37560525c19ec7048" ON "plugin_sources" ("tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_6fae6d0ddfd7177abcb4befd72" ON "plugin_sources" ("versionId", "operatingSystem", "architecture", "tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE TABLE "plugin_versions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "number" varchar NOT NULL, "changelog" varchar NOT NULL, "checksum" varchar, "signature" varchar, "releaseDate" datetime, "downloadCount" integer DEFAULT (0), "pluginId" varchar)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_485db4d1cc977cc3d499824d95" ON "plugin_versions" ("createdByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_0b36b5701e9890a395ded76cb5" ON "plugin_versions" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_e06094816e67e584dea754cc81" ON "plugin_versions" ("deletedByUserId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_e6d49799b916946e5cd5399385" ON "plugin_versions" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_a16869769b9a219acb157bb2b3" ON "plugin_versions" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_650ccf2e7394509f7ad8448e32" ON "plugin_versions" ("tenantId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_f806bae81cd490404a1888ad5b" ON "plugin_versions" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
+		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_6fa0eda3add1fb070ba172a44e" ON "plugin_versions" ("downloadCount") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_e632aa70ea7b7e5c5fdbfba41b" ON "plugin_versions" ("number") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_e1e7cf1589d06ac02a12e41db0" ON "plugin_versions" ("pluginId", "releaseDate") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_f5c8259c0d815486f31878864d" ON "plugin_versions" ("tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_39d060301c8a36b51da6e4aec3" ON "plugin_versions" ("pluginId", "organizationId", "number") `
+		);
+		await queryRunner.query(
+			`CREATE TABLE "plugins" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" varchar, "type" varchar CHECK( "type" IN ('DESKTOP','WEB','MOBILE') ) NOT NULL DEFAULT ('DESKTOP'), "status" varchar CHECK( "status" IN ('ACTIVE','INACTIVE','DEPRECATED','ARCHIVED') ) NOT NULL DEFAULT ('ACTIVE'), "categoryId" varchar, "author" varchar, "license" varchar, "homepage" varchar, "repository" varchar, "uploadedById" varchar, "uploadedAt" datetime, "requiresSubscription" boolean NOT NULL DEFAULT (0), "isFeatured" boolean NOT NULL DEFAULT (0), "isVerified" boolean NOT NULL DEFAULT (0), "lastDownloadedAt" datetime)`
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_cc5b64091fbfdcdbd23d6da80e" ON "plugins" ("createdByUserId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_61357761fc6b140180b104dc8d" ON "plugins" ("updatedByUserId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_3210c015451d02d015a23eedad" ON "plugins" ("deletedByUserId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_d0a1444aa92229d7f1af237184" ON "plugins" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_c61c7032e7b3afd352d82bc4b4" ON "plugins" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_35ee1cb5098e17e30ee5cbc705" ON "plugins" ("type") `);
+		await queryRunner.query(`CREATE INDEX "IDX_100eef6409ee96d0673ee510e6" ON "plugins" ("status") `);
+		await queryRunner.query(`CREATE INDEX "IDX_16d0aed6fcc311379f5c75bbd2" ON "plugins" ("categoryId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_4bf89f98c41969e23e3f9974d5" ON "plugins" ("uploadedById") `);
-		await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "plugin_name_unique" ON "plugins" ("name") `);
+		await queryRunner.query(`CREATE INDEX "IDX_15ca158f27ab3296915b7d1b38" ON "plugins" ("isFeatured") `);
+		await queryRunner.query(`CREATE INDEX "IDX_123f1b37f4826f6241446a8416" ON "plugins" ("isVerified") `);
+		await queryRunner.query(`CREATE INDEX "IDX_c0fab3c6709a93bca88eb100a9" ON "plugins" ("status", "isFeatured") `);
+		await queryRunner.query(`CREATE INDEX "IDX_6c8d4a0f437cfae296ef43ce13" ON "plugins" ("status", "type") `);
+		await queryRunner.query(`CREATE UNIQUE INDEX "IDX_0479844f05c1132f8929cab1c8" ON "plugins" ("name") `);
 		await queryRunner.query(
-			`CREATE TABLE "plugin_subscription_plans" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" text, "type" varchar CHECK( "type" IN ('free','trial','basic','premium','enterprise','custom') ) NOT NULL DEFAULT ('free'), "price" decimal(10,2) NOT NULL DEFAULT (0), "currency" varchar(3) NOT NULL DEFAULT ('USD'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time','usage_based') ) NOT NULL DEFAULT ('monthly'), "features" text NOT NULL, "limitations" text, "isPopular" boolean NOT NULL DEFAULT (0), "isRecommended" boolean NOT NULL DEFAULT (0), "trialDays" integer, "setupFee" decimal(10,2), "discountPercentage" decimal(5,2), "metadata" text, "sortOrder" integer NOT NULL DEFAULT (0), "pluginId" varchar NOT NULL, "createdById" varchar)`
+			`CREATE TABLE "plugin_subscription_plans" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" text, "type" varchar CHECK( "type" IN ('free','trial','basic','premium','enterprise','custom') ) NOT NULL DEFAULT ('free'), "price" decimal(10,2) NOT NULL DEFAULT (0), "currency" varchar(3) NOT NULL DEFAULT ('USD'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time') ) NOT NULL DEFAULT ('monthly'), "features" text NOT NULL, "limitations" text, "isPopular" boolean NOT NULL DEFAULT (0), "isRecommended" boolean NOT NULL DEFAULT (0), "trialDays" integer, "setupFee" decimal(10,2), "discountPercentage" decimal(5,2), "metadata" text, "sortOrder" integer NOT NULL DEFAULT (0), "pluginId" varchar NOT NULL, "createdById" varchar)`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_646aa1161ac9861061842e05c2" ON "plugin_subscription_plans" ("createdByUserId") `
@@ -1251,7 +1325,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE INDEX "IDX_082f6cba880ecd144b28284376" ON "plugin_subscription_plans" ("pluginId", "type") `
 		);
 		await queryRunner.query(
-			`CREATE TABLE "plugin_subscriptions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "status" varchar CHECK( "status" IN ('active','trial','expired','cancelled','suspended','pending') ) NOT NULL DEFAULT ('pending'), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('tenant'), "startDate" datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP), "endDate" datetime, "trialEndDate" datetime, "autoRenew" boolean NOT NULL DEFAULT (1), "cancelledAt" datetime, "cancellationReason" text, "metadata" text, "externalSubscriptionId" varchar, "pluginId" varchar NOT NULL, "pluginTenantId" varchar NOT NULL, "planId" varchar, "subscriberId" varchar, "parentId" varchar)`
+			`CREATE TABLE "plugin_subscriptions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "status" varchar CHECK( "status" IN ('active','cancelled','expired','trial','past_due','suspended','pending') ) NOT NULL DEFAULT ('pending'), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('tenant'), "startDate" datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP), "endDate" datetime, "trialEndDate" datetime, "autoRenew" boolean NOT NULL DEFAULT (1), "cancelledAt" datetime, "cancellationReason" text, "metadata" text, "externalSubscriptionId" varchar, "pluginId" varchar NOT NULL, "pluginTenantId" varchar NOT NULL, "planId" varchar, "subscriberId" varchar, "parentId" varchar)`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_449b2294593f5787f40a60c8f2" ON "plugin_subscriptions" ("createdByUserId") `
@@ -1275,6 +1349,9 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE INDEX "IDX_9bbac226cce476576134c5726e" ON "plugin_subscriptions" ("organizationId") `
 		);
 		await queryRunner.query(
+			`CREATE INDEX "IDX_7afeffe18364cae48efd454e4d" ON "plugin_subscriptions" ("scope", "tenantId") `
+		);
+		await queryRunner.query(
 			`CREATE INDEX "IDX_39a16aca760fc7a3cef39d5563" ON "plugin_subscriptions" ("parentId") `
 		);
 		await queryRunner.query(
@@ -1282,7 +1359,10 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_4e8a9f4ee7df8c39d0314063e7" ON "plugin_subscriptions" ("planId") `);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "IDX_5e454c743af9400e3fe1814039" ON "plugin_subscriptions" ("pluginId", "subscriberId") `
+			`CREATE UNIQUE INDEX "IDX_18db53b62833e1bdb9949b5827" ON "plugin_subscriptions" ("pluginId", "subscriberId", "tenantId") WHERE "subscriberId" IS NOT NULL`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_448990d16086477ee1c5f08968" ON "plugin_subscriptions" ("status", "tenantId") `
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_fed0c61e1d142e1c448a45e5a0" ON "plugin_subscriptions" ("status", "endDate") `
@@ -1294,7 +1374,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE INDEX "IDX_eb3b9c7cfe7aa86bca589aee9e" ON "plugin_subscriptions" ("pluginId", "tenantId", "organizationId") `
 		);
 		await queryRunner.query(
-			`CREATE TABLE "plugin_billings" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "amount" decimal(10,2) NOT NULL, "currency" varchar NOT NULL DEFAULT ('USD'), "billingDate" datetime NOT NULL, "dueDate" datetime NOT NULL, "status" varchar CHECK( "status" IN ('pending','processed','paid','overdue','failed','cancelled','refunded','partially_paid') ) NOT NULL DEFAULT ('pending'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time','usage_based') ) NOT NULL, "billingPeriodStart" datetime NOT NULL, "billingPeriodEnd" datetime NOT NULL, "description" text, "metadata" text, "subscriptionId" varchar NOT NULL)`
+			`CREATE TABLE "plugin_billings" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "amount" decimal(10,2) NOT NULL, "currency" varchar NOT NULL DEFAULT ('USD'), "billingDate" datetime NOT NULL, "dueDate" datetime NOT NULL, "status" varchar CHECK( "status" IN ('pending','processed','paid','overdue','failed','cancelled','refunded','partially_paid') ) NOT NULL DEFAULT ('pending'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time') ) NOT NULL, "billingPeriodStart" datetime NOT NULL, "billingPeriodEnd" datetime NOT NULL, "description" text, "metadata" text, "subscriptionId" varchar NOT NULL)`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_74d0d8f22af90d92d3213d5e74" ON "plugin_billings" ("createdByUserId") `
@@ -1556,148 +1636,6 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(
 			`CREATE INDEX "IDX_63d9e137716eb1bdfe93ccf23d" ON "time_slot_session" ("createdByUserId") `
 		);
-		await queryRunner.query(`DROP INDEX "IDX_842e5e5f94c4008a42d4b5f44a"`);
-		await queryRunner.query(`DROP INDEX "IDX_7e9b8b3eebb881753e07b73f6c"`);
-		await queryRunner.query(`DROP INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af"`);
-		await queryRunner.query(`DROP INDEX "IDX_d742ed346264f4c9d9225265d7"`);
-		await queryRunner.query(`DROP INDEX "IDX_3e63eed07bcc0e3e36d9183cca"`);
-		await queryRunner.query(`DROP INDEX "IDX_dff9e6c763c8c33b07f330e6a1"`);
-		await queryRunner.query(`DROP INDEX "IDX_8aafffefdce2eb11079ec2aa75"`);
-		await queryRunner.query(`DROP INDEX "IDX_547e4b71ae81ee772fa4ab79e6"`);
-		await queryRunner.query(`DROP INDEX "IDX_acac58b213936ea488d0a8d1a3"`);
-		await queryRunner.query(`DROP INDEX "IDX_32c3f7a738ec8b40d6375b2933"`);
-		await queryRunner.query(`DROP INDEX "IDX_28624735b4e3ace75883521a57"`);
-		await queryRunner.query(`DROP INDEX "IDX_c92ea21dfcfd889730e2214c8f"`);
-		await queryRunner.query(`DROP INDEX "IDX_5e6b80341a4ed75ae7c4af6897"`);
-		await queryRunner.query(`DROP INDEX "IDX_3c3ce338e7716d853220d8b176"`);
-		await queryRunner.query(`DROP INDEX "IDX_6b7ef18c0cb54d547e40f30fb8"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_plugin_installations" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar, "versionId" varchar, "installedById" varchar, "installedAt" datetime, "uninstalledAt" datetime, "status" varchar CHECK( "status" IN ('INSTALLED','UNINSTALLED','FAILED','IN_PROGRESS') ) NOT NULL DEFAULT ('IN_PROGRESS'), "isActivated" boolean NOT NULL DEFAULT (0), "activatedAt" datetime, "deactivatedAt" datetime, CONSTRAINT "FK_842e5e5f94c4008a42d4b5f44a6" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7e9b8b3eebb881753e07b73f6c6" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_a45f5c2aba22d4fa4eb8fa85af8" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_dff9e6c763c8c33b07f330e6a19" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_8aafffefdce2eb11079ec2aa755" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_547e4b71ae81ee772fa4ab79e60" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_acac58b213936ea488d0a8d1a30" FOREIGN KEY ("versionId") REFERENCES "plugin_versions" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_32c3f7a738ec8b40d6375b2933c" FOREIGN KEY ("installedById") REFERENCES "employee" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_plugin_installations"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "versionId", "installedById", "installedAt", "uninstalledAt", "status", "isActivated", "activatedAt", "deactivatedAt") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "versionId", "installedById", "installedAt", "uninstalledAt", "status", "isActivated", "activatedAt", "deactivatedAt" FROM "plugin_installations"`
-		);
-		await queryRunner.query(`DROP TABLE "plugin_installations"`);
-		await queryRunner.query(`ALTER TABLE "temporary_plugin_installations" RENAME TO "plugin_installations"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_842e5e5f94c4008a42d4b5f44a" ON "plugin_installations" ("createdByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7e9b8b3eebb881753e07b73f6c" ON "plugin_installations" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af" ON "plugin_installations" ("deletedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_d742ed346264f4c9d9225265d7" ON "plugin_installations" ("isActive") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_3e63eed07bcc0e3e36d9183cca" ON "plugin_installations" ("isArchived") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_dff9e6c763c8c33b07f330e6a1" ON "plugin_installations" ("tenantId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_8aafffefdce2eb11079ec2aa75" ON "plugin_installations" ("organizationId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_547e4b71ae81ee772fa4ab79e6" ON "plugin_installations" ("pluginId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_acac58b213936ea488d0a8d1a3" ON "plugin_installations" ("versionId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_32c3f7a738ec8b40d6375b2933" ON "plugin_installations" ("installedById") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_28624735b4e3ace75883521a57" ON "plugin_installations" ("installedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_c92ea21dfcfd889730e2214c8f" ON "plugin_installations" ("uninstalledAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_5e6b80341a4ed75ae7c4af6897" ON "plugin_installations" ("activatedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_3c3ce338e7716d853220d8b176" ON "plugin_installations" ("deactivatedAt") `
-		);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX "IDX_6b7ef18c0cb54d547e40f30fb8" ON "plugin_installations" ("pluginId", "versionId", "installedById") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_485db4d1cc977cc3d499824d95"`);
-		await queryRunner.query(`DROP INDEX "IDX_0b36b5701e9890a395ded76cb5"`);
-		await queryRunner.query(`DROP INDEX "IDX_e06094816e67e584dea754cc81"`);
-		await queryRunner.query(`DROP INDEX "IDX_e6d49799b916946e5cd5399385"`);
-		await queryRunner.query(`DROP INDEX "IDX_a16869769b9a219acb157bb2b3"`);
-		await queryRunner.query(`DROP INDEX "IDX_650ccf2e7394509f7ad8448e32"`);
-		await queryRunner.query(`DROP INDEX "IDX_f806bae81cd490404a1888ad5b"`);
-		await queryRunner.query(`DROP INDEX "IDX_ab6e29cd444226f80bf0c0c1db"`);
-		await queryRunner.query(`DROP INDEX "IDX_8adf7a9181e968bcafc71236c8"`);
-		await queryRunner.query(`DROP INDEX IF EXISTS "version_number_unique"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_plugin_versions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "number" varchar NOT NULL, "changelog" varchar NOT NULL, "checksum" varchar, "signature" varchar, "releaseDate" datetime, "downloadCount" integer DEFAULT (0), "pluginId" varchar, CONSTRAINT "FK_485db4d1cc977cc3d499824d958" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_0b36b5701e9890a395ded76cb57" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_e06094816e67e584dea754cc81c" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_650ccf2e7394509f7ad8448e323" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_f806bae81cd490404a1888ad5b9" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_8adf7a9181e968bcafc71236c80" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_plugin_versions"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "number", "changelog", "checksum", "signature", "releaseDate", "downloadCount", "pluginId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "number", "changelog", "checksum", "signature", "releaseDate", "downloadCount", "pluginId" FROM "plugin_versions"`
-		);
-		await queryRunner.query(`DROP TABLE "plugin_versions"`);
-		await queryRunner.query(`ALTER TABLE "temporary_plugin_versions" RENAME TO "plugin_versions"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_485db4d1cc977cc3d499824d95" ON "plugin_versions" ("createdByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_0b36b5701e9890a395ded76cb5" ON "plugin_versions" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_e06094816e67e584dea754cc81" ON "plugin_versions" ("deletedByUserId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_e6d49799b916946e5cd5399385" ON "plugin_versions" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_a16869769b9a219acb157bb2b3" ON "plugin_versions" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_650ccf2e7394509f7ad8448e32" ON "plugin_versions" ("tenantId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_f806bae81cd490404a1888ad5b" ON "plugin_versions" ("organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
-		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX IF NOT EXISTS "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_09a383d6f2858d49c064ca4cda"`);
-		await queryRunner.query(`DROP INDEX "IDX_0404416b5c1cd48ae87fe81834"`);
-		await queryRunner.query(`DROP INDEX "IDX_c90b796bd033e54e3719213a0c"`);
-		await queryRunner.query(`DROP INDEX "IDX_cb9a1e5640b8e07a9a63b51245"`);
-		await queryRunner.query(`DROP INDEX "IDX_0ab83b39cc676ee2097714fb3b"`);
-		await queryRunner.query(`DROP INDEX "IDX_19d9135639e3b40ec0dca1c926"`);
-		await queryRunner.query(`DROP INDEX "IDX_7c6dc1cdd58690b7179d76184b"`);
-		await queryRunner.query(`DROP INDEX "IDX_55bee446d2c470e5d6b066a27a"`);
-		await queryRunner.query(`DROP INDEX "IDX_d658bc853b354445cf2a0d6fb7"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_plugin_sources" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "type" varchar CHECK( "type" IN ('CDN','NPM','GAUZY') ) NOT NULL DEFAULT ('GAUZY'), "operatingSystem" varchar CHECK( "operatingSystem" IN ('LINUX','MAC','WINDOWS','UNIVERSAL') ) NOT NULL DEFAULT ('UNIVERSAL'), "architecture" varchar CHECK( "architecture" IN ('X64','ARM') ) NOT NULL DEFAULT ('X64'), "url" varchar, "integrity" varchar, "crossOrigin" varchar, "name" varchar, "registry" varchar, "private" boolean DEFAULT (0), "scope" varchar, "filePath" varchar, "fileName" varchar, "fileSize" integer, "mimeType" varchar, "fileKey" varchar, "versionId" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ), CONSTRAINT "FK_09a383d6f2858d49c064ca4cda9" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_0404416b5c1cd48ae87fe81834a" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_c90b796bd033e54e3719213a0ce" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_19d9135639e3b40ec0dca1c9261" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7c6dc1cdd58690b7179d76184be" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_55bee446d2c470e5d6b066a27a2" FOREIGN KEY ("versionId") REFERENCES "plugin_versions" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_plugin_sources"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "type", "operatingSystem", "architecture", "url", "integrity", "crossOrigin", "name", "registry", "private", "scope", "filePath", "fileName", "fileSize", "mimeType", "fileKey", "versionId", "storageProvider") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "type", "operatingSystem", "architecture", "url", "integrity", "crossOrigin", "name", "registry", "private", "scope", "filePath", "fileName", "fileSize", "mimeType", "fileKey", "versionId", "storageProvider" FROM "plugin_sources"`
-		);
-		await queryRunner.query(`DROP TABLE "plugin_sources"`);
-		await queryRunner.query(`ALTER TABLE "temporary_plugin_sources" RENAME TO "plugin_sources"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_09a383d6f2858d49c064ca4cda" ON "plugin_sources" ("createdByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_0404416b5c1cd48ae87fe81834" ON "plugin_sources" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_c90b796bd033e54e3719213a0c" ON "plugin_sources" ("deletedByUserId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_cb9a1e5640b8e07a9a63b51245" ON "plugin_sources" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_0ab83b39cc676ee2097714fb3b" ON "plugin_sources" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_19d9135639e3b40ec0dca1c926" ON "plugin_sources" ("tenantId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7c6dc1cdd58690b7179d76184b" ON "plugin_sources" ("organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_55bee446d2c470e5d6b066a27a" ON "plugin_sources" ("versionId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_d658bc853b354445cf2a0d6fb7" ON "plugin_sources" ("storageProvider") `
-		);
 		await queryRunner.query(`DROP INDEX "IDX_f209a8620f1677ed2c82c4cd2e"`);
 		await queryRunner.query(`DROP INDEX "IDX_0b5cc71673410a449491fb3db9"`);
 		await queryRunner.query(`DROP INDEX "IDX_06f10073cd6e84a19b6f604ddd"`);
@@ -1717,7 +1655,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_a3a616a07b21a4212736493f5e"`);
 		await queryRunner.query(`DROP INDEX "IDX_1394aebfcfe6782051e76f46a5"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_plugin_tenants" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar NOT NULL, "enabled" boolean NOT NULL DEFAULT (1), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('user'), "autoInstall" boolean NOT NULL DEFAULT (0), "requiresApproval" boolean NOT NULL DEFAULT (1), "isMandatory" boolean NOT NULL DEFAULT (0), "maxInstallations" integer, "maxActiveUsers" integer, "currentInstallations" integer NOT NULL DEFAULT (0), "currentActiveUsers" integer NOT NULL DEFAULT (0), "tenantConfiguration" text, "preferences" text, "approvedAt" text, "isDataCompliant" boolean NOT NULL DEFAULT (1), "complianceCertifications" text, "approvedById" varchar NOT NULL, CONSTRAINT "FK_f209a8620f1677ed2c82c4cd2e4" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_0b5cc71673410a449491fb3db93" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_06f10073cd6e84a19b6f604ddd1" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_5df2b63d82f2168e43c2d7e64c1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_545faee53386f4e9d7b43111047" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_c47db2e2072ba3b570608192467" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_52ca2ab9f943fe3f47df36aef76" FOREIGN KEY ("approvedById") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_plugin_tenants" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar NOT NULL, "enabled" boolean NOT NULL DEFAULT (1), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('user'), "autoInstall" boolean NOT NULL DEFAULT (0), "requiresApproval" boolean NOT NULL DEFAULT (1), "isMandatory" boolean NOT NULL DEFAULT (0), "maxInstallations" integer, "maxActiveUsers" integer, "currentInstallations" integer NOT NULL DEFAULT (0), "currentActiveUsers" integer NOT NULL DEFAULT (0), "tenantConfiguration" text, "preferences" text, "approvedAt" text, "isDataCompliant" boolean NOT NULL DEFAULT (1), "complianceCertifications" text, "approvedById" varchar, CONSTRAINT "FK_f209a8620f1677ed2c82c4cd2e4" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_0b5cc71673410a449491fb3db93" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_06f10073cd6e84a19b6f604ddd1" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_5df2b63d82f2168e43c2d7e64c1" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_545faee53386f4e9d7b43111047" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_c47db2e2072ba3b570608192467" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_52ca2ab9f943fe3f47df36aef76" FOREIGN KEY ("approvedById") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_plugin_tenants"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "enabled", "scope", "autoInstall", "requiresApproval", "isMandatory", "maxInstallations", "maxActiveUsers", "currentInstallations", "currentActiveUsers", "tenantConfiguration", "preferences", "approvedAt", "isDataCompliant", "complianceCertifications", "approvedById") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "enabled", "scope", "autoInstall", "requiresApproval", "isMandatory", "maxInstallations", "maxActiveUsers", "currentInstallations", "currentActiveUsers", "tenantConfiguration", "preferences", "approvedAt", "isDataCompliant", "complianceCertifications", "approvedById" FROM "plugin_tenants"`
@@ -1874,18 +1812,193 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX "IDX_676e7c749905331c36b1707ba8" ON "plugin_tags" ("pluginId", "tagId") `
 		);
+		await queryRunner.query(`DROP INDEX "IDX_842e5e5f94c4008a42d4b5f44a"`);
+		await queryRunner.query(`DROP INDEX "IDX_7e9b8b3eebb881753e07b73f6c"`);
+		await queryRunner.query(`DROP INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af"`);
+		await queryRunner.query(`DROP INDEX "IDX_d742ed346264f4c9d9225265d7"`);
+		await queryRunner.query(`DROP INDEX "IDX_3e63eed07bcc0e3e36d9183cca"`);
+		await queryRunner.query(`DROP INDEX "IDX_dff9e6c763c8c33b07f330e6a1"`);
+		await queryRunner.query(`DROP INDEX "IDX_8aafffefdce2eb11079ec2aa75"`);
+		await queryRunner.query(`DROP INDEX "IDX_547e4b71ae81ee772fa4ab79e6"`);
+		await queryRunner.query(`DROP INDEX "IDX_acac58b213936ea488d0a8d1a3"`);
+		await queryRunner.query(`DROP INDEX "IDX_32c3f7a738ec8b40d6375b2933"`);
+		await queryRunner.query(`DROP INDEX "IDX_28624735b4e3ace75883521a57"`);
+		await queryRunner.query(`DROP INDEX "IDX_c92ea21dfcfd889730e2214c8f"`);
+		await queryRunner.query(`DROP INDEX "IDX_5e6b80341a4ed75ae7c4af6897"`);
+		await queryRunner.query(`DROP INDEX "IDX_3c3ce338e7716d853220d8b176"`);
+		await queryRunner.query(`DROP INDEX "IDX_173e0668b17afd3696abf3c518"`);
+		await queryRunner.query(`DROP INDEX "IDX_1569d8ca526d958d82483e15c7"`);
+		await queryRunner.query(
+			`CREATE TABLE "temporary_plugin_installations" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar(36), "versionId" varchar(36), "installedById" varchar(36), "installedAt" datetime, "uninstalledAt" datetime, "status" varchar CHECK( "status" IN ('INSTALLED','UNINSTALLED','FAILED','IN_PROGRESS') ) NOT NULL DEFAULT ('IN_PROGRESS'), "isActivated" boolean NOT NULL DEFAULT (0), "activatedAt" datetime, "deactivatedAt" datetime, CONSTRAINT "FK_842e5e5f94c4008a42d4b5f44a6" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7e9b8b3eebb881753e07b73f6c6" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_a45f5c2aba22d4fa4eb8fa85af8" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_dff9e6c763c8c33b07f330e6a19" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_8aafffefdce2eb11079ec2aa755" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_547e4b71ae81ee772fa4ab79e60" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_acac58b213936ea488d0a8d1a30" FOREIGN KEY ("versionId") REFERENCES "plugin_versions" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_32c3f7a738ec8b40d6375b2933c" FOREIGN KEY ("installedById") REFERENCES "employee" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "temporary_plugin_installations"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "versionId", "installedById", "installedAt", "uninstalledAt", "status", "isActivated", "activatedAt", "deactivatedAt") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "versionId", "installedById", "installedAt", "uninstalledAt", "status", "isActivated", "activatedAt", "deactivatedAt" FROM "plugin_installations"`
+		);
+		await queryRunner.query(`DROP TABLE "plugin_installations"`);
+		await queryRunner.query(`ALTER TABLE "temporary_plugin_installations" RENAME TO "plugin_installations"`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_842e5e5f94c4008a42d4b5f44a" ON "plugin_installations" ("createdByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_7e9b8b3eebb881753e07b73f6c" ON "plugin_installations" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af" ON "plugin_installations" ("deletedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_d742ed346264f4c9d9225265d7" ON "plugin_installations" ("isActive") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_3e63eed07bcc0e3e36d9183cca" ON "plugin_installations" ("isArchived") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_dff9e6c763c8c33b07f330e6a1" ON "plugin_installations" ("tenantId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_8aafffefdce2eb11079ec2aa75" ON "plugin_installations" ("organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_547e4b71ae81ee772fa4ab79e6" ON "plugin_installations" ("pluginId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_acac58b213936ea488d0a8d1a3" ON "plugin_installations" ("versionId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_32c3f7a738ec8b40d6375b2933" ON "plugin_installations" ("installedById") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_28624735b4e3ace75883521a57" ON "plugin_installations" ("installedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c92ea21dfcfd889730e2214c8f" ON "plugin_installations" ("uninstalledAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_5e6b80341a4ed75ae7c4af6897" ON "plugin_installations" ("activatedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_3c3ce338e7716d853220d8b176" ON "plugin_installations" ("deactivatedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_173e0668b17afd3696abf3c518" ON "plugin_installations" ("installedById", "pluginId") `
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_1569d8ca526d958d82483e15c7" ON "plugin_installations" ("pluginId", "tenantId", "organizationId", "installedById") `
+		);
+		await queryRunner.query(`DROP INDEX "IDX_09a383d6f2858d49c064ca4cda"`);
+		await queryRunner.query(`DROP INDEX "IDX_0404416b5c1cd48ae87fe81834"`);
+		await queryRunner.query(`DROP INDEX "IDX_c90b796bd033e54e3719213a0c"`);
+		await queryRunner.query(`DROP INDEX "IDX_cb9a1e5640b8e07a9a63b51245"`);
+		await queryRunner.query(`DROP INDEX "IDX_0ab83b39cc676ee2097714fb3b"`);
+		await queryRunner.query(`DROP INDEX "IDX_19d9135639e3b40ec0dca1c926"`);
+		await queryRunner.query(`DROP INDEX "IDX_7c6dc1cdd58690b7179d76184b"`);
+		await queryRunner.query(`DROP INDEX "IDX_55bee446d2c470e5d6b066a27a"`);
+		await queryRunner.query(`DROP INDEX "IDX_d658bc853b354445cf2a0d6fb7"`);
+		await queryRunner.query(`DROP INDEX "IDX_af8978fbf37560525c19ec7048"`);
+		await queryRunner.query(`DROP INDEX "IDX_6fae6d0ddfd7177abcb4befd72"`);
+		await queryRunner.query(
+			`CREATE TABLE "temporary_plugin_sources" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "type" varchar CHECK( "type" IN ('CDN','NPM','GAUZY') ) NOT NULL DEFAULT ('GAUZY'), "operatingSystem" varchar CHECK( "operatingSystem" IN ('LINUX','MAC','WINDOWS','UNIVERSAL') ) NOT NULL DEFAULT ('UNIVERSAL'), "architecture" varchar CHECK( "architecture" IN ('X64','ARM') ) NOT NULL DEFAULT ('X64'), "url" varchar, "integrity" varchar, "crossOrigin" varchar, "name" varchar, "registry" varchar, "private" boolean DEFAULT (0), "scope" varchar, "filePath" varchar, "fileName" varchar, "fileSize" integer, "mimeType" varchar, "fileKey" varchar, "versionId" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ), CONSTRAINT "FK_09a383d6f2858d49c064ca4cda9" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_0404416b5c1cd48ae87fe81834a" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_c90b796bd033e54e3719213a0ce" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_19d9135639e3b40ec0dca1c9261" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7c6dc1cdd58690b7179d76184be" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_55bee446d2c470e5d6b066a27a2" FOREIGN KEY ("versionId") REFERENCES "plugin_versions" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "temporary_plugin_sources"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "type", "operatingSystem", "architecture", "url", "integrity", "crossOrigin", "name", "registry", "private", "scope", "filePath", "fileName", "fileSize", "mimeType", "fileKey", "versionId", "storageProvider") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "type", "operatingSystem", "architecture", "url", "integrity", "crossOrigin", "name", "registry", "private", "scope", "filePath", "fileName", "fileSize", "mimeType", "fileKey", "versionId", "storageProvider" FROM "plugin_sources"`
+		);
+		await queryRunner.query(`DROP TABLE "plugin_sources"`);
+		await queryRunner.query(`ALTER TABLE "temporary_plugin_sources" RENAME TO "plugin_sources"`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_09a383d6f2858d49c064ca4cda" ON "plugin_sources" ("createdByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_0404416b5c1cd48ae87fe81834" ON "plugin_sources" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c90b796bd033e54e3719213a0c" ON "plugin_sources" ("deletedByUserId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_cb9a1e5640b8e07a9a63b51245" ON "plugin_sources" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_0ab83b39cc676ee2097714fb3b" ON "plugin_sources" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_19d9135639e3b40ec0dca1c926" ON "plugin_sources" ("tenantId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_7c6dc1cdd58690b7179d76184b" ON "plugin_sources" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_55bee446d2c470e5d6b066a27a" ON "plugin_sources" ("versionId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_d658bc853b354445cf2a0d6fb7" ON "plugin_sources" ("storageProvider") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_af8978fbf37560525c19ec7048" ON "plugin_sources" ("tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_6fae6d0ddfd7177abcb4befd72" ON "plugin_sources" ("versionId", "operatingSystem", "architecture", "tenantId", "organizationId") `
+		);
+		await queryRunner.query(`DROP INDEX "IDX_485db4d1cc977cc3d499824d95"`);
+		await queryRunner.query(`DROP INDEX "IDX_0b36b5701e9890a395ded76cb5"`);
+		await queryRunner.query(`DROP INDEX "IDX_e06094816e67e584dea754cc81"`);
+		await queryRunner.query(`DROP INDEX "IDX_e6d49799b916946e5cd5399385"`);
+		await queryRunner.query(`DROP INDEX "IDX_a16869769b9a219acb157bb2b3"`);
+		await queryRunner.query(`DROP INDEX "IDX_650ccf2e7394509f7ad8448e32"`);
+		await queryRunner.query(`DROP INDEX "IDX_f806bae81cd490404a1888ad5b"`);
+		await queryRunner.query(`DROP INDEX "IDX_ab6e29cd444226f80bf0c0c1db"`);
+		await queryRunner.query(`DROP INDEX "IDX_8adf7a9181e968bcafc71236c8"`);
+		await queryRunner.query(`DROP INDEX "IDX_6fa0eda3add1fb070ba172a44e"`);
+		await queryRunner.query(`DROP INDEX "IDX_e632aa70ea7b7e5c5fdbfba41b"`);
+		await queryRunner.query(`DROP INDEX "IDX_e1e7cf1589d06ac02a12e41db0"`);
+		await queryRunner.query(`DROP INDEX "IDX_f5c8259c0d815486f31878864d"`);
+		await queryRunner.query(`DROP INDEX "IDX_39d060301c8a36b51da6e4aec3"`);
+		await queryRunner.query(
+			`CREATE TABLE "temporary_plugin_versions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "number" varchar NOT NULL, "changelog" varchar NOT NULL, "checksum" varchar, "signature" varchar, "releaseDate" datetime, "downloadCount" integer DEFAULT (0), "pluginId" varchar, CONSTRAINT "FK_485db4d1cc977cc3d499824d958" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_0b36b5701e9890a395ded76cb57" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_e06094816e67e584dea754cc81c" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_650ccf2e7394509f7ad8448e323" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_f806bae81cd490404a1888ad5b9" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_8adf7a9181e968bcafc71236c80" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "temporary_plugin_versions"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "number", "changelog", "checksum", "signature", "releaseDate", "downloadCount", "pluginId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "number", "changelog", "checksum", "signature", "releaseDate", "downloadCount", "pluginId" FROM "plugin_versions"`
+		);
+		await queryRunner.query(`DROP TABLE "plugin_versions"`);
+		await queryRunner.query(`ALTER TABLE "temporary_plugin_versions" RENAME TO "plugin_versions"`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_485db4d1cc977cc3d499824d95" ON "plugin_versions" ("createdByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_0b36b5701e9890a395ded76cb5" ON "plugin_versions" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_e06094816e67e584dea754cc81" ON "plugin_versions" ("deletedByUserId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_e6d49799b916946e5cd5399385" ON "plugin_versions" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_a16869769b9a219acb157bb2b3" ON "plugin_versions" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_650ccf2e7394509f7ad8448e32" ON "plugin_versions" ("tenantId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_f806bae81cd490404a1888ad5b" ON "plugin_versions" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
+		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_6fa0eda3add1fb070ba172a44e" ON "plugin_versions" ("downloadCount") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_e632aa70ea7b7e5c5fdbfba41b" ON "plugin_versions" ("number") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_e1e7cf1589d06ac02a12e41db0" ON "plugin_versions" ("pluginId", "releaseDate") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_f5c8259c0d815486f31878864d" ON "plugin_versions" ("tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_39d060301c8a36b51da6e4aec3" ON "plugin_versions" ("pluginId", "organizationId", "number") `
+		);
 		await queryRunner.query(`DROP INDEX "IDX_cc5b64091fbfdcdbd23d6da80e"`);
 		await queryRunner.query(`DROP INDEX "IDX_61357761fc6b140180b104dc8d"`);
 		await queryRunner.query(`DROP INDEX "IDX_3210c015451d02d015a23eedad"`);
 		await queryRunner.query(`DROP INDEX "IDX_d0a1444aa92229d7f1af237184"`);
 		await queryRunner.query(`DROP INDEX "IDX_c61c7032e7b3afd352d82bc4b4"`);
+		await queryRunner.query(`DROP INDEX "IDX_35ee1cb5098e17e30ee5cbc705"`);
+		await queryRunner.query(`DROP INDEX "IDX_100eef6409ee96d0673ee510e6"`);
+		await queryRunner.query(`DROP INDEX "IDX_16d0aed6fcc311379f5c75bbd2"`);
 		await queryRunner.query(`DROP INDEX "IDX_4bf89f98c41969e23e3f9974d5"`);
-		await queryRunner.query(`DROP INDEX "plugin_name_unique"`);
+		await queryRunner.query(`DROP INDEX "IDX_15ca158f27ab3296915b7d1b38"`);
+		await queryRunner.query(`DROP INDEX "IDX_123f1b37f4826f6241446a8416"`);
+		await queryRunner.query(`DROP INDEX "IDX_c0fab3c6709a93bca88eb100a9"`);
+		await queryRunner.query(`DROP INDEX "IDX_6c8d4a0f437cfae296ef43ce13"`);
+		await queryRunner.query(`DROP INDEX "IDX_0479844f05c1132f8929cab1c8"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_plugins" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" varchar, "type" varchar CHECK( "type" IN ('DESKTOP','WEB','MOBILE') ) NOT NULL DEFAULT ('DESKTOP'), "status" varchar CHECK( "status" IN ('ACTIVE','INACTIVE','DEPRECATED','ARCHIVED') ) NOT NULL DEFAULT ('ACTIVE'), "categoryId" varchar, "author" varchar, "license" varchar, "homepage" varchar, "repository" varchar, "uploadedById" varchar, "uploadedAt" datetime, "requiresSubscription" boolean NOT NULL DEFAULT (0), "lastDownloadedAt" datetime, CONSTRAINT "FK_cc5b64091fbfdcdbd23d6da80ee" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_61357761fc6b140180b104dc8d5" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_3210c015451d02d015a23eedad4" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_16d0aed6fcc311379f5c75bbd2d" FOREIGN KEY ("categoryId") REFERENCES "plugin_categories" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_4bf89f98c41969e23e3f9974d56" FOREIGN KEY ("uploadedById") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_plugins" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" varchar, "type" varchar CHECK( "type" IN ('DESKTOP','WEB','MOBILE') ) NOT NULL DEFAULT ('DESKTOP'), "status" varchar CHECK( "status" IN ('ACTIVE','INACTIVE','DEPRECATED','ARCHIVED') ) NOT NULL DEFAULT ('ACTIVE'), "categoryId" varchar, "author" varchar, "license" varchar, "homepage" varchar, "repository" varchar, "uploadedById" varchar, "uploadedAt" datetime, "requiresSubscription" boolean NOT NULL DEFAULT (0), "isFeatured" boolean NOT NULL DEFAULT (0), "isVerified" boolean NOT NULL DEFAULT (0), "lastDownloadedAt" datetime, CONSTRAINT "FK_cc5b64091fbfdcdbd23d6da80ee" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_61357761fc6b140180b104dc8d5" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_3210c015451d02d015a23eedad4" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_16d0aed6fcc311379f5c75bbd2d" FOREIGN KEY ("categoryId") REFERENCES "plugin_categories" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_4bf89f98c41969e23e3f9974d56" FOREIGN KEY ("uploadedById") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
-			`INSERT INTO "temporary_plugins"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "status", "categoryId", "author", "license", "homepage", "repository", "uploadedById", "uploadedAt", "requiresSubscription", "lastDownloadedAt") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "status", "categoryId", "author", "license", "homepage", "repository", "uploadedById", "uploadedAt", "requiresSubscription", "lastDownloadedAt" FROM "plugins"`
+			`INSERT INTO "temporary_plugins"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "status", "categoryId", "author", "license", "homepage", "repository", "uploadedById", "uploadedAt", "requiresSubscription", "isFeatured", "isVerified", "lastDownloadedAt") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "status", "categoryId", "author", "license", "homepage", "repository", "uploadedById", "uploadedAt", "requiresSubscription", "isFeatured", "isVerified", "lastDownloadedAt" FROM "plugins"`
 		);
 		await queryRunner.query(`DROP TABLE "plugins"`);
 		await queryRunner.query(`ALTER TABLE "temporary_plugins" RENAME TO "plugins"`);
@@ -1894,8 +2007,15 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`CREATE INDEX "IDX_3210c015451d02d015a23eedad" ON "plugins" ("deletedByUserId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_d0a1444aa92229d7f1af237184" ON "plugins" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_c61c7032e7b3afd352d82bc4b4" ON "plugins" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_35ee1cb5098e17e30ee5cbc705" ON "plugins" ("type") `);
+		await queryRunner.query(`CREATE INDEX "IDX_100eef6409ee96d0673ee510e6" ON "plugins" ("status") `);
+		await queryRunner.query(`CREATE INDEX "IDX_16d0aed6fcc311379f5c75bbd2" ON "plugins" ("categoryId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_4bf89f98c41969e23e3f9974d5" ON "plugins" ("uploadedById") `);
-		await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "plugin_name_unique" ON "plugins" ("name") `);
+		await queryRunner.query(`CREATE INDEX "IDX_15ca158f27ab3296915b7d1b38" ON "plugins" ("isFeatured") `);
+		await queryRunner.query(`CREATE INDEX "IDX_123f1b37f4826f6241446a8416" ON "plugins" ("isVerified") `);
+		await queryRunner.query(`CREATE INDEX "IDX_c0fab3c6709a93bca88eb100a9" ON "plugins" ("status", "isFeatured") `);
+		await queryRunner.query(`CREATE INDEX "IDX_6c8d4a0f437cfae296ef43ce13" ON "plugins" ("status", "type") `);
+		await queryRunner.query(`CREATE UNIQUE INDEX "IDX_0479844f05c1132f8929cab1c8" ON "plugins" ("name") `);
 		await queryRunner.query(`DROP INDEX "IDX_646aa1161ac9861061842e05c2"`);
 		await queryRunner.query(`DROP INDEX "IDX_b874f9ee9c04061b4892926388"`);
 		await queryRunner.query(`DROP INDEX "IDX_6f401b811d14d8b06db0fbea30"`);
@@ -1905,7 +2025,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_37c9e1c698331b9345280374fd"`);
 		await queryRunner.query(`DROP INDEX "IDX_082f6cba880ecd144b28284376"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_plugin_subscription_plans" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" text, "type" varchar CHECK( "type" IN ('free','trial','basic','premium','enterprise','custom') ) NOT NULL DEFAULT ('free'), "price" decimal(10,2) NOT NULL DEFAULT (0), "currency" varchar(3) NOT NULL DEFAULT ('USD'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time','usage_based') ) NOT NULL DEFAULT ('monthly'), "features" text NOT NULL, "limitations" text, "isPopular" boolean NOT NULL DEFAULT (0), "isRecommended" boolean NOT NULL DEFAULT (0), "trialDays" integer, "setupFee" decimal(10,2), "discountPercentage" decimal(5,2), "metadata" text, "sortOrder" integer NOT NULL DEFAULT (0), "pluginId" varchar NOT NULL, "createdById" varchar, CONSTRAINT "FK_646aa1161ac9861061842e05c2f" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_b874f9ee9c04061b4892926388f" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_6f401b811d14d8b06db0fbea308" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_a06a8b0e7f54e73cfc92c96511b" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_d3afff45d3c259d2d484387a248" FOREIGN KEY ("createdById") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_plugin_subscription_plans" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" text, "type" varchar CHECK( "type" IN ('free','trial','basic','premium','enterprise','custom') ) NOT NULL DEFAULT ('free'), "price" decimal(10,2) NOT NULL DEFAULT (0), "currency" varchar(3) NOT NULL DEFAULT ('USD'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time') ) NOT NULL DEFAULT ('monthly'), "features" text NOT NULL, "limitations" text, "isPopular" boolean NOT NULL DEFAULT (0), "isRecommended" boolean NOT NULL DEFAULT (0), "trialDays" integer, "setupFee" decimal(10,2), "discountPercentage" decimal(5,2), "metadata" text, "sortOrder" integer NOT NULL DEFAULT (0), "pluginId" varchar NOT NULL, "createdById" varchar, CONSTRAINT "FK_646aa1161ac9861061842e05c2f" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_b874f9ee9c04061b4892926388f" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_6f401b811d14d8b06db0fbea308" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_a06a8b0e7f54e73cfc92c96511b" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_d3afff45d3c259d2d484387a248" FOREIGN KEY ("createdById") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_plugin_subscription_plans"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "price", "currency", "billingPeriod", "features", "limitations", "isPopular", "isRecommended", "trialDays", "setupFee", "discountPercentage", "metadata", "sortOrder", "pluginId", "createdById") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "price", "currency", "billingPeriod", "features", "limitations", "isPopular", "isRecommended", "trialDays", "setupFee", "discountPercentage", "metadata", "sortOrder", "pluginId", "createdById" FROM "plugin_subscription_plans"`
@@ -1945,15 +2065,17 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_b5163f874ce5bc6b63c8e8631a"`);
 		await queryRunner.query(`DROP INDEX "IDX_7f792e3c1891f728f9e5256142"`);
 		await queryRunner.query(`DROP INDEX "IDX_9bbac226cce476576134c5726e"`);
+		await queryRunner.query(`DROP INDEX "IDX_7afeffe18364cae48efd454e4d"`);
 		await queryRunner.query(`DROP INDEX "IDX_39a16aca760fc7a3cef39d5563"`);
 		await queryRunner.query(`DROP INDEX "IDX_bbd6dc08c0c91724e5d26202fa"`);
 		await queryRunner.query(`DROP INDEX "IDX_4e8a9f4ee7df8c39d0314063e7"`);
-		await queryRunner.query(`DROP INDEX "IDX_5e454c743af9400e3fe1814039"`);
+		await queryRunner.query(`DROP INDEX "IDX_18db53b62833e1bdb9949b5827"`);
+		await queryRunner.query(`DROP INDEX "IDX_448990d16086477ee1c5f08968"`);
 		await queryRunner.query(`DROP INDEX "IDX_fed0c61e1d142e1c448a45e5a0"`);
 		await queryRunner.query(`DROP INDEX "IDX_af82eaa17a59e0cf0fac16d7fe"`);
 		await queryRunner.query(`DROP INDEX "IDX_eb3b9c7cfe7aa86bca589aee9e"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_plugin_subscriptions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "status" varchar CHECK( "status" IN ('active','trial','expired','cancelled','suspended','pending') ) NOT NULL DEFAULT ('pending'), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('tenant'), "startDate" datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP), "endDate" datetime, "trialEndDate" datetime, "autoRenew" boolean NOT NULL DEFAULT (1), "cancelledAt" datetime, "cancellationReason" text, "metadata" text, "externalSubscriptionId" varchar, "pluginId" varchar NOT NULL, "pluginTenantId" varchar NOT NULL, "planId" varchar, "subscriberId" varchar, "parentId" varchar, CONSTRAINT "FK_449b2294593f5787f40a60c8f23" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_ddf7be116060ee20bc16128632d" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_0be98c36cdbaa56f3880bc6baa5" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7f792e3c1891f728f9e52561428" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_9bbac226cce476576134c5726e2" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_052c95e24f8ac2afdea389d31e0" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_6163fac447615c15bdd3cc4b108" FOREIGN KEY ("pluginTenantId") REFERENCES "plugin_tenants" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_4e8a9f4ee7df8c39d0314063e73" FOREIGN KEY ("planId") REFERENCES "plugin_subscription_plans" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_b76c1241cbcbe8a92cba6d7fbcd" FOREIGN KEY ("subscriberId") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_39a16aca760fc7a3cef39d55638" FOREIGN KEY ("parentId") REFERENCES "plugin_subscriptions" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_plugin_subscriptions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "status" varchar CHECK( "status" IN ('active','cancelled','expired','trial','past_due','suspended','pending') ) NOT NULL DEFAULT ('pending'), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('tenant'), "startDate" datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP), "endDate" datetime, "trialEndDate" datetime, "autoRenew" boolean NOT NULL DEFAULT (1), "cancelledAt" datetime, "cancellationReason" text, "metadata" text, "externalSubscriptionId" varchar, "pluginId" varchar NOT NULL, "pluginTenantId" varchar NOT NULL, "planId" varchar, "subscriberId" varchar, "parentId" varchar, CONSTRAINT "FK_449b2294593f5787f40a60c8f23" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_ddf7be116060ee20bc16128632d" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_0be98c36cdbaa56f3880bc6baa5" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7f792e3c1891f728f9e52561428" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_9bbac226cce476576134c5726e2" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_052c95e24f8ac2afdea389d31e0" FOREIGN KEY ("pluginId") REFERENCES "plugins" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_6163fac447615c15bdd3cc4b108" FOREIGN KEY ("pluginTenantId") REFERENCES "plugin_tenants" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_4e8a9f4ee7df8c39d0314063e73" FOREIGN KEY ("planId") REFERENCES "plugin_subscription_plans" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_b76c1241cbcbe8a92cba6d7fbcd" FOREIGN KEY ("subscriberId") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_39a16aca760fc7a3cef39d55638" FOREIGN KEY ("parentId") REFERENCES "plugin_subscriptions" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_plugin_subscriptions"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "status", "scope", "startDate", "endDate", "trialEndDate", "autoRenew", "cancelledAt", "cancellationReason", "metadata", "externalSubscriptionId", "pluginId", "pluginTenantId", "planId", "subscriberId", "parentId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "status", "scope", "startDate", "endDate", "trialEndDate", "autoRenew", "cancelledAt", "cancellationReason", "metadata", "externalSubscriptionId", "pluginId", "pluginTenantId", "planId", "subscriberId", "parentId" FROM "plugin_subscriptions"`
@@ -1982,6 +2104,9 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE INDEX "IDX_9bbac226cce476576134c5726e" ON "plugin_subscriptions" ("organizationId") `
 		);
 		await queryRunner.query(
+			`CREATE INDEX "IDX_7afeffe18364cae48efd454e4d" ON "plugin_subscriptions" ("scope", "tenantId") `
+		);
+		await queryRunner.query(
 			`CREATE INDEX "IDX_39a16aca760fc7a3cef39d5563" ON "plugin_subscriptions" ("parentId") `
 		);
 		await queryRunner.query(
@@ -1989,7 +2114,10 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_4e8a9f4ee7df8c39d0314063e7" ON "plugin_subscriptions" ("planId") `);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "IDX_5e454c743af9400e3fe1814039" ON "plugin_subscriptions" ("pluginId", "subscriberId") `
+			`CREATE UNIQUE INDEX "IDX_18db53b62833e1bdb9949b5827" ON "plugin_subscriptions" ("pluginId", "subscriberId", "tenantId") WHERE "subscriberId" IS NOT NULL`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_448990d16086477ee1c5f08968" ON "plugin_subscriptions" ("status", "tenantId") `
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_fed0c61e1d142e1c448a45e5a0" ON "plugin_subscriptions" ("status", "endDate") `
@@ -2008,7 +2136,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_7b12d1d4e5d36737596155ce2d"`);
 		await queryRunner.query(`DROP INDEX "IDX_7d05232ee38835a76623154b7b"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_plugin_billings" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "amount" decimal(10,2) NOT NULL, "currency" varchar NOT NULL DEFAULT ('USD'), "billingDate" datetime NOT NULL, "dueDate" datetime NOT NULL, "status" varchar CHECK( "status" IN ('pending','processed','paid','overdue','failed','cancelled','refunded','partially_paid') ) NOT NULL DEFAULT ('pending'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time','usage_based') ) NOT NULL, "billingPeriodStart" datetime NOT NULL, "billingPeriodEnd" datetime NOT NULL, "description" text, "metadata" text, "subscriptionId" varchar NOT NULL, CONSTRAINT "FK_74d0d8f22af90d92d3213d5e74e" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_2c926e12d6fba9b0d320c974f32" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_8fb8bf376857199096a73d90b86" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7b12d1d4e5d36737596155ce2d5" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7d05232ee38835a76623154b7b2" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_3c3212b2cf3a4e6cc6896657bb1" FOREIGN KEY ("subscriptionId") REFERENCES "plugin_subscriptions" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_plugin_billings" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "amount" decimal(10,2) NOT NULL, "currency" varchar NOT NULL DEFAULT ('USD'), "billingDate" datetime NOT NULL, "dueDate" datetime NOT NULL, "status" varchar CHECK( "status" IN ('pending','processed','paid','overdue','failed','cancelled','refunded','partially_paid') ) NOT NULL DEFAULT ('pending'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time') ) NOT NULL, "billingPeriodStart" datetime NOT NULL, "billingPeriodEnd" datetime NOT NULL, "description" text, "metadata" text, "subscriptionId" varchar NOT NULL, CONSTRAINT "FK_74d0d8f22af90d92d3213d5e74e" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_2c926e12d6fba9b0d320c974f32" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_8fb8bf376857199096a73d90b86" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7b12d1d4e5d36737596155ce2d5" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_7d05232ee38835a76623154b7b2" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_3c3212b2cf3a4e6cc6896657bb1" FOREIGN KEY ("subscriptionId") REFERENCES "plugin_subscriptions" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_plugin_billings"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "amount", "currency", "billingDate", "dueDate", "status", "billingPeriod", "billingPeriodStart", "billingPeriodEnd", "description", "metadata", "subscriptionId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "amount", "currency", "billingDate", "dueDate", "status", "billingPeriod", "billingPeriodStart", "billingPeriodEnd", "description", "metadata", "subscriptionId" FROM "plugin_billings"`
@@ -2049,7 +2177,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_12c6c6c88720dfb785a0e066bb"`);
 		await queryRunner.query(`DROP INDEX "IDX_0c355caddd182f2e7099d35911"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_plugin_tenant_allowed_roles" ("pluginTenantsId" varchar NOT NULL, "roleId" varchar NOT NULL, CONSTRAINT "FK_12c6c6c88720dfb785a0e066bb6" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants" ("id") ON DELETE SET NULL ON UPDATE CASCADE, CONSTRAINT "FK_0c355caddd182f2e7099d359119" FOREIGN KEY ("roleId") REFERENCES "role" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("pluginTenantsId", "roleId"))`
+			`CREATE TABLE "temporary_plugin_tenant_allowed_roles" ("pluginTenantsId" varchar NOT NULL, "roleId" varchar NOT NULL, CONSTRAINT "FK_12c6c6c88720dfb785a0e066bb6" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_0c355caddd182f2e7099d359119" FOREIGN KEY ("roleId") REFERENCES "role" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("pluginTenantsId", "roleId"))`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_plugin_tenant_allowed_roles"("pluginTenantsId", "roleId") SELECT "pluginTenantsId", "roleId" FROM "plugin_tenant_allowed_roles"`
@@ -2067,7 +2195,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_358b3ee7d6cac92234c829e384"`);
 		await queryRunner.query(`DROP INDEX "IDX_99cab633947d311b29e5e3d9f1"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_plugin_tenant_allowed_users" ("pluginTenantsId" varchar NOT NULL, "userId" varchar NOT NULL, CONSTRAINT "FK_358b3ee7d6cac92234c829e3844" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants" ("id") ON DELETE SET NULL ON UPDATE CASCADE, CONSTRAINT "FK_99cab633947d311b29e5e3d9f16" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("pluginTenantsId", "userId"))`
+			`CREATE TABLE "temporary_plugin_tenant_allowed_users" ("pluginTenantsId" varchar NOT NULL, "userId" varchar NOT NULL, CONSTRAINT "FK_358b3ee7d6cac92234c829e3844" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_99cab633947d311b29e5e3d9f16" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("pluginTenantsId", "userId"))`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_plugin_tenant_allowed_users"("pluginTenantsId", "userId") SELECT "pluginTenantsId", "userId" FROM "plugin_tenant_allowed_users"`
@@ -2085,7 +2213,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_27e45daf821a522cf6c7b794bc"`);
 		await queryRunner.query(`DROP INDEX "IDX_17fc7d5ec9f51d9716c79b50ae"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_plugin_tenant_denied_users" ("pluginTenantsId" varchar NOT NULL, "userId" varchar NOT NULL, CONSTRAINT "FK_27e45daf821a522cf6c7b794bce" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants" ("id") ON DELETE SET NULL ON UPDATE CASCADE, CONSTRAINT "FK_17fc7d5ec9f51d9716c79b50ae8" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("pluginTenantsId", "userId"))`
+			`CREATE TABLE "temporary_plugin_tenant_denied_users" ("pluginTenantsId" varchar NOT NULL, "userId" varchar NOT NULL, CONSTRAINT "FK_27e45daf821a522cf6c7b794bce" FOREIGN KEY ("pluginTenantsId") REFERENCES "plugin_tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_17fc7d5ec9f51d9716c79b50ae8" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("pluginTenantsId", "userId"))`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_plugin_tenant_denied_users"("pluginTenantsId", "userId") SELECT "pluginTenantsId", "userId" FROM "plugin_tenant_denied_users"`
@@ -2259,7 +2387,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_74d0d8f22af90d92d3213d5e74"`);
 		await queryRunner.query(`ALTER TABLE "plugin_billings" RENAME TO "temporary_plugin_billings"`);
 		await queryRunner.query(
-			`CREATE TABLE "plugin_billings" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "amount" decimal(10,2) NOT NULL, "currency" varchar NOT NULL DEFAULT ('USD'), "billingDate" datetime NOT NULL, "dueDate" datetime NOT NULL, "status" varchar CHECK( "status" IN ('pending','processed','paid','overdue','failed','cancelled','refunded','partially_paid') ) NOT NULL DEFAULT ('pending'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time','usage_based') ) NOT NULL, "billingPeriodStart" datetime NOT NULL, "billingPeriodEnd" datetime NOT NULL, "description" text, "metadata" text, "subscriptionId" varchar NOT NULL)`
+			`CREATE TABLE "plugin_billings" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "amount" decimal(10,2) NOT NULL, "currency" varchar NOT NULL DEFAULT ('USD'), "billingDate" datetime NOT NULL, "dueDate" datetime NOT NULL, "status" varchar CHECK( "status" IN ('pending','processed','paid','overdue','failed','cancelled','refunded','partially_paid') ) NOT NULL DEFAULT ('pending'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time') ) NOT NULL, "billingPeriodStart" datetime NOT NULL, "billingPeriodEnd" datetime NOT NULL, "description" text, "metadata" text, "subscriptionId" varchar NOT NULL)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "plugin_billings"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "amount", "currency", "billingDate", "dueDate", "status", "billingPeriod", "billingPeriodStart", "billingPeriodEnd", "description", "metadata", "subscriptionId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "amount", "currency", "billingDate", "dueDate", "status", "billingPeriod", "billingPeriodStart", "billingPeriodEnd", "description", "metadata", "subscriptionId" FROM "temporary_plugin_billings"`
@@ -2283,10 +2411,12 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_eb3b9c7cfe7aa86bca589aee9e"`);
 		await queryRunner.query(`DROP INDEX "IDX_af82eaa17a59e0cf0fac16d7fe"`);
 		await queryRunner.query(`DROP INDEX "IDX_fed0c61e1d142e1c448a45e5a0"`);
-		await queryRunner.query(`DROP INDEX "IDX_5e454c743af9400e3fe1814039"`);
+		await queryRunner.query(`DROP INDEX "IDX_448990d16086477ee1c5f08968"`);
+		await queryRunner.query(`DROP INDEX "IDX_18db53b62833e1bdb9949b5827"`);
 		await queryRunner.query(`DROP INDEX "IDX_4e8a9f4ee7df8c39d0314063e7"`);
 		await queryRunner.query(`DROP INDEX "IDX_bbd6dc08c0c91724e5d26202fa"`);
 		await queryRunner.query(`DROP INDEX "IDX_39a16aca760fc7a3cef39d5563"`);
+		await queryRunner.query(`DROP INDEX "IDX_7afeffe18364cae48efd454e4d"`);
 		await queryRunner.query(`DROP INDEX "IDX_9bbac226cce476576134c5726e"`);
 		await queryRunner.query(`DROP INDEX "IDX_7f792e3c1891f728f9e5256142"`);
 		await queryRunner.query(`DROP INDEX "IDX_b5163f874ce5bc6b63c8e8631a"`);
@@ -2296,7 +2426,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_449b2294593f5787f40a60c8f2"`);
 		await queryRunner.query(`ALTER TABLE "plugin_subscriptions" RENAME TO "temporary_plugin_subscriptions"`);
 		await queryRunner.query(
-			`CREATE TABLE "plugin_subscriptions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "status" varchar CHECK( "status" IN ('active','trial','expired','cancelled','suspended','pending') ) NOT NULL DEFAULT ('pending'), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('tenant'), "startDate" datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP), "endDate" datetime, "trialEndDate" datetime, "autoRenew" boolean NOT NULL DEFAULT (1), "cancelledAt" datetime, "cancellationReason" text, "metadata" text, "externalSubscriptionId" varchar, "pluginId" varchar NOT NULL, "pluginTenantId" varchar NOT NULL, "planId" varchar, "subscriberId" varchar, "parentId" varchar)`
+			`CREATE TABLE "plugin_subscriptions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "status" varchar CHECK( "status" IN ('active','cancelled','expired','trial','past_due','suspended','pending') ) NOT NULL DEFAULT ('pending'), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('tenant'), "startDate" datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP), "endDate" datetime, "trialEndDate" datetime, "autoRenew" boolean NOT NULL DEFAULT (1), "cancelledAt" datetime, "cancellationReason" text, "metadata" text, "externalSubscriptionId" varchar, "pluginId" varchar NOT NULL, "pluginTenantId" varchar NOT NULL, "planId" varchar, "subscriberId" varchar, "parentId" varchar)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "plugin_subscriptions"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "status", "scope", "startDate", "endDate", "trialEndDate", "autoRenew", "cancelledAt", "cancellationReason", "metadata", "externalSubscriptionId", "pluginId", "pluginTenantId", "planId", "subscriberId", "parentId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "status", "scope", "startDate", "endDate", "trialEndDate", "autoRenew", "cancelledAt", "cancellationReason", "metadata", "externalSubscriptionId", "pluginId", "pluginTenantId", "planId", "subscriberId", "parentId" FROM "temporary_plugin_subscriptions"`
@@ -2312,7 +2442,10 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE INDEX "IDX_fed0c61e1d142e1c448a45e5a0" ON "plugin_subscriptions" ("status", "endDate") `
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "IDX_5e454c743af9400e3fe1814039" ON "plugin_subscriptions" ("pluginId", "subscriberId") `
+			`CREATE INDEX "IDX_448990d16086477ee1c5f08968" ON "plugin_subscriptions" ("status", "tenantId") `
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_18db53b62833e1bdb9949b5827" ON "plugin_subscriptions" ("pluginId", "subscriberId", "tenantId") WHERE "subscriberId" IS NOT NULL`
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_4e8a9f4ee7df8c39d0314063e7" ON "plugin_subscriptions" ("planId") `);
 		await queryRunner.query(
@@ -2320,6 +2453,9 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_39a16aca760fc7a3cef39d5563" ON "plugin_subscriptions" ("parentId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_7afeffe18364cae48efd454e4d" ON "plugin_subscriptions" ("scope", "tenantId") `
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_9bbac226cce476576134c5726e" ON "plugin_subscriptions" ("organizationId") `
@@ -2354,7 +2490,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`ALTER TABLE "plugin_subscription_plans" RENAME TO "temporary_plugin_subscription_plans"`
 		);
 		await queryRunner.query(
-			`CREATE TABLE "plugin_subscription_plans" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" text, "type" varchar CHECK( "type" IN ('free','trial','basic','premium','enterprise','custom') ) NOT NULL DEFAULT ('free'), "price" decimal(10,2) NOT NULL DEFAULT (0), "currency" varchar(3) NOT NULL DEFAULT ('USD'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time','usage_based') ) NOT NULL DEFAULT ('monthly'), "features" text NOT NULL, "limitations" text, "isPopular" boolean NOT NULL DEFAULT (0), "isRecommended" boolean NOT NULL DEFAULT (0), "trialDays" integer, "setupFee" decimal(10,2), "discountPercentage" decimal(5,2), "metadata" text, "sortOrder" integer NOT NULL DEFAULT (0), "pluginId" varchar NOT NULL, "createdById" varchar)`
+			`CREATE TABLE "plugin_subscription_plans" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" text, "type" varchar CHECK( "type" IN ('free','trial','basic','premium','enterprise','custom') ) NOT NULL DEFAULT ('free'), "price" decimal(10,2) NOT NULL DEFAULT (0), "currency" varchar(3) NOT NULL DEFAULT ('USD'), "billingPeriod" varchar CHECK( "billingPeriod" IN ('daily','weekly','monthly','quarterly','yearly','one-time') ) NOT NULL DEFAULT ('monthly'), "features" text NOT NULL, "limitations" text, "isPopular" boolean NOT NULL DEFAULT (0), "isRecommended" boolean NOT NULL DEFAULT (0), "trialDays" integer, "setupFee" decimal(10,2), "discountPercentage" decimal(5,2), "metadata" text, "sortOrder" integer NOT NULL DEFAULT (0), "pluginId" varchar NOT NULL, "createdById" varchar)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "plugin_subscription_plans"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "price", "currency", "billingPeriod", "features", "limitations", "isPopular", "isRecommended", "trialDays", "setupFee", "discountPercentage", "metadata", "sortOrder", "pluginId", "createdById") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "price", "currency", "billingPeriod", "features", "limitations", "isPopular", "isRecommended", "trialDays", "setupFee", "discountPercentage", "metadata", "sortOrder", "pluginId", "createdById" FROM "temporary_plugin_subscription_plans"`
@@ -2384,8 +2520,15 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(
 			`CREATE INDEX "IDX_646aa1161ac9861061842e05c2" ON "plugin_subscription_plans" ("createdByUserId") `
 		);
-		await queryRunner.query(`DROP INDEX IF EXISTS "plugin_name_unique"`);
+		await queryRunner.query(`DROP INDEX "IDX_0479844f05c1132f8929cab1c8"`);
+		await queryRunner.query(`DROP INDEX "IDX_6c8d4a0f437cfae296ef43ce13"`);
+		await queryRunner.query(`DROP INDEX "IDX_c0fab3c6709a93bca88eb100a9"`);
+		await queryRunner.query(`DROP INDEX "IDX_123f1b37f4826f6241446a8416"`);
+		await queryRunner.query(`DROP INDEX "IDX_15ca158f27ab3296915b7d1b38"`);
 		await queryRunner.query(`DROP INDEX "IDX_4bf89f98c41969e23e3f9974d5"`);
+		await queryRunner.query(`DROP INDEX "IDX_16d0aed6fcc311379f5c75bbd2"`);
+		await queryRunner.query(`DROP INDEX "IDX_100eef6409ee96d0673ee510e6"`);
+		await queryRunner.query(`DROP INDEX "IDX_35ee1cb5098e17e30ee5cbc705"`);
 		await queryRunner.query(`DROP INDEX "IDX_c61c7032e7b3afd352d82bc4b4"`);
 		await queryRunner.query(`DROP INDEX "IDX_d0a1444aa92229d7f1af237184"`);
 		await queryRunner.query(`DROP INDEX "IDX_3210c015451d02d015a23eedad"`);
@@ -2393,19 +2536,194 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_cc5b64091fbfdcdbd23d6da80e"`);
 		await queryRunner.query(`ALTER TABLE "plugins" RENAME TO "temporary_plugins"`);
 		await queryRunner.query(
-			`CREATE TABLE "plugins" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" varchar, "type" varchar CHECK( "type" IN ('DESKTOP','WEB','MOBILE') ) NOT NULL DEFAULT ('DESKTOP'), "status" varchar CHECK( "status" IN ('ACTIVE','INACTIVE','DEPRECATED','ARCHIVED') ) NOT NULL DEFAULT ('ACTIVE'), "categoryId" varchar, "author" varchar, "license" varchar, "homepage" varchar, "repository" varchar, "uploadedById" varchar, "uploadedAt" datetime, "requiresSubscription" boolean NOT NULL DEFAULT (0), "lastDownloadedAt" datetime)`
+			`CREATE TABLE "plugins" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "name" varchar NOT NULL, "description" varchar, "type" varchar CHECK( "type" IN ('DESKTOP','WEB','MOBILE') ) NOT NULL DEFAULT ('DESKTOP'), "status" varchar CHECK( "status" IN ('ACTIVE','INACTIVE','DEPRECATED','ARCHIVED') ) NOT NULL DEFAULT ('ACTIVE'), "categoryId" varchar, "author" varchar, "license" varchar, "homepage" varchar, "repository" varchar, "uploadedById" varchar, "uploadedAt" datetime, "requiresSubscription" boolean NOT NULL DEFAULT (0), "isFeatured" boolean NOT NULL DEFAULT (0), "isVerified" boolean NOT NULL DEFAULT (0), "lastDownloadedAt" datetime)`
 		);
 		await queryRunner.query(
-			`INSERT INTO "plugins"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "status", "categoryId", "author", "license", "homepage", "repository", "uploadedById", "uploadedAt", "requiresSubscription", "lastDownloadedAt") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "status", "categoryId", "author", "license", "homepage", "repository", "uploadedById", "uploadedAt", "requiresSubscription", "lastDownloadedAt" FROM "temporary_plugins"`
+			`INSERT INTO "plugins"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "status", "categoryId", "author", "license", "homepage", "repository", "uploadedById", "uploadedAt", "requiresSubscription", "isFeatured", "isVerified", "lastDownloadedAt") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "name", "description", "type", "status", "categoryId", "author", "license", "homepage", "repository", "uploadedById", "uploadedAt", "requiresSubscription", "isFeatured", "isVerified", "lastDownloadedAt" FROM "temporary_plugins"`
 		);
 		await queryRunner.query(`DROP TABLE "temporary_plugins"`);
-		await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "plugin_name_unique" ON "plugins" ("name") `);
+		await queryRunner.query(`CREATE UNIQUE INDEX "IDX_0479844f05c1132f8929cab1c8" ON "plugins" ("name") `);
+		await queryRunner.query(`CREATE INDEX "IDX_6c8d4a0f437cfae296ef43ce13" ON "plugins" ("status", "type") `);
+		await queryRunner.query(`CREATE INDEX "IDX_c0fab3c6709a93bca88eb100a9" ON "plugins" ("status", "isFeatured") `);
+		await queryRunner.query(`CREATE INDEX "IDX_123f1b37f4826f6241446a8416" ON "plugins" ("isVerified") `);
+		await queryRunner.query(`CREATE INDEX "IDX_15ca158f27ab3296915b7d1b38" ON "plugins" ("isFeatured") `);
 		await queryRunner.query(`CREATE INDEX "IDX_4bf89f98c41969e23e3f9974d5" ON "plugins" ("uploadedById") `);
+		await queryRunner.query(`CREATE INDEX "IDX_16d0aed6fcc311379f5c75bbd2" ON "plugins" ("categoryId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_100eef6409ee96d0673ee510e6" ON "plugins" ("status") `);
+		await queryRunner.query(`CREATE INDEX "IDX_35ee1cb5098e17e30ee5cbc705" ON "plugins" ("type") `);
 		await queryRunner.query(`CREATE INDEX "IDX_c61c7032e7b3afd352d82bc4b4" ON "plugins" ("isArchived") `);
 		await queryRunner.query(`CREATE INDEX "IDX_d0a1444aa92229d7f1af237184" ON "plugins" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_3210c015451d02d015a23eedad" ON "plugins" ("deletedByUserId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_61357761fc6b140180b104dc8d" ON "plugins" ("updatedByUserId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_cc5b64091fbfdcdbd23d6da80e" ON "plugins" ("createdByUserId") `);
+		await queryRunner.query(`DROP INDEX "IDX_39d060301c8a36b51da6e4aec3"`);
+		await queryRunner.query(`DROP INDEX "IDX_f5c8259c0d815486f31878864d"`);
+		await queryRunner.query(`DROP INDEX "IDX_e1e7cf1589d06ac02a12e41db0"`);
+		await queryRunner.query(`DROP INDEX "IDX_e632aa70ea7b7e5c5fdbfba41b"`);
+		await queryRunner.query(`DROP INDEX "IDX_6fa0eda3add1fb070ba172a44e"`);
+		await queryRunner.query(`DROP INDEX "IDX_8adf7a9181e968bcafc71236c8"`);
+		await queryRunner.query(`DROP INDEX "IDX_ab6e29cd444226f80bf0c0c1db"`);
+		await queryRunner.query(`DROP INDEX "IDX_f806bae81cd490404a1888ad5b"`);
+		await queryRunner.query(`DROP INDEX "IDX_650ccf2e7394509f7ad8448e32"`);
+		await queryRunner.query(`DROP INDEX "IDX_a16869769b9a219acb157bb2b3"`);
+		await queryRunner.query(`DROP INDEX "IDX_e6d49799b916946e5cd5399385"`);
+		await queryRunner.query(`DROP INDEX "IDX_e06094816e67e584dea754cc81"`);
+		await queryRunner.query(`DROP INDEX "IDX_0b36b5701e9890a395ded76cb5"`);
+		await queryRunner.query(`DROP INDEX "IDX_485db4d1cc977cc3d499824d95"`);
+		await queryRunner.query(`ALTER TABLE "plugin_versions" RENAME TO "temporary_plugin_versions"`);
+		await queryRunner.query(
+			`CREATE TABLE "plugin_versions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "number" varchar NOT NULL, "changelog" varchar NOT NULL, "checksum" varchar, "signature" varchar, "releaseDate" datetime, "downloadCount" integer DEFAULT (0), "pluginId" varchar)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "plugin_versions"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "number", "changelog", "checksum", "signature", "releaseDate", "downloadCount", "pluginId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "number", "changelog", "checksum", "signature", "releaseDate", "downloadCount", "pluginId" FROM "temporary_plugin_versions"`
+		);
+		await queryRunner.query(`DROP TABLE "temporary_plugin_versions"`);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_39d060301c8a36b51da6e4aec3" ON "plugin_versions" ("pluginId", "organizationId", "number") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_f5c8259c0d815486f31878864d" ON "plugin_versions" ("tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_e1e7cf1589d06ac02a12e41db0" ON "plugin_versions" ("pluginId", "releaseDate") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_e632aa70ea7b7e5c5fdbfba41b" ON "plugin_versions" ("number") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_6fa0eda3add1fb070ba172a44e" ON "plugin_versions" ("downloadCount") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_f806bae81cd490404a1888ad5b" ON "plugin_versions" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_650ccf2e7394509f7ad8448e32" ON "plugin_versions" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_a16869769b9a219acb157bb2b3" ON "plugin_versions" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_e6d49799b916946e5cd5399385" ON "plugin_versions" ("isActive") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_e06094816e67e584dea754cc81" ON "plugin_versions" ("deletedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_0b36b5701e9890a395ded76cb5" ON "plugin_versions" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_485db4d1cc977cc3d499824d95" ON "plugin_versions" ("createdByUserId") `
+		);
+		await queryRunner.query(`DROP INDEX "IDX_6fae6d0ddfd7177abcb4befd72"`);
+		await queryRunner.query(`DROP INDEX "IDX_af8978fbf37560525c19ec7048"`);
+		await queryRunner.query(`DROP INDEX "IDX_d658bc853b354445cf2a0d6fb7"`);
+		await queryRunner.query(`DROP INDEX "IDX_55bee446d2c470e5d6b066a27a"`);
+		await queryRunner.query(`DROP INDEX "IDX_7c6dc1cdd58690b7179d76184b"`);
+		await queryRunner.query(`DROP INDEX "IDX_19d9135639e3b40ec0dca1c926"`);
+		await queryRunner.query(`DROP INDEX "IDX_0ab83b39cc676ee2097714fb3b"`);
+		await queryRunner.query(`DROP INDEX "IDX_cb9a1e5640b8e07a9a63b51245"`);
+		await queryRunner.query(`DROP INDEX "IDX_c90b796bd033e54e3719213a0c"`);
+		await queryRunner.query(`DROP INDEX "IDX_0404416b5c1cd48ae87fe81834"`);
+		await queryRunner.query(`DROP INDEX "IDX_09a383d6f2858d49c064ca4cda"`);
+		await queryRunner.query(`ALTER TABLE "plugin_sources" RENAME TO "temporary_plugin_sources"`);
+		await queryRunner.query(
+			`CREATE TABLE "plugin_sources" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "type" varchar CHECK( "type" IN ('CDN','NPM','GAUZY') ) NOT NULL DEFAULT ('GAUZY'), "operatingSystem" varchar CHECK( "operatingSystem" IN ('LINUX','MAC','WINDOWS','UNIVERSAL') ) NOT NULL DEFAULT ('UNIVERSAL'), "architecture" varchar CHECK( "architecture" IN ('X64','ARM') ) NOT NULL DEFAULT ('X64'), "url" varchar, "integrity" varchar, "crossOrigin" varchar, "name" varchar, "registry" varchar, "private" boolean DEFAULT (0), "scope" varchar, "filePath" varchar, "fileName" varchar, "fileSize" integer, "mimeType" varchar, "fileKey" varchar, "versionId" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ))`
+		);
+		await queryRunner.query(
+			`INSERT INTO "plugin_sources"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "type", "operatingSystem", "architecture", "url", "integrity", "crossOrigin", "name", "registry", "private", "scope", "filePath", "fileName", "fileSize", "mimeType", "fileKey", "versionId", "storageProvider") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "type", "operatingSystem", "architecture", "url", "integrity", "crossOrigin", "name", "registry", "private", "scope", "filePath", "fileName", "fileSize", "mimeType", "fileKey", "versionId", "storageProvider" FROM "temporary_plugin_sources"`
+		);
+		await queryRunner.query(`DROP TABLE "temporary_plugin_sources"`);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_6fae6d0ddfd7177abcb4befd72" ON "plugin_sources" ("versionId", "operatingSystem", "architecture", "tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_af8978fbf37560525c19ec7048" ON "plugin_sources" ("tenantId", "organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_d658bc853b354445cf2a0d6fb7" ON "plugin_sources" ("storageProvider") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_55bee446d2c470e5d6b066a27a" ON "plugin_sources" ("versionId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_7c6dc1cdd58690b7179d76184b" ON "plugin_sources" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_19d9135639e3b40ec0dca1c926" ON "plugin_sources" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_0ab83b39cc676ee2097714fb3b" ON "plugin_sources" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_cb9a1e5640b8e07a9a63b51245" ON "plugin_sources" ("isActive") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c90b796bd033e54e3719213a0c" ON "plugin_sources" ("deletedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_0404416b5c1cd48ae87fe81834" ON "plugin_sources" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_09a383d6f2858d49c064ca4cda" ON "plugin_sources" ("createdByUserId") `
+		);
+		await queryRunner.query(`DROP INDEX "IDX_1569d8ca526d958d82483e15c7"`);
+		await queryRunner.query(`DROP INDEX "IDX_173e0668b17afd3696abf3c518"`);
+		await queryRunner.query(`DROP INDEX "IDX_3c3ce338e7716d853220d8b176"`);
+		await queryRunner.query(`DROP INDEX "IDX_5e6b80341a4ed75ae7c4af6897"`);
+		await queryRunner.query(`DROP INDEX "IDX_c92ea21dfcfd889730e2214c8f"`);
+		await queryRunner.query(`DROP INDEX "IDX_28624735b4e3ace75883521a57"`);
+		await queryRunner.query(`DROP INDEX "IDX_32c3f7a738ec8b40d6375b2933"`);
+		await queryRunner.query(`DROP INDEX "IDX_acac58b213936ea488d0a8d1a3"`);
+		await queryRunner.query(`DROP INDEX "IDX_547e4b71ae81ee772fa4ab79e6"`);
+		await queryRunner.query(`DROP INDEX "IDX_8aafffefdce2eb11079ec2aa75"`);
+		await queryRunner.query(`DROP INDEX "IDX_dff9e6c763c8c33b07f330e6a1"`);
+		await queryRunner.query(`DROP INDEX "IDX_3e63eed07bcc0e3e36d9183cca"`);
+		await queryRunner.query(`DROP INDEX "IDX_d742ed346264f4c9d9225265d7"`);
+		await queryRunner.query(`DROP INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af"`);
+		await queryRunner.query(`DROP INDEX "IDX_7e9b8b3eebb881753e07b73f6c"`);
+		await queryRunner.query(`DROP INDEX "IDX_842e5e5f94c4008a42d4b5f44a"`);
+		await queryRunner.query(`ALTER TABLE "plugin_installations" RENAME TO "temporary_plugin_installations"`);
+		await queryRunner.query(
+			`CREATE TABLE "plugin_installations" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar(36), "versionId" varchar(36), "installedById" varchar(36), "installedAt" datetime, "uninstalledAt" datetime, "status" varchar CHECK( "status" IN ('INSTALLED','UNINSTALLED','FAILED','IN_PROGRESS') ) NOT NULL DEFAULT ('IN_PROGRESS'), "isActivated" boolean NOT NULL DEFAULT (0), "activatedAt" datetime, "deactivatedAt" datetime)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "plugin_installations"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "versionId", "installedById", "installedAt", "uninstalledAt", "status", "isActivated", "activatedAt", "deactivatedAt") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "versionId", "installedById", "installedAt", "uninstalledAt", "status", "isActivated", "activatedAt", "deactivatedAt" FROM "temporary_plugin_installations"`
+		);
+		await queryRunner.query(`DROP TABLE "temporary_plugin_installations"`);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_1569d8ca526d958d82483e15c7" ON "plugin_installations" ("pluginId", "tenantId", "organizationId", "installedById") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_173e0668b17afd3696abf3c518" ON "plugin_installations" ("installedById", "pluginId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_3c3ce338e7716d853220d8b176" ON "plugin_installations" ("deactivatedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_5e6b80341a4ed75ae7c4af6897" ON "plugin_installations" ("activatedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_c92ea21dfcfd889730e2214c8f" ON "plugin_installations" ("uninstalledAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_28624735b4e3ace75883521a57" ON "plugin_installations" ("installedAt") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_32c3f7a738ec8b40d6375b2933" ON "plugin_installations" ("installedById") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_acac58b213936ea488d0a8d1a3" ON "plugin_installations" ("versionId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_547e4b71ae81ee772fa4ab79e6" ON "plugin_installations" ("pluginId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_8aafffefdce2eb11079ec2aa75" ON "plugin_installations" ("organizationId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_dff9e6c763c8c33b07f330e6a1" ON "plugin_installations" ("tenantId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_3e63eed07bcc0e3e36d9183cca" ON "plugin_installations" ("isArchived") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_d742ed346264f4c9d9225265d7" ON "plugin_installations" ("isActive") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af" ON "plugin_installations" ("deletedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_7e9b8b3eebb881753e07b73f6c" ON "plugin_installations" ("updatedByUserId") `
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_842e5e5f94c4008a42d4b5f44a" ON "plugin_installations" ("createdByUserId") `
+		);
 		await queryRunner.query(`DROP INDEX "IDX_676e7c749905331c36b1707ba8"`);
 		await queryRunner.query(`DROP INDEX "IDX_cddb5e04a93a957dc4d56522b7"`);
 		await queryRunner.query(`DROP INDEX "IDX_17c923b300710a13f6dfade59b"`);
@@ -2538,7 +2856,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_f209a8620f1677ed2c82c4cd2e"`);
 		await queryRunner.query(`ALTER TABLE "plugin_tenants" RENAME TO "temporary_plugin_tenants"`);
 		await queryRunner.query(
-			`CREATE TABLE "plugin_tenants" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar NOT NULL, "enabled" boolean NOT NULL DEFAULT (1), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('user'), "autoInstall" boolean NOT NULL DEFAULT (0), "requiresApproval" boolean NOT NULL DEFAULT (1), "isMandatory" boolean NOT NULL DEFAULT (0), "maxInstallations" integer, "maxActiveUsers" integer, "currentInstallations" integer NOT NULL DEFAULT (0), "currentActiveUsers" integer NOT NULL DEFAULT (0), "tenantConfiguration" text, "preferences" text, "approvedAt" text, "isDataCompliant" boolean NOT NULL DEFAULT (1), "complianceCertifications" text, "approvedById" varchar NOT NULL)`
+			`CREATE TABLE "plugin_tenants" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar NOT NULL, "enabled" boolean NOT NULL DEFAULT (1), "scope" varchar CHECK( "scope" IN ('tenant','organization','user') ) NOT NULL DEFAULT ('user'), "autoInstall" boolean NOT NULL DEFAULT (0), "requiresApproval" boolean NOT NULL DEFAULT (1), "isMandatory" boolean NOT NULL DEFAULT (0), "maxInstallations" integer, "maxActiveUsers" integer, "currentInstallations" integer NOT NULL DEFAULT (0), "currentActiveUsers" integer NOT NULL DEFAULT (0), "tenantConfiguration" text, "preferences" text, "approvedAt" text, "isDataCompliant" boolean NOT NULL DEFAULT (1), "complianceCertifications" text, "approvedById" varchar)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "plugin_tenants"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "enabled", "scope", "autoInstall", "requiresApproval", "isMandatory", "maxInstallations", "maxActiveUsers", "currentInstallations", "currentActiveUsers", "tenantConfiguration", "preferences", "approvedAt", "isDataCompliant", "complianceCertifications", "approvedById") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "enabled", "scope", "autoInstall", "requiresApproval", "isMandatory", "maxInstallations", "maxActiveUsers", "currentInstallations", "currentActiveUsers", "tenantConfiguration", "preferences", "approvedAt", "isDataCompliant", "complianceCertifications", "approvedById" FROM "temporary_plugin_tenants"`
@@ -2581,148 +2899,6 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_f209a8620f1677ed2c82c4cd2e" ON "plugin_tenants" ("createdByUserId") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_d658bc853b354445cf2a0d6fb7"`);
-		await queryRunner.query(`DROP INDEX "IDX_55bee446d2c470e5d6b066a27a"`);
-		await queryRunner.query(`DROP INDEX "IDX_7c6dc1cdd58690b7179d76184b"`);
-		await queryRunner.query(`DROP INDEX "IDX_19d9135639e3b40ec0dca1c926"`);
-		await queryRunner.query(`DROP INDEX "IDX_0ab83b39cc676ee2097714fb3b"`);
-		await queryRunner.query(`DROP INDEX "IDX_cb9a1e5640b8e07a9a63b51245"`);
-		await queryRunner.query(`DROP INDEX "IDX_c90b796bd033e54e3719213a0c"`);
-		await queryRunner.query(`DROP INDEX "IDX_0404416b5c1cd48ae87fe81834"`);
-		await queryRunner.query(`DROP INDEX "IDX_09a383d6f2858d49c064ca4cda"`);
-		await queryRunner.query(`ALTER TABLE "plugin_sources" RENAME TO "temporary_plugin_sources"`);
-		await queryRunner.query(
-			`CREATE TABLE "plugin_sources" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "type" varchar CHECK( "type" IN ('CDN','NPM','GAUZY') ) NOT NULL DEFAULT ('GAUZY'), "operatingSystem" varchar CHECK( "operatingSystem" IN ('LINUX','MAC','WINDOWS','UNIVERSAL') ) NOT NULL DEFAULT ('UNIVERSAL'), "architecture" varchar CHECK( "architecture" IN ('X64','ARM') ) NOT NULL DEFAULT ('X64'), "url" varchar, "integrity" varchar, "crossOrigin" varchar, "name" varchar, "registry" varchar, "private" boolean DEFAULT (0), "scope" varchar, "filePath" varchar, "fileName" varchar, "fileSize" integer, "mimeType" varchar, "fileKey" varchar, "versionId" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "plugin_sources"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "type", "operatingSystem", "architecture", "url", "integrity", "crossOrigin", "name", "registry", "private", "scope", "filePath", "fileName", "fileSize", "mimeType", "fileKey", "versionId", "storageProvider") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "type", "operatingSystem", "architecture", "url", "integrity", "crossOrigin", "name", "registry", "private", "scope", "filePath", "fileName", "fileSize", "mimeType", "fileKey", "versionId", "storageProvider" FROM "temporary_plugin_sources"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_plugin_sources"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_d658bc853b354445cf2a0d6fb7" ON "plugin_sources" ("storageProvider") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_55bee446d2c470e5d6b066a27a" ON "plugin_sources" ("versionId") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7c6dc1cdd58690b7179d76184b" ON "plugin_sources" ("organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_19d9135639e3b40ec0dca1c926" ON "plugin_sources" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_0ab83b39cc676ee2097714fb3b" ON "plugin_sources" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_cb9a1e5640b8e07a9a63b51245" ON "plugin_sources" ("isActive") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_c90b796bd033e54e3719213a0c" ON "plugin_sources" ("deletedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_0404416b5c1cd48ae87fe81834" ON "plugin_sources" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_09a383d6f2858d49c064ca4cda" ON "plugin_sources" ("createdByUserId") `
-		);
-		await queryRunner.query(`DROP INDEX IF EXISTS "version_number_unique"`);
-		await queryRunner.query(`DROP INDEX "IDX_8adf7a9181e968bcafc71236c8"`);
-		await queryRunner.query(`DROP INDEX "IDX_ab6e29cd444226f80bf0c0c1db"`);
-		await queryRunner.query(`DROP INDEX "IDX_f806bae81cd490404a1888ad5b"`);
-		await queryRunner.query(`DROP INDEX "IDX_650ccf2e7394509f7ad8448e32"`);
-		await queryRunner.query(`DROP INDEX "IDX_a16869769b9a219acb157bb2b3"`);
-		await queryRunner.query(`DROP INDEX "IDX_e6d49799b916946e5cd5399385"`);
-		await queryRunner.query(`DROP INDEX "IDX_e06094816e67e584dea754cc81"`);
-		await queryRunner.query(`DROP INDEX "IDX_0b36b5701e9890a395ded76cb5"`);
-		await queryRunner.query(`DROP INDEX "IDX_485db4d1cc977cc3d499824d95"`);
-		await queryRunner.query(`ALTER TABLE "plugin_versions" RENAME TO "temporary_plugin_versions"`);
-		await queryRunner.query(
-			`CREATE TABLE "plugin_versions" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "number" varchar NOT NULL, "changelog" varchar NOT NULL, "checksum" varchar, "signature" varchar, "releaseDate" datetime, "downloadCount" integer DEFAULT (0), "pluginId" varchar)`
-		);
-		await queryRunner.query(
-			`INSERT INTO "plugin_versions"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "number", "changelog", "checksum", "signature", "releaseDate", "downloadCount", "pluginId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "number", "changelog", "checksum", "signature", "releaseDate", "downloadCount", "pluginId" FROM "temporary_plugin_versions"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_plugin_versions"`);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX IF NOT EXISTS "version_number_unique" ON "plugin_versions" ("number", "pluginId", "organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_8adf7a9181e968bcafc71236c8" ON "plugin_versions" ("pluginId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_ab6e29cd444226f80bf0c0c1db" ON "plugin_versions" ("releaseDate") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_f806bae81cd490404a1888ad5b" ON "plugin_versions" ("organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_650ccf2e7394509f7ad8448e32" ON "plugin_versions" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_a16869769b9a219acb157bb2b3" ON "plugin_versions" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_e6d49799b916946e5cd5399385" ON "plugin_versions" ("isActive") `);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_e06094816e67e584dea754cc81" ON "plugin_versions" ("deletedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_0b36b5701e9890a395ded76cb5" ON "plugin_versions" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_485db4d1cc977cc3d499824d95" ON "plugin_versions" ("createdByUserId") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_6b7ef18c0cb54d547e40f30fb8"`);
-		await queryRunner.query(`DROP INDEX "IDX_3c3ce338e7716d853220d8b176"`);
-		await queryRunner.query(`DROP INDEX "IDX_5e6b80341a4ed75ae7c4af6897"`);
-		await queryRunner.query(`DROP INDEX "IDX_c92ea21dfcfd889730e2214c8f"`);
-		await queryRunner.query(`DROP INDEX "IDX_28624735b4e3ace75883521a57"`);
-		await queryRunner.query(`DROP INDEX "IDX_32c3f7a738ec8b40d6375b2933"`);
-		await queryRunner.query(`DROP INDEX "IDX_acac58b213936ea488d0a8d1a3"`);
-		await queryRunner.query(`DROP INDEX "IDX_547e4b71ae81ee772fa4ab79e6"`);
-		await queryRunner.query(`DROP INDEX "IDX_8aafffefdce2eb11079ec2aa75"`);
-		await queryRunner.query(`DROP INDEX "IDX_dff9e6c763c8c33b07f330e6a1"`);
-		await queryRunner.query(`DROP INDEX "IDX_3e63eed07bcc0e3e36d9183cca"`);
-		await queryRunner.query(`DROP INDEX "IDX_d742ed346264f4c9d9225265d7"`);
-		await queryRunner.query(`DROP INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af"`);
-		await queryRunner.query(`DROP INDEX "IDX_7e9b8b3eebb881753e07b73f6c"`);
-		await queryRunner.query(`DROP INDEX "IDX_842e5e5f94c4008a42d4b5f44a"`);
-		await queryRunner.query(`ALTER TABLE "plugin_installations" RENAME TO "temporary_plugin_installations"`);
-		await queryRunner.query(
-			`CREATE TABLE "plugin_installations" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "pluginId" varchar, "versionId" varchar, "installedById" varchar, "installedAt" datetime, "uninstalledAt" datetime, "status" varchar CHECK( "status" IN ('INSTALLED','UNINSTALLED','FAILED','IN_PROGRESS') ) NOT NULL DEFAULT ('IN_PROGRESS'), "isActivated" boolean NOT NULL DEFAULT (0), "activatedAt" datetime, "deactivatedAt" datetime)`
-		);
-		await queryRunner.query(
-			`INSERT INTO "plugin_installations"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "versionId", "installedById", "installedAt", "uninstalledAt", "status", "isActivated", "activatedAt", "deactivatedAt") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "pluginId", "versionId", "installedById", "installedAt", "uninstalledAt", "status", "isActivated", "activatedAt", "deactivatedAt" FROM "temporary_plugin_installations"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_plugin_installations"`);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX "IDX_6b7ef18c0cb54d547e40f30fb8" ON "plugin_installations" ("pluginId", "versionId", "installedById") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_3c3ce338e7716d853220d8b176" ON "plugin_installations" ("deactivatedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_5e6b80341a4ed75ae7c4af6897" ON "plugin_installations" ("activatedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_c92ea21dfcfd889730e2214c8f" ON "plugin_installations" ("uninstalledAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_28624735b4e3ace75883521a57" ON "plugin_installations" ("installedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_32c3f7a738ec8b40d6375b2933" ON "plugin_installations" ("installedById") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_acac58b213936ea488d0a8d1a3" ON "plugin_installations" ("versionId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_547e4b71ae81ee772fa4ab79e6" ON "plugin_installations" ("pluginId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_8aafffefdce2eb11079ec2aa75" ON "plugin_installations" ("organizationId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_dff9e6c763c8c33b07f330e6a1" ON "plugin_installations" ("tenantId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_3e63eed07bcc0e3e36d9183cca" ON "plugin_installations" ("isArchived") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_d742ed346264f4c9d9225265d7" ON "plugin_installations" ("isActive") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af" ON "plugin_installations" ("deletedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7e9b8b3eebb881753e07b73f6c" ON "plugin_installations" ("updatedByUserId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_842e5e5f94c4008a42d4b5f44a" ON "plugin_installations" ("createdByUserId") `
 		);
 		await queryRunner.query(`DROP INDEX "IDX_63d9e137716eb1bdfe93ccf23d"`);
 		await queryRunner.query(`DROP INDEX "IDX_f120aba634b63389a3a351a4f5"`);
@@ -2950,10 +3126,12 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_eb3b9c7cfe7aa86bca589aee9e"`);
 		await queryRunner.query(`DROP INDEX "IDX_af82eaa17a59e0cf0fac16d7fe"`);
 		await queryRunner.query(`DROP INDEX "IDX_fed0c61e1d142e1c448a45e5a0"`);
-		await queryRunner.query(`DROP INDEX "IDX_5e454c743af9400e3fe1814039"`);
+		await queryRunner.query(`DROP INDEX "IDX_448990d16086477ee1c5f08968"`);
+		await queryRunner.query(`DROP INDEX "IDX_18db53b62833e1bdb9949b5827"`);
 		await queryRunner.query(`DROP INDEX "IDX_4e8a9f4ee7df8c39d0314063e7"`);
 		await queryRunner.query(`DROP INDEX "IDX_bbd6dc08c0c91724e5d26202fa"`);
 		await queryRunner.query(`DROP INDEX "IDX_39a16aca760fc7a3cef39d5563"`);
+		await queryRunner.query(`DROP INDEX "IDX_7afeffe18364cae48efd454e4d"`);
 		await queryRunner.query(`DROP INDEX "IDX_9bbac226cce476576134c5726e"`);
 		await queryRunner.query(`DROP INDEX "IDX_7f792e3c1891f728f9e5256142"`);
 		await queryRunner.query(`DROP INDEX "IDX_b5163f874ce5bc6b63c8e8631a"`);
@@ -2971,14 +3149,65 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_b874f9ee9c04061b4892926388"`);
 		await queryRunner.query(`DROP INDEX "IDX_646aa1161ac9861061842e05c2"`);
 		await queryRunner.query(`DROP TABLE "plugin_subscription_plans"`);
-		await queryRunner.query(`DROP INDEX IF EXISTS "plugin_name_unique"`);
+		await queryRunner.query(`DROP INDEX "IDX_0479844f05c1132f8929cab1c8"`);
+		await queryRunner.query(`DROP INDEX "IDX_6c8d4a0f437cfae296ef43ce13"`);
+		await queryRunner.query(`DROP INDEX "IDX_c0fab3c6709a93bca88eb100a9"`);
+		await queryRunner.query(`DROP INDEX "IDX_123f1b37f4826f6241446a8416"`);
+		await queryRunner.query(`DROP INDEX "IDX_15ca158f27ab3296915b7d1b38"`);
 		await queryRunner.query(`DROP INDEX "IDX_4bf89f98c41969e23e3f9974d5"`);
+		await queryRunner.query(`DROP INDEX "IDX_16d0aed6fcc311379f5c75bbd2"`);
+		await queryRunner.query(`DROP INDEX "IDX_100eef6409ee96d0673ee510e6"`);
+		await queryRunner.query(`DROP INDEX "IDX_35ee1cb5098e17e30ee5cbc705"`);
 		await queryRunner.query(`DROP INDEX "IDX_c61c7032e7b3afd352d82bc4b4"`);
 		await queryRunner.query(`DROP INDEX "IDX_d0a1444aa92229d7f1af237184"`);
 		await queryRunner.query(`DROP INDEX "IDX_3210c015451d02d015a23eedad"`);
 		await queryRunner.query(`DROP INDEX "IDX_61357761fc6b140180b104dc8d"`);
 		await queryRunner.query(`DROP INDEX "IDX_cc5b64091fbfdcdbd23d6da80e"`);
 		await queryRunner.query(`DROP TABLE "plugins"`);
+		await queryRunner.query(`DROP INDEX "IDX_39d060301c8a36b51da6e4aec3"`);
+		await queryRunner.query(`DROP INDEX "IDX_f5c8259c0d815486f31878864d"`);
+		await queryRunner.query(`DROP INDEX "IDX_e1e7cf1589d06ac02a12e41db0"`);
+		await queryRunner.query(`DROP INDEX "IDX_e632aa70ea7b7e5c5fdbfba41b"`);
+		await queryRunner.query(`DROP INDEX "IDX_6fa0eda3add1fb070ba172a44e"`);
+		await queryRunner.query(`DROP INDEX "IDX_8adf7a9181e968bcafc71236c8"`);
+		await queryRunner.query(`DROP INDEX "IDX_ab6e29cd444226f80bf0c0c1db"`);
+		await queryRunner.query(`DROP INDEX "IDX_f806bae81cd490404a1888ad5b"`);
+		await queryRunner.query(`DROP INDEX "IDX_650ccf2e7394509f7ad8448e32"`);
+		await queryRunner.query(`DROP INDEX "IDX_a16869769b9a219acb157bb2b3"`);
+		await queryRunner.query(`DROP INDEX "IDX_e6d49799b916946e5cd5399385"`);
+		await queryRunner.query(`DROP INDEX "IDX_e06094816e67e584dea754cc81"`);
+		await queryRunner.query(`DROP INDEX "IDX_0b36b5701e9890a395ded76cb5"`);
+		await queryRunner.query(`DROP INDEX "IDX_485db4d1cc977cc3d499824d95"`);
+		await queryRunner.query(`DROP TABLE "plugin_versions"`);
+		await queryRunner.query(`DROP INDEX "IDX_6fae6d0ddfd7177abcb4befd72"`);
+		await queryRunner.query(`DROP INDEX "IDX_af8978fbf37560525c19ec7048"`);
+		await queryRunner.query(`DROP INDEX "IDX_d658bc853b354445cf2a0d6fb7"`);
+		await queryRunner.query(`DROP INDEX "IDX_55bee446d2c470e5d6b066a27a"`);
+		await queryRunner.query(`DROP INDEX "IDX_7c6dc1cdd58690b7179d76184b"`);
+		await queryRunner.query(`DROP INDEX "IDX_19d9135639e3b40ec0dca1c926"`);
+		await queryRunner.query(`DROP INDEX "IDX_0ab83b39cc676ee2097714fb3b"`);
+		await queryRunner.query(`DROP INDEX "IDX_cb9a1e5640b8e07a9a63b51245"`);
+		await queryRunner.query(`DROP INDEX "IDX_c90b796bd033e54e3719213a0c"`);
+		await queryRunner.query(`DROP INDEX "IDX_0404416b5c1cd48ae87fe81834"`);
+		await queryRunner.query(`DROP INDEX "IDX_09a383d6f2858d49c064ca4cda"`);
+		await queryRunner.query(`DROP TABLE "plugin_sources"`);
+		await queryRunner.query(`DROP INDEX "IDX_1569d8ca526d958d82483e15c7"`);
+		await queryRunner.query(`DROP INDEX "IDX_173e0668b17afd3696abf3c518"`);
+		await queryRunner.query(`DROP INDEX "IDX_3c3ce338e7716d853220d8b176"`);
+		await queryRunner.query(`DROP INDEX "IDX_5e6b80341a4ed75ae7c4af6897"`);
+		await queryRunner.query(`DROP INDEX "IDX_c92ea21dfcfd889730e2214c8f"`);
+		await queryRunner.query(`DROP INDEX "IDX_28624735b4e3ace75883521a57"`);
+		await queryRunner.query(`DROP INDEX "IDX_32c3f7a738ec8b40d6375b2933"`);
+		await queryRunner.query(`DROP INDEX "IDX_acac58b213936ea488d0a8d1a3"`);
+		await queryRunner.query(`DROP INDEX "IDX_547e4b71ae81ee772fa4ab79e6"`);
+		await queryRunner.query(`DROP INDEX "IDX_8aafffefdce2eb11079ec2aa75"`);
+		await queryRunner.query(`DROP INDEX "IDX_dff9e6c763c8c33b07f330e6a1"`);
+		await queryRunner.query(`DROP INDEX "IDX_3e63eed07bcc0e3e36d9183cca"`);
+		await queryRunner.query(`DROP INDEX "IDX_d742ed346264f4c9d9225265d7"`);
+		await queryRunner.query(`DROP INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af"`);
+		await queryRunner.query(`DROP INDEX "IDX_7e9b8b3eebb881753e07b73f6c"`);
+		await queryRunner.query(`DROP INDEX "IDX_842e5e5f94c4008a42d4b5f44a"`);
+		await queryRunner.query(`DROP TABLE "plugin_installations"`);
 		await queryRunner.query(`DROP INDEX "IDX_676e7c749905331c36b1707ba8"`);
 		await queryRunner.query(`DROP INDEX "IDX_cddb5e04a93a957dc4d56522b7"`);
 		await queryRunner.query(`DROP INDEX "IDX_17c923b300710a13f6dfade59b"`);
@@ -3032,43 +3261,6 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX "IDX_0b5cc71673410a449491fb3db9"`);
 		await queryRunner.query(`DROP INDEX "IDX_f209a8620f1677ed2c82c4cd2e"`);
 		await queryRunner.query(`DROP TABLE "plugin_tenants"`);
-		await queryRunner.query(`DROP INDEX "IDX_d658bc853b354445cf2a0d6fb7"`);
-		await queryRunner.query(`DROP INDEX "IDX_55bee446d2c470e5d6b066a27a"`);
-		await queryRunner.query(`DROP INDEX "IDX_7c6dc1cdd58690b7179d76184b"`);
-		await queryRunner.query(`DROP INDEX "IDX_19d9135639e3b40ec0dca1c926"`);
-		await queryRunner.query(`DROP INDEX "IDX_0ab83b39cc676ee2097714fb3b"`);
-		await queryRunner.query(`DROP INDEX "IDX_cb9a1e5640b8e07a9a63b51245"`);
-		await queryRunner.query(`DROP INDEX "IDX_c90b796bd033e54e3719213a0c"`);
-		await queryRunner.query(`DROP INDEX "IDX_0404416b5c1cd48ae87fe81834"`);
-		await queryRunner.query(`DROP INDEX "IDX_09a383d6f2858d49c064ca4cda"`);
-		await queryRunner.query(`DROP TABLE "plugin_sources"`);
-		await queryRunner.query(`DROP INDEX IF EXISTS "version_number_unique"`);
-		await queryRunner.query(`DROP INDEX "IDX_8adf7a9181e968bcafc71236c8"`);
-		await queryRunner.query(`DROP INDEX "IDX_ab6e29cd444226f80bf0c0c1db"`);
-		await queryRunner.query(`DROP INDEX "IDX_f806bae81cd490404a1888ad5b"`);
-		await queryRunner.query(`DROP INDEX "IDX_650ccf2e7394509f7ad8448e32"`);
-		await queryRunner.query(`DROP INDEX "IDX_a16869769b9a219acb157bb2b3"`);
-		await queryRunner.query(`DROP INDEX "IDX_e6d49799b916946e5cd5399385"`);
-		await queryRunner.query(`DROP INDEX "IDX_e06094816e67e584dea754cc81"`);
-		await queryRunner.query(`DROP INDEX "IDX_0b36b5701e9890a395ded76cb5"`);
-		await queryRunner.query(`DROP INDEX "IDX_485db4d1cc977cc3d499824d95"`);
-		await queryRunner.query(`DROP TABLE "plugin_versions"`);
-		await queryRunner.query(`DROP INDEX "IDX_6b7ef18c0cb54d547e40f30fb8"`);
-		await queryRunner.query(`DROP INDEX "IDX_3c3ce338e7716d853220d8b176"`);
-		await queryRunner.query(`DROP INDEX "IDX_5e6b80341a4ed75ae7c4af6897"`);
-		await queryRunner.query(`DROP INDEX "IDX_c92ea21dfcfd889730e2214c8f"`);
-		await queryRunner.query(`DROP INDEX "IDX_28624735b4e3ace75883521a57"`);
-		await queryRunner.query(`DROP INDEX "IDX_32c3f7a738ec8b40d6375b2933"`);
-		await queryRunner.query(`DROP INDEX "IDX_acac58b213936ea488d0a8d1a3"`);
-		await queryRunner.query(`DROP INDEX "IDX_547e4b71ae81ee772fa4ab79e6"`);
-		await queryRunner.query(`DROP INDEX "IDX_8aafffefdce2eb11079ec2aa75"`);
-		await queryRunner.query(`DROP INDEX "IDX_dff9e6c763c8c33b07f330e6a1"`);
-		await queryRunner.query(`DROP INDEX "IDX_3e63eed07bcc0e3e36d9183cca"`);
-		await queryRunner.query(`DROP INDEX "IDX_d742ed346264f4c9d9225265d7"`);
-		await queryRunner.query(`DROP INDEX "IDX_a45f5c2aba22d4fa4eb8fa85af"`);
-		await queryRunner.query(`DROP INDEX "IDX_7e9b8b3eebb881753e07b73f6c"`);
-		await queryRunner.query(`DROP INDEX "IDX_842e5e5f94c4008a42d4b5f44a"`);
-		await queryRunner.query(`DROP TABLE "plugin_installations"`);
 		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
 		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
 		await queryRunner.query(`ALTER TABLE "employee_job_preset" RENAME TO "temporary_employee_job_preset"`);
@@ -3097,16 +3289,7 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_7ae5b4d4bdec77971dab319f2e2\``
 		);
 		await queryRunner.query(
-			`CREATE TABLE \`plugin_installations\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`pluginId\` varchar(255) NULL, \`versionId\` varchar(255) NULL, \`installedById\` varchar(255) NULL, \`installedAt\` datetime NULL, \`uninstalledAt\` datetime NULL, \`status\` enum ('INSTALLED', 'UNINSTALLED', 'FAILED', 'IN_PROGRESS') NOT NULL DEFAULT 'IN_PROGRESS', \`isActivated\` tinyint NOT NULL DEFAULT 0, \`activatedAt\` datetime NULL, \`deactivatedAt\` datetime NULL, INDEX \`IDX_842e5e5f94c4008a42d4b5f44a\` (\`createdByUserId\`), INDEX \`IDX_7e9b8b3eebb881753e07b73f6c\` (\`updatedByUserId\`), INDEX \`IDX_a45f5c2aba22d4fa4eb8fa85af\` (\`deletedByUserId\`), INDEX \`IDX_d742ed346264f4c9d9225265d7\` (\`isActive\`), INDEX \`IDX_3e63eed07bcc0e3e36d9183cca\` (\`isArchived\`), INDEX \`IDX_dff9e6c763c8c33b07f330e6a1\` (\`tenantId\`), INDEX \`IDX_8aafffefdce2eb11079ec2aa75\` (\`organizationId\`), INDEX \`IDX_547e4b71ae81ee772fa4ab79e6\` (\`pluginId\`), INDEX \`IDX_acac58b213936ea488d0a8d1a3\` (\`versionId\`), INDEX \`IDX_32c3f7a738ec8b40d6375b2933\` (\`installedById\`), INDEX \`IDX_28624735b4e3ace75883521a57\` (\`installedAt\`), INDEX \`IDX_c92ea21dfcfd889730e2214c8f\` (\`uninstalledAt\`), INDEX \`IDX_5e6b80341a4ed75ae7c4af6897\` (\`activatedAt\`), INDEX \`IDX_3c3ce338e7716d853220d8b176\` (\`deactivatedAt\`), UNIQUE INDEX \`IDX_6b7ef18c0cb54d547e40f30fb8\` (\`pluginId\`, \`versionId\`, \`installedById\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
-		);
-		await queryRunner.query(
-			`CREATE TABLE \`plugin_versions\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`number\` varchar(255) NOT NULL, \`changelog\` varchar(255) NOT NULL, \`checksum\` varchar(255) NULL, \`signature\` varchar(255) NULL, \`releaseDate\` datetime NULL, \`downloadCount\` int NULL DEFAULT '0', \`pluginId\` varchar(255) NULL, INDEX \`IDX_485db4d1cc977cc3d499824d95\` (\`createdByUserId\`), INDEX \`IDX_0b36b5701e9890a395ded76cb5\` (\`updatedByUserId\`), INDEX \`IDX_e06094816e67e584dea754cc81\` (\`deletedByUserId\`), INDEX \`IDX_e6d49799b916946e5cd5399385\` (\`isActive\`), INDEX \`IDX_a16869769b9a219acb157bb2b3\` (\`isArchived\`), INDEX \`IDX_650ccf2e7394509f7ad8448e32\` (\`tenantId\`), INDEX \`IDX_f806bae81cd490404a1888ad5b\` (\`organizationId\`), INDEX \`IDX_ab6e29cd444226f80bf0c0c1db\` (\`releaseDate\`), INDEX \`IDX_8adf7a9181e968bcafc71236c8\` (\`pluginId\`), UNIQUE INDEX \`version_number_unique\` (\`number\`, \`pluginId\`, \`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
-		);
-		await queryRunner.query(
-			`CREATE TABLE \`plugin_sources\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`type\` enum ('CDN', 'NPM', 'GAUZY') NOT NULL DEFAULT 'GAUZY', \`operatingSystem\` enum ('LINUX', 'MAC', 'WINDOWS', 'UNIVERSAL') NOT NULL DEFAULT 'UNIVERSAL', \`architecture\` enum ('X64', 'ARM') NOT NULL DEFAULT 'X64', \`url\` varchar(255) NULL, \`integrity\` varchar(255) NULL, \`crossOrigin\` varchar(255) NULL, \`name\` varchar(255) NULL, \`registry\` varchar(255) NULL, \`private\` tinyint NULL DEFAULT 0, \`scope\` varchar(255) NULL, \`filePath\` varchar(255) NULL, \`fileName\` varchar(255) NULL, \`fileSize\` int NULL, \`mimeType\` varchar(255) NULL, \`fileKey\` varchar(255) NULL, \`versionId\` varchar(255) NULL, \`storageProvider\` enum ('LOCAL', 'S3', 'WASABI', 'CLOUDINARY', 'DIGITALOCEAN') NULL, INDEX \`IDX_09a383d6f2858d49c064ca4cda\` (\`createdByUserId\`), INDEX \`IDX_0404416b5c1cd48ae87fe81834\` (\`updatedByUserId\`), INDEX \`IDX_c90b796bd033e54e3719213a0c\` (\`deletedByUserId\`), INDEX \`IDX_cb9a1e5640b8e07a9a63b51245\` (\`isActive\`), INDEX \`IDX_0ab83b39cc676ee2097714fb3b\` (\`isArchived\`), INDEX \`IDX_19d9135639e3b40ec0dca1c926\` (\`tenantId\`), INDEX \`IDX_7c6dc1cdd58690b7179d76184b\` (\`organizationId\`), INDEX \`IDX_55bee446d2c470e5d6b066a27a\` (\`versionId\`), INDEX \`IDX_d658bc853b354445cf2a0d6fb7\` (\`storageProvider\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
-		);
-		await queryRunner.query(
-			`CREATE TABLE \`plugin_tenants\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`pluginId\` varchar(255) NOT NULL, \`enabled\` tinyint NOT NULL DEFAULT 1, \`scope\` enum ('tenant', 'organization', 'user') NOT NULL DEFAULT 'user', \`autoInstall\` tinyint NOT NULL DEFAULT 0, \`requiresApproval\` tinyint NOT NULL DEFAULT 1, \`isMandatory\` tinyint NOT NULL DEFAULT 0, \`maxInstallations\` int NULL, \`maxActiveUsers\` int NULL, \`currentInstallations\` int NOT NULL DEFAULT '0', \`currentActiveUsers\` int NOT NULL DEFAULT '0', \`tenantConfiguration\` json NULL, \`preferences\` json NULL, \`approvedAt\` timestamp NULL, \`isDataCompliant\` tinyint NOT NULL DEFAULT 1, \`complianceCertifications\` text NULL, \`approvedById\` varchar(255) NOT NULL, INDEX \`IDX_f209a8620f1677ed2c82c4cd2e\` (\`createdByUserId\`), INDEX \`IDX_0b5cc71673410a449491fb3db9\` (\`updatedByUserId\`), INDEX \`IDX_06f10073cd6e84a19b6f604ddd\` (\`deletedByUserId\`), INDEX \`IDX_cf185e176c869e2be48d00d648\` (\`isActive\`), INDEX \`IDX_0ed7c977facb534e572d33b485\` (\`isArchived\`), INDEX \`IDX_5df2b63d82f2168e43c2d7e64c\` (\`tenantId\`), INDEX \`IDX_545faee53386f4e9d7b4311104\` (\`organizationId\`), INDEX \`IDX_c47db2e2072ba3b57060819246\` (\`pluginId\`), INDEX \`IDX_6d6a338f4eb5b467c2ff5eaa4b\` (\`enabled\`), INDEX \`IDX_e723cb5fdc4092538fe0384853\` (\`scope\`), INDEX \`IDX_c4accce384c6007c92b9afdc2d\` (\`currentInstallations\`), INDEX \`IDX_1aca41d7ee08b3b140eae4ee88\` (\`currentActiveUsers\`), INDEX \`IDX_a32259b1b9cdeea1c6d94bf94c\` (\`approvedAt\`), INDEX \`IDX_52ca2ab9f943fe3f47df36aef7\` (\`approvedById\`), INDEX \`IDX_4f1dada611375594ce22411cbe\` (\`pluginId\`, \`enabled\`), INDEX \`IDX_69f72957e1c98832cdab0c486e\` (\`organizationId\`, \`scope\`), INDEX \`IDX_a3a616a07b21a4212736493f5e\` (\`tenantId\`, \`scope\`, \`enabled\`), UNIQUE INDEX \`IDX_1394aebfcfe6782051e76f46a5\` (\`pluginId\`, \`tenantId\`, \`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`plugin_tenants\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`pluginId\` varchar(255) NOT NULL, \`enabled\` tinyint NOT NULL DEFAULT 1, \`scope\` enum ('tenant', 'organization', 'user') NOT NULL DEFAULT 'user', \`autoInstall\` tinyint NOT NULL DEFAULT 0, \`requiresApproval\` tinyint NOT NULL DEFAULT 1, \`isMandatory\` tinyint NOT NULL DEFAULT 0, \`maxInstallations\` int NULL, \`maxActiveUsers\` int NULL, \`currentInstallations\` int NOT NULL DEFAULT '0', \`currentActiveUsers\` int NOT NULL DEFAULT '0', \`tenantConfiguration\` json NULL, \`preferences\` json NULL, \`approvedAt\` timestamp NULL, \`isDataCompliant\` tinyint NOT NULL DEFAULT 1, \`complianceCertifications\` text NULL, \`approvedById\` varchar(255) NULL, INDEX \`IDX_f209a8620f1677ed2c82c4cd2e\` (\`createdByUserId\`), INDEX \`IDX_0b5cc71673410a449491fb3db9\` (\`updatedByUserId\`), INDEX \`IDX_06f10073cd6e84a19b6f604ddd\` (\`deletedByUserId\`), INDEX \`IDX_cf185e176c869e2be48d00d648\` (\`isActive\`), INDEX \`IDX_0ed7c977facb534e572d33b485\` (\`isArchived\`), INDEX \`IDX_5df2b63d82f2168e43c2d7e64c\` (\`tenantId\`), INDEX \`IDX_545faee53386f4e9d7b4311104\` (\`organizationId\`), INDEX \`IDX_c47db2e2072ba3b57060819246\` (\`pluginId\`), INDEX \`IDX_6d6a338f4eb5b467c2ff5eaa4b\` (\`enabled\`), INDEX \`IDX_e723cb5fdc4092538fe0384853\` (\`scope\`), INDEX \`IDX_c4accce384c6007c92b9afdc2d\` (\`currentInstallations\`), INDEX \`IDX_1aca41d7ee08b3b140eae4ee88\` (\`currentActiveUsers\`), INDEX \`IDX_a32259b1b9cdeea1c6d94bf94c\` (\`approvedAt\`), INDEX \`IDX_52ca2ab9f943fe3f47df36aef7\` (\`approvedById\`), INDEX \`IDX_4f1dada611375594ce22411cbe\` (\`pluginId\`, \`enabled\`), INDEX \`IDX_69f72957e1c98832cdab0c486e\` (\`organizationId\`, \`scope\`), INDEX \`IDX_a3a616a07b21a4212736493f5e\` (\`tenantId\`, \`scope\`, \`enabled\`), UNIQUE INDEX \`IDX_1394aebfcfe6782051e76f46a5\` (\`pluginId\`, \`tenantId\`, \`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
 			`CREATE TABLE \`plugin_settings\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`key\` varchar(255) NOT NULL, \`value\` text NOT NULL, \`isRequired\` tinyint NOT NULL DEFAULT 0, \`isEncrypted\` tinyint NOT NULL DEFAULT 0, \`description\` text NULL, \`order\` int NULL, \`validationRules\` text NULL, \`dataType\` enum ('string', 'number', 'boolean', 'json', 'file') NOT NULL DEFAULT 'string', \`defaultValue\` varchar(255) NULL, \`pluginId\` varchar(255) NOT NULL, \`pluginTenantId\` varchar(255) NULL, \`categoryId\` varchar(255) NULL, \`updatedById\` varchar(255) NULL, INDEX \`IDX_5534e36ff3a1416c17f507d546\` (\`createdByUserId\`), INDEX \`IDX_6b8deef29d0fb5eee571c39b39\` (\`updatedByUserId\`), INDEX \`IDX_a97ab238dc6aff5f305d37dbc7\` (\`deletedByUserId\`), INDEX \`IDX_cf20745f234b0b3512c03d74be\` (\`isActive\`), INDEX \`IDX_199b3708ea7962d21fc55de243\` (\`isArchived\`), INDEX \`IDX_bbced9536ca0a8ee967b531c32\` (\`tenantId\`), INDEX \`IDX_d4504369b0f19d2360a464408a\` (\`organizationId\`), INDEX \`IDX_737e0935140d7b17632fc7815a\` (\`pluginId\`), INDEX \`IDX_8e11188fb92db2ee126b53e866\` (\`pluginTenantId\`), INDEX \`IDX_a8471a91f63494a0d3ec5cf248\` (\`categoryId\`), INDEX \`IDX_734649a34ee071f44de4a14490\` (\`updatedById\`), UNIQUE INDEX \`IDX_48aa394150a960cf3e7b285cf4\` (\`pluginId\`, \`key\`, \`pluginTenantId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
@@ -3115,19 +3298,28 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`CREATE TABLE \`plugin_categories\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`name\` varchar(255) NOT NULL, \`description\` text NULL, \`slug\` varchar(255) NOT NULL, \`color\` varchar(255) NULL, \`icon\` varchar(255) NULL, \`order\` int NOT NULL DEFAULT '0', \`metadata\` json NULL, \`parentId\` varchar(255) NULL, INDEX \`IDX_60543808734ff13850d7843f7b\` (\`createdByUserId\`), INDEX \`IDX_c7c4b6b97be418be173859d10d\` (\`updatedByUserId\`), INDEX \`IDX_1fa4520b20a0bf4fdfe3ca1ec7\` (\`deletedByUserId\`), INDEX \`IDX_99ab190a6b7ae5ffc61b4dfaf4\` (\`isActive\`), INDEX \`IDX_b23665ef0d73dbe47d4d26f3d5\` (\`isArchived\`), INDEX \`IDX_7c239f665e5caedd708c62b1f7\` (\`tenantId\`), INDEX \`IDX_ca31918911db08a4008be72c8e\` (\`organizationId\`), UNIQUE INDEX \`IDX_d427c34c4dd721c72d5d56187f\` (\`slug\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE TABLE \`plugin_tags\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`pluginId\` varchar(255) NOT NULL, \`tagId\` varchar(255) NOT NULL, \`appliedAt\` text NULL DEFAULT CURRENT_TIMESTAMP, \`appliedById\` varchar(255) NULL, \`priority\` int NULL COMMENT 'Priority weight for tag association (0-100, higher = more important)' DEFAULT '50', \`isFeatured\` tinyint NOT NULL COMMENT 'Indicates if this tag association should be featured/highlighted' DEFAULT 0, INDEX \`IDX_9b013a85a6ae26db17101ffb89\` (\`createdByUserId\`), INDEX \`IDX_ee480ffb800fb2c9f6d91f66aa\` (\`updatedByUserId\`), INDEX \`IDX_09654ebaec00e0c0c4dfae4c42\` (\`deletedByUserId\`), INDEX \`IDX_fe4db46e2c3d32f64b4a4728e3\` (\`isActive\`), INDEX \`IDX_cacbb5fd767b06985be6049858\` (\`isArchived\`), INDEX \`IDX_da359f059e06030ec33adba133\` (\`tenantId\`), INDEX \`IDX_8bcd0243b780191a391b348f58\` (\`organizationId\`), INDEX \`IDX_05292c8750270ff028ab2fec14\` (\`pluginId\`), INDEX \`IDX_df3d0fc648c9e0544ca11df9d2\` (\`tagId\`), INDEX \`IDX_17c923b300710a13f6dfade59b\` (\`tagId\`, \`tenantId\`, \`organizationId\`), INDEX \`IDX_cddb5e04a93a957dc4d56522b7\` (\`pluginId\`, \`tenantId\`, \`organizationId\`), UNIQUE INDEX \`IDX_676e7c749905331c36b1707ba8\` (\`pluginId\`, \`tagId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`plugin_tags\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`pluginId\` varchar(255) NOT NULL, \`tagId\` varchar(255) NOT NULL, \`appliedAt\` timestamp NULL DEFAULT CURRENT_TIMESTAMP, \`appliedById\` varchar(255) NULL, \`priority\` int NULL COMMENT 'Priority weight for tag association (0-100, higher = more important)' DEFAULT '50', \`isFeatured\` tinyint NOT NULL COMMENT 'Indicates if this tag association should be featured/highlighted' DEFAULT 0, INDEX \`IDX_9b013a85a6ae26db17101ffb89\` (\`createdByUserId\`), INDEX \`IDX_ee480ffb800fb2c9f6d91f66aa\` (\`updatedByUserId\`), INDEX \`IDX_09654ebaec00e0c0c4dfae4c42\` (\`deletedByUserId\`), INDEX \`IDX_fe4db46e2c3d32f64b4a4728e3\` (\`isActive\`), INDEX \`IDX_cacbb5fd767b06985be6049858\` (\`isArchived\`), INDEX \`IDX_da359f059e06030ec33adba133\` (\`tenantId\`), INDEX \`IDX_8bcd0243b780191a391b348f58\` (\`organizationId\`), INDEX \`IDX_05292c8750270ff028ab2fec14\` (\`pluginId\`), INDEX \`IDX_df3d0fc648c9e0544ca11df9d2\` (\`tagId\`), INDEX \`IDX_17c923b300710a13f6dfade59b\` (\`tagId\`, \`tenantId\`, \`organizationId\`), INDEX \`IDX_cddb5e04a93a957dc4d56522b7\` (\`pluginId\`, \`tenantId\`, \`organizationId\`), UNIQUE INDEX \`IDX_676e7c749905331c36b1707ba8\` (\`pluginId\`, \`tagId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE TABLE \`plugins\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`name\` varchar(255) NOT NULL, \`description\` varchar(255) NULL, \`type\` enum ('DESKTOP', 'WEB', 'MOBILE') NOT NULL DEFAULT 'DESKTOP', \`status\` enum ('ACTIVE', 'INACTIVE', 'DEPRECATED', 'ARCHIVED') NOT NULL DEFAULT 'ACTIVE', \`categoryId\` varchar(255) NULL, \`author\` varchar(255) NULL, \`license\` varchar(255) NULL, \`homepage\` varchar(255) NULL, \`repository\` varchar(255) NULL, \`uploadedById\` varchar(255) NULL, \`uploadedAt\` datetime NULL, \`requiresSubscription\` tinyint NOT NULL DEFAULT 0, \`lastDownloadedAt\` datetime NULL, INDEX \`IDX_cc5b64091fbfdcdbd23d6da80e\` (\`createdByUserId\`), INDEX \`IDX_61357761fc6b140180b104dc8d\` (\`updatedByUserId\`), INDEX \`IDX_3210c015451d02d015a23eedad\` (\`deletedByUserId\`), INDEX \`IDX_d0a1444aa92229d7f1af237184\` (\`isActive\`), INDEX \`IDX_c61c7032e7b3afd352d82bc4b4\` (\`isArchived\`), INDEX \`IDX_4bf89f98c41969e23e3f9974d5\` (\`uploadedById\`), UNIQUE INDEX \`plugin_name_unique\` (\`name\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`plugin_installations\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`pluginId\` varchar(36) NULL, \`versionId\` varchar(36) NULL, \`installedById\` varchar(36) NULL, \`installedAt\` datetime NULL, \`uninstalledAt\` datetime NULL, \`status\` enum ('INSTALLED', 'UNINSTALLED', 'FAILED', 'IN_PROGRESS') NOT NULL DEFAULT 'IN_PROGRESS', \`isActivated\` tinyint NOT NULL DEFAULT 0, \`activatedAt\` datetime NULL, \`deactivatedAt\` datetime NULL, INDEX \`IDX_842e5e5f94c4008a42d4b5f44a\` (\`createdByUserId\`), INDEX \`IDX_7e9b8b3eebb881753e07b73f6c\` (\`updatedByUserId\`), INDEX \`IDX_a45f5c2aba22d4fa4eb8fa85af\` (\`deletedByUserId\`), INDEX \`IDX_d742ed346264f4c9d9225265d7\` (\`isActive\`), INDEX \`IDX_3e63eed07bcc0e3e36d9183cca\` (\`isArchived\`), INDEX \`IDX_dff9e6c763c8c33b07f330e6a1\` (\`tenantId\`), INDEX \`IDX_8aafffefdce2eb11079ec2aa75\` (\`organizationId\`), INDEX \`IDX_547e4b71ae81ee772fa4ab79e6\` (\`pluginId\`), INDEX \`IDX_acac58b213936ea488d0a8d1a3\` (\`versionId\`), INDEX \`IDX_32c3f7a738ec8b40d6375b2933\` (\`installedById\`), INDEX \`IDX_28624735b4e3ace75883521a57\` (\`installedAt\`), INDEX \`IDX_c92ea21dfcfd889730e2214c8f\` (\`uninstalledAt\`), INDEX \`IDX_5e6b80341a4ed75ae7c4af6897\` (\`activatedAt\`), INDEX \`IDX_3c3ce338e7716d853220d8b176\` (\`deactivatedAt\`), INDEX \`IDX_173e0668b17afd3696abf3c518\` (\`installedById\`, \`pluginId\`), UNIQUE INDEX \`IDX_1569d8ca526d958d82483e15c7\` (\`pluginId\`, \`tenantId\`, \`organizationId\`, \`installedById\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE TABLE \`plugin_subscription_plans\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`name\` varchar(255) NOT NULL, \`description\` text NULL, \`type\` enum ('free', 'trial', 'basic', 'premium', 'enterprise', 'custom') NOT NULL DEFAULT 'free', \`price\` decimal(10,2) NOT NULL DEFAULT '0.00', \`currency\` varchar(3) NOT NULL DEFAULT 'USD', \`billingPeriod\` enum ('daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'one-time', 'usage_based') NOT NULL DEFAULT 'monthly', \`features\` text NOT NULL, \`limitations\` json NULL, \`isPopular\` tinyint NOT NULL DEFAULT 0, \`isRecommended\` tinyint NOT NULL DEFAULT 0, \`trialDays\` int NULL, \`setupFee\` decimal(10,2) NULL, \`discountPercentage\` decimal(5,2) NULL, \`metadata\` json NULL, \`sortOrder\` int NOT NULL DEFAULT '0', \`pluginId\` varchar(255) NOT NULL, \`createdById\` varchar(255) NULL, INDEX \`IDX_646aa1161ac9861061842e05c2\` (\`createdByUserId\`), INDEX \`IDX_b874f9ee9c04061b4892926388\` (\`updatedByUserId\`), INDEX \`IDX_6f401b811d14d8b06db0fbea30\` (\`deletedByUserId\`), INDEX \`IDX_a7bf8b446ca66e5824fb6ff91a\` (\`isActive\`), INDEX \`IDX_dec9037a57726ae5f54bc3c4a8\` (\`isArchived\`), INDEX \`IDX_234c8f3d694ae31b095bdf5a8a\` (\`price\`, \`billingPeriod\`), INDEX \`IDX_37c9e1c698331b9345280374fd\` (\`isActive\`, \`type\`), INDEX \`IDX_082f6cba880ecd144b28284376\` (\`pluginId\`, \`type\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`plugin_sources\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`type\` enum ('CDN', 'NPM', 'GAUZY') NOT NULL DEFAULT 'GAUZY', \`operatingSystem\` enum ('LINUX', 'MAC', 'WINDOWS', 'UNIVERSAL') NOT NULL DEFAULT 'UNIVERSAL', \`architecture\` enum ('X64', 'ARM') NOT NULL DEFAULT 'X64', \`url\` varchar(255) NULL, \`integrity\` varchar(255) NULL, \`crossOrigin\` varchar(255) NULL, \`name\` varchar(255) NULL, \`registry\` varchar(255) NULL, \`private\` tinyint NULL DEFAULT 0, \`scope\` varchar(255) NULL, \`filePath\` varchar(255) NULL, \`fileName\` varchar(255) NULL, \`fileSize\` int NULL, \`mimeType\` varchar(255) NULL, \`fileKey\` varchar(255) NULL, \`versionId\` varchar(255) NULL, \`storageProvider\` enum ('LOCAL', 'S3', 'WASABI', 'CLOUDINARY', 'DIGITALOCEAN') NULL, INDEX \`IDX_09a383d6f2858d49c064ca4cda\` (\`createdByUserId\`), INDEX \`IDX_0404416b5c1cd48ae87fe81834\` (\`updatedByUserId\`), INDEX \`IDX_c90b796bd033e54e3719213a0c\` (\`deletedByUserId\`), INDEX \`IDX_cb9a1e5640b8e07a9a63b51245\` (\`isActive\`), INDEX \`IDX_0ab83b39cc676ee2097714fb3b\` (\`isArchived\`), INDEX \`IDX_19d9135639e3b40ec0dca1c926\` (\`tenantId\`), INDEX \`IDX_7c6dc1cdd58690b7179d76184b\` (\`organizationId\`), INDEX \`IDX_55bee446d2c470e5d6b066a27a\` (\`versionId\`), INDEX \`IDX_d658bc853b354445cf2a0d6fb7\` (\`storageProvider\`), INDEX \`IDX_af8978fbf37560525c19ec7048\` (\`tenantId\`, \`organizationId\`), UNIQUE INDEX \`IDX_6fae6d0ddfd7177abcb4befd72\` (\`versionId\`, \`operatingSystem\`, \`architecture\`, \`tenantId\`, \`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE TABLE \`plugin_subscriptions\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`status\` enum ('active', 'trial', 'expired', 'cancelled', 'suspended', 'pending') NOT NULL DEFAULT 'pending', \`scope\` enum ('tenant', 'organization', 'user') NOT NULL DEFAULT 'tenant', \`startDate\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, \`endDate\` datetime NULL, \`trialEndDate\` datetime NULL, \`autoRenew\` tinyint NOT NULL DEFAULT 1, \`cancelledAt\` datetime NULL, \`cancellationReason\` text NULL, \`metadata\` json NULL, \`externalSubscriptionId\` varchar(255) NULL, \`pluginId\` varchar(255) NOT NULL, \`pluginTenantId\` varchar(255) NOT NULL, \`planId\` varchar(255) NULL, \`subscriberId\` varchar(255) NULL, \`parentId\` varchar(255) NULL, INDEX \`IDX_449b2294593f5787f40a60c8f2\` (\`createdByUserId\`), INDEX \`IDX_ddf7be116060ee20bc16128632\` (\`updatedByUserId\`), INDEX \`IDX_0be98c36cdbaa56f3880bc6baa\` (\`deletedByUserId\`), INDEX \`IDX_18743cb5933b78e2b8081589e4\` (\`isActive\`), INDEX \`IDX_b5163f874ce5bc6b63c8e8631a\` (\`isArchived\`), INDEX \`IDX_7f792e3c1891f728f9e5256142\` (\`tenantId\`), INDEX \`IDX_9bbac226cce476576134c5726e\` (\`organizationId\`), INDEX \`IDX_39a16aca760fc7a3cef39d5563\` (\`parentId\`), INDEX \`IDX_bbd6dc08c0c91724e5d26202fa\` (\`externalSubscriptionId\`), INDEX \`IDX_4e8a9f4ee7df8c39d0314063e7\` (\`planId\`), UNIQUE INDEX \`IDX_5e454c743af9400e3fe1814039\` (\`pluginId\`, \`subscriberId\`), INDEX \`IDX_fed0c61e1d142e1c448a45e5a0\` (\`status\`, \`endDate\`), INDEX \`IDX_af82eaa17a59e0cf0fac16d7fe\` (\`subscriberId\`, \`tenantId\`), INDEX \`IDX_eb3b9c7cfe7aa86bca589aee9e\` (\`pluginId\`, \`tenantId\`, \`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`plugin_versions\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`number\` varchar(255) NOT NULL, \`changelog\` varchar(255) NOT NULL, \`checksum\` varchar(255) NULL, \`signature\` varchar(255) NULL, \`releaseDate\` datetime NULL, \`downloadCount\` int NULL DEFAULT '0', \`pluginId\` varchar(255) NULL, INDEX \`IDX_485db4d1cc977cc3d499824d95\` (\`createdByUserId\`), INDEX \`IDX_0b36b5701e9890a395ded76cb5\` (\`updatedByUserId\`), INDEX \`IDX_e06094816e67e584dea754cc81\` (\`deletedByUserId\`), INDEX \`IDX_e6d49799b916946e5cd5399385\` (\`isActive\`), INDEX \`IDX_a16869769b9a219acb157bb2b3\` (\`isArchived\`), INDEX \`IDX_650ccf2e7394509f7ad8448e32\` (\`tenantId\`), INDEX \`IDX_f806bae81cd490404a1888ad5b\` (\`organizationId\`), INDEX \`IDX_ab6e29cd444226f80bf0c0c1db\` (\`releaseDate\`), INDEX \`IDX_8adf7a9181e968bcafc71236c8\` (\`pluginId\`), INDEX \`IDX_6fa0eda3add1fb070ba172a44e\` (\`downloadCount\`), INDEX \`IDX_e632aa70ea7b7e5c5fdbfba41b\` (\`number\`), INDEX \`IDX_e1e7cf1589d06ac02a12e41db0\` (\`pluginId\`, \`releaseDate\`), INDEX \`IDX_f5c8259c0d815486f31878864d\` (\`tenantId\`, \`organizationId\`), UNIQUE INDEX \`IDX_39d060301c8a36b51da6e4aec3\` (\`pluginId\`, \`organizationId\`, \`number\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE TABLE \`plugin_billings\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`amount\` decimal(10,2) NOT NULL, \`currency\` varchar(255) NOT NULL DEFAULT 'USD', \`billingDate\` datetime NOT NULL, \`dueDate\` datetime NOT NULL, \`status\` enum ('pending', 'processed', 'paid', 'overdue', 'failed', 'cancelled', 'refunded', 'partially_paid') NOT NULL DEFAULT 'pending', \`billingPeriod\` enum ('daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'one-time', 'usage_based') NOT NULL, \`billingPeriodStart\` datetime NOT NULL, \`billingPeriodEnd\` datetime NOT NULL, \`description\` text NULL, \`metadata\` json NULL, \`subscriptionId\` varchar(255) NOT NULL, INDEX \`IDX_74d0d8f22af90d92d3213d5e74\` (\`createdByUserId\`), INDEX \`IDX_2c926e12d6fba9b0d320c974f3\` (\`updatedByUserId\`), INDEX \`IDX_8fb8bf376857199096a73d90b8\` (\`deletedByUserId\`), INDEX \`IDX_e1d678ee40f241203ee5ad7d41\` (\`isActive\`), INDEX \`IDX_9e3344b0c59fcd4cd699cef727\` (\`isArchived\`), INDEX \`IDX_7b12d1d4e5d36737596155ce2d\` (\`tenantId\`), INDEX \`IDX_7d05232ee38835a76623154b7b\` (\`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`plugins\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`name\` varchar(255) NOT NULL, \`description\` varchar(255) NULL, \`type\` enum ('DESKTOP', 'WEB', 'MOBILE') NOT NULL DEFAULT 'DESKTOP', \`status\` enum ('ACTIVE', 'INACTIVE', 'DEPRECATED', 'ARCHIVED') NOT NULL DEFAULT 'ACTIVE', \`categoryId\` varchar(255) NULL, \`author\` varchar(255) NULL, \`license\` varchar(255) NULL, \`homepage\` varchar(255) NULL, \`repository\` varchar(255) NULL, \`uploadedById\` varchar(255) NULL, \`uploadedAt\` datetime NULL, \`requiresSubscription\` tinyint NOT NULL DEFAULT 0, \`isFeatured\` tinyint NOT NULL DEFAULT 0, \`isVerified\` tinyint NOT NULL DEFAULT 0, \`lastDownloadedAt\` datetime NULL, INDEX \`IDX_cc5b64091fbfdcdbd23d6da80e\` (\`createdByUserId\`), INDEX \`IDX_61357761fc6b140180b104dc8d\` (\`updatedByUserId\`), INDEX \`IDX_3210c015451d02d015a23eedad\` (\`deletedByUserId\`), INDEX \`IDX_d0a1444aa92229d7f1af237184\` (\`isActive\`), INDEX \`IDX_c61c7032e7b3afd352d82bc4b4\` (\`isArchived\`), INDEX \`IDX_35ee1cb5098e17e30ee5cbc705\` (\`type\`), INDEX \`IDX_100eef6409ee96d0673ee510e6\` (\`status\`), INDEX \`IDX_16d0aed6fcc311379f5c75bbd2\` (\`categoryId\`), INDEX \`IDX_4bf89f98c41969e23e3f9974d5\` (\`uploadedById\`), INDEX \`IDX_15ca158f27ab3296915b7d1b38\` (\`isFeatured\`), INDEX \`IDX_123f1b37f4826f6241446a8416\` (\`isVerified\`), INDEX \`IDX_c0fab3c6709a93bca88eb100a9\` (\`status\`, \`isFeatured\`), INDEX \`IDX_6c8d4a0f437cfae296ef43ce13\` (\`status\`, \`type\`), UNIQUE INDEX \`IDX_0479844f05c1132f8929cab1c8\` (\`name\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+		);
+		await queryRunner.query(
+			`CREATE TABLE \`plugin_subscription_plans\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`name\` varchar(255) NOT NULL, \`description\` text NULL, \`type\` enum ('free', 'trial', 'basic', 'premium', 'enterprise', 'custom') NOT NULL DEFAULT 'free', \`price\` decimal(10,2) NOT NULL DEFAULT '0.00', \`currency\` varchar(3) NOT NULL DEFAULT 'USD', \`billingPeriod\` enum ('daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'one-time') NOT NULL DEFAULT 'monthly', \`features\` text NOT NULL, \`limitations\` json NULL, \`isPopular\` tinyint NOT NULL DEFAULT 0, \`isRecommended\` tinyint NOT NULL DEFAULT 0, \`trialDays\` int NULL, \`setupFee\` decimal(10,2) NULL, \`discountPercentage\` decimal(5,2) NULL, \`metadata\` json NULL, \`sortOrder\` int NOT NULL DEFAULT '0', \`pluginId\` varchar(255) NOT NULL, \`createdById\` varchar(255) NULL, INDEX \`IDX_646aa1161ac9861061842e05c2\` (\`createdByUserId\`), INDEX \`IDX_b874f9ee9c04061b4892926388\` (\`updatedByUserId\`), INDEX \`IDX_6f401b811d14d8b06db0fbea30\` (\`deletedByUserId\`), INDEX \`IDX_a7bf8b446ca66e5824fb6ff91a\` (\`isActive\`), INDEX \`IDX_dec9037a57726ae5f54bc3c4a8\` (\`isArchived\`), INDEX \`IDX_234c8f3d694ae31b095bdf5a8a\` (\`price\`, \`billingPeriod\`), INDEX \`IDX_37c9e1c698331b9345280374fd\` (\`isActive\`, \`type\`), INDEX \`IDX_082f6cba880ecd144b28284376\` (\`pluginId\`, \`type\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+		);
+		await queryRunner.query(
+			`CREATE TABLE \`plugin_subscriptions\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`status\` enum ('active', 'cancelled', 'expired', 'trial', 'past_due', 'suspended', 'pending') NOT NULL DEFAULT 'pending', \`scope\` enum ('tenant', 'organization', 'user') NOT NULL DEFAULT 'tenant', \`startDate\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, \`endDate\` datetime NULL, \`trialEndDate\` datetime NULL, \`autoRenew\` tinyint NOT NULL DEFAULT 1, \`cancelledAt\` datetime NULL, \`cancellationReason\` text NULL, \`metadata\` json NULL, \`externalSubscriptionId\` varchar(255) NULL, \`pluginId\` varchar(255) NOT NULL, \`pluginTenantId\` varchar(255) NOT NULL, \`planId\` varchar(255) NULL, \`subscriberId\` varchar(255) NULL, \`parentId\` varchar(255) NULL, INDEX \`IDX_449b2294593f5787f40a60c8f2\` (\`createdByUserId\`), INDEX \`IDX_ddf7be116060ee20bc16128632\` (\`updatedByUserId\`), INDEX \`IDX_0be98c36cdbaa56f3880bc6baa\` (\`deletedByUserId\`), INDEX \`IDX_18743cb5933b78e2b8081589e4\` (\`isActive\`), INDEX \`IDX_b5163f874ce5bc6b63c8e8631a\` (\`isArchived\`), INDEX \`IDX_7f792e3c1891f728f9e5256142\` (\`tenantId\`), INDEX \`IDX_9bbac226cce476576134c5726e\` (\`organizationId\`), INDEX \`IDX_7afeffe18364cae48efd454e4d\` (\`scope\`, \`tenantId\`), INDEX \`IDX_39a16aca760fc7a3cef39d5563\` (\`parentId\`), INDEX \`IDX_bbd6dc08c0c91724e5d26202fa\` (\`externalSubscriptionId\`), INDEX \`IDX_4e8a9f4ee7df8c39d0314063e7\` (\`planId\`), UNIQUE INDEX \`IDX_18db53b62833e1bdb9949b5827\` (\`pluginId\`, \`subscriberId\`, \`tenantId\`), INDEX \`IDX_448990d16086477ee1c5f08968\` (\`status\`, \`tenantId\`), INDEX \`IDX_fed0c61e1d142e1c448a45e5a0\` (\`status\`, \`endDate\`), INDEX \`IDX_af82eaa17a59e0cf0fac16d7fe\` (\`subscriberId\`, \`tenantId\`), INDEX \`IDX_eb3b9c7cfe7aa86bca589aee9e\` (\`pluginId\`, \`tenantId\`, \`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+		);
+		await queryRunner.query(
+			`CREATE TABLE \`plugin_billings\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`amount\` decimal(10,2) NOT NULL, \`currency\` varchar(255) NOT NULL DEFAULT 'USD', \`billingDate\` datetime NOT NULL, \`dueDate\` datetime NOT NULL, \`status\` enum ('pending', 'processed', 'paid', 'overdue', 'failed', 'cancelled', 'refunded', 'partially_paid') NOT NULL DEFAULT 'pending', \`billingPeriod\` enum ('daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'one-time') NOT NULL, \`billingPeriodStart\` datetime NOT NULL, \`billingPeriodEnd\` datetime NOT NULL, \`description\` text NULL, \`metadata\` json NULL, \`subscriptionId\` varchar(255) NOT NULL, INDEX \`IDX_74d0d8f22af90d92d3213d5e74\` (\`createdByUserId\`), INDEX \`IDX_2c926e12d6fba9b0d320c974f3\` (\`updatedByUserId\`), INDEX \`IDX_8fb8bf376857199096a73d90b8\` (\`deletedByUserId\`), INDEX \`IDX_e1d678ee40f241203ee5ad7d41\` (\`isActive\`), INDEX \`IDX_9e3344b0c59fcd4cd699cef727\` (\`isArchived\`), INDEX \`IDX_7b12d1d4e5d36737596155ce2d\` (\`tenantId\`), INDEX \`IDX_7d05232ee38835a76623154b7b\` (\`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
 			`CREATE TABLE \`plugin_tenant_allowed_roles\` (\`pluginTenantsId\` varchar(36) NOT NULL, \`roleId\` varchar(36) NOT NULL, INDEX \`IDX_12c6c6c88720dfb785a0e066bb\` (\`pluginTenantsId\`), INDEX \`IDX_0c355caddd182f2e7099d35911\` (\`roleId\`), PRIMARY KEY (\`pluginTenantsId\`, \`roleId\`)) ENGINE=InnoDB`
@@ -3146,66 +3338,6 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`organization_project\` CHANGE \`status\` \`status\` varchar(255) NULL DEFAULT 'open'`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_842e5e5f94c4008a42d4b5f44a6\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_7e9b8b3eebb881753e07b73f6c6\` FOREIGN KEY (\`updatedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_a45f5c2aba22d4fa4eb8fa85af8\` FOREIGN KEY (\`deletedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_dff9e6c763c8c33b07f330e6a19\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_8aafffefdce2eb11079ec2aa755\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_547e4b71ae81ee772fa4ab79e60\` FOREIGN KEY (\`pluginId\`) REFERENCES \`plugins\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_acac58b213936ea488d0a8d1a30\` FOREIGN KEY (\`versionId\`) REFERENCES \`plugin_versions\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_32c3f7a738ec8b40d6375b2933c\` FOREIGN KEY (\`installedById\`) REFERENCES \`employee\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_485db4d1cc977cc3d499824d958\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_0b36b5701e9890a395ded76cb57\` FOREIGN KEY (\`updatedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_e06094816e67e584dea754cc81c\` FOREIGN KEY (\`deletedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_650ccf2e7394509f7ad8448e323\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_f806bae81cd490404a1888ad5b9\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_8adf7a9181e968bcafc71236c80\` FOREIGN KEY (\`pluginId\`) REFERENCES \`plugins\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_09a383d6f2858d49c064ca4cda9\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_0404416b5c1cd48ae87fe81834a\` FOREIGN KEY (\`updatedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_c90b796bd033e54e3719213a0ce\` FOREIGN KEY (\`deletedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_19d9135639e3b40ec0dca1c9261\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_7c6dc1cdd58690b7179d76184be\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_55bee446d2c470e5d6b066a27a2\` FOREIGN KEY (\`versionId\`) REFERENCES \`plugin_versions\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`plugin_tenants\` ADD CONSTRAINT \`FK_f209a8620f1677ed2c82c4cd2e4\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
@@ -3295,6 +3427,66 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`ALTER TABLE \`plugin_tags\` ADD CONSTRAINT \`FK_df3d0fc648c9e0544ca11df9d2e\` FOREIGN KEY (\`tagId\`) REFERENCES \`tag\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_842e5e5f94c4008a42d4b5f44a6\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_7e9b8b3eebb881753e07b73f6c6\` FOREIGN KEY (\`updatedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_a45f5c2aba22d4fa4eb8fa85af8\` FOREIGN KEY (\`deletedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_dff9e6c763c8c33b07f330e6a19\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_8aafffefdce2eb11079ec2aa755\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_547e4b71ae81ee772fa4ab79e60\` FOREIGN KEY (\`pluginId\`) REFERENCES \`plugins\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_acac58b213936ea488d0a8d1a30\` FOREIGN KEY (\`versionId\`) REFERENCES \`plugin_versions\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` ADD CONSTRAINT \`FK_32c3f7a738ec8b40d6375b2933c\` FOREIGN KEY (\`installedById\`) REFERENCES \`employee\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_09a383d6f2858d49c064ca4cda9\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_0404416b5c1cd48ae87fe81834a\` FOREIGN KEY (\`updatedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_c90b796bd033e54e3719213a0ce\` FOREIGN KEY (\`deletedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_19d9135639e3b40ec0dca1c9261\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_7c6dc1cdd58690b7179d76184be\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_sources\` ADD CONSTRAINT \`FK_55bee446d2c470e5d6b066a27a2\` FOREIGN KEY (\`versionId\`) REFERENCES \`plugin_versions\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_485db4d1cc977cc3d499824d958\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_0b36b5701e9890a395ded76cb57\` FOREIGN KEY (\`updatedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_e06094816e67e584dea754cc81c\` FOREIGN KEY (\`deletedByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_650ccf2e7394509f7ad8448e323\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_f806bae81cd490404a1888ad5b9\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_versions\` ADD CONSTRAINT \`FK_8adf7a9181e968bcafc71236c80\` FOREIGN KEY (\`pluginId\`) REFERENCES \`plugins\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
 			`ALTER TABLE \`plugins\` ADD CONSTRAINT \`FK_cc5b64091fbfdcdbd23d6da80ee\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
@@ -3376,19 +3568,19 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 			`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
-			`ALTER TABLE \`plugin_tenant_allowed_roles\` ADD CONSTRAINT \`FK_12c6c6c88720dfb785a0e066bb6\` FOREIGN KEY (\`pluginTenantsId\`) REFERENCES \`plugin_tenants\`(\`id\`) ON DELETE SET NULL ON UPDATE CASCADE`
+			`ALTER TABLE \`plugin_tenant_allowed_roles\` ADD CONSTRAINT \`FK_12c6c6c88720dfb785a0e066bb6\` FOREIGN KEY (\`pluginTenantsId\`) REFERENCES \`plugin_tenants\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`plugin_tenant_allowed_roles\` ADD CONSTRAINT \`FK_0c355caddd182f2e7099d359119\` FOREIGN KEY (\`roleId\`) REFERENCES \`role\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
-			`ALTER TABLE \`plugin_tenant_allowed_users\` ADD CONSTRAINT \`FK_358b3ee7d6cac92234c829e3844\` FOREIGN KEY (\`pluginTenantsId\`) REFERENCES \`plugin_tenants\`(\`id\`) ON DELETE SET NULL ON UPDATE CASCADE`
+			`ALTER TABLE \`plugin_tenant_allowed_users\` ADD CONSTRAINT \`FK_358b3ee7d6cac92234c829e3844\` FOREIGN KEY (\`pluginTenantsId\`) REFERENCES \`plugin_tenants\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`plugin_tenant_allowed_users\` ADD CONSTRAINT \`FK_99cab633947d311b29e5e3d9f16\` FOREIGN KEY (\`userId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
-			`ALTER TABLE \`plugin_tenant_denied_users\` ADD CONSTRAINT \`FK_27e45daf821a522cf6c7b794bce\` FOREIGN KEY (\`pluginTenantsId\`) REFERENCES \`plugin_tenants\`(\`id\`) ON DELETE SET NULL ON UPDATE CASCADE`
+			`ALTER TABLE \`plugin_tenant_denied_users\` ADD CONSTRAINT \`FK_27e45daf821a522cf6c7b794bce\` FOREIGN KEY (\`pluginTenantsId\`) REFERENCES \`plugin_tenants\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`plugin_tenant_denied_users\` ADD CONSTRAINT \`FK_17fc7d5ec9f51d9716c79b50ae8\` FOREIGN KEY (\`userId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
@@ -3502,6 +3694,42 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`ALTER TABLE \`plugins\` DROP FOREIGN KEY \`FK_3210c015451d02d015a23eedad4\``);
 		await queryRunner.query(`ALTER TABLE \`plugins\` DROP FOREIGN KEY \`FK_61357761fc6b140180b104dc8d5\``);
 		await queryRunner.query(`ALTER TABLE \`plugins\` DROP FOREIGN KEY \`FK_cc5b64091fbfdcdbd23d6da80ee\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_8adf7a9181e968bcafc71236c80\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_f806bae81cd490404a1888ad5b9\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_650ccf2e7394509f7ad8448e323\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_e06094816e67e584dea754cc81c\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_0b36b5701e9890a395ded76cb57\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_485db4d1cc977cc3d499824d958\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_55bee446d2c470e5d6b066a27a2\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_7c6dc1cdd58690b7179d76184be\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_19d9135639e3b40ec0dca1c9261\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_c90b796bd033e54e3719213a0ce\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_0404416b5c1cd48ae87fe81834a\``);
+		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_09a383d6f2858d49c064ca4cda9\``);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_32c3f7a738ec8b40d6375b2933c\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_acac58b213936ea488d0a8d1a30\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_547e4b71ae81ee772fa4ab79e60\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_8aafffefdce2eb11079ec2aa755\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_dff9e6c763c8c33b07f330e6a19\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_a45f5c2aba22d4fa4eb8fa85af8\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_7e9b8b3eebb881753e07b73f6c6\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_842e5e5f94c4008a42d4b5f44a6\``
+		);
 		await queryRunner.query(`ALTER TABLE \`plugin_tags\` DROP FOREIGN KEY \`FK_df3d0fc648c9e0544ca11df9d2e\``);
 		await queryRunner.query(`ALTER TABLE \`plugin_tags\` DROP FOREIGN KEY \`FK_05292c8750270ff028ab2fec140\``);
 		await queryRunner.query(`ALTER TABLE \`plugin_tags\` DROP FOREIGN KEY \`FK_8bcd0243b780191a391b348f582\``);
@@ -3543,42 +3771,6 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`ALTER TABLE \`plugin_tenants\` DROP FOREIGN KEY \`FK_06f10073cd6e84a19b6f604ddd1\``);
 		await queryRunner.query(`ALTER TABLE \`plugin_tenants\` DROP FOREIGN KEY \`FK_0b5cc71673410a449491fb3db93\``);
 		await queryRunner.query(`ALTER TABLE \`plugin_tenants\` DROP FOREIGN KEY \`FK_f209a8620f1677ed2c82c4cd2e4\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_55bee446d2c470e5d6b066a27a2\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_7c6dc1cdd58690b7179d76184be\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_19d9135639e3b40ec0dca1c9261\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_c90b796bd033e54e3719213a0ce\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_0404416b5c1cd48ae87fe81834a\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_sources\` DROP FOREIGN KEY \`FK_09a383d6f2858d49c064ca4cda9\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_8adf7a9181e968bcafc71236c80\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_f806bae81cd490404a1888ad5b9\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_650ccf2e7394509f7ad8448e323\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_e06094816e67e584dea754cc81c\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_0b36b5701e9890a395ded76cb57\``);
-		await queryRunner.query(`ALTER TABLE \`plugin_versions\` DROP FOREIGN KEY \`FK_485db4d1cc977cc3d499824d958\``);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_32c3f7a738ec8b40d6375b2933c\``
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_acac58b213936ea488d0a8d1a30\``
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_547e4b71ae81ee772fa4ab79e60\``
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_8aafffefdce2eb11079ec2aa755\``
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_dff9e6c763c8c33b07f330e6a19\``
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_a45f5c2aba22d4fa4eb8fa85af8\``
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_7e9b8b3eebb881753e07b73f6c6\``
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`plugin_installations\` DROP FOREIGN KEY \`FK_842e5e5f94c4008a42d4b5f44a6\``
-		);
 		await queryRunner.query(`ALTER TABLE \`organization_project\` CHANGE \`status\` \`status\` varchar(255) NULL`);
 		await queryRunner.query(`DROP INDEX \`IDX_9c7a67d94dc7edfc580657a52d\` ON \`plugin_subscriptions_closure\``);
 		await queryRunner.query(`DROP INDEX \`IDX_31cca01b2ea11308a44475563b\` ON \`plugin_subscriptions_closure\``);
@@ -3606,10 +3798,12 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX \`IDX_eb3b9c7cfe7aa86bca589aee9e\` ON \`plugin_subscriptions\``);
 		await queryRunner.query(`DROP INDEX \`IDX_af82eaa17a59e0cf0fac16d7fe\` ON \`plugin_subscriptions\``);
 		await queryRunner.query(`DROP INDEX \`IDX_fed0c61e1d142e1c448a45e5a0\` ON \`plugin_subscriptions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_5e454c743af9400e3fe1814039\` ON \`plugin_subscriptions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_448990d16086477ee1c5f08968\` ON \`plugin_subscriptions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_18db53b62833e1bdb9949b5827\` ON \`plugin_subscriptions\``);
 		await queryRunner.query(`DROP INDEX \`IDX_4e8a9f4ee7df8c39d0314063e7\` ON \`plugin_subscriptions\``);
 		await queryRunner.query(`DROP INDEX \`IDX_bbd6dc08c0c91724e5d26202fa\` ON \`plugin_subscriptions\``);
 		await queryRunner.query(`DROP INDEX \`IDX_39a16aca760fc7a3cef39d5563\` ON \`plugin_subscriptions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_7afeffe18364cae48efd454e4d\` ON \`plugin_subscriptions\``);
 		await queryRunner.query(`DROP INDEX \`IDX_9bbac226cce476576134c5726e\` ON \`plugin_subscriptions\``);
 		await queryRunner.query(`DROP INDEX \`IDX_7f792e3c1891f728f9e5256142\` ON \`plugin_subscriptions\``);
 		await queryRunner.query(`DROP INDEX \`IDX_b5163f874ce5bc6b63c8e8631a\` ON \`plugin_subscriptions\``);
@@ -3627,14 +3821,65 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX \`IDX_b874f9ee9c04061b4892926388\` ON \`plugin_subscription_plans\``);
 		await queryRunner.query(`DROP INDEX \`IDX_646aa1161ac9861061842e05c2\` ON \`plugin_subscription_plans\``);
 		await queryRunner.query(`DROP TABLE \`plugin_subscription_plans\``);
-		await queryRunner.query(`DROP INDEX \`plugin_name_unique\` ON \`plugins\``);
+		await queryRunner.query(`DROP INDEX \`IDX_0479844f05c1132f8929cab1c8\` ON \`plugins\``);
+		await queryRunner.query(`DROP INDEX \`IDX_6c8d4a0f437cfae296ef43ce13\` ON \`plugins\``);
+		await queryRunner.query(`DROP INDEX \`IDX_c0fab3c6709a93bca88eb100a9\` ON \`plugins\``);
+		await queryRunner.query(`DROP INDEX \`IDX_123f1b37f4826f6241446a8416\` ON \`plugins\``);
+		await queryRunner.query(`DROP INDEX \`IDX_15ca158f27ab3296915b7d1b38\` ON \`plugins\``);
 		await queryRunner.query(`DROP INDEX \`IDX_4bf89f98c41969e23e3f9974d5\` ON \`plugins\``);
+		await queryRunner.query(`DROP INDEX \`IDX_16d0aed6fcc311379f5c75bbd2\` ON \`plugins\``);
+		await queryRunner.query(`DROP INDEX \`IDX_100eef6409ee96d0673ee510e6\` ON \`plugins\``);
+		await queryRunner.query(`DROP INDEX \`IDX_35ee1cb5098e17e30ee5cbc705\` ON \`plugins\``);
 		await queryRunner.query(`DROP INDEX \`IDX_c61c7032e7b3afd352d82bc4b4\` ON \`plugins\``);
 		await queryRunner.query(`DROP INDEX \`IDX_d0a1444aa92229d7f1af237184\` ON \`plugins\``);
 		await queryRunner.query(`DROP INDEX \`IDX_3210c015451d02d015a23eedad\` ON \`plugins\``);
 		await queryRunner.query(`DROP INDEX \`IDX_61357761fc6b140180b104dc8d\` ON \`plugins\``);
 		await queryRunner.query(`DROP INDEX \`IDX_cc5b64091fbfdcdbd23d6da80e\` ON \`plugins\``);
 		await queryRunner.query(`DROP TABLE \`plugins\``);
+		await queryRunner.query(`DROP INDEX \`IDX_39d060301c8a36b51da6e4aec3\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_f5c8259c0d815486f31878864d\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_e1e7cf1589d06ac02a12e41db0\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_e632aa70ea7b7e5c5fdbfba41b\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_6fa0eda3add1fb070ba172a44e\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_8adf7a9181e968bcafc71236c8\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_ab6e29cd444226f80bf0c0c1db\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_f806bae81cd490404a1888ad5b\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_650ccf2e7394509f7ad8448e32\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_a16869769b9a219acb157bb2b3\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_e6d49799b916946e5cd5399385\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_e06094816e67e584dea754cc81\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_0b36b5701e9890a395ded76cb5\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_485db4d1cc977cc3d499824d95\` ON \`plugin_versions\``);
+		await queryRunner.query(`DROP TABLE \`plugin_versions\``);
+		await queryRunner.query(`DROP INDEX \`IDX_6fae6d0ddfd7177abcb4befd72\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_af8978fbf37560525c19ec7048\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_d658bc853b354445cf2a0d6fb7\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_55bee446d2c470e5d6b066a27a\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_7c6dc1cdd58690b7179d76184b\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_19d9135639e3b40ec0dca1c926\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_0ab83b39cc676ee2097714fb3b\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_cb9a1e5640b8e07a9a63b51245\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_c90b796bd033e54e3719213a0c\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_0404416b5c1cd48ae87fe81834\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_09a383d6f2858d49c064ca4cda\` ON \`plugin_sources\``);
+		await queryRunner.query(`DROP TABLE \`plugin_sources\``);
+		await queryRunner.query(`DROP INDEX \`IDX_1569d8ca526d958d82483e15c7\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_173e0668b17afd3696abf3c518\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_3c3ce338e7716d853220d8b176\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_5e6b80341a4ed75ae7c4af6897\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_c92ea21dfcfd889730e2214c8f\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_28624735b4e3ace75883521a57\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_32c3f7a738ec8b40d6375b2933\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_acac58b213936ea488d0a8d1a3\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_547e4b71ae81ee772fa4ab79e6\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_8aafffefdce2eb11079ec2aa75\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_dff9e6c763c8c33b07f330e6a1\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_3e63eed07bcc0e3e36d9183cca\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_d742ed346264f4c9d9225265d7\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_a45f5c2aba22d4fa4eb8fa85af\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_7e9b8b3eebb881753e07b73f6c\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP INDEX \`IDX_842e5e5f94c4008a42d4b5f44a\` ON \`plugin_installations\``);
+		await queryRunner.query(`DROP TABLE \`plugin_installations\``);
 		await queryRunner.query(`DROP INDEX \`IDX_676e7c749905331c36b1707ba8\` ON \`plugin_tags\``);
 		await queryRunner.query(`DROP INDEX \`IDX_cddb5e04a93a957dc4d56522b7\` ON \`plugin_tags\``);
 		await queryRunner.query(`DROP INDEX \`IDX_17c923b300710a13f6dfade59b\` ON \`plugin_tags\``);
@@ -3689,43 +3934,6 @@ export class CreatePluginMarketplaceTables1765816256172 implements MigrationInte
 		await queryRunner.query(`DROP INDEX \`IDX_0b5cc71673410a449491fb3db9\` ON \`plugin_tenants\``);
 		await queryRunner.query(`DROP INDEX \`IDX_f209a8620f1677ed2c82c4cd2e\` ON \`plugin_tenants\``);
 		await queryRunner.query(`DROP TABLE \`plugin_tenants\``);
-		await queryRunner.query(`DROP INDEX \`IDX_d658bc853b354445cf2a0d6fb7\` ON \`plugin_sources\``);
-		await queryRunner.query(`DROP INDEX \`IDX_55bee446d2c470e5d6b066a27a\` ON \`plugin_sources\``);
-		await queryRunner.query(`DROP INDEX \`IDX_7c6dc1cdd58690b7179d76184b\` ON \`plugin_sources\``);
-		await queryRunner.query(`DROP INDEX \`IDX_19d9135639e3b40ec0dca1c926\` ON \`plugin_sources\``);
-		await queryRunner.query(`DROP INDEX \`IDX_0ab83b39cc676ee2097714fb3b\` ON \`plugin_sources\``);
-		await queryRunner.query(`DROP INDEX \`IDX_cb9a1e5640b8e07a9a63b51245\` ON \`plugin_sources\``);
-		await queryRunner.query(`DROP INDEX \`IDX_c90b796bd033e54e3719213a0c\` ON \`plugin_sources\``);
-		await queryRunner.query(`DROP INDEX \`IDX_0404416b5c1cd48ae87fe81834\` ON \`plugin_sources\``);
-		await queryRunner.query(`DROP INDEX \`IDX_09a383d6f2858d49c064ca4cda\` ON \`plugin_sources\``);
-		await queryRunner.query(`DROP TABLE \`plugin_sources\``);
-		await queryRunner.query(`DROP INDEX \`version_number_unique\` ON \`plugin_versions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_8adf7a9181e968bcafc71236c8\` ON \`plugin_versions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_ab6e29cd444226f80bf0c0c1db\` ON \`plugin_versions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_f806bae81cd490404a1888ad5b\` ON \`plugin_versions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_650ccf2e7394509f7ad8448e32\` ON \`plugin_versions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_a16869769b9a219acb157bb2b3\` ON \`plugin_versions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_e6d49799b916946e5cd5399385\` ON \`plugin_versions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_e06094816e67e584dea754cc81\` ON \`plugin_versions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_0b36b5701e9890a395ded76cb5\` ON \`plugin_versions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_485db4d1cc977cc3d499824d95\` ON \`plugin_versions\``);
-		await queryRunner.query(`DROP TABLE \`plugin_versions\``);
-		await queryRunner.query(`DROP INDEX \`IDX_6b7ef18c0cb54d547e40f30fb8\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_3c3ce338e7716d853220d8b176\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_5e6b80341a4ed75ae7c4af6897\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_c92ea21dfcfd889730e2214c8f\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_28624735b4e3ace75883521a57\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_32c3f7a738ec8b40d6375b2933\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_acac58b213936ea488d0a8d1a3\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_547e4b71ae81ee772fa4ab79e6\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_8aafffefdce2eb11079ec2aa75\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_dff9e6c763c8c33b07f330e6a1\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_3e63eed07bcc0e3e36d9183cca\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_d742ed346264f4c9d9225265d7\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_a45f5c2aba22d4fa4eb8fa85af\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_7e9b8b3eebb881753e07b73f6c\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP INDEX \`IDX_842e5e5f94c4008a42d4b5f44a\` ON \`plugin_installations\``);
-		await queryRunner.query(`DROP TABLE \`plugin_installations\``);
 		await queryRunner.query(
 			`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
 		);
