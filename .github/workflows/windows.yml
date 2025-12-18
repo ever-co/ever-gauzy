@@ -106,28 +106,23 @@ jobs:
           Write-Output "PATH environment variable is:"
           Write-Output $path
 
-      - name: Get Yarn Path
-        id: yarn-path
+      - name: Add Yarn/Node to GITHUB_PATH
         shell: powershell
         run: |
+          # Get yarn and node directories and add them to GITHUB_PATH
+          # This ensures they're available in ALL subsequent steps and subprocesses
           $yarnPath = (Get-Command yarn).Source | Split-Path -Parent
           $nodePath = (Get-Command node).Source | Split-Path -Parent
-          "YARN_DIR=$yarnPath" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "NODE_DIR=$nodePath" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo $yarnPath >> $env:GITHUB_PATH
+          if ($nodePath -ne $yarnPath) {
+            echo $nodePath >> $env:GITHUB_PATH
+          }
+          Write-Host "Added to GITHUB_PATH: $yarnPath"
+          Write-Host "Node path: $nodePath"
 
       - name: Build Desktop Timer App
         shell: cmd
         run: |
-          call "%ProgramFiles%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat" -arch=x64
-          set GYP_MSVS_VERSION=2022
-          set npm_config_msvs_version=2022
-          set npm_config_target_arch=x64
-          set npm_config_arch=x64
-          REM Ensure yarn and node are in PATH for Nx subprocesses
-          set "PATH=%YARN_DIR%;%NODE_DIR%;%PATH%"
-          where cl.exe
-          where msbuild.exe
-          where yarn
           yarn build:desktop-timer:windows:release:gh
         env:
           USE_HARD_LINKS: false
