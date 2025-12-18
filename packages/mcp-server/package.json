@@ -62,6 +62,7 @@
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/express-session": "^1.18.2",
 		"cross-env": "^7.0.3",
+		"ts-node": "^10.9.2",
 		"typescript": "^5.8.3"
 	},
 	"keywords": [

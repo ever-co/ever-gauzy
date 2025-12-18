@@ -212,6 +212,7 @@
 		"supertest": "^6.0.1",
 		"ts-jest": "29.1.1",
 		"ts-node": "^10.9.2",
+		"cross-env": "^7.0.3",
 		"tslint-config-prettier": "^1.18.0",
 		"typescript": "^5.8.3"
 	},

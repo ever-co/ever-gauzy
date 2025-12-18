@@ -68,6 +68,7 @@
 		"@nestjs/cli": "^11.0.7",
 		"@nestjs/schematics": "^11.0.5",
 		"@nestjs/testing": "^11.0.0",
+		"cross-env": "^7.0.3",
 		"nodemon": "^3.1.0",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.8.3"

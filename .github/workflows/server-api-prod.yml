@@ -26,7 +26,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: buildjet/setup-node@v4
         with:
-          node-version: 20.18.1
+          node-version: 22.21.1
           cache: "yarn"
 
       - name: Change permissions
@@ -39,10 +39,10 @@ jobs:
         run: python3 -m pip install packaging setuptools
 
       - name: Install latest version of NPM
-        run: "sudo npm install -g npm@9"
+        run: "sudo npm install -g npm@10.9.4"
 
-      - name: Install node-gyp package
-        run: "sudo npm install --quiet -g node-gyp@10.2.0"
+      - name: Install globally node-gyp, ts-node and nx packages
+        run: "sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0"
 
       - name: Install Yarn dependencies
         run: "yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts"
@@ -93,17 +93,17 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 20.18.1
+          node-version: 22.21.1
           cache: "yarn"
 
       - name: Fix node-gyp and Python
         run: python3 -m pip install --break-system-packages packaging setuptools
 
       - name: Install latest version of NPM
-        run: "sudo npm install -g npm@9"
+        run: "sudo npm install -g npm@10.9.4"
 
-      - name: Install node-gyp package
-        run: "sudo npm install --quiet -g node-gyp@10.2.0"
+      - name: Install globally node-gyp, ts-node and nx packages
+        run: "sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0"
 
       - name: Install Yarn dependencies
         run: "yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts"
@@ -157,17 +157,49 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 20.18.1
+          node-version: 22.21.1
           cache: "yarn"
+
+      - name: Install Visual Studio 2022 Build Tools (VCTools)
+        shell: powershell
+        run: |
+          choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive --norestart"
+
+      - name: Configure node-gyp to use VS 2022
+        shell: powershell
+        run: |
+          "GYP_MSVS_VERSION=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "npm_config_msvs_version=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Fix node-gyp and Python
         run: python3 -m pip install packaging setuptools
 
-      - name: Install latest version of NPM
-        run: "npm install -g npm@9"
+      - name: Setup MSVC (VS 2022 dev env)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
-      - name: Install node-gyp package
-        run: "npm install --quiet -g node-gyp@10.2.0"
+      - name: Install latest version of NPM
+        run: "npm install -g npm@10.9.4"
+
+      - name: Install globally node-gyp, ts-node and nx packages
+        run: "npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0"
+
+      - name: Configure npm python for node-gyp
+        shell: powershell
+        run: |
+          $py = (Get-Command python.exe).Source
+          Write-Host "python is: $py"
+          "npm_config_python=$py" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Show tool versions
+        shell: powershell
+        run: |
+          node -v
+          npm -v
+          python --version
+          python -c "import sys; print(sys.executable)"
 
       - name: Install Yarn dependencies
         run: "yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts"
@@ -188,8 +220,30 @@ jobs:
           DESKTOP_API_SERVER_APP_DESCRIPTION: "Ever Gauzy API Server"
           DESKTOP_API_SERVER_APP_ID: "com.ever.gauzyapiserver"
 
-      - name: Build Server
+      - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
+        shell: powershell
         run: |
+          $yarnPath = (Get-Command yarn).Source | Split-Path -Parent
+          $nodePath = (Get-Command node).Source | Split-Path -Parent
+          $npmGlobalBin = npm config get prefix
+          $localBin = Join-Path $PWD "node_modules\.bin"
+          echo $localBin >> $env:GITHUB_PATH
+          echo $npmGlobalBin >> $env:GITHUB_PATH
+          echo $yarnPath >> $env:GITHUB_PATH
+          if ($nodePath -ne $yarnPath) { echo $nodePath >> $env:GITHUB_PATH }
+          Write-Host "Added to GITHUB_PATH: $localBin, $npmGlobalBin, $yarnPath, $nodePath"
+
+      - name: Build Server
+        shell: powershell
+        run: |
+          Write-Host "=== Command locations ==="
+          Write-Host "Node: $((Get-Command node -ErrorAction SilentlyContinue).Source)"
+          Write-Host "Yarn: $((Get-Command yarn -ErrorAction SilentlyContinue).Source)"
+          Write-Host "ts-node: $((Get-Command ts-node -ErrorAction SilentlyContinue).Source)"
+          Write-Host "cross-env: $((Get-Command cross-env -ErrorAction SilentlyContinue).Source)"
+          Write-Host "nx: $((Get-Command nx -ErrorAction SilentlyContinue).Source)"
+          Write-Host ""
+          Write-Host "=== Starting build ==="
           yarn build:gauzy-api-server:windows:release:gh
         env:
           USE_HARD_LINKS: false
