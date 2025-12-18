@@ -507,6 +507,7 @@ nb-button-group {
     height: calc(100vh - 24.125rem);
     padding: 1rem;
     background-color: var(--gauzy-card-2);
+    gap: 1rem;
 
     &.unavailable {
       height: auto;

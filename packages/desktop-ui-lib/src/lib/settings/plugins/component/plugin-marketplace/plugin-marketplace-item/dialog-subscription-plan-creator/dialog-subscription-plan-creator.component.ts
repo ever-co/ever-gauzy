@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { IPlugin, IPluginPlanCreateInput } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { filter, pairwise, take } from 'rxjs';
+import { Actions } from '@ngneat/effects-ng';
+import { filter, Observable, pairwise, take } from 'rxjs';
 import { PluginPlanActions } from '../../+state/actions/plugin-plan.action';
 import { PluginPlanQuery } from '../../+state/queries/plugin-plan.query';
 
@@ -16,10 +17,11 @@ export class DialogSubscriptionPlanCreatorComponent {
 	public readonly plugin!: IPlugin;
 	public readonly pluginId!: string;
 	public plans: IPluginPlanCreateInput[] = [];
-	public isPlanValid = true;
+	public isPlanValid = false;
 
 	private readonly dialogRef = inject(NbDialogRef<DialogSubscriptionPlanCreatorComponent>);
 	private readonly planQuery = inject(PluginPlanQuery);
+	private readonly actions = inject(Actions);
 
 	public onClose(): void {
 		this.dialogRef.close();
@@ -30,15 +32,15 @@ export class DialogSubscriptionPlanCreatorComponent {
 	}
 
 	public onValidationChange(isValid: boolean): void {
-		this.isPlanValid = isValid;
+		this.isPlanValid = isValid && this.plans.length > 0;
 	}
 
-	public get creating$() {
+	public get creating$(): Observable<boolean> {
 		return this.planQuery.creating$;
 	}
 
 	public onSaved(): void {
-		PluginPlanActions.bulkCreatePlans(this.plans);
+		this.actions.dispatch(PluginPlanActions.bulkCreatePlans(this.plans));
 		this.creating$
 			.pipe(
 				pairwise(),

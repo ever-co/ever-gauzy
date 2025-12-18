@@ -191,7 +191,7 @@
 			</button>
 
 			<!-- User assignment button (only for plugins with plans) -->
-			@if(plugin.hasPlan && subscription.scope !== 'user') {
+			@if(plugin.hasPlan && subscription?.scope !== 'user') {
 			<button
 				nbButton
 				ghost

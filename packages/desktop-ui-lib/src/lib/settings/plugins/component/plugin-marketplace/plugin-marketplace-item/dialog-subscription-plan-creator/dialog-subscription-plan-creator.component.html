@@ -35,7 +35,7 @@
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
 			<button nbButton status="primary" size="medium" (click)="onSaved()" [disabled]="!isPlanValid || creating">
-				<nb-icon *gauzySpinner="creating" icon="save-outline"></nb-icon>
+				<nb-icon *gauzySpinnerButton="creating" icon="save-outline"></nb-icon>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</div>
