@@ -52,6 +52,9 @@ jobs:
       - name: Install node-gyp package
         run: 'npm install --quiet -g node-gyp@10.2.0'
 
+      - name: Install globally ts-node package
+        run: 'npm install --quiet -g ts-node@10.9.2'
+
       - name: Configure npm python for node-gyp
         shell: powershell
         run: |
