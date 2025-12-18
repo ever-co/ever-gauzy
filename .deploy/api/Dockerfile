@@ -126,7 +126,7 @@ RUN apk --update add bash && npm i -g npm@9 \
 # Verify installed versions
 RUN node --version && npm --version && python3 --version
 
-RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force
+RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force && npm install --quiet ts-node@10.9.2 -g
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
@@ -192,7 +192,7 @@ RUN apk --update add bash && npm i -g npm@9 \
 # Verify installed versions
 RUN node --version && npm --version && python3 --version
 
-RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force
+RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force && npm install --quiet ts-node@10.9.2 -g
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node

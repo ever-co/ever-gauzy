@@ -2,7 +2,7 @@ name: Desktop Build Windows Fixing
 
 on:
   push:
-    branches: [develop, temp]
+    branches: [win]
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -23,7 +23,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 20.18.1
+          node-version: 22.21.1
           cache: 'yarn'
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
@@ -47,17 +47,26 @@ jobs:
           arch: x64
 
       - name: Install latest version of NPM
-        run: 'npm install -g npm@9'
+        run: 'npm install -g npm@10.9.4'
 
-      - name: Install node-gyp package
-        run: 'npm install --quiet -g node-gyp@10.2.0'
+      - name: Install globally node-gyp, ts-node and nx packages
+        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
 
       - name: Configure npm python for node-gyp
         shell: powershell
         run: |
           $py = (Get-Command python.exe).Source
           Write-Host "python is: $py"
-          npm config set python "$py"
+          "npm_config_python=$py" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Show tool versions
+        shell: powershell
+        run: |
+          node -v
+          npm -v
+          python --version
+          python -c "import sys; print(sys.executable)"
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -97,16 +106,57 @@ jobs:
           Write-Output "PATH environment variable is:"
           Write-Output $path
 
-      - name: Build Desktop Timer App
-        shell: cmd
+      - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
+        shell: powershell
         run: |
-          call "%ProgramFiles%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat" -arch=x64
-          set GYP_MSVS_VERSION=2022
-          set npm_config_msvs_version=2022
-          set npm_config_target_arch=x64
-          set npm_config_arch=x64
-          where cl.exe
-          where msbuild.exe
+          # Get yarn and node directories
+          $yarnPath = (Get-Command yarn).Source | Split-Path -Parent
+          $nodePath = (Get-Command node).Source | Split-Path -Parent
+
+          # Get npm global prefix (where global packages are installed)
+          $npmGlobalBin = npm config get prefix
+
+          # Get the workspace's node_modules/.bin for local binaries (cross-env, ts-node, etc.)
+          $localBin = Join-Path $PWD "node_modules\.bin"
+
+          # Add all paths to GITHUB_PATH for subprocess inheritance
+          echo $localBin >> $env:GITHUB_PATH
+          echo $npmGlobalBin >> $env:GITHUB_PATH
+          echo $yarnPath >> $env:GITHUB_PATH
+          if ($nodePath -ne $yarnPath) {
+            echo $nodePath >> $env:GITHUB_PATH
+          }
+
+          Write-Host "Added to GITHUB_PATH:"
+          Write-Host "  Local bin: $localBin"
+          Write-Host "  npm global: $npmGlobalBin"
+          Write-Host "  Yarn path: $yarnPath"
+          Write-Host "  Node path: $nodePath"
+
+          # Verify the binaries exist
+          Write-Host ""
+          Write-Host "Checking local binaries:"
+          if (Test-Path "$localBin\cross-env.cmd") { Write-Host "  cross-env: found" } else { Write-Host "  cross-env: NOT FOUND" }
+          if (Test-Path "$localBin\ts-node.cmd") { Write-Host "  ts-node: found" } else { Write-Host "  ts-node: NOT FOUND" }
+          if (Test-Path "$localBin\nx.cmd") { Write-Host "  nx: found" } else { Write-Host "  nx: NOT FOUND" }
+
+      - name: Build Desktop Timer App
+        shell: powershell
+        run: |
+          # Print PATH for debugging
+          Write-Host "=== Current PATH ==="
+          $env:PATH -split ';' | ForEach-Object { Write-Host "  $_" }
+          Write-Host ""
+          Write-Host "=== Command locations ==="
+          Write-Host "Node: $((Get-Command node -ErrorAction SilentlyContinue).Source)"
+          Write-Host "Yarn: $((Get-Command yarn -ErrorAction SilentlyContinue).Source)"
+          Write-Host "npx: $((Get-Command npx -ErrorAction SilentlyContinue).Source)"
+          Write-Host "ts-node: $((Get-Command ts-node -ErrorAction SilentlyContinue).Source)"
+          Write-Host "cross-env: $((Get-Command cross-env -ErrorAction SilentlyContinue).Source)"
+          Write-Host "nx: $((Get-Command nx -ErrorAction SilentlyContinue).Source)"
+          Write-Host ""
+          Write-Host "=== Starting build ==="
+          # Run the build
           yarn build:desktop-timer:windows:release:gh
         env:
           USE_HARD_LINKS: false

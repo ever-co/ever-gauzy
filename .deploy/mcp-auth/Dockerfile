@@ -46,6 +46,7 @@ RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc
     && npm install --quiet node-gyp@10.2.0 -g \
     && npm install yarn -g --force \
     && npm install --quiet ts-node@10.9.2 -g
+
 RUN mkdir /srv/gauzy-mcp-auth && chown -R node:node /srv/gauzy-mcp-auth
 
 USER node:node
@@ -105,6 +106,7 @@ FROM node:20.18.1-alpine3.19 AS proddependencies
 
 RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
     && npm install --quiet node-gyp@10.2.0 -g \
+	&& npm install yarn -g --force \
     && npm install --quiet ts-node@10.9.2 -g
 
 USER node:node
