@@ -57,7 +57,16 @@ jobs:
         run: |
           $py = (Get-Command python.exe).Source
           Write-Host "python is: $py"
-          npm config set python "$py"
+          "npm_config_python=$py" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Show tool versions
+        shell: powershell
+        run: |
+          node -v
+          npm -v
+          python --version
+          python -c "import sys; print(sys.executable)"
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
