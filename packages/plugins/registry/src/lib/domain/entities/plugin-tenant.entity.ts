@@ -42,7 +42,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	@IsUUID()
 	@RelationId((it: PluginTenant) => it.plugin)
 	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
+	@MultiORMColumn({ relationId: true, type: 'uuid' })
 	pluginId: ID;
 
 	@ApiProperty({ type: Boolean, description: 'Whether the plugin is enabled for this tenant' })
@@ -221,7 +221,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 	@IsUUID()
 	@RelationId((it: PluginTenant) => it.approvedBy)
 	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
+	@MultiORMColumn({ relationId: true, nullable: true, type: 'uuid' })
 	approvedById?: ID;
 
 	/*
@@ -280,7 +280,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		description: 'Roles explicitly allowed to access this plugin'
 	})
 	@MultiORMManyToMany(() => Role, {
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'plugin_tenant_allowed_roles',
 		joinColumn: 'pluginTenantId',
@@ -295,7 +295,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		description: 'Users explicitly allowed to access this plugin'
 	})
 	@MultiORMManyToMany(() => User, {
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'plugin_tenant_allowed_users',
 		joinColumn: 'pluginTenantId',
@@ -310,7 +310,7 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		description: 'Users explicitly denied access to this plugin'
 	})
 	@MultiORMManyToMany(() => User, {
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'plugin_tenant_denied_users',
 		joinColumn: 'pluginTenantId',

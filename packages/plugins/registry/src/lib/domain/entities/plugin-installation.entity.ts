@@ -1,3 +1,4 @@
+import { isPostgres } from '@gauzy/config';
 import { ID, IEmployee, PluginInstallationStatus } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -27,7 +28,7 @@ export class PluginInstallation extends TenantOrganizationBaseEntity implements 
 
 	@RelationId((installation: PluginInstallation) => installation.plugin)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
+	@MultiORMColumn({ nullable: true, relationId: true, ...(!isPostgres() && { length: 36 }) })
 	pluginId?: ID;
 
 	@ApiProperty({ type: () => PluginVersion, description: 'Installed version of the plugin' })
@@ -37,7 +38,7 @@ export class PluginInstallation extends TenantOrganizationBaseEntity implements 
 
 	@RelationId((installation: PluginInstallation) => installation.version)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
+	@MultiORMColumn({ nullable: true, relationId: true, ...(!isPostgres() && { length: 36 }) })
 	versionId?: ID;
 
 	@ApiProperty({ type: () => Employee, description: 'Employee who installed the plugin', required: false })
@@ -47,7 +48,7 @@ export class PluginInstallation extends TenantOrganizationBaseEntity implements 
 
 	@RelationId((installation: PluginInstallation) => installation.installedBy)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
+	@MultiORMColumn({ nullable: true, relationId: true, ...(!isPostgres() && { length: 36 }) })
 	installedById?: ID;
 
 	@ApiPropertyOptional({ type: () => String, description: 'Installed date' })

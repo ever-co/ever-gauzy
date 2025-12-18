@@ -118,7 +118,7 @@ export class PluginTag extends TenantOrganizationBaseEntity implements IPluginTa
 	})
 	@IsOptional()
 	@MultiORMColumn({
-		type: isBetterSqlite3 ? 'text' : 'timestamp',
+		type: isBetterSqlite3() ? 'text' : 'timestamp',
 		nullable: true,
 		default: () => 'CURRENT_TIMESTAMP'
 	})
