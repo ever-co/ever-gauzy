@@ -106,18 +106,25 @@ jobs:
           Write-Output "PATH environment variable is:"
           Write-Output $path
 
+      - name: Get Yarn Path
+        id: yarn-path
+        shell: powershell
+        run: |
+          $yarnPath = (Get-Command yarn).Source | Split-Path -Parent
+          $nodePath = (Get-Command node).Source | Split-Path -Parent
+          "YARN_DIR=$yarnPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "NODE_DIR=$nodePath" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Build Desktop Timer App
         shell: cmd
         run: |
-          REM Save the original PATH before VsDevCmd modifies it
-          set "ORIGINAL_PATH=%PATH%"
           call "%ProgramFiles%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat" -arch=x64
           set GYP_MSVS_VERSION=2022
           set npm_config_msvs_version=2022
           set npm_config_target_arch=x64
           set npm_config_arch=x64
-          REM Re-add original PATH to ensure yarn and npm are available in subprocesses
-          set "PATH=%PATH%;%ORIGINAL_PATH%"
+          REM Ensure yarn and node are in PATH for Nx subprocesses
+          set "PATH=%YARN_DIR%;%NODE_DIR%;%PATH%"
           where cl.exe
           where msbuild.exe
           where yarn
