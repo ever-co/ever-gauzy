@@ -10,9 +10,10 @@ import {
 	Output
 } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
-import { asyncScheduler, Observable, of, Subject } from 'rxjs';
-import { filter, take, takeUntil } from 'rxjs/operators';
-import { PluginSubscriptionFacade } from '../../+state/plugin-subscription.facade';
+import { Actions } from '@ngneat/effects-ng';
+import { asyncScheduler, filter, Observable, of, Subject, take, takeUntil, withLatestFrom } from 'rxjs';
+import { PluginPlanActions } from '../../+state/actions/plugin-plan.action';
+import { PluginPlanQuery } from '../../+state/queries/plugin-plan.query';
 import {
 	IPluginPlanCreateInput,
 	IPluginSubscriptionPlan,
@@ -28,7 +29,6 @@ import { SubscriptionPlanFormatService } from './services/subscription-plan-form
  * @principle Single Responsibility - Manages subscription plan forms
  * @principle Open/Closed - Extensible through inputs and outputs
  * @principle Dependency Inversion - Depends on abstractions (facade, services)
- * @pattern Facade Pattern - Uses PluginSubscriptionFacade for state management
  * @pattern Builder Pattern - Uses SubscriptionPlanFormBuilderService for form creation
  */
 @Component({
@@ -87,15 +87,16 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	// Inject services following Dependency Injection
 	private readonly formBuilderService = inject(SubscriptionPlanFormBuilderService);
 	private readonly formatService = inject(SubscriptionPlanFormatService);
-	private readonly subscriptionFacade = inject(PluginSubscriptionFacade);
+	private readonly actions = inject(Actions);
+	private readonly planQuery = inject(PluginPlanQuery);
 	private readonly cdr = inject(ChangeDetectorRef);
 
 	// Expose loading states to template
-	public readonly loading$ = this.subscriptionFacade.loading$;
-	public readonly creating$ = this.subscriptionFacade.creating$;
-	public readonly updating$ = this.subscriptionFacade.updating$;
-	public readonly deleting$ = this.subscriptionFacade.deleting$;
-	public readonly error$ = this.subscriptionFacade.error$;
+	public readonly loading$ = this.planQuery.loading$;
+	public readonly creating$ = this.planQuery.creating$;
+	public readonly updating$ = this.planQuery.updating$;
+	public readonly deleting$ = this.planQuery.deleting$;
+	public readonly error$ = this.planQuery.error$;
 
 	ngOnInit(): void {
 		this.initializeComponent();
@@ -107,9 +108,11 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 		this.destroy$.complete();
 
 		// Reset any pending state
-		if (this.pluginId) {
-			this.subscriptionFacade.resetError();
-		}
+		this.resetErrors();
+	}
+
+	public resetErrors(): void {
+		this.actions.dispatch(PluginPlanActions.resetErrors());
 	}
 
 	/**
@@ -146,29 +149,25 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 	/**
 	 * Loads existing plans from state if pluginId is provided
 	 * Uses state management through facade (no direct service calls)
-	 * Fixed: Removed filter that blocked empty arrays, allowing proper state updates
 	 */
 	private loadExistingPlans(): void {
 		if (!this.pluginId) {
 			return;
 		}
 
-		// Dispatch action to load plans
-		this.subscriptionFacade.loadPluginPlans(this.pluginId);
+		// Dispatch action to load plans first
+		this.actions.dispatch(PluginPlanActions.loadPluginPlans(this.pluginId));
 
-		// Subscribe to plans from state
-		// Fixed: Allow empty arrays to complete the loading process
-		this.subscriptionFacade
-			.getPlansForPlugin(this.pluginId)
+		// Wait for loading to complete, then get plans
+		this.loading$
 			.pipe(
-				filter(() => !this.plansLoaded), // Only prevent duplicate loads
+				filter((loading) => !loading),
+				withLatestFrom(this.planQuery.getPlansForPlugin(this.pluginId)),
 				take(1),
 				takeUntil(this.destroy$)
 			)
-			.subscribe((plans) => {
-				if (plans && plans.length > 0) {
-					this.prepopulatePlans(plans);
-				}
+			.subscribe(([_, plans]) => {
+				this.prepopulatePlans(plans);
 				this.plansLoaded = true;
 				this.emitChanges();
 				this.cdr.markForCheck();
@@ -261,7 +260,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 		// If it's an existing plan, dispatch delete action
 		if (planId && this.existingPlanIds.has(planId)) {
 			// Dispatch delete action for existing plan
-			this.subscriptionFacade.deletePlan(planId);
+			this.actions.dispatch(PluginPlanActions.deletePlan(planId));
 			this.existingPlanIds.delete(planId);
 		}
 
@@ -547,10 +546,10 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 		this.setPlanLoading(index, true);
 
 		// Dispatch update action through facade
-		this.subscriptionFacade.updatePlan(planId, updates as any);
+		this.actions.dispatch(PluginPlanActions.updatePlan(planId, updates));
 
 		// Listen for update completion
-		this.subscriptionFacade.updating$
+		this.updating$
 			.pipe(
 				filter((loading) => !loading),
 				take(1),
@@ -601,7 +600,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 
 		// Dispatch update actions for existing plans
 		updatedPlans.forEach(({ id, updates }) => {
-			this.subscriptionFacade.updatePlan(id, updates as any);
+			this.actions.dispatch(PluginPlanActions.updatePlan(id, updates));
 		});
 
 		// Dispatch bulk create action for new plans
@@ -635,7 +634,7 @@ export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy
 					...rest
 				})
 			);
-			this.subscriptionFacade.bulkCreatePlans(plansForCreation);
+			this.actions.dispatch(PluginPlanActions.bulkCreatePlans(plansForCreation));
 		}
 
 		// Emit only new plans to parent component

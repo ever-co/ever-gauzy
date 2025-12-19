@@ -1,7 +1,7 @@
 <div class="subscription-plan-creator">
 	<!-- Error Alert -->
 	@if(error$ | async; as error) {
-	<nb-alert status="danger" closable (close)="subscriptionFacade.resetError()" class="error-alert">
+	<nb-alert status="danger" closable (close)="resetErrors()" class="error-alert">
 		<div class="alert-content">
 			<nb-icon icon="alert-circle-outline"></nb-icon>
 			<div>
@@ -33,9 +33,11 @@
 				<h6>Subscription Plans</h6>
 				<p class="text-hint">Create pricing plans for your plugin</p>
 			</div>
-			<div class="header-badge" *ngIf="plans?.length > 0">
+			@if(plans?.length > 0) {
+			<div class="header-badge">
 				<nb-badge [text]="plans.length + ' Plan' + (plans.length !== 1 ? 's' : '')" status="primary"></nb-badge>
 			</div>
+			}
 		</div>
 		@if(plans?.length === 0 && plansLoaded) {
 		<div class="header-hint">
@@ -48,12 +50,8 @@
 	<form [formGroup]="plansForm" class="plans-form">
 		<div formArrayName="plans" class="plans-array">
 			<!-- Plan Cards -->
-			<div
-				*ngFor="let planGroup of plans.controls; let planIndex = index"
-				[formGroupName]="planIndex"
-				class="plan-card"
-				[class.is-loading]="isPlanLoading(planIndex)"
-			>
+			@for(planGroup of plans.controls; track planIndex; let planIndex = $index) {
+			<div [formGroupName]="planIndex" class="plan-card" [class.is-loading]="isPlanLoading(planIndex)">
 				<div class="plan-card-header">
 					<div class="plan-title">
 						@if(isPlanLoading(planIndex)) {
@@ -63,28 +61,21 @@
 						}
 						<span>{{ planGroup.get('name')?.value || 'Plan ' + (planIndex + 1) }}</span>
 						<div class="badges-group">
-							<nb-badge
-								*ngIf="isExistingPlan(planIndex) && !planGroup.dirty"
-								text="Saved"
-								status="success"
-							></nb-badge>
-							<nb-badge *ngIf="planGroup.dirty" text="Unsaved" status="warning"></nb-badge>
-							<nb-badge
-								*ngIf="planGroup.get('isPopular')?.value"
-								text="Popular"
-								status="success"
-							></nb-badge>
-							<nb-badge
-								*ngIf="planGroup.get('isRecommended')?.value"
-								text="Recommended"
-								status="info"
-							></nb-badge>
+							@if(isExistingPlan(planIndex) && !planGroup.dirty) {
+							<nb-badge text="Saved" status="success"></nb-badge>
+							} @if(planGroup.dirty) {
+							<nb-badge text="Unsaved" status="warning"></nb-badge>
+							} @if(planGroup.get('isPopular')?.value) {
+							<nb-badge text="Popular" status="success"></nb-badge>
+							} @if(planGroup.get('isRecommended')?.value) {
+							<nb-badge text="Recommended" status="info"></nb-badge>
+							}
 						</div>
 					</div>
 					<div class="plan-actions">
 						<!-- Save button for dirty plans -->
+						@if(isExistingPlan(planIndex) && planGroup.dirty) {
 						<button
-							*ngIf="isExistingPlan(planIndex) && planGroup.dirty"
 							type="button"
 							nbButton
 							status="primary"
@@ -97,9 +88,10 @@
 							<nb-icon icon="save-outline"></nb-icon>
 							Save
 						</button>
+						}
 						<!-- Duplicate button -->
+						@if(allowMultiplePlans) {
 						<button
-							*ngIf="allowMultiplePlans"
 							type="button"
 							nbButton
 							ghost
@@ -112,9 +104,10 @@
 						>
 							<nb-icon icon="copy-outline"></nb-icon>
 						</button>
+						}
 						<!-- Delete button -->
+						@if(canRemovePlan()) {
 						<button
-							*ngIf="canRemovePlan()"
 							type="button"
 							nbButton
 							ghost
@@ -127,6 +120,7 @@
 						>
 							<nb-icon icon="trash-2-outline"></nb-icon>
 						</button>
+						}
 					</div>
 				</div>
 
@@ -138,8 +132,8 @@
 							Plan Type *
 						</label>
 						<div class="type-options">
+							@for(type of PluginSubscriptionType | keyvalue; track type.key) {
 							<button
-								*ngFor="let type of PluginSubscriptionType | keyvalue"
 								type="button"
 								class="type-option"
 								[class.selected]="planGroup.get('type')?.value === type.value"
@@ -148,6 +142,7 @@
 								<nb-icon [icon]="getPlanTypeIcon(type.value)"></nb-icon>
 								<span>{{ type.value | titlecase }}</span>
 							</button>
+							}
 						</div>
 					</div>
 
@@ -208,10 +203,9 @@
 							<div class="field-footer">
 								@if(planGroup.get('description')?.invalid && planGroup.get('description')?.touched) {
 								<span class="error-text">Description is required</span>
+								} @if(planGroup.get('description')?.value) {
+								<span class="char-count"> {{ planGroup.get('description')?.value.length }}/500 </span>
 								}
-								<span class="char-count" *ngIf="planGroup.get('description')?.value">
-									{{ planGroup.get('description')?.value.length }}/500
-								</span>
 							</div>
 						</nb-form-field>
 					</div>
@@ -250,25 +244,27 @@
 							<nb-form-field class="form-group">
 								<label class="label">Billing Period *</label>
 								<nb-select fullWidth formControlName="billingPeriod">
-									<nb-option
-										*ngFor="let period of PluginBillingPeriod | keyvalue"
-										[value]="period.value"
-									>
+									@for(period of PluginBillingPeriod | keyvalue; track period.key) {
+									<nb-option [value]="period.value">
 										{{ formatBillingPeriod(period.value) | titlecase }}
 									</nb-option>
+									}
 								</nb-select>
 							</nb-form-field>
 						</div>
 						}
 
 						<!-- Price Preview -->
-						<div class="price-preview" *ngIf="planGroup.get('price')?.value >= 0">
+						@if(planGroup.get('price')?.value >= 0) {
+						<div class="price-preview">
 							<div class="preview-label">Preview:</div>
-							<div class="preview-value" *ngIf="planGroup.get('price')?.value === 0">
+							@if(planGroup.get('price')?.value === 0) {
+							<div class="preview-value">
 								<nb-icon icon="gift-outline" status="success"></nb-icon>
 								<span class="price-text free">Free</span>
 							</div>
-							<div class="preview-value" *ngIf="planGroup.get('price')?.value > 0">
+							} @if(planGroup.get('price')?.value > 0) {
+							<div class="preview-value">
 								<span class="price-text">
 									{{
 										formatCurrency(planGroup.get('price')?.value, planGroup.get('currency')?.value)
@@ -278,7 +274,9 @@
 									>
 								</span>
 							</div>
+							}
 						</div>
+						}
 					</div>
 
 					<!-- Features -->
@@ -289,13 +287,9 @@
 						</label>
 
 						<div class="features-list">
-							<div
-								*ngFor="
-									let featureControl of getPlanFeatures(planIndex).controls;
-									let featureIndex = index
-								"
-								class="feature-item"
-							>
+							@for(featureControl of getPlanFeatures(planIndex).controls; track featureIndex; let
+							featureIndex = $index) {
+							<div class="feature-item">
 								<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
 								<input
 									nbInput
@@ -303,8 +297,8 @@
 									[formControl]="featureControl"
 									placeholder="Enter a feature (e.g., Unlimited projects)"
 								/>
+								@if(getPlanFeatures(planIndex).length > 1) {
 								<button
-									*ngIf="getPlanFeatures(planIndex).length > 1"
 									type="button"
 									nbButton
 									ghost
@@ -314,7 +308,9 @@
 								>
 									<nb-icon icon="close-outline"></nb-icon>
 								</button>
+								}
 							</div>
+							}
 
 							<!-- Add Feature Button at Bottom -->
 							<button
@@ -340,14 +336,9 @@
 						</label>
 
 						<div class="limitations-list">
-							<div
-								*ngFor="
-									let limitationControl of getPlanLimitations(planIndex).controls;
-									let limitationIndex = index
-								"
-								class="limitation-item"
-								[formGroupName]="limitationIndex"
-							>
+							@for(limitationControl of getPlanLimitations(planIndex).controls; track limitationIndex; let
+							limitationIndex = $index) {
+							<div class="limitation-item" [formGroupName]="limitationIndex">
 								<nb-form-field class="form-group">
 									<input nbInput fullWidth formControlName="key" placeholder="e.g., maxUsers" />
 								</nb-form-field>
@@ -367,6 +358,7 @@
 									<nb-icon icon="close-outline"></nb-icon>
 								</button>
 							</div>
+							}
 
 							<!-- Add Limitation Button at Bottom -->
 							<button
@@ -474,9 +466,11 @@
 					}
 				</div>
 			</div>
+			}
 
 			<!-- Add Plan Button -->
-			<div *ngIf="canAddPlan()" class="add-plan-section">
+			@if(canAddPlan()) {
+			<div class="add-plan-section">
 				<button
 					type="button"
 					nbButton
@@ -490,11 +484,16 @@
 					Add Another Plan
 				</button>
 			</div>
+			}
 
 			<!-- No Plans Message -->
-			<div *ngIf="!hasPlans()" class="no-plans-message">
+			@if(!hasPlans()) {
+			<div class="no-plans-message">
+				@if(!(loading$ | async)) {
 				<div class="empty-state">
-					<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+					<div class="empty-icon">
+						<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+					</div>
 					<h6>No subscription plans yet</h6>
 					<p>Create your first plan to start monetizing your plugin</p>
 					<button type="button" nbButton status="primary" size="large" (click)="createPlan()">
@@ -502,13 +501,25 @@
 						Create First Plan
 					</button>
 				</div>
+				} @else {
+				<div class="loading-state">
+					<div class="loading-content">
+						<nb-spinner status="primary" size="large"></nb-spinner>
+						<p>Loading subscription plans...</p>
+					</div>
+				</div>
+				}
 			</div>
+			}
 		</div>
 	</form>
 	} @else {
 	<div class="loading-state">
-		<nb-spinner status="primary" size="large"></nb-spinner>
-		<p>Initializing plan creator...</p>
+		<div class="loading-content">
+			<nb-spinner status="primary" size="large"></nb-spinner>
+			<p>Initializing plan creator...</p>
+			<span class="loading-hint">Preparing your workspace</span>
+		</div>
 	</div>
 	}
 </div>

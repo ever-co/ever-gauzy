@@ -84,4 +84,7 @@ export class PluginPlanActions {
 		'[Plugin Plan] Set Current Plugin Plans',
 		(pluginId: string, plans: IPluginSubscriptionPlan[]) => ({ pluginId, plans })
 	);
+
+	// Reset errors
+	public static resetErrors = createAction('[Plugin Plan] Reset Errors');
 }
