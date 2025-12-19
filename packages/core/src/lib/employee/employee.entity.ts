@@ -475,21 +475,18 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 
 	/*
 	|--------------------------------------------------------------------------
-	| @OneToOne
+	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
 	/**
 	 * User
+	 * Note: Changed from @MultiORMOneToOne to @MultiORMManyToOne to allow
+	 * one User to have multiple Employee records across different organizations.
+	 * See: https://github.com/ever-co/ever-gauzy/wiki/Users-vs-Employees
 	 */
-	@MultiORMOneToOne(() => User, {
-		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
-		cascade: true,
-
+	@MultiORMManyToOne(() => User, {
 		/** Database cascade action on delete. */
-		onDelete: 'CASCADE',
-
-		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
-		owner: true
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	user: IUser;
