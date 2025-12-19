@@ -63,12 +63,12 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 
 			// If updating name, ensure uniqueness per plugin
 			if (updateInput.name && updateInput.name !== existingPlan.name) {
-				const duplicatePlan = await this.findOneByWhereOptions({
+				const { record: duplicatePlan, success } = await this.findOneOrFailByWhereOptions({
 					pluginId: existingPlan.pluginId,
 					name: updateInput.name
 				});
 
-				if (duplicatePlan && duplicatePlan.id !== id) {
+				if (success && duplicatePlan.id !== id) {
 					throw new BadRequestException(
 						`A plan with name "${updateInput.name}" already exists for this plugin`
 					);
