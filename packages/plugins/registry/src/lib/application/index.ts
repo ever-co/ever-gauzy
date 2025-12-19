@@ -52,6 +52,7 @@ import {
 	RecoverPluginSourceCommandHandler
 } from './plugin-source/commands/handlers';
 import {
+	BulkCreatePluginPlansHandler,
 	BulkPluginPlanOperationCommandHandler,
 	CancelPluginSubscriptionCommandHandler,
 	CheckUserSubscriptionAccessQueryHandler,
@@ -189,6 +190,7 @@ const commands = [
 
 	// Plugin Subscription Plan Command Handlers
 	BulkPluginPlanOperationCommandHandler,
+	BulkCreatePluginPlansHandler,
 	CopyPluginPlanCommandHandler,
 	CreatePluginSubscriptionPlanCommandHandler,
 	DeletePluginSubscriptionPlanCommandHandler,

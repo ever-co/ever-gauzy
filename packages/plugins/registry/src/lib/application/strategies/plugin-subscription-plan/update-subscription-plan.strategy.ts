@@ -1,4 +1,4 @@
-import { UpdatePluginSubscriptionPlanDTO } from '../../../shared';
+import { IPluginSubscriptionPlan, UpdatePluginSubscriptionPlanDTO } from '../../../shared';
 import { UpdatePluginSubscriptionPlanCommand } from '../../plugin-subscription';
 import { ISubscriptionPlanOperation, SubscriptionPlanOperationContext } from './subscription-plan-operation.strategy';
 
@@ -11,13 +11,16 @@ export class UpdateSubscriptionPlanStrategy implements ISubscriptionPlanOperatio
 	 * @param data - The plan data to update
 	 * @param context - The operation context (should include planId for updates)
 	 */
-	async execute(data: UpdatePluginSubscriptionPlanDTO, context: SubscriptionPlanOperationContext): Promise<void> {
+	async execute(
+		data: UpdatePluginSubscriptionPlanDTO,
+		context: SubscriptionPlanOperationContext
+	): Promise<IPluginSubscriptionPlan> {
 		const { commandBus, planId = data.id } = context;
 
 		if (!planId) {
 			throw new Error('Plan ID is required for update operation');
 		}
 
-		await commandBus.execute(new UpdatePluginSubscriptionPlanCommand(planId, data));
+		return commandBus.execute(new UpdatePluginSubscriptionPlanCommand(planId, data));
 	}
 }

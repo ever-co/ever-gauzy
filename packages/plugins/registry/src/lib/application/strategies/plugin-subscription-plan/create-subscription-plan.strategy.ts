@@ -1,4 +1,4 @@
-import { CreatePluginSubscriptionPlanDTO } from '../../../shared';
+import { CreatePluginSubscriptionPlanDTO, IPluginSubscriptionPlan } from '../../../shared';
 import { CreatePluginSubscriptionPlanCommand } from '../../plugin-subscription';
 import { ISubscriptionPlanOperation, SubscriptionPlanOperationContext } from './subscription-plan-operation.strategy';
 
@@ -11,12 +11,17 @@ export class CreateSubscriptionPlan implements ISubscriptionPlanOperation {
 	 * @param input - The plan data to create
 	 * @param context - The operation context containing pluginId, tenantId, etc.
 	 */
-	async execute(input: CreatePluginSubscriptionPlanDTO, context: SubscriptionPlanOperationContext): Promise<void> {
+	async execute(
+		input: CreatePluginSubscriptionPlanDTO,
+		context: SubscriptionPlanOperationContext
+	): Promise<IPluginSubscriptionPlan> {
 		const { tenantId, organizationId, userId, commandBus, pluginId } = context;
 
+		if (pluginId) {
+			input.pluginId = pluginId;
+		}
+
 		// The pluginId should already be included in the input DTO
-		await commandBus.execute(
-			new CreatePluginSubscriptionPlanCommand({ ...input, pluginId }, tenantId, organizationId, userId)
-		);
+		return commandBus.execute(new CreatePluginSubscriptionPlanCommand(input, tenantId, organizationId, userId));
 	}
 }

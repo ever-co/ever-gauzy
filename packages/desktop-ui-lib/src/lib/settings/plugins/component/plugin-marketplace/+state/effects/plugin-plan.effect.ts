@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { EMPTY, catchError, exhaustMap, finalize, map, of, switchMap, take, tap } from 'rxjs';
+import { EMPTY, catchError, concatMap, exhaustMap, finalize, map, of, switchMap, take, tap } from 'rxjs';
 
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrNotificationService } from '../../../../../../services';
-import { IPluginSubscriptionPlan, PluginSubscriptionService } from '../../../../services/plugin-subscription.service';
+import { PluginSubscriptionService } from '../../../../services/plugin-subscription.service';
 import { DialogSubscriptionPlanCreatorComponent } from '../../plugin-marketplace-item/dialog-subscription-plan-creator/dialog-subscription-plan-creator.component';
 import {
 	IPluginSubscriptionPlanSelectionResult,
@@ -139,45 +139,24 @@ export class PluginPlanEffects {
 				this.pluginPlanStore.setCreating(true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.BULK_CREATING'));
 			}),
-			switchMap(({ plansData }) => {
-				const createPlan$ = (planData) =>
-					this.pluginSubscriptionService.createPlan(planData).pipe(
-						catchError((error) => {
-							this.toastrService.error(
-								`Failed to create plan "${planData.name}": ${error.message || 'Unknown error'}`
-							);
-							return EMPTY;
-						})
-					);
-
-				return plansData.reduce(
-					(acc$, planData) =>
-						acc$.pipe(
-							switchMap((createdPlans) =>
-								createPlan$(planData).pipe(
-									map((newPlan) => (newPlan ? [...createdPlans, newPlan] : createdPlans))
-								)
-							)
-						),
-					of([] as IPluginSubscriptionPlan[])
-				);
-			}),
-			tap((plans) => {
-				if (plans.length > 0) {
-					plans.forEach((plan) => this.pluginPlanStore.addPlan(plan));
-					this.toastrService.success(
-						this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.BULK_CREATED', {
-							count: plans.length
-						})
-					);
-				}
-			}),
-			finalize(() => this.pluginPlanStore.setCreating(false)),
-			catchError((error) => {
-				this.pluginPlanStore.setErrorMessage(error.message || 'Failed to create plans');
-				this.toastrService.error(error.message || 'Failed to create plans');
-				return EMPTY;
-			})
+			concatMap(({ plansData }) =>
+				this.pluginSubscriptionService.bulkCreatePlans(plansData).pipe(
+					tap((plans) => {
+						plans.forEach((plan) => this.pluginPlanStore.addPlan(plan));
+						this.toastrService.success(
+							this.translateService.instant('PLUGIN.SUBSCRIPTION.PLAN.BULK_CREATED', {
+								count: plans.length
+							})
+						);
+					}),
+					finalize(() => this.pluginPlanStore.setCreating(false)),
+					catchError((error) => {
+						this.pluginPlanStore.setErrorMessage(error.message || 'Failed to create plans');
+						this.toastrService.error(error.message || 'Failed to create plans');
+						return EMPTY;
+					})
+				)
+			)
 		)
 	);
 

@@ -4,7 +4,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
 import { Plugin, PluginService, PluginSourceService, PluginVersionService } from '../../../../domain';
-import { CreatePluginSubscriptionPlanCommand } from '../../../plugin-subscription';
+import { BulkCreatePluginPlansCommand } from '../../../plugin-subscription';
 import { CreatePluginCommand } from '../create-plugin.command';
 
 @CommandHandler(CreatePluginCommand)
@@ -59,16 +59,16 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 				const organizationId = RequestContext.currentOrganizationId();
 				const user = RequestContext.currentUser();
 
-				for (const planData of subscriptionPlans) {
-					const planWithPluginId = {
-						...planData,
-						pluginId: savedPlugin.id
-					};
+				// Attach plugin ID to all plans
+				const plansWithPluginId = subscriptionPlans.map((planData) => ({
+					...planData,
+					pluginId: savedPlugin.id
+				}));
 
-					await this.commandBus.execute(
-						new CreatePluginSubscriptionPlanCommand(planWithPluginId, tenantId, organizationId, user?.id)
-					);
-				}
+				// Create all plans at once using bulk create command
+				await this.commandBus.execute(
+					new BulkCreatePluginPlansCommand(plansWithPluginId, tenantId, organizationId, user?.id)
+				);
 			}
 
 			await queryRunner.commitTransaction();

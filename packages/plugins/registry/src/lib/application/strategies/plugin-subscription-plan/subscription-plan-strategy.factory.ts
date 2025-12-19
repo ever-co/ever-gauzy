@@ -1,4 +1,8 @@
-import { CreatePluginSubscriptionPlanDTO, UpdatePluginSubscriptionPlanDTO } from '../../../shared';
+import {
+	CreatePluginSubscriptionPlanDTO,
+	IPluginSubscriptionPlan,
+	UpdatePluginSubscriptionPlanDTO
+} from '../../../shared';
 import { CreateSubscriptionPlan } from './create-subscription-plan.strategy';
 import {
 	ISubscriptionPlanOperation,
@@ -35,8 +39,8 @@ export class SubscriptionPlanOperationFactory {
 	static async execute(
 		planData: CreatePluginSubscriptionPlanDTO | UpdatePluginSubscriptionPlanDTO,
 		context: SubscriptionPlanOperationContext
-	): Promise<void> {
+	): Promise<IPluginSubscriptionPlan> {
 		const strategy = this.getOperation(planData);
-		await strategy.execute(planData, context);
+		return strategy.execute(planData, context);
 	}
 }

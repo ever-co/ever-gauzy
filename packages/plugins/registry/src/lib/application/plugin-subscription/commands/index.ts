@@ -1,4 +1,5 @@
 export * from './auto-renew-plugin-subscription.command';
+export * from './bulk-create-plugin-plans.command';
 export * from './bulk-plugin-plan-operation.command';
 export * from './cancel-plugin-subscription.command';
 export * from './copy-plugin-plan.command';

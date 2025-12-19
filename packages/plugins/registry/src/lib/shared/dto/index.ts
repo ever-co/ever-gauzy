@@ -1,3 +1,4 @@
+export * from './create-multiple-plugin-plans.dto';
 export * from './create-plugin-billing.dto';
 export * from './create-plugin-category.dto';
 export * from './create-plugin-source.dto';

@@ -1,3 +1,4 @@
+export * from './bulk-create-plugin-plans.handler';
 export * from './bulk-plugin-plan-operation.handler';
 export * from './cancel-plugin-subscription.handler';
 export * from './copy-plugin-plan.handler';

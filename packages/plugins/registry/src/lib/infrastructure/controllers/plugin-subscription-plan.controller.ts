@@ -19,6 +19,7 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
+	BulkCreatePluginPlansCommand,
 	BulkPluginPlanOperationCommand,
 	CopyPluginPlanCommand,
 	CreatePluginSubscriptionPlanCommand,
@@ -34,6 +35,7 @@ import { PluginSubscriptionPlan } from '../../domain';
 import {
 	BulkPluginPlanOperationDTO,
 	CopyPluginPlanDTO,
+	CreateMultiplePluginPlansDTO,
 	CreatePluginSubscriptionPlanDTO,
 	PluginPlanAnalyticsDTO,
 	PluginSubscriptionPlanQueryDTO,
@@ -57,6 +59,24 @@ export class PluginSubscriptionPlanController {
 	async create(@Body() createDto: CreatePluginSubscriptionPlanDTO): Promise<PluginSubscriptionPlan> {
 		const userId = RequestContext.currentUserId();
 		return await this.commandBus.execute(new CreatePluginSubscriptionPlanCommand(createDto, userId));
+	}
+
+	@ApiOperation({ summary: 'Create multiple plugin subscription plans' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Plugin subscription plans created successfully',
+		type: [PluginSubscriptionPlan]
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
+	@Post('bulk-create')
+	async createMultiple(@Body() createDto: CreateMultiplePluginPlansDTO): Promise<PluginSubscriptionPlan[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const userId = RequestContext.currentUserId();
+		return await this.commandBus.execute(
+			new BulkCreatePluginPlansCommand(createDto.plans, tenantId, organizationId, userId)
+		);
 	}
 
 	@ApiOperation({ summary: 'Get all plugin subscription plans' })

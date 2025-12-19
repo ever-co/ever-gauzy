@@ -188,6 +188,10 @@ export class PluginSubscriptionService {
 		return this.http.post<IPluginSubscriptionPlan>(this.plansEndPoint, plan);
 	}
 
+	public bulkCreatePlans(plans: IPluginPlanCreateInput[]): Observable<IPluginSubscriptionPlan[]> {
+		return this.http.post<IPluginSubscriptionPlan[]>(`${this.plansEndPoint}/bulk-create`, { plans });
+	}
+
 	public updatePlan(id: string, plan: Partial<IPluginPlanCreateInput>): Observable<IPluginSubscriptionPlan> {
 		return this.http.put<IPluginSubscriptionPlan>(`${this.plansEndPoint}/${id}`, plan);
 	}

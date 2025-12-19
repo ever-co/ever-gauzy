@@ -50,7 +50,7 @@ export class PluginSubscriptionAccessQuery extends QueryEntity<
 	 * Check if user can configure plugin
 	 */
 	canConfig$(pluginId: string): Observable<boolean> {
-		return this.selectEntity(pluginId).pipe(map((state) => state.accessLevel !== PluginScope.USER || false));
+		return this.selectEntity(pluginId).pipe(map((state) => state?.accessLevel !== PluginScope.USER || false));
 	}
 
 	/**

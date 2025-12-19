@@ -1,6 +1,10 @@
 import { ID } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
-import { CreatePluginSubscriptionPlanDTO, UpdatePluginSubscriptionPlanDTO } from '../../../shared';
+import {
+	CreatePluginSubscriptionPlanDTO,
+	IPluginSubscriptionPlan,
+	UpdatePluginSubscriptionPlanDTO
+} from '../../../shared';
 
 export type PlanOperationDTO = CreatePluginSubscriptionPlanDTO | UpdatePluginSubscriptionPlanDTO;
 /**
@@ -13,7 +17,7 @@ export interface ISubscriptionPlanOperation {
 	 * @param context - Additional context needed for the operation
 	 * @returns Promise that resolves when operation is complete
 	 */
-	execute(data: PlanOperationDTO, context: SubscriptionPlanOperationContext): Promise<void>;
+	execute(data: PlanOperationDTO, context: SubscriptionPlanOperationContext): Promise<IPluginSubscriptionPlan>;
 }
 
 /**

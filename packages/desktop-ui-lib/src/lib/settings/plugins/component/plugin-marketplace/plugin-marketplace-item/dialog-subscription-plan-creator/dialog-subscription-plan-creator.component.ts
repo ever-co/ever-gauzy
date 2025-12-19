@@ -32,7 +32,7 @@ export class DialogSubscriptionPlanCreatorComponent {
 	}
 
 	public onValidationChange(isValid: boolean): void {
-		this.isPlanValid = isValid && this.plans.length > 0;
+		this.isPlanValid = isValid && this.pluginId && this.plans.length > 0;
 	}
 
 	public get creating$(): Observable<boolean> {
@@ -40,7 +40,9 @@ export class DialogSubscriptionPlanCreatorComponent {
 	}
 
 	public onSaved(): void {
-		this.actions.dispatch(PluginPlanActions.bulkCreatePlans(this.plans));
+		this.actions.dispatch(
+			PluginPlanActions.bulkCreatePlans(this.plans.map((plan) => ({ pluginId: this.pluginId, ...plan })))
+		);
 		this.creating$
 			.pipe(
 				pairwise(),
