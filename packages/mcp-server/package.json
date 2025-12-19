@@ -50,7 +50,8 @@
 		"connect-redis": "^7.1.0",
 		"ioredis": "^5.7.0",
 		"helmet": "^4.1.1",
-		"escape-html": "^1.0.3"
+		"escape-html": "^1.0.3",
+		"zod-to-json-schema": "^3.25.0"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
