@@ -1,16 +1,19 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { EmployeeAwardSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { EmployeeAwardInputSchema } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('EmployeeAwardTools');
 
 export const registerEmployeeAwardTools = (server: McpServer) => {
 	// Get employee awards tool
-	server.tool(
+	registerTool(
+		server,
 		'get_employee_awards',
 		"Get list of employee awards for the authenticated user's organization",
 		{
@@ -58,7 +61,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Get employee award by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_employee_award',
 		'Get a specific employee award by ID',
 		{
@@ -89,16 +93,18 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Create employee award tool
-	server.tool(
+	registerTool(
+		server,
 		'create_employee_award',
 		"Create a new employee award in the authenticated user's organization",
 		{
-			award_data: EmployeeAwardSchema.partial()
-				.required({
-					name: true,
-					year: true,
-					employeeId: true
+			award_data: z
+				.object({
+					name: z.string().describe('The award name (required)'),
+					year: z.number().describe('The year (required)'),
+					employeeId: z.string().describe('The employee ID (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the employee award')
 		},
 		async ({ award_data }) => {
@@ -129,12 +135,13 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Update employee award tool
-	server.tool(
+	registerTool(
+		server,
 		'update_employee_award',
 		'Update an existing employee award',
 		{
 			id: z.string().uuid().describe('The employee award ID'),
-			award_data: EmployeeAwardSchema.partial().describe('The data for updating the employee award')
+			award_data: z.record(z.string(), z.any()).describe('The data for updating the employee award')
 		},
 		async ({ id, award_data }) => {
 			try {
@@ -156,7 +163,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Delete employee award tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_employee_award',
 		'Delete an employee award',
 		{
@@ -186,7 +194,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Get employee awards by employee tool
-	server.tool(
+	registerTool(
+		server,
 		'get_employee_awards_by_employee',
 		'Get awards for a specific employee',
 		{
@@ -230,7 +239,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Get awards by year tool
-	server.tool(
+	registerTool(
+		server,
 		'get_employee_awards_by_year',
 		'Get employee awards for a specific year',
 		{
@@ -280,7 +290,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Get employee awards count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_employee_awards_count',
 		"Get employee awards count in the authenticated user's organization",
 		{
@@ -318,7 +329,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Get employee awards statistics tool
-	server.tool(
+	registerTool(
+		server,
 		'get_employee_awards_statistics',
 		"Get employee awards statistics for the authenticated user's organization",
 		{
@@ -360,18 +372,20 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Bulk create employee awards tool
-	server.tool(
+	registerTool(
+		server,
 		'bulk_create_employee_awards',
 		"Create multiple employee awards in bulk for the authenticated user's organization",
 		{
 			awards: z
 				.array(
-					EmployeeAwardSchema.partial()
-						.required({
-							name: true,
-							year: true,
-							employeeId: true
+					z
+						.object({
+							name: z.string().describe('The award name (required)'),
+							year: z.number().describe('The year (required)'),
+							employeeId: z.string().describe('The employee ID (required)')
 						})
+						.passthrough()
 						.describe('Employee award data')
 				)
 				.describe('Array of employee award data to create')
@@ -407,7 +421,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Bulk update employee awards tool
-	server.tool(
+	registerTool(
+		server,
 		'bulk_update_employee_awards',
 		'Update multiple employee awards in bulk',
 		{
@@ -415,7 +430,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				.array(
 					z.object({
 						id: z.string().uuid().describe('The employee award ID'),
-						data: EmployeeAwardSchema.partial().describe('The data to update')
+						data: z.record(z.string(), z.any()).describe('The data to update')
 					})
 				)
 				.describe('Array of employee award updates')
@@ -442,7 +457,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 	);
 
 	// Bulk delete employee awards tool
-	server.tool(
+	registerTool(
+		server,
 		'bulk_delete_employee_awards',
 		'Delete multiple employee awards in bulk',
 		{

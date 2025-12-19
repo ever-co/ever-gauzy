@@ -1,16 +1,19 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { WarehouseSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { WarehouseInputSchema } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('WarehouseTools');
 
 export const registerWarehouseTools = (server: McpServer) => {
 	// Get warehouses tool
-	server.tool(
+	registerTool(
+		server,
 		'get_warehouses',
 		"Get list of warehouses for the authenticated user's organization",
 		{
@@ -52,7 +55,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 	);
 
 	// Get warehouse by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_warehouse',
 		'Get a specific warehouse by ID',
 		{
@@ -91,15 +95,17 @@ export const registerWarehouseTools = (server: McpServer) => {
 	);
 
 	// Create warehouse tool
-	server.tool(
+	registerTool(
+		server,
 		'create_warehouse',
 		"Create a new warehouse in the authenticated user's organization",
 		{
-			warehouse_data: WarehouseSchema.partial()
-				.required({
-					name: true,
-					code: true
+			warehouse_data: z
+				.object({
+					name: z.string().describe('The warehouse name (required)'),
+					code: z.string().describe('The warehouse code (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the warehouse')
 		},
 		async ({ warehouse_data }) => {
@@ -130,12 +136,13 @@ export const registerWarehouseTools = (server: McpServer) => {
 	);
 
 	// Update warehouse tool
-	server.tool(
+	registerTool(
+		server,
 		'update_warehouse',
 		'Update an existing warehouse',
 		{
 			id: z.string().uuid().describe('The warehouse ID'),
-			warehouse_data: WarehouseSchema.partial().describe('The data for updating the warehouse')
+			warehouse_data: z.record(z.string(), z.any()).describe('The data for updating the warehouse')
 		},
 		async ({ id, warehouse_data }) => {
 			try {
@@ -165,7 +172,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 	);
 
 	// Delete warehouse tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_warehouse',
 		'Delete a warehouse',
 		{

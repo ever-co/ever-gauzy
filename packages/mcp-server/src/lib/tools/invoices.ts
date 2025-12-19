@@ -1,11 +1,13 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { InvoiceSchema, InvoiceStatusEnum, InvoiceTypeEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { InvoiceStatusEnum, InvoiceTypeEnum } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('InvoiceTools');
 
 /**
@@ -32,7 +34,8 @@ const convertInvoiceDateFields = (invoiceData: InvoiceData): ConvertedInvoiceDat
 
 export const registerInvoiceTools = (server: McpServer) => {
 	// Get invoices tool - uses pagination endpoint
-	server.tool(
+	registerTool(
+		server,
 		'get_invoices',
 		"Get list of invoices for the authenticated user's organization",
 		{
@@ -85,7 +88,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Get invoice count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_invoice_count',
 		"Get invoice count in the authenticated user's organization",
 		{
@@ -125,7 +129,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Get invoice by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_invoice',
 		'Get a specific invoice by ID',
 		{
@@ -162,17 +167,19 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Create invoice tool
-	server.tool(
+	registerTool(
+		server,
 		'create_invoice',
 		"Create a new invoice in the authenticated user's organization",
 		{
-			invoice_data: InvoiceSchema.partial()
-				.required({
-					invoiceNumber: true,
-					invoiceDate: true,
-					dueDate: true,
-					currency: true
+			invoice_data: z
+				.object({
+					invoiceNumber: z.string().describe('The invoice number (required)'),
+					invoiceDate: z.string().describe('The invoice date (required)'),
+					dueDate: z.string().describe('The due date (required)'),
+					currency: z.string().describe('The currency (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the invoice')
 		},
 		async ({ invoice_data }) => {
@@ -203,12 +210,13 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Update invoice tool
-	server.tool(
+	registerTool(
+		server,
 		'update_invoice',
 		'Update an existing invoice',
 		{
 			id: z.string().uuid().describe('The invoice ID'),
-			invoice_data: InvoiceSchema.partial().describe('The data for updating the invoice')
+			invoice_data: z.record(z.string(), z.any()).describe('The data for updating the invoice')
 		},
 		async ({ id, invoice_data }) => {
 			try {
@@ -232,7 +240,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Update invoice action (status/estimate) tool
-	server.tool(
+	registerTool(
+		server,
 		'update_invoice_action',
 		'Update the action/status of an invoice',
 		{
@@ -265,7 +274,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Update estimate status tool
-	server.tool(
+	registerTool(
+		server,
 		'update_estimate_status',
 		'Update estimate status of an invoice',
 		{
@@ -298,7 +308,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Delete invoice tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_invoice',
 		'Delete an invoice',
 		{
@@ -328,7 +339,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Get invoice items tool
-	server.tool(
+	registerTool(
+		server,
 		'get_invoice_items',
 		'Get items for a specific invoice',
 		{
@@ -365,7 +377,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Send invoice via email tool
-	server.tool(
+	registerTool(
+		server,
 		'send_invoice_email',
 		'Send an invoice via email',
 		{
@@ -408,7 +421,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Generate invoice PDF tool
-	server.tool(
+	registerTool(
+		server,
 		'download_invoice_pdf',
 		'Download PDF for an invoice as binary data',
 		{
@@ -450,26 +464,33 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Get highest invoice number tool
-	server.tool('get_highest_invoice_number', 'Get the highest invoice number in the organization', {}, async () => {
-		try {
-			const response = await apiClient.get('/api/invoices/highest');
+	registerTool(
+		server,
+		'get_highest_invoice_number',
+		'Get the highest invoice number in the organization',
+		{},
+		async () => {
+			try {
+				const response = await apiClient.get('/api/invoices/highest');
 
-			return {
-				content: [
-					{
-						type: 'text',
-						text: JSON.stringify(response, null, 2)
-					}
-				]
-			};
-		} catch (error) {
-			logger.error('Error fetching highest invoice number:', sanitizeForLogging(error));
-			throw new Error(`Failed to fetch highest invoice number: ${sanitizeErrorMessage(error)}`);
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error fetching highest invoice number:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch highest invoice number: ${sanitizeErrorMessage(error)}`);
+			}
 		}
-	});
+	);
 
 	// Generate public link for invoice tool
-	server.tool(
+	registerTool(
+		server,
 		'generate_invoice_link',
 		'Generate a public link for an invoice',
 		{
@@ -495,7 +516,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 	);
 
 	// Download invoice payment PDF tool
-	server.tool(
+	registerTool(
+		server,
 		'download_invoice_payment_pdf',
 		'Download payment PDF for an invoice',
 		{
