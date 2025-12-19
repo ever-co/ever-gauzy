@@ -96,7 +96,7 @@
 		"doc:build": "compodoc -p tsconfig.json -d dist/docs",
 		"doc:serve": "compodoc -s -d dist/docs",
 		"doc:build-serve": "compodoc -p tsconfig.json -d docs -s",
-		"postinstall.manual": "yarn ts-node ./.scripts/postinstall.js",
+		"postinstall.manual": "yarn node ./.scripts/postinstall.js",
 		"postinstall.electron": "yarn electron-builder install-app-deps && yarn node tools/electron/postinstall",
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn node tools/web/postinstall",
 		"build:desktop": "cross-env NODE_ENV=production yarn run copy-files-i18n-desktop && yarn run postinstall.electron && yarn run config:prod && yarn run config:desktop:prod && yarn run build:package:all:prod && yarn run pack:desktop && yarn run generate:icons:desktop --environment=prod && yarn ng:prod run gauzy:desktop-ui --base-href ./ && yarn run prepare:desktop && yarn ng:prod run api:desktop-api && yarn ng:prod build desktop-api --output-path=dist/apps/desktop/desktop-api && yarn ng:prod build desktop --base-href ./ && yarn run copy-files-desktop && yarn run copy-assets-gauzy",

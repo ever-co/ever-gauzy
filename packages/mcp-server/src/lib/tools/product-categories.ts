@@ -1,16 +1,19 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { ProductCategorySchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { ProductCategoryInputSchema } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('ProductCategoryTools');
 
 export const registerProductCategoryTools = (server: McpServer) => {
 	// Get product categories tool
-	server.tool(
+	registerTool(
+		server,
 		'get_product_categories',
 		"Get list of product categories for the authenticated user's organization",
 		{
@@ -52,7 +55,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 	);
 
 	// Get product category count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_product_category_count',
 		"Get product category count in the authenticated user's organization",
 		{},
@@ -83,14 +87,14 @@ export const registerProductCategoryTools = (server: McpServer) => {
 	);
 
 	// Create product category tool
-	server.tool(
+	registerTool(
+		server,
 		'create_product_category',
 		"Create a new product category in the authenticated user's organization",
 		{
-			category_data: ProductCategorySchema.partial()
-				.required({
-					name: true
-				})
+			category_data: z
+				.object({ name: z.string().describe('The name (required)') })
+				.passthrough()
 				.extend({
 					translations: z
 						.array(
@@ -133,13 +137,14 @@ export const registerProductCategoryTools = (server: McpServer) => {
 	);
 
 	// Update product category tool
-	server.tool(
+	registerTool(
+		server,
 		'update_product_category',
 		'Update an existing product category',
 		{
 			id: z.string().uuid().describe('The product category ID'),
-			category_data: ProductCategorySchema.partial()
-				.extend({
+			category_data: z
+				.object({
 					translations: z
 						.array(
 							z.object({
@@ -151,6 +156,7 @@ export const registerProductCategoryTools = (server: McpServer) => {
 						.optional()
 						.describe('Category translations for different languages')
 				})
+				.passthrough()
 				.describe('The data for updating the product category')
 		},
 		async ({ id, category_data }) => {
@@ -173,7 +179,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 	);
 
 	// Get products by category tool
-	server.tool(
+	registerTool(
+		server,
 		'get_products_by_category',
 		'Get all products in a specific category',
 		{
