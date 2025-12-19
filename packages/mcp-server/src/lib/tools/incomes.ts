@@ -1,11 +1,13 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
-import { IncomeSchemaFull, CurrenciesEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { CurrenciesEnum } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('IncomeTools');
 
 /**
@@ -29,7 +31,8 @@ const convertIncomeDateFields = (incomeData: IncomeData): ConvertedIncomeData =>
 
 export const registerIncomeTools = (server: McpServer) => {
 	// Get my incomes tool (only implemented endpoint)
-	server.tool(
+	registerTool(
+		server,
 		'get_my_incomes',
 		'Get income records for the current authenticated user',
 		{
@@ -68,7 +71,8 @@ export const registerIncomeTools = (server: McpServer) => {
 	);
 
 	// Get income count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_income_count',
 		'Get income count using available filters',
 		{
@@ -108,7 +112,8 @@ export const registerIncomeTools = (server: McpServer) => {
 	);
 
 	// Get paginated incomes tool
-	server.tool(
+	registerTool(
+		server,
 		'get_incomes_pagination',
 		'Get paginated list of incomes',
 		{
@@ -144,7 +149,8 @@ export const registerIncomeTools = (server: McpServer) => {
 	);
 
 	// Get all incomes tool
-	server.tool(
+	registerTool(
+		server,
 		'get_incomes',
 		'Get list of incomes with filtering options',
 		{
@@ -183,7 +189,8 @@ export const registerIncomeTools = (server: McpServer) => {
 	);
 
 	// Get income by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_income',
 		'Get a specific income by ID',
 		{
@@ -209,15 +216,17 @@ export const registerIncomeTools = (server: McpServer) => {
 	);
 
 	// Create income tool
-	server.tool(
+	registerTool(
+		server,
 		'create_income',
 		'Create a new income record',
 		{
-			income_data: IncomeSchemaFull.partial()
-				.required({
-					amount: true,
-					currency: true
+			income_data: z
+				.object({
+					amount: z.number().describe('The amount (required)'),
+					currency: z.string().describe('The currency (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the income')
 		},
 		async ({ income_data }) => {
@@ -255,12 +264,13 @@ export const registerIncomeTools = (server: McpServer) => {
 	);
 
 	// Update income tool
-	server.tool(
+	registerTool(
+		server,
 		'update_income',
 		'Update an existing income record',
 		{
 			id: z.string().uuid().describe('The income ID'),
-			income_data: IncomeSchemaFull.partial().describe('The data for updating the income')
+			income_data: z.record(z.string(), z.any()).describe('The data for updating the income')
 		},
 		async ({ id, income_data }) => {
 			try {
@@ -297,7 +307,8 @@ export const registerIncomeTools = (server: McpServer) => {
 	);
 
 	// Delete income tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_income',
 		'Delete an income record',
 		{

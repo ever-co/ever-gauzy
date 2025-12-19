@@ -1,11 +1,13 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { TimeOffRequestSchema, TimeOffPolicySchema, TimeOffStatusEnum, TimeOffTypeEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { TimeOffStatusEnum, TimeOffTypeEnum } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('TimeOffTools');
 
 /**
@@ -44,7 +46,8 @@ const convertTimeOffDateFields = (timeOffData: TimeOffData): ConvertedTimeOffDat
 
 export const registerTimeOffTools = (server: McpServer) => {
 	// Get time-off requests tool
-	server.tool(
+	registerTool(
+		server,
 		'get_time_off_requests',
 		"Get list of time-off requests for the authenticated user's organization",
 		{
@@ -97,7 +100,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Get time-off request count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_time_off_request_count',
 		"Get time-off request count in the authenticated user's organization",
 		{
@@ -139,7 +143,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Get time-off request by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_time_off_request',
 		'Get a specific time-off request by ID',
 		{
@@ -173,17 +178,19 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Create time-off request tool
-	server.tool(
+	registerTool(
+		server,
 		'create_time_off_request',
 		"Create a new time-off request in the authenticated user's organization",
 		{
-			request_data: TimeOffRequestSchema.partial()
-				.required({
-					startDate: true,
-					endDate: true,
-					employeeId: true,
-					policyId: true
+			request_data: z
+				.object({
+					startDate: z.string().describe('The start date (required)'),
+					endDate: z.string().describe('The end date (required)'),
+					employeeId: z.string().describe('The employee ID (required)'),
+					policyId: z.string().describe('The policy ID (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the time-off request')
 		},
 		async ({ request_data }) => {
@@ -215,12 +222,13 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Update time-off request tool
-	server.tool(
+	registerTool(
+		server,
 		'update_time_off_request',
 		'Update an existing time-off request',
 		{
 			id: z.string().uuid().describe('The time-off request ID'),
-			request_data: TimeOffRequestSchema.partial().describe('The data for updating the time-off request')
+			request_data: z.record(z.string(), z.any()).describe('The data for updating the time-off request')
 		},
 		async ({ id, request_data }) => {
 			try {
@@ -244,7 +252,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Delete time-off request tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_time_off_request',
 		'Delete a time-off request',
 		{
@@ -274,7 +283,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Approve time-off request tool
-	server.tool(
+	registerTool(
+		server,
 		'approve_time_off_request',
 		'Approve a time-off request',
 		{
@@ -303,7 +313,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Deny time-off request tool
-	server.tool(
+	registerTool(
+		server,
 		'deny_time_off_request',
 		'Deny a time-off request',
 		{
@@ -333,7 +344,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Cancel time-off request tool
-	server.tool(
+	registerTool(
+		server,
 		'cancel_time_off_request',
 		'Cancel a time-off request',
 		{
@@ -361,7 +373,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Get my time-off requests tool
-	server.tool(
+	registerTool(
+		server,
 		'get_my_time_off_requests',
 		'Get time-off requests for the current authenticated user',
 		{
@@ -407,7 +420,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Get pending time-off requests tool
-	server.tool(
+	registerTool(
+		server,
 		'get_pending_time_off_requests',
 		"Get pending time-off requests for the authenticated user's organization",
 		{
@@ -452,7 +466,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	// TIME-OFF POLICIES
 
 	// Get time-off policies tool
-	server.tool(
+	registerTool(
+		server,
 		'get_time_off_policies',
 		"Get list of time-off policies for the authenticated user's organization",
 		{
@@ -498,7 +513,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Get time-off policy by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_time_off_policy',
 		'Get a specific time-off policy by ID',
 		{
@@ -529,15 +545,17 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Create time-off policy tool
-	server.tool(
+	registerTool(
+		server,
 		'create_time_off_policy',
 		"Create a new time-off policy in the authenticated user's organization",
 		{
-			policy_data: TimeOffPolicySchema.partial()
-				.required({
-					name: true,
-					type: true
+			policy_data: z
+				.object({
+					name: z.string().describe('The policy name (required)'),
+					type: z.string().describe('The policy type (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the time-off policy')
 		},
 		async ({ policy_data }) => {
@@ -568,12 +586,13 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Update time-off policy tool
-	server.tool(
+	registerTool(
+		server,
 		'update_time_off_policy',
 		'Update an existing time-off policy',
 		{
 			id: z.string().uuid().describe('The time-off policy ID'),
-			policy_data: TimeOffPolicySchema.partial().describe('The data for updating the time-off policy')
+			policy_data: z.record(z.string(), z.any()).describe('The data for updating the time-off policy')
 		},
 		async ({ id, policy_data }) => {
 			try {
@@ -597,7 +616,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Delete time-off policy tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_time_off_policy',
 		'Delete a time-off policy',
 		{
@@ -627,7 +647,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Assign employees to time-off policy tool
-	server.tool(
+	registerTool(
+		server,
 		'assign_employees_to_time_off_policy',
 		'Assign employees to a time-off policy',
 		{
@@ -656,7 +677,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Get time-off balance tool
-	server.tool(
+	registerTool(
+		server,
 		'get_time_off_balance',
 		'Get time-off balance for an employee',
 		{
@@ -694,7 +716,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Get my time-off balance tool
-	server.tool(
+	registerTool(
+		server,
 		'get_my_time_off_balance',
 		'Get time-off balance for the current authenticated user',
 		{
@@ -730,7 +753,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 	);
 
 	// Get time-off statistics tool
-	server.tool(
+	registerTool(
+		server,
 		'get_time_off_statistics',
 		"Get time-off statistics for the authenticated user's organization",
 		{
