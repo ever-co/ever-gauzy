@@ -28,8 +28,10 @@ export class SharedEntity extends BasePerEntityType implements ISharedEntity {
     @ApiProperty({ type: () => Object })
     @IsOptional()
     @IsObject()
-    @MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text' })
-    shareRules: IShareRule[];
+    @MultiORMColumn({
+        type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text'
+     })
+    shareRules: IShareRule[] | string;
 
     /**
      * The additional options for the shared entity.

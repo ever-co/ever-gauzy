@@ -14,12 +14,10 @@ export class EmployeeRecentVisitSubscriber extends BaseEntityEventSubscriber<Emp
     }
 
     /**
-     * Called before an EmployeeRecentVisit entity is inserted or updated in the database.
-     * This method prepares the entity for insertion or update by serializing the data property to a JSON string
-     * for SQLite databases.
+     * Serializes the data property to a JSON string for SQLite databases.
      *
-     * @param entity The EmployeeRecentVisit entity that is about to be created or updated.
-     * @returns {Promise<void>} A promise that resolves when the pre-creation or pre-update processing is complete.
+     * @param entity The EmployeeRecentVisit entity that is about to be serialized.
+     * @returns {Promise<void>} A promise that resolves when the serialization is complete.
      */
     private async serializeDataForSQLite(entity: EmployeeRecentVisit): Promise<void> {
         try {

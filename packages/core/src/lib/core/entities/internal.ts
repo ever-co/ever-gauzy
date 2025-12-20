@@ -197,6 +197,7 @@ export * from '../../organization/organization.subscriber';
 export * from '../../payment/payment.subscriber';
 export * from '../../pipeline/pipeline.subscriber';
 export * from '../../product-category/product-category.subscriber';
+export * from '../../shared-entity/shared-entity.subscriber';
 export * from '../../reports/report.subscriber';
 export * from '../../resource-link/resource-link.subscriber';
 export * from '../../role/role.subscriber';
