@@ -131,7 +131,7 @@ jobs:
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
-            console.log(script.serverApi(true))
+            console.log(script.serverapi(true))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_API_SERVER_APP_NAME: 'gauzy-api-server'
@@ -411,7 +411,7 @@ jobs:
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
-            console.log(script.serverApi(true))
+            console.log(script.serverapi(true))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_API_SERVER_APP_NAME: 'gauzy-api-server'
