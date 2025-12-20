@@ -80,52 +80,18 @@
 			}
 		},
 		"win": {
-			"target": [
-				{
-					"target": "nsis",
-					"arch": [
-						"x64",
-						"arm64"
-					]
-				}
-			],
+			"target": "nsis",
 			"icon": "icon.ico",
 			"verifyUpdateCodeSignature": false
 		},
 		"linux": {
 			"icon": "linux",
 			"target": [
-				{
-					"target": "deb",
-					"arch": [
-						"x64",
-						"arm64"
-					]
-				},
-				{
-					"target": "snap"
-				},
-				{
-					"target": "tar.gz",
-					"arch": [
-						"x64",
-						"arm64"
-					]
-				},
-				{
-					"target": "rpm",
-					"arch": [
-						"x64",
-						"arm64"
-					]
-				},
-				{
-					"target": "AppImage",
-					"arch": [
-						"x64",
-						"arm64"
-					]
-				}
+				"deb",
+				"snap",
+				"tar.gz",
+				"rpm",
+				"AppImage"
 			],
 			"executableName": "gauzy-desktop",
 			"artifactName": "${name}-${arch}-${version}.${ext}",
