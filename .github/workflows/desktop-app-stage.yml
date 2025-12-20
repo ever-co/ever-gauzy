@@ -61,9 +61,11 @@ jobs:
             console.log(script.desktop(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_APP_NAME: 'ever-gauzy-desktop'
+          DESKTOP_APP_NAME: 'gauzy-desktop'
+          DESKTOP_APP_REPO_NAME: 'ever-gauzy-desktop'
+          DESKTOP_APP_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_APP_DESCRIPTION: 'Ever Gauzy Desktop'
+          DESKTOP_APP_DESCRIPTION: 'Gauzy Desktop'
           DESKTOP_APP_ID: 'com.ever.gauzydesktop'
 
       - name: Build Desktop App
@@ -132,9 +134,11 @@ jobs:
             console.log(script.desktop(true))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_APP_NAME: 'ever-gauzy-desktop'
+          DESKTOP_APP_NAME: 'gauzy-desktop'
+          DESKTOP_APP_REPO_NAME: 'ever-gauzy-desktop'
+          DESKTOP_APP_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_APP_DESCRIPTION: 'Ever Gauzy Desktop'
+          DESKTOP_APP_DESCRIPTION: 'Gauzy Desktop'
           DESKTOP_APP_ID: 'com.ever.gauzydesktop'
 
       - name: Build Desktop App
@@ -194,9 +198,11 @@ jobs:
             console.log(script.desktop(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_APP_NAME: 'ever-gauzy-desktop'
+          DESKTOP_APP_NAME: 'gauzy-desktop'
+          DESKTOP_APP_REPO_NAME: 'ever-gauzy-desktop'
+          DESKTOP_APP_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_APP_DESCRIPTION: 'Ever Gauzy Desktop'
+          DESKTOP_APP_DESCRIPTION: 'Gauzy Desktop'
           DESKTOP_APP_ID: 'com.ever.gauzydesktop'
 
       - name: Build Desktop App
@@ -290,9 +296,11 @@ jobs:
             console.log(script.desktop(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_APP_NAME: 'ever-gauzy-desktop'
+          DESKTOP_APP_NAME: 'gauzy-desktop'
+          DESKTOP_APP_REPO_NAME: 'ever-gauzy-desktop'
+          DESKTOP_APP_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_APP_DESCRIPTION: 'Ever Gauzy Desktop'
+          DESKTOP_APP_DESCRIPTION: 'Gauzy Desktop'
           DESKTOP_APP_ID: 'com.ever.gauzydesktop'
 
       - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
@@ -339,7 +347,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [warp-windows-latest-arm64-16x]
+        os: [windows-11-arm]
 
     steps:
       - name: Check out Git repository
@@ -406,9 +414,11 @@ jobs:
             console.log(script.desktop(true))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_APP_NAME: 'ever-gauzy-desktop'
+          DESKTOP_APP_NAME: 'gauzy-desktop'
+          DESKTOP_APP_REPO_NAME: 'ever-gauzy-desktop'
+          DESKTOP_APP_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_APP_DESCRIPTION: 'Ever Gauzy Desktop'
+          DESKTOP_APP_DESCRIPTION: 'Gauzy Desktop'
           DESKTOP_APP_ID: 'com.ever.gauzydesktop'
 
       - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH

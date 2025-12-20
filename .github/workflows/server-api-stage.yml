@@ -61,9 +61,11 @@ jobs:
             console.log(script.serverapi(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_API_SERVER_APP_NAME: 'ever-gauzy-api-server'
+          DESKTOP_API_SERVER_APP_NAME: 'gauzy-api-server'
+          DESKTOP_API_SERVER_REPO_NAME: 'ever-gauzy-api-server'
+          DESKTOP_API_SERVER_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_API_SERVER_APP_DESCRIPTION: 'Ever Gauzy API Server'
+          DESKTOP_API_SERVER_APP_DESCRIPTION: 'Gauzy API Server'
           DESKTOP_API_SERVER_APP_ID: 'com.ever.gauzyapiserver'
 
       - name: Build Server
@@ -132,9 +134,11 @@ jobs:
             console.log(script.serverApi(true))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_API_SERVER_APP_NAME: 'ever-gauzy-api-server'
+          DESKTOP_API_SERVER_APP_NAME: 'gauzy-api-server'
+          DESKTOP_API_SERVER_REPO_NAME: 'ever-gauzy-api-server'
+          DESKTOP_API_SERVER_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_API_SERVER_APP_DESCRIPTION: 'Ever Gauzy API Server'
+          DESKTOP_API_SERVER_APP_DESCRIPTION: 'Gauzy API Server'
           DESKTOP_API_SERVER_APP_ID: 'com.ever.gauzyapiserver'
 
       - name: Build Server API
@@ -194,9 +198,11 @@ jobs:
             console.log(script.serverapi(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_API_SERVER_APP_NAME: 'ever-gauzy-api-server'
+          DESKTOP_API_SERVER_APP_NAME: 'gauzy-api-server'
+          DESKTOP_API_SERVER_REPO_NAME: 'ever-gauzy-api-server'
+          DESKTOP_API_SERVER_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_API_SERVER_APP_DESCRIPTION: 'Ever Gauzy API Server'
+          DESKTOP_API_SERVER_APP_DESCRIPTION: 'Gauzy API Server'
           DESKTOP_API_SERVER_APP_ID: 'com.ever.gauzyapiserver'
 
       - name: Build Server
@@ -290,9 +296,11 @@ jobs:
             console.log(script.serverapi(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_API_SERVER_APP_NAME: 'ever-gauzy-api-server'
+          DESKTOP_API_SERVER_APP_NAME: 'gauzy-api-server'
+          DESKTOP_API_SERVER_REPO_NAME: 'ever-gauzy-api-server'
+          DESKTOP_API_SERVER_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_API_SERVER_APP_DESCRIPTION: 'Ever Gauzy API Server'
+          DESKTOP_API_SERVER_APP_DESCRIPTION: 'Gauzy API Server'
           DESKTOP_API_SERVER_APP_ID: 'com.ever.gauzyapiserver'
 
       - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
@@ -339,7 +347,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [warp-windows-latest-arm64-16x]
+        os: [windows-11-arm]
 
     steps:
       - name: Check out Git repository
@@ -406,9 +414,11 @@ jobs:
             console.log(script.serverApi(true))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_API_SERVER_APP_NAME: 'ever-gauzy-api-server'
+          DESKTOP_API_SERVER_APP_NAME: 'gauzy-api-server'
+          DESKTOP_API_SERVER_REPO_NAME: 'ever-gauzy-api-server'
+          DESKTOP_API_SERVER_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_API_SERVER_APP_DESCRIPTION: 'Ever Gauzy API Server'
+          DESKTOP_API_SERVER_APP_DESCRIPTION: 'Gauzy API Server'
           DESKTOP_API_SERVER_APP_ID: 'com.ever.gauzyapiserver'
 
       - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
