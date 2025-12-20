@@ -14,6 +14,10 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	private _screenshots: string[] | string;
 	private _afkDuration: number = 0;
 	private _activeWindows: TActiveWindows[] | string;
+	private _syncedActivity: boolean;
+	private _timerId: number;
+	private _timeslotId: string;
+	private _isOffline: boolean;
 
 	constructor(kbMouseActivity: KbMouseActivityTO) {
 		super(kbMouseActivity.id, kbMouseActivity.tenantId, kbMouseActivity.organizationId);
@@ -28,6 +32,10 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 		this._screenshots = kbMouseActivity.screenshots;
 		this._afkDuration = kbMouseActivity.afkDuration;
 		this._activeWindows = kbMouseActivity.activeWindows;
+		this._syncedActivity = kbMouseActivity.syncedActivity;
+		this._timerId = kbMouseActivity.timerId;
+		this._timeslotId = kbMouseActivity.timeslotId;
+		this._isOffline = kbMouseActivity.isOffline;
 	}
 
 	public get timeStart(): Date {
@@ -96,24 +104,52 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	public get activeWindows(): TActiveWindows[] | string {
 		return this._activeWindows;
 	}
+	public set syncedActivity(value: boolean) {
+		this._syncedActivity = value;
+	}
+	public get syncedActivity(): boolean {
+		return this._syncedActivity;
+	}
+	public set isOffline(value: boolean) {
+		this._isOffline = value;
+	}
+	public get isOffline(): boolean {
+		return this._isOffline;
+	}
+	public set timerId(value: number) {
+		this._timerId = value;
+	}
+	public get timerId(): number {
+		return this._timerId;
+	}
+	public set timeslotId(value: string) {
+		this._timeslotId = value;
+	}
+	public get timeslotId(): string {
+		return this._timeslotId;
+	}
 
 	public toObject(): KbMouseActivityTO {
 		return {
-			timeStart: this.timeStart,
-			timeEnd: this.timeEnd,
-			kbPressCount: this.kbPressCount,
-			kbSequence: Array.isArray(this.kbSequence) ? this.kbSequence : [],
-			mouseMovementsCount: this.mouseMovementsCount,
-			mouseRightClickCount: this.mouseRightClickCount,
-			mouseLeftClickCount: this.mouseLeftClickCount,
-			mouseEvents: Array.isArray(this.mouseEvents) ? this.mouseEvents : [],
+			timeStart: this._timeStart,
+			timeEnd: this._timeEnd,
+			kbPressCount: this._kbPressCount,
+			kbSequence: Array.isArray(this._kbSequence) ? this._kbSequence : [],
+			mouseMovementsCount: this._mouseMovementsCount,
+			mouseRightClickCount: this._mouseRightClickCount,
+			mouseLeftClickCount: this._mouseLeftClickCount,
+			mouseEvents: Array.isArray(this._mouseEvents) ? this._mouseEvents : [],
 			id: this.id,
 			organizationId: this.organizationId,
 			tenantId: this.tenantId,
 			remoteId: this.remoteId,
-			screenshots: Array.isArray(this.screenshots) ? this.screenshots : [],
-			afkDuration: this.afkDuration,
-			activeWindows: Array.isArray(this.activeWindows) ? this.activeWindows : [],
+			screenshots: Array.isArray(this._screenshots) ? this._screenshots : [],
+			afkDuration: this._afkDuration,
+			activeWindows: Array.isArray(this._activeWindows) ? this._activeWindows : [],
+			syncedActivity: this._syncedActivity,
+			isOffline: this._isOffline,
+			timerId: this._timerId,
+			timeslotId: this._timeslotId
 		};
 	}
 }

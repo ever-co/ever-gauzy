@@ -28,6 +28,7 @@ import {
 	PaginationFilterBaseComponent
 } from '../../smart-data-layout/pagination/pagination-filter-base.component';
 import { DateViewComponent } from '../../table-components';
+import { InputFilterComponent, InviteStatusFilterComponent, ToggleFilterComponent } from '../../table-filters';
 import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
@@ -66,7 +67,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	public invites: IInviteViewModel[] = [];
-	public invites$: Subject<any> = new Subject();
+	public invites$: Subject<any> = this.subject$;
 	public organization: IOrganization;
 	private _refresh$: Subject<any> = new Subject();
 
@@ -261,7 +262,8 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 					? {
 							role: [RolesEnum.CANDIDATE]
 					  }
-					: {})
+					: {}),
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (invite: IInvite) => this.transformInvite(invite),
 			finalize: () => {
@@ -342,11 +344,18 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 			columns: {
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
-					type: 'email'
+					type: 'email',
+					isFilterable: true,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: this._getFilterFunction('email')
 				},
 				roleName: {
 					title: this.getTranslation('SM_TABLE.ROLE'),
-					type: 'text'
+					type: 'text',
+					isFilterable: false
 				},
 				projects: {
 					title: this.getTranslation('SM_TABLE.PROJECTS'),
@@ -377,7 +386,13 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 				},
 				fullName: {
 					title: this.getTranslation('SM_TABLE.INVITED_BY'),
-					type: 'text'
+					type: 'text',
+					isFilterable: true,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: this._getFilterFunction('invitedByUser')
 				},
 				createdDate: {
 					title: this.getTranslation('SM_TABLE.CREATED'),
@@ -391,11 +406,31 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 				},
 				expireDate: {
 					title: this.getTranslation('SM_TABLE.EXPIRE_DATE'),
-					type: 'text'
+					type: 'text',
+					class: 'text-center',
+					width: '5%',
+					isFilterable: true,
+					filter: {
+						type: 'custom',
+						component: ToggleFilterComponent
+					},
+					filterFunction: (isExpired: boolean) => {
+						this.setFilter({ field: 'isExpired', search: isExpired });
+						return true;
+					}
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'text'
+					type: 'text',
+					isFilterable: true,
+					filter: {
+						type: 'custom',
+						component: InviteStatusFilterComponent
+					},
+					filterFunction: (status: string) => {
+						this.setFilter({ field: 'status', search: status });
+						return !!status;
+					}
 				}
 			}
 		};
@@ -413,6 +448,17 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 			delete settingsSmartTable['columns']['roleName'];
 		}
 		this.settingsSmartTable = settingsSmartTable;
+	}
+
+	/**
+	 * Helper function to create a reusable filter function for columns.
+	 * @param field - The field to filter by.
+	 */
+	private _getFilterFunction(field: string) {
+		return (value: string) => {
+			this.setFilter({ field, search: value });
+			return value.length > 0;
+		};
 	}
 
 	async deleteInvite(selectedItem?: IInviteViewModel) {

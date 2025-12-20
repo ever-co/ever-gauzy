@@ -112,6 +112,8 @@
 		"@types/ckeditor": "^4.9.10",
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
+		"cross-env": "^7.0.3",
+		"ts-node": "^10.9.2",
 		"jest-preset-angular": "14.5.5"
 	},
 	"keywords": [

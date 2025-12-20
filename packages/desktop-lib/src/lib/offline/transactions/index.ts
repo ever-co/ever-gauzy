@@ -5,3 +5,4 @@ export * from './user-transaction';
 export * from './timer-transaction';
 export * from './kb-mouse-activity-transaction';
 export * from './audit-queue-transaction';
+export * from './screenshot-transaction';

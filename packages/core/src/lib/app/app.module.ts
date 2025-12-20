@@ -166,6 +166,7 @@ import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TagTypeModule } from '../tag-type/tag-type.module';
 import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
+import { EmployeeRecentVisitModule } from '../employee-recent-visit/employee-recent-visit.module';
 
 const { unleashConfig } = environment;
 
@@ -254,9 +255,9 @@ if (environment.THROTTLE_ENABLED) {
 								const parsedUrl = new URL(url);
 								const isTls = parsedUrl.protocol === 'rediss:';
 								const username = parsedUrl.username || REDIS_USER;
-								const password = parsedUrl.password || REDIS_PASSWORD;
+								const password = parsedUrl.password || REDIS_PASSWORD || undefined;
 								const host = parsedUrl.hostname || REDIS_HOST;
-								const port = parsedUrl.port || REDIS_PORT || '6379';
+								const port = parseInt(parsedUrl.port || REDIS_PORT || '6379', 10);
 
 								const primary = new Keyv({
 									store: new CacheableMemory({ ttl: '1h', lruSize: 10000 })
@@ -275,7 +276,7 @@ if (environment.THROTTLE_ENABLED) {
 										? {
 												// TLS socket options (RedisTlsOptions)
 												host,
-												port: parseInt(port, 10),
+												port,
 												tls: true,
 												rejectUnauthorized: process.env.NODE_ENV === 'production',
 												// Connection timeout
@@ -284,7 +285,7 @@ if (environment.THROTTLE_ENABLED) {
 										: {
 												// TCP socket options (RedisTcpOptions)
 												host,
-												port: parseInt(port, 10),
+												port,
 												// TCP keepalive (value in milliseconds for initial delay)
 												keepAlive: true,
 												keepAliveInitialDelay: 10_000,
@@ -343,7 +344,8 @@ if (environment.THROTTLE_ENABLED) {
 		I18nModule.forRoot({
 			fallbackLanguage: LanguagesEnum.ENGLISH,
 			loaderOptions: {
-				path: path.resolve(__dirname, '../i18n/'),
+				path: environment.isElectron && environment.electronResourcesPath ? path.resolve(environment.electronResourcesPath, 'app.asar.unpacked/node_modules/@gauzy/core/src/lib/i18n')
+				: path.resolve(__dirname, '../i18n/'),
 				watch: !environment.production
 			},
 			resolvers: [new HeaderResolver(['language'])]
@@ -505,7 +507,8 @@ if (environment.THROTTLE_ENABLED) {
 		DashboardWidgetModule,
 		EmployeeNotificationModule,
 		EmployeeNotificationSettingModule,
-		TenantApiKeyModule
+		TenantApiKeyModule,
+		EmployeeRecentVisitModule
 	],
 	controllers: [AppController],
 	providers: [

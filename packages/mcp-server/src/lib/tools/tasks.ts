@@ -1,15 +1,11 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
-import {
-	TaskSchema,
-	TaskStatusEnum,
-	TaskPriorityEnum,
-	TaskSizeEnum,
-	TaskTypeEnum,
-} from '../schema';
+import { TaskStatusEnum, TaskPriorityEnum, TaskSizeEnum, TaskTypeEnum } from '../input-schemas';
+import { registerTool } from './tool-helper';
 
 const logger = new Logger('TaskTools');
 
@@ -21,13 +17,22 @@ interface TaskDateFields {
 
 const convertDateFields = (data: TaskDateFields) => ({
 	...data,
-	dueDate: data.dueDate ? (isNaN(Date.parse(data.dueDate.toString())) ? undefined : new Date(data.dueDate)) : undefined,
-	startDate: data.startDate ? (isNaN(Date.parse(data.startDate.toString())) ? undefined : new Date(data.startDate)) : undefined
+	dueDate: data.dueDate
+		? isNaN(Date.parse(data.dueDate.toString()))
+			? undefined
+			: new Date(data.dueDate)
+		: undefined,
+	startDate: data.startDate
+		? isNaN(Date.parse(data.startDate.toString()))
+			? undefined
+			: new Date(data.startDate)
+		: undefined
 });
 
 export const registerTaskTools = (server: McpServer) => {
 	// Get tasks tool
-	server.tool(
+	registerTool(
+		server,
 		'get_tasks',
 		"Get list of tasks for the authenticated user's organization or project",
 		{
@@ -45,18 +50,30 @@ export const registerTaskTools = (server: McpServer) => {
 				.optional()
 				.describe('Relations to include (e.g., ["members", "tags", "project"])')
 		},
-		async ({
-			projectId,
-			employeeId,
-			status,
-			priority,
-			size,
-			issueType,
-			page = 1,
-			limit = 10,
-			search,
-			relations
-		}) => {
+		async (args) => {
+			const {
+				projectId,
+				employeeId,
+				status,
+				priority,
+				size,
+				issueType,
+				page = 1,
+				limit = 10,
+				search,
+				relations
+			} = args as {
+				projectId?: string;
+				employeeId?: string;
+				status?: string;
+				priority?: string;
+				size?: string;
+				issueType?: string;
+				page?: number;
+				limit?: number;
+				search?: string;
+				relations?: string[];
+			};
 			try {
 				// Get default parameters from authenticated user
 				const defaultParams = authManager.getDefaultParams();
@@ -87,7 +104,7 @@ export const registerTaskTools = (server: McpServer) => {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(response, null, 2)
 						}
 					]
@@ -347,10 +364,7 @@ export const registerTaskTools = (server: McpServer) => {
 		'create_task',
 		"Create a new task in the authenticated user's organization",
 		{
-			task_data: TaskSchema.partial()
-				.required({
-					title: true
-				})
+			task_data: z.object({ title: z.string().describe('The title (required)') }).passthrough()
 				.describe('The data for creating the task')
 		},
 		async ({ task_data }) => {
@@ -367,7 +381,7 @@ export const registerTaskTools = (server: McpServer) => {
 				const createData = convertDateFields({
 					...task_data,
 					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
 				const response = await apiClient.post('/api/tasks', createData);
@@ -429,7 +443,7 @@ export const registerTaskTools = (server: McpServer) => {
 		'Update an existing task',
 		{
 			id: z.string().uuid().describe('The task ID'),
-			task_data: TaskSchema.partial().describe('The data for updating the task')
+			task_data: z.record(z.string(), z.any()).describe('The data for updating the task')
 		},
 		async ({ id, task_data }) => {
 			try {
@@ -487,10 +501,7 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			tasks: z
 				.array(
-					TaskSchema.partial()
-						.required({
-							title: true
-						})
+					z.object({ title: z.string().describe('The title (required)') }).passthrough()
 						.describe('Task data')
 				)
 				.describe('Array of task data to create')
@@ -507,11 +518,13 @@ export const registerTaskTools = (server: McpServer) => {
 				}
 
 				// Add organization and tenant ID to each task
-				const tasksWithDefaults = tasks.map((task) => convertDateFields({
-					...task,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				}));
+				const tasksWithDefaults = tasks.map((task) =>
+					convertDateFields({
+						...task,
+						organizationId: defaultParams.organizationId,
+						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+					})
+				);
 
 				const response = await apiClient.post('/api/tasks/bulk', { tasks: tasksWithDefaults });
 
@@ -540,7 +553,7 @@ export const registerTaskTools = (server: McpServer) => {
 				.array(
 					z.object({
 						id: z.string().uuid().describe('The task ID'),
-						data: TaskSchema.partial().describe('The data to update')
+						data: z.record(z.string(), z.any()).describe('The data to update')
 					})
 				)
 				.describe('Array of task updates')

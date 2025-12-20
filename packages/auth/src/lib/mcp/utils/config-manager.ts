@@ -16,7 +16,7 @@ export interface ServerConfig {
 	port: number;
 	mcpAuthUrl: string;
 	baseUrl: string;
-	environment: 'development' | 'production' | 'test';
+	environment: 'development' | 'production' | 'stage';
 
 	// Security settings
 	sessionSecret: string;
@@ -64,10 +64,34 @@ export class ConfigManager {
 	}
 
 	private getEnvEnvironment(key: string, defaultEnv: ServerConfig['environment']): ServerConfig['environment'] {
-		const v = (process.env[key] || defaultEnv).toLowerCase();
-		if (v === 'production') return 'production';
-		if (v === 'test') return 'test';
-		return 'development';
+		const rawValue = process.env[key];
+
+		if (!rawValue || rawValue.trim() === '') {
+			return defaultEnv;
+		}
+
+		// Normalize: trim whitespace and convert to lowercase
+		const normalizedValue = rawValue.trim().toLowerCase();
+
+		// Explicitly handle each valid environment with common variations
+		switch (normalizedValue) {
+			case 'production':
+				return 'production';
+
+			// Development environment (local)
+			case 'development':
+				return 'development';
+
+			case 'stage':
+				this.securityLogger.info(`${key}="${rawValue}" detected. Treating staging as production environment.`);
+				return 'production';
+
+			default:
+				this.securityLogger.warn(
+					`Unexpected ${key} value: "${rawValue}". Valid values: production, development, stage. Defaulting to "${defaultEnv}".`
+				);
+				return defaultEnv;
+		}
 	}
 
 	static getInstance(): ConfigManager {
@@ -123,7 +147,7 @@ export class ConfigManager {
 			host: this.getEnvString('MCP_HTTP_HOST', 'localhost'),
 			port: this.getEnvNumber('MCP_HTTP_PORT', 3001),
 			mcpAuthUrl: this.getEnvString('MCP_AUTH_JWT_ISSUER', 'http://localhost:3003'),
-			baseUrl: this.getEnvString('MCP_BASE_URL', 'http://localhost:3001'),
+			baseUrl: this.getEnvString('MCP_AUTH_BASE_URL', 'http://localhost:3003'),
 			environment: this.getEnvEnvironment('NODE_ENV', 'development'),
 
 			// Security settings
@@ -254,10 +278,10 @@ export class ConfigManager {
 			try {
 				const u = new URL(config.baseUrl);
 				if (config.environment === 'production' && u.protocol !== 'https:') {
-					errors.push('MCP_BASE_URL must use https in production');
+					errors.push('MCP_AUTH_BASE_URL must use https in production');
 				}
 			} catch {
-				errors.push('MCP_BASE_URL must be a valid URL');
+				errors.push('MCP_AUTH_BASE_URL must be a valid URL');
 			}
 		}
 

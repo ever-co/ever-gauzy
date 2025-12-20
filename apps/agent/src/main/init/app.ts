@@ -207,7 +207,7 @@ function listenGrantAccess(pullActivities: PullActivities) {
 			clearInterval(grantCheckInterval);
 			pullActivities.startTracking();
 		}
-	}, 1000);
+	}, 3000);
 }
 
 function listenIO() {
@@ -304,10 +304,9 @@ export async function InitApp() {
 		}
 	});
 
-	app.on('window-all-closed', (event: Event) => {
+	app.on('window-all-closed', () => {
 		// On OS X it is common for applications and their menu bar
 		// to stay active until the user quits explicitly with Cmd + Q
-		event.preventDefault();
 		if (process.platform === 'darwin') {
 			app.dock.hide();
 		}

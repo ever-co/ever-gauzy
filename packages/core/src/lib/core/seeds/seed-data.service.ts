@@ -37,7 +37,11 @@ import {
 	createRandomUsersOrganizations
 } from '../../user-organization/user-organization.seed';
 import { createCountries } from '../../country/country.seed';
-import { createDefaultTeams, createRandomTeam } from '../../organization-team/organization-team.seed';
+import {
+	createDefaultTeams,
+	createRandomTeam,
+	updateDemoUsersLastTeam
+} from '../../organization-team/organization-team.seed';
 import { createRolePermissions } from '../../role-permission/role-permission.seed';
 import { createDefaultTenant, createRandomTenants, DEFAULT_EVER_TENANT, DEFAULT_TENANT } from '../../tenant';
 import { createDefaultTenantSetting } from './../../tenant/tenant-setting/tenant-setting.seed';
@@ -495,7 +499,15 @@ export class SeedDataService {
 			this.dataSource,
 			this.tenant
 		);
-		this.superAdminUsers.push(...(defaultSuperAdminUsers as IUser[]));
+
+		// Set the first super admin as the creator of the tenant
+		if (defaultSuperAdminUsers && defaultSuperAdminUsers.length > 0) {
+			this.superAdminUsers.push(...(defaultSuperAdminUsers as IUser[]));
+
+			const superAdmin = defaultSuperAdminUsers[0];
+			await this.dataSource.manager.update('tenant', { id: this.tenant.id }, { createdByUserId: superAdmin.id });
+			console.log(`Tenant "${this.tenant.name}" creator set to Super Admin: ${superAdmin.email}`);
+		}
 
 		const { defaultEmployeeUsers } = await createDefaultEmployeesUsers(this.dataSource, this.tenant);
 
@@ -516,11 +528,12 @@ export class SeedDataService {
 
 		const allDefaultEmployees = DEFAULT_EMPLOYEES.concat(DEFAULT_EVER_EMPLOYEES);
 		//User level data that needs dataSource, tenant, organization, role, users
+		// Create employees for all default users (including admins and super admins)
 		this.defaultEmployees = await createDefaultEmployees(
 			this.dataSource,
 			this.tenant,
 			this.defaultOrganization,
-			defaultEmployeeUsers,
+			defaultUsers, // Changed from defaultEmployeeUsers to include admins
 			allDefaultEmployees
 		);
 
@@ -633,6 +646,12 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Teams',
 			createDefaultTeams(this.dataSource, this.defaultOrganization, this.defaultEmployees, this.roles)
+		);
+
+		// Update demo users' lastTeamId after teams are created
+		await this.tryExecute(
+			'Update Demo Users Last Team',
+			updateDemoUsersLastTeam(this.dataSource, this.defaultOrganization)
 		);
 
 		this.defaultProjects = await this.tryExecute(

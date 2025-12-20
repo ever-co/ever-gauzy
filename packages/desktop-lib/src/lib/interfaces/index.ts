@@ -44,3 +44,5 @@ export * from './i-user-transaction';
 export * from './serializable';
 export * from './i-audit-queue-transaction';
 export * from './i-audit-queue';
+export * from './i-screenshot-transaction';
+export * from './i-screenshot';
