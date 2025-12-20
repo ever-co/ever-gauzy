@@ -16,3 +16,4 @@ export * from './renew-plugin-subscription.command';
 export * from './update-plugin-subscription-plan.command';
 export * from './update-plugin-subscription.command';
 export * from './upgrade-plugin-subscription.command';
+

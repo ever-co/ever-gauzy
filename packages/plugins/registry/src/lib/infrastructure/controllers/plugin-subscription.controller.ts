@@ -271,7 +271,10 @@ export class PluginSubscriptionController {
 	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	@Delete(':id')
 	@HttpCode(HttpStatus.NO_CONTENT)
-	async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-		await this.commandBus.execute(new DeletePluginSubscriptionCommand(id));
+	async delete(
+		@Param('id', ParseUUIDPipe) subscriberId: string,
+		@Param('pluginTenantId', ParseUUIDPipe) pluginTenantId: string
+	): Promise<void> {
+		await this.commandBus.execute(new DeletePluginSubscriptionCommand(subscriberId, pluginTenantId));
 	}
 }

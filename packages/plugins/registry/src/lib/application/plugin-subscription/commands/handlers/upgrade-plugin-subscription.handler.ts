@@ -1,9 +1,6 @@
-import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { In } from 'typeorm';
 import { PluginSubscriptionService } from '../../../../domain';
-import { PluginSubscription } from '../../../../domain/entities';
 import { IPluginSubscription } from '../../../../shared';
 import { UpgradePluginSubscriptionCommand } from '../upgrade-plugin-subscription.command';
 
@@ -32,61 +29,59 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 	 */
 	async execute(command: UpgradePluginSubscriptionCommand): Promise<IPluginSubscription> {
 		const { subscriptionId, newPlanId, tenantId, organizationId, userId } = command;
-
-		// Find the existing subscription with proper tenant/organization filtering
-		const subscription = await this.pluginSubscriptionService.findOneByIdString(subscriptionId, {
-			where: {
-				tenantId,
-				...(organizationId && { organizationId }),
-				...(userId && { subscriberId: userId })
-			},
-			relations: ['plan', 'plugin', 'children']
-		});
-
-		if (!subscription) {
-			throw new NotFoundException(`Plugin subscription with ID ${subscriptionId} not found or access denied`);
-		}
-
-		// Ensure the user can only upgrade their own subscription
-		if (userId && subscription.subscriberId && subscription.subscriberId !== userId) {
-			throw new BadRequestException('You can only upgrade your own subscriptions');
-		}
-
-		// Validate that the new plan is different from current plan
-		if (subscription.planId === newPlanId) {
-			throw new BadRequestException('Cannot upgrade to the same plan. Please select a different plan.');
-		}
-
-		const previousPlanId = subscription.planId;
-
-		// Use domain method to upgrade subscription (includes validation and business logic)
 		try {
-			subscription.upgradeToPlan(newPlanId);
+			// Find the existing subscription with proper tenant/organization filtering
+			const { record: subscription, success } = await this.pluginSubscriptionService.findOneOrFailByIdString(
+				subscriptionId,
+				{
+					where: {
+						tenantId,
+						...(organizationId && { organizationId }),
+						...(userId && { subscriberId: userId })
+					},
+					relations: ['plan', 'plugin', 'parent', 'children']
+				}
+			);
+
+			if (!success) {
+				throw new NotFoundException(`Plugin subscription with ID ${subscriptionId} not found or access denied`);
+			}
+
+			// Ensure the user can only upgrade their own subscription
+			if (userId && subscription.subscriberId && subscription.subscriberId !== userId) {
+				throw new BadRequestException('You can only upgrade your own subscriptions');
+			}
+
+			// Validate that the new plan is different from current plan
+			if (subscription.planId === newPlanId) {
+				throw new BadRequestException('Cannot upgrade to the same plan. Please select a different plan.');
+			}
+
+			// Use domain method to upgrade subscription (includes validation and business logic)
+			const upgradedSubscription = subscription.upgradeToPlan(newPlanId);
+
+			// Cascade upgrade to child subscriptions if this is a parent subscription
+			const upgradedChildren = this.upgradeChildSubscriptions(upgradedSubscription);
+
+			if (upgradedChildren.length > 0) {
+				this.logger.log(
+					`Upgraded ${upgradedChildren.length} child subscription(s) for parent subscription ${subscriptionId}`
+				);
+			}
+
+			// Add upgrade metadata
+			upgradedSubscription.metadata = {
+				...upgradedSubscription.metadata,
+				upgradedChildCount: upgradedChildren.length,
+				upgradedBy: userId,
+				upgradeType: upgradedSubscription.parentId ? 'child' : 'parent'
+			};
+
+			// Persist the upgraded subscription
+			return this.pluginSubscriptionService.save(upgradedSubscription);
 		} catch (error) {
 			throw new BadRequestException(`Failed to upgrade subscription: ${error.message}`);
 		}
-
-		// Cascade upgrade to child subscriptions if this is a parent subscription
-		const upgradedChildren = await this.upgradeChildSubscriptions(subscription, newPlanId, previousPlanId);
-
-		if (upgradedChildren.length > 0) {
-			this.logger.log(
-				`Upgraded ${upgradedChildren.length} child subscription(s) for parent subscription ${subscriptionId}`
-			);
-		}
-
-		// Add upgrade metadata
-		subscription.metadata = {
-			...subscription.metadata,
-			upgradedChildCount: upgradedChildren.length,
-			upgradedBy: userId,
-			upgradeType: subscription.parentId ? 'child' : 'parent'
-		};
-
-		// Persist the upgraded subscription
-		const updatedSubscription = await this.pluginSubscriptionService.save(subscription);
-
-		return updatedSubscription;
 	}
 
 	/**
@@ -97,57 +92,10 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 	 * @param previousPlanId - The previous plan ID for metadata tracking
 	 * @returns Array of upgraded child subscriptions
 	 */
-	private async upgradeChildSubscriptions(
-		subscription: PluginSubscription,
-		newPlanId: string,
-		previousPlanId?: string
-	): Promise<PluginSubscription[]> {
+	private upgradeChildSubscriptions(subscription: IPluginSubscription): IPluginSubscription[] {
 		// Skip if this is a child subscription (no cascade needed)
-		if (subscription.isInherited()) {
-			return [];
-		}
-
-		// Find all active child subscriptions
-		const activeChildren = await this.pluginSubscriptionService.find({
-			where: {
-				parentId: subscription.id,
-				status: In([
-					PluginSubscriptionStatus.ACTIVE,
-					PluginSubscriptionStatus.TRIAL,
-					PluginSubscriptionStatus.PENDING
-				])
-			}
-		});
-
-		if (!activeChildren || activeChildren.length === 0) {
-			return [];
-		}
-
-		const upgradedChildren: PluginSubscription[] = [];
-
-		for (const child of activeChildren) {
-			try {
-				// Update child's plan to match parent
-				child.planId = newPlanId;
-				child.metadata = {
-					...child.metadata,
-					previousPlanId,
-					upgradedByParent: true,
-					parentSubscriptionId: subscription.id,
-					upgradedAt: new Date().toISOString()
-				};
-				child.updatedAt = new Date();
-				upgradedChildren.push(child);
-			} catch (error) {
-				this.logger.warn(`Failed to upgrade child subscription ${child.id}: ${error.message}`);
-			}
-		}
-
-		// Save all upgraded children individually (service.save doesn't support arrays)
-		if (upgradedChildren.length > 0) {
-			await Promise.all(upgradedChildren.map((child) => this.pluginSubscriptionService.save(child)));
-		}
-
-		return upgradedChildren;
+		if (subscription.isInherited()) return [];
+		// Upgrade all children
+		return subscription.children.map((child: IPluginSubscription) => child.upgradeToPlan(subscription.planId));
 	}
 }

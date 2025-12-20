@@ -64,15 +64,22 @@ export class ExtendTrialSubscriptionCommandHandler implements ICommandHandler<Ex
 		}
 
 		// Use domain method to extend trial (includes validation and business logic)
-		try {
-			subscription.extendTrial(days, effectiveUserId);
-		} catch (error) {
-			throw new BadRequestException(`Failed to extend trial: ${error.message}`);
-		}
+		const extendedSubscription = subscription.extendTrial(days, effectiveUserId);
+
+		// Cascade trial extension to child subscriptions if this is a parent subscription
+		extendedSubscription.children = extendedSubscription.children.map((child) =>
+			child.extendTrial(days, effectiveUserId)
+		);
+
+		// Update metadata with extension details
+		extendedSubscription.metadata = {
+			...extendedSubscription.metadata,
+			trialExtendedBy: effectiveUserId,
+			trialExtensionDays: days,
+			trialExtendedAt: new Date()
+		};
 
 		// Persist the updated subscription
-		const extendedSubscription = await this.pluginSubscriptionService.save(subscription);
-
-		return extendedSubscription;
+		return this.pluginSubscriptionService.save(extendedSubscription);
 	}
 }

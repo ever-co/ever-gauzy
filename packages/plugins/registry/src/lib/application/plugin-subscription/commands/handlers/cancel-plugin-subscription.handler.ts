@@ -1,8 +1,6 @@
-import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { In } from 'typeorm';
 import { PluginSubscriptionService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
 import { IPluginSubscription } from '../../../../shared';
@@ -35,60 +33,56 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 	async execute(command: CancelPluginSubscriptionCommand): Promise<IPluginSubscription> {
 		const { id, reason } = command;
 
-		// Get current tenant and organization context
-		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.currentOrganizationId();
-		const subscriberId = RequestContext.currentUserId();
-
-		// Find the existing subscription with proper tenant/organization filtering
-		const subscription = await this.pluginSubscriptionService.findOneByIdString(id, {
-			where: {
-				tenantId,
-				...(organizationId && { organizationId }),
-				...(subscriberId && { subscriberId })
-			},
-			relations: ['plan', 'plugin', 'pluginTenant', 'children']
-		});
-
-		if (!subscription) {
-			throw new NotFoundException(`Plugin subscription with ID ${id} not found or access denied`);
-		}
-
-		// Validate that the subscription can be cancelled using domain method
-		if (!subscription.canBeCancelled()) {
-			throw new BadRequestException('This subscription cannot be cancelled as it is already cancelled');
-		}
-
-		// Use domain method to cancel subscription (includes validation and business logic)
 		try {
-			subscription.cancel(reason);
+			// Get current tenant and organization context
+			const tenantId = RequestContext.currentTenantId();
+			const organizationId = RequestContext.currentOrganizationId();
+			const subscriberId = RequestContext.currentUserId();
+
+			// Find the existing subscription with proper tenant/organization filtering
+			const subscription = await this.pluginSubscriptionService.findOneByIdString(id, {
+				where: {
+					tenantId,
+					...(organizationId && { organizationId }),
+					...(subscriberId && { subscriberId })
+				},
+				relations: ['plan', 'plugin', 'pluginTenant', 'children', 'children.pluginTenant']
+			});
+
+			if (!subscription) {
+				throw new NotFoundException(`Plugin subscription with ID ${id} not found or access denied`);
+			}
+
+			// Validate that the subscription can be cancelled using domain method
+			if (!subscription.canBeCancelled()) {
+				throw new BadRequestException('This subscription cannot be cancelled as it is already cancelled');
+			}
+
+			// Use domain method to cancel subscription (includes validation and business logic)
+
+			const cancelledSubscription = subscription.cancel(reason);
+
+			// Cascade cancellation to child subscriptions if this is a parent subscription
+			const cancelledChildren = await this.cancelChildSubscriptions(cancelledSubscription, reason);
+
+			if (cancelledChildren.length > 0) {
+				this.logger.log(
+					`Cancelled ${cancelledChildren.length} child subscription(s) for parent subscription ${id}`
+				);
+			}
+
+			// Add cancellation metadata
+			cancelledSubscription.metadata = {
+				...cancelledSubscription.metadata,
+				cancelledChildCount: cancelledChildren.length,
+				cancelledBy: subscriberId,
+				cancellationType: subscription.isInherited() ? 'parent' : 'child'
+			};
+
+			return this.pluginSubscriptionService.save(cancelledSubscription);
 		} catch (error) {
 			throw new BadRequestException(`Failed to cancel subscription: ${error.message}`);
 		}
-
-		// Cascade cancellation to child subscriptions if this is a parent subscription
-		const cancelledChildren = await this.cancelChildSubscriptions(subscription, reason);
-
-		if (cancelledChildren.length > 0) {
-			this.logger.log(
-				`Cancelled ${cancelledChildren.length} child subscription(s) for parent subscription ${id}`
-			);
-		}
-
-		// Persist the cancelled subscription
-		const cancelledSubscription = await this.pluginSubscriptionService.save(subscription);
-
-		// Add cancellation metadata
-		cancelledSubscription.metadata = {
-			...cancelledSubscription.metadata,
-			cancelledChildCount: cancelledChildren.length,
-			cancelledBy: subscriberId,
-			cancellationType: subscription.parentId ? 'child' : 'parent'
-		};
-
-		await this.pluginSubscriptionService.save(cancelledSubscription);
-
-		return cancelledSubscription;
 	}
 
 	/**
@@ -101,54 +95,10 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 	private async cancelChildSubscriptions(
 		subscription: PluginSubscription,
 		reason?: string
-	): Promise<PluginSubscription[]> {
+	): Promise<IPluginSubscription[]> {
 		// Skip if this is a child subscription (no cascade needed)
-		if (subscription.isInherited()) {
-			return [];
-		}
-
-		// Find all active child subscriptions with required relations
-		const activeChildren = await this.pluginSubscriptionService.find({
-			where: {
-				parentId: subscription.id,
-				status: In([
-					PluginSubscriptionStatus.ACTIVE,
-					PluginSubscriptionStatus.TRIAL,
-					PluginSubscriptionStatus.PENDING
-				])
-			},
-			relations: ['plan', 'plugin', 'pluginTenant']
-		});
-
-		if (!activeChildren || activeChildren.length === 0) {
-			return [];
-		}
-
-		const cancelledChildren: PluginSubscription[] = [];
+		if (subscription.isInherited()) return [];
 		const cascadeReason = reason ? `Parent subscription cancelled: ${reason}` : 'Parent subscription cancelled';
-
-		for (const child of activeChildren) {
-			if (child.canBeCancelled()) {
-				try {
-					child.cancel(cascadeReason);
-					child.metadata = {
-						...child.metadata,
-						cancelledByParent: true,
-						parentSubscriptionId: subscription.id,
-						parentCancellationReason: reason
-					};
-					cancelledChildren.push(child);
-				} catch (error) {
-					this.logger.warn(`Failed to cancel child subscription ${child.id}: ${error.message}`);
-				}
-			}
-		}
-
-		// Save all cancelled children individually (service.save doesn't support arrays)
-		if (cancelledChildren.length > 0) {
-			await Promise.all(cancelledChildren.map((child) => this.pluginSubscriptionService.save(child)));
-		}
-
-		return cancelledChildren;
+		return subscription.children.map((child) => child.cancel(cascadeReason));
 	}
 }

@@ -208,8 +208,8 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 	 * @returns Updated plugin tenant
 	 */
 	async disablePlugin(pluginTenantId: string): Promise<IPluginTenant> {
-		const pluginTenant = await this.findOneByIdString(pluginTenantId);
-		if (!pluginTenant) {
+		const { success, record: pluginTenant } = await this.findOneOrFailByIdString(pluginTenantId);
+		if (!success) {
 			throw new NotFoundException(`Plugin tenant with ID "${pluginTenantId}" not found`);
 		}
 
@@ -219,7 +219,7 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 		}
 
 		await this.update(pluginTenantId, { enabled: false });
-		const updated = await this.findOneByIdString(pluginTenantId);
+		const { record: updated } = await this.findOneOrFailByIdString(pluginTenantId);
 
 		this.logger.log(`Plugin tenant disabled: ${pluginTenantId}`);
 		return updated;
@@ -233,13 +233,13 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 	 * @returns Updated plugin tenant
 	 */
 	async updateScope(pluginTenantId: string, scope: PluginScope): Promise<IPluginTenant> {
-		const pluginTenant = await this.findOneByIdString(pluginTenantId);
-		if (!pluginTenant) {
+		const { success, record: pluginTenant } = await this.findOneOrFailByIdString(pluginTenantId);
+		if (!success) {
 			throw new NotFoundException(`Plugin tenant with ID "${pluginTenantId}" not found`);
 		}
 
 		await this.update(pluginTenantId, { scope });
-		const updated = await this.findOneByIdString(pluginTenantId);
+		const { record: updated } = await this.findOneOrFailByIdString(pluginTenantId);
 
 		this.logger.log(`Plugin tenant scope updated: ${pluginTenantId} to ${scope}`);
 		return updated;
@@ -264,8 +264,9 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 	 * @param pluginTenantId - The plugin tenant ID
 	 */
 	async deletePluginTenant(pluginTenantId: string): Promise<void> {
-		const pluginTenant = await this.findOneByIdString(pluginTenantId);
-		if (!pluginTenant) {
+		const { success } = await this.findOneOrFailByIdString(pluginTenantId);
+
+		if (!success) {
 			throw new NotFoundException(`Plugin tenant with ID "${pluginTenantId}" not found`);
 		}
 
@@ -304,5 +305,9 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 		if (!tenantId || tenantId.trim().length === 0) {
 			throw new BadRequestException('Tenant ID is required and cannot be empty');
 		}
+	}
+
+	public exists(pluginTenantId: string): Promise<boolean> {
+		return this.exists(pluginTenantId);
 	}
 }

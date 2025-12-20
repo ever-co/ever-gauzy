@@ -1,10 +1,11 @@
 import { PluginBillingPeriod, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { PluginSubscriptionPlanService, PluginSubscriptionService, PluginTenantService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
 import { IPluginSubscription } from '../../../../shared';
+import { DeletePluginSubscriptionCommand } from '../delete-plugin-subscription.command';
 import { PurchasePluginSubscriptionCommand } from '../purchase-plugin-subscription.command';
 
 @CommandHandler(PurchasePluginSubscriptionCommand)
@@ -12,7 +13,8 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 	constructor(
 		private readonly pluginSubscriptionService: PluginSubscriptionService,
 		private readonly pluginTenantService: PluginTenantService,
-		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService,
+		private readonly commandBus: CommandBus
 	) {}
 
 	/**
@@ -56,10 +58,10 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 
 		options.tenantId = tenantId;
 
-		const { record: existingSubscription, success } =
+		const { record: existingSubscription, success: isSubscriptionExists } =
 			await this.pluginSubscriptionService.findOneOrFailByWhereOptions(options);
 
-		if (success && existingSubscription) {
+		if (isSubscriptionExists && existingSubscription) {
 			// If user has an active or trial subscription, reject the purchase
 			if (
 				[
@@ -76,7 +78,9 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 				`[PurchaseSubscription] Deleting ${existingSubscription.status} subscription ${existingSubscription.id} to replace with new purchase`
 			);
 			// Delete the old subscription to avoid unique constraint violation
-			await this.pluginSubscriptionService.delete(existingSubscription.id);
+			await this.commandBus.execute(
+				new DeletePluginSubscriptionCommand(existingSubscription.id, existingSubscription.pluginTenantId)
+			);
 		}
 
 		const pluginTenantInput = {
@@ -86,13 +90,15 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 			scope: purchaseDto.scope
 		};
 
-		let subscription: PluginSubscription;
+		let subscription: IPluginSubscription;
 
 		// Handle subscription based on plan type
 		if (purchaseDto.planId) {
 			// Plan-based subscription
-			const plan = await this.pluginSubscriptionPlanService.findOneByIdString(purchaseDto.planId);
-			if (!plan) {
+			const { record: plan, success: isPlanExists } =
+				await this.pluginSubscriptionPlanService.findOneOrFailByIdString(purchaseDto.planId);
+
+			if (!isPlanExists) {
 				throw new BadRequestException(`Plugin subscription plan with ID "${purchaseDto.planId}" not found`);
 			}
 
@@ -100,8 +106,8 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 			const pluginTenantId = await this.pluginTenantService.findOrCreate({
 				...pluginTenantInput,
 				...(plan.hasLimitations && {
-					maxActiveUsers: plan.limitations?.['maxUsers'],
-					maxInstallations: plan.limitations?.['maxProjects']
+					maxActiveUsers: plan.limitations?.['maxUsers'] || 1,
+					maxInstallations: plan.limitations?.['maxProjects'] || 1
 				})
 			});
 
@@ -180,7 +186,7 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 		}
 
 		// Save the subscription
-		return await this.pluginSubscriptionService.create(subscription);
+		return this.pluginSubscriptionService.save(subscription);
 	}
 
 	/**

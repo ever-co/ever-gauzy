@@ -2,6 +2,7 @@ import { ID, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { Injectable, Logger } from '@nestjs/common';
 import { In } from 'typeorm';
+import { IPluginSubscription } from '../../shared';
 import { PluginSubscription } from '../entities';
 import { MikroOrmPluginSubscriptionRepository, TypeOrmPluginSubscriptionRepository } from '../repositories';
 
@@ -138,5 +139,9 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		}
 
 		return revokedSubscriptions;
+	}
+
+	public upsert(entity: IPluginSubscription): Promise<IPluginSubscription> {
+		return this.upsert(entity);
 	}
 }

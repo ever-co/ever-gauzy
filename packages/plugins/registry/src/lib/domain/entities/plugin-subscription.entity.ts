@@ -448,10 +448,14 @@ export class PluginSubscription extends TenantOrganizationBaseEntity implements 
 		}
 
 		this.status = PluginSubscriptionStatus.CANCELLED;
+		this.planId = null;
 		this.cancelledAt = new Date();
 		this.cancellationReason = reason;
 		this.autoRenew = false;
 		this.updatedAt = new Date();
+
+		this.pluginTenant.removeAllowedUser(this.subscriberId);
+
 		return this;
 	}
 

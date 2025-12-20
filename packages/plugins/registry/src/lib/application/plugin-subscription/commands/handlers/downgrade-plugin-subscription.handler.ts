@@ -1,7 +1,5 @@
-import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { In } from 'typeorm';
 import { PluginSubscriptionService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
 import { IPluginSubscription } from '../../../../shared';
@@ -62,17 +60,11 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 			throw new BadRequestException('This subscription cannot be downgraded due to plan restrictions.');
 		}
 
-		const previousPlanId = subscription.planId;
-
 		// Use domain method to downgrade subscription (includes validation and business logic)
-		try {
-			subscription.downgradeToPlan(newPlanId);
-		} catch (error) {
-			throw new BadRequestException(`Failed to downgrade subscription: ${error.message}`);
-		}
+		const downgradedSubscription = subscription.downgradeToPlan(newPlanId);
 
 		// Cascade downgrade to child subscriptions if this is a parent subscription
-		const downgradedChildren = await this.downgradeChildSubscriptions(subscription, newPlanId, previousPlanId);
+		const downgradedChildren = this.downgradeChildSubscriptions(downgradedSubscription);
 
 		if (downgradedChildren.length > 0) {
 			this.logger.log(
@@ -81,78 +73,29 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 		}
 
 		// Add downgrade metadata
-		subscription.metadata = {
-			...subscription.metadata,
+		downgradedSubscription.metadata = {
+			...downgradedSubscription.metadata,
 			downgradedChildCount: downgradedChildren.length,
 			downgradedBy: userId,
-			downgradeType: subscription.parentId ? 'child' : 'parent'
+			downgradeType: downgradedSubscription.isInherited() ? 'child' : 'parent'
 		};
 
 		// Persist the downgraded subscription
-		const updatedSubscription = await this.pluginSubscriptionService.save(subscription);
-
-		return updatedSubscription;
+		return this.pluginSubscriptionService.save(downgradedSubscription);
 	}
 
 	/**
 	 * Downgrades all active child subscriptions when a parent subscription is downgraded.
 	 *
 	 * @param subscription - The parent subscription being downgraded
-	 * @param newPlanId - The new plan ID to apply to children
-	 * @param previousPlanId - The previous plan ID for metadata tracking
 	 * @returns Array of downgraded child subscriptions
 	 */
-	private async downgradeChildSubscriptions(
-		subscription: PluginSubscription,
-		newPlanId: string,
-		previousPlanId?: string
-	): Promise<PluginSubscription[]> {
+	private downgradeChildSubscriptions(subscription: PluginSubscription): IPluginSubscription[] {
 		// Skip if this is a child subscription (no cascade needed)
 		if (subscription.isInherited()) {
 			return [];
 		}
 
-		// Find all active child subscriptions
-		const activeChildren = await this.pluginSubscriptionService.find({
-			where: {
-				parentId: subscription.id,
-				status: In([
-					PluginSubscriptionStatus.ACTIVE,
-					PluginSubscriptionStatus.TRIAL,
-					PluginSubscriptionStatus.PENDING
-				])
-			}
-		});
-
-		if (!activeChildren || activeChildren.length === 0) {
-			return [];
-		}
-
-		const downgradedChildren: PluginSubscription[] = [];
-
-		for (const child of activeChildren) {
-			try {
-				// Update child's plan to match parent
-				child.planId = newPlanId;
-				child.metadata = {
-					...child.metadata,
-					previousPlanId,
-					downgradedByParent: true,
-					parentSubscriptionId: subscription.id,
-					downgradedAt: new Date().toISOString()
-				};
-				child.updatedAt = new Date();
-				downgradedChildren.push(child);
-			} catch (error) {
-				this.logger.warn(`Failed to downgrade child subscription ${child.id}: ${error.message}`);
-			}
-		}
-
-		// Save all downgraded children individually (service.save doesn't support arrays)
-		if (downgradedChildren.length > 0) {
-			await Promise.all(downgradedChildren.map((child) => this.pluginSubscriptionService.save(child)));
-		}
-
-		return downgradedChildren;
+		return subscription.children.map((child) => child.downgradeToPlan(subscription.planId));
 	}
 }
