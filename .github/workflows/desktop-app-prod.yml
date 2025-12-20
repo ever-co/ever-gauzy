@@ -160,6 +160,7 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+          SNAPCRAFT_BUILD_ENVIRONMENT: host
 
   release-mac:
     runs-on: ${{ matrix.os }}
