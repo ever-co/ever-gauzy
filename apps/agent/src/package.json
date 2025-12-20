@@ -121,7 +121,7 @@
 					]
 				}
 			],
-			"executableName": "ever-gauzy-agent",
+			"executableName": "gauzy-agent",
 			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
