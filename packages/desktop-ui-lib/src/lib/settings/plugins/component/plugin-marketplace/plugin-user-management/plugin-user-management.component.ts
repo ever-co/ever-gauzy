@@ -113,7 +113,9 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 		this.viewModel$ = this.facade.viewModel$;
 
 		// Expose individual streams for template convenience
-		this.filteredAvailableUsers$ = this.facade.filteredAvailableUsers$;
+		this.filteredAvailableUsers$ = this.facade.filteredAvailableUsers$.pipe(
+			map((users) => users.filter((user) => user.id !== this.store.userId))
+		);
 		this.assignedUsers$ = this.facade.assignedUsers$;
 		this.selectedUsers$ = this.facade.selectedUsers$;
 		this.loadingAvailableUsers$ = this.facade.loadingAvailableUsers$;
