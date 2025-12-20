@@ -106,7 +106,7 @@ jobs:
         run: 'sudo chown -R $(whoami) ./*'
 
       - name: Install system dependencies
-        run: 'sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
+        run: 'sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev'
 
       - name: Install Snapcraft
         uses: samuelmeuli/action-snapcraft@v2
@@ -359,10 +359,10 @@ jobs:
           node-version: 22.21.1
           cache: 'yarn'
 
-      - name: Install Visual Studio 2022 Build Tools (VCTools)
+      - name: Install Visual Studio 2022 Build Tools (VCTools with ARM64)
         shell: powershell
         run: |
-          choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive --norestart"
+          choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --includeRecommended --passive --norestart"
 
       - name: Configure node-gyp to use VS 2022
         shell: powershell
