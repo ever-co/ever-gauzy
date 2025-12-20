@@ -1,8 +1,8 @@
 import { EventSubscriber } from 'typeorm';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
-import { EmployeeSetting } from './employee-setting.entity';
 import { MultiOrmEntityManager } from '../core/entities/subscribers/entity-event-subscriber.types';
+import { EmployeeSetting } from './employee-setting.entity';
 
 @EventSubscriber()
 export class EmployeeSettingSubscriber extends BaseEntityEventSubscriber<EmployeeSetting> {
