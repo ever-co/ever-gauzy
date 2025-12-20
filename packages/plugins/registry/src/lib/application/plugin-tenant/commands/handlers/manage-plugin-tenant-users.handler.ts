@@ -1,4 +1,4 @@
-import { IUser } from '@gauzy/contracts';
+import { ID, IUser } from '@gauzy/contracts';
 import { RequestContext, UserService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -41,7 +41,9 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 		const { pluginTenantId, userIds, operation } = command;
 
 		this.logger.log(
-			`Executing ${operation} operation for plugin tenant ${pluginTenantId} with ${userIds ? userIds.length : 0} users`
+			`Executing ${operation} operation for plugin tenant ${pluginTenantId} with ${
+				userIds ? userIds.length : 0
+			} users`
 		);
 
 		// Validate input
@@ -84,6 +86,7 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 
 			case 'deny':
 				for (const user of users) {
+					this.validate(user.id);
 					pluginTenant.denyUser(user);
 					affectedUserIds.push(user.id);
 				}
@@ -92,6 +95,7 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 
 			case 'remove-allowed':
 				for (const userId of userIds) {
+					this.validate(userId);
 					pluginTenant.removeAllowedUser(userId);
 					affectedUserIds.push(userId);
 				}
@@ -100,6 +104,7 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 
 			case 'remove-denied':
 				for (const userId of userIds) {
+					this.validate(userId);
 					pluginTenant.removeDeniedUser(userId);
 					affectedUserIds.push(userId);
 				}
@@ -172,5 +177,13 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 		}
 
 		return users;
+	}
+
+	private async validate(userId: ID): Promise<void> {
+		const currentUserId = RequestContext.currentUserId();
+
+		if (userId === currentUserId) {
+			throw new BadRequestException('Operation cannot be performed on the current user.');
+		}
 	}
 }
