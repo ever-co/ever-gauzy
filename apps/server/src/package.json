@@ -25,12 +25,13 @@
 			"--production"
 		],
 		"appId": "com.ever.gauzyserver",
-		"artifactName": "${name}-${version}.${ext}",
+		"artifactName": "${name}-${arch}-${version}.${ext}",
 		"productName": "Gauzy Server",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"afterSign": "tools/notarize.js",
 		"dmg": {
-			"sign": false
+			"sign": false,
+			"artifactName": "${name}-${arch}-${version}.${ext}"
 		},
 		"asar": true,
 		"npmRebuild": true,
@@ -61,20 +62,24 @@
 		"mac": {
 			"category": "public.app-category.developer-tools",
 			"icon": "icon.icns",
-			"target": [
-				"zip",
-				"dmg"
-			],
+			"target": {
+				"target": "default",
+				"arch": [
+					"x64",
+					"arm64"
+				]
+			},
 			"asarUnpack": "**/*.node",
-			"artifactName": "${name}-${version}.${ext}",
+			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"hardenedRuntime": true,
 			"gatekeeperAssess": false,
 			"entitlements": "tools/build/entitlements.mas.plist",
 			"entitlementsInherit": "tools/build/entitlements.mas.plist",
 			"extendInfo": {
-				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
-				"NSMicrophoneUsageDescription": "This app requires microphone access when recording sounds or detecting loudness.",
-				"NSCameraUsageDescription": "This app requires camera access when using the video sensing blocks."
+				"NSAppleEventsUsageDescription": "This app requires access to script browser applications to detect the current URL when triggering instant lookup.",
+				"NSCameraUsageDescription": "Please allow access to the device camera to capture images and videos.",
+				"NSMicrophoneUsageDescription": "Please allow access to the device's microphone to capture audio and voice recordings.",
+				"NSScreenCaptureUsageDescription": "Please allow access to the device's screen to capture screenshots and videos."
 			}
 		},
 		"win": {
@@ -82,7 +87,8 @@
 				{
 					"target": "nsis",
 					"arch": [
-						"x64"
+						"x64",
+						"arm64"
 					]
 				}
 			],
@@ -93,14 +99,48 @@
 		"linux": {
 			"icon": "linux",
 			"target": [
-				"AppImage",
-				"deb",
-				"tar.gz"
+				{
+					"target": "deb",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				},
+				{
+					"target": "snap"
+				},
+				{
+					"target": "tar.gz",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				},
+				{
+					"target": "rpm",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				},
+				{
+					"target": "AppImage",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				}
 			],
 			"executableName": "gauzy-server",
-			"artifactName": "${name}-${version}.${ext}",
+			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"synopsis": "Server",
 			"category": "Development"
+		},
+		"rpm": {
+			"fpm": [
+				"--rpm-rpmbuild-define",
+				"_build_id_links none"
+			]
 		},
 		"nsis": {
 			"oneClick": false,
@@ -110,7 +150,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "${name}-${version}.${ext}",
+			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},
