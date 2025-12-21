@@ -1,0 +1,152 @@
+.plan-card {
+	background: var(--gauzy-card-1);
+	border: 2px solid var(--gauzy-card-2);
+	border-radius: var(--border-radius);
+	padding: 24px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+
+	&:hover:not(.disabled) {
+		border-color: var(--color-primary-400);
+		box-shadow: var(--gauzy-shadow);
+		transform: translateY(-4px);
+	}
+
+	&.selected {
+		border-color: var(--color-primary-500);
+		background-color: var(--gauzy-card-1);
+		box-shadow: 0 0 0 4px var(--color-primary-transparent-200);
+	}
+
+	&.current {
+		border-color: var(--color-info-500);
+	}
+
+	&.popular {
+		border-color: var(--color-warning-500);
+
+		&::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: 4px;
+			background: var(--color-warning-500);
+		}
+	}
+
+	&.recommended {
+		border-color: var(--color-success-500);
+	}
+
+	&.disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		background: var(--gauzy-card-2);
+	}
+}
+
+.plan-badges {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-bottom: 16px;
+	min-height: 24px;
+}
+
+.plan-header {
+	margin-bottom: 16px;
+}
+
+.plan-name {
+	font-size: 20px;
+	font-weight: 700;
+	margin: 0 0 8px 0;
+	color: var(--gauzy-text-color-1);
+}
+
+.plan-price {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 8px;
+}
+
+.price-amount {
+	font-size: 28px;
+	font-weight: 800;
+	color: var(--color-primary-600);
+	line-height: 1;
+}
+
+.trial-info {
+	font-size: 13px;
+	color: var(--color-success-600);
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.savings {
+	font-size: 13px;
+	color: var(--color-success-600);
+	font-weight: 600;
+	margin-top: 4px;
+	padding: 4px 8px;
+	background: var(--color-success-transparent-100);
+	border-radius: 4px;
+	display: inline-block;
+}
+
+.plan-description {
+	color: var(--gauzy-text-color-2);
+	margin-bottom: 24px;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.plan-features {
+	flex-grow: 1;
+	margin-bottom: 24px;
+}
+
+.features-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.feature-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 6px 0;
+	font-size: 14px;
+	color: var(--gauzy-text-color-1);
+
+	.feature-check {
+		color: var(--color-success-500);
+		flex-shrink: 0;
+		margin-top: 2px;
+		font-size: 18px;
+	}
+}
+
+.plan-action {
+	margin-top: auto;
+
+	button {
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		border-radius: var(--border-radius);
+		padding: 12px;
+	}
+}

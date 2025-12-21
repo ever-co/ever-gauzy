@@ -1,0 +1,291 @@
+.plan-card {
+  border: 2px solid var(--border-basic-color-4);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+  background: var(--background-basic-color-1);
+
+  &:hover {
+    border-color: var(--border-basic-color-3);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+
+  &.current-plan {
+    border-color: var(--color-info-500);
+    background: var(--color-info-100);
+
+    .plan-header h5 {
+      color: var(--color-info-600);
+    }
+  }
+
+  &.upgrade {
+    border-color: var(--color-success-500);
+
+    &:hover {
+      background: var(--color-success-100);
+    }
+  }
+
+  &.downgrade {
+    border-color: var(--color-warning-500);
+
+    &:hover {
+      background: var(--color-warning-100);
+    }
+  }
+
+  &.new {
+    border-color: var(--color-primary-500);
+
+    &:hover {
+      background: var(--color-primary-100);
+    }
+  }
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+
+    &:hover {
+      transform: none;
+      box-shadow: none;
+    }
+  }
+}
+
+.plan-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+
+  nb-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  h5 {
+    margin: 0.5rem 0;
+    font-weight: 600;
+    color: var(--text-basic-color);
+  }
+
+  .plan-description {
+    color: var(--text-hint-color);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.plan-badges {
+  position: absolute;
+  top: -1rem;
+  right: -1rem;
+  z-index: 10;
+
+  nb-badge {
+    margin-left: 0.5rem;
+  }
+}
+
+.plan-pricing {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--background-basic-color-2);
+  border-radius: var(--border-radius);
+
+  .price-main {
+    margin-bottom: 0.5rem;
+
+    .price {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-basic-color);
+    }
+
+    .period {
+      font-size: 0.9rem;
+      color: var(--text-hint-color);
+      margin-left: 0.25rem;
+    }
+  }
+
+  .proration-info {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: var(--color-success-100);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-success-300);
+
+    small {
+      color: var(--color-success-600);
+      font-weight: 500;
+    }
+  }
+
+  .trial-info {
+    margin-top: 0.5rem;
+
+    small {
+      font-weight: 500;
+    }
+  }
+}
+
+.plan-features {
+  margin-bottom: 1.5rem;
+
+  h6 {
+    margin-bottom: 1rem;
+    color: var(--text-basic-color);
+    font-weight: 600;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-basic-color-5);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      nb-icon {
+        margin-right: 0.75rem;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+.comparison-info {
+  margin-bottom: 1.5rem;
+
+  .benefits, .restrictions {
+    margin-bottom: 1rem;
+
+    h6 {
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+  }
+
+  .benefits {
+    .benefit-list {
+      .benefit-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 0.25rem 0;
+        font-size: 0.85rem;
+        color: var(--color-success-600);
+
+        nb-icon {
+          margin-right: 0.5rem;
+          margin-top: 0.1rem;
+          font-size: 1rem;
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+
+  .restrictions {
+    .restriction-list {
+      .restriction-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 0.25rem 0;
+        font-size: 0.85rem;
+        color: var(--color-warning-600);
+
+        nb-icon {
+          margin-right: 0.5rem;
+          margin-top: 0.1rem;
+          font-size: 1rem;
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+}
+
+.plan-action {
+  button {
+    position: relative;
+
+    .action-icon {
+      margin-right: 0.5rem;
+    }
+
+    &[disabled] {
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .plan-card {
+    padding: 1rem;
+  }
+
+  .plan-header {
+    margin-bottom: 1rem;
+
+    nb-icon {
+      font-size: 2.5rem;
+    }
+
+    h5 {
+      font-size: 1.2rem;
+    }
+  }
+
+  .plan-pricing {
+    padding: 0.75rem;
+
+    .price-main .price {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+// Dark theme adjustments
+@media (prefers-color-scheme: dark) {
+  .plan-card {
+    &.current-plan {
+      background: rgba(var(--color-info-500), 0.1);
+    }
+
+    &.upgrade:hover {
+      background: rgba(var(--color-success-500), 0.1);
+    }
+
+    &.downgrade:hover {
+      background: rgba(var(--color-warning-500), 0.1);
+    }
+
+    &.new:hover {
+      background: rgba(var(--color-primary-500), 0.1);
+    }
+  }
+}

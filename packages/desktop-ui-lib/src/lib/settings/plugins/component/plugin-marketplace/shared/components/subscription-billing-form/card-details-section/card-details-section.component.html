@@ -1,0 +1,109 @@
+<nb-card class="form-section card-details" [formGroup]="form">
+	<nb-card-header>
+		<div class="section-title">
+			<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
+			<div>
+				<h6>Card details</h6>
+				<p class="hint">We never store your card number</p>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="field-grid">
+			<div class="input-group">
+				<label for="cardNumber">
+					Card number
+					<span class="required" aria-label="required">*</span>
+				</label>
+				<nb-form-field
+					[class.has-error]="hasError('cardNumber', 'required') || hasError('cardNumber', 'pattern')"
+				>
+					<input
+						nbInput
+						id="cardNumber"
+						formControlName="cardNumber"
+						placeholder="1234 5678 9012 3456"
+						maxlength="19"
+						type="text"
+						autocomplete="cc-number"
+						aria-required="true"
+						aria-describedby="cardNumber-error"
+					/>
+					@if (!hasError('cardNumber', 'required') && !hasError('cardNumber', 'pattern')) {
+					<nb-icon nbSuffix icon="credit-card-outline" aria-hidden="true"></nb-icon>
+					}
+				</nb-form-field>
+				@if (hasError('cardNumber', 'required')) {
+				<div class="error-message" id="cardNumber-error" role="alert">
+					<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+					Card number is required
+				</div>
+				} @if (hasError('cardNumber', 'pattern')) {
+				<div class="error-message" id="cardNumber-error" role="alert">
+					<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+					Please enter a valid card number
+				</div>
+				}
+			</div>
+
+			<div class="field-row">
+				<div class="input-group">
+					<label for="expiryDate">
+						Expiry date
+						<span class="required" aria-label="required">*</span>
+					</label>
+					<nb-form-field [class.has-error]="hasError('expiryDate', 'pattern')">
+						<input
+							nbInput
+							id="expiryDate"
+							formControlName="expiryDate"
+							placeholder="MM/YY"
+							maxlength="5"
+							autocomplete="cc-exp"
+							aria-required="true"
+							aria-describedby="expiryDate-error"
+						/>
+					</nb-form-field>
+					@if (hasError('expiryDate', 'pattern')) {
+					<div class="error-message" id="expiryDate-error" role="alert">
+						<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+						Format: MM/YY
+					</div>
+					}
+				</div>
+
+				<div class="input-group">
+					<label for="cvv">
+						CVV
+						<span class="required" aria-label="required">*</span>
+						<nb-icon
+							icon="question-mark-circle-outline"
+							nbTooltip="3 or 4 digit security code on the back of your card"
+							class="help-icon"
+							aria-label="CVV help"
+						></nb-icon>
+					</label>
+					<nb-form-field [class.has-error]="hasError('cvv', 'pattern')">
+						<input
+							nbInput
+							id="cvv"
+							formControlName="cvv"
+							placeholder="123"
+							maxlength="4"
+							type="password"
+							autocomplete="cc-csc"
+							aria-required="true"
+							aria-describedby="cvv-error"
+						/>
+					</nb-form-field>
+					@if (hasError('cvv', 'pattern')) {
+					<div class="error-message" id="cvv-error" role="alert">
+						<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+						Invalid CVV
+					</div>
+					}
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>
