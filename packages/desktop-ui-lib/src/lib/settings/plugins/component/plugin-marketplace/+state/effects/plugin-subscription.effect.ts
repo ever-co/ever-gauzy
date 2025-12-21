@@ -16,6 +16,7 @@ import {
 import { PluginSubscriptionManagerComponent } from '../../plugin-subscription-manager/plugin-subscription-manager.component';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginPlanActions } from '../actions/plugin-plan.action';
+import { PluginSubscriptionAccessActions } from '../actions/plugin-subscription-access.actions';
 import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
 import { PluginToggleActions } from '../actions/plugin-toggle.action';
 import { PluginInstallationQuery } from '../queries/plugin-installation.query';
@@ -511,6 +512,20 @@ export class PluginSubscriptionEffects {
 				})
 			),
 		{ dispatch: false }
+	);
+
+	subscriptionChange$ = createEffect(() =>
+		this.actions$.pipe(
+			ofType(
+				PluginSubscriptionActions.createSubscriptionSuccess,
+				PluginSubscriptionActions.updateSubscriptionSuccess,
+				PluginSubscriptionActions.cancelSubscriptionSuccess,
+				PluginSubscriptionActions.upgradeSubscriptionSuccess,
+				PluginSubscriptionActions.downgradeSubscriptionSuccess
+			),
+			tap(({ subscription }) => this.pluginMarketplaceStore.setSubscription(subscription)),
+			map(({ subscription }) => PluginSubscriptionAccessActions.refreshPluginAccess(subscription.pluginId))
+		)
 	);
 
 	/**

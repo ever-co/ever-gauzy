@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
-import { IPlugin, PluginStatus, PluginType } from '@gauzy/contracts';
+import { IPlugin, IPluginSubscription, PluginStatus, PluginType } from '@gauzy/contracts';
 
 // Filter interfaces
 export interface IPluginFilter {
@@ -209,6 +209,18 @@ export class PluginMarketplaceStore extends Store<IPluginMarketplaceState> {
 
 	public selectPlugin(plugin: IPlugin | null): void {
 		this.update({ plugin });
+	}
+
+	public setSubscription(subscription: IPluginSubscription): void {
+		this.update((state) => ({
+			plugin:
+				state.plugin && state.plugin.id === subscription.pluginId
+					? { ...state.plugin, subscriptions: [subscription] }
+					: state.plugin,
+			plugins: state.plugins.map((p) =>
+				p.id === subscription.pluginId ? { ...p, subscriptions: [subscription] } : p
+			)
+		}));
 	}
 
 	public updatePlugin(pluginId: string, updates: Partial<IPlugin>): void {
