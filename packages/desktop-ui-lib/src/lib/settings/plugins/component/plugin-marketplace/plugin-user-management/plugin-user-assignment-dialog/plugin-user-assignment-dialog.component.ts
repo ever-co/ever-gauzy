@@ -2,10 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IUser } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { PluginSubscriptionAccessFacade } from '../../+state/plugin-subscription-access.facade';
-import { ToastrNotificationService } from '../../../../../../services';
 
 @Component({
 	selector: 'gauzy-plugin-user-assignment-dialog',
@@ -28,9 +26,7 @@ export class PluginUserAssignmentDialogComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly dialogRef: NbDialogRef<PluginUserAssignmentDialogComponent>,
 		private readonly fb: FormBuilder,
-		private readonly accessFacade: PluginSubscriptionAccessFacade,
-		private readonly translateService: TranslateService,
-		private readonly toastrService: ToastrNotificationService
+		private readonly accessFacade: PluginSubscriptionAccessFacade
 	) {
 		this.buildForm();
 	}
