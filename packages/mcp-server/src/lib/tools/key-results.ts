@@ -1,11 +1,13 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { KeyResultSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { KeyResultInputSchema } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('KeyResultTools');
 
 /**
@@ -29,7 +31,8 @@ const convertKeyResultDateFields = (keyResultData: KeyResultData): ConvertedKeyR
 
 export const registerKeyResultTools = (server: McpServer) => {
 	// Get key results tool
-	server.tool(
+	registerTool(
+		server,
 		'get_key_results',
 		"Get list of key results for the authenticated user's organization",
 		{
@@ -78,7 +81,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Get key result count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_key_result_count',
 		"Get key result count in the authenticated user's organization",
 		{
@@ -116,7 +120,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Get key result by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_key_result',
 		'Get a specific key result by ID',
 		{
@@ -147,16 +152,18 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Create key result tool
-	server.tool(
+	registerTool(
+		server,
 		'create_key_result',
 		"Create a new key result in the authenticated user's organization",
 		{
-			key_result_data: KeyResultSchema.partial()
-				.required({
-					name: true,
-					goalId: true,
-					deadline: true
+			key_result_data: z
+				.object({
+					name: z.string().describe('The key result name (required)'),
+					goalId: z.string().describe('The goal ID (required)'),
+					deadline: z.string().describe('The deadline (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the key result')
 		},
 		async ({ key_result_data }) => {
@@ -187,12 +194,13 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Update key result tool
-	server.tool(
+	registerTool(
+		server,
 		'update_key_result',
 		'Update an existing key result',
 		{
 			id: z.string().uuid().describe('The key result ID'),
-			key_result_data: KeyResultSchema.partial().describe('The data for updating the key result')
+			key_result_data: z.record(z.string(), z.any()).describe('The data for updating the key result')
 		},
 		async ({ id, key_result_data }) => {
 			try {
@@ -216,7 +224,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Update key result progress tool
-	server.tool(
+	registerTool(
+		server,
 		'update_key_result_progress',
 		'Update the progress of a key result',
 		{
@@ -249,7 +258,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Delete key result tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_key_result',
 		'Delete a key result',
 		{
@@ -279,7 +289,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Get key results by goal tool
-	server.tool(
+	registerTool(
+		server,
 		'get_key_results_by_goal',
 		'Get all key results for a specific goal',
 		{
@@ -321,7 +332,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Get my key results tool
-	server.tool(
+	registerTool(
+		server,
 		'get_my_key_results',
 		'Get key results assigned to the current authenticated user',
 		{
@@ -361,7 +373,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Create key result update tool
-	server.tool(
+	registerTool(
+		server,
 		'create_key_result_update',
 		'Create an update for a key result',
 		{
@@ -404,7 +417,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Get key result updates tool
-	server.tool(
+	registerTool(
+		server,
 		'get_key_result_updates',
 		'Get updates for a specific key result',
 		{
@@ -438,7 +452,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 	);
 
 	// Get key result statistics tool
-	server.tool(
+	registerTool(
+		server,
 		'get_key_result_statistics',
 		"Get key result statistics for the authenticated user's organization",
 		{

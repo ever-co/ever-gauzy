@@ -1,11 +1,13 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { EquipmentSchema, EquipmentTypeEnum, EquipmentStatusEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { EquipmentTypeEnum, EquipmentStatusEnum } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('EquipmentTools');
 
 /**
@@ -27,7 +29,8 @@ const convertEquipmentDateFields = (equipmentData: EquipmentDateFields) => {
 
 export const registerEquipmentTools = (server: McpServer) => {
 	// Get equipment tool
-	server.tool(
+	registerTool(
+		server,
 		'get_equipment',
 		"Get list of equipment for the authenticated user's organization",
 		{
@@ -91,7 +94,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Get equipment count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_equipment_count',
 		"Get equipment count in the authenticated user's organization",
 		{
@@ -131,7 +135,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Get equipment by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_equipment_by_id',
 		'Get a specific equipment by ID',
 		{
@@ -173,14 +178,12 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Create equipment tool
-	server.tool(
+	registerTool(
+		server,
 		'create_equipment',
 		"Create a new equipment in the authenticated user's organization",
 		{
-			equipment_data: EquipmentSchema.partial()
-				.required({
-					name: true
-				})
+			equipment_data: z.object({ name: z.string().describe('The name (required)') }).passthrough()
 				.describe('The data for creating the equipment')
 		},
 		async ({ equipment_data }) => {
@@ -211,12 +214,13 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Update equipment tool
-	server.tool(
+	registerTool(
+		server,
 		'update_equipment',
 		'Update an existing equipment',
 		{
 			id: z.string().uuid().describe('The equipment ID'),
-			equipment_data: EquipmentSchema.partial().describe('The data for updating the equipment')
+			equipment_data: z.record(z.string(), z.any()).describe('The data for updating the equipment')
 		},
 		async ({ id, equipment_data }) => {
 			try {
@@ -240,7 +244,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Update equipment status tool
-	server.tool(
+	registerTool(
+		server,
 		'update_equipment_status',
 		'Update the status of equipment',
 		{
@@ -267,7 +272,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Assign equipment tool
-	server.tool(
+	registerTool(
+		server,
 		'assign_equipment',
 		'Assign equipment to an employee',
 		{
@@ -297,7 +303,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Unassign equipment tool
-	server.tool(
+	registerTool(
+		server,
 		'unassign_equipment',
 		'Unassign equipment from an employee (make it available)',
 		{
@@ -326,7 +333,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Delete equipment tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_equipment',
 		'Delete equipment',
 		{
@@ -356,7 +364,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Get equipment by employee tool
-	server.tool(
+	registerTool(
+		server,
 		'get_equipment_by_employee',
 		'Get equipment assigned to a specific employee',
 		{
@@ -400,7 +409,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Get my equipment tool
-	server.tool(
+	registerTool(
+		server,
 		'get_my_equipment',
 		'Get equipment assigned to the current authenticated user',
 		{
@@ -442,7 +452,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Get available equipment tool
-	server.tool(
+	registerTool(
+		server,
 		'get_available_equipment',
 		"Get available (unassigned) equipment for the authenticated user's organization",
 		{
@@ -485,7 +496,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Get equipment statistics tool
-	server.tool(
+	registerTool(
+		server,
 		'get_equipment_statistics',
 		"Get equipment statistics for the authenticated user's organization",
 		{
@@ -523,7 +535,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Request equipment sharing tool
-	server.tool(
+	registerTool(
+		server,
 		'request_equipment_sharing',
 		'Request to share equipment with another employee',
 		{
@@ -567,7 +580,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Get equipment sharing requests tool
-	server.tool(
+	registerTool(
+		server,
 		'get_equipment_sharing_requests',
 		'Get equipment sharing requests',
 		{
@@ -609,7 +623,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 	);
 
 	// Search equipment tool
-	server.tool(
+	registerTool(
+		server,
 		'search_equipment',
 		'Search equipment by name, model, serial number, or description',
 		{

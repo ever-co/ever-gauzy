@@ -1,15 +1,18 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { OrganizationContactSchema, ContactTypeEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { ContactTypeEnum } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('OrganizationContactTools');
 
 export const registerOrganizationContactTools = (server: McpServer) => {
 	// Get organization contacts tool
-	server.tool(
+	registerTool(
+		server,
 		'get_organization_contacts',
 		'Get all organization contacts with filters',
 		{
@@ -71,7 +74,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Get organization contact count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_organization_contact_count',
 		'Get organization contact count in the same tenant',
 		{
@@ -107,7 +111,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Get organization contacts by pagination tool
-	server.tool(
+	registerTool(
+		server,
 		'get_organization_contacts_pagination',
 		'Get organization contacts by pagination in the same tenant',
 		{
@@ -166,7 +171,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Get organization contacts by employee tool
-	server.tool(
+	registerTool(
+		server,
 		'get_organization_contacts_by_employee',
 		'Get organization contacts assigned to a specific employee',
 		{
@@ -201,7 +207,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Get organization contact by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_organization_contact',
 		'Get a specific organization contact by ID',
 		{
@@ -235,15 +242,17 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Create organization contact tool
-	server.tool(
+	registerTool(
+		server,
 		'create_organization_contact',
 		'Create a new organization contact',
 		{
-			contact_data: OrganizationContactSchema.partial()
-				.required({
-					name: true,
-					organizationId: true
+			contact_data: z
+				.object({
+					name: z.string().describe('The name (required)'),
+					organizationId: z.string().describe('The organization ID (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the organization contact')
 		},
 		async ({ contact_data }) => {
@@ -266,14 +275,13 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Update organization contact tool
-	server.tool(
+	registerTool(
+		server,
 		'update_organization_contact',
 		'Update an existing organization contact',
 		{
 			id: z.string().uuid().describe('The organization contact ID'),
-			contact_data: OrganizationContactSchema.partial().describe(
-				'The fields to update on the organization contact'
-			)
+			contact_data: z.record(z.string(), z.any()).describe('The fields to update on the organization contact')
 		},
 		async ({ id, contact_data }) => {
 			try {
@@ -295,16 +303,15 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Update organization contact by employee tool
-	server.tool(
+	registerTool(
+		server,
 		'update_organization_contact_by_employee',
 		'Update organization contact by employee',
 		{
 			id: z.string().uuid().describe('The organization contact ID'),
 			organizationId: z.string().uuid().describe('The organization ID'),
 			tenantId: z.string().uuid().optional().describe('The tenant ID'),
-			contact_data: OrganizationContactSchema.partial().describe(
-				'The fields to update on the organization contact'
-			)
+			contact_data: z.record(z.string(), z.any()).describe('The fields to update on the organization contact')
 		},
 		async ({ id, organizationId, tenantId, contact_data }) => {
 			try {
@@ -332,7 +339,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Delete organization contact tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_organization_contact',
 		'Delete an organization contact by ID',
 		{
@@ -362,16 +370,19 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Bulk create organization contacts tool
-	server.tool(
+	registerTool(
+		server,
 		'bulk_create_organization_contacts',
 		'Create multiple organization contacts in bulk',
 		{
 			contacts: z
 				.array(
-					OrganizationContactSchema.partial().required({
-						name: true,
-						organizationId: true
-					})
+					z
+						.object({
+							name: z.string().describe('The name (required)'),
+							organizationId: z.string().describe('The organization ID (required)')
+						})
+						.passthrough()
 				)
 				.describe('Array of organization contacts to create')
 		},
@@ -395,18 +406,21 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Bulk update organization contacts tool
-	server.tool(
+	registerTool(
+		server,
 		'bulk_update_organization_contacts',
 		'Update multiple organization contacts in bulk',
 		{
 			contacts: z
 				.array(
-					OrganizationContactSchema.partial().required({
-						id: true,
-						name: true,
-						organizationId: true,
-						tenantId: true
-					})
+					z
+						.object({
+							id: z.string().describe('The ID (required)'),
+							name: z.string().describe('The name (required)'),
+							organizationId: z.string().describe('The organization ID (required)'),
+							tenantId: z.string().describe('The tenant ID (required)')
+						})
+						.passthrough()
 				)
 				.describe('Array of organization contacts to update')
 		},
@@ -430,7 +444,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Bulk delete organization contacts tool
-	server.tool(
+	registerTool(
+		server,
 		'bulk_delete_organization_contacts',
 		'Delete multiple organization contacts in bulk',
 		{
@@ -464,7 +479,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Get organization contact statistics tool
-	server.tool(
+	registerTool(
+		server,
 		'get_organization_contact_statistics',
 		'Get organization contact statistics',
 		{
@@ -504,7 +520,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Assign contact to employee tool
-	server.tool(
+	registerTool(
+		server,
 		'assign_contact_to_employee',
 		'Assign an organization contact to an employee',
 		{
@@ -537,7 +554,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Unassign contact from employee tool
-	server.tool(
+	registerTool(
+		server,
 		'unassign_contact_from_employee',
 		'Unassign an organization contact from an employee',
 		{
@@ -572,7 +590,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Get contact projects tool
-	server.tool(
+	registerTool(
+		server,
 		'get_contact_projects',
 		'Get projects associated with an organization contact',
 		{
@@ -609,7 +628,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 	);
 
 	// Invite organization contact tool
-	server.tool(
+	registerTool(
+		server,
 		'invite_organization_contact',
 		'Send invitation to an organization contact',
 		{

@@ -130,12 +130,9 @@ Notes:
 
 You can download Gauzy Platform, Gauzy Server, or Desktop Apps (Windows/Mac/Linux) from the official [Downloads](https://web.gauzy.co/downloads) page.
 
-In addition, all downloads are also available from the following pages:
-
--   [Platform Releases](https://github.com/ever-co/ever-gauzy/releases)
--   [Server Releases](https://github.com/ever-co/ever-gauzy-server/releases)
--   [Desktop App Releases](https://github.com/ever-co/ever-gauzy-desktop/releases)
--   [Desktop Timer App Releases](https://github.com/ever-co/ever-gauzy-desktop-timer/releases)
+In addition, all releases and pre-releases downloads are also available from the following pages:
+- [Platform Releases](https://github.com/ever-co/ever-gauzy/releases)
+- [Apps](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps)
 
 ### Production (SaaS)
 
