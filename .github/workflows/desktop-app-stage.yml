@@ -26,7 +26,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: buildjet/setup-node@v4
         with:
-          node-version: 22.21.1
+          node-version: 24.12.0
           cache: 'yarn'
 
       - name: Change permissions
@@ -42,7 +42,7 @@ jobs:
         run: python3 -m pip install packaging setuptools
 
       - name: Install latest version of NPM
-        run: 'sudo npm install -g npm@10.9.4'
+        run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
         run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
@@ -99,7 +99,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: buildjet/setup-node@v4
         with:
-          node-version: 22.21.1
+          node-version: 24.12.0
           cache: 'yarn'
 
       - name: Change permissions
@@ -121,7 +121,7 @@ jobs:
         run: python3 -m pip install packaging setuptools
 
       - name: Install latest version of NPM
-        run: 'sudo npm install -g npm@10.9.4'
+        run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
         run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
@@ -180,14 +180,14 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 22.21.1
+          node-version: 24.12.0
           cache: 'yarn'
 
       - name: Fix node-gyp and Python
         run: python3 -m pip install --break-system-packages packaging setuptools
 
       - name: Install latest version of NPM
-        run: 'sudo npm install -g npm@10.9.4'
+        run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
         run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
@@ -246,7 +246,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 22.21.1
+          node-version: 24.12.0
           cache: 'yarn'
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
@@ -269,7 +269,7 @@ jobs:
           arch: x64
 
       - name: Install latest version of NPM
-        run: 'npm install -g npm@10.9.4'
+        run: 'npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
         run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
@@ -364,7 +364,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 22.21.1
+          node-version: 24.12.0
           cache: 'yarn'
 
       - name: Install Visual Studio 2022 Build Tools (VCTools with ARM64)
@@ -387,7 +387,7 @@ jobs:
           arch: arm64
 
       - name: Install latest version of NPM
-        run: 'npm install -g npm@10.9.4'
+        run: 'npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
         run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
