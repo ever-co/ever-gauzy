@@ -48,7 +48,7 @@ export class PluginUserAssignmentEffects {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.loadAssignments),
 				tap(() => this.store.setLoading(true)),
-				switchMap(({ pluginId, includeInactive, take, skip, append }) => {
+				switchMap(({ pluginId, take, skip, append }) => {
 					const currentSkip = skip !== undefined ? skip : this.store.getValue().pagination.skip;
 					const currentTake = take !== undefined ? take : this.store.getValue().pagination.take;
 
@@ -109,7 +109,7 @@ export class PluginUserAssignmentEffects {
 					this.store.setLoadingMore(true);
 					this.store.incrementSkip();
 				}),
-				switchMap(({ pluginId, includeInactive }) => {
+				switchMap(({ pluginId }) => {
 					const { skip, take } = this.store.getValue().pagination;
 
 					// First get the plugin tenant, then load more users from it

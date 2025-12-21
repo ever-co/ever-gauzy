@@ -5,19 +5,19 @@
   grid-template-columns: minmax(280px, 340px) 1fr;
   background: var(--gauzy-card-2);
   height: calc(100vh - 10rem);
-  padding: 1.5rem;
-  gap: 2rem;
+  padding: 1rem;
+  gap: 1rem;
   border-radius: var(--border-radius);
 
   @media (max-width: 1024px) {
     grid-template-columns: minmax(260px, 300px) 1fr;
-    gap: 1.5rem;
-    padding: 1.25rem;
+    gap: 1rem;
+    padding: 1rem;
   }
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 1.25rem;
+    gap: 1rem;
     padding: 1rem;
   }
 }
@@ -42,6 +42,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  gap: 1rem;
   flex: 1;
 }
 
@@ -50,9 +51,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
   flex-wrap: wrap;
-  padding: 1.5rem;
+  padding: 1rem;
   background: var(--gauzy-card-1);
   border: 1px solid var(--border-basic-color-3);
   border-radius: calc(var(--border-radius) * 1.5);
@@ -63,12 +63,12 @@
   box-shadow: var(--gauzy-shadow);
   /* Prevent content jump when header sticks */
   margin-top: -1px;
-  gap: 1.5rem;
+  gap: 1rem;
 
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
-    gap: 1.25rem;
+    gap: 1rem;
     padding: 1rem;
   }
 
@@ -201,8 +201,8 @@
     // Grid view: plugins will be displayed in cards
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: 1.5rem;
-    padding: 1.5rem;
+    gap: 1rem;
+    padding: 1rem;
     align-content: start;
 
     &.first {
@@ -366,7 +366,7 @@
 .plugin-container.skeleton-loader {
   display: flex;
   justify-content: space-between;
-  padding: 1.5rem;
+  padding: 1rem;
   background: var(--gauzy-card-1);
   border: 1px solid var(--border-basic-color-3);
   border-radius: calc(var(--border-radius) * 1.5);
@@ -504,7 +504,7 @@ nb-button-group {
   .plugin-list {
     border-radius: calc(var(--border-radius) * 2.25);
     overflow: auto;
-    height: calc(100vh - 24.125rem);
+    height: calc(100vh - 22.125rem);
     padding: 1rem;
     background-color: var(--gauzy-card-2);
     gap: 1rem;

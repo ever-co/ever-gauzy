@@ -1,6 +1,8 @@
+import { PluginSubscriptionStatus } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Not } from 'typeorm';
 import { PluginSubscriptionService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
 import { IPluginSubscription } from '../../../../shared';
@@ -43,6 +45,7 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 			const subscription = await this.pluginSubscriptionService.findOneByIdString(id, {
 				where: {
 					tenantId,
+					status: Not(PluginSubscriptionStatus.CANCELLED),
 					...(organizationId && { organizationId }),
 					...(subscriberId && { subscriberId })
 				},
@@ -99,6 +102,8 @@ export class CancelPluginSubscriptionCommandHandler implements ICommandHandler<C
 		// Skip if this is a child subscription (no cascade needed)
 		if (subscription.isInherited()) return [];
 		const cascadeReason = reason ? `Parent subscription cancelled: ${reason}` : 'Parent subscription cancelled';
-		return subscription.children.map((child) => child.cancel(cascadeReason));
+		return subscription.children
+			.filter((child) => child.canBeCancelled())
+			.map((child) => child.cancel(cascadeReason));
 	}
 }
