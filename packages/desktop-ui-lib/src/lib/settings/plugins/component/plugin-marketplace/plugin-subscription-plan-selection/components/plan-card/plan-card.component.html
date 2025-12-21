@@ -1,0 +1,108 @@
+<nb-card
+	class="plan-card"
+	[class.selected]="isSelected"
+	[class.current-plan]="isCurrentPlan"
+	[class.disabled]="isDisabled || isCurrentPlan"
+	[class.popular]="plan.isPopular"
+	[class.recommended]="plan.isRecommended"
+	[class.free]="plan.isFree"
+	(click)="onCardClick()"
+	(keydown)="onKeyDown($event)"
+	[attr.tabindex]="isDisabled || isCurrentPlan ? -1 : 0"
+	[attr.role]="'button'"
+	[attr.aria-pressed]="isSelected"
+	[attr.aria-label]="
+		'Select ' + plan.name + ' plan for ' + plan.formattedPrice + ' per ' + plan.formattedBillingPeriod
+	"
+>
+	<div class="plan-header">
+		<div class="plan-title">
+			<nb-icon [icon]="plan.icon" class="plan-icon"></nb-icon>
+			<div class="plan-title-text">
+				<span class="plan-name">{{ plan.name }}</span>
+				<span class="plan-subtitle">{{ plan.type | titlecase }}</span>
+			</div>
+		</div>
+		<div class="plan-badges" aria-label="Plan highlights">
+			<nb-badge [status]="plan.colorStatus" [text]="plan.type | titlecase" class="plan-badge"> </nb-badge>
+
+			@if (isCurrentPlan) {
+			<nb-badge status="success" text="Current Plan" class="current-plan-badge"></nb-badge>
+			} @else if (plan.isPopular) {
+			<nb-badge status="warning" text="Popular" class="popular-badge"></nb-badge>
+			} @else if (plan.isRecommended) {
+			<nb-badge status="info" text="Recommended" class="recommended-badge"></nb-badge>
+			}
+		</div>
+	</div>
+
+	<div class="plan-pricing">
+		@if (plan.isFree) {
+		<div class="price-display">
+			<span class="price-amount">Free</span>
+		</div>
+		} @else {
+		<div class="price-display">
+			<span class="price-amount">{{ plan.formattedPrice }}</span>
+			<span class="price-period">/ {{ plan.formattedBillingPeriod }}</span>
+		</div>
+		@if (plan.setupFee && plan.setupFee > 0) {
+		<div class="setup-fee">Setup fee: {{ plan.formattedSetupFee }}</div>
+		} @if (plan.discountPercentage && plan.discountPercentage > 0) {
+		<div class="discount">
+			<nb-badge status="success" [text]="plan.discountPercentage + '% OFF'"></nb-badge>
+		</div>
+		} } @if (plan.trialDays && plan.trialDays > 0) {
+		<div class="trial-info">
+			<nb-icon icon="clock-outline"></nb-icon>
+			{{ plan.trialText }}
+		</div>
+		}
+	</div>
+
+	<div class="plan-description">
+		<p>{{ plan.description }}</p>
+	</div>
+
+	<div class="plan-features">
+		<h6 class="features-title">Features included</h6>
+		<ul class="features-list">
+			@for (feature of plan.features; track feature) {
+			<li class="feature-item">
+				<nb-icon icon="checkmark-outline" status="success"></nb-icon>
+				<span>{{ feature }}</span>
+			</li>
+			}
+		</ul>
+	</div>
+
+	@if (hasLimitations()) {
+	<div class="plan-limitations">
+		<h6 class="limitations-title">Limitations</h6>
+		<ul class="limitations-list">
+			@for (limitation of getLimitationEntries(); track limitation[0]) {
+			<li class="limitation-item">
+				<nb-icon icon="info-outline" status="warning"></nb-icon>
+				<span
+					>{{ formatter.formatLimitationKey(limitation[0]) }}:
+					{{ formatter.formatLimitationValue(limitation[1]) }}</span
+				>
+			</li>
+			}
+		</ul>
+	</div>
+	} @if (showSelection) {
+	<div class="plan-selection">
+		@if (isCurrentPlan) {
+		<nb-icon icon="shield-outline" status="success" class="selection-icon current-plan-icon"> </nb-icon>
+		} @else {
+		<nb-icon
+			[icon]="isSelected ? 'checkmark-circle-2' : 'radio-button-off-outline'"
+			[status]="isSelected ? 'success' : 'basic'"
+			class="selection-icon"
+		>
+		</nb-icon>
+		}
+	</div>
+	}
+</nb-card>

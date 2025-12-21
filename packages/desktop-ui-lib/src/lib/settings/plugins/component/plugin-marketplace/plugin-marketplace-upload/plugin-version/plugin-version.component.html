@@ -1,15 +1,32 @@
 <lib-form-section [formGroup]="form" class="version-section" title="{{ 'PLUGIN.FORM.VERSION' | translate }}">
+	<!-- Header Info -->
+	<div class="version-header">
+		<div class="header-icon-wrapper">
+			<nb-icon icon="pricetags-outline" status="success"></nb-icon>
+		</div>
+		<div class="header-content">
+			<h6 class="header-title">{{ 'PLUGIN.FORM.VERSION_TITLE' | translate }}</h6>
+			<p class="header-description">{{ 'PLUGIN.FORM.VERSION_DESCRIPTION' | translate }}</p>
+		</div>
+	</div>
+
+	<!-- Version & Release Date Row -->
 	<lib-form-row>
 		@if(isEdit && pluginId){
-		<lib-form-row>
-			<div class="d-flex flex-column">
-				<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
-				<gauzy-version-selector [pluginId]="pluginId"></gauzy-version-selector>
-			</div>
-		</lib-form-row>
+		<div class="form-group">
+			<label class="label">
+				<nb-icon icon="hash-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.VERSION' | translate }}
+			</label>
+			<gauzy-version-selector [pluginId]="pluginId"></gauzy-version-selector>
+		</div>
 		}@else {
-		<nb-form-field class="form-group" pluginId>
-			<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }} *</label>
+		<nb-form-field class="form-group">
+			<label class="label">
+				<nb-icon icon="hash-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.VERSION' | translate }}
+				<span class="required-indicator">*</span>
+			</label>
 			<input
 				nbInput
 				fullWidth
@@ -18,17 +35,31 @@
 				placeholder="1.0.0"
 				[status]="getFieldError('number') ? 'danger' : 'basic'"
 			/>
-			<nb-hint *ngIf="getFieldError('number', 'required')" status="danger">
+			@if(getFieldError('number', 'required')) {
+			<nb-hint class="hint-danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.VERSION_REQUIRED' | translate }}
 			</nb-hint>
-			<nb-hint *ngIf="getFieldError('number', 'pattern')" status="danger">
+			} @if(getFieldError('number', 'pattern')) {
+			<nb-hint class="hint-danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.VERSION_FORMAT' | translate }}
 			</nb-hint>
+			} @if(form.get('number')?.valid && form.get('number')?.value) {
+			<nb-hint class="hint-success">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Valid semantic version
+			</nb-hint>
+			}
 		</nb-form-field>
 		}
 
 		<nb-form-field class="form-group">
-			<label class="label" for="release-date">{{ 'PLUGIN.FORM.RELEASE_DATE' | translate }} *</label>
+			<label class="label">
+				<nb-icon icon="calendar-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.RELEASE_DATE' | translate }}
+				<span class="required-indicator">*</span>
+			</label>
 			<input
 				nbInput
 				fullWidth
@@ -39,33 +70,73 @@
 				[status]="getFieldError('releaseDate') ? 'danger' : 'basic'"
 			/>
 			<nb-datepicker #datepicker [max]="max"></nb-datepicker>
-			<nb-hint *ngIf="getFieldError('releaseDate', 'required')" status="danger">
+			@if(getFieldError('releaseDate', 'required')) {
+			<nb-hint class="hint-danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.RELEASE_DATE_REQUIRED' | translate }}
 			</nb-hint>
-			<nb-hint *ngIf="getFieldError('releaseDate', 'futureDate')" status="danger">
+			} @if(getFieldError('releaseDate', 'futureDate')) {
+			<nb-hint class="hint-danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.FUTURE_DATE' | translate }}
 			</nb-hint>
+			} @if(form.get('releaseDate')?.valid && form.get('releaseDate')?.value) {
+			<nb-hint class="hint-success">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Release date set
+			</nb-hint>
+			}
 		</nb-form-field>
 	</lib-form-row>
 
-	<lib-form-row>
-		<nb-form-field class="form-group full-width">
-			<label class="label" for="version-changelog">{{ 'PLUGIN.FORM.CHANGELOG' | translate }} *</label>
-			<textarea
-				nbInput
-				fullWidth
-				id="version-changelog"
-				formControlName="changelog"
-				placeholder="{{ 'PLUGIN.FORM.CHANGELOG_PLACEHOLDER' | translate }}"
-				[status]="getFieldError('changelog') ? 'danger' : 'basic'"
-				rows="3"
-			></textarea>
-			<nb-hint *ngIf="getFieldError('changelog', 'required')" status="danger">
-				{{ 'PLUGIN.FORM.VALIDATION.CHANGELOG_REQUIRED' | translate }}
-			</nb-hint>
-			<nb-hint *ngIf="getFieldError('changelog', 'minlength')" status="danger">
-				{{ 'PLUGIN.FORM.VALIDATION.CHANGELOG_TOO_SHORT' | translate }}
-			</nb-hint>
-		</nb-form-field>
-	</lib-form-row>
+	<!-- Changelog Section -->
+	<div class="changelog-section">
+		<div class="section-header">
+			<nb-icon icon="book-open-outline" status="info"></nb-icon>
+			<h6 class="section-title">{{ 'CHANGELOG_MENU.HEADER' | translate }}</h6>
+		</div>
+
+		<lib-form-row>
+			<nb-form-field class="form-group full-width">
+				<label class="label">
+					<nb-icon icon="edit-outline" class="label-icon"></nb-icon>
+					{{ 'PLUGIN.FORM.CHANGELOG' | translate }}
+					<span class="required-indicator">*</span>
+				</label>
+				<textarea
+					nbInput
+					fullWidth
+					id="version-changelog"
+					formControlName="changelog"
+					placeholder="{{ 'PLUGIN.FORM.CHANGELOG_PLACEHOLDER' | translate }}"
+					[status]="getFieldError('changelog') ? 'danger' : 'basic'"
+					rows="5"
+				></textarea>
+				@if(getFieldError('changelog', 'required')) {
+				<nb-hint class="hint-danger">
+					<nb-icon icon="alert-circle-outline"></nb-icon>
+					{{ 'PLUGIN.FORM.VALIDATION.CHANGELOG_REQUIRED' | translate }}
+				</nb-hint>
+				} @if(getFieldError('changelog', 'minlength')) {
+				<nb-hint class="hint-danger">
+					<nb-icon icon="alert-circle-outline"></nb-icon>
+					{{ 'PLUGIN.FORM.VALIDATION.CHANGELOG_TOO_SHORT' | translate }}
+				</nb-hint>
+				} @if(form.get('changelog')?.value) {
+				<nb-hint class="hint-basic">
+					<nb-icon icon="text-outline"></nb-icon>
+					{{ form.get('changelog')?.value?.length || 0 }} characters
+				</nb-hint>
+				}
+			</nb-form-field>
+		</lib-form-row>
+	</div>
+
+	<!-- Info Alert -->
+	<nb-alert status="info" size="small" class="version-info-alert">
+		<div class="alert-content">
+			<nb-icon icon="bulb-outline"></nb-icon>
+			<span>{{ 'PLUGIN.FORM.VERSION_INFO' | translate }}</span>
+		</div>
+	</nb-alert>
 </lib-form-section>

@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   gauzy-mcp-auth:
-    runs-on: ubicloud-standard-16
+    runs-on: ubicloud-standard-8
     steps:
       - name: Checkout
         uses: actions/checkout@v4

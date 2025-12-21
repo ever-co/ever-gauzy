@@ -1,0 +1,193 @@
+.create-category-dialog {
+  height: 80vh;
+  width: 600px;
+  background: var(--gauzy-card-1);
+  border-radius: calc(var(--border-radius) * 1.5);
+  box-shadow: var(--gauzy-shadow);
+
+  ::ng-deep nb-card-header {
+    background: linear-gradient(135deg, rgba(143, 155, 179, 0.05) 0%, rgba(143, 155, 179, 0.02) 100%);
+    border-bottom: 1px solid var(--border-basic-color-3);
+    padding: 1.5rem;
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .header-icon {
+      font-size: 1.75rem;
+      color: var(--color-primary-default);
+    }
+
+    .card-title {
+      color: var(--gauzy-text-color-1);
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin: 0;
+    }
+  }
+
+  ::ng-deep nb-card-body {
+    padding: 1.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+
+    .label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--gauzy-text-color-1);
+      font-weight: 600;
+      font-size: 0.875rem;
+
+      .required {
+        color: var(--color-danger-default);
+        margin-left: 0.25rem;
+      }
+    }
+
+    .form-text {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--gauzy-text-color-2);
+    }
+  }
+
+  .color-picker {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .color-presets {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      flex: 1;
+
+      .color-preset {
+        width: 2rem;
+        height: 2rem;
+        border-radius: calc(var(--border-radius) * 0.75);
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: scale(1.1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        &.selected {
+          border-color: var(--gauzy-text-color-1);
+          box-shadow: 0 0 0 3px rgba(51, 102, 255, 0.2);
+        }
+      }
+    }
+
+    .color-input {
+      width: 3.5rem;
+      height: 2rem;
+      border-radius: calc(var(--border-radius) * 0.75);
+      border: 1px solid var(--border-basic-color-3);
+      cursor: pointer;
+    }
+  }
+
+  .icon-picker {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 0.5rem;
+
+    .icon-preset {
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: calc(var(--border-radius) * 0.75);
+      border: 1px solid var(--border-basic-color-3);
+      background: var(--background-basic-color-2);
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      nb-icon {
+        font-size: 1.5rem;
+        color: var(--gauzy-text-color-2);
+      }
+
+      &:hover {
+        background: var(--background-basic-color-3);
+        border-color: var(--color-primary-default);
+
+        nb-icon {
+          color: var(--color-primary-default);
+        }
+      }
+
+      &.selected {
+        background: var(--color-primary-default);
+        border-color: var(--color-primary-default);
+
+        nb-icon {
+          color: white;
+        }
+      }
+    }
+  }
+
+  .preview-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-basic-color-3);
+
+    .category-preview {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      border-radius: calc(var(--border-radius) * 1);
+      background: var(--background-basic-color-2);
+      border: 1px solid var(--border-basic-color-3);
+
+      nb-icon {
+        font-size: 1.5rem;
+      }
+
+      .preview-name {
+        flex: 1;
+        color: var(--gauzy-text-color-1);
+        font-weight: 600;
+      }
+
+      .preview-color {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: calc(var(--border-radius) * 0.5);
+        border: 1px solid var(--border-basic-color-3);
+      }
+    }
+  }
+
+  ::ng-deep nb-card-footer {
+    background: var(--background-basic-color-2);
+    border-top: 1px solid var(--border-basic-color-3);
+    padding: 1rem 1.5rem;
+  }
+
+  ::ng-deep {
+    input,
+    textarea {
+      border-radius: calc(var(--border-radius) * 1);
+      transition: all 0.3s ease;
+
+      &:focus {
+        border-color: var(--color-primary-default);
+        box-shadow: 0 0 0 3px rgba(51, 102, 255, 0.1);
+      }
+    }
+  }
+}

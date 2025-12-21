@@ -3,28 +3,44 @@
 <form [formGroup]="versionForm" (ngSubmit)="submit()">
 	<nb-card class="dialog-card" status="basic">
 		<nb-card-header class="mb-0">
-			<h5 class="title">
-				{{
-					isEdit
-						? ('PLUGIN.DIALOG.VERSION.UPDATE.TITLE' | translate : { number: version.number })
-						: ('PLUGIN.DIALOG.VERSION.CREATE.TITLE' | translate : { name: plugin?.name })
-				}}
-			</h5>
-			<button nbButton ghost size="small" (click)="dismiss()" class="close-button">
-				<nb-icon icon="close-outline"></nb-icon>
-			</button>
+			<div class="header-content">
+				<div class="header-left">
+					<div class="icon-container">
+						<nb-icon [icon]="isEdit ? 'edit-outline' : 'plus-circle-outline'"></nb-icon>
+					</div>
+					<div class="header-info">
+						<h5 class="title">
+							{{
+								isEdit
+									? ('PLUGIN.DIALOG.VERSION.UPDATE.TITLE' | translate : { number: version.number })
+									: ('PLUGIN.DIALOG.VERSION.CREATE.TITLE' | translate : { name: plugin?.name })
+							}}
+						</h5>
+					</div>
+				</div>
+				<button nbButton ghost size="small" (click)="dismiss()" class="close-button">
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
 		</nb-card-header>
 		<nb-card-body>
 			<nb-stepper orientation="horizontal" #stepper>
 				<!-- Step 1 : Sources -->
 				<nb-step [stepControl]="versionForm?.get('sources')" [label]="'PLUGIN.FORM.SOURCES' | translate">
 					@if(isEdit && plugin){
-					<lib-form-row>
-						<div class="d-flex flex-column">
-							<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
-							<gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
-						</div>
-					</lib-form-row>
+					<div class="version-section mb-3">
+						<lib-form-row>
+							<div class="d-flex flex-column">
+								<div class="field-header mb-2">
+									<nb-icon icon="layers-outline" class="field-icon"></nb-icon>
+									<label class="label" for="version-number">{{
+										'PLUGIN.FORM.VERSION' | translate
+									}}</label>
+								</div>
+								<gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
+							</div>
+						</lib-form-row>
+					</div>
 					}
 					<lib-source-container
 						class="overflow-auto grow"
@@ -36,7 +52,10 @@
 						(restore)="restoreSource($event)"
 					></lib-source-container>
 					<div class="stepper-buttons">
-						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+						<button nbButton status="primary" nbStepperNext class="next-button">
+							{{ 'BUTTONS.NEXT' | translate }}
+							<nb-icon icon="arrow-forward-outline" class="ml-1"></nb-icon>
+						</button>
 					</div>
 				</nb-step>
 
@@ -49,10 +68,18 @@
 						[form]="versionForm"
 					></lib-plugin-version>
 					<div class="stepper-buttons">
-						<button nbButton outline status="basic" nbStepperPrevious>
+						<button nbButton outline status="basic" nbStepperPrevious class="previous-button">
+							<nb-icon icon="arrow-back-outline" class="mr-1"></nb-icon>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
-						<button nbButton status="primary" type="submit" [disabled]="isFormInvalid || isSubmitting">
+						<button
+							nbButton
+							status="primary"
+							type="submit"
+							[disabled]="isFormInvalid || isSubmitting"
+							class="submit-button"
+						>
+							<nb-icon [icon]="isEdit ? 'checkmark-outline' : 'plus-outline'" class="mr-1"></nb-icon>
 							{{
 								version
 									? ('BUTTONS.UPDATE' | translate)

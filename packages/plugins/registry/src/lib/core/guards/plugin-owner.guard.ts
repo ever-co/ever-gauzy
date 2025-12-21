@@ -9,16 +9,16 @@ export class PluginOwnerGuard implements CanActivate {
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest();
 		const pluginId = this.getPluginIdFromRequest(request);
-		const employeeId = RequestContext.currentEmployeeId();
+		const userId = RequestContext.currentUserId();
 
 		if (!pluginId) {
 			throw new ForbiddenException('Plugin ID is required.');
 		}
-		if (!employeeId) {
-			throw new ForbiddenException('Employee ID is required.');
+		if (!userId) {
+			throw new ForbiddenException('User ID is required.');
 		}
 
-		const isOwner = await this.pluginService.validatePluginOwnership(pluginId, employeeId);
+		const isOwner = await this.pluginService.validatePluginOwnership(pluginId, userId);
 
 		if (!isOwner) {
 			throw new ForbiddenException('You do not have permission to access this plugin.');
