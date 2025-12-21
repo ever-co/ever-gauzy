@@ -233,7 +233,7 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 	 * @returns Updated plugin tenant
 	 */
 	async updateScope(pluginTenantId: string, scope: PluginScope): Promise<IPluginTenant> {
-		const { success, record: pluginTenant } = await this.findOneOrFailByIdString(pluginTenantId);
+		const { success } = await this.findOneOrFailByIdString(pluginTenantId);
 		if (!success) {
 			throw new NotFoundException(`Plugin tenant with ID "${pluginTenantId}" not found`);
 		}
