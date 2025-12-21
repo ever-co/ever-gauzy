@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubicloud-standard-16]
+        os: [ubicloud-standard-8]
 
     steps:
       - name: Check out Git repository
@@ -90,7 +90,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubicloud-standard-16-arm]
+        os: [ubicloud-standard-8-arm]
 
     steps:
       - name: Check out Git repository
@@ -106,10 +106,16 @@ jobs:
         run: 'sudo chown -R $(whoami) ./*'
 
       - name: Install system dependencies
-        run: 'sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev libxrandr-dev'
+        run: |
+          sudo apt-get update
+          sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev libxrandr-dev ruby ruby-dev rubygems build-essential
+          sudo gem install --no-document fpm
 
       - name: Install Snapcraft
         uses: samuelmeuli/action-snapcraft@v2
+
+      - name: Install Multipass
+        run: 'sudo snap install multipass'
 
       - name: Fix node-gyp and Python
         run: python3 -m pip install packaging setuptools
@@ -145,6 +151,7 @@ jobs:
         run: 'yarn build:gauzy-api-server:linux:release:gh:arm64'
         env:
           USE_HARD_LINKS: false
+          USE_SYSTEM_FPM: true
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           EP_GH_IGNORE_TIME: true
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
@@ -157,13 +164,14 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+          SNAPCRAFT_BUILD_ENVIRONMENT: host
 
   release-mac:
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [warp-macos-15-arm64-12x]
+        os: [warp-macos-15-arm64-6x]
 
     steps:
       - name: Check out Git repository
@@ -229,7 +237,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [warp-windows-latest-x64-16x]
+        os: [warp-windows-latest-x64-8x]
 
     steps:
       - name: Check out Git repository

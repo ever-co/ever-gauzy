@@ -6,7 +6,8 @@ export enum PluginChannel {
 	ACTIVATE = 'plugin::activate',
 	DEACTIVATE = 'plugin::deactivate',
 	UNINSTALL = 'plugin::uninstall',
-	STATUS = 'plugin::status'
+	STATUS = 'plugin::status',
+	COMPLETE_INSTALLATION = 'plugin::complete::installation'
 }
 
 export enum PluginHandlerChannel {

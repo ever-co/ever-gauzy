@@ -1,0 +1,114 @@
+<div class="hierarchy-container" *ngIf="subscriptions && subscriptions.length > 0">
+	<nb-card>
+		<nb-card-header>
+			<h6 class="mb-0">{{ 'PLUGIN.HIERARCHY.TITLE' | translate }}</h6>
+		</nb-card-header>
+
+		<nb-card-body>
+			<div class="subscriptions-list">
+				<div *ngFor="let node of nodes" class="subscription-row">
+					<div class="subscription-card">
+						<!-- Status Badge -->
+						<div class="status-section">
+							<gauzy-subscription-status-badge [status]="node.subscription.status">
+							</gauzy-subscription-status-badge>
+						</div>
+						<!-- Subscription Details -->
+						<div class="details-section">
+							<div class="detail-row">
+								<span class="label">{{ 'PLUGIN.HIERARCHY.USER_ID' | translate }}:</span>
+								<span class="value">{{ getUserId(node.subscription) }}</span>
+							</div>
+
+							<div class="detail-row">
+								<span class="label">{{ 'PLUGIN.HIERARCHY.TYPE' | translate }}:</span>
+								<span class="value">{{ node.Subscription.plan.type | titlecase }}</span>
+							</div>
+
+							<div class="detail-row">
+								<span class="label">{{ 'PLUGIN.HIERARCHY.BILLING_PERIOD' | translate }}:</span>
+								<span class="value">{{
+									node.subscription.plan?.billingPeriod ?? node.subscription.billingPeriod | titlecase
+								}}</span>
+							</div>
+
+							<div class="detail-row">
+								<span class="label">{{ 'PLUGIN.HIERARCHY.AMOUNT' | translate }}:</span>
+								<span class="value">{{ formatAmount(node.subscription) }}</span>
+							</div>
+
+							<div class="detail-row">
+								<span class="label">{{ 'PLUGIN.HIERARCHY.START_DATE' | translate }}:</span>
+								<span class="value">{{ formatDate(node.subscription.startDate) }}</span>
+							</div>
+
+							<div class="detail-row" *ngIf="node.subscription.endDate">
+								<span class="label">{{ 'PLUGIN.HIERARCHY.END_DATE' | translate }}:</span>
+								<span class="value">{{ formatDate(node.subscription.endDate) }}</span>
+							</div>
+
+							<div class="detail-row" *ngIf="node.subscription.nextBillingDate">
+								<span class="label">{{ 'PLUGIN.HIERARCHY.NEXT_BILLING' | translate }}:</span>
+								<span class="value">{{ formatDate(node.subscription.nextBillingDate) }}</span>
+							</div>
+
+							<!-- Auto-Renew Indicator -->
+							<div class="detail-row">
+								<span class="label">{{ 'PLUGIN.HIERARCHY.AUTO_RENEW' | translate }}:</span>
+								<span class="value">
+									<nb-icon
+										[icon]="
+											node.subscription.isAutoRenew
+												? 'checkmark-circle-outline'
+												: 'close-circle-outline'
+										"
+										[status]="node.subscription.isAutoRenew ? 'success' : 'basic'"
+									>
+									</nb-icon>
+									{{
+										(node.subscription.isAutoRenew
+											? 'PLUGIN.HIERARCHY.ENABLED'
+											: 'PLUGIN.HIERARCHY.DISABLED'
+										) | translate
+									}}
+								</span>
+							</div>
+
+							<!-- Features -->
+							<div
+								class="features-section"
+								*ngIf="
+									(node.subscription.plan?.features ?? node.subscription.features) &&
+									(node.subscription.plan?.features ?? node.subscription.features).length > 0
+								"
+							>
+								<span class="label">{{ 'PLUGIN.HIERARCHY.FEATURES' | translate }}:</span>
+								<div class="features-list">
+									<nb-badge
+										*ngFor="
+											let feature of node.subscription.plan?.features ??
+												node.subscription.features
+										"
+										status="info"
+										class="feature-badge"
+										[text]="feature"
+									>
+									</nb-badge>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</div>
+
+<div class="empty-state" *ngIf="!subscriptions || subscriptions.length === 0">
+	<nb-card>
+		<nb-card-body class="text-center py-5">
+			<nb-icon icon="layers-outline" class="empty-icon"></nb-icon>
+			<p class="text-muted mt-3">{{ 'PLUGIN.HIERARCHY.NO_SUBSCRIPTIONS' | translate }}</p>
+		</nb-card-body>
+	</nb-card>
+</div>

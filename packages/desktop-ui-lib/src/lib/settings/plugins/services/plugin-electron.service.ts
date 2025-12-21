@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
-import { IPlugin } from './plugin-loader.service';
+import type { IPlugin } from './plugin-loader.service';
 
 @Injectable({
 	providedIn: 'root'
@@ -42,8 +42,15 @@ export class PluginElectronService {
 		this.electronService.ipcRenderer.send('plugin::download', config);
 	}
 
-	public uninstall(plugin: IPlugin) {
-		this.electronService.ipcRenderer.send('plugin::uninstall', plugin.name);
+	public uninstall(input: { marketplaceId: ID; name?: string; id?: ID }) {
+		this.electronService.ipcRenderer.send('plugin::uninstall', input);
+	}
+
+	public completeInstallation(marketplaceId: string, installationId: string): void {
+		this.electronService.ipcRenderer.send('plugin::complete::installation', {
+			marketplaceId,
+			installationId
+		});
 	}
 
 	public lazyLoader(pluginPath: string) {

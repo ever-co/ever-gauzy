@@ -1,0 +1,56 @@
+.dialog-card {
+  background: var(--gauzy-card-1);
+  border-radius: calc(var(--border-radius) * 1.25);
+  box-shadow: var(--gauzy-shadow);
+  width: 80vw;
+  height: 90vh;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.icon-container {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  background: var(--gauzy-card-2);
+  border-radius: calc(var(--border-radius) * 1.1);
+}
+
+.title {
+  margin: 0;
+  color: var(--gauzy-text-color-1);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--gauzy-text-color-2);
+  font-size: 0.875rem;
+}
+
+.close-button {
+  min-width: auto;
+  padding: 0.25rem 0.5rem;
+  border-radius: calc(var(--border-radius) * 0.9);
+}
+
+.footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+[nbButton] {
+  border-radius: calc(var(--border-radius) * 1.2);
+}

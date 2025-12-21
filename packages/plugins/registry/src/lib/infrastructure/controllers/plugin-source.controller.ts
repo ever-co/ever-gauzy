@@ -22,34 +22,18 @@ import {
 	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
-	ApiBearerAuth,
-	ApiBody,
-	ApiConsumes,
-	ApiOperation,
-	ApiParam,
-	ApiResponse,
-	ApiSecurity,
-	ApiTags
-} from '@nestjs/swagger';
-import { CreatePluginSourceCommand } from '../../application/commands/create-plugin-source.command';
-import { DeletePluginSourceCommand } from '../../application/commands/delete-plugin-source.command';
-import { RecoverPluginSourceCommand } from '../../application/commands/recover-plugin-source.command';
-import { ListPluginSourcesQuery } from '../../application/queries/list-plugin-sources.query';
-import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
-import { LazyAnyFileInterceptor } from '../../core/interceptors/lazy-any-file.interceptor';
-import { CreatePluginSourceDTO } from '../../shared/dto/create-plugin-source.dto';
-import { FileDTO } from '../../shared/dto/file.dto';
-import { PluginSourceDTO } from '../../shared/dto/plugin-source.dto';
-import { IPluginSource } from '../../shared/models/plugin-source.model';
-import { IPluginVersion } from '../../shared/models/plugin-version.model';
-import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
-import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
+	CreatePluginSourceCommand,
+	DeletePluginSourceCommand,
+	ListPluginSourcesQuery,
+	RecoverPluginSourceCommand
+} from '../../application';
+import { LazyAnyFileInterceptor, PluginOwnerGuard } from '../../core';
+import { CreatePluginSourceDTO, FileDTO, IPluginSource, IPluginVersion, PluginSourceDTO } from '../../shared';
+import { GauzyStorageProvider, UploadedPluginStorage } from '../storage';
 
 @ApiTags('Plugin Sources')
-@ApiBearerAuth('Bearer')
-@ApiSecurity('api_key')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/plugins/:pluginId/versions/:versionId/sources')
 export class PluginSourceController {
 	constructor(private readonly queryBus: QueryBus, private readonly commandBus: CommandBus) {}
@@ -99,7 +83,7 @@ export class PluginSourceController {
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Post()
 	public async create(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
@@ -222,7 +206,7 @@ export class PluginSourceController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Delete(':sourceId')
 	public async delete(
 		@Param('sourceId', UUIDValidationPipe) sourceId: ID,
@@ -233,11 +217,11 @@ export class PluginSourceController {
 	}
 
 	/**
-	 * Recover a soft-deleted plugin source.
+	 * Update plugin source status (including restoration)
 	 */
 	@ApiOperation({
-		summary: 'Recover a deleted plugin source',
-		description: 'Soft-recovers a previously deleted plugin source using its UUID, version UUID the plugin ID.'
+		summary: 'Update plugin source status',
+		description: 'Updates a plugin source status, including restoring deleted sources.'
 	})
 	@ApiParam({
 		name: 'pluginId',
@@ -250,19 +234,33 @@ export class PluginSourceController {
 		name: 'versionId',
 		type: String,
 		format: 'uuid',
-		description: "UUID of the plugin source's version on to recover",
+		description: "UUID of the plugin source's version",
 		required: true
 	})
 	@ApiParam({
 		name: 'sourceId',
 		type: String,
 		format: 'uuid',
-		description: 'UUID of the plugin source to recover',
+		description: 'UUID of the plugin source to update',
 		required: true
+	})
+	@ApiBody({
+		description: 'Status update data',
+		schema: {
+			type: 'object',
+			properties: {
+				status: {
+					type: 'string',
+					enum: ['active', 'inactive', 'deleted', 'restored'],
+					description: 'The new status for the plugin source'
+				}
+			},
+			required: ['status']
+		}
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Plugin source recovered successfully.'
+		description: 'Plugin source status updated successfully.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -270,7 +268,7 @@ export class PluginSourceController {
 	})
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
-		description: 'User does not have permission to recover this plugin source.'
+		description: 'User does not have permission to update this plugin source.'
 	})
 	@ApiResponse({
 		status: HttpStatus.UNAUTHORIZED,
@@ -281,13 +279,20 @@ export class PluginSourceController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
-	@UseGuards(PluginOwnerGuard)
-	@Patch(':sourceId')
-	public async recover(
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Patch(':sourceId/status')
+	public async updateStatus(
 		@Param('sourceId', UUIDValidationPipe) sourceId: ID,
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
-		@Param('pluginId', UUIDValidationPipe) pluginId: ID
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Body() updateDto: { status: 'active' | 'inactive' | 'deleted' | 'restored' }
 	): Promise<void> {
-		return this.commandBus.execute(new RecoverPluginSourceCommand(sourceId, versionId, pluginId));
+		if (updateDto.status === 'restored') {
+			return this.commandBus.execute(new RecoverPluginSourceCommand(sourceId, versionId, pluginId));
+		}
+
+		// Handle other status updates as needed
+		// Note: Implement appropriate command handling for other statuses
+		throw new Error(`Status '${updateDto.status}' update not implemented yet`);
 	}
 }

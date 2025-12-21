@@ -1,0 +1,43 @@
+@let creating = creating$ | async;
+
+<nb-card class="dialog-card">
+	<nb-card-header>
+		<div class="header-content">
+			<div class="header-left">
+				<div class="icon-container">
+					<nb-icon icon="pricetags-outline"></nb-icon>
+				</div>
+				<div class="header-info">
+					<h5 class="title">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_CREATOR.TITLE' | translate }}</h5>
+					<p class="subtitle">{{ plugin?.name }}</p>
+				</div>
+			</div>
+			<button nbButton ghost size="small" (click)="onClose()" class="close-button">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body>
+		<lib-plugin-subscription-plan-creator
+			[dialogMode]="true"
+			[pluginId]="pluginId"
+			[allowMultiplePlans]="true"
+			[requireAtLeastOnePlan]="true"
+			(validationStateChanged)="onValidationChange($event)"
+			(plansChanged)="onPlansChange($event)"
+		></lib-plugin-subscription-plan-creator>
+	</nb-card-body>
+
+	<nb-card-footer>
+		<div class="footer-actions">
+			<button nbButton outline status="basic" size="medium" (click)="onClose()">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button nbButton status="primary" size="medium" (click)="onSaved()" [disabled]="!isPlanValid || creating">
+				<nb-icon *gauzySpinnerButton="creating" icon="save-outline"></nb-icon>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</div>
+	</nb-card-footer>
+</nb-card>

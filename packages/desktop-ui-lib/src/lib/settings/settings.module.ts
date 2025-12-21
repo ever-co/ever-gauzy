@@ -7,6 +7,7 @@ import {
 	NbButtonModule,
 	NbCardModule,
 	NbDialogService,
+	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
 	NbLayoutModule,
@@ -24,13 +25,13 @@ import {
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { LanguageModule } from '../language/language.module';
 import { Store } from '../services';
+import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.module';
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { TaskRenderModule } from '../time-tracker/task-render';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { PluginsModule } from './plugins/plugins.module';
 import { SettingsComponent } from './settings.component';
 import { SslModule } from './ssl';
-import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.module';
 
 @NgModule({
 	declarations: [SettingsComponent],
@@ -43,6 +44,7 @@ import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.m
 		NbIconModule,
 		NbListModule,
 		NbSelectModule,
+		NbFormFieldModule,
 		FormsModule,
 		NbToggleModule,
 		NbInputModule,
@@ -64,4 +66,4 @@ import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.m
 	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store],
 	exports: [SettingsComponent]
 })
-export class SettingsModule { }
+export class SettingsModule {}

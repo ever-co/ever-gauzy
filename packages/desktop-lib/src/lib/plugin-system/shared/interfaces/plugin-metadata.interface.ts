@@ -8,6 +8,7 @@ export interface IPluginMetadata {
 	author?: string;
 	marketplaceId?: string;
 	versionId?: string;
+	installationId?: string;
 }
 
 export type IPluginMetadataCreate = IPluginMetadata & {
@@ -18,7 +19,7 @@ export type IPluginMetadataCreate = IPluginMetadata & {
 export type IPluginMetadataUpdate = Partial<
 	Pick<
 		IPluginMetadataCreate,
-		'isActivate' | 'name' | 'version' | 'description' | 'logo' | 'marketplaceId' | 'versionId'
+		'isActivate' | 'name' | 'version' | 'description' | 'logo' | 'marketplaceId' | 'versionId' | 'installationId'
 	> & {
 		id?: string;
 	}
@@ -26,6 +27,6 @@ export type IPluginMetadataUpdate = Partial<
 
 export type IPluginMetadataPersistance = IPluginMetadataCreate & IPluginMetadataUpdate;
 
-export type IPluginMetadataFindOne = Pick<IPluginMetadataUpdate, 'id' | 'name' | 'marketplaceId'>;
+export type IPluginMetadataFindOne = Pick<IPluginMetadataUpdate, 'id' | 'name' | 'marketplaceId' | 'installationId'>;
 
 export type IPluginMetadataDelete = IPluginMetadataFindOne;

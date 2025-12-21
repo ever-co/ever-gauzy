@@ -1,7 +1,23 @@
 <lib-form-section [formGroup]="form" title="{{ 'PLUGIN.FORM.BASIC_INFO' | translate }}">
+	<!-- Header Info -->
+	<div class="basic-info-header">
+		<div class="header-icon-wrapper">
+			<nb-icon icon="cube-outline" status="primary"></nb-icon>
+		</div>
+		<div class="header-content">
+			<h6 class="header-title">{{ 'PLUGIN.FORM.BASIC_INFO_TITLE' | translate }}</h6>
+			<p class="header-description">{{ 'PLUGIN.FORM.BASIC_INFO_DESCRIPTION' | translate }}</p>
+		</div>
+	</div>
+
+	<!-- Name & Type Row -->
 	<lib-form-row>
 		<nb-form-field class="form-group">
-			<label class="label" for="plugin-name">{{ 'PLUGIN.FORM.NAME' | translate }} *</label>
+			<label class="label">
+				<nb-icon icon="text-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.NAME' | translate }}
+				<span class="required-indicator">*</span>
+			</label>
 			<input
 				nbInput
 				fullWidth
@@ -10,16 +26,30 @@
 				placeholder="{{ 'PLUGIN.FORM.NAME_PLACEHOLDER' | translate }}"
 				[status]="getFieldError('name') ? 'danger' : 'basic'"
 			/>
-			<nb-hint *ngIf="getFieldError('name', 'required')" status="danger">
+			@if(getFieldError('name', 'required')) {
+			<nb-hint class="hint-danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.NAME_REQUIRED' | translate }}
 			</nb-hint>
-			<nb-hint *ngIf="getFieldError('name', 'maxlength')" status="danger">
+			} @if(getFieldError('name', 'maxlength')) {
+			<nb-hint class="hint-danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.NAME_TOO_LONG' | translate }}
 			</nb-hint>
+			} @if(form.get('name')?.valid && form.get('name')?.value) {
+			<nb-hint class="hint-success">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Great! Plugin name is valid
+			</nb-hint>
+			}
 		</nb-form-field>
 
-		<nb-form-field class="form-group">
-			<label class="label" for="plugin-type">{{ 'PLUGIN.FORM.TYPE' | translate }} *</label>
+		<div class="form-group">
+			<label class="label">
+				<nb-icon icon="layers-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.TYPE' | translate }}
+				<span class="required-indicator">*</span>
+			</label>
 			<nb-select
 				fullWidth
 				id="plugin-type"
@@ -28,15 +58,29 @@
 				[status]="getFieldError('type') ? 'danger' : 'basic'"
 			>
 				<nb-option *ngFor="let type of pluginTypes" [value]="type">
-					{{ 'PLUGIN.FORM.TYPES.' + type | translate }}
+					<div class="select-option-content">
+						<nb-icon icon="layers-outline"></nb-icon>
+						<span>{{ 'PLUGIN.FORM.TYPES.' + type | translate }}</span>
+					</div>
 				</nb-option>
 			</nb-select>
-		</nb-form-field>
+			@if(form.get('type')?.valid && form.get('type')?.value) {
+			<nb-hint class="hint-success">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Plugin type selected
+			</nb-hint>
+			}
+		</div>
 	</lib-form-row>
 
+	<!-- Status & Category Row -->
 	<lib-form-row>
-		<nb-form-field class="form-group">
-			<label class="label" for="plugin-status">{{ 'PLUGIN.FORM.STATUS' | translate }} *</label>
+		<div class="form-group">
+			<label class="label">
+				<nb-icon icon="radio-button-on-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.STATUS' | translate }}
+				<span class="required-indicator">*</span>
+			</label>
 			<nb-select
 				fullWidth
 				id="plugin-status"
@@ -44,15 +88,54 @@
 				[status]="getFieldError('status') ? 'danger' : 'basic'"
 			>
 				<nb-option *ngFor="let status of pluginStatuses" [value]="status">
-					{{ 'PLUGIN.FORM.STATUSES.' + status | translate }}
+					<div class="select-option-content">
+						{{ 'PLUGIN.FORM.STATUSES.' + status | translate }}
+					</div>
 				</nb-option>
 			</nb-select>
-		</nb-form-field>
+			@if(form.get('status')?.valid && form.get('status')?.value) {
+			<nb-hint [class]="'hint-' + getStatusHintColor(form.get('status')?.value)">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Status: {{ 'PLUGIN.FORM.STATUSES.' + form.get('status')?.value | translate }}
+			</nb-hint>
+			}
+		</div>
+
+		<div class="form-group">
+			<label class="label">
+				<nb-icon icon="folder-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.CATEGORY' | translate }}
+			</label>
+			<gauzy-category-selector [categoryId]="category?.value"></gauzy-category-selector>
+			@if(category?.value) {
+			<nb-hint class="hint-success">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Category selected
+			</nb-hint>
+			}
+		</div>
 	</lib-form-row>
 
+	<!-- Status Info Card Row -->
+	<lib-form-row>
+		<div class="form-group status-info-card full-width">
+			<div class="info-card-content">
+				<nb-icon icon="bulb-outline" status="warning"></nb-icon>
+				<div class="info-text">
+					<strong>{{ 'PLUGIN.FORM.STATUS_INFO_TITLE' | translate }}</strong>
+					<p>{{ 'PLUGIN.FORM.STATUS_INFO_DESCRIPTION' | translate }}</p>
+				</div>
+			</div>
+		</div>
+	</lib-form-row>
+
+	<!-- Description Row -->
 	<lib-form-row>
 		<nb-form-field class="form-group full-width">
-			<label class="label" for="plugin-description">{{ 'PLUGIN.FORM.DESCRIPTION' | translate }}</label>
+			<label class="label">
+				<nb-icon icon="file-text-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.DESCRIPTION' | translate }}
+			</label>
 			<textarea
 				nbInput
 				fullWidth
@@ -60,10 +143,19 @@
 				formControlName="description"
 				placeholder="{{ 'PLUGIN.FORM.DESCRIPTION_PLACEHOLDER' | translate }}"
 				[status]="getFieldError('description') ? 'danger' : 'basic'"
+				rows="4"
 			></textarea>
-			<nb-hint *ngIf="getFieldError('description', 'maxlength')" status="danger">
+			@if(getFieldError('description', 'maxlength')) {
+			<nb-hint class="hint-danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.DESCRIPTION_TOO_LONG' | translate }}
 			</nb-hint>
+			} @if(form.get('description')?.value) {
+			<nb-hint class="hint-basic">
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ form.get('description')?.value?.length || 0 }} characters
+			</nb-hint>
+			}
 		</nb-form-field>
 	</lib-form-row>
 </lib-form-section>
