@@ -137,7 +137,7 @@ ARG NODE_OPTIONS
 ENV NX_NO_CLOUD=true
 ENV CI=true
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
 ENV NODE_ENV=production
 ENV IS_DOCKER=true
 
