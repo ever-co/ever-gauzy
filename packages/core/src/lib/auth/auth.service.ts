@@ -853,10 +853,12 @@ export class AuthService extends SocialAuthService {
 	 * If the user does not exist, an error is thrown.
 	 *
 	 * @param request A partial IUser object, mainly containing the user's ID.
+	 * @param organizationId Optional organization ID to use for finding the employee.
+	 *                       If not provided, uses RequestContext.currentOrganizationId().
 	 * @returns A Promise that resolves to a JWT access token string.
 	 * @throws Throws an UnauthorizedException if the user is not found or if there is an issue in token generation.
 	 */
-	public async getJwtAccessToken(request: Partial<IUser>) {
+	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID) {
 		const tenantId = request.tenantId || RequestContext.currentTenantId();
 		try {
 			// Validate that the request contains a user ID
@@ -911,7 +913,8 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Retrieve the employee details associated with the user.
-			const employee = await this.employeeService.findOneByUserId(user.id);
+			// Use provided organizationId if available, otherwise fall back to RequestContext
+			const employee = await this.employeeService.findOneByUserId(user.id, organizationId);
 
 			// Create a payload for the JWT token
 			const payload: JwtPayload = {
@@ -1582,6 +1585,119 @@ export class AuthService extends SocialAuthService {
 			};
 		} catch (error) {
 			console.error('Error while switching workspace:', error?.message);
+
+			// Re-throw known exceptions for better error handling in the frontend
+			if (error instanceof UnauthorizedException) {
+				throw error;
+			}
+
+			// For unexpected errors, return null to maintain backward compatibility
+			return null;
+		}
+	}
+
+	/**
+	 * Switch the current user to a different organization within the same workspace.
+	 *
+	 * @param organizationId The ID of the organization to switch to.
+	 * @returns A promise that resolves to the authentication response with new tokens or null if switching fails.
+	 * @throws UnauthorizedException when user is not authenticated or doesn't have access to the organization.
+	 */
+	async switchOrganization(organizationId: ID): Promise<IAuthResponse | null> {
+		try {
+			// Get the current authenticated user
+			const currentUser = RequestContext.currentUser();
+			if (!currentUser || !currentUser.id) {
+				throw new UnauthorizedException('User not authenticated');
+			}
+
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new UnauthorizedException('Tenant context not found');
+			}
+
+			// Verify the user has access to this organization
+			const userOrganization = await this.userOrganizationService.findOneByOptions({
+				where: {
+					userId: currentUser.id,
+					organizationId,
+					tenantId,
+					isActive: true
+				}
+			});
+
+			if (!userOrganization) {
+				throw new UnauthorizedException('User does not have access to this organization');
+			}
+
+			// Retrieve the user with role permissions
+			let user: User;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
+						where: {
+							id: currentUser.id,
+							tenantId,
+							isActive: true,
+							isArchived: false
+						},
+						relations: { role: { rolePermissions: true } }
+					});
+					user = (await this.mikroOrmUserRepository.findOne(where, mikroOptions)) as User;
+					break;
+
+				case MultiORMEnum.TypeORM:
+					user = await this.typeOrmUserRepository.findOne({
+						where: {
+							id: currentUser.id,
+							tenantId,
+							isActive: true,
+							isArchived: false
+						},
+						relations: { role: { rolePermissions: true } }
+					});
+					break;
+
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+			}
+
+			if (!user) {
+				throw new UnauthorizedException('User not found');
+			}
+
+			// Retrieve the employee details for the target organization
+			const employee = await this.employeeService.findOneByUserId(user.id, organizationId);
+
+			// Check if the employee is active and not archived (if employee exists)
+			if (employee && (!employee.isActive || employee.isArchived)) {
+				throw new UnauthorizedException('Employee account is not active in this organization');
+			}
+
+			// Update user's last organization
+			await this.userService.update(user.id, { lastOrganizationId: organizationId });
+
+			// Generate new access and refresh tokens with the new organization context
+			const [access_token, refresh_token] = await Promise.all([
+				this.getJwtAccessToken(user, organizationId),
+				this.getJwtRefreshToken(user)
+			]);
+
+			// Store the current refresh token with the user
+			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+
+			// Return the authentication response
+			return {
+				user: new User({
+					...this.serialize(user),
+					...(employee && { employee })
+				}),
+				token: access_token,
+				refresh_token: refresh_token
+			};
+		} catch (error) {
+			console.error('Error while switching organization:', error?.message);
 
 			// Re-throw known exceptions for better error handling in the frontend
 			if (error instanceof UnauthorizedException) {

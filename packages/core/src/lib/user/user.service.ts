@@ -130,7 +130,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		// Fetch employee details if 'includeEmployee' is true
 		if (options.includeEmployee) {
 			const relations = options.includeOrganization ? { organization: true } : [];
-			employee = await this._employeeService.findOneByUserId(user.id, { relations });
+			employee = await this._employeeService.findOneByUserId(user.id, undefined, { relations });
 		}
 
 		// Return user data combined with employee data, if it exists.

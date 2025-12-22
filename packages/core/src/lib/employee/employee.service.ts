@@ -210,13 +210,18 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * Finds an employee by user ID.
 	 *
 	 * @param userId The ID of the user to find.
+	 * @param organizationId Optional organization ID. If not provided, uses the current organization from request context.
 	 * @param options Optional FindOneOptions.
 	 * @returns A Promise resolving to the employee if found, otherwise null.
 	 */
-	async findOneByUserId(userId: ID, options?: FindOneOptions<Employee>): Promise<IEmployee | null> {
+	async findOneByUserId(
+		userId: ID,
+		organizationId?: ID,
+		options?: FindOneOptions<Employee>
+	): Promise<IEmployee | null> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const organizationId = RequestContext.currentOrganizationId();
+			const orgId = organizationId || RequestContext.currentOrganizationId();
 
 			// Define the base where clause
 			const whereClause = {
@@ -224,7 +229,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				isActive: true,
 				isArchived: false,
 				...(tenantId && { tenantId }),
-				...(organizationId && { organizationId })
+				...(orgId && { organizationId: orgId })
 			};
 
 			// Merge the existing where conditions in options, if any
