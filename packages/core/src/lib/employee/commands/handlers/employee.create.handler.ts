@@ -37,6 +37,31 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 		const { organizationId } = input;
 
 		if (isEmpty(input.userId)) {
+			// Check if a user with this email already exists in the current tenant
+			const tenantId = RequestContext.currentTenantId();
+			const existingUser = await this._userService.findOneByWhereOptions({
+				email: input.user.email,
+				tenantId
+			});
+
+			if (existingUser) {
+				// User already exists in this tenant - create only the employee
+				const employee = await this._employeeService.create({
+					...input,
+					user: existingUser,
+					organizationId,
+					organization: { id: organizationId }
+				});
+
+				// Assign organization to the existing user
+				if (!!employee.organizationId) {
+					await this._userOrganizationService.addUserToOrganization(existingUser, organizationId);
+				}
+
+				return employee;
+			}
+
+			// User doesn't exist in this tenant - create new user and employee
 			// 1. Find employee role for relative tenant
 			const role = await this._roleService.findOneByWhereOptions({
 				name: RolesEnum.EMPLOYEE,

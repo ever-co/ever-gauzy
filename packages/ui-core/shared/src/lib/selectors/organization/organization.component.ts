@@ -16,10 +16,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-organization-selector',
-    templateUrl: './organization.component.html',
-    styleUrls: ['./organization.component.scss'],
-    standalone: false
+	selector: 'ga-organization-selector',
+	templateUrl: './organization.component.html',
+	styleUrls: ['./organization.component.scss'],
+	standalone: false
 })
 export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organizations: IOrganization[] = [];
@@ -124,13 +124,13 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			// Retrieve the user's ID and tenant ID
 			const { id: userId, tenantId } = this._store.user;
 
-			// Define the relations to be included in the query
-			const relations = [
-				'organization',
-				'organization.contact',
-				'organization.featureOrganizations',
-				'organization.featureOrganizations.feature'
-			];
+			// Define base relations
+			const relations = ['organization', 'organization.contact'];
+
+			// Add feature organizations relations only if user has permission
+			if (this._store.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+				relations.push('organization.featureOrganizations', 'organization.featureOrganizations.feature');
+			}
 
 			// Fetch all organizations associated with the user
 			const { items = [] } = await this._userOrganizationService.getAll(relations, { userId, tenantId });
