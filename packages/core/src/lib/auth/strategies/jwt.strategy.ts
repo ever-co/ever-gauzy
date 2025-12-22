@@ -40,18 +40,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 				if (employeeId) {
 					// Verify that the employeeId from JWT belongs to this user
 					// This is a security check - the employee must exist and belong to this user
-					const jwtEmployee = await this._employeeService.findOneByIdString(employeeId);
+					const employee = await this._employeeService.findOneByIdString(employeeId);
 
-					if (!jwtEmployee || jwtEmployee.userId !== user.id) {
+					if (!employee || employee.userId !== user.id) {
 						return done(new UnauthorizedException('unauthorized'), false);
 					}
 
-					// Now get the employee for the current organization context (from Organization-Id header)
-					// This allows users with multiple employees across organizations to work correctly
-					const currentOrgEmployee = await this._employeeService.findOneByUserId(user.id);
-
-					// Assign the current organization's employeeId (or the JWT one if no org context)
-					user.employeeId = currentOrgEmployee ? currentOrgEmployee.id : employeeId;
+					// Assign employeeId from JWT to user
+					// The JWT always contains the correct employeeId for the current organization
+					// (regenerated via /auth/switch-organization when user switches organizations)
+					user.employeeId = employeeId;
 				}
 
 				// You could add a function to the authService to verify the claims of the token:
