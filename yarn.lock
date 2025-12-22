@@ -117,12 +117,12 @@
     lodash "^4.17.15"
     webpack-merge "^6.0.0"
 
-"@angular-devkit/architect@0.1002.0", "@angular-devkit/architect@0.1902.11", "@angular-devkit/architect@0.1902.19", "@angular-devkit/architect@>= 0.1900.0 < 0.2000.0", "@angular-devkit/architect@>=0.1900.0 < 0.2000.0", "@angular-devkit/architect@^0.1902.11":
-  version "0.1902.11"
-  resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.1902.11.tgz#73f3ac9e15f384d20696eab05585b4591ff93f1e"
-  integrity sha512-Zz/4ySZ4i8WXU4U4WwUGQm8wjwAyrMo5kjFt7O2SGmHQx7L/hChvcMLCGVkpHr27Xdsmrl//OXfbjkPgb6DFBg==
+"@angular-devkit/architect@0.1002.0", "@angular-devkit/architect@0.1902.11", "@angular-devkit/architect@0.1902.19", "@angular-devkit/architect@>= 0.1900.0 < 0.2000.0", "@angular-devkit/architect@>=0.1900.0 < 0.2000.0", "@angular-devkit/architect@^0.1902.17":
+  version "0.1902.19"
+  resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.1902.19.tgz#de932b62fcb3f31fad542988ebd766114b03f48d"
+  integrity sha512-iexYDIYpGAeAU7T60bGcfrGwtq1bxpZixYxWuHYiaD1b5baQgNSfd1isGEOh37GgDNsf4In9i2LOLPm0wBdtgQ==
   dependencies:
-    "@angular-devkit/core" "19.2.11"
+    "@angular-devkit/core" "19.2.19"
     rxjs "7.8.1"
 
 "@angular-devkit/build-angular@^19.0.0":
@@ -321,17 +321,6 @@
     ora "5.4.1"
     rxjs "7.8.1"
 
-"@angular-devkit/schematics@19.2.11", "@angular-devkit/schematics@>= 19.0.0 < 20.0.0":
-  version "19.2.11"
-  resolved "https://registry.yarnpkg.com/@angular-devkit/schematics/-/schematics-19.2.11.tgz#d3649fc925a08ce73de5df47a8cf3c0acfb4225c"
-  integrity sha512-R5g18xBhMHRtti5kDd2tlEMMxfRi8gQZ6LoT5xbox3w2kGSt7NtkSa3SUoF7Ns7JfPLrKsTQbVLFd5AggBLbHQ==
-  dependencies:
-    "@angular-devkit/core" "19.2.11"
-    jsonc-parser "3.3.1"
-    magic-string "0.30.17"
-    ora "5.4.1"
-    rxjs "7.8.1"
-
 "@angular-devkit/schematics@19.2.19", "@angular-devkit/schematics@^19.2.17":
   version "19.2.19"
   resolved "https://registry.yarnpkg.com/@angular-devkit/schematics/-/schematics-19.2.19.tgz#fc9b41372c2f080721673b357d7d8a5fd33d5941"
@@ -360,6 +349,17 @@
   integrity sha512-QsmFuYdAyeCyg9WF/AJBhFXDUfCwmDFTEbsv5t5KPSP6slhk0GoLNZApniiFytU2siRlSxVNpve2uATyYuAYkQ==
   dependencies:
     "@angular-devkit/core" "19.2.8"
+    jsonc-parser "3.3.1"
+    magic-string "0.30.17"
+    ora "5.4.1"
+    rxjs "7.8.1"
+
+"@angular-devkit/schematics@>= 19.0.0 < 20.0.0":
+  version "19.2.11"
+  resolved "https://registry.yarnpkg.com/@angular-devkit/schematics/-/schematics-19.2.11.tgz#d3649fc925a08ce73de5df47a8cf3c0acfb4225c"
+  integrity sha512-R5g18xBhMHRtti5kDd2tlEMMxfRi8gQZ6LoT5xbox3w2kGSt7NtkSa3SUoF7Ns7JfPLrKsTQbVLFd5AggBLbHQ==
+  dependencies:
+    "@angular-devkit/core" "19.2.11"
     jsonc-parser "3.3.1"
     magic-string "0.30.17"
     ora "5.4.1"
@@ -592,20 +592,15 @@
   dependencies:
     tslib "^2.3.0"
 
-"@angular/language-service@19.2.17":
+"@angular/language-service@19.2.17", "@angular/language-service@^19.2.17":
   version "19.2.17"
   resolved "https://registry.yarnpkg.com/@angular/language-service/-/language-service-19.2.17.tgz#fc4cc630cbe6d7a12315e1b551549b465ea05910"
   integrity sha512-Jv9D3WUIVRj+PW3HdUFcyPySR1y7TbHdaWBXabe53XTChq+t38BDTEt6tcyBJs/6GgjlrFhP1D7O/9LmCSelJA==
 
-"@angular/language-service@^19.2.10":
-  version "19.2.10"
-  resolved "https://registry.yarnpkg.com/@angular/language-service/-/language-service-19.2.10.tgz#e5ac68f3d629fc369e8ddec055f1871c90d63012"
-  integrity sha512-j2acOAgVk6GVJ5dJcC6JZ3hUukO+oiDPis6WvHTyODhPYofvxbiAzRUqdHARX+uCQRwJbivQiGc1kD0OWNNOFg==
-
-"@angular/material@^19.2.11":
-  version "19.2.15"
-  resolved "https://registry.yarnpkg.com/@angular/material/-/material-19.2.15.tgz#0fc3a79f6d96fcf06de9f6ef1edef1b252241b85"
-  integrity sha512-5IRzspYwzG58nz9/uJwGpaeFymaVveylIg8A+7SyYjAASFkdDUdI2hQn8TPRiP3AhGRSSx80BShYrcYwTZseYA==
+"@angular/material@^19.2.17":
+  version "19.2.19"
+  resolved "https://registry.yarnpkg.com/@angular/material/-/material-19.2.19.tgz#dd10669e260109c4f944303dcff3d92fed2e5566"
+  integrity sha512-auIE6JUzTIA3LyYklh9J/T7u64crmphxUBgAa0zcOMDog6SYfwbNe9YeLQqua5ek4OUAOdK/BHHfVl5W5iaUoQ==
   dependencies:
     tslib "^2.3.0"
 
@@ -630,17 +625,10 @@
   dependencies:
     tslib "^2.3.0"
 
-"@angular/service-worker@19.2.17":
+"@angular/service-worker@19.2.17", "@angular/service-worker@^19.2.17":
   version "19.2.17"
   resolved "https://registry.yarnpkg.com/@angular/service-worker/-/service-worker-19.2.17.tgz#2c85cfe3c05aeed97e643c5fc8a92ed30df0c72d"
   integrity sha512-rwki6a0PBm4biGG+BnnHiALPfAnTUqebjyA5fRCJ+cbh4nYvJZ2nU9GyHc56WwgfhwXWDo3UOxB+8K0INTv2RA==
-  dependencies:
-    tslib "^2.3.0"
-
-"@angular/service-worker@^19.2.10":
-  version "19.2.10"
-  resolved "https://registry.yarnpkg.com/@angular/service-worker/-/service-worker-19.2.10.tgz#df40a9bb5ffe8369e2e37dcb15b6ac8947074831"
-  integrity sha512-XyXyQPAIvLg/KcL5De4CQyoZdgvEovYtwGBcQpRqVqq0qX/+xLwRSFrRPedbfW78Gs4Vg8zpQ/tSvWSOpUx6YA==
   dependencies:
     tslib "^2.3.0"
 
@@ -11177,22 +11165,13 @@
   resolved "https://registry.yarnpkg.com/@scarf/scarf/-/scarf-1.4.0.tgz#3bbb984085dbd6d982494538b523be1ce6562972"
   integrity sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==
 
-"@schematics/angular@19.2.19":
+"@schematics/angular@19.2.19", "@schematics/angular@^19.2.17":
   version "19.2.19"
   resolved "https://registry.yarnpkg.com/@schematics/angular/-/angular-19.2.19.tgz#43b3a035684490a4f00ef6b02a59d3ba02204233"
   integrity sha512-6/0pvbPCY4UHeB4lnM/5r250QX5gcLgOYbR5FdhFu+22mOPHfWpRc5tNuY9kCephDHzAHjo6fTW1vefOOmA4jw==
   dependencies:
     "@angular-devkit/core" "19.2.19"
     "@angular-devkit/schematics" "19.2.19"
-    jsonc-parser "3.3.1"
-
-"@schematics/angular@^19.2.11":
-  version "19.2.11"
-  resolved "https://registry.yarnpkg.com/@schematics/angular/-/angular-19.2.11.tgz#2bb23e6d8212b2906aeb7f87f63326892e5d526d"
-  integrity sha512-Xkqur8OJrrfR5CeMXj2FqdiqGp//w9cZ7q9RBfRr3lZgW5QUiZw7iJNQHUIDNsCBKK5yFpPIDckpdVx8jLGclg==
-  dependencies:
-    "@angular-devkit/core" "19.2.11"
-    "@angular-devkit/schematics" "19.2.11"
     jsonc-parser "3.3.1"
 
 "@selderee/plugin-htmlparser2@^0.11.0":
