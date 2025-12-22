@@ -1,141 +1,110 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { Subject, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, skip, switchMap, tap, debounceTime, catchError } from 'rxjs/operators';
-import { IOrganization, IUser } from '@gauzy/contracts';
+import { Injectable } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { IAuthResponse, IOrganization } from '@gauzy/contracts';
 import { Store } from '../store/store.service';
-import { UsersService } from '../users/users.service';
+import { AuthService } from '../auth/auth.service';
+import { ToastrService } from '../notification/toastr.service';
 
 /**
- * Service responsible for maintaining user context synchronization when the selected organization changes.
+ * Service responsible for switching organization context.
  *
- * When a user switches organizations within the same tenant, this service automatically refreshes
- * the user data (including the correct employee for the new organization) from the backend.
+ * When a user switches organizations within the same tenant, this service:
+ * 1. Calls the backend to generate a new JWT with the correct employeeId for the target organization
+ * 2. Updates the store with the new tokens and user data
+ * 3. Updates the selected organization in the store
  *
- * This ensures that `store.user.employee` always contains the employee record for the current organization,
- * supporting the 1:N relationship between User and Employee (one user can have multiple employees
- * across different organizations within the same tenant).
+ * This ensures that the JWT always contains the correct employeeId for the current organization,
+ * supporting the 1:N relationship between User and Employee.
  */
 @Injectable({ providedIn: 'root' })
-export class OrganizationContextService implements OnDestroy {
-	/** Subscription for organization changes listener */
-	private subscription: Subscription | null = null;
-
-	/** Subject to trigger manual refresh */
-	private readonly refreshTrigger$ = new Subject<void>();
-
-	/** Flag to track if the service has been initialized */
-	private initialized = false;
-
-	/** Cache the last organization ID to detect real changes */
-	private lastOrganizationId: string | null = null;
-
+export class OrganizationContextService {
 	constructor(
 		private readonly store: Store,
-		private readonly usersService: UsersService
+		private readonly authService: AuthService,
+		private readonly toastrService: ToastrService
 	) {}
 
 	/**
-	 * Initialize the organization context listener.
-	 * Should be called once at application startup (e.g., in AppInitService).
+	 * Switch to a different organization within the same workspace.
+	 * This generates a new JWT with the correct employeeId for the target organization.
 	 *
-	 * The listener:
-	 * 1. Skips the first emission (initial load is handled by AppInitService)
-	 * 2. Debounces to avoid multiple rapid calls
-	 * 3. Filters out null/undefined organizations
-	 * 4. Only triggers when organization ID actually changes
-	 * 5. Calls the API to refresh user data with the correct employee
+	 * @param organization The organization to switch to
+	 * @returns Promise that resolves when the switch is complete
+	 */
+	async switchOrganization(organization: IOrganization): Promise<boolean> {
+		try {
+			if (!organization?.id) {
+				console.warn('[OrganizationContextService] No organization provided');
+				return false;
+			}
+
+			// Check if we're already on this organization
+			const currentOrgId = this.store.selectedOrganization?.id;
+			if (currentOrgId === organization.id) {
+				console.info('[OrganizationContextService] Already on this organization');
+				return true;
+			}
+
+			// Call the backend to switch organization and get new tokens
+			const response = await firstValueFrom(
+				this.authService.switchOrganization(organization.id).pipe(
+					catchError((error) => {
+						console.error('[OrganizationContextService] Switch organization failed:', error);
+						throw error;
+					})
+				)
+			);
+
+			if (!response) {
+				this.toastrService.danger('Failed to switch organization', 'Error');
+				return false;
+			}
+
+			// Apply the new authentication data
+			this.applyOrganizationData(response, organization);
+
+			return true;
+		} catch (error) {
+			console.error('[OrganizationContextService] Error switching organization:', error);
+			this.toastrService.danger('Failed to switch organization. Please try again.', 'Error');
+			return false;
+		}
+	}
+
+	/**
+	 * Apply the new organization data to the store after a successful switch.
+	 *
+	 * @param response The auth response from the switch organization API
+	 * @param organization The target organization
+	 */
+	private applyOrganizationData(response: IAuthResponse, organization: IOrganization): void {
+		const { user, token, refresh_token } = response;
+
+		// Update tokens
+		this.store.token = token;
+		this.store.refresh_token = refresh_token;
+
+		// Update user (with new employee for the organization)
+		this.store.user = user;
+
+		// Update organization context
+		this.store.selectedOrganization = organization;
+		this.store.organizationId = organization.id;
+
+		// Reset selected employee (will be set based on context)
+		this.store.selectedEmployee = null;
+
+		console.info(`[OrganizationContextService] Switched to organization: ${organization.name}`);
+	}
+
+	/**
+	 * Initialize the service.
+	 * This method exists for backward compatibility but no longer sets up automatic listeners.
+	 * Organization switching is now done explicitly via switchOrganization().
 	 */
 	initialize(): void {
-		if (this.initialized) {
-			return;
-		}
-
-		this.initialized = true;
-
-		// Store the initial organization ID
-		const currentOrg = this.store.selectedOrganization;
-		this.lastOrganizationId = currentOrg?.id || null;
-
-		this.subscription = this.store.selectedOrganization$
-			.pipe(
-				// Skip the first emission (initial load handled by AppInitService)
-				skip(1),
-				// Debounce to avoid multiple rapid API calls
-				debounceTime(100),
-				// Filter out null/undefined organizations
-				filter((org: IOrganization | null): org is IOrganization => !!org?.id),
-				// Only proceed if organization ID actually changed
-				distinctUntilChanged((prev, curr) => prev?.id === curr?.id),
-				// Filter out if same as last known organization
-				filter((org: IOrganization) => {
-					const changed = org.id !== this.lastOrganizationId;
-					if (changed) {
-						this.lastOrganizationId = org.id;
-					}
-					return changed;
-				}),
-				// Switch to the API call
-				switchMap(() => this.refreshUserContext()),
-				// Handle errors gracefully
-				catchError((error) => {
-					console.error('[OrganizationContextService] Failed to refresh user context:', error);
-					return [];
-				})
-			)
-			.subscribe();
-	}
-
-	/**
-	 * Refresh the user context by fetching updated user data from the backend.
-	 * The backend will return the employee record for the current organization
-	 * based on the Organization-Id header.
-	 */
-	private async refreshUserContext(): Promise<IUser | null> {
-		try {
-			// Check if user is logged in
-			if (!this.store.userId) {
-				return null;
-			}
-
-			const relations = [
-				'role',
-				'tenant',
-				'tenant.featureOrganizations',
-				'tenant.featureOrganizations.feature'
-			];
-
-			// Fetch updated user with employee for current organization
-			const user = await this.usersService.getMe(relations, true);
-
-			// Update the store with new user data
-			if (user) {
-				this.store.user = user;
-			}
-
-			return user;
-		} catch (error) {
-			console.error('[OrganizationContextService] Error refreshing user context:', error);
-			throw error;
-		}
-	}
-
-	/**
-	 * Manually trigger a user context refresh.
-	 * Can be called when needed outside of organization changes.
-	 */
-	triggerRefresh(): void {
-		this.refreshTrigger$.next();
-	}
-
-	/**
-	 * Cleanup subscriptions when service is destroyed
-	 */
-	ngOnDestroy(): void {
-		if (this.subscription) {
-			this.subscription.unsubscribe();
-			this.subscription = null;
-		}
-		this.refreshTrigger$.complete();
+		// No-op: Organization switching is now explicit via switchOrganization()
+		// This method exists for backward compatibility with AppInitService
 	}
 }
-
