@@ -48,8 +48,8 @@
 		"ui-plugin"
 	],
 	"engines": {
-		"node": ">=20.18.1",
-		"yarn": ">=1.22.19"
+		"node": ">=22",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }
