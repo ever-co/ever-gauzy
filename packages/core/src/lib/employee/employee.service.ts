@@ -171,17 +171,21 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * Finds the employeeId associated with a given userId.
 	 *
 	 * @param userId The ID of the user.
+	 * @param organizationId Optional organization ID. If not provided, uses the current organization from request context.
 	 * @returns The employeeId or null if not found or in case of an error.
 	 */
-	async findEmployeeIdByUserId(userId: ID): Promise<string | null> {
+	async findEmployeeIdByUserId(userId: ID, organizationId?: ID): Promise<string | null> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			// Construct the where clause based on whether tenantId is available
+			const orgId = organizationId || RequestContext.currentOrganizationId();
+
+			// Construct the where clause based on whether tenantId/organizationId is available
 			const whereClause = {
 				userId,
 				isActive: true,
 				isArchived: false,
-				...(tenantId && { tenantId }) // Include tenantId if available
+				...(tenantId && { tenantId }),
+				...(orgId && { organizationId: orgId })
 			};
 
 			switch (this.ormType) {
@@ -206,15 +210,21 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * Finds an employee by user ID.
 	 *
 	 * @param userId The ID of the user to find.
+	 * @param options Optional FindOneOptions.
 	 * @returns A Promise resolving to the employee if found, otherwise null.
 	 */
 	async findOneByUserId(userId: ID, options?: FindOneOptions<Employee>): Promise<IEmployee | null> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
+			const organizationId = RequestContext.currentOrganizationId();
+
 			// Define the base where clause
 			const whereClause = {
 				userId,
 				isActive: true,
-				isArchived: false
+				isArchived: false,
+				...(tenantId && { tenantId }),
+				...(organizationId && { organizationId })
 			};
 
 			// Merge the existing where conditions in options, if any

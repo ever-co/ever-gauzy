@@ -194,6 +194,17 @@ export class RequestContext {
 	}
 
 	/**
+	 * Retrieves the current organization ID from the request headers.
+	 * Returns the organization ID if available, otherwise returns null.
+	 *
+	 * @returns {ID | null} - The current organization ID or null if not available.
+	 */
+	static currentOrganizationId(): ID | null {
+		const req = RequestContext.currentRequest();
+		return (req?.headers?.['organization-id'] as ID) || null;
+	}
+
+	/**
 	 * Retrieves the current employee ID from the request context.
 	 * @returns {string | null} - The current employee ID if available, otherwise null.
 	 */
