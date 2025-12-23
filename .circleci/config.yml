@@ -408,20 +408,6 @@ workflows:
             - build-monorepo-root
 
   # ----------------------------------------------------------------------------
-  # Code Quality Workflow - Runs on develop and main branches
-  # ----------------------------------------------------------------------------
-  code-quality:
-    jobs:
-      - sonarqube:
-          filters:
-            branches:
-              only:
-                - develop
-                - stage
-                - main
-                - master
-
-  # ----------------------------------------------------------------------------
   # Test Workflow
   # ----------------------------------------------------------------------------
   test:
@@ -435,6 +421,20 @@ workflows:
                 - stage
                 - main
                 - master
+
+  # ----------------------------------------------------------------------------
+  # Code Quality Workflow - Runs on develop and main branches (DISABLED)
+  # ----------------------------------------------------------------------------
+  # code-quality:
+  #   jobs:
+  #     - sonarqube:
+  #         filters:
+  #           branches:
+  #             only:
+  #               - develop
+  #               - stage
+  #               - main
+  #               - master
 
   # ----------------------------------------------------------------------------
   # Deployment Workflow (Manual trigger via API or scheduled)
