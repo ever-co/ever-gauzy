@@ -28,7 +28,7 @@
 		"@angular/core": "^19.2.0"
 	},
 	"dependencies": {
-		"@angular/router": "^19.2.10",
+		"@angular/router": "^19.2.17",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^15.0.0",
 		"@ngx-translate/core": "^16.0.4",
@@ -41,8 +41,8 @@
 	},
 	"keywords": [],
 	"engines": {
-		"node": ">=20.18.1",
-		"yarn": ">=1.22.19"
+		"node": ">=22",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }
