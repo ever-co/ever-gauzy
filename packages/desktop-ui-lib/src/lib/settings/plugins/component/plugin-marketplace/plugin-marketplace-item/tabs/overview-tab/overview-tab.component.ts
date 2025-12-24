@@ -68,6 +68,6 @@ export class OverviewTabComponent implements OnDestroy {
 		if (!pluginId) return;
 
 		// Navigate to version history
-		await this.router.navigate(['settings', 'marketplace-plugins', pluginId, 'versions']);
+		await this.router.navigate(['plugins', 'marketplace', pluginId, 'versions']);
 	}
 }

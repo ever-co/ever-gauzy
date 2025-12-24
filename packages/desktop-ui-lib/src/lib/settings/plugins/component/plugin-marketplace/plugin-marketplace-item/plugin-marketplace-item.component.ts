@@ -125,7 +125,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	private async handleError(error: any): Promise<void> {
 		this.toastrService.error(error);
-		await this.router.navigate(['/settings/marketplace-plugins']);
+		await this.router.navigate(['/plugins/marketplace']);
 	}
 
 	// Delegate utility methods to PluginMarketplaceUtilsService
@@ -180,11 +180,11 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public async navigateBack(): Promise<void> {
-		await this.router.navigate(['settings', 'marketplace-plugins']);
+		await this.router.navigate(['plugins', 'marketplace']);
 	}
 
 	public async navigateToHistory(): Promise<void> {
-		await this.router.navigate(['settings', 'marketplace-plugins', this.pluginId, 'versions']);
+		await this.router.navigate(['plugins', 'marketplace', this.pluginId, 'versions']);
 	}
 
 	/**
