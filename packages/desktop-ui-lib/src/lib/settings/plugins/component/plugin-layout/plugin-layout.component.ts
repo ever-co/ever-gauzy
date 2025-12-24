@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
@@ -7,7 +7,8 @@ import { Subject, takeUntil } from 'rxjs';
 	selector: 'ngx-plugin-layout',
 	templateUrl: './plugin-layout.component.html',
 	styleUrls: ['./plugin-layout.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginLayoutComponent implements OnInit, OnDestroy {
 	public tabs: NbRouteTab[] = [];

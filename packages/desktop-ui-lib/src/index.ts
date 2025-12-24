@@ -1,4 +1,3 @@
-export * from './/lib/login/features/login-workspace/login-workspace.component';
 export * from './lib/agent-dashboard/activity-sync/activity-sync.component';
 export * from './lib/agent-dashboard/agent-dashboard-routing.module';
 export * from './lib/agent-dashboard/agent-dashboard.component';
@@ -25,6 +24,7 @@ export * from './lib/language/language-electron.service';
 export * from './lib/language/language-selector.component';
 export * from './lib/language/language.module';
 export * from './lib/login/features/login-magic/login-magic.component';
+export * from './lib/login/features/login-workspace/login-workspace.component';
 export * from './lib/login/features/magic-login-workspace/magic-login-workspace.component';
 export * from './lib/ngx-translate';
 export * from './lib/recap/features/recap/recap.component';

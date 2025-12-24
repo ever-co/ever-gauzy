@@ -141,10 +141,11 @@ class TrayMenu {
 				id: 'tray_plugins',
 				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
 				async click() {
-					const window = WindowManager.getInstance().getOne(RegisteredWindow.PLUGINS);
+					let window = WindowManager.getInstance().getOne(RegisteredWindow.PLUGINS);
 					if (!window) {
 						const plugin = new PluginMarketplaceWindow(this.path);
 						await plugin.loadURL();
+						window = WindowManager.getInstance().getOne(RegisteredWindow.PLUGINS);
 					}
 					window.show();
 				}
