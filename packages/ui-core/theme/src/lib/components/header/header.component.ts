@@ -578,8 +578,13 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		// Count user organizations based on the provided userId and tenantId
 		const orgCount = await this.usersOrganizationsService.getCount({ userId, tenantId });
 
-		// Show organization selector if user has more than 1 organization
-		this.showOrganizationsSelector = orgCount > 1;
+		// Check if the current user has the permission to change the selected organization
+		const hasChangeSelectedOrganizationPermission: boolean = this.store.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
+		);
+
+		// Show organization selector only if user has permission and more than 1 organization exists
+		this.showOrganizationsSelector = hasChangeSelectedOrganizationPermission && orgCount > 1;
 
 		// If organization selector is not shown and the user has at least one organization
 		if (!this.showOrganizationsSelector && orgCount > 0) {
