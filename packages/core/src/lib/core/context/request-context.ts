@@ -183,18 +183,45 @@ export class RequestContext {
 	}
 
 	/**
-	 * Retrieves the current organization ID associated with the user in the RequestContext.
-	 * Returns the organization ID if available, otherwise returns null.
+	 * Retrieves the current organization ID from the request context.
+	 * Priority:
+	 * 1. JWT token organizationId
+	 * 2. User's employee organizationId
+	 * 3. Request header organization-id
 	 *
 	 * @returns {ID | null} - The current organization ID or null if not available.
 	 */
 	static currentOrganizationId(): ID | null {
+		const requestContext = RequestContext.currentRequestContext();
+		if (requestContext) {
+			try {
+				// 1. Try to get organizationId from JWT token
+				const token = this.currentToken();
+				if (token) {
+					const jwtPayload = verify(token, env.JWT_SECRET) as {
+						id: string;
+						organizationId?: ID;
+					};
+					if (jwtPayload.organizationId) {
+						return jwtPayload.organizationId;
+					}
+				}
+			} catch (error) {
+				if (!(error instanceof JsonWebTokenError)) {
+					throw error;
+				}
+				// Continue to fallback if JWT verification fails
+			}
+		}
+
+		// 2. Fallback to user's employee organizationId
 		const user: IUser | null = RequestContext.currentUser();
-		return (
-			user?.employee?.organizationId ||
-			(RequestContext.currentRequest()?.headers['organization-id'] as ID) ||
-			null
-		);
+		if (user?.employee?.organizationId) {
+			return user.employee.organizationId;
+		}
+
+		// 3. Legacy fallback to header
+		return (RequestContext.currentRequest()?.headers['organization-id'] as ID) || null;
 	}
 
 	/**
@@ -206,35 +233,6 @@ export class RequestContext {
 	static currentRoleId(): ID | null {
 		const user: IUser | null = RequestContext.currentUser();
 		return user?.roleId || null;
-	}
-
-	/**
-	 * Retrieves the current organization ID from the JWT token.
-	 * This is secure because it reads from the authenticated token, not from client headers.
-	 * Returns the organization ID if available, otherwise returns null.
-	 *
-	 * @returns {ID | null} - The current organization ID or null if not available.
-	 */
-	static currentOrganizationId(): ID | null {
-		const requestContext = RequestContext.currentRequestContext();
-		if (requestContext) {
-			try {
-				const token = this.currentToken();
-				if (token) {
-					const jwtPayload = verify(token, env.JWT_SECRET) as {
-						id: string;
-						organizationId: ID;
-					};
-					return jwtPayload.organizationId ?? null;
-				}
-			} catch (error) {
-				if (error instanceof JsonWebTokenError) {
-					return null;
-				}
-				throw error;
-			}
-		}
-		return null;
 	}
 
 	/**
