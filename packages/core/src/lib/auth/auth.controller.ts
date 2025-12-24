@@ -18,7 +18,8 @@ import {
 	ISocialAccount,
 	ISocialAccountExistUser,
 	IUserSigninWorkspaceResponse,
-	LanguagesEnum
+	LanguagesEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { parseToBoolean } from '@gauzy/utils';
@@ -31,7 +32,8 @@ import {
 	WorkspaceSigninVerifyTokenCommand
 } from './commands';
 import { RequestContext } from '../core/context';
-import { AuthRefreshGuard, TenantPermissionGuard } from './../shared/guards';
+import { AuthRefreshGuard, PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
 import { UseValidationPipe } from '../shared/pipes';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
@@ -381,7 +383,8 @@ export class AuthController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('/switch-organization')
-	@UseGuards(TenantPermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.CHANGE_SELECTED_ORGANIZATION)
 	@UseValidationPipe({ whitelist: true })
 	async switchOrganization(@Body() input: SwitchOrganizationDTO): Promise<IAuthResponse | null> {
 		return await this.authService.switchOrganization(input.organizationId);

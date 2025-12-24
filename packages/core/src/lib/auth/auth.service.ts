@@ -922,6 +922,7 @@ export class AuthService extends SocialAuthService {
 			const payload: JwtPayload = {
 				id: user.id,
 				tenantId: user.tenantId ?? null,
+				organizationId: organizationId ?? employee?.organizationId ?? null,
 				employeeId: employee ? employee.id : null,
 				role: user.role ? user.role.name : null,
 				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null
@@ -945,21 +946,23 @@ export class AuthService extends SocialAuthService {
 	 * ID, email, tenant ID, and role. It then generates a refresh token based on this payload.
 	 *
 	 * @param user A partial IUser object containing at least the user's ID, email, and role.
+	 * @param organizationId Optional organization ID to include in the token.
 	 * @returns A Promise that resolves to a JWT refresh token string.
 	 * @throws Logs an error and throws an exception if the token generation fails.
 	 */
-	public async getJwtRefreshToken(user: Partial<IUser>) {
+	public async getJwtRefreshToken(user: Partial<IUser>, organizationId?: ID) {
 		try {
 			// Ensure the user object contains the necessary information
 			if (!user.id || !user.email) {
 				throw new Error('User ID or email is missing.');
 			}
 
-			// Construct the JWT payload
+			// Construct the JWT payload with organization context
 			const payload: JwtPayload = {
 				id: user.id,
 				email: user.email,
 				tenantId: user.tenantId || null,
+				organizationId: organizationId || user.lastOrganizationId || null,
 				role: user.role ? user.role.name : null
 			};
 
@@ -975,6 +978,9 @@ export class AuthService extends SocialAuthService {
 	/**
 	 * Get JWT access token from JWT refresh token
 	 *
+	 * Extracts the organization context from the refresh token to maintain
+	 * the user's organization selection across token refreshes.
+	 *
 	 * @returns {Promise<{ token: string } | null>}
 	 */
 	async getAccessTokenFromRefreshToken(): Promise<{ token: string } | null> {
@@ -985,8 +991,12 @@ export class AuthService extends SocialAuthService {
 			// If no user is found, return null
 			if (!user) return null;
 
-			// Get and return the JWT access token for the user
-			const token = await this.getJwtAccessToken(user);
+			// Extract organizationId from the current token (refresh token context)
+			// This ensures the new access token maintains the organization context
+			const organizationId = RequestContext.currentOrganizationId() || user.lastOrganizationId;
+
+			// Get and return the JWT access token for the user with organization context
+			const token = await this.getJwtAccessToken(user, organizationId);
 			return { token };
 		} catch (error) {
 			// Use console.error for error logging with more descriptive context
@@ -1686,7 +1696,7 @@ export class AuthService extends SocialAuthService {
 			// Generate new access and refresh tokens with the new organization context
 			const [access_token, refresh_token] = await Promise.all([
 				this.getJwtAccessToken(user, organizationId),
-				this.getJwtRefreshToken(user)
+				this.getJwtRefreshToken(user, organizationId)
 			]);
 
 			// Store the current refresh token with the user

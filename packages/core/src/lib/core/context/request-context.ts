@@ -194,14 +194,32 @@ export class RequestContext {
 	}
 
 	/**
-	 * Retrieves the current organization ID from the request headers.
+	 * Retrieves the current organization ID from the JWT token.
+	 * This is secure because it reads from the authenticated token, not from client headers.
 	 * Returns the organization ID if available, otherwise returns null.
 	 *
 	 * @returns {ID | null} - The current organization ID or null if not available.
 	 */
 	static currentOrganizationId(): ID | null {
-		const req = RequestContext.currentRequest();
-		return (req?.headers?.['organization-id'] as ID) || null;
+		const requestContext = RequestContext.currentRequestContext();
+		if (requestContext) {
+			try {
+				const token = this.currentToken();
+				if (token) {
+					const jwtPayload = verify(token, env.JWT_SECRET) as {
+						id: string;
+						organizationId: ID;
+					};
+					return jwtPayload.organizationId ?? null;
+				}
+			} catch (error) {
+				if (error instanceof JsonWebTokenError) {
+					return null;
+				}
+				throw error;
+			}
+		}
+		return null;
 	}
 
 	/**
