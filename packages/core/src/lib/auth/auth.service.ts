@@ -875,7 +875,7 @@ export class AuthService extends SocialAuthService {
 			let user: User;
 
 			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
+				case MultiORMEnum.MikroORM: {
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
 						where: {
 							id: userId,
@@ -888,8 +888,9 @@ export class AuthService extends SocialAuthService {
 					});
 					user = (await this.mikroOrmUserRepository.findOne(where, mikroOptions)) as User;
 					break;
+				}
 
-				case MultiORMEnum.TypeORM:
+				case MultiORMEnum.TypeORM: {
 					user = await this.typeOrmUserRepository.findOne({
 						where: {
 							id: userId,
@@ -901,6 +902,7 @@ export class AuthService extends SocialAuthService {
 						order: { createdAt: 'DESC' }
 					});
 					break;
+				}
 
 				default:
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
@@ -1634,7 +1636,7 @@ export class AuthService extends SocialAuthService {
 			let user: User;
 
 			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
+				case MultiORMEnum.MikroORM: {
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
 						where: {
 							id: currentUser.id,
@@ -1646,8 +1648,9 @@ export class AuthService extends SocialAuthService {
 					});
 					user = (await this.mikroOrmUserRepository.findOne(where, mikroOptions)) as User;
 					break;
+				}
 
-				case MultiORMEnum.TypeORM:
+				case MultiORMEnum.TypeORM: {
 					user = await this.typeOrmUserRepository.findOne({
 						where: {
 							id: currentUser.id,
@@ -1658,6 +1661,7 @@ export class AuthService extends SocialAuthService {
 						relations: { role: { rolePermissions: true } }
 					});
 					break;
+				}
 
 				default:
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
