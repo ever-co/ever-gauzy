@@ -143,7 +143,7 @@ class TrayMenu {
 				async click() {
 					let window = WindowManager.getInstance().getOne(RegisteredWindow.PLUGINS);
 					if (!window) {
-						const plugin = new PluginMarketplaceWindow(this.path);
+						const plugin = new PluginMarketplaceWindow(appWindow.getUiPath('plugins'));
 						await plugin.loadURL();
 						window = WindowManager.getInstance().getOne(RegisteredWindow.PLUGINS);
 					}
