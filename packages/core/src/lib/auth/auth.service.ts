@@ -1624,7 +1624,8 @@ export class AuthService extends SocialAuthService {
 					userId: currentUser.id,
 					organizationId,
 					tenantId,
-					isActive: true
+					isActive: true,
+					isArchived: false
 				}
 			});
 
