@@ -56,6 +56,7 @@ import {
 	createSetupWindow,
 	createTimeTrackerWindow,
 	createUpdaterWindow,
+	PluginMarketplaceWindow,
 	ScreenCaptureNotification,
 	SplashScreen,
 	timeTrackerPage
@@ -406,8 +407,10 @@ app.on('ready', async () => {
 		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
+		await marketplace.loadURL();
 
 		if (configs && configs.isSetup) {
 			global.variableGlobal = {
