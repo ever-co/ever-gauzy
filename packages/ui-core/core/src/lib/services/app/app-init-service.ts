@@ -5,7 +5,6 @@ import { Store } from '../store/store.service';
 import { PermissionsService } from '../permission/permissions.service';
 import { UsersService } from '../users';
 import { AuthStrategy } from '../auth/auth-strategy.service';
-import { OrganizationContextService } from '../organization/organization-context.service';
 
 @Injectable({ providedIn: 'root' })
 export class AppInitService {
@@ -16,8 +15,7 @@ export class AppInitService {
 		private readonly _store: Store,
 		private readonly _usersService: UsersService,
 		private readonly _authStrategy: AuthStrategy,
-		private readonly _permissionsService: PermissionsService,
-		private readonly _organizationContextService: OrganizationContextService
+		private readonly _permissionsService: PermissionsService
 	) {}
 
 	async init() {
@@ -54,10 +52,6 @@ export class AppInitService {
 				//tenant enabled/disabled features for relatives organizations
 				const { tenant } = this.user;
 				this._store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
-
-				// Initialize organization context listener
-				// This will refresh user.employee when the selected organization changes
-				this._organizationContextService.initialize();
 			}
 		} catch (error) {
 			console.log('Error on init', error);
