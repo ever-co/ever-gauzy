@@ -1,0 +1,80 @@
+<div class="billing-form">
+	<header class="form-header">
+		<div class="title-block">
+			<div class="icon-ring">
+				<nb-icon icon="credit-card-outline" aria-hidden="true"></nb-icon>
+			</div>
+			<div class="title-copy">
+				<p class="eyebrow">{{ getHeaderText() }}</p>
+				<h4 class="plan-name">{{ plan.name }}</h4>
+				<p class="subtitle">{{ getDescriptionText() }}</p>
+			</div>
+		</div>
+		<div class="pill-row" aria-live="polite">
+			@if (isUpgrade) {
+			<nb-badge status="success" text="Upgrade"></nb-badge>
+			} @if (isDowngrade) {
+			<nb-badge status="warning" text="Downgrade"></nb-badge>
+			}
+		</div>
+	</header>
+
+	<form [formGroup]="form" (ngSubmit)="onSubmit()" role="form" class="form" aria-label="Subscription billing form">
+		<gauzy-billing-cycle-section
+			[form]="form"
+			[billingOptions]="billingOptions"
+			[currency]="plan.currency"
+		></gauzy-billing-cycle-section>
+
+		@if (showPaymentSection && !isFreePlan) {
+		<div class="two-column">
+			<gauzy-payment-method-section
+				[form]="form"
+				[paymentMethods]="paymentMethods"
+			></gauzy-payment-method-section>
+
+			@if (isCardPaymentMethod()) {
+			<gauzy-card-details-section [form]="form" [hasError]="hasError"></gauzy-card-details-section>
+			}
+		</div>
+		}
+
+		<gauzy-billing-contact-section [form]="form" [hasError]="hasError"></gauzy-billing-contact-section>
+
+		<gauzy-subscription-consent-section [form]="form" [hasError]="hasError"></gauzy-subscription-consent-section>
+
+		<div class="form-actions">
+			<button
+				type="button"
+				nbButton
+				ghost
+				size="medium"
+				(click)="onCancel()"
+				[disabled]="isLoading"
+				class="cancel-button"
+				aria-label="Cancel subscription"
+			>
+				<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
+				Cancel
+			</button>
+			<button
+				type="submit"
+				nbButton
+				size="medium"
+				[status]="getActionStatus()"
+				[disabled]="!form.valid || isLoading"
+				*gauzySpinnerButton="isLoading"
+				class="submit-button"
+				[attr.aria-label]="getActionText()"
+			>
+				<nb-icon [icon]="isLoading ? 'loader-outline' : 'checkmark-outline'" aria-hidden="true"></nb-icon>
+				{{ getActionText() }}
+			</button>
+		</div>
+
+		<div class="security-notice" role="status" aria-live="polite">
+			<nb-icon icon="shield-outline" status="success" aria-hidden="true"></nb-icon>
+			<span>Your payment information is encrypted and secure</span>
+		</div>
+	</form>
+</div>

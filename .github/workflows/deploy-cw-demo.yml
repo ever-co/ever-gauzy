@@ -10,6 +10,7 @@ on:
 jobs:
   deploy-demo:
     runs-on: ubicloud-standard-4
+    timeout-minutes: 150
 
     environment: demo
 

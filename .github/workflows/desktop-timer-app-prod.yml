@@ -2,7 +2,7 @@ name: Desktop Timer App Build Prod
 
 on:
   workflow_run:
-    workflows: ["Release Prod"]
+    workflows: ['Release Prod']
     branches: [master]
     types:
       - completed
@@ -14,10 +14,11 @@ concurrency:
 jobs:
   release-linux:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
 
     strategy:
       matrix:
-        os: [ubicloud-standard-16]
+        os: [ubicloud-standard-8]
 
     steps:
       - name: Check out Git repository
@@ -26,29 +27,32 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: buildjet/setup-node@v4
         with:
-          node-version: 22.21.1
-          cache: "yarn"
+          node-version: 24.12.0
+          cache: 'yarn'
 
       - name: Change permissions
-        run: "sudo chown -R $(whoami) ./*"
+        run: 'sudo chown -R $(whoami) ./*'
 
       - name: Install system dependencies
-        run: "sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick"
+        run: 'sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
+
+      - name: Install Snapcraft
+        uses: samuelmeuli/action-snapcraft@v2
 
       - name: Fix node-gyp and Python
         run: python3 -m pip install packaging setuptools
 
       - name: Install latest version of NPM
-        run: "sudo npm install -g npm@10.9.4"
+        run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: "sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0"
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
 
       - name: Install Yarn dependencies
-        run: "yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts"
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
       - name: Run Postinstall Manually
-        run: "yarn postinstall.manual"
+        run: 'yarn postinstall.manual'
 
       - name: Bump version desktop timer app
         uses: actions/github-script@v7
@@ -57,30 +61,116 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktopTimer(true))
         env:
-          PROJECT_REPO: "https://github.com/ever-co/ever-gauzy.git"
-          DESKTOP_TIMER_APP_NAME: "ever-gauzy-desktop-timer"
-          COMPANY_SITE_LINK: "https://gauzy.co"
-          DESKTOP_TIMER_APP_DESCRIPTION: "Ever Gauzy Desktop Timer"
-          DESKTOP_TIMER_APP_ID: "com.ever.gauzydesktoptimer"
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          DESKTOP_TIMER_APP_NAME: 'gauzy-desktop-timer'
+          DESKTOP_TIMER_APP_REPO_NAME: 'ever-gauzy-desktop-timer'
+          DESKTOP_TIMER_APP_REPO_OWNER: 'ever-co'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          DESKTOP_TIMER_APP_DESCRIPTION: 'Gauzy Desktop Timer'
+          DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
 
       - name: Build Desktop Timer App
-        run: "yarn build:desktop-timer:linux:release:gh"
+        run: 'yarn build:desktop-timer:linux:release:gh:x64'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           EP_GH_IGNORE_TIME: true
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          SENTRY_TRACES_SAMPLE_RATE: "${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}"
-          SENTRY_PROFILE_SAMPLE_RATE: "${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}"
-          SENTRY_HTTP_TRACING_ENABLED: "${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}"
-          SENTRY_POSTGRES_TRACKING_ENABLED: "${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}"
-          SENTRY_PROFILING_ENABLED: "${{ secrets.SENTRY_PROFILING_ENABLED }}"
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+
+  release-linux-arm64:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+
+    strategy:
+      matrix:
+        os: [ubicloud-standard-8-arm]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js, NPM and Yarn
+        uses: buildjet/setup-node@v4
+        with:
+          node-version: 24.12.0
+          cache: 'yarn'
+
+      - name: Change permissions
+        run: 'sudo chown -R $(whoami) ./*'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev libxrandr-dev ruby ruby-dev rubygems build-essential
+          sudo gem install --no-document fpm
+
+      - name: Install Snapcraft
+        uses: samuelmeuli/action-snapcraft@v2
+
+      - name: Install Multipass
+        run: 'sudo snap install multipass'
+
+      - name: Fix node-gyp and Python
+        run: python3 -m pip install packaging setuptools
+
+      - name: Install latest version of NPM
+        run: 'sudo npm install -g npm@11.6.2'
+
+      - name: Install globally node-gyp, ts-node and nx packages
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+
+      - name: Install Yarn dependencies
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
+
+      - name: Run Postinstall Manually
+        run: 'yarn postinstall.manual'
+
+      - name: Bump version desktop timer app
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.scripts/bump-version-electron.js')
+            console.log(script.desktopTimer(true))
+        env:
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          DESKTOP_TIMER_APP_NAME: 'gauzy-desktop-timer'
+          DESKTOP_TIMER_APP_REPO_NAME: 'ever-gauzy-desktop-timer'
+          DESKTOP_TIMER_APP_REPO_OWNER: 'ever-co'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          DESKTOP_TIMER_APP_DESCRIPTION: 'Gauzy Desktop Timer'
+          DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
+
+      - name: Build Desktop Timer App
+        run: 'yarn build:desktop-timer:linux:release:gh:arm64'
+        env:
+          USE_HARD_LINKS: false
+          USE_SYSTEM_FPM: true
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+          SNAPCRAFT_BUILD_ENVIRONMENT: host
 
   release-mac:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
 
     strategy:
       matrix:
@@ -93,23 +183,23 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 22.21.1
-          cache: "yarn"
+          node-version: 24.12.0
+          cache: 'yarn'
 
       - name: Fix node-gyp and Python
         run: python3 -m pip install --break-system-packages packaging setuptools
 
       - name: Install latest version of NPM
-        run: "sudo npm install -g npm@10.9.4"
+        run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: "sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0"
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
 
       - name: Install Yarn dependencies
-        run: "yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts"
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
       - name: Run Postinstall Manually
-        run: "yarn postinstall.manual"
+        run: 'yarn postinstall.manual'
 
       - name: Bump version desktop timer app
         uses: actions/github-script@v7
@@ -118,24 +208,26 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktopTimer(true))
         env:
-          PROJECT_REPO: "https://github.com/ever-co/ever-gauzy.git"
-          DESKTOP_TIMER_APP_NAME: "ever-gauzy-desktop-timer"
-          COMPANY_SITE_LINK: "https://gauzy.co"
-          DESKTOP_TIMER_APP_DESCRIPTION: "Ever Gauzy Desktop Timer"
-          DESKTOP_TIMER_APP_ID: "com.ever.gauzydesktoptimer"
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          DESKTOP_TIMER_APP_NAME: 'gauzy-desktop-timer'
+          DESKTOP_TIMER_APP_REPO_NAME: 'ever-gauzy-desktop-timer'
+          DESKTOP_TIMER_APP_REPO_OWNER: 'ever-co'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          DESKTOP_TIMER_APP_DESCRIPTION: 'Gauzy Desktop Timer'
+          DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
 
       - name: Build Desktop Timer App
-        run: "yarn build:desktop-timer:mac:release"
+        run: 'yarn build:desktop-timer:mac:release'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           EP_GH_IGNORE_TIME: true
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          SENTRY_TRACES_SAMPLE_RATE: "${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}"
-          SENTRY_PROFILE_SAMPLE_RATE: "${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}"
-          SENTRY_HTTP_TRACING_ENABLED: "${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}"
-          SENTRY_POSTGRES_TRACKING_ENABLED: "${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}"
-          SENTRY_PROFILING_ENABLED: "${{ secrets.SENTRY_PROFILING_ENABLED }}"
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
@@ -145,10 +237,11 @@ jobs:
 
   release-windows:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
 
     strategy:
       matrix:
-        os: [warp-windows-latest-x64-16x]
+        os: [warp-windows-latest-x64-8x]
 
     steps:
       - name: Check out Git repository
@@ -157,8 +250,8 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 22.21.1
-          cache: "yarn"
+          node-version: 24.12.0
+          cache: 'yarn'
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
@@ -180,10 +273,10 @@ jobs:
           arch: x64
 
       - name: Install latest version of NPM
-        run: "npm install -g npm@10.9.4"
+        run: 'npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: "npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0"
+        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
 
       - name: Configure npm python for node-gyp
         shell: powershell
@@ -202,10 +295,10 @@ jobs:
           python -c "import sys; print(sys.executable)"
 
       - name: Install Yarn dependencies
-        run: "yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts"
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
       - name: Run Postinstall Manually
-        run: "yarn postinstall.manual"
+        run: 'yarn postinstall.manual'
 
       - name: Bump version desktop timer app
         uses: actions/github-script@v7
@@ -214,11 +307,13 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktopTimer(true))
         env:
-          PROJECT_REPO: "https://github.com/ever-co/ever-gauzy.git"
-          DESKTOP_TIMER_APP_NAME: "ever-gauzy-desktop-timer"
-          COMPANY_SITE_LINK: "https://gauzy.co"
-          DESKTOP_TIMER_APP_DESCRIPTION: "Ever Gauzy Desktop Timer"
-          DESKTOP_TIMER_APP_ID: "com.ever.gauzydesktoptimer"
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          DESKTOP_TIMER_APP_NAME: 'gauzy-desktop-timer'
+          DESKTOP_TIMER_APP_REPO_NAME: 'ever-gauzy-desktop-timer'
+          DESKTOP_TIMER_APP_REPO_OWNER: 'ever-co'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          DESKTOP_TIMER_APP_DESCRIPTION: 'Gauzy Desktop Timer'
+          DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
 
       - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
         shell: powershell
@@ -244,17 +339,136 @@ jobs:
           Write-Host "nx: $((Get-Command nx -ErrorAction SilentlyContinue).Source)"
           Write-Host ""
           Write-Host "=== Starting build ==="
-          yarn build:desktop-timer:windows:release:gh
+          yarn build:desktop-timer:windows:release:gh:x64
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           EP_GH_IGNORE_TIME: true
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          SENTRY_TRACES_SAMPLE_RATE: "${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}"
-          SENTRY_PROFILE_SAMPLE_RATE: "${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}"
-          SENTRY_HTTP_TRACING_ENABLED: "${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}"
-          SENTRY_POSTGRES_TRACKING_ENABLED: "${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}"
-          SENTRY_PROFILING_ENABLED: "${{ secrets.SENTRY_PROFILING_ENABLED }}"
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+
+  release-windows-arm64:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+
+    strategy:
+      matrix:
+        os: [windows-11-arm]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.12.0
+          cache: 'yarn'
+
+      - name: Install Visual Studio 2022 Build Tools (VCTools with ARM64)
+        shell: powershell
+        run: |
+          choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --includeRecommended --passive --norestart"
+
+      - name: Configure node-gyp to use VS 2022
+        shell: powershell
+        run: |
+          "GYP_MSVS_VERSION=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "npm_config_msvs_version=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Fix node-gyp and Python
+        run: python3 -m pip install packaging setuptools
+
+      - name: Setup MSVC (VS 2022 dev env)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Install latest version of NPM
+        run: 'npm install -g npm@11.6.2'
+
+      - name: Install globally node-gyp, ts-node and nx packages
+        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+
+      - name: Configure npm python for node-gyp
+        shell: powershell
+        run: |
+          $py = (Get-Command python.exe).Source
+          Write-Host "python is: $py"
+          "npm_config_python=$py" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Show tool versions
+        shell: powershell
+        run: |
+          node -v
+          npm -v
+          python --version
+          python -c "import sys; print(sys.executable)"
+
+      - name: Install Yarn dependencies
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
+
+      - name: Run Postinstall Manually
+        run: 'yarn postinstall.manual'
+
+      - name: Bump version desktop timer app
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.scripts/bump-version-electron.js')
+            console.log(script.desktopTimer(true))
+        env:
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          DESKTOP_TIMER_APP_NAME: 'gauzy-desktop-timer'
+          DESKTOP_TIMER_APP_REPO_NAME: 'ever-gauzy-desktop-timer'
+          DESKTOP_TIMER_APP_REPO_OWNER: 'ever-co'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          DESKTOP_TIMER_APP_DESCRIPTION: 'Gauzy Desktop Timer'
+          DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
+
+      - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
+        shell: powershell
+        run: |
+          $yarnPath = (Get-Command yarn).Source | Split-Path -Parent
+          $nodePath = (Get-Command node).Source | Split-Path -Parent
+          $npmGlobalBin = npm config get prefix
+          $localBin = Join-Path $PWD "node_modules\.bin"
+          echo $localBin >> $env:GITHUB_PATH
+          echo $npmGlobalBin >> $env:GITHUB_PATH
+          echo $yarnPath >> $env:GITHUB_PATH
+          if ($nodePath -ne $yarnPath) { echo $nodePath >> $env:GITHUB_PATH }
+          Write-Host "Added to GITHUB_PATH: $localBin, $npmGlobalBin, $yarnPath, $nodePath"
+
+      - name: Build Desktop Timer App
+        shell: powershell
+        run: |
+          Write-Host "=== Command locations ==="
+          Write-Host "Node: $((Get-Command node -ErrorAction SilentlyContinue).Source)"
+          Write-Host "Yarn: $((Get-Command yarn -ErrorAction SilentlyContinue).Source)"
+          Write-Host "ts-node: $((Get-Command ts-node -ErrorAction SilentlyContinue).Source)"
+          Write-Host "cross-env: $((Get-Command cross-env -ErrorAction SilentlyContinue).Source)"
+          Write-Host "nx: $((Get-Command nx -ErrorAction SilentlyContinue).Source)"
+          Write-Host ""
+          Write-Host "=== Starting build ==="
+          yarn build:desktop-timer:windows:release:gh:arm64
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true

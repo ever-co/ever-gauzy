@@ -1,0 +1,259 @@
+.dialog-container {
+  min-width: 540px;
+  max-width: 640px;
+
+  ::ng-deep nb-card {
+    border-radius: calc(var(--border-radius) * 1.5);
+    box-shadow: var(--gauzy-shadow);
+    border: 1px solid var(--border-basic-color-3);
+  }
+
+  ::ng-deep nb-card-header {
+    background: linear-gradient(135deg, var(--gauzy-card-1) 0%, var(--gauzy-card-2) 100%);
+    border-bottom: 2px solid var(--border-basic-color-3);
+    padding: 1.5rem;
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .header-icon-container {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: calc(var(--border-radius) * 1.5);
+      background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-info-default) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+      nb-icon {
+        font-size: 1.5rem;
+        color: white;
+      }
+    }
+
+    h5 {
+      color: var(--gauzy-text-color-1);
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.01em;
+    }
+
+    .close-btn {
+      border-radius: calc(var(--border-radius) * 2);
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background: var(--color-danger-default);
+        color: white;
+        transform: rotate(90deg);
+      }
+    }
+  }
+
+  ::ng-deep nb-card-body {
+    padding: 2rem;
+    background: var(--gauzy-card-2);
+  }
+
+  ::ng-deep nb-card-footer {
+    background: var(--gauzy-card-1);
+    border-top: 2px solid var(--border-basic-color-3);
+    padding: 1.25rem 2rem;
+    gap: 1rem;
+  }
+}
+
+.form-group {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--gauzy-text-color-1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  .label-icon {
+    font-size: 1rem;
+    color: var(--color-primary-default);
+    flex-shrink: 0;
+  }
+}
+
+.form-help-text {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--gauzy-text-color-2);
+  font-weight: 500;
+  padding: 0.375rem 0.75rem;
+  background: var(--gauzy-card-1);
+  border-radius: calc(var(--border-radius) * 1.5);
+  width: fit-content;
+
+  .help-icon {
+    font-size: 0.875rem;
+    color: var(--color-primary-default);
+  }
+
+  nb-icon {
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+}
+
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-danger-default);
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  background: rgba(var(--color-danger-default), 0.1);
+  border-radius: calc(var(--border-radius) * 1.5);
+  border-left: 3px solid var(--color-danger-default);
+
+  &::before {
+    content: '⚠';
+    font-size: 1rem;
+  }
+}
+
+.user-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  border-radius: var(--border-radius);
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: var(--gauzy-card-2);
+  }
+
+  .user-name {
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+    font-size: 0.875rem;
+  }
+
+  .user-email {
+    font-size: 0.75rem;
+    color: var(--gauzy-text-color-2);
+    font-weight: 500;
+  }
+}
+
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, var(--gauzy-card-2) 0%, var(--gauzy-card-1) 100%);
+  border-radius: calc(var(--border-radius) * 1.2);
+  margin: 1.5rem 0;
+  border: 1px solid var(--border-basic-color-3);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+
+  span {
+    color: var(--gauzy-text-color-2);
+    font-weight: 600;
+    margin-top: 1rem;
+  }
+}
+
+::ng-deep nb-select {
+  button {
+    border-radius: calc(var(--border-radius) * 1.2);
+    background: var(--gauzy-card-1);
+    border: 1px solid var(--border-basic-color-3);
+    transition: all 0.2s ease;
+
+    &:focus,
+    &:hover {
+      border-color: var(--color-primary-default);
+      box-shadow: 0 0 0 3px rgba(var(--color-primary-default), 0.1);
+    }
+  }
+}
+
+::ng-deep textarea {
+  border-radius: calc(var(--border-radius) * 1.2);
+  background: var(--gauzy-card-1);
+  border: 1px solid var(--border-basic-color-3);
+  transition: all 0.2s ease;
+  font-family: inherit;
+  resize: vertical;
+
+  &:focus {
+    border-color: var(--color-primary-default);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-default), 0.1);
+  }
+}
+
+nb-alert {
+  margin-bottom: 0;
+  border-radius: calc(var(--border-radius) * 1.2);
+  border-left: 4px solid var(--color-danger-default);
+  background: rgba(var(--color-danger-default), 0.1);
+  box-shadow: 0 2px 8px rgba(var(--color-danger-default), 0.2);
+
+  ::ng-deep button {
+    border-radius: 50%;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: rotate(90deg) scale(1.1);
+      background: var(--color-danger-default);
+      color: white;
+    }
+  }
+}
+
+::ng-deep nb-card-footer {
+  button {
+    border-radius: calc(var(--border-radius) * 2);
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 120px;
+    gap: 0.5rem;
+
+    &[status='primary'] {
+      background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-primary-600) 100%);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+    }
+
+    &[status='basic'] {
+      &:hover:not(:disabled) {
+        background: var(--gauzy-card-2);
+        transform: translateY(-2px);
+      }
+    }
+  }
+}

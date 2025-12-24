@@ -1,6 +1,10 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID, IEmployee, PluginStatus, PluginType } from '@gauzy/contracts';
-import { IPluginSource } from './plugin-source.model';
-import { IPluginVersion, IPluginVersionUpdate } from './plugin-version.model';
+import type { ID, PluginStatus, PluginType } from '@gauzy/contracts';
+import { IPlugin as PluginModel } from '@gauzy/contracts';
+import type {
+	IPluginSubscriptionPlanCreateInput,
+	IPluginSubscriptionPlanUpdateInput
+} from './plugin-subscription.model';
+import type { IPluginVersion, IPluginVersionUpdate } from './plugin-version.model';
 
 export interface IPluginUpdate {
 	id: ID;
@@ -12,29 +16,58 @@ export interface IPluginUpdate {
 	license?: string;
 	homepage?: string;
 	repository?: string;
+	requiresSubscription?: boolean;
 	version?: IPluginVersionUpdate;
+	subscriptionPlans?: Array<IPluginSubscriptionPlanCreateInput | (IPluginSubscriptionPlanUpdateInput & { id: ID })>;
 }
 
-export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
-	name: string; // Plugin name
-	description?: string; // Optional description
-	type: PluginType; // Type of the plugin
-	status: PluginStatus; // Status of the plugin
-	versions: IPluginVersion[]; // List of plugin versions
-	version?: IPluginVersion; // Current version
+export interface IPlugin extends PluginModel {
+	// Business Logic Methods
+	isPublished(): boolean;
+	getLatestVersion(): IPluginVersion | undefined;
+	requiresPayment(): boolean;
+	isUploadedBy(userId: ID): boolean;
+	markAsDownloaded(): void;
+	canBeActivated(): boolean;
+	getTotalDownloadCount(): number;
+	hasValidSubscriptionPlans(): boolean;
+	validate(): { isValid: boolean; errors: string[] };
+}
 
-	author?: string; // Optional author information
-	license?: string; // Optional license information
-	homepage?: string; // Optional homepage URL
-	repository?: string; // Optional repository URL
-
-	uploadedBy?: IEmployee; // Employee who uploaded the plugin
-	uploadedById?: ID; // ID reference for the employee who uploaded the plugin
-	uploadedAt?: Date; // Optional date when the plugin was uploaded
-
-	source?: IPluginSource; // Optional reference to the plugin's source
-
-	installed: boolean; // Flag indicating if the plugin is installed
-	downloadCount: number; // Number of times the plugin has been downloaded
-	lastDownloadedAt?: Date; // Optional date when the plugin was last downloaded
+/**
+ * Static methods interface for Plugin class
+ */
+export interface IPluginStatic {
+	create(data: Partial<IPlugin>): IPlugin;
+	createForPlatform(name: string, type: PluginType, description?: string): IPlugin;
+	createDesktopPlugin(name: string, description?: string): IPlugin;
+	createWebPlugin(name: string, description?: string): IPlugin;
+	createMobilePlugin(name: string, description?: string): IPlugin;
+	isValidName(name: string): boolean;
+	isValidStatus(status: string): status is PluginStatus;
+	isValidType(type: string): type is PluginType;
+	getAvailableStatuses(): PluginStatus[];
+	getAvailableTypes(): PluginType[];
+	getPublishedStatuses(): PluginStatus[];
+	compareName(a: IPlugin, b: IPlugin): number;
+	compareUploadDate(a: IPlugin, b: IPlugin): number;
+	compareDownloadCount(a: IPlugin, b: IPlugin): number;
+	filterByStatus(plugins: IPlugin[], status: PluginStatus): IPlugin[];
+	filterByType(plugins: IPlugin[], type: PluginType): IPlugin[];
+	filterPublished(plugins: IPlugin[]): IPlugin[];
+	filterPaid(plugins: IPlugin[]): IPlugin[];
+	filterFree(plugins: IPlugin[]): IPlugin[];
+	search(plugins: IPlugin[], query: string): IPlugin[];
+	filterByUploader(plugins: IPlugin[], uploaderId: ID): IPlugin[];
+	groupByType(plugins: IPlugin[]): Record<PluginType, IPlugin[]>;
+	groupByStatus(plugins: IPlugin[]): Record<PluginStatus, IPlugin[]>;
+	getStatistics(plugins: IPlugin[]): {
+		total: number;
+		published: number;
+		byType: Record<PluginType, number>;
+		byStatus: Record<PluginStatus, number>;
+		paid: number;
+		free: number;
+		totalDownloads: number;
+	};
 }

@@ -5,7 +5,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { TranslateService } from '../../translation';
 import { PluginManager } from '../data-access/plugin-manager';
-import { IPluginManager, PluginChannel, PluginHandlerChannel } from '../shared';
+import { IPluginManager, IPluginMetadataFindOne, PluginChannel, PluginHandlerChannel } from '../shared';
 import { PluginEventManager } from './plugin-event.manager';
 
 class ElectronPluginListener {
@@ -27,7 +27,8 @@ class ElectronPluginListener {
 			[PluginChannel.DOWNLOAD]: this.downloadPlugin,
 			[PluginChannel.ACTIVATE]: this.activatePlugin,
 			[PluginChannel.DEACTIVATE]: this.deactivatePlugin,
-			[PluginChannel.UNINSTALL]: this.uninstallPlugin
+			[PluginChannel.UNINSTALL]: this.uninstallPlugin,
+			[PluginChannel.COMPLETE_INSTALLATION]: this.syncMarketplaceInstallationId
 		};
 
 		for (const [channel, handler] of Object.entries(eventMap)) {
@@ -162,21 +163,35 @@ class ElectronPluginListener {
 		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Activated' });
 	}
 
+	private async syncMarketplaceInstallationId(
+		event: IpcMainEvent,
+		{ marketplaceId, installationId }: { marketplaceId: string; installationId: string }
+	): Promise<void> {
+		event.reply(PluginChannel.STATUS, {
+			status: 'inProgress',
+			message: 'Updating Plugin Marketplace Installation ID...'
+		});
+		await this.pluginManager.completeInstallation(marketplaceId, installationId);
+		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Installation completed' });
+	}
+
 	private async deactivatePlugin(event: IpcMainEvent, name: string): Promise<void> {
 		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugin Deactivating...' });
 		await this.pluginManager.deactivatePlugin(name);
 		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Deactivated' });
 	}
 
-	private async uninstallPlugin(event: IpcMainEvent, name: string): Promise<void> {
+	private async uninstallPlugin(event: IpcMainEvent, input: IPluginMetadataFindOne): Promise<void> {
 		event.reply(PluginChannel.STATUS, {
 			status: 'inProgress',
 			message: this.translateService.instant('PLUGIN.TOASTR.INFO.UNINSTALLING')
 		});
-		await this.pluginManager.uninstallPlugin(name);
+		const installationId = await this.pluginManager.uninstallPlugin(input);
+		console.log('Uninstalled plugin with installation ID:', installationId);
 		event.reply(PluginChannel.STATUS, {
 			status: 'success',
-			message: this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED')
+			message: this.translateService.instant('PLUGIN.TOASTR.SUCCESS.UNINSTALLED'),
+			data: installationId
 		});
 	}
 }

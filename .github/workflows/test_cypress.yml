@@ -10,7 +10,6 @@ concurrency:
 jobs:
   e2e-tests-setup:
     runs-on: ubicloud-standard-4
-
     timeout-minutes: 360
 
     steps:
@@ -39,6 +38,7 @@ jobs:
 
   e2e-tests:
     runs-on: [self-hosted]
+    timeout-minutes: 360
 
     # we can try to run tests in the Docker containers later
     # container: cypress/browsers:node14.17.0-chrome88-ff89
@@ -58,8 +58,6 @@ jobs:
 
     env:
       CYPRESS_CACHE_FOLDER: C:\Users\Evereq\AppData\Local\Cypress\Cache
-
-    timeout-minutes: 360
 
     steps:
       - name: Checkout
@@ -140,13 +138,13 @@ jobs:
           # run tests in parallel
           parallel: true
 
-          group: "1 - all e2e tests"
+          group: '1 - all e2e tests'
 
           # Cypress tests and config file are in "apps/gauzy-e2e" folder
-          working-directory: "apps/gauzy-e2e"
+          working-directory: 'apps/gauzy-e2e'
 
           # We wait till both API and UI runs completely here
-          wait-on: "http://localhost:3000/api,http://localhost:4200"
+          wait-on: 'http://localhost:3000/api,http://localhost:4200'
 
           # wait up to 20 minutes for the servers to respond
           wait-on-timeout: 1200
