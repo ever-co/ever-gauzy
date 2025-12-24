@@ -36,21 +36,23 @@
 		"@mikro-orm/nestjs": "^6.1.1",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
 		"@nestjs/cache-manager": "^3.0.1",
-		"@nestjs/common": "^11.1.0",
-		"@nestjs/core": "^11.1.0",
+		"@nestjs/common": "^11.1.10",
+		"@nestjs/core": "^11.1.10",
 		"@nestjs/cqrs": "^11.0.3",
 		"@nestjs/typeorm": "^11.0.0",
 		"@nestjs/swagger": "^11.1.5",
-		"@octokit/rest": "^22.0.0",
 		"cache-manager": "^6.4.2",
 		"chalk": "^4.1.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.2",
-		"express": "^5.1.0",
+		"express": "^5.2.1",
 		"moment": "^2.30.1",
-		"octokit": "^5.0.3",
+		"octokit": "^5.0.5",
+		"@octokit/rest": "^22.0.1",
+		"@octokit/auth-app": "^8.1.2",
+		"probot": "^14.2.4",
+		"@probot/get-private-key": "^2.1.1",
 		"pino-std-serializers": "^7.0.0",
-		"probot": "^14.0.1",
 		"rxjs": "^7.8.2",
 		"smee-client": "^1.2.3",
 		"tslib": "^2.6.2",
@@ -75,8 +77,8 @@
 		"webhooks"
 	],
 	"engines": {
-		"node": ">=20.18.1",
-		"yarn": ">=1.22.19"
+		"node": ">=22",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }

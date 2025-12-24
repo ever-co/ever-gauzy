@@ -150,7 +150,7 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 	}
 
 	public isOwner(version: IPluginVersion): boolean {
-		return !!this.store.user && this.store.user.employee?.id === version?.plugin?.uploadedById;
+		return !!this.store.user && this.store.user?.id === version?.plugin?.uploadedById;
 	}
 
 	public get pluginId(): ID {

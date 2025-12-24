@@ -1,0 +1,17 @@
+.subscription-status-badge {
+	display: inline-flex;
+	position: relative;
+	align-items: center;
+	gap: 0.5rem;
+
+	.status-icon {
+		font-size: 1.25rem;
+	}
+
+	nb-badge {
+		position: relative;
+		font-size: 0.75rem;
+		padding: 0.375rem;
+		border-radius: calc(var(--border-radius) * 1);
+	}
+}

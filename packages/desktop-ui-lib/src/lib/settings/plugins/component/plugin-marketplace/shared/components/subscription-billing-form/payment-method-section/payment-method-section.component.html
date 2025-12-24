@@ -1,0 +1,63 @@
+<nb-card class="form-section payment-method" [formGroup]="form()">
+	<nb-card-header>
+		<div class="section-title">
+			<nb-icon icon="credit-card-outline" aria-hidden="true"></nb-icon>
+			<div>
+				<h6>Payment method</h6>
+				<p class="hint">Securely choose how to pay</p>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="payment-note" aria-live="polite">
+			<nb-icon icon="shield-outline" status="success" aria-hidden="true"></nb-icon>
+			<div>
+				<p class="note-title">Secure checkout</p>
+				<p class="note-copy">Card activates instantly; PayPal keeps your card details private.</p>
+			</div>
+		</div>
+		<div class="payment-options" role="radiogroup" aria-label="Select payment method">
+			@for (method of paymentMethods(); track method.value) {
+			<button
+				type="button"
+				class="payment-card"
+				[class.selected]="isSelected(method.value)"
+				(click)="selectPaymentMethod(method.value)"
+				role="radio"
+				[attr.aria-checked]="isSelected(method.value)"
+				[attr.aria-label]="method.title + ' - ' + method.subtitle"
+			>
+				<div class="payment-head">
+					<div class="payment-line">
+						<nb-icon [icon]="method.icon" status="primary" aria-hidden="true"></nb-icon>
+						<div class="payment-copy">
+							<span class="title">{{ method.title }}</span>
+							<span class="subtitle">{{ method.subtitle }}</span>
+						</div>
+					</div>
+					<div class="badge-row">
+						@if (method.badge) {
+						<nb-badge [status]="method.badge.status" [text]="method.badge.text"></nb-badge>
+						}
+						<nb-icon icon="shield-outline" status="success" class="shield" aria-hidden="true"></nb-icon>
+					</div>
+				</div>
+				@if (method.details?.length) {
+				<ul class="payment-meta">
+					@for (detail of method.details; track detail) {
+					<li>
+						<nb-icon icon="checkmark-outline" status="success" aria-hidden="true"></nb-icon>
+						<span>{{ detail }}</span>
+					</li>
+					}
+				</ul>
+				} @if (isSelected(method.value)) {
+				<div class="selection-indicator" aria-hidden="true">
+					<nb-icon icon="checkmark-circle-2" status="success"></nb-icon>
+				</div>
+				}
+			</button>
+			}
+		</div>
+	</nb-card-body>
+</nb-card>

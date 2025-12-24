@@ -21,12 +21,13 @@
 	"main": "index.js",
 	"build": {
 		"appId": "com.ever.gauzydesktop",
-		"artifactName": "${name}-${version}.${ext}",
+		"artifactName": "${name}-${arch}-${version}.${ext}",
 		"productName": "Ever Gauzy Desktop",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"afterSign": "tools/notarize.js",
 		"dmg": {
-			"sign": false
+			"sign": false,
+			"artifactName": "${name}-${arch}-${version}.${ext}"
 		},
 		"asar": true,
 		"npmRebuild": true,
@@ -58,45 +59,50 @@
 		"mac": {
 			"category": "public.app-category.developer-tools",
 			"icon": "icon.icns",
-			"target": [
-				"zip",
-				"dmg"
-			],
+			"target": {
+				"target": "default",
+				"arch": [
+					"x64",
+					"arm64"
+				]
+			},
 			"asarUnpack": "**/*.node",
-			"artifactName": "${name}-${version}.${ext}",
+			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"hardenedRuntime": true,
 			"gatekeeperAssess": false,
 			"entitlements": "tools/build/entitlements.mas.plist",
 			"entitlementsInherit": "tools/build/entitlements.mas.plist",
 			"extendInfo": {
-				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
-				"NSMicrophoneUsageDescription": "This app requires microphone access when recording sounds or detecting loudness.",
-				"NSCameraUsageDescription": "This app requires camera access when using the video sensing blocks."
+				"NSAppleEventsUsageDescription": "This app requires access to script browser applications to detect the current URL when triggering instant lookup.",
+				"NSCameraUsageDescription": "Please allow access to the device camera to capture images and videos.",
+				"NSMicrophoneUsageDescription": "Please allow access to the device's microphone to capture audio and voice recordings.",
+				"NSScreenCaptureUsageDescription": "Please allow access to the device's screen to capture screenshots and videos."
 			}
 		},
 		"win": {
-			"target": [
-				{
-					"target": "nsis",
-					"arch": [
-						"x64"
-					]
-				}
-			],
+			"target": "nsis",
 			"icon": "icon.ico",
 			"verifyUpdateCodeSignature": false
 		},
 		"linux": {
 			"icon": "linux",
 			"target": [
-				"AppImage",
 				"deb",
-				"tar.gz"
+				"snap",
+				"tar.gz",
+				"rpm",
+				"AppImage"
 			],
 			"executableName": "gauzy-desktop",
-			"artifactName": "${name}-${version}.${ext}",
+			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
+		},
+		"rpm": {
+			"fpm": [
+				"--rpm-rpmbuild-define",
+				"_build_id_links none"
+			]
 		},
 		"nsis": {
 			"oneClick": false,
@@ -106,7 +112,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "${name}-${version}.${ext}",
+			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},
@@ -152,7 +158,7 @@
 		"@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
-		"@nestjs/platform-express": "^11.1.0",
+		"@nestjs/platform-express": "^11.1.10",
 		"@sentry/electron": "6.9.0",
 		"@sentry/node": "9.43.0",
 		"@sentry/profiling-node": "9.43.0",

@@ -1,0 +1,156 @@
+<nb-card class="plugin-create-setting-dialog">
+	<nb-card-header>
+		<div class="header-content">
+			<nb-icon icon="plus-circle-outline" class="header-icon"></nb-icon>
+			<h5 class="card-title">Create New Setting</h5>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form [formGroup]="createForm">
+			<div class="row">
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="key" class="label">Setting Key <span class="required">*</span></label>
+						<input
+							nbInput
+							fullWidth
+							fieldSize="medium"
+							id="key"
+							formControlName="key"
+							placeholder="e.g., api_key, max_connections"
+							pattern="[a-zA-Z0-9_-]+"
+						/>
+						<small class="form-text text-hint">
+							Unique identifier for the setting (alphanumeric, underscore, hyphen only)
+						</small>
+					</div>
+				</div>
+
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="label" class="label">Display Label <span class="required">*</span></label>
+						<input
+							nbInput
+							fullWidth
+							fieldSize="medium"
+							id="label"
+							formControlName="label"
+							placeholder="e.g., API Key"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="description" class="label">Description</label>
+				<textarea
+					nbInput
+					fullWidth
+					fieldSize="medium"
+					id="description"
+					formControlName="description"
+					placeholder="Describe what this setting controls..."
+					rows="3"
+				></textarea>
+			</div>
+
+			<div class="row">
+				<div class="col-md-4">
+					<div class="form-group">
+						<label for="type" class="label">Type <span class="required">*</span></label>
+						<nb-select
+							fullWidth
+							fieldSize="medium"
+							id="type"
+							formControlName="type"
+							placeholder="Select type"
+						>
+							@for (type of settingTypes; track type) {
+							<nb-option [value]="type">{{ type | titlecase }}</nb-option>
+							}
+						</nb-select>
+					</div>
+				</div>
+
+				<div class="col-md-4">
+					<div class="form-group">
+						<label for="scope" class="label">Scope <span class="required">*</span></label>
+						<nb-select
+							fullWidth
+							fieldSize="medium"
+							id="scope"
+							formControlName="scope"
+							placeholder="Select scope"
+						>
+							@for (scope of settingScopes; track scope) {
+							<nb-option [value]="scope">{{ scope | titlecase }}</nb-option>
+							}
+						</nb-select>
+					</div>
+				</div>
+
+				<div class="col-md-4">
+					<div class="form-group">
+						<label for="category" class="label">Category</label>
+						<gauzy-category-selector [categoryId]="categoryId?.value"></gauzy-category-selector>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="value" class="label">Initial Value</label>
+						<input
+							nbInput
+							fullWidth
+							fieldSize="medium"
+							id="value"
+							formControlName="value"
+							placeholder="Enter initial value"
+						/>
+					</div>
+				</div>
+
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="defaultValue" class="label">Default Value</label>
+						<input
+							nbInput
+							fullWidth
+							fieldSize="medium"
+							id="defaultValue"
+							formControlName="defaultValue"
+							placeholder="Enter default value"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="label">Options</label>
+				<div class="checkbox-group">
+					<nb-checkbox formControlName="isRequired">Required</nb-checkbox>
+					<nb-checkbox formControlName="isEncrypted">Encrypted</nb-checkbox>
+					<nb-checkbox formControlName="isVisible">Visible</nb-checkbox>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="d-flex justify-content-end">
+		<button nbButton ghost status="basic" (click)="cancel()" class="me-2">Cancel</button>
+		<button
+			nbButton
+			status="primary"
+			[disabled]="!createForm.valid || submitting"
+			[nbSpinner]="submitting"
+			nbSpinnerStatus="control"
+			(click)="onSubmit()"
+		>
+			<nb-icon icon="checkmark-outline"></nb-icon>
+			Create Setting
+		</button>
+	</nb-card-footer>
+</nb-card>

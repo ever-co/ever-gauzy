@@ -1,8 +1,10 @@
-import { HttpStatus, ID, PluginSourceType } from '@gauzy/contracts';
+import { HttpStatus, ID, PermissionsEnum, PluginSourceType } from '@gauzy/contracts';
 import {
 	FileStorage,
 	FileStorageFactory,
 	PermissionGuard,
+	Permissions,
+	RequestContext,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -12,13 +14,15 @@ import {
 	Body,
 	Controller,
 	Delete,
+	Get,
 	Param,
+	Patch,
 	Post,
 	Put,
 	UseGuards,
 	UseInterceptors
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
 	ApiBearerAuth,
 	ApiBody,
@@ -29,19 +33,16 @@ import {
 	ApiSecurity,
 	ApiTags
 } from '@nestjs/swagger';
-import { CreatePluginCommand } from '../../application/commands/create-plugin.command';
-import { DeletePluginCommand } from '../../application/commands/delete-plugin.command';
-import { UpdatePluginCommand } from '../../application/commands/update-plugin.command';
-import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
-import { LazyAnyFileInterceptor } from '../../core/interceptors/lazy-any-file.interceptor';
-import { Plugin } from '../../domain/entities/plugin.entity';
-import { CreatePluginDTO } from '../../shared/dto/create-plugin.dto';
-import { FileDTO } from '../../shared/dto/file.dto';
-import { UpdatePluginDTO } from '../../shared/dto/update-plugin.dto';
-import { IPluginSource } from '../../shared/models/plugin-source.model';
-import { IPlugin } from '../../shared/models/plugin.model';
-import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
-import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
+import {
+	CreatePluginCommand,
+	DeletePluginCommand,
+	GetPluginTenantByPluginQuery,
+	UpdatePluginCommand
+} from '../../application';
+import { LazyAnyFileInterceptor, PluginOwnerGuard } from '../../core';
+import { Plugin } from '../../domain';
+import { CreatePluginDTO, FileDTO, IPlugin, IPluginSource, UpdatePluginDTO } from '../../shared';
+import { GauzyStorageProvider, UploadedPluginStorage } from '../storage';
 
 @ApiTags('Plugin Management')
 @ApiBearerAuth('Bearer')
@@ -49,7 +50,7 @@ import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/plugins')
 export class PluginManagementController {
-	constructor(private readonly commandBus: CommandBus) {}
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	/**
 	 * Creates a new plugin in the system.
@@ -86,6 +87,7 @@ export class PluginManagementController {
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
 	public async create(
 		@Body() input: CreatePluginDTO,
@@ -189,6 +191,7 @@ export class PluginManagementController {
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@UseGuards(PluginOwnerGuard)
 	@Put(':id')
 	public async update(
@@ -271,6 +274,56 @@ export class PluginManagementController {
 	}
 
 	/**
+	 * Partially updates an existing plugin by ID.
+	 */
+	@ApiOperation({
+		summary: 'Partially update plugin',
+		description: 'Partially updates an existing plugin record with only the provided fields.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin to update',
+		required: true
+	})
+	@ApiBody({
+		type: UpdatePluginDTO,
+		description: 'Partial plugin metadata to update'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin updated successfully.',
+		type: Plugin
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input provided. Check the response body for error details.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
+	@UseGuards(PluginOwnerGuard)
+	@Patch(':id')
+	public async partialUpdate(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: Partial<UpdatePluginDTO>
+	): Promise<IPlugin> {
+		return this.commandBus.execute(new UpdatePluginCommand(id, input as UpdatePluginDTO));
+	}
+
+	/**
 	 * Deletes a plugin by ID.
 	 */
 	@ApiOperation({
@@ -305,9 +358,45 @@ export class PluginManagementController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
+	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	@UseGuards(PluginOwnerGuard)
 	@Delete(':id')
 	public async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
 		return this.commandBus.execute(new DeletePluginCommand(id));
+	}
+
+	/**
+	 * Retrieves plugin tenant ID for a specific plugin.
+	 * If the plugin tenant doesn't exist, it will be created.
+	 */
+	@ApiOperation({
+		summary: 'Get plugin tenant by plugin ID',
+		description:
+			'Retrieves or creates a plugin tenant relationship for a specific plugin. Returns the plugin tenant ID.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin tenant retrieved or created successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input provided.'
+	})
+	@Get(':id/tenant')
+	public async getPluginTenant(@Param('id', UUIDValidationPipe) id: ID): Promise<{ id: ID; pluginId: ID }> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		return this.queryBus.execute(new GetPluginTenantByPluginQuery(id, tenantId, organizationId));
 	}
 }

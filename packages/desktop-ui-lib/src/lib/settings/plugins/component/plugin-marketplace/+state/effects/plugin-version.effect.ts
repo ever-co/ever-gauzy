@@ -1,14 +1,17 @@
 import { Injectable } from '@angular/core';
+import { IPlugin, IPluginVersion } from '@gauzy/contracts';
+import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { EMPTY, catchError, filter, finalize, map, mergeMap, switchMap, tap } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { EMPTY, Observable, catchError, exhaustMap, filter, finalize, map, mergeMap, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
+import { coalesceValue } from '../../../../../../utils';
 import { PluginService } from '../../../../services/plugin.service';
+import { DialogCreateVersionComponent } from '../../plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
 import { PluginVersionActions } from '../actions/plugin-version.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginVersionStore } from '../stores/plugin-version.store';
-import { coalesceValue } from '../../../../../../utils';
-import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({ providedIn: 'root' })
 export class PluginVersionEffects {
@@ -18,23 +21,20 @@ export class PluginVersionEffects {
 		private readonly pluginService: PluginService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
-		private readonly translateService: TranslateService
+		private readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService
 	) {}
 
 	getAll$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginVersionActions.getAll),
-			tap(() => this.pluginVersionStore.setLoading(true)), // Start loading state
+			tap(({ pluginId }) => {
+				this.pluginVersionStore.setLoading(true);
+				this.pluginVersionStore.setPluginId(pluginId);
+			}),
 			switchMap(({ pluginId, params = {} }) =>
 				this.pluginService.getVersions(pluginId, params).pipe(
-					tap(({ items, total }) => {
-						this.pluginVersionStore.update((state) => ({
-							versions: [
-								...new Map([...state.versions, ...items].map((item) => [item.id, item])).values()
-							],
-							count: total
-						}));
-					}),
+					tap(({ items, total }) => this.pluginVersionStore.setVersions(items, total)),
 					finalize(() => this.pluginVersionStore.setLoading(false)), // Always stop loading
 					catchError((error) => {
 						this.toastrService.error(error.message || error); // Handle error properly
@@ -48,22 +48,28 @@ export class PluginVersionEffects {
 	createOne$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginVersionActions.add),
-			tap(() => {
-				this.pluginVersionStore.update({ creating: true });
-				this.pluginMarketplaceStore.setUpload({ uploading: true });
+			tap(({ plugin }) => this.pluginVersionStore.setPluginId(plugin.id)),
+			exhaustMap(({ plugin }) =>
+				this.createVersionDialog(plugin).pipe(map((version) => ({ pluginId: plugin.id, version })))
+			),
+			tap(({ pluginId }) => {
+				this.pluginVersionStore.setCreating(pluginId, true);
+				this.pluginMarketplaceStore.setUpload(pluginId, { uploading: true, progress: 0 });
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.ADDING'));
 			}),
 			switchMap(({ pluginId, version }) =>
 				this.pluginService.addVersion(pluginId, version).pipe(
-					tap((res) => this.pluginMarketplaceStore.setUpload({ progress: coalesceValue(res?.progress, 0) })),
+					tap((res) =>
+						this.pluginMarketplaceStore.setUpload(pluginId, {
+							uploading: true,
+							progress: coalesceValue(res?.progress, 0)
+						})
+					),
 					filter((res) => Boolean(res?.version)), // Filter out null or undefined responses
 					map((res) => res.version),
 					tap((created) => {
-						this.pluginVersionStore.update((state) => ({
-							version: created,
-							versions: [created, ...state.versions],
-							count: state.count + 1
-						}));
+						this.pluginVersionStore.addVersion(created);
+						this.pluginVersionStore.selectVersion(created);
 						this.toastrService.success(
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.CREATED', {
 								number: created.number
@@ -71,8 +77,8 @@ export class PluginVersionEffects {
 						);
 					}),
 					finalize(() => {
-						this.pluginMarketplaceStore.setUpload({ uploading: false });
-						this.pluginVersionStore.update({ creating: false });
+						this.pluginMarketplaceStore.setUpload(pluginId, { uploading: false, progress: 0 });
+						this.pluginVersionStore.setCreating(pluginId, false);
 					}), // Always stop loading
 					catchError((error) => {
 						this.toastrService.error(error.message || error); // Handle error properly
@@ -86,32 +92,22 @@ export class PluginVersionEffects {
 	update$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginVersionActions.update),
-			tap(() => {
-				this.pluginVersionStore.update({ updating: true });
+			tap(({ pluginId }) => {
+				this.pluginVersionStore.setUpdating(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.UPDATING'));
 			}),
 			switchMap(({ pluginId, versionId, version }) =>
 				this.pluginService.updateVersion(pluginId, versionId, version).pipe(
-					tap((version) => {
-						this.pluginVersionStore.update((state) => {
-							const index = state.versions.findIndex((v) => v.id === version.id);
-							const versions = [...state.versions]; // Shallow copy
-
-							if (index >= 0) {
-								versions[index] = version; // In-place update
-							} else {
-								versions.unshift(version); // Append if new
-							}
-
-							return { versions, version };
-						});
+					tap((updatedVersion) => {
+						this.pluginVersionStore.updateVersion(versionId, updatedVersion);
+						this.pluginVersionStore.selectVersion(updatedVersion);
 						this.toastrService.success(
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.UPDATED', {
-								number: version.number
+								number: updatedVersion.number
 							})
 						);
 					}),
-					finalize(() => this.pluginVersionStore.update({ updating: false })),
+					finalize(() => this.pluginVersionStore.setUpdating(pluginId, false)),
 					catchError((error) => {
 						this.toastrService.error(error.message || error);
 						return EMPTY;
@@ -124,28 +120,27 @@ export class PluginVersionEffects {
 	delete$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginVersionActions.delete),
-			tap(() => {
-				this.pluginVersionStore.update({ deleting: true });
+			tap(({ pluginId }) => {
+				this.pluginVersionStore.setDeleting(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.DELETING'));
 			}),
 			mergeMap(({ pluginId, versionId }) =>
 				this.pluginService.deleteVersion(pluginId, versionId).pipe(
 					tap(() => {
 						const deletedAt = new Date();
-						this.pluginVersionStore.update((state) => ({
-							version: state.version && { ...state.version, deletedAt },
-							versions: [
-								...state.versions.map((version) =>
-									version.id === versionId ? { ...version, deletedAt } : version
-								)
-							],
-							count: state.count - 1
-						}));
+						this.pluginVersionStore.updateVersion(versionId, { deletedAt });
+
+						// Update selected version if it was deleted
+						const currentVersion = this.pluginVersionStore.getValue().version;
+						if (currentVersion?.id === versionId) {
+							this.pluginVersionStore.selectVersion({ ...currentVersion, deletedAt });
+						}
+
 						this.toastrService.success(
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.DELETED')
 						);
 					}),
-					finalize(() => this.pluginVersionStore.update({ deleting: false })),
+					finalize(() => this.pluginVersionStore.setDeleting(pluginId, false)),
 					catchError((error) => {
 						this.toastrService.error(error.message || error);
 						return EMPTY;
@@ -158,20 +153,21 @@ export class PluginVersionEffects {
 	restore$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginVersionActions.restore),
-			tap(() => {
-				this.pluginVersionStore.update({ restoring: true });
+			tap(({ pluginId }) => {
+				this.pluginVersionStore.setRestoring(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.VERSION.RESTORING'));
 			}),
 			mergeMap(({ pluginId, versionId }) =>
 				this.pluginService.restoreVersion(pluginId, versionId).pipe(
 					tap(() => {
-						this.pluginVersionStore.update((state) => ({
-							version:
-								state.version?.id === versionId ? { ...state.version, deletedAt: null } : state.version,
-							versions: state.versions.map((version) =>
-								version.id === versionId ? { ...version, deletedAt: null } : version
-							)
-						}));
+						this.pluginVersionStore.updateVersion(versionId, { deletedAt: null });
+
+						// Update selected version if it was restored
+						const currentVersion = this.pluginVersionStore.getValue().version;
+						if (currentVersion?.id === versionId) {
+							this.pluginVersionStore.selectVersion({ ...currentVersion, deletedAt: null });
+						}
+
 						this.toastrService.success(
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.VERSION.RESTORED')
 						);
@@ -181,7 +177,7 @@ export class PluginVersionEffects {
 						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.VERSION.RESTORE'));
 						return EMPTY;
 					}),
-					finalize(() => this.pluginVersionStore.update({ restoring: false }))
+					finalize(() => this.pluginVersionStore.setRestoring(pluginId, false))
 				)
 			)
 		)
@@ -191,7 +187,7 @@ export class PluginVersionEffects {
 		this.action$.pipe(
 			ofType(PluginVersionActions.setCurrentPluginId),
 			tap(({ pluginId }) => {
-				this.pluginVersionStore.update({ pluginId });
+				this.pluginVersionStore.setPluginId(pluginId);
 			})
 		)
 	);
@@ -200,7 +196,10 @@ export class PluginVersionEffects {
 		this.action$.pipe(
 			ofType(PluginVersionActions.selectVersion),
 			tap(({ version }) => {
-				this.pluginVersionStore.update({ version, pluginId: version.pluginId });
+				this.pluginVersionStore.selectVersion(version);
+				if (version?.pluginId) {
+					this.pluginVersionStore.setPluginId(version.pluginId);
+				}
 			})
 		)
 	);
@@ -208,11 +207,16 @@ export class PluginVersionEffects {
 	reset$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginVersionActions.reset),
-			tap(() =>
-				this.pluginVersionStore.update({
-					versions: []
-				})
-			)
+			tap(() => this.pluginVersionStore.reset())
 		)
 	);
+
+	private createVersionDialog(plugin: IPlugin): Observable<IPluginVersion> {
+		return this.dialogService
+			.open(DialogCreateVersionComponent, {
+				backdropClass: 'backdrop-blur',
+				context: { plugin }
+			})
+			.onClose.pipe(filter(Boolean));
+	}
 }

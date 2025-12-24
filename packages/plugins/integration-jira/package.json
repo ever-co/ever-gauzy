@@ -30,8 +30,8 @@
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
-		"@nestjs/common": "^11.1.0",
-		"@nestjs/core": "^11.1.0",
+		"@nestjs/common": "^11.1.10",
+		"@nestjs/core": "^11.1.10",
 		"chalk": "^4.1.0"
 	},
 	"devDependencies": {
@@ -51,8 +51,8 @@
 		"microservices"
 	],
 	"engines": {
-		"node": ">=20.18.1",
-		"yarn": ">=1.22.19"
+		"node": ">=22",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }
