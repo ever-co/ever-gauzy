@@ -29,13 +29,13 @@
 	"dependencies": {
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@nestjs/common": "^11.1.0",
-		"@nestjs/core": "^11.1.0",
+		"@nestjs/common": "^11.1.10",
+		"@nestjs/core": "^11.1.10",
 		"@nestjs/graphql": "^13.1.0",
 		"@sentry/node": "9.43.0",
 		"@sentry/core": "9.43.0",
 		"chalk": "^4.1.0",
-		"express": "^5.1.0",
+		"express": "^5.2.1",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2"
 	},
