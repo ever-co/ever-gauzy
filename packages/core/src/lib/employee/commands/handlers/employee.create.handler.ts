@@ -1,5 +1,5 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ComponentLayoutStyleEnum, IEmployee, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IEmployee, IUser, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../../core/context';
@@ -39,10 +39,17 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 		if (isEmpty(input.userId)) {
 			// Check if a user with this email already exists in the current tenant
 			const tenantId = RequestContext.currentTenantId();
-			const existingUser = await this._userService.findOneByWhereOptions({
-				email: input.user.email,
-				tenantId
-			});
+			let existingUser: IUser | null = null;
+
+			try {
+				existingUser = await this._userService.findOneByWhereOptions({
+					email: input.user.email,
+					tenantId
+				});
+			} catch (error) {
+				// findOneByWhereOptions throws NotFoundException when no user exists
+				// In this case, existingUser remains null and we'll create a new user
+			}
 
 			if (existingUser) {
 				// User already exists in this tenant - create only the employee
