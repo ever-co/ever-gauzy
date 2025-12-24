@@ -26,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	 */
 	async validate(payload: JwtPayload, done: (err: unknown, user?: unknown) => void): Promise<void> {
 		try {
-			const { id, thirdPartyId, employeeId } = payload;
+			const { id, thirdPartyId, employeeId, organizationId } = payload;
 
 			if (this.loggingEnabled) console.log('Validate JWT payload:', payload);
 
@@ -50,6 +50,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 					// The JWT always contains the correct employeeId for the current organization
 					// (regenerated via /auth/switch-organization when user switches organizations)
 					user.employeeId = employeeId;
+				}
+
+				// Assign organizationId from JWT to user
+				// The JWT always contains the correct organizationId for the current organization context
+				// (regenerated via /auth/switch-organization when user switches organizations)
+				if (organizationId) {
+					user.lastOrganizationId = organizationId;
 				}
 
 				// You could add a function to the authService to verify the claims of the token:
