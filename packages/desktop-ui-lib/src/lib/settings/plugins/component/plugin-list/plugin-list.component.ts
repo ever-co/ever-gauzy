@@ -159,7 +159,7 @@ export class PluginListComponent implements OnInit, OnDestroy {
 	}
 
 	public view() {
-		this.router.navigate(['/settings', 'plugins', this.plugin.name]);
+		this.router.navigate(['/plugins', 'installed', this.plugin.name]);
 	}
 
 	public addPlugin() {

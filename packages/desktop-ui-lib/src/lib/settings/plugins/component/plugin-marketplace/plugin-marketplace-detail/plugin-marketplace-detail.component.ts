@@ -82,7 +82,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	// Installation validation and dialog orchestration moved to effects.
 	public async openPlugin(): Promise<void> {
 		this.action.dispatch(PluginVersionActions.selectVersion(this.plugin.version));
-		await this.router.navigate([`/settings/marketplace-plugins/${this.plugin.id}`]);
+		await this.router.navigate([`/plugins/marketplace/${this.plugin.id}`]);
 	}
 
 	public editPlugin(): void {
@@ -152,7 +152,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			{
 				title: 'View Details',
 				icon: 'eye-outline',
-				link: `/settings/marketplace-plugins/${this.plugin.id}`
+				link: `/plugins/marketplace/${this.plugin.id}`
 			}
 		];
 

@@ -7,7 +7,7 @@
   flex-direction: column;
   padding: 8px 4px 0px;
   border-radius: var(--border-radius);
-  height: calc(100vh - 15.5rem);
+  height: calc(100vh - 13rem);
   width: auto;
 
   .table-scroll-container {
@@ -28,7 +28,7 @@
 }
 
 .no-data {
-  height: 552px;
+  height: calc(100vh - 13rem);
   width: 100%;
 }
 

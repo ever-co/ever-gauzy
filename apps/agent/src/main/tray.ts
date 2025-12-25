@@ -1,20 +1,15 @@
-import {
-	Tray,
-	nativeImage,
-	shell,
-	app,
-	Menu,
-	MenuItemConstructorOptions,
-} from 'electron';
+import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';
 import { TranslateService } from '@gauzy/desktop-lib';
-import AppWindow from './window-manager';
-import MainEvent from './events/events';
-import  { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
+import { PluginMarketplaceWindow } from '@gauzy/desktop-window';
+import { app, Menu, MenuItemConstructorOptions, nativeImage, shell, Tray } from 'electron';
 import * as path from 'path';
+import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
+import MainEvent from './events/events';
+import AppWindow from './window-manager';
 
 type ISiteUrl = {
-	helpSiteUrl: string
-}
+	helpSiteUrl: string;
+};
 const appWindow = AppWindow.getInstance(path.join(__dirname, '..'));
 const mainEvent = MainEvent.getInstance();
 
@@ -24,19 +19,15 @@ class TrayMenu {
 		width: number;
 		height: number;
 	} = {
-			width: 16,
-			height: 16
-		};
+		width: 16,
+		height: 16
+	};
 	private TrayMenuList: MenuItemConstructorOptions[] = [];
 	private tray: Tray | null = null;
 	private useCommonMenu: boolean;
 	private siteUrls: ISiteUrl;
 	static instance: TrayMenu;
-	constructor(
-		trayIconPath: string,
-		useCommonMenu: boolean,
-		siteUrls: ISiteUrl,
-	) {
+	constructor(trayIconPath: string, useCommonMenu: boolean, siteUrls: ISiteUrl) {
 		if (!TrayMenu.instance) {
 			TrayMenu.instance = this;
 			this.trayIconPath = trayIconPath;
@@ -147,6 +138,19 @@ class TrayMenu {
 				}
 			},
 			{
+				id: 'tray_plugins',
+				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
+				async click() {
+					let window = WindowManager.getInstance().getOne(RegisteredWindow.PLUGINS);
+					if (!window) {
+						const plugin = new PluginMarketplaceWindow(appWindow.getUiPath('plugins'));
+						await plugin.loadURL();
+						window = WindowManager.getInstance().getOne(RegisteredWindow.PLUGINS);
+					}
+					window.show();
+				}
+			},
+			{
 				id: 'tray_exit',
 				label: `${TranslateService.instant('BUTTONS.EXIT')}`,
 				click() {
@@ -164,7 +168,6 @@ class TrayMenu {
 		this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
 	}
 
-
 	private initTray() {
 		this.tray = new Tray(this.nativeIconPath());
 		this.tray.setTitle('State: Startup', {
@@ -173,10 +176,7 @@ class TrayMenu {
 		this.tray.setToolTip('Agent is starting up');
 	}
 
-	public updateStatus(
-		menuId: 'keyboard_mouse' | 'network' | 'afk',
-		checked: boolean = false
-	) {
+	public updateStatus(menuId: 'keyboard_mouse' | 'network' | 'afk', checked: boolean = false) {
 		const menuIdx = this.TrayMenuList.findIndex((menu) => menu.id === menuId);
 		if (menuIdx !== -1) {
 			this.TrayMenuList[menuIdx].checked = checked;
@@ -197,7 +197,6 @@ class TrayMenu {
 			this.tray.setTitle(`Status: ${status}`);
 			this.tray.setToolTip(`Agent is ${status}`);
 		}
-
 	}
 
 	public updateTimerMenu(isStarted: boolean) {
