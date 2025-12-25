@@ -1,5 +1,5 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ComponentLayoutStyleEnum, IEmployee, IUser, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { isEmpty } from '@gauzy/utils';
@@ -42,7 +42,7 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			let existingUser: IUser | null = null;
 
 			if (!input.user?.email) {
-				throw new Error('User email is required when userId is not provided');
+				throw new BadRequestException('User email is required when userId is not provided');
 			}
 
 			try {
@@ -59,6 +59,22 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			}
 
 			if (existingUser) {
+				// Check if an employee already exists for this user in this organization
+				try {
+					const existingEmployee = await this._employeeService.findOneByWhereOptions({
+						userId: existingUser.id,
+						organizationId
+					});
+					if (existingEmployee) {
+						throw new BadRequestException('Employee already exists for this user in this organization');
+					}
+				} catch (error) {
+					if (!(error instanceof NotFoundException)) {
+						throw error;
+					}
+					// No existing employee found - proceed with creation
+				}
+
 				// User already exists in this tenant - create only the employee
 				const employee = await this._employeeService.create({
 					...input,
