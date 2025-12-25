@@ -60,7 +60,11 @@ export class OrganizationContextService {
 			}
 
 			// Apply the new authentication data
-			this.applyOrganizationData(response, organization);
+			const applied = this.applyOrganizationData(response, organization);
+			if (!applied) {
+				this.toastrService.danger('Failed to apply organization data', 'Error');
+				return false;
+			}
 
 			return true;
 		} catch (error) {
@@ -75,13 +79,22 @@ export class OrganizationContextService {
 	 *
 	 * @param response The auth response from the switch organization API
 	 * @param organization The target organization
+	 * @returns true if applied successfully, false if validation failed
 	 */
-	private applyOrganizationData(response: IAuthResponse, organization: IOrganization): void {
+	private applyOrganizationData(response: IAuthResponse, organization: IOrganization): boolean {
 		const { user, token, refresh_token } = response;
+
+		// Validate required fields before updating store
+		if (!token || !user) {
+			console.error('[OrganizationContextService] Invalid response: missing token or user');
+			return false;
+		}
 
 		// Update tokens
 		this.store.token = token;
-		this.store.refresh_token = refresh_token;
+		if (refresh_token) {
+			this.store.refresh_token = refresh_token;
+		}
 
 		// Update user with new employee context
 		this.store.user = user;
@@ -92,6 +105,7 @@ export class OrganizationContextService {
 		this.store.selectedEmployee = null;
 
 		console.info(`[OrganizationContextService] Switched to organization: ${organization.name}`);
+		return true;
 	}
 
 	/**
