@@ -1703,8 +1703,9 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException('Employee account is not active in this organization');
 			}
 
-			// Update user's last organization
+			// Update user's last organization and reflect it in the user object
 			await this.userService.update(user.id, { lastOrganizationId: organizationId });
+			user.lastOrganizationId = organizationId;
 
 			// Generate new access and refresh tokens with the new organization context
 			const [access_token, refresh_token] = await Promise.all([
