@@ -39,14 +39,14 @@
 		"publish": [
 			{
 				"provider": "github",
-				"repo": "ever-agent",
+				"repo": "ever-gauzy-agent",
 				"releaseType": "release"
 			},
 			{
 				"provider": "spaces",
 				"name": "ever",
 				"region": "sfo3",
-				"path": "/ever-agent",
+				"path": "/ever-gauzy-agent",
 				"acl": "public-read"
 			}
 		],
