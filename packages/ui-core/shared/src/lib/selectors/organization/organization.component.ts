@@ -246,7 +246,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	 *
 	 * @param organization - The organization with updated data.
 	 */
-	public updateOrganization(organization: IOrganization): void {
+	public async updateOrganization(organization: IOrganization): Promise<void> {
 		// Check if the organization exists
 		const exists = this.organizations.some((org) => org.id === organization.id);
 		if (!exists) {
@@ -261,7 +261,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			);
 
 			// Update the store with the selected organization details
-			this.selectOrganization(organization);
+			await this.selectOrganization(organization);
 
 			// Assign the filtered and updated organizations list
 			this.organizations = updatedOrganizations.filter(isNotEmpty);
@@ -276,7 +276,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	 *
 	 * @param organization - The organization to delete.
 	 */
-	public deleteOrganization(organization: IOrganization): void {
+	public async deleteOrganization(organization: IOrganization): Promise<void> {
 		if (!organization) {
 			console.warn('No organization provided to delete.');
 			return;
@@ -300,8 +300,8 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			if (this._store.selectedOrganization?.id === organization.id) {
 				if (updatedOrganizations.length > 0) {
 					// Select a random organization from the updated list
-					const organization = this.getRandomOrganization(updatedOrganizations);
-					this.selectOrganization(organization);
+					const randomOrg = this.getRandomOrganization(updatedOrganizations);
+					await this.selectOrganization(randomOrg);
 				} else {
 					// No organizations left; reset the store
 					this.resetStore();
@@ -367,12 +367,12 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	 *
 	 * @param organizationId - The ID of the organization to select.
 	 */
-	selectOrganizationById(organizationId: ID): void {
+	async selectOrganizationById(organizationId: ID): Promise<void> {
 		const organization = this.organizations.find(
 			(organization: IOrganization) => organization.id === organizationId
 		);
 		if (organization) {
-			this.selectOrganization(organization);
+			await this.selectOrganization(organization);
 		}
 	}
 
