@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { IAuthResponse, IOrganization } from '@gauzy/contracts';
@@ -19,11 +19,9 @@ import { ToastrService } from '../notification/toastr.service';
  */
 @Injectable({ providedIn: 'root' })
 export class OrganizationContextService {
-	constructor(
-		private readonly store: Store,
-		private readonly authService: AuthService,
-		private readonly toastrService: ToastrService
-	) {}
+	private readonly store = inject(Store);
+	private readonly authService = inject(AuthService);
+	private readonly toastrService = inject(ToastrService);
 
 	/**
 	 * Switch to a different organization within the same workspace.
