@@ -981,6 +981,10 @@ export class AuthService extends SocialAuthService {
 	 * Extracts the organization context from the refresh token to maintain
 	 * the user's organization selection across token refreshes.
 	 *
+	 * Note: The refresh token is organization-specific (contains organizationId).
+	 * When refreshing, the new access token will use the same organization context.
+	 * To switch organizations, use the /auth/switch-organization endpoint instead.
+	 *
 	 * @returns {Promise<{ token: string } | null>}
 	 */
 	async getAccessTokenFromRefreshToken(): Promise<{ token: string } | null> {
