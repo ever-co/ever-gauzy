@@ -47,9 +47,10 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 
 			try {
 				// Check if a user with this email already exists in the current tenant
-				existingUser = await this._userService.findOneByWhereOptions({
-					email: input.user.email,
-					tenantId
+				// Include role relation for addUserToOrganization which checks user.role.name
+				existingUser = await this._userService.findOneByOptions({
+					where: { email: input.user.email, tenantId },
+					relations: { role: true }
 				});
 			} catch (error) {
 				if (!(error instanceof NotFoundException)) {
