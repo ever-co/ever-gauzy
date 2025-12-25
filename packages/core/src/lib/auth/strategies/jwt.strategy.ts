@@ -43,6 +43,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			}
 
 			// Validate and assign employeeId from JWT
+			let validatedEmployee = null;
 			if (employeeId) {
 				const employee = await this._employeeService.findOneByIdString(employeeId);
 
@@ -50,11 +51,20 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 					return done(new UnauthorizedException('unauthorized'), false);
 				}
 
+				validatedEmployee = employee;
 				user.employeeId = employeeId;
 			}
 
 			// Validate and assign organizationId from JWT
 			if (organizationId) {
+				// Cross-validate: if employeeId was provided, ensure it belongs to the claimed organization
+				if (validatedEmployee && validatedEmployee.organizationId !== organizationId) {
+					return done(
+						new UnauthorizedException('Employee does not belong to the claimed organization'),
+						false
+					);
+				}
+
 				const userOrganization = await this._userOrganizationService.findOneByOptions({
 					where: {
 						userId: user.id,
