@@ -85,14 +85,12 @@ export class OrganizationContextService {
 		this.store.token = token;
 		this.store.refresh_token = refresh_token;
 
-		// Update user (with new employee for the organization)
+		// Update user with new employee context
 		this.store.user = user;
 
 		// Update organization context
 		this.store.selectedOrganization = organization;
 		this.store.organizationId = organization.id;
-
-		// Reset selected employee (will be set based on context)
 		this.store.selectedEmployee = null;
 
 		console.info(`[OrganizationContextService] Switched to organization: ${organization.name}`);
@@ -100,11 +98,12 @@ export class OrganizationContextService {
 
 	/**
 	 * Initialize the service.
-	 * This method exists for backward compatibility but no longer sets up automatic listeners.
+	 *
+	 * @deprecated This method is retained for backward compatibility with AppInitService.
 	 * Organization switching is now done explicitly via switchOrganization().
+	 * This will be removed in a future version.
 	 */
 	initialize(): void {
 		// No-op: Organization switching is now explicit via switchOrganization()
-		// This method exists for backward compatibility with AppInitService
 	}
 }
