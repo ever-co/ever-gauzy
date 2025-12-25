@@ -179,10 +179,13 @@ export class AuthService extends SocialAuthService {
 			// Select the most recently updated user (already sorted by updatedAt DESC)
 			const { user: selectedUser, employee } = userValidations[0];
 
+			// Determine organization context for tokens
+			const organizationId = employee?.organizationId || selectedUser.lastOrganizationId;
+
 			// Generate both access and refresh tokens concurrently
 			const [access_token, refresh_token] = await Promise.all([
-				this.getJwtAccessToken(selectedUser),
-				this.getJwtRefreshToken(selectedUser)
+				this.getJwtAccessToken(selectedUser, organizationId),
+				this.getJwtRefreshToken(selectedUser, organizationId)
 			]);
 
 			// Update user's refresh token and last login timestamp concurrently
@@ -1224,10 +1227,13 @@ export class AuthService extends SocialAuthService {
 					throw new UnauthorizedException();
 				}
 
+				// Determine organization context for tokens
+				const organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
+
 				// Generate both access and refresh tokens concurrently for efficiency.
 				const [access_token, refresh_token] = await Promise.all([
-					this.getJwtAccessToken(user),
-					this.getJwtRefreshToken(user)
+					this.getJwtAccessToken(user, organizationId),
+					this.getJwtRefreshToken(user, organizationId)
 				]);
 
 				// Store the current refresh token with the user for later validation.
@@ -1578,10 +1584,13 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException('Employee account is not active');
 			}
 
+			// Determine organization context for tokens
+			const organizationId = employee?.organizationId || targetUser.lastOrganizationId;
+
 			// Generate new access and refresh tokens for the target workspace
 			const [access_token, refresh_token] = await Promise.all([
-				this.getJwtAccessToken(targetUser),
-				this.getJwtRefreshToken(targetUser)
+				this.getJwtAccessToken(targetUser, organizationId),
+				this.getJwtRefreshToken(targetUser, organizationId)
 			]);
 
 			// Store the current refresh token with the user
