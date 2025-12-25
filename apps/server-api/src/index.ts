@@ -58,6 +58,7 @@ import {
 	createServerWindow,
 	createSettingsWindow,
 	createSetupWindow,
+	PluginMarketplaceWindow,
 	SplashScreen
 } from '@gauzy/desktop-window';
 import * as Sentry from '@sentry/electron/main';
@@ -464,6 +465,9 @@ app.on('ready', async () => {
 		if (!settingsWindow) {
 			settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui, pathWindow.preloadPath);
 		}
+
+		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
+		await marketplace.loadURL();
 
 		await appState();
 

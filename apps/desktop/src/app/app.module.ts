@@ -22,6 +22,7 @@ import {
 	NgxDesktopThemeModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
+	PluginsModule,
 	RecapModule,
 	RefreshTokenInterceptor,
 	ScreenCaptureModule,
@@ -92,7 +93,8 @@ if (environment.SENTRY_DSN) {
 		LanguageModule.forRoot(),
 		AboutModule,
 		AlwaysOnModule,
-		RecapModule
+		RecapModule,
+		PluginsModule
 	],
 	providers: [
 		AppService,

@@ -29,7 +29,6 @@ import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.m
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { TaskRenderModule } from '../time-tracker/task-render';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
-import { PluginsModule } from './plugins/plugins.module';
 import { SettingsComponent } from './settings.component';
 import { SslModule } from './ssl';
 
@@ -59,7 +58,6 @@ import { SslModule } from './ssl';
 		LanguageModule.forChild(),
 		TaskRenderModule,
 		SslModule,
-		PluginsModule,
 		PipeModule,
 		SwitchThemeModule
 	],

@@ -1,5 +1,5 @@
-import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
 import { RegisteredWindow, WindowManager, logger } from '@gauzy/desktop-core';
+import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerService } from './offline';
@@ -16,7 +16,6 @@ export class AppMenu {
 	private readonly pluginManager = PluginManager.getInstance();
 	private readonly pluginEventManager = PluginEventManager.getInstance();
 	private readonly windowManager = WindowManager.getInstance();
-
 
 	/**
 	 * Constructs and initializes the application menu.
@@ -191,12 +190,7 @@ export class AppMenu {
 				}
 			]
 		};
-		this.menu = [
-			this.applicationMenu,
-			this.windowMenu,
-			this.editMenu,
-			this.pluginMenu
-		];
+		this.menu = [this.applicationMenu, this.windowMenu, this.editMenu, this.pluginMenu];
 
 		// Build the menu
 		if (!isCustomMenu) {
@@ -260,11 +254,11 @@ export class AppMenu {
 		// Return the plugin menu structure
 		return {
 			id: 'plugin-menu',
-			label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGIN'),
+			label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
 			submenu: [
 				{
 					label: TranslateService.instant('TIMER_TRACKER.MENU.INSTALL_PLUGIN'),
-					click: () => this.openPluginSettings()
+					click: () => this.openPlugin()
 				},
 				...pluginSubmenu
 			]
@@ -272,19 +266,11 @@ export class AppMenu {
 	}
 
 	/**
-	 * Opens the plugin settings window and sends the current application configuration to it.
+	 * Opens the plugin window.
 	 */
-	private openPluginSettings(): void {
-		// Retrieve the settings window instance
-		const settingsWindow = this.windowManager.getOne(RegisteredWindow.SETTINGS);
-
-		// Show the settings window
-		this.windowManager.show(RegisteredWindow.SETTINGS);
-
-		// Send the application configuration to the settings window
-		if (settingsWindow) {
-			this.windowManager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-		}
+	private openPlugin(): void {
+		// Show the plugins window
+		this.windowManager.show(RegisteredWindow.PLUGINS);
 	}
 
 	/**

@@ -1,11 +1,11 @@
+import { RegisteredWindow, store, WindowManager } from '@gauzy/desktop-core';
 import { getApiBaseUrl, loginPage, settingsPage, timeTrackerPage } from '@gauzy/desktop-window';
-import { RegisteredWindow, WindowManager, store } from '@gauzy/desktop-core';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
+import * as path from 'node:path';
 import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
 import { User, UserService } from './offline';
 import { TranslateService } from './translation';
-import * as path from 'node:path';
 import TitleOptions = Electron.TitleOptions;
 
 export class TrayIcon {
@@ -44,6 +44,14 @@ export class TrayIcon {
 						type: 'goto_top_menu'
 					});
 					manager.webContents(settingsWindow).send('refresh_menu');
+				}
+			},
+			{
+				id: '6-0',
+				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
+				accelerator: 'CmdOrCtrl+P',
+				async click() {
+					manager.show(RegisteredWindow.PLUGINS);
 				}
 			},
 			{
@@ -93,6 +101,14 @@ export class TrayIcon {
 						type: 'goto_top_menu'
 					});
 					manager.webContents(settingsWindow).send('refresh_menu');
+				}
+			},
+			{
+				id: '6-0',
+				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
+				accelerator: 'CmdOrCtrl+P',
+				async click() {
+					manager.show(RegisteredWindow.PLUGINS);
 				}
 			},
 			{
@@ -175,6 +191,14 @@ export class TrayIcon {
 				visible: appConfig.timeTrackerWindow
 			},
 			{
+				id: '6-0',
+				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
+				accelerator: 'CmdOrCtrl+P',
+				async click() {
+					manager.show(RegisteredWindow.PLUGINS);
+				}
+			},
+			{
 				id: '6',
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				accelerator: 'CmdOrCtrl+U',
@@ -246,8 +270,14 @@ export class TrayIcon {
 			unAuthMenu.unshift(openGauzyMenu);
 		}
 
-		const menuWindowTime = Menu.getApplicationMenu()?.getMenuItemById('window-time-track') ?? { enabled: false, visible: false };
-		const menuWindowSetting = Menu.getApplicationMenu()?.getMenuItemById('window-setting') ?? { enabled: false, visible: false };
+		const menuWindowTime = Menu.getApplicationMenu()?.getMenuItemById('window-time-track') ?? {
+			enabled: false,
+			visible: false
+		};
+		const menuWindowSetting = Menu.getApplicationMenu()?.getMenuItemById('window-setting') ?? {
+			enabled: false,
+			visible: false
+		};
 
 		const openWindow = async () => {
 			if (process.env.IS_DESKTOP_TIMER) {

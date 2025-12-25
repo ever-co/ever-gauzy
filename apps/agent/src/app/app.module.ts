@@ -25,6 +25,7 @@ import {
 	NgxLoginModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
+	PluginsModule,
 	RefreshTokenInterceptor,
 	ScreenCaptureModule,
 	ServerConnectionService,
@@ -119,7 +120,8 @@ if (environment.SENTRY_DSN) {
 		NbDatepickerModule.forRoot(),
 		AboutModule,
 		AgentDashboardModule,
-		AlwaysOnModule
+		AlwaysOnModule,
+		PluginsModule
 	],
 	providers: [
 		AppService,
