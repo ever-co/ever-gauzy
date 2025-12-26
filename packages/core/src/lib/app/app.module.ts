@@ -167,6 +167,7 @@ import { TagTypeModule } from '../tag-type/tag-type.module';
 import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
 import { EmployeeRecentVisitModule } from '../employee-recent-visit/employee-recent-visit.module';
+import { SharedEntityModule } from '../shared-entity/shared-entity.module';
 
 const { unleashConfig } = environment;
 
@@ -508,7 +509,8 @@ if (environment.THROTTLE_ENABLED) {
 		EmployeeNotificationModule,
 		EmployeeNotificationSettingModule,
 		TenantApiKeyModule,
-		EmployeeRecentVisitModule
+		EmployeeRecentVisitModule,
+		SharedEntityModule
 	],
 	controllers: [AppController],
 	providers: [
