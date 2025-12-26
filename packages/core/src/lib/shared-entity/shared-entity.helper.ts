@@ -11,7 +11,9 @@ import { IShareRule } from "@gauzy/contracts";
  * @returns The select for the shared entity.
  */
 export function buildSharedEntitySelect(rules: IShareRule): FindOptionsSelect<any> {
-    const select: FindOptionsSelect<any> = {};
+    const select: FindOptionsSelect<any> = {
+        id: true // Always include the primary key for TypeORM to work correctly
+    };
 
     // Add the fields to the select
     for (const field of rules.fields) {
@@ -21,7 +23,7 @@ export function buildSharedEntitySelect(rules: IShareRule): FindOptionsSelect<an
     // Add the relations to the select
     if (isNotEmpty(rules.relations)) {
         for (const [relation, subRules] of Object.entries(rules.relations)) {
-            select[relation] = this.buildSelect(subRules as IShareRule);
+            select[relation] = buildSharedEntitySelect(subRules as IShareRule);
         }
     }
 
@@ -42,7 +44,7 @@ export function buildSharedEntityRelations(rules: IShareRule): FindOptionsRelati
 
     // Add the relations to the relations
     for (const [relation, subRules] of Object.entries(rules.relations)) {
-        relations[relation] = isEmpty(subRules) ? true : this.buildRelations(subRules as IShareRule);
+        relations[relation] = isEmpty(subRules) ? true : buildSharedEntityRelations(subRules as IShareRule);
     }
 
     // Return the relations
@@ -63,19 +65,19 @@ export function filterSharedEntity(entity: any, rules: IShareRule): any {
         result[field] = entity[field];
     }
 
-        if (rules.relations) {
+    if (rules.relations) {
         for (const [relation, subRules] of Object.entries(rules.relations)) {
             if (!entity[relation]) continue;
 
             if (Array.isArray(entity[relation])) {
                 result[relation] = entity[relation].map(item =>
-                    this.filterEntity(item, subRules)
+                    filterSharedEntity(item, subRules as IShareRule)
                 );
             } else {
-                result[relation] = this.filterEntity(entity[relation], subRules);
+                result[relation] = filterSharedEntity(entity[relation], subRules as IShareRule);
             }
         }
-        }
+    }
 
     // Return the result
         return result;

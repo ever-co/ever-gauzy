@@ -70,7 +70,7 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             const repository = this.resolveRepository(sharedEntity.entity);
 
             // Construct the find options for the shared entity
-            const findOptions = this.buildFindOptions(sharedEntity.id, shareRules);
+            const findOptions = this.buildFindOptions(sharedEntity.entityId, shareRules);
 
             // Get the entity
             const entity = await repository.findOne(findOptions);
