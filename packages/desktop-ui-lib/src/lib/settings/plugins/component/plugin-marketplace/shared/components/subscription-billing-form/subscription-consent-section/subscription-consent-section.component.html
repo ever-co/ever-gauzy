@@ -1,0 +1,41 @@
+<div [formGroup]="form">
+	<nb-card class="form-section auto-renew">
+		<nb-card-body>
+			<div class="checkbox-wrapper">
+				<nb-checkbox formControlName="autoRenew">
+					<div class="checkbox-content">
+						<nb-icon icon="refresh-outline" aria-hidden="true"></nb-icon>
+						<span>Enable automatic renewal</span>
+					</div>
+				</nb-checkbox>
+				<p class="checkbox-help">
+					<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
+					Renew automatically at the end of each billing period. You can cancel anytime.
+				</p>
+			</div>
+		</nb-card-body>
+	</nb-card>
+
+	<nb-card class="form-section terms">
+		<nb-card-body>
+			<div class="checkbox-wrapper" [class.has-error]="hasError('acceptTerms', 'required')">
+				<nb-checkbox formControlName="acceptTerms" aria-required="true">
+					<div class="checkbox-content">
+						I agree to the
+						<a href="#" target="_blank" (click)="$event.stopPropagation()" rel="noopener"
+							>Terms of Service</a
+						>
+						and
+						<a href="#" target="_blank" (click)="$event.stopPropagation()" rel="noopener">Privacy Policy</a>
+					</div>
+				</nb-checkbox>
+				@if (hasError('acceptTerms', 'required')) {
+				<div class="error-message" role="alert">
+					<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+					You must accept the terms to continue
+				</div>
+				}
+			</div>
+		</nb-card-body>
+	</nb-card>
+</div>

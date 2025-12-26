@@ -10,6 +10,7 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubicloud-standard-4
+    timeout-minutes: 150
     outputs:
       uuid: ${{ steps.uuid.outputs.value }}
     steps:
@@ -25,7 +26,8 @@ jobs:
 
   e2e-tests:
     runs-on: [self-hosted]
-    needs: ["prepare"]
+    timeout-minutes: 360
+    needs: ['prepare']
 
     # we can try to run tests in the Docker containers later
     # container: cypress/browsers:node14.17.0-chrome88-ff89
@@ -57,8 +59,6 @@ jobs:
       # we don't use original Cypress Dashboard here, but we want to override values with correct from Currents
       CYPRESS_RECORD_KEY: ${{ secrets.CURRENTS_CYPRESS_RECORD_KEY }}
       CYPRESS_PROJECT_ID: ${{ secrets.CURRENTS_CYPRESS_PROJECT_ID }}
-
-    timeout-minutes: 360
 
     steps:
       - name: Checkout

@@ -11,17 +11,17 @@ import { PluginQuery } from '../+state/plugin.query';
 import { AlertComponent } from '../../../../dialogs/alert/alert.component';
 import { IPlugin } from '../../services/plugin-loader.service';
 import { AddPluginComponent } from '../add-plugin/add-plugin.component';
-import { PluginStatusComponent } from './plugin-status/plugin-status.component';
-import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
 import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/plugin-installation.query';
+import { PluginStatusComponent } from './plugin-status/plugin-status.component';
+import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-plugin-list',
-    templateUrl: './plugin-list.component.html',
-    styleUrls: ['./plugin-list.component.scss'],
-    standalone: false
+	selector: 'ngx-plugin-list',
+	templateUrl: './plugin-list.component.html',
+	styleUrls: ['./plugin-list.component.scss'],
+	standalone: false
 })
 export class PluginListComponent implements OnInit, OnDestroy {
 	private readonly translateService = inject(TranslateService);
@@ -159,7 +159,7 @@ export class PluginListComponent implements OnInit, OnDestroy {
 	}
 
 	public view() {
-		this.router.navigate(['/settings', 'plugins', this.plugin.name]);
+		this.router.navigate(['/plugins', 'installed', this.plugin.name]);
 	}
 
 	public addPlugin() {
@@ -170,24 +170,7 @@ export class PluginListComponent implements OnInit, OnDestroy {
 	}
 
 	public uninstall() {
-		this.dialog
-			.open(AlertComponent, {
-				backdropClass: 'backdrop-blur',
-				context: {
-					data: {
-						title: 'PLUGIN.DIALOG.UNINSTALL.TITLE',
-						message: 'PLUGIN.DIALOG.UNINSTALL.DESCRIPTION',
-						confirmText: 'PLUGIN.DIALOG.UNINSTALL.CONFIRM',
-						status: 'basic'
-					}
-				}
-			})
-			.onClose.pipe(
-				take(1),
-				filter(Boolean),
-				tap(() => this.action.dispatch(PluginInstallationActions.uninstall(this.plugin)))
-			)
-			.subscribe();
+		this.action.dispatch(PluginInstallationActions.uninstall(this.plugin.marketplaceId, this.plugin.id));
 	}
 
 	private clearItem(): void {

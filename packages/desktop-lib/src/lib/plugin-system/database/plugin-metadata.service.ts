@@ -18,7 +18,7 @@ export class PluginMetadataService {
 
 	public async update(input: IPluginMetadataUpdate): Promise<void> {
 		const query = this.buildQuery(input);
-		await query.update({ isActivate: input.isActivate, version: input.version, description: input.description });
+		await query.update(input);
 	}
 
 	public async delete(input: IPluginMetadataDelete): Promise<void> {
@@ -32,11 +32,7 @@ export class PluginMetadataService {
 
 	public async findOne(input: IPluginMetadataFindOne): Promise<IPluginMetadataPersistance> {
 		const query = this.buildQuery(input);
-		const result = await query.first();
-		if (!result) {
-			throw new Error(`Plugin metadata not found for input: ${JSON.stringify(input)}`);
-		}
-		return result;
+		return query.first();
 	}
 
 	public async findActivated(): Promise<IPluginMetadataPersistance[]> {

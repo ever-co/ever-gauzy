@@ -306,7 +306,7 @@ export const env: Env = cleanEnv(
 			default: 'gauzy-desktop'
 		}),
 		DESKTOP_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy Desktop'
+			default: 'Gauzy Desktop'
 		}),
 		DESKTOP_APP_ID: str({
 			default: 'com.ever.gauzydesktop'
@@ -322,7 +322,7 @@ export const env: Env = cleanEnv(
 			default: 'gauzy-server'
 		}),
 		DESKTOP_SERVER_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy Server'
+			default: 'Gauzy Server'
 		}),
 		DESKTOP_SERVER_APP_ID: str({
 			default: 'com.ever.gauzyserver'
@@ -344,7 +344,7 @@ export const env: Env = cleanEnv(
 			default: 'gauzy-api-server'
 		}),
 		DESKTOP_API_SERVER_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy API Server'
+			default: 'Gauzy API Server'
 		}),
 		DESKTOP_API_SERVER_APP_ID: str({
 			default: 'com.ever.gauzyapiserver'
@@ -359,7 +359,7 @@ export const env: Env = cleanEnv(
 			default: 'gauzy-mcp-server'
 		}),
 		DESKTOP_MCP_SERVER_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy MCP Server'
+			default: 'Gauzy MCP Server'
 		}),
 		DESKTOP_MCP_SERVER_APP_ID: str({
 			default: 'com.ever.gauzymcpserver'
@@ -374,13 +374,13 @@ export const env: Env = cleanEnv(
 		REGISTER_URL: str({ default: 'https://app.gauzy.co/#/auth/register' }),
 		FORGOT_PASSWORD_URL: str({ default: 'https://app.gauzy.co/#/auth/request-password' }),
 		AGENT_APP_NAME: str({
-			default: 'ever-gauzy-agent'
+			default: 'gauzy-agent'
 		}),
 		AGENT_APP_ID: str({
 			default: 'com.ever.gauzyagent'
 		}),
 		AGENT_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy Agent'
+			default: 'Gauzy Agent'
 		}),
 		AGENT_APP_REPO_NAME: str({
 			default: 'ever-gauzy-agent'

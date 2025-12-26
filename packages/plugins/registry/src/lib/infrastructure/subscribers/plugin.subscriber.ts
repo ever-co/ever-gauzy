@@ -1,12 +1,12 @@
-import { ID } from '@gauzy/contracts';
+import { ID, PluginInstallationStatus } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
 import { Logger } from '@nestjs/common';
 import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
 import { Plugin } from '../../domain/entities/plugin.entity';
-import { PluginVersionService } from '../../domain/services/plugin-version.service';
-import { PluginSourceService } from '../../domain/services/plugin-source.service';
 import { PluginInstallationService } from '../../domain/services/plugin-installation.service';
-import { RequestContext } from '@gauzy/core';
-import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
+import { PluginSourceService } from '../../domain/services/plugin-source.service';
+import { PluginSubscriptionPlanService } from '../../domain/services/plugin-subscription-plan.service';
+import { PluginVersionService } from '../../domain/services/plugin-version.service';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 
 @EventSubscriber()
@@ -17,6 +17,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 		private readonly pluginVersionService: PluginVersionService,
 		private readonly pluginSourceService: PluginSourceService,
 		private readonly pluginInstallationService: PluginInstallationService,
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService,
 		readonly dataSource: DataSource
 	) {
 		dataSource.subscribers.push(this);
@@ -41,7 +42,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 
 		const entity = event.entity;
 		// Set uploadedBy and uploadedAt
-		entity.uploadedById = RequestContext.currentEmployeeId();
+		entity.uploadedById = RequestContext.currentUserId();
 		entity.uploadedAt = new Date();
 		// Normalize string fields
 		if (entity.name) entity.name = entity.name.trim();
@@ -63,15 +64,20 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 
 			// Compute total download count from all versions
 			const downloadCount = await this.computeDownloadCount(entity.id);
-
 			// Compute latest version
 			const version = await this.computeLatestVersion(entity.id);
+			// Get current user and context
+			const currentUser = RequestContext.currentUser();
+			// Get employeeId - may be null for users without employee records or with CHANGE_SELECTED_EMPLOYEE permission
+			const installedById = currentUser?.employeeId || null;
 
 			// compute installation
-			const installation = await this.pluginInstallationService.findOneOrFailByWhereOptions({
-				pluginId: entity.id,
-				installedById: RequestContext.currentEmployeeId(),
-				status: PluginInstallationStatus.INSTALLED
+			const installation = await this.pluginInstallationService.findOneOrFailByOptions({
+				where: {
+					pluginId: entity.id,
+					installedById,
+					status: PluginInstallationStatus.INSTALLED
+				}
 			});
 
 			// Compute latest source associated to version
@@ -88,6 +94,9 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 				  })
 				: { success: false, record: null };
 
+			// Compute if plugin has at least one subscription plan
+			const hasPlan = await this.computeHasPlan(entity.id);
+
 			// Add the computed property to the entity
 			entity.downloadCount = downloadCount;
 
@@ -98,6 +107,9 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			entity.source = source.success ? source.record : null;
 
 			entity.installed = installation.success;
+
+			// Add the hasPlan state
+			entity.hasPlan = hasPlan && entity.requiresSubscription;
 
 			this.logger.debug(`Total downloads for plugin ${entity.id}: ${downloadCount}`);
 		} catch (error) {
@@ -110,6 +122,8 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			entity.source = null;
 			// Add default installed
 			entity.installed = false;
+			// Add default hasPlan
+			entity.hasPlan = false;
 		}
 	}
 
@@ -186,6 +200,27 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 		} catch (error) {
 			this.logger.error(`Error finding latest version for plugin ${pluginId}: ${error.message}`, error.stack);
 			return null;
+		}
+	}
+
+	/**
+	 * Check if a plugin has at least one subscription plan
+	 * @param pluginId The ID of the plugin
+	 * @returns True if the plugin has at least one plan, false otherwise
+	 */
+	private async computeHasPlan(pluginId: ID): Promise<boolean> {
+		try {
+			this.logger.debug(`Checking if plugin ${pluginId} has subscription plans`);
+
+			// Query for subscription plans with this plugin ID
+			const count = await this.pluginSubscriptionPlanService.countBy({ pluginId });
+
+			this.logger.debug(`Plugin ${pluginId} has plans: ${count}`);
+
+			return count > 0;
+		} catch (error) {
+			this.logger.error(`Error checking plans for plugin ${pluginId}: ${error.message}`, error.stack);
+			return false;
 		}
 	}
 }

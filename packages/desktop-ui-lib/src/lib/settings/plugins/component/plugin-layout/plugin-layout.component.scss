@@ -6,8 +6,9 @@ h4 {
   color: var(--gauzy-text-color-1);
 }
 
-.titlebar-space {
-  margin-top: 15px;
+.container-fluid {
+  padding: 1rem;
+  background: var(--gauzy-card-2);
 }
 
 :host ::ng-deep {
@@ -15,9 +16,9 @@ h4 {
     background-color: var(--gauzy-card-2);
     border-radius: var(--border-radius);
     &.first {
-      border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
+      border-radius: 0 var(--border-radius) var(--border-radius);
     }
-    height: calc(100vh - 10rem);
+    height: calc(100vh - 7.5rem);
     padding: 1rem;
     width: 100%;
 
@@ -55,4 +56,8 @@ h4 {
       text-transform: uppercase;
     }
   }
+}
+
+::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
+  padding: 0px;
 }

@@ -34,7 +34,7 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@mikro-orm/nestjs": "^6.1.1",
-		"@nestjs/common": "^11.1.0",
+		"@nestjs/common": "^11.1.10",
 		"@nestjs/cqrs": "^11.0.3",
 		"@nestjs/mapped-types": "^2.1.0",
 		"@nestjs/swagger": "^11.1.5",
@@ -64,8 +64,8 @@
 		"platform"
 	],
 	"engines": {
-		"node": ">=20.18.1",
-		"yarn": ">=1.22.19"
+		"node": ">=22",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }

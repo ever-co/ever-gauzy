@@ -1,16 +1,31 @@
 import { Injectable } from '@angular/core';
-import { IPluginSource } from '@gauzy/contracts';
+import { ID, IPlugin, IPluginSource, IPluginVersion } from '@gauzy/contracts';
+import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, catchError, filter, finalize, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs';
+import {
+	EMPTY,
+	Observable,
+	catchError,
+	exhaustMap,
+	filter,
+	finalize,
+	map,
+	mergeMap,
+	switchMap,
+	tap,
+	withLatestFrom
+} from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { coalesceValue } from '../../../../../../utils';
 import { PluginElectronService } from '../../../../services/plugin-electron.service';
 import { PluginService } from '../../../../services/plugin.service';
+import { DialogCreateSourceComponent } from '../../plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
 import { PluginSourceActions } from '../actions/plugin-source.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginSourceStore } from '../stores/plugin-source.store';
+import { PluginVersionStore } from '../stores/plugin-version.store';
 
 @Injectable({ providedIn: 'root' })
 export class PluginSourceEffects {
@@ -18,45 +33,47 @@ export class PluginSourceEffects {
 		private readonly action$: Actions,
 		private readonly pluginService: PluginService,
 		private readonly pluginSourceStore: PluginSourceStore,
+		private readonly pluginVersionStore: PluginVersionStore,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginElectronService: PluginElectronService,
-		private readonly translateService: TranslateService
+		private readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService
 	) {}
 
 	createMany$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.add),
-			tap(() => {
-				this.pluginSourceStore.update({ creating: true });
-				this.pluginMarketplaceStore.setUpload({ uploading: true });
+			tap(({ plugin }) => this.selectSourceContext(plugin)),
+			exhaustMap(({ plugin }) => this.createSourceDialog(plugin, plugin.versions[0])),
+			tap(({ pluginId }) => {
+				this.pluginSourceStore.setCreating(pluginId, true);
+				this.pluginMarketplaceStore.setUpload(pluginId, { uploading: true, progress: 0 });
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.ADDING'));
 			}),
 			switchMap(({ pluginId, versionId, sources }) =>
 				this.pluginService.addSources(pluginId, versionId, sources).pipe(
-					tap((res) => this.pluginMarketplaceStore.setUpload({ progress: coalesceValue(res?.progress, 0) })),
-					filter((res) => Boolean(res?.sources)), // Filter out null or undefined responses
+					tap((res) =>
+						this.pluginMarketplaceStore.setUpload(pluginId, {
+							uploading: true,
+							progress: coalesceValue(res?.progress, 0)
+						})
+					),
+					filter((res) => Boolean(res?.sources)),
 					map((res) => res.sources),
 					withLatestFrom(this.pluginElectronService.getOS()),
 					tap(([created, os]) => {
-						this.pluginSourceStore.update((state) => ({
-							source: created[0],
-							sources: [...created, ...state.sources].sort((a, b) => {
-								if (a.operatingSystem === os.platform) return -1;
-								if (b.operatingSystem === os.platform) return 1;
-								return 0;
-							}),
-							count: state.count + created.length
-						}));
+						this.pluginSourceStore.setSources(created, created.length, os);
 						this.toastrService.success(this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SOURCE.ADD'));
 					}),
-					finalize(() => {
-						this.pluginMarketplaceStore.setUpload({ uploading: false });
-						this.pluginSourceStore.update({ creating: false });
-					}), // Always stop loading
 					catchError((error) => {
-						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.ADD')); // Handle error properly
-						return EMPTY; // Return a fallback value to keep the stream alive
+						console.error('Failed to add plugin sources:', error);
+						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.ADD'));
+						return EMPTY;
+					}),
+					finalize(() => {
+						this.pluginMarketplaceStore.setUpload(pluginId, { uploading: false, progress: 0 });
+						this.pluginSourceStore.setCreating(pluginId, false);
 					})
 				)
 			)
@@ -66,44 +83,23 @@ export class PluginSourceEffects {
 	getAll$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.getAll),
-			tap(() => this.pluginSourceStore.setLoading(true)), // Start loading state
+			filter(({ pluginId, versionId }) => Boolean(pluginId && versionId)),
+			tap(({ pluginId, versionId }) => {
+				this.pluginSourceStore.setLoading(true);
+				this.pluginSourceStore.setPluginVersion(pluginId, versionId);
+			}),
 			switchMap(({ pluginId, versionId, params = {} }) =>
 				this.pluginService.getSources(pluginId, versionId, params).pipe(
 					withLatestFrom(this.pluginElectronService.getOS()),
-					tap(([{ items, total }, os]) => {
-						this.pluginSourceStore.update((state) => {
-							if (!items?.length) {
-								return {
-									sources: state.sources || [],
-									source: state.source,
-									count: total
-								};
-							}
-
-							const sourceMap = new Map<string, IPluginSource>(
-								(state.sources || []).map((item) => [item.id, item])
-							);
-
-							items.forEach((item) => sourceMap.set(item.id, item));
-
-							const sortedSources = Array.from(sourceMap.values()).sort((a, b) => {
-								if (a.operatingSystem === os.platform) return -1;
-								if (b.operatingSystem === os.platform) return 1;
-								return 0;
-							});
-
-							return {
-								sources: sortedSources,
-								source: state.source ?? sortedSources[0],
-								count: total
-							};
-						});
-					}),
-					finalize(() => this.pluginSourceStore.setLoading(false)), // Always stop loading
+					tap(([{ items, total }, os]) => this.pluginSourceStore.setSources(items, total, os)),
 					catchError((error) => {
-						this.toastrService.error(error.message || error); // Handle error properly
-						return EMPTY; // Return a fallback observable
-					})
+						console.error('Failed to get plugin sources:', error);
+						this.toastrService.error(
+							error?.message || this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.GET')
+						);
+						return EMPTY;
+					}),
+					finalize(() => this.pluginSourceStore.setLoading(false))
 				)
 			)
 		)
@@ -112,49 +108,46 @@ export class PluginSourceEffects {
 	select$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.selectSource),
-			tap(({ source }) => this.pluginSourceStore.update((state) => ({ ...state, source })))
+			tap(({ source }) => this.pluginSourceStore.selectSource(source))
 		)
 	);
 
 	reset$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.reset),
-			tap(() =>
-				this.pluginSourceStore.update({
-					sources: []
-				})
-			)
+			tap(() => this.pluginSourceStore.reset())
 		)
 	);
 
 	delete$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.delete),
-			tap(() => {
-				this.pluginSourceStore.update({ deleting: true });
+			tap(({ pluginId }) => {
+				this.pluginSourceStore.setDeleting(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.DELETING'));
 			}),
 			mergeMap(({ pluginId, versionId, sourceId }) =>
 				this.pluginService.deleteSource(pluginId, versionId, sourceId).pipe(
 					tap(() => {
 						const deletedAt = new Date();
-						this.pluginSourceStore.update((state) => ({
-							source: state.source && { ...state.source, deletedAt },
-							sources: [
-								...state.sources.map((source) =>
-									source.id === sourceId ? { ...source, deletedAt } : source
-								)
-							]
-						}));
+						this.pluginSourceStore.updateSource(sourceId, { deletedAt });
+
+						// Update selected source if it was deleted
+						const currentSource = this.pluginSourceStore.getValue().source;
+						if (currentSource?.id === sourceId) {
+							this.pluginSourceStore.selectSource({ ...currentSource, deletedAt });
+						}
+
 						this.toastrService.success(
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SOURCE.DELETE')
 						);
 					}),
-					finalize(() => this.pluginSourceStore.update({ deleting: false })),
 					catchError((error) => {
+						console.error('Failed to delete plugin source:', error);
 						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.DELETE'));
 						return EMPTY;
-					})
+					}),
+					finalize(() => this.pluginSourceStore.setDeleting(pluginId, false))
 				)
 			)
 		)
@@ -163,20 +156,21 @@ export class PluginSourceEffects {
 	restore$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(PluginSourceActions.restore),
-			tap(() => {
-				this.pluginSourceStore.update({ restoring: true });
+			tap(({ pluginId }) => {
+				this.pluginSourceStore.setRestoring(pluginId, true);
 				this.toastrService.info(this.translateService.instant('PLUGIN.TOASTR.INFO.SOURCE.RESTORING'));
 			}),
 			mergeMap(({ pluginId, versionId, sourceId }) =>
 				this.pluginService.restoreSource(pluginId, versionId, sourceId).pipe(
 					tap(() => {
-						this.pluginSourceStore.update((state) => ({
-							version:
-								state.source?.id === sourceId ? { ...state.source, deletedAt: null } : state.source,
-							sources: state.sources.map((source) =>
-								source.id === sourceId ? { ...source, deletedAt: null } : source
-							)
-						}));
+						this.pluginSourceStore.updateSource(sourceId, { deletedAt: null });
+
+						// Update selected source if it was restored
+						const currentSource = this.pluginSourceStore.getValue().source;
+						if (currentSource?.id === sourceId) {
+							this.pluginSourceStore.selectSource({ ...currentSource, deletedAt: null });
+						}
+
 						this.toastrService.success(
 							this.translateService.instant('PLUGIN.TOASTR.SUCCESS.SOURCE.RESTORE')
 						);
@@ -186,9 +180,29 @@ export class PluginSourceEffects {
 						this.toastrService.error(this.translateService.instant('PLUGIN.TOASTR.ERROR.SOURCE.RESTORE'));
 						return EMPTY;
 					}),
-					finalize(() => this.pluginSourceStore.update({ restoring: false }))
+					finalize(() => this.pluginSourceStore.setRestoring(pluginId, false))
 				)
 			)
 		)
 	);
+
+	private createSourceDialog(
+		plugin: IPlugin,
+		version: IPluginVersion
+	): Observable<{ sources: IPluginSource[]; pluginId: ID; versionId: ID }> {
+		return this.dialogService
+			.open(DialogCreateSourceComponent, {
+				backdropClass: 'backdrop-blur',
+				context: { plugin, version }
+			})
+			.onClose.pipe(filter(Boolean));
+	}
+
+	// Helper method to set plugin context in stores
+	private selectSourceContext(plugin: IPlugin): void {
+		this.pluginVersionStore.setPluginId(plugin.id);
+		this.pluginMarketplaceStore.selectPlugin(plugin);
+		this.pluginVersionStore.selectVersion(plugin.versions[0]);
+		this.pluginSourceStore.setPluginVersion(plugin.id, plugin.versions[0].id);
+	}
 }

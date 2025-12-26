@@ -1,13 +1,13 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
-    selector: 'ngx-plugin-layout',
-    templateUrl: './plugin-layout.component.html',
-    styleUrls: ['./plugin-layout.component.scss'],
-    standalone: false
+	selector: 'ngx-plugin-layout',
+	templateUrl: './plugin-layout.component.html',
+	styleUrls: ['./plugin-layout.component.scss'],
+	standalone: false
 })
 export class PluginLayoutComponent implements OnInit, OnDestroy {
 	public tabs: NbRouteTab[] = [];
@@ -33,7 +33,7 @@ export class PluginLayoutComponent implements OnInit, OnDestroy {
 		this.tabs = [
 			{
 				title: this.translateService.instant('PLUGIN.LAYOUT.DISCOVER'),
-				route: '/settings/marketplace-plugins',
+				route: '/plugins/marketplace',
 				icon: 'search-outline',
 				responsive: true,
 				activeLinkOptions: {
@@ -42,7 +42,7 @@ export class PluginLayoutComponent implements OnInit, OnDestroy {
 			},
 			{
 				title: this.translateService.instant('PLUGIN.LAYOUT.INSTALLED'),
-				route: '/settings/plugins',
+				route: '/plugins/installed',
 				icon: 'checkmark-circle-2-outline',
 				activeLinkOptions: {
 					exact: false

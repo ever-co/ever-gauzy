@@ -130,12 +130,10 @@ Notes:
 
 You can download Gauzy Platform, Gauzy Server, or Desktop Apps (Windows/Mac/Linux) from the official [Downloads](https://web.gauzy.co/downloads) page.
 
-In addition, all downloads are also available from the following pages:
+In addition, all releases and pre-releases downloads are also available from the following pages:
 
 -   [Platform Releases](https://github.com/ever-co/ever-gauzy/releases)
--   [Server Releases](https://github.com/ever-co/ever-gauzy-server/releases)
--   [Desktop App Releases](https://github.com/ever-co/ever-gauzy-desktop/releases)
--   [Desktop Timer App Releases](https://github.com/ever-co/ever-gauzy-desktop-timer/releases)
+-   [Apps](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps)
 
 ### Production (SaaS)
 
@@ -215,7 +213,7 @@ Note: we recommend using Kubernetes for production workloads instead of Docker C
 #### Build
 
 -   Edit `.env.compose` (if needed) to use your custom settings, e.g. DB type.
--   Run `docker-compose -f docker-compose.build.yml up -d `, if you want to build everything (code and Docker images) locally. _(Note: this is extremely long process because it builds whole platform locally. Other options above are much faster!)_
+-   Run `docker-compose -f docker-compose.build.yml up -d`, if you want to build everything (code and Docker images) locally. _(Note: this is extremely long process because it builds whole platform locally. Other options above are much faster!)_
 -   :coffee: time... It might take some time for our API to seed fake data in the DB during the first Docker Compose run, even if you used prebuilt Docker images.
 
 Notes:
@@ -241,8 +239,8 @@ Together with Gauzy, the Docker Compose commands described above for Production 
 
 #### Required
 
--   Install [NodeJs](https://nodejs.org/en/download) LTS version or later, e.g. 18.x.
--   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`.
+-   Install [NodeJs](https://nodejs.org/en/download) LTS version or later (e.g. version 22.x or 24.x).
+-   Install [Yarn](https://github.com/yarnpkg/yarn) v1.22.x (if you don't have it) with `npm i -g yarn`.
 -   Install NPM packages and Bootstrap solution using the command `yarn bootstrap`.
 -   If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.
 -   Adjust settings in the [`.env.local`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.local) which is used in local runs.

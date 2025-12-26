@@ -7,26 +7,39 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbAlertModule,
 	NbBadgeModule,
+	NbButtonGroupModule,
 	NbButtonModule,
 	NbCardModule,
+	NbCheckboxModule,
+	NbContextMenuModule,
 	NbDatepickerModule,
+	NbDialogModule,
+	NbDialogService,
 	NbFormFieldModule,
 	NbIconModule,
 	NbInfiniteListDirective,
 	NbInputModule,
+	NbLayoutModule,
 	NbListModule,
+	NbPopoverModule,
+	NbRadioModule,
 	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSpinnerModule,
 	NbStepperModule,
+	NbTabsetModule,
+	NbTagModule,
+	NbToastrService,
 	NbToggleModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbUserModule
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { AlertModule } from '../../dialogs/alert/alert.module';
 import { DesktopDirectiveModule } from '../../directives/desktop-directive.module';
+import { InfiniteScrollDirective } from '../../directives/infinite-scroll.directive';
 import { SelectModule } from '../../shared/components/ui/select/select.module';
 import { NoDataMessageModule } from '../../time-tracker/no-data-message/no-data-message.module';
 import { PaginationModule } from '../../time-tracker/pagination/pagination.module';
@@ -39,14 +52,39 @@ import { PluginLayoutComponent } from './component/plugin-layout/plugin-layout.c
 import { PluginListComponent } from './component/plugin-list/plugin-list.component';
 import { PluginStatusComponent } from './component/plugin-list/plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './component/plugin-list/plugin-update/plugin-update.component';
+import { AvailableUsersEffects } from './component/plugin-marketplace/+state/effects/available-users.effects';
 import { PluginInstallationEffects } from './component/plugin-marketplace/+state/effects/plugin-installation.effect';
 import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/effects/plugin-marketplace.effect';
+import { PluginPlanComparisonEffects } from './component/plugin-marketplace/+state/effects/plugin-plan-comparison.effect';
+import { PluginPlanEffects } from './component/plugin-marketplace/+state/effects/plugin-plan.effect';
+import { PluginSettingsEffects } from './component/plugin-marketplace/+state/effects/plugin-settings.effects';
 import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
+import { PluginSubscriptionAccessEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription-access.effects';
+import { PluginSubscriptionEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription.effect';
+import { PluginUserAssignmentEffects } from './component/plugin-marketplace/+state/effects/plugin-user-assignment.effects';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
+import { UserManagementFacade } from './component/plugin-marketplace/+state/facades/user-management.facade';
+import { PluginSubscriptionAccessFacade } from './component/plugin-marketplace/+state/plugin-subscription-access.facade';
+import { PluginSubscriptionFacade } from './component/plugin-marketplace/+state/plugin-subscription.facade';
+import { AvailableUsersQuery } from './component/plugin-marketplace/+state/queries/available-users.query';
+import { PluginSettingsQuery } from './component/plugin-marketplace/+state/queries/plugin-settings.query';
+import { PluginSubscriptionAccessQuery } from './component/plugin-marketplace/+state/queries/plugin-subscription-access.query';
+import { PluginSubscriptionQuery } from './component/plugin-marketplace/+state/queries/plugin-subscription.query';
+import { PluginUserAssignmentQuery } from './component/plugin-marketplace/+state/queries/plugin-user-assignment.query';
+import { AvailableUsersStore } from './component/plugin-marketplace/+state/stores/available-users.store';
+import { PluginSettingsStore } from './component/plugin-marketplace/+state/stores/plugin-settings.store';
+import { PluginSubscriptionAccessStore } from './component/plugin-marketplace/+state/stores/plugin-subscription-access.store';
+import { PluginSubscriptionStore } from './component/plugin-marketplace/+state/stores/plugin-subscription.store';
+import { PluginUserAssignmentStore } from './component/plugin-marketplace/+state/stores/plugin-user-assignment.store';
+import { PluginCreateSettingDialogComponent } from './component/plugin-marketplace/plugin-create-setting-dialog/plugin-create-setting-dialog.component';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
+import { PluginMarketplaceFilterComponent } from './component/plugin-marketplace/plugin-marketplace-filter/plugin-marketplace-filter.component';
+import { CategorySelectorComponent } from './component/plugin-marketplace/plugin-marketplace-item/category-selector/category-selector.component';
+import { CreateCategoryDialogComponent } from './component/plugin-marketplace/plugin-marketplace-item/create-category-dialog/create-category-dialog.component';
 import { DialogCreateSourceComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
+import { DialogSubscriptionPlanCreatorComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-subscription-plan-creator/dialog-subscription-plan-creator.component';
 import { PluginMarketplaceItemComponent } from './component/plugin-marketplace/plugin-marketplace-item/plugin-marketplace-item.component';
 import { SourceSelectorComponent } from './component/plugin-marketplace/plugin-marketplace-item/source-selector/source-selector.component';
 import { VersionHistoryComponent } from './component/plugin-marketplace/plugin-marketplace-item/version-history/version-history.component';
@@ -61,13 +99,51 @@ import { CdnFormComponent } from './component/plugin-marketplace/plugin-marketpl
 import { GauzyFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/gauzy-form/gauzy-form.component';
 import { NpmFormComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/forms/npm-form/npm-form.component';
 import { PluginSourceComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/plugin-source.component';
+import { PluginSubscriptionPlanCreatorComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
 import { PluginVersionComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-version/plugin-version.component';
 import { PluginMarketplaceComponent } from './component/plugin-marketplace/plugin-marketplace.component';
+import { PluginSettingsManagementComponent } from './component/plugin-marketplace/plugin-settings-management/plugin-settings-management.component';
+import { PluginSettingsManagerComponent } from './component/plugin-marketplace/plugin-settings-manager/plugin-settings-manager.component';
+import { PluginSubscriptionManagerComponent } from './component/plugin-marketplace/plugin-subscription-manager/plugin-subscription-manager.component';
+import { PlanCardComparisonComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/plan-card-comparison.component';
+import { PlanCardComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/plan-card/plan-card.component';
+import { SubscriptionConfirmationComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/subscription-confirmation.component';
+import { SubscriptionPreviewComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/components/subscription-preview/subscription-preview.component';
+import { PluginSubscriptionPlanSelectionComponent } from './component/plugin-marketplace/plugin-subscription-plan-selection/plugin-subscription-plan-selection.component';
+import { PlanComparisonService } from './component/plugin-marketplace/plugin-subscription-plan-selection/services/plan-comparison.service';
+import { PlanFormatterService } from './component/plugin-marketplace/plugin-subscription-plan-selection/services/plan-formatter.service';
+import { PluginTagsManagerComponent } from './component/plugin-marketplace/plugin-tags-manager/plugin-tags-manager.component';
+import { PluginUserManagementComponent } from './component/plugin-marketplace/plugin-user-management/plugin-user-management.component';
 import { PluginComponent } from './component/plugin/plugin.component';
+import { PluginAnalyticsService } from './services/plugin-analytics.service';
 import { PluginElectronService } from './services/plugin-electron.service';
 import { PluginLoaderService } from './services/plugin-loader.service';
+import { PluginSecurityService } from './services/plugin-security.service';
+import { PluginSettingsService } from './services/plugin-settings.service';
+import { PluginSubscriptionAccessService } from './services/plugin-subscription-access.service';
+import { PluginSubscriptionService } from './services/plugin-subscription.service';
+import { PluginTagsService } from './services/plugin-tags.service';
+import { PluginUserAssignmentService } from './services/plugin-user-assignment.service';
 import { PluginService } from './services/plugin.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
+// Shared subscription components and services
+import { LanguageModule } from '../../language/language.module';
+import { Store } from '../../services';
+import { PluginCategoryEffects } from './component/plugin-marketplace/+state';
+import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
+import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
+import {
+	BillingContactSectionComponent,
+	BillingCycleSectionComponent,
+	CardDetailsSectionComponent,
+	PaymentMethodSectionComponent,
+	SubscriptionBillingFormComponent,
+	SubscriptionConsentSectionComponent,
+	SubscriptionFormService,
+	SubscriptionPlanService,
+	SubscriptionStatusBadgeComponent,
+	SubscriptionStatusService
+} from './component/plugin-marketplace/shared';
 
 @NgModule({
 	declarations: [
@@ -79,12 +155,25 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		PluginUpdateComponent,
 		PluginMarketplaceComponent,
 		PluginMarketplaceDetailComponent,
+		PluginMarketplaceFilterComponent,
+		PluginSettingsManagerComponent,
+		PluginSettingsManagementComponent,
+		PluginCreateSettingDialogComponent,
+		PluginSubscriptionManagerComponent,
+		PluginSubscriptionPlanSelectionComponent,
+		PlanCardComponent,
+		PlanCardComparisonComponent,
+		SubscriptionConfirmationComponent,
+		SubscriptionPreviewComponent,
+		PluginTagsManagerComponent,
+		PluginUserManagementComponent,
 		PluginMarketplaceUploadComponent,
 		PluginMarketplaceItemComponent,
 		PluginVersionComponent,
 		PluginSourceComponent,
 		PluginMetadataComponent,
 		PluginBasicInformationComponent,
+		PluginSubscriptionPlanCreatorComponent,
 		FormSectionComponent,
 		FormRowComponent,
 		FileUploadComponent,
@@ -92,18 +181,33 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		VersionHistoryComponent,
 		VersionSelectorComponent,
 		SourceSelectorComponent,
+		CategorySelectorComponent,
+		CreateCategoryDialogComponent,
 		DialogInstallationValidationComponent,
+		DialogSubscriptionPlanCreatorComponent,
 		CdnFormComponent,
 		GauzyFormComponent,
 		NpmFormComponent,
 		DialogCreateSourceComponent,
-		SourceContainerComponent
+		SourceContainerComponent,
+		PluginSubscriptionHierarchyComponent,
+		SubscriptionStatusBadgeComponent,
+		SubscriptionBillingFormComponent,
+		BillingCycleSectionComponent,
+		PaymentMethodSectionComponent,
+		CardDetailsSectionComponent,
+		BillingContactSectionComponent,
+		SubscriptionConsentSectionComponent
 	],
+	exports: [PluginLayoutComponent],
 	imports: [
 		CommonModule,
+		NbLayoutModule,
 		Angular2SmartTableModule,
 		PaginationModule,
 		NbButtonModule,
+		NbButtonGroupModule,
+		NbDialogModule,
 		NbInputModule,
 		NbCardModule,
 		DesktopDirectiveModule,
@@ -124,28 +228,75 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 		NbDatepickerModule,
 		NbStepperModule,
 		NbAlertModule,
+		NbCheckboxModule,
+		NbContextMenuModule,
+		NbTabsetModule,
+		NbUserModule,
+		NbRadioModule,
 		PipeModule,
 		NbListModule,
 		SelectModule,
 		NbEvaIconsModule,
-		DragDropModule
+		DragDropModule,
+		NbTagModule,
+		InfiniteScrollDirective,
+		NbPopoverModule,
+		LanguageModule.forChild()
 	],
-	exports: [PluginLayoutComponent],
 	providers: [
 		PluginLoaderService,
 		PluginElectronService,
 		PluginService,
+		PluginSubscriptionService,
+		PluginSubscriptionAccessService,
+		PluginTagsService,
+		PluginSettingsService,
+		PluginAnalyticsService,
+		PluginSecurityService,
+		PluginUserAssignmentService,
+		// Shared subscription services
+		SubscriptionPlanService,
+		SubscriptionFormService,
+		SubscriptionStatusService,
+		// Plan selection services
+		PlanFormatterService,
+		PlanComparisonService,
 		provideEffectsManager(),
 		provideEffects(
 			PluginEffects,
 			PluginInstallationEffects,
 			PluginMarketplaceEffects,
 			PluginVersionEffects,
-			PluginSourceEffects
+			PluginSourceEffects,
+			PluginUserAssignmentEffects,
+			PluginSettingsEffects,
+			PluginSubscriptionEffects,
+			PluginPlanEffects,
+			PluginPlanComparisonEffects,
+			PluginSubscriptionAccessEffects,
+			AvailableUsersEffects,
+			PluginToggleEffects,
+			PluginCategoryEffects
 		),
 		PluginQuery,
 		PluginStore,
-		NbInfiniteListDirective
+		PluginSettingsQuery,
+		PluginSettingsStore,
+		PluginSubscriptionQuery,
+		PluginSubscriptionStore,
+		PluginSubscriptionAccessQuery,
+		PluginSubscriptionAccessStore,
+		PluginSubscriptionFacade,
+		PluginSubscriptionAccessFacade,
+		PluginUserAssignmentQuery,
+		PluginUserAssignmentStore,
+		AvailableUsersStore,
+		AvailableUsersQuery,
+		UserManagementFacade,
+		NbInfiniteListDirective,
+		NbToastrService,
+		NbDialogService,
+		Store
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

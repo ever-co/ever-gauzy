@@ -10,15 +10,28 @@ export class PluginVersionQuery extends Query<IPluginVersionState> {
 	public readonly versions$: Observable<IPluginVersion[]> = this.select((state) => state.versions);
 	public readonly version$: Observable<IPluginVersion> = this.select((state) => state.version);
 	public readonly count$: Observable<number> = this.select((state) => state.count);
-	public readonly deleting$: Observable<boolean> = this.select((state) => state.deleting);
-	public readonly updating$: Observable<boolean> = this.select((state) => state.updating);
-	public readonly restoring$: Observable<boolean> = this.select((state) => state.restoring);
-	public readonly creating$: Observable<boolean> = this.select((state) => state.creating);
 	public readonly pluginId$: Observable<ID> = this.select((state) => state.pluginId);
 	public readonly isLoading$: Observable<boolean> = this.selectLoading();
 
 	constructor(readonly pluginVersionStore: PluginVersionStore) {
 		super(pluginVersionStore);
+	}
+
+	// Per-plugin observables
+	public deleting$(pluginId: string): Observable<boolean> {
+		return this.select((state) => state.deleting[pluginId] ?? false);
+	}
+
+	public updating$(pluginId: string): Observable<boolean> {
+		return this.select((state) => state.updating[pluginId] ?? false);
+	}
+
+	public restoring$(pluginId: string): Observable<boolean> {
+		return this.select((state) => state.restoring[pluginId] ?? false);
+	}
+
+	public creating$(pluginId: string): Observable<boolean> {
+		return this.select((state) => state.creating[pluginId] ?? false);
 	}
 
 	public get version(): IPluginVersion {
@@ -35,5 +48,21 @@ export class PluginVersionQuery extends Query<IPluginVersionState> {
 
 	public get pluginId(): ID {
 		return this.getValue().pluginId;
+	}
+
+	public isCreating(pluginId: string): boolean {
+		return this.getValue().creating[pluginId] ?? false;
+	}
+
+	public isUpdating(pluginId: string): boolean {
+		return this.getValue().updating[pluginId] ?? false;
+	}
+
+	public isDeleting(pluginId: string): boolean {
+		return this.getValue().deleting[pluginId] ?? false;
+	}
+
+	public isRestoring(pluginId: string): boolean {
+		return this.getValue().restoring[pluginId] ?? false;
 	}
 }
