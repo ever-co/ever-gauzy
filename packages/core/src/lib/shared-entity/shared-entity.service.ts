@@ -1,15 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
-import { randomBytes } from "crypto";
-import { DataSource, FindOneOptions, FindOptionsRelations, FindOptionsSelect, Repository } from "typeorm";
+import { DataSource, FindOneOptions, Repository } from "typeorm";
 
 import { BaseEntityEnum, ID, ISharedEntityCreateInput, IShareRule } from "@gauzy/contracts";
-import { isEmpty, isNotEmpty } from "@gauzy/utils";
 import { RequestContext } from "../core/context";
 import { TenantAwareCrudService } from "../core/crud";
 import { MikroOrmSharedEntityRepository } from "./repository/mikro-orm-shared-entity.repository";
 import { TypeOrmSharedEntityRepository } from "./repository/type-orm-shared-entity.repository";
 import { SharedEntity } from "./shared-entity.entity";
+import { buildSharedEntityRelations, buildSharedEntitySelect, filterSharedEntity, generateSharedEntityToken } from "./shared-entity.helper";
 
 @Injectable()
 export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
@@ -34,7 +33,7 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
             // Generate a unique token for the shared entity
-            const token = this.generateToken();
+            const token = generateSharedEntityToken();
 
             // Create and return the shared entity
             return await super.create({
@@ -81,7 +80,7 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             }
 
             // Return the entity
-            return this.filterEntity(entity, shareRules);
+            return filterSharedEntity(entity, shareRules);
         } catch (error) {
             throw new BadRequestException(`Failed to get shared entity by token: ${error?.message || error}`);
         }
@@ -97,95 +96,9 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
     private buildFindOptions(entityId: ID, rules: IShareRule): FindOneOptions<any> {
         return {
             where: { id: entityId },
-            select: this.buildSelect(rules),
-            relations: this.buildRelations(rules)
+            select: buildSharedEntitySelect(rules),
+            relations: buildSharedEntityRelations(rules)
         }
-    }
-
-    /**
-     * Builds the select for the shared entity.
-     *
-     * @param rules - The share rules for the shared entity.
-     * @returns The select for the shared entity.
-     */
-    private buildSelect(rules: IShareRule): FindOptionsSelect<any> {
-        const select: FindOptionsSelect<any> = {};
-
-        // Add the fields to the select
-        for (const field of rules.fields) {
-            select[field] = true;
-        }
-
-        // Add the relations to the select
-        if (isNotEmpty(rules.relations)) {
-            for (const [relation, subRules] of Object.entries(rules.relations)) {
-                select[relation] = this.buildSelect(subRules as IShareRule);
-            }
-        }
-
-        // Return the select
-        return select;
-    }
-
-    /**
-     * Builds the relations for the shared entity.
-     *
-     * @param rules - The share rules for the shared entity.
-     * @returns The relations for the shared entity.
-     */
-    private buildRelations(rules: IShareRule): FindOptionsRelations<any> {
-        if (isEmpty(rules.relations)) return {};
-
-        const relations: FindOptionsRelations<any> = {};
-
-        // Add the relations to the relations
-        for (const [relation, subRules] of Object.entries(rules.relations)) {
-            relations[relation] = isEmpty(subRules) ? true : this.buildRelations(subRules as IShareRule);
-        }
-
-        // Return the relations
-        return relations;
-    }
-
-    /**
-     * Filters the entity based on the share rules.
-     *
-     * @param entity - The entity to filter.
-     * @param rules - The share rules for the shared entity.
-     * @returns The filtered entity.
-     */
-    private filterEntity(entity: any, rules: IShareRule): any {
-        const result: any = {};
-
-        for (const field of rules.fields) {
-            result[field] = entity[field];
-        }
-
-         if (rules.relations) {
-            for (const [relation, subRules] of Object.entries(rules.relations)) {
-                if (!entity[relation]) continue;
-
-                if (Array.isArray(entity[relation])) {
-                    result[relation] = entity[relation].map(item =>
-                        this.filterEntity(item, subRules)
-                    );
-                } else {
-                    result[relation] = this.filterEntity(entity[relation], subRules);
-                }
-            }
-         }
-
-        // Return the result
-         return result;
-    }
-
-    /**
-     * Generates a unique token for the shared entity.
-     *
-     * @returns A string of 32 characters.
-     */
-    private generateToken(): string {
-        return randomBytes(16).toString('hex');
     }
 
     /**

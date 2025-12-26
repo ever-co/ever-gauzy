@@ -14,3 +14,5 @@ export interface IShareRule {
 export interface ISharedEntityCreateInput extends OmitFields<ISharedEntity, 'token'> {}
 
 export interface ISharedEntityFindInput extends Partial<ISharedEntity> {}
+
+export interface ISharedEntityUpdateInput extends Partial<OmitFields<ISharedEntity, 'token' | 'entity' | 'entityId'>> {}
