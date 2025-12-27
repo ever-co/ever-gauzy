@@ -13,9 +13,7 @@ import { TimeSlotModule } from '../time-slot/time-slot.module';
 import { TimeLogModule } from '../time-log/time-log.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmTimeSlotRepository } from '../time-slot/repository/type-orm-time-slot.repository';
-import { MikroOrmTimeSlotRepository } from '../time-slot/repository/mikro-orm-time-slot.repository';
 import { TypeOrmTimeSlotSessionRepository } from '../time-slot-session/repository/type-orm-time-slot-session.repository';
-import { MikroOrmTimeSlotSessionRepository } from '../time-slot-session/repository/mikro-orm-time-slot-session.repository';
 
 @Module({
 	imports: [
@@ -31,9 +29,7 @@ import { MikroOrmTimeSlotSessionRepository } from '../time-slot-session/reposito
 		CustomTrackingService,
 		TimeSlotSessionService,
 		TypeOrmTimeSlotRepository,
-		MikroOrmTimeSlotRepository,
 		TypeOrmTimeSlotSessionRepository,
-		MikroOrmTimeSlotSessionRepository,
 		...CommandHandlers
 	],
 	exports: [CustomTrackingService, TimeSlotSessionService]

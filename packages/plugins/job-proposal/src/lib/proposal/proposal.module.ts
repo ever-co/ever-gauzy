@@ -9,12 +9,9 @@ import { ProposalService } from './proposal.service';
 import { CommandHandlers } from './commands/handlers';
 import { ProposalSeederService } from './proposal-seeder.service';
 import { TypeOrmProposalRepository } from './repository/type-orm-proposal.repository';
-import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 
 @Module({
-	controllers: [
-		ProposalController
-	],
+	controllers: [ProposalController],
 	imports: [
 		TypeOrmModule.forFeature([Proposal]),
 		MikroOrmModule.forFeature([Proposal]),
@@ -22,15 +19,7 @@ import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repo
 		SeederModule,
 		CqrsModule
 	],
-	providers: [
-		ProposalService,
-		ProposalSeederService,
-		TypeOrmProposalRepository,
-		MikroOrmProposalRepository,
-		...CommandHandlers
-	],
-	exports: [
-		ProposalSeederService
-	]
+	providers: [ProposalService, ProposalSeederService, TypeOrmProposalRepository, ...CommandHandlers],
+	exports: [ProposalSeederService]
 })
 export class ProposalModule {}
