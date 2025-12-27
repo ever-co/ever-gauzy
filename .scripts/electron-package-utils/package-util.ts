@@ -8,9 +8,14 @@ export class PackageUtil {
 	private static _instance: PackageUtil;
 	private readonly filePath: string;
 	private readonly desktop: string;
+	private readonly arch: string;
+	private readonly platform: string;
 
 	constructor() {
 		this.desktop = String(argv.desktop);
+		this.arch = String(argv.arch);
+		this.platform = String(argv.platform);
+
 		this.filePath = path.join('apps', this.desktop, 'src', 'package.json');
 	}
 
@@ -35,7 +40,12 @@ export class PackageUtil {
 		const pkg = this.package;
 		if (pkg) {
 			const packager = PackagerFactory.packager(this.instance.desktop);
-			const packed = packager.prepare(pkg);
+			let packed = pkg;
+			if (this.instance.arch && this.instance.platform === 'win32') {
+				packed = packager.preparePublishChannel(pkg, this.instance.arch);
+			} else {
+				packed = packager.prepare(pkg);
+			}
 			fs.writeFileSync(
 				this.instance.filePath,
 				JSON.stringify(packed, null, 4)

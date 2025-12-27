@@ -15,4 +15,12 @@ export class ServerPackager implements IPackager {
 			env.DESKTOP_SERVER_APP_NAME || pkg.build.linux.executableName;
 		return pkg;
 	}
+
+	public preparePublishChannel(pkg: IPackage, arch: string): IPackage {
+		pkg.build.publish = pkg.build.publish.map((publish) => {
+			publish.channel = `latest-${arch}`;
+			return publish;
+		});
+		return pkg;
+	}
 }
