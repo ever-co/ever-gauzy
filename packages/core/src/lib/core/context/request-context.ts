@@ -183,18 +183,16 @@ export class RequestContext {
 	}
 
 	/**
-	 * Retrieves the current organization ID associated with the user in the RequestContext.
-	 * Returns the organization ID if available, otherwise returns null.
+	 * Retrieves the current organization ID from the request context.
+	 *
+	 * The organizationId is injected into user.lastOrganizationId by jwt.strategy.ts
+	 * after validating that the user has access to the organization.
 	 *
 	 * @returns {ID | null} - The current organization ID or null if not available.
 	 */
 	static currentOrganizationId(): ID | null {
 		const user: IUser | null = RequestContext.currentUser();
-		return (
-			user?.employee?.organizationId ||
-			(RequestContext.currentRequest()?.headers['organization-id'] as ID) ||
-			null
-		);
+		return user?.lastOrganizationId || null;
 	}
 
 	/**

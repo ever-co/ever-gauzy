@@ -1,5 +1,6 @@
 export * from './organization-awards.service';
 export * from './organization-contact.service';
+export * from './organization-context.service';
 export * from './organization-departments.service';
 export * from './organization-documents.service';
 export * from './organization-edit-store.service';

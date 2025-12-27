@@ -57,7 +57,7 @@ export class TimerService {
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
-		private readonly _commandBus: CommandBus,
+		private readonly _commandBus: CommandBus
 	) {}
 
 	/**
@@ -595,7 +595,7 @@ export class TimerService {
 		const tenantId = RequestContext.currentTenantId(); // Get the current tenant ID
 
 		// Fetch the employee record using userId and tenantId
-		const employee = await this._employeeService.findOneByUserId(userId, { where: { tenantId } });
+		const employee = await this._employeeService.findOneByUserId(userId, undefined, { where: { tenantId } });
 
 		if (!employee) {
 			throw new NotFoundException('Employee record not found. Please verify your details and try again.');
