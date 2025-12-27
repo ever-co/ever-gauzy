@@ -30,9 +30,6 @@ app.setName(process.env.NAME);
 console.log('Server Node Modules Path', path.join(__dirname, 'node_modules'));
 
 import * as remoteMain from '@electron/remote/main';
-import * as Sentry from '@sentry/electron/main';
-import { setupTitlebar } from 'custom-electron-titlebar/main';
-import { autoUpdater } from 'electron-updater';
 import {
 	AppError,
 	AppMenu,
@@ -62,8 +59,12 @@ import {
 	createServerWindow,
 	createSettingsWindow,
 	createSetupWindow,
+	PluginMarketplaceWindow,
 	SplashScreen
 } from '@gauzy/desktop-window';
+import * as Sentry from '@sentry/electron/main';
+import { setupTitlebar } from 'custom-electron-titlebar/main';
+import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
 
 remoteMain.initialize();
@@ -479,6 +480,9 @@ app.on('ready', async () => {
 		if (!settingsWindow) {
 			settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui, pathWindow.preloadPath);
 		}
+
+		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
+		await marketplace.loadURL();
 
 		await appState();
 

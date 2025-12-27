@@ -9,11 +9,12 @@ import {
 	GAUZY_ENV,
 	LanguageModule,
 	LoggerService,
+	NgxDesktopThemeModule,
+	PluginsModule,
 	ServerDashboardModule,
 	SettingsModule,
 	SetupModule,
-	UpdaterModule,
-	NgxDesktopThemeModule
+	UpdaterModule
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
@@ -65,7 +66,8 @@ if (environment.SENTRY_DSN) {
 		UpdaterModule,
 		ServerDashboardModule,
 		AboutModule,
-		LanguageModule.forRoot()
+		LanguageModule.forRoot(),
+		PluginsModule
 	],
 	providers: [
 		AppService,

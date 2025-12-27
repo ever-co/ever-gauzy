@@ -69,7 +69,7 @@ export class AddPluginComponent {
 	}
 
 	public async redirectToStore(): Promise<void> {
-		await this.router.navigate(['settings', 'marketplace-plugins']);
+		await this.router.navigate(['plugins', 'marketplace']);
 		this.close();
 	}
 }
