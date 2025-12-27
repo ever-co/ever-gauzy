@@ -125,6 +125,7 @@ export * from './lib/role.model';
 export * from './lib/screening-task.model';
 export * from './lib/screenshot.model';
 export * from './lib/seed.model';
+export * from './lib/shared-entity.model';
 export * from './lib/shared-types';
 export * from './lib/skill-entity.model';
 export * from './lib/sms.model';
