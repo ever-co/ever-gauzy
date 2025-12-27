@@ -14,14 +14,14 @@ export abstract class UpdateStrategy implements IDesktopUpdate {
 		this._notifier = new DesktopNotification();
 		try {
 			this._cancellationToken = new CancellationToken();
-		} catch (error) {}
+		} catch (error) { }
 	}
 
 	public update(): void {
 		autoUpdater.autoDownload = !this._isUpdateTriggered;
 		if (this.url) {
 			autoUpdater.setFeedURL({
-				channel: 'latest',
+				channel: process.platform === 'win32' ? `latest-${process.arch}` : 'latest',
 				provider: 'generic',
 				url: this.url,
 			});
@@ -45,7 +45,7 @@ export abstract class UpdateStrategy implements IDesktopUpdate {
 		try {
 			autoUpdater.autoDownload = false;
 			autoUpdater.setFeedURL({
-				channel: 'latest',
+				channel: process.platform === 'win32' ? `latest-${process.arch}` : 'latest',
 				provider: 'generic',
 				url: this.url,
 			});
