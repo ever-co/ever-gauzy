@@ -1,6 +1,8 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { CommandBus } from "@nestjs/cqrs";
+import { DeleteResult } from "typeorm";
+import { Public } from "@gauzy/common";
 import { ID, IPagination } from "@gauzy/contracts";
 import { UseValidationPipe, UUIDValidationPipe } from "../shared/pipes";
 import { TenantPermissionGuard } from "../shared/guards";
@@ -9,7 +11,6 @@ import { SharedEntity } from "./shared-entity.entity";
 import { SharedEntityService } from "./shared-entity.service";
 import { SharedEntityCreateCommand, SharedEntityUpdateCommand } from "./commands";
 import { CreateSharedEntityDTO, UpdateSharedEntityDTO } from "./dto";
-import { DeleteResult } from "typeorm";
 
 @ApiTags('SharedEntity')
 @UseGuards(TenantPermissionGuard)
@@ -52,6 +53,7 @@ export class SharedEntityController extends CrudController<SharedEntity> {
         status: HttpStatus.NOT_FOUND,
         description: 'Record not found'
     })
+    @Public()
     @HttpCode(HttpStatus.OK)
     @Get('/token/:token')
     @UseValidationPipe()
@@ -101,12 +103,11 @@ export class SharedEntityController extends CrudController<SharedEntity> {
         summary: 'Delete a shared entity'
     })
     @ApiResponse({
-        status: HttpStatus.NO_CONTENT,
+        status: HttpStatus.OK,
         description: 'Shared entity deleted successfully'
     })
-    @HttpCode(HttpStatus.NO_CONTENT)
+    @HttpCode(HttpStatus.OK)
     @Delete(':id')
-    @UseValidationPipe()
     async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
         return await this.sharedEntityService.delete(id);
     }

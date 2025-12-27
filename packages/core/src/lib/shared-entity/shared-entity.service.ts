@@ -82,7 +82,7 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             // Return the entity
             return filterSharedEntity(entity, shareRules);
         } catch (error) {
-            throw new BadRequestException(`Failed to get shared entity by token: ${error?.message || error}`);
+            throw new NotFoundException(`Failed to get shared entity by token: ${error?.message || error}`);
         }
     }
 

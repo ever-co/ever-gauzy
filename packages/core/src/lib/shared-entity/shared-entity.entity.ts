@@ -26,7 +26,7 @@ export class SharedEntity extends BasePerEntityType implements ISharedEntity {
      * The rules that define how the shared entity is shared — Essentially stores entity fields and relations that are shared.
      */
     @ApiProperty({ type: () => Object })
-    @IsOptional()
+    @IsNotEmpty()
     @IsObject()
     @MultiORMColumn({
         type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text'

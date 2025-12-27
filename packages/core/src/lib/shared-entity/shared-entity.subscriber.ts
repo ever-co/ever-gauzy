@@ -36,7 +36,7 @@ export class SharedEntitySubscriber extends BaseEntityEventSubscriber<SharedEnti
         } catch (error) {
             // Log the error and reset the sharedOptions to an empty object if JSON parsing fails
             console.error('Error stringify sharedOptions:', error);
-            entity.shareRules = '{}';
+            entity.shareRules = JSON.stringify({ fields: [] });
             entity.sharedOptions = '{}';
         }
     }
@@ -91,8 +91,8 @@ export class SharedEntitySubscriber extends BaseEntityEventSubscriber<SharedEnti
         } catch (error) {
             // Log the error and reset the shareRules and sharedOptions to an empty object if JSON parsing fails
             console.error('Error parsing JSON data:', error);
-            entity.shareRules = '{}';
-            entity.sharedOptions = '{}';
+            entity.shareRules = { fields: [], relations: {} };
+            entity.sharedOptions = {};
         }
     }
 }
