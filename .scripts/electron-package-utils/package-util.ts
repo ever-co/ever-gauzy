@@ -40,7 +40,7 @@ export class PackageUtil {
 		const pkg = this.package;
 		if (pkg) {
 			const packager = PackagerFactory.packager(this.instance.desktop);
-			let packed = pkg;
+			let packed: IPackage;
 			if (this.instance.arch && ['linux', 'win32'].includes(this.instance.platform)) {
 				packed = packager.preparePublishChannel(pkg, this.instance.arch);
 			} else {
