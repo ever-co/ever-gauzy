@@ -1,8 +1,8 @@
 import { IPackage } from '../interfaces/i-package';
-import { IPackager } from '../interfaces/i-packager';
+import { BasePackager } from './base-packager';
 import { env } from '../../env';
 
-export class AgentPackager implements IPackager {
+export class AgentPackager extends BasePackager {
 	public prepare(pkg: IPackage): IPackage {
 		pkg.name = env.AGENT_APP_NAME || pkg.name;
 		pkg.productName = env.AGENT_APP_DESCRIPTION || pkg.productName;
@@ -14,14 +14,6 @@ export class AgentPackager implements IPackager {
 		pkg.build.linux.executableName =
 			env.AGENT_APP_NAME || pkg.build.linux.executableName;
 
-		return pkg;
-	}
-
-	public preparePublishChannel(pkg: IPackage, arch: string): IPackage {
-		pkg.build.publish = pkg.build.publish.map((publish) => {
-			publish.channel = `latest-${arch}`;
-			return publish;
-		});
 		return pkg;
 	}
 }
