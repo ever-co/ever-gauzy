@@ -21,7 +21,7 @@ export abstract class UpdateStrategy implements IDesktopUpdate {
 		autoUpdater.autoDownload = !this._isUpdateTriggered;
 		if (this.url) {
 			autoUpdater.setFeedURL({
-				channel: process.platform === 'win32' ? `latest-${process.arch}` : 'latest',
+				channel: ['win32', 'linux'].includes(process.platform) ? `latest-${process.arch}` : 'latest',
 				provider: 'generic',
 				url: this.url,
 			});
@@ -45,7 +45,7 @@ export abstract class UpdateStrategy implements IDesktopUpdate {
 		try {
 			autoUpdater.autoDownload = false;
 			autoUpdater.setFeedURL({
-				channel: process.platform === 'win32' ? `latest-${process.arch}` : 'latest',
+				channel: ['linux', 'win32'].includes(process.platform) ? `latest-${process.arch}` : 'latest',
 				provider: 'generic',
 				url: this.url,
 			});
