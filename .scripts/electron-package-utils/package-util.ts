@@ -41,7 +41,7 @@ export class PackageUtil {
 		if (pkg) {
 			const packager = PackagerFactory.packager(this.instance.desktop);
 			let packed = pkg;
-			if (this.instance.arch && this.instance.platform === 'win32') {
+			if (this.instance.arch && ['linux', 'win32'].includes(this.instance.platform)) {
 				packed = packager.preparePublishChannel(pkg, this.instance.arch);
 			} else {
 				packed = packager.prepare(pkg);
