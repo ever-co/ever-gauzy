@@ -14,7 +14,7 @@ export class PackageUtil {
 	constructor() {
 		this.desktop = String(argv.desktop);
 		this.arch = argv.arch ? String(argv.arch) : null;
-		this.platform = argv.arch ? String(argv.platform) : null;
+		this.platform = argv.platform ? String(argv.platform) : null;
 
 		this.filePath = path.join('apps', this.desktop, 'src', 'package.json');
 	}
