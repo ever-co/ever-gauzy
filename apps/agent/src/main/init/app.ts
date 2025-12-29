@@ -333,24 +333,16 @@ export async function InitApp() {
 			type: MAIN_EVENT_TYPE.STOP_TIMER
 		});
 	});
+
 	powerMonitor.on('suspend', () => {
 		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.STOP_TIMER
+			type: MAIN_EVENT_TYPE.ACTIVITY_PAUSED
 		});
 	});
-	powerMonitor.on('lock-screen', () => {
-		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.STOP_TIMER
-		});
-	});
-	powerMonitor.on('unlock-screen', () => {
-		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.START_TIMER
-		});
-	});
+
 	powerMonitor.on('resume', () => {
 		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.START_TIMER
+			type: MAIN_EVENT_TYPE.ACTIVITY_RESUME
 		});
 	});
 }

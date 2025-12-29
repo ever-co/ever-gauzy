@@ -61,6 +61,7 @@ class PullActivities {
 	private powerManagerPreventDisplaySleep: PowerManagerPreventDisplaySleep;
 	private currentTimerId: number;
 	private lastTodayDuration: number;
+	private _startePausedDate: Date;
 	constructor() {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -91,6 +92,14 @@ class PullActivities {
 
 	public get startedAt(): Date {
 		return this.startedDate;
+	}
+
+	public get startPausedDate(): Date {
+		return this._startePausedDate;
+	}
+
+	public set startPausedDate(value: Date) {
+		this._startePausedDate = value;
 	}
 
 	public updateAppUserAuth(user: UserLogin) {
@@ -137,7 +146,7 @@ class PullActivities {
 		});
 	};
 
-	async startTracking() {
+	async startTracking(isResume = false) {
 		if (!this.listenerModule) {
 			this.getListenerModule();
 		}
@@ -145,7 +154,9 @@ class PullActivities {
 			const appSetting = getAppSetting();
 			if (!this.isStarted) {
 				this.startedDate = new Date();
-				await this.startTimerApi();
+				if (!isResume) {
+					await this.startTimerApi();
+				}
 				this.agentLogger.info('Listener keyboard and mouse starting');
 				if (appSetting?.kbMouseTracking) {
 					this.startListener();
@@ -315,14 +326,16 @@ class PullActivities {
 		this.agentLogger.info('Keyboard and mouse activity listener stopped');
 	}
 
-	async stopTracking() {
+	async stopTracking(isPaused = false) {
 		if (!this.listenerModule) {
 			this.getListenerModule();
 		}
 		try {
 			const appSetting = getAppSetting();
 			if (this.isStarted) {
-				await this.stopTimerApi();
+				if (!isPaused) {
+					await this.stopTimerApi();
+				}
 				this.agentLogger.info('Listener keyboard and mouse stopping');
 				this.listenerModule.stopListener();
 				this.isStarted = false;

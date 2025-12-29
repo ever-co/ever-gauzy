@@ -132,6 +132,19 @@ export default class EventHandler {
 		}
 	}
 
+	private async resumeActivity() {
+		const authConfig = getAuthConfig();
+		this.getPullActivities(authConfig);
+		this.pullActivities.startTracking(true);
+	}
+
+	private async pauseActivity() {
+		const authConfig = getAuthConfig();
+		this.getPullActivities(authConfig);
+		this.pullActivities.startPausedDate = new Date;
+		await this.pullActivities.stopTracking(true);
+	}
+
 	async handleEvent(args: TEventArgs) {
 		switch (args.type) {
 			case MAIN_EVENT_TYPE.LOGOUT_EVENT:
@@ -157,6 +170,10 @@ export default class EventHandler {
 				return this.checkStatusTimer();
 			case MAIN_EVENT_TYPE.TRAY_TIMER_STATUS:
 				return this.trayTimerStatus();
+			case MAIN_EVENT_TYPE.ACTIVITY_RESUME:
+				return this.resumeActivity();
+			case MAIN_EVENT_TYPE.ACTIVITY_PAUSED:
+				return this.pauseActivity();
 			default: break;
 		}
 	}
