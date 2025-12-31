@@ -15,16 +15,14 @@ export class TrayIcon {
 		this.removeTrayListener();
 		this.removeTimerHandlers();
 		let loginPageAlreadyShow = false;
-		const options: TitleOptions = { fontType: 'monospacedDigit' };
 		const appConfig = LocalStore.getStore('configs');
 		console.log('icon path', iconPath);
 		const iconDir = path.dirname(iconPath);
-		const grayIcon = path.join(iconDir, 'icon_gray.png');
 		const normalIcon = path.join(iconDir, 'icon.png');
-		const iconNativePath = nativeImage.createFromPath(grayIcon);
-		iconNativePath.resize({ width: 16, height: 16 });
+		const iconNativePath = nativeImage.createFromPath(normalIcon);
+		iconNativePath.resize({ width: 16, height: 96 });
 		this.tray = new Tray(iconNativePath);
-		this.tray.setTitle('--:--:--', options);
+
 		const userService = new UserService();
 		const manager = WindowManager.getInstance();
 
@@ -294,7 +292,10 @@ export class TrayIcon {
 			menuWindowTime.enabled = true;
 			manager.webContents(timeTrackerWindow).send('get_user_detail', LocalStore.beforeRequestParams());
 		} else {
-			this.tray.setTitle('--:--:--', options);
+			timeTrackerWindow.webContents.send('custom_tray_icon', {
+				event: 'updateTimer',
+				timeText: null
+			});
 			this.contextMenu = unAuthMenu;
 			menuWindowTime.enabled = false;
 		}
@@ -309,7 +310,9 @@ export class TrayIcon {
 			this.contextMenu[2].enabled = false;
 			this.contextMenu[0].visible = true;
 			this.contextMenu[3].enabled = true;
-			this.tray.setImage(nativeImage.createFromPath(normalIcon));
+			timeTrackerWindow.webContents.send('custom_tray_icon', {
+				event: 'startTimer'
+			});
 			this.build();
 		});
 
@@ -317,7 +320,9 @@ export class TrayIcon {
 			this.contextMenu[2].enabled = true;
 			this.contextMenu[0].visible = false;
 			this.contextMenu[3].enabled = false;
-			this.tray.setImage(nativeImage.createFromPath(grayIcon));
+			timeTrackerWindow.webContents.send('custom_tray_icon', {
+				event: 'stopTimer'
+			});
 			this.build();
 		});
 
@@ -332,7 +337,10 @@ export class TrayIcon {
 		ipcMain.on('update_tray_time_title', (event, arg) => {
 			const auth = store.get('auth');
 			if (auth && auth.employeeId && !auth.isLogout) {
-				this.tray.setTitle(arg ? arg.timeRun : '--:--:--', options);
+				timeTrackerWindow.webContents.send('custom_tray_icon', {
+					event: 'updateTimer',
+					timeText: arg ? arg.timeRun : null
+				});
 			}
 		});
 
@@ -376,7 +384,10 @@ export class TrayIcon {
 				this.contextMenu = menuAuth;
 				menuWindowTime.enabled = true;
 			} else {
-				this.tray.setTitle('--:--:--', options);
+				timeTrackerWindow.webContents.send('custom_tray_icon', {
+					event: 'updateTimer',
+					timeText: null
+				});
 				this.contextMenu = unAuthMenu;
 				menuWindowTime.enabled = false;
 			}
@@ -410,7 +421,10 @@ export class TrayIcon {
 		ipcMain.handle('FINAL_LOGOUT', async (event, arg) => {
 			console.log('Final Logout');
 
-			this.tray.setTitle('--:--:--', options);
+			timeTrackerWindow.webContents.send('custom_tray_icon', {
+				event: 'updateTimer',
+				timeText: null
+			});
 
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 
@@ -466,6 +480,17 @@ export class TrayIcon {
 				this.contextMenu[1].visible = true;
 			}
 		});
+
+		ipcMain.on('update-tray-icon', (event, dataUrl) => {
+			console.log('update-tray-icon', dataUrl);
+			if (!this.tray?.isDestroyed()) {
+				const image = nativeImage.createFromDataURL(dataUrl);
+				this.tray.setImage(image);
+			}
+
+		});
+
+		timeTrackerWindow.webContents.send('custom_tray_icon', { event: 'initCustomIcon' });
 	}
 
 	public destroy() {

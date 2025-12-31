@@ -14,6 +14,7 @@ export class DesktopIconGenerator
 	constructor() {
 		super();
 		this.imageUrl = env.GAUZY_DESKTOP_LOGO_512X512;
+		this.trayIconImageUrl = env.GAUZY_DESKTOP_TRAY_ICON;
 		this.destination = path.join('apps', this.desktop, 'src', 'icons');
 	}
 
@@ -168,8 +169,9 @@ export class DesktopIconGenerator
 		}
 	}
 
-	public async resizeAndConvert(filePath: string): Promise<void> {
+	public async resizeAndConvert(filePath: string, trayIconFilePath?: string): Promise<void> {
 		const image = await Jimp.read(filePath);
+
 		const pngFilePath = path.join(this.destination, 'icon.png');
 		await new Promise((resolve) =>
 			image
@@ -186,15 +188,21 @@ export class DesktopIconGenerator
 		await this.generateLinuxIcons(image);
 		await this.generateMacIcon(image);
 		await this.generateWindowsIcon(image);
-		await this.generateTrayIcon(image);
+		if (trayIconFilePath) {
+			const trayImage = await Jimp.read(trayIconFilePath);
+			await this.generateTrayIcon(trayImage);
+		} else {
+			await this.generateTrayIcon(image);
+		}
 		await this.generateMenuIcon(image);
 	}
 
 	public async generate(): Promise<void> {
 		try {
 			const filePath = await this.downloadImage();
+			const trayIconFilePath = await this.downloadTrayImage();
 			if (filePath) {
-				await this.resizeAndConvert(filePath);
+				await this.resizeAndConvert(filePath, trayIconFilePath || '');
 				await this.remove(filePath);
 			} else {
 				await IconFactory.generateDefaultIcons();
