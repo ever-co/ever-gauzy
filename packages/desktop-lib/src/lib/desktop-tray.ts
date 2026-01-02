@@ -6,7 +6,6 @@ import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
 import { User, UserService } from './offline';
 import { TranslateService } from './translation';
-import TitleOptions = Electron.TitleOptions;
 
 export class TrayIcon {
 	tray: Tray;

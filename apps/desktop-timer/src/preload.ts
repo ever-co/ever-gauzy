@@ -1,7 +1,7 @@
 import { CustomTitlebar, TitlebarColor } from "custom-electron-titlebar";
 import { nativeImage, ipcRenderer } from 'electron';
 import * as path from 'path';
-import { initIpc } from "./preload/custom-tray-icon";
+import { initializeIpcListener } from "./preload/custom-tray-icon";
 
 const isTimerWindow = location.hash.startsWith('#/time-tracker');
 const isLoginPage = location.hash.startsWith('#/auth/login');
@@ -12,7 +12,7 @@ const isLoginPage = location.hash.startsWith('#/auth/login');
  */
 window.addEventListener('DOMContentLoaded', async () => {
 	if (process.platform === 'darwin' && (isTimerWindow || isLoginPage)) {
-		initIpc()
+		initializeIpcListener()
 	}
 	/**
 	 * Fetches the application's base path from the Electron main process using IPC.
