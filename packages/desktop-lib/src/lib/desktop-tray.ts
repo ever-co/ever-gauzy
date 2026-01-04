@@ -291,7 +291,7 @@ export class TrayIcon {
 			menuWindowTime.enabled = true;
 			manager.webContents(timeTrackerWindow).send('get_user_detail', LocalStore.beforeRequestParams());
 		} else {
-			timeTrackerWindow.webContents.send('custom_tray_icon', {
+			manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
 				event: 'updateTimer',
 				timeText: null
 			});
@@ -309,7 +309,7 @@ export class TrayIcon {
 			this.contextMenu[2].enabled = false;
 			this.contextMenu[0].visible = true;
 			this.contextMenu[3].enabled = true;
-			timeTrackerWindow.webContents.send('custom_tray_icon', {
+			manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
 				event: 'startTimer'
 			});
 			this.build();
@@ -319,7 +319,7 @@ export class TrayIcon {
 			this.contextMenu[2].enabled = true;
 			this.contextMenu[0].visible = false;
 			this.contextMenu[3].enabled = false;
-			timeTrackerWindow.webContents.send('custom_tray_icon', {
+			manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
 				event: 'stopTimer'
 			});
 			this.build();
@@ -336,7 +336,7 @@ export class TrayIcon {
 		ipcMain.on('update_tray_time_title', (event, arg) => {
 			const auth = store.get('auth');
 			if (auth && auth.employeeId && !auth.isLogout) {
-				timeTrackerWindow.webContents.send('custom_tray_icon', {
+				manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
 					event: 'updateTimer',
 					timeText: arg ? arg.timeRun : null
 				});
@@ -383,7 +383,7 @@ export class TrayIcon {
 				this.contextMenu = menuAuth;
 				menuWindowTime.enabled = true;
 			} else {
-				timeTrackerWindow.webContents.send('custom_tray_icon', {
+				manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
 					event: 'updateTimer',
 					timeText: null
 				});
@@ -420,7 +420,7 @@ export class TrayIcon {
 		ipcMain.handle('FINAL_LOGOUT', async (event, arg) => {
 			console.log('Final Logout');
 
-			timeTrackerWindow.webContents.send('custom_tray_icon', {
+			manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
 				event: 'updateTimer',
 				timeText: null
 			});
@@ -489,7 +489,7 @@ export class TrayIcon {
 
 		});
 
-		timeTrackerWindow.webContents.send('custom_tray_icon', { event: 'initCustomIcon' });
+		manager.webContents(timeTrackerWindow).send('custom_tray_icon', { event: 'initCustomIcon' });
 	}
 
 	public destroy() {

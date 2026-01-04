@@ -807,7 +807,7 @@ ipcMain.handle('set-tray-icon', () => {
 
 nativeTheme.on('updated', () => {
 	const appSetting = LocalStore.getStore('appSetting');
-	timeTrackerWindow.webContents.send('custom_tray_icon', {
+	timeTrackerWindow?.webContents?.send?.('custom_tray_icon', {
 		event: 'updateTheme',
 		isStopped: !appSetting.timerStarted
 	});

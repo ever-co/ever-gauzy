@@ -260,34 +260,35 @@ function renderTrayIconWithTime(currentTime?: string): string {
 	return mainCanvas.toDataURL(IMAGE_FORMAT);
 }
 
+function customTrayIconHandler(_event: IpcRendererEvent, data: TrayIconEventData): void {
+	switch (data.event) {
+		case 'stopTimer':
+			handleStopTimer();
+			break;
+		case 'updateTheme':
+			handleThemeUpdate(data.isStopped ?? true);
+			break;
+		case 'initCustomIcon':
+			initializeTrayIcon();
+			break;
+		case 'updateTimer':
+			handleTimerUpdate(data.timeText);
+			break;
+		case 'startTimer':
+			handleStartTimer();
+			break;
+		default:
+			console.warn(`Unknown tray icon event: ${data.event}`);
+			break;
+	}
+}
+
 /**
  * Initializes IPC communication listener for tray icon events
  */
 export function initializeIpcListener(): void {
-	ipcRenderer.on('custom_tray_icon', (_event: IpcRendererEvent, data: TrayIconEventData): void => {
-		switch (data.event) {
-			case 'stopTimer':
-				handleStopTimer();
-				break;
-			case 'updateTheme':
-				handleThemeUpdate(data.isStopped ?? true);
-				break;
-			case 'initCustomIcon':
-				initializeTrayIcon();
-				break;
-			case 'updateTimer':
-				if (data.timeText) {
-					handleTimerUpdate(data.timeText);
-				}
-				break;
-			case 'startTimer':
-				handleStartTimer();
-				break;
-			default:
-				console.warn(`Unknown tray icon event: ${data.event}`);
-				break;
-		}
-	});
+	ipcRenderer.removeListener('custom_tray_icon', customTrayIconHandler);
+	ipcRenderer.on('custom_tray_icon', customTrayIconHandler);
 }
 
 /**
@@ -303,9 +304,6 @@ export async function initializeTrayIcon(): Promise<void> {
 	// Request icon paths from main process
 	const iconPaths = await ipcRenderer.invoke('set-tray-icon') as TrayIconsResponse;
 	setIconPaths(iconPaths.activeIcon, iconPaths.grayIcon);
-
-	// Set up IPC listener for future events
-	initializeIpcListener();
 
 	// Load stopped state icon and render initial tray icon
 	await loadIconImage(INITIAL_TIMER_STATE_STOPPED);
@@ -333,6 +331,8 @@ export async function handleStopTimer(): Promise<void> {
 	const TIMER_STOPPED = true;
 	await loadIconImage(TIMER_STOPPED);
 	renderBackgroundLayer(TIMER_STOPPED);
+	const iconDataUrl = renderTrayIconWithTime(LAST_TIME_DISPLAY);
+	ipcRenderer.send('update-tray-icon', iconDataUrl);
 }
 
 /**
@@ -346,6 +346,8 @@ export async function handleStartTimer(): Promise<void> {
 
 	await loadIconImage(TIMER_ACTIVE);
 	renderBackgroundLayer(TIMER_ACTIVE);
+	const iconDataUrl = renderTrayIconWithTime(LAST_TIME_DISPLAY);
+	ipcRenderer.send('update-tray-icon', iconDataUrl);
 }
 
 /**

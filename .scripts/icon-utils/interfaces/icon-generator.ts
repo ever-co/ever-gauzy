@@ -10,7 +10,7 @@ export abstract class IconGenerator {
 	protected destination: string;
 	protected imageUrl: string;
 	protected desktop: string | null;
-	protected trayIconImageUrl: string | null;
+	protected trayIconImageUrl: string;
 
 	protected constructor() {
 		this.desktop = isUndefined(argv.desktop) ? null : String(argv.desktop);
@@ -81,7 +81,7 @@ export abstract class IconGenerator {
 			console.warn('WARNING: A desktop application variant must be selected, process exit.');
 			process.exit(0);
 		}
-		if (!this.checkUrlValidity(this.imageUrl)) {
+		if (!this.checkUrlValidity(this.trayIconImageUrl)) {
 			return null;
 		}
 		return this.downloadContext.strategy.download(this.trayIconImageUrl || '', this.destination);
