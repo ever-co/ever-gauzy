@@ -19,7 +19,7 @@ export class TrayIcon {
 		const iconDir = path.dirname(iconPath);
 		const normalIcon = path.join(iconDir, 'icon.png');
 		const iconNativePath = nativeImage.createFromPath(normalIcon);
-		iconNativePath.resize({ width: 16, height: 96 });
+		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
 
 		const userService = new UserService();
@@ -510,7 +510,8 @@ export class TrayIcon {
 			'update_tray_time_update',
 			'update_tray_time_title',
 			'auth_success',
-			'user_detail'
+			'user_detail',
+			'update-tray-icon'
 		];
 
 		trayListener.forEach((listener) => {
