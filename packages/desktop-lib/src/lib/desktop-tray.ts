@@ -481,7 +481,6 @@ export class TrayIcon {
 		});
 
 		ipcMain.on('update-tray-icon', (event, dataUrl) => {
-			console.log('update-tray-icon', dataUrl);
 			if (!this.tray?.isDestroyed()) {
 				const image = nativeImage.createFromDataURL(dataUrl);
 				this.tray.setImage(image);
