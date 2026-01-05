@@ -2,8 +2,8 @@ import { logger } from '@gauzy/desktop-core';
 import { createReadStream, createWriteStream } from 'fs';
 import * as fs from 'fs/promises';
 import fetch from 'node-fetch';
+import { finished } from 'node:stream/promises';
 import * as path from 'path';
-import { finished } from 'stream/promises';
 import * as unzipper from 'unzipper';
 import { ICdnDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy } from '../../shared';
 
@@ -297,7 +297,6 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 			let totalSize = 0;
 
 			await new Promise<void>((resolve, reject) => {
-				const baseExtractPath = path.resolve(extractDir);
 				const pendingWrites: Promise<void>[] = [];
 
 				createReadStream(filePath)
