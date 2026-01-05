@@ -460,7 +460,7 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 		const normalizedEntry = entryPath.replaceAll(/\\/g, '/');
 
 		// Disallow absolute paths and drive letters
-		if (path.isAbsolute(normalizedEntry)) {
+		if (path.isAbsolute(entryPath)) {
 			return false;
 		}
 		if (/^[a-zA-Z]:/.test(normalizedEntry)) {
@@ -469,7 +469,7 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 
 		// Resolve the full path and ensure it stays within rootDir
 		const resolvedRoot = path.resolve(rootDir);
-		const resolvedTarget = path.resolve(rootDir, normalizedEntry);
+		const resolvedTarget = path.resolve(rootDir, entryPath);
 
 		// Ensure the resolved target is within the resolved root directory
 		if (resolvedTarget === resolvedRoot) {
