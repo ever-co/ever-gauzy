@@ -305,9 +305,19 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 					.on('entry', (entry: any) => {
 						const { path: entryPath, type, size } = entry;
 
-						// Security: Check for path traversal
-						if (!this.isSafePath(extractDir, entryPath)) {
-							logger.warn(`Suspicious path detected, skipping: ${entryPath}`);
+						// Security: Normalize and validate entry path to prevent path traversal (Zip Slip)
+						const normalizedEntryPath = path.normalize(entryPath);
+
+						// Reject absolute paths and paths that attempt to traverse upwards
+						if (
+							!normalizedEntryPath || // empty or falsy
+							path.isAbsolute(normalizedEntryPath) ||
+							normalizedEntryPath.startsWith('..' + path.sep) ||
+							normalizedEntryPath === '..' ||
+							normalizedEntryPath.includes(path.sep + '..' + path.sep) ||
+							normalizedEntryPath.endsWith(path.sep + '..')
+						) {
+							logger.warn(`Suspicious or unsafe path detected, skipping: ${entryPath}`);
 							entry.autodrain();
 							return;
 						}
@@ -330,13 +340,14 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 							return;
 						}
 
-						const fullPath = path.join(extractDir, entryPath);
+						// Build the full output path from the normalized entry path
+						const fullPath = path.join(extractDir, normalizedEntryPath);
 						const resolvedFullPath = path.resolve(fullPath);
 
-						// Additional Security: Ensure resolved path is within extraction directory
+						// Additional Security: Ensure resolved path is strictly within extraction directory
 						if (
-							!resolvedFullPath.startsWith(baseExtractPath + path.sep) &&
-							resolvedFullPath !== baseExtractPath
+							resolvedFullPath !== baseExtractPath &&
+							!resolvedFullPath.startsWith(baseExtractPath + path.sep)
 						) {
 							logger.warn(`Resolved path escapes extract directory, skipping: ${entryPath}`);
 							entry.autodrain();
