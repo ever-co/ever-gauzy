@@ -534,74 +534,50 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 					response
 						.body!.pipe(unzipper.Parse())
 						.on('entry', (entry: any) => {
-							const { path: filePath, type, size } = entry;
+							const { path: entryPath, type, size } = entry;
 
-							// Security: Check for path traversal
-							if (!this.isSafePath(extractPath, filePath)) {
-								logger.warn(`Suspicious path detected, skipping: ${filePath}`);
-								entry.autodrain();
-								return;
+							// Guard: path traversal
+							if (!this.isSafePath(extractPath, entryPath)) {
+								logger.warn(`Unsafe archive entry skipped: ${entryPath}`);
+								return entry.autodrain();
 							}
 
-							// Security: Check file size
+							// Guard: per-file size
 							if (size > CdnDownloadStrategy.MAX_FILE_SIZE) {
-								logger.warn(`File too large (${size} bytes), skipping: ${filePath}`);
-								entry.autodrain();
-								return;
+								logger.warn(`Archive entry too large (${size} bytes): ${entryPath}`);
+								return entry.autodrain();
 							}
 
-							// Security: Check total extraction size
+							// Guard: total extraction size
 							totalExtractedSize += size;
 							if (totalExtractedSize > CdnDownloadStrategy.MAX_TOTAL_SIZE) {
-								reject(
+								return reject(
 									new Error(
-										`Total extraction size exceeds limit (${CdnDownloadStrategy.MAX_TOTAL_SIZE} bytes)`
+										`Total extraction size exceeded (${CdnDownloadStrategy.MAX_TOTAL_SIZE} bytes)`
 									)
 								);
+							}
+
+							const resolvedPath = path.resolve(extractPath, entryPath);
+
+							// Directory handling
+							if (type === 'Directory') {
+								pendingWrites.push(this.createDirectory(resolvedPath, extractedFiles, entry));
 								return;
 							}
 
-							const fullPath = path.join(extractPath, filePath);
-
-							if (type === 'Directory') {
-								// Track directory creation as a pending operation
-								const dirPromise = (async () => {
-									try {
-										await fs.mkdir(fullPath, { recursive: true });
-										extractedFiles.push(fullPath);
-									} catch (err) {
-										logger.error(`Error creating directory ${fullPath}: ${err.message}`);
+							// File handling
+							pendingWrites.push(
+								this.extractFile({
+									entry,
+									entryPath,
+									targetPath: resolvedPath,
+									extractedFiles,
+									onManifestDetected: (dir) => {
+										if (!pluginDir) pluginDir = dir;
 									}
-									entry.autodrain();
-								})();
-								pendingWrites.push(dirPromise);
-							} else {
-								// Create a promise for this write operation and track it
-								const writePromise = (async () => {
-									try {
-										// Ensure directory exists
-										await fs.mkdir(path.dirname(fullPath), { recursive: true });
-
-										// Stream file to disk and wait for completion
-										const writeStream = createWriteStream(fullPath);
-										entry.pipe(writeStream);
-										await finished(writeStream);
-										extractedFiles.push(fullPath);
-
-										// Track manifest location
-										if (
-											path.basename(filePath) === CdnDownloadStrategy.MANIFEST_FILENAME &&
-											!pluginDir
-										) {
-											pluginDir = path.dirname(fullPath);
-										}
-									} catch (err) {
-										logger.error(`Error processing entry ${filePath}: ${err.message}`);
-										entry.autodrain();
-									}
-								})();
-								pendingWrites.push(writePromise);
-							}
+								})
+							);
 						})
 						.on('finish', async () => {
 							// Wait for all pending write operations to complete before resolving
@@ -651,6 +627,44 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 			// Cleanup on error
 			await this.cleanupOnError(null, [extractPath]);
 			throw new Error(`Streaming extraction failed: ${error.message}`);
+		}
+	}
+
+	private async createDirectory(dirPath: string, extractedFiles: string[], entry: unzipper.Entry): Promise<void> {
+		try {
+			await fs.mkdir(dirPath, { recursive: true });
+			extractedFiles.push(dirPath);
+		} catch (err) {
+			logger.error(`Failed to create directory ${dirPath}: ${err.message}`);
+		} finally {
+			entry.autodrain();
+		}
+	}
+
+	private async extractFile(options: {
+		entry: unzipper.Entry;
+		entryPath: string;
+		targetPath: string;
+		extractedFiles: string[];
+		onManifestDetected: (dir: string) => void;
+	}): Promise<void> {
+		const { entry, entryPath, targetPath, extractedFiles, onManifestDetected } = options;
+
+		try {
+			await fs.mkdir(path.dirname(targetPath), { recursive: true });
+
+			const writeStream = createWriteStream(targetPath);
+			entry.pipe(writeStream);
+			await finished(writeStream);
+
+			extractedFiles.push(targetPath);
+
+			if (path.basename(entryPath) === CdnDownloadStrategy.MANIFEST_FILENAME) {
+				onManifestDetected(path.dirname(targetPath));
+			}
+		} catch (err) {
+			logger.error(`Failed to extract ${entryPath}: ${err.message}`);
+			entry.autodrain();
 		}
 	}
 }
