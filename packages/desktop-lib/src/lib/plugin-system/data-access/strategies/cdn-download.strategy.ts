@@ -442,7 +442,7 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 		}
 
 		// Normalize entry path separators
-		const normalizedEntry = entryPath.replace(/\\/g, '/');
+		const normalizedEntry = entryPath.replaceAll(/\\/g, '/');
 
 		// Disallow absolute paths and drive letters
 		if (path.isAbsolute(normalizedEntry)) {
