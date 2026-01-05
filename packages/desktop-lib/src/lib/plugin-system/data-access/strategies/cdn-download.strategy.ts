@@ -296,6 +296,8 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 			let totalSize = 0;
 
 			await new Promise<void>((resolve, reject) => {
+				const baseExtractPath = path.resolve(extractDir);
+
 				createReadStream(filePath)
 					.pipe(unzipper.Parse())
 					.on('entry', (entry: any) => {
@@ -327,12 +329,31 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 						}
 
 						const fullPath = path.join(extractDir, entryPath);
+						const resolvedFullPath = path.resolve(fullPath);
+
+						// Additional Security: Ensure resolved path is within extraction directory
+						if (
+							!resolvedFullPath.startsWith(baseExtractPath + path.sep) &&
+							resolvedFullPath !== baseExtractPath
+						) {
+							logger.warn(`Resolved path escapes extract directory, skipping: ${entryPath}`);
+							entry.autodrain();
+							return;
+						}
 
 						if (type === 'Directory') {
 							entry.autodrain();
 						} else {
-							// Extract file
-							entry.pipe(createWriteStream(fullPath));
+							// Ensure directory exists before writing file
+							fs.mkdir(path.dirname(resolvedFullPath), { recursive: true })
+								.then(() => {
+									// Extract file
+									entry.pipe(createWriteStream(resolvedFullPath));
+								})
+								.catch((err) => {
+									logger.error(`Failed to create directory for ${resolvedFullPath}: ${err.message}`);
+									entry.autodrain();
+								});
 						}
 					})
 					.on('close', resolve)
@@ -415,10 +436,36 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 	/**
 	 * Validates that a file path is safe and doesn't attempt path traversal
 	 */
-	private isSafePath(basePath: string, filePath: string): boolean {
-		const resolvedPath = path.resolve(basePath, filePath);
-		const normalizedBase = path.normalize(basePath);
-		return resolvedPath.startsWith(normalizedBase);
+	private isSafePath(rootDir: string, entryPath: string): boolean {
+		if (!entryPath) {
+			return false;
+		}
+
+		// Normalize entry path separators
+		const normalizedEntry = entryPath.replace(/\\/g, '/');
+
+		// Disallow absolute paths and drive letters
+		if (path.isAbsolute(normalizedEntry)) {
+			return false;
+		}
+		if (/^[a-zA-Z]:/.test(normalizedEntry)) {
+			return false;
+		}
+
+		// Resolve the full path and ensure it stays within rootDir
+		const resolvedRoot = path.resolve(rootDir);
+		const resolvedTarget = path.resolve(rootDir, normalizedEntry);
+
+		// Ensure the resolved target is within the resolved root directory
+		if (resolvedTarget === resolvedRoot) {
+			return false;
+		}
+
+		if (!resolvedTarget.startsWith(resolvedRoot + path.sep)) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
