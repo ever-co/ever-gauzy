@@ -3,6 +3,7 @@ import { createReadStream, createWriteStream } from 'fs';
 import * as fs from 'fs/promises';
 import fetch from 'node-fetch';
 import * as path from 'path';
+import { finished } from 'stream/promises';
 import * as unzipper from 'unzipper';
 import { ICdnDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy } from '../../shared';
 
@@ -297,6 +298,7 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 
 			await new Promise<void>((resolve, reject) => {
 				const baseExtractPath = path.resolve(extractDir);
+				const pendingWrites: Promise<void>[] = [];
 
 				createReadStream(filePath)
 					.pipe(unzipper.Parse())
@@ -344,19 +346,32 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 						if (type === 'Directory') {
 							entry.autodrain();
 						} else {
-							// Ensure directory exists before writing file
-							fs.mkdir(path.dirname(resolvedFullPath), { recursive: true })
-								.then(() => {
-									// Extract file
-									entry.pipe(createWriteStream(resolvedFullPath));
-								})
-								.catch((err) => {
-									logger.error(`Failed to create directory for ${resolvedFullPath}: ${err.message}`);
+							// Create a promise for this write operation and track it
+							const writePromise = (async () => {
+								try {
+									// Ensure directory exists before writing file
+									await fs.mkdir(path.dirname(resolvedFullPath), { recursive: true });
+									// Extract file and wait for stream to finish
+									const writeStream = createWriteStream(resolvedFullPath);
+									entry.pipe(writeStream);
+									await finished(writeStream);
+								} catch (err) {
+									logger.error(`Failed to write file ${resolvedFullPath}: ${err.message}`);
 									entry.autodrain();
-								});
+								}
+							})();
+							pendingWrites.push(writePromise);
 						}
 					})
-					.on('close', resolve)
+					.on('close', async () => {
+						// Wait for all pending write operations to complete before resolving
+						try {
+							await Promise.all(pendingWrites);
+							resolve();
+						} catch (err) {
+							reject(err);
+						}
+					})
 					.on('error', reject);
 			});
 			logger.info(`File unzipped successfully (total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
@@ -509,66 +524,89 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 
 				// Stream directly to extraction with security checks
 				await new Promise<void>((resolve, reject) => {
+					const pendingWrites: Promise<void>[] = [];
+
 					response
 						.body!.pipe(unzipper.Parse())
-						.on('entry', async (entry: any) => {
+						.on('entry', (entry: any) => {
 							const { path: filePath, type, size } = entry;
 
-							try {
-								// Security: Check for path traversal
-								if (!this.isSafePath(extractPath, filePath)) {
-									logger.warn(`Suspicious path detected, skipping: ${filePath}`);
-									entry.autodrain();
-									return;
-								}
-
-								// Security: Check file size
-								if (size > CdnDownloadStrategy.MAX_FILE_SIZE) {
-									logger.warn(`File too large (${size} bytes), skipping: ${filePath}`);
-									entry.autodrain();
-									return;
-								}
-
-								// Security: Check total extraction size
-								totalExtractedSize += size;
-								if (totalExtractedSize > CdnDownloadStrategy.MAX_TOTAL_SIZE) {
-									reject(
-										new Error(
-											`Total extraction size exceeds limit (${CdnDownloadStrategy.MAX_TOTAL_SIZE} bytes)`
-										)
-									);
-									return;
-								}
-
-								const fullPath = path.join(extractPath, filePath);
-
-								if (type === 'Directory') {
-									await fs.mkdir(fullPath, { recursive: true });
-									extractedFiles.push(fullPath);
-									entry.autodrain();
-								} else {
-									// Ensure directory exists
-									await fs.mkdir(path.dirname(fullPath), { recursive: true });
-
-									// Stream file to disk
-									const writeStream = createWriteStream(fullPath);
-									entry.pipe(writeStream);
-									extractedFiles.push(fullPath);
-
-									// Track manifest location
-									if (
-										path.basename(filePath) === CdnDownloadStrategy.MANIFEST_FILENAME &&
-										!pluginDir
-									) {
-										pluginDir = path.dirname(fullPath);
-									}
-								}
-							} catch (err) {
-								logger.error(`Error processing entry ${filePath}: ${err.message}`);
+							// Security: Check for path traversal
+							if (!this.isSafePath(extractPath, filePath)) {
+								logger.warn(`Suspicious path detected, skipping: ${filePath}`);
 								entry.autodrain();
+								return;
+							}
+
+							// Security: Check file size
+							if (size > CdnDownloadStrategy.MAX_FILE_SIZE) {
+								logger.warn(`File too large (${size} bytes), skipping: ${filePath}`);
+								entry.autodrain();
+								return;
+							}
+
+							// Security: Check total extraction size
+							totalExtractedSize += size;
+							if (totalExtractedSize > CdnDownloadStrategy.MAX_TOTAL_SIZE) {
+								reject(
+									new Error(
+										`Total extraction size exceeds limit (${CdnDownloadStrategy.MAX_TOTAL_SIZE} bytes)`
+									)
+								);
+								return;
+							}
+
+							const fullPath = path.join(extractPath, filePath);
+
+							if (type === 'Directory') {
+								// Track directory creation as a pending operation
+								const dirPromise = (async () => {
+									try {
+										await fs.mkdir(fullPath, { recursive: true });
+										extractedFiles.push(fullPath);
+									} catch (err) {
+										logger.error(`Error creating directory ${fullPath}: ${err.message}`);
+									}
+									entry.autodrain();
+								})();
+								pendingWrites.push(dirPromise);
+							} else {
+								// Create a promise for this write operation and track it
+								const writePromise = (async () => {
+									try {
+										// Ensure directory exists
+										await fs.mkdir(path.dirname(fullPath), { recursive: true });
+
+										// Stream file to disk and wait for completion
+										const writeStream = createWriteStream(fullPath);
+										entry.pipe(writeStream);
+										await finished(writeStream);
+										extractedFiles.push(fullPath);
+
+										// Track manifest location
+										if (
+											path.basename(filePath) === CdnDownloadStrategy.MANIFEST_FILENAME &&
+											!pluginDir
+										) {
+											pluginDir = path.dirname(fullPath);
+										}
+									} catch (err) {
+										logger.error(`Error processing entry ${filePath}: ${err.message}`);
+										entry.autodrain();
+									}
+								})();
+								pendingWrites.push(writePromise);
 							}
 						})
-						.on('finish', resolve)
+						.on('finish', async () => {
+							// Wait for all pending write operations to complete before resolving
+							try {
+								await Promise.all(pendingWrites);
+								resolve();
+							} catch (err) {
+								reject(err);
+							}
+						})
 						.on('error', reject);
 				});
 			} finally {
