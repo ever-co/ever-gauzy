@@ -344,16 +344,6 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 						const fullPath = path.join(extractDir, normalizedEntryPath);
 						const resolvedFullPath = path.resolve(fullPath);
 
-						// Additional Security: Ensure resolved path is strictly within extraction directory
-						if (
-							resolvedFullPath !== baseExtractPath &&
-							!resolvedFullPath.startsWith(baseExtractPath + path.sep)
-						) {
-							logger.warn(`Resolved path escapes extract directory, skipping: ${entryPath}`);
-							entry.autodrain();
-							return;
-						}
-
 						if (type === 'Directory') {
 							entry.autodrain();
 						} else {
@@ -469,6 +459,11 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 
 		// Normalize entry path separators
 		const normalizedEntry = entryPath.replaceAll(/\\/g, '/');
+
+		// Explicitly reject Unix-style absolute paths (fast fail on all platforms)
+		if (normalizedEntry === '/' || normalizedEntry.startsWith('/')) {
+			return false;
+		}
 
 		// Disallow absolute paths and drive letters
 		if (path.isAbsolute(entryPath)) {
