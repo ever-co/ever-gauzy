@@ -263,10 +263,11 @@
 						(checkedChange)="togglePlugin($event)"
 						class="install-toggle"
 					>
+						<span class="toggle-label">
+							@if(installed) { Installed } @else if(plugin.hasPlan) { Subscribe & Install } @else {
+							Install }
+						</span>
 					</nb-toggle>
-					<span class="toggle-label">
-						@if(installed) { Installed } @else if(plugin.hasPlan) { Subscribe & Install } @else { Install }
-					</span>
 				</div>
 			</div>
 			}
