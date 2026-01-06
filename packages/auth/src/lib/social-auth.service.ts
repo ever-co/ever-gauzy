@@ -35,7 +35,12 @@ export class SocialAuthService extends BaseSocialAuth {
 	 * @returns A promise that resolves to the hashed password.
 	 */
 	public async getPasswordHash(password: string): Promise<string> {
-		return hashPassword(password);
+		try {
+			return await hashPassword(password);
+		} catch (error) {
+			console.error('Error in getPasswordHash:', error);
+			throw error;
+		}
 	}
 
 	/**
