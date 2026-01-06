@@ -542,4 +542,10 @@ nb-button-group {
   nb-dialog-container nb-card {
     max-height: unset !important;
   }
+
+  nb-toggle {
+	label {
+		margin-bottom: 0 !important;
+	}
+ }
 }
