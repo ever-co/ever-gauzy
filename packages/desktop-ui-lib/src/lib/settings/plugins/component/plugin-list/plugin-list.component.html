@@ -17,12 +17,6 @@
 
 <div class="content-active">
 	<div class="button-container mb-3">
-		<div class="button-add">
-			<button (click)="addPlugin()" [disabled]="disabled" status="success" size="small" nbButton>
-				<nb-icon *gauzySpinnerButton="installing" icon="plus-outline"></nb-icon>
-				{{ 'BUTTONS.ADD_PLUGIN' | translate }}
-			</button>
-		</div>
 		<div *ngIf="selected" class="button-hide">
 			<button
 				*ngIf="selected.renderer"

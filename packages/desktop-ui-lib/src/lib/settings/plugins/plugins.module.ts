@@ -131,6 +131,9 @@ import { LanguageModule } from '../../language/language.module';
 import { Store } from '../../services';
 import { PluginCategoryEffects } from './component/plugin-marketplace/+state';
 import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
+import { PluginUploadIntentEffects } from './component/plugin-marketplace/+state/effects/plugin-upload-intent.effect';
+import { PluginUploadIntentQuery } from './component/plugin-marketplace/+state/queries/plugin-upload-intent.query';
+import { PluginUploadIntentStore } from './component/plugin-marketplace/+state/stores/plugin-upload-intent.store';
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
 	BillingContactSectionComponent,
@@ -144,6 +147,7 @@ import {
 	SubscriptionStatusBadgeComponent,
 	SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
+import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
 
 @NgModule({
 	declarations: [
@@ -197,7 +201,8 @@ import {
 		PaymentMethodSectionComponent,
 		CardDetailsSectionComponent,
 		BillingContactSectionComponent,
-		SubscriptionConsentSectionComponent
+		SubscriptionConsentSectionComponent,
+		UploadSelectionComponent
 	],
 	exports: [PluginLayoutComponent],
 	imports: [
@@ -276,7 +281,8 @@ import {
 			PluginSubscriptionAccessEffects,
 			AvailableUsersEffects,
 			PluginToggleEffects,
-			PluginCategoryEffects
+			PluginCategoryEffects,
+			PluginUploadIntentEffects
 		),
 		PluginQuery,
 		PluginStore,
@@ -293,6 +299,8 @@ import {
 		AvailableUsersStore,
 		AvailableUsersQuery,
 		UserManagementFacade,
+		PluginUploadIntentStore,
+		PluginUploadIntentQuery,
 		NbInfiniteListDirective,
 		NbToastrService,
 		NbDialogService,

@@ -10,7 +10,6 @@ import { PluginActions } from '../+state/plugin.action';
 import { PluginQuery } from '../+state/plugin.query';
 import { AlertComponent } from '../../../../dialogs/alert/alert.component';
 import { IPlugin } from '../../services/plugin-loader.service';
-import { AddPluginComponent } from '../add-plugin/add-plugin.component';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
 import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/plugin-installation.query';
 import { PluginStatusComponent } from './plugin-status/plugin-status.component';
@@ -160,13 +159,6 @@ export class PluginListComponent implements OnInit, OnDestroy {
 
 	public view() {
 		this.router.navigate(['/plugins', 'installed', this.plugin.name]);
-	}
-
-	public addPlugin() {
-		this.dialog
-			.open(AddPluginComponent, { backdropClass: 'backdrop-blur' })
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe();
 	}
 
 	public uninstall() {

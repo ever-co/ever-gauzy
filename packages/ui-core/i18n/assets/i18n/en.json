@@ -174,6 +174,8 @@
 		"DEACTIVATE": "Deactivate",
 		"ACTIVATE": "Activate",
 		"ADD_PLUGIN": "Add Plugin",
+		"UPLOAD": "Upload",
+		"UPLOAD_PLUGIN": "Upload Plugin",
 		"LOAD_PLUGIN": "Load Plugin",
 		"FROM_CDN": "From CDN",
 		"ADD_MODULE": "Add Module",
@@ -5253,6 +5255,14 @@
 				"SHARE_NOT_ALLOWED": "Share is not allowed",
 				"UNEXPECTED_SHARING_ERROR": "Unexpected sharing error"
 			}
+		},
+		"UPLOAD_SELECTION": {
+			"TITLE": "Choose Upload Method",
+			"DESCRIPTION": "How would you like to proceed?",
+			"INSTALL_LOCAL": "Install Plugin Locally",
+			"INSTALL_LOCAL_DESC": "Install a plugin directly on your device for personal use",
+			"PUBLISH_MARKETPLACE": "Publish to Marketplace",
+			"PUBLISH_MARKETPLACE_DESC": "Share your plugin with the community on the Marketplace"
 		},
 		"FORM": {
 			"TITLE": "Upload Plugin",
