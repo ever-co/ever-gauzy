@@ -5,7 +5,7 @@ const scryptAsync = promisify<string | Buffer, Buffer, number, ScryptOptions, Bu
 const SCRYPT_PARAMS = { N: 16384, r: 8, p: 1, keyLength: 64, saltLength: 16 };
 
 /**
- * Standalone password hashing using scrypt (for seed files and non-DI contexts).
+ * Hash a password using scrypt algorithm.
  * Format: $scrypt$N$r$p$salt$hash
  */
 export async function hashPassword(password: string): Promise<string> {
@@ -16,7 +16,7 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 /**
- * Standalone password verification using scrypt.
+ * Verify a password against a scrypt hash.
  */
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
 	try {
@@ -36,3 +36,4 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 		return false;
 	}
 }
+

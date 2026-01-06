@@ -5,7 +5,7 @@
 import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
-import { hashPassword } from '../password-hash/password-hash.utils';
+import { hashPassword } from '@gauzy/utils';
 import {
 	IDefaultUser,
 	RolesEnum,
