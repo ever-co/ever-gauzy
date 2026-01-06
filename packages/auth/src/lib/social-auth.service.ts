@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService, IEnvironment } from '@gauzy/config';
-import { scrypt, randomBytes, ScryptOptions } from 'crypto';
-import { promisify } from 'util';
-
-const scryptAsync = promisify<string | Buffer, Buffer, number, ScryptOptions, Buffer>(scrypt);
+import { hashPassword } from '@gauzy/utils';
 
 /**
  * Base class for social authentication.
@@ -38,21 +35,7 @@ export class SocialAuthService extends BaseSocialAuth {
 	 * @returns A promise that resolves to the hashed password.
 	 */
 	public async getPasswordHash(password: string): Promise<string> {
-		try {
-			const salt = randomBytes(16);
-			const N = 16384;
-			const r = 8;
-			const p = 1;
-			const keyLength = 64;
-
-			const derivedKey = (await scryptAsync(password, salt, keyLength, { N, r, p })) as Buffer;
-
-			// Format: $scrypt$N$r$p$salt$hash
-			return ['$scrypt', N, r, p, salt.toString('hex'), derivedKey.toString('hex')].join('$');
-		} catch (error) {
-			console.error('Error in getPasswordHash:', error);
-			throw new Error('Failed to hash the password');
-		}
+		return hashPassword(password);
 	}
 
 	/**

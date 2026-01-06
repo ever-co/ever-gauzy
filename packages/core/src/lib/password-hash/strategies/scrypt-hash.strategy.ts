@@ -30,6 +30,11 @@ export class ScryptHashStrategy implements IPasswordHashStrategy {
 			const N = parseInt(nStr, 10);
 			const r = parseInt(rStr, 10);
 			const p = parseInt(pStr, 10);
+
+			// Validate scrypt parameters to prevent DoS
+			if (isNaN(N) || isNaN(r) || isNaN(p) || N <= 0 || r <= 0 || p <= 0) return false;
+			if (N > 1048576 || r > 64 || p > 64) return false; // Prevent excessive CPU usage
+
 			const salt = Buffer.from(saltHex, 'hex');
 			const storedHash = Buffer.from(hashHex, 'hex');
 			const derivedKey = await scryptAsync(password, salt, storedHash.length, { N, r, p });
