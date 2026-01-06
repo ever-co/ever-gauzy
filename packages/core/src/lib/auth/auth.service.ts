@@ -8,7 +8,6 @@ import {
 	UnauthorizedException
 } from '@nestjs/common';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { pick } from 'underscore';
@@ -70,6 +69,7 @@ import {
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
 import { SocialAccountService } from './social-account/social-account.service';
+import { PasswordHashService } from '../password-hash/password-hash.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -90,7 +90,8 @@ export class AuthService extends SocialAuthService {
 		private readonly commandBus: CommandBus,
 		private readonly httpService: HttpService,
 		private readonly socialAccountService: SocialAccountService,
-		private readonly eventBus: EventBus
+		private readonly eventBus: EventBus,
+		private readonly passwordHashService: PasswordHashService
 	) {
 		super();
 	}
@@ -134,17 +135,28 @@ export class AuthService extends SocialAuthService {
 			const userValidations = [];
 
 			for (const user of users) {
-				// Check password (let real bcrypt errors bubble up)
+				// Check password using PasswordHashService (supports bcrypt and scrypt)
 				let isPasswordValid = false;
 				try {
-					isPasswordValid = await bcrypt.compare(password, user.hash);
-				} catch (bcryptError) {
+					isPasswordValid = await this.passwordHashService.verify(password, user.hash);
+				} catch (hashError) {
 					// We don't log "errors" below because we might have many such users whose passwords are different, really!
-					// console.error(`Password comparison failed for user ${user.id}: ${bcryptError.message}`);
-					continue; // Skip this user if bcrypt fails
+					// console.error(`Password comparison failed for user ${user.id}: ${hashError.message}`);
+					continue; // Skip this user if hash verification fails
 				}
 				if (!isPasswordValid) {
 					continue; // Skip this user if password doesn't match
+				}
+
+				// Progressive password hash migration: rehash with new algorithm if needed
+				if (this.passwordHashService.needsRehash(user.hash)) {
+					try {
+						const newHash = await this.passwordHashService.hash(password);
+						await this.userService.changePassword(user.id, newHash);
+					} catch (rehashError) {
+						// Log but don't fail login if rehash fails
+						console.warn(`Failed to rehash password for user ${user.id}:`, rehashError.message);
+					}
 				}
 				// Fetch employee record
 				let employee = null;
@@ -224,7 +236,7 @@ export class AuthService extends SocialAuthService {
 		const { email, password } = input;
 
 		/** Fetching users matching the query */
-		let users = await this.userService.find({
+		const allUsers = await this.userService.find({
 			where: [
 				{
 					email,
@@ -237,8 +249,31 @@ export class AuthService extends SocialAuthService {
 			order: { createdAt: 'DESC' }
 		});
 
-		// Filter users based on password match
-		users = users.filter((user: IUser) => bcrypt.compareSync(password, user.hash));
+		// Filter users based on password match using async verification
+		const validatedUsers: IUser[] = [];
+		for (const user of allUsers) {
+			try {
+				const isValid = await this.passwordHashService.verify(password, user.hash);
+				if (isValid) {
+					validatedUsers.push(user);
+
+					// Progressive password hash migration
+					if (this.passwordHashService.needsRehash(user.hash)) {
+						try {
+							const newHash = await this.passwordHashService.hash(password);
+							await this.userService.changePassword(user.id, newHash);
+						} catch (rehashError) {
+							console.warn(`Failed to rehash password for user ${user.id}:`, rehashError.message);
+						}
+					}
+				}
+			} catch (error) {
+				// Continue to next user if verification fails
+				continue;
+			}
+		}
+
+		let users = validatedUsers;
 
 		if (users.length === 0) {
 			throw new UnauthorizedException();
@@ -606,8 +641,8 @@ export class AuthService extends SocialAuthService {
 				throw new NotFoundException('Password Reset Failed.');
 			}
 
-			// Hash the new password and update it for the user
-			const hash = await this.getPasswordHash(password);
+			// Hash the new password using PasswordHashService and update it for the user
+			const hash = await this.passwordHashService.hash(password);
 			await this.userService.changePassword(user.id, hash);
 
 			return true;
@@ -647,7 +682,7 @@ export class AuthService extends SocialAuthService {
 		const entity = this.typeOrmUserRepository.create({
 			...input.user,
 			tenant,
-			...(input.password ? { hash: await this.getPasswordHash(input.password) } : {})
+			...(input.password ? { hash: await this.passwordHashService.hash(input.password) } : {})
 		});
 		let user = await this.typeOrmUserRepository.save(entity);
 
