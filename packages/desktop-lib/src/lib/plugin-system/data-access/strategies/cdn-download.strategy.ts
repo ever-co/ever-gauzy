@@ -358,7 +358,8 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 								} catch (err) {
 									logger.error(`Failed to write file ${resolvedFullPath}: ${err.message}`);
 									// Re-throw to propagate error to Promise.all
-									throw err;
+										entry.autodrain();
+										throw err;
 								}
 							})();
 							pendingWrites.push(writePromise);
