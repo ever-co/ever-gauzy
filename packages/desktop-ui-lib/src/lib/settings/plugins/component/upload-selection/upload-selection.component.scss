@@ -57,14 +57,14 @@
 
         &:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+          box-shadow: var(--gauzy-shadow);
           border-color: var(--gauzy-text-color-1);
         }
 
         &:focus {
           outline: none;
           border-color: var(--gauzy-text-color-1);
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+          box-shadow: var(--gauzy-shadow);
         }
 
         nb-card-body {
