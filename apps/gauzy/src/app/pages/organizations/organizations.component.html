@@ -1,90 +1,89 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="d-flex flex-column pb-0">
-		<div class="card-header-title">
-			<h4>{{ 'ORGANIZATIONS_PAGE.ORGANIZATIONS' | translate }}</h4>
-		</div>
-		<div class="align-self-end">
-			<ngx-gauzy-button-action
-				[buttonTemplate]="actionButtons"
-				[buttonTemplateVisible]="visible"
-				[isDisable]="disableButton"
-				[componentName]="viewComponentName"
-			></ngx-gauzy-button-action>
-		</div>
-	</nb-card-header>
-	<nb-card-body>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
-			<div class="table-scroll-container">
-				<angular2-smart-table
-					[settings]="settingsSmartTable"
-					[source]="smartTableSource"
-					(userRowSelect)="selectOrganization($event)"
-					style="cursor: pointer"
-					#organizationsTable
-				></angular2-smart-table>
-			</div>
-			<div class="pagination-container align-self-end">
-				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-				</ng-container>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				[settings]="settingsSmartTable"
-				[source]="organizations"
-				(onSelectedItem)="selectOrganization($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
-		</ng-template>
-	</nb-card-body>
+  <nb-card-header class="d-flex flex-column pb-0">
+    <div class="card-header-title">
+      <h4>{{ 'ORGANIZATIONS_PAGE.ORGANIZATIONS' | translate }}</h4>
+    </div>
+    <div class="align-self-end">
+      <ngx-gauzy-button-action
+        [buttonTemplate]="actionButtons"
+        [buttonTemplateVisible]="visible"
+        [isDisable]="disableButton"
+        [componentName]="viewComponentName"
+      ></ngx-gauzy-button-action>
+    </div>
+  </nb-card-header>
+  <nb-card-body>
+    @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+      <div class="table-scroll-container">
+        <angular2-smart-table
+          [settings]="settingsSmartTable"
+          [source]="smartTableSource"
+          (userRowSelect)="selectOrganization($event)"
+          style="cursor: pointer"
+          #organizationsTable
+        ></angular2-smart-table>
+      </div>
+      <div class="pagination-container align-self-end">
+        @if (smartTableSource) {
+          <ngx-pagination [source]="smartTableSource"></ngx-pagination>
+        }
+      </div>
+    } @else {
+      <ga-card-grid
+        [totalItems]="pagination?.totalItems"
+        [settings]="settingsSmartTable"
+        [source]="organizations"
+        (onSelectedItem)="selectOrganization($event)"
+        (scroll)="onScroll()"
+      ></ga-card-grid>
+    }
+  </nb-card-body>
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
-	<div class="actions">
-		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_EXPENSES_EDIT']">
-			<button
-				nbButton
-				[disabled]="!selectedItem && disableButton"
-				status="basic"
-				class="action secondary"
-				size="small"
-				underConstruction
-			>
-				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>{{ 'BUTTONS.VIEW' | translate }}
-			</button>
-		</ng-template>
-		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_EXPENSES_EDIT']">
-			<button
-				nbButton
-				[disabled]="!selectedItem && disableButton"
-				(click)="editOrganization(selectedItem)"
-				status="basic"
-				class="action primary"
-				size="small"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'BUTTONS.MANAGE' | translate }}
-			</button>
-		</ng-template>
-		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
-			<button
-				nbButton
-				[disabled]="!selectedItem && disableButton"
-				(click)="deleteOrganization(selectedItem)"
-				status="basic"
-				class="action"
-				size="small"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>
-		</ng-template>
-	</div>
+  <div class="actions">
+    <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_EXPENSES_EDIT']">
+      <button
+        nbButton
+        [disabled]="!selectedItem && disableButton"
+        status="basic"
+        class="action secondary"
+        size="small"
+        underConstruction
+        >
+        <nb-icon class="mr-1" icon="eye-outline"></nb-icon>{{ 'BUTTONS.VIEW' | translate }}
+      </button>
+    </ng-template>
+    <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_EXPENSES_EDIT']">
+      <button
+        nbButton
+        [disabled]="!selectedItem && disableButton"
+        (click)="editOrganization(selectedItem)"
+        status="basic"
+        class="action primary"
+        size="small"
+        >
+        <nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'BUTTONS.MANAGE' | translate }}
+      </button>
+    </ng-template>
+    <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
+      <button
+        nbButton
+        [disabled]="!selectedItem && disableButton"
+        (click)="deleteOrganization(selectedItem)"
+        status="basic"
+        class="action"
+        size="small"
+        [nbTooltip]="'BUTTONS.DELETE' | translate"
+        >
+        <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+      </button>
+    </ng-template>
+  </div>
 </ng-template>
 <ng-template #visible>
-	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
-		<button nbButton status="success" class="action" size="small" (click)="addOrganization()">
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
-		</button>
-	</ng-template>
+  <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
+    <button nbButton status="success" class="action" size="small" (click)="addOrganization()">
+      <nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
+    </button>
+  </ng-template>
 </ng-template>

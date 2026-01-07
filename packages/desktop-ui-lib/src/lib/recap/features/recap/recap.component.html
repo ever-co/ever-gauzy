@@ -1,16 +1,16 @@
 <nb-card class="main-report-wrapper">
-	<nb-card-header class="p-3 main-report-header">
-		<ngx-segmented-control [segments]="segments"></ngx-segmented-control>
-		<ng-container *ngIf="isLoading$ | async">
-			<nb-icon class="loader" size="medium" icon="loader-outline"></nb-icon>
-		</ng-container>
-		<div class="tools">
-			<ngx-date-range-picker [isLockDatePicker]="true" [arrows]="true" [isSingleDatePicker]="true" [isDisableFutureDatePicker]="true"
-				class="medium" (rangeChanges)="onRangeChange($event)"></ngx-date-range-picker>
-			<ngx-filter></ngx-filter>
-		</div>
-	</nb-card-header>
-	<nb-card-body class="main-report-body">
-		<router-outlet></router-outlet>
-	</nb-card-body>
+  <nb-card-header class="p-3 main-report-header">
+    <ngx-segmented-control [segments]="segments"></ngx-segmented-control>
+    @if (isLoading$ | async) {
+      <nb-icon class="loader" size="medium" icon="loader-outline"></nb-icon>
+    }
+    <div class="tools">
+      <ngx-date-range-picker [isLockDatePicker]="true" [arrows]="true" [isSingleDatePicker]="true" [isDisableFutureDatePicker]="true"
+      class="medium" (rangeChanges)="onRangeChange($event)"></ngx-date-range-picker>
+      <ngx-filter></ngx-filter>
+    </div>
+  </nb-card-header>
+  <nb-card-body class="main-report-body">
+    <router-outlet></router-outlet>
+  </nb-card-body>
 </nb-card>

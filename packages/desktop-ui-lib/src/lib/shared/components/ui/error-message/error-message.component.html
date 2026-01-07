@@ -1,3 +1,5 @@
-<div *ngIf="message" class="error-message">
-	{{ message }}
-</div>
+@if (message) {
+  <div class="error-message">
+    {{ message }}
+  </div>
+}

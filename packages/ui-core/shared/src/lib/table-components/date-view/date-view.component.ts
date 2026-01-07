@@ -4,14 +4,15 @@ import { Component, Input } from '@angular/core';
     selector: 'ngx-date-view',
     template: `
 		<span>
-			{{ value | dateFormat }}
-			<nb-icon
-				*ngIf="rowData?.recurring"
-				[nbTooltip]="'POP_UPS.RECURRING_EXPENSE' | translate"
-				icon="sync-outline"
-			></nb-icon>
+		  {{ value | dateFormat }}
+		  @if (rowData?.recurring) {
+		    <nb-icon
+		      [nbTooltip]="'POP_UPS.RECURRING_EXPENSE' | translate"
+		      icon="sync-outline"
+		    ></nb-icon>
+		  }
 		</span>
-	`,
+		`,
     styles: [],
     standalone: false
 })

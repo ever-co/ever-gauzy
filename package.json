@@ -563,7 +563,7 @@
 		"@angular-eslint/eslint-plugin": "^19.3.0",
 		"@angular-eslint/eslint-plugin-template": "^19.3.0",
 		"@angular-eslint/template-parser": "^19.3.0",
-		"@angular/cli": "^20.0.6",
+		"@angular/cli": "~20.0.0",
 		"@angular/compiler-cli": "^20.0.7",
 		"@commitlint/cli": "^19.6.1",
 		"@commitlint/config-conventional": "^19.6.0",

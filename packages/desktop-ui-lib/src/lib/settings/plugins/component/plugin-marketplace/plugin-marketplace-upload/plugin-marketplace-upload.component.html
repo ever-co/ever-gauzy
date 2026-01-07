@@ -1,253 +1,272 @@
 @let isEdit = !!plugin;
 <!-- form -->
 <nb-card class="dialog-card" status="basic">
-	<nb-card-header class="mb-0">
-		<div class="header-content">
-			<div class="header-icon">
-				<nb-icon [icon]="isEdit ? 'edit-outline' : 'plus-circle-outline'" status="primary"></nb-icon>
-			</div>
-			<div class="header-text">
-				<h5 class="title">{{ (isEdit ? 'POP_UPS.EDIT' : 'PLUGIN.FORM.TITLE') | translate }}</h5>
-				<p class="subtitle" *ngIf="!isEdit">Create and publish your plugin to the marketplace</p>
-				<p class="subtitle" *ngIf="isEdit">Update your plugin information and version</p>
-			</div>
-		</div>
-		<button nbButton ghost size="small" class="close-button" (click)="dismiss()">
-			<nb-icon icon="close-outline"></nb-icon>
-		</button>
-	</nb-card-header>
+  <nb-card-header class="mb-0">
+    <div class="header-content">
+      <div class="header-icon">
+        <nb-icon [icon]="isEdit ? 'edit-outline' : 'plus-circle-outline'" status="primary"></nb-icon>
+      </div>
+      <div class="header-text">
+        <h5 class="title">{{ (isEdit ? 'POP_UPS.EDIT' : 'PLUGIN.FORM.TITLE') | translate }}</h5>
+        @if (!isEdit) {
+          <p class="subtitle">Create and publish your plugin to the marketplace</p>
+        }
+        @if (isEdit) {
+          <p class="subtitle">Update your plugin information and version</p>
+        }
+      </div>
+    </div>
+    <button nbButton ghost size="small" class="close-button" (click)="dismiss()">
+      <nb-icon icon="close-outline"></nb-icon>
+    </button>
+  </nb-card-header>
 
-	<nb-card-body>
-		<form [formGroup]="pluginForm" (ngSubmit)="submit()">
-			<nb-stepper orientation="horizontal" #stepper>
-				<!-- Step 1: Basic Info -->
-				<nb-step [stepControl]="pluginForm?.get('name')" [label]="'PLUGIN.FORM.BASIC_INFO' | translate">
-					<lib-plugin-basic-information
-						[form]="pluginForm"
-						[pluginTypes]="pluginTypes"
-						[pluginStatuses]="pluginStatuses"
-						class="grow"
-					></lib-plugin-basic-information>
-					<div class="stepper-buttons">
-						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
-					</div>
-				</nb-step>
+  <nb-card-body>
+    <form [formGroup]="pluginForm" (ngSubmit)="submit()">
+      <nb-stepper orientation="horizontal" #stepper>
+        <!-- Step 1: Basic Info -->
+        <nb-step [stepControl]="pluginForm?.get('name')" [label]="'PLUGIN.FORM.BASIC_INFO' | translate">
+          <lib-plugin-basic-information
+            [form]="pluginForm"
+            [pluginTypes]="pluginTypes"
+            [pluginStatuses]="pluginStatuses"
+            class="grow"
+          ></lib-plugin-basic-information>
+          <div class="stepper-buttons">
+            <button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+          </div>
+        </nb-step>
 
-				<!-- Step 2: Source -->
-				<nb-step [stepControl]="pluginForm?.get('version.sources')" [label]="'PLUGIN.FORM.SOURCE' | translate">
-					@if(isEdit && plugin){
-					<lib-form-row>
-						<div class="d-flex flex-column">
-							<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
-							<gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
-						</div>
-					</lib-form-row>
-					}
-					<lib-source-container
-						class="overflow-auto grow"
-						[sources]="sources"
-						[sourceTypes]="sourceTypes"
-						[cantAddMore]="!!plugin"
-						(add)="addSource($event)"
-						(remove)="removeSource($event)"
-						(restore)="restoreSource($event)"
-					></lib-source-container>
-					<div class="stepper-buttons">
-						<button nbButton outline status="basic" nbStepperPrevious>
-							{{ 'BUTTONS.PREVIOUS' | translate }}
-						</button>
-						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
-					</div>
-				</nb-step>
+        <!-- Step 2: Source -->
+        <nb-step [stepControl]="pluginForm?.get('version.sources')" [label]="'PLUGIN.FORM.SOURCE' | translate">
+          @if(isEdit && plugin){
+            <lib-form-row>
+              <div class="d-flex flex-column">
+                <label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
+                <gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
+              </div>
+            </lib-form-row>
+          }
+          <lib-source-container
+            class="overflow-auto grow"
+            [sources]="sources"
+            [sourceTypes]="sourceTypes"
+            [cantAddMore]="!!plugin"
+            (add)="addSource($event)"
+            (remove)="removeSource($event)"
+            (restore)="restoreSource($event)"
+          ></lib-source-container>
+          <div class="stepper-buttons">
+            <button nbButton outline status="basic" nbStepperPrevious>
+              {{ 'BUTTONS.PREVIOUS' | translate }}
+            </button>
+            <button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+          </div>
+        </nb-step>
 
-				<!-- Step 3: Version -->
-				<nb-step [stepControl]="pluginForm?.get('version')" [label]="'PLUGIN.FORM.VERSION' | translate">
-					<lib-plugin-version
-						class="grow"
-						[isEdit]="isEdit"
-						[pluginId]="plugin?.id"
-						[form]="pluginForm?.get('version')"
-					></lib-plugin-version>
-					<div class="stepper-buttons">
-						<button nbButton outline status="basic" nbStepperPrevious>
-							{{ 'BUTTONS.PREVIOUS' | translate }}
-						</button>
-						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
-					</div>
-				</nb-step>
+        <!-- Step 3: Version -->
+        <nb-step [stepControl]="pluginForm?.get('version')" [label]="'PLUGIN.FORM.VERSION' | translate">
+          <lib-plugin-version
+            class="grow"
+            [isEdit]="isEdit"
+            [pluginId]="plugin?.id"
+            [form]="pluginForm?.get('version')"
+          ></lib-plugin-version>
+          <div class="stepper-buttons">
+            <button nbButton outline status="basic" nbStepperPrevious>
+              {{ 'BUTTONS.PREVIOUS' | translate }}
+            </button>
+            <button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+          </div>
+        </nb-step>
 
-				<!-- Step 4: Metadata -->
-				<nb-step [label]="'PLUGIN.FORM.METADATA' | translate">
-					<lib-plugin-metadata class="grow" [form]="pluginForm"></lib-plugin-metadata>
-					<div class="stepper-buttons">
-						<button nbButton outline status="basic" nbStepperPrevious>
-							{{ 'BUTTONS.PREVIOUS' | translate }}
-						</button>
-						<button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
-					</div>
-				</nb-step>
+        <!-- Step 4: Metadata -->
+        <nb-step [label]="'PLUGIN.FORM.METADATA' | translate">
+          <lib-plugin-metadata class="grow" [form]="pluginForm"></lib-plugin-metadata>
+          <div class="stepper-buttons">
+            <button nbButton outline status="basic" nbStepperPrevious>
+              {{ 'BUTTONS.PREVIOUS' | translate }}
+            </button>
+            <button nbButton status="primary" nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+          </div>
+        </nb-step>
 
-				<!-- Step 5: Subscription Plans (Optional) -->
-				<nb-step [label]="'PLUGIN.FORM.SUBSCRIPTION_PLANS' | translate">
-					<div class="subscription-step-content">
-						<div class="subscription-toggle">
-							<div class="toggle-header">
-								<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
-								<h6>Monetization Options</h6>
-							</div>
-							<nb-checkbox
-								formControlName="requiresSubscription"
-								(checkedChange)="toggleSubscriptions($event)"
-								class="subscription-checkbox"
-							>
-								{{ 'PLUGIN.FORM.ENABLE_SUBSCRIPTIONS' | translate }}
-							</nb-checkbox>
-							<p class="subscription-description">
-								<nb-icon icon="info-outline" status="info"></nb-icon>
-								{{ 'PLUGIN.FORM.SUBSCRIPTION_DESCRIPTION' | translate }}
-							</p>
-						</div>
+        <!-- Step 5: Subscription Plans (Optional) -->
+        <nb-step [label]="'PLUGIN.FORM.SUBSCRIPTION_PLANS' | translate">
+          <div class="subscription-step-content">
+            <div class="subscription-toggle">
+              <div class="toggle-header">
+                <nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+                <h6>Monetization Options</h6>
+              </div>
+              <nb-checkbox
+                formControlName="requiresSubscription"
+                (checkedChange)="toggleSubscriptions($event)"
+                class="subscription-checkbox"
+                >
+                {{ 'PLUGIN.FORM.ENABLE_SUBSCRIPTIONS' | translate }}
+              </nb-checkbox>
+              <p class="subscription-description">
+                <nb-icon icon="info-outline" status="info"></nb-icon>
+                {{ 'PLUGIN.FORM.SUBSCRIPTION_DESCRIPTION' | translate }}
+              </p>
+            </div>
 
-						@if(pluginForm.get('requiresSubscription')?.value){
-						<div class="subscription-creator-container">
-							<lib-plugin-subscription-plan-creator
-								#subscriptionPlanCreator
-								[pluginId]="plugin?.id"
-								[allowMultiplePlans]="true"
-								[requireAtLeastOnePlan]="pluginForm.get('requiresSubscription')?.value"
-								(plansChanged)="onSubscriptionPlansChanged($event)"
-								(validationStateChanged)="onSubscriptionValidationChanged($event)"
-							></lib-plugin-subscription-plan-creator>
-						</div>
-						}@else{
-						<div class="no-subscription-message">
-							<nb-alert status="info" size="small">
-								<nb-icon icon="info-outline"></nb-icon>
-								{{ 'PLUGIN.FORM.FREE_PLUGIN_MESSAGE' | translate }}
-							</nb-alert>
-						</div>
-						}
-					</div>
+            @if(pluginForm.get('requiresSubscription')?.value){
+              <div class="subscription-creator-container">
+                <lib-plugin-subscription-plan-creator
+                  #subscriptionPlanCreator
+                  [pluginId]="plugin?.id"
+                  [allowMultiplePlans]="true"
+                  [requireAtLeastOnePlan]="pluginForm.get('requiresSubscription')?.value"
+                  (plansChanged)="onSubscriptionPlansChanged($event)"
+                  (validationStateChanged)="onSubscriptionValidationChanged($event)"
+                ></lib-plugin-subscription-plan-creator>
+              </div>
+              }@else{
+              <div class="no-subscription-message">
+                <nb-alert status="info" size="small">
+                  <nb-icon icon="info-outline"></nb-icon>
+                  {{ 'PLUGIN.FORM.FREE_PLUGIN_MESSAGE' | translate }}
+                </nb-alert>
+              </div>
+            }
+          </div>
 
-					<div class="stepper-buttons">
-						<button nbButton outline status="basic" nbStepperPrevious>
-							{{ 'BUTTONS.PREVIOUS' | translate }}
-						</button>
-						<button
-							nbButton
-							status="primary"
-							nbStepperNext
-							[disabled]="pluginForm.get('requiresSubscription')?.value && !isSubscriptionStepComplete()"
-						>
-							{{ 'BUTTONS.NEXT' | translate }}
-						</button>
-					</div>
-				</nb-step>
+          <div class="stepper-buttons">
+            <button nbButton outline status="basic" nbStepperPrevious>
+              {{ 'BUTTONS.PREVIOUS' | translate }}
+            </button>
+            <button
+              nbButton
+              status="primary"
+              nbStepperNext
+              [disabled]="pluginForm.get('requiresSubscription')?.value && !isSubscriptionStepComplete()"
+              >
+              {{ 'BUTTONS.NEXT' | translate }}
+            </button>
+          </div>
+        </nb-step>
 
-				<!-- Step 6: Review & Submit -->
-				<nb-step [label]="'PLUGIN.FORM.REVIEW' | translate">
-					<div class="review-step-content">
-						<div class="review-header">
-							<nb-icon icon="checkmark-circle-outline" status="success"></nb-icon>
-							<h6>{{ 'PLUGIN.FORM.REVIEW_TITLE' | translate }}</h6>
-						</div>
+        <!-- Step 6: Review & Submit -->
+        <nb-step [label]="'PLUGIN.FORM.REVIEW' | translate">
+          <div class="review-step-content">
+            <div class="review-header">
+              <nb-icon icon="checkmark-circle-outline" status="success"></nb-icon>
+              <h6>{{ 'PLUGIN.FORM.REVIEW_TITLE' | translate }}</h6>
+            </div>
 
-						<!-- Plugin Information Summary -->
-						<div class="review-section">
-							<div class="section-header">
-								<nb-icon icon="cube-outline" status="primary"></nb-icon>
-								<h6>{{ 'PLUGIN.FORM.PLUGIN_INFORMATION' | translate }}</h6>
-							</div>
-							<div class="review-item">
-								<strong>{{ 'PLUGIN.FORM.NAME' | translate }}:</strong>
-								<span>{{ pluginForm.get('name')?.value }}</span>
-							</div>
-							<div class="review-item">
-								<strong>{{ 'PLUGIN.FORM.TYPE' | translate }}:</strong>
-								<span>{{ pluginForm.get('type')?.value }}</span>
-							</div>
-							<div class="review-item">
-								<strong>{{ 'PLUGIN.FORM.STATUS' | translate }}:</strong>
-								<span>{{ pluginForm.get('status')?.value }}</span>
-							</div>
-							<div class="review-item" *ngIf="pluginForm.get('description')?.value">
-								<strong>{{ 'PLUGIN.FORM.DESCRIPTION' | translate }}:</strong>
-								<span>{{ pluginForm.get('description')?.value }}</span>
-							</div>
-						</div>
+            <!-- Plugin Information Summary -->
+            <div class="review-section">
+              <div class="section-header">
+                <nb-icon icon="cube-outline" status="primary"></nb-icon>
+                <h6>{{ 'PLUGIN.FORM.PLUGIN_INFORMATION' | translate }}</h6>
+              </div>
+              <div class="review-item">
+                <strong>{{ 'PLUGIN.FORM.NAME' | translate }}:</strong>
+                <span>{{ pluginForm.get('name')?.value }}</span>
+              </div>
+              <div class="review-item">
+                <strong>{{ 'PLUGIN.FORM.TYPE' | translate }}:</strong>
+                <span>{{ pluginForm.get('type')?.value }}</span>
+              </div>
+              <div class="review-item">
+                <strong>{{ 'PLUGIN.FORM.STATUS' | translate }}:</strong>
+                <span>{{ pluginForm.get('status')?.value }}</span>
+              </div>
+              @if (pluginForm.get('description')?.value) {
+                <div class="review-item">
+                  <strong>{{ 'PLUGIN.FORM.DESCRIPTION' | translate }}:</strong>
+                  <span>{{ pluginForm.get('description')?.value }}</span>
+                </div>
+              }
+            </div>
 
-						<!-- Version Information -->
-						<div class="review-section" *ngIf="pluginForm.get('version')?.value">
-							<h6>{{ 'PLUGIN.FORM.VERSION_INFORMATION' | translate }}</h6>
-							<div class="review-item">
-								<strong>{{ 'PLUGIN.FORM.VERSION_NUMBER' | translate }}:</strong>
-								<span>{{ pluginForm.get('version.number')?.value }}</span>
-							</div>
-							<div class="review-item" *ngIf="pluginForm.get('version.changelog')?.value">
-								<strong>{{ 'PLUGIN.FORM.CHANGELOG' | translate }}:</strong>
-								<span>{{ pluginForm.get('version.changelog')?.value }}</span>
-							</div>
-						</div>
+            <!-- Version Information -->
+            @if (pluginForm.get('version')?.value) {
+              <div class="review-section">
+                <h6>{{ 'PLUGIN.FORM.VERSION_INFORMATION' | translate }}</h6>
+                <div class="review-item">
+                  <strong>{{ 'PLUGIN.FORM.VERSION_NUMBER' | translate }}:</strong>
+                  <span>{{ pluginForm.get('version.number')?.value }}</span>
+                </div>
+                @if (pluginForm.get('version.changelog')?.value) {
+                  <div class="review-item">
+                    <strong>{{ 'PLUGIN.FORM.CHANGELOG' | translate }}:</strong>
+                    <span>{{ pluginForm.get('version.changelog')?.value }}</span>
+                  </div>
+                }
+              </div>
+            }
 
-						<!-- Subscription Plans Summary -->
-						<div
-							class="review-section"
-							*ngIf="pluginForm.get('requiresSubscription')?.value && subscriptionPlans.length > 0"
-						>
-							<h6>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_SUMMARY' | translate }}</h6>
-							<div class="subscription-plans-preview">
-								<div *ngFor="let plan of subscriptionPlans" class="plan-preview-card">
-									<div class="plan-header">
-										<span class="plan-name">{{ plan.name }}</span>
-										<nb-badge [status]="plan.type === 'FREE' ? 'success' : 'primary'">
-											{{ plan.type }}
-										</nb-badge>
-									</div>
-									<div class="plan-price">
-										<span *ngIf="plan.price === 0">Free</span>
-										<span *ngIf="plan.price > 0">
-											{{ plan.currency === 'USD' ? '$' : plan.currency }}{{ plan.price }} /{{
-												plan.billingPeriod
-											}}
-										</span>
-									</div>
-									<div class="plan-features">
-										<small>{{ plan.features.length }} features included</small>
-									</div>
-								</div>
-							</div>
-						</div>
+            <!-- Subscription Plans Summary -->
+            @if (pluginForm.get('requiresSubscription')?.value && subscriptionPlans.length > 0) {
+              <div
+                class="review-section"
+                >
+                <h6>{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS_SUMMARY' | translate }}</h6>
+                <div class="subscription-plans-preview">
+                  @for (plan of subscriptionPlans; track plan) {
+                    <div class="plan-preview-card">
+                      <div class="plan-header">
+                        <span class="plan-name">{{ plan.name }}</span>
+                        <nb-badge [status]="plan.type === 'FREE' ? 'success' : 'primary'">
+                          {{ plan.type }}
+                        </nb-badge>
+                      </div>
+                      <div class="plan-price">
+                        @if (plan.price === 0) {
+                          <span>Free</span>
+                        }
+                        @if (plan.price > 0) {
+                          <span>
+                            {{ plan.currency === 'USD' ? '$' : plan.currency }}{{ plan.price }} /{{
+                            plan.billingPeriod
+                            }}
+                          </span>
+                        }
+                      </div>
+                      <div class="plan-features">
+                        <small>{{ plan.features.length }} features included</small>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
 
-						<!-- Free Plugin Message -->
-						<div class="review-section" *ngIf="!pluginForm.get('requiresSubscription')?.value">
-							<nb-alert status="success" size="small">
-								<nb-icon icon="gift-outline"></nb-icon>
-								{{ 'PLUGIN.FORM.FREE_PLUGIN_REVIEW_MESSAGE' | translate }}
-							</nb-alert>
-						</div>
-					</div>
+            <!-- Free Plugin Message -->
+            @if (!pluginForm.get('requiresSubscription')?.value) {
+              <div class="review-section">
+                <nb-alert status="success" size="small">
+                  <nb-icon icon="gift-outline"></nb-icon>
+                  {{ 'PLUGIN.FORM.FREE_PLUGIN_REVIEW_MESSAGE' | translate }}
+                </nb-alert>
+              </div>
+            }
+          </div>
 
-					<div class="stepper-buttons">
-						<button nbButton outline status="basic" nbStepperPrevious>
-							{{ 'BUTTONS.PREVIOUS' | translate }}
-						</button>
-						<button nbButton type="button" (click)="dismiss()" outline status="danger">
-							{{ 'BUTTONS.CANCEL' | translate }}
-						</button>
-						<button
-							nbButton
-							type="submit"
-							status="success"
-							[disabled]="!canProceedToFinalStep() || isSubmitting"
-							[nbSpinner]="isSubmitting"
-							nbSpinnerStatus="success"
-							nbSpinnerSize="small"
-						>
-							{{ (!!plugin ? 'BUTTONS.UPDATE' : 'BUTTONS.UPLOAD') | translate }}
-						</button>
-					</div>
-				</nb-step>
-			</nb-stepper>
-		</form>
-	</nb-card-body>
+          <div class="stepper-buttons">
+            <button nbButton outline status="basic" nbStepperPrevious>
+              {{ 'BUTTONS.PREVIOUS' | translate }}
+            </button>
+            <button nbButton type="button" (click)="dismiss()" outline status="danger">
+              {{ 'BUTTONS.CANCEL' | translate }}
+            </button>
+            <button
+              nbButton
+              type="submit"
+              status="success"
+              [disabled]="!canProceedToFinalStep() || isSubmitting"
+              [nbSpinner]="isSubmitting"
+              nbSpinnerStatus="success"
+              nbSpinnerSize="small"
+              >
+              {{ (!!plugin ? 'BUTTONS.UPDATE' : 'BUTTONS.UPLOAD') | translate }}
+            </button>
+          </div>
+        </nb-step>
+      </nb-stepper>
+    </form>
+  </nb-card-body>
 </nb-card>

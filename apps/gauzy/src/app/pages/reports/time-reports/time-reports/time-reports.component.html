@@ -1,48 +1,50 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
-	<nb-card-header>
-		<div class="row">
-			<div class="col-auto">
-				<h4>
-					<ngx-header-title>
-						{{ 'REPORT_PAGE.TIME_AND_ACTIVITY_REPORT' | translate }}
-					</ngx-header-title>
-				</h4>
-				<ng-container *ngIf="request?.startDate && request?.endDate">
-					<ngx-date-range-title
-						[start]="request?.startDate"
-						[end]="request?.endDate"
-						[format]="'dddd, LL'"
-					></ngx-date-range-title>
-				</ng-container>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-auto ml-auto">
-				<ngx-gauzy-filters
-					[filters]="filters"
-					[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-					(filtersChange)="filtersChange($event)"
-				></ngx-gauzy-filters>
-			</div>
-		</div>
-	</nb-card-header>
-	<nb-card-body class="report-body">
-		<div class="report-container">
-			<div class="daily-statistics">
-				<ga-daily-statistics [filters]="filters"></ga-daily-statistics>
-			</div>
-			<div class="daily-time-report">
-				<nb-card>
-					<nb-card-body class="chart" *ngIf="organization">
-						<ngx-line-chart
-							[data]="charts"
-							[standardWorkHours]="organization?.standardWorkHoursPerDay"
-							[enableAnnotations]="true"
-						></ngx-line-chart>
-					</nb-card-body>
-				</nb-card>
-			</div>
-			<ga-daily-grid [filters]="filters"></ga-daily-grid>
-		</div>
-	</nb-card-body>
+  <nb-card-header>
+    <div class="row">
+      <div class="col-auto">
+        <h4>
+          <ngx-header-title>
+            {{ 'REPORT_PAGE.TIME_AND_ACTIVITY_REPORT' | translate }}
+          </ngx-header-title>
+        </h4>
+        @if (request?.startDate && request?.endDate) {
+          <ngx-date-range-title
+            [start]="request?.startDate"
+            [end]="request?.endDate"
+            [format]="'dddd, LL'"
+          ></ngx-date-range-title>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-auto ml-auto">
+        <ngx-gauzy-filters
+          [filters]="filters"
+          [saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+          (filtersChange)="filtersChange($event)"
+        ></ngx-gauzy-filters>
+      </div>
+    </div>
+  </nb-card-header>
+  <nb-card-body class="report-body">
+    <div class="report-container">
+      <div class="daily-statistics">
+        <ga-daily-statistics [filters]="filters"></ga-daily-statistics>
+      </div>
+      <div class="daily-time-report">
+        <nb-card>
+          @if (organization) {
+            <nb-card-body class="chart">
+              <ngx-line-chart
+                [data]="charts"
+                [standardWorkHours]="organization?.standardWorkHoursPerDay"
+                [enableAnnotations]="true"
+              ></ngx-line-chart>
+            </nb-card-body>
+          }
+        </nb-card>
+      </div>
+      <ga-daily-grid [filters]="filters"></ga-daily-grid>
+    </div>
+  </nb-card-body>
 </nb-card>

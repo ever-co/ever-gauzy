@@ -1,14 +1,28 @@
-<div [ngSwitch]="probability" class="text-center" style="border-radius: 0.25rem; min-width: 5rem">
-	<div *ngSwitchCase="1" class="badge-danger">{{ probability }} - {{ 'PIPELINE_DEALS_PAGE.LOW' | translate }}</div>
-	<div *ngSwitchCase="2" class="badge-danger">{{ probability }} - {{ 'PIPELINE_DEALS_PAGE.LOW' | translate }}</div>
-	<div *ngSwitchCase="3" class="badge-warning">
-		{{ probability }} - {{ 'PIPELINE_DEALS_PAGE.MEDIUM' | translate }}
-	</div>
-	<div *ngSwitchCase="4" class="badge-warning">
-		{{ probability }} - {{ 'PIPELINE_DEALS_PAGE.MEDIUM' | translate }}
-	</div>
-	<div *ngSwitchCase="5" class="badge-success">{{ probability }} - {{ 'PIPELINE_DEALS_PAGE.HIGH' | translate }}</div>
-	<div *ngSwitchDefault class="badge-primary">
-		{{ probability }} - {{ 'PIPELINE_DEALS_PAGE.UNKNOWN' | translate }}
-	</div>
+<div class="text-center" style="border-radius: 0.25rem; min-width: 5rem">
+  @switch (probability) {
+    @case (1) {
+      <div class="badge-danger">{{ probability }} - {{ 'PIPELINE_DEALS_PAGE.LOW' | translate }}</div>
+    }
+    @case (2) {
+      <div class="badge-danger">{{ probability }} - {{ 'PIPELINE_DEALS_PAGE.LOW' | translate }}</div>
+    }
+    @case (3) {
+      <div class="badge-warning">
+        {{ probability }} - {{ 'PIPELINE_DEALS_PAGE.MEDIUM' | translate }}
+      </div>
+    }
+    @case (4) {
+      <div class="badge-warning">
+        {{ probability }} - {{ 'PIPELINE_DEALS_PAGE.MEDIUM' | translate }}
+      </div>
+    }
+    @case (5) {
+      <div class="badge-success">{{ probability }} - {{ 'PIPELINE_DEALS_PAGE.HIGH' | translate }}</div>
+    }
+    @default {
+      <div class="badge-primary">
+        {{ probability }} - {{ 'PIPELINE_DEALS_PAGE.UNKNOWN' | translate }}
+      </div>
+    }
+  }
 </div>

@@ -1,87 +1,89 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"
-			><i class="fas fa-times" (click)="closeDialog()"></i
-		></span>
-		<h5 class="title">
-			{{
-				(equipment
-					? 'EQUIPMENT_PAGE.EDIT_EQUIPMENT'
-					: 'EQUIPMENT_PAGE.ADD_EQUIPMENT'
-				) | translate
-			}}
-		</h5>
-	</nb-card-header>
-	<nb-card-body class="body">
-		<form [formGroup]="form" *ngIf="form">
-			<div class="row mt-3">
-				<div class="col-sm-3 mb-5">
-					<div class="equipment-img" (click)="onAddImageClick()">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							xmlns:xlink="http://www.w3.org/1999/xlink"
-							width="68"
-							height="68"
-							viewBox="0 0 68 68"
-							[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
-						>
-							<defs>
-								<path
-									id="a"
-									d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
-								/>
-							</defs>
-							<g fill="none" fill-rule="evenodd">
-								<circle
-									cx="34"
-									cy="34"
-									r="34"
-									fill="#0091FF"
-									opacity=".3"
-								/>
-								<circle
-									cx="34"
-									cy="34"
-									r="26"
-									fill="#0091FF"
-									opacity=".9"
-								/>
-								<use
-									fill="#FFF"
-									fill-rule="nonzero"
-									xlink:href="#a"
-								/>
-							</g>
-						</svg>
-						<div
-							class="image-overlay"
-							[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
-						></div>
-
-						<img
-							*ngIf="image && image?.fullUrl"
-							class="featured-image"
-							[src]="image?.fullUrl"
-							alt="Feature image"
-							style="width: 150px"
-						/>
-						<div
-							*ngIf="!image"
-							class="featured-image no-image"
-							style="width: 150px"
-						></div>
-					</div>
-				</div>
-				<div class="col-sm-9 pl-4 mb-5">
-					<div class="form-group mb-3">
-						<label for="name" class="label">
-							{{ 'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate }}
-						</label>
-						<input
-							nbInput
-							type="text"
-							formControlName="name"
-							fullWidth
+  <nb-card-header class="d-flex flex-column">
+    <span class="cancel"
+      ><i class="fas fa-times" (click)="closeDialog()"></i
+    ></span>
+    <h5 class="title">
+      {{
+      (equipment
+      ? 'EQUIPMENT_PAGE.EDIT_EQUIPMENT'
+      : 'EQUIPMENT_PAGE.ADD_EQUIPMENT'
+      ) | translate
+      }}
+    </h5>
+  </nb-card-header>
+  <nb-card-body class="body">
+    @if (form) {
+      <form [formGroup]="form">
+        <div class="row mt-3">
+          <div class="col-sm-3 mb-5">
+            <div class="equipment-img" (click)="onAddImageClick()">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
+                width="68"
+                height="68"
+                viewBox="0 0 68 68"
+                [ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+                >
+                <defs>
+                  <path
+                    id="a"
+                    d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+                    />
+                  </defs>
+                  <g fill="none" fill-rule="evenodd">
+                    <circle
+                      cx="34"
+                      cy="34"
+                      r="34"
+                      fill="#0091FF"
+                      opacity=".3"
+                      />
+                      <circle
+                        cx="34"
+                        cy="34"
+                        r="26"
+                        fill="#0091FF"
+                        opacity=".9"
+                        />
+                        <use
+                          fill="#FFF"
+                          fill-rule="nonzero"
+                          xlink:href="#a"
+                          />
+                        </g>
+                      </svg>
+                      <div
+                        class="image-overlay"
+                        [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
+                      ></div>
+                      @if (image && image?.fullUrl) {
+                        <img
+                          class="featured-image"
+                          [src]="image?.fullUrl"
+                          alt="Feature image"
+                          style="width: 150px"
+                          />
+                      }
+                      @if (!image) {
+                        <div
+                          class="featured-image no-image"
+                          style="width: 150px"
+                        ></div>
+                      }
+                    </div>
+                  </div>
+                  <div class="col-sm-9 pl-4 mb-5">
+                    <div class="form-group mb-3">
+                      <label for="name" class="label">
+                        {{ 'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate }}
+                      </label>
+                      <input
+                        nbInput
+                        type="text"
+                        formControlName="name"
+                        fullWidth
 							placeholder="{{
 								'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate
 							}}"
@@ -93,21 +95,20 @@
 									form.controls['name'].valid &&
 									form.controls['name'].dirty
 							}"
-						/>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<label for="type" class="label">
-						{{ 'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate }}
-					</label>
-					<input
-						nbInput
-						type="text"
-						formControlName="type"
-						fullWidth
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-6 mb-3">
+                      <label for="type" class="label">
+                        {{ 'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate }}
+                      </label>
+                      <input
+                        nbInput
+                        type="text"
+                        formControlName="type"
+                        fullWidth
 						placeholder="{{
 							'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate
 						}}"
@@ -119,20 +120,20 @@
 								form.controls['type'].valid &&
 								form.controls['type'].dirty
 						}"
-					/>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<label for="manufacturedYear" class="label">
-						{{
-							'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
-								| translate
-						}}
-					</label>
-					<input
-						nbInput
-						type="number"
-						formControlName="manufacturedYear"
-						fullWidth
+                        />
+                      </div>
+                      <div class="col-sm-6 mb-3">
+                        <label for="manufacturedYear" class="label">
+                          {{
+                          'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
+                          | translate
+                          }}
+                        </label>
+                        <input
+                          nbInput
+                          type="number"
+                          formControlName="manufacturedYear"
+                          fullWidth
 						placeholder="{{
 							'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
 								| translate
@@ -145,37 +146,36 @@
 								form.controls['manufacturedYear'].valid &&
 								form.controls['manufacturedYear'].dirty
 						}"
-					/>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<label for="serialNumber" class="label">
-						{{ 'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate }}
-					</label>
-					<input
-						nbInput
-						type="text"
-						formControlName="serialNumber"
-						fullWidth
+                          />
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-sm-6 mb-3">
+                          <label for="serialNumber" class="label">
+                            {{ 'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate }}
+                          </label>
+                          <input
+                            nbInput
+                            type="text"
+                            formControlName="serialNumber"
+                            fullWidth
 						placeholder="{{
 							'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate
 						}}"
-					/>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<label for="name" class="label">
-						{{
-							'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
-								| translate
-						}}
-					</label>
-					<input
-						nbInput
-						type="number"
-						formControlName="maxSharePeriod"
-						fullWidth
+                            />
+                          </div>
+                          <div class="col-sm-6 mb-3">
+                            <label for="name" class="label">
+                              {{
+                              'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
+                              | translate
+                              }}
+                            </label>
+                            <input
+                              nbInput
+                              type="number"
+                              formControlName="maxSharePeriod"
+                              fullWidth
 						placeholder="{{
 							'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
 								| translate
@@ -188,22 +188,21 @@
 								form.controls['maxSharePeriod'].valid &&
 								form.controls['maxSharePeriod'].dirty
 						}"
-					/>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<label for="initialCost" class="label">
-						{{
-							'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
-						}}
-					</label>
-					<input
-						nbInput
-						type="number"
-						formControlName="initialCost"
-						fullWidth
+                              />
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-sm-6 mb-3">
+                              <label for="initialCost" class="label">
+                                {{
+                                'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
+                                }}
+                              </label>
+                              <input
+                                nbInput
+                                type="number"
+                                formControlName="initialCost"
+                                fullWidth
 						placeholder="{{
 							'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
 						}}"
@@ -215,57 +214,55 @@
 								form.controls['initialCost'].valid &&
 								form.controls['initialCost'].dirty
 						}"
-					/>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<ga-currency formControlName="currency"></ga-currency>
-				</div>
-			</div>
+                                />
+                              </div>
+                              <div class="col-sm-6 mb-3">
+                                <ga-currency formControlName="currency"></ga-currency>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-sm-12">
+                                <ga-tags-color-input
+                                  [selectedTags]="form.get('tags')?.value"
+                                  (selectedTagsEvent)="selectedTagsEvent($event)"
+                                  [isOrgLevel]="true"
+                                ></ga-tags-color-input>
+                              </div>
+                            </div>
+                            <div class="row mt-3">
+                              <div class="col-sm-9 mb-3">
+                                <div class="form-group mb-3">
+                                  <nb-checkbox formControlName="autoApproveShare">
+                                    <span>{{
+                                      'EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE'
+                                      | translate
+                                    }}</span>
+                                  </nb-checkbox>
+                                </div>
+                              </div>
+                            </div>
+                            <input type="hidden" formControlName="id" />
+                          </form>
+                        }
+                      </nb-card-body>
 
-			<div class="row">
-				<div class="col-sm-12">
-					<ga-tags-color-input
-						[selectedTags]="form.get('tags')?.value"
-						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isOrgLevel]="true"
-					></ga-tags-color-input>
-				</div>
-			</div>
-
-			<div class="row mt-3">
-				<div class="col-sm-9 mb-3">
-					<div class="form-group mb-3">
-						<nb-checkbox formControlName="autoApproveShare">
-							<span>{{
-								'EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE'
-									| translate
-							}}</span>
-						</nb-checkbox>
-					</div>
-				</div>
-			</div>
-
-			<input type="hidden" formControlName="id" />
-		</form>
-	</nb-card-body>
-
-	<nb-card-footer class="text-left">
-		<button
-			(click)="dialogRef.close()"
-			status="basic"
-			class="mr-2"
-			outline
-			nbButton
-		>
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button
-			[disabled]="form.invalid"
-			(click)="saveEquipment()"
-			status="success"
-			nbButton
-		>
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</nb-card-footer>
-</nb-card>
+                      <nb-card-footer class="text-left">
+                        <button
+                          (click)="dialogRef.close()"
+                          status="basic"
+                          class="mr-2"
+                          outline
+                          nbButton
+                          >
+                          {{ 'BUTTONS.CANCEL' | translate }}
+                        </button>
+                        <button
+                          [disabled]="form.invalid"
+                          (click)="saveEquipment()"
+                          status="success"
+                          nbButton
+                          >
+                          {{ 'BUTTONS.SAVE' | translate }}
+                        </button>
+                      </nb-card-footer>
+                    </nb-card>

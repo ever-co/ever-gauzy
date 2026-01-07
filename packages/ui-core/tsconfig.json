@@ -10,13 +10,10 @@
 		"noFallthroughCasesInSwitch": true,
 		"baseUrl": ".",
 		"paths": {
-			"@gauzy/ui-core/*": [
-				"./*/src/index.ts"
-			],
-			"@gauzy/ui-config": [
-				"./../../dist/packages/ui-config"
-			]
-		}
+			"@gauzy/ui-core/*": ["./*/src/index.ts"],
+			"@gauzy/ui-config": ["./../../dist/packages/ui-config"]
+		},
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],

@@ -1,9 +1,11 @@
 <div class="stars" [ngClass]="{ gridView: isGridView }">
-	<div *ngFor="let star of stars; let i = index" class="stars-icon">
-		<span
-			class="ion ion-md-{{ star.icon }} rating-star-icon"
-			[ngClass]="{ 'gold-star': star.active }"
-			[style.font-size]="isGridView ? '1rem' : '1.5rem'"
-		></span>
-	</div>
+  @for (star of stars; track star; let i = $index) {
+    <div class="stars-icon">
+      <span
+        class="ion ion-md-{{ star.icon }} rating-star-icon"
+        [ngClass]="{ 'gold-star': star.active }"
+        [style.font-size]="isGridView ? '1rem' : '1.5rem'"
+      ></span>
+    </div>
+  }
 </div>

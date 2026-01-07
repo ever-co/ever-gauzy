@@ -1,57 +1,61 @@
 <nb-card>
-	<nb-card-body class="pb-0">
-		<div class="custom-header">
-			<div class="title">
-				<h5>
-					{{
-						(!recurringAvailabilityMode
-							? 'SCHEDULE.DATE_SPECIFIC_AVAILABILITY'
-							: 'SCHEDULE.RECURRING_AVAILABILITY'
-						) | translate
-					}}
-					<nb-icon
-						class="ml-2"
-						icon="link-2-outline"
+  <nb-card-body class="pb-0">
+    <div class="custom-header">
+      <div class="title">
+        <h5>
+          {{
+          (!recurringAvailabilityMode
+          ? 'SCHEDULE.DATE_SPECIFIC_AVAILABILITY'
+          : 'SCHEDULE.RECURRING_AVAILABILITY'
+          ) | translate
+          }}
+          <nb-icon
+            class="ml-2"
+            icon="link-2-outline"
 						nbTooltip="{{
 							(!recurringAvailabilityMode
 								? 'SCHEDULE.DATE_SPECIFIC_AVAILABILITY_TOOLTIP'
 								: 'SCHEDULE.RECURRING_AVAILABILITY_TOOLTIP'
 							) | translate
 						}}"
-						nbTooltipTrigger="hover"
-					>
-					</nb-icon>
-				</h5>
-			</div>
-			<div class="time-range" *ngIf="recurringAvailabilityMode">
-				<div class="col">
-					{{
-						(organization?.startWeekOn == weekDaysEnum.MONDAY
-							? 'SCHEDULE.MONDAY_FRIDAY'
-							: 'SCHEDULE.SUNDAY_THURSDAY'
-						) | translate
-					}}
-				</div>
-				<div class="col">
-					<ga-timer-picker [(ngModel)]="createForm.startTime"></ga-timer-picker>
-				</div>
-				<div class="col">
-					<ga-timer-picker [(ngModel)]="createForm.endTime"></ga-timer-picker>
-				</div>
-				<div class="col">
-					<button
-						nbButton
-						status="primary"
-						(click)="setSchedule()"
-						[disabled]="!createForm.startTime || !createForm.endTime ? true : false"
-					>
-						{{ 'BUTTONS.SET' | translate }}
-					</button>
-				</div>
-			</div>
-		</div>
-		<div class="custom-calendar">
-			<full-calendar *ngIf="!loading" #calendar [options]="calendarOptions"></full-calendar>
-		</div>
-	</nb-card-body>
+            nbTooltipTrigger="hover"
+            >
+          </nb-icon>
+        </h5>
+      </div>
+      @if (recurringAvailabilityMode) {
+        <div class="time-range">
+          <div class="col">
+            {{
+            (organization?.startWeekOn == weekDaysEnum.MONDAY
+            ? 'SCHEDULE.MONDAY_FRIDAY'
+            : 'SCHEDULE.SUNDAY_THURSDAY'
+            ) | translate
+            }}
+          </div>
+          <div class="col">
+            <ga-timer-picker [(ngModel)]="createForm.startTime"></ga-timer-picker>
+          </div>
+          <div class="col">
+            <ga-timer-picker [(ngModel)]="createForm.endTime"></ga-timer-picker>
+          </div>
+          <div class="col">
+            <button
+              nbButton
+              status="primary"
+              (click)="setSchedule()"
+              [disabled]="!createForm.startTime || !createForm.endTime ? true : false"
+              >
+              {{ 'BUTTONS.SET' | translate }}
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+    <div class="custom-calendar">
+      @if (!loading) {
+        <full-calendar #calendar [options]="calendarOptions"></full-calendar>
+      }
+    </div>
+  </nb-card-body>
 </nb-card>

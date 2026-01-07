@@ -17,25 +17,24 @@ import { Store } from '@gauzy/ui-core/core';
 @Component({
     selector: 'ga-employee-doughnut-chart',
     template: `
-		<ng-template [ngIf]="employeeStatistics.length" [ngIfElse]="chartNotFoundTemplate">
-			<!-- <span>{{ displayDate }}</span> -->
-			<canvas
-				style="height: 500px; width: 500px;"
-				baseChart
-				[data]="data"
-				[options]="chartOptions"
-				[type]="chartType"
-			></canvas>
-		</ng-template>
-		<ng-template #chartNotFoundTemplate>
-			<div class="title">
-				<nb-icon icon="info-outline"></nb-icon>
-				<div>
-					{{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
-				</div>
-			</div>
-		</ng-template>
-	`,
+		@if (employeeStatistics.length) {
+		  <!-- <span>{{ displayDate }}</span> -->
+		  <canvas
+		    style="height: 500px; width: 500px;"
+		    baseChart
+		    [data]="data"
+		    [options]="chartOptions"
+		    [type]="chartType"
+		  ></canvas>
+		} @else {
+		  <div class="title">
+		    <nb-icon icon="info-outline"></nb-icon>
+		    <div>
+		      {{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
+		    </div>
+		  </div>
+		}
+		`,
     styles: [
         `
 			:host {

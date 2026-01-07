@@ -1,5 +1,5 @@
-import { DOCUMENT } from '@angular/common';
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+
+import { Component, Inject, OnDestroy, OnInit, DOCUMENT } from '@angular/core';
 import { LegalService } from '../../providers/legal.service';
 
 export const PRIVACY_POLICY_ENDPOINT = 'https://www.iubenda.com/api/privacy-policy/18120170';
