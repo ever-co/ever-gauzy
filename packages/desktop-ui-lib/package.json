@@ -28,7 +28,7 @@
 		"@angular/core": "^20.0.7"
 	},
 	"dependencies": {
-		"@angular-slider/ngx-slider": "^19.0.0",
+		"@angular-slider/ngx-slider": "^20.0.0",
 		"@angular/animations": "^20.0.7",
 		"@angular/forms": "^20.0.7",
 		"@angular/platform-browser": "^20.0.7",

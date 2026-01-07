@@ -512,10 +512,10 @@
   dependencies:
     "@angular-eslint/bundled-angular-compiler" "19.4.0"
 
-"@angular-slider/ngx-slider@^19.0.0":
-  version "19.0.0"
-  resolved "https://registry.yarnpkg.com/@angular-slider/ngx-slider/-/ngx-slider-19.0.0.tgz#02c278d732bb076ecfc9f700096787b9c24a8469"
-  integrity sha512-VVJ+Fij5SKnbltxh6TdoBAUAKWfCnSLRPZ7e+r2uO88t8qte5/KHqVOdK4DWCjBr3rEr4YrPR4ylqBCuAWPsKQ==
+"@angular-slider/ngx-slider@^20.0.0":
+  version "20.0.0"
+  resolved "https://registry.yarnpkg.com/@angular-slider/ngx-slider/-/ngx-slider-20.0.0.tgz#f27fc56b9dad9bfa2e97aaa07680306333aab5b1"
+  integrity sha512-tDBAh3PvgtuQ7ExXlvOGcRcoHFaPybFwIp2mvOI2xO0q0nsUdB4JTOPrGIYNEzOMTZ+wxWNbZ8ZkQx7VwGsNzA==
   dependencies:
     detect-passive-events "^2.0.3"
     rxjs "^7.8.1"
@@ -3819,12 +3819,12 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@bluehalo/ngx-leaflet@^19.0.0":
-  version "19.0.0"
-  resolved "https://registry.yarnpkg.com/@bluehalo/ngx-leaflet/-/ngx-leaflet-19.0.0.tgz#53125e8c96c144c7ee6b5cd751e0bf3967f8d893"
-  integrity sha512-c1BUyDcS5QB3bwG9QUCNJLB/G3hdYQmaj37TaeCNnKUo9TViOCEhPihCXDTRAFkobbtNGXN8lGg8uD5GXv6/Zw==
+"@bluehalo/ngx-leaflet@^20.0.0":
+  version "20.0.0"
+  resolved "https://registry.yarnpkg.com/@bluehalo/ngx-leaflet/-/ngx-leaflet-20.0.0.tgz#10133471d4c9f12a6c195846b125dec49a65e4d0"
+  integrity sha512-vXFn8+eozCuJtHRrbG+uEavt4sCHiTyicpfhlbMt2ZxanLFVqBRhNEsROqSTYdv0fXuGps7Q+7aZYmv15+W+nA==
   dependencies:
-    tslib "^2.3.0"
+    tslib "^2.8.0"
 
 "@borewit/text-codec@^0.1.0":
   version "0.1.1"
@@ -30999,10 +30999,10 @@ ngx-color-picker@^19.0.0:
   dependencies:
     tslib "^2.3.0"
 
-ngx-cookie-service@^19.1.2:
-  version "19.1.2"
-  resolved "https://registry.yarnpkg.com/ngx-cookie-service/-/ngx-cookie-service-19.1.2.tgz#d96c073705bfd9740609b6635bb2a23973a1760d"
-  integrity sha512-4BFbc5BA7/ryuQVZUfDMHcjdgkHeW8obqfCCknoOEaplefjzlVvMQUx9Hywfjbc8POzZeZD2csS43Hs7rscJcA==
+ngx-cookie-service@^20.1.1:
+  version "20.1.1"
+  resolved "https://registry.yarnpkg.com/ngx-cookie-service/-/ngx-cookie-service-20.1.1.tgz#ea1873f56e7775f7b7a2393735cfdff4db981489"
+  integrity sha512-jGjjIqu+Kt8De6YjDqTQOaUHKB7gYs0eaDuLyXfNhfKnA78lA7D7oWcaIzjkmXhRqTnh2/ex1UHmZHN9MX0yoQ==
   dependencies:
     tslib "^2.8.0"
 
@@ -31071,17 +31071,17 @@ ngx-moment@^6.0.2:
   dependencies:
     tslib "^2.3.0"
 
-ngx-page-scroll-core@^14.0.1:
-  version "14.0.1"
-  resolved "https://registry.yarnpkg.com/ngx-page-scroll-core/-/ngx-page-scroll-core-14.0.1.tgz#a485bddccb740f14ef47018c477cfdcf6c734ee0"
-  integrity sha512-bQzKs4FBpE/QEjxsVpyJs79R0RK0F4T9SMkYf/0jXGOpJdretRVvfOMB5kVk7rK1QKwLBFAwGjG9tIFj7BEhJw==
+ngx-page-scroll-core@^15.0.1:
+  version "15.0.1"
+  resolved "https://registry.yarnpkg.com/ngx-page-scroll-core/-/ngx-page-scroll-core-15.0.1.tgz#981f95cbe30db31fa95173c9a6646ffdcbefa858"
+  integrity sha512-RdMWR7rFGGrAqhOzJqZ3KKnKgYQGuxsBOpOMtYGzsuNtH39WoT8GUndLkWSIZTyWe/rnCPbaNksqKUgQWzQE+A==
   dependencies:
     tslib "^2.6.2"
 
-ngx-page-scroll@^14.0.1:
-  version "14.0.1"
-  resolved "https://registry.yarnpkg.com/ngx-page-scroll/-/ngx-page-scroll-14.0.1.tgz#9269a965636be582dd4f225591e6772c33ecfa1a"
-  integrity sha512-FRQlBWRLcKa6l9yNFbjxPqTLtSR/VWMRTTDYBMpE2gWFqaV8YnPwS2XHNAZ+bfN7Qv0UqEDaxByBoj9mKmMPQA==
+ngx-page-scroll@^15.0.1:
+  version "15.0.1"
+  resolved "https://registry.yarnpkg.com/ngx-page-scroll/-/ngx-page-scroll-15.0.1.tgz#b37dc0b3b38813b5f8fb2ec6dc3f5c525120f275"
+  integrity sha512-R2yg6T66TfnwbAS4TEPNj9+4HKZWxyESJRb2+PPWUx6fbgIyDEKQeHYcjkY1pdaN8dGPkXRR6HxT49baMNWtPQ==
   dependencies:
     tslib "^2.6.2"
 
