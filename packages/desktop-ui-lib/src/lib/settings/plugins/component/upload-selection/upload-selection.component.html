@@ -4,7 +4,14 @@
 			<nb-icon icon="cloud-upload-outline" class="header-icon"></nb-icon>
 			<h5 class="title">{{ 'PLUGIN.UPLOAD_SELECTION.TITLE' | translate }}</h5>
 		</div>
-		<button class="close-button" nbButton ghost (click)="dismiss()" [attr.aria-label]="'BUTTONS.CLOSE' | translate">
+		<button
+			class="close-button"
+			size="small"
+			nbButton
+			ghost
+			(click)="dismiss()"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+		>
 			<nb-icon icon="close-outline"></nb-icon>
 		</button>
 	</nb-card-header>

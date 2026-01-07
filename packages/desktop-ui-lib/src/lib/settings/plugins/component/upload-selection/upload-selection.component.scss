@@ -27,12 +27,8 @@
     }
 
     .close-button {
-      padding: 0;
-      min-width: auto;
-
-      nb-icon {
-        font-size: 1.5rem;
-      }
+      padding: 0.5rem;
+      border-radius: var(--border-radius);
     }
   }
 

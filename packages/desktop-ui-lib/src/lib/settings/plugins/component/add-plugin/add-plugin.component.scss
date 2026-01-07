@@ -81,9 +81,10 @@ h4 {
 
 .close-button {
   flex-shrink: 0;
+  padding: 0.5rem;
   color: var(--gauzy-text-color-2);
   transition: all 0.2s ease-in-out;
-  border-radius: 50%;
+  border-radius: var(--border-radius);
 
   &:hover {
     color: var(--gauzy-text-color-1);
