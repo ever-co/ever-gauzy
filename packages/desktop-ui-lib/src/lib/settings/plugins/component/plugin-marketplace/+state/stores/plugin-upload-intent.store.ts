@@ -7,7 +7,7 @@ export enum UploadIntent {
 }
 
 export interface IPluginUploadIntentState {
-	intent: UploadIntent;
+	intent: UploadIntent | null;
 }
 
 export function createInitialUploadIntentState(): IPluginUploadIntentState {
@@ -25,7 +25,7 @@ export class PluginUploadIntentStore extends Store<IPluginUploadIntentState> {
 
 	/**
 	 * Set the upload intent
-	 * @param intent - 'install' for local installation, 'publish' for marketplace publishing, null to clear
+	 * @param intent - 'install' for local installation, 'publish' for marketplace publishing
 	 */
 	public setIntent(intent: UploadIntent): void {
 		this.update({ intent });

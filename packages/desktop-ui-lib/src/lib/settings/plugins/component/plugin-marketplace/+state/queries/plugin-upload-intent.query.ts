@@ -8,7 +8,7 @@ export class PluginUploadIntentQuery extends Query<IPluginUploadIntentState> {
 	/**
 	 * Observable of the current upload intent
 	 */
-	public intent$: Observable<UploadIntent> = this.select((state) => state.intent);
+	public intent$: Observable<UploadIntent | null> = this.select((state) => state.intent);
 
 	constructor(protected store: PluginUploadIntentStore) {
 		super(store);
@@ -17,7 +17,7 @@ export class PluginUploadIntentQuery extends Query<IPluginUploadIntentState> {
 	/**
 	 * Get the current upload intent value
 	 */
-	public get intent(): UploadIntent {
+	public get intent(): UploadIntent | null {
 		return this.getValue().intent;
 	}
 }
