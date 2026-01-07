@@ -2,7 +2,7 @@ import { logger } from '@gauzy/desktop-core';
 import { createReadStream, createWriteStream } from 'fs';
 import * as fs from 'fs/promises';
 import fetch from 'node-fetch';
-import { finished } from 'node:stream/promises';
+import { finished, pipeline } from 'node:stream/promises';
 import * as path from 'path';
 import * as unzipper from 'unzipper';
 import { ICdnDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy } from '../../shared';
@@ -636,7 +636,9 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 			await fs.mkdir(dirPath, { recursive: true });
 			extractedFiles.push(dirPath);
 		} catch (err) {
-			logger.error(`Failed to create directory ${dirPath}: ${err.message}`);
+			const errorMessage = err instanceof Error ? err.message : String(err);
+			logger.error(`Failed to create directory ${dirPath}: ${errorMessage}`);
+			throw new Error(`Failed to create directory ${dirPath}: ${errorMessage}`);
 		} finally {
 			entry.autodrain();
 		}
@@ -652,10 +654,13 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 	}): Promise<void> {
 		const { entry, entryPath, targetPath, extractedFiles, baseDir, onManifestDetected } = options;
 
+		let writeStream: ReturnType<typeof createWriteStream> | null = null;
+		let safeTargetPath: string | null = null;
+
 		try {
 			// Resolve and validate the target path to prevent path traversal
 			const baseRealPath = await fs.realpath(baseDir);
-			const safeTargetPath = path.resolve(baseRealPath, path.relative(baseDir, targetPath));
+			safeTargetPath = path.resolve(baseRealPath, path.relative(baseDir, targetPath));
 
 			if (!safeTargetPath.startsWith(baseRealPath + path.sep)) {
 				logger.warn(`Unsafe target path detected, skipping extraction of entry: ${entryPath}`);
@@ -665,9 +670,10 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 
 			await fs.mkdir(path.dirname(safeTargetPath), { recursive: true });
 
-			const writeStream = createWriteStream(safeTargetPath);
-			entry.pipe(writeStream);
-			await finished(writeStream);
+			writeStream = createWriteStream(safeTargetPath);
+
+			// Use pipeline for proper stream handling with error propagation
+			await pipeline(entry, writeStream);
 
 			extractedFiles.push(safeTargetPath);
 
@@ -675,8 +681,37 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 				onManifestDetected(path.dirname(safeTargetPath));
 			}
 		} catch (err) {
-			logger.error(`Failed to extract ${entryPath}: ${err.message}`);
-			entry.autodrain();
+			logger.error(
+				`Failed to extract ${entryPath}: ${err instanceof Error ? err.stack || err.message : String(err)}`
+			);
+
+			// Destroy streams to release resources
+			if (!entry.destroyed) {
+				entry.destroy();
+			}
+			if (writeStream && !writeStream.destroyed) {
+				writeStream.destroy();
+			}
+
+			// Remove incomplete target file if it exists
+			if (safeTargetPath) {
+				try {
+					await fs.unlink(safeTargetPath);
+					logger.info(`Removed incomplete file: ${safeTargetPath}`);
+				} catch (unlinkErr) {
+					// File may not exist or already removed, ignore ENOENT errors
+					if ((unlinkErr as NodeJS.ErrnoException).code !== 'ENOENT') {
+						logger.warn(
+							`Failed to remove incomplete file ${safeTargetPath}: ${
+								unlinkErr instanceof Error ? unlinkErr.message : String(unlinkErr)
+							}`
+						);
+					}
+				}
+			}
+
+			// Re-throw the error to propagate it to the caller
+			throw err;
 		}
 	}
 }
