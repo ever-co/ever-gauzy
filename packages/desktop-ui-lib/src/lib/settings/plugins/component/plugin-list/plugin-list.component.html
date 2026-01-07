@@ -1,9 +1,33 @@
 <!-- State variables -->
-@let installing = installationQuery.installing$() | async; @let uninstalling = installationQuery.uninstalling$() |
-async; @let activating = query.activating$ | async; @let deactivating = query.deactivating$ | async; @let disabled =
-installing || uninstalling || activating || deactivating; @let selected = query.plugin$ | async; @let loading =
-query.isLoading$ | async; @let source = sourceData$ | async; @let plugins = plugins$ | async; @let isPluginAvailable =
-plugins && plugins.length > 0;
+<!-- Whether a plugin is being installed -->
+@let installing = installationQuery.installing$() | async;
+
+<!-- Whether a plugin is being uninstalled -->
+@let uninstalling = installationQuery.uninstalling$() | async;
+
+<!-- Whether a plugin is being activated -->
+@let activating = query.activating$ | async;
+
+<!-- Whether a plugin is being deactivated -->
+@let deactivating = query.deactivating$ | async;
+
+<!-- Whether any operation is in progress -->
+@let disabled = installing || uninstalling || activating || deactivating;
+
+<!-- The currently selected plugin -->
+@let selected = query.plugin$ | async;
+
+<!-- Whether the plugins are loading -->
+@let loading = query.isLoading$ | async;
+
+<!-- The source data for the table -->
+@let source = sourceData$ | async;
+
+<!-- The list of plugins -->
+@let plugins = plugins$ | async;
+
+<!-- Whether there are any plugins available -->
+@let isPluginAvailable = plugins && plugins.length > 0;
 
 <section class="content-active first" aria-label="Plugin List">
 	<!-- Content States -->
