@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { asyncScheduler, exhaustMap, filter, map, switchMap, take, tap } from 'rxjs';
+import { asyncScheduler, EMPTY, exhaustMap, filter, map, of, switchMap, take, tap } from 'rxjs';
 import { AddPluginComponent } from '../../../add-plugin/add-plugin.component';
 import { UploadSelectionComponent } from '../../../upload-selection/upload-selection.component';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
@@ -31,7 +31,7 @@ export class PluginUploadIntentEffects {
 						})
 						.onClose.pipe(
 							take(1),
-							filter((intent: UploadIntent) => intent !== null),
+							filter(Boolean),
 							switchMap((intent: UploadIntent) => {
 								// Store the intent in Akita
 								this.uploadIntentStore.setIntent(intent);
@@ -49,9 +49,9 @@ export class PluginUploadIntentEffects {
 										);
 								} else if (intent === UploadIntent.Publish) {
 									// Dispatch action to trigger marketplace publish flow
-									return [PluginMarketplaceActions.upload()];
+									return of(PluginMarketplaceActions.upload());
 								}
-								return [];
+								return EMPTY;
 							})
 						)
 				)
