@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
@@ -11,11 +11,9 @@ import { PluginUploadIntentStore, UploadIntent } from '../stores/plugin-upload-i
 
 @Injectable({ providedIn: 'root' })
 export class PluginUploadIntentEffects {
-	constructor(
-		private readonly action$: Actions,
-		private readonly dialogService: NbDialogService,
-		private readonly uploadIntentStore: PluginUploadIntentStore
-	) {}
+	private readonly action$ = inject(Actions);
+	private readonly dialogService = inject(NbDialogService);
+	private readonly uploadIntentStore = inject(PluginUploadIntentStore);
 
 	/**
 	 * Effect to handle opening the upload selection modal

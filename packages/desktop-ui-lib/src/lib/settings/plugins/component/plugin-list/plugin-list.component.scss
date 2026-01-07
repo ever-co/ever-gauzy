@@ -225,11 +225,13 @@
 // Button Status Classes
 // ============================================
 .danger {
+  --danger-bg: color-mix(in srgb, var(--color-danger-default) 10%, transparent);
+  --danger-bg-hover: color-mix(in srgb, var(--color-danger-default) 15%, transparent);
   color: var(--color-danger-default) !important;
-  background-color: rgba(255, 61, 113, 0.1) !important;
+  background-color: var(--danger-bg) !important;
 
   &:hover:not(:disabled) {
-    background-color: rgba(255, 61, 113, 0.15) !important;
+    background-color: var(--danger-bg-hover) !important;
   }
 }
 
