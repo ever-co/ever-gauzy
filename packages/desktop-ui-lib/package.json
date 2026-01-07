@@ -24,8 +24,8 @@
 		"lib:watch": "yarn nx build desktop-ui-lib --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^19.2.17",
-		"@angular/core": "^19.2.17"
+		"@angular/common": "^20.0.7",
+		"@angular/core": "^20.0.7"
 	},
 	"dependencies": {
 		"@angular-slider/ngx-slider": "^19.0.0",
@@ -43,11 +43,11 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
 		"@kurkle/color": "^0.3.4",
-		"@nebular/auth": "^15.0.0",
+		"@nebular/auth": "^16.0.0",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
-		"@nebular/eva-icons": "^15.0.0",
-		"@nebular/security": "^15.0.0",
-		"@nebular/theme": "^15.0.0",
+		"@nebular/eva-icons": "^16.0.0",
+		"@nebular/security": "^16.0.0",
+		"@nebular/theme": "^16.0.0",
 		"@ng-select/ng-select": "^14.9.0",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",
