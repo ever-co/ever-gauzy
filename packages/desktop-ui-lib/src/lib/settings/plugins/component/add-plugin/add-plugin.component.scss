@@ -430,7 +430,7 @@ input[nbInput] {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--gauzy-card-1) 25%, transparent), transparent);
     opacity: 0;
     transition: opacity 0.25s ease-in-out;
   }

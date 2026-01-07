@@ -309,7 +309,7 @@
     .button-hide {
       flex-wrap: wrap;
       width: 100%;
-      justify-content: stretch;
+      justify-content: flex-start;
 
       button {
         flex: 1 1 calc(50% - 0.25rem);
