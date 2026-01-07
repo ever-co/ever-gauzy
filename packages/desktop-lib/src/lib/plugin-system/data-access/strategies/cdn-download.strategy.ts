@@ -387,8 +387,7 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 									}
 
 									// Re-throw to propagate error to Promise.all
-										entry.autodrain();
-										throw err;
+									throw err;
 								}
 							})();
 							pendingWrites.push(writePromise);
