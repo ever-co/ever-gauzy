@@ -573,6 +573,7 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 									entryPath,
 									targetPath: resolvedPath,
 									extractedFiles,
+									baseDir: extractPath,
 									onManifestDetected: (dir) => {
 										if (!pluginDir) pluginDir = dir;
 									}
@@ -646,21 +647,32 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 		entryPath: string;
 		targetPath: string;
 		extractedFiles: string[];
+		baseDir: string;
 		onManifestDetected: (dir: string) => void;
 	}): Promise<void> {
-		const { entry, entryPath, targetPath, extractedFiles, onManifestDetected } = options;
+		const { entry, entryPath, targetPath, extractedFiles, baseDir, onManifestDetected } = options;
 
 		try {
-			await fs.mkdir(path.dirname(targetPath), { recursive: true });
+			// Resolve and validate the target path to prevent path traversal
+			const baseRealPath = await fs.realpath(baseDir);
+			const safeTargetPath = path.resolve(baseRealPath, path.relative(baseDir, targetPath));
 
-			const writeStream = createWriteStream(targetPath);
+			if (!safeTargetPath.startsWith(baseRealPath + path.sep)) {
+				logger.warn(`Unsafe target path detected, skipping extraction of entry: ${entryPath}`);
+				entry.autodrain();
+				return;
+			}
+
+			await fs.mkdir(path.dirname(safeTargetPath), { recursive: true });
+
+			const writeStream = createWriteStream(safeTargetPath);
 			entry.pipe(writeStream);
 			await finished(writeStream);
 
-			extractedFiles.push(targetPath);
+			extractedFiles.push(safeTargetPath);
 
 			if (path.basename(entryPath) === CdnDownloadStrategy.MANIFEST_FILENAME) {
-				onManifestDetected(path.dirname(targetPath));
+				onManifestDetected(path.dirname(safeTargetPath));
 			}
 		} catch (err) {
 			logger.error(`Failed to extract ${entryPath}: ${err.message}`);
