@@ -35,7 +35,7 @@
 		"@types/node": "^20.14.9",
 		"cross-env": "^7.0.3",
 		"ts-node": "^10.9.2",
-		"jest-preset-angular": "14.5.5"
+		"jest-preset-angular": "14.6.2"
 	},
 	"keywords": [
 		"gauzy",
