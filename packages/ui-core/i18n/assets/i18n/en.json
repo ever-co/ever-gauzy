@@ -5220,6 +5220,23 @@
 	"SERVER_API_LOG": "API Server Log",
 	"COMING_SOON": "This page is coming soon!",
 	"PLUGIN": {
+		"BY": "by",
+		"DOWNLOADS": "downloads",
+		"FREE": "Free",
+		"NO_DESCRIPTION": "No description available",
+		"SUBSCRIPTION_REQUIRED": "Subscription Required",
+		"INSTALLING": "Installing...",
+		"UNINSTALLING": "Uninstalling...",
+		"TRIAL": "Trial",
+		"UPDATED": "Updated",
+		"LICENSE": "License",
+		"RELEASED": "Released",
+		"MORE_TAGS": "+{{ count }} more",
+		"INSTALL_LABEL": {
+			"INSTALLED": "Installed",
+			"SUBSCRIBE": "Subscribe & Install",
+			"INSTALL": "Install"
+		},
 		"VIDEO": {
 			"SINGLE": "Video",
 			"PLURAL": "Videos",
@@ -5758,7 +5775,12 @@
 			"SETTINGS": "Plugin Settings",
 			"MANAGE_USERS": "Manage Users",
 			"EDIT": "Edit Plugin",
-			"MORE": "More Actions"
+			"MORE": "More Actions",
+			"VIEW_DETAILS": "View Details",
+			"MANAGE_SUBSCRIPTION": "Manage Subscription",
+			"HOMEPAGE": "Homepage",
+			"REPOSITORY": "Repository",
+			"DELETE": "Delete"
 		},
 		"SOURCE": {
 			"DELETE_CONFIRMATION": "Are you sure you want to delete this source?",

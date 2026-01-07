@@ -4,6 +4,7 @@ import { IPlugin, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts'
 import { NbMenuService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs';
 import { PluginSettingsActions, PluginSubscriptionActions } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
@@ -34,6 +35,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 	private readonly router = inject(Router);
 	private readonly action = inject(Actions);
+	private readonly translate = inject(TranslateService);
 
 	constructor(
 		private readonly utils: PluginMarketplaceUtilsService,
@@ -150,7 +152,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 		const items: any[] = [
 			{
-				title: 'View Details',
+				title: this.translate.instant('PLUGIN.ACTIONS.VIEW_DETAILS'),
 				icon: 'eye-outline',
 				link: `/plugins/marketplace/${this.plugin.id}`
 			}
@@ -159,7 +161,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		// Add plugin management options if installed
 		if (this.plugin.installed && this.isOwner) {
 			items.push({
-				title: 'Settings',
+				title: this.translate.instant('PLUGIN.ACTIONS.SETTINGS'),
 				icon: 'settings-outline',
 				data: { action: 'settings' }
 			});
@@ -167,13 +169,13 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			// Add subscription management for plugins with plans
 			if (this.plugin.hasPlan) {
 				items.push({
-					title: 'Manage Subscription',
+					title: this.translate.instant('PLUGIN.ACTIONS.MANAGE_SUBSCRIPTION'),
 					icon: 'credit-card-outline',
 					data: { action: 'manage-subscription' }
 				});
 				// Only show user management for plugins with plans (subscription-based)
 				items.push({
-					title: 'Manage Users',
+					title: this.translate.instant('PLUGIN.ACTIONS.MANAGE_USERS'),
 					icon: 'people-outline',
 					data: { action: 'manage-users' }
 				});
@@ -183,7 +185,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		// Add external links
 		if (this.plugin.homepage) {
 			items.push({
-				title: 'Homepage',
+				title: this.translate.instant('PLUGIN.ACTIONS.HOMEPAGE'),
 				icon: 'external-link-outline',
 				data: { action: 'homepage', url: this.plugin.homepage }
 			});
@@ -191,7 +193,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 		if (this.plugin.repository) {
 			items.push({
-				title: 'Repository',
+				title: this.translate.instant('PLUGIN.ACTIONS.REPOSITORY'),
 				icon: 'github-outline',
 				data: { action: 'repository', url: this.plugin.repository }
 			});
@@ -201,12 +203,12 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		if (this.isOwner) {
 			items.push(
 				{
-					title: 'Edit Plugin',
+					title: this.translate.instant('PLUGIN.ACTIONS.EDIT'),
 					icon: 'edit-outline',
 					data: { action: 'edit' }
 				},
 				{
-					title: 'Delete',
+					title: this.translate.instant('PLUGIN.ACTIONS.DELETE'),
 					icon: 'trash-outline',
 					data: { action: 'delete' }
 				}
