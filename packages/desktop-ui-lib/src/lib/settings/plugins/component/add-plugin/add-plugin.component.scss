@@ -5,14 +5,14 @@ nb-card {
   display: flex;
   flex-direction: column;
   border-radius: calc(var(--border-radius) * 2);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--gauzy-shadow);
   background: var(--gauzy-card-1);
   animation: fadeIn 0.3s ease-in-out;
 
   @media (max-width: 576px) {
     max-width: 96vw;
     border-radius: calc(var(--border-radius) * 1.5);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--gauzy-shadow);
   }
 
   @media (min-width: 577px) and (max-width: 768px) {
@@ -35,7 +35,7 @@ nb-card {
 nb-card-header {
   padding: 1.75rem 1.5rem;
   background: var(--gauzy-card-1);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--border-basic-color-3);
 
   @media (max-width: 576px) {
     padding: 1.25rem 1rem;
@@ -87,12 +87,12 @@ h4 {
 
   &:hover {
     color: var(--gauzy-text-color-1);
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--background-basic-color-2);
     transform: rotate(90deg);
   }
 
   &:focus {
-    outline: 2px solid rgba(59, 130, 246, 0.4);
+    outline: 2px solid var(--color-primary-focus);
     outline-offset: 2px;
   }
 
@@ -171,8 +171,8 @@ nb-card-body {
 
   &:hover:not(.disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-    border-color: var(--gauzy-text-color-1);
+    box-shadow: var(--gauzy-shadow);
+    border-color: var(--color-primary-default);
 
     .option-icon-container {
       transform: scale(1.05);
@@ -181,8 +181,8 @@ nb-card-body {
 
   &:focus {
     outline: none;
-    border-color: var(--gauzy-text-color-1);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-primary-default);
+    box-shadow: 0 0 0 3px var(--color-primary-focus);
   }
 
   &.disabled {
@@ -214,26 +214,26 @@ nb-card-body {
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
     &.local {
-      background: rgba(59, 130, 246, 0.1);
+      background: var(--color-primary-100);
 
       .option-icon {
-        color: #3b82f6;
+        color: var(--color-primary-default);
       }
     }
 
     &.cdn {
-      background: rgba(16, 185, 129, 0.1);
+      background: var(--color-success-100);
 
       .option-icon {
-        color: #10b981;
+        color: var(--color-success-default);
       }
     }
 
     &.npm {
-      background: rgba(255, 61, 113, 0.1);
+      background: var(--color-danger-100);
 
       .option-icon {
-        color: #ff3d71;
+        color: var(--color-danger-default);
       }
     }
 
@@ -301,12 +301,12 @@ nb-card-body {
 
   &:hover {
     color: var(--gauzy-text-color-1);
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--background-basic-color-2);
     transform: translateX(-2px);
   }
 
   &:focus {
-    outline: 2px solid rgba(59, 130, 246, 0.4);
+    outline: 2px solid var(--color-primary-focus);
     outline-offset: 2px;
   }
 
@@ -335,7 +335,7 @@ nb-card-body {
   color: var(--gauzy-text-color-1);
 
   .required {
-    color: #ff3d71;
+    color: var(--color-danger-default);
   }
 }
 
@@ -352,17 +352,17 @@ input[nbInput] {
   }
 
   &:hover:not([disabled]) {
-    border-color: rgba(59, 130, 246, 0.3);
+    border-color: var(--color-primary-hover);
   }
 
   &:focus {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
-    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 3px var(--color-primary-focus);
+    border-color: var(--color-primary-default);
   }
 
   &[status='danger'] {
     &:focus {
-      box-shadow: 0 0 0 3px rgba(255, 61, 113, 0.12);
+      box-shadow: 0 0 0 3px var(--color-danger-focus);
     }
   }
 
@@ -382,9 +382,9 @@ input[nbInput] {
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--gauzy-card-2);
   border-radius: var(--border-radius);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-basic-color-3);
   animation: slideDown 0.2s ease-in-out;
 
   @media (max-width: 576px) {
@@ -437,7 +437,7 @@ input[nbInput] {
 
   &:hover:not([disabled]) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+    box-shadow: var(--gauzy-shadow);
 
     &::before {
       opacity: 1;
@@ -446,11 +446,11 @@ input[nbInput] {
 
   &:active:not([disabled]) {
     transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--gauzy-shadow);
   }
 
   &:focus {
-    outline: 2px solid rgba(59, 130, 246, 0.4);
+    outline: 2px solid var(--color-primary-focus);
     outline-offset: 2px;
   }
 
