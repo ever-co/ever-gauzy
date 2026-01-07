@@ -96,7 +96,7 @@
 				</nb-card>
 			</div>
 		</div>
-		} @if (isCdnContext()) {
+		} @else if (isCdnContext()) {
 		<form class="plugin-form" (ngSubmit)="installPlugin(cdnUrl())">
 			<div class="form-header">
 				<button
@@ -148,7 +148,7 @@
 				<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
 			</button>
 		</form>
-		} @if (isNpmContext()) {
+		} @else if (isNpmContext()) {
 		<form class="plugin-form" (ngSubmit)="installPluginFromNPM()">
 			<div class="form-header">
 				<button
