@@ -109,6 +109,16 @@ export class AddPluginComponent {
 		this.context.set('local');
 		this.error.set(null);
 		this.cdnUrl.set('');
+		this.npmModel.set({
+			pkg: {
+				name: null,
+				version: null
+			},
+			registry: {
+				privateURL: null,
+				authToken: null
+			}
+		});
 	}
 
 	protected toggleRegistry(enabled: boolean): void {
