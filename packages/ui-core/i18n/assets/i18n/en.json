@@ -178,6 +178,7 @@
 		"UPLOAD_PLUGIN": "Upload Plugin",
 		"LOAD_PLUGIN": "Load Plugin",
 		"FROM_CDN": "From CDN",
+		"FROM_NPM": "From NPM",
 		"ADD_MODULE": "Add Module",
 		"SHARE": "Share",
 		"GET_INFO": "Get Info",
@@ -4320,6 +4321,9 @@
 			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
 		},
 		"SETTINGS": {
+			"INSTALL_FROM_COMPUTER": "Install from your computer",
+			"INSTALL_FROM_CDN": "Install from a CDN URL",
+			"INSTALL_FROM_NPM": "Install from NPM registry",
 			"SCREEN_CAPTURE": "Screen Capture",
 			"MONITOR": "Monitor",
 			"AUTOMATIC_SCREEN_CAPTURE": "Automatic Screen Capture",

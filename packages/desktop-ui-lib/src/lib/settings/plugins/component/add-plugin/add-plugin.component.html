@@ -47,7 +47,9 @@
 							></nb-icon>
 						</div>
 						<h6 class="option-title">{{ 'BUTTONS.LOAD_PLUGIN' | translate }}</h6>
-						<p class="option-description">Install from your computer</p>
+						<p class="option-description">
+							{{ 'TIMER_TRACKER.SETTINGS.INSTALL_FROM_COMPUTER' | translate }}
+						</p>
 					</nb-card-body>
 				</nb-card>
 
@@ -66,7 +68,9 @@
 							<nb-icon icon="globe-outline" class="option-icon"></nb-icon>
 						</div>
 						<h6 class="option-title">{{ 'BUTTONS.FROM_CDN' | translate }}</h6>
-						<p class="option-description">Install from a CDN URL</p>
+						<p class="option-description">
+							{{ 'TIMER_TRACKER.SETTINGS.INSTALL_FROM_CDN' | translate }}
+						</p>
 					</nb-card-body>
 				</nb-card>
 
@@ -77,15 +81,17 @@
 					(keydown.enter)="!installing && switchContext('npm')"
 					(keydown.space)="!installing && switchContext('npm')"
 					[tabindex]="installing ? -1 : 0"
-					aria-label="Install from NPM"
+					[attr.aria-label]="'BUTTONS.FROM_NPM' | translate"
 					role="button"
 				>
 					<nb-card-body>
 						<div class="option-icon-container npm">
 							<nb-icon icon="cube-outline" class="option-icon"></nb-icon>
 						</div>
-						<h6 class="option-title">NPM</h6>
-						<p class="option-description">Install from NPM registry</p>
+						<h6 class="option-title">{{ 'BUTTONS.FROM_NPM' | translate }}</h6>
+						<p class="option-description">
+							{{ 'TIMER_TRACKER.SETTINGS.INSTALL_FROM_NPM' | translate }}
+						</p>
 					</nb-card-body>
 				</nb-card>
 			</div>
