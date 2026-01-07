@@ -348,15 +348,44 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 						} else {
 							// Create a promise for this write operation and track it
 							const writePromise = (async () => {
+								let writeStream: ReturnType<typeof createWriteStream> | null = null;
 								try {
 									// Ensure directory exists before writing file
 									await fs.mkdir(path.dirname(resolvedFullPath), { recursive: true });
 									// Extract file and wait for stream to finish
-									const writeStream = createWriteStream(resolvedFullPath);
+									writeStream = createWriteStream(resolvedFullPath);
 									entry.pipe(writeStream);
 									await finished(writeStream);
 								} catch (err) {
-									logger.error(`Failed to write file ${resolvedFullPath}: ${err.message}`);
+									logger.error(
+										`Failed to write file ${resolvedFullPath}: ${
+											err instanceof Error ? err.stack || err.message : String(err)
+										}`
+									);
+
+									// Destroy streams to release resources
+									if (!entry.destroyed) {
+										entry.destroy();
+									}
+									if (writeStream && !writeStream.destroyed) {
+										writeStream.destroy();
+									}
+
+									// Remove incomplete target file if it exists
+									try {
+										await fs.unlink(resolvedFullPath);
+										logger.info(`Removed incomplete file: ${resolvedFullPath}`);
+									} catch (unlinkErr) {
+										// File may not exist or already removed, ignore ENOENT errors
+										if ((unlinkErr as NodeJS.ErrnoException).code !== 'ENOENT') {
+											logger.warn(
+												`Failed to remove incomplete file ${resolvedFullPath}: ${
+													unlinkErr instanceof Error ? unlinkErr.message : String(unlinkErr)
+												}`
+											);
+										}
+									}
+
 									// Re-throw to propagate error to Promise.all
 										entry.autodrain();
 										throw err;
