@@ -2,9 +2,8 @@
 
 :host {
   nb-card.first {
-    padding: 0;
-    background: var(--gauzy-card-1);
-    border-radius: calc(var(--border-radius) * 1.5);
+    padding: 1rem;
+    border-radius: 0 calc(var(--border-radius) * 1.5) calc(var(--border-radius) * 1.5);
     box-shadow: var(--gauzy-shadow);
   }
 

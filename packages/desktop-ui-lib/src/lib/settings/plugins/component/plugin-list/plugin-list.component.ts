@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -10,7 +10,6 @@ import { PluginActions } from '../+state/plugin.action';
 import { PluginQuery } from '../+state/plugin.query';
 import { AlertComponent } from '../../../../dialogs/alert/alert.component';
 import { IPlugin } from '../../services/plugin-loader.service';
-import { AddPluginComponent } from '../add-plugin/add-plugin.component';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
 import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/plugin-installation.query';
 import { PluginStatusComponent } from './plugin-status/plugin-status.component';
@@ -23,7 +22,7 @@ import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
 	styleUrls: ['./plugin-list.component.scss'],
 	standalone: false
 })
-export class PluginListComponent implements OnInit, OnDestroy {
+export class PluginListComponent implements OnInit, AfterViewInit, OnDestroy {
 	private readonly translateService = inject(TranslateService);
 	private readonly action = inject(Actions);
 	public readonly query = inject(PluginQuery);
@@ -56,46 +55,16 @@ export class PluginListComponent implements OnInit, OnDestroy {
 		return this._pluginTable;
 	}
 
-	public smartTableSettings = {
-		columns: {
-			name: {
-				title: this.translateService.instant('SM_TABLE.NAME')
-			},
-			isActivate: {
-				title: this.translateService.instant('SM_TABLE.STATUS'),
-				type: 'custom',
-				renderComponent: PluginStatusComponent,
-				componentInitFunction: (instance: PluginStatusComponent, cell: Cell) => {
-					instance.rowData = cell.getRow().getData();
-				}
-			},
-			version: {
-				title: this.translateService.instant('TIMER_TRACKER.SETTINGS.VERSION')
-			},
-			updatedAt: {
-				title: this.translateService.instant('TIMER_TRACKER.SETTINGS.UPDATE'),
-				type: 'custom',
-				renderComponent: PluginUpdateComponent,
-				componentInitFunction: (instance: PluginUpdateComponent, cell: Cell) => {
-					instance.rowData = cell.getRow().getData();
-				}
-			}
-		},
-		hideSubHeader: true,
-		actions: false,
-		noDataMessage: this.translateService.instant('SM_TABLE.NO_DATA.PLUGIN'),
-		pager: {
-			display: true,
-			perPage: 10,
-			page: 1
-		}
-	};
+	public smartTableSettings = this.buildSmartTableSettings();
 
 	ngOnInit(): void {
 		this.reset();
+	}
+
+	ngAfterViewInit(): void {
 		this.observePlugins();
-		this.loadPlugins();
 		this.onLanguageChange();
+		this.loadPlugins();
 	}
 
 	private observePlugins(): void {
@@ -159,14 +128,7 @@ export class PluginListComponent implements OnInit, OnDestroy {
 	}
 
 	public view() {
-		this.router.navigate(['/settings', 'plugins', this.plugin.name]);
-	}
-
-	public addPlugin() {
-		this.dialog
-			.open(AddPluginComponent, { backdropClass: 'backdrop-blur' })
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe();
+		this.router.navigate(['/plugins', 'installed', this.plugin.name]);
 	}
 
 	public uninstall() {
@@ -201,12 +163,47 @@ export class PluginListComponent implements OnInit, OnDestroy {
 	private onLanguageChange() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => {
-					this.smartTableSettings = Object.assign({}, this.smartTableSettings);
-				}),
+				tap(() => (this.smartTableSettings = this.buildSmartTableSettings())),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	private buildSmartTableSettings() {
+		return {
+			columns: {
+				name: {
+					title: this.translateService.instant('SM_TABLE.NAME')
+				},
+				isActivate: {
+					title: this.translateService.instant('SM_TABLE.STATUS'),
+					type: 'custom',
+					renderComponent: PluginStatusComponent,
+					componentInitFunction: (instance: PluginStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
+				},
+				version: {
+					title: this.translateService.instant('TIMER_TRACKER.SETTINGS.VERSION')
+				},
+				updatedAt: {
+					title: this.translateService.instant('TIMER_TRACKER.SETTINGS.UPDATE'),
+					type: 'custom',
+					renderComponent: PluginUpdateComponent,
+					componentInitFunction: (instance: PluginUpdateComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
+				}
+			},
+			hideSubHeader: true,
+			actions: false,
+			noDataMessage: this.translateService.instant('SM_TABLE.NO_DATA.PLUGIN'),
+			pager: {
+				display: true,
+				perPage: 10,
+				page: 1
+			}
+		};
 	}
 
 	public get plugin(): IPlugin {

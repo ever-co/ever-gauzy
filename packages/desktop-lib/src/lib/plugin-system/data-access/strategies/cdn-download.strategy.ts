@@ -2,6 +2,7 @@ import { logger } from '@gauzy/desktop-core';
 import { createReadStream, createWriteStream } from 'fs';
 import * as fs from 'fs/promises';
 import fetch from 'node-fetch';
+import { finished, pipeline } from 'node:stream/promises';
 import * as path from 'path';
 import * as unzipper from 'unzipper';
 import { ICdnDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy } from '../../shared';
@@ -296,14 +297,26 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 			let totalSize = 0;
 
 			await new Promise<void>((resolve, reject) => {
+				const pendingWrites: Promise<void>[] = [];
+
 				createReadStream(filePath)
 					.pipe(unzipper.Parse())
 					.on('entry', (entry: any) => {
 						const { path: entryPath, type, size } = entry;
 
-						// Security: Check for path traversal
-						if (!this.isSafePath(extractDir, entryPath)) {
-							logger.warn(`Suspicious path detected, skipping: ${entryPath}`);
+						// Security: Normalize and validate entry path to prevent path traversal (Zip Slip)
+						const normalizedEntryPath = path.normalize(entryPath);
+
+						// Reject absolute paths and paths that attempt to traverse upwards
+						if (
+							!normalizedEntryPath || // empty or falsy
+							path.isAbsolute(normalizedEntryPath) ||
+							normalizedEntryPath.startsWith('..' + path.sep) ||
+							normalizedEntryPath === '..' ||
+							normalizedEntryPath.includes(path.sep + '..' + path.sep) ||
+							normalizedEntryPath.endsWith(path.sep + '..')
+						) {
+							logger.warn(`Suspicious or unsafe path detected, skipping: ${entryPath}`);
 							entry.autodrain();
 							return;
 						}
@@ -326,16 +339,69 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 							return;
 						}
 
-						const fullPath = path.join(extractDir, entryPath);
+						// Build the full output path from the normalized entry path
+						const fullPath = path.join(extractDir, normalizedEntryPath);
+						const resolvedFullPath = path.resolve(fullPath);
 
 						if (type === 'Directory') {
 							entry.autodrain();
 						} else {
-							// Extract file
-							entry.pipe(createWriteStream(fullPath));
+							// Create a promise for this write operation and track it
+							const writePromise = (async () => {
+								let writeStream: ReturnType<typeof createWriteStream> | null = null;
+								try {
+									// Ensure directory exists before writing file
+									await fs.mkdir(path.dirname(resolvedFullPath), { recursive: true });
+									// Extract file and wait for stream to finish
+									writeStream = createWriteStream(resolvedFullPath);
+									entry.pipe(writeStream);
+									await finished(writeStream);
+								} catch (err) {
+									logger.error(
+										`Failed to write file ${resolvedFullPath}: ${
+											err instanceof Error ? err.stack || err.message : String(err)
+										}`
+									);
+
+									// Destroy streams to release resources
+									if (!entry.destroyed) {
+										entry.destroy();
+									}
+									if (writeStream && !writeStream.destroyed) {
+										writeStream.destroy();
+									}
+
+									// Remove incomplete target file if it exists
+									try {
+										await fs.unlink(resolvedFullPath);
+										logger.info(`Removed incomplete file: ${resolvedFullPath}`);
+									} catch (unlinkErr) {
+										// File may not exist or already removed, ignore ENOENT errors
+										if ((unlinkErr as NodeJS.ErrnoException).code !== 'ENOENT') {
+											logger.warn(
+												`Failed to remove incomplete file ${resolvedFullPath}: ${
+													unlinkErr instanceof Error ? unlinkErr.message : String(unlinkErr)
+												}`
+											);
+										}
+									}
+
+									// Re-throw to propagate error to Promise.all
+									throw err;
+								}
+							})();
+							pendingWrites.push(writePromise);
 						}
 					})
-					.on('close', resolve)
+					.on('close', async () => {
+						// Wait for all pending write operations to complete before resolving
+						try {
+							await Promise.all(pendingWrites);
+							resolve();
+						} catch (err) {
+							reject(err);
+						}
+					})
 					.on('error', reject);
 			});
 			logger.info(`File unzipped successfully (total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
@@ -415,10 +481,41 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 	/**
 	 * Validates that a file path is safe and doesn't attempt path traversal
 	 */
-	private isSafePath(basePath: string, filePath: string): boolean {
-		const resolvedPath = path.resolve(basePath, filePath);
-		const normalizedBase = path.normalize(basePath);
-		return resolvedPath.startsWith(normalizedBase);
+	private isSafePath(rootDir: string, entryPath: string): boolean {
+		if (!entryPath) {
+			return false;
+		}
+
+		// Normalize entry path separators
+		const normalizedEntry = entryPath.replaceAll('\\', '/');
+
+		// Explicitly reject Unix-style absolute paths (fast fail on all platforms)
+		if (normalizedEntry === '/' || normalizedEntry.startsWith('/')) {
+			return false;
+		}
+
+		// Disallow absolute paths and drive letters
+		if (path.isAbsolute(entryPath)) {
+			return false;
+		}
+		if (/^[a-zA-Z]:/.test(normalizedEntry)) {
+			return false;
+		}
+
+		// Resolve the full path and ensure it stays within rootDir
+		const resolvedRoot = path.resolve(rootDir);
+		const resolvedTarget = path.resolve(rootDir, entryPath);
+
+		// Ensure the resolved target is within the resolved root directory
+		if (resolvedTarget === resolvedRoot) {
+			return false;
+		}
+
+		if (!resolvedTarget.startsWith(resolvedRoot + path.sep)) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -462,66 +559,66 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 
 				// Stream directly to extraction with security checks
 				await new Promise<void>((resolve, reject) => {
+					const pendingWrites: Promise<void>[] = [];
+
 					response
 						.body!.pipe(unzipper.Parse())
-						.on('entry', async (entry: any) => {
-							const { path: filePath, type, size } = entry;
+						.on('entry', (entry: any) => {
+							const { path: entryPath, type, size } = entry;
 
-							try {
-								// Security: Check for path traversal
-								if (!this.isSafePath(extractPath, filePath)) {
-									logger.warn(`Suspicious path detected, skipping: ${filePath}`);
-									entry.autodrain();
-									return;
-								}
+							// Guard: path traversal
+							if (!this.isSafePath(extractPath, entryPath)) {
+								logger.warn(`Unsafe archive entry skipped: ${entryPath}`);
+								return entry.autodrain();
+							}
 
-								// Security: Check file size
-								if (size > CdnDownloadStrategy.MAX_FILE_SIZE) {
-									logger.warn(`File too large (${size} bytes), skipping: ${filePath}`);
-									entry.autodrain();
-									return;
-								}
+							// Guard: per-file size
+							if (size > CdnDownloadStrategy.MAX_FILE_SIZE) {
+								logger.warn(`Archive entry too large (${size} bytes): ${entryPath}`);
+								return entry.autodrain();
+							}
 
-								// Security: Check total extraction size
-								totalExtractedSize += size;
-								if (totalExtractedSize > CdnDownloadStrategy.MAX_TOTAL_SIZE) {
-									reject(
-										new Error(
-											`Total extraction size exceeds limit (${CdnDownloadStrategy.MAX_TOTAL_SIZE} bytes)`
-										)
-									);
-									return;
-								}
+							// Guard: total extraction size
+							totalExtractedSize += size;
+							if (totalExtractedSize > CdnDownloadStrategy.MAX_TOTAL_SIZE) {
+								return reject(
+									new Error(
+										`Total extraction size exceeded (${CdnDownloadStrategy.MAX_TOTAL_SIZE} bytes)`
+									)
+								);
+							}
 
-								const fullPath = path.join(extractPath, filePath);
+							const resolvedPath = path.resolve(extractPath, entryPath);
 
-								if (type === 'Directory') {
-									await fs.mkdir(fullPath, { recursive: true });
-									extractedFiles.push(fullPath);
-									entry.autodrain();
-								} else {
-									// Ensure directory exists
-									await fs.mkdir(path.dirname(fullPath), { recursive: true });
+							// Directory handling
+							if (type === 'Directory') {
+								pendingWrites.push(this.createDirectory(resolvedPath, extractedFiles, entry));
+								return;
+							}
 
-									// Stream file to disk
-									const writeStream = createWriteStream(fullPath);
-									entry.pipe(writeStream);
-									extractedFiles.push(fullPath);
-
-									// Track manifest location
-									if (
-										path.basename(filePath) === CdnDownloadStrategy.MANIFEST_FILENAME &&
-										!pluginDir
-									) {
-										pluginDir = path.dirname(fullPath);
+							// File handling
+							pendingWrites.push(
+								this.extractFile({
+									entry,
+									entryPath,
+									targetPath: resolvedPath,
+									extractedFiles,
+									baseDir: extractPath,
+									onManifestDetected: (dir) => {
+										if (!pluginDir) pluginDir = dir;
 									}
-								}
+								})
+							);
+						})
+						.on('finish', async () => {
+							// Wait for all pending write operations to complete before resolving
+							try {
+								await Promise.all(pendingWrites);
+								resolve();
 							} catch (err) {
-								logger.error(`Error processing entry ${filePath}: ${err.message}`);
-								entry.autodrain();
+								reject(err);
 							}
 						})
-						.on('finish', resolve)
 						.on('error', reject);
 				});
 			} finally {
@@ -561,6 +658,90 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 			// Cleanup on error
 			await this.cleanupOnError(null, [extractPath]);
 			throw new Error(`Streaming extraction failed: ${error.message}`);
+		}
+	}
+
+	private async createDirectory(dirPath: string, extractedFiles: string[], entry: unzipper.Entry): Promise<void> {
+		try {
+			await fs.mkdir(dirPath, { recursive: true });
+			extractedFiles.push(dirPath);
+		} catch (err) {
+			const errorMessage = err instanceof Error ? err.message : String(err);
+			logger.error(`Failed to create directory ${dirPath}: ${errorMessage}`);
+			throw new Error(`Failed to create directory ${dirPath}: ${errorMessage}`);
+		} finally {
+			entry.autodrain();
+		}
+	}
+
+	private async extractFile(options: {
+		entry: unzipper.Entry;
+		entryPath: string;
+		targetPath: string;
+		extractedFiles: string[];
+		baseDir: string;
+		onManifestDetected: (dir: string) => void;
+	}): Promise<void> {
+		const { entry, entryPath, targetPath, extractedFiles, baseDir, onManifestDetected } = options;
+
+		let writeStream: ReturnType<typeof createWriteStream> | null = null;
+		let safeTargetPath: string | null = null;
+
+		try {
+			// Resolve and validate the target path to prevent path traversal
+			const baseRealPath = await fs.realpath(baseDir);
+			safeTargetPath = path.resolve(baseRealPath, path.relative(baseDir, targetPath));
+
+			if (!safeTargetPath.startsWith(baseRealPath + path.sep)) {
+				logger.warn(`Unsafe target path detected, skipping extraction of entry: ${entryPath}`);
+				entry.autodrain();
+				return;
+			}
+
+			await fs.mkdir(path.dirname(safeTargetPath), { recursive: true });
+
+			writeStream = createWriteStream(safeTargetPath);
+
+			// Use pipeline for proper stream handling with error propagation
+			await pipeline(entry, writeStream);
+
+			extractedFiles.push(safeTargetPath);
+
+			if (path.basename(entryPath) === CdnDownloadStrategy.MANIFEST_FILENAME) {
+				onManifestDetected(path.dirname(safeTargetPath));
+			}
+		} catch (err) {
+			logger.error(
+				`Failed to extract ${entryPath}: ${err instanceof Error ? err.stack || err.message : String(err)}`
+			);
+
+			// Destroy streams to release resources
+			if (!entry.destroyed) {
+				entry.destroy();
+			}
+			if (writeStream && !writeStream.destroyed) {
+				writeStream.destroy();
+			}
+
+			// Remove incomplete target file if it exists
+			if (safeTargetPath) {
+				try {
+					await fs.unlink(safeTargetPath);
+					logger.info(`Removed incomplete file: ${safeTargetPath}`);
+				} catch (unlinkErr) {
+					// File may not exist or already removed, ignore ENOENT errors
+					if ((unlinkErr as NodeJS.ErrnoException).code !== 'ENOENT') {
+						logger.warn(
+							`Failed to remove incomplete file ${safeTargetPath}: ${
+								unlinkErr instanceof Error ? unlinkErr.message : String(unlinkErr)
+							}`
+						);
+					}
+				}
+			}
+
+			// Re-throw the error to propagate it to the caller
+			throw err;
 		}
 	}
 }

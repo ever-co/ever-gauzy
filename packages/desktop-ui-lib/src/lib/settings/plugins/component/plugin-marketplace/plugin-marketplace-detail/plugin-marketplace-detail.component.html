@@ -56,11 +56,11 @@
 			<div class="plugin-meta">
 				<span class="plugin-version">v{{ plugin.version?.number || '1.0.0' }}</span>
 				@if(plugin.author) {
-				<span class="plugin-author">by {{ plugin.author }}</span>
+				<span class="plugin-author">{{ 'PLUGIN.BY' | translate }} {{ plugin.author }}</span>
 				}
 				<span class="download-count">
 					<nb-icon icon="download-outline"></nb-icon>
-					{{ plugin.downloadCount | number }} downloads
+					{{ plugin.downloadCount | number }} {{ 'PLUGIN.DOWNLOADS' | translate }}
 				</span>
 			</div>
 		</div>
@@ -72,7 +72,7 @@
 			<nb-badge status="basic" class="type-badge" [text]="plugin.type | titlecase"> </nb-badge>
 			<!-- Free Badge if plugin has no plans -->
 			@if(!plugin.hasPlan) {
-			<nb-badge status="success" class="free-badge" text="Free"> </nb-badge>
+			<nb-badge status="success" class="free-badge" [text]="'PLUGIN.FREE' | translate"> </nb-badge>
 			}
 		</div>
 	</div>
@@ -84,7 +84,7 @@
 			[readMoreText]="'BUTTONS.READ_MORE' | translate"
 			[readLessText]="'BUTTONS.READ_LESS' | translate"
 		>
-			{{ plugin.description || 'No description available' }}
+			{{ plugin.description || ('PLUGIN.NO_DESCRIPTION' | translate) }}
 		</div>
 	</div>
 
@@ -103,7 +103,7 @@
 			@for(tag of plugin.tags.slice(0, 5); track tag.id) {
 			<nb-badge status="basic" class="tag-badge" [class.featured]="tag.isFeatured" [text]="tag.name"> </nb-badge>
 			} @if(plugin.tags.length > 5) {
-			<span class="more-tags">+{{ plugin.tags.length - 5 }} more</span>
+			<span class="more-tags">{{ 'PLUGIN.MORE_TAGS' | translate : { count: plugin.tags.length - 5 } }}</span>
 			}
 		</div>
 	</div>
@@ -143,7 +143,7 @@
 				@if(subscription.trialEndDate) {
 				<nb-badge status="info" class="trial-badge">
 					<nb-icon icon="time-outline"></nb-icon>
-					Trial
+					{{ 'PLUGIN.TRIAL' | translate }}
 				</nb-badge>
 				}
 			</div>
@@ -155,19 +155,19 @@
 	<div class="plugin-metrics">
 		<div class="metric-item">
 			<nb-icon icon="calendar-outline"></nb-icon>
-			<span class="metric-label">Updated</span>
+			<span class="metric-label">{{ 'PLUGIN.UPDATED' | translate }}</span>
 			<span class="metric-value">{{ plugin.updatedAt | date : 'short' }}</span>
 		</div>
 		@if(plugin.license) {
 		<div class="metric-item">
 			<nb-icon icon="file-text-outline"></nb-icon>
-			<span class="metric-label">License</span>
+			<span class="metric-label">{{ 'PLUGIN.LICENSE' | translate }}</span>
 			<span class="metric-value">{{ plugin.license }}</span>
 		</div>
 		} @if(plugin.version?.releaseDate) {
 		<div class="metric-item">
 			<nb-icon icon="layers-outline"></nb-icon>
-			<span class="metric-label">Released</span>
+			<span class="metric-label">{{ 'PLUGIN.RELEASED' | translate }}</span>
 			<span class="metric-value">{{ plugin.version.releaseDate | date : 'short' }}</span>
 		</div>
 		}
@@ -238,7 +238,7 @@
 			<div class="progress-indicator">
 				<nb-icon *gauzySpinnerButton="true" icon="sync-outline"></nb-icon>
 				<span class="progress-text">
-					{{ installing ? 'Installing...' : 'Uninstalling...' }}
+					{{ installing ? ('PLUGIN.INSTALLING' | translate) : ('PLUGIN.UNINSTALLING' | translate) }}
 				</span>
 			</div>
 			} @else {
@@ -247,12 +247,12 @@
 				@if(plugin.hasPlan && !installed) {
 				<div class="subscription-required">
 					<nb-icon icon="card-outline" class="subscription-icon"></nb-icon>
-					<span class="subscription-text">Subscription Required</span>
+					<span class="subscription-text">{{ 'PLUGIN.SUBSCRIPTION_REQUIRED' | translate }}</span>
 				</div>
 				} @else if(!plugin.hasPlan && !installed) {
 				<div class="free-plugin">
 					<nb-icon icon="gift-outline" class="free-icon" status="success"></nb-icon>
-					<span class="free-text">Free</span>
+					<span class="free-text">{{ 'PLUGIN.FREE' | translate }}</span>
 				</div>
 				}
 
@@ -263,10 +263,16 @@
 						(checkedChange)="togglePlugin($event)"
 						class="install-toggle"
 					>
+						<span class="toggle-label">
+							@if(installed) {
+							{{ 'PLUGIN.INSTALL_LABEL.INSTALLED' | translate }}
+							} @else if(plugin.hasPlan) {
+							{{ 'PLUGIN.INSTALL_LABEL.SUBSCRIBE' | translate }}
+							} @else {
+							{{ 'PLUGIN.INSTALL_LABEL.INSTALL' | translate }}
+							}
+						</span>
 					</nb-toggle>
-					<span class="toggle-label">
-						@if(installed) { Installed } @else if(plugin.hasPlan) { Subscribe & Install } @else { Install }
-					</span>
 				</div>
 			</div>
 			}

@@ -172,10 +172,8 @@ export class PluginCategoryService extends TenantAwareCrudService<PluginCategory
 	): Promise<string> {
 		let baseSlug = name
 			.toLowerCase()
-			.replace(/[^a-z0-9\s-]/g, '')
-			.replace(/\s+/g, '-')
-			.replace(/-+/g, '-')
-			.replace(/^-+|-+$/g, '');
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/(^-)|(-$)/g, '');
 
 		let slug = baseSlug;
 		let counter = 1;

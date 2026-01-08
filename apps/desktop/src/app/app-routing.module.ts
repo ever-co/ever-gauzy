@@ -3,6 +3,7 @@ import { ExtraOptions, RouterModule, Routes } from '@angular/router';
 import {
 	AboutComponent,
 	AlwaysOnComponent,
+	AuthConnectionGuard,
 	ImageViewerComponent,
 	ScreenCaptureComponent,
 	SettingsComponent,
@@ -29,6 +30,12 @@ const routes: Routes = [
 	{
 		path: 'screen-capture',
 		component: ScreenCaptureComponent
+	},
+	{
+		path: 'plugins',
+		canActivate: [AuthConnectionGuard],
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginLayoutComponent),
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.pluginRoutes)
 	},
 	{
 		path: 'settings',

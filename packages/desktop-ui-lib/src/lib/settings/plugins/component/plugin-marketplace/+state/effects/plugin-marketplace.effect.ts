@@ -227,7 +227,7 @@ export class PluginMarketplaceEffects {
 			switchMap((id) =>
 				this.pluginService.delete(id).pipe(
 					tap(() => {
-						this.router.navigate(['settings', 'marketplace-plugins']);
+						this.router.navigate(['plugins', 'marketplace']);
 
 						const plugins = this.pluginMarketplaceStore.getValue().plugins;
 						const updated = plugins.filter((p) => p.id !== id);

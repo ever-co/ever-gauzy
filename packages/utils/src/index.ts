@@ -33,6 +33,7 @@ export * from './lib/match';
 export * from './lib/parse-object';
 export * from './lib/parse-to-boolean';
 export * from './lib/password-generator';
+export * from './lib/password-hash';
 export * from './lib/slugify';
 export * from './lib/sleep';
 export * from './lib/trim-if-not-empty';

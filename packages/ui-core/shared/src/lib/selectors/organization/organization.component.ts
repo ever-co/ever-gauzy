@@ -8,6 +8,7 @@ import { IOrganization, CrudActionEnum, PermissionsEnum, ID } from '@gauzy/contr
 import { isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	NavigationService,
+	OrganizationContextService,
 	OrganizationEditStore,
 	Store,
 	ToastrService,
@@ -16,10 +17,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-organization-selector',
-    templateUrl: './organization.component.html',
-    styleUrls: ['./organization.component.scss'],
-    standalone: false
+	selector: 'ga-organization-selector',
+	templateUrl: './organization.component.html',
+	styleUrls: ['./organization.component.scss'],
+	standalone: false
 })
 export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organizations: IOrganization[] = [];
@@ -41,7 +42,8 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 		private readonly _userOrganizationService: UsersOrganizationsService,
 		private readonly _organizationEditStore: OrganizationEditStore,
 		private readonly _activatedRoute: ActivatedRoute,
-		private readonly _navigationService: NavigationService
+		private readonly _navigationService: NavigationService,
+		private readonly _organizationContextService: OrganizationContextService
 	) {}
 
 	ngOnInit() {
@@ -75,34 +77,33 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 
 	/**
 	 * Selects an organization and updates the store and query parameters accordingly.
+	 * This method calls the backend to switch organization context and get a new JWT
+	 * with the correct employeeId for the target organization.
 	 *
 	 * @param organization - The organization to select.
-	 * @param isResetEmployeeStore - Whether to reset the selected employee. Defaults to true.
 	 */
-	public selectOrganization(
-		organization: IOrganization | null | undefined,
-		isResetEmployeeStore: boolean = true
-	): void {
+	public async selectOrganization(organization: IOrganization | null | undefined): Promise<void> {
 		if (!organization) {
 			this._toastrService.warning('No organization provided to select.');
 			console.warn('No organization provided to select.');
 			return;
 		}
 
-		// Update the store with the selected organization details
-		this._store.selectedOrganization = organization;
-		this._store.organizationId = organization.id;
-
-		// Reset the selected employee store if required
-		if (isResetEmployeeStore) {
-			this._store.selectedEmployee = null;
-			console.info('Selected employee store has been reset.');
+		// Check if we're already on this organization
+		if (this._store.selectedOrganization?.id === organization.id) {
+			console.info('Already on this organization, skipping switch.');
+			return;
 		}
 
-		console.log(`Selected Organization: ${organization.name}`);
+		console.log(`Switching to Organization: ${organization.name}`);
 
-		// Update the query parameters in the URL
-		this._navigationService.updateQueryParams({ organizationId: organization.id });
+		// Call the backend to switch organization and get new JWT with correct employeeId
+		const success = await this._organizationContextService.switchOrganization(organization);
+
+		if (success) {
+			// Update the query parameters in the URL
+			this._navigationService.updateQueryParams({ organizationId: organization.id });
+		}
 	}
 
 	/**
@@ -124,13 +125,13 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			// Retrieve the user's ID and tenant ID
 			const { id: userId, tenantId } = this._store.user;
 
-			// Define the relations to be included in the query
-			const relations = [
-				'organization',
-				'organization.contact',
-				'organization.featureOrganizations',
-				'organization.featureOrganizations.feature'
-			];
+			// Define base relations
+			const relations = ['organization', 'organization.contact'];
+
+			// Add feature organizations relations only if user has permission
+			if (this._store.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+				relations.push('organization.featureOrganizations', 'organization.featureOrganizations.feature');
+			}
 
 			// Fetch all organizations associated with the user
 			const { items = [] } = await this._userOrganizationService.getAll(relations, { userId, tenantId });
@@ -245,7 +246,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	 *
 	 * @param organization - The organization with updated data.
 	 */
-	public updateOrganization(organization: IOrganization): void {
+	public async updateOrganization(organization: IOrganization): Promise<void> {
 		// Check if the organization exists
 		const exists = this.organizations.some((org) => org.id === organization.id);
 		if (!exists) {
@@ -260,7 +261,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			);
 
 			// Update the store with the selected organization details
-			this.selectOrganization(organization);
+			await this.selectOrganization(organization);
 
 			// Assign the filtered and updated organizations list
 			this.organizations = updatedOrganizations.filter(isNotEmpty);
@@ -275,7 +276,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	 *
 	 * @param organization - The organization to delete.
 	 */
-	public deleteOrganization(organization: IOrganization): void {
+	public async deleteOrganization(organization: IOrganization): Promise<void> {
 		if (!organization) {
 			console.warn('No organization provided to delete.');
 			return;
@@ -299,8 +300,8 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			if (this._store.selectedOrganization?.id === organization.id) {
 				if (updatedOrganizations.length > 0) {
 					// Select a random organization from the updated list
-					const organization = this.getRandomOrganization(updatedOrganizations);
-					this.selectOrganization(organization);
+					const randomOrg = this.getRandomOrganization(updatedOrganizations);
+					await this.selectOrganization(randomOrg);
 				} else {
 					// No organizations left; reset the store
 					this.resetStore();
@@ -366,12 +367,12 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	 *
 	 * @param organizationId - The ID of the organization to select.
 	 */
-	selectOrganizationById(organizationId: ID): void {
+	async selectOrganizationById(organizationId: ID): Promise<void> {
 		const organization = this.organizations.find(
 			(organization: IOrganization) => organization.id === organizationId
 		);
 		if (organization) {
-			this.selectOrganization(organization, false);
+			await this.selectOrganization(organization);
 		}
 	}
 

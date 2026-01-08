@@ -154,11 +154,11 @@ export class AuthService {
 	 * @param includeTeams - Whether to include teams in the response (default: false).
 	 * @returns An observable of the user signin workspace response.
 	 */
-getUserWorkspaces(includeTeams = false): Observable<IUserSigninWorkspaceResponse> {
-    return this.http.get<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/workspaces`, {
-        params: toParams({ includeTeams })
-    });
-}
+	getUserWorkspaces(includeTeams = false): Observable<IUserSigninWorkspaceResponse> {
+		return this.http.get<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/workspaces`, {
+			params: toParams({ includeTeams })
+		});
+	}
 
 	/**
 	 * Switch the current user to a different workspace (tenant).
@@ -168,5 +168,15 @@ getUserWorkspaces(includeTeams = false): Observable<IUserSigninWorkspaceResponse
 	 */
 	switchWorkspace(tenantId: string): Observable<IAuthResponse | null> {
 		return this.http.post<IAuthResponse | null>(`${API_PREFIX}/auth/switch-workspace`, { tenantId });
+	}
+
+	/**
+	 * Switch the current user to a different organization within the same workspace.
+	 *
+	 * @param organizationId - The ID of the organization to switch to.
+	 * @returns An observable of the authentication response with new tokens or null if switching fails.
+	 */
+	switchOrganization(organizationId: string): Observable<IAuthResponse | null> {
+		return this.http.post<IAuthResponse | null>(`${API_PREFIX}/auth/switch-organization`, { organizationId });
 	}
 }

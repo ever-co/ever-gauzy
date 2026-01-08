@@ -1,1 +1,1 @@
-export const TABLE_PLUGINS = 'plugins';
+export const TABLE_PLUGINS = 'desktop_plugins';

@@ -31,7 +31,7 @@
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@jitsu/js": "^1.10.0",
-		"@nestjs/common": "^11.1.0",
+		"@nestjs/common": "^11.1.10",
 		"chalk": "^4.1.0",
 		"node-fetch": "^2.6.7",
 		"tslib": "^2.6.2",

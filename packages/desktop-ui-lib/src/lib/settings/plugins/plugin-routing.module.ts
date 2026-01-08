@@ -5,10 +5,10 @@ export const pluginRoutes: Routes = [
 	{
 		path: '',
 		pathMatch: 'full',
-		redirectTo: 'plugins'
+		redirectTo: 'installed'
 	},
 	{
-		path: 'marketplace-plugins',
+		path: 'marketplace',
 		loadChildren: () =>
 			import('./component/plugin-marketplace/plugin-marketplace-routing.module').then(
 				(m) => m.pluginMarketplaceRoutes
@@ -16,11 +16,11 @@ export const pluginRoutes: Routes = [
 		resolve: { isUploadAvailable: PluginUploadResolver }
 	},
 	{
-		path: 'plugins',
+		path: 'installed',
 		loadChildren: () => import('./component/plugin-installed-routing.module').then((m) => m.pluginInstalledRoutes)
 	},
 	{
 		path: '**',
-		redirectTo: 'plugins'
+		redirectTo: 'installed'
 	}
 ];

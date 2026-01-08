@@ -2,14 +2,15 @@ import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
 import {
 	AboutComponent,
+	AgentDashboardComponent,
+	AlwaysOnComponent,
+	AuthConnectionGuard,
+	ScreenCaptureComponent,
 	ServerDownPage,
 	SettingsComponent,
 	SetupComponent,
 	SplashScreenComponent,
-	UpdaterComponent,
-	ScreenCaptureComponent,
-	AgentDashboardComponent,
-	AlwaysOnComponent
+	UpdaterComponent
 } from '@gauzy/desktop-ui-lib';
 import { AppModuleGuard } from './app.module.guards';
 
@@ -22,6 +23,12 @@ const routes: Routes = [
 		path: 'auth',
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.authRoutes),
 		canActivate: [AppModuleGuard]
+	},
+	{
+		path: 'plugins',
+		canActivate: [AuthConnectionGuard],
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginLayoutComponent),
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.pluginRoutes)
 	},
 	{
 		path: 'settings',
@@ -70,4 +77,4 @@ const config: ExtraOptions = {
 	imports: [RouterModule.forRoot(routes, config)],
 	exports: [RouterModule]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

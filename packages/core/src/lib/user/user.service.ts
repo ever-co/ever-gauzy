@@ -13,7 +13,6 @@ import {
 	DeleteResult,
 	MoreThan
 } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import {
@@ -28,7 +27,7 @@ import {
 	UserStats
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { ConfigService, environment as env } from '@gauzy/config';
+import { ConfigService } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -39,6 +38,7 @@ import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
+import { PasswordHashService } from '../password-hash/password-hash.service';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -47,7 +47,8 @@ export class UserService extends TenantAwareCrudService<User> {
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		private readonly _configService: ConfigService,
 		private readonly _employeeService: EmployeeService,
-		private readonly _taskService: TaskService
+		private readonly _taskService: TaskService,
+		private readonly _passwordHashService: PasswordHashService
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
 	}
@@ -130,7 +131,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		// Fetch employee details if 'includeEmployee' is true
 		if (options.includeEmployee) {
 			const relations = options.includeOrganization ? { organization: true } : [];
-			employee = await this._employeeService.findOneByUserId(user.id, { relations });
+			employee = await this._employeeService.findOneByUserId(user.id, undefined, { relations });
 		}
 
 		// Return user data combined with employee data, if it exists.
@@ -437,9 +438,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async setCurrentRefreshToken(refreshToken: string, userId: ID): Promise<UpdateResult> {
 		try {
-			// Hash the refresh token using bcrypt if refreshToken is provided
+			// Hash the refresh token using PasswordHashService if refreshToken is provided
 			if (refreshToken) {
-				refreshToken = await bcrypt.hash(refreshToken, 10);
+				refreshToken = await this._passwordHashService.hash(refreshToken);
 			}
 
 			// Update the user's refresh token in the repository
@@ -535,7 +536,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				query.orderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
 			});
 			const user = await query.getOneOrFail();
-			const isRefreshTokenMatching = await bcrypt.compare(refreshToken, user.refreshToken);
+			const isRefreshTokenMatching = await this._passwordHashService.verify(refreshToken, user.refreshToken);
 
 			if (isRefreshTokenMatching) {
 				return user;
@@ -548,19 +549,13 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Asynchronously generates a bcrypt hash from the provided password.
+	 * Generates a hash from the provided password using PasswordHashService.
 	 *
 	 * @param password The password to hash.
-	 * @returns A promise resolving to the bcrypt hash of the password.
+	 * @returns A promise resolving to the hashed password.
 	 */
 	private async getPasswordHash(password: string): Promise<string> {
-		try {
-			// Generate bcrypt hash using provided password and salt rounds from environment
-			return await bcrypt.hash(password, env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
-		} catch (error) {
-			// Handle any errors during hashing process
-			console.error('Error generating password hash:', error);
-		}
+		return this._passwordHashService.hash(password);
 	}
 
 	/**

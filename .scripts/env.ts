@@ -154,6 +154,7 @@ export type Env = Readonly<{
 	AGENT_APP_WELCOME_TITLE: string;
 	AGENT_APP_WELCOME_CONTENT: string;
 	AGENT_POOL_ACTIVITY_INTERVAL: number;
+	GAUZY_DESKTOP_TRAY_ICON: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -396,6 +397,9 @@ export const env: Env = cleanEnv(
 		}),
 		AGENT_POOL_ACTIVITY_INTERVAL: num({
 			default: 5000
+		}),
+		GAUZY_DESKTOP_TRAY_ICON: str({
+			default: 'assets/icons/default-tray-icon.png'
 		})
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }

@@ -34,7 +34,7 @@ export class PluginAccessGuard implements CanActivate {
 		if (!pluginId) {
 			console.error('PluginAccessGuard: No plugin ID found in route params');
 			this.toastrService.error(this.translateService.instant('PLUGIN.ACCESS.NO_PLUGIN_ID'));
-			return this.router.createUrlTree(['/settings/marketplace-plugins']);
+			return this.router.createUrlTree(['/plugins/marketplace']);
 		}
 
 		// Check access for the plugin
@@ -75,12 +75,12 @@ export class PluginAccessGuard implements CanActivate {
 				// Plugin doesn't require subscription but user doesn't have access
 				// This might be a free plugin or configuration issue
 				this.toastrService.error(this.translateService.instant('PLUGIN.ACCESS.NO_ACCESS'));
-				return of(this.router.createUrlTree(['/settings/marketplace-plugins']));
+				return of(this.router.createUrlTree(['/plugins/marketplace']));
 			}),
 			catchError((error) => {
 				console.error('PluginAccessGuard: Error checking access', error);
 				this.toastrService.error(this.translateService.instant('PLUGIN.ACCESS.CHECK_FAILED'));
-				return of(this.router.createUrlTree(['/settings/marketplace-plugins']));
+				return of(this.router.createUrlTree(['/plugins/marketplace']));
 			})
 		);
 	}

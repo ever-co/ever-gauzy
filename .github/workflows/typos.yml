@@ -13,6 +13,7 @@ jobs:
   spellcheck:
     name: Cspell
     runs-on: ubicloud-standard-4
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
       - uses: streetsidesoftware/cspell-action@v2

@@ -14,9 +14,9 @@ $transition-speed: 0.2s;
   border-radius: calc(var(--border-radius) * 1.5);
   box-shadow: var(--gauzy-shadow);
   overflow: hidden;
-  width: 600px;
+  width: 90vw;
   margin: 0 auto;
-  height: 78vh;
+  height: 90vh;
   background: var(--gauzy-card-1);
 
   nb-card-header {
@@ -726,9 +726,6 @@ $transition-speed: 0.2s;
 
 // Enhanced Dialog Card for Better Content Management
 .dialog-card {
-  width: 800px; // Increased width for subscription content
-  height: calc(100vh - 16rem);
-
   @media (max-width: 1024px) {
     width: 95vw;
     height: 90vh;

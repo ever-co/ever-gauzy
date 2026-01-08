@@ -6,12 +6,17 @@ import { environment as env } from '@gauzy/config';
 import { IUser } from '@gauzy/contracts';
 import { AuthService } from '../auth.service';
 import { EmployeeService } from '../../employee/employee.service';
+import { UserOrganizationService } from '../../user-organization/user-organization.services';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	public loggingEnabled: boolean = false;
 
-	constructor(private readonly _authService: AuthService, private readonly _employeeService: EmployeeService) {
+	constructor(
+		private readonly _authService: AuthService,
+		private readonly _employeeService: EmployeeService,
+		private readonly _userOrganizationService: UserOrganizationService
+	) {
 		super({
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 			secretOrKey: env.JWT_SECRET
@@ -26,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	 */
 	async validate(payload: JwtPayload, done: (err: unknown, user?: unknown) => void): Promise<void> {
 		try {
-			const { id, thirdPartyId, employeeId } = payload;
+			const { id, thirdPartyId, employeeId, organizationId, tenantId } = payload;
 
 			if (this.loggingEnabled) console.log('Validate JWT payload:', payload);
 
@@ -35,31 +40,49 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
 			if (!user) {
 				return done(new UnauthorizedException('unauthorized'), false);
-			} else {
-				// Check if employeeId exists in payload
-				if (employeeId) {
-					// Retrieve employee details associated with the user
-					const employee = await this._employeeService.findOneByUserId(user.id);
+			}
 
-					// Check if the employeeId from payload matches the employeeId retrieved
-					if (!employee || payload.employeeId !== employee.id) {
-						return done(new UnauthorizedException('unauthorized'), false);
-					}
+			// Validate and assign employeeId from JWT
+			let validatedEmployee = null;
+			if (employeeId) {
+				const employee = await this._employeeService.findOneByIdString(employeeId);
 
-					// Assign employeeId to user if employee is found, otherwise assign null
-					user.employeeId = employee.id;
+				if (!employee || employee.userId !== user.id) {
+					return done(new UnauthorizedException('unauthorized'), false);
 				}
 
-				// You could add a function to the authService to verify the claims of the token:
-				// i.e. does the user still have the roles that are claimed by the token
-				// const validClaims = await this.authService.verifyTokenClaims(payload);
-
-				// if (!validClaims) {
-				// 	return done(new UnauthorizedException('invalid token claims'), false);
-				// }
-
-				done(null, user);
+				validatedEmployee = employee;
+				user.employeeId = employeeId;
 			}
+
+			// Validate and assign organizationId from JWT
+			if (organizationId) {
+				// Cross-validate: if employeeId was provided, ensure it belongs to the claimed organization
+				if (validatedEmployee && validatedEmployee.organizationId !== organizationId) {
+					return done(
+						new UnauthorizedException('Employee does not belong to the claimed organization'),
+						false
+					);
+				}
+
+				const userOrganization = await this._userOrganizationService.findOneByOptions({
+					where: {
+						userId: user.id,
+						organizationId,
+						tenantId: tenantId || user.tenantId,
+						isActive: true,
+						isArchived: false
+					}
+				});
+
+				if (!userOrganization) {
+					return done(new UnauthorizedException('User does not have access to organization'), false);
+				}
+
+				user.lastOrganizationId = organizationId;
+			}
+
+			done(null, user);
 		} catch (error) {
 			console.error('Error occurred during JWT validation:', error);
 			return done(new UnauthorizedException('unauthorized', error.message), false);

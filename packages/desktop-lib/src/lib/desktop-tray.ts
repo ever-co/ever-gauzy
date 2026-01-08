@@ -1,12 +1,11 @@
+import { RegisteredWindow, store, WindowManager } from '@gauzy/desktop-core';
 import { getApiBaseUrl, loginPage, settingsPage, timeTrackerPage } from '@gauzy/desktop-window';
-import { RegisteredWindow, WindowManager, store } from '@gauzy/desktop-core';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
+import * as path from 'node:path';
 import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
 import { User, UserService } from './offline';
 import { TranslateService } from './translation';
-import * as path from 'node:path';
-import TitleOptions = Electron.TitleOptions;
 
 export class TrayIcon {
 	tray: Tray;
@@ -15,16 +14,14 @@ export class TrayIcon {
 		this.removeTrayListener();
 		this.removeTimerHandlers();
 		let loginPageAlreadyShow = false;
-		const options: TitleOptions = { fontType: 'monospacedDigit' };
 		const appConfig = LocalStore.getStore('configs');
 		console.log('icon path', iconPath);
 		const iconDir = path.dirname(iconPath);
-		const grayIcon = path.join(iconDir, 'icon_gray.png');
 		const normalIcon = path.join(iconDir, 'icon.png');
-		const iconNativePath = nativeImage.createFromPath(grayIcon);
+		const iconNativePath = nativeImage.createFromPath(normalIcon);
 		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
-		this.tray.setTitle('--:--:--', options);
+
 		const userService = new UserService();
 		const manager = WindowManager.getInstance();
 
@@ -44,6 +41,14 @@ export class TrayIcon {
 						type: 'goto_top_menu'
 					});
 					manager.webContents(settingsWindow).send('refresh_menu');
+				}
+			},
+			{
+				id: '6-0',
+				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
+				accelerator: 'CmdOrCtrl+P',
+				async click() {
+					manager.show(RegisteredWindow.PLUGINS);
 				}
 			},
 			{
@@ -93,6 +98,14 @@ export class TrayIcon {
 						type: 'goto_top_menu'
 					});
 					manager.webContents(settingsWindow).send('refresh_menu');
+				}
+			},
+			{
+				id: '6-0',
+				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
+				accelerator: 'CmdOrCtrl+P',
+				async click() {
+					manager.show(RegisteredWindow.PLUGINS);
 				}
 			},
 			{
@@ -175,6 +188,14 @@ export class TrayIcon {
 				visible: appConfig.timeTrackerWindow
 			},
 			{
+				id: '6-0',
+				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
+				accelerator: 'CmdOrCtrl+P',
+				async click() {
+					manager.show(RegisteredWindow.PLUGINS);
+				}
+			},
+			{
 				id: '6',
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				accelerator: 'CmdOrCtrl+U',
@@ -246,8 +267,14 @@ export class TrayIcon {
 			unAuthMenu.unshift(openGauzyMenu);
 		}
 
-		const menuWindowTime = Menu.getApplicationMenu()?.getMenuItemById('window-time-track') ?? { enabled: false, visible: false };
-		const menuWindowSetting = Menu.getApplicationMenu()?.getMenuItemById('window-setting') ?? { enabled: false, visible: false };
+		const menuWindowTime = Menu.getApplicationMenu()?.getMenuItemById('window-time-track') ?? {
+			enabled: false,
+			visible: false
+		};
+		const menuWindowSetting = Menu.getApplicationMenu()?.getMenuItemById('window-setting') ?? {
+			enabled: false,
+			visible: false
+		};
 
 		const openWindow = async () => {
 			if (process.env.IS_DESKTOP_TIMER) {
@@ -264,7 +291,10 @@ export class TrayIcon {
 			menuWindowTime.enabled = true;
 			manager.webContents(timeTrackerWindow).send('get_user_detail', LocalStore.beforeRequestParams());
 		} else {
-			this.tray.setTitle('--:--:--', options);
+			manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
+				event: 'updateTimer',
+				timeText: null
+			});
 			this.contextMenu = unAuthMenu;
 			menuWindowTime.enabled = false;
 		}
@@ -279,7 +309,9 @@ export class TrayIcon {
 			this.contextMenu[2].enabled = false;
 			this.contextMenu[0].visible = true;
 			this.contextMenu[3].enabled = true;
-			this.tray.setImage(nativeImage.createFromPath(normalIcon));
+			manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
+				event: 'startTimer'
+			});
 			this.build();
 		});
 
@@ -287,7 +319,9 @@ export class TrayIcon {
 			this.contextMenu[2].enabled = true;
 			this.contextMenu[0].visible = false;
 			this.contextMenu[3].enabled = false;
-			this.tray.setImage(nativeImage.createFromPath(grayIcon));
+			manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
+				event: 'stopTimer'
+			});
 			this.build();
 		});
 
@@ -302,7 +336,10 @@ export class TrayIcon {
 		ipcMain.on('update_tray_time_title', (event, arg) => {
 			const auth = store.get('auth');
 			if (auth && auth.employeeId && !auth.isLogout) {
-				this.tray.setTitle(arg ? arg.timeRun : '--:--:--', options);
+				manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
+					event: 'updateTimer',
+					timeText: arg ? arg.timeRun : null
+				});
 			}
 		});
 
@@ -346,7 +383,10 @@ export class TrayIcon {
 				this.contextMenu = menuAuth;
 				menuWindowTime.enabled = true;
 			} else {
-				this.tray.setTitle('--:--:--', options);
+				manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
+					event: 'updateTimer',
+					timeText: null
+				});
 				this.contextMenu = unAuthMenu;
 				menuWindowTime.enabled = false;
 			}
@@ -380,7 +420,10 @@ export class TrayIcon {
 		ipcMain.handle('FINAL_LOGOUT', async (event, arg) => {
 			console.log('Final Logout');
 
-			this.tray.setTitle('--:--:--', options);
+			manager.webContents(timeTrackerWindow).send('custom_tray_icon', {
+				event: 'updateTimer',
+				timeText: null
+			});
 
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 
@@ -436,6 +479,16 @@ export class TrayIcon {
 				this.contextMenu[1].visible = true;
 			}
 		});
+
+		ipcMain.on('update-tray-icon', (event, dataUrl) => {
+			if (!this.tray?.isDestroyed()) {
+				const image = nativeImage.createFromDataURL(dataUrl);
+				this.tray.setImage(image);
+			}
+
+		});
+
+		manager.webContents(timeTrackerWindow).send('custom_tray_icon', { event: 'initCustomIcon' });
 	}
 
 	public destroy() {
@@ -456,7 +509,8 @@ export class TrayIcon {
 			'update_tray_time_update',
 			'update_tray_time_title',
 			'auth_success',
-			'user_detail'
+			'user_detail',
+			'update-tray-icon'
 		];
 
 		trayListener.forEach((listener) => {

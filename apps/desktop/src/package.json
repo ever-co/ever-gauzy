@@ -158,7 +158,7 @@
 		"@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
-		"@nestjs/platform-express": "^11.1.0",
+		"@nestjs/platform-express": "^11.1.10",
 		"@sentry/electron": "6.9.0",
 		"@sentry/node": "9.43.0",
 		"@sentry/profiling-node": "9.43.0",
