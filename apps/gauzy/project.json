@@ -14,7 +14,6 @@
 			"executor": "@angular-builders/custom-webpack:browser",
 			"options": {
 				"preserveSymlinks": true,
-				"verbose": true,
 				"aot": true,
 				"customWebpackConfig": {
 					"path": "apps/gauzy/config/custom-webpack.config.js"
@@ -91,7 +90,6 @@
 					"namedChunks": false,
 					"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
 					"aot": true,
-					"verbose": true,
 					"extractLicenses": true,
 					"vendorChunk": true,
 					"buildOptimizer": true,
