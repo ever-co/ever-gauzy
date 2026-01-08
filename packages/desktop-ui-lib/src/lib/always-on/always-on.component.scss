@@ -1,8 +1,13 @@
+:host {
+	overflow: hidden !important;
+}
+
 :host(.rounded-theme) ::ng-deep nb-layout,
 :host(.rounded-theme) ::ng-deep nb-layout>div,
 :host(.rounded-theme) ::ng-deep nb-layout>div>div {
 	background: transparent !important;
 	box-shadow: none !important;
+	overflow: hidden !important;
 }
 
 
@@ -15,6 +20,7 @@
 
 :host(.rounded-theme) ::ng-deep nb-layout-column {
 	background: transparent !important;
+	overflow: hidden !important;
 }
 
 nb-card-body,
@@ -22,11 +28,13 @@ nb-card-footer {
 	padding: 1rem;
 	background-color: var(--gauzy-card-4);
 	color: var(--gauzy-text-color-4);
+	overflow: hidden !important;
 }
 
 nb-card {
 	background-color: var(--gauzy-card-2);
 	color: var(--gauzy-text-color-1);
+	overflow: hidden !important;
 }
 
 ::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
@@ -36,12 +44,43 @@ nb-card {
 :host(.rounded-theme) ::ng-deep nb-layout nb-layout-column {
 	padding: 0 !important;
 	margin: 0 !important;
+	overflow: hidden !important;
 }
 
 ::ng-deep .layout {
 	min-width: unset !important;
+	overflow: hidden !important;
 }
 
+/* Global scrollbar removal for this component */
+::ng-deep nb-layout,
+::ng-deep nb-layout-column,
+::ng-deep .scrollable-container,
+::ng-deep .content,
+::ng-deep .layout-container {
+	overflow: hidden !important;
+
+	&::-webkit-scrollbar {
+		display: none !important;
+		width: 0 !important;
+		height: 0 !important;
+	}
+
+	-ms-overflow-style: none !important;
+	scrollbar-width: none !important;
+}
+
+/* Hide scrollbar for all elements inside host */
+:host ::ng-deep * {
+	&::-webkit-scrollbar {
+		display: none !important;
+		width: 0 !important;
+		height: 0 !important;
+	}
+
+	-ms-overflow-style: none !important;
+	scrollbar-width: none !important;
+}
 
 button {
 	width: 48px;
@@ -58,6 +97,7 @@ button {
 	-moz-border-radius: 50px;
 	border-radius: 50px;
 	padding: 4px;
+	overflow: hidden !important;
 }
 
 .counter {
@@ -98,6 +138,7 @@ button {
 	-webkit-border-radius: 50px;
 	-moz-border-radius: 50px;
 	border-radius: 50px;
+	overflow: hidden !important;
 }
 
 .timer-card {
@@ -112,7 +153,8 @@ button {
 	justify-content: center;
 	-webkit-app-region: drag;
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4),
-		0 0 12px rgba(50, 150, 250, 0.2)
+		0 0 12px rgba(50, 150, 250, 0.2);
+	overflow: hidden !important;
 }
 
 /* Body inside card */
@@ -125,6 +167,7 @@ button {
 	padding: 0 8px;
 	box-sizing: border-box;
 	color: var(--gauzy-text-color-1);
+	overflow: hidden !important;
 }
 
 /* Container for all elements */
@@ -133,6 +176,7 @@ button {
 	align-items: center;
 	gap: 10px;
 	width: 100%;
+	overflow: hidden !important;
 }
 
 /* Time display area */
@@ -141,6 +185,7 @@ button {
 	flex-direction: column;
 	flex-grow: 1;
 	text-align: left;
+	overflow: hidden !important;
 
 	.current-session {
 		font-size: 16px;

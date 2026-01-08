@@ -1,4 +1,5 @@
-require('webpack');
+const webpack = require('webpack');
+const path = require('path');
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
 const TerserPlugin = require('terser-webpack-plugin');
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
@@ -17,13 +18,23 @@ if (isCircleEnv) {
 }
 
 module.exports = {
-	target: 'electron-renderer',
+	target: 'web',
 	resolve: {
-		mainFields: ['es2016', 'browser', 'module', 'main']
+		mainFields: ['es2016', 'browser', 'module', 'main'],
+		alias: {
+			// Force uuid to use the browser ESM build
+			uuid: path.resolve(__dirname, '../../../node_modules/uuid/dist/esm-browser/index.js')
+		},
+		fallback: {
+			crypto: require.resolve('crypto-browserify'),
+			stream: require.resolve('stream-browserify'),
+			util: require.resolve('util/'),
+			buffer: require.resolve('buffer/'),
+			process: require.resolve('process/browser')
+		}
 	},
 	optimization: {
 		concatenateModules: false,
-		// for now let's disable minimize in CircleCI
 		minimize: !isCircleCI,
 		minimizer: [
 			new TerserPlugin({
@@ -38,11 +49,21 @@ module.exports = {
 		]
 	},
 	externals: {
-		'electron-log': 'electron-log'
+		'electron-log': 'electron-log',
+		electron: 'commonjs electron'
 	},
 	plugins: [
 		new NodePolyfillPlugin({
 			excludeAliases: ['console']
+		}),
+		new webpack.ProvidePlugin({
+			process: 'process/browser',
+			Buffer: ['buffer', 'Buffer'],
+			global: ['global', 'window'] // Add global polyfill
+		}),
+		// Define global as window for browser compatibility
+		new webpack.DefinePlugin({
+			global: 'globalThis'
 		})
 	],
 	output: {
