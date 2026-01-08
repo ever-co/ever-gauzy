@@ -6,16 +6,16 @@
 				<ng-container *ngFor="let socialLink of socialLinks">
 					<ng-container *ngIf="socialLink.link">
 						<a [routerLink]="socialLink.link" [attr.target]="socialLink.target" class="social-link">
-							<nb-icon *ngIf="socialLink.icon; else title" [icon]="socialLink.icon"></nb-icon>
-							<ng-template #title>
+							<nb-icon *ngIf="socialLink.icon; else titleLink" [icon]="socialLink.icon"></nb-icon>
+							<ng-template #titleLink>
 								{{ socialLink.title }}
 							</ng-template>
 						</a>
 					</ng-container>
 					<ng-container *ngIf="socialLink.url">
 						<a [attr.href]="socialLink.url" [attr.target]="socialLink.target" class="social-link">
-							<nb-icon *ngIf="socialLink.icon; else title" [icon]="socialLink.icon"></nb-icon>
-							<ng-template #title>
+							<nb-icon *ngIf="socialLink.icon; else titleUrl" [icon]="socialLink.icon"></nb-icon>
+							<ng-template #titleUrl>
 								{{ socialLink.title }}
 							</ng-template>
 						</a>

@@ -63,7 +63,7 @@
                         <div
                           class="criterion"
 								*ngFor="
-									let technologyRating of form.get('technologies').controls as controls;
+									let technologyRating of form.get('technologies').controls;
 									index as i
 								"
                           >
@@ -88,7 +88,7 @@
                         <div
                           class="criterion"
 								*ngFor="
-									let personalQualityRating of form.get('personalQualities').controls as controls;
+									let personalQualityRating of form.get('personalQualities').controls;
 									index as i
 								"
                           >

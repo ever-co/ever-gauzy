@@ -28,7 +28,7 @@
 			></ga-contact-mutation>
 		</ng-container>
 		<ng-template #layout>
-			<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
+			<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="contactsGridLayout">
 				<div class="table-scroll-container">
 					<angular2-smart-table
 						style="cursor: pointer"
@@ -43,7 +43,7 @@
 					</ng-container>
 				</div>
 			</ng-template>
-			<ng-template #gridLayout>
+			<ng-template #contactsGridLayout>
 				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
 					(onSelectedItem)="selectContact($event)"
