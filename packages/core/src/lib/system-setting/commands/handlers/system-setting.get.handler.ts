@@ -24,7 +24,7 @@ export class SystemSettingGetHandler implements ICommandHandler<SystemSettingGet
 		const { names } = command;
 
 		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.getOrganizationId();
+		const organizationId = RequestContext.currentOrganizationId();
 
 		let settings = await this._systemSettingService.getSettingsWithCascade(names, tenantId, organizationId);
 
@@ -54,7 +54,7 @@ export class SystemSettingGetByScopeHandler implements ICommandHandler<SystemSet
 		const { scope } = command;
 
 		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.getOrganizationId();
+		const organizationId = RequestContext.currentOrganizationId();
 		const effectiveScope = scope || SystemSettingScope.TENANT;
 
 		let settings = await this._systemSettingService.getSettingsByScope(effectiveScope, tenantId, organizationId);

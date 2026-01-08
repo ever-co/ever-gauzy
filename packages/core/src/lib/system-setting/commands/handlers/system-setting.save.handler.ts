@@ -21,7 +21,7 @@ export class SystemSettingSaveHandler implements ICommandHandler<SystemSettingSa
 		const { input, scope } = command;
 
 		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.getOrganizationId();
+		const organizationId = RequestContext.currentOrganizationId();
 
 		return await this._systemSettingService.saveSettings(input, scope, tenantId, organizationId);
 	}
