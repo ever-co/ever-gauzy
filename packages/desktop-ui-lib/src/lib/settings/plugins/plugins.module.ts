@@ -29,7 +29,6 @@ import {
 	NbStepperModule,
 	NbTabsetModule,
 	NbTagModule,
-	NbToastrService,
 	NbToggleModule,
 	NbTooltipModule,
 	NbUserModule
@@ -127,8 +126,9 @@ import { PluginUserAssignmentService } from './services/plugin-user-assignment.s
 import { PluginService } from './services/plugin.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
+import { ElectronService } from '../../electron/services';
 import { LanguageModule } from '../../language/language.module';
-import { Store } from '../../services';
+import { Store, ToastrNotificationService } from '../../services';
 import { PluginCategoryEffects } from './component/plugin-marketplace/+state';
 import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
 import { PluginUploadIntentEffects } from './component/plugin-marketplace/+state/effects/plugin-upload-intent.effect';
@@ -250,6 +250,7 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 	],
 	providers: [
 		PluginLoaderService,
+		ElectronService,
 		PluginElectronService,
 		PluginService,
 		PluginSubscriptionService,
@@ -302,7 +303,7 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		PluginUploadIntentStore,
 		PluginUploadIntentQuery,
 		NbInfiniteListDirective,
-		NbToastrService,
+		ToastrNotificationService,
 		NbDialogService,
 		Store
 	],
