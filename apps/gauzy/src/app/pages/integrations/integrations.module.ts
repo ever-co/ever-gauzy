@@ -1,25 +1,34 @@
 import { Inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
+import { PluginsModule } from '@gauzy/desktop-ui-lib';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { SharedModule, SmartDataViewLayoutModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import {
+	NbButtonGroupModule,
 	NbButtonModule,
 	NbCardModule,
 	NbIconModule,
 	NbInputModule,
 	NbSelectModule,
 	NbSpinnerModule,
+	NbTabsetModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { SmartDataViewLayoutModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
-import { createIntegrationsRoutes } from './integrations.routes';
-import { IntegrationsComponent } from './integrations.component';
-import { IntegrationLayoutComponent } from './layout/layout.component';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { IntegrationListComponent } from './components/integration-list/list.component';
+import { PluginMarketplaceWrapperComponent } from './components/plugin-marketplace-wrapper/plugin-marketplace-wrapper.component';
+import { IntegrationsComponent } from './integrations.component';
+import { createIntegrationsRoutes } from './integrations.routes';
+import { IntegrationLayoutComponent } from './layout/layout.component';
 
 @NgModule({
-	declarations: [IntegrationLayoutComponent, IntegrationListComponent, IntegrationsComponent],
+	declarations: [
+		IntegrationLayoutComponent,
+		IntegrationListComponent,
+		IntegrationsComponent,
+		PluginMarketplaceWrapperComponent
+	],
 	imports: [
 		NbButtonModule,
 		NbCardModule,
@@ -28,6 +37,9 @@ import { IntegrationListComponent } from './components/integration-list/list.com
 		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
+		NbTabsetModule,
+		NbButtonGroupModule,
+		PluginsModule,
 		RouterModule.forChild([]),
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),

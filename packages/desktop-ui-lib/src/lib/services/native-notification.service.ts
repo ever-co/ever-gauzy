@@ -1,20 +1,22 @@
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, Optional } from '@angular/core';
 import { ElectronService } from '../electron/services';
 import { NotificationService } from './notification.service';
 import { GAUZY_ENV } from '../constants';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class NativeNotificationService extends NotificationService {
 	constructor(
 		private readonly _electronService: ElectronService,
-		@Inject(GAUZY_ENV) environment: any
+		@Optional()
+		@Inject(GAUZY_ENV)
+		environment: any
 	) {
 		super();
 		this._notification = {
-			title: environment.DESCRIPTION,
-			message: '',
+			title: environment?.DESCRIPTION || 'Gauzy',
+			message: ''
 		};
 	}
 

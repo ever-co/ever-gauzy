@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable, Optional } from '@angular/core';
 import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
@@ -8,7 +8,10 @@ import type { IPlugin } from './plugin-loader.service';
 	providedIn: 'root'
 })
 export class PluginElectronService {
-	private electronService = inject(ElectronService);
+	constructor(
+		@Optional()
+		private readonly electronService: ElectronService
+	) {}
 
 	public get plugins(): Promise<IPlugin[]> {
 		return this.electronService.ipcRenderer.invoke('plugins::getAll');

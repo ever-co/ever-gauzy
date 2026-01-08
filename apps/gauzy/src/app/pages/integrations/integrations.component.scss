@@ -8,8 +8,32 @@
 /**
 * By setting min-height of the card to this value, we ensure the card will properly adjust it's height
 */
-:host>nb-card {
+:host > nb-card {
   min-height: 47.5rem;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+
+  h4 {
+    margin: 0;
+  }
+
+  .header-tabs {
+    ::ng-deep {
+      nb-tabset {
+        .tabset {
+          border: none;
+        }
+        ul.tabset {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
 }
 
 .integration-filters {
@@ -53,17 +77,16 @@ a.disabled {
     padding: 15px;
     margin: 0 1rem 1rem 0;
     box-shadow: 0 1px 1px 0 rgb(0 0 0 / 15%);
-    border-radius: 8px;
+    border-radius: calc(var(--border-radius) * 1);
     position: relative;
     background-color: var(--gauzy-card-1);
 
     &:hover {
       box-shadow: 0px 1px 1px 1px var(--text-primary-color);
-      transition: 0.2 all;
+      transition: 0.2s all;
     }
   }
 }
-
 
 img {
   width: 100%;
@@ -117,7 +140,6 @@ img {
 }
 
 :host {
-
   nb-card,
   nb-card-body {
     background-color: var(--gauzy-card-2);
@@ -125,8 +147,8 @@ img {
 
   ::ng-deep {
     nb-select {
-      &.integration-selector{
-          min-width: 10rem;
+      &.integration-selector {
+        min-width: 10rem;
       }
       span {
         color: var(--gauzy-text-color-2);
@@ -136,12 +158,9 @@ img {
         letter-spacing: 0em;
         text-align: left;
       }
-
     }
 
-    @include nb-select-overrides(2rem,
-      $default-button-radius,
-      $default-box-shadow );
+    @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
   }
 
   h4 {
@@ -169,7 +188,6 @@ label {
   line-height: 13px;
   letter-spacing: -0.01em;
   text-align: left;
-
 }
 
 nb-option {
@@ -189,5 +207,18 @@ nb-option {
 
   button {
     box-shadow: 0 1px 1px 0 rgb(0 0 0 / 15%);
+  }
+}
+
+// Plugin Marketplace Tab Styles
+.plugin-marketplace-wrapper {
+  min-height: 500px;
+  width: 100%;
+
+  ::ng-deep {
+    lib-plugin-marketplace {
+      width: 100%;
+      display: block;
+    }
   }
 }
