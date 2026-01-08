@@ -5,6 +5,7 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:package",
