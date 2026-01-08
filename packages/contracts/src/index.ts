@@ -161,6 +161,12 @@ export * from './lib/clone.model';
 export * from './lib/soundshot.model';
 export * from './lib/zapier.model';
 
+/** System Setting Models */
+export * from './lib/system-setting.model';
+export * from './lib/sentry-config.model';
+export * from './lib/unleash-config.model';
+export * from './lib/google-maps-config.model';
+
 export {
 	ActorTypeEnum,
 	BaseEntityEnum,
