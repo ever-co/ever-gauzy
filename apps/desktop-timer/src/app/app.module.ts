@@ -26,7 +26,6 @@ import {
 	NgxLoginModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
-	PluginsModule,
 	RecapModule,
 	RefreshTokenInterceptor,
 	ScreenCaptureModule,
@@ -121,7 +120,6 @@ if (environment.SENTRY_DSN) {
 		NbDatepickerModule.forRoot(),
 		AboutModule,
 		ActivityWatchModule,
-		PluginsModule,
 		RecapModule,
 		TaskTableModule
 	],

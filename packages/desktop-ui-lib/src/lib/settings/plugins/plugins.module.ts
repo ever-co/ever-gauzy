@@ -246,7 +246,7 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		NbTagModule,
 		InfiniteScrollDirective,
 		NbPopoverModule,
-		LanguageModule.forChild(),
+		LanguageModule.forRoot(),
 		PluginRoutingModule
 	],
 	providers: [
