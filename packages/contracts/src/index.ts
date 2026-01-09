@@ -166,6 +166,11 @@ export * from './lib/system-setting.model';
 export * from './lib/sentry-config.model';
 export * from './lib/unleash-config.model';
 export * from './lib/google-maps-config.model';
+export * from './lib/posthog-config.model';
+export * from './lib/jitsu-config.model';
+export * from './lib/gauzy-ai-config.model';
+export * from './lib/cloudinary-config.model';
+export * from './lib/chatwoot-config.model';
 
 export {
 	ActorTypeEnum,
