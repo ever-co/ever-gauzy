@@ -427,7 +427,7 @@ jobs:
             console.log(script.agent(true))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          AGENT_APP_NAME: 'ever-gauzy-agent'
+          AGENT_APP_NAME: 'gauzy-agent'
           AGENT_APP_REPO_NAME: 'ever-gauzy-agent'
           AGENT_APP_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
