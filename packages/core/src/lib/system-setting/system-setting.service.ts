@@ -8,7 +8,12 @@ import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { SystemSetting } from './system-setting.entity';
 import { TypeOrmSystemSettingRepository } from './repository/type-orm-system-setting.repository';
 import { MikroOrmSystemSettingRepository } from './repository/mikro-orm-system-setting.repository';
-import { getDefaultValue, getEnvVarName, getSettingMetadata, isSettingAllowedAtScope } from './system-setting.constants';
+import {
+	getDefaultValue,
+	getEnvVarName,
+	getSettingMetadata,
+	isSettingAllowedAtScope
+} from './system-setting.constants';
 
 @Injectable()
 export class SystemSettingService extends TenantAwareCrudService<SystemSetting> {
@@ -264,7 +269,9 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 		if (!metadata.allowedScopes.includes(scope)) {
 			throw new BadRequestException(
-				`Setting "${settingKey}" cannot be defined at ${scope} level. Allowed scopes: ${metadata.allowedScopes.join(', ')}`
+				`Setting "${settingKey}" cannot be defined at ${scope} level. Allowed scopes: ${metadata.allowedScopes.join(
+					', '
+				)}`
 			);
 		}
 	}

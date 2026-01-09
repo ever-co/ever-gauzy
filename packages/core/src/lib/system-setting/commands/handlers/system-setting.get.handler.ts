@@ -5,7 +5,16 @@ import { RequestContext } from '../../../core/context';
 import { WrapSecrets } from '../../../core/decorators';
 import { SystemSettingGetCommand, SystemSettingGetByScopeCommand } from '../system-setting.get.command';
 import { SystemSettingService } from '../../system-setting.service';
-import { SentryConfigDTO, UnleashConfigDTO, GoogleMapsConfigDTO } from '../../dto';
+import {
+	SentryConfigDTO,
+	UnleashConfigDTO,
+	GoogleMapsConfigDTO,
+	PosthogConfigDTO,
+	JitsuConfigDTO,
+	GauzyAIConfigDTO,
+	CloudinaryConfigDTO,
+	ChatwootConfigDTO
+} from '../../dto';
 
 @CommandHandler(SystemSettingGetCommand)
 export class SystemSettingGetHandler implements ICommandHandler<SystemSettingGetCommand> {
@@ -32,7 +41,12 @@ export class SystemSettingGetHandler implements ICommandHandler<SystemSettingGet
 			{},
 			WrapSecrets(settings, new SentryConfigDTO()),
 			WrapSecrets(settings, new UnleashConfigDTO()),
-			WrapSecrets(settings, new GoogleMapsConfigDTO())
+			WrapSecrets(settings, new GoogleMapsConfigDTO()),
+			WrapSecrets(settings, new PosthogConfigDTO()),
+			WrapSecrets(settings, new JitsuConfigDTO()),
+			WrapSecrets(settings, new GauzyAIConfigDTO()),
+			WrapSecrets(settings, new CloudinaryConfigDTO()),
+			WrapSecrets(settings, new ChatwootConfigDTO())
 		);
 	}
 }
@@ -63,7 +77,12 @@ export class SystemSettingGetByScopeHandler implements ICommandHandler<SystemSet
 			{},
 			WrapSecrets(settings, new SentryConfigDTO()),
 			WrapSecrets(settings, new UnleashConfigDTO()),
-			WrapSecrets(settings, new GoogleMapsConfigDTO())
+			WrapSecrets(settings, new GoogleMapsConfigDTO()),
+			WrapSecrets(settings, new PosthogConfigDTO()),
+			WrapSecrets(settings, new JitsuConfigDTO()),
+			WrapSecrets(settings, new GauzyAIConfigDTO()),
+			WrapSecrets(settings, new CloudinaryConfigDTO()),
+			WrapSecrets(settings, new ChatwootConfigDTO())
 		);
 	}
 }
