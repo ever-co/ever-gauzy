@@ -1,5 +1,4 @@
 const webpack = require('webpack');
-const path = require('path');
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
 const TerserPlugin = require('terser-webpack-plugin');
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
@@ -21,10 +20,7 @@ module.exports = {
 	target: 'web',
 	resolve: {
 		mainFields: ['es2016', 'browser', 'module', 'main'],
-		alias: {
-			// Force uuid to use the browser ESM build
-			uuid: path.resolve(__dirname, '../../../node_modules/uuid/dist/esm-browser/index.js')
-		},
+		conditionNames: ['browser', 'import', 'default'],
 		fallback: {
 			crypto: require.resolve('crypto-browserify'),
 			stream: require.resolve('stream-browserify'),
@@ -58,8 +54,7 @@ module.exports = {
 		}),
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
-			Buffer: ['buffer', 'Buffer'],
-			global: ['global', 'window'] // Add global polyfill
+			Buffer: ['buffer', 'Buffer']
 		}),
 		// Define global as window for browser compatibility
 		new webpack.DefinePlugin({
