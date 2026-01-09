@@ -151,6 +151,7 @@ export * from '../../tasks/views/view.entity';
 export * from '../../tenant-api-key/tenant-api-key.entity';
 export * from '../../tenant/tenant-setting/tenant-setting.entity';
 export * from '../../tenant/tenant.entity';
+export * from '../../system-setting/system-setting.entity';
 export * from '../../time-off-policy/time-off-policy.entity';
 export * from '../../time-off-request/time-off-request.entity';
 export * from '../../time-tracking/activity/activity.entity';
