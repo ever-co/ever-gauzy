@@ -61,9 +61,10 @@
 		"build:lerna": "yarn lerna run --parallel build",
 		"build:prod": "yarn build:package:all && concurrently --raw \"yarn build:api:prod\" \"yarn build:gauzy:prod\"",
 		"build:gauzy": "yarn run postinstall.web && yarn run config:dev && yarn ng build gauzy",
-		"build:gauzy:prod": "yarn run config:prod && yarn ng:prod build gauzy -c=production --prod --verbose",
-		"build:gauzy:prod:docker": "yarn run config:prod && yarn ng:docker build gauzy -c=production --prod --verbose",
-		"build:gauzy:prod:ci": "yarn run config:prod && yarn --frozen-lockfile --cache-folder ~/.cache/yarn ng:ci build gauzy -c=production --prod --verbose",
+		"build:gauzy:prod": "yarn run config:prod && yarn ng:prod build gauzy -c=production --prod",
+		"build:gauzy:prod:debug": "yarn run config:prod && yarn ng:prod build gauzy -c=production --prod --verbose",
+		"build:gauzy:prod:docker": "yarn run config:prod && yarn ng:docker build gauzy -c=production --prod",
+		"build:gauzy:prod:ci": "yarn run config:prod && yarn --frozen-lockfile --cache-folder ~/.cache/yarn ng:ci build gauzy -c=production --prod",
 		"build:api": "yarn ng build api --configuration=development",
 		"build:api:prod": "yarn ng:prod build api --configuration=production",
 		"build:api:prod:docker": "yarn ng:docker build api --configuration=production",
@@ -299,9 +300,9 @@
 		"build:package:api": "yarn run build:package:constants && yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:utils && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:auth && yarn run build:package:core && yarn run build:package:plugins:post && yarn run build:package:plugin:integration-wakatime",
 		"build:package:api:prod": "yarn run build:package:constants:prod && yarn run build:package:contracts:prod && yarn run build:package:common:prod && yarn run build:package:utils:prod && yarn run build:package:config:prod && yarn run build:package:plugin:prod && yarn run build:package:auth:prod && yarn run build:package:core:prod && yarn run build:package:plugins:post:prod",
 		"build:package:api:docker": "yarn run build:package:constants:docker && yarn run build:package:contracts:docker && yarn run build:package:common:docker && yarn run build:package:utils:docker && yarn run build:package:config:docker && yarn run build:package:plugin:docker && yarn run build:package:auth:docker && yarn run build:package:core:docker && yarn run build:package:plugins:post:docker",
-		"build:package:gauzy": "yarn run build:package:constants && yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:utils && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:auth && yarn run build:package:plugins:pre && yarn run build:package:core && yarn run build:package:plugins:post",
-		"build:package:gauzy:prod": "yarn run build:package:constants:prod && yarn run build:package:contracts:prod && yarn run build:package:common:prod && yarn run build:package:utils:prod && yarn run build:package:config:prod && yarn run build:package:plugin:prod && yarn run build:package:auth:prod && yarn run build:package:plugins:pre:prod && yarn run build:package:core:prod && yarn run build:package:plugins:post:prod",
-		"build:package:gauzy:docker": "yarn run build:package:constants:docker && yarn run build:package:contracts:docker && yarn run build:package:common:docker && yarn run build:package:utils:docker && yarn run build:package:config:docker && yarn run build:package:plugin:docker && yarn run build:package:auth:docker && yarn run build:package:plugins:pre:docker && yarn run build:package:core:docker && yarn run build:package:plugins:post:docker",
+		"build:package:gauzy": "yarn run build:package:constants && yarn run build:package:contracts && yarn run build:package:ui-config && yarn run build:package:ui-core && yarn run build:package:ui-auth && yarn run build:package:plugins:pre",
+		"build:package:gauzy:prod": "yarn run build:package:constants:prod && yarn run build:package:contracts:prod && yarn run build:package:ui-config:prod && yarn run build:package:ui-core:prod && yarn run build:package:ui-auth:prod && yarn run build:package:plugins:pre:prod",
+		"build:package:gauzy:docker": "yarn run build:package:constants:docker && yarn run build:package:contracts:docker && yarn run build:package:ui-config:docker && yarn run build:package:ui-core:docker && yarn run build:package:ui-auth:docker && yarn run build:package:plugins:pre:docker",
 		"build:package:desktop-activity": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn nx build desktop-activity",
 		"build:package:desktop-activity:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn nx build desktop-activity",
 		"build:package:desktop-activity:docker": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=30000 yarn nx build desktop-activity",
@@ -643,6 +644,7 @@
 		"lighthouse": "^6.3.0",
 		"lint-staged": "^10.4.0",
 		"ng-packagr": "19.2.2",
+		"node-abi": "^3.78.0",
 		"node-gyp": "^10.2.0",
 		"npm-run-all": "^4.1.5",
 		"nx": "21.1.0",
@@ -674,8 +676,7 @@
 		"webpack-bundle-analyzer": "^4.10.2",
 		"webpack-cli": "^6.0.1",
 		"webpack-merge": "^6.0.1",
-		"webpack-node-externals": "^3.0.0",
-		"node-abi": "^3.78.0"
+		"webpack-node-externals": "^3.0.0"
 	},
 	"overrides": {
 		"prebuild": {
@@ -685,9 +686,13 @@
 			"locutus": "2.0.30"
 		},
 		"electron-rebuild": {
-			"node-abi": "3.78.0",
-			"@electron/rebuild/node-abi": "3.78.0",
-			"app-builder-lib/node-abi": "3.78.0"
+			"node-abi": "3.78.0"
+		},
+		"@electron/rebuild": {
+			"node-abi": "3.78.0"
+		},
+		"app-builder-lib": {
+			"node-abi": "3.78.0"
 		}
 	},
 	"engines": {
