@@ -48,9 +48,8 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		// Check if we should navigate to plugins on init
-		const urlTree = this.router.parseUrl(this.router.url);
-		if (urlTree.root.children['plugins']) {
+		// Check if we should show plugins tab based on current URL
+		if (this.router.url.includes('/integrations/plugins')) {
 			this.activeTab.set('plugins');
 		}
 	}
@@ -63,11 +62,11 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
 
 		// Navigate to the appropriate route
 		if (tab === 'plugins') {
-			// Navigate to plugins outlet
-			this.router.navigate([{ outlets: { plugins: [''] } }], { relativeTo: this.activatedRoute });
+			// Navigate to plugins route
+			this.router.navigate(['/pages/integrations/plugins']);
 		} else {
-			// Close the plugins outlet
-			this.router.navigate([{ outlets: { plugins: null } }], { relativeTo: this.activatedRoute });
+			// Navigate back to integrations
+			this.router.navigate(['/pages/integrations/new']);
 		}
 	}
 

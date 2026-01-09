@@ -1,7 +1,6 @@
 import { Route } from '@angular/router';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { IntegrationListComponent } from './components/integration-list/list.component';
-import { PluginMarketplaceWrapperComponent } from './components/plugin-marketplace-wrapper/plugin-marketplace-wrapper.component';
 import { IntegrationsComponent } from './integrations.component';
 import { IntegrationLayoutComponent } from './layout/layout.component';
 
@@ -40,17 +39,12 @@ export const createIntegrationsRoutes = (_pageRouteRegistryService: PageRouteReg
 						date: false,
 						organization: false
 					}
-				},
-				children: [
-					{
-						path: 'plugins',
-						outlet: 'plugins',
-						component: PluginMarketplaceWrapperComponent,
-						data: {
-							isUploadAvailable: true
-						}
-					}
-				]
+				}
+			},
+			{
+				path: 'plugins',
+				loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginLayoutComponent),
+				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.pluginRoutes)
 			}
 		]
 	},

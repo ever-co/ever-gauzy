@@ -17,18 +17,11 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { IntegrationListComponent } from './components/integration-list/list.component';
-import { PluginMarketplaceWrapperComponent } from './components/plugin-marketplace-wrapper/plugin-marketplace-wrapper.component';
 import { IntegrationsComponent } from './integrations.component';
 import { createIntegrationsRoutes } from './integrations.routes';
 import { IntegrationLayoutComponent } from './layout/layout.component';
-
 @NgModule({
-	declarations: [
-		IntegrationLayoutComponent,
-		IntegrationListComponent,
-		IntegrationsComponent,
-		PluginMarketplaceWrapperComponent
-	],
+	declarations: [IntegrationLayoutComponent, IntegrationListComponent, IntegrationsComponent],
 	imports: [
 		NbButtonModule,
 		NbCardModule,
