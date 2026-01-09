@@ -148,6 +148,7 @@ import {
 	SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
+import { PluginRoutingModule } from './plugin-routing.module';
 
 @NgModule({
 	declarations: [
@@ -204,7 +205,6 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		SubscriptionConsentSectionComponent,
 		UploadSelectionComponent
 	],
-	exports: [PluginLayoutComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -246,7 +246,8 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		NbTagModule,
 		InfiniteScrollDirective,
 		NbPopoverModule,
-		LanguageModule.forChild()
+		LanguageModule.forChild(),
+		PluginRoutingModule
 	],
 	providers: [
 		PluginLoaderService,

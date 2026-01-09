@@ -40,11 +40,6 @@ export const createIntegrationsRoutes = (_pageRouteRegistryService: PageRouteReg
 						organization: false
 					}
 				}
-			},
-			{
-				path: 'plugins',
-				loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginLayoutComponent),
-				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.pluginRoutes)
 			}
 		]
 	},

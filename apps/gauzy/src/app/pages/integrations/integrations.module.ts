@@ -1,6 +1,5 @@
 import { Inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-import { PluginsModule } from '@gauzy/desktop-ui-lib';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { SharedModule, SmartDataViewLayoutModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import {
@@ -32,7 +31,6 @@ import { IntegrationLayoutComponent } from './layout/layout.component';
 		NbTooltipModule,
 		NbTabsetModule,
 		NbButtonGroupModule,
-		PluginsModule,
 		RouterModule.forChild([]),
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
@@ -138,6 +136,14 @@ export class IntegrationsModule {
 			path: 'github',
 			// Register the loadChildren function to load the GithubModule lazy module
 			loadChildren: () => import('@gauzy/plugin-integration-github-ui').then((m) => m.IntegrationGithubUiModule)
+		});
+
+		// Register the routes for plugins
+		this._pageRouteRegistryService.registerPageRoute({
+			data: { selectors: false },
+			location: 'integrations',
+			path: 'plugins',
+			loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginsModule)
 		});
 
 		// Register the routes for activepieces integration

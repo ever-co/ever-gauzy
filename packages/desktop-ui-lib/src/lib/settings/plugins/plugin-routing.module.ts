@@ -1,26 +1,16 @@
-import { Routes } from '@angular/router';
-import { PluginUploadResolver } from './services/resolvers/plugin-upload.resolver';
+import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 
-export const pluginRoutes: Routes = [
-	{
-		path: '',
-		pathMatch: 'full',
-		redirectTo: 'installed'
-	},
-	{
-		path: 'marketplace',
-		loadChildren: () =>
-			import('./component/plugin-marketplace/plugin-marketplace-routing.module').then(
-				(m) => m.pluginMarketplaceRoutes
-			),
-		resolve: { isUploadAvailable: PluginUploadResolver }
-	},
-	{
-		path: 'installed',
-		loadChildren: () => import('./component/plugin-installed-routing.module').then((m) => m.pluginInstalledRoutes)
-	},
-	{
-		path: '**',
-		redirectTo: 'installed'
-	}
-];
+@NgModule({
+	imports: [
+		RouterModule.forChild([
+			{
+				path: '',
+				loadComponent: () => import('./component/plugin-layout/plugin-layout.component').then((m) => m.PluginLayoutComponent),
+				loadChildren: () => import('./plugin.route').then((m) => m.routes)
+			}
+		])
+	],
+	exports: [RouterModule]
+})
+export class PluginRoutingModule {}
