@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FindManyOptions, In, IsNull } from 'typeorm';
 import { indexBy, keys, object, pluck } from 'underscore';
@@ -8,7 +8,7 @@ import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { SystemSetting } from './system-setting.entity';
 import { TypeOrmSystemSettingRepository } from './repository/type-orm-system-setting.repository';
 import { MikroOrmSystemSettingRepository } from './repository/mikro-orm-system-setting.repository';
-import { DEFAULT_VALUES, ENV_VAR_MAPPING } from './system-setting.constants';
+import { getDefaultValue, getEnvVarName, getSettingMetadata, isSettingAllowedAtScope } from './system-setting.constants';
 
 @Injectable()
 export class SystemSettingService extends TenantAwareCrudService<SystemSetting> {
@@ -72,6 +72,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	/**
 	 * Resolves a single setting value using cascade resolution.
 	 * Resolution order: Organization → Tenant → Global → ENV → Default
+	 * Only checks scopes that are allowed for the setting based on metadata.
 	 *
 	 * @param {string} name - The setting name to resolve.
 	 * @param {ID} [tenantId] - Optional tenant ID.
@@ -79,30 +80,32 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	 * @returns {Promise<IResolvedSystemSetting>} - The resolved setting with its source.
 	 */
 	async resolveSettingValue(name: string, tenantId?: ID, organizationId?: ID): Promise<IResolvedSystemSetting> {
-		// Try to find at ORGANIZATION level
-		if (tenantId && organizationId) {
+		// Try to find at ORGANIZATION level (only if allowed)
+		if (tenantId && organizationId && isSettingAllowedAtScope(name, SystemSettingScope.ORGANIZATION)) {
 			const orgSetting = await this.findSettingByScope(name, tenantId, organizationId);
 			if (orgSetting?.value !== undefined && orgSetting?.value !== null) {
 				return { name, value: orgSetting.value, source: SystemSettingScope.ORGANIZATION };
 			}
 		}
 
-		// Try to find at TENANT level
-		if (tenantId) {
+		// Try to find at TENANT level (only if allowed)
+		if (tenantId && isSettingAllowedAtScope(name, SystemSettingScope.TENANT)) {
 			const tenantSetting = await this.findSettingByScope(name, tenantId, null);
 			if (tenantSetting?.value !== undefined && tenantSetting?.value !== null) {
 				return { name, value: tenantSetting.value, source: SystemSettingScope.TENANT };
 			}
 		}
 
-		// Try to find at GLOBAL level
-		const globalSetting = await this.findSettingByScope(name, null, null);
-		if (globalSetting?.value !== undefined && globalSetting?.value !== null) {
-			return { name, value: globalSetting.value, source: SystemSettingScope.GLOBAL };
+		// Try to find at GLOBAL level (only if allowed)
+		if (isSettingAllowedAtScope(name, SystemSettingScope.GLOBAL)) {
+			const globalSetting = await this.findSettingByScope(name, null, null);
+			if (globalSetting?.value !== undefined && globalSetting?.value !== null) {
+				return { name, value: globalSetting.value, source: SystemSettingScope.GLOBAL };
+			}
 		}
 
 		// Try to get from environment variables
-		const envVarName = ENV_VAR_MAPPING[name];
+		const envVarName = getEnvVarName(name);
 		if (envVarName) {
 			const envValue = this.configService.get(envVarName);
 			if (envValue !== undefined && envValue !== '') {
@@ -111,7 +114,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		}
 
 		// Return default value
-		const defaultValue = DEFAULT_VALUES[name];
+		const defaultValue = getDefaultValue(name);
 		return { name, value: defaultValue !== undefined ? String(defaultValue) : undefined, source: 'DEFAULT' };
 	}
 
@@ -139,6 +142,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 	/**
 	 * Saves settings for a specific scope.
+	 * Validates that each setting is allowed at the requested scope based on metadata.
 	 *
 	 * @param {Record<string, any>} input - Key-value pairs of settings to save.
 	 * @param {SystemSettingScope} scope - The scope at which to save the settings.
@@ -154,6 +158,11 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	): Promise<Record<string, any>> {
 		// Validate scope requirements
 		this.validateScopeRequirements(scope, tenantId, organizationId);
+
+		// Validate each setting is allowed at the requested scope
+		for (const key of keys(input)) {
+			this.validateSettingScopeAllowed(key, scope);
+		}
 
 		// Determine the effective IDs based on scope
 		const effectiveTenantId = scope === SystemSettingScope.GLOBAL ? null : tenantId;
@@ -231,10 +240,32 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	 */
 	private validateScopeRequirements(scope: SystemSettingScope, tenantId?: ID, organizationId?: ID): void {
 		if (scope === SystemSettingScope.ORGANIZATION && (!tenantId || !organizationId)) {
-			throw new Error('tenantId and organizationId are required for ORGANIZATION scope');
+			throw new BadRequestException('tenantId and organizationId are required for ORGANIZATION scope');
 		}
 		if (scope === SystemSettingScope.TENANT && !tenantId) {
-			throw new Error('tenantId is required for TENANT scope');
+			throw new BadRequestException('tenantId is required for TENANT scope');
+		}
+	}
+
+	/**
+	 * Validates that a setting is allowed at the specified scope.
+	 *
+	 * @param {string} settingKey - The setting key to validate.
+	 * @param {SystemSettingScope} scope - The scope to check.
+	 * @throws {BadRequestException} If the setting is not allowed at the specified scope.
+	 */
+	private validateSettingScopeAllowed(settingKey: string, scope: SystemSettingScope): void {
+		const metadata = getSettingMetadata(settingKey);
+
+		// If no metadata defined, allow at all scopes (for flexibility with custom settings)
+		if (!metadata) {
+			return;
+		}
+
+		if (!metadata.allowedScopes.includes(scope)) {
+			throw new BadRequestException(
+				`Setting "${settingKey}" cannot be defined at ${scope} level. Allowed scopes: ${metadata.allowedScopes.join(', ')}`
+			);
 		}
 	}
 }
