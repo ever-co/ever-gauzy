@@ -85,7 +85,7 @@
   },
   "defaultProject": "gauzy",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "parallel": 1,
+  "parallel": 3,
   "targetDefaults": {
     "build": {
       "cache": false,
@@ -159,7 +159,17 @@
       ]
     },
     "@angular-devkit/build-angular:application": {
-      "cache": false,
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
+    },
+    "@angular-builders/custom-webpack:browser": {
+      "cache": true,
       "dependsOn": [
         "^build"
       ],

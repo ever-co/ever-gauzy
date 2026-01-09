@@ -9,6 +9,7 @@
 		"tracking",
 		"posthog"
 	],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:package",
