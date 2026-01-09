@@ -590,9 +590,9 @@
     tslib "^2.3.0"
 
 "@angular/core@^19.2.17":
-  version "19.2.17"
-  resolved "https://registry.yarnpkg.com/@angular/core/-/core-19.2.17.tgz#1594430aab89ed0eac72d25af6fff5a788092ad0"
-  integrity sha512-nVu0ryxfiXUZ9M+NV21TY+rJZkPXTYo9U0aJb19hvByPpG+EvuujXUOgpulz6vxIzGy7pz/znRa+K9kxuuC+yQ==
+  version "19.2.18"
+  resolved "https://registry.yarnpkg.com/@angular/core/-/core-19.2.18.tgz#50e561c20e98e5339ce351f207d6d7aeecf10f85"
+  integrity sha512-+QRrf0Igt8ccUWXHA+7doK5W6ODyhHdqVyblSlcQ8OciwkzIIGGEYNZom5OZyWMh+oI54lcSeyV2O3xaDepSrQ==
   dependencies:
     tslib "^2.3.0"
 
