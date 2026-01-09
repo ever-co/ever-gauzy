@@ -2,3 +2,8 @@ export * from './create-system-setting.dto';
 export * from './sentry-config.dto';
 export * from './unleash-config.dto';
 export * from './google-maps-config.dto';
+export * from './posthog-config.dto';
+export * from './jitsu-config.dto';
+export * from './gauzy-ai-config.dto';
+export * from './cloudinary-config.dto';
+export * from './chatwoot-config.dto';
