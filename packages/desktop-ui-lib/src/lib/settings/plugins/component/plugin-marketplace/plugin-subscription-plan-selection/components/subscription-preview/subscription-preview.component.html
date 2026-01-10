@@ -1,0 +1,92 @@
+@if (preview) {
+<nb-card class="order-summary-card" aria-live="polite" aria-label="Order Summary">
+	<!-- Header -->
+	<nb-card-header class="summary-header">
+		<div class="header-left">
+			<div class="header-icon" aria-hidden="true">
+				<nb-icon icon="file-text-outline"></nb-icon>
+			</div>
+			<div class="header-info">
+				<h3 class="header-title">Order Summary</h3>
+				<span class="header-plan">{{ preview.planName }}</span>
+			</div>
+		</div>
+		@if (preview.trialDays && preview.trialDays > 0) {
+		<span class="trial-badge">
+			<nb-icon icon="clock-outline"></nb-icon>
+			{{ preview.trialText }}
+		</span>
+		}
+	</nb-card-header>
+
+	<nb-card-body class="summary-body">
+		@if (!preview.isFree) {
+		<!-- Price Breakdown -->
+		<section class="price-section" aria-label="Price breakdown">
+			<div class="price-row">
+				<span class="price-label">Subtotal</span>
+				<span class="price-value">{{ preview.formattedBaseAmount }}</span>
+			</div>
+
+			@if (preview.setupFee > 0) {
+			<div class="price-row">
+				<span class="price-label">Setup Fee</span>
+				<span class="price-value">{{ preview.formattedSetupFee }}</span>
+			</div>
+			} @if (preview.discount > 0) {
+			<div class="price-row discount-row">
+				<span class="price-label">
+					<nb-icon icon="pricetags-outline"></nb-icon>
+					Discount
+				</span>
+				<span class="price-value">-{{ preview.formattedDiscount }}</span>
+			</div>
+			}
+		</section>
+
+		<!-- Total -->
+		<section class="total-section" aria-label="Total amount">
+			<div class="total-row">
+				<div class="total-info">
+					<span class="total-label">Total</span>
+					<span class="billing-period">{{ preview.formattedBillingPeriod }}</span>
+				</div>
+				<span class="total-value">{{ preview.formattedTotalAmount }}</span>
+			</div>
+		</section>
+		} @else {
+		<!-- Free Plan -->
+		<section class="free-section" aria-label="Free plan">
+			<div class="free-content">
+				<nb-icon icon="gift-outline" class="free-icon"></nb-icon>
+				<div class="free-info">
+					<span class="free-title">Free Plan</span>
+					<span class="free-subtitle">No payment required</span>
+				</div>
+			</div>
+		</section>
+		}
+
+		<!-- Features -->
+		@if (preview.features && preview.features.length > 0) {
+		<section class="features-section" aria-label="Included features">
+			<h4 class="features-heading">Included in this plan</h4>
+			<ul class="features-list">
+				@for (feature of preview.features; track feature) {
+				<li class="feature-item">
+					<nb-icon icon="checkmark-outline" status="success"></nb-icon>
+					<span>{{ feature }}</span>
+				</li>
+				}
+			</ul>
+		</section>
+		}
+
+		<!-- Footer -->
+		<footer class="summary-footer">
+			<nb-icon icon="lock-outline"></nb-icon>
+			<span>Secure & encrypted checkout</span>
+		</footer>
+	</nb-card-body>
+</nb-card>
+}

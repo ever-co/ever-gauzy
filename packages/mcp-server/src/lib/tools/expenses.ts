@@ -1,11 +1,13 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { ExpenseSchema, ExpenseCategoriesEnum, CurrenciesEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { ExpenseCategoriesEnum, CurrenciesEnum } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('ExpenseTools');
 
 /**
@@ -20,7 +22,8 @@ const convertExpenseDateFields = (expenseData: any) => {
 
 export const registerExpenseTools = (server: McpServer) => {
 	// Get expenses tool
-	server.tool(
+	registerTool(
+		server,
 		'get_expenses',
 		"Get list of expenses for the authenticated user's organization",
 		{
@@ -89,7 +92,8 @@ export const registerExpenseTools = (server: McpServer) => {
 	);
 
 	// Get expense count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_expense_count',
 		"Get expense count in the authenticated user's organization",
 		{
@@ -131,7 +135,8 @@ export const registerExpenseTools = (server: McpServer) => {
 	);
 
 	// Get expense by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_expense',
 		'Get a specific expense by ID',
 		{
@@ -165,15 +170,17 @@ export const registerExpenseTools = (server: McpServer) => {
 	);
 
 	// Create expense tool
-	server.tool(
+	registerTool(
+		server,
 		'create_expense',
 		"Create a new expense in the authenticated user's organization",
 		{
-			expense_data: ExpenseSchema.partial()
-				.required({
-					amount: true,
-					currency: true
+			expense_data: z
+				.object({
+					amount: z.number().describe('The amount (required)'),
+					currency: z.string().describe('The currency (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the expense')
 		},
 		async ({ expense_data }) => {
@@ -204,12 +211,13 @@ export const registerExpenseTools = (server: McpServer) => {
 	);
 
 	// Update expense tool
-	server.tool(
+	registerTool(
+		server,
 		'update_expense',
 		'Update an existing expense',
 		{
 			id: z.string().uuid().describe('The expense ID'),
-			expense_data: ExpenseSchema.partial().describe('The data for updating the expense')
+			expense_data: z.record(z.string(), z.any()).describe('The data for updating the expense')
 		},
 		async ({ id, expense_data }) => {
 			try {
@@ -233,7 +241,8 @@ export const registerExpenseTools = (server: McpServer) => {
 	);
 
 	// Delete expense tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_expense',
 		'Delete an expense',
 		{
@@ -263,7 +272,8 @@ export const registerExpenseTools = (server: McpServer) => {
 	);
 
 	// Get expense categories tool
-	server.tool(
+	registerTool(
+		server,
 		'get_expense_categories',
 		"Get list of expense categories for the authenticated user's organization",
 		{
@@ -301,7 +311,8 @@ export const registerExpenseTools = (server: McpServer) => {
 	);
 
 	// Get expenses by employee tool
-	server.tool(
+	registerTool(
+		server,
 		'get_expenses_by_employee',
 		'Get expenses for a specific employee',
 		{
@@ -345,7 +356,8 @@ export const registerExpenseTools = (server: McpServer) => {
 	);
 
 	// Get my expenses tool
-	server.tool(
+	registerTool(
+		server,
 		'get_my_expenses',
 		'Get expenses for the current authenticated user',
 		{

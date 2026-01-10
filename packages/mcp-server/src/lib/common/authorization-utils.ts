@@ -7,9 +7,7 @@
 
 import { URL } from 'node:url';
 import { createHash, randomBytes } from 'node:crypto';
-import { SecurityLogger } from '@gauzy/auth';
-
-const securityLogger = new SecurityLogger();
+import { SecurityLogger, securityLogger } from './security-logger';
 
 /**
  * Validate canonical resource URI according to RFC 8707

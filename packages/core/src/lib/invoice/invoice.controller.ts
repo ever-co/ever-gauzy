@@ -66,6 +66,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	 */
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('pagination')
+	@UseValidationPipe({ transform: true })
 	async pagination(@Query() options: BaseQueryDTO<Invoice>): Promise<IPagination<IInvoice>> {
 		return await this.invoiceService.pagination(options);
 	}

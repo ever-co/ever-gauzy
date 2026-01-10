@@ -1,0 +1,39 @@
+<nb-card class="form-section billing-cycle" [formGroup]="form">
+	<nb-card-header>
+		<div class="section-title">
+			<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+			<div>
+				<h6>Billing cycle</h6>
+				<p class="hint">Choose how often to renew</p>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-radio-group formControlName="billingPeriod" class="options-grid" aria-label="Select billing period">
+			@for (option of billingOptions; track option.period) {
+			<nb-radio
+				[value]="option.period"
+				class="option-card"
+				[class.selected]="form.get('billingPeriod')?.value === option.period"
+			>
+				<div class="option-content">
+					<div class="option-header">
+						<span class="label">{{ option.label }}</span>
+						@if (option.badge) {
+						<nb-badge [status]="option.badge.status" [text]="option.badge.text"></nb-badge>
+						}
+					</div>
+					<div class="price-line">
+						<span class="price">{{ option.price | currency : currency }}</span>
+						<span class="suffix">
+							/ @switch (option.period) { @case ('monthly') { month } @case ('quarterly') { quarter }
+							@case ('yearly') { year } @default { option.period } }
+						</span>
+					</div>
+					<p class="description">{{ option.description }}</p>
+				</div>
+			</nb-radio>
+			}
+		</nb-radio-group>
+	</nb-card-body>
+</nb-card>

@@ -1,0 +1,216 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.cdn-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, var(--gauzy-card-2) 0%, var(--background-basic-color-2) 100%);
+  border-radius: calc(var(--border-radius) * 1.5);
+  border-left: 3px solid var(--color-info-default);
+  box-shadow: var(--gauzy-shadow);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .header-icon-wrapper {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gauzy-card-1);
+    border-radius: calc(var(--border-radius) * 1.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    nb-icon {
+      font-size: 1.5rem;
+    }
+  }
+
+  .header-content {
+    flex: 1;
+
+    .header-title {
+      margin: 0 0 0.5rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gauzy-text-color-1);
+    }
+
+    .header-description {
+      margin: 0;
+      color: var(--gauzy-text-color-2);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+  }
+}
+
+.security-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--gauzy-card-2);
+  border-radius: calc(var(--border-radius) * 1.5);
+  border: 1px solid var(--border-basic-color-3);
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-basic-color-3);
+
+    nb-icon {
+      font-size: 1.25rem;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gauzy-text-color-1);
+    }
+  }
+}
+
+.security-alert {
+  margin-top: 1.5rem;
+
+  .alert-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    nb-icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    span {
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+  }
+}
+
+// Enhanced form field styles
+::ng-deep {
+  nb-form-field {
+    .label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      color: var(--gauzy-text-color-1);
+      margin-bottom: 0.5rem;
+
+      .label-icon {
+        font-size: 1rem;
+        opacity: 0.7;
+      }
+
+      .required-indicator {
+        color: var(--color-danger-default);
+        font-weight: 600;
+        margin-left: 0.125rem;
+      }
+    }
+
+    input[nbInput] {
+      border-radius: var(--border-radius);
+      transition: all 0.2s ease;
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(var(--color-primary-default-rgb), 0.1);
+      }
+    }
+  }
+
+  nb-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    margin-top: 0.375rem;
+
+    nb-icon {
+      font-size: 0.875rem;
+    }
+
+    &.hint-success {
+      color: var(--color-success-default);
+
+      nb-icon {
+        color: var(--color-success-default);
+      }
+    }
+
+    &.hint-danger {
+      color: var(--color-danger-default);
+
+      nb-icon {
+        color: var(--color-danger-default);
+      }
+    }
+
+    &.hint-warning {
+      color: var(--color-warning-default);
+
+      nb-icon {
+        color: var(--color-warning-default);
+      }
+    }
+
+    &.hint-info {
+      color: var(--color-info-default);
+
+      nb-icon {
+        color: var(--color-info-default);
+      }
+    }
+
+    &.hint-basic {
+      color: var(--gauzy-text-color-2);
+
+      nb-icon {
+        color: var(--gauzy-text-color-2);
+      }
+    }
+  }
+
+  nb-alert {
+    border-radius: calc(var(--border-radius) * 1.2);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .cdn-header {
+    flex-direction: column;
+    text-align: center;
+
+    .header-icon-wrapper {
+      margin: 0 auto;
+    }
+  }
+
+  .security-section {
+    padding: 1rem;
+
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+}

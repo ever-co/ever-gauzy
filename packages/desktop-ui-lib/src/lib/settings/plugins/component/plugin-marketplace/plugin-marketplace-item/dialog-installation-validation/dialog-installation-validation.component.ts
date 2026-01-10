@@ -61,7 +61,10 @@ export class DialogInstallationValidationComponent implements OnInit {
 	}
 
 	public get versionId$(): Observable<ID> {
-		return this.version$.pipe(map((version) => version.id));
+		return this.version$.pipe(
+			filter((version) => Boolean(version && version?.id)),
+			map((version) => version.id)
+		);
 	}
 
 	public dismiss(): void {

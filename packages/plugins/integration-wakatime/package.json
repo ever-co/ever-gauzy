@@ -31,8 +31,8 @@
 		"@gauzy/core": "^0.1.0",
 		"@mikro-orm/core": "^6.4.13",
 		"@mikro-orm/nestjs": "^6.1.1",
-		"@nestjs/common": "^11.1.0",
-		"@nestjs/core": "^11.1.0",
+		"@nestjs/common": "^11.1.10",
+		"@nestjs/core": "^11.1.10",
 		"@nestjs/typeorm": "^11.0.0",
 		"moment": "^2.30.1",
 		"tslib": "^2.6.2",
@@ -55,8 +55,8 @@
 		"typeorm"
 	],
 	"engines": {
-		"node": ">=20.18.1",
-		"yarn": ">=1.22.19"
+		"node": ">=22",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }

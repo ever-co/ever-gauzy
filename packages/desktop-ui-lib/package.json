@@ -29,11 +29,11 @@
 	},
 	"dependencies": {
 		"@angular-slider/ngx-slider": "^19.0.0",
-		"@angular/animations": "^19.2.10",
-		"@angular/forms": "^19.2.10",
-		"@angular/platform-browser": "^19.2.10",
-		"@angular/platform-browser-dynamic": "^19.2.10",
-		"@angular/router": "^19.2.10",
+		"@angular/animations": "^19.2.18",
+		"@angular/forms": "^19.2.18",
+		"@angular/platform-browser": "^19.2.18",
+		"@angular/platform-browser-dynamic": "^19.2.18",
+		"@angular/router": "^19.2.18",
 		"@datorama/akita": "^8.0.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
@@ -48,7 +48,7 @@
 		"@nebular/eva-icons": "^15.0.0",
 		"@nebular/security": "^15.0.0",
 		"@nebular/theme": "^15.0.0",
-		"@ng-select/ng-select": "^14.8.1",
+		"@ng-select/ng-select": "^14.9.0",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",
 		"@ngx-translate/http-loader": "^16.0.1",
@@ -70,7 +70,7 @@
 		"@types/jest": "29.5.14",
 		"@types/moment-duration-format": "^2.2.3",
 		"@types/node": "^20.14.9",
-		"electron": "^30.0.1",
+		"electron": "^38.1.2",
 		"jest-preset-angular": "14.5.5"
 	},
 	"keywords": [
@@ -91,8 +91,8 @@
 		"electron-angular"
 	],
 	"engines": {
-		"node": ">=20.18.1",
-		"yarn": ">=1.22.19"
+		"node": ">=22",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }

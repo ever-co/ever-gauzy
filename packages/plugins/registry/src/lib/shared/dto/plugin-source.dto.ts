@@ -1,5 +1,5 @@
-import { PluginSource } from '../../domain/entities/plugin-source.entity';
 import { OmitType } from '@nestjs/swagger';
+import { PluginSource } from '../../domain/entities/plugin-source.entity';
 
 export class PluginSourceDTO extends OmitType(PluginSource, [
 	'id',

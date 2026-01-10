@@ -1,4 +1,4 @@
-import { ID, IPluginVersion } from '@gauzy/contracts';
+import { ID, IPlugin, IPluginVersion } from '@gauzy/contracts';
 import { createAction } from '@ngneat/effects';
 
 export class PluginVersionActions {
@@ -6,9 +6,8 @@ export class PluginVersionActions {
 		params,
 		pluginId
 	}));
-	public static add = createAction('[Plugin Version] Add', (pluginId: ID, version: IPluginVersion) => ({
-		pluginId,
-		version
+	public static add = createAction('[Plugin Version] Add', (plugin: IPlugin) => ({
+		plugin
 	}));
 	public static update = createAction(
 		'[Plugin] Update Version',

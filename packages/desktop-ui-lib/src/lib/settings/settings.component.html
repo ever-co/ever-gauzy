@@ -1,12 +1,15 @@
-<nb-layout [nbSpinner]="menus?.length === 0 || !(selectedMenu$ | async)" nbSpinnerSize="giant"
-	nbSpinnerStatus="primary">
+<nb-layout
+	[nbSpinner]="menus?.length === 0 || !(selectedMenu$ | async)"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
 	<nb-sidebar>
 		<nb-list>
-			<nb-list-item *ngFor="let menu of menus" (click)="selectMenu(menu)" [class]="
-					(selectedMenu$ | async) === menu
-						? 'menu-item menu-item-active'
-						: 'menu-item'
-				">
+			<nb-list-item
+				*ngFor="let menu of menus"
+				(click)="selectMenu(menu)"
+				[class]="(selectedMenu$ | async) === menu ? 'menu-item menu-item-active' : 'menu-item'"
+			>
 				<div #selectRef>
 					{{ menu | translate }}
 				</div>
@@ -17,10 +20,7 @@
 	</nb-sidebar>
 
 	<nb-layout-column class="main-layout colored-column-success">
-		<ng-container *ngIf="
-				(selectedMenu$ | async) ===
-				'TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'
-			">
+		<ng-container *ngIf="(selectedMenu$ | async) === 'TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'">
 			<div class="row titlebar-space">
 				<div class="col-12">
 					<h4>{{ 'TIMER_TRACKER.SETTINGS.MONITOR' | translate }}</h4>
@@ -29,45 +29,54 @@
 			<div class="row">
 				<div class="col-12">
 					<h6>
-						{{
-						'TIMER_TRACKER.SETTINGS.AUTOMATIC_SCREEN_CAPTURE'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.AUTOMATIC_SCREEN_CAPTURE' | translate }}
 					</h6>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-12">
-					<div [ngClass]="{
+					<div
+						[ngClass]="{
 							'disabled-monitors': appSetting?.timerStarted || isAgent
-						}" class="row monitors mb-3">
+						}"
+						class="row monitors mb-3"
+					>
 						<div class="col-5" *ngFor="let item of monitorsOption$ | async">
 							<nb-card accent="{{ item?.accent }}" status="primary">
 								<nb-card-body class="center-card" (click)="selectMonitorOption(item)">
 									<div class="row">
 										<div class="col-12">
-											<nb-icon class="all-monitor_icon" icon="monitor-outline"
-												[status]="item?.status">
+											<nb-icon
+												class="all-monitor_icon"
+												icon="monitor-outline"
+												[status]="item?.status"
+											>
 											</nb-icon>
-											<nb-icon *ngIf="item?.value === 'all'" class="all-monitor_icon monitor-many"
-												icon="monitor-outline" [status]="item?.status">
+											<nb-icon
+												*ngIf="item?.value === 'all'"
+												class="all-monitor_icon monitor-many"
+												icon="monitor-outline"
+												[status]="item?.status"
+											>
 											</nb-icon>
 										</div>
 										<div class="col-12">
-											<span [class]="
-													item?.status === 'primary'
-														? 'title-tile selected'
-														: 'title-tile'
-												">
+											<span
+												[class]="
+													item?.status === 'primary' ? 'title-tile selected' : 'title-tile'
+												"
+											>
 												{{ item?.title | translate }}
 											</span>
 										</div>
 										<div class="col-12">
-											<span [class]="
+											<span
+												[class]="
 													item?.status === 'primary'
 														? 'subtitle-tile selected'
 														: 'subtitle-tile'
-												">
+												"
+											>
 												{{ item?.subtitle | translate }}
 											</span>
 										</div>
@@ -81,30 +90,21 @@
 			<div class="row">
 				<div class="col-12">
 					<h4>
-						{{
-						'TIMER_TRACKER.SETTINGS.NOTIFICATION_SETTINGS'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.NOTIFICATION_SETTINGS' | translate }}
 					</h4>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-12">
 					<h6>
-						{{
-						'TIMER_TRACKER.SETTINGS.DESKTOP_NOTIFICATIONS'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.DESKTOP_NOTIFICATIONS' | translate }}
 					</h6>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-12">
 					<p>
-						{{
-						'TIMER_TRACKER.SETTINGS.SHOW_DESKTOP_NOTIF_SCREEN_CAPTURE'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.SHOW_DESKTOP_NOTIF_SCREEN_CAPTURE' | translate }}
 					</p>
 				</div>
 			</div>
@@ -116,26 +116,19 @@
 								<div class="col-6">
 									<div class="row d-flex flex-column">
 										<div class="col-12">
-											<nb-toggle [(ngModel)]="
-													screenshotNotification
-												" [disabled]="
-													appSetting?.timerStarted
-												" (ngModelChange)="
-													toggleNotificationChange(
-														$event
-													)
-												" status="basic">
-												{{
-												'TIMER_TRACKER.SETTINGS.DETAILED_NOTIF'
-												| translate
-												}}
+											<nb-toggle
+												[(ngModel)]="screenshotNotification"
+												[disabled]="appSetting?.timerStarted"
+												(ngModelChange)="toggleNotificationChange($event)"
+												status="basic"
+											>
+												{{ 'TIMER_TRACKER.SETTINGS.DETAILED_NOTIF' | translate }}
 											</nb-toggle>
 										</div>
 										<div class="col-12">
 											<small>{{
-												'TIMER_TRACKER.SETTINGS.SHOW_NOTIF_CAPTURED_IMG'
-												| translate
-												}}</small>
+												'TIMER_TRACKER.SETTINGS.SHOW_NOTIF_CAPTURED_IMG' | translate
+											}}</small>
 										</div>
 										<div class="col-12">
 											<img width="100%" src="./assets/images/logos/screenshot_detailed.png" />
@@ -145,27 +138,19 @@
 								<div class="col-6">
 									<div class="row d-flex flex-column">
 										<div class="col-12">
-											<nb-toggle [checked]="
-													simpleScreenshotNotification$
-														| async
-												" [disabled]="
-													appSetting?.timerStarted
-												" (checkedChange)="
-													toggleSimpleNotificationChange(
-														$event
-													)
-												" status="basic">
-												{{
-												'TIMER_TRACKER.SETTINGS.SIMPLE_NOTIF'
-												| translate
-												}}
+											<nb-toggle
+												[checked]="simpleScreenshotNotification$ | async"
+												[disabled]="appSetting?.timerStarted"
+												(checkedChange)="toggleSimpleNotificationChange($event)"
+												status="basic"
+											>
+												{{ 'TIMER_TRACKER.SETTINGS.SIMPLE_NOTIF' | translate }}
 											</nb-toggle>
 										</div>
 										<div class="col-12">
 											<small>{{
-												'TIMER_TRACKER.SETTINGS.SHOW_NATIVE_OS_NOTIF'
-												| translate
-												}}</small>
+												'TIMER_TRACKER.SETTINGS.SHOW_NATIVE_OS_NOTIF' | translate
+											}}</small>
 										</div>
 										<div class="col-12">
 											<img width="100%" src="./assets/images/logos/screenshot_simple.png" />
@@ -195,14 +180,17 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-toggle [checked]="!muted" [disabled]="appSetting?.timerStarted" (checkedChange)="
-									toggleNotificationSoundChange($event)
-								" status="basic">
+							<nb-toggle
+								[checked]="!muted"
+								[disabled]="appSetting?.timerStarted"
+								(checkedChange)="toggleNotificationSoundChange($event)"
+								status="basic"
+							>
 								{{
-								(muted
-								? 'TIMER_TRACKER.SETTINGS.SOUND_DISABLED'
-								: 'TIMER_TRACKER.SETTINGS.SOUND_ENABLED'
-								) | translate
+									(muted
+										? 'TIMER_TRACKER.SETTINGS.SOUND_DISABLED'
+										: 'TIMER_TRACKER.SETTINGS.SOUND_ENABLED'
+									) | translate
 								}}
 							</nb-toggle>
 						</nb-card-body>
@@ -219,10 +207,7 @@
 			<div class="row">
 				<div class="col-12">
 					<h6>
-						{{
-						'TIMER_TRACKER.SETTINGS.UPDATE_ACTIVITIES'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.UPDATE_ACTIVITIES' | translate }}
 					</h6>
 				</div>
 			</div>
@@ -230,33 +215,38 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-select class="mb-3" placeholder="Select Period" [(ngModel)]="selectedPeriod"
+							<nb-select
+								class="mb-3"
+								placeholder="Select Period"
+								[(ngModel)]="selectedPeriod"
 								(ngModelChange)="selectPeriod($event)"
-								[disabled]="appSetting?.timerStarted || appSetting?.enforced || isAgent">
-								<nb-option *ngFor="let item of periodOption" [value]="item">{{ humanize(item / 60) |
-									titlecase }}
+								[disabled]="appSetting?.timerStarted || appSetting?.enforced || isAgent"
+							>
+								<nb-option *ngFor="let item of periodOption" [value]="item"
+									>{{ humanize(item / 60) | titlecase }}
 								</nb-option>
 							</nb-select>
-							<nb-toggle [(ngModel)]="appSetting.randomScreenshotTime"
-								(ngModelChange)="toggleRandomScreenshot($event)" status="basic"
-								[disabled]="appSetting?.timerStarted || appSetting?.enforced || isAgent">{{
-								'TIMER_TRACKER.SETTINGS.RANDOM_SCREENSHOT_TIME'
-								| translate
-								}}
+							<nb-toggle
+								[(ngModel)]="appSetting.randomScreenshotTime"
+								(ngModelChange)="toggleRandomScreenshot($event)"
+								status="basic"
+								[disabled]="appSetting?.timerStarted || appSetting?.enforced || isAgent"
+								>{{ 'TIMER_TRACKER.SETTINGS.RANDOM_SCREENSHOT_TIME' | translate }}
 							</nb-toggle>
-							<nb-toggle [(ngModel)]="appSetting.trackOnPcSleep"
+							<nb-toggle
+								[(ngModel)]="appSetting.trackOnPcSleep"
 								(ngModelChange)="toggleTrackOnPcSleep($event)"
-								[disabled]="appSetting?.timerStarted || appSetting?.enforced || isAgent" status="basic">{{
-								'TIMER_TRACKER.SETTINGS.TRACK_TIME_PC_LOCKED'
-								| translate
-								}}
+								[disabled]="appSetting?.timerStarted || appSetting?.enforced || isAgent"
+								status="basic"
+								>{{ 'TIMER_TRACKER.SETTINGS.TRACK_TIME_PC_LOCKED' | translate }}
 							</nb-toggle>
-							<nb-toggle *ngIf="isAgent" [(ngModel)]="appSetting.kbMouseTracking"
+							<nb-toggle
+								*ngIf="isAgent"
+								[(ngModel)]="appSetting.kbMouseTracking"
 								(ngModelChange)="toggleTrackKbMouse($event)"
-								[disabled]="appSetting?.timerStarted || isAgent" status="basic">{{
-								'TIMER_TRACKER.SETTINGS.TRACK_KEYBOARD_MOUSE_ACTIVITY'
-								| translate
-								}}
+								[disabled]="appSetting?.timerStarted || isAgent"
+								status="basic"
+								>{{ 'TIMER_TRACKER.SETTINGS.TRACK_KEYBOARD_MOUSE_ACTIVITY' | translate }}
 							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
@@ -265,20 +255,14 @@
 			<div class="row">
 				<div class="col-12">
 					<h6>
-						{{
-						'TIMER_TRACKER.SETTINGS.KEEP_SYSTEM_ACTIVE'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.KEEP_SYSTEM_ACTIVE' | translate }}
 					</h6>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-12">
 					<p>
-						{{
-						'TIMER_TRACKER.SETTINGS.PREVENT_DISPLAY_GOING_SLEEP'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.PREVENT_DISPLAY_GOING_SLEEP' | translate }}
 					</p>
 				</div>
 			</div>
@@ -286,12 +270,12 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-toggle [(ngModel)]="appSetting.preventDisplaySleep" (ngModelChange)="
-									togglePreventDisplaySleep($event)
-								" status="basic" [disabled]="appSetting?.timerStarted">{{
-								'TIMER_TRACKER.SETTINGS.PREVENT_DISPLAY_SLEEP'
-								| translate
-								}}
+							<nb-toggle
+								[(ngModel)]="appSetting.preventDisplaySleep"
+								(ngModelChange)="togglePreventDisplaySleep($event)"
+								status="basic"
+								[disabled]="appSetting?.timerStarted"
+								>{{ 'TIMER_TRACKER.SETTINGS.PREVENT_DISPLAY_SLEEP' | translate }}
 							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
@@ -300,20 +284,14 @@
 			<div class="row">
 				<div class="col-12">
 					<h6>
-						{{
-						'TIMER_TRACKER.SETTINGS.TIMEZONE'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.TIMEZONE' | translate }}
 					</h6>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-10">
 					<p>
-						{{
-						'TIMER_TRACKER.SETTINGS.TIMEZONE_LABEL'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.TIMEZONE_LABEL' | translate }}
 					</p>
 				</div>
 			</div>
@@ -321,11 +299,14 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-select [placeholder]="'TIMER_TRACKER.SETTINGS.TIMEZONE_PLACEHOLDER'| translate"
-								[(ngModel)]="selectedZone" (ngModelChange)="selectZone($event)"
-								[disabled]="appSetting?.timerStarted">
-								<nb-option *ngFor="let zone of zones" [value]="zone.name"> {{ zone.translation |
-									translate }}
+							<nb-select
+								[placeholder]="'TIMER_TRACKER.SETTINGS.TIMEZONE_PLACEHOLDER' | translate"
+								[(ngModel)]="selectedZone"
+								(ngModelChange)="selectZone($event)"
+								[disabled]="appSetting?.timerStarted"
+							>
+								<nb-option *ngFor="let zone of zones" [value]="zone.name">
+									{{ zone.translation | translate }}
 								</nb-option>
 							</nb-select>
 						</nb-card-body>
@@ -335,20 +316,14 @@
 			<div class="row">
 				<div class="col-12">
 					<h6>
-						{{
-						'TIMER_TRACKER.SETTINGS.WIDGET'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.WIDGET' | translate }}
 					</h6>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-10">
 					<p>
-						{{
-						'TIMER_TRACKER.SETTINGS.WIDGET_LABEL'
-						| translate
-						}}
+						{{ 'TIMER_TRACKER.SETTINGS.WIDGET_LABEL' | translate }}
 					</p>
 				</div>
 			</div>
@@ -356,12 +331,12 @@
 				<div class="col-10">
 					<nb-card>
 						<nb-card-body>
-							<nb-toggle [(ngModel)]="appSetting.alwaysOn" (ngModelChange)="
-									toggleAlwaysOn($event)
-								" status="basic" [disabled]="appSetting?.timerStarted">{{
-								'TIMER_TRACKER.SETTINGS.WIDGET'
-								| translate
-								}}
+							<nb-toggle
+								[(ngModel)]="appSetting.alwaysOn"
+								(ngModelChange)="toggleAlwaysOn($event)"
+								status="basic"
+								[disabled]="appSetting?.timerStarted"
+								>{{ 'TIMER_TRACKER.SETTINGS.WIDGET' | translate }}
 							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
@@ -380,20 +355,14 @@
 				<div class="row">
 					<div class="col-12">
 						<h6>
-							{{
-							'TIMER_TRACKER.SETTINGS.AUTOMATIC_UPDATE_CHECK'
-							| translate
-							}}
+							{{ 'TIMER_TRACKER.SETTINGS.AUTOMATIC_UPDATE_CHECK' | translate }}
 						</h6>
 					</div>
 				</div>
 				<div class="row">
 					<div class="col-10">
 						<p>
-							{{
-							'TIMER_TRACKER.SETTINGS.ENABLE_AUTOMATIC_UPDATE_LABEL'
-							| translate
-							}}
+							{{ 'TIMER_TRACKER.SETTINGS.ENABLE_AUTOMATIC_UPDATE_LABEL' | translate }}
 						</p>
 					</div>
 				</div>
@@ -403,41 +372,28 @@
 							<nb-card-body>
 								<div class="row">
 									<div class="col-6">
-										<nb-toggle [checked]="automaticUpdate$ | async" (checkedChange)="
-												toggleAutomaticUpdate($event)
-											" status="basic" [disabled]="
-												appSetting?.timerStarted
-											">{{
-											'TIMER_TRACKER.SETTINGS.ENABLE_AUTOMATIC_UPDATE'
-											| translate
-											}}
+										<nb-toggle
+											[checked]="automaticUpdate$ | async"
+											(checkedChange)="toggleAutomaticUpdate($event)"
+											status="basic"
+											[disabled]="appSetting?.timerStarted"
+											>{{ 'TIMER_TRACKER.SETTINGS.ENABLE_AUTOMATIC_UPDATE' | translate }}
 										</nb-toggle>
 									</div>
 									<div *ngIf="automaticUpdate$ | async" class="col-6">
 										<div class="label">
-											{{
-											'TIMER_TRACKER.SETTINGS.SET_UPDATE_INTERVAL_DURATION'
-											| translate
-											}}
+											{{ 'TIMER_TRACKER.SETTINGS.SET_UPDATE_INTERVAL_DURATION' | translate }}
 										</div>
-										<nb-select *ngIf="automaticUpdate$ | async" class="w-100" [placeholder]="
-												'TIMER_TRACKER.SETTINGS.SELECT_DELAY'
-													| translate
-											" [selected]="
-												automaticUpdateDelay$ | async
-											" (selectedChange)="
-												selectAutomaticUpdateDelay(
-													$event
-												)
-											" [disabled]="
-												appSetting?.timerStarted
-											">
-											<nb-option *ngFor="
-													let delay of delayOptions
-												" [value]="delay">
-												<span>{{
-													humanize(delay) | titlecase
-													}}</span>
+										<nb-select
+											*ngIf="automaticUpdate$ | async"
+											class="w-100"
+											[placeholder]="'TIMER_TRACKER.SETTINGS.SELECT_DELAY' | translate"
+											[selected]="automaticUpdateDelay$ | async"
+											(selectedChange)="selectAutomaticUpdateDelay($event)"
+											[disabled]="appSetting?.timerStarted"
+										>
+											<nb-option *ngFor="let delay of delayOptions" [value]="delay">
+												<span>{{ humanize(delay) | titlecase }}</span>
 											</nb-option>
 										</nb-select>
 									</div>
@@ -449,20 +405,14 @@
 				<div class="row">
 					<div class="col-12">
 						<h6>
-							{{
-							'TIMER_TRACKER.SETTINGS.UPDATE_SERVER'
-							| translate
-							}}
+							{{ 'TIMER_TRACKER.SETTINGS.UPDATE_SERVER' | translate }}
 						</h6>
 					</div>
 				</div>
 				<div class="row">
 					<div class="col-10">
 						<p>
-							{{
-							'TIMER_TRACKER.SETTINGS.SELECT_DEFAULT_CDN'
-							| translate
-							}}
+							{{ 'TIMER_TRACKER.SETTINGS.SELECT_DEFAULT_CDN' | translate }}
 						</p>
 					</div>
 				</div>
@@ -472,53 +422,52 @@
 							<nb-card-body>
 								<div class="row">
 									<div class="col-6">
-										<nb-toggle [checked]="(updaterServer$ | async)?.github" (checkedChange)="
-											toggleGithubDefaultServer($event)
-										" status="basic" [disabled]="
-											appSetting?.timerStarted ||
-											showProgressBar
-										"><i class="fa-brands fa-github-alt"></i>
+										<nb-toggle
+											[checked]="(updaterServer$ | async)?.github"
+											(checkedChange)="toggleGithubDefaultServer($event)"
+											status="basic"
+											[disabled]="appSetting?.timerStarted || showProgressBar"
+											><i class="fa-brands fa-github-alt"></i>
 											Github
 										</nb-toggle>
 									</div>
 									<div class="col-6">
-										<nb-toggle [checked]="
-											(updaterServer$ | async)?.digitalOcean
-										" (checkedChange)="
-											toggleDigitalOceanDefaultServer($event)
-										" status="basic" [disabled]="
-											appSetting?.timerStarted ||
-											showProgressBar
-										"><i class="fa-brands fa-digital-ocean"></i>
+										<nb-toggle
+											[checked]="(updaterServer$ | async)?.digitalOcean"
+											(checkedChange)="toggleDigitalOceanDefaultServer($event)"
+											status="basic"
+											[disabled]="appSetting?.timerStarted || showProgressBar"
+											><i class="fa-brands fa-digital-ocean"></i>
 											Digital Ocean
 										</nb-toggle>
 									</div>
 									<div class="col-12">
-										<nb-toggle [checked]="(updaterServer$ | async)?.local"
-											(checkedChange)="toggleLocalServer($event)" status="basic" [disabled]="
-												appSetting?.timerStarted ||
-												showProgressBar
-											"><i class="fas fa-server"></i>
-											{{
-											'TIMER_TRACKER.SETTINGS.LOCAL_SERVER'
-											| translate
-											}}
+										<nb-toggle
+											[checked]="(updaterServer$ | async)?.local"
+											(checkedChange)="toggleLocalServer($event)"
+											status="basic"
+											[disabled]="appSetting?.timerStarted || showProgressBar"
+											><i class="fas fa-server"></i>
+											{{ 'TIMER_TRACKER.SETTINGS.LOCAL_SERVER' | translate }}
 										</nb-toggle>
 									</div>
-									<div *ngIf="(updaterServer$ | async)?.local"
-										class="col-12 d-flex align-items-center justify-content-center">
+									<div
+										*ngIf="(updaterServer$ | async)?.local"
+										class="col-12 d-flex align-items-center justify-content-center"
+									>
 										<div class="row">
 											<div class="col-12">
-												<p [innerHTML]="
-														'TIMER_TRACKER.SETTINGS.LOCAL_SERVER_NOTE'
-															| translate
-													"></p>
+												<p
+													[innerHTML]="'TIMER_TRACKER.SETTINGS.LOCAL_SERVER_NOTE' | translate"
+												></p>
 											</div>
 											<div class="col-12 w-100 file d-flex align-items-center">
-												<button nbButton [disabled]="
-														appSetting?.timerStarted ||
-														showProgressBar
-													" size="small" (click)="selectDirectory()">
+												<button
+													nbButton
+													[disabled]="appSetting?.timerStarted || showProgressBar"
+													size="small"
+													(click)="selectDirectory()"
+												>
 													<nb-icon icon="folder-outline"></nb-icon>
 													{{ 'BUTTONS.FILES' | translate }}
 												</button>
@@ -537,10 +486,7 @@
 				<div class="row">
 					<div class="col-10">
 						<p>
-							{{
-							'TIMER_TRACKER.SETTINGS.OTHER_SETTINGS'
-							| translate
-							}}
+							{{ 'TIMER_TRACKER.SETTINGS.OTHER_SETTINGS' | translate }}
 						</p>
 					</div>
 				</div>
@@ -548,14 +494,12 @@
 					<div class="col-10">
 						<nb-card>
 							<nb-card-body>
-								<nb-toggle [checked]="prerelease$ | async" (checkedChange)="togglePrerelease($event)"
-									status="basic" [disabled]="
-										appSetting?.timerStarted ||
-										showProgressBar
-									">{{
-									'TIMER_TRACKER.SETTINGS.ALLOW_PRERELEASE_VERSIONS'
-									| translate
-									}}
+								<nb-toggle
+									[checked]="prerelease$ | async"
+									(checkedChange)="togglePrerelease($event)"
+									status="basic"
+									[disabled]="appSetting?.timerStarted || showProgressBar"
+									>{{ 'TIMER_TRACKER.SETTINGS.ALLOW_PRERELEASE_VERSIONS' | translate }}
 								</nb-toggle>
 							</nb-card-body>
 						</nb-card>
@@ -565,10 +509,7 @@
 				<div class="row">
 					<div class="col-10">
 						<h6>
-							{{
-							'TIMER_TRACKER.SETTINGS.CHECK_UPDATE_APP_VERSION'
-							| translate
-							}}
+							{{ 'TIMER_TRACKER.SETTINGS.CHECK_UPDATE_APP_VERSION' | translate }}
 						</h6>
 					</div>
 				</div>
@@ -576,39 +517,45 @@
 					<div class="col-10">
 						<p>
 							{{
-							((available$ | async)
-							? downloadFinish
-							? 'TIMER_TRACKER.SETTINGS.UPDATE_DOWNLOADED_NOTE'
-							: 'TIMER_TRACKER.SETTINGS.UPDATE_AVAILABLE_NOTE'
-							: 'TIMER_TRACKER.SETTINGS.CHECK_UPDATE_NOTE'
-							) | translate
+								((available$ | async)
+									? downloadFinish
+										? 'TIMER_TRACKER.SETTINGS.UPDATE_DOWNLOADED_NOTE'
+										: 'TIMER_TRACKER.SETTINGS.UPDATE_AVAILABLE_NOTE'
+									: 'TIMER_TRACKER.SETTINGS.CHECK_UPDATE_NOTE'
+								) | translate
 							}}
 						</p>
 					</div>
 				</div>
 				<div class="row update-setting center-content">
 					<div class="col-12 button-update" *ngIf="!downloadFinish">
-						<button *ngIf="!(available$ | async)" nbButton [disabled]="loading$ | async" status="primary"
-							class="button-big" (click)="checkForUpdate()">
+						<button
+							*ngIf="!(available$ | async)"
+							nbButton
+							[disabled]="loading$ | async"
+							status="primary"
+							class="button-big"
+							(click)="checkForUpdate()"
+						>
 							{{ 'BUTTONS.CHECK_UPDATE' | translate }}
-							<nb-icon icon="sync-outline" [class]="
-									(loading$ | async)
-										? 'icon-medium icon-spin'
-										: 'icon-medium'
-								"></nb-icon>
+							<nb-icon
+								icon="sync-outline"
+								[class]="(loading$ | async) ? 'icon-medium icon-spin' : 'icon-medium'"
+							></nb-icon>
 						</button>
-						<button *ngIf="available$ | async" nbButton [disabled]="loading$ | async" status="primary"
-							class="button-big" (click)="downloadNow()">
+						<button
+							*ngIf="available$ | async"
+							nbButton
+							[disabled]="loading$ | async"
+							status="primary"
+							class="button-big"
+							(click)="downloadNow()"
+						>
 							{{ 'BUTTONS.DOWNLOAD_NOW' | translate }}
-							<nb-icon [icon]="
-									(loading$ | async)
-										? 'loader-outline'
-										: 'cloud-download-outline'
-								" [class]="
-									(loading$ | async)
-										? 'icon-medium icon-spin'
-										: 'icon-medium'
-								"></nb-icon>
+							<nb-icon
+								[icon]="(loading$ | async) ? 'loader-outline' : 'cloud-download-outline'"
+								[class]="(loading$ | async) ? 'icon-medium icon-spin' : 'icon-medium'"
+							></nb-icon>
 						</button>
 					</div>
 					<div class="col-12 button-update" *ngIf="downloadFinish">
@@ -628,20 +575,17 @@
 					</div>
 					<div class="col-12 text-center update-message" *ngIf="loading$ | async">
 						<nb-accordion multi>
-							<nb-accordion-item #logUpdate [expanded]="logIsOpen"
-								(collapsedChange)="logBoxChange($event)">
+							<nb-accordion-item
+								#logUpdate
+								[expanded]="logIsOpen"
+								(collapsedChange)="logBoxChange($event)"
+							>
 								<nb-accordion-item-header>
-									{{
-									'TIMER_TRACKER.SETTINGS.UPDATE_LOGS'
-									| translate
-									}}
+									{{ 'TIMER_TRACKER.SETTINGS.UPDATE_LOGS' | translate }}
 								</nb-accordion-item-header>
 								<nb-accordion-item-body class="log-box">
 									<div class="log-content" #logBox>
-										<p class="content-text" *ngFor="
-												let content of logContents$
-													| async
-											">
+										<p class="content-text" *ngFor="let content of logContents$ | async">
 											{{ content }}
 										</p>
 									</div>
@@ -652,27 +596,20 @@
 				</div>
 			</div>
 		</div>
-		<div class="row" *ngIf="
-				(selectedMenu$ | async) ===
-				'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS'
-			">
+		<div class="row" *ngIf="(selectedMenu$ | async) === 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS'">
 			<div class="col-12 titlebar-space">
 				<h4>
 					{{ 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS' | translate }}
 				</h4>
 			</div>
 			<div class="col-12 warning-config" *ngIf="appSetting?.timerStarted">
-				<span>{{
-					'TIMER_TRACKER.SETTINGS.WARNING_STOP_TIMER' | translate
-					}}</span>
+				<span>{{ 'TIMER_TRACKER.SETTINGS.WARNING_STOP_TIMER' | translate }}</span>
 			</div>
 			<div class="col-12">
 				<nb-card class="nb-tab-card">
 					<nb-card-body class="nb-tab-body">
 						<nb-tabset>
-							<nb-tab [tabTitle]="
-									'TIMER_TRACKER.SETTINGS.GENERAL' | translate
-								">
+							<nb-tab [tabTitle]="'TIMER_TRACKER.SETTINGS.GENERAL' | translate">
 								<div class="row">
 									<div class="col-12">
 										<nb-card>
@@ -681,171 +618,140 @@
 													<div class="col-12">
 														<p class="subtitle-tile">
 															{{
-															'TIMER_TRACKER.SETTINGS.SERVER_ACCESS_CONFIG'
-															| translate
+																'TIMER_TRACKER.SETTINGS.SERVER_ACCESS_CONFIG'
+																	| translate
 															}}
 														</p>
 													</div>
 													<div class="col-5 centered-text" *ngIf="!isServer">
 														<p>
-															{{
-															'TIMER_TRACKER.SETTINGS.SERVER_TYPE'
-															| translate
-															}}
+															{{ 'TIMER_TRACKER.SETTINGS.SERVER_TYPE' | translate }}
 														</p>
 													</div>
 													<div class="col-7 form-group" *ngIf="!isServer">
-														<nb-select fullWidth [(ngModel)]="
-																config.serverType
-															" (ngModelChange)="
-																onServerChange(
-																	$event
-																)
-															" [disabled]="
-																appSetting?.timerStarted
-															">
-															<nb-option *ngFor="
-																	let item of serverOptions
-																" [value]="item">
+														<nb-select
+															fullWidth
+															[(ngModel)]="config.serverType"
+															(ngModelChange)="onServerChange($event)"
+															[disabled]="appSetting?.timerStarted"
+														>
+															<nb-option
+																*ngFor="let item of serverOptions"
+																[value]="item"
+															>
 																{{ item }}
 															</nb-option>
 														</nb-select>
 													</div>
 													<div class="col-5 centered-text" *ngIf="isServer">
 														<p>
-															{{
-															'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME'
-															| translate
-															}}
+															{{ 'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME' | translate }}
 														</p>
 													</div>
 													<div class="col-7 form-group" *ngIf="isServer">
-														<input [(ngModel)]="
-																config.host
-															" type="text" nbInput fullWidth [disabled]="
-																appSetting?.timerStarted
-															" status="basic" />
+														<input
+															[(ngModel)]="config.host"
+															type="text"
+															nbInput
+															fullWidth
+															[disabled]="appSetting?.timerStarted"
+															status="basic"
+														/>
 													</div>
-													<div class="col-5 centered-text" *ngIf="
-															config?.isLocalServer
-														">
+													<div class="col-5 centered-text" *ngIf="config?.isLocalServer">
 														<p>
-															{{
-															'TIMER_TRACKER.SETTINGS.API_SERVER_PORT'
-															| translate
-															}}
+															{{ 'TIMER_TRACKER.SETTINGS.API_SERVER_PORT' | translate }}
 														</p>
 													</div>
-													<div class="col-7 form-group" *ngIf="
-															config?.isLocalServer
-														">
-														<input [(ngModel)]="
-																config.port
-															" type="number" nbInput fullWidth [disabled]="
-																appSetting?.timerStarted
-															" status="basic" (ngModelChange)="
-																portChange(
-																	$event,
-																	'api'
-																)
-															" />
+													<div class="col-7 form-group" *ngIf="config?.isLocalServer">
+														<input
+															[(ngModel)]="config.port"
+															type="number"
+															nbInput
+															fullWidth
+															[disabled]="appSetting?.timerStarted"
+															status="basic"
+															(ngModelChange)="portChange($event, 'api')"
+														/>
 													</div>
 													<div class="col-5 centered-text" *ngIf="isServer && !isServerApi">
 														<p>
-															{{
-															'TIMER_TRACKER.SETTINGS.UI_SERVER_PORT'
-															| translate
-															}}
+															{{ 'TIMER_TRACKER.SETTINGS.UI_SERVER_PORT' | translate }}
 														</p>
 													</div>
 													<div class="col-7" *ngIf="isServer && !isServerApi">
-														<input [(ngModel)]="
-																config.portUi
-															" type="number" nbInput fullWidth [disabled]="
-																appSetting?.timerStarted
-															" status="basic" />
+														<input
+															[(ngModel)]="config.portUi"
+															type="number"
+															nbInput
+															fullWidth
+															[disabled]="appSetting?.timerStarted"
+															status="basic"
+														/>
 													</div>
-													<div class="col-5 centered-text" *ngIf="
-															!config?.isLocalServer
-														">
+													<div class="col-5 centered-text" *ngIf="!config?.isLocalServer">
 														<p>
-															{{
-															'TIMER_TRACKER.SETTINGS.SERVER_URL'
-															| translate
-															}}
+															{{ 'TIMER_TRACKER.SETTINGS.SERVER_URL' | translate }}
 														</p>
 													</div>
-													<div class="col-7 form-group" *ngIf="
-															!config?.isLocalServer
-														">
-														<input [(ngModel)]="
-																config.serverUrl
-															" (ngModelChange)="
-																onHostChange(
-																	$event
-																)
-															" type="text" nbInput fullWidth [disabled]="
+													<div class="col-7 form-group" *ngIf="!config?.isLocalServer">
+														<input
+															[(ngModel)]="config.serverUrl"
+															(ngModelChange)="onHostChange($event)"
+															type="text"
+															nbInput
+															fullWidth
+															[disabled]="
 																appSetting?.timerStarted ||
-																config?.serverType ===
-																	serverTypes?.live
-															" status="basic" />
+																config?.serverType === serverTypes?.live
+															"
+															status="basic"
+														/>
 													</div>
-													<div *ngIf="
-															!isServer &&
-															!config?.isLocalServer
-														" class="col-5">
-														<button nbButton status="basic" class="check-db" (click)="
-																checkHostConnectivity()
-															" [disabled]="
-																appSetting?.timerStarted
-															">
-															<nb-icon *gauzySpinnerButton="
-																	(
-																		isCheckHost$
-																		| async
-																	)?.isLoading
-																" [status]="
-																	(
-																		isCheckHost$
-																		| async
-																	)?.status
+													<div *ngIf="!isServer && !config?.isLocalServer" class="col-5">
+														<button
+															nbButton
+															status="basic"
+															class="check-db"
+															(click)="checkHostConnectivity()"
+															[disabled]="appSetting?.timerStarted"
+														>
+															<nb-icon
+																*gauzySpinnerButton="(isCheckHost$ | async)?.isLoading"
+																[status]="
+																	(isCheckHost$ | async)?.status
 																		? 'success'
 																		: 'danger'
-																" [icon]="
-																	(
-																		isCheckHost$
-																		| async
-																	)?.status
+																"
+																[icon]="
+																	(isCheckHost$ | async)?.status
 																		? 'checkmark-circle-2-outline'
 																		: 'close-circle-outline'
-																"></nb-icon>
-															{{
-															'BUTTONS.CHECK'
-															| translate
-															}}
+																"
+															></nb-icon>
+															{{ 'BUTTONS.CHECK' | translate }}
 														</button>
 													</div>
-													<div *ngIf="
-															!(
-																isCheckHost$
-																| async
-															)?.isHidden
-														" class="col-7 warn-container">
-														<button nbButton (click)="
-																onHideApi()
-															" status="basic" size="tiny" class="close-warn">
+													<div
+														*ngIf="!(isCheckHost$ | async)?.isHidden"
+														class="col-7 warn-container"
+													>
+														<button
+															nbButton
+															(click)="onHideApi()"
+															status="basic"
+															size="tiny"
+															class="close-warn"
+														>
 															<nb-icon icon="close-outline"></nb-icon>
 														</button>
 														<div class="message-db-connection">
 															{{
-															(
-															isCheckHost$
-															| async
-															)?.message
-															| translate
-															: {
-															url: config.serverUrl
-															}
+																(isCheckHost$ | async)?.message
+																	| translate
+																		: {
+																				url: config.serverUrl
+																		  }
 															}}
 														</div>
 													</div>
@@ -859,91 +765,76 @@
 												<div class="row">
 													<div class="col-12">
 														<p class="subtitle-tile">
-															{{
-															'TIMER_TRACKER.SETTINGS.DB_CONFIG'
-															| translate
-															}}
+															{{ 'TIMER_TRACKER.SETTINGS.DB_CONFIG' | translate }}
 														</p>
 													</div>
 													<div class="col-5 centered-text">
 														<p>
-															{{
-															'TIMER_TRACKER.SETTINGS.DB_DRIVER'
-															| translate
-															}}
+															{{ 'TIMER_TRACKER.SETTINGS.DB_DRIVER' | translate }}
 														</p>
 													</div>
 													<div class="col-7 form-group">
-														<nb-select fullWidth [(ngModel)]="
-																config.db
-															" (ngModelChange)="
-																onDriverChange(
-																	$event
-																)
-															" [disabled]="
-																appSetting?.timerStarted
-															">
-															<nb-option *ngFor="
-																	let item of driverOptions
-																" [value]="item">
-																{{ item | replace: '-' : ' ' | titlecase }}
+														<nb-select
+															fullWidth
+															[(ngModel)]="config.db"
+															(ngModelChange)="onDriverChange($event)"
+															[disabled]="appSetting?.timerStarted"
+														>
+															<nb-option
+																*ngFor="let item of driverOptions"
+																[value]="item"
+															>
+																{{ item | replace : '-' : ' ' | titlecase }}
 															</nb-option>
 														</nb-select>
 													</div>
-													<ng-container *ngTemplateOutlet="
+													<ng-container
+														*ngTemplateOutlet="
 															databaseConfig;
 															context: {
-																providerConfig:
-																	config
+																providerConfig: config
 															}
-														">
+														"
+													>
 													</ng-container>
 												</div>
 												<div class="row">
 													<div class="col-5">
-														<button nbButton status="basic" class="check-db" (click)="
-																checkDatabaseConnectivity()
-															" [disabled]="
-																appSetting?.timerStarted
-															">
-															<nb-icon *gauzySpinnerButton="
-																	isCheckDatabase$
-																		| async
-																" [status]="
-																	(
-																		isConnectedDatabase$
-																		| async
-																	)?.status
+														<button
+															nbButton
+															status="basic"
+															class="check-db"
+															(click)="checkDatabaseConnectivity()"
+															[disabled]="appSetting?.timerStarted"
+														>
+															<nb-icon
+																*gauzySpinnerButton="isCheckDatabase$ | async"
+																[status]="
+																	(isConnectedDatabase$ | async)?.status
 																		? 'success'
 																		: 'danger'
-																" [icon]="
-																	(
-																		isConnectedDatabase$
-																		| async
-																	)?.status
+																"
+																[icon]="
+																	(isConnectedDatabase$ | async)?.status
 																		? 'checkmark-circle-2-outline'
 																		: 'close-circle-outline'
-																"></nb-icon>
-															{{
-															'BUTTONS.CHECK'
-															| translate
-															}}
+																"
+															></nb-icon>
+															{{ 'BUTTONS.CHECK' | translate }}
 														</button>
 													</div>
-													<div *ngIf="
-															!(isHidden$ | async)
-														" class="col-7 warn-container">
-														<button nbButton (click)="onHide()" status="basic" size="tiny"
-															class="close-warn">
+													<div *ngIf="!(isHidden$ | async)" class="col-7 warn-container">
+														<button
+															nbButton
+															(click)="onHide()"
+															status="basic"
+															size="tiny"
+															class="close-warn"
+														>
 															<nb-icon icon="close-outline"></nb-icon>
 														</button>
 														<div class="message-db-connection">
-															{{
-															(
-															isConnectedDatabase$
-															| async
-															)?.message
-															}}
+															{{ (isConnectedDatabase$ | async)?.message }}
 														</div>
 													</div>
 												</div>
@@ -956,50 +847,34 @@
 												<div class="row">
 													<div class="col-12">
 														<p class="subtitle-tile">
-															{{
-															'TIMER_TRACKER.SETTINGS.STARTUP_CONFIG'
-															| translate
-															}}
+															{{ 'TIMER_TRACKER.SETTINGS.STARTUP_CONFIG' | translate }}
 														</p>
 													</div>
 													<div [class]="isServer ? 'col-6' : 'col-12'">
-														<nb-toggle [(ngModel)]="
-																autoLaunch
-															" (ngModelChange)="
-																toggleAutoLaunch(
-																	$event
-																)
-															" status="basic">{{
-															'TIMER_TRACKER.SETTINGS.AUTOMATIC_LAUNCH'
-															| translate
-															}}
+														<nb-toggle
+															[(ngModel)]="autoLaunch"
+															(ngModelChange)="toggleAutoLaunch($event)"
+															status="basic"
+															>{{ 'TIMER_TRACKER.SETTINGS.AUTOMATIC_LAUNCH' | translate }}
 														</nb-toggle>
 													</div>
 													<div *ngIf="isServer" class="col-6">
-														<nb-toggle [(ngModel)]="config.autoStart" (ngModelChange)="
-																toggleAutoStartOnStartup(
-																	$event
-																)
-															" status="basic">{{
-															'TIMER_TRACKER.SETTINGS.AUTO_START_STARTUP'
-															| translate
+														<nb-toggle
+															[(ngModel)]="config.autoStart"
+															(ngModelChange)="toggleAutoStartOnStartup($event)"
+															status="basic"
+															>{{
+																'TIMER_TRACKER.SETTINGS.AUTO_START_STARTUP' | translate
 															}}
 														</nb-toggle>
 													</div>
 													<div class="col-12">
-														<nb-toggle [(ngModel)]="
-																minimizeOnStartup
-															" (ngModelChange)="
-																toggleMinimizeOnStartup(
-																	$event
-																)
-															" status="basic" [disabled]="
-																!autoLaunch ||
-																appSetting?.timerStarted
-															">{{
-															'TIMER_TRACKER.SETTINGS.MIN_ON_STARTUP'
-															| translate
-															}}
+														<nb-toggle
+															[(ngModel)]="minimizeOnStartup"
+															(ngModelChange)="toggleMinimizeOnStartup($event)"
+															status="basic"
+															[disabled]="!autoLaunch || appSetting?.timerStarted"
+															>{{ 'TIMER_TRACKER.SETTINGS.MIN_ON_STARTUP' | translate }}
 														</nb-toggle>
 													</div>
 												</div>
@@ -1007,15 +882,14 @@
 										</nb-card>
 									</div>
 									<div *ngIf="isServer" class="col-12 mb-3">
-										<gauzy-ssl [config]="config?.secureProxy"
-											(update)="updateSslSetting($event)"></gauzy-ssl>
+										<gauzy-ssl
+											[config]="config?.secureProxy"
+											(update)="updateSslSetting($event)"
+										></gauzy-ssl>
 									</div>
 								</div>
 							</nb-tab>
-							<nb-tab [tabTitle]="
-									'TIMER_TRACKER.SETTINGS.3RD_PARTY'
-										| translate
-								">
+							<nb-tab [tabTitle]="'TIMER_TRACKER.SETTINGS.3RD_PARTY' | translate">
 								<div *ngIf="config?.timeTrackerWindow" class="row">
 									<div class="col-12">
 										<nb-card>
@@ -1023,56 +897,42 @@
 												<div class="row">
 													<div class="col-12">
 														<p class="subtitle-tile">
-															{{
-															'TIMER_TRACKER.SETTINGS.3RD_PARTY_CONFIG'
-															| translate
-															}}
+															{{ 'TIMER_TRACKER.SETTINGS.3RD_PARTY_CONFIG' | translate }}
 														</p>
 													</div>
 													<div class="col-5 centered-text">
 														<p>
-															{{
-															'TIMER_TRACKER.SETTINGS.AW_PORT'
-															| translate
-															}}
+															{{ 'TIMER_TRACKER.SETTINGS.AW_PORT' | translate }}
 														</p>
 													</div>
 													<div class="col-7 form-group">
-														<input [disabled]="
-																appSetting?.timerStarted
-															" [(ngModel)]="
-																config.awPort
-															" type="text" nbInput fullWidth status="basic" [disabled]="true" />
+														<input
+															[disabled]="appSetting?.timerStarted"
+															[(ngModel)]="config.awPort"
+															type="text"
+															nbInput
+															fullWidth
+															status="basic"
+															[disabled]="true"
+														/>
 													</div>
 													<div class="col-12">
-														<nb-toggle [disabled]="
-																appSetting?.timerStarted
-															" [(ngModel)]="
-																appSetting.visibleAwOption
-															" (ngModelChange)="
-																toggleAwView(
-																	$event
-																)
-															" status="basic">
-															{{
-															'TIMER_TRACKER.SETTINGS.VISIBLE_AW'
-															| translate
-															}}
+														<nb-toggle
+															[disabled]="appSetting?.timerStarted"
+															[(ngModel)]="appSetting.visibleAwOption"
+															(ngModelChange)="toggleAwView($event)"
+															status="basic"
+														>
+															{{ 'TIMER_TRACKER.SETTINGS.VISIBLE_AW' | translate }}
 														</nb-toggle>
 													</div>
 													<div class="col-12">
-														<nb-toggle [disabled]="
-																appSetting?.timerStarted
-															" [(ngModel)]="
-																appSetting.visibleWakatimeOption
-															" (ngModelChange)="
-																toggleWakatimeView(
-																	$event
-																)
-															" status="basic">{{
-															'TIMER_TRACKER.SETTINGS.VISIBLE_WAKATIME'
-															| translate
-															}}
+														<nb-toggle
+															[disabled]="appSetting?.timerStarted"
+															[(ngModel)]="appSetting.visibleWakatimeOption"
+															(ngModelChange)="toggleWakatimeView($event)"
+															status="basic"
+															>{{ 'TIMER_TRACKER.SETTINGS.VISIBLE_WAKATIME' | translate }}
 														</nb-toggle>
 													</div>
 												</div>
@@ -1082,40 +942,31 @@
 								</div>
 								<div class="row">
 									<div class="col-12">
-										<nb-card *ngFor="
-												let item of thirdPartyConfig
-											">
+										<nb-card *ngFor="let item of thirdPartyConfig">
 											<nb-card-body>
 												<div class="row">
 													<div class="col-12">
 														<p class="subtitle-tile third-party-item">
-															<i [class]="
-																	'fab fa-' +
-																		item?.title
-																		| lowercase
-																"></i>{{ item?.title }}
+															<i [class]="'fab fa-' + item?.title | lowercase"></i
+															>{{ item?.title }}
 														</p>
 													</div>
-													<div class="col-12" *ngFor="
-															let field of item?.fields
-														">
+													<div class="col-12" *ngFor="let field of item?.fields">
 														<div class="row">
 															<div class="col-5 centered-text">
 																<p>
-																	{{
-																	field?.name.replaceAll(
-																	'_',
-																	' '
-																	)
-																	}}
+																	{{ field?.name.replaceAll('_', ' ') }}
 																</p>
 															</div>
 															<div class="col-7 form-group">
-																<input [(ngModel)]="
-																		field.value
-																	" type="text" nbInput fullWidth [disabled]="
-																		appSetting?.timerStarted
-																	" status="basic" />
+																<input
+																	[(ngModel)]="field.value"
+																	type="text"
+																	nbInput
+																	fullWidth
+																	[disabled]="appSetting?.timerStarted"
+																	status="basic"
+																/>
 															</div>
 														</div>
 													</div>
@@ -1137,9 +988,6 @@
 				</nb-card>
 			</div>
 		</div>
-		<ng-container *ngIf="(selectedMenu$ | async) === 'TIMER_TRACKER.SETTINGS.PLUGINS'">
-			<ngx-plugin-layout></ngx-plugin-layout>
-		</ng-container>
 		<ng-container class="row" *ngIf="(selectedMenu$ | async) === 'MENU.ABOUT'">
 			<div class="col-12 titlebar-space">
 				<div class="row">
@@ -1147,15 +995,15 @@
 						<img [src]="gauzyIcon" class="margin-icon" />
 					</div>
 					<div class="col-12 version-text">
-						<span>{{
-							'TIMER_TRACKER.VERSION' | translate : { version }
-							}}</span>
+						<span>{{ 'TIMER_TRACKER.VERSION' | translate : { version } }}</span>
 					</div>
 					<div class="col-12 copyright-text text-center">
-						<span>2020-{{ 'FOOTER.PRESENT' | translate }},
+						<span
+							>2020-{{ 'FOOTER.PRESENT' | translate }},
 							<strong>{{ companySite }}</strong>
 							{{ 'FOOTER.BY' | translate }}
-							<strong>{{ companyName }}</strong></span>
+							<strong>{{ companyName }}</strong></span
+						>
 					</div>
 					<div class="col-12 copyright-text text-center">
 						<span> {{ 'FOOTER.RIGHTS_RESERVED' | translate }}</span>
@@ -1171,17 +1019,20 @@
 		<span>
 			<p class="m-0">
 				{{
-				'TIMER_TRACKER.SETTINGS.SIGN_IN_AS'
-				| translate
-				: {
-				name: (currentUser$ | async)?.name,
-				email: (currentUser$ | async)?.email
-				}
+					'TIMER_TRACKER.SETTINGS.SIGN_IN_AS'
+						| translate
+							: {
+									name: (currentUser$ | async)?.name,
+									email: (currentUser$ | async)?.email
+							  }
 				}}
 				-
-				<a href="javascript:void(0);" (click)="logout()" *ngIf="!isAgent || (isAgent && appSetting?.allowLogoutFromAgentApp)">{{
-					'TIMER_TRACKER.SETTINGS.SIGN_OUT' | translate
-					}}</a>
+				<a
+					href="javascript:void(0);"
+					(click)="logout()"
+					*ngIf="!isAgent || (isAgent && appSetting?.allowLogoutFromAgentApp)"
+					>{{ 'TIMER_TRACKER.SETTINGS.SIGN_OUT' | translate }}</a
+				>
 			</p>
 		</span>
 	</nb-layout-footer>
@@ -1193,40 +1044,73 @@
 			<p>{{ 'TIMER_TRACKER.SETTINGS.DB_HOST' | translate }}</p>
 		</div>
 		<div class="col-7 form-group">
-			<input [(ngModel)]="provider[provider?.db].dbHost" type="text" nbInput fullWidth status="basic"
-				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+			<input
+				[(ngModel)]="provider[provider?.db].dbHost"
+				type="text"
+				nbInput
+				fullWidth
+				status="basic"
+				[disabled]="appSetting?.timerStarted"
+				(ngModelChange)="portChange($event, 'db')"
+			/>
 		</div>
 		<div class="col-5 centered-text">
 			<p>{{ 'TIMER_TRACKER.SETTINGS.DB_USERNAME' | translate }}</p>
 		</div>
 		<div class="col-7 form-group">
-			<input [(ngModel)]="provider[provider?.db].dbUsername" type="text" nbInput fullWidth status="basic"
-				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+			<input
+				[(ngModel)]="provider[provider?.db].dbUsername"
+				type="text"
+				nbInput
+				fullWidth
+				status="basic"
+				[disabled]="appSetting?.timerStarted"
+				(ngModelChange)="portChange($event, 'db')"
+			/>
 		</div>
 		<div class="col-5 centered-text">
 			<p>{{ 'TIMER_TRACKER.SETTINGS.DB_PASSWORD' | translate }}</p>
 		</div>
 		<div class="col-7 form-group">
-			<input [(ngModel)]="provider[provider?.db].dbPassword" type="password" nbInput fullWidth status="basic"
-				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+			<input
+				[(ngModel)]="provider[provider?.db].dbPassword"
+				type="password"
+				nbInput
+				fullWidth
+				status="basic"
+				[disabled]="appSetting?.timerStarted"
+				(ngModelChange)="portChange($event, 'db')"
+			/>
 		</div>
 		<div class="col-5 centered-text">
 			<p>{{ 'TIMER_TRACKER.SETUP.DB_PORT' | translate }}</p>
 		</div>
 		<div class="col-7 form-group">
-			<input [(ngModel)]="provider[provider?.db].dbPort" type="number" nbInput fullWidth status="basic"
-				[disabled]="appSetting?.timerStarted" (ngModelChange)="portChange($event, 'db')" />
+			<input
+				[(ngModel)]="provider[provider?.db].dbPort"
+				type="number"
+				nbInput
+				fullWidth
+				status="basic"
+				[disabled]="appSetting?.timerStarted"
+				(ngModelChange)="portChange($event, 'db')"
+			/>
 		</div>
 	</ng-container>
 </ng-template>
 <ng-template #restart>
-	<div class="restart-btn-container" nbTooltip="Check database connectivity"
-		[nbTooltipDisabled]="(isConnectedDatabase$ | async)?.status">
-		<button nbButton status="primary" (click)="restartApp()"
-			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted">
-			{{
-			(isServer ? 'BUTTONS.SAVE' : 'BUTTONS.SAVE_RESTART') | translate
-			}}
+	<div
+		class="restart-btn-container"
+		nbTooltip="Check database connectivity"
+		[nbTooltipDisabled]="(isConnectedDatabase$ | async)?.status"
+	>
+		<button
+			nbButton
+			status="primary"
+			(click)="restartApp()"
+			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted"
+		>
+			{{ (isServer ? 'BUTTONS.SAVE' : 'BUTTONS.SAVE_RESTART') | translate }}
 			<nb-icon [icon]="isServer ? 'save' : 'refresh-outline'" *gauzySpinnerButton="isRestart$ | async"></nb-icon>
 		</button>
 	</div>

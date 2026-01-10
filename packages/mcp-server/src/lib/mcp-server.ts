@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { version } from './common/version';
-import { sanitizeErrorMessage } from '@gauzy/auth';
+import { sanitizeErrorMessage } from './common/error-utils';
 import { TransportFactory, TransportResult } from './transports';
 import { sessionManager } from './session/session-manager';
 import { registerTimerTools } from './tools/timer';
@@ -229,13 +229,17 @@ export class ExtendedMcpServer extends McpServer {
  * @param sessionId - Optional session ID for session-aware operations
  */
 export function createMcpServer(sessionId?: string) {
-	const server = new ExtendedMcpServer({
-		name: 'gauzy-mcp-server',
-		version,
-		capabilities: {
-			tools: {}
+	const server = new ExtendedMcpServer(
+		{
+			name: 'gauzy-mcp-server',
+			version
+		},
+		{
+			capabilities: {
+				tools: {}
+			}
 		}
-	});
+	);
 
 	try {
 		// Register all available tools (functions that can be called by the LLM)

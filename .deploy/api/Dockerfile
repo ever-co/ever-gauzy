@@ -105,7 +105,7 @@ ARG REDIS_USER
 ARG REDIS_TLS
 ARG REDIS_URL
 
-FROM node:20.18.1-alpine3.19 AS dependencies
+FROM node:24.12.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -126,7 +126,7 @@ RUN apk --update add bash && npm i -g npm@9 \
 # Verify installed versions
 RUN node --version && npm --version && python3 --version
 
-RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force
+RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force && npm install --quiet ts-node@10.9.2 -g
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
@@ -175,7 +175,7 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
 
-FROM node:20.18.1-alpine3.19 AS prodDependencies
+FROM node:24.12.0-alpine3.23 AS prodDependencies
 
 ENV CI=true
 
@@ -192,7 +192,7 @@ RUN apk --update add bash && npm i -g npm@9 \
 # Verify installed versions
 RUN node --version && npm --version && python3 --version
 
-RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force
+RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force && npm install --quiet ts-node@10.9.2 -g
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node
@@ -245,7 +245,7 @@ RUN rm -r node_modules/@angular
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r node_modules/@gauzy
 
-FROM node:20.18.1-alpine3.19 AS development
+FROM node:24.12.0-alpine3.23 AS development
 
 USER node:node
 
@@ -255,7 +255,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:20.18.1-alpine3.19 AS build
+FROM node:24.12.0-alpine3.23 AS build
 
 WORKDIR /srv/gauzy
 
@@ -274,7 +274,7 @@ ARG NODE_ENV
 ARG DEMO
 ARG NODE_OPTIONS
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
 ENV NODE_ENV=${NODE_ENV}
 ENV DEMO=${DEMO:-false}
 
@@ -295,7 +295,7 @@ RUN yarn build:api:prod:docker
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r dist/apps/api/node_modules/@gauzy
 
-FROM node:20.18.1-alpine3.19 AS production
+FROM node:24.12.0-alpine3.23 AS production
 
 WORKDIR /srv/gauzy
 

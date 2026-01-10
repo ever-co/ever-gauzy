@@ -1,0 +1,534 @@
+@let collapsed = (isCollapsed$ | async);
+@let hasActive = (hasActiveFilters$ | async);
+@let activeCount = (activeFiltersCount$ | async);
+@let filteredCount = (filteredPluginsCount$ | async);
+
+<div class="marketplace-filter" [class.collapsed]="collapsed" [class.mobile]="isMobile">
+	<!-- Filter Header -->
+	<div class="filter-header">
+		<div class="header-content">
+			<div class="header-icon-container">
+				<nb-icon icon="funnel-outline"></nb-icon>
+			</div>
+			<div class="filter-title">
+				<h4>Filters</h4>
+				<div class="active-filters-badge" *ngIf="activeCount as count">
+					<nb-badge
+						[text]="count.toString()"
+						status="primary"
+						position="top-right">
+					</nb-badge>
+				</div>
+			</div>
+		</div>
+
+		<div class="header-actions">
+			<button
+				nbButton
+				ghost
+				size="small"
+				(click)="clearAllFilters()"
+				[disabled]="!hasActive"
+				nbTooltip="Clear all filters"
+				aria-label="Clear all filters">
+				<nb-icon icon="refresh-outline"></nb-icon>
+				Clear
+			</button>
+
+			<button
+				nbButton
+				ghost
+				size="small"
+				(click)="toggleCollapse()"
+				[nbTooltip]="collapsed ? 'Expand filters' : 'Collapse filters'"
+				class="collapse-toggle"
+				[attr.aria-expanded]="!collapsed"
+				aria-controls="marketplace-filter-content"
+				aria-label="Toggle filter panel">
+				<nb-icon [icon]="collapsed ? 'chevron-down-outline' : 'chevron-up-outline'"></nb-icon>
+			</button>
+		</div>
+	</div>
+
+	<!-- Filter Content -->
+	<div id="marketplace-filter-content" class="filter-content" *ngIf="!collapsed">
+		<form [formGroup]="filterForm" class="filter-form">
+
+			<!-- Search & Sort Section -->
+			@if(filterSections[0]?.visible) {
+				<div class="filter-section" [class.expanded]="filterSections[0]?.expanded" [attr.aria-labelledby]="'section-search-header'">
+					<button
+						type="button"
+						class="section-header"
+						(click)="toggleSection('search')"
+						(keydown.enter)="toggleSection('search')"
+						(keydown.space)="toggleSection('search')"
+						[attr.aria-expanded]="filterSections[0]?.expanded"
+						[attr.id]="'section-search-header'"
+						[attr.aria-controls]="'section-search-content'">
+						<div class="section-title">
+							<nb-icon [icon]="filterSections[0]?.icon"></nb-icon>
+							<span>{{ filterSections[0]?.label }}</span>
+						</div>
+						<nb-icon
+							[icon]="filterSections[0]?.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
+							class="section-toggle">
+						</nb-icon>
+					</button>
+
+					<div class="section-content" *ngIf="filterSections[0]?.expanded" [attr.id]="'section-search-content'">
+						<!-- Search Input -->
+						<div class="form-group">
+							<label class="form-label">
+								<nb-icon icon="search-outline"></nb-icon>
+								Search Plugins
+							</label>
+							<nb-form-field>
+								<nb-icon nbPrefix icon="search-outline"></nb-icon>
+								<input
+									nbInput
+									formControlName="search"
+									placeholder="Search by name, author, or description..."
+									[nbAutocomplete]="searchAutocomplete">
+								<button
+									nbSuffix
+									nbButton
+									ghost
+									size="tiny"
+									*ngIf="filterForm.get('search')?.value"
+									(click)="filterForm.patchValue({search: ''})"
+									tabindex="-1">
+									<nb-icon icon="close-outline"></nb-icon>
+								</button>
+							</nb-form-field>
+
+							<nb-autocomplete #searchAutocomplete>
+								@for(suggestion of searchSuggestions$ | async; track suggestion) {
+									<nb-option [value]="suggestion">{{ suggestion }}</nb-option>
+								}
+							</nb-autocomplete>
+						</div>
+
+						<!-- Sort Options -->
+						<div class="form-group">
+							<label class="form-label">
+								<nb-icon icon="swap-outline"></nb-icon>
+								Sort By
+							</label>
+							<div class="sort-controls">
+								<nb-select formControlName="sortBy" placeholder="Sort by...">
+									@for(option of sortOptions; track option) {
+										<nb-option [value]="option">
+											{{ formatSortOption(option) }}
+										</nb-option>
+									}
+								</nb-select>
+
+								<nb-button-group>
+									<button
+										nbButton
+										[status]="filterForm.get('sortDirection')?.value === 'asc' ? 'primary' : 'basic'"
+										(click)="filterForm.patchValue({sortDirection: 'asc'})"
+										nbTooltip="Ascending"
+										size="small">
+										<nb-icon icon="arrow-upward-outline"></nb-icon>
+									</button>
+									<button
+										nbButton
+										[status]="filterForm.get('sortDirection')?.value === 'desc' ? 'primary' : 'basic'"
+										(click)="filterForm.patchValue({sortDirection: 'desc'})"
+										nbTooltip="Descending"
+										size="small">
+										<nb-icon icon="arrow-downward-outline"></nb-icon>
+									</button>
+								</nb-button-group>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+
+			<!-- Categories Section -->
+			@if(filterSections[1]?.visible) {
+				<div class="filter-section" [class.expanded]="filterSections[1]?.expanded" [attr.aria-labelledby]="'section-categories-header'">
+					<button
+						type="button"
+						class="section-header"
+						(click)="toggleSection('categories')"
+						(keydown.enter)="toggleSection('categories')"
+						(keydown.space)="toggleSection('categories')"
+						[attr.aria-expanded]="filterSections[1]?.expanded"
+						[attr.id]="'section-categories-header'"
+						[attr.aria-controls]="'section-categories-content'">
+						<div class="section-title">
+							<nb-icon [icon]="filterSections[1]?.icon"></nb-icon>
+							<span>{{ filterSections[1]?.label }}</span>
+						</div>
+						<nb-icon
+							[icon]="filterSections[1]?.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
+							class="section-toggle">
+						</nb-icon>
+					</button>
+
+					<div class="section-content" *ngIf="filterSections[1]?.expanded" [attr.id]="'section-categories-content'">
+						<!-- Loading state (initial load) -->
+						<div class="categories-loading" *ngIf="isCategoriesLoading && categoryOptions.length === 0">
+							<nb-spinner size="small"></nb-spinner>
+							<span class="loading-text">Loading categories...</span>
+						</div>
+
+						<!-- Empty state -->
+						<div class="categories-empty" *ngIf="!isCategoriesLoading && hasCategoriesLoaded && categoryOptions.length === 0">
+							<nb-icon icon="cube-outline" class="empty-icon"></nb-icon>
+							<p class="empty-text">No categories available</p>
+						</div>
+
+						<!-- Categories grid with infinite scroll -->
+						<div
+							class="categories-grid-wrapper"
+							*ngIf="categoryOptions.length > 0"
+							(scroll)="onCategoryScroll($event)">
+
+							<div class="categories-grid">
+								@for(category of categoryOptions; track category.value) {
+									<button
+										type="button"
+										class="category-item"
+										[class.selected]="isCategorySelected(category.value)"
+										[attr.aria-pressed]="isCategorySelected(category.value)"
+										(click)="selectCategory(category.value)">
+
+										<div class="category-content">
+											<div class="category-icon">
+												<nb-icon [icon]="category.icon"></nb-icon>
+											</div>
+											<div class="category-info">
+												<span class="category-name">{{ category.label }}</span>
+												<span class="category-count">{{ category.count || 0 }}</span>
+											</div>
+										</div>
+
+										<div class="category-indicator" *ngIf="isCategorySelected(category.value)">
+											<nb-icon icon="checkmark-circle-outline"></nb-icon>
+										</div>
+									</button>
+								}
+							</div>
+
+							<!-- Loading more indicator -->
+							<div class="categories-loading-more" *ngIf="isCategoriesLoadingMore">
+								<nb-spinner size="tiny"></nb-spinner>
+								<span class="loading-text">Loading more...</span>
+							</div>
+
+							<!-- End of list indicator -->
+							<div class="categories-end" *ngIf="!hasMoreCategories && categoryOptions.length > 0">
+								<span class="end-text">No more categories</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+
+			<!-- Properties Section -->
+			@if(filterSections[2]?.visible) {
+				<div class="filter-section" [class.expanded]="filterSections[2]?.expanded" [attr.aria-labelledby]="'section-properties-header'">
+					<button
+						type="button"
+						class="section-header"
+						(click)="toggleSection('properties')"
+						(keydown.enter)="toggleSection('properties')"
+						(keydown.space)="toggleSection('properties')"
+						[attr.aria-expanded]="filterSections[2]?.expanded"
+						[attr.id]="'section-properties-header'"
+						[attr.aria-controls]="'section-properties-content'">
+						<div class="section-title">
+							<nb-icon [icon]="filterSections[2]?.icon"></nb-icon>
+							<span>{{ filterSections[2]?.label }}</span>
+						</div>
+						<nb-icon
+							[icon]="filterSections[2]?.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
+							class="section-toggle">
+						</nb-icon>
+					</button>
+
+					<div class="section-content" *ngIf="filterSections[2]?.expanded" [attr.id]="'section-properties-content'">
+						<!-- Plugin Status -->
+						<fieldset class="form-group form-fieldset">
+							<legend class="form-label">
+								<nb-icon icon="activity-outline"></nb-icon>
+								Status
+							</legend>
+							<div class="checkbox-group">
+								@for(status of statusOptions; track status) {
+									<div class="checkbox-item">
+										<nb-checkbox
+											[checked]="isStatusSelected(status)"
+											(checkedChange)="selectStatus(status)">
+											<nb-tag
+												[text]="status"
+												[status]="getStatusBadgeStatus(status)"
+												size="tiny">
+											</nb-tag>
+										</nb-checkbox>
+									</div>
+								}
+							</div>
+						</fieldset>
+
+						<!-- Plugin Type -->
+						<fieldset class="form-group form-fieldset">
+							<legend class="form-label">
+								<nb-icon icon="pricetags-outline"></nb-icon>
+								Type
+							</legend>
+							<div class="checkbox-group">
+								@for(type of typeOptions; track type) {
+									<div class="checkbox-item">
+										<nb-checkbox
+											[checked]="isTypeSelected(type)"
+											(checkedChange)="selectType(type)">
+											<nb-tag
+												[text]="type"
+												[status]="getTypeBadgeStatus(type)"
+												size="tiny">
+											</nb-tag>
+										</nb-checkbox>
+									</div>
+								}
+							</div>
+						</fieldset>
+
+						<!-- Special Properties -->
+						<div class="form-group">
+							<label class="form-label">
+								<nb-icon icon="flash-outline"></nb-icon>
+								Special Properties
+							</label>
+							<div class="checkbox-group">
+								<div class="checkbox-item">
+									<nb-checkbox formControlName="featured">
+										<span class="checkbox-label">
+											<nb-icon icon="star-outline"></nb-icon>
+											Featured Plugins
+										</span>
+									</nb-checkbox>
+								</div>
+								<div class="checkbox-item">
+									<nb-checkbox formControlName="verified">
+										<span class="checkbox-label">
+											<nb-icon icon="checkmark-circle-outline"></nb-icon>
+											Verified Plugins
+										</span>
+									</nb-checkbox>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+
+			<!-- Pricing Section -->
+			@if(filterSections[3]?.visible) {
+				<div class="filter-section" [class.expanded]="filterSections[3]?.expanded" [attr.aria-labelledby]="'section-pricing-header'">
+					<button
+						type="button"
+						class="section-header"
+						(click)="toggleSection('pricing')"
+						(keydown.enter)="toggleSection('pricing')"
+						(keydown.space)="toggleSection('pricing')"
+						[attr.aria-expanded]="filterSections[3]?.expanded"
+						[attr.id]="'section-pricing-header'"
+						[attr.aria-controls]="'section-pricing-content'">
+						<div class="section-title">
+							<nb-icon [icon]="filterSections[3]?.icon"></nb-icon>
+							<span>{{ filterSections[3]?.label }}</span>
+						</div>
+						<nb-icon
+							[icon]="filterSections[3]?.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
+							class="section-toggle">
+						</nb-icon>
+					</button>
+
+					<div class="section-content" *ngIf="filterSections[3]?.expanded" [attr.id]="'section-pricing-content'">
+						<!-- Price Categories -->
+						<div class="form-group">
+							<label class="form-label">Price Category</label>
+							<div class="price-categories">
+								@for(category of priceCategories; track category) {
+									<button
+										nbButton
+										outline
+										size="small"
+										class="price-category-btn"
+										[status]="'basic'"
+										(click)="selectPriceCategory(category)">
+										{{ category | titlecase }}
+									</button>
+								}
+							</div>
+						</div>
+
+						<!-- Price Range -->
+						<div class="form-group" formGroupName="priceRange">
+							<label class="form-label">Price Range ($)</label>
+							<div class="price-range-controls">
+								<nb-form-field class="range-input">
+									<input
+										nbInput
+										type="number"
+										formControlName="min"
+										placeholder="Min"
+										min="0">
+								</nb-form-field>
+								<span class="range-separator">to</span>
+								<nb-form-field class="range-input">
+									<input
+										nbInput
+										type="number"
+										formControlName="max"
+										placeholder="Max">
+								</nb-form-field>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+
+			<!-- Advanced Section -->
+			@if(filterSections[4]?.visible && showAdvanced) {
+				<div class="filter-section" [class.expanded]="filterSections[4]?.expanded" [attr.aria-labelledby]="'section-advanced-header'">
+					<button
+						type="button"
+						class="section-header"
+						(click)="toggleSection('advanced')"
+						(keydown.enter)="toggleSection('advanced')"
+						(keydown.space)="toggleSection('advanced')"
+						[attr.aria-expanded]="filterSections[4]?.expanded"
+						[attr.id]="'section-advanced-header'"
+						[attr.aria-controls]="'section-advanced-content'">
+						<div class="section-title">
+							<nb-icon [icon]="filterSections[4]?.icon"></nb-icon>
+							<span>{{ filterSections[4]?.label }}</span>
+						</div>
+						<nb-icon
+							[icon]="filterSections[4]?.expanded ? 'chevron-up-outline' : 'chevron-down-outline'"
+							class="section-toggle">
+						</nb-icon>
+					</button>
+
+					<div class="section-content" *ngIf="filterSections[4]?.expanded" [attr.id]="'section-advanced-content'">
+						<!-- Author Filter -->
+						<div class="form-group">
+							<label class="form-label">Author</label>
+							<nb-select formControlName="author" placeholder="Select author...">
+								<nb-option value="">All Authors</nb-option>
+								@for(author of authorOptions; track author) {
+									<nb-option [value]="author">{{ author }}</nb-option>
+								}
+							</nb-select>
+						</div>
+
+						<!-- License Filter -->
+						<div class="form-group">
+							<label class="form-label">License</label>
+							<nb-select
+								formControlName="license"
+								multiple
+								placeholder="Select licenses...">
+								@for(license of licenseOptions; track license) {
+									<nb-option [value]="license">{{ license }}</nb-option>
+								}
+							</nb-select>
+						</div>
+
+						<!-- Minimum Downloads -->
+						<div class="form-group">
+							<label class="form-label">Minimum Downloads</label>
+							<nb-form-field>
+								<input
+									nbInput
+									type="number"
+									formControlName="minDownloads"
+									placeholder="Enter minimum download count"
+									min="0">
+							</nb-form-field>
+						</div>
+
+						<!-- Date Range -->
+						<div class="form-group" formGroupName="dateRange">
+							<label class="form-label">Upload Date Range</label>
+							<div class="date-range-controls">
+								<nb-form-field class="date-input">
+									<input
+										nbInput
+										[nbDatepicker]="fromPicker"
+										formControlName="from"
+										placeholder="From date">
+									<nb-datepicker #fromPicker></nb-datepicker>
+								</nb-form-field>
+								<span class="date-separator">to</span>
+								<nb-form-field class="date-input">
+									<input
+										nbInput
+										[nbDatepicker]="toPicker"
+										formControlName="to"
+										placeholder="To date">
+									<nb-datepicker #toPicker></nb-datepicker>
+								</nb-form-field>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+
+		</form>
+	</div>
+
+	<!-- Quick Filters (Mobile) -->
+	<div class="quick-filters" *ngIf="isMobile && !collapsed">
+		<div class="quick-filter-chips">
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				*ngIf="!hasActive"
+				disabled>
+				No filters applied
+			</button>
+
+			@if((filterForm.get('search')?.value)) {
+				<nb-tag
+					[text]="'Search: ' + filterForm.get('search')?.value"
+					removable
+					(remove)="filterForm.patchValue({search: ''})"
+					size="tiny">
+				</nb-tag>
+			}
+
+			@if((filterForm.get('categories')?.value?.length)) {
+				<nb-tag
+					[text]="filterForm.get('categories')?.value.length + ' categories'"
+					removable
+					(remove)="filterForm.patchValue({categories: []})"
+					size="tiny">
+				</nb-tag>
+			}
+
+			@if((filterForm.get('status')?.value?.length)) {
+				<nb-tag
+					[text]="filterForm.get('status')?.value.length + ' statuses'"
+					removable
+					(remove)="filterForm.patchValue({status: []})"
+					size="tiny">
+				</nb-tag>
+			}
+		</div>
+	</div>
+
+	<!-- Loading Overlay -->
+	<div class="filter-loading" *ngIf="isLoading">
+		<nb-spinner size="medium"></nb-spinner>
+		<span>Applying filters...</span>
+	</div>
+</div>

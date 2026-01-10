@@ -1,0 +1,481 @@
+<div class="tags-manager">
+	<div class="manager-header">
+		<div class="header-info">
+			<h4 class="manager-title">
+				<nb-icon icon="pricetags-outline"></nb-icon>
+				Plugin Tags
+			</h4>
+			<p class="manager-subtitle">
+				Add tags to help users discover your plugin
+				<span class="tag-count">({{ selectedTags.length }}/{{ maxTags }})</span>
+			</p>
+		</div>
+
+		<div class="header-actions" *ngIf="canEdit">
+			<button
+				nbButton
+				ghost
+				size="small"
+				(click)="clearAllTags()"
+				[disabled]="selectedTags.length === 0"
+				nbTooltip="Remove all tags">
+				<nb-icon icon="trash-outline"></nb-icon>
+				Clear All
+			</button>
+		</div>
+	</div>
+
+	<!-- Selected Tags Display -->
+	<div class="selected-tags-section" *ngIf="selectedTags.length > 0">
+		<h5 class="section-title">
+			<nb-icon icon="checkmark-circle-outline"></nb-icon>
+			Selected Tags
+		</h5>
+
+		<div class="selected-tags-container">
+			@for(tag of getSelectedTagsSorted(); track tag.id) {
+				<div class="selected-tag-item" [style.border-color]="tag.color">
+					<div class="tag-main">
+						<nb-tag
+							[text]="tag.name"
+							[removable]="canEdit"
+							(remove)="removeTag(tag)"
+							[style.background]="tag.color"
+							class="tag-badge">
+						</nb-tag>
+
+						@if(tag.isFeatured) {
+							<nb-icon
+								icon="star"
+								class="featured-icon"
+								nbTooltip="Featured tag">
+							</nb-icon>
+						}
+					</div>
+
+					<div class="tag-controls" *ngIf="canEdit && showFeatured">
+						<div class="priority-control">
+							<label class="control-label">Priority:</label>
+							<nb-slider
+								[value]="tag.priority || 50"
+								[min]="0"
+								[max]="100"
+								[step]="5"
+								(valueChange)="setTagPriority(tag, $event)"
+								class="priority-slider">
+							</nb-slider>
+							<span class="priority-value">{{ tag.priority || 50 }}</span>
+						</div>
+
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							[status]="tag.isFeatured ? 'warning' : 'basic'"
+							(click)="toggleTagFeatured(tag)"
+							[nbTooltip]="tag.isFeatured ? 'Remove from featured' : 'Mark as featured'">
+							<nb-icon [icon]="tag.isFeatured ? 'star' : 'star-outline'"></nb-icon>
+						</button>
+
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							(click)="showTagDetailsDialog(tag)"
+							nbTooltip="View tag details">
+							<nb-icon icon="info-outline"></nb-icon>
+						</button>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+
+	<!-- Tag Suggestions -->
+	<div class="suggestions-section" *ngIf="showSuggestions && tagSuggestions.length > 0 && canEdit">
+		<h5 class="section-title">
+			<nb-icon icon="bulb-outline"></nb-icon>
+			Suggested Tags
+		</h5>
+
+		<div class="suggestions-container">
+			@for(suggestion of tagSuggestions; track suggestion.tag.id) {
+				<div class="suggestion-item">
+					<div class="suggestion-content">
+						<nb-tag
+							[text]="suggestion.tag.name"
+							[style.background]="suggestion.tag.color"
+							class="suggestion-tag">
+						</nb-tag>
+						<div class="suggestion-info">
+							<span class="suggestion-reason">{{ suggestion.reason }}</span>
+							<span class="suggestion-score">
+								{{ (suggestion.relevanceScore * 100).toFixed(0) }}% match
+							</span>
+						</div>
+					</div>
+
+					<div class="suggestion-actions">
+						<button
+							nbButton
+							size="tiny"
+							status="primary"
+							(click)="applySuggestedTag(suggestion)"
+							[disabled]="!canAddMoreTags()">
+							<nb-icon icon="plus-outline"></nb-icon>
+							Add
+						</button>
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							(click)="dismissSuggestion(suggestion)">
+							<nb-icon icon="close-outline"></nb-icon>
+						</button>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+
+	<!-- Popular Tags -->
+	<div class="popular-tags-section" *ngIf="popularTags.length > 0">
+		<h5 class="section-title">
+			<nb-icon icon="trending-up-outline"></nb-icon>
+			Popular Tags
+		</h5>
+
+		<div class="tags-grid">
+			@for(tag of popularTags; track tag.id) {
+				<div
+					class="tag-item"
+					[class.selected]="isTagSelected(tag)"
+					[class.disabled]="!canEdit || (!canAddMoreTags() && !isTagSelected(tag))"
+					(click)="!isTagSelected(tag) && selectTag(tag)">
+
+					<div class="tag-content">
+						<nb-tag
+							[text]="tag.name"
+							[style.background]="tag.color"
+							class="tag-badge">
+						</nb-tag>
+
+						<div class="tag-info">
+							<div class="tag-category">
+								<nb-icon [icon]="getCategoryInfo(tag.category).icon"></nb-icon>
+								{{ getCategoryInfo(tag.category).label }}
+							</div>
+							<div class="tag-usage">{{ getTagUsageText(tag) }}</div>
+						</div>
+					</div>
+
+					@if(isTagSelected(tag)) {
+						<div class="selected-indicator">
+							<nb-icon icon="checkmark-circle"></nb-icon>
+						</div>
+					}
+				</div>
+			}
+		</div>
+	</div>
+
+	<!-- Recent Tags -->
+	<div class="recent-tags-section" *ngIf="recentTags.length > 0 && canEdit">
+		<h5 class="section-title">
+			<nb-icon icon="clock-outline"></nb-icon>
+			Recently Used
+		</h5>
+
+		<div class="tags-list">
+			@for(tag of recentTags; track tag.id) {
+				<button
+					nbButton
+					ghost
+					size="small"
+					class="recent-tag"
+					[class.selected]="isTagSelected(tag)"
+					[disabled]="!canAddMoreTags() && !isTagSelected(tag)"
+					(click)="!isTagSelected(tag) && selectTag(tag)">
+
+					<div class="tag-color-indicator" [style.background]="tag.color"></div>
+					{{ tag.name }}
+
+					@if(isTagSelected(tag)) {
+						<nb-icon icon="checkmark-circle-outline" class="selected-icon"></nb-icon>
+					}
+				</button>
+			}
+		</div>
+	</div>
+
+	<!-- Search and Browse -->
+	<div class="search-section">
+		<h5 class="section-title">
+			<nb-icon icon="search-outline"></nb-icon>
+			Browse All Tags
+		</h5>
+
+		<div class="search-container">
+			<nb-form-field>
+				<nb-icon nbPrefix icon="search-outline"></nb-icon>
+				<input
+					nbInput
+					placeholder="Search tags..."
+					[value]="searchTerm$ | async"
+					(input)="searchTerm$.next($event.target.value)">
+			</nb-form-field>
+
+			<button
+				nbButton
+				status="primary"
+				size="small"
+				(click)="openCreateTagForm()"
+				[disabled]="!canEdit"
+				*ngIf="canEdit">
+				<nb-icon icon="plus-outline"></nb-icon>
+				Create Tag
+			</button>
+		</div>
+
+		<div class="browsable-tags">
+			@for(tag of filteredTags; track tag.id) {
+				<div
+					class="browsable-tag-item"
+					[class.selected]="isTagSelected(tag)"
+					[class.disabled]="!canEdit || (!canAddMoreTags() && !isTagSelected(tag))">
+
+					<div class="tag-main-info" (click)="!isTagSelected(tag) && selectTag(tag)">
+						<div class="tag-color-dot" [style.background]="tag.color"></div>
+						<div class="tag-text">
+							<span class="tag-name">{{ tag.name }}</span>
+							@if(tag.description) {
+								<span class="tag-description">{{ tag.description }}</span>
+							}
+						</div>
+						<div class="tag-meta">
+							<span class="tag-category-badge" [style.color]="getCategoryInfo(tag.category).color">
+								<nb-icon [icon]="getCategoryInfo(tag.category).icon"></nb-icon>
+								{{ getCategoryInfo(tag.category).label }}
+							</span>
+							<span class="tag-usage-count">{{ getTagUsageText(tag) }}</span>
+						</div>
+					</div>
+
+					<div class="tag-actions">
+						@if(isTagSelected(tag)) {
+							<button
+								nbButton
+								status="danger"
+								ghost
+								size="tiny"
+								(click)="removeTag(tag)"
+								[disabled]="!canEdit">
+								<nb-icon icon="minus-outline"></nb-icon>
+							</button>
+						} @else {
+							<button
+								nbButton
+								status="success"
+								ghost
+								size="tiny"
+								(click)="selectTag(tag)"
+								[disabled]="!canEdit || !canAddMoreTags()">
+								<nb-icon icon="plus-outline"></nb-icon>
+							</button>
+						}
+
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							(click)="showTagDetailsDialog(tag)">
+							<nb-icon icon="info-outline"></nb-icon>
+						</button>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+
+	<!-- Create Tag Form -->
+	<div class="create-tag-modal" *ngIf="showCreateForm">
+		<div class="modal-backdrop" (click)="cancelCreateTag()"></div>
+		<div class="modal-content">
+			<form [formGroup]="tagForm" (ngSubmit)="createTag()" class="create-tag-form">
+				<div class="form-header">
+					<h5>Create New Tag</h5>
+					<button
+						type="button"
+						nbButton
+						ghost
+						size="small"
+						(click)="cancelCreateTag()">
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</div>
+
+				<div class="form-body">
+					<div class="form-group">
+						<label>Tag Name *</label>
+						<nb-form-field>
+							<input
+								nbInput
+								formControlName="name"
+								placeholder="Enter tag name..."
+								maxlength="30">
+						</nb-form-field>
+						@if(tagForm.get('name')?.invalid && tagForm.get('name')?.touched) {
+							<div class="error-message">
+								@if(tagForm.get('name')?.errors?.['required']) {
+									Tag name is required
+								}
+								@if(tagForm.get('name')?.errors?.['minlength']) {
+									Tag name must be at least 2 characters
+								}
+								@if(tagForm.get('name')?.errors?.['maxlength']) {
+									Tag name cannot exceed 30 characters
+								}
+							</div>
+						}
+					</div>
+
+					<div class="form-group">
+						<label>Description</label>
+						<nb-form-field>
+							<textarea
+								nbInput
+								formControlName="description"
+								placeholder="Brief description of the tag..."
+								rows="2"
+								maxlength="200">
+							</textarea>
+						</nb-form-field>
+					</div>
+
+					<div class="form-group">
+						<label>Category *</label>
+						<nb-select formControlName="category">
+							@for(category of tagCategories; track category.value) {
+								<nb-option [value]="category.value">
+									<nb-icon [icon]="category.icon"></nb-icon>
+									{{ category.label }}
+								</nb-option>
+							}
+						</nb-select>
+					</div>
+
+					<div class="form-group">
+						<label>Color *</label>
+						<div class="color-input-group">
+							<input
+								type="color"
+								formControlName="color"
+								class="color-picker">
+							<nb-form-field>
+								<input
+									nbInput
+									formControlName="color"
+									placeholder="#407BFF">
+							</nb-form-field>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<nb-checkbox formControlName="isPrivate">
+							Private tag (only visible to you)
+						</nb-checkbox>
+					</div>
+				</div>
+
+				<div class="form-actions">
+					<button
+						type="button"
+						nbButton
+						ghost
+						(click)="cancelCreateTag()">
+						Cancel
+					</button>
+					<button
+						type="submit"
+						nbButton
+						status="primary"
+						[disabled]="!tagForm.valid">
+						Create Tag
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- Tag Details Modal -->
+	<div class="tag-details-modal" *ngIf="showTagDetails && selectedTagForDetails">
+		<div class="modal-backdrop" (click)="closeTagDetails()"></div>
+		<div class="modal-content">
+			<div class="details-header">
+				<div class="tag-preview">
+					<nb-tag
+						[text]="selectedTagForDetails.name"
+						[style.background]="selectedTagForDetails.color"
+						class="preview-tag">
+					</nb-tag>
+					@if(selectedTagForDetails.isFeatured) {
+						<nb-icon icon="star" class="featured-icon"></nb-icon>
+					}
+				</div>
+				<button
+					nbButton
+					ghost
+					size="small"
+					(click)="closeTagDetails()">
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
+
+			<div class="details-body">
+				<div class="detail-section">
+					<h6>Basic Information</h6>
+					<div class="detail-grid">
+						<div class="detail-item">
+							<span class="label">Name:</span>
+							<span class="value">{{ selectedTagForDetails.name }}</span>
+						</div>
+						<div class="detail-item">
+							<span class="label">Category:</span>
+							<span class="value">
+								<nb-icon [icon]="getCategoryInfo(selectedTagForDetails.category).icon"></nb-icon>
+								{{ getCategoryInfo(selectedTagForDetails.category).label }}
+							</span>
+						</div>
+						<div class="detail-item">
+							<span class="label">Usage:</span>
+							<span class="value">{{ getTagUsageText(selectedTagForDetails) }}</span>
+						</div>
+						@if(selectedTagForDetails.priority) {
+							<div class="detail-item">
+								<span class="label">Priority:</span>
+								<span class="value">{{ selectedTagForDetails.priority }}/100</span>
+							</div>
+						}
+					</div>
+				</div>
+
+				@if(selectedTagForDetails.description) {
+					<div class="detail-section">
+						<h6>Description</h6>
+						<p class="description-text">{{ selectedTagForDetails.description }}</p>
+					</div>
+				}
+
+				@if(selectedTagForDetails.appliedAt) {
+					<div class="detail-section">
+						<h6>Usage History</h6>
+						<div class="detail-item">
+							<span class="label">First Used:</span>
+							<span class="value">{{ selectedTagForDetails.appliedAt | date:'medium' }}</span>
+						</div>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+</div>

@@ -19,52 +19,15 @@
 		"url": "https://ever.co"
 	},
 	"main": "index.js",
-	"workspaces": {
-		"packages": [
-			"../../../dist/packages/auth",
-			"../../../dist/packages/common",
-			"../../../dist/packages/config",
-			"../../../dist/packages/constants",
-			"../../../dist/packages/contracts",
-			"../../../dist/packages/core",
-			"../../../dist/packages/desktop-core",
-			"../../../dist/packages/desktop-activity",
-			"../../../dist/packages/desktop-lib",
-			"../../../dist/packages/desktop-window",
-			"../../../dist/packages/plugin",
-			"../../../dist/packages/plugins/changelog",
-			"../../../dist/packages/plugins/integration-ai",
-			"../../../dist/packages/plugins/integration-hubstaff",
-			"../../../dist/packages/plugins/integration-github",
-			"../../../dist/packages/plugins/integration-jira",
-			"../../../dist/packages/plugins/integration-make-com",
-			"../../../dist/packages/plugins/integration-upwork",
-			"../../../dist/packages/plugins/integration-wakatime",
-			"../../../dist/packages/plugins/integration-zapier",
-			"../../../dist/packages/plugins/jitsu-analytics",
-			"../../../dist/packages/plugins/job-proposal",
-			"../../../dist/packages/plugins/job-search",
-			"../../../dist/packages/plugins/knowledge-base",
-			"../../../dist/packages/plugins/product-reviews",
-			"../../../dist/packages/plugins/sentry-tracing",
-			"../../../dist/packages/plugins/videos",
-			"../../../dist/packages/plugins/registry",
-			"../../../dist/packages/plugins/posthog",
-			"../../../dist/packages/plugins/camshot",
-			"../../../dist/packages/plugins/soundshot",
-			"../../../dist/packages/ui-config",
-			"../../../dist/packages/utils",
-			"../../../dist/packages/plugins/integration-activepieces"
-		]
-	},
 	"build": {
 		"appId": "com.ever.gauzydesktop",
-		"artifactName": "${name}-${version}.${ext}",
+		"artifactName": "${name}-${arch}-${version}.${ext}",
 		"productName": "Ever Gauzy Desktop",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"afterSign": "tools/notarize.js",
 		"dmg": {
-			"sign": false
+			"sign": false,
+			"artifactName": "${name}-${arch}-${version}.${ext}"
 		},
 		"asar": true,
 		"npmRebuild": true,
@@ -96,46 +59,50 @@
 		"mac": {
 			"category": "public.app-category.developer-tools",
 			"icon": "icon.icns",
-			"target": [
-				"zip",
-				"dmg"
-			],
+			"target": {
+				"target": "default",
+				"arch": [
+					"x64",
+					"arm64"
+				]
+			},
 			"asarUnpack": "**/*.node",
-			"artifactName": "${name}-${version}.${ext}",
+			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"hardenedRuntime": true,
 			"gatekeeperAssess": false,
 			"entitlements": "tools/build/entitlements.mas.plist",
 			"entitlementsInherit": "tools/build/entitlements.mas.plist",
 			"extendInfo": {
-				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
-				"NSMicrophoneUsageDescription": "This app requires microphone access when recording sounds or detecting loudness.",
-				"NSCameraUsageDescription": "This app requires camera access when using the video sensing blocks."
+				"NSAppleEventsUsageDescription": "This app requires access to script browser applications to detect the current URL when triggering instant lookup.",
+				"NSCameraUsageDescription": "Please allow access to the device camera to capture images and videos.",
+				"NSMicrophoneUsageDescription": "Please allow access to the device's microphone to capture audio and voice recordings.",
+				"NSScreenCaptureUsageDescription": "Please allow access to the device's screen to capture screenshots and videos."
 			}
 		},
 		"win": {
-			"publisherName": "Ever",
-			"target": [
-				{
-					"target": "nsis",
-					"arch": [
-						"x64"
-					]
-				}
-			],
+			"target": "nsis",
 			"icon": "icon.ico",
 			"verifyUpdateCodeSignature": false
 		},
 		"linux": {
 			"icon": "linux",
 			"target": [
-				"AppImage",
 				"deb",
-				"tar.gz"
+				"snap",
+				"tar.gz",
+				"rpm",
+				"AppImage"
 			],
 			"executableName": "gauzy-desktop",
-			"artifactName": "${name}-${version}.${ext}",
+			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
+		},
+		"rpm": {
+			"fpm": [
+				"--rpm-rpmbuild-define",
+				"_build_id_links none"
+			]
 		},
 		"nsis": {
 			"oneClick": false,
@@ -145,7 +112,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "${name}-${version}.${ext}",
+			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},
@@ -161,6 +128,7 @@
 		"@gauzy/config": "file:../../../dist/packages/config",
 		"@gauzy/constants": "file:../../../dist/packages/constants",
 		"@gauzy/contracts": "file:../../../dist/packages/contracts",
+		"@gauzy/common": "file:../../../dist/packages/common",
 		"@gauzy/core": "file:../../../dist/packages/core",
 		"@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
 		"@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
@@ -190,7 +158,7 @@
 		"@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
-		"@nestjs/platform-express": "^11.1.0",
+		"@nestjs/platform-express": "^11.1.10",
 		"@sentry/electron": "6.9.0",
 		"@sentry/node": "9.43.0",
 		"@sentry/profiling-node": "9.43.0",
@@ -222,7 +190,45 @@
 		"underscore": "^1.13.3",
 		"undici": "^6.10.2",
 		"custom-electron-titlebar": "^4.2.8",
+		"call-bind-apply-helpers": "^1.0.2",
+		"cheerio-select": "^2.1.0",
 		"@as-integrations/express5": "^1.1.2"
+	},
+	"resolutions": {
+		"@gauzy/auth": "file:../../../dist/packages/auth",
+		"@gauzy/config": "file:../../../dist/packages/config",
+		"@gauzy/constants": "file:../../../dist/packages/constants",
+		"@gauzy/contracts": "file:../../../dist/packages/contracts",
+		"@gauzy/common": "file:../../../dist/packages/common",
+		"@gauzy/core": "file:../../../dist/packages/core",
+		"@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
+		"@gauzy/desktop-activity": "file:../../../dist/packages/desktop-activity",
+		"@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
+		"@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
+		"@gauzy/plugin": "file:../../../dist/packages/plugin",
+		"@gauzy/plugin-changelog": "file:../../../dist/packages/plugins/changelog",
+		"@gauzy/plugin-integration-ai": "file:../../../dist/packages/plugins/integration-ai",
+		"@gauzy/plugin-integration-github": "file:../../../dist/packages/plugins/integration-github",
+		"@gauzy/plugin-integration-hubstaff": "file:../../../dist/packages/plugins/integration-hubstaff",
+		"@gauzy/plugin-integration-jira": "file:../../../dist/packages/plugins/integration-jira",
+		"@gauzy/plugin-integration-make-com": "file:../../../dist/packages/plugins/integration-make-com",
+		"@gauzy/plugin-integration-upwork": "file:../../../dist/packages/plugins/integration-upwork",
+		"@gauzy/plugin-integration-wakatime": "file:../../../dist/packages/plugins/integration-wakatime",
+		"@gauzy/plugin-integration-zapier": "file:../../../dist/packages/plugins/integration-zapier",
+		"@gauzy/plugin-jitsu-analytics": "file:../../../dist/packages/plugins/jitsu-analytics",
+		"@gauzy/plugin-job-proposal": "file:../../../dist/packages/plugins/job-proposal",
+		"@gauzy/plugin-job-search": "file:../../../dist/packages/plugins/job-search",
+		"@gauzy/plugin-knowledge-base": "file:../../../dist/packages/plugins/knowledge-base",
+		"@gauzy/plugin-product-reviews": "file:../../../dist/packages/plugins/product-reviews",
+		"@gauzy/plugin-sentry": "file:../../../dist/packages/plugins/sentry-tracing",
+		"@gauzy/plugin-videos": "file:../../../dist/packages/plugins/videos",
+		"@gauzy/plugin-registry": "file:../../../dist/packages/plugins/registry",
+		"@gauzy/plugin-posthog": "file:../../../dist/packages/plugins/posthog",
+		"@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
+		"@gauzy/plugin-soundshot": "file:../../../dist/packages/plugins/soundshot",
+		"@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
+		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
+		"@gauzy/utils": "file:../../../dist/packages/utils"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",

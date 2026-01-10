@@ -1,4 +1,16 @@
 <lib-form-section *ngIf="form" [formGroup]="form" class="source-inputs">
+	<!-- Gauzy Header -->
+	<div class="gauzy-header">
+		<div class="header-icon-wrapper">
+			<nb-icon icon="inbox-outline"></nb-icon>
+		</div>
+		<div class="header-content">
+			<h6 class="header-title">{{ 'PLUGIN.FORM.GAUZY.TITLE' | translate }}</h6>
+			<p class="header-description">{{ 'PLUGIN.FORM.GAUZY.DESCRIPTION' | translate }}</p>
+		</div>
+	</div>
+
+	<!-- File Upload -->
 	<lib-file-upload
 		*ngIf="form.get('file')"
 		[allowedExtensions]="['.zip']"
@@ -11,4 +23,15 @@
 		(fileSelected)="onFileSelected($event)"
 		(fileRemoved)="removeFile()"
 	></lib-file-upload>
+
+	<!-- Upload Info Alert -->
+	<nb-alert status="info" size="small" class="upload-info-alert">
+		<div class="alert-content">
+			<nb-icon icon="info-outline"></nb-icon>
+			<div>
+				<strong>{{ 'PLUGIN.FORM.GAUZY.UPLOAD_INFO_TITLE' | translate }}</strong>
+				<p>{{ 'PLUGIN.FORM.GAUZY.UPLOAD_INFO_DESC' | translate }}</p>
+			</div>
+		</div>
+	</nb-alert>
 </lib-form-section>

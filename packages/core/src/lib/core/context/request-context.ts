@@ -2,15 +2,15 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { CLS_ID, ClsService } from 'nestjs-cls';
-import { v4 as uuidv4 } from 'uuid';
-import { Request, Response } from 'express';
-import { ExtractJwt } from 'passport-jwt';
-import { JsonWebTokenError, verify } from 'jsonwebtoken';
-import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum, ID } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
+import { ID, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
+import { HttpException, HttpStatus } from '@nestjs/common';
+import { Request, Response } from 'express';
+import { JsonWebTokenError, verify } from 'jsonwebtoken';
+import { CLS_ID, ClsService } from 'nestjs-cls';
+import { ExtractJwt } from 'passport-jwt';
+import { v4 as uuidv4 } from 'uuid';
 import { SerializedRequestContext } from './types';
 
 export class RequestContext {
@@ -180,6 +180,19 @@ export class RequestContext {
 	static currentUserId(): ID | null {
 		const user: IUser | null = RequestContext.currentUser();
 		return user?.id || null;
+	}
+
+	/**
+	 * Retrieves the current organization ID from the request context.
+	 *
+	 * The organizationId is injected into user.lastOrganizationId by jwt.strategy.ts
+	 * after validating that the user has access to the organization.
+	 *
+	 * @returns {ID | null} - The current organization ID or null if not available.
+	 */
+	static currentOrganizationId(): ID | null {
+		const user: IUser | null = RequestContext.currentUser();
+		return user?.lastOrganizationId || null;
 	}
 
 	/**

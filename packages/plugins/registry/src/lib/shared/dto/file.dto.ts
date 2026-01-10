@@ -1,6 +1,16 @@
 import { UploadedFile } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, IsUrl, Matches, MaxLength, Min } from 'class-validator';
+import {
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsPositive,
+	IsString,
+	IsUrl,
+	Matches,
+	MaxLength,
+	Min
+} from 'class-validator';
 
 export class FileDTO implements UploadedFile {
 	@ApiProperty({
@@ -79,7 +89,7 @@ export class FileDTO implements UploadedFile {
 		example: 'https://example.com/plugin-demo-2024.zip'
 	})
 	@IsNotEmpty({ message: 'File URL must not be empty' })
-	@IsUrl({ protocols: ['http', 'https'] }, { message: 'File URL must be a valid URL' })
+	@IsUrl({ protocols: ['http', 'https'], require_tld: false }, { message: 'File URL must be a valid URL' })
 	@MaxLength(2083, { message: 'File URL must not exceed 2083 characters' }) // 2083 is the maximum URL length in browsers
 	url: string;
 

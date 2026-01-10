@@ -17,15 +17,17 @@ module.exports = {
 		mainFields: ['es2016', 'browser', 'module', 'main']
 	},
 	optimization: {
-		concatenateModules: false,
+		concatenateModules: true, // Enable module concatenation for better performance
 		// for now let's disable minimize in CircleCI
 		minimize: !isCircleCI,
 		minimizer: [
 			new TerserPlugin({
-				parallel: isCircleEnv ? 2 : true,
+				parallel: isCircleEnv ? 2 : true, // Use all available CPUs
 				terserOptions: {
 					sourceMap: !isCircleEnv,
-					compress: true
+					compress: {
+						passes: 2 // Multiple passes for better minification
+					}
 				},
 				extractComments: !isCircleEnv
 			})

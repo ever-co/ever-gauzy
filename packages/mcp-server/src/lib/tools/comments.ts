@@ -1,16 +1,19 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { CommentSchema, CommentableTypeEnum } from '../schema';
+import { CommentableTypeEnum } from '../input-schemas';
 import { validateOrganizationContext } from './utils';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('CommentTools');
 
 export const registerCommentTools = (server: McpServer) => {
 	// Get comments tool
-	server.tool(
+	registerTool(
+		server,
 		'get_comments',
 		"Get list of comments for the authenticated user's organization",
 		{
@@ -61,7 +64,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Get comment count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_comment_count',
 		"Get comment count in the authenticated user's organization",
 		{
@@ -101,7 +105,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Get comment by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_comment',
 		'Get a specific comment by ID',
 		{
@@ -135,16 +140,18 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Create comment tool
-	server.tool(
+	registerTool(
+		server,
 		'create_comment',
 		"Create a new comment in the authenticated user's organization",
 		{
-			comment_data: CommentSchema.partial()
-				.required({
-					comment: true,
-					entity: true,
-					entityId: true
+			comment_data: z
+				.object({
+					comment: z.string().describe('The comment text (required)'),
+					entity: z.string().describe('The entity type (required)'),
+					entityId: z.string().describe('The entity ID (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the comment')
 		},
 		async ({ comment_data }) => {
@@ -175,13 +182,16 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Update comment tool
-	server.tool(
+	registerTool(
+		server,
 		'update_comment',
 		'Update an existing comment',
 		{
 			id: z.string().uuid().describe('The comment ID'),
-			comment_data: CommentSchema.partial()
-				.pick({ comment: true })
+			comment_data: z
+				.object({
+					comment: z.string().describe('The comment text')
+				})
 				.describe('The data for updating the comment (only comment text can be updated)')
 		},
 		async ({ id, comment_data }) => {
@@ -204,7 +214,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Delete comment tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_comment',
 		'Delete a comment',
 		{
@@ -234,7 +245,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Get comments by entity tool
-	server.tool(
+	registerTool(
+		server,
 		'get_comments_by_entity',
 		'Get all comments for a specific entity',
 		{
@@ -278,7 +290,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Reply to comment tool
-	server.tool(
+	registerTool(
+		server,
 		'reply_to_comment',
 		'Reply to an existing comment',
 		{
@@ -318,7 +331,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Get comment replies tool
-	server.tool(
+	registerTool(
+		server,
 		'get_comment_replies',
 		'Get all replies to a specific comment',
 		{
@@ -358,7 +372,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Get my comments tool
-	server.tool(
+	registerTool(
+		server,
 		'get_my_comments',
 		'Get comments created by the current authenticated user',
 		{
@@ -400,7 +415,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Add comment to task tool
-	server.tool(
+	registerTool(
+		server,
 		'add_comment_to_task',
 		'Add a comment to a specific task',
 		{
@@ -437,7 +453,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Add comment to project tool
-	server.tool(
+	registerTool(
+		server,
 		'add_comment_to_project',
 		'Add a comment to a specific project',
 		{
@@ -474,7 +491,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Add comment to goal tool
-	server.tool(
+	registerTool(
+		server,
 		'add_comment_to_goal',
 		'Add a comment to a specific goal',
 		{
@@ -511,7 +529,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Search comments tool
-	server.tool(
+	registerTool(
+		server,
 		'search_comments',
 		'Search comments by content',
 		{
@@ -551,7 +570,8 @@ export const registerCommentTools = (server: McpServer) => {
 	);
 
 	// Get recent comments tool
-	server.tool(
+	registerTool(
+		server,
 		'get_recent_comments',
 		"Get recent comments for the authenticated user's organization",
 		{

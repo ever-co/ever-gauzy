@@ -1,13 +1,20 @@
 import { CustomTitlebar, TitlebarColor } from "custom-electron-titlebar";
 import { nativeImage, ipcRenderer } from 'electron';
 import * as path from 'path';
+import { initializeIpcListener } from "./preload/custom-tray-icon";
+
+const isTimerWindow = location.hash.startsWith('#/time-tracker');
+const isLoginPage = location.hash.startsWith('#/auth/login');
 
 /**
  * Listens for the DOMContentLoaded event to ensure the DOM is fully loaded
  * before initializing the custom title bar and attaching styles or event listeners.
  */
 window.addEventListener('DOMContentLoaded', async () => {
-    /**
+	if (process.platform === 'darwin' && (isTimerWindow || isLoginPage)) {
+		initializeIpcListener()
+	}
+	/**
 	 * Fetches the application's base path from the Electron main process using IPC.
 	 *
 	 * The `get-app-path` event must be handled in the Electron main process to return
@@ -57,8 +64,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 	 *
 	 * @property {HTMLStyleElement} overStyle - The `<style>` element containing the CSS rules.
 	 */
-    const overStyle = document.createElement('style');
-    overStyle.innerHTML = `
+	const overStyle = document.createElement('style');
+	overStyle.innerHTML = `
         .cet-container {
             top:0px !important;
 			overflow: unset !important;
@@ -110,5 +117,5 @@ window.addEventListener('DOMContentLoaded', async () => {
             outline: 0;
         }
     `;
-    document.head.appendChild(overStyle);
+	document.head.appendChild(overStyle);
 });

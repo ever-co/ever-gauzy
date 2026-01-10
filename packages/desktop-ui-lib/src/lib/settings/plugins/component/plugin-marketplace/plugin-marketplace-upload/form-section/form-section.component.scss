@@ -1,19 +1,54 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 .form-section {
+  margin-bottom: 1.5rem;
+
   .section-title {
-    margin: 0 0 1rem;
+    margin: 0 0 1.5rem;
     font-weight: 600;
     color: var(--gauzy-text-color-1);
-    font-size: 1rem;
-    padding-bottom: 0.5rem;
+    font-size: 1.125rem;
+    padding-bottom: 0.75rem;
     display: flex;
     align-items: center;
+    position: relative;
 
     &::after {
       content: '';
       flex: 1;
-      height: 1px;
-      background-color: var(--divider-color);
-      margin-left: 0.75rem;
+      height: 2px;
+      background: linear-gradient(
+        to right,
+        var(--color-primary-default),
+        transparent
+      );
+      margin-left: 1rem;
+      border-radius: 2px;
+    }
+  }
+
+  // Add spacing between form rows
+  ::ng-deep {
+    .form-row {
+      &:not(:last-child) {
+        margin-bottom: 1.5rem;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .form-section {
+    .section-title {
+      font-size: 1rem;
+
+      &::after {
+        margin-left: 0.75rem;
+      }
     }
   }
 }

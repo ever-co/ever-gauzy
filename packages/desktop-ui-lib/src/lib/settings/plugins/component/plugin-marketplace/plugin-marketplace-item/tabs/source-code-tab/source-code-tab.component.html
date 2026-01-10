@@ -1,0 +1,193 @@
+@let plugin = plugin$ | async; @let selectedSource = selectedSource$ | async;
+
+<div class="source-code-tab-content">
+	<!-- Source Information Section -->
+	@if(selectedSource; as source) {
+	<div class="info-card">
+		<div class="card-header">
+			<div class="header-left">
+				<nb-icon icon="code-outline" class="header-icon"></nb-icon>
+				<div>
+					<h6 class="section-title">{{ 'PLUGIN.FORM.SOURCE' | translate }}</h6>
+					<p class="section-subtitle">{{ 'PLUGIN.DETAILS.SOURCE_CONFIGURATION' | translate }}</p>
+				</div>
+			</div>
+			<nb-badge
+				class="source-badge"
+				[text]="getSourceTypeLabel(source.type)"
+				[status]="getPluginSourceTypeBadgeStatus(source.type)"
+			></nb-badge>
+		</div>
+
+		<!-- CDN Source -->
+		<ng-container *ngIf="source.type === pluginSourceType.CDN">
+			<div class="source-container">
+				<div class="info-item full-width">
+					<div class="label">
+						<nb-icon icon="link-outline" class="label-icon"></nb-icon>
+						{{ 'PLUGIN.FORM.CDN.URL' | translate }}
+					</div>
+					<div class="value code-block">
+						<code>{{ source.url }}</code>
+						<button nbButton ghost size="tiny" class="copy-btn" [nbTooltip]="'BUTTONS.COPY' | translate">
+							<nb-icon icon="copy-outline"></nb-icon>
+						</button>
+					</div>
+				</div>
+
+				@if(source.integrity) {
+				<div class="info-item full-width">
+					<div class="label">
+						<nb-icon icon="shield-outline" class="label-icon"></nb-icon>
+						{{ 'PLUGIN.FORM.CDN.INTEGRITY' | translate }}
+					</div>
+					<div class="value code-block">
+						<code [nbTooltip]="source.integrity">{{ source.integrity }}</code>
+						<button nbButton ghost size="tiny" class="copy-btn" [nbTooltip]="'BUTTONS.COPY' | translate">
+							<nb-icon icon="copy-outline"></nb-icon>
+						</button>
+					</div>
+				</div>
+				} @if(source.crossOrigin) {
+				<div class="info-item full-width">
+					<div class="label">
+						<nb-icon icon="flip-2-outline" class="label-icon"></nb-icon>
+						{{ 'PLUGIN.FORM.CDN.CROSS_ORIGIN' | translate }}
+					</div>
+					<div class="value">
+						<nb-badge [text]="source.crossOrigin" status="info"></nb-badge>
+					</div>
+				</div>
+				}
+			</div>
+		</ng-container>
+
+		<!-- NPM Source -->
+		<ng-container *ngIf="source.type === pluginSourceType.NPM">
+			<div class="source-container">
+				<div class="info-item full-width">
+					<div class="label">
+						<nb-icon icon="cube-outline" class="label-icon"></nb-icon>
+						{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }}
+					</div>
+					<div class="value code-block">
+						<code>{{ source.name }}</code>
+						<button nbButton ghost size="tiny" class="copy-btn" [nbTooltip]="'BUTTONS.COPY' | translate">
+							<nb-icon icon="copy-outline"></nb-icon>
+						</button>
+					</div>
+				</div>
+
+				@if(source.scope) {
+				<div class="info-item">
+					<div class="label">
+						<nb-icon icon="at-outline" class="label-icon"></nb-icon>
+						{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}
+					</div>
+					<div class="value">
+						<nb-badge [text]="source.scope" status="basic"></nb-badge>
+					</div>
+				</div>
+				} @if(source.registry) {
+				<div class="info-item full-width">
+					<div class="label">
+						<nb-icon icon="globe-outline" class="label-icon"></nb-icon>
+						{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}
+					</div>
+					<div class="value code-block">
+						<code>{{ source.registry }}</code>
+						<button nbButton ghost size="tiny" class="copy-btn" [nbTooltip]="'BUTTONS.COPY' | translate">
+							<nb-icon icon="copy-outline"></nb-icon>
+						</button>
+					</div>
+				</div>
+				} @if(source.private) {
+				<div class="info-item">
+					<div class="label">
+						<nb-icon icon="lock-outline" class="label-icon"></nb-icon>
+						{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}
+					</div>
+					<div class="value">
+						<nb-alert status="warning" size="tiny" closable="false">
+							<nb-icon icon="shield-outline"></nb-icon>
+							{{ 'PLUGIN.DETAILS.HIDDEN_FOR_SECURITY' | translate }}
+						</nb-alert>
+					</div>
+				</div>
+				}
+			</div>
+		</ng-container>
+
+		<!-- GAUZY Source -->
+		<ng-container *ngIf="source.type === pluginSourceType.GAUZY">
+			<div class="source-container">
+				<div class="info-item full-width">
+					<div class="label">
+						<nb-icon icon="inbox-outline" class="label-icon"></nb-icon>
+						{{ 'PLUGIN.FORM.FILE_UPLOAD.FILE' | translate }}
+					</div>
+					<div class="value">
+						@if(source.url) {
+						<a [href]="source.url" target="_blank" rel="noopener noreferrer" class="external-link">
+							<nb-icon icon="file-text-outline" class="file-icon"></nb-icon>
+							<span>{{ source.url }}</span>
+							<nb-icon icon="external-link-outline" class="link-icon"></nb-icon>
+						</a>
+						}@else {
+						<div class="uploaded-file-indicator">
+							<nb-icon icon="checkmark-circle-outline" status="success"></nb-icon>
+							{{ 'PLUGIN.DETAILS.UPLOADED_FILE' | translate }}
+						</div>
+						}
+					</div>
+				</div>
+			</div>
+		</ng-container>
+	</div>
+	}
+
+	<!-- Security Info -->
+	@if(plugin && (plugin.checksum || plugin.signature)) {
+	<div class="info-card security-card">
+		<div class="card-header">
+			<div class="header-left">
+				<nb-icon icon="shield-outline" class="header-icon" status="success"></nb-icon>
+				<div>
+					<h6 class="section-title">{{ 'PLUGIN.DETAILS.SECURITY_INFO' | translate }}</h6>
+					<p class="section-subtitle">{{ 'PLUGIN.DETAILS.SECURITY_DESCRIPTION' | translate }}</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="source-container">
+			@if(plugin.checksum) {
+			<div class="info-item full-width">
+				<div class="label">
+					<nb-icon icon="checkmark-square-outline" class="label-icon"></nb-icon>
+					{{ 'PLUGIN.DETAILS.CHECKSUM' | translate }}
+				</div>
+				<div class="value code-block">
+					<code [nbTooltip]="plugin.checksum">{{ plugin.checksum }}</code>
+					<button nbButton ghost size="tiny" class="copy-btn" [nbTooltip]="'BUTTONS.COPY' | translate">
+						<nb-icon icon="copy-outline"></nb-icon>
+					</button>
+				</div>
+			</div>
+			} @if(plugin.signature) {
+			<div class="info-item full-width">
+				<div class="label">
+					<nb-icon icon="award-outline" class="label-icon"></nb-icon>
+					{{ 'PLUGIN.DETAILS.SIGNATURE' | translate }}
+				</div>
+				<div class="value code-block">
+					<code [nbTooltip]="plugin.signature">{{ plugin.signature }}</code>
+					<button nbButton ghost size="tiny" class="copy-btn" [nbTooltip]="'BUTTONS.COPY' | translate">
+						<nb-icon icon="copy-outline"></nb-icon>
+					</button>
+				</div>
+			</div>
+			}
+		</div>
+	</div>
+	}
+</div>

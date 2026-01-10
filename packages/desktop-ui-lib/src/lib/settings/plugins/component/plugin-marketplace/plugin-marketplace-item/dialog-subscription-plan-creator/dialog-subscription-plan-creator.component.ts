@@ -1,0 +1,54 @@
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { IPlugin, IPluginPlanCreateInput } from '@gauzy/contracts';
+import { NbDialogRef } from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
+import { filter, Observable, pairwise, take } from 'rxjs';
+import { PluginPlanActions } from '../../+state/actions/plugin-plan.action';
+import { PluginPlanQuery } from '../../+state/queries/plugin-plan.query';
+
+@Component({
+	selector: 'lib-dialog-subscription-plan-creator',
+	templateUrl: './dialog-subscription-plan-creator.component.html',
+	styleUrls: ['./dialog-subscription-plan-creator.component.scss'],
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class DialogSubscriptionPlanCreatorComponent {
+	public readonly plugin!: IPlugin;
+	public readonly pluginId!: string;
+	public plans: IPluginPlanCreateInput[] = [];
+	public isPlanValid = false;
+
+	private readonly dialogRef = inject(NbDialogRef<DialogSubscriptionPlanCreatorComponent>);
+	private readonly planQuery = inject(PluginPlanQuery);
+	private readonly actions = inject(Actions);
+
+	public onClose(): void {
+		this.dialogRef.close();
+	}
+
+	public onPlansChange(plans: IPluginPlanCreateInput[]): void {
+		this.plans = plans;
+	}
+
+	public onValidationChange(isValid: boolean): void {
+		this.isPlanValid = isValid && this.pluginId && this.plans.length > 0;
+	}
+
+	public get creating$(): Observable<boolean> {
+		return this.planQuery.creating$;
+	}
+
+	public onSaved(): void {
+		this.actions.dispatch(
+			PluginPlanActions.bulkCreatePlans(this.plans.map((plan) => ({ pluginId: this.pluginId, ...plan })))
+		);
+		this.creating$
+			.pipe(
+				pairwise(),
+				filter(([wasCreating, isCreating]) => wasCreating && !isCreating),
+				take(1)
+			)
+			.subscribe(() => this.dialogRef.close(true));
+	}
+}

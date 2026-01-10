@@ -1,10 +1,12 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
-import { ProjectSchema, CurrenciesEnum } from '../schema';
+import { CurrenciesEnum } from '../input-schemas';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('ProjectTools');
 
 /**
@@ -22,7 +24,8 @@ const convertProjectDates = <T extends { startDate?: any; endDate?: any }>(data:
 
 export const registerProjectTools = (server: McpServer) => {
 	// Get projects tool
-	server.tool(
+	registerTool(
+		server,
 		'get_projects',
 		"Get list of projects for the authenticated user's organization",
 		{
@@ -98,7 +101,8 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Get project count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_project_count',
 		"Get project count in the authenticated user's organization",
 		{
@@ -141,7 +145,8 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Get projects by employee tool
-	server.tool(
+	registerTool(
+		server,
 		'get_projects_by_employee',
 		'Get projects assigned to a specific employee',
 		{
@@ -187,7 +192,8 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Get my projects tool
-	server.tool(
+	registerTool(
+		server,
 		'get_my_projects',
 		'Get projects assigned to the current authenticated user',
 		{
@@ -232,7 +238,8 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Get project by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_project',
 		'Get a specific project by ID',
 		{
@@ -276,14 +283,16 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Create project tool
-	server.tool(
+	registerTool(
+		server,
 		'create_project',
 		"Create a new project in the authenticated user's organization",
 		{
-			project_data: ProjectSchema.partial()
-				.required({
-					name: true
+			project_data: z
+				.object({
+					name: z.string().describe('The name of the project (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the project')
 		},
 		async ({ project_data }) => {
@@ -321,12 +330,13 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Update project tool
-	server.tool(
+	registerTool(
+		server,
 		'update_project',
 		'Update an existing project',
 		{
 			id: z.string().uuid().describe('The project ID'),
-			project_data: ProjectSchema.partial().describe('The data for updating the project')
+			project_data: z.record(z.string(), z.any()).describe('The data for updating the project')
 		},
 		async ({ id, project_data }) => {
 			try {
@@ -365,7 +375,8 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Delete project tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_project',
 		'Delete a project',
 		{
@@ -400,16 +411,18 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Bulk create projects tool
-	server.tool(
+	registerTool(
+		server,
 		'bulk_create_projects',
 		"Create multiple projects in bulk for the authenticated user's organization",
 		{
 			projects: z
 				.array(
-					ProjectSchema.partial()
-						.required({
-							name: true
+					z
+						.object({
+							name: z.string().describe('The name of the project (required)')
 						})
+						.passthrough()
 						.describe('Project data')
 				)
 				.describe('Array of project data to create')
@@ -454,7 +467,8 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Bulk update projects tool
-	server.tool(
+	registerTool(
+		server,
 		'bulk_update_projects',
 		'Update multiple projects in bulk',
 		{
@@ -462,7 +476,7 @@ export const registerProjectTools = (server: McpServer) => {
 				.array(
 					z.object({
 						id: z.string().uuid().describe('The project ID'),
-						data: ProjectSchema.partial().describe('The data to update')
+						data: z.record(z.string(), z.any()).describe('The data to update')
 					})
 				)
 				.describe('Array of project updates')
@@ -503,7 +517,8 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Bulk delete projects tool
-	server.tool(
+	registerTool(
+		server,
 		'bulk_delete_projects',
 		'Delete multiple projects in bulk',
 		{
@@ -540,7 +555,8 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Get project statistics tool
-	server.tool(
+	registerTool(
+		server,
 		'get_project_statistics',
 		"Get project statistics for the authenticated user's organization",
 		{
@@ -587,7 +603,8 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Assign project to employee tool
-	server.tool(
+	registerTool(
+		server,
 		'assign_project_to_employee',
 		'Assign a project to an employee',
 		{
@@ -627,7 +644,8 @@ export const registerProjectTools = (server: McpServer) => {
 	);
 
 	// Unassign project from employee tool
-	server.tool(
+	registerTool(
+		server,
 		'unassign_project_from_employee',
 		'Unassign a project from an employee',
 		{

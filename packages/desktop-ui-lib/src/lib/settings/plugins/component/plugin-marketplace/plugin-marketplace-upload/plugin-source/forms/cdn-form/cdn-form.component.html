@@ -1,8 +1,23 @@
 <lib-form-section *ngIf="form" [formGroup]="form" class="source-content">
-	<!-- CDN fields here -->
+	<!-- CDN Header -->
+	<div class="cdn-header">
+		<div class="header-icon-wrapper">
+			<nb-icon icon="cloud-download-outline"></nb-icon>
+		</div>
+		<div class="header-content">
+			<h6 class="header-title">{{ 'PLUGIN.FORM.CDN.TITLE' | translate }}</h6>
+			<p class="header-description">{{ 'PLUGIN.FORM.CDN.DESCRIPTION' | translate }}</p>
+		</div>
+	</div>
+
+	<!-- CDN URL -->
 	<lib-form-row *ngIf="form.get('url')">
 		<nb-form-field class="form-group full-width">
-			<label class="label" for="cdn-url">{{ 'PLUGIN.FORM.CDN.URL' | translate }} *</label>
+			<label class="label">
+				<nb-icon icon="link-outline" class="label-icon"></nb-icon>
+				{{ 'PLUGIN.FORM.CDN.URL' | translate }}
+				<span class="required-indicator">*</span>
+			</label>
 			<input
 				nbInput
 				fullWidth
@@ -12,24 +27,68 @@
 				type="url"
 				[status]="getFieldError('url') ? 'danger' : 'basic'"
 			/>
-			<nb-hint *ngIf="getFieldError('url', 'required')" status="danger">
+			@if(getFieldError('url', 'required')) {
+			<nb-hint class="hint-danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.URL_REQUIRED' | translate }}
 			</nb-hint>
-			<nb-hint *ngIf="getFieldError('url', 'pattern')" status="danger">
+			} @if(getFieldError('url', 'pattern')) {
+			<nb-hint class="hint-danger">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
 				{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
 			</nb-hint>
+			} @if(form.get('url')?.valid && form.get('url')?.value) {
+			<nb-hint class="hint-success">
+				<nb-icon icon="checkmark-circle-outline"></nb-icon>
+				Valid CDN URL
+			</nb-hint>
+			}
 		</nb-form-field>
 	</lib-form-row>
 
-	<lib-form-row>
-		<nb-form-field *ngIf="form.get('integrity')" class="form-group">
-			<label class="label" for="cdn-integrity">{{ 'PLUGIN.FORM.CDN.INTEGRITY' | translate }}</label>
-			<input nbInput fullWidth id="cdn-integrity" formControlName="integrity" placeholder="sha384-..." />
-		</nb-form-field>
+	<!-- Security Section -->
+	<div class="security-section">
+		<div class="section-header">
+			<nb-icon icon="shield-outline" status="success"></nb-icon>
+			<h6 class="section-title">{{ 'PLUGIN.FORM.CDN.SECURITY' | translate }}</h6>
+		</div>
 
-		<nb-form-field *ngIf="form.get('crossOrigin')" class="form-group">
-			<label class="label" for="cdn-crossorigin">{{ 'PLUGIN.FORM.CDN.CROSS_ORIGIN' | translate }}</label>
-			<input nbInput fullWidth id="cdn-crossorigin" formControlName="crossOrigin" placeholder="anonymous" />
-		</nb-form-field>
-	</lib-form-row>
+		<lib-form-row>
+			<nb-form-field *ngIf="form.get('integrity')" class="form-group">
+				<label class="label">
+					<nb-icon icon="shield-outline" class="label-icon"></nb-icon>
+					{{ 'PLUGIN.FORM.CDN.INTEGRITY' | translate }}
+				</label>
+				<input nbInput fullWidth id="cdn-integrity" formControlName="integrity" placeholder="sha384-..." />
+				@if(form.get('integrity')?.value) {
+				<nb-hint class="hint-info">
+					<nb-icon icon="info-outline"></nb-icon>
+					SRI hash for resource integrity
+				</nb-hint>
+				}
+			</nb-form-field>
+
+			<nb-form-field *ngIf="form.get('crossOrigin')" class="form-group">
+				<label class="label">
+					<nb-icon icon="flip-2-outline" class="label-icon"></nb-icon>
+					{{ 'PLUGIN.FORM.CDN.CROSS_ORIGIN' | translate }}
+				</label>
+				<input nbInput fullWidth id="cdn-crossorigin" formControlName="crossOrigin" placeholder="anonymous" />
+				@if(form.get('crossOrigin')?.value) {
+				<nb-hint class="hint-info">
+					<nb-icon icon="info-outline"></nb-icon>
+					CORS attribute: {{ form.get('crossOrigin')?.value }}
+				</nb-hint>
+				}
+			</nb-form-field>
+		</lib-form-row>
+	</div>
+
+	<!-- Security Info Alert -->
+	<nb-alert status="info" size="small" class="security-alert">
+		<div class="alert-content">
+			<nb-icon icon="bulb-outline"></nb-icon>
+			<span>{{ 'PLUGIN.FORM.CDN.SECURITY_INFO' | translate }}</span>
+		</div>
+	</nb-alert>
 </lib-form-section>

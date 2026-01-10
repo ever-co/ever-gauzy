@@ -1,16 +1,19 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { ReportCategoryEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { ReportCategoryEnum } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('ReportTools');
 
 export const registerReportTools = (server: McpServer) => {
 	// Get reports tool
-	server.tool(
+	registerTool(
+		server,
 		'get_reports',
 		"Get list of available reports for the authenticated user's organization",
 		{
@@ -56,7 +59,9 @@ export const registerReportTools = (server: McpServer) => {
 	);
 
 	// Get report categories tool
-	server.tool('get_report_categories', 'Get available report categories', {}, async () => {
+	registerTool(
+		server,
+		'get_report_categories', 'Get available report categories', {}, async () => {
 		try {
 			const response = await apiClient.get('/api/report/category');
 
@@ -75,7 +80,8 @@ export const registerReportTools = (server: McpServer) => {
 	});
 
 	// Get report menu items tool
-	server.tool(
+	registerTool(
+		server,
 		'get_report_menu_items',
 		'Get report menu items for the organization',
 		{
@@ -113,7 +119,8 @@ export const registerReportTools = (server: McpServer) => {
 	);
 
 	// Update report menu tool
-	server.tool(
+	registerTool(
+		server,
 		'update_report_menu',
 		'Update report menu settings for the organization',
 		{

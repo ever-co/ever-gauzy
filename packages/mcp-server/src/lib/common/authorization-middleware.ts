@@ -6,7 +6,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { AuthorizationConfig, ProtectedResourceMetadata, OAuthValidator, SecurityLogger } from '@gauzy/auth';
+import { AuthorizationConfig, ProtectedResourceMetadata, OAuthValidator } from './auth-types';
+import { SecurityLogger } from './security-logger';
 
 export interface AuthorizedRequest extends Request {
 	/** OAuth token validation result */

@@ -5,28 +5,24 @@
 	"projectType": "library",
 	"release": {
 		"version": {
-			"generatorOptions": {
-				"packageRoot": "dist/{projectRoot}",
-				"currentVersionResolver": "git-tag",
-				"fallbackCurrentVersionResolver": "disk"
-			}
+			"currentVersionResolver": "git-tag",
+			"fallbackCurrentVersionResolver": "disk",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
 	"tags": [],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": [
-				"{options.outputPath}"
-			],
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/plugins/camshot",
 				"tsConfig": "packages/plugins/camshot/tsconfig.lib.json",
 				"packageJson": "packages/plugins/camshot/package.json",
 				"main": "packages/plugins/camshot/src/index.ts",
-				"assets": [
-					"packages/plugins/camshot/*.md"
-				]
+				"assets": ["packages/plugins/camshot/*.md"]
 			}
 		},
 		"nx-release-publish": {

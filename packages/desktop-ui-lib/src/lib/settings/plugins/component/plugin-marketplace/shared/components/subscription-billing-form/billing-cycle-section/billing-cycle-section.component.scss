@@ -1,0 +1,142 @@
+:host {
+  display: block;
+}
+
+::ng-deep nb-card.form-section {
+  border-radius: calc(var(--border-radius) * 1.5);
+  background: var(--gauzy-card-1);
+  border: 1px solid var(--gauzy-card-2);
+  box-shadow: var(--gauzy-shadow);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+::ng-deep nb-card-header {
+  padding: 24px;
+  border-bottom: 1px solid var(--gauzy-card-2);
+  background: transparent;
+}
+
+::ng-deep nb-card-body {
+  padding: 24px;
+}
+
+.section-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+
+  nb-icon {
+    font-size: 24px;
+    color: var(--gauzy-text-color-1);
+    margin-top: 2px;
+  }
+
+  h6 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gauzy-text-color-1);
+  }
+
+  .hint {
+    margin: 0;
+    color: var(--gauzy-text-color-2);
+    font-size: 14px;
+  }
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+::ng-deep nb-radio.option-card {
+  display: flex;
+  height: 100%;
+
+  // Hide default radio circle for a cleaner card look
+  .outer-circle,
+  .inner-circle {
+    display: none !important;
+  }
+
+  // Style the label as the card
+  label {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+    border: 2px solid var(--gauzy-card-2);
+    border-radius: var(--border-radius);
+    background: var(--gauzy-card-1);
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    position: relative;
+    padding-left: 24px !important; // Override default padding for radio circle
+  }
+
+  // Hover state
+  &:hover label {
+    border-color: var(--gauzy-text-color-2);
+    transform: translateY(-2px);
+    box-shadow: var(--gauzy-shadow);
+  }
+
+  // Selected state
+  &.selected label {
+    border-color: var(--color-primary-500, #3366ff);
+    background-color: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.05));
+    box-shadow: 0 0 0 4px var(--color-primary-transparent-100, rgba(51, 102, 255, 0.05));
+  }
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.option-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  width: 100%;
+
+  .label {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gauzy-text-color-1);
+    text-transform: capitalize;
+  }
+}
+
+.price-line {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 8px;
+
+  .price {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gauzy-text-color-1);
+    line-height: 1;
+  }
+
+  .suffix {
+    color: var(--gauzy-text-color-2);
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.description {
+  margin: 0;
+  color: var(--gauzy-text-color-2);
+  font-size: 14px;
+  line-height: 1.5;
+}

@@ -5,14 +5,13 @@
 	"projectType": "library",
 	"release": {
 		"version": {
-			"generatorOptions": {
-				"packageRoot": "dist/{projectRoot}",
-				"currentVersionResolver": "git-tag"
-			}
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": ["contracts", "config", "common"],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -35,7 +34,7 @@
 		"serve": {
 			"executor": "nx:run-commands",
 			"options": {
-				"command": "nodemon --restartable rs --ignore .git --ignore node_modules/ --ignore dist/ --ignore coverage/ --ignore src/**/*.spec.ts --watch packages/core/src --exec \"yarn ts-node -r tsconfig-paths/register packages/core/src/lib/main.ts\" --env NODE_ENV=development --ext ts",
+				"command": "nodemon --restartable rs --ignore .git --ignore node_modules/ --ignore dist/ --ignore coverage/ --ignore src/**/*.spec.ts --watch packages/core/src --exec \"ts-node -r tsconfig-paths/register packages/core/src/lib/main.ts\" --env NODE_ENV=development --ext ts",
 				"cwd": "."
 			}
 		},

@@ -15,6 +15,7 @@ import {
 	Delete,
 	Get,
 	Param,
+	Patch,
 	Post,
 	Put,
 	Query,
@@ -22,36 +23,20 @@ import {
 	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
-	ApiBearerAuth,
-	ApiBody,
-	ApiConsumes,
-	ApiOperation,
-	ApiParam,
-	ApiResponse,
-	ApiSecurity,
-	ApiTags
-} from '@nestjs/swagger';
-import { CreatePluginVersionCommand } from '../../application/commands/create-plugin-version.command';
-import { DeletePluginVersionCommand } from '../../application/commands/delete-plugin-version.command';
-import { RecoverPluginVersionCommand } from '../../application/commands/recover-plugin-version.command';
-import { UpdatePluginVersionCommand } from '../../application/commands/update-plugin-version.command';
-import { ListPluginVersionsQuery } from '../../application/queries/list-plugin-versions.query';
-import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
-import { LazyAnyFileInterceptor } from '../../core/interceptors/lazy-any-file.interceptor';
-import { PluginVersion } from '../../domain/entities/plugin-version.entity';
-import { FileDTO } from '../../shared/dto/file.dto';
-import { PluginVersionDTO } from '../../shared/dto/plugin-version.dto';
-import { UpdatePluginVersionDTO } from '../../shared/dto/update-plugin-version.dto';
-import { IPluginSource } from '../../shared/models/plugin-source.model';
-import { IPluginVersion } from '../../shared/models/plugin-version.model';
-import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
-import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
+	CreatePluginVersionCommand,
+	DeletePluginVersionCommand,
+	ListPluginVersionsQuery,
+	RecoverPluginVersionCommand,
+	UpdatePluginVersionCommand
+} from '../../application';
+import { LazyAnyFileInterceptor, PluginOwnerGuard } from '../../core';
+import { PluginVersion } from '../../domain';
+import { FileDTO, IPluginSource, IPluginVersion, PluginVersionDTO, UpdatePluginVersionDTO } from '../../shared';
+import { GauzyStorageProvider, UploadedPluginStorage } from '../storage';
 
 @ApiTags('Plugin Versions')
-@ApiBearerAuth('Bearer')
-@ApiSecurity('api_key')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/plugins/:pluginId/versions')
 export class PluginVersionController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
@@ -94,7 +79,7 @@ export class PluginVersionController {
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Post()
 	public async createVersion(
 		@Param('pluginId', UUIDValidationPipe) id: ID,
@@ -195,7 +180,7 @@ export class PluginVersionController {
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Put(':versionId')
 	public async update(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
@@ -247,11 +232,11 @@ export class PluginVersionController {
 	}
 
 	/**
-	 * Recover a soft-deleted plugin version.
+	 * Update plugin version status (including restoration)
 	 */
 	@ApiOperation({
-		summary: 'Recover a deleted plugin version',
-		description: 'Soft-recovers a previously deleted plugin version using its UUID and the plugin ID.'
+		summary: 'Update plugin version status',
+		description: 'Updates a plugin version status, including restoring deleted versions.'
 	})
 	@ApiParam({
 		name: 'pluginId',
@@ -264,12 +249,26 @@ export class PluginVersionController {
 		name: 'versionId',
 		type: String,
 		format: 'uuid',
-		description: 'UUID of the plugin version to recover',
+		description: 'UUID of the plugin version to update',
 		required: true
+	})
+	@ApiBody({
+		description: 'Status update data',
+		schema: {
+			type: 'object',
+			properties: {
+				status: {
+					type: 'string',
+					enum: ['active', 'inactive', 'deleted', 'restored'],
+					description: 'The new status for the plugin version'
+				}
+			},
+			required: ['status']
+		}
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Plugin version recovered successfully.'
+		description: 'Plugin version status updated successfully.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -277,7 +276,7 @@ export class PluginVersionController {
 	})
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
-		description: 'User does not have permission to recover this plugin version.'
+		description: 'User does not have permission to update this plugin version.'
 	})
 	@ApiResponse({
 		status: HttpStatus.UNAUTHORIZED,
@@ -288,13 +287,20 @@ export class PluginVersionController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
-	@UseGuards(PluginOwnerGuard)
-	@Post(':versionId')
-	public async recover(
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Patch(':versionId/status')
+	public async updateStatus(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
-		@Param('pluginId', UUIDValidationPipe) pluginId: ID
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Body() updateDto: { status: 'active' | 'inactive' | 'deleted' | 'restored' }
 	): Promise<void> {
-		return this.commandBus.execute(new RecoverPluginVersionCommand(versionId, pluginId));
+		if (updateDto.status === 'restored') {
+			return this.commandBus.execute(new RecoverPluginVersionCommand(versionId, pluginId));
+		}
+
+		// Handle other status updates as needed
+		// Note: Implement appropriate command handling for other statuses
+		throw new Error(`Status '${updateDto.status}' update not implemented yet`);
 	}
 
 	/**
@@ -332,7 +338,7 @@ export class PluginVersionController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
-	@UseGuards(PluginOwnerGuard)
+	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
 	@Delete(':versionId')
 	public async delete(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,

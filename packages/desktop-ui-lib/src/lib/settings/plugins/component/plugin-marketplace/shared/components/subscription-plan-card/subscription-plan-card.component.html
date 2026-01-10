@@ -1,0 +1,66 @@
+<div
+	class="plan-card"
+	[class.selected]="isSelected"
+	[class.current]="isCurrent"
+	[class.popular]="isPopular"
+	[class.recommended]="isRecommended"
+	[class.disabled]="disabled"
+	(click)="onPlanClick()"
+>
+	<!-- Plan badges -->
+	<div class="plan-badges">
+		@if (isPopular) {
+		<nb-badge status="warning" text="Most Popular"></nb-badge>
+		} @if (isRecommended) {
+		<nb-badge status="success" text="Recommended"></nb-badge>
+		} @if (isCurrent) {
+		<nb-badge status="info" text="Current Plan"></nb-badge>
+		}
+	</div>
+
+	<!-- Plan header -->
+	<div class="plan-header">
+		<h6 class="plan-name">{{ plan.name }}</h6>
+		@if (priceLabel) {
+		<div class="plan-price">
+			<span class="price-amount">{{ priceLabel }}</span>
+			@if (plan.trialDays) {
+			<span class="trial-info">{{ plan.trialDays }} days free</span>
+			}
+		</div>
+		} @if (savingsLabel) {
+		<div class="savings">{{ savingsLabel }}</div>
+		}
+	</div>
+
+	<!-- Plan description -->
+	<p class="plan-description">{{ plan.description }}</p>
+
+	<!-- Plan features -->
+	<div class="plan-features">
+		<ul class="features-list">
+			@for (feature of plan.features; track feature) {
+			<li class="feature-item">
+				<nb-icon icon="checkmark-circle-outline" class="feature-check"></nb-icon>
+				{{ feature }}
+			</li>
+			}
+		</ul>
+	</div>
+
+	<!-- Plan action button -->
+	@if (showActions) {
+	<div class="plan-action">
+		<button
+			nbButton
+			[status]="canUpgrade ? 'success' : canDowngrade ? 'warning' : isCurrent ? 'basic' : 'primary'"
+			[disabled]="isCurrent || disabled"
+			size="small"
+			fullWidth
+			(click)="onActionClick($event)"
+		>
+			{{ actionLabel }}
+		</button>
+	</div>
+	}
+</div>

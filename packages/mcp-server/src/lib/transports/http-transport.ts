@@ -9,14 +9,9 @@ import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { validateMCPToolInput, validateRequestSize } from '../common/security-config';
-import {
-	AuthorizationConfig,
-	loadAuthorizationConfig,
-	ResponseBuilder,
-	sanitizeErrorMessage,
-	SecurityEvents,
-	SecurityLogger
-} from '@gauzy/auth';
+import { AuthorizationConfig, loadAuthorizationConfig, ResponseBuilder } from '../common/auth-types';
+import { sanitizeErrorMessage } from '../common/error-utils';
+import { SecurityEvents, SecurityLogger } from '../common/security-logger';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
 
 const logger = new Logger('HttpTransport');

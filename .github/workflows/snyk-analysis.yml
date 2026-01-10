@@ -15,6 +15,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubicloud-standard-4
+    timeout-minutes: 150
 
     steps:
       - name: Checkout repository

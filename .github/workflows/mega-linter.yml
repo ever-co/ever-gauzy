@@ -23,6 +23,7 @@ jobs:
   build:
     name: MegaLinter
     runs-on: ubicloud-standard-4
+    timeout-minutes: 150
     steps:
       # Git Checkout
       - name: Checkout Code

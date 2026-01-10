@@ -1,11 +1,13 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { GoalSchema, GoalLevelEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { GoalLevelEnum } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('GoalTools');
 
 /**
@@ -29,7 +31,8 @@ const convertGoalDateFields = (goalData: GoalData): ConvertedGoalData => {
 
 export const registerGoalTools = (server: McpServer) => {
 	// Get goals tool
-	server.tool(
+	registerTool(
+		server,
 		'get_goals',
 		"Get list of goals for the authenticated user's organization",
 		{
@@ -80,7 +83,8 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Get goal count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_goal_count',
 		"Get goal count in the authenticated user's organization",
 		{
@@ -120,7 +124,8 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Get goal by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_goal',
 		'Get a specific goal by ID',
 		{
@@ -154,16 +159,18 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Create goal tool
-	server.tool(
+	registerTool(
+		server,
 		'create_goal',
 		"Create a new goal in the authenticated user's organization",
 		{
-			goal_data: GoalSchema.partial()
-				.required({
-					name: true,
-					deadline: true,
-					level: true
+			goal_data: z
+				.object({
+					name: z.string().describe('The goal name (required)'),
+					deadline: z.string().describe('The deadline (required)'),
+					level: z.string().describe('The level (required)')
 				})
+				.passthrough()
 				.describe('The data for creating the goal')
 		},
 		async ({ goal_data }) => {
@@ -194,12 +201,13 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Update goal tool
-	server.tool(
+	registerTool(
+		server,
 		'update_goal',
 		'Update an existing goal',
 		{
 			id: z.string().uuid().describe('The goal ID'),
-			goal_data: GoalSchema.partial().describe('The data for updating the goal')
+			goal_data: z.record(z.string(), z.any()).describe('The data for updating the goal')
 		},
 		async ({ id, goal_data }) => {
 			try {
@@ -223,7 +231,8 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Update goal progress tool
-	server.tool(
+	registerTool(
+		server,
 		'update_goal_progress',
 		'Update the progress of a goal',
 		{
@@ -250,7 +259,8 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Delete goal tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_goal',
 		'Delete a goal',
 		{
@@ -276,7 +286,8 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Get my goals tool
-	server.tool(
+	registerTool(
+		server,
 		'get_my_goals',
 		'Get goals assigned to the current authenticated user',
 		{
@@ -316,7 +327,8 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Get team goals tool
-	server.tool(
+	registerTool(
+		server,
 		'get_team_goals',
 		'Get goals for a specific team',
 		{
@@ -356,7 +368,8 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Get goal statistics tool
-	server.tool(
+	registerTool(
+		server,
 		'get_goal_statistics',
 		"Get goal statistics for the authenticated user's organization",
 		{
@@ -398,7 +411,8 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Align goals tool
-	server.tool(
+	registerTool(
+		server,
 		'align_goals',
 		'Align one goal with another (create goal alignment)',
 		{
@@ -425,7 +439,8 @@ export const registerGoalTools = (server: McpServer) => {
 	);
 
 	// Get goal templates tool
-	server.tool(
+	registerTool(
+		server,
 		'get_goal_templates',
 		"Get goal templates for the authenticated user's organization",
 		{

@@ -10,11 +10,11 @@ import { DesktopEnvironmentManager } from '../../electron-desktop-environment/de
 
 export class DesktopIconGenerator
 	extends IconGenerator
-	implements IDesktopIconGenerator
-{
+	implements IDesktopIconGenerator {
 	constructor() {
 		super();
 		this.imageUrl = env.GAUZY_DESKTOP_LOGO_512X512;
+		this.trayIconImageUrl = env.GAUZY_DESKTOP_TRAY_ICON;
 		this.destination = path.join('apps', this.desktop, 'src', 'icons');
 	}
 
@@ -102,6 +102,8 @@ export class DesktopIconGenerator
 
 	public async generateTrayIcon(originalImage: Jimp): Promise<void> {
 		const REF_SIZE = 16;
+		const colors = ['gray', 'normal'];
+		const grayColor = '#999999';
 		const scales = [1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5];
 		const pngFilePath = path.join(
 			'apps',
@@ -111,28 +113,41 @@ export class DesktopIconGenerator
 			'icons',
 			'tray'
 		);
-		for (const scale of scales) {
-			const size = REF_SIZE * scale;
-			const icon =
-				scale === scales[0] ? 'icon.png' : `icon@${scale}x.png`;
-			await new Promise((resolve) =>
-				originalImage
-					.clone()
-					.resize(size, size)
-					.write(path.join(pngFilePath, icon), () => {
+		for (const color of colors) {
+			for (const scale of scales) {
+				const size = REF_SIZE * scale;
+				const suffix = color === 'gray' ? '_gray' : '';
+				const scalePart = scale === scales[0] ? '' : `@${scale}x`;
+
+				const icon = `icon${scalePart}${suffix}.png`;
+				await new Promise((resolve) => {
+					const imgJimp = originalImage
+						.clone()
+						.resize(size, size)
+					if (color === 'gray') {
+						imgJimp.color([{
+							apply: 'mix' as any,
+							params: [grayColor, 60]
+						}])
+						imgJimp.grayscale();
+						imgJimp.brightness(-0.1);
+					}
+					return imgJimp.write(path.join(pngFilePath, icon), () => {
 						console.log(
 							`✔ tray icon ${icon} generated successfully.`
 						);
 						resolve(true);
 					})
-			);
+				});
+			}
 		}
+
 	}
 
 	public async generateMenuIcon(originalImage: Jimp): Promise<void> {
-		const iconSizes = [ 512, 256, 192, 128, 96, 64, 48, 40, 32, 24, 20, 16];
+		const iconSizes = [512, 256, 192, 128, 96, 64, 48, 40, 32, 24, 20, 16];
 		// Remove 512x512 pixels for windows apps
-		if(process.platform === 'win32') {
+		if (process.platform === 'win32') {
 			iconSizes.shift();
 		}
 		const destination = path.join(
@@ -143,8 +158,8 @@ export class DesktopIconGenerator
 			'icons',
 			'menu'
 		);
-		for(const iconSize of iconSizes) {
-			const png = iconSize === iconSizes[0] ? 'icon.png' :`icon_${iconSize}x${iconSize}.png`;
+		for (const iconSize of iconSizes) {
+			const png = iconSize === iconSizes[0] ? 'icon.png' : `icon_${iconSize}x${iconSize}.png`;
 			const menuIconFilePath = path.join(destination, png);
 			await originalImage
 				.clone()
@@ -154,8 +169,9 @@ export class DesktopIconGenerator
 		}
 	}
 
-	public async resizeAndConvert(filePath: string): Promise<void> {
+	public async resizeAndConvert(filePath: string, trayIconFilePath?: string): Promise<void> {
 		const image = await Jimp.read(filePath);
+
 		const pngFilePath = path.join(this.destination, 'icon.png');
 		await new Promise((resolve) =>
 			image
@@ -172,15 +188,21 @@ export class DesktopIconGenerator
 		await this.generateLinuxIcons(image);
 		await this.generateMacIcon(image);
 		await this.generateWindowsIcon(image);
-		await this.generateTrayIcon(image);
+		if (trayIconFilePath) {
+			const trayImage = await Jimp.read(trayIconFilePath);
+			await this.generateTrayIcon(trayImage);
+		} else {
+			await this.generateTrayIcon(image);
+		}
 		await this.generateMenuIcon(image);
 	}
 
 	public async generate(): Promise<void> {
 		try {
 			const filePath = await this.downloadImage();
+			const trayIconFilePath = await this.downloadTrayImage();
 			if (filePath) {
-				await this.resizeAndConvert(filePath);
+				await this.resizeAndConvert(filePath, trayIconFilePath || '');
 				await this.remove(filePath);
 			} else {
 				await IconFactory.generateDefaultIcons();

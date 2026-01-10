@@ -31,7 +31,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
-		"@nestjs/common": "^11.1.0",
+		"@nestjs/common": "^11.1.10",
 		"@nestjs/config": "^4.0.2",
 		"@nestjs/passport": "^11.0.5",
 		"axios": "^1.9.0",
@@ -41,7 +41,7 @@
 		"cookie-parser": "^1.4.7",
 		"csrf-csrf": "4.0.3",
 		"escape-html": "^1.0.3",
-		"express": "^5.1.0",
+		"express": "^5.2.1",
 		"express-rate-limit": "^8.0.1",
 		"express-session": "^1.18.1",
 		"helmet": "^4.1.1",
@@ -85,8 +85,8 @@
 		"passport"
 	],
 	"engines": {
-		"node": ">=20.18.1",
-		"yarn": ">=1.22.19"
+		"node": ">=22",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }

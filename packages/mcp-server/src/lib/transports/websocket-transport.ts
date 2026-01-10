@@ -8,7 +8,7 @@ import { PROTOCOL_VERSION } from '../config';
 import https from 'node:https';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { getEnhancedTLSOptions, validateMCPToolInput, validateRequestSize } from '../common/security-config';
-import { SecurityLogger, SecurityEvents } from '@gauzy/auth';
+import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 
 const logger = new Logger('WebSocketTransport');
 

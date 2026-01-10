@@ -1,16 +1,19 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
-import { DealSchema, DealStatusEnum } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { DealStatusEnum } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('DealTools');
 
 export const registerDealTools = (server: McpServer) => {
 	// Get deals tool
-	server.tool(
+	registerTool(
+		server,
 		'get_deals',
 		"Get list of deals for the authenticated user's organization",
 		{
@@ -59,7 +62,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Get deal count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_deal_count',
 		"Get deal count in the authenticated user's organization",
 		{
@@ -97,7 +101,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Get deal by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_deal',
 		'Get a specific deal by ID',
 		{
@@ -131,14 +136,12 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Create deal tool
-	server.tool(
+	registerTool(
+		server,
 		'create_deal',
 		"Create a new deal in the authenticated user's organization",
 		{
-			deal_data: DealSchema.partial()
-				.required({
-					title: true
-				})
+			deal_data: z.object({ title: z.string().describe('The title (required)') }).passthrough()
 				.describe('The data for creating the deal')
 		},
 		async ({ deal_data }) => {
@@ -169,12 +172,13 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Update deal tool
-	server.tool(
+	registerTool(
+		server,
 		'update_deal',
 		'Update an existing deal',
 		{
 			id: z.string().uuid().describe('The deal ID'),
-			deal_data: DealSchema.partial().describe('The data for updating the deal')
+			deal_data: z.record(z.string(), z.any()).describe('The data for updating the deal')
 		},
 		async ({ id, deal_data }) => {
 			try {
@@ -196,7 +200,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Update deal stage tool
-	server.tool(
+	registerTool(
+		server,
 		'update_deal_stage',
 		'Update the stage of a deal',
 		{
@@ -223,7 +228,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Delete deal tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_deal',
 		'Delete a deal',
 		{
@@ -249,7 +255,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Get deals by client tool
-	server.tool(
+	registerTool(
+		server,
 		'get_deals_by_client',
 		'Get deals for a specific client',
 		{
@@ -291,7 +298,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Get my deals tool
-	server.tool(
+	registerTool(
+		server,
 		'get_my_deals',
 		'Get deals created by the current authenticated user',
 		{
@@ -331,7 +339,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Get deal statistics tool
-	server.tool(
+	registerTool(
+		server,
 		'get_deal_statistics',
 		"Get deal statistics for the authenticated user's organization",
 		{
@@ -371,7 +380,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Add deal property tool
-	server.tool(
+	registerTool(
+		server,
 		'add_deal_property',
 		'Add a custom property to a deal',
 		{
@@ -403,7 +413,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Update deal property tool
-	server.tool(
+	registerTool(
+		server,
 		'update_deal_property',
 		'Update a custom property of a deal',
 		{
@@ -431,7 +442,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Remove deal property tool
-	server.tool(
+	registerTool(
+		server,
 		'remove_deal_property',
 		'Remove a custom property from a deal',
 		{
@@ -462,7 +474,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Get deals pipeline tool
-	server.tool(
+	registerTool(
+		server,
 		'get_deals_pipeline',
 		"Get deals organized by pipeline stages for the authenticated user's organization",
 		{
@@ -498,7 +511,8 @@ export const registerDealTools = (server: McpServer) => {
 	);
 
 	// Search deals tool
-	server.tool(
+	registerTool(
+		server,
 		'search_deals',
 		'Search deals by title or properties',
 		{

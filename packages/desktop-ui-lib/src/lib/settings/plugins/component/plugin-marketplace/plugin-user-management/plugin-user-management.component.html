@@ -1,0 +1,271 @@
+<!-- Assigned Users -->
+@let assignedUsers = assignedUsers$ | async;
+<!-- Available Users -->
+@let filteredUsers = filteredAvailableUsers$ | async;
+<!-- Selected Users -->
+@let selectedUsers = getSelectedUsers() | async;
+<!-- Loading state -->
+@let loading = loading$ | async;
+<!-- Total Assigned Count -->
+@let totalCount = getTotalAssignedCount() | async;
+<!-- Derived State -->
+@let isAssignedAvailable = totalCount && totalCount > 0;
+
+<nb-card class="plugin-user-management">
+	<nb-card-header class="d-flex justify-content-between align-items-center">
+		<div class="header-icon-container">
+			<nb-icon icon="people-outline"></nb-icon>
+		</div>
+		<div class="header-info">
+			<h5 class="card-title mb-1">Manage Users - {{ plugin.name }}</h5>
+			<p class="card-subtitle text-hint mb-0">Assign and manage user access to this plugin installation</p>
+		</div>
+		@if(isAssignedAvailable) {
+		<div class="header-stats">
+			<nb-badge status="success" class="assignment-count">
+				<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+				{{ totalCount || 0 }} assigned
+			</nb-badge>
+		</div>
+		}
+	</nb-card-header>
+
+	<nb-card-body>
+		<nb-tabset>
+			<!-- Assign Users Tab -->
+			<nb-tab tabTitle="Assign Users" [badgeText]="selectedUsers?.length || 0" badgeStatus="primary">
+				<div class="assign-users-section">
+					<!-- Search Form -->
+					<form [formGroup]="searchForm" class="search-form mb-3">
+						<nb-form-field>
+							<nb-icon nbPrefix icon="search-outline"></nb-icon>
+							<input
+								nbInput
+								placeholder="Search users by name or email..."
+								formControlName="searchTerm"
+								class="search-input"
+							/>
+						</nb-form-field>
+					</form>
+
+					<!-- Selected Users Preview -->
+					@if(selectedUsers && selectedUsers.length > 0) {
+					<div class="selected-users mb-3">
+						<div class="section-header">
+							<nb-icon icon="checkmark-square-outline" class="section-icon"></nb-icon>
+							<h6 class="section-title">Selected Users ({{ selectedUsers.length }})</h6>
+						</div>
+						<div class="selected-users-list">
+							@for(user of selectedUsers; track user.id) {
+							<div class="selected-user-chip">
+								<nb-user
+									[picture]="getUserAvatar(user)"
+									[name]="user.firstName + ' ' + user.lastName"
+									[title]="user.email"
+									size="small"
+								>
+								</nb-user>
+								<button
+									nbButton
+									ghost
+									size="tiny"
+									status="danger"
+									(click)="onUserDeselect(user)"
+									class="remove-btn"
+								>
+									<nb-icon icon="close-outline"></nb-icon>
+								</button>
+							</div>
+							}
+						</div>
+					</div>
+					}
+
+					<!-- Available Users List -->
+					<div class="available-users">
+						<div class="section-header">
+							<nb-icon icon="people-outline" class="section-icon"></nb-icon>
+							<h6 class="section-title">Available Users</h6>
+						</div>
+
+						@if(loadingAvailableUsers$ | async) {
+						<div class="loading-state">
+							<nb-spinner size="medium"></nb-spinner>
+							<span class="loading-text">Loading users...</span>
+						</div>
+						} @else if(filteredUsers && filteredUsers.length > 0) {
+						<div
+							class="users-list"
+							libInfiniteScroll
+							[scrollThreshold]="200"
+							[debounceTime]="300"
+							[disabled]="!(hasMoreAvailableUsers$ | async) || (loadingMoreAvailableUsers$ | async)"
+							(scrolled)="onLoadMoreAvailableUsers()"
+						>
+							@for(user of filteredUsers; track user.id; let isLast = $last) {
+							<div class="user-item" [class.selected]="isUserSelected(user)" (click)="onUserSelect(user)">
+								<nb-user
+									[picture]="getUserAvatar(user)"
+									[name]="user.firstName + ' ' + user.lastName"
+									[title]="user.email"
+									size="medium"
+								>
+								</nb-user>
+								<div class="user-actions">
+									@if(isUserSelected(user)) {
+									<nb-icon icon="checkmark-circle-2" status="success"></nb-icon>
+									} @else {
+									<nb-icon icon="plus-circle-outline" status="primary"></nb-icon>
+									}
+								</div>
+							</div>
+							@if(!isLast) {
+							<nb-divider></nb-divider>
+							} }
+
+							<!-- Loading More Indicator -->
+							@if(loadingMoreAvailableUsers$ | async) {
+							<div class="loading-more-state">
+								<nb-spinner size="small"></nb-spinner>
+								<span class="loading-text">Loading more users...</span>
+							</div>
+							}
+
+							<!-- End of List Indicator -->
+							@if(!(hasMoreAvailableUsers$ | async) && !(loadingMoreAvailableUsers$ | async)) {
+							<div class="end-of-list">
+								<span class="text-hint">No more users to load</span>
+							</div>
+							}
+						</div>
+						} @else {
+						<div class="empty-state">
+							<nb-icon icon="people-outline" class="empty-icon"></nb-icon>
+							<p class="empty-text">No users available to assign</p>
+							<small class="empty-hint">
+								All eligible users may already be assigned to this plugin.
+							</small>
+						</div>
+						}
+					</div>
+
+					<!-- Assignment Form -->
+					@if(selectedUsers && selectedUsers.length > 0) {
+					<form [formGroup]="assignmentForm" class="assignment-form mt-4">
+						<nb-form-field>
+							<label class="label">Assignment Reason (Optional)</label>
+							<textarea
+								nbInput
+								fullWidth
+								placeholder="Enter reason for assignment..."
+								formControlName="reason"
+								rows="3"
+							>
+							</textarea>
+							<nb-form-field-hint>
+								Provide context for why these users are being assigned to this plugin.
+							</nb-form-field-hint>
+						</nb-form-field>
+
+						<div class="form-actions">
+							<button
+								nbButton
+								status="primary"
+								[disabled]="!assignmentForm.valid || submitting"
+								(click)="onAssignUsers()"
+								class="assign-btn"
+							>
+								<nb-icon *gauzySpinnerButton="submitting" icon="person-add-outline"></nb-icon>
+								Assign {{ selectedUsers.length }} User{{ selectedUsers.length !== 1 ? 's' : '' }}
+							</button>
+						</div>
+					</form>
+					}
+				</div>
+			</nb-tab>
+
+			<!-- Current Assignments Tab -->
+			<nb-tab tabTitle="Current Assignments" [badgeText]="totalCount || 0" badgeStatus="info">
+				<div class="current-assignments-section">
+					@if(loading) {
+					<div class="loading-state">
+						<nb-spinner size="medium"></nb-spinner>
+						<span class="loading-text">Loading assignments...</span>
+					</div>
+					} @else if(assignedUsers && assignedUsers.length > 0) {
+					<div class="assignments-list">
+						@for(assignment of assignedUsers; track assignment.id; let isLast = $last) {
+						<div class="assignment-item">
+							<div class="assignment-user">
+								<nb-user
+									[picture]="getUserAvatar(assignment.user)"
+									[name]="getUserDisplayName(assignment)"
+									[title]="assignment.user?.email || 'Unknown Email'"
+									size="medium"
+								>
+								</nb-user>
+							</div>
+
+							<div class="assignment-details">
+								<div class="assignment-meta">
+									<div class="meta-item">
+										<nb-icon icon="calendar-outline"></nb-icon>
+										<span
+											>Assigned @if (getAssignmentDate(assignment); as assignedDate) {
+											{{ assignedDate | date : 'short' }}
+											} @else { N/A }
+										</span>
+									</div>
+									@if(assignment.reason) {
+									<div class="meta-item">
+										<nb-icon icon="message-circle-outline"></nb-icon>
+										<span>{{ assignment.reason }}</span>
+									</div>
+									}
+								</div>
+
+								<div class="assignment-status">
+									<nb-badge
+										[status]="assignment.isActive ? 'success' : 'warning'"
+										[text]="assignment.isActive ? 'Active' : 'Inactive'"
+									>
+									</nb-badge>
+								</div>
+							</div>
+
+							<div class="assignment-actions">
+								<button
+									nbButton
+									ghost
+									size="small"
+									status="danger"
+									[disabled]="!assignment.isActive"
+									(click)="onUnassignUser(assignment)"
+									nbTooltip="Unassign user from plugin"
+									class="unassign-btn"
+								>
+									<nb-icon icon="person-remove-outline"></nb-icon>
+								</button>
+							</div>
+						</div>
+						@if(!isLast) {
+						<nb-divider></nb-divider>
+						} }
+					</div>
+					} @else {
+					<div class="empty-state">
+						<nb-icon icon="person-outline" class="empty-icon"></nb-icon>
+						<p class="empty-text">No users assigned</p>
+						<small class="empty-hint"> Users assigned to this plugin will appear here. </small>
+					</div>
+					}
+				</div>
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>
+
+	<nb-card-footer class="d-flex justify-content-end">
+		<button nbButton ghost status="basic" (click)="close()" class="me-2">Cancel</button>
+		<button nbButton status="primary" (click)="save()">Done</button>
+	</nb-card-footer>
+</nb-card>

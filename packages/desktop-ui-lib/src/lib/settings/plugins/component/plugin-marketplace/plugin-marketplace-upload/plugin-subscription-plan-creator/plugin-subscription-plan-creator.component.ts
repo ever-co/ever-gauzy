@@ -1,0 +1,781 @@
+import {
+	ChangeDetectionStrategy,
+	ChangeDetectorRef,
+	Component,
+	EventEmitter,
+	inject,
+	Input,
+	OnDestroy,
+	OnInit,
+	Output
+} from '@angular/core';
+import { FormArray, FormGroup } from '@angular/forms';
+import { Actions } from '@ngneat/effects-ng';
+import { asyncScheduler, filter, Observable, of, Subject, take, takeUntil, withLatestFrom } from 'rxjs';
+import { PluginPlanActions } from '../../+state/actions/plugin-plan.action';
+import { PluginPlanQuery } from '../../+state/queries/plugin-plan.query';
+import {
+	IPluginPlanCreateInput,
+	IPluginSubscriptionPlan,
+	PluginBillingPeriod,
+	PluginSubscriptionType
+} from '../../../../services/plugin-subscription.service';
+import { SubscriptionPlanFormBuilderService } from './services/subscription-plan-form-builder.service';
+import { SubscriptionPlanFormatService } from './services/subscription-plan-format.service';
+
+/**
+ * Component for creating and managing subscription plans for plugins
+ *
+ * @principle Single Responsibility - Manages subscription plan forms
+ * @principle Open/Closed - Extensible through inputs and outputs
+ * @principle Dependency Inversion - Depends on abstractions (facade, services)
+ * @pattern Builder Pattern - Uses SubscriptionPlanFormBuilderService for form creation
+ */
+@Component({
+	selector: 'lib-plugin-subscription-plan-creator',
+	templateUrl: './plugin-subscription-plan-creator.component.html',
+	styleUrls: ['./plugin-subscription-plan-creator.component.scss'],
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy {
+	@Input() set pluginId(value: string | undefined) {
+		if (this._pluginId !== value) {
+			this._pluginId = value;
+			// Reset loaded flag when pluginId changes
+			this.plansLoaded = false;
+			if (this.isInitialized && value) {
+				this.loadExistingPlans();
+			}
+		}
+	}
+	get pluginId(): string | undefined {
+		return this._pluginId;
+	}
+	private _pluginId?: string;
+
+	@Input() allowMultiplePlans = true;
+	@Input() requireAtLeastOnePlan = false;
+	@Input() dialogMode = false;
+
+	@Output() plansChanged = new EventEmitter<IPluginPlanCreateInput[]>();
+	@Output() validationStateChanged = new EventEmitter<boolean>();
+
+	public plansForm!: FormGroup;
+	private destroy$ = new Subject<void>();
+	private isInitialized = false;
+	public plansLoaded = false;
+
+	// Track existing plan IDs to differentiate between new and existing plans
+	private existingPlanIds = new Set<string>();
+	private planIdMap = new Map<number, string>(); // Maps form array index to plan ID
+
+	// Track loading state per plan
+	private planLoadingState = new Map<number, boolean>();
+
+	// Track advanced options expansion state
+	private advancedOptionsExpanded = new Set<number>();
+
+	// Success message subject
+	private successMessageSubject = new Subject<string>();
+	public readonly successMessage$ = this.successMessageSubject.asObservable();
+
+	// Expose enums to template
+	public readonly PluginSubscriptionType = PluginSubscriptionType;
+	public readonly PluginBillingPeriod = PluginBillingPeriod;
+
+	// Inject services following Dependency Injection
+	private readonly formBuilderService = inject(SubscriptionPlanFormBuilderService);
+	private readonly formatService = inject(SubscriptionPlanFormatService);
+	private readonly actions = inject(Actions);
+	private readonly planQuery = inject(PluginPlanQuery);
+	private readonly cdr = inject(ChangeDetectorRef);
+
+	// Expose loading states to template
+	public readonly loading$ = this.planQuery.loading$;
+	public readonly creating$ = this.planQuery.creating$;
+	public readonly updating$ = this.planQuery.updating$;
+	public readonly deleting$ = this.planQuery.deleting$;
+	public readonly error$ = this.planQuery.error$;
+
+	ngOnInit(): void {
+		this.initializeComponent();
+	}
+
+	ngOnDestroy(): void {
+		// Clean up subscriptions
+		this.destroy$.next();
+		this.destroy$.complete();
+
+		// Reset any pending state
+		this.resetErrors();
+	}
+
+	public resetErrors(): void {
+		this.actions.dispatch(PluginPlanActions.resetErrors());
+	}
+
+	/**
+	 * Initializes the component, form, and loads existing plans if pluginId is provided
+	 */
+	private initializeComponent(): void {
+		this.initializeForm();
+		this.setupFormListeners();
+		this.loadExistingPlans();
+		this.isInitialized = true;
+	}
+
+	/**
+	 * Initializes the plans form using the form builder service
+	 */
+	private initializeForm(): void {
+		this.plansForm = this.formBuilderService.createPlansForm();
+
+		// Add at least one plan if required and no pluginId (new plugin)
+		if (this.requireAtLeastOnePlan && !this.pluginId) {
+			this.addPlan();
+		}
+	}
+
+	/**
+	 * Sets up reactive form listeners
+	 */
+	private setupFormListeners(): void {
+		this.plansForm.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+			this.emitChanges();
+		});
+	}
+
+	/**
+	 * Loads existing plans from state if pluginId is provided
+	 * Uses state management through facade (no direct service calls)
+	 */
+	private loadExistingPlans(): void {
+		if (!this.pluginId) {
+			return;
+		}
+
+		// Dispatch action to load plans first
+		this.actions.dispatch(PluginPlanActions.loadPluginPlans(this.pluginId));
+
+		// Wait for loading to complete, then get plans
+		this.loading$
+			.pipe(
+				filter((loading) => !loading),
+				withLatestFrom(this.planQuery.getPlansForPlugin(this.pluginId)),
+				take(1),
+				takeUntil(this.destroy$)
+			)
+			.subscribe(([_, plans]) => {
+				this.prepopulatePlans(plans);
+				this.plansLoaded = true;
+				this.emitChanges();
+				this.cdr.markForCheck();
+			});
+	}
+
+	/**
+	 * Prepopulates the form with existing plans
+	 * Prevents duplicate additions by checking plansLoaded flag
+	 * Tracks existing plan IDs for update/delete operations
+	 */
+	private prepopulatePlans(plans: IPluginSubscriptionPlan[]): void {
+		if (!plans || plans.length === 0) {
+			return;
+		}
+
+		// Clear existing tracking
+		this.existingPlanIds.clear();
+		this.planIdMap.clear();
+
+		// Convert IPluginSubscriptionPlan to IPluginPlanCreateInput format
+		const planInputs: Partial<IPluginPlanCreateInput>[] = plans.map((plan, index) => {
+			// Track existing plan IDs
+			if (plan.id) {
+				this.existingPlanIds.add(plan.id);
+				this.planIdMap.set(index, plan.id);
+			}
+
+			return {
+				...(plan.id && { id: plan.id }),
+				pluginId: plan.pluginId,
+				type: plan.type,
+				name: plan.name,
+				description: plan.description,
+				price: Number(plan.price),
+				currency: plan.currency,
+				billingPeriod: plan.billingPeriod,
+				features: plan.features,
+				limitations: plan.limitations,
+				trialDays: plan.trialDays,
+				setupFee: Number(plan.setupFee),
+				discountPercentage: Number(plan.discountPercentage),
+				isPopular: plan.isPopular,
+				isRecommended: plan.isRecommended
+			};
+		});
+
+		// Use form builder service to populate plans
+		this.formBuilderService.populatePlansFormArray(this.plans, planInputs);
+	}
+
+	/**
+	 * Gets the plans FormArray from the form
+	 */
+	public get plans(): FormArray {
+		return this.plansForm?.get('plans') as FormArray;
+	}
+
+	/**
+	 * Adds a new plan to the form
+	 * Uses the form builder service for plan creation
+	 */
+	public addPlan(plan?: Partial<IPluginPlanCreateInput>): void {
+		if (!this.canAddPlan()) return;
+		this.createPlan(plan);
+	}
+
+	public createPlan(plan?: Partial<IPluginPlanCreateInput>): void {
+		const planGroup = this.formBuilderService.createPlanFormGroup(plan);
+		this.plans.push(planGroup);
+		this.emitChanges();
+	}
+
+	/**
+	 * Removes a plan from the form at the specified index
+	 * If it's an existing plan, dispatches delete action through facade
+	 * Fixed: Properly handle async delete and update mappings
+	 */
+	public removePlan(index: number): void {
+		if (this.requireAtLeastOnePlan && this.plans.length <= 1) {
+			return;
+		}
+
+		// Check if this is an existing plan
+		const planId = this.planIdMap.get(index);
+
+		// Remove from form array immediately for UI responsiveness
+		this.plans.removeAt(index);
+
+		// If it's an existing plan, dispatch delete action
+		if (planId && this.existingPlanIds.has(planId)) {
+			// Dispatch delete action for existing plan
+			this.actions.dispatch(PluginPlanActions.deletePlan(planId));
+			this.existingPlanIds.delete(planId);
+		}
+
+		// Update plan ID mapping for remaining plans
+		const updatedMap = new Map<number, string>();
+		this.planIdMap.forEach((id, idx) => {
+			if (idx > index) {
+				updatedMap.set(idx - 1, id);
+			} else if (idx < index) {
+				updatedMap.set(idx, id);
+			}
+		});
+		this.planIdMap = updatedMap;
+
+		this.emitChanges();
+	}
+
+	/**
+	 * Duplicates an existing plan
+	 */
+	public duplicatePlan(index: number): void {
+		if (!this.allowMultiplePlans) {
+			return;
+		}
+
+		const planValue = this.formBuilderService.normalizePlanValue(
+			this.plans.at(index).value as IPluginPlanCreateInput
+		);
+		const duplicatedPlan: Partial<IPluginPlanCreateInput> = {
+			...planValue,
+			name: `${planValue.name} (Copy)`
+		};
+		this.addPlan(duplicatedPlan);
+	}
+
+	/**
+	 * Gets the features FormArray for a specific plan
+	 */
+	public getPlanFeatures(planIndex: number): FormArray {
+		const plan = this.plans.at(planIndex) as FormGroup;
+		return plan.get('features') as FormArray;
+	}
+
+	/**
+	 * Gets the limitations FormArray for a specific plan
+	 */
+	public getPlanLimitations(planIndex: number): FormArray {
+		const plan = this.plans.at(planIndex) as FormGroup;
+		return plan.get('limitations') as FormArray;
+	}
+
+	/**
+	 * Adds a new feature to a plan
+	 */
+	public addFeature(planIndex: number): void {
+		const features = this.getPlanFeatures(planIndex);
+		const featureControl = this.formBuilderService.createFeatureControl();
+		features.push(featureControl);
+		this.emitChanges();
+	}
+
+	/**
+	 * Adds a new limitation to a plan
+	 */
+	public addLimitation(planIndex: number): void {
+		const limitations = this.getPlanLimitations(planIndex);
+		limitations.push(this.formBuilderService.createLimitationGroup());
+		this.emitChanges();
+	}
+
+	/**
+	 * Removes a feature from a plan
+	 */
+	public removeFeature(planIndex: number, featureIndex: number): void {
+		const features = this.getPlanFeatures(planIndex);
+		if (features.length > 1) {
+			features.removeAt(featureIndex);
+			this.emitChanges();
+		}
+	}
+
+	/**
+	 * Removes a limitation from a plan
+	 */
+	public removeLimitation(planIndex: number, limitationIndex: number): void {
+		const limitations = this.getPlanLimitations(planIndex);
+		if (limitationIndex < 0 || limitationIndex >= limitations.length) {
+			return;
+		}
+
+		limitations.removeAt(limitationIndex);
+		this.emitChanges();
+	}
+
+	/**
+	 * Handles plan type change and applies preset values
+	 * Uses the form builder service for preset creation
+	 */
+	public onPlanTypeChange(planIndex: number): void {
+		const plan = this.plans.at(planIndex) as FormGroup;
+		const type = plan.get('type')?.value as PluginSubscriptionType;
+
+		if (!type) {
+			return;
+		}
+
+		// Create a new plan with presets
+		const presetPlan = this.formBuilderService.createPlanWithPresets(type);
+		const presetValue = presetPlan.value;
+
+		// Patch the current plan with preset values (excluding type to avoid recursion)
+		plan.patchValue(
+			{
+				name: presetValue.name,
+				description: presetValue.description,
+				price: presetValue.price,
+				currency: presetValue.currency,
+				billingPeriod: presetValue.billingPeriod,
+				trialDays: presetValue.trialDays,
+				setupFee: presetValue.setupFee,
+				discountPercentage: presetValue.discountPercentage,
+				isPopular: presetValue.isPopular,
+				isRecommended: presetValue.isRecommended
+			},
+			{ emitEvent: false }
+		);
+
+		// Update features array
+		const features = this.getPlanFeatures(planIndex);
+		features.clear();
+		const presetFeatures = presetValue.features as string[];
+		if (presetFeatures && presetFeatures.length > 0) {
+			presetFeatures.forEach((feature: string) => {
+				features.push(this.formBuilderService.createFeatureControl(feature));
+			});
+		}
+
+		// Update limitations array with presets
+		this.formBuilderService.resetLimitationsArray(
+			this.getPlanLimitations(planIndex),
+			presetValue.limitations as Record<string, any>
+		);
+
+		this.emitChanges();
+	}
+
+	/**
+	 * Emits form changes and validation state to parent component
+	 * Uses form builder service for validation
+	 */
+	private emitChanges(): void {
+		if (!this.isInitialized) {
+			return;
+		}
+
+		const formValue = this.plansForm.value;
+		const validPlans = this.formBuilderService.extractValidPlansFromForm(formValue);
+
+		// Add pluginId to each plan if available
+		const plansWithPluginId = validPlans.map((plan) => ({
+			...plan,
+			pluginId: this.pluginId || plan.pluginId
+		}));
+
+		this.plansChanged.emit(plansWithPluginId);
+
+		// Emit validation state
+		const isValid = this.isFormValid();
+		this.validationStateChanged.emit(isValid);
+	}
+
+	/**
+	 * Validates if the entire form is valid
+	 */
+	private isFormValid(): boolean {
+		if (this.plansForm?.invalid) {
+			return false;
+		}
+
+		if (this.requireAtLeastOnePlan && this.plans.length === 0) {
+			return false;
+		}
+
+		const formValue = this.plansForm.value;
+		const validPlans = this.formBuilderService.extractValidPlansFromForm(formValue);
+
+		return validPlans.length > 0;
+	}
+
+	/**
+	 * Formats currency using the format service
+	 */
+	public formatCurrency(amount: number, currency: string): string {
+		return this.formatService.formatCurrency(amount, currency);
+	}
+
+	/**
+	 * Formats billing period using the format service
+	 */
+	public formatBillingPeriod(period: PluginBillingPeriod): string {
+		return this.formatService.formatBillingPeriod(period);
+	}
+
+	/**
+	 * Checks if a plan can be removed based on configuration
+	 */
+	public canRemovePlan(): boolean {
+		return !this.requireAtLeastOnePlan || this.plans.length > 1;
+	}
+
+	/**
+	 * Checks if a plan can be added based on configuration
+	 */
+	public canAddPlan(): boolean {
+		return this.allowMultiplePlans && this.hasPlans();
+	}
+
+	/**
+	 * Checks if a plan at the given index is an existing plan (has an ID)
+	 */
+	public isExistingPlan(index: number): boolean {
+		const planId = this.planIdMap.get(index);
+		return !!planId && this.existingPlanIds.has(planId);
+	}
+
+	/**
+	 * Updates an existing plan via the facade
+	 * This is called when clicking the update button for existing plans
+	 */
+	public updateExistingPlan(index: number): void {
+		const planId = this.planIdMap.get(index);
+		if (!planId || !this.existingPlanIds.has(planId)) {
+			console.warn('Cannot update: Plan ID not found or not an existing plan', { index, planId });
+			return;
+		}
+
+		const plan = this.plans.at(index) as FormGroup;
+		if (!plan) {
+			console.warn('Cannot update: Plan form group not found at index', index);
+			return;
+		}
+
+		// Mark all fields as touched to show validation errors
+		Object.keys(plan.controls).forEach((key) => {
+			const control = plan.get(key);
+			control?.markAsTouched();
+			control?.markAsDirty();
+		});
+
+		if (plan.invalid) {
+			console.warn('Cannot update: Plan form is invalid', { index, errors: plan.errors, value: plan.value });
+			return;
+		}
+
+		const planValue = plan.value as IPluginPlanCreateInput;
+		const normalizedPlanValue = this.formBuilderService.normalizePlanValue(planValue);
+		if (!normalizedPlanValue) {
+			console.warn('Cannot update: Normalized plan value is undefined', { index, planId });
+			return;
+		}
+
+		// Build the update payload directly from form value
+		const updates: Partial<IPluginPlanCreateInput> = {
+			...(normalizedPlanValue.id && { id: normalizedPlanValue.id }),
+			type: normalizedPlanValue.type,
+			name: normalizedPlanValue.name,
+			description: normalizedPlanValue.description,
+			price: Number(normalizedPlanValue.price),
+			currency: normalizedPlanValue.currency,
+			billingPeriod: normalizedPlanValue.billingPeriod,
+			features: normalizedPlanValue.features || [],
+			limitations: normalizedPlanValue.limitations,
+			trialDays: normalizedPlanValue.trialDays,
+			setupFee: Number(normalizedPlanValue.setupFee),
+			discountPercentage: Number(normalizedPlanValue.discountPercentage),
+			isPopular: normalizedPlanValue.isPopular,
+			isRecommended: normalizedPlanValue.isRecommended
+		};
+
+		console.log('Updating existing plan:', { planId, index, updates });
+
+		// Set loading state for this plan
+		this.setPlanLoading(index, true);
+
+		// Dispatch update action through facade
+		this.actions.dispatch(PluginPlanActions.updatePlan(planId, updates));
+
+		// Listen for update completion
+		this.updating$
+			.pipe(
+				filter((loading) => !loading),
+				take(1),
+				takeUntil(this.destroy$)
+			)
+			.subscribe(() => {
+				this.setPlanLoading(index, false);
+				this.showSuccessMessage('Plan updated successfully');
+				// Mark form as pristine after successful update
+				plan.markAsPristine();
+			});
+	}
+
+	/**
+	 * Saves all plans - creates new plans and updates existing ones
+	 * Separates new plans from existing ones to avoid duplication
+	 * Returns an observable to allow parent to wait for completion
+	 * Fixed: Actually triggers the save operations through facade
+	 */
+	public savePlans(): Observable<{ newPlans: IPluginPlanCreateInput[]; updatedCount: number }> {
+		if (!this.isFormValid()) {
+			return of({ newPlans: [], updatedCount: 0 });
+		}
+
+		const formValue = this.plansForm.value;
+		const allPlans = this.formBuilderService.extractValidPlansFromForm(formValue);
+
+		// Separate new plans from existing ones
+		const newPlans: IPluginPlanCreateInput[] = [];
+		const updatedPlans: Array<{ id: string; updates: Partial<IPluginPlanCreateInput> }> = [];
+
+		allPlans.forEach((plan, index) => {
+			const planId = this.planIdMap.get(index);
+			const planWithPluginId = {
+				...plan,
+				pluginId: this.pluginId || plan.pluginId
+			};
+
+			if (planId && this.existingPlanIds.has(planId)) {
+				// Existing plan - prepare for update
+				const { pluginId, ...updates } = planWithPluginId;
+				updatedPlans.push({ id: planId, updates });
+			} else {
+				// New plan - prepare for creation
+				newPlans.push(planWithPluginId);
+			}
+		});
+
+		// Dispatch update actions for existing plans
+		updatedPlans.forEach(({ id, updates }) => {
+			this.actions.dispatch(PluginPlanActions.updatePlan(id, updates));
+		});
+
+		// Dispatch bulk create action for new plans
+		if (newPlans.length > 0) {
+			// Remove id, createdAt, updatedAt, isActive fields for creation
+			const plansForCreation = newPlans.map(
+				({
+					pluginId,
+					type,
+					name,
+					description,
+					price,
+					currency,
+					billingPeriod,
+					features,
+					setupFee,
+					discountPercentage,
+					...rest
+				}) => ({
+					pluginId,
+					type,
+					name,
+					description,
+					price: Number(price),
+					currency,
+					billingPeriod,
+					features,
+					setupFee: Number(setupFee),
+					discountPercentage: Number(discountPercentage),
+					isArchived: false,
+					...rest
+				})
+			);
+			this.actions.dispatch(PluginPlanActions.bulkCreatePlans(plansForCreation));
+		}
+
+		// Emit only new plans to parent component
+		this.plansChanged.emit(newPlans);
+
+		// Return result for async handling
+		return of({ newPlans, updatedCount: updatedPlans.length });
+	}
+
+	/**
+	 * Gets the plan ID for a given index
+	 */
+	public getPlanId(index: number): string | undefined {
+		return this.planIdMap.get(index);
+	}
+
+	/**
+	 * Gets the current form validity state
+	 */
+	public get isValid(): boolean {
+		return this.isFormValid();
+	}
+
+	/**
+	 * Gets the current plans to be saved (for parent component)
+	 */
+	public getPlansForSubmission(): IPluginPlanCreateInput[] {
+		if (!this.isFormValid()) {
+			return [];
+		}
+
+		const formValue = this.plansForm.value;
+		const allPlans = this.formBuilderService.extractValidPlansFromForm(formValue);
+
+		// Return only new plans (existing plans are updated via facade)
+		return allPlans
+			.filter((plan, index) => {
+				const planId = this.planIdMap.get(index);
+				return !planId || !this.existingPlanIds.has(planId);
+			})
+			.map((plan) => ({
+				...plan,
+				pluginId: this.pluginId || plan.pluginId
+			}));
+	}
+
+	/**
+	 * Checks if a specific plan is currently loading
+	 */
+	public isPlanLoading(index: number): boolean {
+		return this.planLoadingState.get(index) || false;
+	}
+
+	/**
+	 * Sets the loading state for a specific plan
+	 */
+	private setPlanLoading(index: number, loading: boolean): void {
+		this.planLoadingState.set(index, loading);
+		this.cdr.markForCheck();
+	}
+
+	/**
+	 * Toggles advanced options for a plan
+	 */
+	public toggleAdvancedOptions(index: number): void {
+		if (this.advancedOptionsExpanded.has(index)) {
+			this.advancedOptionsExpanded.delete(index);
+		} else {
+			this.advancedOptionsExpanded.add(index);
+		}
+	}
+
+	/**
+	 * Checks if advanced options are expanded for a plan
+	 */
+	public isAdvancedOptionsExpanded(index: number): boolean {
+		return this.advancedOptionsExpanded.has(index);
+	}
+
+	/**
+	 * Selects a plan type and applies presets
+	 */
+	public selectPlanType(planIndex: number, type: PluginSubscriptionType): void {
+		const plan = this.plans.at(planIndex) as FormGroup;
+		plan.patchValue({ type, ...(type === PluginSubscriptionType.FREE && { price: 0 }) }, { emitEvent: false });
+		this.onPlanTypeChange(planIndex);
+	}
+
+	/**
+	 * Clears the success message
+	 */
+	public clearSuccessMessage(): void {
+		this.successMessageSubject.next('');
+	}
+
+	/**
+	 * Shows a success message
+	 */
+	private showSuccessMessage(message: string): void {
+		this.successMessageSubject.next(message);
+		// Auto-clear after 5 seconds
+		asyncScheduler.schedule(() => this.clearSuccessMessage(), 5000);
+	}
+
+	/**
+	 * Determines if additional options should be shown for a plan
+	 * Hides additional options for free plans since they're not relevant
+	 */
+	public shouldShowAdditionalOptions(planIndex: number): boolean {
+		const plan = this.plans.at(planIndex) as FormGroup;
+		if (!plan) {
+			return false;
+		}
+
+		const planType = plan.get('type')?.value;
+		const planPrice = plan.get('price')?.value;
+
+		// Hide additional options for free plans or when price is 0/null
+		if (
+			planType === PluginSubscriptionType.FREE ||
+			planPrice === 0 ||
+			planPrice === null ||
+			planPrice === undefined
+		) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Gets the appropriate icon for a plan type
+	 */
+	public getPlanTypeIcon(type: PluginSubscriptionType): string {
+		return this.formatService.getPlanTypeIcon(type);
+	}
+
+	/**
+	 * Checks if the plans array has any items
+	 */
+	public hasPlans(): boolean {
+		return this.plans && this.plans.length > 0;
+	}
+}

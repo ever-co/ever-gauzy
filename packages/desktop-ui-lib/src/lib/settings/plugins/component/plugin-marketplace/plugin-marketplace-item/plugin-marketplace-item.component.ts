@@ -1,38 +1,35 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-	ICDNSource,
-	IGauzySource,
-	INPMSource,
+	ID,
 	IPlugin,
-	IPluginSource,
-	IPluginVersion,
+	IPluginSubscription,
+	PluginScope,
 	PluginSourceType,
 	PluginStatus,
 	PluginType
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDialogService } from '@nebular/theme';
+import { NbRouteTab } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
-import { catchError, concatMap, filter, take, takeUntil } from 'rxjs/operators';
+import { combineLatest, Observable, Subject, tap } from 'rxjs';
+import { catchError, filter, map, takeUntil } from 'rxjs/operators';
+import { PluginSubscriptionActions, PluginSubscriptionQuery } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
+import { PluginPlanActions } from '../+state/actions/plugin-plan.action';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
 import { PluginVersionActions } from '../+state/actions/plugin-version.action';
+import { PluginSubscriptionAccessFacade } from '../+state/plugin-subscription-access.facade';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { PluginSourceQuery } from '../+state/queries/plugin-source.query';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
-import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
+import { PluginQuery } from '../../+state/plugin.query';
 import { Store, ToastrNotificationService } from '../../../../../services';
-import { PluginElectronService } from '../../../services/plugin-electron.service';
-import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
-import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
-import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
-import { DialogInstallationValidationComponent } from './dialog-installation-validation/dialog-installation-validation.component';
-import { DialogCreateSourceComponent } from './dialog-create-source/dialog-create-source.component';
+import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
+// Installation and subscription side-effects moved to effects
 
 @Component({
 	selector: 'gauzy-plugin-marketplace-item',
@@ -43,27 +40,38 @@ import { DialogCreateSourceComponent } from './dialog-create-source/dialog-creat
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private readonly destroy$ = new Subject<void>();
-	installed$ = new BehaviorSubject<boolean>(false);
-	needUpdate$ = new BehaviorSubject<boolean>(false);
 
 	// Enum for template use
 	readonly pluginStatus = PluginStatus;
 	readonly pluginType = PluginType;
 	readonly pluginSourceType = PluginSourceType;
+	readonly pluginScope = PluginScope;
+
+	// Access observables
+	hasAccess$: Observable<boolean>;
+	canAssign$: Observable<boolean>;
+	canConfigure$: Observable<boolean>;
+	accessLevel$: Observable<PluginScope | undefined>;
+
+	// Tabs configuration
+	tabs$: Observable<NbRouteTab[]>;
+
+	private readonly route = inject(ActivatedRoute);
+	private readonly router = inject(Router);
+	private readonly action = inject(Actions);
 
 	constructor(
-		private readonly route: ActivatedRoute,
-		private readonly router: Router,
-		private readonly pluginElectronService: PluginElectronService,
-		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		private readonly translateService: TranslateService,
 		private readonly toastrService: ToastrNotificationService,
-		private readonly action: Actions,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
+		public readonly pluginQuery: PluginQuery,
 		public readonly versionQuery: PluginVersionQuery,
-		public readonly sourceQuery: PluginSourceQuery
+		public readonly sourceQuery: PluginSourceQuery,
+		public readonly subscriptionQuery: PluginSubscriptionQuery,
+		public readonly accessFacade: PluginSubscriptionAccessFacade,
+		private readonly utils: PluginMarketplaceUtilsService
 	) {}
 
 	ngOnInit(): void {
@@ -71,10 +79,18 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			.pipe(
 				filter(Boolean),
 				distinctUntilChange(),
-				concatMap((plugin) => {
-					this.action.dispatch(PluginVersionActions.selectVersion(plugin.version));
-					this.action.dispatch(PluginSourceActions.selectSource(plugin.source));
-					return this.checkInstallation(plugin);
+				tap((plugin) => {
+					// Check access when plugin loads
+					this.accessFacade.checkAccess(plugin.id);
+
+					// Initialize access observables
+					this.hasAccess$ = this.accessFacade.hasAccess$(plugin.id);
+					this.canAssign$ = this.accessFacade.canAssign$(plugin.id);
+					this.canConfigure$ = this.accessFacade.canConfig$(plugin.id); // Using hasAccess for now
+					this.accessLevel$ = this.accessFacade.getAccessLevel$(plugin.id);
+
+					// Build tabs based on permissions
+					this.tabs$ = this.buildTabs$();
 				}),
 				catchError((error) => this.handleError(error)),
 				takeUntil(this.destroy$)
@@ -94,7 +110,14 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	public loadPlugin(): void {
 		this.action.dispatch(
 			PluginMarketplaceActions.getOne(this.pluginId, {
-				relations: ['versions', 'versions.sources', 'uploadedBy', 'uploadedBy.user'],
+				relations: [
+					'versions',
+					'versions.sources',
+					'category',
+					'uploadedBy',
+					'subscriptions',
+					'subscriptions.plan'
+				],
 				order: { versions: { releaseDate: 'DESC' } }
 			})
 		);
@@ -102,293 +125,190 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	private async handleError(error: any): Promise<void> {
 		this.toastrService.error(error);
-		await this.router.navigate(['/settings/marketplace-plugins']);
+		await this.router.navigate(['/plugins/marketplace']);
 	}
 
-	async checkInstallation(plugin: IPlugin): Promise<void> {
-		if (!plugin) return;
-
-		try {
-			const installed = await this.checkPlugin(plugin);
-			this.installed$.next(!!installed);
-
-			if (installed && plugin.versions) {
-				this.needUpdate$.next(installed.version !== plugin.version.number);
-			}
-		} catch (error) {
-			this.installed$.next(false);
-		}
+	// Delegate utility methods to PluginMarketplaceUtilsService
+	public getSourceTypeLabel(type: PluginSourceType): string {
+		return this.utils.getSourceTypeLabel(type);
 	}
 
-	async checkPlugin(plugin: IPlugin): Promise<IPluginInstalled> {
-		if (!plugin) return;
-		try {
-			return this.pluginElectronService.checkInstallation(plugin.id);
-		} catch (error) {
-			return null;
-		}
+	public getStatusLabel(status: PluginStatus): string {
+		return this.utils.getStatusLabel(status);
 	}
 
-	// Utility methods with strong typing
-	getSourceTypeLabel(type: PluginSourceType): string {
-		const labels: Record<PluginSourceType, string> = {
-			[PluginSourceType.CDN]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.CDN'),
-			[PluginSourceType.NPM]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.NPM'),
-			[PluginSourceType.GAUZY]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.GAUZY')
-		};
-		return labels[type] || type;
+	public getTypeLabel(type: PluginType): string {
+		return this.utils.getTypeLabel(type);
 	}
 
-	getStatusLabel(status: PluginStatus): string {
-		return this.translateService.instant(`PLUGIN.FORM.STATUSES.${status}`);
-	}
-
-	getTypeLabel(type: PluginType): string {
-		return this.translateService.instant(`PLUGIN.FORM.TYPES.${type}`);
-	}
-
-	getStatusBadgeStatus(status: PluginStatus): string {
-		const statusMap: Record<PluginStatus, string> = {
-			[PluginStatus.ACTIVE]: 'success',
-			[PluginStatus.INACTIVE]: 'warning',
-			[PluginStatus.DEPRECATED]: 'info',
-			[PluginStatus.ARCHIVED]: 'danger'
-		};
-		return statusMap[status] || 'basic';
+	public getStatusBadgeStatus(status: PluginStatus): string {
+		return this.utils.getStatusBadgeStatus(status);
 	}
 
 	getPluginTypeBadgeStatus(type: PluginType): string {
-		const typeMap: Record<PluginType, string> = {
-			[PluginType.DESKTOP]: 'primary',
-			[PluginType.WEB]: 'info',
-			[PluginType.MOBILE]: 'success'
-		};
-		return typeMap[type] || 'basic';
+		return this.utils.getPluginTypeBadgeStatus(type);
 	}
 
-	getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
-		const typeMap: Record<PluginSourceType, string> = {
-			[PluginSourceType.GAUZY]: 'primary',
-			[PluginSourceType.CDN]: 'info',
-			[PluginSourceType.NPM]: 'danger'
-		};
-		return typeMap[type] || 'basic';
+	public getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
+		return this.utils.getPluginSourceTypeBadgeStatus(type);
 	}
 
-	getSourceDetails(plugin: IPlugin): string {
-		switch (plugin.source.type) {
-			case PluginSourceType.CDN:
-				return (plugin.source as ICDNSource).url;
-			case PluginSourceType.NPM:
-				const npmSource = plugin.source as INPMSource;
-				return `${npmSource.scope ? npmSource.scope + '/' : ''}${npmSource.name}@${plugin.version.number}`;
-			case PluginSourceType.GAUZY:
-				return (
-					(plugin.source as IGauzySource).url || this.translateService.instant('PLUGIN.DETAILS.UPLOADED_FILE')
-				);
-			default:
-				return this.translateService.instant('PLUGIN.DETAILS.UNKNOWN_SOURCE');
-		}
+	getAccessLevelLabel(level: PluginScope): string {
+		return this.utils.getAccessLevelLabel(level);
 	}
 
-	async updatePluginStatus(status: PluginStatus): Promise<void> {
+	public getAccessLevelBadgeStatus(level: PluginScope): string {
+		return this.utils.getAccessLevelBadgeStatus(level);
+	}
+
+	public showAssignUsersDialog(): void {
+		if (!this.pluginId) return;
+		this.accessFacade.showAssignmentDialog(this.pluginId);
+	}
+
+	public getSourceDetails(plugin: IPlugin): string {
+		return this.utils.getSourceDetails(plugin);
+	}
+
+	public async updatePluginStatus(status: PluginStatus): Promise<void> {
 		if (!this.pluginId || !this.isOwner) return;
-		this.action.dispatch(PluginMarketplaceActions.update(this.pluginId, { status }));
+		this.action.dispatch(PluginMarketplaceActions.update({ ...this.plugin, status }));
 	}
 
-	navigateToEdit(): void {
-		if (!this.plugin) return;
+	public navigateToEdit(): void {
+		this.action.dispatch(PluginMarketplaceActions.update(this.plugin));
+	}
 
-		this.dialogService
-			.open(PluginMarketplaceUploadComponent, {
-				backdropClass: 'backdrop-blur',
-				context: { plugin: this.plugin }
+	public async navigateBack(): Promise<void> {
+		await this.router.navigate(['plugins', 'marketplace']);
+	}
+
+	public async navigateToHistory(): Promise<void> {
+		await this.router.navigate(['plugins', 'marketplace', this.pluginId, 'versions']);
+	}
+
+	/**
+	 * Build tabs array dynamically based on user permissions
+	 * Uses combineLatest for better performance and cleaner logic
+	 */
+	private buildTabs$(): Observable<NbRouteTab[]> {
+		const baseTabs: NbRouteTab[] = [
+			{
+				title: this.translateService.instant('PLUGIN.DETAILS.OVERVIEW'),
+				icon: 'info-outline',
+				route: './overview',
+				responsive: true
+			},
+			{
+				title: this.translateService.instant('PLUGIN.DETAILS.SOURCE_CODE'),
+				icon: 'code-outline',
+				route: './source-code',
+				responsive: true
+			}
+		];
+
+		// Use combineLatest to efficiently combine multiple observables
+		return combineLatest([this.canConfigure$, this.canAssign$]).pipe(
+			map(([canConfigure, canAssign]) => {
+				const tabs = [...baseTabs];
+
+				// Add settings tab if user can configure
+				if (canConfigure) {
+					tabs.push({
+						title: this.translateService.instant('PLUGIN.DETAILS.SETTINGS'),
+						icon: 'settings-outline',
+						route: './settings',
+						responsive: true
+					});
+				}
+
+				// Add user management tab if user can assign
+				if (canAssign) {
+					tabs.push({
+						title: this.translateService.instant('PLUGIN.DETAILS.USER_MANAGEMENT'),
+						icon: 'people-outline',
+						route: './user-management',
+						responsive: true
+					});
+				}
+
+				return tabs;
 			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap((plugin: IPlugin) => {
-					this.action.dispatch(
-						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
-					);
-					this.action.dispatch(PluginMarketplaceActions.update(this.pluginId, plugin));
-				}),
-				takeUntil(this.destroy$)
-			)
-			.subscribe();
+		);
 	}
 
-	navigateBack(): void {
-		this.router.navigate(['/settings/marketplace-plugins']);
-	}
-
-	navigateToHistory(): void {
-		this.router.navigate(['settings', 'marketplace-plugins', this.pluginId, 'versions']);
-	}
-
-	formatDate(date: Date | string | null): string {
-		if (!date) return 'N/A';
-		return new Date(date).toLocaleString();
+	public formatDate(date: Date | string | null): string {
+		return this.utils.formatDate(date);
 	}
 
 	public get isOwner(): boolean {
-		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedBy?.id;
+		return !!this.store.user && this.store.user?.id === this.plugin?.uploadedBy?.id;
 	}
 
-	updatePlugin(): void {
-		this.installPlugin(true);
+	public installUpdate(): void {
+		// Trigger install update flow via actions/effects
+		this.action.dispatch(PluginMarketplaceActions.installUpdate(this.plugin));
 	}
 
 	public async uninstallPlugin(): Promise<void> {
-		this.dialogService
-			.open(AlertComponent, {
-				backdropClass: 'backdrop-blur',
-				context: {
-					data: {
-						title: 'PLUGIN.DIALOG.UNINSTALL.TITLE',
-						message: 'PLUGIN.DIALOG.UNINSTALL.DESCRIPTION',
-						confirmText: 'PLUGIN.DIALOG.UNINSTALL.CONFIRM',
-						status: 'basic'
-					}
-				}
-			})
-			.onClose.pipe(
-				take(1),
-				filter(Boolean),
-				concatMap(() => this.checkPlugin(this.plugin)),
-				filter(Boolean),
-				tap((plugin) => {
-					this.action.dispatch(PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin }));
-					this.action.dispatch(PluginInstallationActions.uninstall(plugin));
-				})
-			)
-			.subscribe();
+		this.action.dispatch(PluginInstallationActions.uninstall(this.pluginId));
 	}
 
-	public installPlugin(isUpdate = false): void {
-		this.dialogService
-			.open(DialogInstallationValidationComponent, {
-				context: {
-					pluginId: this.pluginId
-				},
-				backdropClass: 'backdrop-blur'
-			})
-			.onClose.pipe(
-				take(1),
-				filter(Boolean),
-				tap(({ version, source, authToken }) =>
-					this.preparePluginInstallation(version, source, isUpdate, authToken)
-				)
-			)
-			.subscribe();
+	public installPlugin(): void {
+		// Trigger the install flow via actions; effects will handle dialogs/validation
+		this.action.dispatch(PluginMarketplaceActions.install(this.plugin));
 	}
 
-	preparePluginInstallation(
-		version: IPluginVersion,
-		source: IPluginSource,
-		isUpdate = false,
-		authToken: string
-	): void {
-		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, plugin: this.plugin }));
-		switch (source.type) {
-			case PluginSourceType.GAUZY:
-			case PluginSourceType.CDN:
-				this.action.dispatch(
-					PluginInstallationActions.install({
-						url: source.url,
-						contextType: 'cdn',
-						marketplaceId: this.pluginId,
-						versionId: version.id
-					})
-				);
-				break;
-			case PluginSourceType.NPM:
-				this.action.dispatch(
-					PluginInstallationActions.install({
-						...{
-							pkg: {
-								name: source.name,
-								version: isUpdate ? this.plugin.version.number : version.number
-							},
-							registry: {
-								privateURL: source.registry,
-								authToken
-							}
-						},
-						contextType: 'npm',
-						marketplaceId: this.pluginId,
-						versionId: version.id
-					})
-				);
-				break;
-			default:
-				break;
-		}
+	/**
+	 * Alternative subscription management dialog (simpler UI)
+	 * NOTE: Subscription management is handled via effects; components should dispatch actions.
+	 */
+	public manageSubscription(): void {
+		// Dispatch an action or use facade to open/manage subscriptions via effects
+		this.action.dispatch(PluginSubscriptionActions.openSubscriptionManagement(this.plugin, true));
 	}
 
-	public get selectedVersionNumber(): string {
-		return this.selectedVersion.number;
+	/**
+	 * Get current subscription
+	 */
+	public get currentSubscription$(): Observable<IPluginSubscription> {
+		return this.accessFacade.getPluginAccess$(this.pluginId).pipe(map((access) => access?.subscription));
+	}
+
+	/**
+	 * Check if plugin has subscription to show hierarchy button
+	 */
+	public get hasSubscription$(): Observable<boolean> {
+		return this.accessFacade
+			.getPluginAccess$(this.pluginId)
+			.pipe(map((plugin) => plugin && plugin.hasAccess && !!plugin.subscription));
+	}
+
+	/**
+	 * View subscription hierarchy (admin feature) — route through actions/effects
+	 */
+	public viewSubscription(): void {
+		this.action.dispatch(PluginSubscriptionActions.openSubscriptionManagement(this.plugin));
 	}
 
 	public addVersion(): void {
-		if (!this.plugin || !this.isOwner || !this.pluginId) return;
+		this.action.dispatch(PluginVersionActions.add(this.plugin));
+	}
 
-		this.dialogService
-			.open(DialogCreateVersionComponent, {
-				backdropClass: 'backdrop-blur',
-				context: { plugin: this.plugin }
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap((version: IPluginVersion) => {
-					this.action.dispatch(
-						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
-					);
-					this.action.dispatch(PluginVersionActions.add(this.pluginId, version));
-				}),
-				takeUntil(this.destroy$)
-			)
-			.subscribe();
+	public openPlanCreator(): void {
+		if (!this.pluginId) {
+			return;
+		}
+
+		this.action.dispatch(PluginPlanActions.openPlanCreator(this.pluginId));
 	}
 
 	public addSource(): void {
-		this.dialogService
-			.open(DialogCreateSourceComponent, {
-				backdropClass: 'backdrop-blur',
-				context: { plugin: this.plugin, version: this.selectedVersion }
-			})
-			.onClose.pipe(
-				filter(Boolean),
-				tap(({ pluginId, versionId, sources }) => {
-					this.action.dispatch(PluginSourceActions.add(pluginId, versionId, sources));
-				}),
-				takeUntil(this.destroy$)
-			)
-			.subscribe();
+		this.action.dispatch(PluginSourceActions.add(this.plugin));
 	}
 
 	public delete(): void {
-		this.dialogService
-			.open(AlertComponent, {
-				context: {
-					data: {
-						message: 'PLUGIN.DIALOG.DELETE.DESCRIPTION',
-						title: 'PLUGIN.DIALOG.DELETE.TITLE',
-						confirmText: 'PLUGIN.DIALOG.DELETE.CONFIRM',
-						status: 'Danger'
-					}
-				}
-			})
-			.onClose.pipe(
-				take(1),
-				filter(Boolean),
-				tap(() => {
-					this.action.dispatch(
-						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
-					);
-					this.action.dispatch(PluginMarketplaceActions.delete(this.pluginId));
-				})
-			)
-			.subscribe();
+		this.action.dispatch(PluginMarketplaceActions.delete(this.pluginId));
 	}
 
 	public get plugin$(): Observable<IPlugin> {
@@ -403,11 +323,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return this.versionQuery.pluginId;
 	}
 
-	private get isInstalled(): boolean {
-		return this.installed$.value;
-	}
-
-	private get selectedVersion(): IPluginVersion {
-		return this.versionQuery.version;
+	public get installedVersionId$(): Observable<ID> {
+		return this.pluginQuery.currentPluginVersionId(this.pluginId);
 	}
 }

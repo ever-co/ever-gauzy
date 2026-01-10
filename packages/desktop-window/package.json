@@ -35,7 +35,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9",
-		"electron": "^30.0.1"
+		"electron": "^38.1.2"
 	},
 	"keywords": [
 		"desktop",
@@ -49,8 +49,8 @@
 		"electron-store"
 	],
 	"engines": {
-		"node": ">=20.18.1",
-		"yarn": ">=1.22.19"
+		"node": ">=22",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }

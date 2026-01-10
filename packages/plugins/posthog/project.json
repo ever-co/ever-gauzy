@@ -5,27 +5,22 @@
 	"projectType": "library",
 	"release": {
 		"version": {
-			"generatorOptions": {
-				"packageRoot": "dist/{projectRoot}",
-				"currentVersionResolver": "git-tag"
-			}
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
 	"tags": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": [
-				"{options.outputPath}"
-			],
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/plugins/posthog",
 				"tsConfig": "packages/plugins/posthog/tsconfig.lib.json",
 				"packageJson": "packages/plugins/posthog/package.json",
 				"main": "packages/plugins/posthog/src/index.ts",
-				"assets": [
-					"packages/plugins/posthog/*.md"
-				]
+				"assets": ["packages/plugins/posthog/*.md"]
 			}
 		},
 		"nx-release-publish": {
@@ -38,9 +33,7 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": [
-				"{workspaceRoot}/coverage/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/plugins/posthog/jest.config.ts"
 			}

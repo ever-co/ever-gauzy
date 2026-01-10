@@ -1,0 +1,92 @@
+.hierarchy-container {
+	margin: 1rem 0;
+}
+
+.subscriptions-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.subscription-row {
+	position: relative;
+}
+
+.subscription-card {
+	display: flex;
+	gap: 1rem;
+	padding: 1rem;
+	background: var(--background-basic-color-2);
+	border-radius: var(--border-radius);
+	border-left: 3px solid var(--color-primary-default);
+
+	&:hover {
+		background: var(--background-basic-color-3);
+	}
+}
+
+.status-section {
+	display: flex;
+	align-items: center;
+}
+
+.details-section {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.detail-row {
+	display: flex;
+	gap: 0.5rem;
+	font-size: 0.875rem;
+
+	.label {
+		font-weight: 600;
+		color: var(--text-basic-color);
+		min-width: 120px;
+	}
+
+	.value {
+		color: var(--text-hint-color);
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+
+		nb-icon {
+			font-size: 1.2rem;
+		}
+	}
+}
+
+.features-section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+
+	.label {
+		font-weight: 600;
+		color: var(--text-basic-color);
+		font-size: 0.875rem;
+	}
+}
+
+.features-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+
+	.feature-badge {
+		font-size: 0.75rem;
+	}
+}
+
+.empty-state {
+	.empty-icon {
+		font-size: 4rem;
+		color: var(--text-hint-color);
+		opacity: 0.3;
+	}
+}

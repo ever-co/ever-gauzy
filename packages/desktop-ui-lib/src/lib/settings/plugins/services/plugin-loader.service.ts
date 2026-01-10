@@ -18,6 +18,7 @@ export interface IPlugin {
 	pathname?: string;
 	logo?: string;
 	installed?: boolean;
+	installationId?: string;
 	name: string;
 	version: string;
 	versionId?: string;

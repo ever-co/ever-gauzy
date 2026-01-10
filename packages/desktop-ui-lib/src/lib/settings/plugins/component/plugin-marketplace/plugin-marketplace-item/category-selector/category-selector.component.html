@@ -1,0 +1,31 @@
+@let categories = query.categories$ | async; @let isLoading = query.isLoading$ | async; @let selected =
+query.selectedCategory$ | async;
+
+<div class="category-selector-container">
+	<gauzy-select
+		class="w-100"
+		[selectedItem]="selected?.id"
+		[items]="categories"
+		bindLabel="name"
+		bindValue="id"
+		placeholder="PLUGIN.FORM.CATEGORY"
+		[canAddTag]="allowCreate"
+		addTagText="Create category"
+		(modelChange)="onCategoryChange($event)"
+		[addTag]="onAddCategory"
+		[isLoading]="isLoading"
+		(scrollToEnd)="loadMore()"
+	>
+		<ng-template ng-option-tmp let-item="item">
+			<div class="category-option">
+				@if(item.icon) {
+				<nb-icon [icon]="item.icon" class="category-icon"></nb-icon>
+				}
+				<span class="category-name">{{ item.name }}</span>
+				@if(item.color) {
+				<span class="category-color" [style.background-color]="item.color"></span>
+				}
+			</div>
+		</ng-template>
+	</gauzy-select>
+</div>

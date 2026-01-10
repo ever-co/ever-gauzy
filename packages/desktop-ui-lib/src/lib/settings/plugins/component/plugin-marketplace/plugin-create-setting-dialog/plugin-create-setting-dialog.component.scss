@@ -1,0 +1,127 @@
+.plugin-create-setting-dialog {
+  width: 80vw;
+  max-width: 95vw;
+  background: var(--gauzy-card-1);
+  border-radius: calc(var(--border-radius) * 1.5);
+  box-shadow: var(--gauzy-shadow);
+  border: 0;
+
+  ::ng-deep nb-card-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--border-basic-color-3);
+    background: transparent;
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .header-icon {
+      font-size: 2rem;
+      color: var(--color-primary-default);
+    }
+
+    .card-title {
+      color: var(--gauzy-text-color-1);
+      font-weight: 600;
+      font-size: 1.25rem;
+      margin: 0;
+    }
+  }
+
+  ::ng-deep nb-card-body {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: 70vh;
+    background-color: var(--gauzy-card-2);
+
+    /* Custom scrollbar for webkit */
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--border-basic-color-3);
+      border-radius: 3px;
+    }
+  }
+
+  .form-group {
+    margin-bottom: 24px;
+
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--gauzy-text-color-1);
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+
+      .required {
+        color: var(--color-danger-default);
+        margin-left: 4px;
+      }
+    }
+
+    .form-text {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: var(--gauzy-text-color-2);
+      line-height: 1.4;
+    }
+  }
+
+  .checkbox-group {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 8px 0;
+
+    ::ng-deep nb-checkbox {
+      .text {
+        color: var(--gauzy-text-color-1);
+        font-weight: 500;
+      }
+    }
+  }
+
+  ::ng-deep nb-card-footer {
+    padding: 24px;
+    border-top: 1px solid var(--border-basic-color-3);
+    background: transparent;
+    gap: 1rem;
+
+    button {
+      border-radius: var(--border-radius);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  /* Input & Select Styling Enhancements */
+  ::ng-deep {
+    input,
+    textarea,
+    nb-select button {
+      background-color: var(--background-basic-color-1) !important;
+      border-color: var(--border-basic-color-3) !important;
+      color: var(--gauzy-text-color-1) !important;
+      border-radius: var(--border-radius) !important;
+
+      &:focus,
+      &.status-primary:focus {
+        border-color: var(--color-primary-default) !important;
+        background-color: var(--background-basic-color-1) !important;
+      }
+
+      &::placeholder {
+        color: var(--gauzy-text-color-2);
+        opacity: 0.7;
+      }
+    }
+  }
+}

@@ -4,6 +4,7 @@ export enum RegisteredWindow {
 	ABOUT = 'about',
 	IMAGE_VIEWER = 'image-viewer',
 	SETTINGS = 'settings',
+	PLUGINS = 'plugins',
 	SERVER = 'server',
 	TIMER = 'timer',
 	UPDATER = 'updater',

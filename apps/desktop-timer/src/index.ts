@@ -56,6 +56,7 @@ import {
 	createSetupWindow,
 	createTimeTrackerWindow,
 	createUpdaterWindow,
+	PluginMarketplaceWindow,
 	ScreenCaptureNotification,
 	SplashScreen,
 	timeTrackerPage
@@ -406,8 +407,10 @@ app.on('ready', async () => {
 		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
+		await marketplace.loadURL();
 
 		if (configs && configs.isSetup) {
 			global.variableGlobal = {
@@ -795,3 +798,17 @@ app.on('browser-window-created', (_, window) => {
 
 ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
+ipcMain.handle('set-tray-icon', () => {
+	return {
+		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
+		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon_gray.png')
+	}
+});
+
+nativeTheme.on('updated', () => {
+	const appSetting = LocalStore.getStore('appSetting');
+	timeTrackerWindow?.webContents?.send?.('custom_tray_icon', {
+		event: 'updateTheme',
+		isStopped: !appSetting.timerStarted
+	});
+});

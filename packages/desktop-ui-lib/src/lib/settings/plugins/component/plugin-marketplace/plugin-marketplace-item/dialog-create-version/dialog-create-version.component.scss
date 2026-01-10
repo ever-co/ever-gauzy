@@ -11,52 +11,126 @@ $transition-speed: 0.2s;
 }
 
 .dialog-card {
-  border-radius: $card-border-radius;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  border-radius: calc(var(--border-radius) * 2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   width: 600px;
   margin: 0 auto;
   height: 78vh;
+  background: var(--gauzy-card-1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 
   nb-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem;
-    border-bottom: 1px solid nb-theme(divider-color);
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: var(--gauzy-card-1);
 
-    .title {
-      margin: 0;
-      font-weight: 600;
-      font-size: 1rem;
-      text-wrap: nowrap;
-    }
-
-    .close-button {
-      padding: 0.25rem;
-      height: 2rem;
-      width: 2rem;
+    .header-content {
       display: flex;
       align-items: center;
-      justify-content: center;
-      transition: all $transition-speed ease;
-      border-radius: 50%;
-      cursor: pointer;
-      opacity: 0.8;
+      justify-content: space-between;
+      width: 100%;
+      gap: 1rem;
 
-      &:hover {
-        opacity: 1;
-        background-color: var(--background-basic-color-3);
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+        min-width: 0;
+
+        .icon-container {
+          flex-shrink: 0;
+          width: 2.5rem;
+          height: 2.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-info-default) 100%);
+          border-radius: calc(var(--border-radius) * 1.25);
+          box-shadow: 0 4px 12px rgba(54, 102, 255, 0.2);
+
+          nb-icon {
+            font-size: 1.25rem;
+            color: white;
+          }
+        }
+
+        .header-info {
+          flex: 1;
+          min-width: 0;
+
+          .title {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.0625rem;
+            color: var(--gauzy-text-color-1);
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+          }
+        }
+      }
+
+      .close-button {
+        flex-shrink: 0;
+        padding: 0.25rem;
+        height: 2rem;
+        width: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all $transition-speed ease;
+        border-radius: calc(var(--border-radius) * 1);
+        cursor: pointer;
+
+        nb-icon {
+          color: var(--gauzy-text-color-2);
+        }
+
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.05);
+
+          nb-icon {
+            color: var(--gauzy-text-color-1);
+          }
+        }
       }
     }
   }
 
   nb-card-body {
-    padding: 1rem;
+    padding: 0;
     overflow-y: auto;
 
     form {
       height: 100%;
+    }
+
+    .version-section {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+      .field-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .field-icon {
+          font-size: 1.125rem;
+          color: var(--color-primary-default);
+        }
+
+        .label {
+          margin: 0;
+          font-weight: 600;
+          font-size: 0.9375rem;
+          color: var(--gauzy-text-color-1);
+        }
+      }
     }
   }
 }
@@ -64,6 +138,40 @@ $transition-speed: 0.2s;
 // Responsive adjustments
 @media (max-width: 768px) {
   .dialog-card {
+    width: 100%;
+    height: 90vh;
+
+    nb-card-header {
+      padding: 1rem;
+
+      .header-content {
+        .header-left {
+          gap: 0.75rem;
+
+          .icon-container {
+            width: 2.25rem;
+            height: 2.25rem;
+
+            nb-icon {
+              font-size: 1.125rem;
+            }
+          }
+
+          .header-info {
+            .title {
+              font-size: 1rem;
+            }
+          }
+        }
+      }
+    }
+
+    nb-card-body {
+      .version-section {
+        padding: 1rem;
+      }
+    }
+
     form {
       .form-row {
         flex-direction: column;
@@ -80,6 +188,14 @@ $transition-speed: 0.2s;
       }
     }
   }
+
+  .stepper-buttons {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
 }
 
 ::ng-deep {
@@ -87,15 +203,15 @@ $transition-speed: 0.2s;
     border: none;
   }
 
-  .nb-theme-dark {
-    .file-upload-area {
-      &.has-file {
-        background-color: rgba(nb-theme(color-success-500), 0.1);
-      }
+  .file-upload-area {
+    &.has-file {
+      background-color: rgba(0, 214, 143, 0.1);
+      border-color: var(--color-success-default);
+    }
 
-      &.error {
-        background-color: rgba(nb-theme(color-danger-500), 0.1);
-      }
+    &.error {
+      background-color: rgba(255, 61, 113, 0.1);
+      border-color: var(--color-danger-default);
     }
   }
 
@@ -107,20 +223,89 @@ $transition-speed: 0.2s;
   nb-spinner {
     background: transparent;
   }
+
+  gauzy-version-selector {
+    nb-select {
+      button {
+        border-radius: calc(var(--border-radius) * 1);
+      }
+    }
+  }
 }
 
 .stepper-buttons {
   display: flex;
-  gap: 1rem;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--gauzy-card-1);
+
+  .previous-button {
+    border-radius: calc(var(--border-radius) * 1.25);
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .next-button,
+  .submit-button {
+    border-radius: calc(var(--border-radius) * 1.25);
+    box-shadow: 0 4px 12px rgba(54, 102, 255, 0.2);
+    transition: all 0.2s ease;
+
+    &:not([disabled]):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(54, 102, 255, 0.3);
+    }
+
+    &[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
 }
 
 ::ng-deep {
   nb-stepper {
     .step-content {
-      padding: 1rem;
+      padding: 1.5rem;
       display: flex;
       flex-direction: column;
       height: calc(100% - 8px);
+    }
+
+    .header {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      padding-bottom: 1rem;
+      margin-bottom: 0;
+
+      .step {
+        .label-index {
+          background: var(--gauzy-card-2);
+          border: 2px solid rgba(0, 0, 0, 0.08);
+          color: var(--gauzy-text-color-2);
+        }
+
+        &.selected .label-index {
+          background: var(--color-primary-default);
+          border-color: var(--color-primary-default);
+          color: white;
+          box-shadow: 0 4px 12px rgba(54, 102, 255, 0.3);
+        }
+
+        .label {
+          color: var(--gauzy-text-color-2);
+        }
+
+        &.selected .label {
+          color: var(--gauzy-text-color-1);
+          font-weight: 600;
+        }
+      }
     }
   }
 }
@@ -140,13 +325,14 @@ $transition-speed: 0.2s;
   overflow: auto;
 }
 
-/* Source Cards with Futuristic Design */
+/* Source Cards with Modern Design */
 .source-card {
   position: relative;
   padding: 1.5rem;
-  border-radius: 16px;
-  background: var(--card-background-color);
-  border: 1px solid var(--border-basic-color-4);
+  border-radius: calc(var(--border-radius) * 1.5);
+  background: var(--gauzy-card-1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: var(--gauzy-shadow);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   margin-bottom: 1rem;
@@ -154,7 +340,7 @@ $transition-speed: 0.2s;
 
   &:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     border-color: var(--color-primary-default);
 
     .hover-actions {
@@ -168,8 +354,9 @@ $transition-speed: 0.2s;
   }
 
   &.cdk-drag-preview {
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     transform: scale(1.02) rotate(1deg);
+    background: var(--gauzy-card-1);
   }
 }
 
@@ -216,7 +403,7 @@ $transition-speed: 0.2s;
   h5 {
     margin: 0;
     font-weight: 600;
-    color: var(--text-primary-color);
+    color: var(--gauzy-text-color-1);
     font-size: 1.1rem;
   }
 }
@@ -237,39 +424,41 @@ $transition-speed: 0.2s;
 .empty-state {
   text-align: center;
   padding: 3rem;
-  border: 2px dashed var(--border-basic-color-3);
-  border-radius: 16px;
+  border: 2px dashed rgba(0, 0, 0, 0.15);
+  border-radius: calc(var(--border-radius) * 1.5);
+  background: var(--gauzy-card-2);
   transition: all 0.3s ease;
 
   &:hover {
     border-color: var(--color-primary-default);
-    background: var(--background-basic-color-2);
+    background: var(--gauzy-card-1);
   }
 
   .empty-icon {
     font-size: 3rem;
-    color: var(--text-hint-color);
+    color: var(--gauzy-text-color-2);
     margin-bottom: 1rem;
   }
 
   h5 {
     margin: 0.5rem 0;
-    color: var(--text-primary-color);
+    color: var(--gauzy-text-color-1);
+    font-weight: 600;
   }
 
   p {
     margin: 0;
-    color: var(--text-hint-color);
+    color: var(--gauzy-text-color-2);
   }
 }
 
-/* Add Source Card - Futuristic Design */
+/* Add Source Card - Modern Design */
 .add-source-card {
   position: relative;
   padding: 2rem;
-  border-radius: 16px;
-  background: var(--background-basic-color-2);
-  border: 2px dashed var(--border-basic-color-3);
+  border-radius: calc(var(--border-radius) * 1.5);
+  background: var(--gauzy-card-2);
+  border: 2px dashed rgba(0, 0, 0, 0.15);
   text-align: center;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -277,9 +466,10 @@ $transition-speed: 0.2s;
   width: 482px;
 
   &:hover {
-    background: var(--background-basic-color-3);
+    background: var(--gauzy-card-1);
     border-color: var(--color-primary-default);
     transform: translateY(-2px);
+    box-shadow: var(--gauzy-shadow);
 
     .add-icon {
       transform: scale(1.1);
@@ -294,19 +484,20 @@ $transition-speed: 0.2s;
 
   .add-icon {
     font-size: 2.5rem;
-    color: var(--text-hint-color);
+    color: var(--gauzy-text-color-2);
     margin-bottom: 1rem;
     transition: all 0.3s ease;
   }
 
   h5 {
     margin: 0.5rem 0;
-    color: var(--text-primary-color);
+    color: var(--gauzy-text-color-1);
+    font-weight: 600;
   }
 
   p {
     margin: 0;
-    color: var(--text-hint-color);
+    color: var(--gauzy-text-color-2);
   }
 }
 
@@ -317,11 +508,11 @@ $transition-speed: 0.2s;
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--background-basic-color-1);
+  background: var(--gauzy-card-1);
   z-index: 10;
   padding: 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border-radius: calc(var(--border-radius) * 1.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   animation: fadeIn 0.3s ease;
 }
 
@@ -334,6 +525,8 @@ $transition-speed: 0.2s;
   h5 {
     margin: 0;
     font-size: 1.2rem;
+    color: var(--gauzy-text-color-1);
+    font-weight: 600;
   }
 }
 
@@ -345,19 +538,24 @@ $transition-speed: 0.2s;
 
 .source-option {
   padding: 1.5rem 1rem;
-  border-radius: 12px;
-  background: var(--background-basic-color-2);
+  border-radius: calc(var(--border-radius) * 1.25);
+  background: var(--gauzy-card-2);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-grow: 2;
   display: flex;
-  gap: 4px;
+  gap: 0.5rem;
   align-items: center;
+  justify-content: center;
 
   &:hover {
     background: var(--color-primary-default);
+    border-color: var(--color-primary-default);
     color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(54, 102, 255, 0.3);
 
     .option-icon {
       color: white;
@@ -368,6 +566,7 @@ $transition-speed: 0.2s;
     font-size: 1.8rem;
     color: var(--color-primary-default);
     display: block;
+    transition: color 0.2s ease;
   }
 }
 
@@ -386,10 +585,16 @@ $transition-speed: 0.2s;
 /* Drag & Drop Styles */
 .cdk-drag-placeholder {
   opacity: 0.5;
-  background: var(--background-basic-color-3);
+  background: var(--gauzy-card-2);
   border: 2px dashed var(--color-primary-default);
+  border-radius: calc(var(--border-radius) * 1.5);
 }
 
 .sources-list.cdk-drop-list-dragging .source-card:not(.cdk-drag-placeholder) {
   transition: transform 300ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Sources Container */
+.sources-container {
+  background: var(--gauzy-card-1);
 }

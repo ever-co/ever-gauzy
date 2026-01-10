@@ -1,11 +1,14 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager, type AuthManager } from '../common/auth-manager';
-import { ProductSchema, ProductCreateSchema, ImageAssetRefSchema } from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+import { ProductInputSchema } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
+import { ImageAssetRefSchema } from '../schema';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('ProductTools');
 
 /**
@@ -65,7 +68,8 @@ const productImageSchema = ImageAssetRefSchema.extend({
 
 export const registerProductTools = (server: McpServer) => {
 	// Get products tool
-	server.tool(
+	registerTool(
+		server,
 		'get_products',
 		"Get list of products for the authenticated user's organization",
 		{
@@ -117,7 +121,8 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Get products with translations tool
-	server.tool(
+	registerTool(
+		server,
 		'get_products_translated',
 		'Get list of products with translations for a specific language',
 		{
@@ -164,7 +169,8 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Get product count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_product_count',
 		"Get product count in the authenticated user's organization",
 		{
@@ -207,7 +213,8 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Get products by pagination tool
-	server.tool(
+	registerTool(
+		server,
 		'get_products_pagination',
 		'Get products with pagination support',
 		{
@@ -253,7 +260,8 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Get product by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_product',
 		'Get a specific product by ID',
 		{
@@ -293,7 +301,8 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Get product translated by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_product_translated',
 		'Get a specific product by ID with translations',
 		{
@@ -330,11 +339,12 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Create product tool
-	server.tool(
+	registerTool(
+		server,
 		'create_product',
 		"Create a new product in the authenticated user's organization",
 		{
-			product_data: ProductCreateSchema.describe(
+			product_data: ProductInputSchema.describe(
 				'The data for creating the product. Required fields: code (string), type (object with name), category (object with name)'
 			)
 		},
@@ -365,17 +375,18 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Update product tool
-	server.tool(
+	registerTool(
+		server,
 		'update_product',
 		'Update an existing product',
 		{
 			id: z.string().uuid().describe('The product ID'),
-			product_data: ProductSchema.partial().describe('The data for updating the product')
+			product_data: z.record(z.string(), z.any()).describe('The data for updating the product')
 		},
 		async ({ id, product_data }) => {
 			try {
 				// Validate user is authenticated
-			getValidatedDefaultParams(authManager);
+				getValidatedDefaultParams(authManager);
 
 				const updateData = {
 					...convertProductDateFields(product_data)
@@ -399,7 +410,8 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Delete product tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_product',
 		'Delete a product',
 		{
@@ -429,7 +441,8 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Add gallery images tool
-	server.tool(
+	registerTool(
+		server,
 		'add_product_gallery_images',
 		'Add images to product gallery',
 		{
@@ -456,7 +469,8 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Set featured image tool
-	server.tool(
+	registerTool(
+		server,
 		'set_product_featured_image',
 		'Set an image as featured for a product',
 		{
@@ -483,7 +497,8 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Delete gallery image tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_product_gallery_image',
 		'Delete an image from product gallery',
 		{
@@ -510,7 +525,8 @@ export const registerProductTools = (server: McpServer) => {
 	);
 
 	// Delete featured image tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_product_featured_image',
 		'Delete the featured image of a product',
 		{

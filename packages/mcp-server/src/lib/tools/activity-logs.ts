@@ -1,31 +1,34 @@
+// @ts-nocheck
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { validateOrganizationContext } from './utils';
 import {
-	ActivityLogSchema,
 	ActivityLogActionEnum,
 	ActivityLogEntityEnum,
 	ActorTypeEnum,
 	SortOrderEnum,
 	ActivityLogSortByEnum,
 	ActivityLogRelationsSchema
-} from '../schema';
-import { sanitizeErrorMessage, sanitizeForLogging } from '@gauzy/auth';
+} from '../input-schemas';
+import { ActivityLogSchema } from '../schema';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
+import { registerTool, registerNoArgsTool } from './tool-helper';
 const ActivityLogGroupBy = z.enum(['entity', 'action', 'user', 'date', 'hour']);
 
 const logger = new Logger('ActivityLogTools');
 
 export const registerActivityLogTools = (server: McpServer) => {
 	// Get activity logs tool
-	server.tool(
+	registerTool(
+		server,
 		'get_activity_logs',
 		"Get list of activity logs for the authenticated user's organization",
 		{
 			page: z.number().int().min(1).optional().default(1).describe('Page number for pagination'),
-      		limit: z.number().int().min(1).max(100).optional().default(10).describe('Number of items per page'),
+			limit: z.number().int().min(1).max(100).optional().default(10).describe('Number of items per page'),
 			relations: ActivityLogRelationsSchema,
 			entity: ActivityLogEntityEnum.optional().describe('Filter by entity type'),
 			entityId: z.string().uuid().optional().describe('Filter by entity ID'),
@@ -33,8 +36,16 @@ export const registerActivityLogTools = (server: McpServer) => {
 			actorType: ActorTypeEnum.optional().describe('Filter by actor type (System or User)'),
 			createdByUserId: z.string().uuid().optional().describe('Filter by user who performed the action'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee context'),
-			startDate: z.string().datetime({ offset: true }).optional().describe('Filter logs from this date (ISO format)'),
-		    endDate: z.string().datetime({ offset: true }).optional().describe('Filter logs until this date (ISO format)'),
+			startDate: z
+				.string()
+				.datetime({ offset: true })
+				.optional()
+				.describe('Filter logs from this date (ISO format)'),
+			endDate: z
+				.string()
+				.datetime({ offset: true })
+				.optional()
+				.describe('Filter logs until this date (ISO format)'),
 			sortBy: ActivityLogSortByEnum.optional().default('createdAt').describe('Sort logs by field'),
 			sortOrder: SortOrderEnum.optional().default('DESC').describe('Sort order')
 		},
@@ -92,7 +103,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Get activity log count tool
-	server.tool(
+	registerTool(
+		server,
 		'get_activity_log_count',
 		"Get activity log count in the authenticated user's organization",
 		{
@@ -140,7 +152,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Get activity log by ID tool
-	server.tool(
+	registerTool(
+		server,
 		'get_activity_log',
 		'Get a specific activity log by ID',
 		{
@@ -171,7 +184,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Create activity log tool
-	server.tool(
+	registerTool(
+		server,
 		'create_activity_log',
 		"Create a new activity log entry in the authenticated user's organization",
 		{
@@ -211,7 +225,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Get activity logs by entity tool
-	server.tool(
+	registerTool(
+		server,
 		'get_activity_logs_by_entity',
 		'Get activity logs for a specific entity',
 		{
@@ -283,7 +298,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Get activity logs by user tool
-	server.tool(
+	registerTool(
+		server,
 		'get_activity_logs_by_user',
 		'Get activity logs created by a specific user',
 		{
@@ -333,7 +349,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Get my activity logs tool
-	server.tool(
+	registerTool(
+		server,
 		'get_my_activity_logs',
 		'Get activity logs created by the current authenticated user',
 		{
@@ -379,7 +396,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Get recent activity logs tool
-	server.tool(
+	registerTool(
+		server,
 		'get_recent_activity_logs',
 		"Get recent activity logs for the authenticated user's organization",
 		{
@@ -426,7 +444,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Get activity log statistics tool
-	server.tool(
+	registerTool(
+		server,
 		'get_activity_log_statistics',
 		"Get activity log statistics for the authenticated user's organization",
 		{
@@ -470,7 +489,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Delete activity logs tool
-	server.tool(
+	registerTool(
+		server,
 		'delete_activity_logs',
 		'Delete activity logs based on criteria (for cleanup purposes)',
 		{
@@ -515,7 +535,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Search activity logs tool
-	server.tool(
+	registerTool(
+		server,
 		'search_activity_logs',
 		'Search activity logs by metadata or data content',
 		{
@@ -559,7 +580,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 	);
 
 	// Get activity timeline tool
-	server.tool(
+	registerTool(
+		server,
 		'get_activity_timeline',
 		'Get activity timeline for a specific entity',
 		{

@@ -1,0 +1,107 @@
+<nb-card class="create-category-dialog">
+	<nb-card-header>
+		<div class="header-content">
+			<nb-icon icon="folder-add-outline" class="header-icon"></nb-icon>
+			<h5 class="card-title">Create Category</h5>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form [formGroup]="categoryForm">
+			<div class="form-group">
+				<label for="name" class="label">Name <span class="required">*</span></label>
+				<input nbInput fullWidth id="name" formControlName="name" placeholder="Enter category name" />
+			</div>
+
+			<div class="form-group">
+				<label for="description" class="label">Description</label>
+				<textarea
+					nbInput
+					fullWidth
+					id="description"
+					formControlName="description"
+					placeholder="Describe this category..."
+					rows="3"
+				></textarea>
+			</div>
+
+			<div class="row">
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="slug" class="label">Slug</label>
+						<input nbInput fullWidth id="slug" formControlName="slug" placeholder="category-slug" />
+						<small class="form-text text-hint"> URL-friendly identifier (auto-generated from name) </small>
+					</div>
+				</div>
+
+				<div class="col-md-6">
+					<div class="form-group">
+						<label for="order" class="label">Order</label>
+						<input
+							nbInput
+							fullWidth
+							type="number"
+							id="order"
+							formControlName="order"
+							placeholder="0"
+							min="0"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="label">Color</label>
+				<div class="color-picker">
+					<div class="color-presets">
+						@for (color of colorPresets; track color) {
+						<button
+							type="button"
+							class="color-preset"
+							[class.selected]="selectedColor === color"
+							[style.background-color]="color"
+							(click)="selectColor(color)"
+							nbTooltip="{{ color }}"
+						></button>
+						}
+					</div>
+					<input nbInput type="color" formControlName="color" class="color-input" />
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="label">Icon</label>
+				<div class="icon-picker">
+					@for (icon of iconPresets; track icon) {
+					<button
+						type="button"
+						class="icon-preset"
+						[class.selected]="selectedIcon === icon"
+						(click)="selectIcon(icon)"
+						nbTooltip="{{ icon }}"
+					>
+						<nb-icon [icon]="icon"></nb-icon>
+					</button>
+					}
+				</div>
+			</div>
+
+			<div class="preview-section">
+				<label class="label">Preview</label>
+				<div class="category-preview">
+					<nb-icon [icon]="selectedIcon" [style.color]="selectedColor"></nb-icon>
+					<span class="preview-name">{{ categoryForm.get('name')?.value || 'Category Name' }}</span>
+					<span class="preview-color" [style.background-color]="selectedColor"></span>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="d-flex justify-content-end">
+		<button nbButton ghost status="basic" (click)="cancel()" class="me-2">Cancel</button>
+		<button nbButton status="primary" [disabled]="!categoryForm.valid || submitting" (click)="onSubmit()">
+			<nb-icon icon="checkmark-outline"></nb-icon>
+			Create Category
+		</button>
+	</nb-card-footer>
+</nb-card>

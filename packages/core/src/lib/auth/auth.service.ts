@@ -8,7 +8,6 @@ import {
 	UnauthorizedException
 } from '@nestjs/common';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { pick } from 'underscore';
@@ -70,6 +69,7 @@ import {
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
 import { SocialAccountService } from './social-account/social-account.service';
+import { PasswordHashService } from '../password-hash/password-hash.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -90,7 +90,8 @@ export class AuthService extends SocialAuthService {
 		private readonly commandBus: CommandBus,
 		private readonly httpService: HttpService,
 		private readonly socialAccountService: SocialAccountService,
-		private readonly eventBus: EventBus
+		private readonly eventBus: EventBus,
+		private readonly passwordHashService: PasswordHashService
 	) {
 		super();
 	}
@@ -134,17 +135,28 @@ export class AuthService extends SocialAuthService {
 			const userValidations = [];
 
 			for (const user of users) {
-				// Check password (let real bcrypt errors bubble up)
+				// Check password using PasswordHashService (supports bcrypt and scrypt)
 				let isPasswordValid = false;
 				try {
-					isPasswordValid = await bcrypt.compare(password, user.hash);
-				} catch (bcryptError) {
+					isPasswordValid = await this.passwordHashService.verify(password, user.hash);
+				} catch (hashError) {
 					// We don't log "errors" below because we might have many such users whose passwords are different, really!
-					// console.error(`Password comparison failed for user ${user.id}: ${bcryptError.message}`);
-					continue; // Skip this user if bcrypt fails
+					// console.error(`Password comparison failed for user ${user.id}: ${hashError.message}`);
+					continue; // Skip this user if hash verification fails
 				}
 				if (!isPasswordValid) {
 					continue; // Skip this user if password doesn't match
+				}
+
+				// Progressive password hash migration: rehash with new algorithm if needed
+				if (this.passwordHashService.needsRehash(user.hash)) {
+					try {
+						const newHash = await this.passwordHashService.hash(password);
+						await this.userService.changePassword(user.id, newHash);
+					} catch (rehashError) {
+						// Log but don't fail login if rehash fails
+						console.warn(`Failed to rehash password for user ${user.id}:`, rehashError.message);
+					}
 				}
 				// Fetch employee record
 				let employee = null;
@@ -179,10 +191,13 @@ export class AuthService extends SocialAuthService {
 			// Select the most recently updated user (already sorted by updatedAt DESC)
 			const { user: selectedUser, employee } = userValidations[0];
 
+			// Determine organization context for tokens
+			const organizationId = employee?.organizationId || selectedUser.lastOrganizationId;
+
 			// Generate both access and refresh tokens concurrently
 			const [access_token, refresh_token] = await Promise.all([
-				this.getJwtAccessToken(selectedUser),
-				this.getJwtRefreshToken(selectedUser)
+				this.getJwtAccessToken(selectedUser, organizationId),
+				this.getJwtRefreshToken(selectedUser, organizationId)
 			]);
 
 			// Update user's refresh token and last login timestamp concurrently
@@ -221,7 +236,7 @@ export class AuthService extends SocialAuthService {
 		const { email, password } = input;
 
 		/** Fetching users matching the query */
-		let users = await this.userService.find({
+		const allUsers = await this.userService.find({
 			where: [
 				{
 					email,
@@ -234,8 +249,31 @@ export class AuthService extends SocialAuthService {
 			order: { createdAt: 'DESC' }
 		});
 
-		// Filter users based on password match
-		users = users.filter((user: IUser) => bcrypt.compareSync(password, user.hash));
+		// Filter users based on password match using async verification
+		const validatedUsers: IUser[] = [];
+		for (const user of allUsers) {
+			try {
+				const isValid = await this.passwordHashService.verify(password, user.hash);
+				if (isValid) {
+					validatedUsers.push(user);
+
+					// Progressive password hash migration
+					if (this.passwordHashService.needsRehash(user.hash)) {
+						try {
+							const newHash = await this.passwordHashService.hash(password);
+							await this.userService.changePassword(user.id, newHash);
+						} catch (rehashError) {
+							console.warn(`Failed to rehash password for user ${user.id}:`, rehashError.message);
+						}
+					}
+				}
+			} catch (error) {
+				// Continue to next user if verification fails
+				continue;
+			}
+		}
+
+		let users = validatedUsers;
 
 		if (users.length === 0) {
 			throw new UnauthorizedException();
@@ -603,8 +641,8 @@ export class AuthService extends SocialAuthService {
 				throw new NotFoundException('Password Reset Failed.');
 			}
 
-			// Hash the new password and update it for the user
-			const hash = await this.getPasswordHash(password);
+			// Hash the new password using PasswordHashService and update it for the user
+			const hash = await this.passwordHashService.hash(password);
 			await this.userService.changePassword(user.id, hash);
 
 			return true;
@@ -644,7 +682,7 @@ export class AuthService extends SocialAuthService {
 		const entity = this.typeOrmUserRepository.create({
 			...input.user,
 			tenant,
-			...(input.password ? { hash: await this.getPasswordHash(input.password) } : {})
+			...(input.password ? { hash: await this.passwordHashService.hash(input.password) } : {})
 		});
 		let user = await this.typeOrmUserRepository.save(entity);
 
@@ -853,10 +891,12 @@ export class AuthService extends SocialAuthService {
 	 * If the user does not exist, an error is thrown.
 	 *
 	 * @param request A partial IUser object, mainly containing the user's ID.
+	 * @param organizationId Optional organization ID to use for finding the employee.
+	 *                       If not provided, uses RequestContext.currentOrganizationId().
 	 * @returns A Promise that resolves to a JWT access token string.
 	 * @throws Throws an UnauthorizedException if the user is not found or if there is an issue in token generation.
 	 */
-	public async getJwtAccessToken(request: Partial<IUser>) {
+	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID) {
 		const tenantId = request.tenantId || RequestContext.currentTenantId();
 		try {
 			// Validate that the request contains a user ID
@@ -873,7 +913,7 @@ export class AuthService extends SocialAuthService {
 			let user: User;
 
 			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
+				case MultiORMEnum.MikroORM: {
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
 						where: {
 							id: userId,
@@ -886,8 +926,9 @@ export class AuthService extends SocialAuthService {
 					});
 					user = (await this.mikroOrmUserRepository.findOne(where, mikroOptions)) as User;
 					break;
+				}
 
-				case MultiORMEnum.TypeORM:
+				case MultiORMEnum.TypeORM: {
 					user = await this.typeOrmUserRepository.findOne({
 						where: {
 							id: userId,
@@ -899,6 +940,7 @@ export class AuthService extends SocialAuthService {
 						order: { createdAt: 'DESC' }
 					});
 					break;
+				}
 
 				default:
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
@@ -911,12 +953,14 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Retrieve the employee details associated with the user.
-			const employee = await this.employeeService.findOneByUserId(user.id);
+			// Use provided organizationId if available, otherwise fall back to RequestContext
+			const employee = await this.employeeService.findOneByUserId(user.id, organizationId);
 
 			// Create a payload for the JWT token
 			const payload: JwtPayload = {
 				id: user.id,
 				tenantId: user.tenantId ?? null,
+				organizationId: organizationId ?? employee?.organizationId ?? null,
 				employeeId: employee ? employee.id : null,
 				role: user.role ? user.role.name : null,
 				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null
@@ -940,21 +984,23 @@ export class AuthService extends SocialAuthService {
 	 * ID, email, tenant ID, and role. It then generates a refresh token based on this payload.
 	 *
 	 * @param user A partial IUser object containing at least the user's ID, email, and role.
+	 * @param organizationId Optional organization ID to include in the token.
 	 * @returns A Promise that resolves to a JWT refresh token string.
 	 * @throws Logs an error and throws an exception if the token generation fails.
 	 */
-	public async getJwtRefreshToken(user: Partial<IUser>) {
+	public async getJwtRefreshToken(user: Partial<IUser>, organizationId?: ID) {
 		try {
 			// Ensure the user object contains the necessary information
 			if (!user.id || !user.email) {
 				throw new Error('User ID or email is missing.');
 			}
 
-			// Construct the JWT payload
+			// Construct the JWT payload with organization context
 			const payload: JwtPayload = {
 				id: user.id,
 				email: user.email,
 				tenantId: user.tenantId || null,
+				organizationId: organizationId || user.lastOrganizationId || null,
 				role: user.role ? user.role.name : null
 			};
 
@@ -970,6 +1016,13 @@ export class AuthService extends SocialAuthService {
 	/**
 	 * Get JWT access token from JWT refresh token
 	 *
+	 * Extracts the organization context from the refresh token to maintain
+	 * the user's organization selection across token refreshes.
+	 *
+	 * Note: The refresh token is organization-specific (contains organizationId).
+	 * When refreshing, the new access token will use the same organization context.
+	 * To switch organizations, use the /auth/switch-organization endpoint instead.
+	 *
 	 * @returns {Promise<{ token: string } | null>}
 	 */
 	async getAccessTokenFromRefreshToken(): Promise<{ token: string } | null> {
@@ -980,8 +1033,12 @@ export class AuthService extends SocialAuthService {
 			// If no user is found, return null
 			if (!user) return null;
 
-			// Get and return the JWT access token for the user
-			const token = await this.getJwtAccessToken(user);
+			// Extract organizationId from the current token (refresh token context)
+			// This ensures the new access token maintains the organization context
+			const organizationId = RequestContext.currentOrganizationId() || user.lastOrganizationId;
+
+			// Get and return the JWT access token for the user with organization context
+			const token = await this.getJwtAccessToken(user, organizationId);
 			return { token };
 		} catch (error) {
 			// Use console.error for error logging with more descriptive context
@@ -1205,10 +1262,13 @@ export class AuthService extends SocialAuthService {
 					throw new UnauthorizedException();
 				}
 
+				// Determine organization context for tokens
+				const organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
+
 				// Generate both access and refresh tokens concurrently for efficiency.
 				const [access_token, refresh_token] = await Promise.all([
-					this.getJwtAccessToken(user),
-					this.getJwtRefreshToken(user)
+					this.getJwtAccessToken(user, organizationId),
+					this.getJwtRefreshToken(user, organizationId)
 				]);
 
 				// Store the current refresh token with the user for later validation.
@@ -1559,10 +1619,13 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException('Employee account is not active');
 			}
 
+			// Determine organization context for tokens
+			const organizationId = employee?.organizationId || targetUser.lastOrganizationId;
+
 			// Generate new access and refresh tokens for the target workspace
 			const [access_token, refresh_token] = await Promise.all([
-				this.getJwtAccessToken(targetUser),
-				this.getJwtRefreshToken(targetUser)
+				this.getJwtAccessToken(targetUser, organizationId),
+				this.getJwtRefreshToken(targetUser, organizationId)
 			]);
 
 			// Store the current refresh token with the user
@@ -1582,6 +1645,123 @@ export class AuthService extends SocialAuthService {
 			};
 		} catch (error) {
 			console.error('Error while switching workspace:', error?.message);
+
+			// Re-throw known exceptions for better error handling in the frontend
+			if (error instanceof UnauthorizedException) {
+				throw error;
+			}
+
+			// For unexpected errors, return null to maintain backward compatibility
+			return null;
+		}
+	}
+
+	/**
+	 * Switch the current user to a different organization within the same workspace.
+	 *
+	 * @param organizationId The ID of the organization to switch to.
+	 * @returns A promise that resolves to the authentication response with new tokens or null if switching fails.
+	 * @throws UnauthorizedException when user is not authenticated or doesn't have access to the organization.
+	 */
+	async switchOrganization(organizationId: ID): Promise<IAuthResponse | null> {
+		try {
+			// Get the current authenticated user
+			const currentUser = RequestContext.currentUser();
+			if (!currentUser || !currentUser.id) {
+				throw new UnauthorizedException('User not authenticated');
+			}
+
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new UnauthorizedException('Tenant context not found');
+			}
+
+			// Verify the user has access to this organization
+			const userOrganization = await this.userOrganizationService.findOneByOptions({
+				where: {
+					userId: currentUser.id,
+					organizationId,
+					tenantId,
+					isActive: true,
+					isArchived: false
+				}
+			});
+
+			if (!userOrganization) {
+				throw new UnauthorizedException('User does not have access to this organization');
+			}
+
+			// Retrieve the user with role permissions
+			let user: User;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
+						where: {
+							id: currentUser.id,
+							tenantId,
+							isActive: true,
+							isArchived: false
+						},
+						relations: { role: { rolePermissions: true } }
+					});
+					user = (await this.mikroOrmUserRepository.findOne(where, mikroOptions)) as User;
+					break;
+				}
+
+				case MultiORMEnum.TypeORM: {
+					user = await this.typeOrmUserRepository.findOne({
+						where: {
+							id: currentUser.id,
+							tenantId,
+							isActive: true,
+							isArchived: false
+						},
+						relations: { role: { rolePermissions: true } }
+					});
+					break;
+				}
+
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+			}
+
+			if (!user) {
+				throw new UnauthorizedException('User not found');
+			}
+
+			// Retrieve the employee details for the target organization
+			const employee = await this.employeeService.findOneByUserId(user.id, organizationId);
+
+			// Check if the employee is active and not archived (if employee exists)
+			if (employee && (!employee.isActive || employee.isArchived)) {
+				throw new UnauthorizedException('Employee account is not active in this organization');
+			}
+
+			// Update user's last organization and reflect it in the user object
+			await this.userService.update(user.id, { lastOrganizationId: organizationId });
+			user.lastOrganizationId = organizationId;
+
+			// Generate new access and refresh tokens with the new organization context
+			const [access_token, refresh_token] = await Promise.all([
+				this.getJwtAccessToken(user, organizationId),
+				this.getJwtRefreshToken(user, organizationId)
+			]);
+
+			// Store the current refresh token with the user
+			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+
+			// Return the authentication response
+			return {
+				user: new User({
+					...this.serialize(user),
+					...(employee && { employee })
+				}),
+				token: access_token,
+				refresh_token: refresh_token
+			};
+		} catch (error) {
+			console.error('Error while switching organization:', error?.message);
 
 			// Re-throw known exceptions for better error handling in the frontend
 			if (error instanceof UnauthorizedException) {

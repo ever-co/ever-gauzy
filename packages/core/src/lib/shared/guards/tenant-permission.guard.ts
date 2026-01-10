@@ -2,7 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, Type, Inject } from '@nestjs
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 import { environment as env } from '@gauzy/config';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty, deduplicate } from '@gauzy/utils';
@@ -27,6 +27,16 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		console.log('TenantPermissionGuard canActivate called');
+
+		// Check if the route or controller has the PUBLIC decorator
+		const isPublic =
+			this._reflector.get<boolean>(PUBLIC_METHOD_METADATA, context.getHandler()) ||
+			this._reflector.get<boolean>(PUBLIC_METHOD_METADATA, context.getClass());
+
+		// Allow access if the method or class has the PUBLIC decorator
+		if (isPublic) {
+			return true;
+		}
 
 		const tenantId = RequestContext.currentTenantId();
 		const roleId = RequestContext.currentRoleId();

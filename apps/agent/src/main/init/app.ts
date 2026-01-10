@@ -167,14 +167,15 @@ async function appReady() {
 	await ensureScreenshotDir();
 	const configs: any = store.get('configs');
 	const settings = getAppSetting();
-	if (!settings) {
+	if (!settings || (!Object.keys(settings).length)) {
 		launchAtStartup(true, false);
 		LocalStore.setAllDefaultConfig();
 
 		/* Set default application setting for agent app. */
 		LocalStore.updateApplicationSetting({
 			screenshotNotification: false,
-			simpleScreenshotNotification: false
+			simpleScreenshotNotification: false,
+			alwaysOn: false
 		});
 	}
 
@@ -304,10 +305,9 @@ export async function InitApp() {
 		}
 	});
 
-	app.on('window-all-closed', (event: Event) => {
+	app.on('window-all-closed', () => {
 		// On OS X it is common for applications and their menu bar
 		// to stay active until the user quits explicitly with Cmd + Q
-		event.preventDefault();
 		if (process.platform === 'darwin') {
 			app.dock.hide();
 		}

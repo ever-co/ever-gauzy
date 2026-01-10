@@ -1,12 +1,13 @@
-import { RouterModule, Routes, ExtraOptions } from '@angular/router';
 import { NgModule } from '@angular/core';
+import { ExtraOptions, RouterModule, Routes } from '@angular/router';
 import {
+	AboutComponent,
+	AuthConnectionGuard,
+	ServerDashboardComponent,
 	SettingsComponent,
 	SetupComponent,
-	UpdaterComponent,
-	ServerDashboardComponent,
-	AboutComponent,
-	SplashScreenComponent
+	SplashScreenComponent,
+	UpdaterComponent
 } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
@@ -17,6 +18,12 @@ const routes: Routes = [
 	{
 		path: 'setup',
 		component: SetupComponent
+	},
+	{
+		path: 'plugins',
+		canActivate: [AuthConnectionGuard],
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginLayoutComponent),
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.pluginRoutes)
 	},
 	{
 		path: 'settings',
@@ -49,4 +56,4 @@ const config: ExtraOptions = {
 	imports: [RouterModule.forRoot(routes, config)],
 	exports: [RouterModule]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

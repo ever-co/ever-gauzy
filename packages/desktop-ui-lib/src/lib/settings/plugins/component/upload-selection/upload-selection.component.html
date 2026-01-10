@@ -1,0 +1,64 @@
+<nb-card class="upload-selection-card">
+	<nb-card-header>
+		<div class="header-content">
+			<nb-icon icon="cloud-upload-outline" class="header-icon"></nb-icon>
+			<h5 class="title">{{ 'PLUGIN.UPLOAD_SELECTION.TITLE' | translate }}</h5>
+		</div>
+		<button
+			class="close-button"
+			size="small"
+			nbButton
+			ghost
+			(click)="dismiss()"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+		>
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	<nb-card-body>
+		<p class="description">{{ 'PLUGIN.UPLOAD_SELECTION.DESCRIPTION' | translate }}</p>
+
+		<div class="options-container">
+			<!-- Install Plugin Locally Option -->
+			<nb-card
+				class="option-card"
+				role="button"
+				(click)="selectInstall()"
+				(keydown.enter)="selectInstall()"
+				(keydown.space)="selectInstall()"
+				[tabindex]="0"
+			>
+				<nb-card-body>
+					<div class="option-icon-container install">
+						<nb-icon icon="monitor-outline" class="option-icon"></nb-icon>
+					</div>
+					<h6 class="option-title">{{ 'PLUGIN.UPLOAD_SELECTION.INSTALL_LOCAL' | translate }}</h6>
+					<p class="option-description">
+						{{ 'PLUGIN.UPLOAD_SELECTION.INSTALL_LOCAL_DESC' | translate }}
+					</p>
+				</nb-card-body>
+			</nb-card>
+
+			<!-- Publish Plugin to Marketplace Option -->
+			<nb-card
+				class="option-card"
+				role="button"
+				(click)="selectPublish()"
+				(keydown.enter)="selectPublish()"
+				(keydown.space)="selectPublish()"
+				[tabindex]="0"
+			>
+				<nb-card-body>
+					<div class="option-icon-container publish">
+						<nb-icon icon="shopping-bag-outline" class="option-icon"></nb-icon>
+					</div>
+					<h6 class="option-title">{{ 'PLUGIN.UPLOAD_SELECTION.PUBLISH_MARKETPLACE' | translate }}</h6>
+					<p class="option-description">
+						{{ 'PLUGIN.UPLOAD_SELECTION.PUBLISH_MARKETPLACE_DESC' | translate }}
+					</p>
+				</nb-card-body>
+			</nb-card>
+		</div>
+	</nb-card-body>
+</nb-card>

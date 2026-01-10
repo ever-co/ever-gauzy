@@ -1,0 +1,72 @@
+<nb-card class="form-section billing-contact" [formGroup]="form">
+	<nb-card-header>
+		<div class="section-title">
+			<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
+			<div>
+				<h6>Billing contact</h6>
+				<p class="hint">Receipts and notices go to this email</p>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="field-grid">
+			<div class="input-group">
+				<label for="billingName">
+					Full name
+					<span class="required" aria-label="required">*</span>
+				</label>
+				<nb-form-field [class.has-error]="hasError('billingName', 'required')">
+					<nb-icon nbPrefix icon="person-outline" aria-hidden="true"></nb-icon>
+					<input
+						nbInput
+						id="billingName"
+						formControlName="billingName"
+						placeholder="John Doe"
+						autocomplete="name"
+						aria-required="true"
+						aria-describedby="billingName-error"
+					/>
+				</nb-form-field>
+				@if (hasError('billingName', 'required')) {
+				<div class="error-message" id="billingName-error" role="alert">
+					<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+					Billing name is required
+				</div>
+				}
+			</div>
+
+			<div class="input-group">
+				<label for="billingEmail">
+					Email address
+					<span class="required" aria-label="required">*</span>
+				</label>
+				<nb-form-field
+					[class.has-error]="hasError('billingEmail', 'required') || hasError('billingEmail', 'email')"
+				>
+					<nb-icon nbPrefix icon="email-outline" aria-hidden="true"></nb-icon>
+					<input
+						nbInput
+						id="billingEmail"
+						formControlName="billingEmail"
+						placeholder="john@example.com"
+						type="email"
+						autocomplete="email"
+						aria-required="true"
+						aria-describedby="billingEmail-error"
+					/>
+				</nb-form-field>
+				@if (hasError('billingEmail', 'required')) {
+				<div class="error-message" id="billingEmail-error" role="alert">
+					<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+					Email is required
+				</div>
+				} @if (hasError('billingEmail', 'email')) {
+				<div class="error-message" id="billingEmail-error" role="alert">
+					<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+					Please enter a valid email address
+				</div>
+				}
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

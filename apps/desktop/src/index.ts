@@ -8,8 +8,8 @@ Object.assign(console, log.functions);
 import * as remoteMain from '@electron/remote/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, nativeTheme, shell } from 'electron';
-import * as path from 'path';
 import * as Store from 'electron-store';
+import * as path from 'path';
 
 import { environment } from './environments/environment';
 
@@ -45,6 +45,7 @@ import {
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
+	PluginMarketplaceWindow,
 	ScreenCaptureNotification,
 	SplashScreen,
 	createGauzyWindow,
@@ -539,6 +540,9 @@ app.on('ready', async () => {
 		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+
+		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
+		await marketplace.loadURL();
 
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();

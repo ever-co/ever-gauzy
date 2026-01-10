@@ -3,6 +3,7 @@
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "apps/mcp/src",
 	"projectType": "application",
+	"implicitDependencies": ["mcp-server"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",

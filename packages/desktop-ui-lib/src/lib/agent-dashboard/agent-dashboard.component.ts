@@ -15,12 +15,6 @@ import { TasksService } from './services/tasks-service';
 export class AgentDashboardComponent implements OnInit, OnDestroy {
 	menu: NbMenuItem[] = [
 		{
-			title: 'Tasks',
-			link: '/server-dashboard/tasks',
-			icon: 'checkmark-square-2-outline',
-			pathMatch: 'prefix'
-		},
-		{
 			title: 'Logs',
 			link: '/server-dashboard/logs', // Assuming this will be the route for logs
 			icon: 'file-text-outline'

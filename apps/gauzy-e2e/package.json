@@ -57,6 +57,8 @@
 		"@4tw/cypress-drag-drop": "^2.1.0",
 		"@cypress/browserify-preprocessor": "^3.0.2",
 		"@types/jest": "29.5.14",
+		"concurrently": "^5.3.0",
+		"cross-env": "^7.0.3",
 		"cypress": "^9.4.1",
 		"cypress-cucumber-preprocessor": "^4.3.1",
 		"cypress-file-upload": "^5.0.8",
@@ -69,7 +71,8 @@
 		"karma-cli": "^2.0.0",
 		"karma-coverage-istanbul-reporter": "^3.0.3",
 		"karma-jasmine": "^5.1.0",
-		"karma-jasmine-html-reporter": "^1.7.0"
+		"karma-jasmine-html-reporter": "^1.7.0",
+		"ts-node": "^10.9.2"
 	},
 	"cypress-cucumber-preprocessor": {
 		"nonGlobalStepDefinitions": true,

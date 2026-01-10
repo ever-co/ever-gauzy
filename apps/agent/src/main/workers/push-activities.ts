@@ -18,7 +18,7 @@ import {
 	ITimerCallbackPayload
 } from '@gauzy/desktop-activity';
 import { ApiService, TResponseTimeSlot } from '../api';
-import { getAuthConfig, TAuthConfig, getInitialConfig } from '../util';
+import { getAuthConfig, TAuthConfig, getInitialConfig, getProjectConfig } from '../util';
 import * as moment from 'moment';
 import { AgentLogger } from '../agent-logger';
 import { environment } from '../../environments/environment';
@@ -26,6 +26,7 @@ import * as fs from 'node:fs';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 import { WorkerQueue } from '../queue/worker-queue';
+import { TaskStatusEnum } from '@gauzy/contracts';
 
 type TParamsActivities = Omit<TimeSlotActivities, 'recordedAt'> & { recordedAt: string };
 
@@ -88,6 +89,9 @@ class PushActivities {
 		(async () => {
 			try {
 				await this.syncTimer(job);
+				if (!job.data?.isStopped) {
+					await this.updateTaskStatus();
+				}
 				return cb(null);
 			} catch (error) {
 				job.attempts += 1;
@@ -110,15 +114,19 @@ class PushActivities {
 				await this.syncTimeSlot(job);
 				return cb(null);
 			} catch (error) {
-				await this.kbMouseActivityService.update({
-					id: job.activityId,
-					isOffline: true
-				});
 				job.attempts += 1;
-				if (!job.isRetry) {
-					job.isRetry = true;
-					job.queue = 'time_slot_retry';
-					this.workerQueue.desktopQueue.enqueueTimeSlot(job);
+				try {
+					await this.kbMouseActivityService.update({
+						id: job.activityId,
+						isOffline: true
+					});
+					if (!job.isRetry) {
+						job.isRetry = true;
+						job.queue = 'time_slot_retry';
+						this.workerQueue.desktopQueue.enqueueTimeSlot(job);
+					}
+				} catch (error) {
+					console.error('TIMER_QUEUE_ERROR', error);
 				}
 				return cb(new Error(error.message));
 			}
@@ -141,21 +149,25 @@ class PushActivities {
 				return cb(null);
 			} catch (error) {
 				job.attempts += 1;
-				const screenshot = await this.screenshotService.saveAndReturn({
-					timeslotId: job.data?.timeSlotId,
-					imagePath: job.data?.imagePath,
-					synced: false,
-					activityId: job.data?.activityId,
-					recordedAt: new Date(job.data?.recordedAt)
-				});
-				if (!job.isRetry) {
-					job.isRetry = true;
-					job.queue = 'screenshot_retry';
-					job.data = {
-						...job.data,
-						id: screenshot.id
+				try {
+					const screenshot = await this.screenshotService.saveAndReturn({
+						timeslotId: job.data?.timeSlotId,
+						imagePath: job.data?.imagePath,
+						synced: false,
+						activityId: job.data?.activityId,
+						recordedAt: new Date(job.data?.recordedAt)
+					});
+					if (!job.isRetry) {
+						job.isRetry = true;
+						job.queue = 'screenshot_retry';
+						job.data = {
+							...job.data,
+							id: screenshot.id
+						}
+						this.workerQueue.desktopQueue.enqueueScreenshot(job);
 					}
-					this.workerQueue.desktopQueue.enqueueScreenshot(job);
+				} catch (error) {
+					console.error('SCREENSHOT_QUEUE_ERR', error);
 				}
 				return cb(new Error(error.message));
 			}
@@ -268,6 +280,29 @@ class PushActivities {
 		this.agentLogger.error(
 			`Failed to save screenshots to the api with response ${JSON.stringify(respScreenshot)}`
 		);
+	}
+
+	async updateTaskStatus() {
+		try {
+			const authConfig = getAuthConfig();
+			const projectConfig = getProjectConfig();
+			if (!projectConfig?.taskId) {
+				return;
+			}
+			const taskStatus = await this.apiService.getTask(projectConfig.taskId);
+			if (taskStatus.status === TaskStatusEnum.IN_PROGRESS) {
+				return;
+			}
+			return this.apiService.updateTaskStatus(projectConfig.taskId, {
+				tenantId: authConfig?.user?.employee?.tenantId,
+				organizationId: authConfig?.user?.employee?.organizationId,
+				status: TaskStatusEnum.IN_PROGRESS,
+				title: taskStatus.title
+			});
+		} catch (error) {
+			console.error('Failed update task status', error);
+		}
+
 	}
 
 	async saveImage(recordedAt: string, images: string[], timeSlotId?: string) {
@@ -415,6 +450,7 @@ class PushActivities {
 		if (!isAuthenticated) {
 			return;
 		}
+		const projectConfig = getProjectConfig();
 		const overall = this.getDurationOverAllSeconds(new Date(activities.timeStart), new Date(activities.timeEnd), activities.afkDuration);
 		const duration = this.getDurationSeconds(new Date(activities.timeStart), new Date(activities.timeEnd));
 		return {
@@ -427,7 +463,10 @@ class PushActivities {
 			startedAt: moment(activities.timeStart).toISOString(),
 			recordedAt: moment(activities.timeStart).toISOString(),
 			activities: this.getActivities(activities, overall, auth),
-			employeeId: auth?.user?.employee?.id
+			employeeId: auth?.user?.employee?.id,
+			...(projectConfig?.projectId ? { projectId: projectConfig?.projectId } : {}),
+			...(projectConfig?.taskId ? { taskId: projectConfig?.taskId } : {}),
+			...(projectConfig?.organizationContactId ? { organizationContactId: projectConfig?.organizationContactId } : {})
 		};
 	}
 

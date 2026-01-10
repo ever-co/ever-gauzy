@@ -37,13 +37,16 @@ ARG DB_SYNCHRONIZE
 ARG MCP_TRUSTED_PROXIES
 
 
-FROM node:20.18.1-alpine3.19 AS dependencies
+FROM node:24.12.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
-RUN apk add --no-cache python3 make g++ \
-    && npm install yarn -g --force
+RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
+    && npm install --quiet node-gyp@10.2.0 -g \
+    && npm install yarn -g --force \
+    && npm install --quiet ts-node@10.9.2 -g
+
 RUN mkdir /srv/gauzy-mcp-auth && chown -R node:node /srv/gauzy-mcp-auth
 
 USER node:node
@@ -60,9 +63,10 @@ COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
-    && npm rebuild bcrypt better-sqlite3 --build-from-source \
+    && yarn postinstall.manual \
     && yarn cache clean
 
 COPY --chown=node:node apps/mcp-auth ./apps/mcp-auth
@@ -89,7 +93,7 @@ ARG NODE_OPTIONS
 ENV NX_NO_CLOUD=true
 ENV CI=true
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
 ENV NODE_ENV=production
 ENV IS_DOCKER=true
 
@@ -98,9 +102,12 @@ RUN rm -rf /srv/gauzy-mcp-auth/dist
 RUN yarn build:mcp-auth:prod
 
 # Only prod dependencies
-FROM node:20.18.1-alpine3.19 AS proddependencies
+FROM node:24.12.0-alpine3.23 AS proddependencies
 
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
+    && npm install --quiet node-gyp@10.2.0 -g \
+	&& npm install yarn -g --force \
+    && npm install --quiet ts-node@10.9.2 -g
 
 USER node:node
 
@@ -108,9 +115,10 @@ WORKDIR /srv/gauzy-mcp-auth
 
 COPY --chown=node:node --from=build /srv/gauzy-mcp-auth/dist .
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
-    && npm rebuild bcrypt better-sqlite3 --build-from-source \
+    && yarn postinstall.manual \
     && yarn cache clean
 
 # PROD

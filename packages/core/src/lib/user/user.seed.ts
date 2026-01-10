@@ -3,10 +3,9 @@
 // Copyright (c) 2019 Alexi Taylor
 
 import { DataSource } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
-import { environment as env } from '@gauzy/config';
+import { hashPassword } from '@gauzy/utils';
 import {
 	IDefaultUser,
 	RolesEnum,
@@ -327,7 +326,7 @@ const generateDefaultUser = async (defaultUser: IDefaultUser, role: IRole, tenan
 	user.preferredComponentLayout = preferredComponentLayout;
 	user.emailVerifiedAt = new Date();
 	user.lastLoginAt = getRandomDateWithinLast3Months();
-	user.hash = await bcrypt.hash(defaultUser.password, env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
+	user.hash = await hashPassword(defaultUser.password);
 
 	return user;
 };
@@ -350,7 +349,7 @@ const generateRandomUser = async (role: IRole, tenant: ITenant): Promise<IUser> 
 	user.preferredLanguage = getRandomLanguage();
 	user.emailVerifiedAt = new Date();
 	user.lastLoginAt = getRandomDateWithinLast3Months();
-	user.hash = await bcrypt.hash('123456', env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
+	user.hash = await hashPassword('123456');
 
 	return user;
 };

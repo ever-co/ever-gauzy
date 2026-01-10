@@ -40,7 +40,7 @@
   .section-title {
     font-weight: 600;
     margin-bottom: 1rem;
-    color: nb-theme(text-basic-color);
+    color: var(--gauzy-text-color-1);
     border-bottom: 1px solid nb-theme(border-basic-color-3);
     padding-bottom: 0.5rem;
   }
@@ -159,25 +159,262 @@ nb-tag-list {
   display: block;
 
   .plugin-details-card {
+    box-shadow: var(--gauzy-shadow);
+
     nb-card-header {
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--gauzy-border-default-color);
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      background: var(--gauzy-card-1);
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+
+        .header-left {
+          display: flex;
+          align-items: flex-start;
+          gap: 1rem;
+          flex: 1;
+          min-width: 0;
+
+          .icon-container {
+            flex-shrink: 0;
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-info-default) 100%);
+            border-radius: calc(var(--border-radius) * 1.5);
+            box-shadow: 0 4px 12px rgba(54, 102, 255, 0.25);
+
+            nb-icon {
+              font-size: 1.5rem;
+              color: white;
+            }
+          }
+
+          .header-info {
+            flex: 1;
+            min-width: 0;
+
+            .title {
+              margin: 0;
+              font-size: 1.25rem;
+              font-weight: 600;
+              color: var(--gauzy-text-color-1);
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+            }
+
+            .category-container {
+              display: flex;
+              align-items: center;
+              font-size: 0.875rem;
+              font-weight: 500;
+
+              nb-icon {
+                font-size: 1rem;
+              }
+            }
+
+            .badge-container {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 0.5rem;
+              margin-top: 0.5rem;
+              position: relative;
+            }
+          }
+        }
+
+        .close-button {
+          flex-shrink: 0;
+          padding: 0.25rem;
+          height: 2rem;
+          width: 2rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          border-radius: calc(var(--border-radius) * 1);
+          cursor: pointer;
+
+          nb-icon {
+            color: var(--gauzy-text-color-2);
+          }
+
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+
+            nb-icon {
+              color: var(--gauzy-text-color-1);
+            }
+          }
+        }
+      }
     }
 
     nb-card-body {
       padding: 1.5rem;
+      background: var(--gauzy-card-2);
+      border-radius: 0;
     }
 
     nb-card-footer {
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--gauzy-border-default-color);
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      background: var(--gauzy-card-1);
+
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        width: 100%;
+
+        .back-button {
+          border-radius: calc(var(--border-radius) * 1.25);
+          transition: all 0.2s ease;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(54, 102, 255, 0.2);
+          }
+        }
+
+        .footer-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+
+          button {
+            border-radius: calc(var(--border-radius) * 1.25);
+            transition: all 0.2s ease;
+
+            &:hover:not([disabled]) {
+              transform: translateY(-1px);
+            }
+
+            &[disabled] {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+          }
+
+          .subscription-button:hover:not([disabled]),
+          .assign-button:hover:not([disabled]),
+          .add-source-button:hover:not([disabled]) {
+            box-shadow: 0 4px 12px rgba(0, 149, 255, 0.2);
+          }
+
+          .add-version-button:hover:not([disabled]),
+          .edit-button:hover:not([disabled]) {
+            box-shadow: 0 4px 12px rgba(54, 102, 255, 0.2);
+          }
+
+          .delete-button:hover:not([disabled]) {
+            box-shadow: 0 4px 12px rgba(255, 61, 113, 0.2);
+          }
+        }
+      }
     }
   }
 
   .plugin-content {
-    .quick-actions {
-      display: flex;
-      align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    .quick-actions-card {
+      background: var(--gauzy-card-1);
+      border-radius: calc(var(--border-radius) * 1.5);
+      padding: 1.5rem;
+      box-shadow: var(--gauzy-shadow);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+
+      .installed-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+
+        .status-indicator {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+
+          .status-icon {
+            font-size: 1.5rem;
+            color: var(--color-success-default);
+          }
+
+          .status-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-success-default);
+          }
+        }
+
+        .action-buttons-group {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+
+          .update-button,
+          .uninstall-button {
+            border-radius: calc(var(--border-radius) * 1.25);
+            transition: all 0.2s ease;
+
+            &:hover:not([disabled]) {
+              transform: translateY(-2px);
+            }
+
+            &[disabled] {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+          }
+
+          .update-button:hover:not([disabled]) {
+            box-shadow: 0 6px 16px rgba(54, 102, 255, 0.3);
+          }
+
+          .uninstall-button:hover:not([disabled]) {
+            box-shadow: 0 4px 12px rgba(255, 61, 113, 0.2);
+          }
+        }
+      }
+
+      .install-options {
+        .install-button,
+        .subscribe-button {
+          border-radius: calc(var(--border-radius) * 1.25);
+          transition: all 0.2s ease;
+
+          &:hover:not([disabled]) {
+            transform: translateY(-2px);
+          }
+
+          &[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+        }
+
+        .install-button:hover:not([disabled]) {
+          box-shadow: 0 6px 16px rgba(0, 214, 143, 0.3);
+        }
+
+        .subscribe-button:hover:not([disabled]) {
+          box-shadow: 0 6px 16px rgba(255, 170, 0, 0.3);
+        }
+      }
     }
 
     .description-container {
@@ -306,6 +543,13 @@ nb-tag-list {
     }
     .value {
       color: var(--gauzy-text-color-1);
+      width: 100%;
+      a {
+        width: 100%;
+        span {
+          width: auto;
+        }
+      }
     }
   }
 
@@ -315,5 +559,124 @@ nb-tag-list {
 
   .action-buttons {
     display: flex;
+  }
+
+  // Owner Actions Popover Styles
+  .owner-actions-popover {
+    max-width: 240px;
+    margin: 0;
+    box-shadow: var(--gauzy-shadow);
+    border-radius: calc(var(--border-radius) * 1.5);
+
+    nb-card-body {
+      padding: 0;
+    }
+
+    .action-list {
+      margin: 0 !important;
+      padding: 0 !important;
+
+      .action-item {
+        padding: 0 !important;
+        margin: 0 !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .action-button {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          border: none;
+          text-align: left;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+          border-radius: calc(var(--border-radius) * 1.2) !important;
+          transition: all 0.2s ease;
+
+          &:first-child {
+            border-radius: calc(var(--border-radius) * 1.5) calc(var(--border-radius) * 1.5) 0 0;
+          }
+
+          &:last-child {
+            border-radius: 0 0 calc(var(--border-radius) * 1.5) calc(var(--border-radius) * 1.5);
+          }
+
+          .button-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+
+            nb-icon {
+              font-size: 1.125rem;
+              flex-shrink: 0;
+            }
+
+            .action-label {
+              font-size: 0.875rem;
+              font-weight: 500;
+              white-space: nowrap;
+            }
+          }
+
+          .progress-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            flex-shrink: 0;
+          }
+
+          &:hover:not([disabled]) {
+            background-color: rgba(0, 0, 0, 0.04);
+          }
+
+          &[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+        }
+      }
+    }
+  }
+}
+
+:host ::ng-deep nb-route-tabset .route-tab .tab-link {
+  display: flex !important;
+  border-radius: var(--border-radius) !important;
+
+  nb-icon {
+    margin-bottom: unset;
+  }
+  svg {
+    fill: var(--text-primary-color);
+  }
+  span {
+    display: inline-block;
+    text-transform: initial;
+    &:first-letter {
+      text-transform: uppercase;
+    }
+  }
+}
+
+::ng-deep {
+  nb-badge {
+    font-size: 0.75rem;
+    padding: 0.375rem;
+    border-radius: calc(var(--border-radius) * 1);
+    position: relative !important;
+  }
+
+  [nbButton] {
+    justify-content: flex-start;
+    border-radius: calc(var(--border-radius) * 1.2);
+
+    &.action-button {
+      border-radius: calc(var(--border-radius) * 1.2) !important;
+      transition: all 0.2s ease;
+    }
   }
 }

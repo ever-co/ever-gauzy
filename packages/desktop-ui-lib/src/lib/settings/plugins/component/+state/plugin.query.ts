@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Query } from '@datorama/akita';
-import { Observable } from 'rxjs';
-import { IPluginState, PluginStore } from './plugin.store';
+import { ID } from '@gauzy/contracts';
+import { map, Observable } from 'rxjs';
 import { IPlugin } from '../../services/plugin-loader.service';
+import { IPluginState, PluginStore } from './plugin.store';
 
 @Injectable({ providedIn: 'root' })
 export class PluginQuery extends Query<IPluginState> {
@@ -30,5 +31,11 @@ export class PluginQuery extends Query<IPluginState> {
 
 	public get deactivating(): boolean {
 		return this.getValue().deactivating;
+	}
+
+	public currentPluginVersionId(pluginId: ID): Observable<ID | null> {
+		return this.plugins$.pipe(
+			map((plugins) => plugins.find((p) => p.marketplaceId === pluginId)?.versionId ?? null)
+		);
 	}
 }

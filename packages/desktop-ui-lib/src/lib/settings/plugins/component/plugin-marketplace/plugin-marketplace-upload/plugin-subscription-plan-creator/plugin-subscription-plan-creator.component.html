@@ -1,0 +1,525 @@
+<div class="subscription-plan-creator">
+	<!-- Error Alert -->
+	@if(error$ | async; as error) {
+	<nb-alert status="danger" closable (close)="resetErrors()" class="error-alert">
+		<div class="alert-content">
+			<nb-icon icon="alert-circle-outline"></nb-icon>
+			<div>
+				<strong>Error</strong>
+				<p>{{ error }}</p>
+			</div>
+		</div>
+	</nb-alert>
+	}
+
+	<!-- Success Alert -->
+	@if(successMessage$ | async; as message) {
+	<nb-alert status="success" closable (close)="clearSuccessMessage()" class="success-alert">
+		<div class="alert-content">
+			<nb-icon icon="checkmark-circle-outline"></nb-icon>
+			<div>
+				<strong>Success</strong>
+				<p>{{ message }}</p>
+			</div>
+		</div>
+	</nb-alert>
+	} @if(!dialogMode) {
+	<div class="creator-header">
+		<div class="header-main">
+			<div class="header-icon">
+				<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+			</div>
+			<div class="header-content">
+				<h6>Subscription Plans</h6>
+				<p class="text-hint">Create pricing plans for your plugin</p>
+			</div>
+			@if(plans?.length > 0) {
+			<div class="header-badge">
+				<nb-badge [text]="plans.length + ' Plan' + (plans.length !== 1 ? 's' : '')" status="primary"></nb-badge>
+			</div>
+			}
+		</div>
+		@if(plans?.length === 0 && plansLoaded) {
+		<div class="header-hint">
+			<nb-icon icon="bulb-outline" status="info"></nb-icon>
+			<span>Start by adding your first subscription plan to monetize your plugin</span>
+		</div>
+		}
+	</div>
+	} @if(plansForm) {
+	<form [formGroup]="plansForm" class="plans-form">
+		<div formArrayName="plans" class="plans-array">
+			<!-- Plan Cards -->
+			@for(planGroup of plans.controls; track planIndex; let planIndex = $index) {
+			<div [formGroupName]="planIndex" class="plan-card" [class.is-loading]="isPlanLoading(planIndex)">
+				<div class="plan-card-header">
+					<div class="plan-title">
+						@if(isPlanLoading(planIndex)) {
+						<nb-spinner size="small" status="primary"></nb-spinner>
+						} @else {
+						<nb-icon icon="layers-outline" status="primary"></nb-icon>
+						}
+						<span>{{ planGroup.get('name')?.value || 'Plan ' + (planIndex + 1) }}</span>
+						<div class="badges-group">
+							@if(isExistingPlan(planIndex) && !planGroup.dirty) {
+							<nb-badge text="Saved" status="success"></nb-badge>
+							} @if(planGroup.dirty) {
+							<nb-badge text="Unsaved" status="warning"></nb-badge>
+							} @if(planGroup.get('isPopular')?.value) {
+							<nb-badge text="Popular" status="success"></nb-badge>
+							} @if(planGroup.get('isRecommended')?.value) {
+							<nb-badge text="Recommended" status="info"></nb-badge>
+							}
+						</div>
+					</div>
+					<div class="plan-actions">
+						<!-- Save button for dirty plans -->
+						@if(isExistingPlan(planIndex) && planGroup.dirty) {
+						<button
+							type="button"
+							nbButton
+							status="primary"
+							size="small"
+							nbTooltip="Save changes"
+							nbTooltipPlacement="top"
+							(click)="updateExistingPlan(planIndex)"
+							[disabled]="isPlanLoading(planIndex) || planGroup.invalid"
+						>
+							<nb-icon icon="save-outline"></nb-icon>
+							Save
+						</button>
+						}
+						<!-- Duplicate button -->
+						@if(allowMultiplePlans) {
+						<button
+							type="button"
+							nbButton
+							ghost
+							size="small"
+							status="basic"
+							nbTooltip="Duplicate this plan"
+							nbTooltipPlacement="top"
+							(click)="duplicatePlan(planIndex)"
+							[disabled]="isPlanLoading(planIndex)"
+						>
+							<nb-icon icon="copy-outline"></nb-icon>
+						</button>
+						}
+						<!-- Delete button -->
+						@if(canRemovePlan()) {
+						<button
+							type="button"
+							nbButton
+							ghost
+							size="small"
+							status="danger"
+							nbTooltip="{{ isExistingPlan(planIndex) ? 'Delete plan permanently' : 'Remove plan' }}"
+							nbTooltipPlacement="top"
+							(click)="removePlan(planIndex)"
+							[disabled]="isPlanLoading(planIndex)"
+						>
+							<nb-icon icon="trash-2-outline"></nb-icon>
+						</button>
+						}
+					</div>
+				</div>
+
+				<div class="plan-card-body">
+					<!-- Plan Type Selection -->
+					<div class="form-section type-selector">
+						<label class="section-label">
+							<nb-icon icon="grid-outline" status="primary"></nb-icon>
+							Plan Type *
+						</label>
+						<div class="type-options">
+							@for(type of PluginSubscriptionType | keyvalue; track type.key) {
+							<button
+								type="button"
+								class="type-option"
+								[class.selected]="planGroup.get('type')?.value === type.value"
+								(click)="selectPlanType(planIndex, type.value)"
+							>
+								<nb-icon [icon]="getPlanTypeIcon(type.value)"></nb-icon>
+								<span>{{ type.value | titlecase }}</span>
+							</button>
+							}
+						</div>
+					</div>
+
+					<!-- Basic Information -->
+					<div class="form-section basic-info">
+						<label class="section-label">
+							<nb-icon icon="edit-2-outline" status="primary"></nb-icon>
+							Basic Information
+						</label>
+
+						<nb-form-field
+							class="form-group"
+							[class.has-error]="planGroup.get('name')?.invalid && planGroup.get('name')?.touched"
+							[class.has-success]="planGroup.get('name')?.valid && planGroup.get('name')?.touched"
+						>
+							<label class="label">
+								Plan Name *
+								<span class="hint-text">This name will be displayed to customers</span>
+							</label>
+							<div class="input-wrapper">
+								<input
+									nbInput
+									fullWidth
+									formControlName="name"
+									placeholder="e.g., Basic, Pro, Enterprise"
+								/>
+								@if(planGroup.get('name')?.valid && planGroup.get('name')?.touched) {
+								<nb-icon icon="checkmark-circle-2" status="success" class="status-icon"></nb-icon>
+								} @if(planGroup.get('name')?.invalid && planGroup.get('name')?.touched) {
+								<nb-icon icon="alert-circle-outline" status="danger" class="status-icon"></nb-icon>
+								}
+							</div>
+							@if(planGroup.get('name')?.invalid && planGroup.get('name')?.touched) {
+							<span class="error-text">Plan name is required</span>
+							}
+						</nb-form-field>
+
+						<nb-form-field
+							class="form-group"
+							[class.has-error]="
+								planGroup.get('description')?.invalid && planGroup.get('description')?.touched
+							"
+							[class.has-success]="
+								planGroup.get('description')?.valid && planGroup.get('description')?.touched
+							"
+						>
+							<label class="label">
+								Description *
+								<span class="hint-text">Describe what this plan offers</span>
+							</label>
+							<textarea
+								nbInput
+								fullWidth
+								formControlName="description"
+								rows="3"
+								placeholder="Provide a clear description of the plan's value and benefits"
+							></textarea>
+							<div class="field-footer">
+								@if(planGroup.get('description')?.invalid && planGroup.get('description')?.touched) {
+								<span class="error-text">Description is required</span>
+								} @if(planGroup.get('description')?.value) {
+								<span class="char-count"> {{ planGroup.get('description')?.value.length }}/500 </span>
+								}
+							</div>
+						</nb-form-field>
+					</div>
+
+					<!-- Pricing -->
+					<div class="form-section pricing-section">
+						<label class="section-label">
+							<nb-icon icon="pricetags-outline" status="success"></nb-icon>
+							Pricing
+						</label>
+						@if(planGroup.get('type')?.value !== PluginSubscriptionType.FREE) {
+						<div class="pricing-grid">
+							<nb-form-field class="form-group">
+								<label class="label">Price *</label>
+								<input
+									nbInput
+									fullWidth
+									type="number"
+									formControlName="price"
+									min="0"
+									step="0.01"
+									placeholder="0.00"
+								/>
+							</nb-form-field>
+
+							<nb-form-field class="form-group">
+								<label class="label">Currency *</label>
+								<nb-select fullWidth formControlName="currency">
+									<nb-option value="USD">USD ($)</nb-option>
+									<nb-option value="EUR">EUR (€)</nb-option>
+									<nb-option value="GBP">GBP (£)</nb-option>
+									<nb-option value="JPY">JPY (¥)</nb-option>
+								</nb-select>
+							</nb-form-field>
+
+							<nb-form-field class="form-group">
+								<label class="label">Billing Period *</label>
+								<nb-select fullWidth formControlName="billingPeriod">
+									@for(period of PluginBillingPeriod | keyvalue; track period.key) {
+									<nb-option [value]="period.value">
+										{{ formatBillingPeriod(period.value) | titlecase }}
+									</nb-option>
+									}
+								</nb-select>
+							</nb-form-field>
+						</div>
+						}
+
+						<!-- Price Preview -->
+						@if(planGroup.get('price')?.value >= 0) {
+						<div class="price-preview">
+							<div class="preview-label">Preview:</div>
+							@if(planGroup.get('price')?.value === 0) {
+							<div class="preview-value">
+								<nb-icon icon="gift-outline" status="success"></nb-icon>
+								<span class="price-text free">Free</span>
+							</div>
+							} @if(planGroup.get('price')?.value > 0) {
+							<div class="preview-value">
+								<span class="price-text">
+									{{
+										formatCurrency(planGroup.get('price')?.value, planGroup.get('currency')?.value)
+									}}
+									<span class="period-text"
+										>/ {{ formatBillingPeriod(planGroup.get('billingPeriod')?.value) }}</span
+									>
+								</span>
+							</div>
+							}
+						</div>
+						}
+					</div>
+
+					<!-- Features -->
+					<div class="form-section features-section">
+						<label class="section-label">
+							<nb-icon icon="checkmark-square-outline" status="success"></nb-icon>
+							Features *
+						</label>
+
+						<div class="features-list">
+							@for(featureControl of getPlanFeatures(planIndex).controls; track featureIndex; let
+							featureIndex = $index) {
+							<div class="feature-item">
+								<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
+								<input
+									nbInput
+									fullWidth
+									[formControl]="featureControl"
+									placeholder="Enter a feature (e.g., Unlimited projects)"
+								/>
+								@if(getPlanFeatures(planIndex).length > 1) {
+								<button
+									type="button"
+									nbButton
+									ghost
+									size="small"
+									status="danger"
+									(click)="removeFeature(planIndex, featureIndex)"
+								>
+									<nb-icon icon="close-outline"></nb-icon>
+								</button>
+								}
+							</div>
+							}
+
+							<!-- Add Feature Button at Bottom -->
+							<button
+								type="button"
+								nbButton
+								ghost
+								fullWidth
+								status="success"
+								class="add-item-button"
+								(click)="addFeature(planIndex)"
+							>
+								<nb-icon icon="plus-outline"></nb-icon>
+								Add Feature
+							</button>
+						</div>
+					</div>
+
+					<!-- Limitations -->
+					<div class="form-section limitations-section" formArrayName="limitations">
+						<label class="section-label">
+							<nb-icon icon="lock-outline" status="warning"></nb-icon>
+							Limitations
+						</label>
+
+						<div class="limitations-list">
+							@for(limitationControl of getPlanLimitations(planIndex).controls; track limitationIndex; let
+							limitationIndex = $index) {
+							<div class="limitation-item" [formGroupName]="limitationIndex">
+								<nb-form-field class="form-group">
+									<input nbInput fullWidth formControlName="key" placeholder="e.g., maxUsers" />
+								</nb-form-field>
+
+								<nb-form-field class="form-group">
+									<input nbInput fullWidth formControlName="value" placeholder="e.g., 10" />
+								</nb-form-field>
+
+								<button
+									type="button"
+									nbButton
+									ghost
+									size="small"
+									status="danger"
+									(click)="removeLimitation(planIndex, limitationIndex)"
+								>
+									<nb-icon icon="close-outline"></nb-icon>
+								</button>
+							</div>
+							}
+
+							<!-- Add Limitation Button at Bottom -->
+							<button
+								type="button"
+								nbButton
+								ghost
+								fullWidth
+								status="warning"
+								class="add-item-button"
+								(click)="addLimitation(planIndex)"
+							>
+								<nb-icon icon="plus-outline"></nb-icon>
+								Add Limitation
+							</button>
+						</div>
+					</div>
+
+					<!-- Additional Options (Collapsible) - Hidden for Free Plans -->
+					@if(shouldShowAdditionalOptions(planIndex)) {
+					<div class="form-section collapsible-section">
+						<button type="button" class="section-toggle" (click)="toggleAdvancedOptions(planIndex)">
+							<nb-icon icon="settings-2-outline" status="info"></nb-icon>
+							<span>Additional Options</span>
+							<nb-icon
+								[icon]="
+									isAdvancedOptionsExpanded(planIndex) ? 'chevron-up-outline' : 'chevron-down-outline'
+								"
+								class="toggle-icon"
+							></nb-icon>
+						</button>
+
+						@if(isAdvancedOptionsExpanded(planIndex)) {
+						<div class="options-content">
+							<div class="options-grid">
+								<nb-form-field class="form-group">
+									<label class="label">
+										<nb-icon icon="clock-outline"></nb-icon>
+										Trial Days
+									</label>
+									<input
+										nbInput
+										fullWidth
+										type="number"
+										formControlName="trialDays"
+										min="0"
+										max="365"
+										placeholder="0"
+									/>
+								</nb-form-field>
+
+								<nb-form-field class="form-group">
+									<label class="label">
+										<nb-icon icon="credit-card-outline"></nb-icon>
+										Setup Fee
+									</label>
+									<input
+										nbInput
+										fullWidth
+										type="number"
+										formControlName="setupFee"
+										min="0"
+										step="0.01"
+										placeholder="0.00"
+									/>
+								</nb-form-field>
+
+								<nb-form-field class="form-group">
+									<label class="label">
+										<nb-icon icon="percent-outline"></nb-icon>
+										Discount %
+									</label>
+									<input
+										nbInput
+										fullWidth
+										type="number"
+										formControlName="discountPercentage"
+										min="0"
+										max="100"
+										placeholder="0"
+									/>
+								</nb-form-field>
+							</div>
+
+							<div class="checkboxes-row">
+								<nb-checkbox formControlName="isPopular">
+									<nb-icon icon="star-outline" status="success"></nb-icon>
+									Mark as Popular
+								</nb-checkbox>
+								<nb-checkbox formControlName="isRecommended">
+									<nb-icon icon="award-outline" status="info"></nb-icon>
+									Mark as Recommended
+								</nb-checkbox>
+							</div>
+						</div>
+						}
+					</div>
+					}
+
+					<!-- Validation Summary -->
+					@if(planGroup.invalid && planGroup.touched) {
+					<div class="validation-summary">
+						<nb-icon icon="alert-circle-outline" status="warning"></nb-icon>
+						<span>Please fill in all required fields to complete this plan</span>
+					</div>
+					}
+				</div>
+			</div>
+			}
+
+			<!-- Add Plan Button -->
+			@if(canAddPlan()) {
+			<div class="add-plan-section">
+				<button
+					type="button"
+					nbButton
+					ghost
+					status="primary"
+					size="large"
+					(click)="addPlan()"
+					class="add-plan-button"
+				>
+					<nb-icon icon="plus-circle-outline"></nb-icon>
+					Add Another Plan
+				</button>
+			</div>
+			}
+
+			<!-- No Plans Message -->
+			@if(!hasPlans()) {
+			<div class="no-plans-message">
+				@if(!(loading$ | async)) {
+				<div class="empty-state">
+					<div class="empty-icon">
+						<nb-icon icon="pricetags-outline" status="primary"></nb-icon>
+					</div>
+					<h6>No subscription plans yet</h6>
+					<p>Create your first plan to start monetizing your plugin</p>
+					<button type="button" nbButton status="primary" size="large" (click)="createPlan()">
+						<nb-icon icon="plus-outline"></nb-icon>
+						Create First Plan
+					</button>
+				</div>
+				} @else {
+				<div class="loading-state">
+					<div class="loading-content">
+						<nb-spinner status="primary" size="large"></nb-spinner>
+						<p>Loading subscription plans...</p>
+					</div>
+				</div>
+				}
+			</div>
+			}
+		</div>
+	</form>
+	} @else {
+	<div class="loading-state">
+		<div class="loading-content">
+			<nb-spinner status="primary" size="large"></nb-spinner>
+			<p>Initializing plan creator...</p>
+			<span class="loading-hint">Preparing your workspace</span>
+		</div>
+	</div>
+	}
+</div>

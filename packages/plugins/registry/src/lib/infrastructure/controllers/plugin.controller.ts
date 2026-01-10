@@ -1,25 +1,26 @@
+import { Public } from '@gauzy/common';
 import { HttpStatus, ID, IPagination } from '@gauzy/contracts';
-import { BaseQueryDTO, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import { UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindOneOptions } from 'typeorm';
-import { GetPluginQuery } from '../../application/queries/get-plugin.query';
-import { ListPluginsQuery } from '../../application/queries/list-plugins.query';
-import { Plugin } from '../../domain/entities/plugin.entity';
-import { IPlugin } from '../../shared/models/plugin.model';
+import { GetPluginQuery, ListPluginsQuery, SearchPluginsQuery } from '../../application';
+import { Plugin } from '../../domain';
+import { IPlugin, PluginQueryOptions, PluginSearchFilterDTO } from '../../shared';
 
 @ApiTags('Plugin Registry')
 @Controller('/plugins')
+@Public()
 export class PluginController {
 	constructor(private readonly queryBus: QueryBus) {}
 
 	/**
-	 * Retrieves a paginated list of plugins with optional filtering.
+	 * Retrieves a paginated list of plugins with optional filtering and search.
 	 */
 	@ApiOperation({
-		summary: 'List all plugins',
-		description: 'Retrieve a paginated list of plugins with optional filtering capabilities.'
+		summary: 'List all plugins with optional search and filtering',
+		description:
+			'Retrieve a paginated list of plugins with optional filtering and search capabilities. Use query parameters for search, category, status, type filtering.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -35,8 +36,22 @@ export class PluginController {
 		status: HttpStatus.UNAUTHORIZED,
 		description: 'Unauthorized access.'
 	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid search or filter criteria provided.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
 	@Get()
-	public async findAll(@Query() params: BaseQueryDTO<IPlugin>): Promise<IPagination<IPlugin>> {
+	public async findAll(@Query() params: PluginSearchFilterDTO): Promise<IPagination<IPlugin>> {
+		// If search parameters are provided, use search query, otherwise use list query
+		if (params.search || params.type || params.status || params.categoryId || params.tags || params.author) {
+			return this.queryBus.execute(new SearchPluginsQuery(params));
+		}
+		// Use simple base parameters for list query
 		return this.queryBus.execute(new ListPluginsQuery(params));
 	}
 
@@ -85,7 +100,7 @@ export class PluginController {
 	@Get(':id')
 	public async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() options: FindOneOptions<IPlugin>
+		@Query() options: PluginQueryOptions
 	): Promise<IPlugin> {
 		return this.queryBus.execute(new GetPluginQuery(id, options));
 	}

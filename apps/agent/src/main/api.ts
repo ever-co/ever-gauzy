@@ -1,5 +1,5 @@
 import { LocalStore, TTimeSlot } from '@gauzy/desktop-lib';
-import { getAuthConfig, getApiBaseUrl, TAuthConfig, TEmployeeResponse, updateAuthConfig } from './util';
+import { getAuthConfig, getApiBaseUrl, TAuthConfig, TEmployeeResponse, updateAuthConfig, getProjectConfig } from './util';
 import fetch, { HeadersInit } from 'node-fetch';
 import * as moment from 'moment';
 import * as fs from 'node:fs';
@@ -7,6 +7,7 @@ import * as FormData from 'form-data';
 import { TimeLogSourceEnum, TimeLogType } from '@gauzy/desktop-activity';
 import MainEvent from './events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
+import { TaskStatusEnum, IBaseTaskProperties, ITaskStatus, IPagination } from '@gauzy/contracts';
 
 export interface ITimerResponse {
 	deletedAt: any
@@ -62,8 +63,7 @@ type UploadParams = {
 
 export type TResponseTimeSlot = {
 	id?: string,
-	recordedAt?: string,
-
+	recordedAt?: string
 }
 
 export type TResponseScreenshot = {
@@ -144,11 +144,19 @@ export interface ITimeLogResp {
 	isEdited: boolean
 }
 
+export type TUpdateTaskStatusReq = {
+	title: string,
+	status: TaskStatusEnum,
+	organizationId: string,
+	tenantId: string
+}
+
 
 export class ApiService {
 	static instance: ApiService;
 	private mainEvent: MainEvent;
 	private isLogout: boolean;
+	private statusProgress: ITaskStatus;
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
@@ -211,17 +219,18 @@ export class ApiService {
 	}
 
 	getTimeToggleParams(payload: TToggleParams): TTimerParams {
+		const projectConfig = getProjectConfig();
 		return {
 			description: '',
 			isBillable: true,
 			logType: TimeLogType.TRACKED,
-			projectId: null,
-			taskId: null,
+			projectId: projectConfig.projectId,
+			taskId: projectConfig.taskId || null,
 			source: TimeLogSourceEnum.DESKTOP,
 			manualTimeSlot: null,
 			organizationId: payload.organizationId,
 			tenantId: payload.tenantId,
-			organizationContactId: payload.organizationContactId,
+			organizationContactId: payload.organizationContactId || projectConfig.organizationContactId || null,
 			isRunning: true,
 			version: null,
 			startedAt: moment(payload.startedAt).utc().toISOString(),
@@ -357,6 +366,54 @@ export class ApiService {
 			}
 		}
 		return false;
+	}
+
+	async isAuthenticated(): Promise<boolean> {
+		const path = '/api/auth/authenticated';
+		try {
+			const res = await this.get(path, {});
+			if (res) {
+				return true;
+			}
+			return false;
+		} catch (error) {
+			return false;
+		}
+	}
+
+	async getTask(taskId: string): Promise<Partial<IBaseTaskProperties>> {
+		const path = `/api/tasks/${taskId}`;
+		return this.get(path, {});
+	}
+
+	async updateTaskStatus(taskId: string, task: TUpdateTaskStatusReq) {
+		const path = `/api/tasks/${taskId}`;
+		await this.getTasksStatuses({
+			tenantId: task.tenantId,
+			organizationId: task.organizationId
+		});
+
+		return this.put(path, {
+			...task,
+			...(this.statusProgress?.id ? {
+				taskStatusId: this.statusProgress.id
+			} : {})
+		});
+	}
+
+	async getTasksStatuses({
+		tenantId,
+		organizationId
+	}: { tenantId: string, organizationId: string }): Promise<void> {
+		if (this.statusProgress) {
+			return;
+		}
+		const path = `/api/task-statuses`;
+		const taskStatuses: Partial<IPagination<ITaskStatus>> = await this.get(path, {
+			tenantId,
+			organizationId
+		});
+		this.statusProgress = taskStatuses.items?.find((i) => i.value === TaskStatusEnum.IN_PROGRESS);
 	}
 
 	async request(

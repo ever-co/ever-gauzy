@@ -1,5 +1,5 @@
 import { environment } from '../environments/environment';
-import { sanitizeForLogging } from '@gauzy/auth';
+import { sanitizeForLogging } from './error-utils';
 import { Logger } from '@nestjs/common';
 
 const logger = new Logger('AuthManager');
