@@ -167,7 +167,7 @@ class PullActivities {
 			const appSetting = getAppSetting();
 			if (!this.isStarted) {
 				this.startedDate = new Date();
-				if (isResume) {
+				if (!isResume) {
 					await this.startTimerApi();
 				}
 				this.agentLogger.info('Listener keyboard and mouse starting');
@@ -612,7 +612,7 @@ class PullActivities {
 					timeStart: chunkStartDate,
 					timeEnd: chunkEndDate
 				},
-				screenShot: true,
+				screenShot: false,
 				afkDuration: chunkDuration,
 				activityState: ActivityState.idle
 			});
