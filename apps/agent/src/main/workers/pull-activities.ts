@@ -511,12 +511,12 @@ class PullActivities {
 			return {
 				activities: this.activityStores.getAndResetCurrentActivities(),
 				activityWindow: this.activityWindow.retrieveAndFlushActivities()
-			}
-		};
+			};
+		}
 		return {
 			activities: this.activityStores.defaultValue,
 			activityWindow: []
-		}
+		};
 	}
 
 	async activityProcess(payload: TActivityProcessParam) {
