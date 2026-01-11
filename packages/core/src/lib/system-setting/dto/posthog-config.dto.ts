@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsNumber, IsUrl } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsNumber } from 'class-validator';
 import { IPosthogConfig } from '@gauzy/contracts';
 import { IsSecret } from '../../core/decorators';
 import { Trimmed } from '../../shared/decorators/trim.decorator';
