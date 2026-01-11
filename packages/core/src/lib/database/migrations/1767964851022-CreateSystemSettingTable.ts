@@ -79,6 +79,9 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_e92e92174dd8c3a33fb49aa23b" ON "system_setting" ("name") `);
 		await queryRunner.query(
+			`ALTER TABLE "system_setting" ADD CONSTRAINT "UQ_system_setting_name_tenant_organization" UNIQUE ("name", "tenantId", "organizationId")`
+		);
+		await queryRunner.query(
 			`ALTER TABLE "system_setting" ADD CONSTRAINT "FK_4b463e697599946f1ce1f71c3b8" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
@@ -106,6 +109,7 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 		await queryRunner.query(`ALTER TABLE "system_setting" DROP CONSTRAINT "FK_c4ed4c1b25565cbac38e15a3baf"`);
 		await queryRunner.query(`ALTER TABLE "system_setting" DROP CONSTRAINT "FK_55abcdef47f9115bfe788aeaf2b"`);
 		await queryRunner.query(`ALTER TABLE "system_setting" DROP CONSTRAINT "FK_4b463e697599946f1ce1f71c3b8"`);
+		await queryRunner.query(`ALTER TABLE "system_setting" DROP CONSTRAINT "UQ_system_setting_name_tenant_organization"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_e92e92174dd8c3a33fb49aa23b"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_f1a78f4f45c80b041c68541db5"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_c8344a7f087ead5614f0e7e173"`);
@@ -150,6 +154,9 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 			`CREATE INDEX "IDX_f1a78f4f45c80b041c68541db5" ON "system_setting" ("organizationId") `
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_e92e92174dd8c3a33fb49aa23b" ON "system_setting" ("name") `);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "UQ_system_setting_name_tenant_organization" ON "system_setting" ("name", "tenantId", "organizationId")`
+		);
 	}
 
 	/**
@@ -158,6 +165,7 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`DROP INDEX "UQ_system_setting_name_tenant_organization"`);
 		await queryRunner.query(`DROP INDEX "IDX_e92e92174dd8c3a33fb49aa23b"`);
 		await queryRunner.query(`DROP INDEX "IDX_f1a78f4f45c80b041c68541db5"`);
 		await queryRunner.query(`DROP INDEX "IDX_c8344a7f087ead5614f0e7e173"`);
@@ -193,6 +201,9 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 		await queryRunner.query(
 			`ALTER TABLE \`system_setting\` ADD CONSTRAINT \`FK_f1a78f4f45c80b041c68541db5a\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
 		);
+		await queryRunner.query(
+			`ALTER TABLE \`system_setting\` ADD CONSTRAINT \`UQ_system_setting_name_tenant_organization\` UNIQUE (\`name\`, \`tenantId\`, \`organizationId\`)`
+		);
 	}
 
 	/**
@@ -206,6 +217,7 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP FOREIGN KEY \`FK_c4ed4c1b25565cbac38e15a3baf\``);
 		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP FOREIGN KEY \`FK_55abcdef47f9115bfe788aeaf2b\``);
 		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP FOREIGN KEY \`FK_4b463e697599946f1ce1f71c3b8\``);
+		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP INDEX \`UQ_system_setting_name_tenant_organization\``);
 		await queryRunner.query(`DROP INDEX \`IDX_e92e92174dd8c3a33fb49aa23b\` ON \`system_setting\``);
 		await queryRunner.query(`DROP INDEX \`IDX_f1a78f4f45c80b041c68541db5\` ON \`system_setting\``);
 		await queryRunner.query(`DROP INDEX \`IDX_c8344a7f087ead5614f0e7e173\` ON \`system_setting\``);
