@@ -594,7 +594,6 @@ class PullActivities {
 		const currentTime = new Date();
 		let idleDuration = Math.floor((currentTime.getTime() - this.startPausedDate.getTime()) / 1000);
 
-		// It starts as the initial pause date and will be advanced for each chunk.
 		let chunkStartDate = new Date(this.startPausedDate.getTime());
 
 		/* Split idle time duration to 10 minutes each minutes */
