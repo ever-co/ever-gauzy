@@ -22,7 +22,7 @@ export interface IPackage {
 		npmRebuild: boolean;
 		asarUnpack: string[];
 		directories: { buildResources: string; output: string };
-		publish: {}[];
+		publish: { channel?: string }[];
 		mac: {
 			category: string;
 			icon: string;

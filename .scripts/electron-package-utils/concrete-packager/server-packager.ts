@@ -1,8 +1,8 @@
 import { IPackage } from '../interfaces/i-package';
-import { IPackager } from '../interfaces/i-packager';
+import { BasePackager } from './base-packager';
 import { env } from '../../env';
 
-export class ServerPackager implements IPackager {
+export class ServerPackager extends BasePackager {
 	public prepare(pkg: IPackage): IPackage {
 		pkg.name = env.DESKTOP_SERVER_APP_NAME || pkg.name;
 		pkg.productName = env.DESKTOP_SERVER_APP_DESCRIPTION || pkg.productName;

@@ -584,6 +584,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 						...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
 						'TIMER_TRACKER.TIMER',
 						'TIMER_TRACKER.SETTINGS.UPDATE',
+						'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
 						'MENU.ABOUT'
 				  ];
 			const lastMenu =

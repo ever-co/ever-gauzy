@@ -22,6 +22,7 @@ export * from './lib/tenant';
 export { RoleModule, RoleService } from './lib/role';
 export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
 export { UserModule, UserService } from './lib/user';
+export { PasswordHashModule, PasswordHashService } from './lib/password-hash';
 
 export * from './lib/organization';
 export {

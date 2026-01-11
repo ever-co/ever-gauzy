@@ -60,7 +60,7 @@
 		"@mikro-orm/postgresql": "^6.4.13",
 		"@nestjs/apollo": "^13.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
-		"@nestjs/cache-manager": "^3.0.1",
+		"@nestjs/cache-manager": "^3.1.0",
 		"@nestjs/common": "^11.1.10",
 		"@nestjs/core": "^11.1.10",
 		"@nestjs/cqrs": "^11.0.3",

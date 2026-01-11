@@ -14,20 +14,23 @@ export interface IPaymentMethod {
 
 export class PluginMarketplaceActions {
 	// Core plugin actions
-	public static upload = createAction('[Plugin Marketplace] Upload');
-	public static getAll = createAction('[Plugin Marketplace] Get All', <T>(params?: T) => ({ params }));
-	public static getOne = createAction('[Plugin Marketplace] Get One', <T>(id: ID, params?: T) => ({ id, params }));
-	public static update = createAction('[Plugin Marketplace] Update', (plugin: IPlugin) => ({
+	public static readonly upload = createAction('[Plugin Marketplace] Upload');
+	public static readonly getAll = createAction('[Plugin Marketplace] Get All', <T>(params?: T) => ({ params }));
+	public static readonly getOne = createAction('[Plugin Marketplace] Get One', <T>(id: ID, params?: T) => ({
+		id,
+		params
+	}));
+	public static readonly update = createAction('[Plugin Marketplace] Update', (plugin: IPlugin) => ({
 		plugin
 	}));
-	public static delete = createAction('[Plugin Marketplace] Delete', (id: ID) => ({ id }));
-	public static reset = createAction('[Plugin Marketplace] Reset');
+	public static readonly delete = createAction('[Plugin Marketplace] Delete', (id: ID) => ({ id }));
+	public static readonly reset = createAction('[Plugin Marketplace] Reset');
 
 	// Search actions
-	public static search = createAction('[Plugin Marketplace] Search', (query: string) => ({ query }));
+	public static readonly search = createAction('[Plugin Marketplace] Search', (query: string) => ({ query }));
 
 	// Installation actions
-	public static install = createAction(
+	public static readonly install = createAction(
 		'[Plugin Marketplace] Install Plugin',
 		(plugin: IPlugin, isUpdate: boolean = false) => ({
 			plugin,
@@ -36,11 +39,11 @@ export class PluginMarketplaceActions {
 	);
 
 	// Install update action
-	public static installUpdate = createAction('[Plugin Marketplace] Install Update', (plugin: IPlugin) => ({
+	public static readonly installUpdate = createAction('[Plugin Marketplace] Install Update', (plugin: IPlugin) => ({
 		plugin
 	}));
 
-	public static uninstall = createAction(
+	public static readonly uninstall = createAction(
 		'[Plugin Marketplace] Uninstall Plugin',
 		(pluginId: ID, installationId: ID, reason?: string) => ({
 			installationId,
@@ -50,38 +53,47 @@ export class PluginMarketplaceActions {
 	);
 
 	// Filter actions
-	public static setFilters = createAction('[Plugin Marketplace] Set Filters', (filters: IPluginFilter) => ({
+	public static readonly setFilters = createAction('[Plugin Marketplace] Set Filters', (filters: IPluginFilter) => ({
 		filters
 	}));
-	public static applyFilters = createAction('[Plugin Marketplace] Apply Filters');
-	public static clearFilters = createAction('[Plugin Marketplace] Clear Filters');
-	public static toggleAdvancedFilters = createAction(
+	public static readonly applyFilters = createAction('[Plugin Marketplace] Apply Filters');
+	public static readonly clearFilters = createAction('[Plugin Marketplace] Clear Filters');
+	public static readonly toggleAdvancedFilters = createAction(
 		'[Plugin Marketplace] Toggle Advanced Filters',
 		(show: boolean) => ({ show })
 	);
-	public static setViewMode = createAction('[Plugin Marketplace] Set View Mode', (view: 'grid' | 'list') => ({
-		view
-	}));
+	public static readonly setViewMode = createAction(
+		'[Plugin Marketplace] Set View Mode',
+		(view: 'grid' | 'list') => ({
+			view
+		})
+	);
 
 	// Tags actions
-	public static loadTags = createAction('[Plugin Marketplace] Load Tags');
-	public static createTag = createAction('[Plugin Marketplace] Create Tag', (tag: IPluginTagCreateInput) => ({
-		tag
-	}));
-	public static updateTag = createAction('[Plugin Marketplace] Update Tag', (id: ID, tag: Partial<IPluginTag>) => ({
-		id,
-		tag
-	}));
-	public static deleteTag = createAction('[Plugin Marketplace] Delete Tag', (id: ID) => ({ id }));
+	public static readonly loadTags = createAction('[Plugin Marketplace] Load Tags');
+	public static readonly createTag = createAction(
+		'[Plugin Marketplace] Create Tag',
+		(tag: IPluginTagCreateInput) => ({
+			tag
+		})
+	);
+	public static readonly updateTag = createAction(
+		'[Plugin Marketplace] Update Tag',
+		(id: ID, tag: Partial<IPluginTag>) => ({
+			id,
+			tag
+		})
+	);
+	public static readonly deleteTag = createAction('[Plugin Marketplace] Delete Tag', (id: ID) => ({ id }));
 
 	// Subscription actions
-	public static loadSubscriptionPlans = createAction(
+	public static readonly loadSubscriptionPlans = createAction(
 		'[Plugin Marketplace] Load Subscription Plans',
 		(pluginId: ID) => ({
 			pluginId
 		})
 	);
-	public static subscribe = createAction(
+	public static readonly subscribe = createAction(
 		'[Plugin Marketplace] Subscribe to Plugin',
 		(pluginId: ID, planId: ID, paymentMethod: IPaymentMethod) => ({
 			pluginId,
@@ -89,10 +101,13 @@ export class PluginMarketplaceActions {
 			paymentMethod
 		})
 	);
-	public static unsubscribe = createAction('[Plugin Marketplace] Unsubscribe from Plugin', (pluginId: ID) => ({
-		pluginId
-	}));
-	public static updateSubscription = createAction(
+	public static readonly unsubscribe = createAction(
+		'[Plugin Marketplace] Unsubscribe from Plugin',
+		(pluginId: ID) => ({
+			pluginId
+		})
+	);
+	public static readonly updateSubscription = createAction(
 		'[Plugin Marketplace] Update Subscription',
 		(subscriptionId: ID, updates: Partial<IPluginSubscription>) => ({
 			subscriptionId,
@@ -101,10 +116,13 @@ export class PluginMarketplaceActions {
 	);
 
 	// Settings actions
-	public static loadPluginSettings = createAction('[Plugin Marketplace] Load Plugin Settings', (pluginId: ID) => ({
-		pluginId
-	}));
-	public static updatePluginSetting = createAction(
+	public static readonly loadPluginSettings = createAction(
+		'[Plugin Marketplace] Load Plugin Settings',
+		(pluginId: ID) => ({
+			pluginId
+		})
+	);
+	public static readonly updatePluginSetting = createAction(
 		'[Plugin Marketplace] Update Plugin Setting',
 		(pluginId: ID, key: string, value: any) => ({
 			pluginId,
@@ -112,19 +130,22 @@ export class PluginMarketplaceActions {
 			value
 		})
 	);
-	public static resetPluginSettings = createAction('[Plugin Marketplace] Reset Plugin Settings', (pluginId: ID) => ({
-		pluginId
-	}));
+	public static readonly resetPluginSettings = createAction(
+		'[Plugin Marketplace] Reset Plugin Settings',
+		(pluginId: ID) => ({
+			pluginId
+		})
+	);
 
 	// Analytics actions
-	public static loadPluginAnalytics = createAction(
+	public static readonly loadPluginAnalytics = createAction(
 		'[Plugin Marketplace] Load Plugin Analytics',
 		(pluginId: ID, period?: AnalyticsPeriod) => ({
 			pluginId,
 			period
 		})
 	);
-	public static trackPluginEvent = createAction(
+	public static readonly trackPluginEvent = createAction(
 		'[Plugin Marketplace] Track Plugin Event',
 		(pluginId: ID, eventType: string, eventData: any) => ({
 			pluginId,
@@ -134,22 +155,25 @@ export class PluginMarketplaceActions {
 	);
 
 	// Security actions
-	public static loadPluginSecurity = createAction('[Plugin Marketplace] Load Plugin Security', (pluginId: ID) => ({
-		pluginId
-	}));
-	public static updatePluginSecurity = createAction(
+	public static readonly loadPluginSecurity = createAction(
+		'[Plugin Marketplace] Load Plugin Security',
+		(pluginId: ID) => ({
+			pluginId
+		})
+	);
+	public static readonly updatePluginSecurity = createAction(
 		'[Plugin Marketplace] Update Plugin Security',
 		(pluginId: ID, security: Partial<IPluginSecurity>) => ({
 			pluginId,
 			security
 		})
 	);
-	public static runSecurityScan = createAction('[Plugin Marketplace] Run Security Scan', (pluginId: ID) => ({
+	public static readonly runSecurityScan = createAction('[Plugin Marketplace] Run Security Scan', (pluginId: ID) => ({
 		pluginId
 	}));
 
 	// Rating and review actions
-	public static ratePlugin = createAction(
+	public static readonly ratePlugin = createAction(
 		'[Plugin Marketplace] Rate Plugin',
 		(pluginId: ID, rating: number, review?: string) => ({
 			pluginId,
@@ -157,13 +181,16 @@ export class PluginMarketplaceActions {
 			review
 		})
 	);
-	public static loadPluginReviews = createAction('[Plugin Marketplace] Load Plugin Reviews', (pluginId: ID) => ({
-		pluginId
-	}));
+	public static readonly loadPluginReviews = createAction(
+		'[Plugin Marketplace] Load Plugin Reviews',
+		(pluginId: ID) => ({
+			pluginId
+		})
+	);
 
 	// Category actions
-	public static loadCategories = createAction('[Plugin Marketplace] Load Categories');
-	public static setSelectedCategory = createAction(
+	public static readonly loadCategories = createAction('[Plugin Marketplace] Load Categories');
+	public static readonly setSelectedCategory = createAction(
 		'[Plugin Marketplace] Set Selected Category',
 		(category: string) => ({
 			category
@@ -171,8 +198,8 @@ export class PluginMarketplaceActions {
 	);
 
 	// Featured plugins actions
-	public static loadFeaturedPlugins = createAction('[Plugin Marketplace] Load Featured Plugins');
-	public static setFeaturedPlugin = createAction(
+	public static readonly loadFeaturedPlugins = createAction('[Plugin Marketplace] Load Featured Plugins');
+	public static readonly setFeaturedPlugin = createAction(
 		'[Plugin Marketplace] Set Featured Plugin',
 		(pluginId: ID, featured: boolean) => ({
 			pluginId,
@@ -181,8 +208,8 @@ export class PluginMarketplaceActions {
 	);
 
 	// Marketplace statistics actions
-	public static loadMarketplaceStats = createAction('[Plugin Marketplace] Load Marketplace Stats');
-	public static loadMarketplaceTrends = createAction(
+	public static readonly loadMarketplaceStats = createAction('[Plugin Marketplace] Load Marketplace Stats');
+	public static readonly loadMarketplaceTrends = createAction(
 		'[Plugin Marketplace] Load Marketplace Trends',
 		(category?: string) => ({
 			category
@@ -190,42 +217,54 @@ export class PluginMarketplaceActions {
 	);
 
 	// Notification actions
-	public static markNotificationRead = createAction(
+	public static readonly markNotificationRead = createAction(
 		'[Plugin Marketplace] Mark Notification Read',
 		(notificationId: ID) => ({
 			notificationId
 		})
 	);
-	public static clearAllNotifications = createAction('[Plugin Marketplace] Clear All Notifications');
+	public static readonly clearAllNotifications = createAction('[Plugin Marketplace] Clear All Notifications');
 
 	// UI state actions
-	public static setSelectedPlugin = createAction(
+	public static readonly setSelectedPlugin = createAction(
 		'[Plugin Marketplace] Set Selected Plugin',
 		(plugin: IPlugin | null) => ({
 			plugin
 		})
 	);
-	public static togglePluginDetails = createAction('[Plugin Marketplace] Toggle Plugin Details', (pluginId: ID) => ({
-		pluginId
-	}));
-	public static setLoadingState = createAction('[Plugin Marketplace] Set Loading State', (isLoading: boolean) => ({
-		isLoading
-	}));
-	public static setError = createAction('[Plugin Marketplace] Set Error', (error: string | null) => ({
+	public static readonly togglePluginDetails = createAction(
+		'[Plugin Marketplace] Toggle Plugin Details',
+		(pluginId: ID) => ({
+			pluginId
+		})
+	);
+	public static readonly setLoadingState = createAction(
+		'[Plugin Marketplace] Set Loading State',
+		(isLoading: boolean) => ({
+			isLoading
+		})
+	);
+	public static readonly setError = createAction('[Plugin Marketplace] Set Error', (error: string | null) => ({
 		error
 	}));
 
 	// Bulk operations
-	public static bulkInstallPlugins = createAction('[Plugin Marketplace] Bulk Install Plugins', (pluginIds: ID[]) => ({
-		pluginIds
-	}));
-	public static bulkUninstallPlugins = createAction(
+	public static readonly bulkInstallPlugins = createAction(
+		'[Plugin Marketplace] Bulk Install Plugins',
+		(pluginIds: ID[]) => ({
+			pluginIds
+		})
+	);
+	public static readonly bulkUninstallPlugins = createAction(
 		'[Plugin Marketplace] Bulk Uninstall Plugins',
 		(pluginIds: ID[]) => ({
 			pluginIds
 		})
 	);
-	public static bulkUpdatePlugins = createAction('[Plugin Marketplace] Bulk Update Plugins', (pluginIds: ID[]) => ({
-		pluginIds
-	}));
+	public static readonly bulkUpdatePlugins = createAction(
+		'[Plugin Marketplace] Bulk Update Plugins',
+		(pluginIds: ID[]) => ({
+			pluginIds
+		})
+	);
 }

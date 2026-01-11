@@ -1,27 +1,40 @@
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { PluginInstallationQuery } from '../plugin-marketplace/+state';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
 
+type PluginContext = 'local' | 'cdn' | 'npm';
+
+interface NpmModel {
+	pkg: {
+		name: string | null;
+		version: string | null;
+	};
+	registry: {
+		privateURL: string | null;
+		authToken: string | null;
+	};
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-add-plugin',
 	templateUrl: './add-plugin.component.html',
 	styleUrls: ['./add-plugin.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: false
 })
 export class AddPluginComponent {
 	private readonly dialogRef = inject(NbDialogRef<AddPluginComponent>);
-	private readonly router = inject(Router);
 	private readonly action = inject(Actions);
-	public readonly query = inject(PluginInstallationQuery);
-	public error = null;
-	public context = 'local';
-	public showRegistry = false;
-	public npmModel = {
+	protected readonly query = inject(PluginInstallationQuery);
+	protected readonly error = signal<string | null>(null);
+	protected readonly context = signal<PluginContext>('local');
+	protected readonly showRegistry = signal<boolean>(false);
+	protected readonly cdnUrl = signal<string>('');
+	protected readonly npmModel = signal<NpmModel>({
 		pkg: {
 			name: null,
 			version: null
@@ -30,46 +43,90 @@ export class AddPluginComponent {
 			privateURL: null,
 			authToken: null
 		}
-	};
+	});
 
-	public installPlugin(value: string) {
-		if (!value) {
-			this.error = 'TIMER_TRACKER.SETTINGS.PLUGIN_INSTALL_CDN_ERROR';
+	protected readonly isLocalContext = computed(() => this.context() === 'local');
+	protected readonly isCdnContext = computed(() => this.context() === 'cdn');
+	protected readonly isNpmContext = computed(() => this.context() === 'npm');
+
+	protected installPlugin(value: string): void {
+		if (!value?.trim()) {
+			this.error.set('TIMER_TRACKER.SETTINGS.PLUGIN_INSTALL_CDN_ERROR');
 			return;
 		}
-		this.context = 'cdn';
+		this.error.set(null);
 		this.action.dispatch(PluginInstallationActions.install({ url: value.trim(), contextType: 'cdn' }));
 	}
 
-	public localPluginInstall() {
-		this.context = 'local';
+	protected localPluginInstall(): void {
+		this.error.set(null);
 		this.action.dispatch(PluginInstallationActions.install({ contextType: 'local' }));
 	}
 
-	public handleUnmaskedValueChange(authToken: string) {
-		this.npmModel.registry.authToken = authToken;
+	protected handleUnmaskedValueChange(authToken: string): void {
+		this.npmModel.update((model) => ({
+			...model,
+			registry: { ...model.registry, authToken }
+		}));
 	}
 
-	public installPluginFromNPM() {
-		this.context = 'npm';
-		this.action.dispatch(PluginInstallationActions.install({ ...this.npmModel, contextType: 'npm' }));
+	protected updateNpmPackageName(name: string): void {
+		this.npmModel.update((model) => ({
+			...model,
+			pkg: { ...model.pkg, name }
+		}));
 	}
 
-	public close() {
+	protected updateNpmPackageVersion(version: string): void {
+		this.npmModel.update((model) => ({
+			...model,
+			pkg: { ...model.pkg, version }
+		}));
+	}
+
+	protected updatePrivateUrl(privateURL: string): void {
+		this.npmModel.update((model) => ({
+			...model,
+			registry: { ...model.registry, privateURL }
+		}));
+	}
+
+	protected installPluginFromNPM(): void {
+		const model = this.npmModel();
+		if (!model.pkg.name?.trim()) {
+			this.error.set('TIMER_TRACKER.SETTINGS.PACKAGE_NAME_REQUIRED');
+			return;
+		}
+		this.error.set(null);
+		this.action.dispatch(PluginInstallationActions.install({ ...model, contextType: 'npm' }));
+	}
+
+	protected close(): void {
 		this.dialogRef.close();
 	}
 
-	public reset() {
-		this.context = 'local';
-		this.error = null;
+	protected reset(): void {
+		this.context.set('local');
+		this.error.set(null);
+		this.cdnUrl.set('');
+		this.npmModel.set({
+			pkg: {
+				name: null,
+				version: null
+			},
+			registry: {
+				privateURL: null,
+				authToken: null
+			}
+		});
 	}
 
-	public toggleRegistry(enabled: boolean) {
-		this.showRegistry = enabled;
+	protected toggleRegistry(enabled: boolean): void {
+		this.showRegistry.set(enabled);
 	}
 
-	public async redirectToStore(): Promise<void> {
-		await this.router.navigate(['plugins', 'marketplace']);
-		this.close();
+	protected switchContext(contextType: PluginContext): void {
+		this.context.set(contextType);
+		this.error.set(null);
 	}
 }

@@ -1,38 +1,456 @@
-@use 'gauzy/_gauzy-table' as *;
+// ============================================
+// Host Element
+// ============================================
+:host {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 5.25rem);
+  min-height: 0;
+  overflow: hidden;
+}
 
+// ============================================
+// Content Container
+// ============================================
+.content-active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  gap: 0.75rem;
+}
+
+// ============================================
+// Action Button Container
+// ============================================
+.button-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .button-hide {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.5rem;
+    animation: fadeIn 0.25s ease-out;
+
+    button {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: calc(var(--border-radius) * 1.2);
+      font-weight: 500;
+      letter-spacing: 0.01em;
+
+      nb-icon {
+        margin-right: 0.25rem;
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      &:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: var(--gauzy-shadow);
+      }
+
+      &:not(:disabled):active {
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+// ============================================
+// Custom Table Container
+// ============================================
 .custom-table {
   background-color: var(--gauzy-card-2);
   margin: 0;
   display: flex;
   flex-direction: column;
-  padding: 8px 4px 0px;
-  border-radius: var(--border-radius);
-  height: calc(100vh - 13rem);
-  width: auto;
+  padding: 0.75rem;
+  border-radius: calc(var(--border-radius) * 1.5);
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  box-shadow: var(--gauzy-shadow);
+  overflow: hidden;
 
   .table-scroll-container {
-    flex-grow: 10;
-    max-height: unset;
-    padding: 0 4px 0;
-    margin-bottom: 8px;
-    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    border-radius: calc(var(--border-radius) * 1);
+
+    // Smart Table Styling
+    ::ng-deep angular2-smart-table {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
+      table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+
+        thead {
+          position: sticky;
+          top: 0;
+          z-index: 1;
+          background-color: var(--gauzy-card-1);
+
+          tr th {
+            padding: 0.875rem 1rem;
+            font-weight: 600;
+            font-size: 0.8125rem;
+            color: var(--gauzy-text-color-2);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 1px solid var(--border-basic-color-3);
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+          }
+        }
+
+        tbody {
+          tr {
+            transition: background-color 0.15s ease;
+
+            &:hover {
+              background-color: var(--smart-table-bg-active);
+            }
+
+            &.selected {
+              background-color: var(--smart-table-bg-active);
+              box-shadow: inset 4px 0 0 var(--color-primary-default);
+            }
+
+            td {
+              padding: 0.75rem 1rem;
+              font-size: 0.875rem;
+              color: var(--gauzy-text-color-1);
+              border-bottom: 1px solid var(--border-basic-color-3);
+              vertical-align: middle;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+            }
+
+            &:last-child td {
+              border-bottom: none;
+            }
+          }
+        }
+      }
+
+      // Hide default pager (using custom pagination)
+      angular2-smart-table-pager {
+        display: none;
+      }
+    }
+
+    // Disabled state overlay
+    .table-disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      user-select: none;
+      filter: grayscale(20%);
+    }
+  }
+
+  .pagination-container,
+  nav.pagination-container {
+    flex-shrink: 0;
+    padding: 0.75rem 0 0;
+    border-top: 1px solid var(--border-basic-color-3);
+    margin-top: auto;
   }
 }
 
-.button-container,
-.button-hide {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0.5rem;
-}
-
+// ============================================
+// No Data / Empty State
+// ============================================
 .no-data {
-  height: calc(100vh - 13rem);
+  flex: 1;
+  min-height: 200px;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--gauzy-card-2);
+  border-radius: calc(var(--border-radius) * 1.5);
+  box-shadow: var(--gauzy-shadow);
+  padding: 1rem;
+  text-align: center;
+
+  ::ng-deep ngx-no-data-message {
+    width: 100%;
+
+    .no-data-container {
+      padding: 1.5rem;
+    }
+
+    nb-icon,
+    .icon {
+      font-size: 3rem;
+      color: var(--gauzy-text-color-2);
+      opacity: 0.6;
+      margin-bottom: 1rem;
+    }
+
+    .message,
+    p {
+      font-size: 0.9375rem;
+      color: var(--gauzy-text-color-2);
+      line-height: 1.5;
+    }
+  }
 }
 
+// ============================================
+// Button Status Classes
+// ============================================
 .danger {
-  color: var(--icon-danger-color) !important;
-  background-color: #ff00002b !important;
+  --danger-bg: color-mix(in srgb, var(--color-danger-default) 10%, transparent);
+  --danger-bg-hover: color-mix(in srgb, var(--color-danger-default) 15%, transparent);
+  color: var(--color-danger-default) !important;
+  background-color: var(--danger-bg) !important;
+
+  &:hover:not(:disabled) {
+    background-color: var(--danger-bg-hover) !important;
+  }
+}
+
+.secondary {
+  color: var(--gauzy-text-color-2);
+}
+
+// ============================================
+// Animations
+// ============================================
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================
+// Responsive Design
+// ============================================
+
+// Large tablets and small desktops
+@media screen and (max-width: 1200px) {
+  .custom-table {
+    padding: 0.625rem;
+
+    .table-scroll-container ::ng-deep angular2-smart-table table {
+      thead tr th,
+      tbody tr td {
+        padding: 0.625rem 0.75rem;
+      }
+    }
+  }
+}
+
+// Tablets
+@media screen and (max-width: 992px) {
+  .button-container .button-hide {
+    gap: 0.375rem;
+
+    button {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+  }
+
+  .custom-table .table-scroll-container {
+    ::ng-deep angular2-smart-table table {
+      thead tr th {
+        font-size: 0.75rem;
+        padding: 0.625rem 0.5rem;
+      }
+
+      tbody tr td {
+        font-size: 0.8125rem;
+        padding: 0.5rem;
+      }
+    }
+  }
+}
+
+// Mobile landscape and small tablets
+@media screen and (max-width: 768px) {
+  .content-active {
+    gap: 0.5rem;
+  }
+
+  .button-container {
+    min-height: 2rem;
+
+    .button-hide {
+      flex-wrap: wrap;
+      width: 100%;
+      justify-content: flex-start;
+
+      button {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-width: 0;
+        justify-content: center;
+
+        // Hide text on very small buttons, show icon only
+        &.action {
+          nb-icon {
+            margin-right: 0.125rem;
+          }
+        }
+      }
+    }
+  }
+
+  .custom-table {
+    padding: 0.5rem;
+    border-radius: calc(var(--border-radius) * 1.25);
+
+    .table-scroll-container {
+      ::ng-deep angular2-smart-table table {
+        // Enable horizontal scroll for table
+        min-width: 500px;
+
+        thead tr th,
+        tbody tr td {
+          padding: 0.5rem;
+          font-size: 0.8125rem;
+        }
+      }
+    }
+
+    .pagination-container {
+      padding: 0.5rem 0 0;
+    }
+  }
+
+  .no-data {
+    min-height: 180px;
+    padding: 1.5rem;
+    border-radius: calc(var(--border-radius) * 1.25);
+
+    ::ng-deep ngx-no-data-message {
+      max-width: 280px;
+
+      nb-icon,
+      .icon {
+        font-size: 2.5rem;
+      }
+
+      .message,
+      p {
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+
+// Mobile portrait
+@media screen and (max-width: 480px) {
+  .button-container .button-hide {
+    button {
+      flex: 1 1 100%;
+      font-size: 0.8125rem;
+      padding: 0.625rem 0.75rem;
+
+      nb-icon {
+        font-size: 1rem;
+      }
+    }
+  }
+
+  .custom-table {
+    padding: 0.375rem;
+
+    .table-scroll-container {
+      margin: 0 -0.25rem;
+      padding: 0 0.25rem;
+
+      ::ng-deep angular2-smart-table table {
+        min-width: 450px;
+
+        thead tr th,
+        tbody tr td {
+          padding: 0.5rem 0.375rem;
+          font-size: 0.75rem;
+        }
+      }
+    }
+  }
+
+  .no-data {
+    min-height: 160px;
+    padding: 1rem;
+  }
+}
+
+// ============================================
+// Accessibility & Motion Preferences
+// ============================================
+@media (prefers-reduced-motion: reduce) {
+  .button-container .button-hide {
+    animation: none;
+
+    button {
+      transition: none;
+
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+
+  .custom-table .table-scroll-container ::ng-deep angular2-smart-table table tbody tr {
+    transition: none;
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  .custom-table {
+    border: 2px solid var(--border-basic-color-4);
+
+    .table-scroll-container ::ng-deep angular2-smart-table table {
+      thead tr th,
+      tbody tr td {
+        border-bottom-width: 2px;
+      }
+
+      tbody tr.selected {
+        box-shadow: inset 6px 0 0 var(--color-primary-default);
+      }
+    }
+  }
+
+  .no-data {
+    border: 2px solid var(--border-basic-color-4);
+  }
+
+  .button-container .button-hide button {
+    border: 2px solid currentColor;
+  }
 }

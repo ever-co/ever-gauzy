@@ -168,6 +168,7 @@ import { EmployeeNotificationModule } from '../employee-notification/employee-no
 import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
 import { EmployeeRecentVisitModule } from '../employee-recent-visit/employee-recent-visit.module';
 import { SharedEntityModule } from '../shared-entity/shared-entity.module';
+import { PasswordHashModule } from '../password-hash/password-hash.module';
 
 const { unleashConfig } = environment;
 
@@ -318,7 +319,7 @@ if (environment.THROTTLE_ENABLED) {
 								// This provides proper type safety without 'as any' cast
 
 								return {
-									stores: [cacheable.primary, cacheable.secondary]
+									stores: cacheable
 								};
 							} catch (error) {
 								console.error(
@@ -345,8 +346,13 @@ if (environment.THROTTLE_ENABLED) {
 		I18nModule.forRoot({
 			fallbackLanguage: LanguagesEnum.ENGLISH,
 			loaderOptions: {
-				path: environment.isElectron && environment.electronResourcesPath ? path.resolve(environment.electronResourcesPath, 'app.asar.unpacked/node_modules/@gauzy/core/src/lib/i18n')
-				: path.resolve(__dirname, '../i18n/'),
+				path:
+					environment.isElectron && environment.electronResourcesPath
+						? path.resolve(
+								environment.electronResourcesPath,
+								'app.asar.unpacked/node_modules/@gauzy/core/src/lib/i18n'
+						  )
+						: path.resolve(__dirname, '../i18n/'),
 				watch: !environment.production
 			},
 			resolvers: [new HeaderResolver(['language'])]
@@ -510,7 +516,8 @@ if (environment.THROTTLE_ENABLED) {
 		EmployeeNotificationSettingModule,
 		TenantApiKeyModule,
 		EmployeeRecentVisitModule,
-		SharedEntityModule
+		SharedEntityModule,
+		PasswordHashModule
 	],
 	controllers: [AppController],
 	providers: [

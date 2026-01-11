@@ -807,8 +807,10 @@
 		"prepopulate",
 		"prepopulates",
 		"prepopulation",
-		"Liskov"
-		"Zrdm"
+		"Liskov",
+		"backoff",
+		"autodrain",
+		"pluginname"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

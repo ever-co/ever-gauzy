@@ -798,3 +798,17 @@ app.on('browser-window-created', (_, window) => {
 
 ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
+ipcMain.handle('set-tray-icon', () => {
+	return {
+		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
+		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon_gray.png')
+	}
+});
+
+nativeTheme.on('updated', () => {
+	const appSetting = LocalStore.getStore('appSetting');
+	timeTrackerWindow?.webContents?.send?.('custom_tray_icon', {
+		event: 'updateTheme',
+		isStopped: !appSetting.timerStarted
+	});
+});

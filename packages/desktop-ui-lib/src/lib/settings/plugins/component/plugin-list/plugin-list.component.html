@@ -1,53 +1,78 @@
-<!-- Installing -->
+<!-- State variables -->
+<!-- Whether a plugin is being installed -->
 @let installing = installationQuery.installing$() | async;
-<!-- uninstalling -->
+
+<!-- Whether a plugin is being uninstalled -->
 @let uninstalling = installationQuery.uninstalling$() | async;
-<!-- activating -->
+
+<!-- Whether a plugin is being activated -->
 @let activating = query.activating$ | async;
-<!-- deactivating -->
+
+<!-- Whether a plugin is being deactivated -->
 @let deactivating = query.deactivating$ | async;
-<!-- disabled -->
+
+<!-- Whether any operation is in progress -->
 @let disabled = installing || uninstalling || activating || deactivating;
-<!-- selected -->
+
+<!-- The currently selected plugin -->
 @let selected = query.plugin$ | async;
-<!-- loading -->
+
+<!-- Whether the plugins are loading -->
 @let loading = query.isLoading$ | async;
-<!-- source -->
+
+<!-- The source data for the table -->
 @let source = sourceData$ | async;
 
-<div class="content-active">
-	<div class="button-container mb-3">
-		<div class="button-add">
-			<button (click)="addPlugin()" [disabled]="disabled" status="success" size="small" nbButton>
-				<nb-icon *gauzySpinnerButton="installing" icon="plus-outline"></nb-icon>
-				{{ 'BUTTONS.ADD_PLUGIN' | translate }}
-			</button>
-		</div>
-		<div *ngIf="selected" class="button-hide">
+<!-- The list of plugins -->
+@let plugins = plugins$ | async;
+
+<!-- Whether there are any plugins available -->
+@let isPluginAvailable = plugins && plugins.length > 0;
+
+<section class="content-active first" aria-label="Plugin List">
+	<!-- Content States -->
+	@if (loading) {
+	<!-- Loading State -->
+	<div class="no-data" aria-live="polite" aria-busy="true">
+		<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.LOADING' | translate"></ngx-no-data-message>
+	</div>
+	} @else if (isPluginAvailable) {
+	<!-- Action Buttons -->
+	@if (selected) {
+	<div class="button-container" aria-label="Plugin actions">
+		<div class="button-hide">
+			@if (selected.renderer) {
 			<button
-				*ngIf="selected.renderer"
 				class="action secondary"
 				status="basic"
 				size="small"
 				(click)="view()"
 				[disabled]="disabled"
+				[attr.aria-disabled]="disabled"
+				aria-label="View plugin details"
 				nbButton
 			>
-				<nb-icon icon="eye-outline"></nb-icon>{{ 'BUTTONS.VIEW' | translate }}
+				<nb-icon icon="eye-outline"></nb-icon>
+				<span class="btn-text">{{ 'BUTTONS.VIEW' | translate }}</span>
 			</button>
+			}
 			<button
 				size="small"
 				[status]="selected.isActivate ? 'warning' : 'primary'"
-				class="button-install"
+				class="button-status"
 				(click)="changeStatus()"
 				[disabled]="disabled"
+				[attr.aria-disabled]="disabled"
+				[attr.aria-label]="(selected.isActivate ? 'Deactivate' : 'Activate') + ' plugin'"
 				nbButton
 			>
 				<nb-icon
 					*gauzySpinnerButton="activating || deactivating"
 					[icon]="selected.isActivate ? 'close-circle-outline' : 'checkmark-circle-outline'"
-				></nb-icon
-				>{{ (selected.isActivate ? 'BUTTONS.DEACTIVATE' : 'BUTTONS.ACTIVATE') | translate }}
+				></nb-icon>
+				<span class="btn-text">{{
+					(selected.isActivate ? 'BUTTONS.DEACTIVATE' : 'BUTTONS.ACTIVATE') | translate
+				}}</span>
 			</button>
 			<button
 				size="small"
@@ -55,32 +80,40 @@
 				status="basic"
 				(click)="uninstall()"
 				[disabled]="disabled"
+				[attr.aria-disabled]="disabled"
+				aria-label="Uninstall plugin"
 				nbButton
 			>
 				<nb-icon *gauzySpinnerButton="uninstalling" status="danger" icon="slash-outline"></nb-icon>
-				{{ 'BUTTONS.UNINSTALL' | translate }}
+				<span class="btn-text">{{ 'BUTTONS.UNINSTALL' | translate }}</span>
 			</button>
 		</div>
 	</div>
-	<div *ngIf="(plugins$ | async)?.length > 0; else noPlugin" class="col-12 custom-table">
+	}
+	<!-- Table View -->
+	<div class="custom-table" aria-label="Plugins table">
 		<div class="table-scroll-container">
+			@if (source) {
 			<angular2-smart-table
 				#pluginTable
 				(userRowSelect)="handleRowSelection($event)"
 				[settings]="smartTableSettings"
 				[source]="source"
-				style="cursor: pointer"
-			>
-			</angular2-smart-table>
+				[class.table-disabled]="disabled"
+				[attr.aria-disabled]="disabled"
+			></angular2-smart-table>
+			}
 		</div>
-		<div class="pagination-container">
+		@if (source) {
+		<nav class="pagination-container" aria-label="Table pagination">
 			<ga-pagination [source]="source"></ga-pagination>
-		</div>
+		</nav>
+		}
 	</div>
-</div>
-<ng-template #noPlugin>
-	<div class="no-data">
-		<ngx-no-data-message [message]="(loading ? 'SM_TABLE.NO_DATA.LOADING' : 'SM_TABLE.NO_DATA.PLUGIN') | translate">
-		</ngx-no-data-message>
+	} @else {
+	<!-- Empty State -->
+	<div class="no-data" aria-live="polite">
+		<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.PLUGIN' | translate"></ngx-no-data-message>
 	</div>
-</ng-template>
+	}
+</section>

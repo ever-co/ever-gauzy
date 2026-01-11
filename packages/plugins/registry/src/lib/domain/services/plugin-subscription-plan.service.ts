@@ -369,7 +369,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 			return count > 0;
 		} catch (error) {
 			// If there's an error checking, default to false (treat as free plugin)
-			console.error(`Error checking if plugin ${pluginId} requires subscription:`, error);
+			console.error('Error checking if plugin %s requires subscription:', pluginId, error);
 			return false;
 		}
 	}

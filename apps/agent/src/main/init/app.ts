@@ -167,14 +167,15 @@ async function appReady() {
 	await ensureScreenshotDir();
 	const configs: any = store.get('configs');
 	const settings = getAppSetting();
-	if (!settings) {
+	if (!settings || (!Object.keys(settings).length)) {
 		launchAtStartup(true, false);
 		LocalStore.setAllDefaultConfig();
 
 		/* Set default application setting for agent app. */
 		LocalStore.updateApplicationSetting({
 			screenshotNotification: false,
-			simpleScreenshotNotification: false
+			simpleScreenshotNotification: false,
+			alwaysOn: false
 		});
 	}
 
