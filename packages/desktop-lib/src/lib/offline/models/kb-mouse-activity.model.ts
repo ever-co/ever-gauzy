@@ -1,5 +1,5 @@
 import { Serializable } from '../../interfaces';
-import { KbMouseActivityTO, TMouseEvents, TActiveWindows } from '../dto/kb-mouse-activity.dto';
+import { KbMouseActivityTO, TMouseEvents, TActiveWindows, ActivityState } from '../dto/kb-mouse-activity.dto';
 import { Base } from './base.model';
 
 export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializable<KbMouseActivityTO> {
@@ -18,6 +18,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	private _timerId: number;
 	private _timeslotId: string;
 	private _isOffline: boolean;
+	private _activityState: ActivityState;
 
 	constructor(kbMouseActivity: KbMouseActivityTO) {
 		super(kbMouseActivity.id, kbMouseActivity.tenantId, kbMouseActivity.organizationId);
@@ -36,6 +37,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 		this._timerId = kbMouseActivity.timerId;
 		this._timeslotId = kbMouseActivity.timeslotId;
 		this._isOffline = kbMouseActivity.isOffline;
+		this._activityState = kbMouseActivity.activityState;
 	}
 
 	public get timeStart(): Date {
@@ -128,6 +130,12 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	public get timeslotId(): string {
 		return this._timeslotId;
 	}
+	public set activityState(value: ActivityState) {
+		this._activityState =  value;
+	}
+	public get activityState(): ActivityState {
+		return this._activityState;
+	}
 
 	public toObject(): KbMouseActivityTO {
 		return {
@@ -149,7 +157,8 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 			syncedActivity: this._syncedActivity,
 			isOffline: this._isOffline,
 			timerId: this._timerId,
-			timeslotId: this._timeslotId
+			timeslotId: this._timeslotId,
+			activityState: this._activityState
 		};
 	}
 }

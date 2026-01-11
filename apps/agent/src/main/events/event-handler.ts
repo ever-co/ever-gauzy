@@ -135,14 +135,25 @@ export default class EventHandler {
 	private async resumeActivity() {
 		const authConfig = getAuthConfig();
 		this.getPullActivities(authConfig);
-		this.pullActivities.startTracking(true);
+		await this.pullActivities.recordIdleTime();
+		this.pullActivities.startPausedDate = null;
+		await this.pullActivities.startTracking(this.pullActivities.isPaused);
+		this.pullActivities.isPaused = false;
 	}
 
 	private async pauseActivity() {
 		const authConfig = getAuthConfig();
 		this.getPullActivities(authConfig);
-		this.pullActivities.startPausedDate = new Date;
+		const isTimeRunning = this.pullActivities.running;
 		await this.pullActivities.stopTracking(true);
+		if (isTimeRunning) {
+			this.pullActivities.startPausedDate = new Date;
+			await this.pullActivities.recordIdleTime();
+
+			/* Re Update paused date after record idle time */
+			this.pullActivities.isPaused = true;
+			this.pullActivities.startPausedDate = new Date();
+		}
 	}
 
 	async handleEvent(args: TEventArgs) {

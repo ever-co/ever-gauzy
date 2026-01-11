@@ -26,6 +26,11 @@ export type TActiveWindows = {
 	}
 }
 
+export enum ActivityState {
+	active = 'active',
+	idle = 'idle'
+}
+
 export interface KbMouseActivityTO {
 	id?: number;
 	timerId?: number;
@@ -45,7 +50,8 @@ export interface KbMouseActivityTO {
 	activeWindows?: TActiveWindows[] | string;
 	syncedActivity?: boolean;
 	isOffline?: boolean;
-	timeslotId?: string
+	timeslotId?: string;
+	activityState?: ActivityState
 }
 
 export const TABLE_NAME_KB_MOUSE_ACTIVITY: string = 'kb_mouse_activity';

@@ -3,6 +3,9 @@ import {
 	KbMouseTimer,
 	KeyboardMouseActivityStores,
 	ActivityWindow,
+	TActivtyProcessParam,
+	TKbMouseActivity,
+	TWindowActivities
 } from '@gauzy/desktop-activity';
 import {
 	KbMouseActivityService,
@@ -10,7 +13,8 @@ import {
 	notifyScreenshot,
 	TimerService,
 	Timer,
-	PowerManagerPreventDisplaySleep
+	PowerManagerPreventDisplaySleep,
+	ActivityState
 } from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
 import * as path from 'node:path';
@@ -62,6 +66,7 @@ class PullActivities {
 	private currentTimerId: number;
 	private lastTodayDuration: number;
 	private _startePausedDate: Date;
+	private _isPaused: boolean;
 	constructor() {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -100,6 +105,14 @@ class PullActivities {
 
 	public set startPausedDate(value: Date) {
 		this._startePausedDate = value;
+	}
+
+	public get isPaused(): boolean {
+		return this._isPaused;
+	}
+
+	public set isPaused(value: boolean) {
+		this._isPaused = value;
 	}
 
 	public updateAppUserAuth(user: UserLogin) {
@@ -154,7 +167,7 @@ class PullActivities {
 			const appSetting = getAppSetting();
 			if (!this.isStarted) {
 				this.startedDate = new Date();
-				if (!isResume) {
+				if (isResume) {
 					await this.startTimerApi();
 				}
 				this.agentLogger.info('Listener keyboard and mouse starting');
@@ -490,17 +503,36 @@ class PullActivities {
 		return imgs;
 	}
 
-	async activityProcess(timeData: { timeStart: Date; timeEnd: Date }, isScreenshot?: boolean, afkDuration?: number) {
+	private collectActivitySnapshot(activityState: ActivityState): {
+		activities: TKbMouseActivity;
+		activityWindow: TWindowActivities[];
+	} {
+		if (activityState === ActivityState.active) {
+			return {
+				activities: this.activityStores.getAndResetCurrentActivities(),
+				activityWindow: this.activityWindow.retrieveAndFlushActivities()
+			}
+		};
+		return {
+			activities: this.activityStores.defaultValue,
+			activityWindow: []
+		}
+	}
+
+	async activityProcess(payload: TActivtyProcessParam) {
 		try {
 			let imgs = [];
-			if (isScreenshot) {
+			if (payload.screenShot) {
 				imgs = await this.getScreenShot();
 			}
-			const activities = this.activityStores.getAndResetCurrentActivities();
-			const activityWindow = this.activityWindow.retrieveAndFlushActivities();
+
+			const {
+				activities,
+				activityWindow
+			} = this.collectActivitySnapshot(payload.activityState || ActivityState.active);
 			const savedActivity = await this.activityService.saveAndReturn({
-				timeStart: timeData.timeStart,
-				timeEnd: timeData.timeEnd,
+				timeStart: payload.timeData.timeStart,
+				timeEnd: payload.timeData.timeEnd,
 				tenantId: this.tenantId,
 				organizationId: this.organizationId,
 				kbPressCount: activities.kbPressCount,
@@ -511,11 +543,12 @@ class PullActivities {
 				mouseEvents: JSON.stringify(activities.mouseEvents),
 				remoteId: this.remoteId,
 				screenshots: JSON.stringify(imgs.map((img) => img.filePath)),
-				afkDuration: afkDuration || 0,
+				afkDuration: payload.afkDuration || 0,
 				activeWindows: JSON.stringify(activityWindow),
 				syncedActivity: false,
 				isOffline: false,
-				timerId: this.currentTimerId
+				timerId: this.currentTimerId,
+				activityState: payload.activityState || ActivityState.active
 			});
 			this.initWorkerQueue();
 			this.workerQueue.desktopQueue.enqueueTimeSlot({
@@ -523,9 +556,9 @@ class PullActivities {
 				activityId: Number(savedActivity?.id),
 				queue: 'time_slot',
 				data: {
-					timeStart: timeData.timeStart.toISOString(),
-					timeEnd: timeData.timeEnd.toISOString(),
-					afkDuration: afkDuration
+					timeStart: payload.timeData.timeStart.toISOString(),
+					timeEnd: payload.timeData.timeEnd.toISOString(),
+					afkDuration: payload.afkDuration
 				}
 			})
 			this.agentLogger.info('Keyboard and mouse activities saved');
@@ -541,14 +574,53 @@ class PullActivities {
 			this.agentLogger.warn('initActivityAndScreenshot skipped: startedDate is not set');
 			return;
 		}
-		return this.activityProcess(
-			{
+		const currentTime = new Date();
+		return this.activityProcess({
+			timeData: {
 				timeStart: this.startedDate,
-				timeEnd: new Date()
+				timeEnd: currentTime
 			},
-			true,
-			0
-		);
+			screenShot: true,
+			afkDuration: Math.floor((currentTime.getTime() - this.startedDate.getTime()) / 1000),
+			activityState: ActivityState.active
+		});
+	}
+
+	public async recordIdleTime() {
+		if (!this.startPausedDate) {
+			this.agentLogger.warn('idletime skipped: startPausedDate is not set');
+			return
+		}
+		const currentTime = new Date();
+		let idleDuration = Math.floor((currentTime.getTime() - this.startPausedDate.getTime()) / 1000);
+
+		// It starts as the initial pause date and will be advanced for each chunk.
+		let chunkStartDate = new Date(this.startPausedDate.getTime());
+
+		/* Split idle time duration to 10 minutes each minutes */
+		while (idleDuration > 0) {
+			// The maximum duration for a chunk is 10 minutes (600 seconds).
+			const tenMinutesInSeconds = 10 * 60;
+			const chunkDuration = Math.min(idleDuration, tenMinutesInSeconds);
+
+			// Calculate the end date for the current chunk.
+			const chunkEndDate = new Date(chunkStartDate.getTime() + chunkDuration * 1000);
+
+			console.log(`Processing time slot: ${chunkStartDate.toISOString()} to ${chunkEndDate.toISOString()}`);
+			this.activityProcess({
+				timeData: {
+					timeStart: chunkStartDate,
+					timeEnd: chunkEndDate
+				},
+				screenShot: true,
+				afkDuration: chunkDuration,
+				activityState: ActivityState.idle
+			});
+
+			idleDuration -= chunkDuration;
+			chunkStartDate = chunkEndDate;
+		}
+		return;
 	}
 
 	/** check employee setting periodically to keep agent setting up to date */
