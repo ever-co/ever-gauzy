@@ -40,9 +40,7 @@ export function WrapSecrets(secrets: Record<string, any>, targets: any | any[], 
 						if (offset * 2 >= string.length) {
 							secrets[key] = character.repeat(string.length);
 						} else {
-							// Get first and last parts without overlap
-							const firstPart = string.substring(0, offset);
-							const lastPart = string.slice(string.length - offset);
+							// Get middle part without overlap
 							const middlePart = string.substring(offset, string.length - offset);
 
 							// Create character repeater

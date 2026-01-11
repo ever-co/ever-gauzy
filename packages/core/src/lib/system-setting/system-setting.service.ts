@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { FindManyOptions, FindOptionsWhere, In, IsNull } from 'typeorm';
-import { indexBy, keys, object, pluck } from 'underscore';
+import { FindManyOptions, FindOptionsWhere, IsNull } from 'typeorm';
+import { keys } from 'underscore';
 import { ID, IResolvedSystemSetting, SystemSettingScope } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
