@@ -37,17 +37,16 @@ export class SystemSettingGetHandler implements ICommandHandler<SystemSettingGet
 
 		let settings = await this._systemSettingService.getSettingsWithCascade(names, tenantId, organizationId);
 
-		return Object.assign(
-			{},
-			WrapSecrets(settings, new SentryConfigDTO()),
-			WrapSecrets(settings, new UnleashConfigDTO()),
-			WrapSecrets(settings, new GoogleMapsConfigDTO()),
-			WrapSecrets(settings, new PosthogConfigDTO()),
-			WrapSecrets(settings, new JitsuConfigDTO()),
-			WrapSecrets(settings, new GauzyAIConfigDTO()),
-			WrapSecrets(settings, new CloudinaryConfigDTO()),
-			WrapSecrets(settings, new ChatwootConfigDTO())
-		);
+		return WrapSecrets(settings, [
+			new SentryConfigDTO(),
+			new UnleashConfigDTO(),
+			new GoogleMapsConfigDTO(),
+			new PosthogConfigDTO(),
+			new JitsuConfigDTO(),
+			new GauzyAIConfigDTO(),
+			new CloudinaryConfigDTO(),
+			new ChatwootConfigDTO()
+		]);
 	}
 }
 
@@ -73,16 +72,15 @@ export class SystemSettingGetByScopeHandler implements ICommandHandler<SystemSet
 
 		let settings = await this._systemSettingService.getSettingsByScope(effectiveScope, tenantId, organizationId);
 
-		return Object.assign(
-			{},
-			WrapSecrets(settings, new SentryConfigDTO()),
-			WrapSecrets(settings, new UnleashConfigDTO()),
-			WrapSecrets(settings, new GoogleMapsConfigDTO()),
-			WrapSecrets(settings, new PosthogConfigDTO()),
-			WrapSecrets(settings, new JitsuConfigDTO()),
-			WrapSecrets(settings, new GauzyAIConfigDTO()),
-			WrapSecrets(settings, new CloudinaryConfigDTO()),
-			WrapSecrets(settings, new ChatwootConfigDTO())
-		);
+		return WrapSecrets(settings, [
+			new SentryConfigDTO(),
+			new UnleashConfigDTO(),
+			new GoogleMapsConfigDTO(),
+			new PosthogConfigDTO(),
+			new JitsuConfigDTO(),
+			new GauzyAIConfigDTO(),
+			new CloudinaryConfigDTO(),
+			new ChatwootConfigDTO()
+		]);
 	}
 }
