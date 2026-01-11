@@ -3,7 +3,7 @@ import {
 	KbMouseTimer,
 	KeyboardMouseActivityStores,
 	ActivityWindow,
-	TActivtyProcessParam,
+	TActivityProcessParam,
 	TKbMouseActivity,
 	TWindowActivities
 } from '@gauzy/desktop-activity';
@@ -65,7 +65,7 @@ class PullActivities {
 	private powerManagerPreventDisplaySleep: PowerManagerPreventDisplaySleep;
 	private currentTimerId: number;
 	private lastTodayDuration: number;
-	private _startePausedDate: Date;
+	private _startedPausedDate: Date;
 	private _isPaused: boolean;
 	constructor() {
 		this.listenerModule = null;
@@ -100,11 +100,11 @@ class PullActivities {
 	}
 
 	public get startPausedDate(): Date {
-		return this._startePausedDate;
+		return this._startedPausedDate;
 	}
 
 	public set startPausedDate(value: Date) {
-		this._startePausedDate = value;
+		this._startedPausedDate = value;
 	}
 
 	public get isPaused(): boolean {
@@ -519,7 +519,7 @@ class PullActivities {
 		}
 	}
 
-	async activityProcess(payload: TActivtyProcessParam) {
+	async activityProcess(payload: TActivityProcessParam) {
 		try {
 			let imgs = [];
 			if (payload.screenShot) {

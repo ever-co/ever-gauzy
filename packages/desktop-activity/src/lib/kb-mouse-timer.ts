@@ -1,11 +1,11 @@
-import { TActivtyProcessParam, ActivityState } from './i-kb-mouse';
+import { TActivityProcessParam, ActivityState } from './i-kb-mouse';
 const DURATION_SCREENSHOT_LIST = [1, 3, 5, 10];
 export class KbMouseTimer {
 	private static instance: KbMouseTimer;
 
 	private flushIntervalSeconds = 60;
 	private intervalId: ReturnType<typeof setInterval> | null = null;
-	private onFlushCallback: ((timeData: TActivtyProcessParam) => void) | null =
+	private onFlushCallback: ((timeData: TActivityProcessParam) => void) | null =
 		null;
 
 	/* interval screenshot from setting */
@@ -66,7 +66,7 @@ export class KbMouseTimer {
 		this.currentScreenshotInterval = seconds;
 	}
 
-	public onFlush(callback: (timeData: TActivtyProcessParam) => void): void {
+	public onFlush(callback: (timeData: TActivityProcessParam) => void): void {
 		this.onFlushCallback = callback;
 	}
 

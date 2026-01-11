@@ -85,7 +85,7 @@ export enum ActivityState {
 	idle = 'idle'
 }
 
-export type TActivtyProcessParam = {
+export type TActivityProcessParam = {
 	timeData: { timeStart: Date; timeEnd: Date },
 	screenShot?: boolean,
 	afkDuration?: number,
