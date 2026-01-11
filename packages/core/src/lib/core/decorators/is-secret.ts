@@ -36,19 +36,17 @@ export function WrapSecrets(secrets: Record<string, any>, targets: any | any[], 
 						// Calculate offset in percentage based on secret length
 						const offset = Math.ceil((percentage / 100) * string.length);
 
-						// If offset covers more than half the string, mask the entire string
-						if (offset * 2 >= string.length) {
-							secrets[key] = character.repeat(string.length);
-						} else {
-							// Get middle part without overlap
-							const middlePart = string.substring(offset, string.length - offset);
+						// Get first offset character
+						const first = string.substring(0, offset);
 
-							// Create character repeater
-							const repeater = character.repeat(offset);
+						// Get last offset character
+						const last = string.slice(string.length - offset);
 
-							// Replace first and last parts with masked characters
-							secrets[key] = repeater + middlePart + repeater;
-						}
+						// Create character repeater
+						const repeater = character.repeat(offset);
+
+						// ReplaceAll secrets with character
+						secrets[key] = string.replace(first, repeater).replace(last, repeater);
 					}
 				}
 			}
