@@ -136,7 +136,7 @@ export default class EventHandler {
 		const authConfig = getAuthConfig();
 		this.getPullActivities(authConfig);
 		await this.pullActivities.recordIdleTime();
-		this.pullActivities.startPausedDate = null;
+		this.pullActivities.startedPausedDate = null;
 		await this.pullActivities.startTracking(this.pullActivities.isPaused);
 		this.pullActivities.isPaused = false;
 	}
@@ -147,12 +147,12 @@ export default class EventHandler {
 		const isTimeRunning = this.pullActivities.running;
 		await this.pullActivities.stopTracking(true);
 		if (isTimeRunning) {
-			this.pullActivities.startPausedDate = new Date;
+			this.pullActivities.startedPausedDate = new Date;
 			await this.pullActivities.recordIdleTime();
 
 			/* Re Update paused date after record idle time */
 			this.pullActivities.isPaused = true;
-			this.pullActivities.startPausedDate = new Date();
+			this.pullActivities.startedPausedDate = new Date();
 		}
 	}
 

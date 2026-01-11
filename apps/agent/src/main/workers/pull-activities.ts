@@ -65,7 +65,7 @@ class PullActivities {
 	private powerManagerPreventDisplaySleep: PowerManagerPreventDisplaySleep;
 	private currentTimerId: number;
 	private lastTodayDuration: number;
-	private _startedPausedDate: Date;
+	private _startedPausedDate: Date | null;
 	private _isPaused: boolean;
 	constructor() {
 		this.listenerModule = null;
@@ -99,11 +99,11 @@ class PullActivities {
 		return this.startedDate;
 	}
 
-	public get startPausedDate(): Date {
+	public get startedPausedDate(): Date {
 		return this._startedPausedDate;
 	}
 
-	public set startPausedDate(value: Date) {
+	public set startedPausedDate(value: Date | null) {
 		this._startedPausedDate = value;
 	}
 
@@ -587,14 +587,14 @@ class PullActivities {
 	}
 
 	public async recordIdleTime() {
-		if (!this.startPausedDate) {
-			this.agentLogger.warn('idletime skipped: startPausedDate is not set');
+		if (!this.startedPausedDate) {
+			this.agentLogger.warn('idletime skipped: startedPausedDate is not set');
 			return
 		}
 		const currentTime = new Date();
-		let idleDuration = Math.floor((currentTime.getTime() - this.startPausedDate.getTime()) / 1000);
+		let idleDuration = Math.floor((currentTime.getTime() - this.startedPausedDate.getTime()) / 1000);
 
-		let chunkStartDate = new Date(this.startPausedDate.getTime());
+		let chunkStartDate = new Date(this.startedPausedDate.getTime());
 
 		/* Split idle time duration to 10 minutes each minutes */
 		while (idleDuration > 0) {
@@ -605,8 +605,7 @@ class PullActivities {
 			// Calculate the end date for the current chunk.
 			const chunkEndDate = new Date(chunkStartDate.getTime() + chunkDuration * 1000);
 
-			console.log(`Processing time slot: ${chunkStartDate.toISOString()} to ${chunkEndDate.toISOString()}`);
-			this.activityProcess({
+			await this.activityProcess({
 				timeData: {
 					timeStart: chunkStartDate,
 					timeEnd: chunkEndDate

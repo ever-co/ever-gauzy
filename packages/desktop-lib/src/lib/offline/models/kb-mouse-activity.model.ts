@@ -18,7 +18,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 	private _timerId: number;
 	private _timeslotId: string;
 	private _isOffline: boolean;
-	private _activityState: ActivityState;
+	private _activityState: ActivityState = ActivityState.active;
 
 	constructor(kbMouseActivity: KbMouseActivityTO) {
 		super(kbMouseActivity.id, kbMouseActivity.tenantId, kbMouseActivity.organizationId);
