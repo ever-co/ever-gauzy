@@ -42,7 +42,7 @@ export class SystemSettingController extends CrudController<SystemSetting> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Tenant not found'
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
+	@HttpCode(HttpStatus.OK)
 	@Get('/resolve')
 	@UseValidationPipe({ whitelist: true })
 	async getSettingsWithCascade(@Query() query: SystemSettingQueryDTO): Promise<Record<string, any>> {
@@ -74,7 +74,7 @@ export class SystemSettingController extends CrudController<SystemSetting> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Tenant not found'
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
+	@HttpCode(HttpStatus.OK)
 	@Get('/')
 	@UseValidationPipe({ whitelist: true })
 	async getSettingsByScope(@Query() query: SystemSettingQueryDTO): Promise<Record<string, any>> {

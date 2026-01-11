@@ -15,7 +15,6 @@ export class PosthogConfigDTO implements IPosthogConfig {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@IsUrl()
 	@Trimmed()
 	readonly posthog_api_host?: string;
 
