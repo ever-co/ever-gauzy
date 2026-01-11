@@ -5,6 +5,7 @@ import { indexBy, keys, object, pluck } from 'underscore';
 import { ID, IResolvedSystemSetting, SystemSettingScope } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
+import { ConnectionEntityManager } from '../database/connection-entity-manager';
 import { SystemSetting } from './system-setting.entity';
 import { TypeOrmSystemSettingRepository } from './repository/type-orm-system-setting.repository';
 import { MikroOrmSystemSettingRepository } from './repository/mikro-orm-system-setting.repository';
@@ -20,7 +21,8 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	constructor(
 		readonly typeOrmSystemSettingRepository: TypeOrmSystemSettingRepository,
 		readonly mikroOrmSystemSettingRepository: MikroOrmSystemSettingRepository,
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly connectionEntityManager: ConnectionEntityManager
 	) {
 		super(typeOrmSystemSettingRepository, mikroOrmSystemSettingRepository);
 	}
@@ -155,9 +157,16 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		}
 
 		const defaultValue = getDefaultValue(name);
+		if (defaultValue === undefined) {
+			return {
+				name,
+				value: undefined,
+				source: 'DEFAULT'
+			};
+		}
 		return {
 			name,
-			value: defaultValue !== undefined ? this.convertValueToType(String(defaultValue), name) : undefined,
+			value: this.convertValueToType(String(defaultValue), name),
 			source: 'DEFAULT'
 		};
 	}
@@ -187,7 +196,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 					where: whereClause
 				});
 				const item = await this.mikroOrmRepository.findOne(where, mikroOptions);
-				return item ? (this.serialize(item) as SystemSetting) : null;
+				return item ? this.serialize(item as SystemSetting) : null;
 			}
 			case MultiORMEnum.TypeORM:
 				return await this.typeOrmRepository.findOne({
@@ -236,91 +245,95 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		const effectiveTenantId = scope === SystemSettingScope.GLOBAL ? null : tenantId;
 		const effectiveOrgId = scope === SystemSettingScope.ORGANIZATION ? organizationId : null;
 
-		const whereClause: FindOptionsWhere<SystemSetting> = {
-			name: In(keys(input)),
-			tenantId: effectiveTenantId ?? IsNull(),
-			organizationId: effectiveOrgId ?? IsNull()
-		};
-
-		let existingSettings: SystemSetting[];
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<SystemSetting>({
-					where: whereClause
-				});
-				const items = await this.mikroOrmRepository.find(where, mikroOptions);
-				existingSettings = items.map((entity: SystemSetting) => this.serialize(entity)) as SystemSetting[];
-				break;
-			}
-			case MultiORMEnum.TypeORM:
-				existingSettings = await this.typeOrmRepository.find({
-					where: whereClause
-				});
-				break;
-			default:
-				throw new Error(`Not implemented for ${this.ormType}`);
-		}
+			case MultiORMEnum.TypeORM: {
+				const queryRunner = this.connectionEntityManager.rawConnection.createQueryRunner();
+				await queryRunner.connect();
+				await queryRunner.startTransaction();
 
-		const settingsByName = indexBy(existingSettings, 'name');
-		const saveInput: SystemSetting[] = [];
+				try {
+					const result: Record<string, any> = {};
 
-		for (const key in input) {
-			if (Object.prototype.hasOwnProperty.call(input, key)) {
-				const existing = settingsByName[key];
-				const value = this.convertValueToString(input[key]);
+					for (const key in input) {
+						if (Object.prototype.hasOwnProperty.call(input, key)) {
+							const value = this.convertValueToString(input[key]);
+							const whereClause: FindOptionsWhere<SystemSetting> = {
+								name: key,
+								tenantId: effectiveTenantId ?? IsNull(),
+								organizationId: effectiveOrgId ?? IsNull()
+							};
 
-				if (existing) {
-					existing.value = value;
-					saveInput.push(existing);
-				} else {
-					saveInput.push(
-						new SystemSetting({
-							name: key,
-							value,
-							tenantId: effectiveTenantId,
-							organizationId: effectiveOrgId
-						})
-					);
-				}
-			}
-		}
+							let setting = await queryRunner.manager.findOne(SystemSetting, {
+								where: whereClause
+							});
 
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				const mikroEntities: SystemSetting[] = [];
-				for (const setting of saveInput) {
-					if (setting.id) {
-						const existing = await this.mikroOrmRepository.findOne(setting.id);
-						if (existing) {
-							this.mikroOrmRepository.assign(existing, { value: setting.value });
-							mikroEntities.push(existing);
+							if (setting) {
+								setting.value = value;
+								setting = await queryRunner.manager.save(setting);
+							} else {
+								setting = queryRunner.manager.create(SystemSetting, {
+									name: key,
+									value,
+									tenantId: effectiveTenantId,
+									organizationId: effectiveOrgId
+								});
+								setting = await queryRunner.manager.save(setting);
+							}
+
+							result[setting.name] = this.convertValueToType(setting.value, setting.name);
 						}
-					} else {
-						const newEntity = this.mikroOrmRepository.create(setting, {
-							managed: true,
-							partial: true
-						});
-						mikroEntities.push(newEntity);
 					}
+
+					await queryRunner.commitTransaction();
+					return result;
+				} catch (error) {
+					await queryRunner.rollbackTransaction();
+					throw new BadRequestException(`Failed to save settings: ${error.message}`);
+				} finally {
+					await queryRunner.release();
 				}
-				await this.mikroOrmRepository.persistAndFlush(mikroEntities);
-				for (let i = 0; i < saveInput.length; i++) {
-					saveInput[i] = this.serialize(mikroEntities[i]) as SystemSetting;
-				}
-				break;
 			}
-			case MultiORMEnum.TypeORM:
-				await this.typeOrmRepository.save(saveInput);
-				break;
+			case MultiORMEnum.MikroORM: {
+				return await this.mikroOrmRepository.em.transactional(async (em) => {
+					const result: Record<string, any> = {};
+
+					for (const key in input) {
+						if (Object.prototype.hasOwnProperty.call(input, key)) {
+							const value = this.convertValueToString(input[key]);
+							const { where } = parseTypeORMFindToMikroOrm<SystemSetting>({
+								where: {
+									name: key,
+									tenantId: effectiveTenantId ?? IsNull(),
+									organizationId: effectiveOrgId ?? IsNull()
+								}
+							});
+
+							let setting = await em.findOne(SystemSetting, where);
+
+							if (setting) {
+								em.assign(setting, { value });
+								await em.flush();
+							} else {
+								setting = em.create(SystemSetting, {
+									name: key,
+									value,
+									tenantId: effectiveTenantId,
+									organizationId: effectiveOrgId
+								});
+								await em.persistAndFlush(setting);
+							}
+
+							const serialized = this.serialize(setting) as SystemSetting;
+							result[serialized.name] = this.convertValueToType(serialized.value, serialized.name);
+						}
+					}
+
+					return result;
+				});
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
-
-		const result: Record<string, any> = {};
-		for (const setting of saveInput) {
-			result[setting.name] = this.convertValueToType(setting.value, setting.name);
-		}
-		return result;
 	}
 
 	/**
