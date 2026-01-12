@@ -1,24 +1,25 @@
 import { Routes } from '@angular/router';
+import { PluginMarketplaceItemComponent } from './plugin-marketplace-item/plugin-marketplace-item.component';
+import { OverviewTabComponent } from './plugin-marketplace-item/tabs/overview-tab/overview-tab.component';
+import { SettingsTabComponent } from './plugin-marketplace-item/tabs/settings-tab/settings-tab.component';
+import { SourceCodeTabComponent } from './plugin-marketplace-item/tabs/source-code-tab/source-code-tab.component';
+import { UserManagementTabComponent } from './plugin-marketplace-item/tabs/user-management-tab/user-management-tab.component';
+import { VersionHistoryComponent } from './plugin-marketplace-item/version-history/version-history.component';
+import { PluginMarketplaceComponent } from './plugin-marketplace.component';
 
 export const pluginMarketplaceRoutes: Routes = [
 	{
 		path: '',
 		pathMatch: 'full',
-		loadComponent: () => import('./plugin-marketplace.component').then((m) => m.PluginMarketplaceComponent)
+		component: PluginMarketplaceComponent
 	},
 	{
 		path: ':id/versions',
-		loadComponent: () =>
-			import('./plugin-marketplace-item/version-history/version-history.component').then(
-				(m) => m.VersionHistoryComponent
-			)
+		component: VersionHistoryComponent
 	},
 	{
 		path: ':id',
-		loadComponent: () =>
-			import('./plugin-marketplace-item/plugin-marketplace-item.component').then(
-				(m) => m.PluginMarketplaceItemComponent
-			),
+		component: PluginMarketplaceItemComponent,
 		children: [
 			{
 				path: '',
@@ -27,31 +28,19 @@ export const pluginMarketplaceRoutes: Routes = [
 			},
 			{
 				path: 'overview',
-				loadChildren: () =>
-					import('./plugin-marketplace-item/tabs/overview-tab/overview-tab.module').then(
-						(m) => m.OverviewTabModule
-					)
+				component: OverviewTabComponent
 			},
 			{
 				path: 'source-code',
-				loadChildren: () =>
-					import('./plugin-marketplace-item/tabs/source-code-tab/source-code-tab.module').then(
-						(m) => m.SourceCodeTabModule
-					)
+				component: SourceCodeTabComponent
 			},
 			{
 				path: 'user-management',
-				loadChildren: () =>
-					import('./plugin-marketplace-item/tabs/user-management-tab/user-management-tab.module').then(
-						(m) => m.UserManagementTabModule
-					)
+				component: UserManagementTabComponent
 			},
 			{
 				path: 'settings',
-				loadChildren: () =>
-					import('./plugin-marketplace-item/tabs/settings-tab/settings-tab.module').then(
-						(m) => m.SettingsTabModule
-					)
+				component: SettingsTabComponent
 			}
 		]
 	},

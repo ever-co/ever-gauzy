@@ -18,18 +18,10 @@ import { InfiniteScrollDirective } from '../../../../../../../directives/infinit
 import { PipeModule } from '../../../../../../../time-tracker/pipes/pipe.module';
 import { UserManagementTabComponent } from './user-management-tab.component';
 
-const routes: Routes = [
-	{
-		path: '',
-		component: UserManagementTabComponent
-	}
-];
-
 @NgModule({
 	declarations: [UserManagementTabComponent],
 	imports: [
 		CommonModule,
-		RouterModule.forChild(routes),
 		TranslateModule,
 		NbCardModule,
 		NbButtonModule,

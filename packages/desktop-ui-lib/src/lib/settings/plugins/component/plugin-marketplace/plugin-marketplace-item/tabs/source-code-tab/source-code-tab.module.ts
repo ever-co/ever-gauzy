@@ -5,23 +5,8 @@ import { NbBadgeModule, NbCardModule, NbIconModule, NbTooltipModule } from '@neb
 import { TranslateModule } from '@ngx-translate/core';
 import { SourceCodeTabComponent } from './source-code-tab.component';
 
-const routes: Routes = [
-	{
-		path: '',
-		component: SourceCodeTabComponent
-	}
-];
-
 @NgModule({
 	declarations: [SourceCodeTabComponent],
-	imports: [
-		CommonModule,
-		RouterModule.forChild(routes),
-		TranslateModule,
-		NbCardModule,
-		NbIconModule,
-		NbBadgeModule,
-		NbTooltipModule
-	]
+	imports: [CommonModule, TranslateModule, NbCardModule, NbIconModule, NbBadgeModule, NbTooltipModule]
 })
 export class SourceCodeTabModule {}

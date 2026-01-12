@@ -5,23 +5,8 @@ import { NbAlertModule, NbButtonModule, NbCardModule, NbIconModule } from '@nebu
 import { TranslateModule } from '@ngx-translate/core';
 import { SettingsTabComponent } from './settings-tab.component';
 
-const routes: Routes = [
-	{
-		path: '',
-		component: SettingsTabComponent
-	}
-];
-
 @NgModule({
 	declarations: [SettingsTabComponent],
-	imports: [
-		CommonModule,
-		RouterModule.forChild(routes),
-		TranslateModule,
-		NbCardModule,
-		NbButtonModule,
-		NbIconModule,
-		NbAlertModule
-	]
+	imports: [CommonModule, TranslateModule, NbCardModule, NbButtonModule, NbIconModule, NbAlertModule]
 })
 export class SettingsTabModule {}

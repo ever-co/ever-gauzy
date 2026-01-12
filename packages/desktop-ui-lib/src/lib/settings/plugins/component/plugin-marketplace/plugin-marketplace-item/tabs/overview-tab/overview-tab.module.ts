@@ -15,19 +15,11 @@ import { DesktopDirectiveModule } from '../../../../../../../directives/desktop-
 import { PipeModule } from '../../../../../../../time-tracker/pipes/pipe.module';
 import { OverviewTabComponent } from './overview-tab.component';
 
-const routes: Routes = [
-	{
-		path: '',
-		component: OverviewTabComponent
-	}
-];
-
 @NgModule({
 	declarations: [OverviewTabComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
-		RouterModule.forChild(routes),
 		TranslateModule,
 		NbCardModule,
 		NbIconModule,

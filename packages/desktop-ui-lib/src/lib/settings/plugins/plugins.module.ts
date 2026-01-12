@@ -14,7 +14,6 @@ import {
 	NbContextMenuModule,
 	NbDatepickerModule,
 	NbDialogModule,
-	NbDialogService,
 	NbFormFieldModule,
 	NbIconModule,
 	NbInfiniteListDirective,
@@ -128,12 +127,17 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 // Shared subscription components and services
 import { ElectronService } from '../../electron/services';
 import { LanguageModule } from '../../language/language.module';
-import { Store, ToastrNotificationService } from '../../services';
 import { PluginCategoryEffects } from './component/plugin-marketplace/+state';
 import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
 import { PluginUploadIntentEffects } from './component/plugin-marketplace/+state/effects/plugin-upload-intent.effect';
+import { PluginPlanQuery } from './component/plugin-marketplace/+state/queries/plugin-plan.query';
 import { PluginUploadIntentQuery } from './component/plugin-marketplace/+state/queries/plugin-upload-intent.query';
+import { PluginPlanStore } from './component/plugin-marketplace/+state/stores/plugin-plan.store';
 import { PluginUploadIntentStore } from './component/plugin-marketplace/+state/stores/plugin-upload-intent.store';
+import { OverviewTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/overview-tab/overview-tab.module';
+import { SettingsTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/settings-tab/settings-tab.module';
+import { SourceCodeTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/source-code-tab/source-code-tab.module';
+import { UserManagementTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/user-management-tab/user-management-tab.module';
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
 	BillingContactSectionComponent,
@@ -212,13 +216,13 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		PaginationModule,
 		NbButtonModule,
 		NbButtonGroupModule,
-		NbDialogModule,
+		NbDialogModule.forChild(),
 		NbInputModule,
 		NbCardModule,
 		DesktopDirectiveModule,
 		NoDataMessageModule,
 		NbIconModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		RouterModule,
 		NbBadgeModule,
 		FormsModule,
@@ -230,7 +234,7 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		NbSelectModule,
 		NbTooltipModule,
 		NbSpinnerModule,
-		NbDatepickerModule,
+		NbDatepickerModule.forRoot(), // This might need to be forChild() depending on your setup
 		NbStepperModule,
 		NbAlertModule,
 		NbCheckboxModule,
@@ -246,8 +250,12 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		NbTagModule,
 		InfiniteScrollDirective,
 		NbPopoverModule,
-		LanguageModule.forRoot(),
-		PluginRoutingModule
+		OverviewTabModule,
+		SourceCodeTabModule,
+		UserManagementTabModule,
+		SettingsTabModule,
+		PluginRoutingModule,
+		LanguageModule.forChild()
 	],
 	providers: [
 		PluginLoaderService,
@@ -288,6 +296,8 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		),
 		PluginQuery,
 		PluginStore,
+		PluginPlanStore,
+		PluginPlanQuery,
 		PluginSettingsQuery,
 		PluginSettingsStore,
 		PluginSubscriptionQuery,
@@ -303,10 +313,7 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		UserManagementFacade,
 		PluginUploadIntentStore,
 		PluginUploadIntentQuery,
-		NbInfiniteListDirective,
-		ToastrNotificationService,
-		NbDialogService,
-		Store
+		NbInfiniteListDirective
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
