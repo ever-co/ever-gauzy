@@ -1,13 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { PluginLayoutComponent } from './component/plugin-layout/plugin-layout.component';
+import { routes } from './plugin.route';
 
 @NgModule({
 	imports: [
 		RouterModule.forChild([
 			{
 				path: '',
-				loadComponent: () => import('./component/plugin-layout/plugin-layout.component').then((m) => m.PluginLayoutComponent),
-				loadChildren: () => import('./plugin.route').then((m) => m.routes)
+				component: PluginLayoutComponent,
+				children: routes
 			}
 		])
 	],
