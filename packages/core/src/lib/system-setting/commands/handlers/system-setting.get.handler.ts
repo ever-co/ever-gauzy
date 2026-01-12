@@ -1,4 +1,4 @@
-import { forwardRef, Inject } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { SystemSettingScope } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
@@ -23,10 +23,15 @@ export class SystemSettingGetHandler implements ICommandHandler<SystemSettingGet
 	public async execute(command: SystemSettingGetCommand): Promise<Record<string, any>> {
 		const { names } = command;
 
+		// Validate names array at runtime
+		if (!names || names.length === 0) {
+			throw new BadRequestException('names array must not be empty');
+		}
+
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 
-		let settings = await this._systemSettingService.getSettingsWithCascade(names, tenantId, organizationId);
+		const settings = await this._systemSettingService.getSettingsWithCascade(names, tenantId, organizationId);
 
 		return WrapSecrets(settings, SECRET_DTO_LIST);
 	}
@@ -52,7 +57,7 @@ export class SystemSettingGetByScopeHandler implements ICommandHandler<SystemSet
 		const organizationId = RequestContext.currentOrganizationId();
 		const effectiveScope = scope || SystemSettingScope.TENANT;
 
-		let settings = await this._systemSettingService.getSettingsByScope(effectiveScope, tenantId, organizationId);
+		const settings = await this._systemSettingService.getSettingsByScope(effectiveScope, tenantId, organizationId);
 
 		return WrapSecrets(settings, SECRET_DTO_LIST);
 	}

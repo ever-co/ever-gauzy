@@ -1,15 +1,10 @@
-import { BadRequestException } from '@nestjs/common';
 import { ICommand } from '@nestjs/cqrs';
 import { SystemSettingScope } from '@gauzy/contracts';
 
 export class SystemSettingGetCommand implements ICommand {
 	static readonly type = '[SystemSetting] Get With Cascade';
 
-	constructor(public readonly names: string[]) {
-		if (!names || names.length === 0) {
-			throw new BadRequestException('names array must not be empty');
-		}
-	}
+	constructor(public readonly names: string[]) {}
 }
 
 export class SystemSettingGetByScopeCommand implements ICommand {
