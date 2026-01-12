@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IPlugin, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts';
 import { NbMenuService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -33,6 +33,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	@Input()
 	public viewMode: 'grid' | 'list' = 'grid';
 
+	private readonly route = inject(ActivatedRoute);
 	private readonly router = inject(Router);
 	private readonly action = inject(Actions);
 	private readonly translate = inject(TranslateService);
@@ -84,7 +85,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	// Installation validation and dialog orchestration moved to effects.
 	public async openPlugin(): Promise<void> {
 		this.action.dispatch(PluginVersionActions.selectVersion(this.plugin.version));
-		await this.router.navigate([`/plugins/marketplace/${this.plugin.id}`]);
+		await this.router.navigate([this.plugin.id], { relativeTo: this.route });
 	}
 
 	public editPlugin(): void {
