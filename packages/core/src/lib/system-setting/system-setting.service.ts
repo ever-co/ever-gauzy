@@ -114,17 +114,17 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 					SystemSettingScope.TENANT,
 					effectiveTenantId
 				);
-			for (const setting of tenantSettingsList) {
-				// Only include settings allowed at tenant scope
-				if (
-					isSettingAllowedAtScope(setting.name, SystemSettingScope.TENANT) &&
-					setting.value !== undefined &&
-					setting.value !== null &&
-					setting.value !== ''
-				) {
-					tenantSettings[setting.name] = this.convertValueToType(setting.value, setting.name);
+				for (const setting of tenantSettingsList) {
+					// Only include settings allowed at tenant scope
+					if (
+						isSettingAllowedAtScope(setting.name, SystemSettingScope.TENANT) &&
+						setting.value !== undefined &&
+						setting.value !== null &&
+						setting.value !== ''
+					) {
+						tenantSettings[setting.name] = this.convertValueToType(setting.value, setting.name);
+					}
 				}
-			}
 			}
 		}
 
