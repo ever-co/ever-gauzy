@@ -92,7 +92,13 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 				effectiveOrgId
 			);
 			for (const setting of orgSettingsList) {
-				if (setting.value !== undefined && setting.value !== null && setting.value !== '') {
+				// Only include settings allowed at organization scope
+				if (
+					isSettingAllowedAtScope(setting.name, SystemSettingScope.ORGANIZATION) &&
+					setting.value !== undefined &&
+					setting.value !== null &&
+					setting.value !== ''
+				) {
 					orgSettings[setting.name] = this.convertValueToType(setting.value, setting.name);
 				}
 			}
@@ -108,11 +114,17 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 					SystemSettingScope.TENANT,
 					effectiveTenantId
 				);
-				for (const setting of tenantSettingsList) {
-					if (setting.value !== undefined && setting.value !== null && setting.value !== '') {
-						tenantSettings[setting.name] = this.convertValueToType(setting.value, setting.name);
-					}
+			for (const setting of tenantSettingsList) {
+				// Only include settings allowed at tenant scope
+				if (
+					isSettingAllowedAtScope(setting.name, SystemSettingScope.TENANT) &&
+					setting.value !== undefined &&
+					setting.value !== null &&
+					setting.value !== ''
+				) {
+					tenantSettings[setting.name] = this.convertValueToType(setting.value, setting.name);
 				}
+			}
 			}
 		}
 
@@ -124,7 +136,13 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		if (missingNames.length > 0) {
 			const globalSettingsList = await this.findSettingsByNamesAndScope(missingNames, SystemSettingScope.GLOBAL);
 			for (const setting of globalSettingsList) {
-				if (setting.value !== undefined && setting.value !== null && setting.value !== '') {
+				// Only include settings allowed at global scope
+				if (
+					isSettingAllowedAtScope(setting.name, SystemSettingScope.GLOBAL) &&
+					setting.value !== undefined &&
+					setting.value !== null &&
+					setting.value !== ''
+				) {
 					globalSettings[setting.name] = this.convertValueToType(setting.value, setting.name);
 				}
 			}
@@ -396,10 +414,10 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		switch (this.ormType) {
 			case MultiORMEnum.TypeORM: {
 				const queryRunner = this.connectionEntityManager.rawConnection.createQueryRunner();
-				await queryRunner.connect();
-				await queryRunner.startTransaction();
 
 				try {
+					await queryRunner.connect();
+					await queryRunner.startTransaction();
 					const result: Record<string, any> = {};
 
 					for (const key in input) {
@@ -453,6 +471,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 						const isUniqueConstraintError =
 							errorMessage.includes('unique constraint') ||
 							errorMessage.includes('duplicate key') ||
+							errorMessage.includes('duplicate entry') ||
 							errorMessage.includes('unique violation');
 						if (isUniqueConstraintError) {
 							throw new BadRequestException(
@@ -531,6 +550,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 					const isUniqueConstraintError =
 						errorMessage.includes('unique constraint') ||
 						errorMessage.includes('duplicate key') ||
+						errorMessage.includes('duplicate entry') ||
 						errorMessage.includes('unique violation');
 					if (isUniqueConstraintError) {
 						throw new BadRequestException(
