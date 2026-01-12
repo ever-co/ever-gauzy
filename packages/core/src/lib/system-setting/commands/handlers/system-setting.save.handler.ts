@@ -5,16 +5,7 @@ import { RequestContext } from '../../../core/context';
 import { WrapSecrets } from '../../../core/decorators';
 import { SystemSettingSaveCommand } from '../system-setting.save.command';
 import { SystemSettingService } from '../../system-setting.service';
-import {
-	SentryConfigDTO,
-	UnleashConfigDTO,
-	GoogleMapsConfigDTO,
-	PosthogConfigDTO,
-	JitsuConfigDTO,
-	GauzyAIConfigDTO,
-	CloudinaryConfigDTO,
-	ChatwootConfigDTO
-} from '../../dto';
+import { SECRET_DTO_LIST } from '../../dto/secret-dto-list';
 
 @CommandHandler(SystemSettingSaveCommand)
 export class SystemSettingSaveHandler implements ICommandHandler<SystemSettingSaveCommand> {
@@ -59,15 +50,6 @@ export class SystemSettingSaveHandler implements ICommandHandler<SystemSettingSa
 		const settings = await this._systemSettingService.saveSettings(input, scope, tenantId, organizationId);
 
 		// Mask secrets in response
-		return WrapSecrets(settings, [
-			new SentryConfigDTO(),
-			new UnleashConfigDTO(),
-			new GoogleMapsConfigDTO(),
-			new PosthogConfigDTO(),
-			new JitsuConfigDTO(),
-			new GauzyAIConfigDTO(),
-			new CloudinaryConfigDTO(),
-			new ChatwootConfigDTO()
-		]);
+		return WrapSecrets(settings, SECRET_DTO_LIST);
 	}
 }

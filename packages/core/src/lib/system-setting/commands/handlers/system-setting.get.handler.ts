@@ -5,16 +5,7 @@ import { RequestContext } from '../../../core/context';
 import { WrapSecrets } from '../../../core/decorators';
 import { SystemSettingGetCommand, SystemSettingGetByScopeCommand } from '../system-setting.get.command';
 import { SystemSettingService } from '../../system-setting.service';
-import {
-	SentryConfigDTO,
-	UnleashConfigDTO,
-	GoogleMapsConfigDTO,
-	PosthogConfigDTO,
-	JitsuConfigDTO,
-	GauzyAIConfigDTO,
-	CloudinaryConfigDTO,
-	ChatwootConfigDTO
-} from '../../dto';
+import { SECRET_DTO_LIST } from '../../dto/secret-dto-list';
 
 @CommandHandler(SystemSettingGetCommand)
 export class SystemSettingGetHandler implements ICommandHandler<SystemSettingGetCommand> {
@@ -37,16 +28,7 @@ export class SystemSettingGetHandler implements ICommandHandler<SystemSettingGet
 
 		let settings = await this._systemSettingService.getSettingsWithCascade(names, tenantId, organizationId);
 
-		return WrapSecrets(settings, [
-			new SentryConfigDTO(),
-			new UnleashConfigDTO(),
-			new GoogleMapsConfigDTO(),
-			new PosthogConfigDTO(),
-			new JitsuConfigDTO(),
-			new GauzyAIConfigDTO(),
-			new CloudinaryConfigDTO(),
-			new ChatwootConfigDTO()
-		]);
+		return WrapSecrets(settings, SECRET_DTO_LIST);
 	}
 }
 
@@ -72,15 +54,6 @@ export class SystemSettingGetByScopeHandler implements ICommandHandler<SystemSet
 
 		let settings = await this._systemSettingService.getSettingsByScope(effectiveScope, tenantId, organizationId);
 
-		return WrapSecrets(settings, [
-			new SentryConfigDTO(),
-			new UnleashConfigDTO(),
-			new GoogleMapsConfigDTO(),
-			new PosthogConfigDTO(),
-			new JitsuConfigDTO(),
-			new GauzyAIConfigDTO(),
-			new CloudinaryConfigDTO(),
-			new ChatwootConfigDTO()
-		]);
+		return WrapSecrets(settings, SECRET_DTO_LIST);
 	}
 }
