@@ -1,6 +1,7 @@
 import { Serializable } from '../../interfaces';
-import { KbMouseActivityTO, TMouseEvents, TActiveWindows, ActivityState } from '../dto/kb-mouse-activity.dto';
+import { KbMouseActivityTO, TMouseEvents, TActiveWindows  } from '../dto/kb-mouse-activity.dto';
 import { Base } from './base.model';
+import { ActivityState } from '@gauzy/desktop-activity';
 
 export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializable<KbMouseActivityTO> {
 	private _timeStart: Date;

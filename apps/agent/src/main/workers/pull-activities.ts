@@ -5,7 +5,8 @@ import {
 	ActivityWindow,
 	TActivityProcessParam,
 	TKbMouseActivity,
-	TWindowActivities
+	TWindowActivities,
+	ActivityState
 } from '@gauzy/desktop-activity';
 import {
 	KbMouseActivityService,
@@ -13,8 +14,7 @@ import {
 	notifyScreenshot,
 	TimerService,
 	Timer,
-	PowerManagerPreventDisplaySleep,
-	ActivityState
+	PowerManagerPreventDisplaySleep
 } from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
 import * as path from 'node:path';

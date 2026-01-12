@@ -1,3 +1,4 @@
+import { ActivityState } from '@gauzy/desktop-activity';
 export type TMouseEvents = {
 	moveTo: {
 		from: {
@@ -24,11 +25,6 @@ export type TActiveWindows = {
 		title: string;
 		platform?: string;
 	}
-}
-
-export enum ActivityState {
-	active = 'active',
-	idle = 'idle'
 }
 
 export interface KbMouseActivityTO {

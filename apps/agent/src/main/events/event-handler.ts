@@ -148,11 +148,7 @@ export default class EventHandler {
 		await this.pullActivities.stopTracking(true);
 		if (isTimeRunning) {
 			this.pullActivities.startedPausedDate = new Date();
-			await this.pullActivities.recordIdleTime();
-
-			/* Re Update paused date after record idle time */
 			this.pullActivities.isPaused = true;
-			this.pullActivities.startedPausedDate = new Date();
 		}
 	}
 
