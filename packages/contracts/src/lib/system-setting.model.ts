@@ -46,6 +46,6 @@ export interface ISystemSettingFindInput extends IBasePerTenantAndOrganizationEn
 
 export interface IResolvedSystemSetting {
 	name: string;
-	value?: string;
+	value?: string | boolean | number;
 	source: SystemSettingScope | 'ENV' | 'DEFAULT';
 }
