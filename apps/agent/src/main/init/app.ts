@@ -257,6 +257,37 @@ function setVariableGlobal(configs: {
 	};
 }
 
+enum powerMonitorEventName {
+	suspend = 'suspend',
+	shutdown = 'shutdown',
+	resume = 'resume'
+}
+
+function powerEventHandler(eventName: powerMonitorEventName) {
+	const authConfig = getAuthConfig();
+	if (authConfig?.token) {
+		switch (eventName) {
+			case powerMonitorEventName.resume:
+				mainEvent.emit(MAIN_EVENT, {
+					type: MAIN_EVENT_TYPE.ACTIVITY_RESUME
+				});
+				break;
+			case powerMonitorEventName.shutdown:
+				mainEvent.emit(MAIN_EVENT, {
+					type: MAIN_EVENT_TYPE.STOP_TIMER
+				});
+				break;
+			case powerMonitorEventName.suspend:
+				mainEvent.emit(MAIN_EVENT, {
+					type: MAIN_EVENT_TYPE.ACTIVITY_PAUSED
+				});
+				break;
+			default:
+				break;
+		}
+	}
+}
+
 export async function InitApp() {
 	require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 
@@ -330,20 +361,14 @@ export async function InitApp() {
 	await appReady();
 
 	powerMonitor.on('shutdown', () => {
-		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.STOP_TIMER
-		});
+		powerEventHandler(powerMonitorEventName.shutdown);
 	});
 
 	powerMonitor.on('suspend', () => {
-		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.ACTIVITY_PAUSED
-		});
+		powerEventHandler(powerMonitorEventName.suspend);
 	});
 
 	powerMonitor.on('resume', () => {
-		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.ACTIVITY_RESUME
-		});
+		powerEventHandler(powerMonitorEventName.resume);
 	});
 }

@@ -131,7 +131,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 		return this._timeslotId;
 	}
 	public set activityState(value: ActivityState) {
-		this._activityState =  value;
+		this._activityState = value;
 	}
 	public get activityState(): ActivityState {
 		return this._activityState;
