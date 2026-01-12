@@ -21,7 +21,7 @@ export type SystemSettingValueType = 'string' | 'boolean' | 'number';
 export interface ISystemSettingMetadata {
 	key: string;
 	envVar?: string;
-	defaultValue?: any;
+	defaultValue?: string | boolean | number;
 	allowedScopes: SystemSettingScope[];
 	isSecret?: boolean;
 	type: SystemSettingValueType;
@@ -32,10 +32,7 @@ export interface ISystemSetting extends IBasePerTenantAndOrganizationEntityModel
 	value?: string;
 }
 
-export interface ISystemSettingCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
-	value?: string;
-}
+export interface ISystemSettingCreateInput extends ISystemSetting {}
 
 export interface ISystemSettingUpdateInput extends Partial<ISystemSettingCreateInput> {}
 
