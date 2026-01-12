@@ -55,4 +55,13 @@ export class MikroOrmBaseEntityRepository<T extends Object> extends EntityReposi
 	async flush(): Promise<void> {
 		return this.em.flush();
 	}
+
+	/**
+	 * Gets the EntityManager instance for transactional operations.
+	 *
+	 * @returns The EntityManager instance.
+	 */
+	getEntityManager(): EntityManager {
+		return this.em;
+	}
 }

@@ -1,7 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectEntityManager } from '@mikro-orm/nestjs';
-import { EntityManager } from '@mikro-orm/knex';
 import { FindManyOptions, FindOptionsWhere, IsNull } from 'typeorm';
 import { keys } from 'underscore';
 import { ID, IResolvedSystemSetting, SystemSettingScope } from '@gauzy/contracts';
@@ -24,8 +22,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		readonly typeOrmSystemSettingRepository: TypeOrmSystemSettingRepository,
 		readonly mikroOrmSystemSettingRepository: MikroOrmSystemSettingRepository,
 		private readonly configService: ConfigService,
-		private readonly connectionEntityManager: ConnectionEntityManager,
-		@InjectEntityManager() private readonly mikroOrmEntityManager: EntityManager
+		private readonly connectionEntityManager: ConnectionEntityManager
 	) {
 		super(typeOrmSystemSettingRepository, mikroOrmSystemSettingRepository);
 	}
@@ -297,7 +294,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 				}
 			}
 			case MultiORMEnum.MikroORM: {
-				return await this.mikroOrmEntityManager.transactional(async (em) => {
+				return await this.mikroOrmRepository.getEntityManager().transactional(async (em) => {
 					const result: Record<string, any> = {};
 
 					for (const key in input) {
