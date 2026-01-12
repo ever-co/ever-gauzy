@@ -1,6 +1,6 @@
 import { Injectable, Optional } from '@angular/core';
 import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import type { IPlugin } from './plugin-loader.service';
 
@@ -13,43 +13,57 @@ export class PluginElectronService {
 		private readonly electronService: ElectronService
 	) {}
 
+	public get isDesktop(): boolean {
+		return this.electronService && this.electronService.isElectron;
+	}
+
 	public get plugins(): Promise<IPlugin[]> {
+		if (!this.isDesktop) return;
 		return this.electronService.ipcRenderer.invoke('plugins::getAll');
 	}
 
 	public plugin(name: string): Promise<IPlugin> {
+		if (!this.isDesktop) return;
 		return this.electronService.ipcRenderer.invoke('plugins::getOne', name);
 	}
 
 	public checkInstallation(marketplaceId: ID): Promise<IPlugin> {
+		if (!this.isDesktop) return;
 		return this.electronService.ipcRenderer.invoke('plugins::check', marketplaceId);
 	}
 
 	public activate(plugin: IPlugin) {
+		if (!this.isDesktop) return;
 		this.electronService.ipcRenderer.send('plugin::activate', plugin.name);
 	}
 
 	public load() {
+		if (!this.isDesktop) return;
 		this.electronService.ipcRenderer.send('plugins::load');
 	}
 
 	public initialize() {
+		if (!this.isDesktop) return;
 		this.electronService.ipcRenderer.send('plugins::initialize');
 	}
 
 	public deactivate(plugin: IPlugin) {
+		if (!this.isDesktop) return;
 		this.electronService.ipcRenderer.send('plugin::deactivate', plugin.name);
 	}
 
 	public downloadAndInstall<T>(config: T) {
+		if (!this.isDesktop) return;
 		this.electronService.ipcRenderer.send('plugin::download', config);
 	}
 
 	public uninstall(input: { marketplaceId: ID; name?: string; id?: ID }) {
+		if (!this.isDesktop) return;
 		this.electronService.ipcRenderer.send('plugin::uninstall', input);
 	}
 
 	public completeInstallation(marketplaceId: string, installationId: string): void {
+		if (!this.isDesktop) return;
 		this.electronService.ipcRenderer.send('plugin::complete::installation', {
 			marketplaceId,
 			installationId
@@ -57,10 +71,12 @@ export class PluginElectronService {
 	}
 
 	public lazyLoader(pluginPath: string) {
+		if (!this.isDesktop) return;
 		return this.electronService.ipcRenderer.invoke('plugins::lazy-loader', pluginPath);
 	}
 
 	public progress<T, U>(callBack?: (message?: string) => T): Observable<{ message?: string; data: U }> {
+		if (!this.isDesktop) return;
 		return new Observable<{ message?: string; data: U }>((observer) => {
 			const channel = 'plugin::status';
 
@@ -93,6 +109,7 @@ export class PluginElectronService {
 	}
 
 	public get status(): Observable<{ status: string; message?: string }> {
+		if (!this.isDesktop) return;
 		return new Observable((observer) => {
 			const channel = 'plugin::status';
 			const listener = (_, arg: { status: string; message?: string }) => {
@@ -108,6 +125,7 @@ export class PluginElectronService {
 	}
 
 	public getOS(): Promise<{ platform: PluginOSType; arch: PluginOSArch }> {
+		if (!this.isDesktop) return;
 		return this.electronService.ipcRenderer.invoke('plugins::get-os');
 	}
 }

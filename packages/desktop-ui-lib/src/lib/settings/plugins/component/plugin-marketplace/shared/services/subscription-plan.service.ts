@@ -9,7 +9,9 @@ import {
  * Service responsible for plan-related business logic
  * Following Single Responsibility Principle
  */
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class SubscriptionPlanService {
 	/**
 	 * Calculate subscription type hierarchy index
