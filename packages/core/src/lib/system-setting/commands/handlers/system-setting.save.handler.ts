@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RolesEnum, SystemSettingScope } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
@@ -9,10 +9,7 @@ import { SECRET_DTO_LIST } from '../../dto/secret-dto-list';
 
 @CommandHandler(SystemSettingSaveCommand)
 export class SystemSettingSaveHandler implements ICommandHandler<SystemSettingSaveCommand> {
-	constructor(
-		@Inject(forwardRef(() => SystemSettingService))
-		private readonly _systemSettingService: SystemSettingService
-	) {}
+	constructor(private readonly _systemSettingService: SystemSettingService) {}
 
 	/**
 	 * Executes a command to save system settings.
@@ -33,20 +30,7 @@ export class SystemSettingSaveHandler implements ICommandHandler<SystemSettingSa
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 
-		// Validate required IDs based on scope
-		if (scope === SystemSettingScope.TENANT && !tenantId) {
-			throw new BadRequestException('Tenant ID is required for TENANT scope settings');
-		}
-
-		if (scope === SystemSettingScope.ORGANIZATION) {
-			if (!tenantId) {
-				throw new BadRequestException('Tenant ID is required for ORGANIZATION scope settings');
-			}
-			if (!organizationId) {
-				throw new BadRequestException('Organization ID is required for ORGANIZATION scope settings');
-			}
-		}
-
+		// Note: Scope/ID validation is handled by SystemSettingService.saveSettings()
 		const settings = await this._systemSettingService.saveSettings(input, scope, tenantId, organizationId);
 
 		// Mask secrets in response
