@@ -25,7 +25,7 @@ import { environment } from '../../environments/environment';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 import { handleSplashScreen } from './splash';
-import { AgentMenu } from './menu';
+import { AgentMenu, MenuType } from './menu';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -75,6 +75,8 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean) {
 }
 
 async function handleSetupWindow() {
+	const agentMenu: AgentMenu = AgentMenu.getInstance();
+	agentMenu.initMenu(MenuType.onboarding);
 	await appWindow.initSetupWindow()
 	appWindow.setupWindow.show();
 }
@@ -100,7 +102,7 @@ export async function startServer(value: any) {
 		throw new AppError('MAINSTRSERVER', error);
 	}
 	const agentMenu: AgentMenu = AgentMenu.getInstance();
-	agentMenu.initMenu();
+	agentMenu.initMenu(MenuType.main);
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
