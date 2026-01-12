@@ -30,7 +30,7 @@ export class SaveSystemSettingsDTO {
 	@ApiProperty({ type: () => Object })
 	@IsNotEmpty()
 	@IsObject()
-	readonly settings: Record<string, string>;
+	readonly settings: Record<string, any>;
 }
 
 /**

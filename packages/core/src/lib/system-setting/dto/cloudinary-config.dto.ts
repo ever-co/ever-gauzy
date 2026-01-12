@@ -27,7 +27,6 @@ export class CloudinaryConfigDTO implements ICloudinaryConfig {
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@IsString()
 	@IsUrl()
 	@Trimmed()
 	readonly cloudinary_cdn_url?: string;

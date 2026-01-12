@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Min, IsUrl } from 'class-validator';
 import { IUnleashConfig } from '@gauzy/contracts';
 import { IsSecret } from '../../core/decorators';
 import { Trimmed } from '../../shared/decorators/trim.decorator';
@@ -11,6 +11,7 @@ export class UnleashConfigDTO implements IUnleashConfig {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@IsUrl()
 	@Trimmed()
 	readonly unleash_api_url?: string;
 
