@@ -151,9 +151,8 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 				continue;
 			}
 
-			// Fallback to ENV and DEFAULT using existing method to avoid duplication
-			const resolved = await this.resolveSettingValue(name, tenantId, organizationId);
-			result[name] = resolved.value;
+			// Fallback to ENV and DEFAULT (no database queries needed - we already checked all scopes)
+			result[name] = this.resolveEnvAndDefaultValue(name);
 		}
 
 		return result;
@@ -249,6 +248,30 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 			value: this.convertValueToType(String(defaultValue), name),
 			source: 'DEFAULT'
 		};
+	}
+
+	/**
+	 * Resolves ENV and DEFAULT values without database queries.
+	 * Used as fallback when we already know the setting doesn't exist in database.
+	 *
+	 * @param {string} name - The setting name.
+	 * @returns {any} - The resolved value from ENV or DEFAULT, or undefined.
+	 */
+	private resolveEnvAndDefaultValue(name: string): any {
+		const envVarName = getEnvVarName(name);
+		if (envVarName) {
+			const envValue = this.configService.get(envVarName);
+			if (envValue !== undefined && envValue !== '') {
+				return this.convertValueToType(String(envValue), name);
+			}
+		}
+
+		const defaultValue = getDefaultValue(name);
+		if (defaultValue !== undefined) {
+			return this.convertValueToType(String(defaultValue), name);
+		}
+
+		return undefined;
 	}
 
 	/**
@@ -426,9 +449,12 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 					// Check for unique constraint violation (race condition)
 					if (error instanceof QueryFailedError) {
-						const errorCode = String((error as any).code);
-						// PostgreSQL: 23505, MySQL: 1062, SQLite: 19
-						if (errorCode === '23505' || errorCode === '1062' || errorCode === '19') {
+						const errorMessage = error.message?.toLowerCase() || '';
+						const isUniqueConstraintError =
+							errorMessage.includes('unique constraint') ||
+							errorMessage.includes('duplicate key') ||
+							errorMessage.includes('unique violation');
+						if (isUniqueConstraintError) {
 							throw new BadRequestException(
 								'A setting with the same name already exists at this scope. Please try again.'
 							);
@@ -501,18 +527,12 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 					// Check for unique constraint violation (race condition)
 					// MikroORM throws different error types, check for unique constraint violations
-					const errorMessage = error?.message || String(error);
-					const errorCode = error?.code ? String(error.code) : '';
-					// PostgreSQL: 23505, MySQL: 1062, SQLite: 19
-					// Also check for common unique constraint error messages
-					if (
-						errorCode === '23505' ||
-						errorCode === '1062' ||
-						errorCode === '19' ||
-						errorMessage.includes('UNIQUE constraint') ||
+					const errorMessage = (error?.message || String(error)).toLowerCase();
+					const isUniqueConstraintError =
+						errorMessage.includes('unique constraint') ||
 						errorMessage.includes('duplicate key') ||
-						errorMessage.includes('unique constraint')
-					) {
+						errorMessage.includes('unique violation');
+					if (isUniqueConstraintError) {
 						throw new BadRequestException(
 							'A setting with the same name already exists at this scope. Please try again.'
 						);
@@ -540,6 +560,9 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		tenantId?: ID,
 		organizationId?: ID
 	): Promise<Record<string, any>> {
+		// Validate required scope parameters
+		this.validateScopeRequirements(scope, tenantId, organizationId);
+
 		const effectiveTenantId = scope === SystemSettingScope.GLOBAL ? null : tenantId;
 		const effectiveOrgId = scope === SystemSettingScope.ORGANIZATION ? organizationId : null;
 
