@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FindManyOptions, FindOptionsWhere, In, IsNull, QueryFailedError } from 'typeorm';
-import { keys } from 'underscore';
 import { ID, IResolvedSystemSetting, SystemSettingScope } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
@@ -364,7 +363,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	): Promise<Record<string, any>> {
 		this.validateScopeRequirements(scope, tenantId, organizationId);
 
-		for (const key of keys(input)) {
+		for (const key of Object.keys(input)) {
 			this.validateSettingScopeAllowed(key, scope);
 		}
 
@@ -427,9 +426,9 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 					// Check for unique constraint violation (race condition)
 					if (error instanceof QueryFailedError) {
-						const errorCode = (error as any).code;
+						const errorCode = String((error as any).code);
 						// PostgreSQL: 23505, MySQL: 1062, SQLite: 19
-						if (errorCode === '23505' || errorCode === 1062 || errorCode === 19) {
+						if (errorCode === '23505' || errorCode === '1062' || errorCode === '19') {
 							throw new BadRequestException(
 								'A setting with the same name already exists at this scope. Please try again.'
 							);
@@ -443,50 +442,85 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 				}
 			}
 			case MultiORMEnum.MikroORM: {
-				return await this.mikroOrmRepository.getEntityManager().transactional(async (em) => {
-					const result: Record<string, any> = {};
-					const settingsToPersist: SystemSetting[] = [];
+				try {
+					return await this.mikroOrmRepository.getEntityManager().transactional(async (em) => {
+						const result: Record<string, any> = {};
+						const settingsToPersist: SystemSetting[] = [];
 
-					for (const key in input) {
-						if (Object.prototype.hasOwnProperty.call(input, key)) {
-							const value = this.convertValueToString(input[key]);
-							const { where } = parseTypeORMFindToMikroOrm<SystemSetting>({
-								where: {
-									name: key,
-									tenantId: effectiveTenantId ?? IsNull(),
-									organizationId: effectiveOrgId ?? IsNull()
-								}
-							});
-
-							let setting = await em.findOne(SystemSetting, where);
-
-							if (setting) {
-								em.assign(setting, { value });
-							} else {
-								setting = em.create(SystemSetting, {
-									name: key,
-									value,
-									tenantId: effectiveTenantId,
-									organizationId: effectiveOrgId
+						for (const key in input) {
+							if (Object.prototype.hasOwnProperty.call(input, key)) {
+								const value = this.convertValueToString(input[key]);
+								const { where } = parseTypeORMFindToMikroOrm<SystemSetting>({
+									where: {
+										name: key,
+										tenantId: effectiveTenantId ?? IsNull(),
+										organizationId: effectiveOrgId ?? IsNull()
+									}
 								});
-								em.persist(setting);
+
+								let setting = await em.findOne(SystemSetting, where);
+
+								if (setting) {
+									em.assign(setting, { value });
+								} else {
+									setting = em.create(SystemSetting, {
+										name: key,
+										value,
+										tenantId: effectiveTenantId,
+										organizationId: effectiveOrgId
+									});
+									em.persist(setting);
+								}
+
+								settingsToPersist.push(setting);
 							}
-
-							settingsToPersist.push(setting);
 						}
+
+						// Batch flush all operations at once
+						await em.flush();
+
+						// Build result after flush
+						for (const setting of settingsToPersist) {
+							const serialized = this.serialize(setting) as SystemSetting;
+							result[serialized.name] = this.convertValueToType(serialized.value, serialized.name);
+						}
+
+						return result;
+					});
+				} catch (error) {
+					// Log full error with context for debugging
+					this.logger.error(
+						`Failed to save settings: ${JSON.stringify({
+							scope,
+							tenantId,
+							organizationId,
+							keys: Object.keys(input)
+						})}`,
+						error.stack || error
+					);
+
+					// Check for unique constraint violation (race condition)
+					// MikroORM throws different error types, check for unique constraint violations
+					const errorMessage = error?.message || String(error);
+					const errorCode = error?.code ? String(error.code) : '';
+					// PostgreSQL: 23505, MySQL: 1062, SQLite: 19
+					// Also check for common unique constraint error messages
+					if (
+						errorCode === '23505' ||
+						errorCode === '1062' ||
+						errorCode === '19' ||
+						errorMessage.includes('UNIQUE constraint') ||
+						errorMessage.includes('duplicate key') ||
+						errorMessage.includes('unique constraint')
+					) {
+						throw new BadRequestException(
+							'A setting with the same name already exists at this scope. Please try again.'
+						);
 					}
 
-					// Batch flush all operations at once
-					await em.flush();
-
-					// Build result after flush
-					for (const setting of settingsToPersist) {
-						const serialized = this.serialize(setting) as SystemSetting;
-						result[serialized.name] = this.convertValueToType(serialized.value, serialized.name);
-					}
-
-					return result;
-				});
+					// Throw generic error without exposing internal details
+					throw new BadRequestException('Failed to save settings');
+				}
 			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
