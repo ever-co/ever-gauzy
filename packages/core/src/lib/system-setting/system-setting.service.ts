@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { FindManyOptions, FindOptionsWhere, IsNull } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In, IsNull, QueryFailedError } from 'typeorm';
 import { keys } from 'underscore';
 import { ID, IResolvedSystemSetting, SystemSettingScope } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
@@ -18,6 +18,8 @@ import {
 
 @Injectable()
 export class SystemSettingService extends TenantAwareCrudService<SystemSetting> {
+	private readonly logger = new Logger(SystemSettingService.name);
+
 	constructor(
 		readonly typeOrmSystemSettingRepository: TypeOrmSystemSettingRepository,
 		readonly mikroOrmSystemSettingRepository: MikroOrmSystemSettingRepository,
@@ -71,9 +73,86 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		tenantId?: ID,
 		organizationId?: ID
 	): Promise<Record<string, any>> {
+		if (!settingNames || settingNames.length === 0) {
+			return {};
+		}
+
 		const result: Record<string, any> = {};
 
+		// Optimize: Fetch only requested settings for each scope using In() (O(3) instead of O(n*3))
+		const effectiveTenantId = tenantId ?? null;
+		const effectiveOrgId = organizationId ?? null;
+
+		// Fetch organization settings (only requested names)
+		const orgSettings: Record<string, any> = {};
+		if (effectiveTenantId && effectiveOrgId) {
+			const orgSettingsList = await this.findSettingsByNamesAndScope(
+				settingNames,
+				SystemSettingScope.ORGANIZATION,
+				effectiveTenantId,
+				effectiveOrgId
+			);
+			for (const setting of orgSettingsList) {
+				if (setting.value !== undefined && setting.value !== null && setting.value !== '') {
+					orgSettings[setting.name] = this.convertValueToType(setting.value, setting.name);
+				}
+			}
+		}
+
+		// Fetch tenant settings (only requested names not found in organization)
+		const tenantSettings: Record<string, any> = {};
+		if (effectiveTenantId) {
+			const missingNames = settingNames.filter((name) => orgSettings[name] === undefined);
+			if (missingNames.length > 0) {
+				const tenantSettingsList = await this.findSettingsByNamesAndScope(
+					missingNames,
+					SystemSettingScope.TENANT,
+					effectiveTenantId
+				);
+				for (const setting of tenantSettingsList) {
+					if (setting.value !== undefined && setting.value !== null && setting.value !== '') {
+						tenantSettings[setting.name] = this.convertValueToType(setting.value, setting.name);
+					}
+				}
+			}
+		}
+
+		// Fetch global settings (only requested names not found in organization or tenant)
+		const globalSettings: Record<string, any> = {};
+		const missingNames = settingNames.filter(
+			(name) => orgSettings[name] === undefined && tenantSettings[name] === undefined
+		);
+		if (missingNames.length > 0) {
+			const globalSettingsList = await this.findSettingsByNamesAndScope(missingNames, SystemSettingScope.GLOBAL);
+			for (const setting of globalSettingsList) {
+				if (setting.value !== undefined && setting.value !== null && setting.value !== '') {
+					globalSettings[setting.name] = this.convertValueToType(setting.value, setting.name);
+				}
+			}
+		}
+
+		// Resolve each setting using cascade logic (Organization → Tenant → Global → ENV → Default)
+		// Reuse resolveSettingValue for ENV/DEFAULT fallback to avoid duplication
 		for (const name of settingNames) {
+			// Check organization first
+			if (orgSettings[name] !== undefined) {
+				result[name] = orgSettings[name];
+				continue;
+			}
+
+			// Check tenant
+			if (tenantSettings[name] !== undefined) {
+				result[name] = tenantSettings[name];
+				continue;
+			}
+
+			// Check global
+			if (globalSettings[name] !== undefined) {
+				result[name] = globalSettings[name];
+				continue;
+			}
+
+			// Fallback to ENV and DEFAULT using existing method to avoid duplication
 			const resolved = await this.resolveSettingValue(name, tenantId, organizationId);
 			result[name] = resolved.value;
 		}
@@ -100,12 +179,14 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		}
 
 		switch (metadata.type) {
-			case 'boolean':
+			case 'boolean': {
 				const normalized = String(value).toLowerCase().trim();
 				return normalized === 'true' || normalized === '1';
-			case 'number':
+			}
+			case 'number': {
 				const num = Number(value);
 				return isNaN(num) ? value : num;
+			}
 			case 'string':
 			default:
 				return value;
@@ -125,7 +206,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	async resolveSettingValue(name: string, tenantId?: ID, organizationId?: ID): Promise<IResolvedSystemSetting> {
 		if (tenantId && organizationId && isSettingAllowedAtScope(name, SystemSettingScope.ORGANIZATION)) {
 			const orgSetting = await this.findSettingByScope(name, tenantId, organizationId);
-			if (orgSetting?.value !== undefined && orgSetting?.value !== null) {
+			if (orgSetting?.value !== undefined && orgSetting?.value !== null && orgSetting?.value !== '') {
 				const convertedValue = this.convertValueToType(orgSetting.value, name);
 				return { name, value: convertedValue, source: SystemSettingScope.ORGANIZATION };
 			}
@@ -133,7 +214,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 		if (tenantId && isSettingAllowedAtScope(name, SystemSettingScope.TENANT)) {
 			const tenantSetting = await this.findSettingByScope(name, tenantId, null);
-			if (tenantSetting?.value !== undefined && tenantSetting?.value !== null) {
+			if (tenantSetting?.value !== undefined && tenantSetting?.value !== null && tenantSetting?.value !== '') {
 				const convertedValue = this.convertValueToType(tenantSetting.value, name);
 				return { name, value: convertedValue, source: SystemSettingScope.TENANT };
 			}
@@ -141,7 +222,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 		if (isSettingAllowedAtScope(name, SystemSettingScope.GLOBAL)) {
 			const globalSetting = await this.findSettingByScope(name, null, null);
-			if (globalSetting?.value !== undefined && globalSetting?.value !== null) {
+			if (globalSetting?.value !== undefined && globalSetting?.value !== null && globalSetting?.value !== '') {
 				const convertedValue = this.convertValueToType(globalSetting.value, name);
 				return { name, value: convertedValue, source: SystemSettingScope.GLOBAL };
 			}
@@ -200,6 +281,51 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 			}
 			case MultiORMEnum.TypeORM:
 				return await this.typeOrmRepository.findOne({
+					where: whereClause
+				});
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Finds multiple settings by names and scope in a single query (optimized batch fetch).
+	 *
+	 * @param {string[]} names - Array of setting names to fetch.
+	 * @param {SystemSettingScope} scope - The scope to search in.
+	 * @param {ID | null} [tenantId] - The tenant ID (null for global).
+	 * @param {ID | null} [organizationId] - The organization ID (null for tenant or global).
+	 * @returns {Promise<SystemSetting[]>} - Array of found settings.
+	 */
+	private async findSettingsByNamesAndScope(
+		names: string[],
+		scope: SystemSettingScope,
+		tenantId?: ID | null,
+		organizationId?: ID | null
+	): Promise<SystemSetting[]> {
+		if (!names || names.length === 0) {
+			return [];
+		}
+
+		const effectiveTenantId = scope === SystemSettingScope.GLOBAL ? null : tenantId ?? null;
+		const effectiveOrgId = scope === SystemSettingScope.ORGANIZATION ? organizationId ?? null : null;
+
+		const whereClause: FindOptionsWhere<SystemSetting> = {
+			name: In(names),
+			tenantId: effectiveTenantId ?? IsNull(),
+			organizationId: effectiveOrgId ?? IsNull()
+		};
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<SystemSetting>({
+					where: whereClause
+				});
+				const items = await this.mikroOrmRepository.find(where, mikroOptions);
+				return items.map((entity: SystemSetting) => this.serialize(entity)) as SystemSetting[];
+			}
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.find({
 					where: whereClause
 				});
 			default:
@@ -288,7 +414,30 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 					return result;
 				} catch (error) {
 					await queryRunner.rollbackTransaction();
-					throw new BadRequestException(`Failed to save settings: ${error.message}`);
+					// Log full error with context for debugging
+					this.logger.error(
+						`Failed to save settings: ${JSON.stringify({
+							scope,
+							tenantId,
+							organizationId,
+							keys: Object.keys(input)
+						})}`,
+						error.stack || error
+					);
+
+					// Check for unique constraint violation (race condition)
+					if (error instanceof QueryFailedError) {
+						const errorCode = (error as any).code;
+						// PostgreSQL: 23505, MySQL: 1062, SQLite: 19
+						if (errorCode === '23505' || errorCode === 1062 || errorCode === 19) {
+							throw new BadRequestException(
+								'A setting with the same name already exists at this scope. Please try again.'
+							);
+						}
+					}
+
+					// Throw generic error without exposing internal details
+					throw new BadRequestException('Failed to save settings');
 				} finally {
 					await queryRunner.release();
 				}
@@ -296,6 +445,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 			case MultiORMEnum.MikroORM: {
 				return await this.mikroOrmRepository.getEntityManager().transactional(async (em) => {
 					const result: Record<string, any> = {};
+					const settingsToPersist: SystemSetting[] = [];
 
 					for (const key in input) {
 						if (Object.prototype.hasOwnProperty.call(input, key)) {
@@ -312,7 +462,6 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 							if (setting) {
 								em.assign(setting, { value });
-								await em.flush();
 							} else {
 								setting = em.create(SystemSetting, {
 									name: key,
@@ -320,12 +469,20 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 									tenantId: effectiveTenantId,
 									organizationId: effectiveOrgId
 								});
-								await em.persistAndFlush(setting);
+								em.persist(setting);
 							}
 
-							const serialized = this.serialize(setting) as SystemSetting;
-							result[serialized.name] = this.convertValueToType(serialized.value, serialized.name);
+							settingsToPersist.push(setting);
 						}
+					}
+
+					// Batch flush all operations at once
+					await em.flush();
+
+					// Build result after flush
+					for (const setting of settingsToPersist) {
+						const serialized = this.serialize(setting) as SystemSetting;
+						result[serialized.name] = this.convertValueToType(serialized.value, serialized.name);
 					}
 
 					return result;
