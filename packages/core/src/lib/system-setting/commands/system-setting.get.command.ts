@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { ICommand } from '@nestjs/cqrs';
 import { SystemSettingScope } from '@gauzy/contracts';
 
@@ -6,7 +7,7 @@ export class SystemSettingGetCommand implements ICommand {
 
 	constructor(public readonly names: string[]) {
 		if (!names || names.length === 0) {
-			throw new Error('names array must not be empty');
+			throw new BadRequestException('names array must not be empty');
 		}
 	}
 }

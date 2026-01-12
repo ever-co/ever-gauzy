@@ -27,7 +27,10 @@ export class SaveSystemSettingsDTO {
 	@IsEnum(SystemSettingScope)
 	readonly scope: SystemSettingScope;
 
-	@ApiProperty({ type: () => Object })
+	@ApiProperty({
+		type: () => Object,
+		description: 'Arbitrary settings as a map of string keys to any JSON value'
+	})
 	@IsNotEmpty()
 	@IsObject()
 	readonly settings: Record<string, any>;
