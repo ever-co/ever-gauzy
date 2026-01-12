@@ -46,6 +46,8 @@ export class SystemSettingGetByScopeHandler implements ICommandHandler<SystemSet
 
 	/**
 	 * Executes the retrieval of system settings for a specific scope.
+	 * Note: If scope is omitted, it defaults to SystemSettingScope.TENANT.
+	 * TenantPermissionGuard ensures tenantId is present for tenant-scoped queries.
 	 *
 	 * @param {SystemSettingGetByScopeCommand} command - The command containing scope.
 	 * @returns {Promise<Record<string, any>>} - Returns an object containing the settings with secrets wrapped.
@@ -55,6 +57,7 @@ export class SystemSettingGetByScopeHandler implements ICommandHandler<SystemSet
 
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
+		// Default to TENANT scope if not specified (TenantPermissionGuard ensures tenantId is present)
 		const effectiveScope = scope || SystemSettingScope.TENANT;
 
 		const settings = await this._systemSettingService.getSettingsByScope(effectiveScope, tenantId, organizationId);
