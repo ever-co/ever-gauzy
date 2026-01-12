@@ -1,16 +1,9 @@
 <nb-card [nbSpinner]="isLoading$ | async" class="card-scroll">
 	<nb-card-header>
-		<div class="header-container">
-			<h4>{{ 'INTEGRATIONS.AVAILABLE_INTEGRATIONS' | translate }}</h4>
-			<nb-tabset (changeTab)="changeTab($event.tabId)" class="header-tabs">
-				<nb-tab tabTitle="Integrations" tabId="integrations" [active]="isIntegrationsTab()"></nb-tab>
-				<nb-tab tabTitle="Plugin Marketplace" tabId="plugins" [active]="isPluginsTab()"></nb-tab>
-			</nb-tabset>
-		</div>
+		<h4>{{ 'INTEGRATIONS.AVAILABLE_INTEGRATIONS' | translate }}</h4>
+		<div [routerLink]="['..', 'plugins']">Plugins</div>
 	</nb-card-header>
 	<nb-card-body>
-		<!-- Integrations Tab Content -->
-		@if (isIntegrationsTab()) {
 		<ng-template [ngxPermissionsOnly]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
 			<ng-template [ngxPermissionsOnly]="['INTEGRATION_VIEW']">
 				<div class="integration-filters">
@@ -106,14 +99,6 @@
 				</div>
 			</ng-template>
 		</ng-template>
-		}
-
-		<!-- Plugin Marketplace Tab Content -->
-		@if (isPluginsTab()) {
-		<div class="plugin-marketplace-wrapper">
-			<router-outlet name="plugins"></router-outlet>
-		</div>
-		}
 		<ng-template [ngxPermissionsExcept]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
 			<div>
 				<!-- Content to display if the user does not have 'canEditComponent' permission -->

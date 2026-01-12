@@ -12,30 +12,6 @@
   min-height: 47.5rem;
 }
 
-.header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-
-  h4 {
-    margin: 0;
-  }
-
-  .header-tabs {
-    ::ng-deep {
-      nb-tabset {
-        .tabset {
-          border: none;
-        }
-        ul.tabset {
-          margin-bottom: 0;
-        }
-      }
-    }
-  }
-}
-
 .integration-filters {
   display: flex;
   margin-bottom: 37px;
@@ -77,13 +53,13 @@ a.disabled {
     padding: 15px;
     margin: 0 1rem 1rem 0;
     box-shadow: 0 1px 1px 0 rgb(0 0 0 / 15%);
-    border-radius: calc(var(--border-radius) * 1);
+    border-radius: 8px;
     position: relative;
     background-color: var(--gauzy-card-1);
 
     &:hover {
       box-shadow: 0px 1px 1px 1px var(--text-primary-color);
-      transition: 0.2s all;
+      transition: 0.2 all;
     }
   }
 }
@@ -207,18 +183,5 @@ nb-option {
 
   button {
     box-shadow: 0 1px 1px 0 rgb(0 0 0 / 15%);
-  }
-}
-
-// Plugin Marketplace Tab Styles
-.plugin-marketplace-wrapper {
-  min-height: 500px;
-  width: 100%;
-
-  ::ng-deep {
-    lib-plugin-marketplace {
-      width: 100%;
-      display: block;
-    }
   }
 }
