@@ -618,6 +618,7 @@ class PullActivities {
 			idleDuration -= chunkDuration;
 			chunkStartDate = chunkEndDate;
 		}
+		this.startedPausedDate = currentTime;
 		return;
 	}
 

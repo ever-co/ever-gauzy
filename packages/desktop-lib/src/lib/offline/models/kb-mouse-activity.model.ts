@@ -37,7 +37,7 @@ export class KbMouseActivity extends Base implements KbMouseActivityTO, Serializ
 		this._timerId = kbMouseActivity.timerId;
 		this._timeslotId = kbMouseActivity.timeslotId;
 		this._isOffline = kbMouseActivity.isOffline;
-		this._activityState = kbMouseActivity.activityState;
+		this._activityState = kbMouseActivity.activityState ?? ActivityState.active;
 	}
 
 	public get timeStart(): Date {
