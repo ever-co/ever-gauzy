@@ -99,7 +99,7 @@ class PullActivities {
 		return this.startedDate;
 	}
 
-	public get startedPausedDate(): Date {
+	public get startedPausedDate(): Date | null {
 		return this._startedPausedDate;
 	}
 
