@@ -163,10 +163,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 			const result: Record<string, any> = {};
 
 			for (const [key, val] of Object.entries(input)) {
-				// null clears the setting (sets DB value to null), undefined skips
 				const value = val === null ? null : val !== undefined ? String(val) : undefined;
-
-				// Atomic upsert with retry on unique constraint violation (TOCTOU race protection)
 				await this.upsertSetting(key, value, effectiveTenantId, effectiveOrgId);
 				result[key] = convertSettingValue(value, key);
 			}
