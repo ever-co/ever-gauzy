@@ -2,8 +2,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
-export class CreateSystemSettingTable1767964851022 implements MigrationInterface {
-	name = 'CreateSystemSettingTable1767964851022';
+export class CreateSystemSettingTable1768294094843 implements MigrationInterface {
+	name = 'CreateSystemSettingTable1768294094843';
 
 	/**
 	 * Up Migration
@@ -63,24 +63,30 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 			`CREATE TABLE "system_setting" ("deletedAt" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "createdByUserId" uuid, "updatedByUserId" uuid, "deletedByUserId" uuid, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "name" character varying NOT NULL, "value" text, CONSTRAINT "PK_88dbc9b10c8558420acf7ea642f" PRIMARY KEY ("id"))`
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_4b463e697599946f1ce1f71c3b" ON "system_setting" ("createdByUserId") `
+			`CREATE INDEX "IDX_4b463e697599946f1ce1f71c3b" ON "system_setting" ("createdByUserId")`
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_55abcdef47f9115bfe788aeaf2" ON "system_setting" ("updatedByUserId") `
+			`CREATE INDEX "IDX_55abcdef47f9115bfe788aeaf2" ON "system_setting" ("updatedByUserId")`
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_c4ed4c1b25565cbac38e15a3ba" ON "system_setting" ("deletedByUserId") `
+			`CREATE INDEX "IDX_c4ed4c1b25565cbac38e15a3ba" ON "system_setting" ("deletedByUserId")`
 		);
-		await queryRunner.query(`CREATE INDEX "IDX_6898dd873dbfd173c4d6d63cf5" ON "system_setting" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_685732774ac601af35ddbfe87a" ON "system_setting" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_c8344a7f087ead5614f0e7e173" ON "system_setting" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_6898dd873dbfd173c4d6d63cf5" ON "system_setting" ("isActive")`);
+		await queryRunner.query(`CREATE INDEX "IDX_685732774ac601af35ddbfe87a" ON "system_setting" ("isArchived")`);
+		await queryRunner.query(`CREATE INDEX "IDX_c8344a7f087ead5614f0e7e173" ON "system_setting" ("tenantId")`);
+		await queryRunner.query(`CREATE INDEX "IDX_f1a78f4f45c80b041c68541db5" ON "system_setting" ("organizationId")`);
+		await queryRunner.query(`CREATE INDEX "IDX_e92e92174dd8c3a33fb49aa23b" ON "system_setting" ("name")`);
+		// Partial unique indexes for scope-based uniqueness
 		await queryRunner.query(
-			`CREATE INDEX "IDX_f1a78f4f45c80b041c68541db5" ON "system_setting" ("organizationId") `
+			`CREATE UNIQUE INDEX "IDX_system_setting_global_scope" ON "system_setting" ("name") WHERE "tenantId" IS NULL AND "organizationId" IS NULL`
 		);
-		await queryRunner.query(`CREATE INDEX "IDX_e92e92174dd8c3a33fb49aa23b" ON "system_setting" ("name") `);
 		await queryRunner.query(
-			`ALTER TABLE "system_setting" ADD CONSTRAINT "UQ_system_setting_name_tenant_organization" UNIQUE ("name", "tenantId", "organizationId")`
+			`CREATE UNIQUE INDEX "IDX_system_setting_tenant_scope" ON "system_setting" ("name", "tenantId") WHERE "tenantId" IS NOT NULL AND "organizationId" IS NULL`
 		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_system_setting_org_scope" ON "system_setting" ("name", "tenantId", "organizationId") WHERE "tenantId" IS NOT NULL AND "organizationId" IS NOT NULL`
+		);
+		// Foreign keys
 		await queryRunner.query(
 			`ALTER TABLE "system_setting" ADD CONSTRAINT "FK_4b463e697599946f1ce1f71c3b8" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
@@ -109,7 +115,11 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 		await queryRunner.query(`ALTER TABLE "system_setting" DROP CONSTRAINT "FK_c4ed4c1b25565cbac38e15a3baf"`);
 		await queryRunner.query(`ALTER TABLE "system_setting" DROP CONSTRAINT "FK_55abcdef47f9115bfe788aeaf2b"`);
 		await queryRunner.query(`ALTER TABLE "system_setting" DROP CONSTRAINT "FK_4b463e697599946f1ce1f71c3b8"`);
-		await queryRunner.query(`ALTER TABLE "system_setting" DROP CONSTRAINT "UQ_system_setting_name_tenant_organization"`);
+		// Drop partial unique indexes
+		await queryRunner.query(`DROP INDEX "public"."IDX_system_setting_org_scope"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_system_setting_tenant_scope"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_system_setting_global_scope"`);
+		// Drop regular indexes
 		await queryRunner.query(`DROP INDEX "public"."IDX_e92e92174dd8c3a33fb49aa23b"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_f1a78f4f45c80b041c68541db5"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_c8344a7f087ead5614f0e7e173"`);
@@ -128,34 +138,31 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE "system_setting" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "value" text)`
+			`CREATE TABLE "system_setting" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "value" text, CONSTRAINT "FK_4b463e697599946f1ce1f71c3b8" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_55abcdef47f9115bfe788aeaf2b" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_c4ed4c1b25565cbac38e15a3baf" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_c8344a7f087ead5614f0e7e1738" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_f1a78f4f45c80b041c68541db5a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE)`
 		);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_system_setting" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "value" text, CONSTRAINT "FK_4b463e697599946f1ce1f71c3b8" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_55abcdef47f9115bfe788aeaf2b" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_c4ed4c1b25565cbac38e15a3baf" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_c8344a7f087ead5614f0e7e1738" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_f1a78f4f45c80b041c68541db5a" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE)`
+			`CREATE INDEX "IDX_4b463e697599946f1ce1f71c3b" ON "system_setting" ("createdByUserId")`
 		);
 		await queryRunner.query(
-			`INSERT INTO "temporary_system_setting"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "name", "value") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "name", "value" FROM "system_setting"`
-		);
-		await queryRunner.query(`DROP TABLE "system_setting"`);
-		await queryRunner.query(`ALTER TABLE "temporary_system_setting" RENAME TO "system_setting"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_4b463e697599946f1ce1f71c3b" ON "system_setting" ("createdByUserId") `
+			`CREATE INDEX "IDX_55abcdef47f9115bfe788aeaf2" ON "system_setting" ("updatedByUserId")`
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_55abcdef47f9115bfe788aeaf2" ON "system_setting" ("updatedByUserId") `
+			`CREATE INDEX "IDX_c4ed4c1b25565cbac38e15a3ba" ON "system_setting" ("deletedByUserId")`
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_6898dd873dbfd173c4d6d63cf5" ON "system_setting" ("isActive")`);
+		await queryRunner.query(`CREATE INDEX "IDX_685732774ac601af35ddbfe87a" ON "system_setting" ("isArchived")`);
+		await queryRunner.query(`CREATE INDEX "IDX_c8344a7f087ead5614f0e7e173" ON "system_setting" ("tenantId")`);
+		await queryRunner.query(`CREATE INDEX "IDX_f1a78f4f45c80b041c68541db5" ON "system_setting" ("organizationId")`);
+		await queryRunner.query(`CREATE INDEX "IDX_e92e92174dd8c3a33fb49aa23b" ON "system_setting" ("name")`);
+		// Partial unique indexes for scope-based uniqueness
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "IDX_system_setting_global_scope" ON "system_setting" ("name") WHERE "tenantId" IS NULL AND "organizationId" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_c4ed4c1b25565cbac38e15a3ba" ON "system_setting" ("deletedByUserId") `
+			`CREATE UNIQUE INDEX "IDX_system_setting_tenant_scope" ON "system_setting" ("name", "tenantId") WHERE "tenantId" IS NOT NULL AND "organizationId" IS NULL`
 		);
-		await queryRunner.query(`CREATE INDEX "IDX_6898dd873dbfd173c4d6d63cf5" ON "system_setting" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_685732774ac601af35ddbfe87a" ON "system_setting" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_c8344a7f087ead5614f0e7e173" ON "system_setting" ("tenantId") `);
 		await queryRunner.query(
-			`CREATE INDEX "IDX_f1a78f4f45c80b041c68541db5" ON "system_setting" ("organizationId") `
-		);
-		await queryRunner.query(`CREATE INDEX "IDX_e92e92174dd8c3a33fb49aa23b" ON "system_setting" ("name") `);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_system_setting_name_tenant_organization" ON "system_setting" ("name", "tenantId", "organizationId")`
+			`CREATE UNIQUE INDEX "IDX_system_setting_org_scope" ON "system_setting" ("name", "tenantId", "organizationId") WHERE "tenantId" IS NOT NULL AND "organizationId" IS NOT NULL`
 		);
 	}
 
@@ -165,7 +172,11 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "UQ_system_setting_name_tenant_organization"`);
+		// Drop partial unique indexes
+		await queryRunner.query(`DROP INDEX "IDX_system_setting_org_scope"`);
+		await queryRunner.query(`DROP INDEX "IDX_system_setting_tenant_scope"`);
+		await queryRunner.query(`DROP INDEX "IDX_system_setting_global_scope"`);
+		// Drop regular indexes
 		await queryRunner.query(`DROP INDEX "IDX_e92e92174dd8c3a33fb49aa23b"`);
 		await queryRunner.query(`DROP INDEX "IDX_f1a78f4f45c80b041c68541db5"`);
 		await queryRunner.query(`DROP INDEX "IDX_c8344a7f087ead5614f0e7e173"`);
@@ -201,8 +212,9 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 		await queryRunner.query(
 			`ALTER TABLE \`system_setting\` ADD CONSTRAINT \`FK_f1a78f4f45c80b041c68541db5a\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
 		);
+		// Unique constraint (MySQL doesn't support partial indexes, so we use a simple unique constraint)
 		await queryRunner.query(
-			`ALTER TABLE \`system_setting\` ADD CONSTRAINT \`UQ_system_setting_name_tenant_organization\` UNIQUE (\`name\`, \`tenantId\`, \`organizationId\`)`
+			`ALTER TABLE \`system_setting\` ADD CONSTRAINT \`UQ_system_setting_name_tenant_org\` UNIQUE (\`name\`, \`tenantId\`, \`organizationId\`)`
 		);
 	}
 
@@ -212,12 +224,12 @@ export class CreateSystemSettingTable1767964851022 implements MigrationInterface
 	 * @param queryRunner
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP INDEX \`UQ_system_setting_name_tenant_org\``);
 		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP FOREIGN KEY \`FK_f1a78f4f45c80b041c68541db5a\``);
 		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP FOREIGN KEY \`FK_c8344a7f087ead5614f0e7e1738\``);
 		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP FOREIGN KEY \`FK_c4ed4c1b25565cbac38e15a3baf\``);
 		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP FOREIGN KEY \`FK_55abcdef47f9115bfe788aeaf2b\``);
 		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP FOREIGN KEY \`FK_4b463e697599946f1ce1f71c3b8\``);
-		await queryRunner.query(`ALTER TABLE \`system_setting\` DROP INDEX \`UQ_system_setting_name_tenant_organization\``);
 		await queryRunner.query(`DROP INDEX \`IDX_e92e92174dd8c3a33fb49aa23b\` ON \`system_setting\``);
 		await queryRunner.query(`DROP INDEX \`IDX_f1a78f4f45c80b041c68541db5\` ON \`system_setting\``);
 		await queryRunner.query(`DROP INDEX \`IDX_c8344a7f087ead5614f0e7e173\` ON \`system_setting\``);
