@@ -4490,7 +4490,8 @@
 			"ERROR_HANDLER": "Error Handler",
 			"ERROR_OCCURRED": "Error Occurred",
 			"SELECT_FILE": "Select file",
-			"EXIT_AGENT_CONFIRM": "Oops! You need to log in before you can use the app."
+			"EXIT_AGENT_LOGIN_CONFIRM": "Oops! You need to log in before you can use the app.",
+			"EXIT_AGENT_PREVENT_CONFIRM": "Oops! You are not allowed to exit. Please contact your account administrator."
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",

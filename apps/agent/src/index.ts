@@ -8,10 +8,12 @@ import {
 	AppError,
 	DesktopUpdater,
 	LocalStore,
+	TranslateService,
+	DesktopDialog
 } from '@gauzy/desktop-lib';
 import PullActivities from './main/workers/pull-activities';
 import PushActivities from './main/workers/push-activities';
-import { getAuthConfig } from './main/util';
+import { getAppSetting, getAuthConfig, getInitialConfig } from './main/util';
 
 let popupWin: BrowserWindow | null = null;
 
@@ -27,7 +29,6 @@ const updater = new DesktopUpdater({
 	typeRelease: 'releases'
 });
 args.some((val) => val === '--serve');
-
 
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
@@ -57,6 +58,16 @@ async function stopAppActivity() {
 	await pushActivities.stopPooling();
 }
 
+async function exitDialog() {
+	const DIALOG_TITLE = TranslateService.instant('TIMER_TRACKER.DIALOG.WARNING');
+	const DIALOG_MESSAGE = TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT_AGENT_PREVENT_CONFIRM');
+	const dialog = new DesktopDialog(DIALOG_TITLE, DIALOG_MESSAGE);
+	dialog.options.buttons = [
+		TranslateService.instant('OK'),
+	];
+	await dialog.show();
+}
+
 app.on('before-quit', async (e) => {
 	e.preventDefault();
 	try {
@@ -66,7 +77,14 @@ app.on('before-quit', async (e) => {
 		log.error(`ERROR: Occurred while cancel update: ${e}`);
 		throw new AppError('MAINUPDTABORT', e);
 	}
-	app.exit(0);
+	const appSetting = getAppSetting();
+	const appConfig = getInitialConfig();
+	const authConfig = getAuthConfig();
+	if (appSetting?.allowAgentAppExit || !appConfig?.isSetup || !authConfig?.token) {
+		app.exit(0);
+	} else {
+		exitDialog();
+	}
 });
 
 // On OS X it is common for applications and their menu bar
