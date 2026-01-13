@@ -5,15 +5,8 @@ import { BrowserWindow, shell, app, ipcMain } from 'electron';
 import * as path from 'path';
 import { InitApplication } from './main/init';
 import {
-	AppError,
-	DesktopUpdater,
 	LocalStore,
-	TranslateService,
-	DesktopDialog
 } from '@gauzy/desktop-lib';
-import PullActivities from './main/workers/pull-activities';
-import PushActivities from './main/workers/push-activities';
-import { getAppSetting, getAuthConfig, getInitialConfig } from './main/util';
 
 let popupWin: BrowserWindow | null = null;
 
@@ -23,11 +16,6 @@ log.info(`Sqlite DB path: ${sqlite3filename}`);
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 const args = process.argv.slice(1);
-const updater = new DesktopUpdater({
-	repository: process.env.REPO_NAME,
-	owner: process.env.REPO_OWNER,
-	typeRelease: 'releases'
-});
 args.some((val) => val === '--serve');
 
 LocalStore.setFilePath({
@@ -45,46 +33,9 @@ app.commandLine.appendSwitch('disable-http2');
 
 ipcMain.on('quit', quit);
 
-async function stopAppActivity() {
-	const auth = getAuthConfig();
-	const pullActivities = PullActivities.getInstance();
-	pullActivities.updateAppUserAuth({
-		tenantId: auth?.user?.employee?.tenantId,
-		organizationId: auth?.user?.employee?.organizationId,
-		remoteId: auth?.user?.id
-	});
-	await pullActivities.stopTracking();
-	const pushActivities = PushActivities.getInstance();
-	await pushActivities.stopPooling();
-}
-
-async function exitDialog() {
-	const DIALOG_TITLE = TranslateService.instant('TIMER_TRACKER.DIALOG.WARNING');
-	const DIALOG_MESSAGE = TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT_AGENT_PREVENT_CONFIRM');
-	const dialog = new DesktopDialog(DIALOG_TITLE, DIALOG_MESSAGE);
-	dialog.options.buttons = [
-		TranslateService.instant('OK'),
-	];
-	await dialog.show();
-}
-
 app.on('before-quit', async (e) => {
 	e.preventDefault();
-	try {
-		await stopAppActivity();
-		updater.cancel();
-	} catch (e) {
-		log.error(`ERROR: Occurred while cancel update: ${e}`);
-		throw new AppError('MAINUPDTABORT', e);
-	}
-	const appSetting = getAppSetting();
-	const appConfig = getInitialConfig();
-	const authConfig = getAuthConfig();
-	if (appSetting?.allowAgentAppExit || !appConfig?.isSetup || !authConfig?.token) {
-		app.exit(0);
-	} else {
-		exitDialog();
-	}
+	app.exit(0);
 });
 
 // On OS X it is common for applications and their menu bar

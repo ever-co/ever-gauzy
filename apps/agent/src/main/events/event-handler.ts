@@ -1,3 +1,4 @@
+import { app } from 'electron';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 import PullActivities from '../workers/pull-activities';
 import PushActivities from '../workers/push-activities';
@@ -6,7 +7,21 @@ import MainEvent from './events';
 import * as path from 'node:path';
 import { TrayNotify } from './tray-notify';
 import { TEventArgs } from './event-types';
-import { getAuthConfig, delaySync, TAuthConfig, updateAgentSetting, getAppSetting } from '../util';
+import {
+	getAuthConfig,
+	delaySync,
+	TAuthConfig,
+	updateAgentSetting,
+	getAppSetting,
+	getInitialConfig
+} from '../util';
+import {
+	DesktopUpdater,
+	AppError,
+	TranslateService,
+	DesktopDialog
+} from '@gauzy/desktop-lib';
+import { logger as log } from '@gauzy/desktop-core';
 
 const appRootPath: string = path.join(__dirname, '../..');
 
@@ -17,11 +32,17 @@ export default class EventHandler {
 	private trayNotify: TrayNotify;
 	private pullActivities: PullActivities;
 	private pushActivities: PushActivities;
+	private updater: DesktopUpdater;
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
 		this.appWindow = AppWindow.getInstance(appRootPath);
 		this.trayNotify = TrayNotify.getInstance();
+		this.updater = new DesktopUpdater({
+			repository: process.env.REPO_NAME,
+			owner: process.env.REPO_OWNER,
+			typeRelease: 'releases'
+		});
 	}
 
 	static getInstance() {
@@ -152,6 +173,54 @@ export default class EventHandler {
 		}
 	}
 
+	async stopAppActivity() {
+		const authConfig = getAuthConfig();
+		this.getPullActivities(authConfig);
+		this.getPushActivities();
+		if (!authConfig?.token) {
+			await this.pushActivities.stopPooling();
+			return;
+		}
+
+		if (this.pullActivities.running) {
+			await this.pullActivities.stopTracking();
+		}
+
+	}
+
+	async exitDialog() {
+		const DIALOG_TITLE = TranslateService.instant('TIMER_TRACKER.DIALOG.WARNING');
+		const DIALOG_MESSAGE = TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT_AGENT_PREVENT_CONFIRM');
+		const dialog = new DesktopDialog(DIALOG_TITLE, DIALOG_MESSAGE);
+		dialog.options.buttons = [
+			TranslateService.instant('OK'),
+		];
+		await dialog.show();
+	}
+
+	private async exitApp() {
+		try {
+			const appSetting = getAppSetting();
+			const appConfig = getInitialConfig();
+			const authConfig = getAuthConfig();
+			if (appSetting?.allowAgentAppExit || !appConfig?.isSetup || !authConfig?.token) {
+				await this.stopAppActivity();
+				this.updater.cancel();
+				app.quit();
+			} else {
+				this.exitDialog();
+			}
+		} catch (e) {
+			log.error(``);
+			throw new AppError('MAINUPDTABORT', e);
+		}
+	}
+
+	private async stopAndExit() {
+		await this.stopAppTracking();
+		app.quit();
+	}
+
 	async handleEvent(args: TEventArgs) {
 		switch (args.type) {
 			case MAIN_EVENT_TYPE.LOGOUT_EVENT:
@@ -181,6 +250,11 @@ export default class EventHandler {
 				return this.resumeActivity();
 			case MAIN_EVENT_TYPE.ACTIVITY_PAUSED:
 				return this.pauseActivity();
+			case MAIN_EVENT_TYPE.EXIT_APP:
+				return this.exitApp();
+			case MAIN_EVENT_TYPE.STOP_N_EXIT:
+				return this.stopAndExit();
+
 			default: break;
 		}
 	}

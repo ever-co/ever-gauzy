@@ -3,6 +3,8 @@ import * as path from 'path';
 import { AppMenu, TranslateService, LocalStore } from '@gauzy/desktop-lib';
 import AppWindow from '../window-manager';
 const appRootPath: string = path.join(__dirname, '../..');
+import MainEvent from '../events/events';
+import { MAIN_EVENT_TYPE, MAIN_EVENT } from '../../constant';
 
 export enum MenuType {
 	onboarding = 'onboarding',
@@ -58,8 +60,13 @@ export class AgentMenu {
 
 	private get quitMenu(): MenuItemConstructorOptions {
 		return {
-			role: 'quit',
-			label: TranslateService.instant('BUTTONS.EXIT')
+			label: TranslateService.instant('BUTTONS.EXIT'),
+			click() {
+				const mainEvent = MainEvent.getInstance();
+				mainEvent.emit(MAIN_EVENT, {
+					type: MAIN_EVENT_TYPE.EXIT_APP
+				});
+			}
 		}
 	}
 
