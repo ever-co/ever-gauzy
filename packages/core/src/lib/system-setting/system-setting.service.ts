@@ -1,10 +1,13 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { v4 as uuidv4 } from 'uuid';
 import { FindManyOptions, FindOptionsWhere, In, IsNull, QueryFailedError } from 'typeorm';
 import { ID, IResolvedSystemSetting, SystemSettingScope } from '@gauzy/contracts';
+import { DatabaseTypeEnum } from '@gauzy/config';
 import { TenantAwareCrudService } from '../core/crud';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { ConnectionEntityManager } from '../database/connection-entity-manager';
+import { prepareSQLQuery as p } from '../database/database.helper';
 import { SystemSetting } from './system-setting.entity';
 import { TypeOrmSystemSettingRepository } from './repository/type-orm-system-setting.repository';
 import { MikroOrmSystemSettingRepository } from './repository/mikro-orm-system-setting.repository';
@@ -20,8 +23,8 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	private readonly logger = new Logger(SystemSettingService.name);
 
 	constructor(
-		readonly typeOrmSystemSettingRepository: TypeOrmSystemSettingRepository,
-		readonly mikroOrmSystemSettingRepository: MikroOrmSystemSettingRepository,
+		private readonly typeOrmSystemSettingRepository: TypeOrmSystemSettingRepository,
+		private readonly mikroOrmSystemSettingRepository: MikroOrmSystemSettingRepository,
 		private readonly configService: ConfigService,
 		private readonly connectionEntityManager: ConnectionEntityManager
 	) {
@@ -419,34 +422,89 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 					await queryRunner.connect();
 					await queryRunner.startTransaction();
 					const result: Record<string, any> = {};
+					const dbType = queryRunner.connection.options.type as DatabaseTypeEnum;
 
 					for (const key in input) {
 						if (Object.prototype.hasOwnProperty.call(input, key)) {
 							const value = this.convertValueToString(input[key]);
-							const whereClause: FindOptionsWhere<SystemSetting> = {
-								name: key,
-								tenantId: effectiveTenantId ?? IsNull(),
-								organizationId: effectiveOrgId ?? IsNull()
-							};
+							let upsertQuery = '';
+							let parameters: any[] = [];
 
-							let setting = await queryRunner.manager.findOne(SystemSetting, {
-								where: whereClause
-							});
-
-							if (setting) {
-								setting.value = value;
-								setting = await queryRunner.manager.save(setting);
-							} else {
-								setting = queryRunner.manager.create(SystemSetting, {
-									name: key,
-									value,
-									tenantId: effectiveTenantId,
-									organizationId: effectiveOrgId
-								});
-								setting = await queryRunner.manager.save(setting);
+							switch (dbType) {
+								case DatabaseTypeEnum.sqlite:
+								case DatabaseTypeEnum.betterSqlite3: {
+									const generatedId = uuidv4();
+									upsertQuery = `
+										INSERT INTO "system_setting" (
+											"id",
+											"name",
+											"value",
+											"tenantId",
+											"organizationId"
+										)
+										VALUES (?, ?, ?, ?, ?)
+										ON CONFLICT("name", "tenantId", "organizationId")
+										DO UPDATE SET
+											"value" = excluded."value",
+											"updatedAt" = datetime('now')
+									`;
+									parameters = [
+										generatedId,
+										key,
+										value,
+										effectiveTenantId ?? null,
+										effectiveOrgId ?? null
+									];
+									break;
+								}
+								case DatabaseTypeEnum.postgres: {
+									upsertQuery = `
+										INSERT INTO "system_setting" (
+											"name",
+											"value",
+											"tenantId",
+											"organizationId"
+										)
+										VALUES ($1, $2, $3, $4)
+										ON CONFLICT("name", "tenantId", "organizationId")
+										DO UPDATE SET
+											"value" = EXCLUDED."value",
+											"updatedAt" = now()
+									`;
+									parameters = [key, value, effectiveTenantId ?? null, effectiveOrgId ?? null];
+									break;
+								}
+								case DatabaseTypeEnum.mysql: {
+									const generatedId = uuidv4();
+									upsertQuery = p(`
+										INSERT INTO "system_setting" (
+											"id",
+											"name",
+											"value",
+											"tenantId",
+											"organizationId"
+										)
+										VALUES (?, ?, ?, ?, ?)
+										ON DUPLICATE KEY UPDATE
+											"value" = VALUES("value")
+									`);
+									parameters = [
+										generatedId,
+										key,
+										value,
+										effectiveTenantId ?? null,
+										effectiveOrgId ?? null
+									];
+									break;
+								}
+								default:
+									throw new Error(`Unsupported database type for system setting upsert: ${dbType}`);
 							}
 
-							result[setting.name] = this.convertValueToType(setting.value, setting.name);
+							await queryRunner.query(upsertQuery, parameters);
+
+							// We know the final stored value, so we can convert directly without reloading
+							result[key] = this.convertValueToType(value, key);
 						}
 					}
 
