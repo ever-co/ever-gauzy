@@ -17,8 +17,8 @@ import { convertSettingValue } from './system-setting.helper';
 @Injectable()
 export class SystemSettingService extends TenantAwareCrudService<SystemSetting> {
 	constructor(
-		readonly typeOrmSystemSettingRepository: TypeOrmSystemSettingRepository,
-		readonly mikroOrmSystemSettingRepository: MikroOrmSystemSettingRepository,
+		private readonly typeOrmSystemSettingRepository: TypeOrmSystemSettingRepository,
+		private readonly mikroOrmSystemSettingRepository: MikroOrmSystemSettingRepository,
 		private readonly configService: ConfigService,
 		private readonly dataSource: DataSource
 	) {
@@ -290,7 +290,10 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		}
 		const defaultValue = getDefaultValue(name);
 		return {
-			value: defaultValue !== undefined ? convertSettingValue(String(defaultValue), name) : undefined,
+			value:
+				defaultValue !== null && defaultValue !== undefined
+					? convertSettingValue(String(defaultValue), name)
+					: undefined,
 			source: 'DEFAULT'
 		};
 	}
