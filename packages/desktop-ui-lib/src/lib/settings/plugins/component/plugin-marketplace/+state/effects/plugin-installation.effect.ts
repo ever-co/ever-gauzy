@@ -28,17 +28,18 @@ import {
 	ServerInstallPluginCommand
 } from '../../../../domain/commands';
 import { PluginElectronService } from '../../../../services/plugin-electron.service';
+import { PluginEnvironmentService } from '../../../../services/plugin-environment.service';
 import { PluginService } from '../../../../services/plugin.service';
 import { DialogInstallationValidationComponent } from '../../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { InstallationValidationChainBuilder } from '../../services';
 import { PluginInstallationActions } from '../actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
+import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
 import { PluginToggleActions } from '../actions/plugin-toggle.action';
 import { PluginMarketplaceQuery } from '../queries/plugin-marketplace.query';
 import { PluginInstallationStore } from '../stores/plugin-installation.store';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginToggleStore } from '../stores/plugin-toggle.store';
-import { PluginSubscriptionActions } from '../actions/plugin-subscription.action';
 
 @Injectable({ providedIn: 'root' })
 export class PluginInstallationEffects {
@@ -50,6 +51,7 @@ export class PluginInstallationEffects {
 		private readonly pluginToggleStore: PluginToggleStore,
 		private readonly pluginService: PluginService,
 		private readonly pluginElectronService: PluginElectronService,
+		private readonly pluginEnvironmentService: PluginEnvironmentService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
 		private readonly downloadCommand: DownloadPluginCommand,
@@ -76,11 +78,20 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginMarketplaceActions.install),
-				// Optimistically enable toggle
-				tap(({ plugin }) => this.pluginToggleStore.setToggle(plugin.id, true)),
 				// Prevent concurrent installations - exhaust until current completes
-				exhaustMap(({ plugin, isUpdate }) =>
-					this.installationValidationChainBuilder.canProceedWithInstallation(plugin, isUpdate).pipe(
+				exhaustMap(({ plugin, isUpdate }) => {
+					// Environment validation at effect level (web/mobile/desktop)
+					if (!this.pluginEnvironmentService.canInstallPlugin(plugin)) {
+						const messageKey = this.pluginEnvironmentService.getEnvironmentMismatchMessage(plugin);
+						const message = this.translateService.instant(messageKey);
+						this.toastrService.warn(message);
+						return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
+					}
+
+					// Optimistically enable toggle after environment passes
+					this.pluginToggleStore.setToggle(plugin.id, true);
+
+					return this.installationValidationChainBuilder.canProceedWithInstallation(plugin, isUpdate).pipe(
 						// Flatten validation result into dialog flow
 						switchMap((canProceed) => {
 							// Early exit if validation fails
@@ -118,8 +129,8 @@ export class PluginInstallationEffects {
 							);
 							return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
 						})
-					)
-				)
+					);
+				})
 			),
 		{ dispatch: true }
 	);
