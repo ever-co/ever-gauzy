@@ -149,7 +149,11 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 			const result: Record<string, any> = {};
 
 			for (const [key, val] of Object.entries(input)) {
-				const value = val === null ? null : val !== undefined ? String(val) : undefined;
+				// undefined = skip (no change), null = clear to NULL, other = stringify
+				if (val === undefined) {
+					continue;
+				}
+				const value = val === null ? null : String(val);
 				await this.upsertSettingWithManager(manager, key, value, effectiveTenantId, effectiveOrgId);
 				result[key] = convertSettingValue(value, key);
 			}
@@ -202,11 +206,12 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 	/**
 	 * Performs atomic upsert using the transactional EntityManager.
+	 * @param value - string to set, or null to clear the setting value
 	 */
 	private async upsertSettingWithManager(
 		manager: EntityManager,
 		name: string,
-		value: string | null | undefined,
+		value: string | null,
 		tenantId: ID | null,
 		organizationId: ID | null
 	): Promise<void> {
