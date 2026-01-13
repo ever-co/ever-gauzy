@@ -126,8 +126,7 @@ import { PluginService } from './services/plugin.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
 import { ElectronService } from '../../electron/services';
-import { LanguageModule } from '../../language/language.module';
-import { PluginCategoryEffects } from './component/plugin-marketplace/+state';
+import { PluginCategoryEffects } from './component/plugin-marketplace/+state/effects/plugin-category.effect';
 import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
 import { PluginUploadIntentEffects } from './component/plugin-marketplace/+state/effects/plugin-upload-intent.effect';
 import { PluginPlanQuery } from './component/plugin-marketplace/+state/queries/plugin-plan.query';
@@ -254,8 +253,7 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		SourceCodeTabModule,
 		UserManagementTabModule,
 		SettingsTabModule,
-		PluginRoutingModule,
-		LanguageModule.forChild()
+		PluginRoutingModule
 	],
 	providers: [
 		PluginLoaderService,
