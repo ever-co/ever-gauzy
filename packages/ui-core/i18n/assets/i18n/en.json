@@ -1593,6 +1593,7 @@
 		"SEARCH_INTEGRATIONS": "Search integrations",
 		"PAID": "Paid",
 		"INTEGRATION": "Integration",
+		"PLUGINS": "Plugins",
 		"MESSAGE": {
 			"SETTINGS_UPDATED": "Updated settings for '{{provider}}' integration",
 			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
