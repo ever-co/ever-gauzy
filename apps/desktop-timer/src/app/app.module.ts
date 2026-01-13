@@ -26,6 +26,7 @@ import {
 	NgxLoginModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
+	PluginsModule,
 	RecapModule,
 	RefreshTokenInterceptor,
 	ScreenCaptureModule,
@@ -121,7 +122,8 @@ if (environment.SENTRY_DSN) {
 		AboutModule,
 		ActivityWatchModule,
 		RecapModule,
-		TaskTableModule
+		TaskTableModule,
+		PluginsModule
 	],
 	providers: [
 		AppService,

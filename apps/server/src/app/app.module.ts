@@ -10,6 +10,7 @@ import {
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
+	PluginsModule,
 	ServerDashboardModule,
 	SettingsModule,
 	SetupModule,
@@ -65,7 +66,8 @@ if (environment.SENTRY_DSN) {
 		UpdaterModule,
 		ServerDashboardModule,
 		AboutModule,
-		LanguageModule.forRoot()
+		LanguageModule.forRoot(),
+		PluginsModule
 	],
 	providers: [
 		AppService,
