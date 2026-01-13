@@ -7,9 +7,17 @@ import { getSettingMetadata } from './system-setting.constants';
  */
 export function convertSettingValue(value: string | undefined | null, key: string): any {
 	if (value === undefined || value === null) return undefined;
-	if (value === '') return '';
 
 	const metadata = getSettingMetadata(key);
+
+	// Empty string handling: for number/boolean types, treat as invalid
+	if (value === '') {
+		if (metadata?.type === 'number' || metadata?.type === 'boolean') {
+			throw new BadRequestException(`Setting "${key}" cannot be empty for type ${metadata.type}.`);
+		}
+		return '';
+	}
+
 	if (!metadata) return value;
 
 	switch (metadata.type) {
@@ -26,4 +34,3 @@ export function convertSettingValue(value: string | undefined | null, key: strin
 			return value;
 	}
 }
-

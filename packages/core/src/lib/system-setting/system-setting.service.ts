@@ -1,8 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { In, IsNull, QueryFailedError } from 'typeorm';
-import { ID, IResolvedSystemSetting, SystemSettingScope } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/utils';
+import { DataSource, In, IsNull, QueryFailedError } from 'typeorm';
+import { ID, IResolvedSystemSetting, ISystemSettingCreateInput, SystemSettingScope } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { SystemSetting } from './system-setting.entity';
 import { TypeOrmSystemSettingRepository } from './repository/type-orm-system-setting.repository';
@@ -20,7 +19,8 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	constructor(
 		readonly typeOrmSystemSettingRepository: TypeOrmSystemSettingRepository,
 		readonly mikroOrmSystemSettingRepository: MikroOrmSystemSettingRepository,
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly dataSource: DataSource
 	) {
 		super(typeOrmSystemSettingRepository, mikroOrmSystemSettingRepository);
 	}
@@ -34,10 +34,14 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		const result: Record<string, any> = {};
 		const remaining = new Set(names);
 
-		// Organization scope
+		// Organization scope (value !== null/undefined stops cascade, empty string is valid)
 		if (tenantId && organizationId) {
 			for (const s of await this.findByNamesAndScope([...remaining], tenantId, organizationId)) {
-				if (isNotEmpty(s.value) && isSettingAllowedAtScope(s.name, SystemSettingScope.ORGANIZATION)) {
+				if (
+					s.value !== null &&
+					s.value !== undefined &&
+					isSettingAllowedAtScope(s.name, SystemSettingScope.ORGANIZATION)
+				) {
 					result[s.name] = convertSettingValue(s.value, s.name);
 					remaining.delete(s.name);
 				}
@@ -47,7 +51,11 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		// Tenant scope
 		if (tenantId && remaining.size) {
 			for (const s of await this.findByNamesAndScope([...remaining], tenantId, null)) {
-				if (isNotEmpty(s.value) && isSettingAllowedAtScope(s.name, SystemSettingScope.TENANT)) {
+				if (
+					s.value !== null &&
+					s.value !== undefined &&
+					isSettingAllowedAtScope(s.name, SystemSettingScope.TENANT)
+				) {
 					result[s.name] = convertSettingValue(s.value, s.name);
 					remaining.delete(s.name);
 				}
@@ -57,7 +65,11 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		// Global scope
 		if (remaining.size) {
 			for (const s of await this.findByNamesAndScope([...remaining], null, null)) {
-				if (isNotEmpty(s.value) && isSettingAllowedAtScope(s.name, SystemSettingScope.GLOBAL)) {
+				if (
+					s.value !== null &&
+					s.value !== undefined &&
+					isSettingAllowedAtScope(s.name, SystemSettingScope.GLOBAL)
+				) {
 					result[s.name] = convertSettingValue(s.value, s.name);
 					remaining.delete(s.name);
 				}
@@ -76,10 +88,10 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	 * Resolves a single setting with source information.
 	 */
 	async resolveSettingValue(name: string, tenantId?: ID, organizationId?: ID): Promise<IResolvedSystemSetting> {
-		// Organization
+		// Organization (value !== null/undefined stops cascade)
 		if (tenantId && organizationId && isSettingAllowedAtScope(name, SystemSettingScope.ORGANIZATION)) {
 			const setting = await this.findByScope(name, tenantId, organizationId);
-			if (isNotEmpty(setting?.value)) {
+			if (setting?.value !== null && setting?.value !== undefined) {
 				return {
 					name,
 					value: convertSettingValue(setting.value, name),
@@ -91,7 +103,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		// Tenant
 		if (tenantId && isSettingAllowedAtScope(name, SystemSettingScope.TENANT)) {
 			const setting = await this.findByScope(name, tenantId, null);
-			if (isNotEmpty(setting?.value)) {
+			if (setting?.value !== null && setting?.value !== undefined) {
 				return { name, value: convertSettingValue(setting.value, name), source: SystemSettingScope.TENANT };
 			}
 		}
@@ -99,7 +111,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		// Global
 		if (isSettingAllowedAtScope(name, SystemSettingScope.GLOBAL)) {
 			const setting = await this.findByScope(name, null, null);
-			if (isNotEmpty(setting?.value)) {
+			if (setting?.value !== null && setting?.value !== undefined) {
 				return { name, value: convertSettingValue(setting.value, name), source: SystemSettingScope.GLOBAL };
 			}
 		}
@@ -108,7 +120,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		const envVarName = getEnvVarName(name);
 		if (envVarName) {
 			const envValue = this.configService.get(envVarName);
-			if (isNotEmpty(envValue)) {
+			if (envValue !== null && envValue !== undefined) {
 				return { name, value: convertSettingValue(String(envValue), name), source: 'ENV' };
 			}
 		}
@@ -124,6 +136,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 	/**
 	 * Saves settings at a specific scope.
+	 * Wrapped in a transaction to ensure atomicity - all settings saved or none.
 	 */
 	async saveSettings(
 		input: Record<string, any>,
@@ -137,20 +150,29 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 		this.validateScope(scope, tenantId, organizationId);
 
-		const effectiveTenantId = scope === SystemSettingScope.GLOBAL ? null : tenantId;
-		const effectiveOrgId = scope === SystemSettingScope.ORGANIZATION ? organizationId : null;
-		const result: Record<string, any> = {};
-
-		for (const [key, val] of Object.entries(input)) {
+		// Validate all settings before starting transaction
+		for (const key of Object.keys(input)) {
 			this.validateSettingScope(key, scope);
-			const value = val != null ? String(val) : undefined;
-
-			// Atomic upsert with retry on unique constraint violation (TOCTOU race protection)
-			await this.upsertSetting(key, value, effectiveTenantId, effectiveOrgId);
-			result[key] = convertSettingValue(value, key);
 		}
 
-		return result;
+		const effectiveTenantId = scope === SystemSettingScope.GLOBAL ? null : tenantId;
+		const effectiveOrgId = scope === SystemSettingScope.ORGANIZATION ? organizationId : null;
+
+		// Use transaction to ensure atomicity
+		return await this.dataSource.transaction(async () => {
+			const result: Record<string, any> = {};
+
+			for (const [key, val] of Object.entries(input)) {
+				// null clears the setting (sets DB value to null), undefined skips
+				const value = val === null ? null : val !== undefined ? String(val) : undefined;
+
+				// Atomic upsert with retry on unique constraint violation (TOCTOU race protection)
+				await this.upsertSetting(key, value, effectiveTenantId, effectiveOrgId);
+				result[key] = convertSettingValue(value, key);
+			}
+
+			return result;
+		});
 	}
 
 	/**
@@ -197,11 +219,10 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 	/**
 	 * Performs atomic upsert with retry on unique constraint violation.
-	 * Handles TOCTOU race condition by catching constraint errors and retrying as update.
 	 */
 	private async upsertSetting(
 		name: string,
-		value: string | undefined,
+		value: string | null | undefined,
 		tenantId: ID | null,
 		organizationId: ID | null
 	): Promise<void> {
@@ -214,12 +235,8 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 		// Try to create, but handle unique constraint violation (race condition)
 		try {
-			await this.create({
-				name,
-				value,
-				tenantId,
-				organizationId
-			} as any);
+			const input: ISystemSettingCreateInput = { name, value, tenantId, organizationId };
+			await this.create(input);
 		} catch (error) {
 			// Check if it's a unique constraint violation (concurrent insert won the race)
 			if (this.isUniqueConstraintError(error)) {
@@ -275,7 +292,9 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		const envVarName = getEnvVarName(name);
 		if (envVarName) {
 			const envValue = this.configService.get(envVarName);
-			if (isNotEmpty(envValue)) return convertSettingValue(String(envValue), name);
+			if (envValue !== null && envValue !== undefined) {
+				return convertSettingValue(String(envValue), name);
+			}
 		}
 		const defaultValue = getDefaultValue(name);
 		return defaultValue !== undefined ? convertSettingValue(String(defaultValue), name) : undefined;

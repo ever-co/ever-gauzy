@@ -27,6 +27,6 @@ export class PosthogConfigDTO implements IPosthogConfig {
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsInt()
-	@Min(1)
+	@Min(1000)
 	readonly posthog_flush_interval?: number;
 }

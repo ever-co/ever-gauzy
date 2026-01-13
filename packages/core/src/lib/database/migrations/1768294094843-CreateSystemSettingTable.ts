@@ -212,7 +212,9 @@ export class CreateSystemSettingTable1768294094843 implements MigrationInterface
 		await queryRunner.query(
 			`ALTER TABLE \`system_setting\` ADD CONSTRAINT \`FK_f1a78f4f45c80b041c68541db5a\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
 		);
-		// Unique constraint (MySQL doesn't support partial indexes, so we use a simple unique constraint)
+		// MySQL doesn't support partial indexes. This unique constraint works for non-NULL values,
+		// but MySQL treats NULL != NULL, so multiple rows with same name and NULL tenant/org are allowed.
+		// Application-level checks in SystemSettingService.upsertSetting() handle this case.
 		await queryRunner.query(
 			`ALTER TABLE \`system_setting\` ADD CONSTRAINT \`UQ_system_setting_name_tenant_org\` UNIQUE (\`name\`, \`tenantId\`, \`organizationId\`)`
 		);

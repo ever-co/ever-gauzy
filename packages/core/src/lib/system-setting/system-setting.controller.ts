@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
+import {
+	BadRequestException,
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Post,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -52,6 +62,10 @@ export class SystemSettingController extends CrudController<SystemSetting> {
 					.map((n) => n.trim())
 					.filter(Boolean)
 			: [];
+
+		if (names.length === 0) {
+			throw new BadRequestException('names query parameter is required');
+		}
 
 		return await this._commandBus.execute(new SystemSettingGetCommand(names));
 	}
