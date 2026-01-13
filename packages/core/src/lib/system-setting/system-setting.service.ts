@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DataSource, In, IsNull, QueryFailedError } from 'typeorm';
-import { ID, IResolvedSystemSetting, ISystemSettingCreateInput, SystemSettingScope } from '@gauzy/contracts';
+import { DataSource, EntityManager, In, IsNull, QueryFailedError } from 'typeorm';
+import { ID, IResolvedSystemSetting, SystemSettingScope } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { SystemSetting } from './system-setting.entity';
 import { TypeOrmSystemSettingRepository } from './repository/type-orm-system-setting.repository';
@@ -78,7 +78,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 
 		// ENV and Default fallback
 		for (const name of remaining) {
-			result[name] = this.getEnvOrDefault(name);
+			result[name] = this.resolveEnvOrDefault(name).value;
 		}
 
 		return result;
@@ -116,22 +116,9 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 			}
 		}
 
-		// ENV
-		const envVarName = getEnvVarName(name);
-		if (envVarName) {
-			const envValue = this.configService.get(envVarName);
-			if (envValue !== null && envValue !== undefined) {
-				return { name, value: convertSettingValue(String(envValue), name), source: 'ENV' };
-			}
-		}
-
-		// Default
-		const defaultValue = getDefaultValue(name);
-		return {
-			name,
-			value: defaultValue !== undefined ? convertSettingValue(String(defaultValue), name) : undefined,
-			source: 'DEFAULT'
-		};
+		// ENV or Default fallback
+		const fallback = this.resolveEnvOrDefault(name);
+		return { name, ...fallback };
 	}
 
 	/**
@@ -158,13 +145,12 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		const effectiveTenantId = scope === SystemSettingScope.GLOBAL ? null : tenantId;
 		const effectiveOrgId = scope === SystemSettingScope.ORGANIZATION ? organizationId : null;
 
-		// Use transaction to ensure atomicity
-		return await this.dataSource.transaction(async () => {
+		return await this.dataSource.transaction(async (manager: EntityManager) => {
 			const result: Record<string, any> = {};
 
 			for (const [key, val] of Object.entries(input)) {
 				const value = val === null ? null : val !== undefined ? String(val) : undefined;
-				await this.upsertSetting(key, value, effectiveTenantId, effectiveOrgId);
+				await this.upsertSettingWithManager(manager, key, value, effectiveTenantId, effectiveOrgId);
 				result[key] = convertSettingValue(value, key);
 			}
 
@@ -215,36 +201,40 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	}
 
 	/**
-	 * Performs atomic upsert with retry on unique constraint violation.
+	 * Performs atomic upsert using the transactional EntityManager.
 	 */
-	private async upsertSetting(
+	private async upsertSettingWithManager(
+		manager: EntityManager,
 		name: string,
 		value: string | null | undefined,
 		tenantId: ID | null,
 		organizationId: ID | null
 	): Promise<void> {
-		const existing = await this.findByScope(name, tenantId, organizationId);
+		const repo = manager.getRepository(SystemSetting);
+		const whereClause = {
+			name,
+			tenantId: tenantId ?? IsNull(),
+			organizationId: organizationId ?? IsNull()
+		};
+
+		const existing = await repo.findOne({ where: whereClause as any });
 
 		if (existing) {
-			await this.update(existing.id, { value });
+			await repo.update(existing.id, { value });
 			return;
 		}
 
-		// Try to create, but handle unique constraint violation (race condition)
 		try {
-			const input: ISystemSettingCreateInput = { name, value, tenantId, organizationId };
-			await this.create(input);
+			const entity = repo.create({ name, value, tenantId, organizationId });
+			await repo.insert(entity);
 		} catch (error) {
-			// Check if it's a unique constraint violation (concurrent insert won the race)
 			if (this.isUniqueConstraintError(error)) {
-				// Re-fetch and update instead
-				const existingAfterRace = await this.findByScope(name, tenantId, organizationId);
+				const existingAfterRace = await repo.findOne({ where: whereClause as any });
 				if (existingAfterRace) {
-					await this.update(existingAfterRace.id, { value });
+					await repo.update(existingAfterRace.id, { value });
 					return;
 				}
 			}
-			// Rethrow if not a unique constraint error or if re-fetch still fails
 			throw error;
 		}
 	}
@@ -285,16 +275,19 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		});
 	}
 
-	private getEnvOrDefault(name: string): any {
+	private resolveEnvOrDefault(name: string): { value: any; source: 'ENV' | 'DEFAULT' } {
 		const envVarName = getEnvVarName(name);
 		if (envVarName) {
 			const envValue = this.configService.get(envVarName);
 			if (envValue !== null && envValue !== undefined) {
-				return convertSettingValue(String(envValue), name);
+				return { value: convertSettingValue(String(envValue), name), source: 'ENV' };
 			}
 		}
 		const defaultValue = getDefaultValue(name);
-		return defaultValue !== undefined ? convertSettingValue(String(defaultValue), name) : undefined;
+		return {
+			value: defaultValue !== undefined ? convertSettingValue(String(defaultValue), name) : undefined,
+			source: 'DEFAULT'
+		};
 	}
 
 	private validateScope(scope: SystemSettingScope, tenantId?: ID, organizationId?: ID): void {
