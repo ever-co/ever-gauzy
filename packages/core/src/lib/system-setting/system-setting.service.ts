@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { In, IsNull } from 'typeorm';
+import { In, IsNull, QueryFailedError } from 'typeorm';
 import { ID, IResolvedSystemSetting, SystemSettingScope } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from '../core/crud';
@@ -144,18 +144,9 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 		for (const [key, val] of Object.entries(input)) {
 			this.validateSettingScope(key, scope);
 			const value = val != null ? String(val) : undefined;
-			const existing = await this.findByScope(key, effectiveTenantId, effectiveOrgId);
 
-			if (existing) {
-				await this.update(existing.id, { value });
-			} else {
-				await this.create({
-					name: key,
-					value,
-					tenantId: effectiveTenantId,
-					organizationId: effectiveOrgId
-				} as any);
-			}
+			// Atomic upsert with retry on unique constraint violation (TOCTOU race protection)
+			await this.upsertSetting(key, value, effectiveTenantId, effectiveOrgId);
 			result[key] = convertSettingValue(value, key);
 		}
 
@@ -195,9 +186,78 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 			return await this.findOneByOptions({
 				where: { name, tenantId: tenantId ?? IsNull(), organizationId: organizationId ?? IsNull() }
 			});
-		} catch {
-			return null;
+		} catch (error) {
+			// Only return null for "not found" errors, rethrow others
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+			throw error;
 		}
+	}
+
+	/**
+	 * Performs atomic upsert with retry on unique constraint violation.
+	 * Handles TOCTOU race condition by catching constraint errors and retrying as update.
+	 */
+	private async upsertSetting(
+		name: string,
+		value: string | undefined,
+		tenantId: ID | null,
+		organizationId: ID | null
+	): Promise<void> {
+		const existing = await this.findByScope(name, tenantId, organizationId);
+
+		if (existing) {
+			await this.update(existing.id, { value });
+			return;
+		}
+
+		// Try to create, but handle unique constraint violation (race condition)
+		try {
+			await this.create({
+				name,
+				value,
+				tenantId,
+				organizationId
+			} as any);
+		} catch (error) {
+			// Check if it's a unique constraint violation (concurrent insert won the race)
+			if (this.isUniqueConstraintError(error)) {
+				// Re-fetch and update instead
+				const existingAfterRace = await this.findByScope(name, tenantId, organizationId);
+				if (existingAfterRace) {
+					await this.update(existingAfterRace.id, { value });
+					return;
+				}
+			}
+			// Rethrow if not a unique constraint error or if re-fetch still fails
+			throw error;
+		}
+	}
+
+	/**
+	 * Checks if an error is a unique constraint violation.
+	 */
+	private isUniqueConstraintError(error: unknown): boolean {
+		if (error instanceof QueryFailedError) {
+			const message = error.message?.toLowerCase() ?? '';
+			const driverError = (error as any).driverError;
+			const code = driverError?.code ?? '';
+
+			// PostgreSQL: 23505, MySQL: ER_DUP_ENTRY (1062), SQLite: SQLITE_CONSTRAINT (19)
+			return (
+				code === '23505' ||
+				code === 'ER_DUP_ENTRY' ||
+				code === '1062' ||
+				code === 'SQLITE_CONSTRAINT' ||
+				code === '19' ||
+				message.includes('unique constraint') ||
+				message.includes('duplicate key') ||
+				message.includes('duplicate entry') ||
+				message.includes('unique_violation')
+			);
+		}
+		return false;
 	}
 
 	private async findByNamesAndScope(
