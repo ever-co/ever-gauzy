@@ -875,6 +875,8 @@
 			"IMPORT_MESSAGE": "点击“导入”按钮将所有表格插入到数据库中。上传文件的名称应为：“archive.zip”。还可以在“合并数据”和“导入前清理”选项之间进行选择。",
 			"IMPORT_HISTORY_MESSAGE": "你可以在这里追踪你最近导入的文件",
 			"SELECT_FILE": "选择文件",
+			"EXIT_AGENT_LOGIN_CONFIRM": "哎呀！您需要先登录才能使用该应用程序。",
+			"EXIT_AGENT_PREVENT_CONFIRM": "哎呀！您不被允许退出。请联系您的账户管理员。",
 			"DROP_FILE": "将文件拖放到这里。",
 			"NO_DROP_FILE": "无法在此处删除文件",
 			"BROWSE": "浏览",

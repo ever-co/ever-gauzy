@@ -137,6 +137,7 @@ class AppWindow {
 						app.quit();
 					}
 				});
+				this.quitKeyListen(this.setupWindow);
 			}
 		} catch (error) {
 			console.error('Failed to initialize setup window', error);
@@ -322,7 +323,7 @@ class AppWindow {
 		this.windowReadyStatus[windowType] = true;
 	}
 
-	quitHandle(e: Electron.Event, input: Electron.Input) {
+	quitHandle = (e: Electron.Event, input: Electron.Input) => {
 		const isCmdQ = input.meta && input.key.toLowerCase() === 'q';
 		const isAltF4 = input.alt && input.key === 'F4';
 

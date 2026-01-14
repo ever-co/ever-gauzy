@@ -172,7 +172,6 @@ export class AgentMenu {
 			default:
 				return [];
 		}
-
 	}
 
 	initMenu(type: MenuType = MenuType.main): void {

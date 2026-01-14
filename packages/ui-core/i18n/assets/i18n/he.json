@@ -879,6 +879,8 @@
 			"IMPORT_MESSAGE": "Click \"IMPORT\" to insert all tables in the database. The name of the file for upload should be: \"archive.zip\". Choose also between options \"Merge data\" and \"Clean up before import\".",
 			"IMPORT_HISTORY_MESSAGE": "You can track your recently imported files here",
 			"SELECT_FILE": "Select File",
+			"EXIT_AGENT_LOGIN_CONFIRM": "אופס! עליך להתחבר לפני שתוכל להשתמש באפליקציה.",
+			"EXIT_AGENT_PREVENT_CONFIRM": "אופס! אינך מורשה לצאת. אנא צור קשר עם מנהל החשבון שלך.",
 			"DROP_FILE": "Drop the file here",
 			"NO_DROP_FILE": "Can't drop the file here",
 			"BROWSE": "BROWSE",

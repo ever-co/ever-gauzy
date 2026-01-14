@@ -876,6 +876,8 @@
 			"IMPORT_MESSAGE": "Cliquez sur \"IMPORTER\" pour insérer toutes les tables dans la base de données. Le nom du fichier à télécharger doit être : \"archive.zip\". Choisissez également entre les options \"Fusionner les données\" et \"Nettoyer avant l'importation\".",
 			"IMPORT_HISTORY_MESSAGE": "Vous pouvez suivre vos fichiers récemment importés ici.",
 			"SELECT_FILE": "Sélectionner le fichier",
+			"EXIT_AGENT_LOGIN_CONFIRM": "Oups ! Vous devez vous connecter avant de pouvoir utiliser l'application.",
+			"EXIT_AGENT_PREVENT_CONFIRM": "Oups ! Vous n'êtes pas autorisé à quitter. Veuillez contacter l'administrateur de votre compte.",
 			"DROP_FILE": "Déposez le fichier ici.",
 			"NO_DROP_FILE": "Impossible de déposer le fichier ici.",
 			"BROWSE": "NAVIGUER",

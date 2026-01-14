@@ -875,6 +875,8 @@
 			"IMPORT_MESSAGE": "Klicken Sie auf \"IMPORTIEREN\", um alle Tabellen in der Datenbank einzufügen. Der Name der hochzuladenden Datei sollte \"archive.zip\" sein. Wählen Sie außerdem zwischen den Optionen \"Daten zusammenführen\" und \"Bereinigen vor dem Import\".",
 			"IMPORT_HISTORY_MESSAGE": "Sie können hier Ihre kürzlich importierten Dateien verfolgen.",
 			"SELECT_FILE": "Datei auswählen",
+			"EXIT_AGENT_LOGIN_CONFIRM": "Hoppla! Sie müssen sich anmelden, bevor Sie die App verwenden können.",
+			"EXIT_AGENT_PREVENT_CONFIRM": "Hoppla! Sie dürfen die App nicht beenden. Bitte wenden Sie sich an Ihren Kontoadministrator.",
 			"DROP_FILE": "Legen Sie die Datei hier ab.",
 			"NO_DROP_FILE": "Kann die Datei hier nicht ablegen",
 			"BROWSE": "DURCHSTÖBERN",

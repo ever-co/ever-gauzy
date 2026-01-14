@@ -33,10 +33,7 @@ app.commandLine.appendSwitch('disable-http2');
 
 ipcMain.on('quit', quit);
 
-app.on('before-quit', async (e) => {
-	e.preventDefault();
-	app.exit(0);
-});
+// Removed: before-quit handler now managed by EventHandler.exitApp()
 
 // On OS X it is common for applications and their menu bar
 // to stay active until the user quits explicitly with Cmd + Q

@@ -185,6 +185,7 @@ export default class EventHandler {
 		if (this.pullActivities.running) {
 			await this.pullActivities.stopTracking();
 		}
+		await this.pushActivities.stopPooling();
 
 	}
 
@@ -208,7 +209,7 @@ export default class EventHandler {
 				this.updater.cancel();
 				app.quit();
 			} else {
-				this.exitDialog();
+				await this.exitDialog();
 			}
 		} catch (e) {
 			log.error(`ERROR: Failed to exit app: ${e}`);
@@ -254,7 +255,6 @@ export default class EventHandler {
 				return this.exitApp();
 			case MAIN_EVENT_TYPE.STOP_N_EXIT:
 				return this.stopAndExit();
-
 			default: break;
 		}
 	}
