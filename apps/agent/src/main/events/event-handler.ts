@@ -211,7 +211,7 @@ export default class EventHandler {
 				this.exitDialog();
 			}
 		} catch (e) {
-			log.error(``);
+			log.error(`ERROR: Failed to exit app: ${e}`);
 			throw new AppError('MAINUPDTABORT', e);
 		}
 	}
