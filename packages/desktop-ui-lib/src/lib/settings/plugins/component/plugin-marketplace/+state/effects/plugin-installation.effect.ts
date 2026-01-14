@@ -51,7 +51,7 @@ export class PluginInstallationEffects {
 		private readonly pluginToggleStore: PluginToggleStore,
 		private readonly pluginService: PluginService,
 		private readonly pluginElectronService: PluginElectronService,
-		private readonly pluginEnvironmentService: PluginEnvironmentService,
+		private readonly environmentService: PluginEnvironmentService,
 		private readonly toastrService: ToastrNotificationService,
 		private readonly translateService: TranslateService,
 		private readonly downloadCommand: DownloadPluginCommand,
@@ -80,14 +80,6 @@ export class PluginInstallationEffects {
 				ofType(PluginMarketplaceActions.install),
 				// Prevent concurrent installations - exhaust until current completes
 				exhaustMap(({ plugin, isUpdate }) => {
-					// Environment validation at effect level (web/mobile/desktop)
-					if (!this.pluginEnvironmentService.canInstallPlugin(plugin)) {
-						const messageKey = this.pluginEnvironmentService.getEnvironmentMismatchMessage(plugin);
-						const message = this.translateService.instant(messageKey);
-						this.toastrService.warn(message);
-						return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
-					}
-
 					// Optimistically enable toggle after environment passes
 					this.pluginToggleStore.setToggle(plugin.id, true);
 
@@ -101,6 +93,13 @@ export class PluginInstallationEffects {
 									PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false })
 								);
 							}
+
+							// Environment validation at effect level (web/mobile/desktop)
+							if (!this.environmentService.canInstallPlugin(plugin)) {
+								this.environmentService.notifyEnvironmentMismatch(plugin);
+								return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
+							}
+
 							// Open confirmation dialog and wait for user decision
 							return this.openInstallationDialog(plugin.id).pipe(
 								// Map dialog result to installation action or cancellation
