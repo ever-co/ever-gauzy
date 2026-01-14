@@ -14,6 +14,6 @@ export const UNLEASH_CONFIG_KEYS = [
 	'unleash_api_key',
 	'unleash_refresh_interval',
 	'unleash_metrics_interval'
-] as const;
+] as const satisfies ReadonlyArray<keyof IUnleashConfig>;
 
 export type UnleashConfigKey = (typeof UNLEASH_CONFIG_KEYS)[number];

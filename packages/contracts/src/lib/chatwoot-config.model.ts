@@ -3,3 +3,5 @@ export interface IChatwootConfig {
 }
 
 export const CHATWOOT_CONFIG_KEYS = ['chatwoot_sdk_token'] as const;
+
+export type ChatwootConfigKey = (typeof CHATWOOT_CONFIG_KEYS)[number];

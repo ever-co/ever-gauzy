@@ -11,3 +11,5 @@ export const CLOUDINARY_CONFIG_KEYS = [
 	'cloudinary_api_secret',
 	'cloudinary_cdn_url'
 ] as const;
+
+export type CloudinaryConfigKey = (typeof CLOUDINARY_CONFIG_KEYS)[number];

@@ -9,3 +9,5 @@ export const GAUZY_AI_CONFIG_KEYS = [
 	'gauzy_ai_rest_endpoint',
 	'gauzy_ai_api_key'
 ] as const;
+
+export type GauzyAIConfigKey = (typeof GAUZY_AI_CONFIG_KEYS)[number];
