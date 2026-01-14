@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
+import { EntityManager as MikroOrmEntityManager, LockMode } from '@mikro-orm/core';
 import { isMySQL } from '@gauzy/config';
 import { DataSource, EntityManager, In, IsNull, QueryFailedError } from 'typeorm';
 import { ID, IResolvedSystemSetting, SystemSettingScope } from '@gauzy/contracts';
@@ -338,7 +339,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 	 * @param organizationId - Organization ID or null for non-organization scope
 	 */
 	private async upsertSettingWithMikroORM(
-		em: any, // MikroORM EntityManager type
+		em: MikroOrmEntityManager,
 		name: string,
 		value: string | null,
 		tenantId: ID | null,
@@ -371,7 +372,7 @@ export class SystemSettingService extends TenantAwareCrudService<SystemSetting> 
 			const duplicateCheck = await em.findOne(
 				SystemSetting,
 				{ name, tenantId: null, organizationId: null },
-				{ lockMode: 2 } // PESSIMISTIC_WRITE
+				{ lockMode: LockMode.PESSIMISTIC_WRITE }
 			);
 
 			if (duplicateCheck) {
