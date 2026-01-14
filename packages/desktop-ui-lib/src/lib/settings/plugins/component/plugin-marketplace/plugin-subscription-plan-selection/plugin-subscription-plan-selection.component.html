@@ -464,7 +464,7 @@ hasExistingSubscription$ | async;
 						updating ||
 						!selectedPlanViewModel ||
 						error ||
-						!canInstallInEnvironment()
+						(!canInstallInEnvironment() && selectedPlanViewModel?.isFree)
 					"
 					*gauzySpinnerButton="creating || updating"
 					[nbTooltip]="getEnvironmentMismatchTooltip()"

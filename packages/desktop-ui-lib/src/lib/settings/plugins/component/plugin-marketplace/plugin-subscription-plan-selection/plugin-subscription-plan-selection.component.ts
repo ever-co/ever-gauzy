@@ -691,7 +691,9 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 
 	// Computed properties for template
 	public get canProceedWithoutSubscription$(): Observable<boolean> {
-		return this.hasFreePlan$.pipe(map((hasFreePlans) => hasFreePlans || !this.plugin?.hasPlan));
+		return this.hasFreePlan$.pipe(
+			map((hasFreePlans) => (hasFreePlans || !this.plugin?.hasPlan) && this.canInstallInEnvironment())
+		);
 	}
 
 	/**
