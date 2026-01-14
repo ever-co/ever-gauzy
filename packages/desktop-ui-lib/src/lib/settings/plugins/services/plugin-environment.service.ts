@@ -52,18 +52,18 @@ export class PluginEnvironmentService {
 	/** Translation key describing the environment mismatch for the plugin type */
 	private getEnvironmentMismatchMessage(plugin: IPlugin): string {
 		if (!plugin || !plugin.type) {
-			return 'PLUGIN.VALIDATION.INVALID_PLUGIN_ENVIRONMENT';
+			return 'PLUGIN.ERRORS.CANNOT_INSTALL';
 		}
 
 		switch (plugin.type) {
 			case PluginType.DESKTOP:
-				return 'PLUGIN.TOASTR.ERROR.DESKTOP_PLUGIN_REQUIRES_DESKTOP_ENVIRONMENT';
+				return 'PLUGIN.ERRORS.DESKTOP_PLUGIN_REQUIRES_DESKTOP_ENVIRONMENT';
 			case PluginType.WEB:
-				return 'PLUGIN.TOASTR.ERROR.WEB_PLUGIN_REQUIRES_WEB_ENVIRONMENT';
+				return 'PLUGIN.ERRORS.WEB_PLUGIN_REQUIRES_WEB_ENVIRONMENT';
 			case PluginType.MOBILE:
-				return 'PLUGIN.TOASTR.ERROR.MOBILE_PLUGIN_REQUIRES_MOBILE_ENVIRONMENT';
+				return 'PLUGIN.ERRORS.MOBILE_PLUGIN_REQUIRES_MOBILE_ENVIRONMENT';
 			default:
-				return 'PLUGIN.VALIDATION.INVALID_PLUGIN_ENVIRONMENT';
+				return 'PLUGIN.ERRORS.UNSUPPORTED_PLUGIN_TYPE';
 		}
 	}
 
