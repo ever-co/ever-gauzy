@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IPlugin, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts';
-import { NbMenuService } from '@nebular/theme';
+import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -147,13 +147,13 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	/**
 	 * Get context menu items for more actions
 	 */
-	public getContextMenuItems() {
+	public getContextMenuItems(): NbMenuItem[] {
 		// Return empty array if plugin is not available
 		if (!this.plugin) {
 			return [];
 		}
 
-		const items: any[] = [
+		const items: NbMenuItem[] = [
 			{
 				title: this.translate.instant('PLUGIN.ACTIONS.VIEW_DETAILS'),
 				icon: 'eye-outline',
