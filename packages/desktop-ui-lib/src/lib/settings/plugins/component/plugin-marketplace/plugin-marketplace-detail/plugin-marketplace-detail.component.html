@@ -258,10 +258,12 @@
 
 				<div class="toggle-wrapper">
 					<nb-toggle
-						[disabled]="disabled"
+						[disabled]="disabled || !canInstallInEnvironment()"
 						[checked]="checked"
 						(checkedChange)="togglePlugin($event)"
 						class="install-toggle"
+						[nbTooltip]="getEnvironmentMismatchTooltip()"
+						[nbTooltipDisabled]="canInstallInEnvironment()"
 					>
 						<span class="toggle-label">
 							@if(installed) {

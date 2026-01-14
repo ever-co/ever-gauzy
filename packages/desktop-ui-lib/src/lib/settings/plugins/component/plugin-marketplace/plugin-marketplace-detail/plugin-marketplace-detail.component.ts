@@ -16,6 +16,7 @@ import { PluginInstallationQuery } from '../+state/queries/plugin-installation.q
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { PluginToggleQuery } from '../+state/queries/plugin-toggle.query';
 import { Store } from '../../../../../services';
+import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 
 @UntilDestroy()
@@ -44,7 +45,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly menuService: NbMenuService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
-		public readonly toggleQuery: PluginToggleQuery
+		public readonly toggleQuery: PluginToggleQuery,
+		private readonly environmentService: PluginEnvironmentService
 	) {}
 
 	ngOnInit(): void {
@@ -260,5 +262,18 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 */
 	private confirmDeletePlugin(): void {
 		this.action.dispatch(PluginMarketplaceActions.delete(this.plugin.id));
+	}
+	/**
+	 * Check if the plugin can be installed in the current environment
+	 */
+	public canInstallInEnvironment(): boolean {
+		return this.environmentService.canInstallPlugin(this.plugin);
+	}
+
+	/**
+	 * Get the environment mismatch tooltip message
+	 */
+	public getEnvironmentMismatchTooltip(): string {
+		return this.environmentService.getEnvironmentMismatchWarning(this.plugin);
 	}
 }

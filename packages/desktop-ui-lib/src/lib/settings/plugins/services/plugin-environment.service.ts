@@ -67,8 +67,11 @@ export class PluginEnvironmentService {
 		}
 	}
 
+	public getEnvironmentMismatchWarning(plugin: IPlugin): string {
+		return this.translateService.instant(this.getEnvironmentMismatchMessage(plugin));
+	}
+
 	public notifyEnvironmentMismatch(plugin: IPlugin): void {
-		const message = this.getEnvironmentMismatchMessage(plugin);
-		this.toastrService.warn(this.translateService.instant(message));
+		this.toastrService.warn(this.getEnvironmentMismatchWarning(plugin));
 	}
 }

@@ -28,6 +28,7 @@ import { PluginSourceQuery } from '../+state/queries/plugin-source.query';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { PluginQuery } from '../../+state/plugin.query';
 import { Store, ToastrNotificationService } from '../../../../../services';
+import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 // Installation and subscription side-effects moved to effects
 
@@ -71,7 +72,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		public readonly sourceQuery: PluginSourceQuery,
 		public readonly subscriptionQuery: PluginSubscriptionQuery,
 		public readonly accessFacade: PluginSubscriptionAccessFacade,
-		private readonly utils: PluginMarketplaceUtilsService
+		private readonly utils: PluginMarketplaceUtilsService,
+		private readonly environmentService: PluginEnvironmentService
 	) {}
 
 	ngOnInit(): void {
@@ -325,5 +327,19 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	public get installedVersionId$(): Observable<ID> {
 		return this.pluginQuery.currentPluginVersionId(this.pluginId);
+	}
+
+	/**
+	 * Check if the plugin can be installed in the current environment
+	 */
+	public canInstallInEnvironment(): boolean {
+		return this.environmentService.canInstallPlugin(this.plugin);
+	}
+
+	/**
+	 * Get the environment mismatch tooltip message
+	 */
+	public getEnvironmentMismatchTooltip(): string {
+		return this.environmentService.getEnvironmentMismatchWarning(this.plugin);
 	}
 }
