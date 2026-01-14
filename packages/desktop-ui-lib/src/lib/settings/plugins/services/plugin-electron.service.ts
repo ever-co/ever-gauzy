@@ -1,6 +1,6 @@
 import { Injectable, Optional } from '@angular/core';
 import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
-import { EMPTY, Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import type { IPlugin } from './plugin-loader.service';
 
@@ -11,7 +11,7 @@ export class PluginElectronService {
 	constructor(
 		@Optional()
 		private readonly electronService: ElectronService
-	) {}
+	) { }
 
 	public get isDesktop(): boolean {
 		return this.electronService && this.electronService.isElectron;

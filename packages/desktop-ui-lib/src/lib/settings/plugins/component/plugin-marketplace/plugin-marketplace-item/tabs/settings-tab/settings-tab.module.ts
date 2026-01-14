@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SettingsTabComponent } from './settings-tab.component';
@@ -9,4 +8,4 @@ import { SettingsTabComponent } from './settings-tab.component';
 	declarations: [SettingsTabComponent],
 	imports: [CommonModule, TranslateModule, NbCardModule, NbButtonModule, NbIconModule, NbAlertModule]
 })
-export class SettingsTabModule {}
+export class SettingsTabModule { }

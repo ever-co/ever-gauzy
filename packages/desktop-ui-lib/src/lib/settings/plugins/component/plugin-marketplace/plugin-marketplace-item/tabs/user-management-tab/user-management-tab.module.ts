@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
 import {
 	NbAlertModule,
 	NbBadgeModule,
@@ -37,4 +36,4 @@ import { UserManagementTabComponent } from './user-management-tab.component';
 		InfiniteScrollDirective
 	]
 })
-export class UserManagementTabModule {}
+export class UserManagementTabModule { }
