@@ -153,11 +153,15 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			return [];
 		}
 
+		// Construct absolute path from activated route
+		const baseRoute = this.router.createUrlTree(['./'], { relativeTo: this.route }).toString();
+
+		// Get items
 		const items: NbMenuItem[] = [
 			{
 				title: this.translate.instant('PLUGIN.ACTIONS.VIEW_DETAILS'),
 				icon: 'eye-outline',
-				link: `/plugins/marketplace/${this.plugin.id}`
+				link: `${baseRoute}/${this.plugin.id}`
 			}
 		];
 

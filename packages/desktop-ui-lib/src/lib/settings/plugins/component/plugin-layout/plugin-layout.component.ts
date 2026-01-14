@@ -3,6 +3,7 @@ import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
 	selector: 'ngx-plugin-layout',
@@ -16,6 +17,8 @@ export class PluginLayoutComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly translateService: TranslateService,
+		private readonly route: ActivatedRoute,
+		private router: Router,
 		private readonly pluginElectronService: PluginElectronService
 	) {}
 
@@ -33,11 +36,15 @@ export class PluginLayoutComponent implements OnInit, OnDestroy {
 		this.destroy$.complete();
 	}
 
+	private get baseRoute(): string {
+		return this.router.createUrlTree(['./'], { relativeTo: this.route }).toString();
+	}
+
 	private updateTabs() {
 		this.tabs = [
 			{
 				title: this.translateService.instant('PLUGIN.LAYOUT.DISCOVER'),
-				route: '/plugins/marketplace',
+				route: `${this.baseRoute}/marketplace`,
 				icon: 'search-outline',
 				responsive: true,
 				activeLinkOptions: {
@@ -46,7 +53,7 @@ export class PluginLayoutComponent implements OnInit, OnDestroy {
 			},
 			this.pluginElectronService.isDesktop && {
 				title: this.translateService.instant('PLUGIN.LAYOUT.INSTALLED'),
-				route: '/plugins/installed',
+				route: `${this.baseRoute}/installed`,
 				icon: 'checkmark-circle-2-outline',
 				activeLinkOptions: {
 					exact: false
