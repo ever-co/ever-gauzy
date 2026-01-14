@@ -187,7 +187,7 @@
 						status="warning"
 						size="medium"
 						class="subscribe-button"
-						[disabled]="disabled || !canInstallInEnvironment()"
+						[disabled]="disabled"
 						(click)="installPlugin()"
 						[nbTooltip]="
 							!canInstallInEnvironment()

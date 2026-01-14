@@ -258,7 +258,7 @@
 
 				<div class="toggle-wrapper">
 					<nb-toggle
-						[disabled]="disabled || !canInstallInEnvironment()"
+						[disabled]="disabled"
 						[checked]="checked"
 						(checkedChange)="togglePlugin($event)"
 						class="install-toggle"
