@@ -8,14 +8,12 @@ import {
 	BroadcastVisibilityModeEnum,
 	IAudienceRules,
 	IBroadcast,
-	IBroadcastCreateInput,
-	IBroadcastFindInput,
-	IBroadcastUpdateInput,
+	IBroadcastCreateInput, IBroadcastUpdateInput,
 	ID,
 	IPagination,
 	RolesEnum
 } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '../core/crud';
+import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { EmployeeService } from '../employee/employee.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
@@ -144,13 +142,16 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 	 * @param filters - Filter criteria for broadcasts.
 	 * @returns A promise that resolves to a paginated list of broadcasts.
 	 */
-	async findAll(filters: IBroadcastFindInput & { relations?: string[] }): Promise<IPagination<IBroadcast>> {
+	async findAll(filters: BaseQueryDTO<Broadcast>): Promise<IPagination<IBroadcast>> {
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentUser = RequestContext.currentUser();
 		const currentRoleId = RequestContext.currentRoleId();
 
-		const { entity, entityId, category, visibilityMode, isArchived = false, relations = [] } = filters;
+		// Extract filters from where clause
+		const whereClause = filters.where ?? {};
+		const { entity, entityId, category, visibilityMode, isArchived = false } = whereClause;
+		const relations = Array.isArray(filters.relations) ? filters.relations as string[] : [];
 
 		// Build the base where condition
 		const where: FindOptionsWhere<Broadcast> = {
