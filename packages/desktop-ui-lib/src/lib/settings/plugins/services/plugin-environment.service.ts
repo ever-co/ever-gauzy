@@ -51,7 +51,7 @@ export class PluginEnvironmentService {
 
 	/** Translation key describing the environment mismatch for the plugin type */
 	private getEnvironmentMismatchMessage(plugin: IPlugin): string {
-		if (!plugin || !plugin.type) {
+		if (!plugin?.type) {
 			return 'PLUGIN.ERRORS.CANNOT_INSTALL';
 		}
 
