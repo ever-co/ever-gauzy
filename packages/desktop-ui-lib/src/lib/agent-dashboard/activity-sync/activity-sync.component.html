@@ -10,17 +10,19 @@
           <nb-list-item class="list-item-header">
             <div class="col-2">Queue</div>
             <div class="col-3">Created At</div>
-            <div class="col-3">Data</div>
+            <!-- <div class="col-3">Data</div> -->
             <div class="col-2">Attempts</div>
             <div class="col-1 centered-column">Status</div>
+			<div class="col-3 centered-column">Last Error</div>
           </nb-list-item>
           <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'PENDING'">
             <div class="list-item-content">
               <div class="col-2">{{ it.queue }}</div>
               <div class="col-3">{{ it.created_at | localDateParse }}</div>
-              <div class="col-3 word-wrap-content">{{ it.data}}</div>
+              <!-- <div class="col-3 word-wrap-content">{{ it.data}}</div> -->
               <div class="col-2">{{ it.attempts }}</div>
               <div class="col-1 centered-column"><nb-badge text="PENDING" status="warning"></nb-badge></div>
+			  <div class="col-3 word-wrap-content">{{ it.last_error ?? '-' }}</div>
             </div>
           </nb-list-item>
         </nb-list>
@@ -30,17 +32,19 @@
           <nb-list-item class="list-item-header">
             <div class="col-2">Queue</div>
             <div class="col-3">Created At</div>
-            <div class="col-3">Data</div>
+            <!-- <div class="col-3">Data</div> -->
             <div class="col-2">Attempts</div>
             <div class="col-1 centered-column">Status</div>
+			<div class="col-3 centered-column">Last Error</div>
           </nb-list-item>
           <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'PROCESS'">
             <div class="list-item-content">
               <div class="col-2">{{ it.queue }}</div>
               <div class="col-3">{{ it.created_at | localDateParse }}</div>
-              <div class="col-3 word-wrap-content">{{ it.data }}</div>
+              <!-- <div class="col-3 word-wrap-content">{{ it.data }}</div> -->
               <div class="col-2">{{ it.attempts }}</div>
               <div class="col-1 centered-column"><nb-badge text="PROCESS" status="warning"></nb-badge></div>
+			  <div class="col-3 word-wrap-content">{{ it.last_error }}</div>
             </div>
           </nb-list-item>
         </nb-list>
@@ -70,17 +74,19 @@
           <nb-list-item class="list-item-header">
             <div class="col-2">Queue</div>
             <div class="col-3">Created At</div>
-            <div class="col-3">Data</div>
+            <!-- <div class="col-3">Data</div> -->
             <div class="col-2">Attempts</div>
             <div class="col-1 centered-column">Status</div>
+			<div class="col-3 centered-column">Last Error</div>
           </nb-list-item>
           <nb-list-item *ngFor="let it of (items$|async) | filterStatus:'SYNCED'">
             <div class="list-item-content">
               <div class="col-2">{{ it.queue }}</div>
               <div class="col-3">{{ it.created_at | localDateParse }}</div>
-              <div class="col-3 word-wrap-content">{{ it.data }}</div>
+              <!-- <div class="col-3 word-wrap-content">{{ it.data }}</div> -->
               <div class="col-2">{{ it.attempts }}</div>
               <div class="col-1 centered-column"><nb-badge text="SYNCED" status="success"></nb-badge></div>
+			  <div class="col-3 word-wrap-content centered-column">{{ it.last_error ?? '-' }}</div>
             </div>
           </nb-list-item>
         </nb-list>

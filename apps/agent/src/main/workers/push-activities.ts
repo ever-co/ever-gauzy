@@ -249,15 +249,25 @@ class PushActivities {
 
 	async uploadCapturedImage(authConfig: TAuthConfig, recordedAt: string, imageTemp: string, timeSlotId?: string) {
 		this.agentLogger.info(`image temporary path ${imageTemp}`);
+		if (!fs.existsSync(imageTemp)) {
+			this.agentLogger.info(`temporary image doesn't exists ${imageTemp}`);
+			await this.screenshotService.remove({
+				imagePath: imageTemp,
+				id: null
+			});
+			return;
+		}
+
 		const isAccessed = await this.imageAccessed(imageTemp);
 		if (!isAccessed) {
+			await this.screenshotService.remove({
+				imagePath: imageTemp,
+				id: null
+			});
 			throw new Error('Image cannot be accessed');
 		}
 
-		if (!fs.existsSync(imageTemp)) {
-			this.agentLogger.info(`temporary image doesn't exists ${imageTemp}`);
-			return;
-		}
+
 
 		this.agentLogger.info(`Preparing to save screenshots recordedAt ${recordedAt} in timeSlotId ${timeSlotId}`);
 		const respScreenshot = await this.apiService.uploadImages(

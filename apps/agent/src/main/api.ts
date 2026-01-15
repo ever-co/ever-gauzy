@@ -8,6 +8,7 @@ import { TimeLogSourceEnum, TimeLogType } from '@gauzy/desktop-activity';
 import MainEvent from './events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
 import { TaskStatusEnum, IBaseTaskProperties, ITaskStatus, IPagination } from '@gauzy/contracts';
+import { AgentLogger } from './agent-logger';
 
 export interface ITimerResponse {
 	deletedAt: any
@@ -157,9 +158,11 @@ export class ApiService {
 	private mainEvent: MainEvent;
 	private isLogout: boolean;
 	private statusProgress: ITaskStatus;
+	private agentLogger: AgentLogger;
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
+		this.agentLogger = AgentLogger.getInstance();
 	}
 
 	get auth(): Partial<TAuthConfig> {
@@ -467,6 +470,7 @@ export class ApiService {
 			const respJson = await response.json();
 			return respJson;
 		} catch (err) {
+			this.agentLogger.error(`Error API call, ${err.message}`);
 			console.error('[Network Error]', err);
 			const enhancedError = err instanceof Error ? err : new Error(String(err));
 			enhancedError['url'] = url;

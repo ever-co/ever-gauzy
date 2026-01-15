@@ -40,6 +40,7 @@ export class ScreenshotDAO implements DAO<ScreenshotTO> {
 		await this._provider
 			.connection<ScreenshotTO>(TABLE_NAME_SCREENSHOT)
 			.where('id', '=', value.id)
+			.orWhere('imagePath', '=', value.imagePath)
 			.del();
 	}
 

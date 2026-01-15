@@ -51,10 +51,9 @@ export class SyncManager {
 
 	async checkUnSyncedTimer() {
 		const timer = await this.timerService.findToSynced();
-		const timerOffline = timer.filter((t) => t.timer.isStartedOffline || t.timer.isStoppedOffline);
-
-		if (timerOffline.length) {
-			await this.syncTimer(timerOffline);
+		console.log('unsync timer', timer);
+		if (timer.length) {
+			await this.syncTimer(timer);
 		}
 	}
 
@@ -67,7 +66,7 @@ export class SyncManager {
 			this.enqueueTimer({
 				attempts: 1,
 				isRetry: true,
-				queue: 'timer_retry',
+				queue: timer.isStartedOffline || timer.isStoppedOffline ? 'timer_retry' : 'timer',
 				timerId: timer.id,
 				data: {
 					startedAt: moment(timer.startedAt).toISOString(),
@@ -92,7 +91,7 @@ export class SyncManager {
 				attempts: 1,
 				activityId: Number(activity.id),
 				isRetry: true,
-				queue: 'time_slot_retry',
+				queue: activity.isOffline ? 'time_slot_retry' : 'time_slot',
 				data: {
 					timeStart: moment(activity.timeStart).toISOString(),
 					timeEnd: moment(activity.timeEnd).toISOString(),

@@ -8,6 +8,10 @@ export default class MainEvent {
 		this.events = new EventEmitter();
 	}
 
+	get eventEmitter(): EventEmitter {
+		return this.events;
+	}
+
 	static getInstance(): MainEvent {
 		if (!MainEvent.instance) {
 			MainEvent.instance = new MainEvent();

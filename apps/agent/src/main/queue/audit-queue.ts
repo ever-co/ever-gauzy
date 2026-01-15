@@ -43,7 +43,7 @@ export class QueueAudit {
 		return QueueAudit.instance;
 	}
 
-	queued(id: string, queue: string, data: any, priority?: number) {
+	async queued(id: string, queue: string, data: any, priority?: number) {
 		const newQueue = {
 			queue_id: id,
 			queue,
@@ -53,49 +53,43 @@ export class QueueAudit {
 			data: JSON.stringify(data),
 			created_at: new Date()
 		};
+		const queueResult = await this.auditQueueService.save(newQueue);
 		this.dashboardEventUpdate(
 			'add',
-			newQueue
+			queueResult
 		);
-		return this.auditQueueService.save(newQueue);
+		return queueResult;
 	}
 
-	running(id: string, data: any) {
-		this.dashboardEventUpdate('update', {
-			queue_id: id,
-			status: 'running'
-		});
-		return this.auditQueueService.update({
+	async running(id: string, data: any) {
+		const queueResult = await this.auditQueueService.update({
 			queue_id: id,
 			status: 'running',
 			started_at: new Date()
 		});
+		this.dashboardEventUpdate('update', queueResult);
+		return queueResult;
 	}
 
-	succeeded(id: string) {
-		this.dashboardEventUpdate('update', {
-			queue_id: id,
-			status: 'succeeded'
-		});
-		return this.auditQueueService.update({
+	async succeeded(id: string) {
+		const queueResult = await this.auditQueueService.update({
 			queue_id: id,
 			status: 'succeeded',
-			finished_at: new Date(),
-			last_error: null
+			finished_at: new Date()
 		});
+		this.dashboardEventUpdate('update', queueResult);
+		return queueResult;
 	}
 
-	failed(id: string, err: any) {
-		this.dashboardEventUpdate('update', {
-			queue_id: id,
-			status: 'failed'
-		});
-		return this.auditQueueService.update({
+	async failed(id: string, err: any) {
+		const queueResult = await this.auditQueueService.update({
 			queue_id: id,
 			status: 'failed',
 			finished_at: new Date(),
 			last_error: `${JSON.stringify(err.message)}`
 		});
+		this.dashboardEventUpdate('update', queueResult);
+		return queueResult;
 	}
 
 	cancelled(id: string) {
