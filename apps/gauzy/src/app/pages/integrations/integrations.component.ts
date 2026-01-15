@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewChild, computed, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, Renderer2, ViewChild, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IIntegrationViewModel, IntegrationFilterEnum } from '@gauzy/contracts';
 import { InitialFilter, IntegrationsStoreService } from '@gauzy/ui-core/core';
@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
 	styleUrls: ['./integrations.component.scss'],
 	standalone: false
 })
-export class IntegrationsComponent implements OnInit, OnDestroy {
+export class IntegrationsComponent implements OnInit {
 	// Integrations observables
 	integrations$: Observable<IIntegrationViewModel[]> = this._integrationsStore.integrations$;
 	integrationGroups$: Observable<any[]> = this._integrationsStore.integrationGroups$;
@@ -23,7 +23,7 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
 	protected readonly isIntegrationsTab = computed(() => this.activeTab() === 'integrations');
 	protected readonly isPluginsTab = computed(() => this.activeTab() === 'plugins');
 
-	@ViewChild('searchElement', { static: false }) searchElement: ElementRef;
+	@ViewChild('searchElement', { static: false }) readonly searchElement: ElementRef;
 
 	public filters = [
 		{
@@ -101,6 +101,4 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
 			this.renderer.setProperty(this.searchElement.nativeElement, 'value', InitialFilter.searchQuery);
 		}
 	}
-
-	ngOnDestroy(): void {}
 }
