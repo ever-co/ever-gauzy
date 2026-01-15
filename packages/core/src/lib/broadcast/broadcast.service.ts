@@ -144,7 +144,7 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 	 * @param filters - Filter criteria for broadcasts.
 	 * @returns A promise that resolves to a paginated list of broadcasts.
 	 */
-	async findBroadcasts(filters: IBroadcastFindInput & { relations?: string[] }): Promise<IPagination<IBroadcast>> {
+	async findAll(filters: IBroadcastFindInput & { relations?: string[] }): Promise<IPagination<IBroadcast>> {
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentUser = RequestContext.currentUser();
