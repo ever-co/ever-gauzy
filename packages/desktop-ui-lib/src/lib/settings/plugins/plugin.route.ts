@@ -20,6 +20,6 @@ export const routes: Routes = [
 	},
 	{
 		path: '**',
-		redirectTo: 'installed'
+		redirectTo: ''
 	}
 ];
