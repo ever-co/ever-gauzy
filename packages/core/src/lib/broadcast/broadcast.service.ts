@@ -153,6 +153,7 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 	 */
 	async findAll(filters: BaseQueryDTO<Broadcast>): Promise<IPagination<IBroadcast>> {
 		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId() ?? filters.where?.organizationId;
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentUser = RequestContext.currentUser();
 		const currentRoleId = RequestContext.currentRoleId();
@@ -162,9 +163,13 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		const { entity, entityId, category, visibilityMode, isArchived = false } = whereClause;
 		const relations = Array.isArray(filters.relations) ? filters.relations as string[] : [];
 
-		// Build the base where condition
+		// Extract pagination options from filters
+		const { take, skip } = filters;
+
+		// Build the base where condition with organizationId for proper scoping
 		const where: FindOptionsWhere<Broadcast> = {
 			tenantId,
+			...(organizationId && { organizationId }),
 			...(entity && { entity }),
 			...(entityId && { entityId }),
 			...(category && { category }),
@@ -173,11 +178,13 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 			isActive: true
 		};
 
-		// Retrieve all broadcasts matching base criteria
+		// Retrieve broadcasts matching base criteria with pagination
 		const queryOptions: FindManyOptions<Broadcast> = {
 			where,
 			relations,
-			order: { publishedAt: 'DESC' }
+			order: { publishedAt: 'DESC' },
+			...(take !== undefined && { take }),
+			...(skip !== undefined && { skip })
 		};
 
 		const { items } = await super.findAll(queryOptions);
@@ -195,6 +202,49 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 			items: filteredBroadcasts,
 			total: filteredBroadcasts.length
 		};
+	}
+
+	/**
+	 * Finds a single broadcast by ID with visibility checks.
+	 *
+	 * @param id - The unique identifier of the broadcast.
+	 * @param relations - Optional relations to load.
+	 * @returns A promise that resolves to the broadcast if found and visible.
+	 * @throws {NotFoundException} If the broadcast is not found or not visible to the current user.
+	 */
+	async findOneById(id: ID, params?: BaseQueryDTO<Broadcast>): Promise<IBroadcast> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId() ?? params?.where?.organizationId;
+		const employeeId = RequestContext.currentEmployeeId();
+		const currentUser = RequestContext.currentUser();
+		const currentRoleId = RequestContext.currentRoleId();
+
+		// Build where condition with tenant and organization scoping
+		const where: FindOptionsWhere<Broadcast> = {
+			id,
+			tenantId,
+			...(organizationId && { organizationId }),
+			isActive: true
+		};
+
+		// Find the broadcast with optional relations
+		const broadcast = await this.findOneByOptions({
+			where,
+			...(params?.relations && { relations: params.relations })
+		});
+
+		if (!broadcast) {
+			throw new NotFoundException(`Broadcast with id ${id} not found`);
+		}
+
+		// Check if the current user can view this broadcast
+		const canView = await this.canViewBroadcast(broadcast, employeeId, currentUser?.id, currentRoleId);
+
+		if (!canView) {
+			throw new NotFoundException(`Broadcast with id ${id} not found or you don't have permission to view it`);
+		}
+
+		return broadcast;
 	}
 
 	/**
@@ -296,9 +346,15 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 			return false;
 		}
 
-		// Parse audience rules if stored as string
-		const rules: IAudienceRules =
-			typeof audienceRules === 'string' ? JSON.parse(audienceRules) : audienceRules;
+		// Parse audience rules if stored as string, with error handling for malformed JSON
+		let rules: IAudienceRules;
+		try {
+			rules = typeof audienceRules === 'string' ? JSON.parse(audienceRules) : audienceRules;
+		} catch (error) {
+			console.error('Failed to parse audienceRules JSON:', error.message);
+			// Treat invalid JSON as "not visible" for security
+			return false;
+		}
 
 		// Check if user is in allowed user IDs
 		if (rules.userIds?.includes(userId)) {
@@ -327,7 +383,7 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 				}
 			} catch (error) {
 				// Role not found, continue checking other rules
-				console.log(`Role with id ${roleId} not found:`, error.message);
+				console.log('Role not found', { roleId, message: error.message });
 			}
 		}
 
@@ -461,8 +517,15 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 	): Promise<ID[]> {
 		if (!audienceRules) return [];
 
-		const rules: IAudienceRules =
-			typeof audienceRules === 'string' ? JSON.parse(audienceRules) : audienceRules;
+		// Parse audience rules if stored as string, with error handling for malformed JSON
+		let rules: IAudienceRules;
+		try {
+			rules = typeof audienceRules === 'string' ? JSON.parse(audienceRules) : audienceRules;
+		} catch (error) {
+			console.error('Failed to parse audienceRules JSON in getRestrictedAudienceIds:', error.message);
+			// Return empty array if rules cannot be parsed
+			return [];
+		}
 
 		const employeeIds: ID[] = [];
 
