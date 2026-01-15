@@ -21,7 +21,6 @@ import { EmployeeService } from '../employee/employee.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { RoleService } from '../role/role.service';
 import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
-import { SharedEntityService } from '../shared-entity/shared-entity.service';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { Broadcast } from './broadcast.entity';
 import { TypeOrmBroadcastRepository } from './repository/type-orm-broadcast.repository';
@@ -37,7 +36,6 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		private readonly _activityLogService: ActivityLogService,
 		private readonly _roleService: RoleService,
 		private readonly _employeeNotificationService: EmployeeNotificationService,
-		private readonly _sharedEntityService: SharedEntityService,
 		private readonly _typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository
 	) {
 		super(typeOrmBroadcastRepository, mikroOrmBroadcastRepository);
