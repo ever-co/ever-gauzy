@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
-import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
 	selector: 'ngx-plugin-layout',
@@ -18,7 +18,7 @@ export class PluginLayoutComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
-		private router: Router,
+		private readonly router: Router,
 		private readonly pluginElectronService: PluginElectronService
 	) {}
 
@@ -50,15 +50,18 @@ export class PluginLayoutComponent implements OnInit, OnDestroy {
 				activeLinkOptions: {
 					exact: false
 				}
-			},
-			this.pluginElectronService.isDesktop && {
+			}
+		];
+
+		if (this.pluginElectronService.isDesktop) {
+			this.tabs.push({
 				title: this.translateService.instant('PLUGIN.LAYOUT.INSTALLED'),
 				route: `${this.baseRoute}/installed`,
 				icon: 'checkmark-circle-2-outline',
 				activeLinkOptions: {
 					exact: false
 				}
-			}
-		];
+			});
+		}
 	}
 }
