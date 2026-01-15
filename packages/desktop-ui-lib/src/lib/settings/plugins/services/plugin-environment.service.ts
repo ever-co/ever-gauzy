@@ -33,7 +33,7 @@ export class PluginEnvironmentService {
 
 	/** Whether the current environment supports installing the given plugin type */
 	public canInstallPlugin(plugin: IPlugin): boolean {
-		if (!plugin || !plugin.type) {
+		if (!plugin?.type) {
 			return false;
 		}
 
