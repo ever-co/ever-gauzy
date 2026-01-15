@@ -55,7 +55,7 @@ export interface IBroadcast extends IBasePerEntityType, IBroadcastAuthor {
  * Broadcast create input interface
  */
 export interface IBroadcastCreateInput
-	extends OmitFields<IBroadcast, 'publishedAt'> {
+	extends OmitFields<IBroadcast, 'publishedAt' | 'employeeId' | 'employee'> {
 	publishedAt?: Date; // Optional, defaults to now if not provided
 }
 
