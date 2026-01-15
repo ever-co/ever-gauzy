@@ -6,11 +6,13 @@ import {
 	ActorTypeEnum,
 	BaseEntityEnum,
 	BroadcastVisibilityModeEnum,
+	EmployeeNotificationTypeEnum,
 	IAudienceRules,
 	IBroadcast,
-	IBroadcastCreateInput, IBroadcastUpdateInput,
+	IBroadcastCreateInput,
+	IBroadcastUpdateInput,
 	ID,
-	IPagination,
+	IPagination, NotificationActionTypeEnum,
 	RolesEnum
 } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
@@ -18,6 +20,8 @@ import { RequestContext } from '../core/context';
 import { EmployeeService } from '../employee/employee.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { RoleService } from '../role/role.service';
+import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
+import { SharedEntityService } from '../shared-entity/shared-entity.service';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { Broadcast } from './broadcast.entity';
 import { TypeOrmBroadcastRepository } from './repository/type-orm-broadcast.repository';
@@ -32,6 +36,8 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		private readonly _employeeService: EmployeeService,
 		private readonly _activityLogService: ActivityLogService,
 		private readonly _roleService: RoleService,
+		private readonly _employeeNotificationService: EmployeeNotificationService,
+		private readonly _sharedEntityService: SharedEntityService,
 		private readonly _typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository
 	) {
 		super(typeOrmBroadcastRepository, mikroOrmBroadcastRepository);
@@ -77,6 +83,11 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 				broadcast,
 				organizationId,
 				tenantId
+			);
+
+			// Notify the audience asynchronously (don't await to avoid blocking)
+			this.notifyAudience(broadcast, employee?.fullName).catch((err) =>
+				console.error('Error notifying audience:', err.message)
 			);
 
 			return broadcast;
@@ -342,5 +353,151 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Notifies the audience of a new broadcast based on visibility mode and audience rules.
+	 *
+	 * @param broadcast - The broadcast to notify about.
+	 * @param publisherName - The name of the employee who published the broadcast.
+	 */
+	private async notifyAudience(broadcast: IBroadcast, publisherName: string): Promise<void> {
+		const { visibilityMode, audienceRules, organizationId, tenantId, employeeId: publisherId } = broadcast;
+
+		// Get the list of employee IDs to notify based on visibility mode
+		let employeeIdsToNotify: ID[] = [];
+
+		switch (visibilityMode) {
+			case BroadcastVisibilityModeEnum.ORGANIZATION:
+				// Notify all employees in the organization
+				const orgEmployees = await this._employeeService.findAll({
+					where: { organizationId, tenantId, isActive: true }
+				});
+				employeeIdsToNotify = orgEmployees.items.map((e) => e.id).filter((id) => id !== publisherId);
+				break;
+
+			case BroadcastVisibilityModeEnum.ENTITY_MEMBERS:
+				// Notify entity members (handled via isEntityMember check already in findAll)
+				// For notifications, we need to get the actual members
+				employeeIdsToNotify = await this.getEntityMemberIds(broadcast);
+				break;
+
+			case BroadcastVisibilityModeEnum.RESTRICTED:
+				// Notify only employees in audience rules
+				employeeIdsToNotify = await this.getRestrictedAudienceIds(audienceRules, organizationId, tenantId);
+				break;
+
+			case BroadcastVisibilityModeEnum.EXTERNAL_VIEW:
+				// External view doesn't notify internal employees
+				return;
+		}
+
+		// Remove duplicates and the publisher
+		const uniqueEmployeeIds = [...new Set(employeeIdsToNotify)].filter((id) => id !== publisherId);
+
+		// Send notifications to each employee
+		for (const receiverEmployeeId of uniqueEmployeeIds) {
+			this._employeeNotificationService.publishNotificationEvent(
+				{
+					entity: BaseEntityEnum.Broadcast,
+					entityId: broadcast.id,
+					type: EmployeeNotificationTypeEnum.BROADCAST,
+					message: broadcast.title,
+					sentByEmployeeId: publisherId,
+					receiverEmployeeId,
+					organizationId,
+					tenantId
+				},
+				NotificationActionTypeEnum.Broadcasted,
+				broadcast.title,
+				publisherName
+			);
+		}
+	}
+
+	/**
+	 * Gets employee IDs that are members of the broadcast's entity.
+	 *
+	 * @param broadcast - The broadcast containing entity information.
+	 * @returns Array of employee IDs.
+	 */
+	private async getEntityMemberIds(broadcast: IBroadcast): Promise<ID[]> {
+		const { entity, entityId } = broadcast;
+		const relationName = entity === BaseEntityEnum.Organization ? 'employees' : 'members';
+
+		try {
+			const repository = this.dataSource.getRepository(entity);
+			const entityWithMembers = await repository.findOne({
+				where: { id: entityId },
+				relations: [relationName]
+			});
+
+			if (!entityWithMembers) return [];
+
+			const members = entityWithMembers[relationName] || [];
+
+			// Project/Team: members have employeeId; Department/Organization: members are employees directly
+			if (entity === BaseEntityEnum.OrganizationProject || entity === BaseEntityEnum.OrganizationTeam) {
+				return members.filter((m: any) => m.isActive && !m.isArchived).map((m: any) => m.employeeId);
+			}
+
+			return members.map((m: any) => m.id);
+		} catch (error) {
+			console.error(`Error getting entity members for ${entity}:`, error.message);
+			return [];
+		}
+	}
+
+	/**
+	 * Gets employee IDs from restricted audience rules.
+	 *
+	 * @param audienceRules - The audience rules defining who can view.
+	 * @param organizationId - The organization ID.
+	 * @param tenantId - The tenant ID.
+	 * @returns Array of employee IDs.
+	 */
+	private async getRestrictedAudienceIds(
+		audienceRules: IAudienceRules | string,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<ID[]> {
+		if (!audienceRules) return [];
+
+		const rules: IAudienceRules =
+			typeof audienceRules === 'string' ? JSON.parse(audienceRules) : audienceRules;
+
+		const employeeIds: ID[] = [];
+
+		// Add directly specified employee IDs
+		if (rules.employeeIds?.length) {
+			employeeIds.push(...rules.employeeIds);
+		}
+
+		// Get employees from specified teams
+		if (rules.teamIds?.length) {
+			const teamMembers = await this._typeOrmOrganizationTeamEmployeeRepository.find({
+				where: { organizationTeamId: In(rules.teamIds), isActive: true }
+			});
+			employeeIds.push(...teamMembers.map((m) => m.employeeId));
+		}
+
+		// Get employees with specified roles
+		if (rules.roles?.length) {
+			const employees = await this._employeeService.findAll({
+				where: { organizationId, tenantId, isActive: true },
+				relations: ['user', 'user.role']
+			});
+
+			for (const emp of employees.items) {
+				const roleName = emp.user?.role?.name as RolesEnum;
+				if (roleName && rules.roles.includes(roleName)) {
+					if (!rules.excludeRoles?.includes(roleName)) {
+						employeeIds.push(emp.id);
+					}
+				}
+			}
+		}
+
+		return employeeIds;
 	}
 }

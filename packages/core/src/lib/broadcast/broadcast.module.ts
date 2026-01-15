@@ -6,6 +6,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { EmployeeModule } from '../employee/employee.module';
 import { RoleModule } from '../role/role.module';
 import { OrganizationTeamEmployeeModule } from '../organization-team-employee/organization-team-employee.module';
+import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 import { Broadcast } from './broadcast.entity';
 import { BroadcastService } from './broadcast.service';
 import { BroadcastController } from './broadcast.controller';
@@ -20,7 +21,8 @@ import { CommandHandlers } from './commands/handlers';
 		RolePermissionModule,
 		EmployeeModule,
 		RoleModule,
-		OrganizationTeamEmployeeModule
+		OrganizationTeamEmployeeModule,
+		EmployeeNotificationModule,
 	],
 	controllers: [BroadcastController],
 	providers: [BroadcastService, TypeOrmBroadcastRepository, ...CommandHandlers],
