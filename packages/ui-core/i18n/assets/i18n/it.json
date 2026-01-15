@@ -875,6 +875,8 @@
 			"IMPORT_MESSAGE": "Clicca su \"IMPORTA\" per inserire tutte le tabelle nel database. Il nome del file da caricare dovrebbe essere: \"archive.zip\". Scegli anche tra le opzioni \"Unisci dati\" e \"Pulisci prima dell'importazione\"",
 			"IMPORT_HISTORY_MESSAGE": "Puoi tracciare i tuoi file di recente importazione qui",
 			"SELECT_FILE": "Seleziona File",
+			"EXIT_AGENT_LOGIN_CONFIRM": "Ops! Devi effettuare l'accesso prima di poter utilizzare l'app.",
+			"EXIT_AGENT_PREVENT_CONFIRM": "Ops! Non sei autorizzato a uscire. Si prega di contattare l'amministratore del tuo account.",
 			"DROP_FILE": "Trascina il file qui",
 			"NO_DROP_FILE": "Non è possibile trascinare il file qui",
 			"BROWSE": "SFOGLIA",

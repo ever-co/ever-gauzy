@@ -1,10 +1,11 @@
+import { TActivityProcessParam, ActivityState } from './i-kb-mouse';
 const DURATION_SCREENSHOT_LIST = [1, 3, 5, 10];
 export class KbMouseTimer {
 	private static instance: KbMouseTimer;
 
 	private flushIntervalSeconds = 60;
 	private intervalId: ReturnType<typeof setInterval> | null = null;
-	private onFlushCallback: ((timeData: { timeStart: Date; timeEnd: Date }, screenShot?: boolean, afkDuration?: number) => void) | null =
+	private onFlushCallback: ((timeData: TActivityProcessParam) => void) | null =
 		null;
 
 	/* interval screenshot from setting */
@@ -17,7 +18,7 @@ export class KbMouseTimer {
 	private afkCountdown: number;
 	private isAfk = false;
 	private onAfkCallback: ((afk?: boolean) => void) | null = null;
-	private isStarted:boolean = false;
+	private isStarted: boolean = false;
 	private timerStartedCallback: (status: 'Working' | 'Error') => void;
 	private activeWindowCallback: () => void;
 
@@ -30,7 +31,7 @@ export class KbMouseTimer {
 
 	private constructor() {
 		this.afkCountdown = this.afkThreshold;
-		this.activeWindowCallback = () => {};
+		this.activeWindowCallback = () => { };
 		this.randomScreenshotInterval = false;
 	}
 
@@ -65,7 +66,7 @@ export class KbMouseTimer {
 		this.currentScreenshotInterval = seconds;
 	}
 
-	public onFlush(callback: (timeData: { timeStart: Date; timeEnd: Date }, screenshot?: boolean, afkDuration?: number) => void): void {
+	public onFlush(callback: (timeData: TActivityProcessParam) => void): void {
 		this.onFlushCallback = callback;
 	}
 
@@ -90,10 +91,14 @@ export class KbMouseTimer {
 			if (this.onFlushCallback) {
 				this.onFlushCallback(
 					{
-						timeStart: this.lastFlushTime,
-						timeEnd: new Date()
-					},
-					true
+						timeData: {
+							timeStart: this.lastFlushTime,
+							timeEnd: new Date()
+						},
+						screenShot: true,
+						afkDuration: this.afkDuration,
+						activityState: ActivityState.active
+					}
 				);
 			}
 			this.intervalId = null;
@@ -116,7 +121,7 @@ export class KbMouseTimer {
 		if (this.afkCountdown < this.afkThreshold) {
 			this.afkCountdown = this.afkThreshold;
 		}
-		if(this.isAfk) {
+		if (this.isAfk) {
 			this.isAfk = false;
 			if (this.onAfkCallback) {
 				this.onAfkCallback(this.isAfk);
@@ -171,11 +176,14 @@ export class KbMouseTimer {
 					if (elapsedSecondsScreenshot >= this.currentScreenshotInterval) {
 						this.onFlushCallback(
 							{
-								timeStart: this.lastFlushTime,
-								timeEnd: now
-							},
-							true,
-							this.afkDuration
+								timeData: {
+									timeStart: this.lastFlushTime,
+									timeEnd: now
+								},
+								screenShot: true,
+								afkDuration: this.afkDuration,
+								activityState: ActivityState.active
+							}
 						);
 						this.lastFlushTime = now;
 						this.lastScreenshotTime = now;
@@ -184,12 +192,14 @@ export class KbMouseTimer {
 					} else {
 						this.onFlushCallback(
 							{
-								timeStart: this.lastFlushTime,
-								timeEnd: now
-							},
-							false,
-							this.afkDuration
-						);
+								timeData: {
+									timeStart: this.lastFlushTime,
+									timeEnd: now
+								},
+								screenShot: false,
+								afkDuration: this.afkDuration,
+								activityState: ActivityState.active
+							});
 						this.resetAfkCount();
 						this.lastFlushTime = now;
 					}

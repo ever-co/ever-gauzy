@@ -190,7 +190,10 @@ export default function AppIpcMain() {
 			throw new AppError('GET_EMP_SETTING', error);
 		}
 		listenIO(false);
-		await handleAlwaysOnWindow(true);
+		const appSetting = getAppSetting();
+		if (appSetting?.alwaysOn) {
+			await handleAlwaysOnWindow(true);
+		}
 		await closeLoginWindow();
 	});
 

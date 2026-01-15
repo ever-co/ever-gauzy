@@ -874,6 +874,8 @@
 			"IMPORT_MESSAGE": "Kliknij \"IMPORTUJ\", aby wstawić wszystkie tabele do bazy danych. Nazwa pliku do przesłania powinna być: \"archive.zip\". Wybierz również spośród opcji \"Scal dane\" i \"Wyczyść przed importem\"",
 			"IMPORT_HISTORY_MESSAGE": "Możesz śledzić tutaj swoje niedawno zaimportowane pliki",
 			"SELECT_FILE": "Wybierz plik",
+			"EXIT_AGENT_LOGIN_CONFIRM": "Ups! Musisz się zalogować, zanim będziesz mógł korzystać z aplikacji.",
+			"EXIT_AGENT_PREVENT_CONFIRM": "Ups! Nie masz uprawnień do wyjścia. Skontaktuj się z administratorem konta.",
 			"DROP_FILE": "Upuść plik tutaj",
 			"NO_DROP_FILE": "Nie można tutaj upuścić pliku",
 			"BROWSE": "PRZEGLĄDAĆ",

@@ -877,6 +877,8 @@
 			"IMPORT_MESSAGE": "Haz clic en \"IMPORTAR\" para insertar todas las tablas en la base de datos. El nombre del archivo para cargar debe ser \"archivo.zip\". También elige entre las opciones \"Combinar datos\" y \"Limpiar antes de importar\".",
 			"IMPORT_HISTORY_MESSAGE": "Puedes rastrear tus archivos recientemente importados aquí.",
 			"SELECT_FILE": "Seleccionar archivo",
+			"EXIT_AGENT_LOGIN_CONFIRM": "¡Ups! Debes iniciar sesión antes de poder usar la aplicación.",
+			"EXIT_AGENT_PREVENT_CONFIRM": "¡Ups! No tienes permitido salir. Por favor, contacta con el administrador de tu cuenta.",
 			"DROP_FILE": "Suelta el archivo aquí",
 			"NO_DROP_FILE": "No se puede soltar el archivo aquí.",
 			"BROWSE": "NAVEGAR",

@@ -142,12 +142,12 @@ jobs:
             console.log(script.agent(true))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_AGENT_APP_NAME: 'gauzy-agent'
-          DESKTOP_AGENT_APP_REPO_NAME: 'ever-gauzy-agent'
-          DESKTOP_AGENT_APP_REPO_OWNER: 'ever-co'
+          AGENT_APP_NAME: 'gauzy-agent'
+          AGENT_APP_REPO_NAME: 'ever-gauzy-agent'
+          AGENT_APP_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_AGENT_APP_DESCRIPTION: 'Gauzy Agent'
-          DESKTOP_AGENT_APP_ID: 'com.ever.gauzyagent'
+          AGENT_APP_DESCRIPTION: 'Gauzy Agent'
+          AGENT_APP_ID: 'com.ever.gauzyagent'
 
       - name: Build Agent
         run: 'yarn build:agent:linux:release:gh:arm64'
@@ -427,12 +427,12 @@ jobs:
             console.log(script.agent(true))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_AGENT_APP_NAME: 'gauzy-agent'
-          DESKTOP_AGENT_APP_REPO_NAME: 'ever-gauzy-agent'
-          DESKTOP_AGENT_APP_REPO_OWNER: 'ever-co'
+          AGENT_APP_NAME: 'gauzy-agent'
+          AGENT_APP_REPO_NAME: 'ever-gauzy-agent'
+          AGENT_APP_REPO_OWNER: 'ever-co'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_AGENT_APP_DESCRIPTION: 'Gauzy Agent'
-          DESKTOP_AGENT_APP_ID: 'com.ever.gauzyagent'
+          AGENT_APP_DESCRIPTION: 'Gauzy Agent'
+          AGENT_APP_ID: 'com.ever.gauzyagent'
 
       - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
         shell: powershell

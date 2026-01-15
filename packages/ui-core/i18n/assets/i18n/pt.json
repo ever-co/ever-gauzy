@@ -875,6 +875,8 @@
 			"IMPORT_MESSAGE": "Clique em \"IMPORTAR\" para inserir todas as tabelas no banco de dados. O nome do arquivo para upload deve ser: \"archive.zip\". Escolha também entre as opções \"Mesclar dados\" e \"Limpar antes da importação\".",
 			"IMPORT_HISTORY_MESSAGE": "Você pode acompanhar seus arquivos recentemente importados aqui.",
 			"SELECT_FILE": "Selecionar Ficheiro",
+			"EXIT_AGENT_LOGIN_CONFIRM": "Oops! Você precisa fazer login antes de usar o aplicativo.",
+			"EXIT_AGENT_PREVENT_CONFIRM": "Oops! Você não tem permissão para sair. Entre em contato com o administrador da sua conta.",
 			"DROP_FILE": "Solte o arquivo aqui.",
 			"NO_DROP_FILE": "Não é possível soltar o arquivo aqui.",
 			"BROWSE": "Navegar",

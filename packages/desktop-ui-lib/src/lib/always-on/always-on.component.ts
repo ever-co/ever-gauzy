@@ -100,6 +100,7 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 			).subscribe();
 			this.checkAndRunTimer();
 			this.renderer.setStyle(document.body, 'background-color', 'transparent');
+			this.renderer.setStyle(document.body, 'overflow', 'hidden');
 			this.isRounded = true;
 		}
 	}

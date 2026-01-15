@@ -1,3 +1,4 @@
+import { ActivityState } from '@gauzy/desktop-activity';
 export type TMouseEvents = {
 	moveTo: {
 		from: {
@@ -45,7 +46,8 @@ export interface KbMouseActivityTO {
 	activeWindows?: TActiveWindows[] | string;
 	syncedActivity?: boolean;
 	isOffline?: boolean;
-	timeslotId?: string
+	timeslotId?: string;
+	activityState?: ActivityState
 }
 
 export const TABLE_NAME_KB_MOUSE_ACTIVITY: string = 'kb_mouse_activity';

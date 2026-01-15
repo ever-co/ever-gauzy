@@ -139,7 +139,7 @@ jobs:
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
-            console.log(script.desktopTimer(true))
+            console.log(script.desktopTimer(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_TIMER_APP_NAME: 'gauzy-desktop-timer'
@@ -424,7 +424,7 @@ jobs:
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
-            console.log(script.desktopTimer(true))
+            console.log(script.desktopTimer(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_TIMER_APP_NAME: 'gauzy-desktop-timer'

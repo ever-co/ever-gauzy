@@ -5,13 +5,8 @@ import { BrowserWindow, shell, app, ipcMain } from 'electron';
 import * as path from 'path';
 import { InitApplication } from './main/init';
 import {
-	AppError,
-	DesktopUpdater,
 	LocalStore,
 } from '@gauzy/desktop-lib';
-import PullActivities from './main/workers/pull-activities';
-import PushActivities from './main/workers/push-activities';
-import { getAuthConfig } from './main/util';
 
 let popupWin: BrowserWindow | null = null;
 
@@ -21,13 +16,7 @@ log.info(`Sqlite DB path: ${sqlite3filename}`);
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 const args = process.argv.slice(1);
-const updater = new DesktopUpdater({
-	repository: process.env.REPO_NAME,
-	owner: process.env.REPO_OWNER,
-	typeRelease: 'releases'
-});
 args.some((val) => val === '--serve');
-
 
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
@@ -44,30 +33,7 @@ app.commandLine.appendSwitch('disable-http2');
 
 ipcMain.on('quit', quit);
 
-async function stopAppActivity() {
-	const auth = getAuthConfig();
-	const pullActivities = PullActivities.getInstance();
-	pullActivities.updateAppUserAuth({
-		tenantId: auth?.user?.employee?.tenantId,
-		organizationId: auth?.user?.employee?.organizationId,
-		remoteId: auth?.user?.id
-	});
-	await pullActivities.stopTracking();
-	const pushActivities = PushActivities.getInstance();
-	await pushActivities.stopPooling();
-}
-
-app.on('before-quit', async (e) => {
-	e.preventDefault();
-	try {
-		await stopAppActivity();
-		updater.cancel();
-	} catch (e) {
-		log.error(`ERROR: Occurred while cancel update: ${e}`);
-		throw new AppError('MAINUPDTABORT', e);
-	}
-	app.exit(0);
-});
+// Removed: before-quit handler now managed by EventHandler.exitApp()
 
 // On OS X it is common for applications and their menu bar
 // to stay active until the user quits explicitly with Cmd + Q

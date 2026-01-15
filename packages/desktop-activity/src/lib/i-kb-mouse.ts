@@ -27,10 +27,10 @@ export type TKbMouseActivity = {
 }
 
 export enum TimeLogType {
-    TRACKED = "TRACKED",
-    MANUAL = "MANUAL",
-    IDLE = "IDLE",
-    RESUMED = "RESUMED"
+	TRACKED = "TRACKED",
+	MANUAL = "MANUAL",
+	IDLE = "IDLE",
+	RESUMED = "RESUMED"
 }
 
 export enum ActivityType {
@@ -78,4 +78,16 @@ export type TWindowActivities = {
 		title: string;
 		platform?: string;
 	}
+}
+
+export enum ActivityState {
+	active = 'active',
+	idle = 'idle'
+}
+
+export type TActivityProcessParam = {
+	timeData: { timeStart: Date; timeEnd: Date },
+	screenShot?: boolean,
+	afkDuration?: number,
+	activityState?: ActivityState
 }

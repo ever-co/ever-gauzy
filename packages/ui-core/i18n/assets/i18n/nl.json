@@ -875,6 +875,8 @@
 			"IMPORT_MESSAGE": "Klik op \"IMPORTEREN\" om alle tabellen in de database in te voegen. De naam van het te uploaden bestand moet \"archive.zip\" zijn. Kies ook tussen de opties \"Gegevens samenvoegen\" en \"Opschonen voor import\".",
 			"IMPORT_HISTORY_MESSAGE": "Je kunt hier je recent geïmporteerde bestanden volgen.",
 			"SELECT_FILE": "Selecteer bestand",
+			"EXIT_AGENT_LOGIN_CONFIRM": "Oeps! Je moet inloggen voordat je de app kunt gebruiken.",
+			"EXIT_AGENT_PREVENT_CONFIRM": "Oeps! Je mag niet afsluiten. Neem contact op met je accountbeheerder.",
 			"DROP_FILE": "Sleep het bestand hierheen",
 			"NO_DROP_FILE": "Hier kan het bestand niet worden neergezet",
 			"BROWSE": "BLADEREN",
