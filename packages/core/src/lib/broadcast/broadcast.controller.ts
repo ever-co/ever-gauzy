@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { DeleteResult } from 'typeorm';
+import { DeleteResult, UpdateResult } from 'typeorm';
 import { IBroadcast, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from '../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -65,8 +65,8 @@ export class BroadcastController extends CrudController<Broadcast> {
 	})
 	@Permissions(PermissionsEnum.BROADCAST_READ)
 	@Get(':id')
-	async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<IBroadcast> {
-		return await this.broadcastService.findOneByIdString(id);
+	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() params: BaseQueryDTO<Broadcast>): Promise<IBroadcast> {
+		return await this.broadcastService.findOneById(id, params);
 	}
 
 	/**
@@ -118,7 +118,7 @@ export class BroadcastController extends CrudController<Broadcast> {
 	@HttpCode(HttpStatus.OK)
 	@Put(':id')
 	@UseValidationPipe()
-	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateBroadcastDTO): Promise<IBroadcast> {
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateBroadcastDTO): Promise<IBroadcast | UpdateResult> {
 		return await this.commandBus.execute(new BroadcastUpdateCommand(id, entity));
 	}
 
