@@ -98,7 +98,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 						new TenantSetting({
 							value: input[key],
 							name: key,
-							tenantId: null // Global setting
+							tenantId: null
 						})
 					);
 				}

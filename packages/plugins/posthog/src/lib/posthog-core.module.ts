@@ -1,7 +1,9 @@
 import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
+import { TenantSettingModule } from '@gauzy/core';
 import { PosthogModuleOptions, PosthogModuleAsyncOptions, PosthogOptionsFactory } from './posthog.interfaces';
 import { POSTHOG_MODULE_OPTIONS, POSTHOG_TOKEN } from './posthog.constants';
 import { PosthogService } from './posthog.service';
+import { PosthogConfigService } from './posthog-config.service';
 import { createPosthogProviders } from './posthog.providers';
 
 @Global()
@@ -17,8 +19,9 @@ export class PosthogCoreModule {
 
 		return {
 			module: PosthogCoreModule,
-			providers: [provider, PosthogService],
-			exports: [provider, PosthogService]
+			imports: [TenantSettingModule],
+			providers: [provider, PosthogService, PosthogConfigService],
+			exports: [provider, PosthogService, PosthogConfigService]
 		};
 	}
 
@@ -37,9 +40,14 @@ export class PosthogCoreModule {
 
 		return {
 			module: PosthogCoreModule,
-			imports: options.imports || [],
-			providers: [...PosthogCoreModule.createAsyncProviders(options), provider, PosthogService],
-			exports: [provider, PosthogService]
+			imports: [TenantSettingModule, ...(options.imports || [])],
+			providers: [
+				...PosthogCoreModule.createAsyncProviders(options),
+				provider,
+				PosthogService,
+				PosthogConfigService
+			],
+			exports: [provider, PosthogService, PosthogConfigService]
 		};
 	}
 
