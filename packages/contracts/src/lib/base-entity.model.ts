@@ -118,6 +118,7 @@ export enum BaseEntityEnum {
 	OrganizationVendor = 'OrganizationVendor',
 	ResourceLink = 'ResourceLink',
 	ScreeningTask = 'ScreeningTask',
+	StrategicInitiative = 'StrategicInitiative',
 	Task = 'Task',
 	TaskLinkedIssue = 'TaskLinkedIssue',
 	TaskView = 'TaskView',

@@ -68,6 +68,7 @@ export * from './lib/geo-location.model';
 export * from './lib/github.model';
 export * from './lib/goal-settings.model';
 export * from './lib/goals.model';
+export * from './lib/strategic-initiative.model';
 export * from './lib/help-center-article.model';
 export * from './lib/help-center.model';
 export * from './lib/http-status.enum';
