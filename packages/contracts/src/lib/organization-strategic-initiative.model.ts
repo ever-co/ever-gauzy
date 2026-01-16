@@ -8,7 +8,7 @@ import { IOrganizationProject } from './organization-projects.model';
 // =====================================================
 
 /**
- * Strategic state enum
+ * Organization Strategic State enum
  * Defines the lifecycle phase of a strategic initiative
  *
  * Lifecycle:
@@ -17,7 +17,7 @@ import { IOrganizationProject } from './organization-projects.model';
  * 3. RESOLVED - Strategy fulfilled its purpose
  * 4. RETIRED - Strategy discontinued or transformed
  */
-export enum StrategicStateEnum {
+export enum OrganizationStrategicStateEnum {
 	DRAFT = 'draft',
 	ACTIVE = 'active',
 	RESOLVED = 'resolved',
@@ -25,34 +25,34 @@ export enum StrategicStateEnum {
 }
 
 /**
- * Visibility scope enum
+ * Organization Strategic Visibility scope enum
  * Defines who can see the strategic initiative
  *
  * - LEADERSHIP: Only organization admins/managers
  * - ORGANIZATION: All organization members
  * - TEAM: Members of teams linked to associated projects
  */
-export enum VisibilityScopeEnum {
+export enum OrganizationStrategicVisibilityScopeEnum {
 	LEADERSHIP = 'leadership',
 	ORGANIZATION = 'organization',
 	TEAM = 'team'
 }
 
 /**
- * Confidence level enum
+ * Organization Strategic Confidence level enum
  * Qualitative signal for strategic confidence
  */
-export enum ConfidenceLevelEnum {
+export enum OrganizationStrategicConfidenceLevelEnum {
 	LOW = 'low',
 	MEDIUM = 'medium',
 	HIGH = 'high'
 }
 
 /**
- * Perceived momentum enum
+ * Organization Strategic Perceived momentum enum
  * Qualitative signal for strategic progress perception
  */
-export enum PerceivedMomentumEnum {
+export enum OrganizationStrategicPerceivedMomentumEnum {
 	STALLED = 'stalled',
 	PROGRESSING = 'progressing',
 	ACCELERATING = 'accelerating'
@@ -63,7 +63,7 @@ export enum PerceivedMomentumEnum {
 // =====================================================
 
 /**
- * Strategic signals interface
+ * Organization Strategic signals interface
  * Qualitative signals stored as structured metadata
  *
  * These are:
@@ -71,12 +71,12 @@ export enum PerceivedMomentumEnum {
  * - Human-authored
  * - NOT derived automatically from project data
  */
-export interface IStrategicSignals {
+export interface IOrganizationStrategicSignals {
 	/** Overall confidence in achieving strategic intent */
-	confidenceLevel?: ConfidenceLevelEnum;
+	confidenceLevel?: OrganizationStrategicConfidenceLevelEnum;
 
 	/** Perceived momentum of progress */
-	perceivedMomentum?: PerceivedMomentumEnum;
+	perceivedMomentum?: OrganizationStrategicPerceivedMomentumEnum;
 
 	/** List of known risks or blockers */
 	knownRisks?: string[];
@@ -99,9 +99,9 @@ export interface IStrategicSignals {
  * Relational interface for entities that reference a single strategic initiative
  * Used for: Goals (ManyToOne relationship)
  */
-export interface IRelationalStrategicInitiative {
-	strategicInitiative?: IStrategicInitiative;
-	strategicInitiativeId?: ID;
+export interface IRelationalOrganizationStrategicInitiative {
+	organizationStrategicInitiative?: IOrganizationStrategicInitiative;
+	organizationStrategicInitiativeId?: ID;
 }
 
 /**
@@ -113,8 +113,8 @@ export interface IRelationalStrategicInitiative {
  * - "Improve User Experience" initiative
  * - "Modernize Tech Stack" initiative
  */
-export interface IRelationalStrategicInitiatives {
-	strategicInitiatives?: IStrategicInitiative[];
+export interface IRelationalOrganizationStrategicInitiatives {
+	organizationStrategicInitiatives?: IOrganizationStrategicInitiative[];
 }
 
 // =====================================================
@@ -122,7 +122,7 @@ export interface IRelationalStrategicInitiatives {
 // =====================================================
 
 /**
- * Strategic Initiative interface
+ * Organization Strategic Initiative interface
  *
  * A declared organizational focus area that gives meaning
  * and alignment to multiple projects over time.
@@ -135,7 +135,7 @@ export interface IRelationalStrategicInitiatives {
  *
  * @see Section 1-4 of conceptual analysis
  */
-export interface IStrategicInitiative
+export interface IOrganizationStrategicInitiative
 	extends IBasePerTenantAndOrganizationEntityModel,
 		IEmployeeEntityInput {
 	/** Short, human-readable title */
@@ -145,10 +145,10 @@ export interface IStrategicInitiative
 	intent?: string;
 
 	/** Current lifecycle state */
-	state: StrategicStateEnum;
+	state: OrganizationStrategicStateEnum;
 
 	/** Who can see this initiative */
-	visibilityScope: VisibilityScopeEnum;
+	visibilityScope: OrganizationStrategicVisibilityScopeEnum;
 
 	/**
 	 * Steward - owns the clarity of the strategy's intent
@@ -163,13 +163,12 @@ export interface IStrategicInitiative
 	 * Stored as JSON, human-authored
 	 * @see Section 9 of conceptual analysis
 	 */
-	signals?: IStrategicSignals | string // String for SQLite compatibility;
+	signals?: IOrganizationStrategicSignals | string; // String for SQLite compatibility
 
 	/**
 	 * Projects aligned with this initiative
 	 * Note: Projects reference initiatives, not the reverse
 	 * This is the inverse side of the relationship
-	 * Typed as generic to avoid circular dependencies
 	 * @see Section 5 of conceptual analysis
 	 */
 	projects?: IOrganizationProject[];
@@ -177,7 +176,6 @@ export interface IStrategicInitiative
 	/**
 	 * Goals aligned with this initiative (optional)
 	 * Provides strategic context to OKR measurements
-	 * Typed as generic to avoid circular dependencies
 	 */
 	goals?: IGoal[];
 }
@@ -187,32 +185,32 @@ export interface IStrategicInitiative
 // =====================================================
 
 /**
- * Create input for strategic initiative
+ * Create input for organization strategic initiative
  */
-export interface IStrategicInitiativeCreateInput
-	extends OmitFields<IStrategicInitiative, 'projects' | 'goals' | 'steward' | 'employee'> {
+export interface IOrganizationStrategicInitiativeCreateInput
+	extends OmitFields<IOrganizationStrategicInitiative, 'projects' | 'goals' | 'steward' | 'employee'> {
 	stewardId?: ID;
 }
 
 /**
- * Update input for strategic initiative
+ * Update input for organization strategic initiative
  */
-export interface IStrategicInitiativeUpdateInput
-	extends Partial<OmitFields<IStrategicInitiative, 'projects' | 'goals' | 'steward' | 'employee'>> {
+export interface IOrganizationStrategicInitiativeUpdateInput
+	extends Partial<OmitFields<IOrganizationStrategicInitiative, 'projects' | 'goals' | 'steward' | 'employee'>> {
 	stewardId?: ID;
 }
 
 /**
- * Update input specifically for strategic signals
+ * Update input specifically for organization strategic signals
  */
-export interface IStrategicSignalsUpdateInput extends Partial<IStrategicSignals> {}
+export interface IOrganizationStrategicSignalsUpdateInput extends Partial<IOrganizationStrategicSignals> {}
 
 /**
- * Find input for strategic initiatives
+ * Find input for organization strategic initiatives
  */
-export interface IStrategicInitiativeFindInput
+export interface IOrganizationStrategicInitiativeFindInput
 	extends Partial<
-		Pick<IStrategicInitiative, 'state' | 'visibilityScope' | 'stewardId' | 'isActive' | 'isArchived'>
+		Pick<IOrganizationStrategicInitiative, 'state' | 'visibilityScope' | 'stewardId' | 'isActive' | 'isArchived'>
 	> {
 	/** Filter by title (partial match) */
 	title?: string;

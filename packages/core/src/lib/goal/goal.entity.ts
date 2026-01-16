@@ -1,10 +1,11 @@
-import { IGoal, GoalLevelEnum, IKeyResult, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
-import { RelationId } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsEnum, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { JoinColumn, RelationId } from 'typeorm';
+import { IsOptional, IsEnum, IsString, IsUUID } from 'class-validator';
+import { IGoal, GoalLevelEnum, IKeyResult, IOrganizationTeam, IEmployee, ID, IOrganizationStrategicInitiative } from '@gauzy/contracts';
 import {
 	Employee,
 	KeyResult,
+	OrganizationStrategicInitiative,
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
@@ -57,7 +58,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsOptional()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	ownerTeamId?: string;
+	ownerTeamId?: ID;
 
 	/**
 	 * Owner Employee
@@ -74,7 +75,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsOptional()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	ownerEmployeeId?: string;
+	ownerEmployeeId?: ID;
 
 	/**
 	 * Lead Employee
@@ -91,7 +92,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsOptional()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	leadId?: string;
+	leadId?: ID;
 
 	/**
 	 * KeyResult
@@ -106,7 +107,34 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsOptional()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	alignedKeyResultId?: string;
+	alignedKeyResultId?: ID;
+
+	/**
+	 * Organization Strategic Initiative - Optional alignment to a strategic direction
+	 * Provides strategic context to this Goal (OKR)
+	 * Answers: "What strategic direction does this Goal support?"
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMManyToOne(() => OrganizationStrategicInitiative, (initiative) => initiative.goals, {
+		/** Indicates if relation column value can be nullable or not */
+		nullable: true,
+		/** Database cascade action on delete */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	organizationStrategicInitiative?: IOrganizationStrategicInitiative;
+
+	/**
+	 * Organization Strategic Initiative ID
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Goal) => it.organizationStrategicInitiative)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	organizationStrategicInitiativeId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------

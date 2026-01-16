@@ -4,9 +4,9 @@ import { IOrganizationProject } from './organization-projects.model';
 import { ITask } from './task.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { IKPI } from './goal-settings.model';
-import { IRelationalStrategicInitiative } from './strategic-initiative.model';
+import { IRelationalOrganizationStrategicInitiative } from './organization-strategic-initiative.model';
 
-export interface IGoal extends IBasePerTenantAndOrganizationEntityModel, IRelationalStrategicInitiative {
+export interface IGoal extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationStrategicInitiative {
 	name: string;
 	description?: string;
 	ownerTeam?: IOrganizationTeam;

@@ -134,6 +134,7 @@ export * from '../../resource-link/resource-link.entity';
 export * from '../../role-permission/role-permission.entity';
 export * from '../../role/role.entity';
 export * from '../../skills/skill.entity';
+export * from '../../organization-strategic-initiative/organization-strategic-initiative.entity';
 export * from '../../shared-entity/shared-entity.entity';
 export * from '../../entity-subscription/entity-subscription.entity';
 export * from '../../tags/tag.entity';

@@ -14,7 +14,7 @@ import { CurrenciesEnum } from './currency.model';
 import { IRelationalRole } from './role.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model'; // Base Entities
 import { CustomFieldsObject } from './shared-types'; // Shared Types
-import { IRelationalStrategicInitiatives } from './strategic-initiative.model';
+import { IRelationalOrganizationStrategicInitiatives } from './organization-strategic-initiative.model';
 
 /**
  * Project status enum
@@ -39,7 +39,7 @@ export interface IOrganizationProjectBase
 		IRelationalImageAsset,
 		IRelationalOrganizationContact,
 		IOrganizationProjectSetting,
-		IRelationalStrategicInitiatives,
+		IRelationalOrganizationStrategicInitiatives,
 		ITaggable {
 	name?: string;
 	startDate?: Date;
