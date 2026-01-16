@@ -779,6 +779,8 @@
 			"IMPORT_MESSAGE": "crwdns11213:0crwdne11213:0",
 			"IMPORT_HISTORY_MESSAGE": "crwdns7944:0crwdne7944:0",
 			"SELECT_FILE": "crwdns3798:0crwdne3798:0",
+			"EXIT_AGENT_LOGIN_CONFIRM": "Oops! You need to log in before you can use the app.",
+			"EXIT_AGENT_PREVENT_CONFIRM": "Oops! You are not allowed to exit. Please contact your account administrator.",
 			"DROP_FILE": "crwdns3800:0crwdne3800:0",
 			"NO_DROP_FILE": "crwdns11195:0crwdne11195:0",
 			"BROWSE": "crwdns3802:0crwdne3802:0",

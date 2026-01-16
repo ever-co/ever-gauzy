@@ -28,6 +28,7 @@ import { PluginSourceQuery } from '../+state/queries/plugin-source.query';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
 import { PluginQuery } from '../../+state/plugin.query';
 import { Store, ToastrNotificationService } from '../../../../../services';
+import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 // Installation and subscription side-effects moved to effects
 
@@ -71,7 +72,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		public readonly sourceQuery: PluginSourceQuery,
 		public readonly subscriptionQuery: PluginSubscriptionQuery,
 		public readonly accessFacade: PluginSubscriptionAccessFacade,
-		private readonly utils: PluginMarketplaceUtilsService
+		private readonly utils: PluginMarketplaceUtilsService,
+		private readonly environmentService: PluginEnvironmentService
 	) {}
 
 	ngOnInit(): void {
@@ -125,7 +127,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	private async handleError(error: any): Promise<void> {
 		this.toastrService.error(error);
-		await this.router.navigate(['/plugins/marketplace']);
+		await this.router.navigate(['..'], { relativeTo: this.route });
 	}
 
 	// Delegate utility methods to PluginMarketplaceUtilsService
@@ -180,11 +182,11 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public async navigateBack(): Promise<void> {
-		await this.router.navigate(['plugins', 'marketplace']);
+		await this.router.navigate(['..'], { relativeTo: this.route });
 	}
 
 	public async navigateToHistory(): Promise<void> {
-		await this.router.navigate(['plugins', 'marketplace', this.pluginId, 'versions']);
+		await this.router.navigate(['versions'], { relativeTo: this.route });
 	}
 
 	/**
@@ -325,5 +327,19 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	public get installedVersionId$(): Observable<ID> {
 		return this.pluginQuery.currentPluginVersionId(this.pluginId);
+	}
+
+	/**
+	 * Check if the plugin can be installed in the current environment
+	 */
+	public canInstallInEnvironment(): boolean {
+		return this.environmentService.canInstallPlugin(this.plugin);
+	}
+
+	/**
+	 * Get the environment mismatch tooltip message
+	 */
+	public getEnvironmentMismatchTooltip(): string {
+		return this.environmentService.getEnvironmentMismatchWarning(this.plugin);
 	}
 }

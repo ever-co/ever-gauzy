@@ -48,7 +48,7 @@ async function handleCloseAuthWindow(appWindow: AppWindow) {
 	const authConfig = getAuthConfig();
 	if (!authConfig?.token) {
 		const DIALOG_TITLE = TranslateService.instant('TIMER_TRACKER.DIALOG.WARNING');
-		const DIALOG_MESSAGE = TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT_AGENT_CONFIRM');
+		const DIALOG_MESSAGE = TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT_AGENT_LOGIN_CONFIRM');
 
 		const dialog = new DesktopDialog(DIALOG_TITLE, DIALOG_MESSAGE, appWindow.authWindow.browserWindow);
 		dialog.options.buttons = [

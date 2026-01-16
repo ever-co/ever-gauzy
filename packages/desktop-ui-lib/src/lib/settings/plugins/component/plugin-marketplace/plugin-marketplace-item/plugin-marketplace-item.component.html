@@ -105,122 +105,134 @@
     </div>
   </nb-card-header>
 
-  <nb-card-body>
-    @if(loading) {
-      <div class="d-flex justify-content-center py-5">
-        <nb-spinner status="primary"></nb-spinner>
-      </div>
-      }@else if(!plugin) {
-      <div class="no-data py-5">
-        <ngx-no-data-message [message]="'SM_TABLE.NO_DATA.PLUGIN_MARKETPLACE' | translate"></ngx-no-data-message>
-      </div>
-      }@else {
-      <div class="plugin-content">
-        <!-- Quick Actions -->
-        <div class="quick-actions-card">
-          @if(installed) {
-            <div class="installed-status">
-              <div class="status-indicator">
-                <nb-icon icon="checkmark-circle-2-outline" class="status-icon"></nb-icon>
-                <span class="status-text">{{ 'PLUGIN.DETAILS.INSTALLED' | translate }}</span>
-              </div>
-              <div class="action-buttons-group">
-                @if(needUpdate) {
-                  <button
-                    nbButton
-                    status="primary"
-                    size="medium"
-                    [disabled]="disabled"
-                    (click)="installUpdate()"
-                    class="update-button"
-                    >
-                    <nb-icon
-                      *gauzySpinnerButton="installing && isSelected"
-                      icon="sync-outline"
-                      class="mr-1"
-                    ></nb-icon>
-                    {{ 'BUTTONS.UPDATE' | translate }}
-                  </button>
-                }
-                <button
-                  nbButton
-                  outline
-                  status="danger"
-                  size="medium"
-                  [disabled]="disabled"
-                  (click)="uninstallPlugin()"
-                  class="uninstall-button"
-                  >
-                  <nb-icon
-                    *gauzySpinnerButton="uninstalling && isSelected"
-                    icon="slash-outline"
-                    class="mr-1"
-                  ></nb-icon>
-                  {{ 'BUTTONS.UNINSTALL' | translate }}
-                </button>
-              </div>
-            </div>
-          } @else {
-            <div class="install-options">
-              <!-- Install button with subscription check -->
-              @if(plugin.hasPlan) { @if(hasAccess$ | async) {
-                <!-- User has active subscription -->
-                <button
-                  nbButton
-                  status="success"
-                  size="medium"
-                  class="install-button"
-                  [disabled]="disabled"
-                  (click)="installPlugin()"
-                  [nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_WITH_SUBSCRIPTION' | translate"
-                  >
-                  <nb-icon
-                    *gauzySpinnerButton="installing && isSelected"
-                    icon="cloud-download-outline"
-                    class="mr-1"
-                  ></nb-icon>
-                  {{ 'BUTTONS.INSTALL' | translate }}
-                </button>
-              } @else {
-                <!-- User needs to subscribe first -->
-                <button
-                  nbButton
-                  status="warning"
-                  size="medium"
-                  class="subscribe-button"
-                  [disabled]="disabled"
-                  (click)="installPlugin()"
-                  [nbTooltip]="'PLUGIN.TOOLTIP.SUBSCRIBE_TO_INSTALL' | translate"
-                  >
-                  <nb-icon
-                    *gauzySpinnerButton="(installing && isSelected) || subscriptionLoading"
-                    icon="lock-outline"
-                    class="mr-1"
-                  ></nb-icon>
-                  {{ 'PLUGIN.BUTTONS.SUBSCRIBE_AND_INSTALL' | translate }}
-                </button>
-                } } @else {
-                <!-- Free plugin - no subscription required -->
-                <button
-                  nbButton
-                  status="success"
-                  size="medium"
-                  class="install-button"
-                  [disabled]="disabled"
-                  (click)="installPlugin()"
-                  [nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_FREE' | translate"
-                  >
-                  <nb-icon
-                    *gauzySpinnerButton="installing && isSelected"
-                    icon="cloud-download-outline"
-                    class="mr-1"
-                  ></nb-icon>
-                  {{ 'BUTTONS.INSTALL' | translate }}
-                </button>
-              }
-            </div>
-          }
-        </div>
+	<nb-card-body>
+		@if(loading) {
+		<div class="d-flex justify-content-center py-5">
+			<nb-spinner status="primary"></nb-spinner>
+		</div>
+		}@else if(!plugin) {
+		<div class="no-data py-5">
+			<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.PLUGIN_MARKETPLACE' | translate"></ngx-no-data-message>
+		</div>
+		}@else {
+		<div class="plugin-content">
+			<!-- Quick Actions -->
+			<div class="quick-actions-card">
+				@if(installed) {
+				<div class="installed-status">
+					<div class="status-indicator">
+						<nb-icon icon="checkmark-circle-2-outline" class="status-icon"></nb-icon>
+						<span class="status-text">{{ 'PLUGIN.DETAILS.INSTALLED' | translate }}</span>
+					</div>
+					<div class="action-buttons-group">
+						@if(needUpdate) {
+						<button
+							nbButton
+							status="primary"
+							size="medium"
+							[disabled]="disabled"
+							(click)="installUpdate()"
+							class="update-button"
+						>
+							<nb-icon
+								*gauzySpinnerButton="installing && isSelected"
+								icon="sync-outline"
+								class="mr-1"
+							></nb-icon>
+							{{ 'BUTTONS.UPDATE' | translate }}
+						</button>
+						}
+						<button
+							nbButton
+							outline
+							status="danger"
+							size="medium"
+							[disabled]="disabled"
+							(click)="uninstallPlugin()"
+							class="uninstall-button"
+						>
+							<nb-icon
+								*gauzySpinnerButton="uninstalling && isSelected"
+								icon="slash-outline"
+								class="mr-1"
+							></nb-icon>
+							{{ 'BUTTONS.UNINSTALL' | translate }}
+						</button>
+					</div>
+				</div>
+				} @else {
+				<div class="install-options">
+					<!-- Install button with subscription check -->
+					@if(plugin.hasPlan) { @if(hasAccess$ | async) {
+					<!-- User has active subscription -->
+					<button
+						nbButton
+						status="success"
+						size="medium"
+						class="install-button"
+						[disabled]="disabled || !canInstallInEnvironment()"
+						(click)="installPlugin()"
+						[nbTooltip]="
+							!canInstallInEnvironment()
+								? getEnvironmentMismatchTooltip()
+								: ('PLUGIN.TOOLTIP.INSTALL_WITH_SUBSCRIPTION' | translate)
+						"
+					>
+						<nb-icon
+							*gauzySpinnerButton="installing && isSelected"
+							icon="cloud-download-outline"
+							class="mr-1"
+						></nb-icon>
+						{{ 'BUTTONS.INSTALL' | translate }}
+					</button>
+					} @else {
+					<!-- User needs to subscribe first -->
+					<button
+						nbButton
+						status="warning"
+						size="medium"
+						class="subscribe-button"
+						[disabled]="disabled"
+						(click)="installPlugin()"
+						[nbTooltip]="
+							!canInstallInEnvironment()
+								? getEnvironmentMismatchTooltip()
+								: ('PLUGIN.TOOLTIP.SUBSCRIBE_TO_INSTALL' | translate)
+						"
+					>
+						<nb-icon
+							*gauzySpinnerButton="(installing && isSelected) || subscriptionLoading"
+							icon="lock-outline"
+							class="mr-1"
+						></nb-icon>
+						{{ 'PLUGIN.BUTTONS.SUBSCRIBE_AND_INSTALL' | translate }}
+					</button>
+					} } @else {
+					<!-- Free plugin - no subscription required -->
+					<button
+						nbButton
+						status="success"
+						size="medium"
+						class="install-button"
+						[disabled]="disabled || !canInstallInEnvironment()"
+						(click)="installPlugin()"
+						[nbTooltip]="
+							!canInstallInEnvironment()
+								? getEnvironmentMismatchTooltip()
+								: ('PLUGIN.TOOLTIP.INSTALL_FREE' | translate)
+						"
+					>
+						<nb-icon
+							*gauzySpinnerButton="installing && isSelected"
+							icon="cloud-download-outline"
+							class="mr-1"
+						></nb-icon>
+						{{ 'BUTTONS.INSTALL' | translate }}
+					</button>
+					}
+				</div>
+				}
+			</div>
 
         <!-- Plugin Info Tabs with Lazy Loading -->
         <nb-route-tabset

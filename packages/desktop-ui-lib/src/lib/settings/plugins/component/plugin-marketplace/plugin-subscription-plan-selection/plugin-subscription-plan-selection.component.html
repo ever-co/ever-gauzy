@@ -424,10 +424,19 @@ hasExistingSubscription$ | async;
 					nbButton
 					[status]="isPlanUpgrade(currentSubscription.plan, selectedPlanViewModel) ? 'success' : 'warning'"
 					(click)="onSubscribeAndInstall()"
-					[disabled]="!subscriptionForm.valid || creating || updating || !selectedPlanViewModel || error"
+					[disabled]="
+						!subscriptionForm.valid ||
+						creating ||
+						updating ||
+						!selectedPlanViewModel ||
+						error ||
+						!canInstallInEnvironment()
+					"
 					*gauzySpinnerButton="creating || updating"
 					[nbTooltip]="
-						isPlanUpgrade(currentSubscription.plan, selectedPlanViewModel)
+						!canInstallInEnvironment()
+							? getEnvironmentMismatchTooltip()
+							: isPlanUpgrade(currentSubscription.plan, selectedPlanViewModel)
 							? 'Upgrade to get instant access to new features'
 							: 'Downgrade will take effect at the end of your current billing cycle'
 					"
@@ -449,8 +458,18 @@ hasExistingSubscription$ | async;
 					nbButton
 					status="primary"
 					(click)="onSubscribeAndInstall()"
-					[disabled]="!subscriptionForm.valid || creating || updating || !selectedPlanViewModel || error"
+					[disabled]="
+						!subscriptionForm.valid ||
+						creating ||
+						updating ||
+						!selectedPlanViewModel ||
+						error ||
+						(!canInstallInEnvironment() && selectedPlanViewModel?.isFree)
+					"
 					*gauzySpinnerButton="creating || updating"
+					[nbTooltip]="getEnvironmentMismatchTooltip()"
+					[nbTooltipDisabled]="canInstallInEnvironment()"
+					nbTooltipPlacement="top"
 				>
 					@if (selectedPlanViewModel?.isFree) {
 					<nb-icon icon="download-outline"></nb-icon>

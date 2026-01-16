@@ -1,23 +1,24 @@
 import { Inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { SharedModule, SmartDataViewLayoutModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import {
+	NbButtonGroupModule,
 	NbButtonModule,
 	NbCardModule,
 	NbIconModule,
 	NbInputModule,
 	NbSelectModule,
 	NbSpinnerModule,
+	NbTabsetModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { SmartDataViewLayoutModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
-import { createIntegrationsRoutes } from './integrations.routes';
-import { IntegrationsComponent } from './integrations.component';
-import { IntegrationLayoutComponent } from './layout/layout.component';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { IntegrationListComponent } from './components/integration-list/list.component';
-
+import { IntegrationsComponent } from './integrations.component';
+import { createIntegrationsRoutes } from './integrations.routes';
+import { IntegrationLayoutComponent } from './layout/layout.component';
 @NgModule({
 	declarations: [IntegrationLayoutComponent, IntegrationListComponent, IntegrationsComponent],
 	imports: [
@@ -28,6 +29,8 @@ import { IntegrationListComponent } from './components/integration-list/list.com
 		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
+		NbTabsetModule,
+		NbButtonGroupModule,
 		RouterModule.forChild([]),
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
@@ -133,6 +136,14 @@ export class IntegrationsModule {
 			path: 'github',
 			// Register the loadChildren function to load the GithubModule lazy module
 			loadChildren: () => import('@gauzy/plugin-integration-github-ui').then((m) => m.IntegrationGithubUiModule)
+		});
+
+		// Register the routes for plugins
+		this._pageRouteRegistryService.registerPageRoute({
+			data: { selectors: false },
+			location: 'integrations',
+			path: 'plugins',
+			loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginsModule)
 		});
 
 		// Register the routes for activepieces integration

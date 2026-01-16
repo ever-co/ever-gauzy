@@ -6,7 +6,8 @@ const EmployeeNotificationTemplates = {
 	[NotificationActionTypeEnum.Assigned]: `{employeeName} {action} you to the {entity} "{entityName}"`,
 	[NotificationActionTypeEnum.Invited]: `{employeeName} {action} you to join the {entity} "{entityName}"`,
 	[NotificationActionTypeEnum.Mentioned]: `{employeeName} {action} you on the {entity} "{entityName}"`,
-	[NotificationActionTypeEnum.Messaged]: `{employeeName} sent you a new message"`
+	[NotificationActionTypeEnum.Messaged]: `{employeeName} sent you a new message`,
+	[NotificationActionTypeEnum.Broadcasted]: `{employeeName} published a new broadcast: "{entityName}"`
 };
 
 /**

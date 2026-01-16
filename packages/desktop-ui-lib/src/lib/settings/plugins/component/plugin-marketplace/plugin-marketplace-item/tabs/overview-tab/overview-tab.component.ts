@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IPlugin, IPluginVersion, PluginStatus, PluginType } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
 import { Observable, Subject } from 'rxjs';
@@ -22,6 +22,8 @@ export class OverviewTabComponent implements OnDestroy {
 
 	plugin$: Observable<IPlugin>;
 	selectedVersion$: Observable<IPluginVersion>;
+
+	private readonly route = inject(ActivatedRoute);
 
 	constructor(
 		private readonly router: Router,
@@ -68,6 +70,6 @@ export class OverviewTabComponent implements OnDestroy {
 		if (!pluginId) return;
 
 		// Navigate to version history
-		await this.router.navigate(['plugins', 'marketplace', pluginId, 'versions']);
+		await this.router.navigate(['../versions'], { relativeTo: this.route });
 	}
 }

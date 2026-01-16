@@ -807,8 +807,11 @@
 		"prepopulate",
 		"prepopulates",
 		"prepopulation",
-		"Liskov"
-		"Zrdm"
+		"Liskov",
+		"backoff",
+		"autodrain",
+		"pluginname",
+		"Mobi"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

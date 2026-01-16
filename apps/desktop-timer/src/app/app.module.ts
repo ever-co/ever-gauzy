@@ -121,9 +121,9 @@ if (environment.SENTRY_DSN) {
 		NbDatepickerModule.forRoot(),
 		AboutModule,
 		ActivityWatchModule,
-		PluginsModule,
 		RecapModule,
-		TaskTableModule
+		TaskTableModule,
+		PluginsModule
 	],
 	providers: [
 		AppService,

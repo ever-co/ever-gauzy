@@ -1,9 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
-import { User } from '@gauzy/core';
-import { IUser } from '@gauzy/contracts'
+import { User, PasswordHashService } from '@gauzy/core';
+import { IUser } from '@gauzy/contracts';
 
 /**
  * OAuth User Service
@@ -17,15 +16,14 @@ export class OAuthUserService {
 	private readonly logger = new Logger(OAuthUserService.name);
 	constructor(
 		@InjectRepository(User)
-		private readonly typeOrmRepository: Repository<User>
+		private readonly typeOrmRepository: Repository<User>,
+		private readonly passwordHashService: PasswordHashService
 	) {}
 
 	/**
 	 * Find user by email or ID with required relations
 	 */
-	private async findUserWithRelations(
-		where: { email: string } | { id: string }
-	): Promise<User | null> {
+	private async findUserWithRelations(where: { email: string } | { id: string }): Promise<User | null> {
 		return this.typeOrmRepository.findOne({
 			where: {
 				...where,
@@ -59,22 +57,19 @@ export class OAuthUserService {
 				return null;
 			}
 
-			// Verify password using bcrypt
+			// Verify password using PasswordHashService
 			if (!user.hash) {
 				return null;
 			}
 
-			const isPasswordValid = await bcrypt.compare(password, user.hash);
+			const isPasswordValid = await this.passwordHashService.verify(password, user.hash);
 			if (!isPasswordValid) {
 				return null;
 			}
 
 			return user;
 		} catch (error) {
-			this.logger.error(
-				'Error authenticating MCP user',
-				(error as Error)?.stack || (error as Error)?.message
-			);
+			this.logger.error('Error authenticating MCP user', (error as Error)?.stack || (error as Error)?.message);
 			return null;
 		}
 	}
@@ -92,10 +87,7 @@ export class OAuthUserService {
 
 			return user || null;
 		} catch (error) {
-			this.logger.error(
-				'Error retrieving MCP user info',
-				(error as Error)?.stack || (error as Error)?.message
-			);
+			this.logger.error('Error retrieving MCP user info', (error as Error)?.stack || (error as Error)?.message);
 			return null;
 		}
 	}

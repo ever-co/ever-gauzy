@@ -2,7 +2,6 @@ import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { IsNull, MoreThanOrEqual } from 'typeorm';
 import { environment } from '@gauzy/config';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
-import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import {
@@ -19,13 +18,15 @@ import { RequestContext } from './../core/context/request-context';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
+import { PasswordHashService } from '../password-hash/password-hash.service';
 
 @Injectable()
 export class EmailConfirmationService {
 	constructor(
 		private readonly emailService: EmailService,
 		private readonly userService: UserService,
-		private readonly featureFlagService: FeatureService
+		private readonly featureFlagService: FeatureService,
+		private readonly passwordHashService: PasswordHashService
 	) {}
 
 	/**
@@ -56,7 +57,7 @@ export class EmailConfirmationService {
 
 			// Update user's email token field and verification code
 			await this.userService.update(id, {
-				emailToken: await bcrypt.hash(token, 10),
+				emailToken: await this.passwordHashService.hash(token),
 				code: verificationCode,
 				...(environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME
 					? {
@@ -121,7 +122,7 @@ export class EmailConfirmationService {
 				if (!!user.emailVerifiedAt) {
 					throw new BadRequestException('Your email is already verified.');
 				}
-				if (!!user.emailToken && !!(await bcrypt.compare(token, user.emailToken))) {
+				if (!!user.emailToken && !!(await this.passwordHashService.verify(token, user.emailToken))) {
 					return user;
 				}
 			}

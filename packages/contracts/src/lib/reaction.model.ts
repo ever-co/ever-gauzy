@@ -15,6 +15,7 @@ export interface IReaction extends IBasePerTenantAndOrganizationEntityModel, IEm
  * Reaction entity enum
  */
 export enum ReactionEntityEnum {
+	Broadcast = 'Broadcast',
 	Comment = 'Comment',
 	Task = 'Task'
 }

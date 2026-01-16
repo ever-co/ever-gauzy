@@ -163,6 +163,8 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 				return employeeNotificationSetting.comment ?? true;
 			case EmployeeNotificationTypeEnum.MESSAGE:
 				return employeeNotificationSetting.message ?? true;
+			case EmployeeNotificationTypeEnum.BROADCAST:
+				return true; // Broadcasts are always allowed
 			default:
 				throw new Error(`Unsupported notification type: ${type}`);
 		}

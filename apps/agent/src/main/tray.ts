@@ -1,7 +1,7 @@
 import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';
 import { TranslateService } from '@gauzy/desktop-lib';
 import { PluginMarketplaceWindow } from '@gauzy/desktop-window';
-import { app, Menu, MenuItemConstructorOptions, nativeImage, shell, Tray } from 'electron';
+import { Menu, MenuItemConstructorOptions, nativeImage, shell, Tray } from 'electron';
 import * as path from 'path';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
 import MainEvent from './events/events';
@@ -154,7 +154,10 @@ class TrayMenu {
 				id: 'tray_exit',
 				label: `${TranslateService.instant('BUTTONS.EXIT')}`,
 				click() {
-					app.quit();
+					const mainEvent = MainEvent.getInstance();
+					mainEvent.emit(MAIN_EVENT, {
+						type: MAIN_EVENT_TYPE.EXIT_APP
+					});
 				}
 			}
 		];

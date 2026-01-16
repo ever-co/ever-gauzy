@@ -203,6 +203,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
+			/** Broadcast Permissions Start */
+			PermissionsEnum.BROADCAST_CREATE,
+			PermissionsEnum.BROADCAST_READ,
+			PermissionsEnum.BROADCAST_UPDATE,
+			PermissionsEnum.BROADCAST_DELETE,
+			/** Broadcast Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -426,6 +432,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
+			/** Broadcast Permissions Start */
+			PermissionsEnum.BROADCAST_CREATE,
+			PermissionsEnum.BROADCAST_READ,
+			PermissionsEnum.BROADCAST_UPDATE,
+			PermissionsEnum.BROADCAST_DELETE,
+			/** Broadcast Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -586,6 +598,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
+			/** Broadcast Permissions Start */
+			PermissionsEnum.BROADCAST_CREATE,
+			PermissionsEnum.BROADCAST_READ,
+			PermissionsEnum.BROADCAST_UPDATE,
+			PermissionsEnum.BROADCAST_DELETE,
+			/** Broadcast Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,

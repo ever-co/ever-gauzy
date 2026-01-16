@@ -5,6 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, debounceTime, distinctUntilChanged, map, tap } from 'rxjs';
 import { Store } from '../../../../services';
 import { PluginMarketplaceActions } from './+state/actions/plugin-marketplace.action';
+import { PluginUploadIntentActions } from './+state/actions/plugin-upload-intent.action';
 import { PluginMarketplaceQuery } from './+state/queries/plugin-marketplace.query';
 import { IPluginFilter, PluginMarketplaceStore } from './+state/stores/plugin-market.store';
 
@@ -204,8 +205,12 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 		return !!this.route.snapshot.data['isUploadAvailable'];
 	}
 
+	/**
+	 * Open the upload selection modal
+	 * Dispatches action to show modal where user chooses between installing locally or publishing to marketplace
+	 */
 	public upload(): void {
-		this.action.dispatch(PluginMarketplaceActions.upload());
+		this.action.dispatch(PluginUploadIntentActions.openUploadSelection());
 	}
 
 	ngOnDestroy(): void {

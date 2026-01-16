@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Routes } from '@angular/router';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -15,19 +14,11 @@ import { DesktopDirectiveModule } from '../../../../../../../directives/desktop-
 import { PipeModule } from '../../../../../../../time-tracker/pipes/pipe.module';
 import { OverviewTabComponent } from './overview-tab.component';
 
-const routes: Routes = [
-	{
-		path: '',
-		component: OverviewTabComponent
-	}
-];
-
 @NgModule({
 	declarations: [OverviewTabComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
-		RouterModule.forChild(routes),
 		TranslateModule,
 		NbCardModule,
 		NbIconModule,
@@ -39,4 +30,4 @@ const routes: Routes = [
 		PipeModule
 	]
 })
-export class OverviewTabModule {}
+export class OverviewTabModule { }

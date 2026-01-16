@@ -5,7 +5,9 @@ import { IPluginSubscription, PluginSubscriptionStatus } from '../../../../servi
  * Service for subscription status icon and badge mapping
  * Following Single Responsibility Principle
  */
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class SubscriptionStatusService {
 	/**
 	 * Get icon for subscription status
