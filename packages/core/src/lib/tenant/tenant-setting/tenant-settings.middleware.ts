@@ -97,11 +97,11 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 			const tenantSettings = await this.tenantSettingService.getSettings({ where: { tenantId } });
 			settings = { ...globalSettings, ...tenantSettings };
 
-			if (settings && Object.keys(settings).length > 0) {
+			if (Object.keys(settings).length > 0) {
 				await this.cacheManager.set(cacheKey, settings, 5 * 60 * 1000);
 			}
 		}
 
-		return settings || null;
+		return Object.keys(settings).length > 0 ? settings : null;
 	}
 }
