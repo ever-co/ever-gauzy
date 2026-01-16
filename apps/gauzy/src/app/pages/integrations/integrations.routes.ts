@@ -1,8 +1,8 @@
 import { Route } from '@angular/router';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { IntegrationLayoutComponent } from './layout/layout.component';
-import { IntegrationsComponent } from './integrations.component';
 import { IntegrationListComponent } from './components/integration-list/list.component';
+import { IntegrationsComponent } from './integrations.component';
+import { IntegrationLayoutComponent } from './layout/layout.component';
 
 /**
  * Create and configures routes for the integrations module.

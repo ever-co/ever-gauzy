@@ -2465,7 +2465,11 @@
 			"EMPLOYEE_AVAILABILITY_CREATE": "Создать доступность сотрудника",
 			"EMPLOYEE_AVAILABILITY_READ": "Просмотреть доступность сотрудника",
 			"EMPLOYEE_AVAILABILITY_UPDATE": "Обновить доступность сотрудника",
-			"EMPLOYEE_AVAILABILITY_DELETE": "Удалить доступность сотрудника"
+			"EMPLOYEE_AVAILABILITY_DELETE": "Удалить доступность сотрудника",
+			"BROADCAST_CREATE": "Создать broadcast",
+			"BROADCAST_READ": "Просмотр broadcast",
+			"BROADCAST_UPDATE": "Обновить broadcast",
+			"BROADCAST_DELETE": "Удалить broadcast"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",

@@ -2430,7 +2430,11 @@
 			"EMPLOYEE_AVAILABILITY_CREATE": "Mitarbeiterverfügbarkeit erstellen",
 			"EMPLOYEE_AVAILABILITY_READ": "Mitarbeiterverfügbarkeit anzeigen",
 			"EMPLOYEE_AVAILABILITY_UPDATE": "Mitarbeiterverfügbarkeit aktualisieren",
-			"EMPLOYEE_AVAILABILITY_DELETE": "Mitarbeiterverfügbarkeit löschen"
+			"EMPLOYEE_AVAILABILITY_DELETE": "Mitarbeiterverfügbarkeit löschen",
+			"BROADCAST_CREATE": "Broadcast erstellen",
+			"BROADCAST_READ": "Broadcast anzeigen",
+			"BROADCAST_UPDATE": "Broadcast aktualisieren",
+			"BROADCAST_DELETE": "Broadcast löschen"
 		},
 		"BILLING": "Rechnungsstellung",
 		"BUDGET": "Budget",

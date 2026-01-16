@@ -26,6 +26,7 @@ import {
 } from 'rxjs';
 import { PluginSubscriptionFacade } from '../+state';
 import { PluginSubscriptionActions } from '../+state/actions/plugin-subscription.action';
+import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginSubscriptionService } from '../../../services/plugin-subscription.service';
 import { SubscriptionPlanService, SubscriptionStatusService } from '../shared';
 import { IPlanViewModel, ISubscriptionPreviewViewModel } from './models/plan-view.model';
@@ -128,7 +129,8 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 		private readonly facade: PluginSubscriptionFacade,
 		private readonly planComparison: PlanComparisonService,
 		public readonly planService: SubscriptionPlanService,
-		public readonly statusService: SubscriptionStatusService
+		public readonly statusService: SubscriptionStatusService,
+		private readonly environmentService: PluginEnvironmentService
 	) {
 		this.initializeForm();
 		this.setupKeyboardShortcuts();
@@ -689,7 +691,9 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 
 	// Computed properties for template
 	public get canProceedWithoutSubscription$(): Observable<boolean> {
-		return this.hasFreePlan$.pipe(map((hasFreePlans) => hasFreePlans || !this.plugin?.hasPlan));
+		return this.hasFreePlan$.pipe(
+			map((hasFreePlans) => (hasFreePlans || !this.plugin?.hasPlan) && this.canInstallInEnvironment())
+		);
 	}
 
 	/**
@@ -953,5 +957,19 @@ export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestr
 				return '';
 			})
 		);
+	}
+
+	/**
+	 * Check if the plugin can be installed in the current environment
+	 */
+	public canInstallInEnvironment(): boolean {
+		return this.environmentService.canInstallPlugin(this.plugin);
+	}
+
+	/**
+	 * Get the environment mismatch tooltip message
+	 */
+	public getEnvironmentMismatchTooltip(): string {
+		return this.environmentService.getEnvironmentMismatchWarning(this.plugin);
 	}
 }

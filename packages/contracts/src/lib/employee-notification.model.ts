@@ -28,7 +28,8 @@ export enum EmployeeNotificationTypeEnum {
 	INVITATION = 'Invitation', // Stored as 2 in DB
 	MENTION = 'Mention', // Stored as 3 in DB
 	COMMENT = 'Comment', // Stored as 4 in DB
-	MESSAGE = 'Message' // Stored as 5 in DB
+	MESSAGE = 'Message', // Stored as 5 in DB
+	BROADCAST = 'Broadcast' // Stored as 6 in DB
 }
 
 /**
@@ -41,7 +42,8 @@ export enum NotificationActionTypeEnum {
 	Invited = 'Invited',
 	Mentioned = 'Mentioned',
 	Commented = 'Commented',
-	Messaged = 'Messaged'
+	Messaged = 'Messaged',
+	Broadcasted = 'Broadcasted'
 }
 
 /**

@@ -1,6 +1,16 @@
 <nb-card [nbSpinner]="isLoading$ | async" class="card-scroll">
 	<nb-card-header>
 		<h4>{{ 'INTEGRATIONS.AVAILABLE_INTEGRATIONS' | translate }}</h4>
+		<button
+			nbButton
+			status="basic"
+			size="medium"
+			class="plugins-navigation-button"
+			[routerLink]="['..', 'plugins']"
+		>
+			<nb-icon icon="cube-outline" pack="eva"></nb-icon>
+			<span>{{ 'INTEGRATIONS.PLUGINS' | translate }}</span>
+		</button>
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template [ngxPermissionsOnly]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
