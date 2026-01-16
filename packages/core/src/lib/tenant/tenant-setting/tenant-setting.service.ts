@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { FindManyOptions, In } from 'typeorm';
+import { FindManyOptions, In, IsNull } from 'typeorm';
 import { indexBy, keys, object, pluck } from 'underscore';
 import { S3Client, CreateBucketCommand, CreateBucketCommandInput, CreateBucketCommandOutput } from '@aws-sdk/client-s3';
 import { ID, ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
@@ -16,6 +16,113 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		mikroOrmTenantSettingRepository: MikroOrmTenantSettingRepository
 	) {
 		super(typeOrmTenantSettingRepository, mikroOrmTenantSettingRepository);
+	}
+
+	/**
+	 * Retrieves settings with hierarchical cascade resolution.
+	 * Priority (highest to lowest): Tenant DB → Global DB (tenantId=NULL) → Environment variables
+	 *
+	 * @param {string[]} names - Array of setting names to retrieve.
+	 * @param {ID} [tenantId] - Optional tenant ID. If not provided, only global and env settings are returned.
+	 * @param {Record<string, string>} [envDefaults] - Optional environment variable defaults (key = setting name, value = env value).
+	 * @returns {Promise<Record<string, string>>} - A key-value pair object with resolved settings.
+	 */
+	async getResolvedSettings(
+		names: string[],
+		tenantId?: ID,
+		envDefaults?: Record<string, string>
+	): Promise<Record<string, string>> {
+		// Start with environment defaults
+		const resolvedSettings: Record<string, string> = { ...(envDefaults || {}) };
+
+		// Fetch global settings (tenantId = NULL)
+		const globalSettings = await this.typeOrmRepository.find({
+			where: {
+				name: In(names),
+				tenantId: IsNull()
+			}
+		});
+
+		// Override with global DB settings
+		for (const setting of globalSettings) {
+			if (setting.value !== undefined && setting.value !== null) {
+				resolvedSettings[setting.name] = setting.value;
+			}
+		}
+
+		// If tenantId is provided, fetch tenant-specific settings
+		if (tenantId) {
+			const tenantSettings = await this.typeOrmRepository.find({
+				where: {
+					name: In(names),
+					tenantId: tenantId as string
+				}
+			});
+
+			// Override with tenant-specific settings
+			for (const setting of tenantSettings) {
+				if (setting.value !== undefined && setting.value !== null) {
+					resolvedSettings[setting.name] = setting.value;
+				}
+			}
+		}
+
+		return resolvedSettings;
+	}
+
+	/**
+	 * Saves or updates global settings in the database (tenantId = NULL).
+	 *
+	 * @param {ITenantSetting} input - An object containing settings where keys are setting names and values are setting values.
+	 * @returns {Promise<ITenantSetting>} - Returns the updated settings as a key-value object.
+	 */
+	async saveGlobalSettings(input: ITenantSetting): Promise<ITenantSetting> {
+		const settings: TenantSetting[] = await this.typeOrmRepository.find({
+			where: {
+				name: In(keys(input)),
+				tenantId: IsNull()
+			}
+		});
+
+		const settingsByName = indexBy(settings, 'name');
+		const saveInput: TenantSetting[] = [];
+
+		for (const key in input) {
+			if (Object.prototype.hasOwnProperty.call(input, key)) {
+				const setting = settingsByName[key];
+				if (setting !== undefined) {
+					setting.value = input[key];
+					saveInput.push(setting);
+				} else {
+					saveInput.push(
+						new TenantSetting({
+							value: input[key],
+							name: key,
+							tenantId: null // Global setting
+						})
+					);
+				}
+			}
+		}
+
+		await this.typeOrmRepository.save(saveInput);
+		return object(pluck(saveInput, 'name'), pluck(saveInput, 'value'));
+	}
+
+	/**
+	 * Retrieves global settings from the database (tenantId = NULL).
+	 *
+	 * @param {string[]} [names] - Optional array of setting names to retrieve. If not provided, all global settings are returned.
+	 * @returns {Promise<Record<string, string>>} - A key-value pair object with global settings.
+	 */
+	async getGlobalSettings(names?: string[]): Promise<Record<string, string>> {
+		const whereClause: any = { tenantId: IsNull() };
+		if (names && names.length > 0) {
+			whereClause.name = In(names);
+		}
+
+		const settings = await this.typeOrmRepository.find({ where: whereClause });
+		return object(pluck(settings, 'name'), pluck(settings, 'value'));
 	}
 
 	/**
