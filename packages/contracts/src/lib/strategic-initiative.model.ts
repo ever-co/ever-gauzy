@@ -96,11 +96,25 @@ export interface IStrategicSignals {
 // =====================================================
 
 /**
- * Relational interface for entities that reference a strategic initiative
+ * Relational interface for entities that reference a single strategic initiative
+ * Used for: Goals (ManyToOne relationship)
  */
 export interface IRelationalStrategicInitiative {
 	strategicInitiative?: IStrategicInitiative;
 	strategicInitiativeId?: ID;
+}
+
+/**
+ * Relational interface for entities that reference multiple strategic initiatives
+ * Used for: Projects (ManyToMany relationship)
+ *
+ * A project can contribute to multiple strategic directions simultaneously.
+ * Example: "Dashboard Redesign" project could align with:
+ * - "Improve User Experience" initiative
+ * - "Modernize Tech Stack" initiative
+ */
+export interface IRelationalStrategicInitiatives {
+	strategicInitiatives?: IStrategicInitiative[];
 }
 
 // =====================================================
