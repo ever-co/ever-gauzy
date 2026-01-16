@@ -130,7 +130,6 @@ import { GoalKpiTemplateModule } from '../goal-kpi-template/goal-kpi-template.mo
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { ReportModule } from '../reports/report.module';
 import { CustomSmtpModule } from '../custom-smtp/custom-smtp.module';
-import { SystemSettingModule } from '../system-setting/system-setting.module';
 import { FeatureModule } from '../feature/feature.module';
 import { ImageAssetModule } from '../image-asset/image-asset.module';
 import { resolveServeStaticPath } from '../helper';
@@ -396,7 +395,6 @@ if (environment.THROTTLE_ENABLED) {
 		CandidateTechnologiesModule,
 		CandidateCriterionsRatingModule,
 		CustomSmtpModule,
-		SystemSettingModule,
 		ExportModule,
 		ImportModule,
 		EmployeeSettingModule,

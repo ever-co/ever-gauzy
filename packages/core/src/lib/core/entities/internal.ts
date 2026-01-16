@@ -133,7 +133,6 @@ export * from '../../role-permission/role-permission.entity';
 export * from '../../role/role.entity';
 export * from '../../skills/skill.entity';
 export * from '../../shared-entity/shared-entity.entity';
-export * from '../../system-setting/system-setting.entity';
 export * from '../../entity-subscription/entity-subscription.entity';
 export * from '../../tags/tag.entity';
 export * from '../../tag-type/tag-type.entity';
