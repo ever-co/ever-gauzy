@@ -93,6 +93,10 @@ const routes: Routes = [
 				loadChildren: () => import('./file-storage/file-storage.module').then((m) => m.FileStorageModule)
 			},
 			{
+				path: 'monitoring',
+				loadChildren: () => import('./monitoring/monitoring.module').then((m) => m.MonitoringModule)
+			},
+			{
 				path: 'danger-zone',
 				component: DangerZoneComponent,
 				canActivate: [PermissionsGuard],
