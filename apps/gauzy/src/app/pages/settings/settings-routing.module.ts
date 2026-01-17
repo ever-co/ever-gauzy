@@ -94,7 +94,20 @@ const routes: Routes = [
 			},
 			{
 				path: 'monitoring',
-				loadChildren: () => import('./monitoring/monitoring.module').then((m) => m.MonitoringModule)
+				loadChildren: () => import('./monitoring/monitoring.module').then((m) => m.MonitoringModule),
+				canActivate: [PermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.GLOBAL_SETTING],
+						redirectTo: '/pages/settings'
+					},
+					selectors: {
+						project: false,
+						employee: false,
+						date: false,
+						organization: false
+					}
+				}
 			},
 			{
 				path: 'danger-zone',

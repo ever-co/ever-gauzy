@@ -202,6 +202,7 @@ export enum PermissionsEnum {
 	ACCESS_DELETE_ACCOUNT = 'ACCESS_DELETE_ACCOUNT',
 	ACCESS_DELETE_ALL_DATA = 'ACCESS_DELETE_ALL_DATA',
 	TENANT_SETTING = 'TENANT_SETTING', //allow user to access tenant setting
+	GLOBAL_SETTING = 'GLOBAL_SETTING', //allow user to access global settings (tenantId = NULL)
 	ALLOW_DELETE_TIME = 'ALLOW_DELETE_TIME',
 	ALLOW_MODIFY_TIME = 'ALLOW_MODIFY_TIME',
 	ALLOW_MANUAL_TIME = 'ALLOW_MANUAL_TIME',
@@ -456,6 +457,7 @@ export const PermissionGroups = {
 		PermissionsEnum.EXPORT_ADD,
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA,
 		PermissionsEnum.TENANT_SETTING,
+		PermissionsEnum.GLOBAL_SETTING,
 		PermissionsEnum.API_CALL_LOG_READ,
 		PermissionsEnum.API_CALL_LOG_DELETE,
 		/** Tenant API Key */

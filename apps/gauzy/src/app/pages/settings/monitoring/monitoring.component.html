@@ -6,7 +6,7 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.TENANT_SETTING]">
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.GLOBAL_SETTING]">
 			<div class="main-form" [nbSpinner]="loading()" nbSpinnerStatus="primary">
 				<aside class="aside-nav">
 					<h4 class="settings-section-header">
@@ -59,7 +59,10 @@
 								<nb-accordion-item-body #posthogBody [hidden]="posthogBody?.state === 'collapsed'">
 									<nb-tabset class="scope-tabset" (changeTab)="onPosthogTabChange($event)">
 										<!-- Global Tab -->
-										<nb-tab [tabTitle]="'SETTINGS_MONITORING.GLOBAL' | translate">
+										<nb-tab
+											[tabTitle]="'SETTINGS_MONITORING.GLOBAL' | translate"
+											*ngxPermissionsOnly="[PermissionsEnum.GLOBAL_SETTING]"
+										>
 											<form [formGroup]="globalPosthogForm">
 												<ng-container
 													*ngTemplateOutlet="
@@ -114,7 +117,10 @@
 								<nb-accordion-item-body #sentryBody [hidden]="sentryBody?.state === 'collapsed'">
 									<nb-tabset class="scope-tabset" (changeTab)="onSentryTabChange($event)">
 										<!-- Global Tab -->
-										<nb-tab [tabTitle]="'SETTINGS_MONITORING.GLOBAL' | translate">
+										<nb-tab
+											[tabTitle]="'SETTINGS_MONITORING.GLOBAL' | translate"
+											*ngxPermissionsOnly="[PermissionsEnum.GLOBAL_SETTING]"
+										>
 											<form [formGroup]="globalSentryForm">
 												<ng-container
 													*ngTemplateOutlet="
@@ -169,7 +175,10 @@
 								<nb-accordion-item-body #jitsuBody [hidden]="jitsuBody?.state === 'collapsed'">
 									<nb-tabset class="scope-tabset" (changeTab)="onJitsuTabChange($event)">
 										<!-- Global Tab -->
-										<nb-tab [tabTitle]="'SETTINGS_MONITORING.GLOBAL' | translate">
+										<nb-tab
+											[tabTitle]="'SETTINGS_MONITORING.GLOBAL' | translate"
+											*ngxPermissionsOnly="[PermissionsEnum.GLOBAL_SETTING]"
+										>
 											<form [formGroup]="globalJitsuForm">
 												<ng-container
 													*ngTemplateOutlet="jitsuFields; context: { form: globalJitsuForm }"

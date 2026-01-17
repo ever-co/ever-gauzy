@@ -32,6 +32,7 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 		status: HttpStatus.OK,
 		description: 'Global settings retrieved successfully.'
 	})
+	@Permissions(PermissionsEnum.GLOBAL_SETTING)
 	@Get('global')
 	async getGlobalSettings(): Promise<Record<string, string>> {
 		return this.commandBus.execute(new GlobalSettingGetCommand());
@@ -112,6 +113,7 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@Permissions(PermissionsEnum.GLOBAL_SETTING)
 	@Post('/global')
 	async saveGlobalSettings(@Body() entity: DynamicSettingDTO): Promise<ITenantSetting> {
 		return this.commandBus.execute(new GlobalSettingSaveCommand(entity));
