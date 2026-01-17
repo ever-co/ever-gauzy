@@ -109,10 +109,16 @@ export class PosthogService implements OnModuleDestroy {
 						}
 					}
 					if (settings.posthogFlushInterval) {
-						config = { ...config, flushInterval: parseInt(settings.posthogFlushInterval, 10) };
+						const interval = parseInt(settings.posthogFlushInterval, 10);
+						if (!isNaN(interval)) {
+							config = { ...config, flushInterval: interval };
+						}
 					}
 					if (settings.posthogFlushAt) {
-						config = { ...config, flushAt: parseInt(settings.posthogFlushAt, 10) };
+						const flushAt = parseInt(settings.posthogFlushAt, 10);
+						if (!isNaN(flushAt)) {
+							config = { ...config, flushAt };
+						}
 					}
 					if (settings.posthogEnableErrorTracking !== undefined) {
 						config = { ...config, enableErrorTracking: settings.posthogEnableErrorTracking === 'true' };
@@ -136,16 +142,21 @@ export class PosthogService implements OnModuleDestroy {
 			return null;
 		}
 
-		if (config.apiKey === this.options.apiKey) {
+		// Generate cache key from all config properties that affect client behavior
+		const cacheKey = `${config.apiKey}:${config.apiHost}:${config.flushInterval}:${config.flushAt}:${config.enableErrorTracking}`;
+		const defaultCacheKey = `${this.options.apiKey}:${this.options.apiHost}:${this.options.flushInterval}:${this.options.flushAt}:${this.options.enableErrorTracking}`;
+
+		// Return default client if config unchanged
+		if (cacheKey === defaultCacheKey) {
 			return this.defaultClient;
 		}
 
-		if (this.clientCache.has(config.apiKey)) {
-			return this.clientCache.get(config.apiKey)!;
+		if (this.clientCache.has(cacheKey)) {
+			return this.clientCache.get(cacheKey)!;
 		}
 
 		const client = this.createClient(config);
-		this.clientCache.set(config.apiKey, client);
+		this.clientCache.set(cacheKey, client);
 
 		return client;
 	}

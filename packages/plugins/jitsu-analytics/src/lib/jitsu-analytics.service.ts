@@ -48,7 +48,9 @@ export class JitsuAnalyticsService {
 				// Override with tenant settings
 				if (settings.jitsuHost) host = settings.jitsuHost;
 				if (settings.jitsuWriteKey) writeKey = settings.jitsuWriteKey;
-				if (settings.jitsuDebug !== undefined) debug = settings.jitsuDebug === 'true';
+				if (settings.jitsuDebug !== undefined) {
+					debug = settings.jitsuDebug === 'true' || settings.jitsuDebug === true;
+				}
 			}
 		} catch {
 			// No request context, use defaults
@@ -62,8 +64,8 @@ export class JitsuAnalyticsService {
 			return this.jitsu;
 		}
 
-		// Get or create cached client for tenant config
-		const cacheKey = `${host}:${writeKey}`;
+		// Get or create cached client for tenant config (include debug in cache key)
+		const cacheKey = `${host}:${writeKey}:${debug}`;
 		let client = this.clientCache.get(cacheKey);
 		if (!client) {
 			client = createJitsu({ ...this.config, host, writeKey, debug });

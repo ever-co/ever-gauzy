@@ -81,7 +81,22 @@ export class PosthogConfigService {
 	 * @returns true if PostHog is enabled and has an API key
 	 */
 	async isEnabled(tenantId?: ID): Promise<boolean> {
-		const config = await this.getConfig(tenantId);
-		return !!config.apiKey;
+		// Get resolved settings to check the enabled flag directly
+		const envConfig: Partial<IPosthogConfig> = environment.posthog ?? {};
+		const envDefaults: Record<string, string> = {
+			posthogKey: envConfig.posthogKey ?? '',
+			posthogEnabled: String(envConfig.posthogEnabled ?? false)
+		};
+
+		const resolvedSettings = await this.tenantSettingService.getResolvedSettings(
+			['posthogKey', 'posthogEnabled'],
+			tenantId,
+			envDefaults
+		);
+
+		const enabled = resolvedSettings['posthogEnabled'] === 'true';
+		const hasApiKey = !!resolvedSettings['posthogKey'];
+
+		return enabled && hasApiKey;
 	}
 }
