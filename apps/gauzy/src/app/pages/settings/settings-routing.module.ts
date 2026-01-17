@@ -98,7 +98,7 @@ const routes: Routes = [
 				canActivate: [PermissionsGuard],
 				data: {
 					permissions: {
-						only: [PermissionsEnum.GLOBAL_SETTING],
+						only: [PermissionsEnum.TENANT_SETTING],
 						redirectTo: '/pages/settings'
 					},
 					selectors: {

@@ -1081,7 +1081,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						link: '/pages/settings/monitoring',
 						data: {
 							translationKey: 'MENU.MONITORING',
-							permissionKeys: [PermissionsEnum.GLOBAL_SETTING]
+							permissionKeys: [PermissionsEnum.TENANT_SETTING]
 						}
 					},
 					{
