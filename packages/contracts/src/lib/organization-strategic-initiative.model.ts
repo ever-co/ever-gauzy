@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID, OmitFields } from './base-entity.model';
-import { IEmployee, IEmployeeEntityInput } from './employee.model';
+import { IEmployee } from './employee.model';
 import { IGoal } from './goals.model';
 import { IOrganizationProject } from './organization-projects.model';
 
@@ -136,8 +136,7 @@ export interface IRelationalOrganizationStrategicInitiatives {
  * @see Section 1-4 of conceptual analysis
  */
 export interface IOrganizationStrategicInitiative
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IEmployeeEntityInput {
+	extends IBasePerTenantAndOrganizationEntityModel {
 	/** Short, human-readable title */
 	title: string;
 
@@ -188,7 +187,7 @@ export interface IOrganizationStrategicInitiative
  * Create input for organization strategic initiative
  */
 export interface IOrganizationStrategicInitiativeCreateInput
-	extends OmitFields<IOrganizationStrategicInitiative, 'projects' | 'goals' | 'steward' | 'employee'> {
+	extends OmitFields<IOrganizationStrategicInitiative, 'projects' | 'goals' | 'steward'> {
 	stewardId?: ID;
 }
 
@@ -196,7 +195,7 @@ export interface IOrganizationStrategicInitiativeCreateInput
  * Update input for organization strategic initiative
  */
 export interface IOrganizationStrategicInitiativeUpdateInput
-	extends Partial<OmitFields<IOrganizationStrategicInitiative, 'projects' | 'goals' | 'steward' | 'employee'>> {
+	extends Partial<OmitFields<IOrganizationStrategicInitiative, 'projects' | 'goals' | 'steward'>> {
 	stewardId?: ID;
 }
 
