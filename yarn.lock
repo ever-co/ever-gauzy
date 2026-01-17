@@ -27,12 +27,11 @@
   resolved "https://registry.yarnpkg.com/@akveo/ng2-completer/-/ng2-completer-9.0.1.tgz#49d2914fb62b78cc6ae5aed861ea7fa4ed5863d1"
   integrity sha512-iACL0heOUmGV1GBKD3srwBJMFLZykld1MiTDvmbgEEXMhavp0UA45GdNsv7BBKI9XauuFKpOqHLlC+fT6DLGAQ==
 
-"@ali-hm/angular-tree-component@^19.2.5":
-  version "19.2.5"
-  resolved "https://registry.yarnpkg.com/@ali-hm/angular-tree-component/-/angular-tree-component-19.2.5.tgz#aca1f4af81eba3aa71b8a674e4387d2121e5f25c"
-  integrity sha512-INkTnYsWK/r+73tplO8lCg1hrQ6t3LI41shuK3vcHK36gGnJY+CJdIP6oYxHf6fbKvuXAdTXXaoOj3QTf38ztQ==
+"@ali-hm/angular-tree-component@^20.1.6":
+  version "20.3.4"
+  resolved "https://registry.yarnpkg.com/@ali-hm/angular-tree-component/-/angular-tree-component-20.3.4.tgz#faacf10cba3638555c8a84b4c9bfc44f4b21fb34"
+  integrity sha512-tPhz+l3sg2an6gm9VbC9CjFex6yTu/m+dst879UaF2TaGE0II/pGAAmTz/zYS9EOk+xWjkwaiJU3EhqN9GAk7Q==
   dependencies:
-    mobx "~4.14.1"
     tslib "^2.5.0"
 
 "@ampproject/remapping@2.3.0", "@ampproject/remapping@^2.2.0", "@ampproject/remapping@^2.3.0":
@@ -5279,17 +5278,10 @@
   resolved "https://registry.yarnpkg.com/@fullcalendar/bootstrap/-/bootstrap-6.1.20.tgz#6b7281fa96674ffea2602172f75a1c724b9b40bd"
   integrity sha512-WLMt4SQTrVnE19aQi54csIDIplVDew/eQ9f0iMRJqSGZqEYbH2Ea11LGjortB8+8bi7fAHhy4An47gaG6FOOpw==
 
-"@fullcalendar/core@^6.1.20":
+"@fullcalendar/core@^6.1.20", "@fullcalendar/core@~6.1.20":
   version "6.1.20"
   resolved "https://registry.yarnpkg.com/@fullcalendar/core/-/core-6.1.20.tgz#e4cfa767a9b8b7dad015b33fcb8acb0fac986a85"
   integrity sha512-1cukXLlePFiJ8YKXn/4tMKsy0etxYLCkXk8nUCFi11nRONF2Ba2CD5b21/ovtOO2tL6afTJfwmc1ed3HG7eB1g==
-  dependencies:
-    preact "~10.12.1"
-
-"@fullcalendar/core@~6.1.17":
-  version "6.1.17"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/core/-/core-6.1.17.tgz#faaffa100f020636a9b4c900462bdc6d652b58ef"
-  integrity sha512-0W7lnIrv18ruJ5zeWBeNZXO8qCWlzxDdp9COFEsZnyNjiEhUVnrW/dPbjRKYpL0edGG0/Lhs0ghp1z/5ekt8ZA==
   dependencies:
     preact "~10.12.1"
 
@@ -5298,51 +5290,34 @@
   resolved "https://registry.yarnpkg.com/@fullcalendar/daygrid/-/daygrid-6.1.20.tgz#fcf33af4ea908b46fd755414278341811e01bdf8"
   integrity sha512-AO9vqhkLP77EesmJzuU+IGXgxNulsA8mgQHynclJ8U70vSwAVnbcLG9qftiTAFSlZjiY/NvhE7sflve6cJelyQ==
 
-"@fullcalendar/daygrid@~6.1.17":
-  version "6.1.17"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/daygrid/-/daygrid-6.1.17.tgz#3ff9d8d99da872631b661bf9ca5a47ed849421cf"
-  integrity sha512-K7m+pd7oVJ9fW4h7CLDdDGJbc9szJ1xDU1DZ2ag+7oOo1aCNLv44CehzkkknM6r8EYlOOhgaelxQpKAI4glj7A==
-
-"@fullcalendar/interaction@^6.1.20":
+"@fullcalendar/interaction@^6.1.20", "@fullcalendar/interaction@~6.1.20":
   version "6.1.20"
   resolved "https://registry.yarnpkg.com/@fullcalendar/interaction/-/interaction-6.1.20.tgz#a73a53af5f93ac261f864b025ae80201609f1cd7"
   integrity sha512-p6txmc5txL0bMiPaJxe2ip6o0T384TyoD2KGdsU6UjZ5yoBlaY+dg7kxfnYKpYMzEJLG58n+URrHr2PgNL2fyA==
 
-"@fullcalendar/interaction@~6.1.17":
-  version "6.1.17"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/interaction/-/interaction-6.1.17.tgz#f0d14cb6f6c3cb7e2b20299dfb39a866232e2976"
-  integrity sha512-AudvQvgmJP2FU89wpSulUUjeWv24SuyCx8FzH2WIPVaYg+vDGGYarI7K6PcM3TH7B/CyaBjm5Rqw9lXgnwt5YA==
-
-"@fullcalendar/list@~6.1.17":
-  version "6.1.17"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/list/-/list-6.1.17.tgz#0111df515e662f2372bc50e56b90c3a5c2dc8ce0"
-  integrity sha512-fkyK49F9IxwlGUBVhJGsFpd/LTi/vRVERLIAe1HmBaGkjwpxnynm8TMLb9mZip97wvDk3CmZWduMe6PxscAlow==
+"@fullcalendar/list@~6.1.20":
+  version "6.1.20"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/list/-/list-6.1.20.tgz#d218906f0c50e1a7232a176df2426269f8601319"
+  integrity sha512-7Hzkbb7uuSqrXwTyD0Ld/7SwWNxPD6SlU548vtkIpH55rZ4qquwtwYdMPgorHos5OynHA4OUrZNcH51CjrCf2g==
 
 "@fullcalendar/moment-timezone@^6.1.20":
   version "6.1.20"
   resolved "https://registry.yarnpkg.com/@fullcalendar/moment-timezone/-/moment-timezone-6.1.20.tgz#3b0f249a781b338bd95ddc2a61b6ab1ab7915d0d"
   integrity sha512-fGk3bQU4hf0rgw3Zd/PH6Ok0Db+s9/nsuALj3IG8GYFqInwLsHZI0Qc+ljN8jv9LrLS5sOBBOZHWDg2ncx1inw==
 
-"@fullcalendar/multimonth@~6.1.17":
-  version "6.1.17"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/multimonth/-/multimonth-6.1.17.tgz#5a40e72a8b41ff365d54461d25893094a3733582"
-  integrity sha512-ZxA9mkTzKayCdxR5je9P9++qqhSeSbuvXmvZ6doZw6omv8K52cD7XJii+P7gvxATXxtI6hg4i+DuMyOHxP1E2g==
+"@fullcalendar/multimonth@~6.1.20":
+  version "6.1.20"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/multimonth/-/multimonth-6.1.20.tgz#1d6add6285222751324868de1cb02371f4ad2330"
+  integrity sha512-rMMiPBA71lUJ1DV/0ckPtN4/G4LozkkDKoG7/CbmTYqFJiMRskM/1WpilhtRn4iUdNe03V5K7ofFQRs0wo4ZtQ==
   dependencies:
-    "@fullcalendar/daygrid" "~6.1.17"
+    "@fullcalendar/daygrid" "~6.1.20"
 
-"@fullcalendar/timegrid@^6.1.20":
+"@fullcalendar/timegrid@^6.1.20", "@fullcalendar/timegrid@~6.1.20":
   version "6.1.20"
   resolved "https://registry.yarnpkg.com/@fullcalendar/timegrid/-/timegrid-6.1.20.tgz#929813235375c2fa3b387691ef5b1dcbb7b86dde"
   integrity sha512-4H+/MWbz3ntA50lrPif+7TsvMeX3R1GSYjiLULz0+zEJ7/Yfd9pupZmAwUs/PBpA6aAcFmeRr0laWfcz1a9V1A==
   dependencies:
     "@fullcalendar/daygrid" "~6.1.20"
-
-"@fullcalendar/timegrid@~6.1.17":
-  version "6.1.17"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/timegrid/-/timegrid-6.1.17.tgz#c88f19a1417ca314545d28a2fe23b33330e086dd"
-  integrity sha512-K4PlA3L3lclLOs3IX8cvddeiJI9ZVMD7RA9IqaWwbvac771971foc9tFze9YY+Pqesf6S+vhS2dWtEVlERaGlQ==
-  dependencies:
-    "@fullcalendar/daygrid" "~6.1.17"
 
 "@gar/promisify@^1.0.1", "@gar/promisify@^1.1.3":
   version "1.1.3"
@@ -15236,12 +15211,12 @@ angular-eslint@^19.3.0:
     "@typescript-eslint/types" "^8.0.0"
     "@typescript-eslint/utils" "^8.0.0"
 
-angular2-smart-table@^3.7.0:
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/angular2-smart-table/-/angular2-smart-table-3.8.0.tgz#f14688e661eff481961131acee1a58750219ebf4"
-  integrity sha512-vuZmhLNUtUWm/uX19ZDAc2Y5fNJQI6slOP3s/sc9H2OPWyakssx6BEOKXCSTmGykrt+tt1NN2xXW2M6BGW7rkg==
+angular2-smart-table@^4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/angular2-smart-table/-/angular2-smart-table-4.1.1.tgz#3ccc5186f0620d70a585b2ad24d4a82d0fc1dc42"
+  integrity sha512-KpItXv7/KH7hVDHYR+yVBXPcNvaYIyQ9SeutSZkD5iZsHiQ6GD0F0A80ENH8rC61Wvwhd2HRWam8HQaZyu/+TA==
   dependencies:
-    tslib "^2.7.0"
+    tslib "^2.8.0"
 
 ansi-align@^3.0.0:
   version "3.0.1"
@@ -23235,17 +23210,17 @@ fstream@^1.0.12:
     mkdirp ">=0.5 0"
     rimraf "2"
 
-fullcalendar@^6.1.15, fullcalendar@^6.1.17:
-  version "6.1.17"
-  resolved "https://registry.yarnpkg.com/fullcalendar/-/fullcalendar-6.1.17.tgz#ddd808c3163bd16b1ab290f9811043cafe40bb24"
-  integrity sha512-5pq3jYo9cJnVn8TrnukJdP3uNZWk2V1uiTqVXIaSbO5qIXeF3H1jE11PAB5fBOacnZ9HLI/98IT82Y1rz/2VIw==
+fullcalendar@^6.1.20:
+  version "6.1.20"
+  resolved "https://registry.yarnpkg.com/fullcalendar/-/fullcalendar-6.1.20.tgz#49df7c39affba29b4386934b7b1bf9408e9a8f41"
+  integrity sha512-7lz2P+0YdA86fBTwfr/ducajrM3zUw5o6uoiiYk9xMqcoTf003xBh3mpzW5om9slfAMwGgCBh0KsiYcU1JY1eQ==
   dependencies:
-    "@fullcalendar/core" "~6.1.17"
-    "@fullcalendar/daygrid" "~6.1.17"
-    "@fullcalendar/interaction" "~6.1.17"
-    "@fullcalendar/list" "~6.1.17"
-    "@fullcalendar/multimonth" "~6.1.17"
-    "@fullcalendar/timegrid" "~6.1.17"
+    "@fullcalendar/core" "~6.1.20"
+    "@fullcalendar/daygrid" "~6.1.20"
+    "@fullcalendar/interaction" "~6.1.20"
+    "@fullcalendar/list" "~6.1.20"
+    "@fullcalendar/multimonth" "~6.1.20"
+    "@fullcalendar/timegrid" "~6.1.20"
 
 function-bind@^1.1.2:
   version "1.1.2"
@@ -30510,10 +30485,10 @@ ngx-clipboard@^16.0.0:
     ngx-window-token ">=7.0.0"
     tslib "^2.0.0"
 
-ngx-color-picker@^19.0.0:
-  version "19.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-color-picker/-/ngx-color-picker-19.0.0.tgz#1084c332b7a7e9c8e2aae0e06e88c0f2bbedde25"
-  integrity sha512-jZs7nk/DJB6FryElYnfkojWYCgpEc650s800g+39ebocVMZ18fAHf/CQd5+Bdm4E3zoRod0a0sErJ+c8tGQcCg==
+ngx-color-picker@^20.1.1:
+  version "20.1.1"
+  resolved "https://registry.yarnpkg.com/ngx-color-picker/-/ngx-color-picker-20.1.1.tgz#59c196d6872d9e7ef3df0060d59dc32e12c34894"
+  integrity sha512-wFk1L9F3JBd1Th+auYexN4uyynaT2dhxVRn0Dd55HrhfVcxfylExITDJ+Bhrcl0W+QHtX6gVbfZuX2hBXeVMFA==
   dependencies:
     tslib "^2.3.0"
 
@@ -30524,10 +30499,10 @@ ngx-cookie-service@^20.1.1:
   dependencies:
     tslib "^2.8.0"
 
-ngx-countdown@^19.0.0:
-  version "19.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-countdown/-/ngx-countdown-19.0.0.tgz#935620d829bbc339f048360194feb1a89c494526"
-  integrity sha512-z4TtaWBQz/eozBS65dcE5leSPoCNjzADIRGpbxigquUPB3jqDfgRrdFvecdrcD3zbIqdhz8TKdGk/bto013rSg==
+ngx-countdown@^21.0.0:
+  version "21.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-countdown/-/ngx-countdown-21.0.0.tgz#ab232e9b2d8b4637e21b2b8d28f7bbc7b4e37994"
+  integrity sha512-uXPgy4JPk84WliaSLICN5MhasPufoCKPdpL+mImC74T/C9XOMrB4UNNnBVUuOdqGpIbAHLsVOZQnVoJ37Dnzsw==
   dependencies:
     tslib "^2.3.0"
 
@@ -30539,17 +30514,10 @@ ngx-daterangepicker-material@^6.0.4:
     dayjs "^1.11.5"
     tslib "^2.0.0"
 
-ngx-draggable-dom@^19.0.7:
-  version "19.0.7"
-  resolved "https://registry.yarnpkg.com/ngx-draggable-dom/-/ngx-draggable-dom-19.0.7.tgz#7536a3c93f41cf53e162081329c9da59a85489f3"
-  integrity sha512-6ePUyR3oNgA77rqAhfaP8v+iq5WVqo66u8aWZRs21dr7pm2ngH8xj50MFo+/G44la7/L2PeGhdw7DOmaOPF0JA==
-  dependencies:
-    tslib "^2.3.1"
-
-ngx-draggable-dom@^20.0.0:
-  version "20.0.4"
-  resolved "https://registry.yarnpkg.com/ngx-draggable-dom/-/ngx-draggable-dom-20.0.4.tgz#bbeaa7ffd9016e379140facf5ecb7bd1b7529a95"
-  integrity sha512-Re32CepTJOFYl51X0mGwJodWUbx4zVXXYv8ehWumxG2/emZNAQ7sBLKbr5byZHK4IYuPKIy/yJZdKlPB3aD7/g==
+ngx-draggable-dom@^21.0.5:
+  version "21.0.5"
+  resolved "https://registry.yarnpkg.com/ngx-draggable-dom/-/ngx-draggable-dom-21.0.5.tgz#72b721f1dee28a8836f76ed08bc14ffd641abde1"
+  integrity sha512-X4ceactZcht9hV//hxbRT5sd0dP5o451fo0pPCNJMP9JwpgnUj83QrQQSu124VUa/WcAnL73LhLe/69oRJMl0A==
   dependencies:
     tslib "^2.3.1"
 
@@ -39029,7 +38997,7 @@ tslib@2.3.0:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.0.tgz#803b8cdab3e12ba581a4ca41c8839bbb0dacb09e"
   integrity sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==
 
-tslib@2.8.1, tslib@^2.0.0, tslib@^2.0.1, tslib@^2.1.0, tslib@^2.2.0, tslib@^2.3.0, tslib@^2.3.1, tslib@^2.4.0, tslib@^2.4.1, tslib@^2.5.0, tslib@^2.6.2, tslib@^2.6.3, tslib@^2.7.0, tslib@^2.8.0, tslib@^2.8.1:
+tslib@2.8.1, tslib@^2.0.0, tslib@^2.0.1, tslib@^2.1.0, tslib@^2.2.0, tslib@^2.3.0, tslib@^2.3.1, tslib@^2.4.0, tslib@^2.4.1, tslib@^2.5.0, tslib@^2.6.2, tslib@^2.6.3, tslib@^2.8.0, tslib@^2.8.1:
   version "2.8.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.8.1.tgz#612efe4ed235d567e8aba5f2a5fab70280ade83f"
   integrity sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
@@ -39382,7 +39350,7 @@ typeorm@^0.3.28:
     uuid "^11.1.0"
     yargs "^17.7.2"
 
-typescript@5.8.3, "typescript@>=3 < 6", typescript@^5.0.4, typescript@^5.8.3, typescript@~5.8.2:
+typescript@5.8.3, "typescript@>=3 < 6", typescript@^5.0.4, typescript@~5.8.2:
   version "5.8.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.8.3.tgz#92f8a3e5e3cf497356f4178c34cd65a7f5e8440e"
   integrity sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==
