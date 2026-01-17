@@ -457,7 +457,6 @@ export const PermissionGroups = {
 		PermissionsEnum.EXPORT_ADD,
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA,
 		PermissionsEnum.TENANT_SETTING,
-		PermissionsEnum.GLOBAL_SETTING,
 		PermissionsEnum.API_CALL_LOG_READ,
 		PermissionsEnum.API_CALL_LOG_DELETE,
 		/** Tenant API Key */

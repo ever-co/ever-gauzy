@@ -6,7 +6,7 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.GLOBAL_SETTING]">
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.TENANT_SETTING, PermissionsEnum.GLOBAL_SETTING]">
 			<div class="main-form" [nbSpinner]="loading()" nbSpinnerStatus="primary">
 				<aside class="aside-nav">
 					<h4 class="settings-section-header">
