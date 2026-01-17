@@ -1,13 +1,12 @@
-import { Inject, Injectable, ConsoleLogger } from '@nestjs/common';
-import { OnApplicationShutdown } from '@nestjs/common';
+import { Inject, Injectable, ConsoleLogger, OnApplicationShutdown } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { RequestContext } from '@gauzy/core';
 import { SENTRY_MODULE_OPTIONS } from './sentry.constants';
 import { SentryModuleOptions } from './sentry.interfaces';
 
 @Injectable()
 export class SentryService extends ConsoleLogger implements OnApplicationShutdown {
-	app = '@ntegral/nestjs-sentry: ';
-
+	private readonly prefix = '@ntegral/nestjs-sentry: ';
 	private static serviceInstance: SentryService;
 
 	constructor(
@@ -15,11 +14,19 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		readonly opts?: SentryModuleOptions
 	) {
 		super();
-		if (!(opts && opts.dsn)) {
+		this.initSentry();
+	}
+
+	/**
+	 * Initialize Sentry with options from environment.
+	 */
+	private initSentry(): void {
+		if (!this.opts?.dsn) {
 			console.log('Sentry options not found. Did you use SentryModule.forRoot?');
 			return;
 		}
-		const { debug, integrations = [], ...sentryOptions } = opts;
+
+		const { integrations = [], ...sentryOptions } = this.opts;
 		Sentry.init({
 			...sentryOptions,
 			integrations: [
@@ -30,14 +37,10 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 							console.log(error);
 						} else {
 							Sentry.getClient()?.captureException(error);
-
-							Sentry.flush(3000).then(() => {
-								process.exit(1);
-							});
+							Sentry.flush(3000).then(() => process.exit(1));
 						}
 					}
 				}),
-
 				Sentry.onUnhandledRejectionIntegration({ mode: 'warn' }),
 				...integrations
 			]
@@ -45,9 +48,21 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 	}
 
 	/**
-	 *
-	 * @returns
+	 * Check if Sentry is enabled based on resolvedSettings or default config.
 	 */
+	private isEnabled(): boolean {
+		try {
+			const request = RequestContext.currentRequest();
+			const settings = request?.['resolvedSettings'];
+			if (settings?.sentryEnabled !== undefined) {
+				return settings.sentryEnabled === 'true' || settings.sentryEnabled === true;
+			}
+		} catch {
+			// No request context
+		}
+		return !!this.opts?.dsn;
+	}
+
 	public static SentryServiceInstance(): SentryService {
 		if (!SentryService.serviceInstance) {
 			SentryService.serviceInstance = new SentryService();
@@ -55,133 +70,76 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		return SentryService.serviceInstance;
 	}
 
-	/**
-	 *
-	 * @param message
-	 * @param context
-	 * @param asBreadcrumb
-	 */
 	log(message: string, context?: string, asBreadcrumb?: boolean) {
-		message = `${this.app} ${message}`;
+		const msg = `${this.prefix}${message}`;
 		try {
-			super.log(message, context);
+			super.log(msg, context);
+			if (!this.isEnabled()) return;
 			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'log',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'log');
-		} catch (err) {
-			// do nothing to avoid blocking the application
+				? Sentry.addBreadcrumb({ message: msg, level: 'log', data: { context } })
+				: Sentry.captureMessage(msg, 'log');
+		} catch {
+			// Silently ignore to avoid blocking the application
 		}
 	}
 
-	/**
-	 *
-	 * @param message
-	 * @param trace
-	 * @param context
-	 */
 	error(message: string, trace?: string, context?: string) {
-		message = `${this.app} ${message}`;
+		const msg = `${this.prefix}${message}`;
 		try {
-			super.error(message, trace, context);
-			Sentry.captureMessage(message, 'error');
-		} catch (err) {
-			// do nothing to avoid blocking the application
+			super.error(msg, trace, context);
+			if (!this.isEnabled()) return;
+			Sentry.captureMessage(msg, 'error');
+		} catch {
+			// Silently ignore to avoid blocking the application
 		}
 	}
 
-	/**
-	 *
-	 * @param message
-	 * @param context
-	 * @param asBreadcrumb
-	 */
 	warn(message: string, context?: string, asBreadcrumb?: boolean) {
-		message = `${this.app} ${message}`;
+		const msg = `${this.prefix}${message}`;
 		try {
-			super.warn(message, context);
+			super.warn(msg, context);
+			if (!this.isEnabled()) return;
 			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'warning',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'warning');
-		} catch (err) {
-			// do nothing to avoid blocking the application
+				? Sentry.addBreadcrumb({ message: msg, level: 'warning', data: { context } })
+				: Sentry.captureMessage(msg, 'warning');
+		} catch {
+			// Silently ignore to avoid blocking the application
 		}
 	}
 
-	/**
-	 *
-	 * @param message
-	 * @param context
-	 * @param asBreadcrumb
-	 */
 	debug(message: string, context?: string, asBreadcrumb?: boolean) {
-		message = `${this.app} ${message}`;
+		const msg = `${this.prefix}${message}`;
 		try {
-			super.debug(message, context);
+			super.debug(msg, context);
+			if (!this.isEnabled()) return;
 			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'debug',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'debug');
-		} catch (err) {
-			// do nothing to avoid blocking the application
+				? Sentry.addBreadcrumb({ message: msg, level: 'debug', data: { context } })
+				: Sentry.captureMessage(msg, 'debug');
+		} catch {
+			// Silently ignore to avoid blocking the application
 		}
 	}
 
-	/**
-	 *
-	 * @param message
-	 * @param context
-	 * @param asBreadcrumb
-	 */
 	verbose(message: string, context?: string, asBreadcrumb?: boolean) {
-		message = `${this.app} ${message}`;
+		const msg = `${this.prefix}${message}`;
 		try {
-			super.verbose(message, context);
+			super.verbose(msg, context);
+			if (!this.isEnabled()) return;
 			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'info',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'info');
-		} catch (err) {
-			// do nothing to avoid blocking the application
+				? Sentry.addBreadcrumb({ message: msg, level: 'info', data: { context } })
+				: Sentry.captureMessage(msg, 'info');
+		} catch {
+			// Silently ignore to avoid blocking the application
 		}
 	}
 
-	/**
-	 *
-	 * @returns
-	 */
 	instance() {
-		return Sentry;
+		return this.isEnabled() ? Sentry : null;
 	}
 
-	/**
-	 *
-	 * @param signal
-	 */
-	async onApplicationShutdown(signal?: string) {
-		if (this.opts?.close?.enabled === true) {
-			await Sentry.close(this.opts?.close.timeout);
+	async onApplicationShutdown() {
+		if (this.opts?.close?.enabled) {
+			await Sentry.close(this.opts.close.timeout);
 		}
 	}
 }

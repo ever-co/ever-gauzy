@@ -26,8 +26,9 @@ export class SentryInterceptor implements NestInterceptor {
 		// first param would be for events, second is for errors
 		return next.handle().pipe(
 			tap(null, (exception: HttpException) => {
-				if (this.shouldReport(exception)) {
-					this.client.instance().withScope((scope) => {
+				const sentry = this.client.instance();
+				if (sentry && this.shouldReport(exception)) {
+					sentry.withScope((scope) => {
 						return this.captureException(context, scope, exception);
 					});
 				}
@@ -63,6 +64,9 @@ export class SentryInterceptor implements NestInterceptor {
 	 * @param exception
 	 */
 	private captureHttpException(scope: Scope, http: HttpArgumentsHost, exception: HttpException): void {
+		const sentry = this.client.instance();
+		if (!sentry) return;
+
 		const request = http.getRequest();
 
 		// V9 Migration: Use httpRequestToRequestData instead of manual extraction
@@ -80,7 +84,7 @@ export class SentryInterceptor implements NestInterceptor {
 			scope.setUser(request.user);
 		}
 
-		this.client.instance().captureException(exception);
+		sentry.captureException(exception);
 	}
 
 	/**
@@ -90,9 +94,11 @@ export class SentryInterceptor implements NestInterceptor {
 	 * @param exception
 	 */
 	private captureRpcException(scope: Scope, rpc: RpcArgumentsHost, exception: any): void {
-		scope.setExtra('rpc_data', rpc.getData());
+		const sentry = this.client.instance();
+		if (!sentry) return;
 
-		this.client.instance().captureException(exception);
+		scope.setExtra('rpc_data', rpc.getData());
+		sentry.captureException(exception);
 	}
 
 	/**
@@ -102,10 +108,12 @@ export class SentryInterceptor implements NestInterceptor {
 	 * @param exception
 	 */
 	private captureWsException(scope: Scope, ws: WsArgumentsHost, exception: any): void {
+		const sentry = this.client.instance();
+		if (!sentry) return;
+
 		scope.setExtra('ws_client', ws.getClient());
 		scope.setExtra('ws_data', ws.getData());
-
-		this.client.instance().captureException(exception);
+		sentry.captureException(exception);
 	}
 
 	/**
