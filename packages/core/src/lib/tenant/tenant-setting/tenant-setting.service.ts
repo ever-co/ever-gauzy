@@ -38,7 +38,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		// Fetch global settings (tenantId = NULL)
 		let globalSettings: TenantSetting[];
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
+			case MultiORMEnum.MikroORM: {
 				const { where: globalWhere, mikroOptions: globalMikroOptions } =
 					parseTypeORMFindToMikroOrm<TenantSetting>({
 						where: { name: In(names), tenantId: IsNull() }
@@ -46,11 +46,13 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 				const globalItems = await this.mikroOrmRepository.find(globalWhere, globalMikroOptions);
 				globalSettings = globalItems.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
 				break;
-			case MultiORMEnum.TypeORM:
+			}
+			case MultiORMEnum.TypeORM: {
 				globalSettings = await this.typeOrmRepository.find({
 					where: { name: In(names), tenantId: IsNull() }
 				});
 				break;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -66,7 +68,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		if (tenantId) {
 			let tenantSettings: TenantSetting[];
 			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
+				case MultiORMEnum.MikroORM: {
 					const { where: tenantWhere, mikroOptions: tenantMikroOptions } =
 						parseTypeORMFindToMikroOrm<TenantSetting>({
 							where: { name: In(names), tenantId: tenantId as string }
@@ -76,11 +78,13 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 						this.serialize(entity)
 					) as TenantSetting[];
 					break;
-				case MultiORMEnum.TypeORM:
+				}
+				case MultiORMEnum.TypeORM: {
 					tenantSettings = await this.typeOrmRepository.find({
 						where: { name: In(names), tenantId: tenantId as string }
 					});
 					break;
+				}
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
@@ -105,18 +109,20 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 	async saveGlobalSettings(input: ITenantSetting): Promise<ITenantSetting> {
 		let settings: TenantSetting[];
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
+			case MultiORMEnum.MikroORM: {
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TenantSetting>({
 					where: { name: In(keys(input)), tenantId: IsNull() }
 				});
 				const items = await this.mikroOrmRepository.find(where, mikroOptions);
 				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
 				break;
-			case MultiORMEnum.TypeORM:
+			}
+			case MultiORMEnum.TypeORM: {
 				settings = await this.typeOrmRepository.find({
 					where: { name: In(keys(input)), tenantId: IsNull() }
 				});
 				break;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -143,12 +149,14 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		}
 
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
+			case MultiORMEnum.MikroORM: {
 				await this.mikroOrmRepository.getEntityManager().persistAndFlush(saveInput);
 				break;
-			case MultiORMEnum.TypeORM:
+			}
+			case MultiORMEnum.TypeORM: {
 				await this.typeOrmRepository.save(saveInput);
 				break;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -169,16 +177,18 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 
 		let settings: TenantSetting[];
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
+			case MultiORMEnum.MikroORM: {
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TenantSetting>({
 					where: whereClause
 				});
 				const items = await this.mikroOrmRepository.find(where, mikroOptions);
 				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
 				break;
-			case MultiORMEnum.TypeORM:
+			}
+			case MultiORMEnum.TypeORM: {
 				settings = await this.typeOrmRepository.find({ where: whereClause });
 				break;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -197,14 +207,16 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		let settings: TenantSetting[];
 
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
+			case MultiORMEnum.MikroORM: {
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TenantSetting>(request);
 				const items = await this.mikroOrmRepository.find(where, mikroOptions);
 				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
 				break;
-			case MultiORMEnum.TypeORM:
+			}
+			case MultiORMEnum.TypeORM: {
 				settings = await this.typeOrmRepository.find(request);
 				break;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -224,16 +236,18 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 	async saveSettings(input: ITenantSetting, tenantId: ID): Promise<ITenantSetting> {
 		let settings: TenantSetting[];
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
+			case MultiORMEnum.MikroORM: {
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TenantSetting>({
 					where: { name: In(keys(input)), tenantId }
 				});
 				const items = await this.mikroOrmRepository.find(where, mikroOptions);
 				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
 				break;
-			case MultiORMEnum.TypeORM:
+			}
+			case MultiORMEnum.TypeORM: {
 				settings = await this.typeOrmRepository.findBy({ name: In(keys(input)), tenantId });
 				break;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -260,12 +274,14 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		}
 
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
+			case MultiORMEnum.MikroORM: {
 				await this.mikroOrmRepository.getEntityManager().persistAndFlush(saveInput);
 				break;
-			case MultiORMEnum.TypeORM:
+			}
+			case MultiORMEnum.TypeORM: {
 				await this.typeOrmRepository.save(saveInput);
 				break;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
