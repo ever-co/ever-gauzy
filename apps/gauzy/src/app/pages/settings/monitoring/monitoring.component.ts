@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbAccordionComponent, NbAccordionItemComponent, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -42,9 +42,16 @@ export enum SettingsScope {
 	selector: 'ga-monitoring',
 	templateUrl: './monitoring.component.html',
 	styleUrls: ['./monitoring.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MonitoringComponent extends TranslationBaseComponent implements OnInit {
+	// Inject services using Angular 19 inject pattern
+	private readonly _fb = inject(UntypedFormBuilder);
+	private readonly _store = inject(Store);
+	private readonly _tenantService = inject(TenantService);
+	private readonly _toastrService = inject(ToastrService);
+
 	loading: boolean = false;
 	user: IUser;
 	PermissionsEnum = PermissionsEnum;
@@ -53,28 +60,28 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	/**
 	 * Nebular Accordion Item Components
 	 */
-	@ViewChild('posthog') posthog: NbAccordionItemComponent;
-	@ViewChild('sentry') sentry: NbAccordionItemComponent;
-	@ViewChild('jitsu') jitsu: NbAccordionItemComponent;
+	@ViewChild('posthog') protected readonly posthog: NbAccordionItemComponent;
+	@ViewChild('sentry') protected readonly sentry: NbAccordionItemComponent;
+	@ViewChild('jitsu') protected readonly jitsu: NbAccordionItemComponent;
 
 	/**
 	 * Nebular Accordion Main Component
 	 */
-	@ViewChild('accordion') accordion: NbAccordionComponent;
+	@ViewChild('accordion') protected readonly accordion: NbAccordionComponent;
 
 	/**
 	 * Forms for Global scope
 	 */
-	globalPosthogForm: UntypedFormGroup = MonitoringComponent.buildPosthogForm(this._fb);
-	globalSentryForm: UntypedFormGroup = MonitoringComponent.buildSentryForm(this._fb);
-	globalJitsuForm: UntypedFormGroup = MonitoringComponent.buildJitsuForm(this._fb);
+	protected globalPosthogForm: UntypedFormGroup = MonitoringComponent.buildPosthogForm(this._fb);
+	protected globalSentryForm: UntypedFormGroup = MonitoringComponent.buildSentryForm(this._fb);
+	protected globalJitsuForm: UntypedFormGroup = MonitoringComponent.buildJitsuForm(this._fb);
 
 	/**
 	 * Forms for Tenant scope
 	 */
-	tenantPosthogForm: UntypedFormGroup = MonitoringComponent.buildPosthogForm(this._fb);
-	tenantSentryForm: UntypedFormGroup = MonitoringComponent.buildSentryForm(this._fb);
-	tenantJitsuForm: UntypedFormGroup = MonitoringComponent.buildJitsuForm(this._fb);
+	protected tenantPosthogForm: UntypedFormGroup = MonitoringComponent.buildPosthogForm(this._fb);
+	protected tenantSentryForm: UntypedFormGroup = MonitoringComponent.buildSentryForm(this._fb);
+	protected tenantJitsuForm: UntypedFormGroup = MonitoringComponent.buildJitsuForm(this._fb);
 
 	static buildPosthogForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
@@ -100,13 +107,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 		});
 	}
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly _fb: UntypedFormBuilder,
-		private readonly _store: Store,
-		private readonly _tenantService: TenantService,
-		private readonly _toastrService: ToastrService
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -148,125 +149,76 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	private async _loadAllSettings(): Promise<void> {
 		this.loading = true;
 		try {
-			await Promise.all([
-				this._loadGlobalPosthogSettings(),
-				this._loadTenantPosthogSettings(),
-				this._loadGlobalSentrySettings(),
-				this._loadTenantSentrySettings(),
-				this._loadGlobalJitsuSettings(),
-				this._loadTenantJitsuSettings()
+			// Fetch both global and tenant settings once
+			const [globalSettings, tenantSettings] = await Promise.all([
+				this._tenantService.getGlobalSettings(),
+				this._tenantService.getSettings()
 			]);
+
+			// Patch all forms with fetched data
+			this._patchGlobalForms(globalSettings);
+			this._patchTenantForms(tenantSettings);
+		} catch (error) {
+			console.error('Error loading settings:', error);
 		} finally {
 			this.loading = false;
 		}
 	}
 
 	/**
-	 * Load Global PostHog settings
+	 * Patch global forms with settings
 	 */
-	private async _loadGlobalPosthogSettings(): Promise<void> {
-		try {
-			const settings = await this._tenantService.getGlobalSettings();
-			if (settings) {
-				this.globalPosthogForm.patchValue({
-					posthogEnabled: settings[POSTHOG_SETTINGS.ENABLED] === 'true',
-					posthogKey: settings[POSTHOG_SETTINGS.KEY] ?? '',
-					posthogHost: settings[POSTHOG_SETTINGS.HOST] ?? 'https://app.posthog.com',
-					posthogFlushInterval: parseInt(settings[POSTHOG_SETTINGS.FLUSH_INTERVAL], 10) || 10000
-				});
-			}
-		} catch (error) {
-			console.error('Error loading Global PostHog settings:', error);
-		}
+	private _patchGlobalForms(settings: Record<string, any>): void {
+		if (!settings) return;
+
+		// PostHog
+		this.globalPosthogForm.patchValue({
+			posthogEnabled: settings[POSTHOG_SETTINGS.ENABLED] === 'true',
+			posthogKey: settings[POSTHOG_SETTINGS.KEY] ?? '',
+			posthogHost: settings[POSTHOG_SETTINGS.HOST] ?? 'https://app.posthog.com',
+			posthogFlushInterval: parseInt(settings[POSTHOG_SETTINGS.FLUSH_INTERVAL], 10) || 10000
+		});
+
+		// Sentry
+		this.globalSentryForm.patchValue({
+			sentryEnabled: settings[SENTRY_SETTINGS.ENABLED] === 'true',
+			sentryDsn: settings[SENTRY_SETTINGS.DSN] ?? ''
+		});
+
+		// Jitsu
+		this.globalJitsuForm.patchValue({
+			jitsuEnabled: settings[JITSU_SETTINGS.ENABLED] === 'true',
+			jitsuHost: settings[JITSU_SETTINGS.HOST] ?? '',
+			jitsuWriteKey: settings[JITSU_SETTINGS.WRITE_KEY] ?? ''
+		});
 	}
 
 	/**
-	 * Load Tenant PostHog settings
+	 * Patch tenant forms with settings
 	 */
-	private async _loadTenantPosthogSettings(): Promise<void> {
-		try {
-			const settings = await this._tenantService.getSettings();
-			if (settings) {
-				this.tenantPosthogForm.patchValue({
-					posthogEnabled: settings[POSTHOG_SETTINGS.ENABLED] === 'true',
-					posthogKey: settings[POSTHOG_SETTINGS.KEY] ?? '',
-					posthogHost: settings[POSTHOG_SETTINGS.HOST] ?? 'https://app.posthog.com',
-					posthogFlushInterval: parseInt(settings[POSTHOG_SETTINGS.FLUSH_INTERVAL], 10) || 10000
-				});
-			}
-		} catch (error) {
-			console.error('Error loading Tenant PostHog settings:', error);
-		}
-	}
+	private _patchTenantForms(settings: Record<string, any>): void {
+		if (!settings) return;
 
-	/**
-	 * Load Global Sentry settings
-	 */
-	private async _loadGlobalSentrySettings(): Promise<void> {
-		try {
-			const settings = await this._tenantService.getGlobalSettings();
-			if (settings) {
-				this.globalSentryForm.patchValue({
-					sentryEnabled: settings[SENTRY_SETTINGS.ENABLED] === 'true',
-					sentryDsn: settings[SENTRY_SETTINGS.DSN] ?? ''
-				});
-			}
-		} catch (error) {
-			console.error('Error loading Global Sentry settings:', error);
-		}
-	}
+		// PostHog
+		this.tenantPosthogForm.patchValue({
+			posthogEnabled: settings[POSTHOG_SETTINGS.ENABLED] === 'true',
+			posthogKey: settings[POSTHOG_SETTINGS.KEY] ?? '',
+			posthogHost: settings[POSTHOG_SETTINGS.HOST] ?? 'https://app.posthog.com',
+			posthogFlushInterval: parseInt(settings[POSTHOG_SETTINGS.FLUSH_INTERVAL], 10) || 10000
+		});
 
-	/**
-	 * Load Tenant Sentry settings
-	 */
-	private async _loadTenantSentrySettings(): Promise<void> {
-		try {
-			const settings = await this._tenantService.getSettings();
-			if (settings) {
-				this.tenantSentryForm.patchValue({
-					sentryEnabled: settings[SENTRY_SETTINGS.ENABLED] === 'true',
-					sentryDsn: settings[SENTRY_SETTINGS.DSN] ?? ''
-				});
-			}
-		} catch (error) {
-			console.error('Error loading Tenant Sentry settings:', error);
-		}
-	}
+		// Sentry
+		this.tenantSentryForm.patchValue({
+			sentryEnabled: settings[SENTRY_SETTINGS.ENABLED] === 'true',
+			sentryDsn: settings[SENTRY_SETTINGS.DSN] ?? ''
+		});
 
-	/**
-	 * Load Global Jitsu settings
-	 */
-	private async _loadGlobalJitsuSettings(): Promise<void> {
-		try {
-			const settings = await this._tenantService.getGlobalSettings();
-			if (settings) {
-				this.globalJitsuForm.patchValue({
-					jitsuEnabled: settings[JITSU_SETTINGS.ENABLED] === 'true',
-					jitsuHost: settings[JITSU_SETTINGS.HOST] ?? '',
-					jitsuWriteKey: settings[JITSU_SETTINGS.WRITE_KEY] ?? ''
-				});
-			}
-		} catch (error) {
-			console.error('Error loading Global Jitsu settings:', error);
-		}
-	}
-
-	/**
-	 * Load Tenant Jitsu settings
-	 */
-	private async _loadTenantJitsuSettings(): Promise<void> {
-		try {
-			const settings = await this._tenantService.getSettings();
-			if (settings) {
-				this.tenantJitsuForm.patchValue({
-					jitsuEnabled: settings[JITSU_SETTINGS.ENABLED] === 'true',
-					jitsuHost: settings[JITSU_SETTINGS.HOST] ?? '',
-					jitsuWriteKey: settings[JITSU_SETTINGS.WRITE_KEY] ?? ''
-				});
-			}
-		} catch (error) {
-			console.error('Error loading Tenant Jitsu settings:', error);
-		}
+		// Jitsu
+		this.tenantJitsuForm.patchValue({
+			jitsuEnabled: settings[JITSU_SETTINGS.ENABLED] === 'true',
+			jitsuHost: settings[JITSU_SETTINGS.HOST] ?? '',
+			jitsuWriteKey: settings[JITSU_SETTINGS.WRITE_KEY] ?? ''
+		});
 	}
 
 	/**

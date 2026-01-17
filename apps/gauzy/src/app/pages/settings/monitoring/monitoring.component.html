@@ -12,22 +12,40 @@
 					<h4 class="settings-section-header">
 						{{ 'SETTINGS_MONITORING.SERVICES' | translate }}
 					</h4>
-					<ul>
-						<span (click)="posthog.toggle()">
-							<li [ngClass]="{ active: posthog?.expanded }">
-								{{ 'SETTINGS_MONITORING.POSTHOG.TITLE' | translate }}
-							</li>
-						</span>
-						<span (click)="sentry.toggle()">
-							<li [ngClass]="{ active: sentry?.expanded }">
-								{{ 'SETTINGS_MONITORING.SENTRY.TITLE' | translate }}
-							</li>
-						</span>
-						<span (click)="jitsu.toggle()">
-							<li [ngClass]="{ active: jitsu?.expanded }">
-								{{ 'SETTINGS_MONITORING.JITSU.TITLE' | translate }}
-							</li>
-						</span>
+					<ul role="tablist" aria-label="Monitoring services">
+						<li
+							role="tab"
+							tabindex="0"
+							[attr.aria-selected]="posthog?.expanded"
+							[class.active]="posthog?.expanded"
+							(click)="posthog.toggle()"
+							(keydown.enter)="posthog.toggle()"
+							(keydown.space)="posthog.toggle(); $event.preventDefault()"
+						>
+							{{ 'SETTINGS_MONITORING.POSTHOG.TITLE' | translate }}
+						</li>
+						<li
+							role="tab"
+							tabindex="0"
+							[attr.aria-selected]="sentry?.expanded"
+							[class.active]="sentry?.expanded"
+							(click)="sentry.toggle()"
+							(keydown.enter)="sentry.toggle()"
+							(keydown.space)="sentry.toggle(); $event.preventDefault()"
+						>
+							{{ 'SETTINGS_MONITORING.SENTRY.TITLE' | translate }}
+						</li>
+						<li
+							role="tab"
+							tabindex="0"
+							[attr.aria-selected]="jitsu?.expanded"
+							[class.active]="jitsu?.expanded"
+							(click)="jitsu.toggle()"
+							(keydown.enter)="jitsu.toggle()"
+							(keydown.space)="jitsu.toggle(); $event.preventDefault()"
+						>
+							{{ 'SETTINGS_MONITORING.JITSU.TITLE' | translate }}
+						</li>
 					</ul>
 				</aside>
 				<section class="fields-section">
