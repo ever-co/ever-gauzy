@@ -23,6 +23,11 @@
 								{{ 'SETTINGS_MONITORING.SENTRY.TITLE' | translate }}
 							</li>
 						</span>
+						<span (click)="jitsu.toggle()">
+							<li [ngClass]="{ active: jitsu?.expanded }">
+								{{ 'SETTINGS_MONITORING.JITSU.TITLE' | translate }}
+							</li>
+						</span>
 					</ul>
 				</aside>
 				<section class="fields-section">
@@ -137,6 +142,55 @@
 									</nb-tabset>
 								</nb-accordion-item-body>
 							</nb-accordion-item>
+
+							<!-- Jitsu Settings -->
+							<nb-accordion-item #jitsu>
+								<nb-accordion-item-header>
+									{{ 'SETTINGS_MONITORING.JITSU.TITLE' | translate }}
+								</nb-accordion-item-header>
+								<nb-accordion-item-body #jitsuBody [hidden]="jitsuBody?.state === 'collapsed'">
+									<nb-tabset class="scope-tabset" (changeTab)="onJitsuTabChange($event)">
+										<!-- Global Tab -->
+										<nb-tab [tabTitle]="'SETTINGS_MONITORING.GLOBAL' | translate">
+											<form [formGroup]="globalJitsuForm">
+												<ng-container
+													*ngTemplateOutlet="jitsuFields; context: { form: globalJitsuForm }"
+												></ng-container>
+												<div class="actions mt-3">
+													<button
+														[disabled]="globalJitsuForm.invalid || loading"
+														(throttledClick)="saveGlobalJitsu()"
+														debounceClick
+														nbButton
+														status="success"
+													>
+														{{ 'BUTTONS.SAVE' | translate }}
+													</button>
+												</div>
+											</form>
+										</nb-tab>
+										<!-- Tenant Tab -->
+										<nb-tab [tabTitle]="'MENU.TENANT' | translate">
+											<form [formGroup]="tenantJitsuForm">
+												<ng-container
+													*ngTemplateOutlet="jitsuFields; context: { form: tenantJitsuForm }"
+												></ng-container>
+												<div class="actions mt-3">
+													<button
+														[disabled]="tenantJitsuForm.invalid || loading"
+														(throttledClick)="saveTenantJitsu()"
+														debounceClick
+														nbButton
+														status="success"
+													>
+														{{ 'BUTTONS.SAVE' | translate }}
+													</button>
+												</div>
+											</form>
+										</nb-tab>
+									</nb-tabset>
+								</nb-accordion-item-body>
+							</nb-accordion-item>
 						</nb-accordion>
 					</div>
 				</section>
@@ -224,6 +278,46 @@
 						type="password"
 						formControlName="sentryDsn"
 						[placeholder]="'SETTINGS_MONITORING.SENTRY.DSN_PLACEHOLDER' | translate"
+					/>
+				</div>
+			</div>
+		</div>
+	</div>
+</ng-template>
+
+<!-- Jitsu Fields Template -->
+<ng-template #jitsuFields let-form="form">
+	<div class="fields" [formGroup]="form">
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group toggle-switch">
+					<nb-toggle class="d-block" formControlName="jitsuEnabled" status="primary" labelPosition="start">
+						{{ 'SETTINGS_MONITORING.JITSU.ENABLED' | translate }}
+					</nb-toggle>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label">{{ 'SETTINGS_MONITORING.JITSU.HOST' | translate }}</label>
+					<input
+						nbInput
+						fullWidth
+						formControlName="jitsuHost"
+						[placeholder]="'SETTINGS_MONITORING.JITSU.HOST_PLACEHOLDER' | translate"
+					/>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label">{{ 'SETTINGS_MONITORING.JITSU.WRITE_KEY' | translate }}</label>
+					<input
+						nbInput
+						fullWidth
+						type="password"
+						formControlName="jitsuWriteKey"
+						[placeholder]="'SETTINGS_MONITORING.JITSU.WRITE_KEY_PLACEHOLDER' | translate"
 					/>
 				</div>
 			</div>

@@ -20,6 +20,10 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 	 * @param {Request} _request - The incoming HTTP request object.
 	 * @param {Response} _response - The outgoing HTTP response object.
 	 * @param {NextFunction} next - The next middleware function to call.
+	 *
+	 * @returns {Promise<void>} - Proceeds to the next middleware after attaching tenant settings to the request.
+	 *
+	 * @throws {Error} - Logs errors if tenant settings retrieval fails.
 	 */
 	async use(_request: Request, _response: Response, next: NextFunction): Promise<void> {
 		try {
@@ -27,6 +31,8 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 
 			if (authHeader) {
 				const token = authHeader.split(' ')[1];
+
+				// Decode JWT token
 				const decodedToken: any = jwt.decode(token);
 				let tenantSettings = {};
 
@@ -38,6 +44,8 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 					}
 
 					const cacheKey = `tenantSettings_${tenantId}`;
+
+					// Attempt to fetch from cache
 					tenantSettings = await this.cacheManager.get(cacheKey);
 
 					if (!tenantSettings) {
@@ -45,12 +53,13 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 							console.log('Tenant settings NOT loaded from Cache for tenantId: %s', tenantId);
 						}
 
+						// Fetch tenant settings from DB
 						tenantSettings = await this.tenantSettingService.getSettings({
 							where: { tenantId }
 						});
 
 						if (tenantSettings) {
-							const ttl = 5 * 60 * 1000;
+							const ttl = 5 * 60 * 1000; // Cache TTL: 5 minutes
 							await this.cacheManager.set(cacheKey, tenantSettings, ttl);
 
 							if (this.logging) {
@@ -74,6 +83,7 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 				}
 
 				if (tenantSettings) {
+					// Attach tenant settings to request
 					_request['tenantSettings'] = tenantSettings;
 				}
 			}

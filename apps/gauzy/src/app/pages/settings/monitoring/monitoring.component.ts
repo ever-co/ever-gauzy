@@ -23,6 +23,12 @@ const SENTRY_SETTINGS = {
 	DSN: 'sentryDsn'
 };
 
+const JITSU_SETTINGS = {
+	ENABLED: 'jitsuEnabled',
+	HOST: 'jitsuHost',
+	WRITE_KEY: 'jitsuWriteKey'
+};
+
 /**
  * Scope enumeration for settings
  */
@@ -49,6 +55,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	 */
 	@ViewChild('posthog') posthog: NbAccordionItemComponent;
 	@ViewChild('sentry') sentry: NbAccordionItemComponent;
+	@ViewChild('jitsu') jitsu: NbAccordionItemComponent;
 
 	/**
 	 * Nebular Accordion Main Component
@@ -60,12 +67,14 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	 */
 	globalPosthogForm: UntypedFormGroup = MonitoringComponent.buildPosthogForm(this._fb);
 	globalSentryForm: UntypedFormGroup = MonitoringComponent.buildSentryForm(this._fb);
+	globalJitsuForm: UntypedFormGroup = MonitoringComponent.buildJitsuForm(this._fb);
 
 	/**
 	 * Forms for Tenant scope
 	 */
 	tenantPosthogForm: UntypedFormGroup = MonitoringComponent.buildPosthogForm(this._fb);
 	tenantSentryForm: UntypedFormGroup = MonitoringComponent.buildSentryForm(this._fb);
+	tenantJitsuForm: UntypedFormGroup = MonitoringComponent.buildJitsuForm(this._fb);
 
 	static buildPosthogForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
@@ -80,6 +89,14 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 		return fb.group({
 			sentryEnabled: [false],
 			sentryDsn: ['']
+		});
+	}
+
+	static buildJitsuForm(fb: UntypedFormBuilder): UntypedFormGroup {
+		return fb.group({
+			jitsuEnabled: [false],
+			jitsuHost: [''],
+			jitsuWriteKey: ['']
 		});
 	}
 
@@ -119,6 +136,13 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	}
 
 	/**
+	 * Handle Jitsu tab change
+	 */
+	onJitsuTabChange(tab: NbTabComponent): void {
+		// Tab change is handled by nb-tabset, data is already loaded
+	}
+
+	/**
 	 * Load all settings for both services and both scopes
 	 */
 	private async _loadAllSettings(): Promise<void> {
@@ -128,7 +152,9 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 				this._loadGlobalPosthogSettings(),
 				this._loadTenantPosthogSettings(),
 				this._loadGlobalSentrySettings(),
-				this._loadTenantSentrySettings()
+				this._loadTenantSentrySettings(),
+				this._loadGlobalJitsuSettings(),
+				this._loadTenantJitsuSettings()
 			]);
 		} finally {
 			this.loading = false;
@@ -204,6 +230,42 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 			}
 		} catch (error) {
 			console.error('Error loading Tenant Sentry settings:', error);
+		}
+	}
+
+	/**
+	 * Load Global Jitsu settings
+	 */
+	private async _loadGlobalJitsuSettings(): Promise<void> {
+		try {
+			const settings = await this._tenantService.getGlobalSettings();
+			if (settings) {
+				this.globalJitsuForm.patchValue({
+					jitsuEnabled: settings[JITSU_SETTINGS.ENABLED] === 'true',
+					jitsuHost: settings[JITSU_SETTINGS.HOST] ?? '',
+					jitsuWriteKey: settings[JITSU_SETTINGS.WRITE_KEY] ?? ''
+				});
+			}
+		} catch (error) {
+			console.error('Error loading Global Jitsu settings:', error);
+		}
+	}
+
+	/**
+	 * Load Tenant Jitsu settings
+	 */
+	private async _loadTenantJitsuSettings(): Promise<void> {
+		try {
+			const settings = await this._tenantService.getSettings();
+			if (settings) {
+				this.tenantJitsuForm.patchValue({
+					jitsuEnabled: settings[JITSU_SETTINGS.ENABLED] === 'true',
+					jitsuHost: settings[JITSU_SETTINGS.HOST] ?? '',
+					jitsuWriteKey: settings[JITSU_SETTINGS.WRITE_KEY] ?? ''
+				});
+			}
+		} catch (error) {
+			console.error('Error loading Tenant Jitsu settings:', error);
 		}
 	}
 
@@ -297,6 +359,54 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error saving Tenant Sentry settings:', error);
+			this._toastrService.danger('TOASTR.MESSAGE.SETTINGS_UPDATE_ERROR');
+		} finally {
+			this.loading = false;
+		}
+	}
+
+	/**
+	 * Save Global Jitsu settings
+	 */
+	async saveGlobalJitsu(): Promise<void> {
+		if (this.globalJitsuForm.invalid) return;
+
+		try {
+			this.loading = true;
+			const formValue = this.globalJitsuForm.getRawValue();
+			const settings = {
+				[JITSU_SETTINGS.ENABLED]: String(formValue.jitsuEnabled),
+				[JITSU_SETTINGS.HOST]: formValue.jitsuHost,
+				[JITSU_SETTINGS.WRITE_KEY]: formValue.jitsuWriteKey
+			};
+			await this._tenantService.saveGlobalSettings(settings);
+			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
+		} catch (error) {
+			console.error('Error saving Global Jitsu settings:', error);
+			this._toastrService.danger('TOASTR.MESSAGE.SETTINGS_UPDATE_ERROR');
+		} finally {
+			this.loading = false;
+		}
+	}
+
+	/**
+	 * Save Tenant Jitsu settings
+	 */
+	async saveTenantJitsu(): Promise<void> {
+		if (this.tenantJitsuForm.invalid) return;
+
+		try {
+			this.loading = true;
+			const formValue = this.tenantJitsuForm.getRawValue();
+			const settings = {
+				[JITSU_SETTINGS.ENABLED]: String(formValue.jitsuEnabled),
+				[JITSU_SETTINGS.HOST]: formValue.jitsuHost,
+				[JITSU_SETTINGS.WRITE_KEY]: formValue.jitsuWriteKey
+			};
+			await this._tenantService.saveDynamicSettings(settings);
+			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
+		} catch (error) {
+			console.error('Error saving Tenant Jitsu settings:', error);
 			this._toastrService.danger('TOASTR.MESSAGE.SETTINGS_UPDATE_ERROR');
 		} finally {
 			this.loading = false;
