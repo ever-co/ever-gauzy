@@ -7,7 +7,7 @@
     </div>
 
     <div class="skeleton-menu">
-      @for (item of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track trackByIndex($index, item)) {
+      @for (item of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track trackByIndex($index)) {
         <div class="skeleton-menu-item">
           <div class="skeleton-menu-icon"></div>
           <div class="skeleton-menu-text"></div>
@@ -45,14 +45,14 @@
           </div>
           <div class="skeleton-date-text"></div>
         </div>
-        @for (i of [ 1, 2, 3,4]; track trackByIndex($index, i)) {
+        @for (i of [ 1, 2, 3,4]; track trackByIndex($index)) {
           <div class="skeleton-user-menu"></div>
         }
       </div>
     </div>
 
     <div class="skeleton-nav-tabs">
-      @for (item of [1, 2, 3, 4]; track trackByIndex($index, item)) {
+      @for (item of [1, 2, 3, 4]; track trackByIndex($index)) {
         <div class="skeleton-nav-tab">
           <div class="skeleton-tab-icon"></div>
           <div class="skeleton-tab-text"></div>
@@ -79,7 +79,7 @@
     </div>
 
     <div class="skeleton-widgets-row">
-      @for (item of [1, 2, 3, 4]; track trackByIndex($index, item)) {
+      @for (item of [1, 2, 3, 4]; track trackByIndex($index)) {
         <div class="skeleton-widget-item">
           <div class="skeleton-widget-header">
             <div class="skeleton-widget-title"></div>
@@ -92,7 +92,7 @@
     </div>
 
     <div class="skeleton-windows-grid">
-      @for (item of [1, 2, 3, 4, 5, 6]; track trackByIndex($index, item)) {
+      @for (item of [1, 2, 3, 4, 5, 6]; track trackByIndex($index)) {
         <div class="skeleton-window-card">
           <div class="skeleton-window-header">
             <div class="skeleton-window-title"></div>
