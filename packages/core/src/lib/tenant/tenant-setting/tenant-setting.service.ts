@@ -36,12 +36,24 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		const resolvedSettings: Record<string, string> = { ...(envDefaults || {}) };
 
 		// Fetch global settings (tenantId = NULL)
-		const globalSettings = await this.typeOrmRepository.find({
-			where: {
-				name: In(names),
-				tenantId: IsNull()
-			}
-		});
+		let globalSettings: TenantSetting[];
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const { where: globalWhere, mikroOptions: globalMikroOptions } =
+					parseTypeORMFindToMikroOrm<TenantSetting>({
+						where: { name: In(names), tenantId: IsNull() }
+					});
+				const globalItems = await this.mikroOrmRepository.find(globalWhere, globalMikroOptions);
+				globalSettings = globalItems.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
+				break;
+			case MultiORMEnum.TypeORM:
+				globalSettings = await this.typeOrmRepository.find({
+					where: { name: In(names), tenantId: IsNull() }
+				});
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 
 		// Override with global DB settings
 		for (const setting of globalSettings) {
@@ -52,12 +64,26 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 
 		// If tenantId is provided, fetch tenant-specific settings
 		if (tenantId) {
-			const tenantSettings = await this.typeOrmRepository.find({
-				where: {
-					name: In(names),
-					tenantId: tenantId as string
-				}
-			});
+			let tenantSettings: TenantSetting[];
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const { where: tenantWhere, mikroOptions: tenantMikroOptions } =
+						parseTypeORMFindToMikroOrm<TenantSetting>({
+							where: { name: In(names), tenantId: tenantId as string }
+						});
+					const tenantItems = await this.mikroOrmRepository.find(tenantWhere, tenantMikroOptions);
+					tenantSettings = tenantItems.map((entity: TenantSetting) =>
+						this.serialize(entity)
+					) as TenantSetting[];
+					break;
+				case MultiORMEnum.TypeORM:
+					tenantSettings = await this.typeOrmRepository.find({
+						where: { name: In(names), tenantId: tenantId as string }
+					});
+					break;
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
 
 			// Override with tenant-specific settings
 			for (const setting of tenantSettings) {
@@ -77,12 +103,23 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 	 * @returns {Promise<ITenantSetting>} - Returns the updated settings as a key-value object.
 	 */
 	async saveGlobalSettings(input: ITenantSetting): Promise<ITenantSetting> {
-		const settings: TenantSetting[] = await this.typeOrmRepository.find({
-			where: {
-				name: In(keys(input)),
-				tenantId: IsNull()
-			}
-		});
+		let settings: TenantSetting[];
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TenantSetting>({
+					where: { name: In(keys(input)), tenantId: IsNull() }
+				});
+				const items = await this.mikroOrmRepository.find(where, mikroOptions);
+				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
+				break;
+			case MultiORMEnum.TypeORM:
+				settings = await this.typeOrmRepository.find({
+					where: { name: In(keys(input)), tenantId: IsNull() }
+				});
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 
 		const settingsByName = indexBy(settings, 'name');
 		const saveInput: TenantSetting[] = [];
@@ -105,7 +142,16 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 			}
 		}
 
-		await this.typeOrmRepository.save(saveInput);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository.getEntityManager().persistAndFlush(saveInput);
+				break;
+			case MultiORMEnum.TypeORM:
+				await this.typeOrmRepository.save(saveInput);
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 		return object(pluck(saveInput, 'name'), pluck(saveInput, 'value'));
 	}
 
@@ -121,7 +167,21 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 			whereClause.name = In(names);
 		}
 
-		const settings = await this.typeOrmRepository.find({ where: whereClause });
+		let settings: TenantSetting[];
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TenantSetting>({
+					where: whereClause
+				});
+				const items = await this.mikroOrmRepository.find(where, mikroOptions);
+				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
+				break;
+			case MultiORMEnum.TypeORM:
+				settings = await this.typeOrmRepository.find({ where: whereClause });
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 		return object(pluck(settings, 'name'), pluck(settings, 'value'));
 	}
 
@@ -162,13 +222,24 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 	 * @throws {Error} - Throws an error if the operation fails.
 	 */
 	async saveSettings(input: ITenantSetting, tenantId: ID): Promise<ITenantSetting> {
-		const settings: TenantSetting[] = await this.typeOrmRepository.findBy({
-			name: In(keys(input)),
-			tenantId
-		});
+		let settings: TenantSetting[];
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TenantSetting>({
+					where: { name: In(keys(input)), tenantId }
+				});
+				const items = await this.mikroOrmRepository.find(where, mikroOptions);
+				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
+				break;
+			case MultiORMEnum.TypeORM:
+				settings = await this.typeOrmRepository.findBy({ name: In(keys(input)), tenantId });
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 
 		const settingsByName = indexBy(settings, 'name');
-		const saveInput = [];
+		const saveInput: TenantSetting[] = [];
 
 		for (const key in input) {
 			if (Object.prototype.hasOwnProperty.call(input, key)) {
@@ -188,7 +259,16 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 			}
 		}
 
-		await this.typeOrmRepository.save(saveInput);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository.getEntityManager().persistAndFlush(saveInput);
+				break;
+			case MultiORMEnum.TypeORM:
+				await this.typeOrmRepository.save(saveInput);
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 		return object(pluck(saveInput, 'name'), pluck(saveInput, 'value'));
 	}
 

@@ -37,6 +37,18 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 		return this.commandBus.execute(new GlobalSettingGetCommand());
 	}
 
+	@ApiOperation({
+		summary: 'Get tenant settings'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Tenant settings retrieved successfully.'
+	})
+	@Get('/')
+	async getSettings(): Promise<Record<string, any>> {
+		return this.commandBus.execute(new TenantSettingGetCommand());
+	}
+
 	@ApiOperation({ summary: 'Find record by ID' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -49,18 +61,6 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 	@Get(':id')
 	async findById(@Param('id') id: string): Promise<TenantSetting> {
 		return this.tenantSettingService.findOneByIdString(id);
-	}
-
-	@ApiOperation({
-		summary: 'Get tenant settings'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Tenant settings retrieved successfully.'
-	})
-	@Get('/')
-	async getSettings(): Promise<Record<string, any>> {
-		return this.commandBus.execute(new TenantSettingGetCommand());
 	}
 
 	@ApiOperation({
