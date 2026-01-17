@@ -1,0 +1,47 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.status-badge-wrapper {
+  display: block;
+  width: 100%;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.status-success {
+  background-color: #00d68f;
+  color: #ffffff;
+}
+
+.status-danger {
+  background-color: #ff3d71;
+  color: #ffffff;
+}
+
+.status-warning {
+  background-color: #ffaa00;
+  color: #222b45;
+}
+
+.status-info {
+  background-color: #0095ff;
+  color: #ffffff;
+}
+
+.status-basic {
+  background-color: #8f9bb3;
+  color: #ffffff;
+}

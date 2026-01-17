@@ -105,3 +105,36 @@ nb-tab.content-active {
 .text-center {
 	text-align: center;
 }
+
+// Smart table column width fixes
+::ng-deep {
+	angular2-smart-table {
+		table {
+			table-layout: fixed;
+			width: 100%;
+		}
+		
+		// Last error column styling
+		.ng2-smart-table {
+			td, th {
+				&:last-child {
+					max-width: 300px;
+					word-wrap: break-word;
+					word-break: break-word;
+					white-space: normal;
+					overflow-wrap: break-word;
+				}
+			}
+		}
+
+		// Clickable row styling
+		.clickable-row {
+			cursor: pointer;
+			transition: background-color 0.2s ease;
+
+			&:hover {
+				background-color: var(--background-basic-color-2);
+			}
+		}
+	}
+}

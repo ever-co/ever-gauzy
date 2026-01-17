@@ -264,7 +264,8 @@ export class ApiService {
 			logType: TimeLogType.TRACKED,
 			source: TimeLogSourceEnum.DESKTOP,
 			tenantId: payload.tenantId,
-			organizationId: payload.organizationId
+			organizationId: payload.organizationId,
+			employeeId: payload.employeeId
 		}
 		return this.put(path, timeLogPayload);
 	}
@@ -446,7 +447,7 @@ export class ApiService {
 
 		try {
 			console.log('url', url);
-			console.log('options data', JSON.stringify(requestOptions));
+			// console.log('options data', JSON.stringify(requestOptions));
 			const response = await fetch(url, requestOptions);
 			console.log(`API ${options.method} ${path}: ${response.status} ${response.statusText}`);
 			if (!response.ok) {

@@ -51,7 +51,6 @@ export class SyncManager {
 
 	async checkUnSyncedTimer() {
 		const timer = await this.timerService.findToSynced();
-		console.log('unsync timer', timer);
 		if (timer.length) {
 			await this.syncTimer(timer);
 		}
@@ -63,9 +62,10 @@ export class SyncManager {
 		}
 		for (const sequence of sequences) {
 			const { timer } = sequence;
+			console.log('unsync timer', timer);
 			this.enqueueTimer({
 				attempts: 1,
-				isRetry: true,
+				isRetry: timer.isStartedOffline || timer.isStoppedOffline ? true : false,
 				queue: timer.isStartedOffline || timer.isStoppedOffline ? 'timer_retry' : 'timer',
 				timerId: timer.id,
 				data: {
@@ -86,11 +86,12 @@ export class SyncManager {
 			authConfig?.user?.employee?.organizationId,
 			authConfig?.user?.employee?.tenantId
 		)
+		console.log('unsync activities', activities);
 		for (const activity of activities) {
 			this.enqueueTimeSlot({
 				attempts: 1,
 				activityId: Number(activity.id),
-				isRetry: true,
+				isRetry: activity.isOffline ? true : false,
 				queue: activity.isOffline ? 'time_slot_retry' : 'time_slot',
 				data: {
 					timeStart: moment(activity.timeStart).toISOString(),
