@@ -1,5 +1,5 @@
-import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	CurrenciesEnum,
@@ -16,6 +16,7 @@ import {
 	IOrganizationSprint,
 	IOrganizationTeam,
 	IPayment,
+	IOrganizationStrategicInitiative,
 	ITag,
 	ITask,
 	ITaskPriority,
@@ -42,6 +43,7 @@ import {
 	OrganizationProjectEmployee,
 	OrganizationProjectModule,
 	OrganizationSprint,
+	OrganizationStrategicInitiative,
 	OrganizationTeam,
 	Payment,
 	Tag,
@@ -477,6 +479,26 @@ export class OrganizationProject
 		name: 'organization_project_team'
 	})
 	teams?: IOrganizationTeam[];
+
+	/**
+	 * Organization Strategic Initiatives Relationship (ManyToMany)
+	 * A project can contribute to multiple strategic directions simultaneously
+	 * This provides strategic context: "Why does this project exist?"
+	 */
+	@MultiORMManyToMany(() => OrganizationStrategicInitiative, (initiative) => initiative.projects, {
+		/** Defines the database action to perform on update. */
+		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'organization_project_organization_strategic_initiative',
+		joinColumn: 'organizationProjectId',
+		inverseJoinColumn: 'organizationStrategicInitiativeId'
+	})
+	@JoinTable({
+		name: 'organization_project_organization_strategic_initiative'
+	})
+	organizationStrategicInitiatives?: IOrganizationStrategicInitiative[];
 
 	/*
 	|--------------------------------------------------------------------------

@@ -1,25 +1,30 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { ITask } from './task.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { IKPI } from './goal-settings.model';
+import { IRelationalOrganizationStrategicInitiative } from './organization-strategic-initiative.model';
 
-export interface IGoal extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGoal extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationStrategicInitiative {
 	name: string;
 	description?: string;
 	ownerTeam?: IOrganizationTeam;
+	ownerTeamId?: ID;
 	ownerEmployee?: IEmployee;
+	ownerEmployeeId?: ID;
 	lead?: IEmployee;
+	leadId?: ID;
 	deadline: string;
 	level: string;
 	progress: number;
 	keyResults?: Array<IKeyResult>;
 	alignedKeyResult?: IKeyResult;
+	alignedKeyResultId?: ID;
 }
 
 export interface IKeyResult extends IBasePerTenantAndOrganizationEntityModel {
-	id?: string;
+	id?: ID;
 	name: string;
 	description?: string;
 	type: string;
@@ -35,25 +40,25 @@ export interface IKeyResult extends IBasePerTenantAndOrganizationEntityModel {
 	softDeadline?: Date;
 	status?: string;
 	weight?: string;
-	goalId?: string;
+	goalId?: ID;
 	goal?: IGoal;
 	project?: IOrganizationProject;
-	projectId?: string;
+	projectId?: ID;
 	task?: ITask;
-	taskId?: string;
+	taskId?: ID;
 	updates?: Array<IKeyResultUpdate>;
 	kpi?: IKPI;
-	kpiId?: string;
+	kpiId?: ID;
 }
 
 export interface IKeyResultUpdate extends IBasePerTenantAndOrganizationEntityModel {
-	id?: string;
+	id?: ID;
 	owner: string;
 	progress: number;
 	update: number;
 	status: string;
 	keyResult?: IKeyResult;
-	keyResultId?: string;
+	keyResultId?: ID;
 }
 
 export enum KeyResultNumberUnitsEnum {

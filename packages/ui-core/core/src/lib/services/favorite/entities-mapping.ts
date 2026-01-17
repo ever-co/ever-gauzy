@@ -33,7 +33,8 @@ export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 	[BaseEntityEnum.Currency]: 'fas fa-coins',
 	[BaseEntityEnum.Language]: 'fas fa-language',
 	[BaseEntityEnum.Organization]: 'fas fa-building',
-	[BaseEntityEnum.Broadcast]: 'fas fa-broadcast-tower'
+	[BaseEntityEnum.Broadcast]: 'fas fa-broadcast-tower',
+	[BaseEntityEnum.OrganizationStrategicInitiative]: 'fas fa-bullseye'
 };
 
 export const ENTITY_LINKS: Record<BaseEntityEnum, (id: string) => string> = {
@@ -65,5 +66,6 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, (id: string) => string> = {
 	[BaseEntityEnum.Currency]: (id) => `/pages/settings/currencies/edit/${id}`,
 	[BaseEntityEnum.Language]: (id) => `/pages/settings/languages/edit/${id}`,
 	[BaseEntityEnum.Organization]: (id) => `/pages/organization/edit/${id}`,
-	[BaseEntityEnum.Broadcast]: (id) => `/pages/broadcasts/edit/${id}`
+	[BaseEntityEnum.Broadcast]: (id) => `/pages/broadcasts/edit/${id}`,
+	[BaseEntityEnum.OrganizationStrategicInitiative]: (id) => `/pages/organization/strategic-initiatives/edit/${id}`
 };

@@ -2500,7 +2500,11 @@
 			"BROADCAST_CREATE": "Създаване на broadcast",
 			"BROADCAST_READ": "Преглед на broadcast",
 			"BROADCAST_UPDATE": "Актуализиране на broadcast",
-			"BROADCAST_DELETE": "Изтриване на broadcast"
+			"BROADCAST_DELETE": "Изтриване на broadcast",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "Създаване на организационна стратегическа инициатива",
+			"ORG_STRATEGIC_INITIATIVE_READ": "Преглед на организационната стратегическа инициатива",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Актуализиране на организационната стратегическа инициатива",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Изтриване на организационната стратегическа инициатива"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

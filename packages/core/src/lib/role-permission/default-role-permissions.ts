@@ -209,6 +209,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.BROADCAST_UPDATE,
 			PermissionsEnum.BROADCAST_DELETE,
 			/** Broadcast Permissions End */
+			/** Organization Strategic Initiative Permissions Start */
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_CREATE,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
+			/** Organization Strategic Initiative Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -438,6 +444,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.BROADCAST_UPDATE,
 			PermissionsEnum.BROADCAST_DELETE,
 			/** Broadcast Permissions End */
+			/** Organization Strategic Initiative Permissions Start */
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_CREATE,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
+			/** Organization Strategic Initiative Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -489,6 +501,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_HELP_CENTER_EDIT,
 			PermissionsEnum.PROFILE_EDIT,
 			PermissionsEnum.SELECT_EMPLOYEE,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
 			PermissionsEnum.PLUGIN_CONFIGURE
@@ -604,6 +617,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.BROADCAST_UPDATE,
 			PermissionsEnum.BROADCAST_DELETE,
 			/** Broadcast Permissions End */
+			/** Organization Strategic Initiative Permissions Start */
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			/** Organization Strategic Initiative Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -617,16 +633,26 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 			PermissionsEnum.PLUGIN_VIEW
 		]
 	},
 	{
 		role: RolesEnum.CANDIDATE,
-		defaultEnabledPermissions: [PermissionsEnum.PLUGIN_VIEW]
+		defaultEnabledPermissions: [
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			PermissionsEnum.PLUGIN_VIEW
+		]
 	},
 	{
 		role: RolesEnum.MANAGER,
 		defaultEnabledPermissions: [
+			/** Organization Strategic Initiative Permissions Start */
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_CREATE,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
+			/** Organization Strategic Initiative Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -641,6 +667,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 	},
 	{
 		role: RolesEnum.VIEWER,
-		defaultEnabledPermissions: [PermissionsEnum.PLUGIN_VIEW, PermissionsEnum.PLUGIN_DISCOVER]
+		defaultEnabledPermissions: [
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			PermissionsEnum.PLUGIN_VIEW,
+			PermissionsEnum.PLUGIN_DISCOVER
+		]
 	}
 ];
