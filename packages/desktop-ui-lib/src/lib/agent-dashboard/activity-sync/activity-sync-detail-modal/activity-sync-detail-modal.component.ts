@@ -27,7 +27,6 @@ export class ActivitySyncDetailModalComponent {
 			try {
 				return JSON.stringify(JSON.parse(this.data.data), null, 2);
 			} catch(err) {
-				console.log('err', err);
 				return this.data.data;
 			}
 		}

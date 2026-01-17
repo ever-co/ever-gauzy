@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Observable } from 'rxjs';
+import { combineLatest, Subject, Observable } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { QueueItem, SyncHealth } from '../models/logs.models';
 import { LogService } from '../services/logs.service';
 import { Angular2SmartTableComponent, Cell, LocalDataSource } from 'angular2-smart-table';
@@ -18,10 +19,24 @@ export class SyncPageComponent implements OnInit {
 	items$: Observable<QueueItem[]> = this.svc.queueStream$;
 	health$: Observable<SyncHealth> = this.svc.healthStream$;
 	tab: 'PENDING' | 'FAILED' | 'SYNCED' | 'PROCESS' = 'PENDING';
+
+	currentFilter = {
+		field: 'status',
+		search: '',
+	};
+
+	private typeStatus = {
+		PENDING: 'waiting',
+		FAILED: 'failed',
+		SYNCED: 'succeeded',
+		PROCESS: 'running'
+	}
+
 	private _smartTable: Angular2SmartTableComponent;
 	public smartTableSource: LocalDataSource;
 	public smartTableSettings: any;
 	public loading$!: Observable<boolean>;
+	private destroy$ = new Subject<void>();
 
 	@ViewChild('smartTable')
 	public set smartTable(content: Angular2SmartTableComponent) {
@@ -41,22 +56,36 @@ export class SyncPageComponent implements OnInit {
 	ngOnInit(): void {
 		this.loadSmartTableSettings();
 		this.smartTableSource = new LocalDataSource();
+		combineLatest([
+			this.items$,
+		])
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(([items]) => {
+				this.smartTableSource.load(items);
+				if (this.currentFilter.search) {
+					this.smartTableSource.setFilter(
+						[this.currentFilter],
+						false,
+					);
+				}
+			});
 	}
 
 	clearSynced() { this.svc.clearSynced(); }
 
 	onChangeTab(tab: 'PENDING' | 'FAILED' | 'SYNCED' | 'PROCESS') {
 		this.tab = tab;
-		const typeStatus = {
-			PENDING: 'waiting',
-			FAILED: 'failed',
-			SYNCED: 'succeeded',
-			PROCESS: 'running'
+		this.svc.getHistorySync(this.typeStatus[tab]);
+		this.currentFilter.search = this.typeStatus[tab];
+
+		if (this.currentFilter.search) {
+			this.smartTableSource.setFilter(
+				[this.currentFilter],
+				false,
+			);
+		} else {
+			this.smartTableSource.reset(); // show all
 		}
-		this.svc.getHistorySync(typeStatus[tab]);
-		this.items$.subscribe((items) => {
-			this.smartTableSource.load(items);
-		});
 	}
 
 	private dateParse(dateString: string) {
