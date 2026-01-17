@@ -62,7 +62,6 @@ export class SyncManager {
 		}
 		for (const sequence of sequences) {
 			const { timer } = sequence;
-			console.log('unsync timer', timer);
 			this.enqueueTimer({
 				attempts: 1,
 				isRetry: timer.isStartedOffline || timer.isStoppedOffline ? true : false,
@@ -86,7 +85,6 @@ export class SyncManager {
 			authConfig?.user?.employee?.organizationId,
 			authConfig?.user?.employee?.tenantId
 		)
-		console.log('unsync activities', activities);
 		for (const activity of activities) {
 			this.enqueueTimeSlot({
 				attempts: 1,
