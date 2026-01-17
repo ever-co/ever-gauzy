@@ -78,7 +78,7 @@ export class OrganizationStrategicInitiativeSubscriber extends BaseEntityEventSu
 						'OrganizationStrategicInitiativeSubscriber: Error parsing signals JSON:',
 						error.message
 					);
-					entity.signals = '{}';
+					entity.signals = null;
 				}
 			}
 		}

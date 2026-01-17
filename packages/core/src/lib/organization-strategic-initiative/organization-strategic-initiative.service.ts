@@ -166,16 +166,26 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	): Promise<IPagination<IOrganizationStrategicInitiative>> {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 
-		const { items } = await super.findAll(filters);
+		// Ensure relations for visibility check are loaded (projects and their teams)
+		const relationsToLoad = ['projects', 'projects.teams'];
+		const existingRelations = Array.isArray(filters.relations) ? filters.relations : [];
+		const mergedRelations = [...new Set([...existingRelations, ...relationsToLoad])];
 
-		// Filter organization strategic initiatives based on visibility scope
-		const filteredOrganizationStrategicInitiatives: IOrganizationStrategicInitiative[] = [];
-		for (const organizationStrategicInitiative of items) {
-			const canView = await this.canViewOrganizationStrategicInitiative(organizationStrategicInitiative, currentEmployeeId);
-			if (canView) {
-				filteredOrganizationStrategicInitiatives.push(organizationStrategicInitiative);
-			}
-		}
+		const { items } = await super.findAll({
+			...filters,
+			relations: mergedRelations
+		});
+
+		// Pre-fetch employee team memberships to avoid N+1 queries
+		const employeeTeamIds = await this.getEmployeeTeamIds(currentEmployeeId);
+
+		// Check leadership access once (instead of per-initiative)
+		const hasLeadership = await this.hasLeadershipAccess();
+
+		// Filter organization strategic initiatives based on visibility scope (no extra queries)
+		const filteredOrganizationStrategicInitiatives = items.filter((initiative) =>
+			this.canViewOrganizationStrategicInitiativeSync(initiative, currentEmployeeId, employeeTeamIds, hasLeadership)
+		);
 
 		return {
 			items: filteredOrganizationStrategicInitiatives,
@@ -199,7 +209,11 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 
 		// Find the organization strategic initiative with optional relations
 		const organizationStrategicInitiative = await this.findOneByOptions({
-			...(params)
+			...(params),
+			where: {
+				...(params?.where && { ...params.where }),
+				id
+			}
 		});
 
 		if (!organizationStrategicInitiative) {
@@ -227,10 +241,14 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		const tenantId = RequestContext.currentTenantId();
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 
-		// Get the project with its strategic initiatives
+		// Get the project with its strategic initiatives and their projects/teams for visibility check
 		const project = await this._typeOrmOrganizationProjectRepository.findOne({
 			where: { id: projectId, tenantId },
-			relations: ['organizationStrategicInitiatives']
+			relations: [
+				'organizationStrategicInitiatives',
+				'organizationStrategicInitiatives.projects',
+				'organizationStrategicInitiatives.projects.teams'
+			]
 		});
 
 		if (!project) {
@@ -239,16 +257,16 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 
 		const organizationStrategicInitiatives = project.organizationStrategicInitiatives ?? [];
 
-		// Filter by visibility
-		const visibleOrganizationStrategicInitiatives: IOrganizationStrategicInitiative[] = [];
-		for (const organizationStrategicInitiative of organizationStrategicInitiatives) {
-			const canView = await this.canViewOrganizationStrategicInitiative(organizationStrategicInitiative, currentEmployeeId);
-			if (canView) {
-				visibleOrganizationStrategicInitiatives.push(organizationStrategicInitiative);
-			}
-		}
+		// Pre-fetch employee team memberships to avoid N+1 queries
+		const employeeTeamIds = await this.getEmployeeTeamIds(currentEmployeeId);
 
-		return visibleOrganizationStrategicInitiatives;
+		// Check leadership access once (instead of per-initiative)
+		const hasLeadership = await this.hasLeadershipAccess();
+
+		// Filter by visibility (no extra queries)
+		return organizationStrategicInitiatives.filter((initiative) =>
+			this.canViewOrganizationStrategicInitiativeSync(initiative, currentEmployeeId, employeeTeamIds, hasLeadership)
+		);
 	}
 
 	/**
@@ -271,14 +289,20 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 			throw new NotFoundException(`Organization strategic initiative with id ${id} not found`);
 		}
 
-		// Parse existing signals if string
+		// Parse existing signals if string (with safe fallback for malformed data)
 		const existingSignals =
-			typeof organizationStrategicInitiative.signals === 'string' ? JSON.parse(organizationStrategicInitiative.signals) : organizationStrategicInitiative.signals ?? {};
+			typeof organizationStrategicInitiative.signals === 'string'
+				? this.safeJsonParse(organizationStrategicInitiative.signals, {})
+				: organizationStrategicInitiative.signals ?? {};
+
+		// Parse new signals if string (with safe fallback for malformed input)
+		const parsedNewSignals =
+			typeof signals === 'string' ? this.safeJsonParse(signals, {}) : signals ?? {};
 
 		// Merge with new signals
 		const updatedSignals = {
 			...existingSignals,
-			...(typeof signals === 'string' ? JSON.parse(signals) : signals),
+			...parsedNewSignals,
 			lastAssessedAt: new Date(),
 			lastAssessedById: currentEmployeeId
 		};
@@ -290,6 +314,122 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	// ============================================================
 	// PRIVATE METHODS - Visibility & Permission Logic
 	// ============================================================
+
+	/**
+	 * Safely parses a JSON string with a fallback value.
+	 * Prevents 500 errors from malformed or manually edited database values.
+	 *
+	 * @param jsonString - The JSON string to parse.
+	 * @param fallback - The fallback value if parsing fails.
+	 * @returns The parsed object or the fallback value.
+	 */
+	private safeJsonParse<T>(jsonString: string, fallback: T): T {
+		try {
+			return JSON.parse(jsonString);
+		} catch (error) {
+			console.error('Failed to parse JSON string, using fallback:', error.message);
+			return fallback;
+		}
+	}
+
+	/**
+	 * Gets all team IDs that an employee is a member of.
+	 * This is used to batch-check team membership instead of N+1 queries.
+	 *
+	 * @param employeeId - The employee ID.
+	 * @returns A Set of team IDs the employee belongs to.
+	 */
+	private async getEmployeeTeamIds(employeeId: ID): Promise<Set<ID>> {
+		if (!employeeId) {
+			return new Set();
+		}
+
+		try {
+			const teamMemberships = await this._typeOrmOrganizationTeamEmployeeRepository.find({
+				where: {
+					employeeId,
+					isActive: true
+				},
+				select: {
+					organizationTeamId: true
+				}
+			});
+
+			return new Set(teamMemberships.map((m) => m.organizationTeamId));
+		} catch (error) {
+			console.error('Error fetching employee team memberships:', error.message);
+			return new Set();
+		}
+	}
+
+	/**
+	 * Synchronous version of visibility check that uses pre-loaded data.
+	 * Avoids N+1 queries by using pre-fetched employee team IDs and organization strategic initiative relations.
+	 *
+	 * @param organizationStrategicInitiative - The organization strategic initiative (with projects.teams relations loaded).
+	 * @param employeeId - The current employee ID.
+	 * @param employeeTeamIds - Pre-fetched Set of team IDs the employee belongs to.
+	 * @param hasLeadership - Pre-computed leadership access flag.
+	 * @returns True if the user can view the organization strategic initiative.
+	 */
+	private canViewOrganizationStrategicInitiativeSync(
+		organizationStrategicInitiative: IOrganizationStrategicInitiative,
+		employeeId: ID,
+		employeeTeamIds: Set<ID>,
+		hasLeadershipAccess: boolean
+	): boolean {
+		const { visibilityScope, stewardId } = organizationStrategicInitiative;
+
+		// Steward can always view
+		if (stewardId === employeeId) {
+			return true;
+		}
+
+		switch (visibilityScope) {
+			case OrganizationStrategicVisibilityScopeEnum.ORGANIZATION:
+				return true;
+
+			case OrganizationStrategicVisibilityScopeEnum.LEADERSHIP:
+				return hasLeadershipAccess;
+
+			case OrganizationStrategicVisibilityScopeEnum.TEAM:
+				// Check if employee is a member of any team linked to associated projects (using pre-loaded data)
+				return this.isTeamMemberOfAssociatedProjectsSync(organizationStrategicInitiative, employeeTeamIds);
+
+			default:
+				return false;
+		}
+	}
+
+	/**
+	 * Synchronous check if employee is a team member of associated projects.
+	 * Uses pre-loaded relations and pre-fetched team memberships.
+	 *
+	 * @param organizationStrategicInitiative - The organization strategic initiative with projects.teams relations already loaded.
+	 * @param employeeTeamIds - Pre-fetched Set of team IDs the employee belongs to.
+	 * @returns True if the employee is a team member of associated projects.
+	 */
+	private isTeamMemberOfAssociatedProjectsSync(
+		organizationStrategicInitiative: IOrganizationStrategicInitiative,
+		employeeTeamIds: Set<ID>
+	): boolean {
+		if (!organizationStrategicInitiative.projects?.length || employeeTeamIds.size === 0) {
+			return false;
+		}
+
+		// Check if any project team matches employee's teams
+		for (const project of organizationStrategicInitiative.projects) {
+			if (project.teams?.length) {
+				for (const team of project.teams) {
+					if (employeeTeamIds.has(team.id)) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
 
 	/**
 	 * Checks if the current user can view a strategic initiative based on visibility scope.
@@ -307,7 +447,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		organizationStrategicInitiative: IOrganizationStrategicInitiative,
 		employeeId: ID
 	): Promise<boolean> {
-		const { visibilityScope, stewardId} = organizationStrategicInitiative;
+		const { visibilityScope, stewardId } = organizationStrategicInitiative;
 
 		// Steward and creator can always view
 		if (stewardId === employeeId) {
