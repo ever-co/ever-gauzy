@@ -240,6 +240,12 @@ export enum PermissionsEnum {
 	BROADCAST_UPDATE = 'BROADCAST_UPDATE',
 	BROADCAST_DELETE = 'BROADCAST_DELETE',
 	/** Broadcast Permissions End */
+	/** Organization Strategic Initiative Permissions Start */
+	ORG_STRATEGIC_INITIATIVE_CREATE = 'ORG_STRATEGIC_INITIATIVE_CREATE',
+	ORG_STRATEGIC_INITIATIVE_READ = 'ORG_STRATEGIC_INITIATIVE_READ',
+	ORG_STRATEGIC_INITIATIVE_UPDATE = 'ORG_STRATEGIC_INITIATIVE_UPDATE',
+	ORG_STRATEGIC_INITIATIVE_DELETE = 'ORG_STRATEGIC_INITIATIVE_DELETE',
+	/** Organization Strategic Initiative Permissions End */
 	/**
 	 * Plugin Permissions
 	 */
@@ -445,8 +451,11 @@ export const PermissionGroups = {
 		PermissionsEnum.BROADCAST_CREATE,
 		PermissionsEnum.BROADCAST_READ,
 		PermissionsEnum.BROADCAST_UPDATE,
-		PermissionsEnum.BROADCAST_DELETE
+		PermissionsEnum.BROADCAST_DELETE,
 		/** Broadcast Permissions End */
+		/** Organization Strategic Initiative Permissions Start */
+		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+		/** Organization Strategic Initiative Permissions End */
 	],
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role
