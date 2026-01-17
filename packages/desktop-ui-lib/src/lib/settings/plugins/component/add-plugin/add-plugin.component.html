@@ -6,7 +6,7 @@
     <h4>{{ 'TIMER_TRACKER.SETTINGS.PLUGIN' | translate }}</h4>
   </nb-card-header>
   <nb-card-body>
-    @if (context === 'local') {
+    @if (isLocalContext()) {
       <div class="full-width mb-3 description">
         {{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_INSTALLATION_DESCRIPTION' | translate }}
       </div>
@@ -28,7 +28,7 @@
             class="full-width button"
             status="info"
             type="submit"
-            (click)="context = 'cdn'"
+            (click)="switchContext('cdn')"
             >
             <nb-icon icon="globe-outline"></nb-icon>{{ 'BUTTONS.FROM_CDN' | translate }}
           </button>
@@ -38,7 +38,7 @@
             class="full-width button"
             status="danger"
             type="submit"
-            (click)="context = 'npm'"
+            (click)="switchContext('npm')"
             >
             <i class="fab fa-npm"></i>
           </button>
@@ -55,7 +55,7 @@
           </button>
         </div>
       } @else {
-        @if (context === 'cdn') {
+        @if (isCdnContext()) {
           <form class="form" (ngSubmit)="installPlugin(input.value)">
             <label
               ><button (click)="reset()" class="return" status="primary" size="small" outline nbButton>
@@ -90,7 +90,7 @@
               </button>
             </form>
           } @else {
-            @if (context === 'npm') {
+            @if (isNpmContext()) {
               <form class="form" (ngSubmit)="installPluginFromNPM()">
                 <label>
                   <button (click)="reset()" class="return" status="primary" size="small" outline nbButton>
