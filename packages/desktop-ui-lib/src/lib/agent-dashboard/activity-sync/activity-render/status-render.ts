@@ -1,6 +1,6 @@
 
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
-import { StatusMapper } from 'src/lib/shared/utils/queue-status-mapper.util';
+import { StatusMapper } from '../../../shared/utils/queue-status-mapper.util';
 
 @Component({
 	selector: 'app-status-badge',

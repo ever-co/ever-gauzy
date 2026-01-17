@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { QueueItem } from '../../models/logs.models';
-import { StatusMapper } from 'src/lib/shared/utils/queue-status-mapper.util';
+import { StatusMapper } from '../../../shared/utils/queue-status-mapper.util';
 
 @Component({
 	selector: 'app-activity-sync-detail-modal',

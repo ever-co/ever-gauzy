@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { StatusBadgeComponent } from './activity-render/status-render';
 import { LocalDateParse } from '../pipes/date.pipe';
 import { NbDialogService } from '@nebular/theme';
-import { StatusMapper } from 'src/lib/shared/utils/queue-status-mapper.util';
+import { StatusMapper } from '../../shared/utils/queue-status-mapper.util';
 
 @Component({
 	selector: 'app-sync-page',
