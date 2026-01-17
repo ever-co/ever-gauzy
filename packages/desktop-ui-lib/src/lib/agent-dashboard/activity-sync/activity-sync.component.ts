@@ -84,11 +84,11 @@ export class SyncPageComponent implements OnInit, OnDestroy {
 		this.smartTableSettings = {
 			columns: {
 				queue: {
-					title: this.translateService.instant('Queue'),
+					title: this.translateService.instant('SM_TABLE.QUEUE'),
 					width: '15%'
 				},
 				status: {
-					title: this.translateService.instant('Status'),
+					title: this.translateService.instant('SM_TABLE.STATUS'),
 					width: '10%',
 					type: 'custom',
 					renderComponent: StatusBadgeComponent,
@@ -98,16 +98,16 @@ export class SyncPageComponent implements OnInit, OnDestroy {
 					}
 				},
 				attempts: {
-					title: this.translateService.instant('Attempts'),
+					title: this.translateService.instant('SM_TABLE.ATTEMPTS'),
 					width: '10%'
 				},
 				created_at: {
-					title: this.translateService.instant('Created'),
+					title: this.translateService.instant('SM_TABLE.CREATED_AT'),
 					width: '25%',
 					valuePrepareFunction: this.dateParse
 				},
 				last_error: {
-					title: this.translateService.instant('Last Error'),
+					title: this.translateService.instant('SM_TABLE.LAST_ERROR'),
 					width: '40%'
 				}
 			},

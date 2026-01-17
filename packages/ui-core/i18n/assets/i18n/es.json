@@ -230,6 +230,9 @@
 			"PLUGIN_MARKETPLACE": "Este complemento no está disponible en el mercado",
 			"LOADING": "Cargando..."
 		},
+		"QUEUE": "Cola",
+		"ATTEMPTS": "Intentos",
+		"LAST_ERROR": "Último Error",
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Cantidad",
 		"DATE": "Fecha",

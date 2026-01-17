@@ -242,6 +242,9 @@
 			"PLUGIN_MARKETPLACE": "No plugins available to display.",
 			"HISTORY": "There's no history"
 		},
+		"QUEUE": "Queue",
+		"ATTEMPTS": "Attempts",
+		"LAST_ERROR": "Last Error",
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
 		"DATE": "Date",

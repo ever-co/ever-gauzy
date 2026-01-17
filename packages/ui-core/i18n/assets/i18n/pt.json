@@ -230,6 +230,9 @@
 			"PLUGIN_MARKETPLACE": "Este plugin não está disponível no marketplace",
 			"LOADING": "Carregando..."
 		},
+		"QUEUE": "Fila",
+		"ATTEMPTS": "Tentativas",
+		"LAST_ERROR": "Último Erro",
 		"TRANSACTION_TYPE": "Digite",
 		"AMOUNT": "Quantia.",
 		"DATE": "Data.",

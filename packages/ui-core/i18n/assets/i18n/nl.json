@@ -230,6 +230,9 @@
 			"PLUGIN_MARKETPLACE": "Deze plugin is niet beschikbaar op de marktplaats",
 			"LOADING": "Laden..."
 		},
+		"QUEUE": "Wachtrij",
+		"ATTEMPTS": "Pogingen",
+		"LAST_ERROR": "Laatste Fout",
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Bedrag",
 		"DATE": "Datum",

@@ -230,6 +230,9 @@
 			"PLUGIN_MARKETPLACE": "该插件在市场上不可用",
 			"LOADING": "加载中..."
 		},
+		"QUEUE": "队列",
+		"ATTEMPTS": "尝试次数",
+		"LAST_ERROR": "最后错误",
 		"TRANSACTION_TYPE": "类型 (Lèixíng)",
 		"AMOUNT": "金额",
 		"DATE": "日期",

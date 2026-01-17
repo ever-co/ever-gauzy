@@ -230,6 +230,9 @@
 			"PLUGIN_MARKETPLACE": "Questo plugin non è disponibile sul marketplace",
 			"LOADING": "Caricamento..."
 		},
+		"QUEUE": "Coda",
+		"ATTEMPTS": "Tentativi",
+		"LAST_ERROR": "Ultimo Errore",
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Importo",
 		"DATE": "Data",

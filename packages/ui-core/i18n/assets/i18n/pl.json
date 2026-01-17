@@ -229,6 +229,9 @@
 			"PLUGIN_MARKETPLACE": "Ta wtyczka nie jest dostępna na rynku",
 			"LOADING": "Ładuje..."
 		},
+		"QUEUE": "Kolejka",
+		"ATTEMPTS": "Próby",
+		"LAST_ERROR": "Ostatni Błąd",
 		"TRANSACTION_TYPE": "Rodzaj",
 		"AMOUNT": "Kwota",
 		"DATE": "Data",

@@ -239,6 +239,9 @@
 			"PLUGIN": "Не сте инсталирали никакви плъгини.",
 			"PLUGIN_MARKETPLACE": "Този плъгин не е наличен на пазара"
 		},
+		"QUEUE": "Опашка",
+		"ATTEMPTS": "Опити",
+		"LAST_ERROR": "Последна Грешка",
 		"TRANSACTION_TYPE": "Тип",
 		"AMOUNT": "Сума",
 		"DATE": "Дата",
@@ -2494,10 +2497,10 @@
 			"EMPLOYEE_AVAILABILITY_READ": "Преглед на наличността на служител",
 			"EMPLOYEE_AVAILABILITY_UPDATE": "Актуализиране на наличността на служител",
 			"EMPLOYEE_AVAILABILITY_DELETE": "Изтриване на наличността на служител",
-            "BROADCAST_CREATE": "Създаване на broadcast",
-            "BROADCAST_READ": "Преглед на broadcast",
-            "BROADCAST_UPDATE": "Актуализиране на broadcast",
-            "BROADCAST_DELETE": "Изтриване на broadcast"
+			"BROADCAST_CREATE": "Създаване на broadcast",
+			"BROADCAST_READ": "Преглед на broadcast",
+			"BROADCAST_UPDATE": "Актуализиране на broadcast",
+			"BROADCAST_DELETE": "Изтриване на broadcast"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

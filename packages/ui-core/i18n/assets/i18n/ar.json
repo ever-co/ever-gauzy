@@ -229,6 +229,9 @@
 			"PLUGIN_MARKETPLACE": "هذا المكون الإضافي غير متوفر في السوق",
 			"LOADING": "جار التحميل"
 		},
+		"QUEUE": "قائمة الانتظار",
+		"ATTEMPTS": "المحاولات",
+		"LAST_ERROR": "آخر خطأ",
 		"TRANSACTION_TYPE": "النوع",
 		"AMOUNT": "المبلغ",
 		"DATE": "تاريخ",

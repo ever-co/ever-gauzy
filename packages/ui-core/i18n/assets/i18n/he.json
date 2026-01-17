@@ -229,6 +229,9 @@
 			"PLUGIN_MARKETPLACE": "תוסף זה אינו זמין בשוק",
 			"HISTORY": "אין היסטוריה"
 		},
+		"QUEUE": "תור",
+		"ATTEMPTS": "ניסיונות",
+		"LAST_ERROR": "שגיאה אחרונה",
 		"TRANSACTION_TYPE": "סוג",
 		"AMOUNT": "כמות",
 		"DATE": "תאריך",

@@ -230,6 +230,9 @@
 			"PLUGIN_MARKETPLACE": "Ce plugin n'est pas disponible sur le marché",
 			"LOADING": "Chargement..."
 		},
+		"QUEUE": "File d'attente",
+		"ATTEMPTS": "Tentatives",
+		"LAST_ERROR": "Dernière Erreur",
 		"TRANSACTION_TYPE": "Taper",
 		"AMOUNT": "Montant",
 		"DATE": "Date",
