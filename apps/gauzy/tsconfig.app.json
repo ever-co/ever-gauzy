@@ -2,8 +2,7 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
-		"types": ["node", "google.maps"],
-		"moduleResolution": "bundler"
+		"types": ["node", "google.maps"]
 	},
 	"files": ["src/main.ts", "src/polyfills.ts"],
 	"include": ["src/**/*.d.ts", "**/*.d.ts", "../../node_modules/@nebular/**/*.d.ts"]
