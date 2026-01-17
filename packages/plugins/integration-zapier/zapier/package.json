@@ -18,7 +18,7 @@
   "devDependencies": {
     "@types/node": "^20.14.9",
     "rimraf": "^3.0.2",
-    "typescript": "^5.8.2",
+    "typescript": "^5.9.3",
     "zapier-platform-cli": "16.5.0"
   },
   "private": true

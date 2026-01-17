@@ -52,7 +52,7 @@
 		"@types/node": "^20.14.9",
 		"cross-env": "^7.0.3",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.8.3"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"api",
