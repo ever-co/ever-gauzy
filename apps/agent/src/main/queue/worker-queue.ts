@@ -78,7 +78,7 @@ export class WorkerQueue {
 					0
 				);
 			case 'running':
-				return this.queueAudit.running(payload.id, payload.data);
+				return this.queueAudit.running(payload.id);
 			case 'succeeded':
 				return this.queueAudit.succeeded(payload.id);
 			case "failed":

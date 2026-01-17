@@ -62,10 +62,11 @@ export class SyncManager {
 		}
 		for (const sequence of sequences) {
 			const { timer } = sequence;
+			const isOffline = timer.isStartedOffline || timer.isStoppedOffline;
 			this.enqueueTimer({
 				attempts: 1,
-				isRetry: timer.isStartedOffline || timer.isStoppedOffline ? true : false,
-				queue: timer.isStartedOffline || timer.isStoppedOffline ? 'timer_retry' : 'timer',
+				isRetry: isOffline,
+				queue: isOffline ? 'timer_retry' : 'timer',
 				timerId: timer.id,
 				data: {
 					startedAt: moment(timer.startedAt).toISOString(),
@@ -89,7 +90,7 @@ export class SyncManager {
 			this.enqueueTimeSlot({
 				attempts: 1,
 				activityId: Number(activity.id),
-				isRetry: activity.isOffline ? true : false,
+				isRetry: activity.isOffline,
 				queue: activity.isOffline ? 'time_slot_retry' : 'time_slot',
 				data: {
 					timeStart: moment(activity.timeStart).toISOString(),

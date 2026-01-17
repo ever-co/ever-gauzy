@@ -43,6 +43,7 @@ class PushActivities {
 	public currentSessionStartTime: Date;
 	public currentSessionTimeLogId: string | null;
 	private screenshotService: ScreenshotService;
+	private readonly MIN_TIMER_DURATION_MS = 1000; // Minimum 1-second duration to avoid API validation errors
 
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
@@ -691,7 +692,7 @@ class PushActivities {
 
 			if (!timerLocal?.stoppedAt && timerLocal?.timelogId && this.currentSessionTimeLogId !== timerLocal.timelogId && !timerLocal?.synced) {
 				try {
-					const stoppedAt = new Date((new Date(timerLocal.startedAt)).getTime() + (1 * 1000));
+					const stoppedAt = new Date((new Date(timerLocal.startedAt)).getTime() + this.MIN_TIMER_DURATION_MS);
 					await this.apiService.updateTimeLog(timerLocal?.timelogId, {
 						tenantId: authConfig?.user?.employee?.tenantId,
 						organizationId: authConfig?.user?.employee?.organizationId,

@@ -11,11 +11,11 @@ export class AuditQueueService implements IAuditQueueService<AuditQueueTO> {
 		this._auditQueueDAO = new AuditQueueDAO();
 	}
 
-	public async save(queue: AuditQueueTO): Promise<AuditQueueTO> {
+	public async save(queue: AuditQueueTO): Promise<AuditQueueTO | null> {
 		try {
 			if (!queue) {
 				console.error('WARN[AUDIT_QUEUE_SERVICE]: No audit queue data, cannot save');
-				return;
+				return null;
 			}
 			return this._auditQueueDAO.saveAndReturn(queue);
 		} catch (error) {
@@ -23,11 +23,11 @@ export class AuditQueueService implements IAuditQueueService<AuditQueueTO> {
 		}
 	}
 
-	public async update(queue: Partial<AuditQueueTO>): Promise<AuditQueueTO> {
+	public async update(queue: Partial<AuditQueueTO>): Promise<AuditQueueTO | null> {
 		try {
 			if (!queue.queue_id) {
 				console.error('WARN[AUDIT_QUEUE_SERVICE]: No audit queue data, cannot update');
-				return;
+				return null;
 			}
 			return this._auditQueueDAO.updatePartial(queue.queue_id, queue);
 		} catch (error) {

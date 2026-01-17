@@ -8,6 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { StatusBadgeComponent } from './activity-render/status-render';
 import { LocalDateParse } from '../pipes/date.pipe';
 import { NbDialogService } from '@nebular/theme';
+import { StatusMapper } from 'src/lib/shared/utils/queue-status-mapper.util';
 
 @Component({
 	selector: 'app-sync-page',
@@ -24,13 +25,6 @@ export class SyncPageComponent implements OnInit {
 		field: 'status',
 		search: '',
 	};
-
-	private typeStatus = {
-		PENDING: 'waiting',
-		FAILED: 'failed',
-		SYNCED: 'succeeded',
-		PROCESS: 'running'
-	}
 
 	private _smartTable: Angular2SmartTableComponent;
 	public smartTableSource: LocalDataSource;
@@ -75,8 +69,8 @@ export class SyncPageComponent implements OnInit {
 
 	onChangeTab(tab: 'PENDING' | 'FAILED' | 'SYNCED' | 'PROCESS') {
 		this.tab = tab;
-		this.svc.getHistorySync(this.typeStatus[tab]);
-		this.currentFilter.search = this.typeStatus[tab];
+		this.svc.getHistorySync(StatusMapper.getStatusForTab(tab));
+		this.currentFilter.search = StatusMapper.getStatusForTab(tab);
 
 		if (this.currentFilter.search) {
 			this.smartTableSource.setFilter(

@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { QueueItem } from '../../models/logs.models';
+import { StatusMapper } from 'src/lib/shared/utils/queue-status-mapper.util';
 
 @Component({
 	selector: 'app-activity-sync-detail-modal',
@@ -11,7 +12,9 @@ import { QueueItem } from '../../models/logs.models';
 export class ActivitySyncDetailModalComponent {
 	@Input() data: QueueItem;
 
-	constructor(protected dialogRef: NbDialogRef<ActivitySyncDetailModalComponent>) {}
+	constructor(
+		protected dialogRef: NbDialogRef<ActivitySyncDetailModalComponent>,
+	) {}
 
 	close() {
 		this.dialogRef.close();
@@ -40,23 +43,6 @@ export class ActivitySyncDetailModalComponent {
 	}
 
 	getStatusClass(status: string): string {
-		const statusValue = String(status || '').toLowerCase();
-		switch (statusValue) {
-			case 'active':
-			case 'succeeded':
-			case 'synced':
-				return 'success';
-			case 'pending':
-			case 'waiting':
-				return 'warning';
-			case 'inactive':
-			case 'failed':
-				return 'danger';
-			case 'running':
-			case 'process':
-				return 'info';
-			default:
-				return 'basic';
-		}
+		return StatusMapper.getBadgeStatus(status);
 	}
 }

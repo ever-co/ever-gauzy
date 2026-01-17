@@ -61,7 +61,7 @@ export class QueueAudit {
 		return queueResult;
 	}
 
-	async running(id: string, data: any) {
+	async running(id: string) {
 		const queueResult = await this.auditQueueService.update({
 			queue_id: id,
 			status: 'running',

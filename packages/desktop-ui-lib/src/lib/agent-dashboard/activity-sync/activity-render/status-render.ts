@@ -1,5 +1,6 @@
 
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { StatusMapper } from 'src/lib/shared/utils/queue-status-mapper.util';
 
 @Component({
 	selector: 'app-status-badge',
@@ -9,28 +10,10 @@ import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 	standalone: false
 })
 export class StatusBadgeComponent {
-
-	@Input() value: string | number;
+	@Input() value: string;
 	@Input() rowData: any;
 
 	get badgeStatus(): string {
-		const statusValue = String(this.value || '').toLowerCase();
-		switch (statusValue) {
-			case 'active':
-			case 'succeeded':
-			case 'synced':
-				return 'success';
-			case 'pending':
-			case 'waiting':
-				return 'warning';
-			case 'inactive':
-			case 'failed':
-				return 'danger';
-			case 'running':
-			case 'process':
-				return 'info';
-			default:
-				return 'basic';
-		}
+		return StatusMapper.getBadgeStatus(this.value || '')
 	}
 }

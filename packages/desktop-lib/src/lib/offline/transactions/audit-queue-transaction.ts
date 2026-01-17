@@ -11,7 +11,7 @@ export class AuditQueueTransaction implements IAuditQueueTransaction {
 	}
 
 	public async createAndReturn(value: AuditQueueTO): Promise<AuditQueueTO> {
-		const [row] =  await this._databaseProvider.connection.transaction(
+		const [row] = await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {
 				try {
 					const data = await trx
@@ -31,8 +31,11 @@ export class AuditQueueTransaction implements IAuditQueueTransaction {
 		return row;
 	}
 
-	async create(value: AuditQueueTO): Promise<void> {
-	    await Promise.resolve(value);
+	async create(_: AuditQueueTO): Promise<void> {
+		throw new Error(
+			'create() method is not used. ' +
+			'Use createAndReturn() instead to ensure transaction safety.'
+		);
 	}
 
 	public async update(id: number, value: Partial<AuditQueueTO>): Promise<void> {
