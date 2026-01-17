@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbAccordionComponent, NbAccordionItemComponent, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -52,7 +52,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	private readonly _tenantService = inject(TenantService);
 	private readonly _toastrService = inject(ToastrService);
 
-	loading: boolean = false;
+	loading = signal(false);
 	user: IUser;
 	PermissionsEnum = PermissionsEnum;
 	SettingsScope = SettingsScope;
@@ -147,7 +147,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 	 * Load all settings for both services and both scopes
 	 */
 	private async _loadAllSettings(): Promise<void> {
-		this.loading = true;
+		this.loading.set(true);
 		try {
 			// Fetch both global and tenant settings once
 			const [globalSettings, tenantSettings] = await Promise.all([
@@ -161,7 +161,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 		} catch (error) {
 			console.error('Error loading settings:', error);
 		} finally {
-			this.loading = false;
+			this.loading.set(false);
 		}
 	}
 
@@ -228,7 +228,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 		if (this.globalPosthogForm.invalid) return;
 
 		try {
-			this.loading = true;
+			this.loading.set(true);
 			const formValue = this.globalPosthogForm.getRawValue();
 			const settings = {
 				[POSTHOG_SETTINGS.ENABLED]: String(formValue.posthogEnabled),
@@ -242,7 +242,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 			console.error('Error saving Global PostHog settings:', error);
 			this._toastrService.danger('TOASTR.MESSAGE.SETTINGS_UPDATE_ERROR');
 		} finally {
-			this.loading = false;
+			this.loading.set(false);
 		}
 	}
 
@@ -253,7 +253,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 		if (this.tenantPosthogForm.invalid) return;
 
 		try {
-			this.loading = true;
+			this.loading.set(true);
 			const formValue = this.tenantPosthogForm.getRawValue();
 			const settings = {
 				[POSTHOG_SETTINGS.ENABLED]: String(formValue.posthogEnabled),
@@ -267,7 +267,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 			console.error('Error saving Tenant PostHog settings:', error);
 			this._toastrService.danger('TOASTR.MESSAGE.SETTINGS_UPDATE_ERROR');
 		} finally {
-			this.loading = false;
+			this.loading.set(false);
 		}
 	}
 
@@ -278,7 +278,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 		if (this.globalSentryForm.invalid) return;
 
 		try {
-			this.loading = true;
+			this.loading.set(true);
 			const formValue = this.globalSentryForm.getRawValue();
 			const settings = {
 				[SENTRY_SETTINGS.ENABLED]: String(formValue.sentryEnabled),
@@ -290,7 +290,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 			console.error('Error saving Global Sentry settings:', error);
 			this._toastrService.danger('TOASTR.MESSAGE.SETTINGS_UPDATE_ERROR');
 		} finally {
-			this.loading = false;
+			this.loading.set(false);
 		}
 	}
 
@@ -301,7 +301,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 		if (this.tenantSentryForm.invalid) return;
 
 		try {
-			this.loading = true;
+			this.loading.set(true);
 			const formValue = this.tenantSentryForm.getRawValue();
 			const settings = {
 				[SENTRY_SETTINGS.ENABLED]: String(formValue.sentryEnabled),
@@ -313,7 +313,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 			console.error('Error saving Tenant Sentry settings:', error);
 			this._toastrService.danger('TOASTR.MESSAGE.SETTINGS_UPDATE_ERROR');
 		} finally {
-			this.loading = false;
+			this.loading.set(false);
 		}
 	}
 
@@ -324,7 +324,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 		if (this.globalJitsuForm.invalid) return;
 
 		try {
-			this.loading = true;
+			this.loading.set(true);
 			const formValue = this.globalJitsuForm.getRawValue();
 			const settings = {
 				[JITSU_SETTINGS.ENABLED]: String(formValue.jitsuEnabled),
@@ -337,7 +337,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 			console.error('Error saving Global Jitsu settings:', error);
 			this._toastrService.danger('TOASTR.MESSAGE.SETTINGS_UPDATE_ERROR');
 		} finally {
-			this.loading = false;
+			this.loading.set(false);
 		}
 	}
 
@@ -348,7 +348,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 		if (this.tenantJitsuForm.invalid) return;
 
 		try {
-			this.loading = true;
+			this.loading.set(true);
 			const formValue = this.tenantJitsuForm.getRawValue();
 			const settings = {
 				[JITSU_SETTINGS.ENABLED]: String(formValue.jitsuEnabled),
@@ -361,7 +361,7 @@ export class MonitoringComponent extends TranslationBaseComponent implements OnI
 			console.error('Error saving Tenant Jitsu settings:', error);
 			this._toastrService.danger('TOASTR.MESSAGE.SETTINGS_UPDATE_ERROR');
 		} finally {
-			this.loading = false;
+			this.loading.set(false);
 		}
 	}
 }

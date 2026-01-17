@@ -7,7 +7,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.TENANT_SETTING]">
-			<div class="main-form" [nbSpinner]="loading" nbSpinnerStatus="primary">
+			<div class="main-form" [nbSpinner]="loading()" nbSpinnerStatus="primary">
 				<aside class="aside-nav">
 					<h4 class="settings-section-header">
 						{{ 'SETTINGS_MONITORING.SERVICES' | translate }}
@@ -69,7 +69,7 @@
 												></ng-container>
 												<div class="actions mt-3">
 													<button
-														[disabled]="globalPosthogForm.invalid || loading"
+														[disabled]="globalPosthogForm.invalid || loading()"
 														(throttledClick)="saveGlobalPosthog()"
 														debounceClick
 														nbButton
@@ -91,7 +91,7 @@
 												></ng-container>
 												<div class="actions mt-3">
 													<button
-														[disabled]="tenantPosthogForm.invalid || loading"
+														[disabled]="tenantPosthogForm.invalid || loading()"
 														(throttledClick)="saveTenantPosthog()"
 														debounceClick
 														nbButton
@@ -124,7 +124,7 @@
 												></ng-container>
 												<div class="actions mt-3">
 													<button
-														[disabled]="globalSentryForm.invalid || loading"
+														[disabled]="globalSentryForm.invalid || loading()"
 														(throttledClick)="saveGlobalSentry()"
 														debounceClick
 														nbButton
@@ -146,7 +146,7 @@
 												></ng-container>
 												<div class="actions mt-3">
 													<button
-														[disabled]="tenantSentryForm.invalid || loading"
+														[disabled]="tenantSentryForm.invalid || loading()"
 														(throttledClick)="saveTenantSentry()"
 														debounceClick
 														nbButton
@@ -176,7 +176,7 @@
 												></ng-container>
 												<div class="actions mt-3">
 													<button
-														[disabled]="globalJitsuForm.invalid || loading"
+														[disabled]="globalJitsuForm.invalid || loading()"
 														(throttledClick)="saveGlobalJitsu()"
 														debounceClick
 														nbButton
@@ -195,7 +195,7 @@
 												></ng-container>
 												<div class="actions mt-3">
 													<button
-														[disabled]="tenantJitsuForm.invalid || loading"
+														[disabled]="tenantJitsuForm.invalid || loading()"
 														(throttledClick)="saveTenantJitsu()"
 														debounceClick
 														nbButton
