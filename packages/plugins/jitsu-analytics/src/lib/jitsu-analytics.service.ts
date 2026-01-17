@@ -59,8 +59,8 @@ export class JitsuAnalyticsService {
 		// Check if this.jitsu is defined and both host and writeKey are defined
 		if (!host || !writeKey) return null;
 
-		// Return default client if config unchanged
-		if (host === this.config.host && writeKey === this.config.writeKey) {
+		// Return default client if config unchanged (including debug)
+		if (host === this.config.host && writeKey === this.config.writeKey && debug === this.config.debug) {
 			return this.jitsu;
 		}
 
