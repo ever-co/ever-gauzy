@@ -160,7 +160,7 @@
 		"typeface-exo": "^0.0.61",
 		"underscore": "^1.13.3",
 		"underscore.string": "^3.3.6",
-		"uuid": "^11.1.0",
+		"uuid": "^13.0.0",
 		"web-animations-js": "^2.3.2",
 		"yargs": "^17.5.0",
 		"zone.js": "0.15.0"

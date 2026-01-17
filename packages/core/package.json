@@ -182,7 +182,7 @@
 		"underscore": "^1.13.3",
 		"unleash-client": "^3.16.1",
 		"unzipper": "^0.10.11",
-		"uuid": "^11.1.0",
+		"uuid": "^13.0.0",
 		"web-push": "^3.4.4",
 		"yargs": "^17.5.0"
 	},

@@ -44,7 +44,7 @@
 		"jose": "^6.0.13",
 		"jsonwebtoken": "^9.0.0",
 		"bcryptjs": "^3.0.2",
-		"uuid": "^11.1.0",
+		"uuid": "^13.0.0",
 		"express-session": "^1.18.1",
 		"connect-redis": "^7.1.0",
 		"ioredis": "^5.7.0",
