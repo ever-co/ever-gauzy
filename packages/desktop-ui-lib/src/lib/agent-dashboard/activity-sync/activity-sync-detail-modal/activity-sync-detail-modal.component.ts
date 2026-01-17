@@ -14,22 +14,21 @@ export class ActivitySyncDetailModalComponent {
 
 	constructor(
 		protected dialogRef: NbDialogRef<ActivitySyncDetailModalComponent>,
-	) {}
+	) { }
 
 	close() {
 		this.dialogRef.close();
 	}
 
-	getFormattedData(data: any): string {
-		if (!data) {
+	getFormattedData(): string {
+		if (!this.data?.data) {
 			return 'N/A';
 		}
-
 
 		if (typeof this.data.data === 'string') {
 			try {
 				return JSON.stringify(JSON.parse(this.data.data), null, 2);
-			} catch(err) {
+			} catch (err) {
 				return this.data.data;
 			}
 		}

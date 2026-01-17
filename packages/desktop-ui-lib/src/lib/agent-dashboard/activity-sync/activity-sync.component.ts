@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { combineLatest, Subject, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { QueueItem, SyncHealth } from '../models/logs.models';
@@ -16,14 +16,14 @@ import { StatusMapper } from '../../shared/utils/queue-status-mapper.util';
 	styleUrls: ['./activity-sync.component.scss'],
 	standalone: false
 })
-export class SyncPageComponent implements OnInit {
+export class SyncPageComponent implements OnInit, OnDestroy {
 	items$: Observable<QueueItem[]> = this.svc.queueStream$;
 	health$: Observable<SyncHealth> = this.svc.healthStream$;
 	tab: 'PENDING' | 'FAILED' | 'SYNCED' | 'PROCESS' = 'PENDING';
 
 	currentFilter = {
 		field: 'status',
-		search: '',
+		search: ''
 	};
 
 	private _smartTable: Angular2SmartTableComponent;
@@ -45,27 +45,24 @@ export class SyncPageComponent implements OnInit {
 		private svc: LogService,
 		private translateService: TranslateService,
 		private dialogService: NbDialogService
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this.loadSmartTableSettings();
 		this.smartTableSource = new LocalDataSource();
-		combineLatest([
-			this.items$,
-		])
+		combineLatest([this.items$])
 			.pipe(takeUntil(this.destroy$))
 			.subscribe(([items]) => {
 				this.smartTableSource.load(items);
 				if (this.currentFilter.search) {
-					this.smartTableSource.setFilter(
-						[this.currentFilter],
-						false,
-					);
+					this.smartTableSource.setFilter([this.currentFilter], false);
 				}
 			});
 	}
 
-	clearSynced() { this.svc.clearSynced(); }
+	clearSynced() {
+		this.svc.clearSynced();
+	}
 
 	onChangeTab(tab: 'PENDING' | 'FAILED' | 'SYNCED' | 'PROCESS') {
 		this.tab = tab;
@@ -73,10 +70,7 @@ export class SyncPageComponent implements OnInit {
 		this.currentFilter.search = StatusMapper.getStatusForTab(tab);
 
 		if (this.currentFilter.search) {
-			this.smartTableSource.setFilter(
-				[this.currentFilter],
-				false,
-			);
+			this.smartTableSource.setFilter([this.currentFilter], false);
 		} else {
 			this.smartTableSource.reset(); // show all
 		}
@@ -129,7 +123,7 @@ export class SyncPageComponent implements OnInit {
 	}
 
 	onRowClick(event: any): void {
-		import('./activity-sync-detail-modal/activity-sync-detail-modal.component').then(m => {
+		import('./activity-sync-detail-modal/activity-sync-detail-modal.component').then((m) => {
 			this.dialogService.open(m.ActivitySyncDetailModalComponent, {
 				context: {
 					data: event.data
@@ -139,5 +133,8 @@ export class SyncPageComponent implements OnInit {
 		});
 	}
 
-
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
+	}
 }

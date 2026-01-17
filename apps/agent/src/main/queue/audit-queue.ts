@@ -1,7 +1,5 @@
 import * as path from 'path';
-import {
-	AuditQueueService
-} from '@gauzy/desktop-lib';
+import { AuditQueueService } from '@gauzy/desktop-lib';
 export type AuditStatus = 'waiting' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 import AppWindow from '../window-manager';
 
@@ -54,10 +52,11 @@ export class QueueAudit {
 			created_at: new Date()
 		};
 		const queueResult = await this.auditQueueService.save(newQueue);
-		this.dashboardEventUpdate(
-			'add',
-			queueResult
-		);
+		if (queueResult) {
+			this.dashboardEventUpdate('add', queueResult);
+		} else {
+			console.error(`Failed to save queue item ${id} to audit queue`);
+		}
 		return queueResult;
 	}
 
@@ -67,7 +66,11 @@ export class QueueAudit {
 			status: 'running',
 			started_at: new Date()
 		});
-		this.dashboardEventUpdate('update', queueResult);
+		if (queueResult) {
+			this.dashboardEventUpdate('update', queueResult);
+		} else {
+			console.error(`Failed to update queue item ${id} to running status`);
+		}
 		return queueResult;
 	}
 
@@ -77,7 +80,11 @@ export class QueueAudit {
 			status: 'succeeded',
 			finished_at: new Date()
 		});
-		this.dashboardEventUpdate('update', queueResult);
+		if (queueResult) {
+			this.dashboardEventUpdate('update', queueResult);
+		} else {
+			console.error(`Failed to update queue item ${id} to succeeded status`);
+		}
 		return queueResult;
 	}
 
@@ -88,7 +95,11 @@ export class QueueAudit {
 			finished_at: new Date(),
 			last_error: `${JSON.stringify(err.message)}`
 		});
-		this.dashboardEventUpdate('update', queueResult);
+		if (queueResult) {
+			this.dashboardEventUpdate('update', queueResult);
+		} else {
+			console.error(`Failed to update queue item ${id} to failed status`);
+		}
 		return queueResult;
 	}
 

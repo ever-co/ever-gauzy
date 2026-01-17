@@ -17,7 +17,7 @@ export class AuditQueueService implements IAuditQueueService<AuditQueueTO> {
 				console.error('WARN[AUDIT_QUEUE_SERVICE]: No audit queue data, cannot save');
 				return null;
 			}
-			return this._auditQueueDAO.saveAndReturn(queue);
+			return await this._auditQueueDAO.saveAndReturn(queue);
 		} catch (error) {
 			throw new AppError('AUDIT_QUEUE_SERVICE', error);
 		}
