@@ -3,10 +3,6 @@ import { IEmployee } from './employee.model';
 import { IGoal } from './goals.model';
 import { IOrganizationProject } from './organization-projects.model';
 
-// =====================================================
-// ENUMS
-// =====================================================
-
 /**
  * Organization Strategic State enum
  * Defines the lifecycle phase of a strategic initiative
@@ -58,10 +54,6 @@ export enum OrganizationStrategicPerceivedMomentumEnum {
 	ACCELERATING = 'accelerating'
 }
 
-// =====================================================
-// INTERFACES - Strategic Signals
-// =====================================================
-
 /**
  * Organization Strategic signals interface
  * Qualitative signals stored as structured metadata
@@ -91,10 +83,6 @@ export interface IOrganizationStrategicSignals {
 	lastAssessedById?: ID;
 }
 
-// =====================================================
-// INTERFACES - Relational
-// =====================================================
-
 /**
  * Relational interface for entities that reference a single strategic initiative
  * Used for: Goals (ManyToOne relationship)
@@ -116,10 +104,6 @@ export interface IRelationalOrganizationStrategicInitiative {
 export interface IRelationalOrganizationStrategicInitiatives {
 	organizationStrategicInitiatives?: IOrganizationStrategicInitiative[];
 }
-
-// =====================================================
-// INTERFACES - Main Entity
-// =====================================================
 
 /**
  * Organization Strategic Initiative interface
@@ -178,10 +162,6 @@ export interface IOrganizationStrategicInitiative
 	 */
 	goals?: IGoal[];
 }
-
-// =====================================================
-// INTERFACES - Input/Output
-// =====================================================
 
 /**
  * Create input for organization strategic initiative
