@@ -2434,7 +2434,11 @@
 			"BROADCAST_CREATE": "Broadcast erstellen",
 			"BROADCAST_READ": "Broadcast anzeigen",
 			"BROADCAST_UPDATE": "Broadcast aktualisieren",
-			"BROADCAST_DELETE": "Broadcast löschen"
+			"BROADCAST_DELETE": "Broadcast löschen",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "Organisationsstrategische Initiative erstellen",
+			"ORG_STRATEGIC_INITIATIVE_READ": "Organisationsstrategische Initiative anzeigen",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Organisationsstrategische Initiative aktualisieren",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Organisationsstrategische Initiative löschen"
 		},
 		"BILLING": "Rechnungsstellung",
 		"BUDGET": "Budget",

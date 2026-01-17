@@ -2438,7 +2438,11 @@
 			"BROADCAST_CREATE": "Criar broadcast",
 			"BROADCAST_READ": "Visualizar broadcast",
 			"BROADCAST_UPDATE": "Atualizar broadcast",
-			"BROADCAST_DELETE": "Excluir broadcast"
+			"BROADCAST_DELETE": "Excluir broadcast",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "Criar Iniciativa Estratégica da Organização",
+			"ORG_STRATEGIC_INITIATIVE_READ": "Visualizar Iniciativa Estratégica da Organização",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Atualizar Iniciativa Estratégica da Organização",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Excluir Iniciativa Estratégica da Organização"
 		},
 		"BILLING": "Faturamento",
 		"BUDGET": "Orçamento",

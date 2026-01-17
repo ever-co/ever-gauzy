@@ -2463,7 +2463,11 @@
 			"BROADCAST_CREATE": "יצירת דיספליי",
 			"BROADCAST_READ": "צפה בדיספליי",
 			"BROADCAST_UPDATE": "עדכן דיספליי",
-			"BROADCAST_DELETE": "מחק דיספליי"
+			"BROADCAST_DELETE": "מחק דיספליי",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "יצירת מבוארה סטרטגית עבור הארגון",
+			"ORG_STRATEGIC_INITIATIVE_READ": "צפה במבוארה סטרטגית עבור הארגון",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "עדכן מבוארה סטרטגית עבור הארגון",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "מחק מבוארה סטרטגית עבור הארגון"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

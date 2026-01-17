@@ -2563,7 +2563,11 @@
 			"BROADCAST_CREATE": "Create Broadcast",
 			"BROADCAST_READ": "View Broadcast",
 			"BROADCAST_UPDATE": "Update Broadcast",
-			"BROADCAST_DELETE": "Delete Broadcast"
+			"BROADCAST_DELETE": "Delete Broadcast",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "Create Organization Strategic Initiative",
+			"ORG_STRATEGIC_INITIATIVE_READ": "View Organization Strategic Initiative",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Update Organization Strategic Initiative",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Delete Organization Strategic Initiative"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

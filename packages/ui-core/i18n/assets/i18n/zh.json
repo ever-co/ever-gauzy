@@ -2438,7 +2438,11 @@
 			"BROADCAST_CREATE": "创建广播",
 			"BROADCAST_READ": "查看广播",
 			"BROADCAST_UPDATE": "更新广播",
-			"BROADCAST_DELETE": "删除广播"
+			"BROADCAST_DELETE": "删除广播",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "创建组织战略举措",
+			"ORG_STRATEGIC_INITIATIVE_READ": "查看组织战略举措",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "更新组织战略举措",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "删除组织战略举措"
 		},
 		"BILLING": "计费",
 		"BUDGET": "预算",

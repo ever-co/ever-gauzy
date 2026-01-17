@@ -2433,7 +2433,11 @@
 			"BROADCAST_CREATE": "Créer une diffusion",
 			"BROADCAST_READ": "Voir une diffusion",
 			"BROADCAST_UPDATE": "Mettre à jour une diffusion",
-			"BROADCAST_DELETE": "Supprimer une diffusion"
+			"BROADCAST_DELETE": "Supprimer une diffusion",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "Créer une initiative stratégique de l'organisation",
+			"ORG_STRATEGIC_INITIATIVE_READ": "Voir une initiative stratégique de l'organisation",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Mettre à jour une initiative stratégique de l'organisation",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Supprimer une initiative stratégique de l'organisation"
 		},
 		"BILLING": "Facturation",
 		"BUDGET": "Budget",

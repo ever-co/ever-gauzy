@@ -2438,7 +2438,11 @@
 			"BROADCAST_CREATE": "Broadcast aanmaken",
 			"BROADCAST_READ": "Broadcast bekijken",
 			"BROADCAST_UPDATE": "Broadcast bijwerken",
-			"BROADCAST_DELETE": "Broadcast verwijderen"
+			"BROADCAST_DELETE": "Broadcast verwijderen",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "Organisatiestrategische initiatief aanmaken",
+			"ORG_STRATEGIC_INITIATIVE_READ": "Bekijk organisatiestrategische initiatief",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Bewerk organisatiestrategische initiatief",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Verwijder organisatiestrategische initiatief"
 		},
 		"BILLING": "Facturatie",
 		"BUDGET": "Budget",

@@ -2438,7 +2438,11 @@
 			"BROADCAST_CREATE": "Crea diffusione",
 			"BROADCAST_READ": "Visualizza diffusione",
 			"BROADCAST_UPDATE": "Aggiorna diffusione",
-			"BROADCAST_DELETE": "Elimina diffusione"
+			"BROADCAST_DELETE": "Elimina diffusione",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "Creare Iniziativa Strategica dell'Organizzazione",
+			"ORG_STRATEGIC_INITIATIVE_READ": "Visualizza Iniziativa Strategica dell'Organizzazione",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Aggiorna Iniziativa Strategica dell'Organizzazione",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Elimina Iniziativa Strategica dell'Organizzazione"
 		},
 		"BILLING": "Fatturazione",
 		"BUDGET": "Bilancio",

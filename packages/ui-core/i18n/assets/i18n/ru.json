@@ -2469,7 +2469,11 @@
 			"BROADCAST_CREATE": "Создать broadcast",
 			"BROADCAST_READ": "Просмотр broadcast",
 			"BROADCAST_UPDATE": "Обновить broadcast",
-			"BROADCAST_DELETE": "Удалить broadcast"
+			"BROADCAST_DELETE": "Удалить broadcast",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "Создать организационную стратегическую инициативу",
+			"ORG_STRATEGIC_INITIATIVE_READ": "Просмотреть организационную стратегическую инициативу",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Обновить организационную стратегическую инициативу",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Удалить организационную стратегическую инициативу"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",

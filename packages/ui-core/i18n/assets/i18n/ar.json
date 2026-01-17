@@ -2419,7 +2419,15 @@
 			"ORG_TASK_EDIT": "تحرير المهام",
 			"ORG_TASK_DELETE": "حذف المهام",
 			"ORG_TASK_SETTING": "إعدادات المهام",
-			"ORG_MEMBER_LAST_LOG_VIEW": "عرض السجل الأخير"
+			"ORG_MEMBER_LAST_LOG_VIEW": "عرض السجل الأخير",
+			"BROADCAST_CREATE": "إنشاء البردكاست",
+			"BROADCAST_READ": "عرض البردكاست",
+			"BROADCAST_UPDATE": "تحديث البردكاست",
+			"BROADCAST_DELETE": "حذف البردكاست",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "إنشاء المبادرة الاستراتيجية للمؤسسة",
+			"ORG_STRATEGIC_INITIATIVE_READ": "عرض المبادرة الاستراتيجية للمؤسسة",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "تحديث المبادرة الاستراتيجية للمؤسسة",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "حذف المبادرة الاستراتيجية للمؤسسة"
 		},
 		"BILLING": "الفوترة",
 		"BUDGET": "ميزانية",
