@@ -39,7 +39,7 @@
     }
     @if (item?.children?.length > 0) {
       <nb-accordion-item-body [ngClass]="{ 'item-collapsed': !state }">
-        @for (subItem of item.children; track subItem?.title($index, subItem)) {
+        @for (subItem of item.children; track subItem?.title) {
           <div>
             @if (!item?.hidden) {
               <ga-children-menu-item
