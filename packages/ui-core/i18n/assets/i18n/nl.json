@@ -230,6 +230,9 @@
 			"PLUGIN_MARKETPLACE": "Deze plugin is niet beschikbaar op de marktplaats",
 			"LOADING": "Laden..."
 		},
+		"QUEUE": "Wachtrij",
+		"ATTEMPTS": "Pogingen",
+		"LAST_ERROR": "Laatste Fout",
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Bedrag",
 		"DATE": "Datum",
@@ -2438,7 +2441,11 @@
 			"BROADCAST_CREATE": "Broadcast aanmaken",
 			"BROADCAST_READ": "Broadcast bekijken",
 			"BROADCAST_UPDATE": "Broadcast bijwerken",
-			"BROADCAST_DELETE": "Broadcast verwijderen"
+			"BROADCAST_DELETE": "Broadcast verwijderen",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "Organisatiestrategische initiatief aanmaken",
+			"ORG_STRATEGIC_INITIATIVE_READ": "Bekijk organisatiestrategische initiatief",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Bewerk organisatiestrategische initiatief",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Verwijder organisatiestrategische initiatief"
 		},
 		"BILLING": "Facturatie",
 		"BUDGET": "Budget",

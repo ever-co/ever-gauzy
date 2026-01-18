@@ -70,8 +70,9 @@ export class QueueStore {
 		try {
 			this.db
 				.prepare(
-					`INSERT OR REPLACE INTO ${this.tableName} (id, lock, task, priority, added)
-					VALUES (@id, '', @task, @priority, @added)`
+					`INSERT INTO ${this.tableName} (id, lock, task, priority, added)
+					VALUES (@id, '', @task, @priority, @added)
+					ON CONFLICT(id) DO NOTHING`
 				)
 				.run({
 					id: taskId,

@@ -43,6 +43,7 @@ class PushActivities {
 	public currentSessionStartTime: Date;
 	public currentSessionTimeLogId: string | null;
 	private screenshotService: ScreenshotService;
+	private readonly MIN_TIMER_DURATION_MS = 1000; // Minimum 1-second duration to avoid API validation errors
 
 	constructor() {
 		this.kbMouseActivityService = new KbMouseActivityService();
@@ -249,15 +250,25 @@ class PushActivities {
 
 	async uploadCapturedImage(authConfig: TAuthConfig, recordedAt: string, imageTemp: string, timeSlotId?: string) {
 		this.agentLogger.info(`image temporary path ${imageTemp}`);
+		if (!fs.existsSync(imageTemp)) {
+			this.agentLogger.info(`temporary image doesn't exists ${imageTemp}`);
+			await this.screenshotService.remove({
+				imagePath: imageTemp,
+				id: null
+			});
+			return;
+		}
+
 		const isAccessed = await this.imageAccessed(imageTemp);
 		if (!isAccessed) {
+			await this.screenshotService.remove({
+				imagePath: imageTemp,
+				id: null
+			});
 			throw new Error('Image cannot be accessed');
 		}
 
-		if (!fs.existsSync(imageTemp)) {
-			this.agentLogger.info(`temporary image doesn't exists ${imageTemp}`);
-			return;
-		}
+
 
 		this.agentLogger.info(`Preparing to save screenshots recordedAt ${recordedAt} in timeSlotId ${timeSlotId}`);
 		const respScreenshot = await this.apiService.uploadImages(
@@ -675,6 +686,30 @@ class PushActivities {
 						isStoppedOffline: true,
 						isStartedOffline: true
 					}));
+					throw error;
+				}
+			}
+
+			if (!timerLocal?.stoppedAt && timerLocal?.timelogId && this.currentSessionTimeLogId !== timerLocal.timelogId && !timerLocal?.synced) {
+				try {
+					const stoppedAt = new Date((new Date(timerLocal.startedAt)).getTime() + this.MIN_TIMER_DURATION_MS);
+					await this.apiService.updateTimeLog(timerLocal?.timelogId, {
+						tenantId: authConfig?.user?.employee?.tenantId,
+						organizationId: authConfig?.user?.employee?.organizationId,
+						startedAt: timerLocal?.startedAt,
+						stoppedAt: stoppedAt,
+						isBillable: true,
+						employeeId: authConfig?.user?.employee?.id
+					});
+					await this.timerService.update(new Timer({
+						id: timerLocal?.id,
+						stoppedAt: stoppedAt,
+						synced: true
+					}));
+					this.mainEvent.emit('MAIN_EVENT', { type: MAIN_EVENT_TYPE.CHECK_STATUS_TIMER });
+					return;
+				} catch (error) {
+					await this.updateStopTimerSyncStatus(timerLocal, false);
 					throw error;
 				}
 			}

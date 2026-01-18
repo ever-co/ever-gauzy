@@ -100,6 +100,7 @@ export * from './lib/organization-project-module.model';
 export * from './lib/organization-projects.model';
 export * from './lib/organization-recurring-expense.model';
 export * from './lib/organization-sprint.model';
+export * from './lib/organization-strategic-initiative.model';
 export * from './lib/organization-task-setting.model';
 export * from './lib/organization-team-employee-model';
 export * from './lib/organization-team-join-request.model';

@@ -1,8 +1,10 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 
 import {
 	NbThemeModule,
@@ -26,7 +28,8 @@ import {
 	NbInputModule,
 	NbCheckboxModule,
 	NbAlertModule,
-	NbRouteTabsetModule
+	NbRouteTabsetModule,
+	NbDialogModule,
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 
@@ -36,10 +39,19 @@ import { SyncPageComponent } from './activity-sync/activity-sync.component';
 import { FilterStatusPipe } from './pipes/filter.status.pipe';
 import { LocalDateParse } from './pipes/date.pipe';
 import { TasksModule } from '../tasks/tasks.module';
+import { StatusBadgeComponent } from './activity-sync/activity-render/status-render';
+import { ActivitySyncDetailModalComponent } from './activity-sync/activity-sync-detail-modal/activity-sync-detail-modal.component';
 
 @NgModule({
-	declarations: [AgentDashboardComponent, LogsPageComponent, SyncPageComponent],
+	declarations: [
+		AgentDashboardComponent, 
+		LogsPageComponent, 
+		SyncPageComponent, 
+		StatusBadgeComponent,
+		ActivitySyncDetailModalComponent
+	],
 	imports: [
+		CommonModule,
 		BrowserModule,
 		BrowserAnimationsModule,
 		FormsModule,
@@ -70,7 +82,9 @@ import { TasksModule } from '../tasks/tasks.module';
 		FilterStatusPipe,
 		LocalDateParse,
 		NbRouteTabsetModule,
-		TasksModule
+		NbDialogModule.forChild(),
+		TasksModule,
+		Angular2SmartTableModule
 	],
 	exports: [
 		FilterStatusPipe,

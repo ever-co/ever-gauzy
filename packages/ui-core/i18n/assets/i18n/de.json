@@ -230,6 +230,9 @@
 			"PLUGIN_MARKETPLACE": "Dieses Plugin ist im Marktplatz nicht verfügbar",
 			"LOADING": "Laden..."
 		},
+		"QUEUE": "Warteschlange",
+		"ATTEMPTS": "Versuche",
+		"LAST_ERROR": "Letzter Fehler",
 		"TRANSACTION_TYPE": "Art\n",
 		"AMOUNT": "Menge",
 		"DATE": "Datum",
@@ -2434,7 +2437,11 @@
 			"BROADCAST_CREATE": "Broadcast erstellen",
 			"BROADCAST_READ": "Broadcast anzeigen",
 			"BROADCAST_UPDATE": "Broadcast aktualisieren",
-			"BROADCAST_DELETE": "Broadcast löschen"
+			"BROADCAST_DELETE": "Broadcast löschen",
+			"ORG_STRATEGIC_INITIATIVE_CREATE": "Organisationsstrategische Initiative erstellen",
+			"ORG_STRATEGIC_INITIATIVE_READ": "Organisationsstrategische Initiative anzeigen",
+			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Organisationsstrategische Initiative aktualisieren",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Organisationsstrategische Initiative löschen"
 		},
 		"BILLING": "Rechnungsstellung",
 		"BUDGET": "Budget",
