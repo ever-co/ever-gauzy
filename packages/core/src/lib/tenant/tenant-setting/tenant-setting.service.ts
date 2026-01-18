@@ -167,9 +167,9 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 	 * Retrieves global settings from the database (tenantId = NULL).
 	 *
 	 * @param {string[]} [names] - Optional array of setting names to retrieve. If not provided, all global settings are returned.
-	 * @returns {Promise<Record<string, string>>} - A key-value pair object with global settings.
+	 * @returns {Promise<Record<string, any>>} - A key-value pair object with global settings.
 	 */
-	async getGlobalSettings(names?: string[]): Promise<Record<string, string>> {
+	async getGlobalSettings(names?: string[]): Promise<Record<string, any>> {
 		const whereClause: any = { tenantId: IsNull() };
 		if (names && names.length > 0) {
 			whereClause.name = In(names);

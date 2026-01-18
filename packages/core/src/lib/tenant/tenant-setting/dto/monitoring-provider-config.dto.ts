@@ -30,6 +30,7 @@ export class MonitoringProviderConfigDTO {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@Trimmed()
 	readonly posthogFlushInterval?: string;
 
 	// Sentry settings

@@ -12,7 +12,7 @@ export class GlobalSettingGetHandler implements ICommandHandler<GlobalSettingGet
 		private readonly _tenantSettingService: TenantSettingService
 	) {}
 
-	public async execute(command: GlobalSettingGetCommand): Promise<Record<string, string>> {
+	public async execute(command: GlobalSettingGetCommand): Promise<Record<string, any>> {
 		const settings = await this._tenantSettingService.getGlobalSettings(command.names);
 
 		// Mask secret values before returning to client

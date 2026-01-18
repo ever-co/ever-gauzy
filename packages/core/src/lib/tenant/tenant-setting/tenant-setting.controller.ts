@@ -34,7 +34,7 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 	})
 	@Permissions(PermissionsEnum.GLOBAL_SETTING)
 	@Get('global')
-	async getGlobalSettings(): Promise<Record<string, string>> {
+	async getGlobalSettings(): Promise<Record<string, any>> {
 		return this.commandBus.execute(new GlobalSettingGetCommand());
 	}
 
