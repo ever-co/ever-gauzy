@@ -27,12 +27,11 @@
   resolved "https://registry.yarnpkg.com/@akveo/ng2-completer/-/ng2-completer-9.0.1.tgz#49d2914fb62b78cc6ae5aed861ea7fa4ed5863d1"
   integrity sha512-iACL0heOUmGV1GBKD3srwBJMFLZykld1MiTDvmbgEEXMhavp0UA45GdNsv7BBKI9XauuFKpOqHLlC+fT6DLGAQ==
 
-"@ali-hm/angular-tree-component@^19.2.5":
-  version "19.2.5"
-  resolved "https://registry.yarnpkg.com/@ali-hm/angular-tree-component/-/angular-tree-component-19.2.5.tgz#aca1f4af81eba3aa71b8a674e4387d2121e5f25c"
-  integrity sha512-INkTnYsWK/r+73tplO8lCg1hrQ6t3LI41shuK3vcHK36gGnJY+CJdIP6oYxHf6fbKvuXAdTXXaoOj3QTf38ztQ==
+"@ali-hm/angular-tree-component@^20.1.6":
+  version "20.3.4"
+  resolved "https://registry.yarnpkg.com/@ali-hm/angular-tree-component/-/angular-tree-component-20.3.4.tgz#faacf10cba3638555c8a84b4c9bfc44f4b21fb34"
+  integrity sha512-tPhz+l3sg2an6gm9VbC9CjFex6yTu/m+dst879UaF2TaGE0II/pGAAmTz/zYS9EOk+xWjkwaiJU3EhqN9GAk7Q==
   dependencies:
-    mobx "~4.14.1"
     tslib "^2.5.0"
 
 "@ampproject/remapping@2.3.0", "@ampproject/remapping@^2.2.0", "@ampproject/remapping@^2.3.0":
