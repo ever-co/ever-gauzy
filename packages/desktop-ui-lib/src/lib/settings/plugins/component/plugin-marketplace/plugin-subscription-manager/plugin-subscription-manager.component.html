@@ -167,8 +167,10 @@
 						status="basic"
 						size="small"
 						class="action warning action-btn install-btn"
-						[disabled]="disabled"
+						[disabled]="disabled || !canInstallInEnvironment()"
 						(click)="install()"
+						[nbTooltip]="getEnvironmentMismatchTooltip()"
+						[nbTooltipDisabled]="canInstallInEnvironment()"
 					>
 						<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline" class="mr-1"></nb-icon>
 						{{ 'BUTTONS.INSTALL' | translate }}

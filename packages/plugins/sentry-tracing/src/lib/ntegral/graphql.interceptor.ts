@@ -36,6 +36,9 @@ export class GraphqlInterceptor extends SentryInterceptor {
 	 * @param exception
 	 */
 	private captureGraphqlException(scope: Scope, gqlContext: typeof GqlExecutionContext, exception: any): void {
+		const sentry = this.client.instance();
+		if (!sentry) return;
+
 		const info = gqlContext.getInfo();
 		const context = gqlContext.getContext();
 
@@ -62,6 +65,6 @@ export class GraphqlInterceptor extends SentryInterceptor {
 			}
 		}
 
-		this.client.instance().captureException(exception);
+		sentry.captureException(exception);
 	}
 }

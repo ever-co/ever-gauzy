@@ -24,6 +24,10 @@ export class AuditQueueDAO implements DAO<AuditQueueTO> {
 			.limit(limit)
 			.offset(page * limit);
 	}
+	public async saveAndReturn(value: AuditQueueTO): Promise<AuditQueueTO> {
+		return this._trx.createAndReturn(value);
+	}
+
 	public async save(value: AuditQueueTO): Promise<void> {
 		await this._trx.create(value);
 	}
@@ -37,8 +41,8 @@ export class AuditQueueDAO implements DAO<AuditQueueTO> {
 	public async update(id: number, value: Partial<AuditQueueTO>): Promise<void> {
 		await this._trx.update(id, value);
 	}
-	public async updatePartial(id: string, value: Partial<AuditQueueTO>): Promise<void> {
-		await this._trx.updatePartial(id, value);
+	public async updatePartial(id: string, value: Partial<AuditQueueTO>): Promise<AuditQueueTO> {
+		return this._trx.updatePartial(id, value);
 	}
 	public async delete(value?: Partial<AuditQueueTO>): Promise<void> {
 		if (!value || value.id === undefined) {

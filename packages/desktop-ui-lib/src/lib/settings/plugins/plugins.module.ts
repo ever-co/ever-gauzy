@@ -14,7 +14,6 @@ import {
 	NbContextMenuModule,
 	NbDatepickerModule,
 	NbDialogModule,
-	NbDialogService,
 	NbFormFieldModule,
 	NbIconModule,
 	NbInfiniteListDirective,
@@ -29,7 +28,6 @@ import {
 	NbStepperModule,
 	NbTabsetModule,
 	NbTagModule,
-	NbToastrService,
 	NbToggleModule,
 	NbTooltipModule,
 	NbUserModule
@@ -127,13 +125,18 @@ import { PluginUserAssignmentService } from './services/plugin-user-assignment.s
 import { PluginService } from './services/plugin.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
-import { LanguageModule } from '../../language/language.module';
-import { Store } from '../../services';
-import { PluginCategoryEffects } from './component/plugin-marketplace/+state';
+import { ElectronService } from '../../electron/services';
+import { PluginCategoryEffects } from './component/plugin-marketplace/+state/effects/plugin-category.effect';
 import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
 import { PluginUploadIntentEffects } from './component/plugin-marketplace/+state/effects/plugin-upload-intent.effect';
+import { PluginPlanQuery } from './component/plugin-marketplace/+state/queries/plugin-plan.query';
 import { PluginUploadIntentQuery } from './component/plugin-marketplace/+state/queries/plugin-upload-intent.query';
+import { PluginPlanStore } from './component/plugin-marketplace/+state/stores/plugin-plan.store';
 import { PluginUploadIntentStore } from './component/plugin-marketplace/+state/stores/plugin-upload-intent.store';
+import { OverviewTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/overview-tab/overview-tab.module';
+import { SettingsTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/settings-tab/settings-tab.module';
+import { SourceCodeTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/source-code-tab/source-code-tab.module';
+import { UserManagementTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/user-management-tab/user-management-tab.module';
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
 	BillingContactSectionComponent,
@@ -148,6 +151,7 @@ import {
 	SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
+import { PluginRoutingModule } from './plugin-routing.module';
 
 @NgModule({
 	declarations: [
@@ -204,7 +208,6 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		SubscriptionConsentSectionComponent,
 		UploadSelectionComponent
 	],
-	exports: [PluginLayoutComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -212,13 +215,13 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		PaginationModule,
 		NbButtonModule,
 		NbButtonGroupModule,
-		NbDialogModule,
+		NbDialogModule.forChild(),
 		NbInputModule,
 		NbCardModule,
 		DesktopDirectiveModule,
 		NoDataMessageModule,
 		NbIconModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		RouterModule,
 		NbBadgeModule,
 		FormsModule,
@@ -230,7 +233,7 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		NbSelectModule,
 		NbTooltipModule,
 		NbSpinnerModule,
-		NbDatepickerModule,
+		NbDatepickerModule.forRoot(), // This might need to be forChild() depending on your setup
 		NbStepperModule,
 		NbAlertModule,
 		NbCheckboxModule,
@@ -246,10 +249,15 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		NbTagModule,
 		InfiniteScrollDirective,
 		NbPopoverModule,
-		LanguageModule.forChild()
+		OverviewTabModule,
+		SourceCodeTabModule,
+		UserManagementTabModule,
+		SettingsTabModule,
+		PluginRoutingModule
 	],
 	providers: [
 		PluginLoaderService,
+		ElectronService,
 		PluginElectronService,
 		PluginService,
 		PluginSubscriptionService,
@@ -286,6 +294,8 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		),
 		PluginQuery,
 		PluginStore,
+		PluginPlanStore,
+		PluginPlanQuery,
 		PluginSettingsQuery,
 		PluginSettingsStore,
 		PluginSubscriptionQuery,
@@ -301,10 +311,7 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		UserManagementFacade,
 		PluginUploadIntentStore,
 		PluginUploadIntentQuery,
-		NbInfiniteListDirective,
-		NbToastrService,
-		NbDialogService,
-		Store
+		NbInfiniteListDirective
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

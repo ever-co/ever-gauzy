@@ -1075,6 +1075,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						}
 					},
 					{
+						id: 'settings-monitoring',
+						title: 'Monitoring',
+						icon: 'fas fa-chart-line',
+						link: '/pages/settings/monitoring',
+						data: {
+							translationKey: 'MENU.MONITORING',
+							permissionKeys: [PermissionsEnum.TENANT_SETTING]
+						}
+					},
+					{
 						id: 'settings-sms-gateways',
 						title: 'SMS Gateways',
 						icon: 'fas fa-at',

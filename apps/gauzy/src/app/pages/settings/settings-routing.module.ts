@@ -93,6 +93,23 @@ const routes: Routes = [
 				loadChildren: () => import('./file-storage/file-storage.module').then((m) => m.FileStorageModule)
 			},
 			{
+				path: 'monitoring',
+				loadChildren: () => import('./monitoring/monitoring.module').then((m) => m.MonitoringModule),
+				canActivate: [PermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.TENANT_SETTING],
+						redirectTo: '/pages/settings'
+					},
+					selectors: {
+						project: false,
+						employee: false,
+						date: false,
+						organization: false
+					}
+				}
+			},
+			{
 				path: 'danger-zone',
 				component: DangerZoneComponent,
 				canActivate: [PermissionsGuard],

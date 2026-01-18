@@ -25,7 +25,7 @@ import { environment } from '../../environments/environment';
 import MainEvent from '../events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 import { handleSplashScreen } from './splash';
-import { AgentMenu } from './menu';
+import { AgentMenu, MenuType } from './menu';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -75,6 +75,8 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean) {
 }
 
 async function handleSetupWindow() {
+	const agentMenu: AgentMenu = AgentMenu.getInstance();
+	agentMenu.initMenu(MenuType.onboarding);
 	await appWindow.initSetupWindow()
 	appWindow.setupWindow.show();
 }
@@ -100,7 +102,7 @@ export async function startServer(value: any) {
 		throw new AppError('MAINSTRSERVER', error);
 	}
 	const agentMenu: AgentMenu = AgentMenu.getInstance();
-	agentMenu.initMenu();
+	agentMenu.initMenu(MenuType.main);
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
@@ -167,14 +169,15 @@ async function appReady() {
 	await ensureScreenshotDir();
 	const configs: any = store.get('configs');
 	const settings = getAppSetting();
-	if (!settings) {
+	if (!settings || (!Object.keys(settings).length)) {
 		launchAtStartup(true, false);
 		LocalStore.setAllDefaultConfig();
 
 		/* Set default application setting for agent app. */
 		LocalStore.updateApplicationSetting({
 			screenshotNotification: false,
-			simpleScreenshotNotification: false
+			simpleScreenshotNotification: false,
+			alwaysOn: false
 		});
 	}
 
@@ -256,6 +259,37 @@ function setVariableGlobal(configs: {
 	};
 }
 
+enum powerMonitorEventName {
+	suspend = 'suspend',
+	shutdown = 'shutdown',
+	resume = 'resume'
+}
+
+function powerEventHandler(eventName: powerMonitorEventName) {
+	const authConfig = getAuthConfig();
+	if (authConfig?.token) {
+		switch (eventName) {
+			case powerMonitorEventName.resume:
+				mainEvent.emit(MAIN_EVENT, {
+					type: MAIN_EVENT_TYPE.ACTIVITY_RESUME
+				});
+				break;
+			case powerMonitorEventName.shutdown:
+				mainEvent.emit(MAIN_EVENT, {
+					type: MAIN_EVENT_TYPE.STOP_TIMER
+				});
+				break;
+			case powerMonitorEventName.suspend:
+				mainEvent.emit(MAIN_EVENT, {
+					type: MAIN_EVENT_TYPE.ACTIVITY_PAUSED
+				});
+				break;
+			default:
+				break;
+		}
+	}
+}
+
 export async function InitApp() {
 	require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 
@@ -329,28 +363,14 @@ export async function InitApp() {
 	await appReady();
 
 	powerMonitor.on('shutdown', () => {
-		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.STOP_TIMER
-		});
+		powerEventHandler(powerMonitorEventName.shutdown);
 	});
+
 	powerMonitor.on('suspend', () => {
-		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.STOP_TIMER
-		});
+		powerEventHandler(powerMonitorEventName.suspend);
 	});
-	powerMonitor.on('lock-screen', () => {
-		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.STOP_TIMER
-		});
-	});
-	powerMonitor.on('unlock-screen', () => {
-		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.START_TIMER
-		});
-	});
+
 	powerMonitor.on('resume', () => {
-		mainEvent.emit(MAIN_EVENT, {
-			type: MAIN_EVENT_TYPE.START_TIMER
-		});
+		powerEventHandler(powerMonitorEventName.resume);
 	});
 }

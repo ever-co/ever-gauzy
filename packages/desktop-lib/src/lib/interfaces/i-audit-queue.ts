@@ -3,10 +3,10 @@
  * @template T The type of activity data being managed
 */
 export interface IAuditQueueService<T> {
-	save(queue: T): Promise<void>;
+	save(queue: T): Promise<T>;
 	retrieve(id: string): Promise<T>;
 	remove(queue: T): Promise<void>;
-	update(queue: Partial<T>): Promise<void>;
+	update(queue: Partial<T>): Promise<T>;
 }
 
 /**

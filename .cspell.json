@@ -810,7 +810,8 @@
 		"Liskov",
 		"backoff",
 		"autodrain",
-		"pluginname"
+		"pluginname",
+		"Mobi"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

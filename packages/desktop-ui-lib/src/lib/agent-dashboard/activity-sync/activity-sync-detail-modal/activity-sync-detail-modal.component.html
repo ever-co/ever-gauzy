@@ -1,0 +1,63 @@
+<nb-card>
+	<nb-card-header class="d-flex justify-content-between align-items-center">
+		<h6>Queue Item Details</h6>
+		<button nbButton ghost size="small" (click)="close()">
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	<nb-card-body>
+		<div class="detail-section">
+			<div class="detail-row">
+				<span class="detail-label">ID:</span>
+				<span class="detail-value">{{ data.id || 'N/A' }}</span>
+			</div>
+
+			<div class="detail-row">
+				<span class="detail-label">Queue ID:</span>
+				<span class="detail-value">{{ data.queue_id || 'N/A' }}</span>
+			</div>
+
+			<div class="detail-row">
+				<span class="detail-label">Queue:</span>
+				<span class="detail-value">{{ data.queue || 'N/A' }}</span>
+			</div>
+
+			<div class="detail-row">
+				<span class="detail-label">Status:</span>
+				<span [class]="'status-chip status-' + getStatusClass(data.status)">
+					{{ data.status || 'N/A' }}
+				</span>
+			</div>
+
+			<div class="detail-row">
+				<span class="detail-label">Attempts:</span>
+				<span class="detail-value">{{ data.attempts || 0 }}</span>
+			</div>
+
+			<div class="detail-row">
+				<span class="detail-label">Priority:</span>
+				<span class="detail-value">{{ data.priority || 0 }}</span>
+			</div>
+
+			<div class="detail-row">
+				<span class="detail-label">Created At:</span>
+				<span class="detail-value">{{ getFormattedDate(data.created_at) }}</span>
+			</div>
+
+			<div class="detail-row" *ngIf="data.last_error">
+				<span class="detail-label">Last Error:</span>
+				<span class="detail-value error-text">{{ data.last_error }}</span>
+			</div>
+
+			<div class="detail-row full-width" *ngIf="data.data">
+				<span class="detail-label">Data:</span>
+				<pre class="data-json">{{ getFormattedData() }}</pre>
+			</div>
+		</div>
+	</nb-card-body>
+
+	<nb-card-footer class="text-right">
+		<button nbButton status="basic" (click)="close()">Close</button>
+	</nb-card-footer>
+</nb-card>

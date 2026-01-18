@@ -168,6 +168,8 @@ import { EmployeeNotificationModule } from '../employee-notification/employee-no
 import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
 import { EmployeeRecentVisitModule } from '../employee-recent-visit/employee-recent-visit.module';
 import { SharedEntityModule } from '../shared-entity/shared-entity.module';
+import { BroadcastModule } from '../broadcast/broadcast.module';
+import { OrganizationStrategicInitiativeModule } from '../organization-strategic-initiative/organization-strategic-initiative.module';
 import { PasswordHashModule } from '../password-hash/password-hash.module';
 
 const { unleashConfig } = environment;
@@ -517,6 +519,8 @@ if (environment.THROTTLE_ENABLED) {
 		TenantApiKeyModule,
 		EmployeeRecentVisitModule,
 		SharedEntityModule,
+		BroadcastModule,
+		OrganizationStrategicInitiativeModule,
 		PasswordHashModule
 	],
 	controllers: [AppController],

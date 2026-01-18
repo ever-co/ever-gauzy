@@ -16,6 +16,7 @@ import { filter, map, pairwise, shareReplay, startWith, take, tap } from 'rxjs/o
 import { PluginInstallationQuery } from '../+state';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginSubscriptionFacade } from '../+state/plugin-subscription.facade';
+import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { IPlanViewModel, PlanFormatterService } from '../plugin-subscription-plan-selection';
 import { SubscriptionFormService, SubscriptionPlanService, SubscriptionStatusService } from '../shared';
 
@@ -55,7 +56,8 @@ export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 		public readonly statusService: SubscriptionStatusService,
 		public readonly formatter: PlanFormatterService,
 		public readonly installationQuery: PluginInstallationQuery,
-		private readonly actions: Actions
+		private readonly actions: Actions,
+		private readonly environmentService: PluginEnvironmentService
 	) {
 		this.subscriptionForm = this.formService.createSubscriptionForm();
 		this.isLoading$ = this.facade.loading$;
@@ -376,5 +378,19 @@ This change will take effect at the end of your current billing period. You'll r
 
 	public getStatusIcon(status: string): string {
 		return this.statusService.getStatusIcon(status);
+	}
+
+	/**
+	 * Check if the plugin can be installed in the current environment
+	 */
+	public canInstallInEnvironment(): boolean {
+		return this.environmentService.canInstallPlugin(this.plugin);
+	}
+
+	/**
+	 * Get the environment mismatch tooltip message
+	 */
+	public getEnvironmentMismatchTooltip(): string {
+		return this.environmentService.getEnvironmentMismatchWarning(this.plugin);
 	}
 }

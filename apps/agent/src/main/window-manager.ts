@@ -12,6 +12,8 @@ import { resolveHtmlPath, getInitialConfig, delaySync } from './util';
 import * as path from 'path';
 import { LocalStore } from '@gauzy/desktop-lib';
 import { ScreenCaptureWindow } from './window/screen-capture-window';
+import MainEvent from './events/events';
+import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
 
 export enum WindowType {
 	settingWindow = 'settingWindow',
@@ -41,7 +43,7 @@ class AppWindow {
 		dashboardWindow: boolean;
 	};
 	private static instance: AppWindow;
-    private autoHideTimeout: NodeJS.Timeout | null = null;
+	private autoHideTimeout: NodeJS.Timeout | null = null;
 	constructor(rootPath: string) {
 		this.windowReadyStatus = {
 			settingWindow: false,
@@ -135,6 +137,7 @@ class AppWindow {
 						app.quit();
 					}
 				});
+				this.quitKeyListen(this.setupWindow);
 			}
 		} catch (error) {
 			console.error('Failed to initialize setup window', error);
@@ -181,6 +184,7 @@ class AppWindow {
 					this.settingWindow = null;
 					this.dockHideHandle();
 				});
+				this.quitKeyListen(this.settingWindow);
 			}
 		} catch (error) {
 			console.error('Failed to initialize setting window', error);
@@ -218,6 +222,7 @@ class AppWindow {
 					this.dockHideHandle();
 					this.logWindow = null;
 				});
+				this.quitKeyListen(this.logWindow);
 			}
 		} catch (error) {
 			console.error('Failed to initialize log window', error);
@@ -316,6 +321,28 @@ class AppWindow {
 
 	setWindowIsReady(windowType: WindowType) {
 		this.windowReadyStatus[windowType] = true;
+	}
+
+	quitHandle = (e: Electron.Event, input: Electron.Input) => {
+		const isCmdQ = input.meta && input.key.toLowerCase() === 'q';
+		const isAltF4 = input.alt && input.key === 'F4';
+
+		if (isCmdQ || isAltF4) {
+			const mainEvent = MainEvent.getInstance();
+			const isMacQuit = isCmdQ && process.platform === 'darwin';
+			const isNoneMacQuit = isAltF4 && process.platform !== 'darwin';
+			if (isMacQuit || isNoneMacQuit) {
+				e.preventDefault();
+				mainEvent.emit(MAIN_EVENT, {
+					type: MAIN_EVENT_TYPE.EXIT_APP
+				});
+			}
+		}
+	}
+
+	quitKeyListen(window: BrowserWindow) {
+		window.webContents.removeListener('before-input-event',  this.quitHandle);
+		window.webContents.on('before-input-event', this.quitHandle);
 	}
 }
 

@@ -1,20 +1,22 @@
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, Optional } from '@angular/core';
 import { NbToastrService } from '@nebular/theme';
 import { GAUZY_ENV } from '../constants';
 import { NotificationService } from './notification.service';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class ToastrNotificationService extends NotificationService {
 	constructor(
 		private readonly _toastrService: NbToastrService,
-		@Inject(GAUZY_ENV) environment: any
+		@Optional()
+		@Inject(GAUZY_ENV)
+		environment: any
 	) {
 		super();
 		this._notification = {
-			title: environment.DESCRIPTION,
-			message: '',
+			title: environment?.DESCRIPTION || 'Gauzy',
+			message: ''
 		};
 	}
 

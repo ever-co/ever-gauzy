@@ -94,6 +94,7 @@ export enum ActorTypeEnum {
 
 // BaseEntityEnum defines the type of the entity, used in BaseEntity model
 export enum BaseEntityEnum {
+	Broadcast = 'Broadcast',
 	Candidate = 'Candidate',
 	Comment = 'Comment',
 	Contact = 'Contact',
@@ -117,6 +118,7 @@ export enum BaseEntityEnum {
 	OrganizationVendor = 'OrganizationVendor',
 	ResourceLink = 'ResourceLink',
 	ScreeningTask = 'ScreeningTask',
+	OrganizationStrategicInitiative = 'OrganizationStrategicInitiative',
 	Task = 'Task',
 	TaskLinkedIssue = 'TaskLinkedIssue',
 	TaskView = 'TaskView',

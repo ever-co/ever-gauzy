@@ -3,6 +3,7 @@ import * as path from 'path';
 import { QueueStore } from './queue-store';
 import * as isOnline from 'is-online';
 import { IScreenshotQueuePayload, ITimerCallbackPayload, ITimeslotQueuePayload, IQueueUpdatePayload, TQueueName } from './i-queue';
+import { EventEmitter } from 'events';
 
 const IS_ONLINE_INTERVAL = 15;
 
@@ -26,6 +27,7 @@ export class DesktopQueue {
 	private serviceCheckCallback: () => Promise<boolean>;
 	private isOnlineIntervalCheck: number;
 	private workerHandler: () => void;
+	private _event: EventEmitter;
 	constructor(
 		dbPath: string
 	) {
@@ -57,6 +59,10 @@ export class DesktopQueue {
 			path: storePath,
 			tableName: 'screenshot_queue_retry'
 		});
+	}
+
+	public set events(value: EventEmitter) {
+		this._event = value;
 	}
 
 	public setUpdateQueueCallback(callback: (param: IQueueUpdatePayload) => void) {
@@ -342,6 +348,12 @@ export class DesktopQueue {
 			this.timeSlotQueueRetry?.pause();
 			this.screenshotQueueRetry?.pause();
 		}
+		this._event.emit('MAIN_EVENT', {
+			type: 'NETWORK_STATUS',
+			data: {
+				online: this.online
+			}
+		});
 	}
 
 	public stopWorker() {

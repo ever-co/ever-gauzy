@@ -12,6 +12,17 @@ export class KeyboardMouseActivityStores {
 		this.resetCurrentActivity();
 	}
 
+	public get defaultValue(): TKbMouseActivity {
+		return {
+			kbSequence: [],
+			kbPressCount: 0,
+			mouseRightClickCount: 0,
+			mouseLeftClickCount: 0,
+			mouseMovementsCount: 0,
+			mouseEvents: []
+		};
+	}
+
 	/**
 	 * Returns the singleton instance of KeyboardMouseActivityStores.
 	 * Creates a new instance if one doesn't exist.
@@ -31,14 +42,7 @@ export class KeyboardMouseActivityStores {
 	}
 
 	resetCurrentActivity() {
-		this.currentActivityData = {
-			kbSequence: [],
-			kbPressCount: 0,
-			mouseRightClickCount: 0,
-			mouseLeftClickCount: 0,
-			mouseMovementsCount: 0,
-			mouseEvents: []
-		};
+		this.currentActivityData = this.defaultValue;
 	}
 
 	updateCurrentKeyPressCount() {

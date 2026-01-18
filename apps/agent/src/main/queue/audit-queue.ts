@@ -1,7 +1,5 @@
 import * as path from 'path';
-import {
-	AuditQueueService
-} from '@gauzy/desktop-lib';
+import { AuditQueueService } from '@gauzy/desktop-lib';
 export type AuditStatus = 'waiting' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 import AppWindow from '../window-manager';
 
@@ -43,7 +41,7 @@ export class QueueAudit {
 		return QueueAudit.instance;
 	}
 
-	queued(id: string, queue: string, data: any, priority?: number) {
+	async queued(id: string, queue: string, data: any, priority?: number) {
 		const newQueue = {
 			queue_id: id,
 			queue,
@@ -53,49 +51,56 @@ export class QueueAudit {
 			data: JSON.stringify(data),
 			created_at: new Date()
 		};
-		this.dashboardEventUpdate(
-			'add',
-			newQueue
-		);
-		return this.auditQueueService.save(newQueue);
+		const queueResult = await this.auditQueueService.save(newQueue);
+		if (queueResult) {
+			this.dashboardEventUpdate('add', queueResult);
+		} else {
+			console.error(`Failed to save queue item ${id} to audit queue`);
+		}
+		return queueResult;
 	}
 
-	running(id: string, data: any) {
-		this.dashboardEventUpdate('update', {
-			queue_id: id,
-			status: 'running'
-		});
-		return this.auditQueueService.update({
+	async running(id: string) {
+		const queueResult = await this.auditQueueService.update({
 			queue_id: id,
 			status: 'running',
 			started_at: new Date()
 		});
+		if (queueResult) {
+			this.dashboardEventUpdate('update', queueResult);
+		} else {
+			console.error(`Failed to update queue item ${id} to running status`);
+		}
+		return queueResult;
 	}
 
-	succeeded(id: string) {
-		this.dashboardEventUpdate('update', {
-			queue_id: id,
-			status: 'succeeded'
-		});
-		return this.auditQueueService.update({
+	async succeeded(id: string) {
+		const queueResult = await this.auditQueueService.update({
 			queue_id: id,
 			status: 'succeeded',
-			finished_at: new Date(),
-			last_error: null
+			finished_at: new Date()
 		});
+		if (queueResult) {
+			this.dashboardEventUpdate('update', queueResult);
+		} else {
+			console.error(`Failed to update queue item ${id} to succeeded status`);
+		}
+		return queueResult;
 	}
 
-	failed(id: string, err: any) {
-		this.dashboardEventUpdate('update', {
-			queue_id: id,
-			status: 'failed'
-		});
-		return this.auditQueueService.update({
+	async failed(id: string, err: any) {
+		const queueResult = await this.auditQueueService.update({
 			queue_id: id,
 			status: 'failed',
 			finished_at: new Date(),
 			last_error: `${JSON.stringify(err.message)}`
 		});
+		if (queueResult) {
+			this.dashboardEventUpdate('update', queueResult);
+		} else {
+			console.error(`Failed to update queue item ${id} to failed status`);
+		}
+		return queueResult;
 	}
 
 	cancelled(id: string) {

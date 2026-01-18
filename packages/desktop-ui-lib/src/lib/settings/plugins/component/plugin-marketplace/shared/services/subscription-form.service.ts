@@ -6,7 +6,9 @@ import { PluginBillingPeriod } from '../../../../services/plugin-subscription.se
  * Service responsible for subscription form creation and validation
  * Following Single Responsibility Principle
  */
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class SubscriptionFormService {
 	constructor(private readonly formBuilder: FormBuilder) {}
 

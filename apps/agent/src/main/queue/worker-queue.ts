@@ -5,6 +5,7 @@ import { ITimeslotQueuePayload, ITimerCallbackPayload, IScreenshotQueuePayload }
 import { QueueAudit } from "./audit-queue";
 import { ApiService } from '../api';
 import { SyncManager } from './sync-manager';
+import MainEvent from "../events/events";
 
 
 export interface IQueueHandler {
@@ -19,10 +20,13 @@ export class WorkerQueue {
 	private queueAudit: QueueAudit;
 	private apiService: ApiService;
 	private syncManager: SyncManager;
+	private mainEvent: MainEvent;
 
 	constructor() {
 		this.apiService = ApiService.getInstance();
+		this.mainEvent = MainEvent.getInstance();
 		this.desktopQueue = new DesktopQueue(path.resolve(app?.getPath('userData') || __dirname));
+		this.desktopQueue.events = this.mainEvent.eventEmitter;
 		this.queueAudit = QueueAudit.getInstance();
 		this.setQueueUpdateHandle();
 		this.setServerCheckHandle();
@@ -74,7 +78,7 @@ export class WorkerQueue {
 					0
 				);
 			case 'running':
-				return this.queueAudit.running(payload.id, payload.data);
+				return this.queueAudit.running(payload.id);
 			case 'succeeded':
 				return this.queueAudit.succeeded(payload.id);
 			case "failed":

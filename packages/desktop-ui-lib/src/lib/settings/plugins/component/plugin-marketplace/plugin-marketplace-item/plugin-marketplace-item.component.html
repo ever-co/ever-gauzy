@@ -165,9 +165,13 @@
 						status="success"
 						size="medium"
 						class="install-button"
-						[disabled]="disabled"
+						[disabled]="disabled || !canInstallInEnvironment()"
 						(click)="installPlugin()"
-						[nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_WITH_SUBSCRIPTION' | translate"
+						[nbTooltip]="
+							!canInstallInEnvironment()
+								? getEnvironmentMismatchTooltip()
+								: ('PLUGIN.TOOLTIP.INSTALL_WITH_SUBSCRIPTION' | translate)
+						"
 					>
 						<nb-icon
 							*gauzySpinnerButton="installing && isSelected"
@@ -185,7 +189,11 @@
 						class="subscribe-button"
 						[disabled]="disabled"
 						(click)="installPlugin()"
-						[nbTooltip]="'PLUGIN.TOOLTIP.SUBSCRIBE_TO_INSTALL' | translate"
+						[nbTooltip]="
+							!canInstallInEnvironment()
+								? getEnvironmentMismatchTooltip()
+								: ('PLUGIN.TOOLTIP.SUBSCRIBE_TO_INSTALL' | translate)
+						"
 					>
 						<nb-icon
 							*gauzySpinnerButton="(installing && isSelected) || subscriptionLoading"
@@ -201,9 +209,13 @@
 						status="success"
 						size="medium"
 						class="install-button"
-						[disabled]="disabled"
+						[disabled]="disabled || !canInstallInEnvironment()"
 						(click)="installPlugin()"
-						[nbTooltip]="'PLUGIN.TOOLTIP.INSTALL_FREE' | translate"
+						[nbTooltip]="
+							!canInstallInEnvironment()
+								? getEnvironmentMismatchTooltip()
+								: ('PLUGIN.TOOLTIP.INSTALL_FREE' | translate)
+						"
 					>
 						<nb-icon
 							*gauzySpinnerButton="installing && isSelected"

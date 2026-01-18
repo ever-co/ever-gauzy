@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
 import {
 	NbAlertModule,
 	NbBadgeModule,
@@ -18,18 +17,10 @@ import { InfiniteScrollDirective } from '../../../../../../../directives/infinit
 import { PipeModule } from '../../../../../../../time-tracker/pipes/pipe.module';
 import { UserManagementTabComponent } from './user-management-tab.component';
 
-const routes: Routes = [
-	{
-		path: '',
-		component: UserManagementTabComponent
-	}
-];
-
 @NgModule({
 	declarations: [UserManagementTabComponent],
 	imports: [
 		CommonModule,
-		RouterModule.forChild(routes),
 		TranslateModule,
 		NbCardModule,
 		NbButtonModule,
@@ -45,4 +36,4 @@ const routes: Routes = [
 		InfiniteScrollDirective
 	]
 })
-export class UserManagementTabModule {}
+export class UserManagementTabModule { }

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IPlugin, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts';
-import { NbMenuService } from '@nebular/theme';
+import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,6 +16,7 @@ import { PluginInstallationQuery } from '../+state/queries/plugin-installation.q
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { PluginToggleQuery } from '../+state/queries/plugin-toggle.query';
 import { Store } from '../../../../../services';
+import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 
 @UntilDestroy()
@@ -33,6 +34,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	@Input()
 	public viewMode: 'grid' | 'list' = 'grid';
 
+	private readonly route = inject(ActivatedRoute);
 	private readonly router = inject(Router);
 	private readonly action = inject(Actions);
 	private readonly translate = inject(TranslateService);
@@ -43,7 +45,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly menuService: NbMenuService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
-		public readonly toggleQuery: PluginToggleQuery
+		public readonly toggleQuery: PluginToggleQuery,
+		private readonly environmentService: PluginEnvironmentService
 	) {}
 
 	ngOnInit(): void {
@@ -84,7 +87,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	// Installation validation and dialog orchestration moved to effects.
 	public async openPlugin(): Promise<void> {
 		this.action.dispatch(PluginVersionActions.selectVersion(this.plugin.version));
-		await this.router.navigate([`/plugins/marketplace/${this.plugin.id}`]);
+		await this.router.navigate([this.plugin.id], { relativeTo: this.route });
 	}
 
 	public editPlugin(): void {
@@ -144,17 +147,21 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	/**
 	 * Get context menu items for more actions
 	 */
-	public getContextMenuItems() {
+	public getContextMenuItems(): NbMenuItem[] {
 		// Return empty array if plugin is not available
 		if (!this.plugin) {
 			return [];
 		}
 
-		const items: any[] = [
+		// Construct absolute path from activated route
+		const baseRoute = this.router.createUrlTree(['./'], { relativeTo: this.route }).toString();
+
+		// Get items
+		const items: NbMenuItem[] = [
 			{
 				title: this.translate.instant('PLUGIN.ACTIONS.VIEW_DETAILS'),
 				icon: 'eye-outline',
-				link: `/plugins/marketplace/${this.plugin.id}`
+				link: `${baseRoute}/${this.plugin.id}`
 			}
 		];
 
@@ -259,5 +266,18 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 */
 	private confirmDeletePlugin(): void {
 		this.action.dispatch(PluginMarketplaceActions.delete(this.plugin.id));
+	}
+	/**
+	 * Check if the plugin can be installed in the current environment
+	 */
+	public canInstallInEnvironment(): boolean {
+		return this.environmentService.canInstallPlugin(this.plugin);
+	}
+
+	/**
+	 * Get the environment mismatch tooltip message
+	 */
+	public getEnvironmentMismatchTooltip(): string {
+		return this.environmentService.getEnvironmentMismatchWarning(this.plugin);
 	}
 }

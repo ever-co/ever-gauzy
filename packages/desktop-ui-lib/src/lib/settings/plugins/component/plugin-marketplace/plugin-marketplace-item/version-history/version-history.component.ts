@@ -78,7 +78,7 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 	}
 
 	public async navigateBack(): Promise<void> {
-		await this.router.navigate(['plugins', 'marketplace', this.pluginId]);
+		await this.router.navigate(['..'], { relativeTo: this.route });
 	}
 
 	public edit(version: IPluginVersion): void {

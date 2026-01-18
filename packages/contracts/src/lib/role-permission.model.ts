@@ -202,6 +202,7 @@ export enum PermissionsEnum {
 	ACCESS_DELETE_ACCOUNT = 'ACCESS_DELETE_ACCOUNT',
 	ACCESS_DELETE_ALL_DATA = 'ACCESS_DELETE_ALL_DATA',
 	TENANT_SETTING = 'TENANT_SETTING', //allow user to access tenant setting
+	GLOBAL_SETTING = 'GLOBAL_SETTING', //allow user to access global settings (tenantId = NULL)
 	ALLOW_DELETE_TIME = 'ALLOW_DELETE_TIME',
 	ALLOW_MODIFY_TIME = 'ALLOW_MODIFY_TIME',
 	ALLOW_MANUAL_TIME = 'ALLOW_MANUAL_TIME',
@@ -234,6 +235,18 @@ export enum PermissionsEnum {
 	EMPLOYEE_AVAILABILITY_READ = 'EMPLOYEE_AVAILABILITY_READ',
 	EMPLOYEE_AVAILABILITY_UPDATE = 'EMPLOYEE_AVAILABILITY_UPDATE',
 	EMPLOYEE_AVAILABILITY_DELETE = 'EMPLOYEE_AVAILABILITY_DELETE',
+	/** Broadcast Permissions Start */
+	BROADCAST_CREATE = 'BROADCAST_CREATE',
+	BROADCAST_READ = 'BROADCAST_READ',
+	BROADCAST_UPDATE = 'BROADCAST_UPDATE',
+	BROADCAST_DELETE = 'BROADCAST_DELETE',
+	/** Broadcast Permissions End */
+	/** Organization Strategic Initiative Permissions Start */
+	ORG_STRATEGIC_INITIATIVE_CREATE = 'ORG_STRATEGIC_INITIATIVE_CREATE',
+	ORG_STRATEGIC_INITIATIVE_READ = 'ORG_STRATEGIC_INITIATIVE_READ',
+	ORG_STRATEGIC_INITIATIVE_UPDATE = 'ORG_STRATEGIC_INITIATIVE_UPDATE',
+	ORG_STRATEGIC_INITIATIVE_DELETE = 'ORG_STRATEGIC_INITIATIVE_DELETE',
+	/** Organization Strategic Initiative Permissions End */
 	/**
 	 * Plugin Permissions
 	 */
@@ -434,7 +447,16 @@ export const PermissionGroups = {
 		PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
 		PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
 		PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
-		PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE
+		PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
+		/** Broadcast Permissions Start */
+		PermissionsEnum.BROADCAST_CREATE,
+		PermissionsEnum.BROADCAST_READ,
+		PermissionsEnum.BROADCAST_UPDATE,
+		PermissionsEnum.BROADCAST_DELETE,
+		/** Broadcast Permissions End */
+		/** Organization Strategic Initiative Permissions Start */
+		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+		/** Organization Strategic Initiative Permissions End */
 	],
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role

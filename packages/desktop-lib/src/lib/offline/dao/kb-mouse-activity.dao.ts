@@ -64,7 +64,6 @@ export class KbMouseActivityDAO implements DAO<KbMouseActivityTO> {
 			.andWhere('organizationId', organizationId)
 			.andWhere('remoteId', remoteId)
 			.andWhere('syncedActivity', false)
-			.andWhere('isOffline', true)
 			.orderBy('timeStart', 'asc')
 		return activities;
 	}

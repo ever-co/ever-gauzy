@@ -5,10 +5,53 @@
   flex-wrap: wrap;
 }
 
+:host ::ng-deep {
+  nb-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .plugins-navigation-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-radius: var(--border-radius);
+      background-color: var(--gauzy-card-2);
+      color: var(--gauzy-text-color-1);
+      border: 1px solid var(--gauzy-border-default-color);
+      transition: all 0.3s ease;
+
+      nb-icon {
+        font-size: 1.25rem;
+      }
+
+      span {
+        font-weight: 500;
+      }
+
+      &:hover {
+        background-color: var(--gauzy-card-1);
+        box-shadow: var(--gauzy-shadow);
+        transform: translateY(-1px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+
+  #integrationSearch {
+    flex: 1 1 70%;
+    @include nb-ltr(margin-right, 20px);
+    @include nb-rtl(margin-right, 0px);
+  }
+}
+
 /**
 * By setting min-height of the card to this value, we ensure the card will properly adjust it's height
 */
-:host>nb-card {
+:host > nb-card {
   min-height: 47.5rem;
 }
 
@@ -22,16 +65,6 @@
 .group-select {
   flex: 1 1 30%;
   margin-right: 20px;
-}
-
-:host {
-  ::ng-deep {
-    #integrationSearch {
-      flex: 1 1 70%;
-      @include nb-ltr(margin-right, 20px);
-      @include nb-rtl(margin-right, 0px);
-    }
-  }
 }
 
 a.disabled {
@@ -63,7 +96,6 @@ a.disabled {
     }
   }
 }
-
 
 img {
   width: 100%;
@@ -117,7 +149,6 @@ img {
 }
 
 :host {
-
   nb-card,
   nb-card-body {
     background-color: var(--gauzy-card-2);
@@ -125,8 +156,8 @@ img {
 
   ::ng-deep {
     nb-select {
-      &.integration-selector{
-          min-width: 10rem;
+      &.integration-selector {
+        min-width: 10rem;
       }
       span {
         color: var(--gauzy-text-color-2);
@@ -136,12 +167,9 @@ img {
         letter-spacing: 0em;
         text-align: left;
       }
-
     }
 
-    @include nb-select-overrides(2rem,
-      $default-button-radius,
-      $default-box-shadow );
+    @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
   }
 
   h4 {
@@ -169,7 +197,6 @@ label {
   line-height: 13px;
   letter-spacing: -0.01em;
   text-align: left;
-
 }
 
 nb-option {

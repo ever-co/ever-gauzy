@@ -37,26 +37,25 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 				let tenantSettings = {};
 
 				if (decodedToken && decodedToken.tenantId) {
+					const tenantId = decodedToken.tenantId;
+
 					if (this.logging) {
-						console.log('Getting Tenant settings from Cache for tenantId: %s', decodedToken.tenantId);
+						console.log('Getting Tenant settings from Cache for tenantId: %s', tenantId);
 					}
 
-					const cacheKey = `tenantSettings_${decodedToken.tenantId}`;
+					const cacheKey = `tenantSettings_${tenantId}`;
 
 					// Attempt to fetch from cache
 					tenantSettings = await this.cacheManager.get(cacheKey);
 
 					if (!tenantSettings) {
 						if (this.logging) {
-							console.log(
-								'Tenant settings NOT loaded from Cache for tenantId: %s',
-								decodedToken.tenantId
-							);
+							console.log('Tenant settings NOT loaded from Cache for tenantId: %s', tenantId);
 						}
 
 						// Fetch tenant settings from DB
 						tenantSettings = await this.tenantSettingService.getSettings({
-							where: { tenantId: decodedToken.tenantId }
+							where: { tenantId }
 						});
 
 						if (tenantSettings) {
@@ -66,14 +65,20 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 							if (this.logging) {
 								console.log(
 									'Tenant settings loaded from DB and stored in Cache for tenantId: %s',
-									decodedToken.tenantId
+									tenantId
 								);
 							}
 						}
 					} else {
 						if (this.logging) {
-							console.log('Tenant settings loaded from Cache for tenantId: %s', decodedToken.tenantId);
+							console.log('Tenant settings loaded from Cache for tenantId: %s', tenantId);
 						}
+					}
+
+					// Load resolved settings (Global DB + Tenant DB cascade)
+					const resolvedSettings = await this.loadResolvedSettings(tenantId);
+					if (resolvedSettings) {
+						_request['resolvedSettings'] = resolvedSettings;
 					}
 				}
 
@@ -88,5 +93,25 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 		}
 
 		next();
+	}
+
+	/**
+	 * Loads resolved settings with cascade: Global DB (tenantId=NULL) → Tenant DB.
+	 */
+	private async loadResolvedSettings(tenantId: string): Promise<Record<string, any> | null> {
+		const cacheKey = `resolvedSettings_${tenantId}`;
+		let settings = await this.cacheManager.get<Record<string, any>>(cacheKey);
+
+		if (!settings) {
+			const globalSettings = await this.tenantSettingService.getGlobalSettings();
+			const tenantSettings = await this.tenantSettingService.getSettings({ where: { tenantId } });
+			settings = { ...globalSettings, ...tenantSettings };
+
+			if (Object.keys(settings).length > 0) {
+				await this.cacheManager.set(cacheKey, settings, 5 * 60 * 1000);
+			}
+		}
+
+		return Object.keys(settings).length > 0 ? settings : null;
 	}
 }

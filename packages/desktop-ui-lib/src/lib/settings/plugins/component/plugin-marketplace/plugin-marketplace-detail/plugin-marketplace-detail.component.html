@@ -262,6 +262,8 @@
 						[checked]="checked"
 						(checkedChange)="togglePlugin($event)"
 						class="install-toggle"
+						[nbTooltip]="getEnvironmentMismatchTooltip()"
+						[nbTooltipDisabled]="canInstallInEnvironment()"
 					>
 						<span class="toggle-label">
 							@if(installed) {
