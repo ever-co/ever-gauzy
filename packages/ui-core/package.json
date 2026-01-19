@@ -71,7 +71,7 @@
 		"@sentry/core": "9.43.0",
 		"angular2-smart-table": "^3.7.0",
 		"bootstrap": "^4.3.1",
-		"camelcase": "^6.3.0",
+		"camelcase": "^9.0.0",
 		"chart.js": "^4.4.9",
 		"chartjs-plugin-annotation": "^3.0.1",
 		"ckeditor4": "4.22.1",
