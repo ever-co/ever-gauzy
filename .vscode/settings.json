@@ -1,20 +1,26 @@
 {
-	"cSpell.userWords": [],
 	"cSpell.enabled": true,
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"npm.packageManager": "yarn",
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.codeActionsOnSave": {
+		"source.fixAll": "explicit",
+		"source.organizeImports": "explicit"
+	},
+	"prettier.requireConfig": true,
+	"prettier.configPath": ".prettierrc",
+	"prettier.useEditorConfig": true,
 	"prettier.trailingComma": "none",
 	"prettier.singleQuote": true,
-	"editor.formatOnSave": true,
 	"eslint.format.enable": true,
 	"editor.tabSize": 4,
+	"editor.insertSpaces": false,
+	"editor.detectIndentation": false,
 	"files.insertFinalNewline": true,
 	"files.trimFinalNewlines": true,
 	"files.trimTrailingWhitespace": true,
-	"editor.codeActionsOnSave": {
-		"source.fixAll": "explicit"
-	},
 	"vsicons.presets.angular": true,
 	"deepscan.enable": true,
 	"files.exclude": {

@@ -2,12 +2,15 @@
 	"printWidth": 120,
 	"singleQuote": true,
 	"semi": true,
-	"useTabs": true,
-	"tabWidth": 4,
+	"useTabs": false,
+	"tabWidth": 2,
 	"arrowParens": "always",
 	"trailingComma": "none",
 	"quoteProps": "as-needed",
 	"trimTrailingWhitespace": true,
+	"insertPragma": false,
+	"requirePragma": false,
+	"endOfLine": "lf",
 	"overrides": [
 		{
 			"files": "*.scss",
