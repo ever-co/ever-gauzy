@@ -4810,7 +4810,7 @@
 		"SERVICES": "Сервисы",
 		"SCOPE": "Область действия",
 		"GLOBAL": "Глобальный",
-		"TENANT": "Тенант",
+		"TENANT": "Владелец",
 		"POSTHOG": {
 			"TITLE": "Аналитика PostHog",
 			"ENABLED": "Включить PostHog",
