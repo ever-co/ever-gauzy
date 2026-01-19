@@ -4808,10 +4808,10 @@
 	},
 	"SETTINGS_MONITORING": {
 		"HEADER": "Monitoring en analyse",
-		"SERVICES": "Services",
+		"SERVICES": "Diensten",
 		"SCOPE": "Bereik",
 		"GLOBAL": "Globaal",
-		"TENANT": "Tenant",
+		"TENANT": "Huurder",
 		"POSTHOG": {
 			"TITLE": "PostHog-analyse",
 			"ENABLED": "PostHog inschakelen",
