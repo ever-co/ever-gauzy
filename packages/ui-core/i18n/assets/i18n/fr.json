@@ -4802,7 +4802,7 @@
 		"SERVICES": "Services",
 		"SCOPE": "Portée",
 		"GLOBAL": "Global",
-		"TENANT": "Tenant",
+		"TENANT": "Locataire",
 		"POSTHOG": {
 			"TITLE": "Analyse PostHog",
 			"ENABLED": "Activer PostHog",
