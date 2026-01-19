@@ -4818,21 +4818,21 @@
 			}
 		},
 		"WASABI": {
-		"HEADER": "Wasabi Конфигурация",
-		"LABELS": {
-		"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
-		"SECRET_ACCESS_KEY": "Таен ключ за достъп",
-		"REGION": "Регион",
-		"BUCKET": "Кофа",
-		"SERVICE_URL": "URL на услугата"
-		},
-		"PLACEHOLDERS": {
-		"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
-		"SECRET_ACCESS_KEY": "Таен ключ за достъп",
-		"REGION": "Регион",
-		"BUCKET": "Кофа",
-		"SERVICE_URL": "URL на услугата"
-		}
+			"HEADER": "Wasabi Конфигурация",
+			"LABELS": {
+				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
+				"REGION": "Регион",
+				"BUCKET": "Кофа",
+				"SERVICE_URL": "URL на услугата"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
+				"REGION": "Регион",
+				"BUCKET": "Кофа",
+				"SERVICE_URL": "URL на услугата"
+			}
 		}
 	},
 	"SETTINGS_MONITORING": {
