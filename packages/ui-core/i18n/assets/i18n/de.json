@@ -4807,12 +4807,12 @@
 		"SERVICES": "Dienste",
 		"SCOPE": "Geltungsbereich",
 		"GLOBAL": "Global",
-		"TENANT": "Mandant",
+		"TENANT": "Mieter",
 		"POSTHOG": {
 			"TITLE": "PostHog-Analytik",
 			"ENABLED": "PostHog aktivieren",
 			"API_KEY": "API-Schlüssel",
-			"API_KEY_PLACEHOLDER": "Gib den API-Schlüssel deines PostHog-Projekts ein",
+			"API_KEY_PLACEHOLDER": "Geben Sie den API-Schlüssel Ihres PostHog-Projekts ein",
 			"HOST": "Host-URL",
 			"HOST_PLACEHOLDER": "https://app.posthog.com",
 			"FLUSH_INTERVAL": "Sendeintervall (ms)",
@@ -4831,7 +4831,7 @@
 			"HOST": "Host-URL",
 			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
 			"WRITE_KEY": "Schreibschlüssel",
-			"WRITE_KEY_PLACEHOLDER": "Gib deinen Jitsu-Schreibschlüssel ein"
+			"WRITE_KEY_PLACEHOLDER": "Geben Sie Ihren Jitsu-Schreibschlüssel ein"
 		}
 	},
 	"CUSTOM_SMTP_PAGE": {
