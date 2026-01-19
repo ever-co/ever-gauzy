@@ -4813,7 +4813,7 @@
 		"SERVICES": "Servicios",
 		"SCOPE": "Ámbito",
 		"GLOBAL": "Global",
-		"TENANT": "Tenant",
+		"TENANT": "Inquilino",
 		"POSTHOG": {
 			"TITLE": "Analítica de PostHog",
 			"ENABLED": "Habilitar PostHog",
