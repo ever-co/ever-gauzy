@@ -902,6 +902,7 @@
 		"ORGANIZATIONS": "Organizations",
 		"SETTINGS": "Settings",
 		"GENERAL": "General",
+		"MONITORING": "Monitoring",
 		"EMAIL_HISTORY": "Email History",
 		"USERS": "Users",
 		"ROLES": "Roles & Permissions",
@@ -979,6 +980,7 @@
 			"TASK": "Task",
 			"TENANT": "Tenant",
 			"TENANT_SETTING": "Tenant Setting",
+			"GLOBAL_SETTING": "Global Setting",
 			"TIME_OFF_POLICY": "Time off policy",
 			"TIME_SHEET": "Time Sheet",
 			"USER": "User",
@@ -2542,6 +2544,7 @@
 			"ACCESS_DELETE_ACCOUNT": "Access Delete Account",
 			"ACCESS_DELETE_ALL_DATA": "Access Delete All Data",
 			"TENANT_SETTING": "Create/Edit/Delete tenant settings",
+			"GLOBAL_SETTING": "Create/Edit/Delete global settings (affects all tenants)",
 			"ALLOW_DELETE_TIME": "Allow Delete Time",
 			"ALLOW_MODIFY_TIME": "Allow Modify Time",
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
@@ -4967,6 +4970,51 @@
 				"SERVICE_URL": "Service URL",
 				"CDN_URL": "CDN URL"
 			}
+		}
+	},
+	"SETTINGS_GENERAL": {
+		"POSTHOG": {
+			"HEADER": "PostHog Analytics",
+			"ENABLED": "Enable PostHog",
+			"API_KEY": "API Key",
+			"API_KEY_PLACEHOLDER": "Enter your PostHog project API key",
+			"HOST": "Host URL",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "Flush Interval (ms)",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "Time in milliseconds between sending batched events"
+		}
+	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "Monitoring & Analytics",
+		"SERVICES": "Services",
+		"SCOPE": "Scope",
+		"GLOBAL": "Global",
+		"TENANT": "Tenant",
+		"POSTHOG": {
+			"TITLE": "PostHog Analytics",
+			"ENABLED": "Enable PostHog",
+			"API_KEY": "API Key",
+			"API_KEY_PLACEHOLDER": "Enter your PostHog project API key",
+			"HOST": "Host URL",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "Flush Interval (ms)",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "Time in milliseconds between sending batched events"
+		},
+		"SENTRY": {
+			"TITLE": "Sentry Error Tracking",
+			"ENABLED": "Enable Sentry",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "Jitsu Analytics",
+			"ENABLED": "Enable Jitsu",
+			"HOST": "Host URL",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "Write Key",
+			"WRITE_KEY_PLACEHOLDER": "Enter your Jitsu write key"
 		}
 	},
 	"CUSTOM_SMTP_PAGE": {

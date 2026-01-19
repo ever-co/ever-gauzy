@@ -8,7 +8,8 @@ import {
 	AwsS3ProviderConfigDTO,
 	CloudinaryProviderConfigDTO,
 	DigitalOceanS3ProviderConfigDTO,
-	WasabiS3ProviderConfigDTO
+	WasabiS3ProviderConfigDTO,
+	MonitoringProviderConfigDTO
 } from './../../dto';
 
 @CommandHandler(TenantSettingGetCommand)
@@ -21,7 +22,7 @@ export class TenantSettingGetHandler implements ICommandHandler<TenantSettingGet
 	/**
 	 * Executes the retrieval and processing of tenant settings.
 	 *
-	 * @returns {Promise<Record<string, any>>} - Returns an object containing the tenant settings with secrets wrapped for various cloud storage providers.
+	 * @returns {Promise<Record<string, any>>} - Returns an object containing the tenant settings with secrets wrapped for various cloud storage providers and monitoring services.
 	 *
 	 * @throws {Error} - Throws an error if the operation fails.
 	 */
@@ -35,7 +36,8 @@ export class TenantSettingGetHandler implements ICommandHandler<TenantSettingGet
 			WrapSecrets(settings, new WasabiS3ProviderConfigDTO()),
 			WrapSecrets(settings, new AwsS3ProviderConfigDTO()),
 			WrapSecrets(settings, new CloudinaryProviderConfigDTO()),
-			WrapSecrets(settings, new DigitalOceanS3ProviderConfigDTO())
+			WrapSecrets(settings, new DigitalOceanS3ProviderConfigDTO()),
+			WrapSecrets(settings, new MonitoringProviderConfigDTO())
 		);
 	}
 }

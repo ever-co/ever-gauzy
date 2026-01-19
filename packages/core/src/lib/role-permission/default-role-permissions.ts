@@ -186,6 +186,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PROFILE_EDIT,
 			PermissionsEnum.TIME_TRACKER,
 			PermissionsEnum.TENANT_SETTING,
+			PermissionsEnum.GLOBAL_SETTING,
 			PermissionsEnum.ALLOW_DELETE_TIME,
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,

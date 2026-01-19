@@ -1,6 +1,6 @@
-import { Inject, Injectable, ConsoleLogger } from '@nestjs/common';
-import { OnApplicationShutdown } from '@nestjs/common';
+import { Inject, Injectable, ConsoleLogger, OnApplicationShutdown } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { RequestContext } from '@gauzy/core';
 import { SENTRY_MODULE_OPTIONS } from './sentry.constants';
 import { SentryModuleOptions } from './sentry.interfaces';
 
@@ -45,6 +45,22 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 	}
 
 	/**
+	 * Check if Sentry is enabled based on resolvedSettings or default config.
+	 */
+	private isEnabled(): boolean {
+		try {
+			const request = RequestContext.currentRequest();
+			const settings = request?.['resolvedSettings'];
+			if (settings?.sentryEnabled !== undefined) {
+				return settings.sentryEnabled === 'true' || settings.sentryEnabled === true;
+			}
+		} catch {
+			// No request context
+		}
+		return !!this.opts?.dsn;
+	}
+
+	/**
 	 *
 	 * @returns
 	 */
@@ -65,6 +81,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.log(message, context);
+			if (!this.isEnabled()) return;
 			asBreadcrumb
 				? Sentry.addBreadcrumb({
 						message,
@@ -89,6 +106,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.error(message, trace, context);
+			if (!this.isEnabled()) return;
 			Sentry.captureMessage(message, 'error');
 		} catch (err) {
 			// do nothing to avoid blocking the application
@@ -105,6 +123,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.warn(message, context);
+			if (!this.isEnabled()) return;
 			asBreadcrumb
 				? Sentry.addBreadcrumb({
 						message,
@@ -129,6 +148,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.debug(message, context);
+			if (!this.isEnabled()) return;
 			asBreadcrumb
 				? Sentry.addBreadcrumb({
 						message,
@@ -153,6 +173,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		message = `${this.app} ${message}`;
 		try {
 			super.verbose(message, context);
+			if (!this.isEnabled()) return;
 			asBreadcrumb
 				? Sentry.addBreadcrumb({
 						message,
@@ -172,7 +193,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 	 * @returns
 	 */
 	instance() {
-		return Sentry;
+		return this.isEnabled() ? Sentry : null;
 	}
 
 	/**
