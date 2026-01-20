@@ -1,6 +1,6 @@
 <nb-card>
-  @if (organization$ | async; as organization) {
-    <nb-card-body>
+  <nb-card-body>
+    @if (organization$ | async; as organization) {
       <div class="org-info">
         <div class="org-head">
           <div class="row">
@@ -171,8 +171,8 @@
             }
           </nb-tabset>
         </div>
-      </nb-card-body>
-    }
+      }
+    </nb-card-body>
   </nb-card>
 
   <!-- Profile HTML Template -->

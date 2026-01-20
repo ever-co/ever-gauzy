@@ -1,6 +1,7 @@
 <nb-card>
   @if (employee$ | async; as employee) {
-    <nb-card-body class="employee-card">
+    <ng-container>
+      <nb-card-body class="employee-card">
       <div class="employee-info-wrapper">
         <div class="employee-photo-wrapper">
           @if (hasEditPermission$ | async) {
@@ -145,7 +146,8 @@
       </nb-tab>
     </nb-tabset>
   </nb-card-body>
-}
+    </ng-container>
+  }
 </nb-card>
 
 <!-- Profile HTML Template -->

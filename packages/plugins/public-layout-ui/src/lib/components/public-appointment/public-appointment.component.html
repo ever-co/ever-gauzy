@@ -4,8 +4,8 @@
       <h4>{{ 'PUBLIC_APPOINTMENTS.BOOK_APPOINTMENTS' | translate }}</h4>
     </div>
   </nb-card-header>
-  @if (organization$ | async; as organization) {
-    <nb-card-body>
+  <nb-card-body>
+    @if (organization$ | async; as organization) {
       @if (employee$ | async; as employee) {
         <div class="employee-info">
           <img class="employee-image" [src]="employee.user?.imageUrl" alt="Employee Avatar" />
@@ -52,6 +52,6 @@
           }
         </div>
       }
-    </nb-card-body>
-  }
+    }
+  </nb-card-body>
 </nb-card>
