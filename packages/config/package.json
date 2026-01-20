@@ -41,7 +41,7 @@
 		"@nestjs/typeorm": "^11.0.0",
 		"app-root-path": "^3.0.0",
 		"chalk": "^4.1.0",
-		"dotenv": "^16.0.3",
+		"dotenv": "^17.2.3",
 		"mikro-orm-soft-delete": "^1.0.0-alpha.1",
 		"nest-knexjs": "^0.0.26",
 		"tslib": "^2.6.2",

@@ -536,7 +536,7 @@
 		"angular2-smart-table": "^3.7.0",
 		"autoprefixer": "^10.4.20",
 		"bcrypt": "^5.1.1",
-		"dotenv": "^16.0.3",
+		"dotenv": "^17.2.3",
 		"electron": "^38.1.2",
 		"jsdom": "^23.0.1",
 		"lodash-es": "^4.17.21",

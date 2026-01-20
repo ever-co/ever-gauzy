@@ -61,7 +61,7 @@
 		"@gauzy/plugin-camshot": "^0.1.0",
 		"@gauzy/plugin-soundshot": "^0.1.0",
 		"@gauzy/plugin-registry": "^0.1.0",
-		"dotenv": "^16.0.3",
+		"dotenv": "^17.2.3",
 		"yargs": "^17.5.0"
 	},
 	"devDependencies": {
