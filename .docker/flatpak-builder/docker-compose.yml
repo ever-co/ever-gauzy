@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  flatpak-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gauzy-flatpak-builder:latest
+    container_name: gauzy-flatpak-dev
+    volumes:
+      - ../../:/workspace
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+    environment:
+      - FLATPAK_USER_DIR=/workspace/.flatpak-cache
+      - XDG_CACHE_HOME=/workspace/.cache

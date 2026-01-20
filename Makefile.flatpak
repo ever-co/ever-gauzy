@@ -1,0 +1,123 @@
+# Flatpak Builder - Makefile for easy Docker operations
+
+.PHONY: help build run validate validate-all clean shell stop
+
+# Default target
+.DEFAULT_GOAL := help
+
+# Docker image name
+IMAGE_NAME := gauzy-flatpak-builder
+CONTAINER_NAME := gauzy-flatpak-dev
+
+help: ## Show this help message
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║   Gauzy Agent - Flatpak Builder Docker Commands           ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+
+build: ## Build the Docker image
+	@echo "Building Flatpak builder Docker image..."
+	docker build -t $(IMAGE_NAME) -f .docker/flatpak-builder/Dockerfile .docker/flatpak-builder/
+	@echo "✅ Image built successfully!"
+
+run: ## Run interactive shell in container
+	@echo "Starting Flatpak builder container..."
+	docker run -it --rm \
+		-v "$$(pwd):/workspace" \
+		--name $(CONTAINER_NAME) \
+		$(IMAGE_NAME)
+
+shell: run ## Alias for 'run' - start interactive shell
+
+validate-manifest: ## Validate the Flatpak manifest only
+	@echo "Validating Flatpak manifest..."
+	docker run --rm \
+		-v "$$(pwd):/workspace" \
+		$(IMAGE_NAME) \
+		validate-manifest
+
+validate-desktop: ## Validate the desktop file only
+	@echo "Validating desktop file..."
+	docker run --rm \
+		-v "$$(pwd):/workspace" \
+		$(IMAGE_NAME) \
+		validate-desktop
+
+validate-metainfo: ## Validate the AppStream metadata only
+	@echo "Validating AppStream metadata..."
+	docker run --rm \
+		-v "$$(pwd):/workspace" \
+		$(IMAGE_NAME) \
+		validate-metainfo
+
+validate-all: ## Run all validations
+	@echo "Running all validations..."
+	@$(MAKE) validate-manifest
+	@echo ""
+	@$(MAKE) validate-desktop
+	@echo ""
+	@$(MAKE) validate-metainfo
+	@echo ""
+	@echo "✅ All validations complete!"
+
+lint: ## Run flatpak-builder-lint on the manifest
+	@echo "Linting Flatpak manifest..."
+	docker run --rm \
+		-v "$$(pwd):/workspace" \
+		$(IMAGE_NAME) \
+		lint-manifest
+
+test-build: ## Attempt to build the Flatpak (will fail without .deb)
+	@echo "Attempting Flatpak build (for validation)..."
+	docker run --rm \
+		-v "$$(pwd):/workspace" \
+		$(IMAGE_NAME) \
+		build-flatpak
+
+clean-build: ## Clean build artifacts
+	@echo "Cleaning build artifacts..."
+	docker run --rm \
+		-v "$$(pwd):/workspace" \
+		$(IMAGE_NAME) \
+		clean
+
+clean: ## Remove Docker image
+	@echo "Removing Docker image..."
+	docker rmi $(IMAGE_NAME) || true
+	@echo "✅ Image removed!"
+
+rebuild: clean build ## Clean and rebuild the Docker image
+
+stop: ## Stop running container
+	@echo "Stopping container..."
+	docker stop $(CONTAINER_NAME) 2>/dev/null || true
+	docker rm $(CONTAINER_NAME) 2>/dev/null || true
+	@echo "✅ Container stopped!"
+
+compose-up: ## Start with docker-compose
+	@echo "Starting with docker-compose..."
+	cd .docker/flatpak-builder && docker-compose up -d
+	@echo "✅ Container started! Connect with: docker exec -it $(CONTAINER_NAME) bash"
+
+compose-down: ## Stop docker-compose
+	@echo "Stopping docker-compose..."
+	cd .docker/flatpak-builder && docker-compose down
+	@echo "✅ Stopped!"
+
+compose-shell: ## Open shell in docker-compose container
+	@echo "Opening shell..."
+	cd .docker/flatpak-builder && docker-compose exec flatpak-builder bash
+
+logs: ## Show container logs (if using docker-compose)
+	cd .docker/flatpak-builder && docker-compose logs -f
+
+# Quick validation shortcut
+v: validate-all ## Shortcut for validate-all
+
+# Quick lint shortcut  
+l: lint ## Shortcut for lint
