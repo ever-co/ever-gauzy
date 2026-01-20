@@ -502,7 +502,8 @@
 		"minizlib": "^2.1.2",
 		"node-abi": "^3.78.0",
 		"@electron/rebuild/node-abi": "^3.78.0",
-		"app-builder-lib/node-abi": "^3.78.0"
+		"app-builder-lib/node-abi": "^3.78.0",
+		"camelcase": "^9.0.0"
 	},
 	"dependencies": {
 		"@angular/animations": "^20.0.7",
@@ -524,10 +525,10 @@
 		"@nebular/eva-icons": "^16.0.0",
 		"@nebular/security": "^16.0.0",
 		"@nebular/theme": "^16.0.0",
-		"@nestjs/common": "^11.1.10",
-		"@nestjs/core": "^11.1.10",
+		"@nestjs/common": "^11.1.12",
+		"@nestjs/core": "^11.1.12",
 		"@nestjs/mapped-types": "^2.1.0",
-		"@nestjs/platform-express": "^11.1.10",
+		"@nestjs/platform-express": "^11.1.12",
 		"@nestjs/terminus": "^11.0.0",
 		"@ng-select/ng-select": "^14.9.0",
 		"@ngx-translate/core": "^16.0.4",
@@ -565,7 +566,7 @@
 		"@angular/cli": "~20.0.0",
 		"@angular/compiler-cli": "^20.0.7",
 		"@nestjs/schematics": "11.0.9",
-		"@nestjs/testing": "11.1.10",
+		"@nestjs/testing": "11.1.12",
 		"@commitlint/cli": "^19.6.1",
 		"@commitlint/config-conventional": "^19.6.0",
 		"@commitlint/config-lerna-scopes": "^19.5.0",

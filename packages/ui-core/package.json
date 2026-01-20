@@ -55,7 +55,7 @@
 		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@jitsu/js": "^1.10.0",
-		"@kurkle/color": "^0.3.4",
+		"@kurkle/color": "^0.4.0",
 		"@nebular/auth": "^16.0.0",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
 		"@nebular/eva-icons": "^16.0.0",
