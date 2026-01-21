@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { pluginInstalledRoutes } from './component/plugin-installed-routing.module';
 import { pluginMarketplaceRoutes } from './component/plugin-marketplace/plugin-marketplace-routing.module';
-import { PluginUploadResolver } from './services/resolvers/plugin-upload.resolver';
+import { PendingInstallationResolver, PluginUploadResolver } from './services/resolvers';
 
 export const routes: Routes = [
 	{
@@ -12,11 +12,12 @@ export const routes: Routes = [
 	{
 		path: 'marketplace',
 		children: pluginMarketplaceRoutes,
-		resolve: { isUploadAvailable: PluginUploadResolver }
+		resolve: { isUploadAvailable: PluginUploadResolver, pendingCheck: PendingInstallationResolver }
 	},
 	{
 		path: 'installed',
-		children: pluginInstalledRoutes
+		children: pluginInstalledRoutes,
+		resolve: { pendingCheck: PendingInstallationResolver }
 	},
 	{
 		path: '**',

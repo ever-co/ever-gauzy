@@ -3,6 +3,7 @@ import {
 	ActivityWatchElectronService,
 	ElectronService,
 	LanguageElectronService,
+	PluginStartupCheckService,
 	Store,
 	TokenRefreshService
 } from '@gauzy/desktop-ui-lib';
@@ -24,7 +25,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private _store: Store,
 		readonly activityWatchElectronService: ActivityWatchElectronService,
 		private readonly languageElectronService: LanguageElectronService,
-		private readonly tokenRefreshService: TokenRefreshService
+		private readonly tokenRefreshService: TokenRefreshService,
+		private readonly pluginStartupCheckService: PluginStartupCheckService
 	) {
 		this._isInitialized = false;
 		activityWatchElectronService.setupActivitiesCollection();
@@ -41,6 +43,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 		if (this._store.token && this._store.refreshToken) {
 			this.tokenRefreshService.start();
 		}
+
+		// Initialize plugin startup check service
+		// This will listen for authentication events and check for available plugins
+		this.pluginStartupCheckService.initialize();
 	}
 
 	ngAfterViewInit(): void {
