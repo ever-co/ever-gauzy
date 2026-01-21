@@ -2,7 +2,7 @@
   <div class="organization-render-container">
     <div class="organization-render">
       @if (rowData) {
-        <img src="{{ rowData.imageUrl }}" />
+        <img src="{{ rowData.imageUrl }}" [alt]="rowData?.name || 'Organization logo'" />
       }
       <span>
         <div>{{ rowData?.name }}</div>
