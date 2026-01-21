@@ -25,6 +25,7 @@ import {
 import {
 	ActivatePluginCommandHandler,
 	DeactivatePluginCommandHandler,
+	HasPendingInstallationQueryHandler,
 	InstallPluginCommandHandler,
 	UninstallPluginCommandHandler
 } from './plugin-installation';
@@ -246,6 +247,7 @@ const queries = [
 	GetPluginSubscriptionsBySubscriberIdQueryHandler,
 	GetActivePluginSubscriptionQueryHandler,
 	GetUserSubscribedPluginsQueryHandler,
+	HasPendingInstallationQueryHandler,
 	CheckPluginAccessQueryHandler,
 	CheckUserSubscriptionAccessQueryHandler,
 	GetSubscriptionAccessQueryHandler,
