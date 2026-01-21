@@ -1,0 +1,221 @@
+@use 'gauzy/_gauzy-dialogs' as *;
+
+.pending-installation-dialog {
+  width: 600px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--gauzy-card-1);
+  border-radius: calc(var(--border-radius) * 2);
+  box-shadow: var(--gauzy-shadow);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--divider-color);
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    nb-icon {
+      font-size: 1.5rem;
+    }
+
+    .title {
+      margin: 0;
+      font-weight: 600;
+      color: var(--gauzy-text-color-1);
+    }
+  }
+
+  .close-btn {
+    padding: 0.25rem;
+    border-radius: var(--border-radius);
+
+    nb-icon {
+      font-size: 1.25rem;
+      color: var(--gauzy-text-color-2);
+    }
+  }
+}
+
+nb-card-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+
+  .description {
+    margin: 0 0 1rem;
+    color: var(--gauzy-text-color-2);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    gap: 1rem;
+
+    .loading-text {
+      color: var(--gauzy-text-color-2);
+    }
+  }
+
+  .no-plugins {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    gap: 0.75rem;
+    color: var(--gauzy-text-color-2);
+
+    nb-icon {
+      font-size: 3rem;
+    }
+  }
+}
+
+.plugins-container {
+  .plugin-list {
+    border: 1px solid var(--divider-color);
+    border-radius: calc(var(--border-radius) * 1.5);
+    overflow: hidden;
+  }
+
+  .plugin-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    gap: 1rem;
+    border-bottom: 1px solid var(--divider-color);
+    background: var(--gauzy-card-2);
+    transition: background-color 0.2s ease;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: var(--background-basic-color-2);
+    }
+  }
+
+  .plugin-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    min-width: 0;
+
+    .plugin-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--color-primary-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .plugin-initials {
+        color: #fff;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+    }
+
+    .plugin-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      min-width: 0;
+
+      .plugin-name {
+        font-weight: 600;
+        color: var(--gauzy-text-color-1);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .plugin-version {
+        font-size: 0.75rem;
+        color: var(--gauzy-text-color-2);
+      }
+
+      .plugin-description {
+        font-size: 0.75rem;
+        color: var(--gauzy-text-color-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  .plugin-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+
+    .error-state {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .error-text {
+        font-size: 0.75rem;
+        color: var(--color-danger-500);
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    nb-spinner {
+      width: 24px;
+      height: 24px;
+    }
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--divider-color);
+  background: var(--gauzy-card-2);
+
+  .footer-info {
+    .plugin-count {
+      font-size: 0.875rem;
+      color: var(--gauzy-text-color-2);
+    }
+  }
+
+  .footer-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+}

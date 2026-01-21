@@ -1,0 +1,137 @@
+import { Injectable } from '@angular/core';
+import { Store, StoreConfig } from '@datorama/akita';
+import { IPlugin } from '@gauzy/contracts';
+
+/**
+ * Interface representing a subscribed plugin that is not yet installed locally
+ */
+export interface IPendingPluginInstallation {
+	plugin: IPlugin;
+	subscriptionId: string;
+	isInstalling: boolean;
+	error: string | null;
+	/** Whether the plugin can be auto-installed without user interaction */
+	canAutoInstall?: boolean;
+	/** Whether the plugin is mandatory for the tenant/organization */
+	isMandatory?: boolean;
+}
+
+/**
+ * State interface for pending plugin installations
+ */
+export interface IPendingInstallationState {
+	/** List of subscribed plugins that are not installed locally */
+	pendingPlugins: IPendingPluginInstallation[];
+	/** Loading state for fetching pending plugins */
+	loading: boolean;
+	/** Whether the pending installation dialog is open */
+	dialogOpen: boolean;
+	/** Global error state */
+	error: string | null;
+	/** Whether the check has been performed */
+	checked: boolean;
+	/** Whether force install mode is enabled (auto-install without dialog) */
+	forceInstallEnabled: boolean;
+}
+
+/**
+ * Creates the initial state for pending installations
+ */
+export function createInitialPendingInstallationState(): IPendingInstallationState {
+	return {
+		pendingPlugins: [],
+		loading: false,
+		dialogOpen: false,
+		error: null,
+		checked: false,
+		forceInstallEnabled: false
+	};
+}
+
+@StoreConfig({ name: '_pending_plugin_installations' })
+@Injectable({ providedIn: 'root' })
+export class PendingInstallationStore extends Store<IPendingInstallationState> {
+	constructor() {
+		super(createInitialPendingInstallationState());
+	}
+
+	/**
+	 * Sets the pending plugins list
+	 */
+	public setPendingPlugins(plugins: IPendingPluginInstallation[]): void {
+		this.update({ pendingPlugins: plugins, checked: true });
+	}
+
+	/**
+	 * Updates the installing state for a specific plugin
+	 */
+	public setPluginInstalling(pluginId: string, isInstalling: boolean): void {
+		this.update((state) => ({
+			pendingPlugins: state.pendingPlugins.map((p) =>
+				p.plugin.id === pluginId ? { ...p, isInstalling, error: isInstalling ? null : p.error } : p
+			)
+		}));
+	}
+
+	/**
+	 * Sets the error for a specific plugin
+	 */
+	public setPluginError(pluginId: string, error: string | null): void {
+		this.update((state) => ({
+			pendingPlugins: state.pendingPlugins.map((p) =>
+				p.plugin.id === pluginId ? { ...p, error, isInstalling: false } : p
+			)
+		}));
+	}
+
+	/**
+	 * Removes a plugin from the pending list (after successful installation)
+	 */
+	public removePlugin(pluginId: string): void {
+		this.update((state) => ({
+			pendingPlugins: state.pendingPlugins.filter((p) => p.plugin.id !== pluginId)
+		}));
+	}
+
+	/**
+	 * Opens the dialog
+	 */
+	public openDialog(): void {
+		this.update({ dialogOpen: true });
+	}
+
+	/**
+	 * Closes the dialog
+	 */
+	public closeDialog(): void {
+		this.update({ dialogOpen: false });
+	}
+
+	/**
+	 * Enables or disables force install mode
+	 */
+	public setForceInstallEnabled(enabled: boolean): void {
+		this.update({ forceInstallEnabled: enabled });
+	}
+
+	/**
+	 * Gets plugins that can be auto-installed
+	 */
+	public getAutoInstallablePlugins(): IPendingPluginInstallation[] {
+		return this.getValue().pendingPlugins.filter((p) => p.canAutoInstall === true);
+	}
+
+	/**
+	 * Gets mandatory plugins that must be installed
+	 */
+	public getMandatoryPlugins(): IPendingPluginInstallation[] {
+		return this.getValue().pendingPlugins.filter((p) => p.isMandatory === true);
+	}
+
+	/**
+	 * Resets the store state
+	 */
+	public resetState(): void {
+		this.update(createInitialPendingInstallationState());
+	}
+}
