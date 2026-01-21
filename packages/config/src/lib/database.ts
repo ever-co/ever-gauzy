@@ -58,7 +58,10 @@ const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE)
 // For now we limit Knex to 10 connections max because it's only used in few places and we don't want to overload the DB.
 const dbPoolSizeKnex = process.env.DB_POOL_SIZE_KNEX ? parseInt(process.env.DB_POOL_SIZE_KNEX) : 10;
 
-const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
+// Reduce connection timeout in development to fail faster and avoid long startup delays
+const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT
+	? parseInt(process.env.DB_CONNECTION_TIMEOUT)
+	: (process.env.NODE_ENV === 'production' ? 5000 : 2000); // 2 seconds for dev, 5 seconds for prod
 
 const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
 
