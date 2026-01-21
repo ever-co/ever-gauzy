@@ -4802,6 +4802,38 @@
 			}
 		}
 	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "Überwachung & Analysen",
+		"SERVICES": "Dienste",
+		"SCOPE": "Geltungsbereich",
+		"GLOBAL": "Global",
+		"TENANT": "Mieter",
+		"POSTHOG": {
+			"TITLE": "PostHog-Analytik",
+			"ENABLED": "PostHog aktivieren",
+			"API_KEY": "API-Schlüssel",
+			"API_KEY_PLACEHOLDER": "Geben Sie den API-Schlüssel Ihres PostHog-Projekts ein",
+			"HOST": "Host-URL",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "Sendeintervall (ms)",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "Zeit in Millisekunden zwischen dem Senden gebündelter Ereignisse"
+		},
+		"SENTRY": {
+			"TITLE": "Sentry-Fehlerverfolgung",
+			"ENABLED": "Sentry aktivieren",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "Jitsu-Analytik",
+			"ENABLED": "Jitsu aktivieren",
+			"HOST": "Host-URL",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "Schreibschlüssel",
+			"WRITE_KEY_PLACEHOLDER": "Geben Sie Ihren Jitsu-Schreibschlüssel ein"
+		}
+	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Verwalte SMTP für '{{ name }}'",
 		"FROM_ADDRESS": "Von E-Mail-Adresse",

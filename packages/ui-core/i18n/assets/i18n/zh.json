@@ -4806,6 +4806,38 @@
 			}
 		}
 	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "监控与分析",
+		"SERVICES": "服务",
+		"SCOPE": "范围",
+		"GLOBAL": "全局",
+		"TENANT": "租户",
+		"POSTHOG": {
+			"TITLE": "PostHog 分析",
+			"ENABLED": "启用 PostHog",
+			"API_KEY": "API 密钥",
+			"API_KEY_PLACEHOLDER": "输入你 PostHog 项目的 API 密钥",
+			"HOST": "主机 URL",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "批量发送间隔（毫秒）",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "批量事件发送之间的时间（毫秒）"
+		},
+		"SENTRY": {
+			"TITLE": "Sentry 错误跟踪",
+			"ENABLED": "启用 Sentry",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "Jitsu 分析",
+			"ENABLED": "启用 Jitsu",
+			"HOST": "主机 URL",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "写入密钥",
+			"WRITE_KEY_PLACEHOLDER": "输入你的 Jitsu 写入密钥"
+		}
+	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "管理SMTP邮件服务器的 '{{ name }}'",
 		"FROM_ADDRESS": "发件人电子邮件地址",

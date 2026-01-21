@@ -4806,6 +4806,38 @@
 			}
 		}
 	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "Monitoring en analyse",
+		"SERVICES": "Diensten",
+		"SCOPE": "Bereik",
+		"GLOBAL": "Globaal",
+		"TENANT": "Huurder",
+		"POSTHOG": {
+			"TITLE": "PostHog-analyse",
+			"ENABLED": "PostHog inschakelen",
+			"API_KEY": "API-sleutel",
+			"API_KEY_PLACEHOLDER": "Voer de API-sleutel van je PostHog-project in",
+			"HOST": "Host-URL",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "Verzendinterval (ms)",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "Tijd in milliseconden tussen het verzenden van gebundelde events"
+		},
+		"SENTRY": {
+			"TITLE": "Sentry-foutopsporing",
+			"ENABLED": "Sentry inschakelen",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "Jitsu-analyse",
+			"ENABLED": "Jitsu inschakelen",
+			"HOST": "Host-URL",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "Schrijfsleutel",
+			"WRITE_KEY_PLACEHOLDER": "Voer je Jitsu-schrijfsleutel in"
+		}
+	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "SMTP beheren voor '{{ name }}'",
 		"FROM_ADDRESS": "Van e-mailadres",

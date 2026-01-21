@@ -4806,6 +4806,38 @@
 			}
 		}
 	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "Monitoramento e análise",
+		"SERVICES": "Serviços",
+		"SCOPE": "Escopo",
+		"GLOBAL": "Global",
+		"TENANT": "Inquilino",
+		"POSTHOG": {
+			"TITLE": "Análise do PostHog",
+			"ENABLED": "Ativar PostHog",
+			"API_KEY": "Chave de API",
+			"API_KEY_PLACEHOLDER": "Insira a chave de API do seu projeto PostHog",
+			"HOST": "URL do host",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "Intervalo de envio (ms)",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "Tempo em milissegundos entre o envio de eventos em lote"
+		},
+		"SENTRY": {
+			"TITLE": "Monitoramento de erros do Sentry",
+			"ENABLED": "Ativar Sentry",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "Análise do Jitsu",
+			"ENABLED": "Ativar Jitsu",
+			"HOST": "URL do host",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "Chave de escrita",
+			"WRITE_KEY_PLACEHOLDER": "Insira sua chave de escrita do Jitsu"
+		}
+	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Gerenciar o SMTP para '{{ name }}'",
 		"FROM_ADDRESS": "Do endereço de e-mail",
