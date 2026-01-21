@@ -27,7 +27,7 @@
 		"lib:watch": "yarn nx build plugin-integration-ai --watch"
 	},
 	"dependencies": {
-		"@apollo/client": "^4.1.2",
+		"@apollo/client": "^3.13.8",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
