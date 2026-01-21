@@ -33,10 +33,10 @@
 		"@gauzy/utils": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
 		"@nestjs/cache-manager": "^3.1.0",
-		"@nestjs/common": "^11.1.10",
+		"@nestjs/common": "^11.1.12",
 		"@nestjs/config": "^4.0.2",
 		"@nestjs/cqrs": "^11.0.3",
-		"@nestjs/swagger": "^11.1.5",
+		"@nestjs/swagger": "^11.2.5",
 		"axios": "^1.9.0",
 		"cache-manager": "^6.4.2",
 		"chalk": "^4.1.0",
@@ -47,7 +47,7 @@
 	"devDependencies": {
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"typescript": "^5.8.3"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"Ever Gauzy",

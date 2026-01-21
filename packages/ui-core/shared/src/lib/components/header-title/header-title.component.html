@@ -1,28 +1,27 @@
 <ng-content></ng-content>
 
 <ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
-	<ng-template [ngIf]="allowEmployee && employee?.id">
-		<span> {{ 'HEADER_TITLE.FOR' | translate }} </span>
-		<span> {{ employee?.fullName | truncate : 22 }} </span>
-	</ng-template>
+  @if (allowEmployee && employee?.id) {
+    <span> {{ 'HEADER_TITLE.FOR' | translate }} </span>
+    <span> {{ employee?.fullName | truncate : 22 }} </span>
+  }
 </ng-template>
 
-<ng-template [ngIf]="organization?.id">
-	<span class="name">
-		<ng-template [ngIf]="allowEmployee && employee?.id" [ngIfElse]="forTitle">
-			<ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
-				{{ 'HEADER_TITLE.FROM' | translate }}
-			</ng-template>
-			<ng-template [ngxPermissionsExcept]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
-				{{ 'HEADER_TITLE.FOR' | translate }}
-			</ng-template>
-		</ng-template>
-	</span>
-	<span class="org-name">
-		{{ organization?.name }}
-	</span>
-</ng-template>
+@if (organization?.id) {
+  <span class="name">
+    @if (allowEmployee && employee?.id) {
+      <ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
+        {{ 'HEADER_TITLE.FROM' | translate }}
+      </ng-template>
+      <ng-template [ngxPermissionsExcept]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
+        {{ 'HEADER_TITLE.FOR' | translate }}
+      </ng-template>
+    } @else {
+      {{ 'HEADER_TITLE.FOR' | translate }}
+    }
+  </span>
+  <span class="org-name">
+    {{ organization?.name }}
+  </span>
+}
 
-<ng-template #forTitle>
-	{{ 'HEADER_TITLE.FOR' | translate }}
-</ng-template>

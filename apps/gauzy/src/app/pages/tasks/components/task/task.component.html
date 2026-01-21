@@ -34,9 +34,9 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body [ngClass]="{ project: selectedProject }">
-		<ng-container [ngSwitch]="viewMode">
-			<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
-				<ng-template [ngSwitchCase]="taskListTypeEnum.GRID">
+		<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
+			<ng-container [ngSwitch]="viewMode">
+				<ng-container *ngSwitchCase="taskListTypeEnum.GRID">
 					<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
 						<div class="table-scroll-container">
 							<angular2-smart-table
@@ -64,8 +64,8 @@
 							(scroll)="onScroll()"
 						></ga-card-grid>
 					</ng-template>
-				</ng-template>
-				<ng-template [ngSwitchCase]="taskListTypeEnum.SPRINT">
+				</ng-container>
+				<ng-container *ngSwitchCase="taskListTypeEnum.SPRINT">
 					<div class="sprint-view">
 						<ga-tasks-sprint-view
 							(createTaskEvent)="createTaskDialog()"
@@ -85,9 +85,9 @@
 							}
 						"
 					></ng-container>
-				</ng-template>
-			</ng-template>
-		</ng-container>
+				</ng-container>
+			</ng-container>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template #paginationTemplate let-pagination="pagination">

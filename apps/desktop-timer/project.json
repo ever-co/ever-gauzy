@@ -58,7 +58,13 @@
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
 				"scripts": [],
-				"allowedCommonJsDependencies": ["localforage", "rxjs", "rxjs/operators"]
+				"allowedCommonJsDependencies": [
+					"dayjs",
+					"localforage",
+					"moment-duration-format",
+					"rxjs",
+					"rxjs/operators"
+				]
 			},
 			"configurations": {
 				"production": {

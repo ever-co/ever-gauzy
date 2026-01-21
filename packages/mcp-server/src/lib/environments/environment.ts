@@ -21,11 +21,11 @@ const envPaths = [
 
 // Try to load .env file from multiple locations (silently)
 envPaths.forEach((envPath) => {
-		const result = dotenv.config({ path: envPath });
-		// Only log in debug mode and only to stderr to avoid interfering with MCP responses
-		if (!result.error && process.env.GAUZY_MCP_DEBUG === 'true') {
-			logger.log(`✓ Loaded environment from: ${envPath}`);
-		}
+	const result = dotenv.config({ path: envPath, quiet: true });
+	// Only log in debug mode and only to stderr to avoid interfering with MCP responses
+	if (!result.error && process.env.GAUZY_MCP_DEBUG === 'true') {
+		logger.log(`✓ Loaded environment from: ${envPath}`);
+	}
 });
 
 // Validate required environment variables

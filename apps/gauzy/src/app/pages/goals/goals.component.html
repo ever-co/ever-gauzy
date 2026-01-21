@@ -1,16 +1,16 @@
 <nb-card>
-	<nb-card-header>
-		<div class="main-header">
-			<h4>
-				<ngx-header-title>
-					{{ 'GOALS_PAGE.HEADER' | translate }}
-				</ngx-header-title>
-			</h4>
-		</div>
-		<div class="gauzy-button-container">
-			<ngx-gauzy-button-action
-				[buttonTemplateVisible]="visibleButton"
-				[isDisable]="!selectedGoal.isSelected && !selectedKeyResult.isSelected"
+  <nb-card-header>
+    <div class="main-header">
+      <h4>
+        <ngx-header-title>
+          {{ 'GOALS_PAGE.HEADER' | translate }}
+        </ngx-header-title>
+      </h4>
+    </div>
+    <div class="gauzy-button-container">
+      <ngx-gauzy-button-action
+        [buttonTemplateVisible]="visibleButton"
+        [isDisable]="!selectedGoal.isSelected && !selectedKeyResult.isSelected"
 				[buttonTemplate]="
 					selectedGoal.isSelected
 						? actionButtonsObjective
@@ -18,57 +18,62 @@
 						? actionButtons
 						: actionButtonsObjective
 				"
-				[hasLayoutSelector]="false"
-			></ngx-gauzy-button-action>
-		</div>
-	</nb-card-header>
-	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-		<div class="goals-container">
-			<div class="h-100" *ngIf="noGoals == true">
-				<ngx-no-data-message [message]="'GOALS_PAGE.GOALS_EMPTY' | translate"></ngx-no-data-message>
-			</div>
-			<div *ngFor="let group of objectiveGroup == 'timeFrames' ? goalTimeFrames : goalLevels">
-				<h6 *ngIf="noGoals == false">{{ group }}</h6>
-				<nb-accordion
-					[hidden]="objectiveGroup == 'timeFrames' ? goal.deadline != group : goal.level != group"
-					class="my-3"
-					*ngFor="let goal of goals; let index = index"
-				>
-					<nb-accordion-item>
-						<nb-accordion-item-header (click)="onClickObjective(goal, index)"
-							><div class="w-100 d-flex align-items-center justify-content-between">
-								{{ goal.name }}
-								<div class="w-25 d-flex align-items-center mr-5 ml-5">
-									<span class="ml-3">{{ goal.progress }}%</span>
-									<nb-progress-bar
-										nbTooltip="{{ 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }}"
-										class="ml-4"
-										[value]="goal.progress"
+        [hasLayoutSelector]="false"
+      ></ngx-gauzy-button-action>
+    </div>
+  </nb-card-header>
+  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+    <div class="goals-container">
+      @if (noGoals == true) {
+        <div class="h-100">
+          <ngx-no-data-message [message]="'GOALS_PAGE.GOALS_EMPTY' | translate"></ngx-no-data-message>
+        </div>
+      }
+      @for (group of objectiveGroup == 'timeFrames' ? goalTimeFrames : goalLevels; track group) {
+        <div>
+          @if (noGoals == false) {
+            <h6>{{ group }}</h6>
+          }
+          @for (goal of goals; track goal; let index = $index) {
+            <nb-accordion
+              [hidden]="objectiveGroup == 'timeFrames' ? goal.deadline != group : goal.level != group"
+              class="my-3"
+              >
+              <nb-accordion-item>
+                <nb-accordion-item-header (click)="onClickObjective(goal, index)"
+                  ><div class="w-100 d-flex align-items-center justify-content-between">
+                  {{ goal.name }}
+                  <div class="w-25 d-flex align-items-center mr-5 ml-5">
+                    <span class="ml-3">{{ goal.progress }}%</span>
+                    <nb-progress-bar
+                      nbTooltip="{{ 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }}"
+                      class="ml-4"
+                      [value]="goal.progress"
 										[status]="
 											goal.progress < 50 ? 'warning' : goal.progress < 75 ? 'info' : 'success'
 										"
-										size="small"
-									>
-									</nb-progress-bar>
-								</div>
-							</div>
-						</nb-accordion-item-header>
-						<nb-accordion-item-body
+                      size="small"
+                      >
+                    </nb-progress-bar>
+                  </div>
+                </div>
+              </nb-accordion-item-header>
+              @for (keyResult of goal.keyResults; track keyResult) {
+                <nb-accordion-item-body
 							[ngClass]="
 								selectedKeyResult.isSelected && selectedKeyResult.data.id === keyResult.id
 									? 'item selected'
 									: ''
 							"
-							*ngFor="let keyResult of goal.keyResults"
-						>
-							<div
-								(click)="onClickKeyResult(keyResult, index)"
-								class="w-100 d-flex align-items-center justify-content-between keyResult"
-							>
-								{{ keyResult.name }}
-								<div class="w-25 d-flex align-items-center">
-									<span class="ml-3">{{ keyResult.progress }}%</span>
-									<nb-progress-bar
+                  >
+                  <div
+                    (click)="onClickKeyResult(keyResult, index)"
+                    class="w-100 d-flex align-items-center justify-content-between keyResult"
+                    >
+                    {{ keyResult.name }}
+                    <div class="w-25 d-flex align-items-center">
+                      <span class="ml-3">{{ keyResult.progress }}%</span>
+                      <nb-progress-bar
 										nbTooltip="{{
 											'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
 												| translate
@@ -76,8 +81,8 @@
 															weight: calculateKeyResultWeight(keyResult.weight, goal)
 													  }
 										}}"
-										class="ml-3"
-										[value]="keyResult.progress"
+                      class="ml-3"
+                      [value]="keyResult.progress"
 										[status]="
 											keyResult.progress < 50
 												? 'warning'
@@ -85,159 +90,164 @@
 												? 'info'
 												: 'success'
 										"
-										size="small"
-									>
-									</nb-progress-bar>
-								</div>
-							</div>
-						</nb-accordion-item-body>
-						<nb-accordion-item-body>
-							<button
-								nbButton
-								status="success"
-								class="gen"
-								outline
-								size="small"
-								(click)="addKeyResult(index, true)"
-							>
-								<nb-icon icon="plus-outline"></nb-icon>
-								{{ 'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate }}
-							</button>
-						</nb-accordion-item-body>
-					</nb-accordion-item>
-				</nb-accordion>
-			</div>
-		</div>
-	</nb-card-body>
+                      size="small"
+                      >
+                    </nb-progress-bar>
+                  </div>
+                </div>
+              </nb-accordion-item-body>
+            }
+            <nb-accordion-item-body>
+              <button
+                nbButton
+                status="success"
+                class="gen"
+                outline
+                size="small"
+                (click)="addKeyResult(index, true)"
+                >
+                <nb-icon icon="plus-outline"></nb-icon>
+                {{ 'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate }}
+              </button>
+            </nb-accordion-item-body>
+          </nb-accordion-item>
+        </nb-accordion>
+      }
+    </div>
+  }
+</div>
+</nb-card-body>
 </nb-card>
 <ng-template #actionButtons>
-	<div class="btn-group actions">
-		<button nbButton status="basic" class="action secondary" size="small" (click)="openKeyResultDetails()">
-			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-			{{ 'BUTTONS.VIEW' | translate }}
-		</button>
-		<button nbButton status="basic" class="action primary" size="small" (click)="addKeyResult()">
-			<nb-icon icon="edit-outline"></nb-icon>{{ 'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate }}
-		</button>
-		<button nbButton status="basic" class="action primary" size="small" (click)="openKeyResultParameters()">
-			<span class="mr-1"><i class="fas fa-percentage"></i></span
-			>{{ 'KEY_RESULT_PAGE.TOOLTIPS.WEIGHT' | translate }}
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action"
-			size="small"
-			(click)="deleteKeyResult()"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
-	</div>
+  <div class="btn-group actions">
+    <button nbButton status="basic" class="action secondary" size="small" (click)="openKeyResultDetails()">
+      <nb-icon icon="eye-outline" pack="eva"></nb-icon>
+      {{ 'BUTTONS.VIEW' | translate }}
+    </button>
+    <button nbButton status="basic" class="action primary" size="small" (click)="addKeyResult()">
+      <nb-icon icon="edit-outline"></nb-icon>{{ 'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate }}
+    </button>
+    <button nbButton status="basic" class="action primary" size="small" (click)="openKeyResultParameters()">
+      <span class="mr-1"><i class="fas fa-percentage"></i></span
+      >{{ 'KEY_RESULT_PAGE.TOOLTIPS.WEIGHT' | translate }}
+    </button>
+    <button
+      nbButton
+      status="basic"
+      class="action"
+      size="small"
+      (click)="deleteKeyResult()"
+      [nbTooltip]="'BUTTONS.DELETE' | translate"
+      >
+      <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+    </button>
+  </div>
 </ng-template>
 <ng-template #actionButtonsObjective>
-	<div class="btn-group actions">
-		<button
-			nbButton
-			status="basic"
-			class="action secondary"
-			(click)="openGoalDetails()"
-			size="small"
-			[nbTooltip]="'GOALS_PAGE.TOOLTIPS.DETAILS' | translate"
-		>
-			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-			{{ 'BUTTONS.VIEW' | translate }}
-		</button>
-		<button nbButton status="basic" class="action primary" (click)="createObjective()" size="small">
-			<nb-icon icon="edit-outline"></nb-icon>{{ 'GOALS_PAGE.TOOLTIPS.EDIT' | translate }}
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action"
-			[disabled]="!selectedItem && disableButton"
-			size="small"
-			(click)="deleteGoal()"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
-	</div>
+  <div class="btn-group actions">
+    <button
+      nbButton
+      status="basic"
+      class="action secondary"
+      (click)="openGoalDetails()"
+      size="small"
+      [nbTooltip]="'GOALS_PAGE.TOOLTIPS.DETAILS' | translate"
+      >
+      <nb-icon icon="eye-outline" pack="eva"></nb-icon>
+      {{ 'BUTTONS.VIEW' | translate }}
+    </button>
+    <button nbButton status="basic" class="action primary" (click)="createObjective()" size="small">
+      <nb-icon icon="edit-outline"></nb-icon>{{ 'GOALS_PAGE.TOOLTIPS.EDIT' | translate }}
+    </button>
+    <button
+      nbButton
+      status="basic"
+      class="action"
+      [disabled]="!selectedItem && disableButton"
+      size="small"
+      (click)="deleteGoal()"
+      [nbTooltip]="'BUTTONS.DELETE' | translate"
+      >
+      <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+    </button>
+  </div>
 </ng-template>
 <ng-template #visibleButton>
-	<button
-		nbButton
-		status="success"
-		nbPopoverTrigger="click"
-		nbPopoverPlacement="bottom"
-		[nbPopover]="createObjectivePopover"
-		size="small"
-		class="custom-success"
-	>
-		<nb-icon icon="plus-outline"></nb-icon>
-		{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
-	</button>
-	<button
-		nbButton
-		status="primary"
-		nbPopoverTrigger="click"
-		nbPopoverPlacement="bottom"
-		[nbPopover]="groupByPopover"
-		size="small"
-		class="action"
-	>
-		<nb-icon icon="folder"></nb-icon>{{ 'GOALS_PAGE.GROUP_BY' | translate }}
-	</button>
-	<button
-		nbButton
-		status="primary"
-		nbPopoverTrigger="click"
-		nbPopoverPlacement="bottom"
-		[nbPopover]="filterPopover"
-		size="small"
-		class="action"
-	>
-		<nb-icon icon="funnel"></nb-icon>{{ 'FORM.FILTER' | translate }}
-	</button>
+  <button
+    nbButton
+    status="success"
+    nbPopoverTrigger="click"
+    nbPopoverPlacement="bottom"
+    [nbPopover]="createObjectivePopover"
+    size="small"
+    class="custom-success"
+    >
+    <nb-icon icon="plus-outline"></nb-icon>
+    {{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
+  </button>
+  <button
+    nbButton
+    status="primary"
+    nbPopoverTrigger="click"
+    nbPopoverPlacement="bottom"
+    [nbPopover]="groupByPopover"
+    size="small"
+    class="action"
+    >
+    <nb-icon icon="folder"></nb-icon>{{ 'GOALS_PAGE.GROUP_BY' | translate }}
+  </button>
+  <button
+    nbButton
+    status="primary"
+    nbPopoverTrigger="click"
+    nbPopoverPlacement="bottom"
+    [nbPopover]="filterPopover"
+    size="small"
+    class="action"
+    >
+    <nb-icon icon="funnel"></nb-icon>{{ 'FORM.FILTER' | translate }}
+  </button>
 </ng-template>
 
 <ng-template class="p-2" #groupByPopover>
-	<nb-list>
-		<nb-list-item
-			(click)="groupBy(group.value)"
+  <nb-list>
+    @for (group of groupObjectivesBy; track group) {
+      <nb-list-item
+        (click)="groupBy(group.value)"
 			[ngStyle]="{
 				'font-weight': objectiveGroup === group.value ? 'bold' : 'normal'
 			}"
-			style="cursor: pointer"
-			*ngFor="let group of groupObjectivesBy"
-			>{{ group.title }}</nb-list-item
-		>
-	</nb-list>
-</ng-template>
-<ng-template class="p-2" #filterPopover>
-	<nb-list>
-		<nb-list-item
-			(click)="filterGoals(filter.value, allGoals)"
+        style="cursor: pointer"
+        >{{ group.title }}</nb-list-item
+        >
+      }
+    </nb-list>
+  </ng-template>
+  <ng-template class="p-2" #filterPopover>
+    <nb-list>
+      @for (filter of filters; track filter) {
+        <nb-list-item
+          (click)="filterGoals(filter.value, allGoals)"
 			[ngStyle]="{
 				'font-weight': selectedFilter === filter.value ? 'bold' : 'normal'
 			}"
-			style="cursor: pointer"
-			*ngFor="let filter of filters"
-			>{{ filter.title }}</nb-list-item
-		>
-	</nb-list>
-</ng-template>
-<ng-template class="p-2" #createObjectivePopover>
-	<div>
-		<ng-container *ngIf="!isEmployee ? true : goalGeneralSettings?.employeeCanCreateObjective">
-			<nb-list>
-				<nb-list-item (click)="createObjective(true)" style="cursor: pointer">
-					{{ 'GOALS_PAGE.CREATE_NEW_MENU' | translate }}
-				</nb-list-item>
-				<nb-list-item (click)="createObjectiveFromTemplate()" style="cursor: pointer">
-					{{ 'GOALS_PAGE.CREATE_FROM_PRESET' | translate }}
-				</nb-list-item>
-			</nb-list>
-		</ng-container>
-	</div>
-</ng-template>
+          style="cursor: pointer"
+          >{{ filter.title }}</nb-list-item
+          >
+        }
+      </nb-list>
+    </ng-template>
+    <ng-template class="p-2" #createObjectivePopover>
+      <div>
+        @if (!isEmployee ? true : goalGeneralSettings?.employeeCanCreateObjective) {
+          <nb-list>
+            <nb-list-item (click)="createObjective(true)" style="cursor: pointer">
+              {{ 'GOALS_PAGE.CREATE_NEW_MENU' | translate }}
+            </nb-list-item>
+            <nb-list-item (click)="createObjectiveFromTemplate()" style="cursor: pointer">
+              {{ 'GOALS_PAGE.CREATE_FROM_PRESET' | translate }}
+            </nb-list-item>
+          </nb-list>
+        }
+      </div>
+    </ng-template>

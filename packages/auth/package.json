@@ -31,7 +31,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
-		"@nestjs/common": "^11.1.10",
+		"@nestjs/common": "^11.1.12",
 		"@nestjs/config": "^4.0.2",
 		"@nestjs/passport": "^11.0.5",
 		"axios": "^1.9.0",
@@ -72,7 +72,7 @@
 		"@types/passport-github2": "^1.2.9",
 		"@types/passport-google-oauth20": "^2.0.16",
 		"@types/passport-jwt": "^4.0.1",
-		"typescript": "^5.8.3"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"auth",

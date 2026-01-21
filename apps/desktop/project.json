@@ -45,7 +45,14 @@
 					"packages/ui-core/static/styles/styles.scss"
 				],
 				"scripts": [],
-				"allowedCommonJsDependencies": ["@datorama/akita", "localforage", "rxjs", "rxjs/operators"]
+				"allowedCommonJsDependencies": [
+					"@datorama/akita",
+					"dayjs",
+					"localforage",
+					"moment-duration-format",
+					"rxjs",
+					"rxjs/operators"
+				]
 			},
 			"configurations": {
 				"production": {

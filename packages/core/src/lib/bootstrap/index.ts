@@ -252,9 +252,11 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 	// Log the current database configuration (for debugging or informational purposes)
 	await logDBConfig();
 
-	// Register core and plugin entities and subscribers
-	const entities = await preBootstrapRegisterEntities(applicationConfig);
-	const subscribers = await preBootstrapRegisterSubscribers(applicationConfig);
+	// Register core and plugin entities and subscribers in parallel
+	const [entities, subscribers] = await Promise.all([
+		preBootstrapRegisterEntities(applicationConfig),
+		preBootstrapRegisterSubscribers(applicationConfig)
+	]);
 
 	// Update configuration with registered entities and subscribers
 	await defineConfig({

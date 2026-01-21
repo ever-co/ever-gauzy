@@ -5,7 +5,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { verify } from 'jsonwebtoken';
-import * as camelcase from 'camelcase';
+import camelcase from 'camelcase';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty } from '@gauzy/utils';

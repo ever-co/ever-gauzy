@@ -4805,6 +4805,38 @@
 			}
 		}
 	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "Мониторинг и аналитика",
+		"SERVICES": "Сервисы",
+		"SCOPE": "Область действия",
+		"GLOBAL": "Глобальный",
+		"TENANT": "Владелец",
+		"POSTHOG": {
+			"TITLE": "Аналитика PostHog",
+			"ENABLED": "Включить PostHog",
+			"API_KEY": "API‑ключ",
+			"API_KEY_PLACEHOLDER": "Введите API‑ключ вашего проекта PostHog",
+			"HOST": "URL хоста",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "Интервал отправки (мс)",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "Время в миллисекундах между отправкой пакетных событий"
+		},
+		"SENTRY": {
+			"TITLE": "Отслеживание ошибок Sentry",
+			"ENABLED": "Включить Sentry",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "Аналитика Jitsu",
+			"ENABLED": "Включить Jitsu",
+			"HOST": "URL хоста",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "Ключ записи",
+			"WRITE_KEY_PLACEHOLDER": "Введите ваш ключ записи Jitsu"
+		}
+	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Управление SMTP для '{{ name }}'",
 		"HOST": "Хост",

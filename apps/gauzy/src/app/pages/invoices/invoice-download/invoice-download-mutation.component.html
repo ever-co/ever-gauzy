@@ -1,21 +1,25 @@
 <nb-card class="pdf-preview-card">
-	<nb-card-header class="d-flex">
-		<h5 *ngIf="!isEstimate">
-			{{ 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_INVOICE' | translate }}
-		</h5>
-		<h5 *ngIf="isEstimate">
-			{{ 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_ESTIMATE' | translate }}
-		</h5>
-	</nb-card-header>
-	<nb-card-body>
-		<ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
-	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button (click)="download()" status="success" nbButton>
-			{{ 'BUTTONS.DOWNLOAD' | translate }}
-		</button>
-	</nb-card-footer>
+  <nb-card-header class="d-flex">
+    @if (!isEstimate) {
+      <h5>
+        {{ 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_INVOICE' | translate }}
+      </h5>
+    }
+    @if (isEstimate) {
+      <h5>
+        {{ 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_ESTIMATE' | translate }}
+      </h5>
+    }
+  </nb-card-header>
+  <nb-card-body>
+    <ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
+  </nb-card-body>
+  <nb-card-footer class="text-right">
+    <button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
+      {{ 'BUTTONS.CANCEL' | translate }}
+    </button>
+    <button (click)="download()" status="success" nbButton>
+      {{ 'BUTTONS.DOWNLOAD' | translate }}
+    </button>
+  </nb-card-footer>
 </nb-card>

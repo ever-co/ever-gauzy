@@ -1,4 +1,6 @@
-<div *ngFor="let stage of pipelineStages">
+@for (stage of pipelineStages; track stage) {
+  <div>
     <div>{{stage.name}}</div>
     <div>{{stage.description}}</div>
-</div>
+  </div>
+}

@@ -4798,6 +4798,38 @@
 			}
 		}
 	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "ניטור וניתוח",
+		"SERVICES": "שירותים",
+		"SCOPE": "טווח",
+		"GLOBAL": "גלובלי",
+		"TENANT": "טננט",
+		"POSTHOG": {
+			"TITLE": "PostHog אנליטיקה",
+			"ENABLED": "הפעל PostHog",
+			"API_KEY": "מפתח API",
+			"API_KEY_PLACEHOLDER": "הזן את מפתח ה‑API של פרויקט ה‑PostHog שלך",
+			"HOST": "כתובת URL של המארח",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "מרווח שליחה (מילישניות)",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "הזמן במילישניות בין שליחת אירועים במנות"
+		},
+		"SENTRY": {
+			"TITLE": "ניטור שגיאות Sentry",
+			"ENABLED": "הפעל Sentry",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "אנליטיקת Jitsu",
+			"ENABLED": "הפעל Jitsu",
+			"HOST": "כתובת URL של המארח",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "מפתח כתיבה",
+			"WRITE_KEY_PLACEHOLDER": "הזן את מפתח הכתיבה שלך עבור Jitsu"
+		}
+	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Manage SMTP for '{{ name }}'",
 		"HOST": "Host",

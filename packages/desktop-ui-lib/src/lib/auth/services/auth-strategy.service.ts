@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { IAuthResponse } from '@gauzy/contracts';
-import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
-import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
+import { NbAuthResult, NbAuthStrategy, NbAuthStrategyClass } from '@nebular/auth';
 import { Observable, from, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ElectronService } from '../../electron/services';

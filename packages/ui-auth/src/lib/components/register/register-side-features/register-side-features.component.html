@@ -1,9 +1,11 @@
 <section class="main-section">
-	<h4 class="main-header">
-		{{ 'CHANGELOG_MENU.GAUZY_FEATURES' | translate }}
-	</h4>
-	<div class="feature-wrapper" *ngFor="let feature of items$ | async; let last = last">
-		<ngx-register-side-single-feature [feature]="feature"></ngx-register-side-single-feature>
-		<div class="small-hr-div" [class]="last ? 'hidden' : ''"></div>
-	</div>
+  <h4 class="main-header">
+    {{ 'CHANGELOG_MENU.GAUZY_FEATURES' | translate }}
+  </h4>
+  @for (feature of items$ | async; track feature; let last = $last) {
+    <div class="feature-wrapper">
+      <ngx-register-side-single-feature [feature]="feature"></ngx-register-side-single-feature>
+      <div class="small-hr-div" [class]="last ? 'hidden' : ''"></div>
+    </div>
+  }
 </section>

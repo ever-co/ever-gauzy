@@ -1,203 +1,202 @@
 <nb-card>
-	<nb-card-header class="p-0">
-		<div class="gauzy-action">
-			<ngx-gauzy-button-action
-				[hasLayoutSelector]="false"
-				[isDisable]="isRowSelected() ? false : !isCheckboxSelected()"
-			>
-				<ng-container
-					buttonTemplate
-					[ngTemplateOutlet]="actionButtons"
+  <nb-card-header class="p-0">
+    <div class="gauzy-action">
+      <ngx-gauzy-button-action
+        [hasLayoutSelector]="false"
+        [isDisable]="isRowSelected() ? false : !isCheckboxSelected()"
+        >
+        <ng-container
+          buttonTemplate
+          [ngTemplateOutlet]="actionButtons"
 					[ngTemplateOutletContext]="{
 						$implicit: selectedTimesheet?.data
 					}"
-				>
-				</ng-container>
-			</ngx-gauzy-button-action>
-		</div>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="approval-container">
-			<div class="custom-header-container">
-				<div class="row custom-header m-0 align-items-center">
-					<div class="col-auto">
-						<nb-checkbox
-							status="basic"
-							[checked]="allChecked"
-							[indeterminate]="isIndeterminate()"
-							(checkedChange)="checkedAll($event)"
-						>
-						</nb-checkbox>
-					</div>
-					<div class="col-2">
-						{{ 'TIMESHEET.EMPLOYEE' | translate }}
-					</div>
-					<div class="col">
-						{{ 'TIMESHEET.TOTAL_TIME' | translate }}
-					</div>
-					<div class="col">
-						{{ 'TIMESHEET.ACTIVITIES' | translate }}
-					</div>
-					<div class="col-3">
-						{{ 'TIMESHEET.DURATION' | translate }}
-					</div>
-					<div class="col">
-						{{ 'TIMESHEET.APPROVED_AT' | translate }}
-					</div>
-					<div class="col">
-						{{ 'TIMESHEET.SUBMITTED_AT' | translate }}
-					</div>
-					<div class="col-1">
-						{{ 'TIMESHEET.STATUS' | translate }}
-					</div>
-				</div>
-			</div>
-			<div
-				[nbSpinner]="loading"
-				[nbSpinnerSize]="'giant'"
-				[nbSpinnerStatus]="'primary'"
-				class="custom-body approval"
-			>
-				<ng-template [ngIf]="timesheets?.length > 0" [ngIfElse]="notFound">
-					<div class="content-approval">
-						<ng-container *ngFor="let timesheet of timesheets; let last = last">
-							<div
-								(click)="userRowSelect(timesheet)"
-								class="row item m-0 py-3 align-items-center"
+          >
+        </ng-container>
+      </ngx-gauzy-button-action>
+    </div>
+  </nb-card-header>
+  <nb-card-body>
+    <div class="approval-container">
+      <div class="custom-header-container">
+        <div class="row custom-header m-0 align-items-center">
+          <div class="col-auto">
+            <nb-checkbox
+              status="basic"
+              [checked]="allChecked"
+              [indeterminate]="isIndeterminate()"
+              (checkedChange)="checkedAll($event)"
+              >
+            </nb-checkbox>
+          </div>
+          <div class="col-2">
+            {{ 'TIMESHEET.EMPLOYEE' | translate }}
+          </div>
+          <div class="col">
+            {{ 'TIMESHEET.TOTAL_TIME' | translate }}
+          </div>
+          <div class="col">
+            {{ 'TIMESHEET.ACTIVITIES' | translate }}
+          </div>
+          <div class="col-3">
+            {{ 'TIMESHEET.DURATION' | translate }}
+          </div>
+          <div class="col">
+            {{ 'TIMESHEET.APPROVED_AT' | translate }}
+          </div>
+          <div class="col">
+            {{ 'TIMESHEET.SUBMITTED_AT' | translate }}
+          </div>
+          <div class="col-1">
+            {{ 'TIMESHEET.STATUS' | translate }}
+          </div>
+        </div>
+      </div>
+      <div
+        [nbSpinner]="loading"
+        [nbSpinnerSize]="'giant'"
+        [nbSpinnerStatus]="'primary'"
+        class="custom-body approval"
+        >
+        @if (timesheets?.length > 0) {
+          <div class="content-approval">
+            @for (timesheet of timesheets; track timesheet; let last = $last) {
+              <div
+                (click)="userRowSelect(timesheet)"
+                class="row item m-0 py-3 align-items-center"
 								[ngClass]="{
 									'border-bottom': !last,
 									selected: timesheet?.isSelected
 								}"
-							>
-								<div class="col-auto">
-									<nb-checkbox
-										[checked]="timesheet.checked"
-										(click)="$event.stopPropagation()"
-										(checkedChange)="toggleCheckbox($event, timesheet)"
-										status="basic"
-									></nb-checkbox>
-								</div>
-								<div class="col-2">
-									<ngx-avatar
-										class="report-table"
-										[name]="timesheet?.employee?.user?.name"
-										[src]="timesheet?.employee?.user?.imageUrl"
-										[id]="timesheet?.employee?.id"
-										[employee]="timesheet?.employee"
-									></ngx-avatar>
-								</div>
-								<div class="col">
-									{{ timesheet.duration | durationFormat }}
-								</div>
-								<div class="col">{{ timesheet.keyboard }}</div>
-								<div class="col-3">
-									{{ timesheet.startedAt | dateFormat }} -
-									{{ timesheet.stoppedAt | dateFormat }}
-								</div>
-								<div class="col">
-									{{ timesheet.approvedAt | dateFormat }}
-								</div>
-								<div class="col">
-									{{ timesheet.submittedAt | dateFormat }}
-								</div>
-								<div class="col-1">
-									<ga-status-badge [value]="statusMapper(timesheet)"></ga-status-badge>
-								</div>
-							</div>
-						</ng-container>
-					</div>
-				</ng-template>
-			</div>
-			<ng-template #notFound>
-				<ngx-no-data-message
-					[message]="'TIMESHEET.NO_DATA.APPROVAL_TIMESHEET' | translate"
-				></ngx-no-data-message>
-			</ng-template>
-		</div>
-	</nb-card-body>
+                >
+                <div class="col-auto">
+                  <nb-checkbox
+                    [checked]="timesheet.checked"
+                    (click)="$event.stopPropagation()"
+                    (checkedChange)="toggleCheckbox($event, timesheet)"
+                    status="basic"
+                  ></nb-checkbox>
+                </div>
+                <div class="col-2">
+                  <ngx-avatar
+                    class="report-table"
+                    [name]="timesheet?.employee?.user?.name"
+                    [src]="timesheet?.employee?.user?.imageUrl"
+                    [id]="timesheet?.employee?.id"
+                    [employee]="timesheet?.employee"
+                  ></ngx-avatar>
+                </div>
+                <div class="col">
+                  {{ timesheet.duration | durationFormat }}
+                </div>
+                <div class="col">{{ timesheet.keyboard }}</div>
+                <div class="col-3">
+                  {{ timesheet.startedAt | dateFormat }} -
+                  {{ timesheet.stoppedAt | dateFormat }}
+                </div>
+                <div class="col">
+                  {{ timesheet.approvedAt | dateFormat }}
+                </div>
+                <div class="col">
+                  {{ timesheet.submittedAt | dateFormat }}
+                </div>
+                <div class="col-1">
+                  <ga-status-badge [value]="statusMapper(timesheet)"></ga-status-badge>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <ngx-no-data-message
+            [message]="'TIMESHEET.NO_DATA.APPROVAL_TIMESHEET' | translate"
+          ></ngx-no-data-message>
+        }
+      </div>
+    </div>
+  </nb-card-body>
 </nb-card>
 <ng-template #actionButtons let-selectedItem>
-	<div class="actions">
-		<ng-container *ngIf="isCheckboxSelected()">
-			<button
-				outline
-				nbButton
-				status="primary"
-				class="action"
-				[title]="'TIMESHEET.BULK_ACTION' | translate"
-				[nbContextMenu]="contextMenus"
-				nbContextMenuTag="timesheet-bulk-action"
-			>
-				{{ 'TIMESHEET.BULK_ACTION' | translate }}
-				<nb-icon icon="chevron-down-outline"></nb-icon>
-			</button>
-		</ng-container>
-		<ng-container *ngIf="selectedItem">
-			<button
-				(click)="redirectToView(selectedItem)"
-				class="action secondary"
-				status="basic"
-				nbButton
-				size="small"
-				[disabled]="disableButton"
-			>
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'TIMESHEET.VIEW' | translate }}
-			</button>
-			<ng-container *ngIf="!selectedItem.submittedAt">
-				<button
-					(click)="submitTimesheet(selectedItem.id, 'submit')"
-					class="action primary"
-					status="basic"
-					nbButton
-					size="small"
-					[disabled]="disableButton"
-				>
-					<nb-icon icon="email-outline"></nb-icon>
-					{{ 'TIMESHEET.SUBMIT_TIMESHEET' | translate }}
-				</button>
-			</ng-container>
-			<ng-container *ngIf="selectedItem.submittedAt">
-				<button
-					(click)="submitTimesheet(selectedItem.id, 'unsubmit')"
-					class="action primary"
-					status="basic"
-					nbButton
-					size="small"
-					[disabled]="disableButton"
-				>
-					<nb-icon icon="email-outline"></nb-icon>
-					{{ 'TIMESHEET.UNSUBMIT_TIMESHEET' | translate }}
-				</button>
-			</ng-container>
-			<ng-container *ngIf="selectedItem.status != TimesheetStatus.APPROVED">
-				<button
-					(click)="updateStatus(selectedItem.id, TimesheetStatus.APPROVED)"
-					nbButton
-					class="action success"
-					status="basic"
-					nbButton
-					size="small"
-					[disabled]="disableButton"
-				>
-					<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
-					{{ 'TIMESHEET.APPROVE' | translate }}
-				</button>
-			</ng-container>
-			<ng-container *ngIf="selectedItem.status != TimesheetStatus.DENIED">
-				<button
-					(click)="updateStatus(selectedItem.id, TimesheetStatus.DENIED)"
-					nbButton
-					class="action warning"
-					status="basic"
-					nbButton
-					size="small"
-					[disabled]="disableButton"
-				>
-					<nb-icon icon="close-outline"></nb-icon>
-					{{ 'TIMESHEET.DENY' | translate }}
-				</button>
-			</ng-container>
-		</ng-container>
-	</div>
+  <div class="actions">
+    @if (isCheckboxSelected()) {
+      <button
+        outline
+        nbButton
+        status="primary"
+        class="action"
+        [title]="'TIMESHEET.BULK_ACTION' | translate"
+        [nbContextMenu]="contextMenus"
+        nbContextMenuTag="timesheet-bulk-action"
+        >
+        {{ 'TIMESHEET.BULK_ACTION' | translate }}
+        <nb-icon icon="chevron-down-outline"></nb-icon>
+      </button>
+    }
+    @if (selectedItem) {
+      <button
+        (click)="redirectToView(selectedItem)"
+        class="action secondary"
+        status="basic"
+        nbButton
+        size="small"
+        [disabled]="disableButton"
+        >
+        <nb-icon icon="edit-outline"></nb-icon>
+        {{ 'TIMESHEET.VIEW' | translate }}
+      </button>
+      @if (!selectedItem.submittedAt) {
+        <button
+          (click)="submitTimesheet(selectedItem.id, 'submit')"
+          class="action primary"
+          status="basic"
+          nbButton
+          size="small"
+          [disabled]="disableButton"
+          >
+          <nb-icon icon="email-outline"></nb-icon>
+          {{ 'TIMESHEET.SUBMIT_TIMESHEET' | translate }}
+        </button>
+      }
+      @if (selectedItem.submittedAt) {
+        <button
+          (click)="submitTimesheet(selectedItem.id, 'unsubmit')"
+          class="action primary"
+          status="basic"
+          nbButton
+          size="small"
+          [disabled]="disableButton"
+          >
+          <nb-icon icon="email-outline"></nb-icon>
+          {{ 'TIMESHEET.UNSUBMIT_TIMESHEET' | translate }}
+        </button>
+      }
+      @if (selectedItem.status != TimesheetStatus.APPROVED) {
+        <button
+          (click)="updateStatus(selectedItem.id, TimesheetStatus.APPROVED)"
+          nbButton
+          class="action success"
+          status="basic"
+          nbButton
+          size="small"
+          [disabled]="disableButton"
+          >
+          <nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+          {{ 'TIMESHEET.APPROVE' | translate }}
+        </button>
+      }
+      @if (selectedItem.status != TimesheetStatus.DENIED) {
+        <button
+          (click)="updateStatus(selectedItem.id, TimesheetStatus.DENIED)"
+          nbButton
+          class="action warning"
+          status="basic"
+          nbButton
+          size="small"
+          [disabled]="disableButton"
+          >
+          <nb-icon icon="close-outline"></nb-icon>
+          {{ 'TIMESHEET.DENY' | translate }}
+        </button>
+      }
+    }
+  </div>
 </ng-template>

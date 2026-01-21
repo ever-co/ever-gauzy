@@ -1,59 +1,62 @@
-<nb-card 
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
-	<nb-card-header>
-		<ng-container *ngIf="!showAddCard">
-			<button
-				(click)="showAddCard = !showAddCard"
-				nbButton
-				status="success"
-				class="float-right"
-				size="small"
-			>
-				<nb-icon icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-		</ng-container>
-		<div class="edit-user-organizations">
-			<ga-edit-user-organizations-mutation
-			*ngIf="showAddCard"
-			(canceled)="cancel()"
-			(addOrg)="addOrg($event)"
-			></ga-edit-user-organizations-mutation>
-		</div>
-	</nb-card-header>
-	<nb-card-body *ngIf="organizations?.length">
-		<div class="mb-3">
-			<strong>
-				{{
-					'ORGANIZATIONS_PAGE.EDIT.USER_ORGANIZATIONS' | translate: {
-						name: selectedUserName
-					}
-				}}
-			</strong>
-		</div>
-		<ng-container *ngFor="let organization of organizations">
-			<nb-card class="organization">
-				<nb-card-body>
-					<img
-						[src]="organization.imageUrl"
-						alt="Smiley face"
-						height="40"
-						width="40"
-						class="organization-image"						
-					/>
-					<strong>{{ organization.name }}</strong>
-					<nb-actions class="float-right" e="medium">
-						<nb-action
-							(click)="remove(organization.id)"
-							class="d-inline pr-0"
-							icon="close"
-						></nb-action>
-					</nb-actions>
-				</nb-card-body>
-			</nb-card>
-		</ng-container>
-	</nb-card-body>
-</nb-card>
+<nb-card
+  [nbSpinner]="loading"
+  nbSpinnerStatus="primary"
+  nbSpinnerSize="large"
+  >
+  <nb-card-header>
+    @if (!showAddCard) {
+      <button
+        (click)="showAddCard = !showAddCard"
+        nbButton
+        status="success"
+        class="float-right"
+        size="small"
+        >
+        <nb-icon icon="plus-outline"></nb-icon
+          >{{ 'BUTTONS.ADD' | translate }}
+        </button>
+      }
+      <div class="edit-user-organizations">
+        @if (showAddCard) {
+          <ga-edit-user-organizations-mutation
+            (canceled)="cancel()"
+            (addOrg)="addOrg($event)"
+          ></ga-edit-user-organizations-mutation>
+        }
+      </div>
+    </nb-card-header>
+    @if (organizations?.length) {
+      <nb-card-body>
+        <div class="mb-3">
+          <strong>
+            {{
+            'ORGANIZATIONS_PAGE.EDIT.USER_ORGANIZATIONS' | translate: {
+            name: selectedUserName
+          }
+          }}
+        </strong>
+      </div>
+      @for (organization of organizations; track organization) {
+        <nb-card class="organization">
+          <nb-card-body>
+            <img
+              [src]="organization.imageUrl"
+              alt="Smiley face"
+              height="40"
+              width="40"
+              class="organization-image"
+              />
+              <strong>{{ organization.name }}</strong>
+              <nb-actions class="float-right" e="medium">
+                <nb-action
+                  (click)="remove(organization.id)"
+                  class="d-inline pr-0"
+                  icon="close"
+                ></nb-action>
+              </nb-actions>
+            </nb-card-body>
+          </nb-card>
+        }
+      </nb-card-body>
+    }
+  </nb-card>

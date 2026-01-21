@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Directive } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
@@ -6,10 +6,7 @@ import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operato
 import { SelectorService } from '../../+state/selector.service';
 
 @UntilDestroy({ checkProperties: true })
-@Component({
-    template: '',
-    standalone: false
-})
+@Directive()
 export abstract class AbstractSelectorComponent<T> implements ControlValueAccessor {
 	public search$ = new Subject<string>();
 	private onChange: (value: any) => void;
