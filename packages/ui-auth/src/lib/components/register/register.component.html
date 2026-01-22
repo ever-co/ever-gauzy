@@ -45,7 +45,7 @@
 					fullWidth
 					fieldSize="large"
 					[status]="fullName.dirty ? (fullName.invalid ? 'danger' : 'success') : 'basic'"
-					required
+					[required]="getConfigValue('forms.validation.fullName.required')"
 					[minlength]="getConfigValue('forms.validation.fullName.minLength')"
 					[maxlength]="getConfigValue('forms.validation.fullName.maxLength')"
 					[attr.aria-invalid]="fullName.invalid && fullName.touched ? true : null"

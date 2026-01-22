@@ -28,7 +28,7 @@
 		"@angular/core": "^20.0.0"
 	},
 	"dependencies": {
-		"@angular/router": "^20.0.7",
+		"@angular/router": "^20.2.4",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^16.0.0",
 		"@ngx-translate/core": "^16.0.4",

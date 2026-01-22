@@ -157,12 +157,13 @@
       }
       .custom-checkbox {
         border-radius: 2px !important; // Make it square
-        border-color: #8f9bb3; // Light grey border
+        border-color: #8f9bb3 !important; // Light grey border
         background-color: transparent;
+        border-width: 1px !important;
       }
-      &.checked .custom-checkbox {
-        background-color: #6236ff;
-        border-color: #6236ff;
+      .custom-checkbox.checked {
+        background-color: #6236ff !important;
+        border-color: #6236ff !important;
       }
     }
     @include mobile-screen {

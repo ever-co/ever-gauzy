@@ -50,7 +50,7 @@
 	"devDependencies": {
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"cross-env": "^7.0.3",
+		"cross-env": "^10.1.0",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.9.3"
 	},

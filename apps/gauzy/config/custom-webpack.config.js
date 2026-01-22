@@ -47,7 +47,7 @@ module.exports = {
 		// Disable module concatenation in development - it's slow and not needed
 		concatenateModules: !isDev,
 		// Only minimize in production builds
-		minimize: !isCircleCI && !isDev,
+		minimize: !isCircleEnv && !isDev,
 		// Only use Terser in production builds
 		minimizer: isDev ? [] : [
 			new TerserPlugin({
