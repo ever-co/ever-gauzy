@@ -30,14 +30,14 @@
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
-		"@nestjs/common": "^11.1.10",
-		"@nestjs/core": "^11.1.10",
+		"@nestjs/common": "^11.1.12",
+		"@nestjs/core": "^11.1.12",
 		"chalk": "^4.1.0"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"typescript": "^5.8.3"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"jira",

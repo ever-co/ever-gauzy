@@ -4,10 +4,14 @@ import { DEFAULT_SVG } from '@gauzy/ui-core/common';
 @Component({
     template: `
 		<div class="img-container">
-			<img *ngIf="imageUrl" [src]="imageUrl" alt="feature img" />
-			<ga-no-image class="no-image" *ngIf="!imageUrl"></ga-no-image>
+		  @if (imageUrl) {
+		    <img [src]="imageUrl" alt="feature img" />
+		  }
+		  @if (!imageUrl) {
+		    <ga-no-image class="no-image"></ga-no-image>
+		  }
 		</div>
-	`,
+		`,
     styles: [
         `
 			.img-container {

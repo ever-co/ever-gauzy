@@ -1,221 +1,222 @@
 <nb-layout center>
-	<nb-layout-column class="top-bottom-space">
-		<nb-card>
-			<nb-card-body class="main-card-body">
-				<nb-stepper orientation="horizontal">
-					<nb-step class="position-relative" [label]="labelOne">
-						<gauzy-language-selector
-							#selector
-							[setup]="true"
-							class="lang-selector"
-						></gauzy-language-selector>
-						<ng-template #labelOne>{{
-							'TIMER_TRACKER.SETUP.WELCOME'
-								| translate
-								| uppercase
-						}}</ng-template>
-						<div class="row content-body">
-							<div class="col-12 text-center margin-content">
-								<img [src]="gauzyIcon" class="margin-icon" />
-							</div>
-							<div class="col-12 text-center margin-content">
-								<div class="row">
-									<div class="col-9 text-justify col-center">
-										<h4>{{ welcomeTitle | translate }}</h4>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-9 text-justify col-center">
-										<p>
-											{{ welcomeLabel | translate }}
-										</p>
-									</div>
-								</div>
-							</div>
-							<div class="col-12 text-center margin-content">
-								<button
-									class="button-home"
-									status="primary"
-									nbButton
-									nbStepperNext
-								>
-									{{ 'BUTTONS.LET_S_GO' | translate }}
-								</button>
-							</div>
-						</div>
-					</nb-step>
-					<nb-step
-						[label]="labelTwo"
-						*ngIf="
-							!isDesktopTimer &&
-							!isServer &&
-							!isAgent
-						"
-					>
-						<ng-template #labelTwo>{{
-							'TIMER_TRACKER.SETUP.FUNCTIONALITIES'
-								| translate
-								| uppercase
-						}}</ng-template>
-						<div class="row content-body">
-							<div class="col-12 text-center margin-content">
-								<h4>
-									{{
-										'TIMER_TRACKER.SETUP.WHAT_WOULD_LIKE_USE'
-											| translate
-									}}
-								</h4>
-								<p>
-									{{
-										'TIMER_TRACKER.SETUP.SELECT_MULTIPLE_OPTIONS'
-											| translate
-									}}
-								</p>
-							</div>
-							<div
-								class="col-10 text-center margin-content col-center"
-							>
-								<div class="row pb-1">
-									<div class="col-6">
-										<nb-card class="card-item">
-											<nb-card-body>
-												<div class="row">
-													<div
-														class="col-9 card-item-content"
-													>
-														<nb-checkbox
-															status="primary"
+  <nb-layout-column class="top-bottom-space">
+    <nb-card>
+      <nb-card-body class="main-card-body">
+        <nb-stepper orientation="horizontal">
+          <nb-step class="position-relative" [label]="labelOne">
+            <gauzy-language-selector
+              #selector
+              [setup]="true"
+              class="lang-selector"
+            ></gauzy-language-selector>
+            <ng-template #labelOne>{{
+              'TIMER_TRACKER.SETUP.WELCOME'
+              | translate
+              | uppercase
+            }}</ng-template>
+            <div class="row content-body">
+              <div class="col-12 text-center margin-content">
+                <img [src]="gauzyIcon" class="margin-icon" />
+              </div>
+              <div class="col-12 text-center margin-content">
+                <div class="row">
+                  <div class="col-9 text-justify col-center">
+                    <h4>{{ welcomeTitle | translate }}</h4>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-9 text-justify col-center">
+                    <p>
+                      {{ welcomeLabel | translate }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 text-center margin-content">
+                <button
+                  class="button-home"
+                  status="primary"
+                  nbButton
+                  nbStepperNext
+                  >
+                  {{ 'BUTTONS.LET_S_GO' | translate }}
+                </button>
+              </div>
+            </div>
+          </nb-step>
+          @if (
+            !isDesktopTimer &&
+            !isServer &&
+            !isAgent
+            ) {
+            <nb-step
+              [label]="labelTwo"
+              >
+              <ng-template #labelTwo>{{
+                'TIMER_TRACKER.SETUP.FUNCTIONALITIES'
+                | translate
+                | uppercase
+              }}</ng-template>
+              <div class="row content-body">
+                <div class="col-12 text-center margin-content">
+                  <h4>
+                    {{
+                    'TIMER_TRACKER.SETUP.WHAT_WOULD_LIKE_USE'
+                    | translate
+                    }}
+                  </h4>
+                  <p>
+                    {{
+                    'TIMER_TRACKER.SETUP.SELECT_MULTIPLE_OPTIONS'
+                    | translate
+                    }}
+                  </p>
+                </div>
+                <div
+                  class="col-10 text-center margin-content col-center"
+                  >
+                  <div class="row pb-1">
+                    <div class="col-6">
+                      <nb-card class="card-item">
+                        <nb-card-body>
+                          <div class="row">
+                            <div
+                              class="col-9 card-item-content"
+                              >
+                              <nb-checkbox
+                                status="primary"
 															[(ngModel)]="
 																desktopFeatures.timeTracking
 															"
-														>
-															<span
-																class="card-item-label"
-																>{{
-																	'TIMER_TRACKER.SETUP.TIME_ACTIVITY_FEATURES'
-																		| translate
-																}}</span
-															>
-														</nb-checkbox>
-													</div>
-													<div
-														class="col-3 card-item-icon"
-													>
-														<nb-icon
-															class="icon-item"
-															icon="clock"
-														>
-														</nb-icon>
-													</div>
-												</div>
-											</nb-card-body>
-										</nb-card>
-									</div>
-									<div class="col-6">
-										<nb-card class="card-item">
-											<nb-card-body>
-												<div class="row">
-													<div
-														class="col-9 card-item-content"
-													>
-														<nb-checkbox
-															status="primary"
+                                >
+                                <span
+                                  class="card-item-label"
+                                  >{{
+                                  'TIMER_TRACKER.SETUP.TIME_ACTIVITY_FEATURES'
+                                  | translate
+                                  }}</span
+                                  >
+                                </nb-checkbox>
+                              </div>
+                              <div
+                                class="col-3 card-item-icon"
+                                >
+                                <nb-icon
+                                  class="icon-item"
+                                  icon="clock"
+                                  >
+                                </nb-icon>
+                              </div>
+                            </div>
+                          </nb-card-body>
+                        </nb-card>
+                      </div>
+                      <div class="col-6">
+                        <nb-card class="card-item">
+                          <nb-card-body>
+                            <div class="row">
+                              <div
+                                class="col-9 card-item-content"
+                                >
+                                <nb-checkbox
+                                  status="primary"
 															[(ngModel)]="
 																desktopFeatures.gauzyPlatform
 															"
-															><span
-																class="card-item-label"
-																>{{
-																	'TIMER_TRACKER.SETUP.GP_FEATURES'
-																		| translate
-																}}</span
-															></nb-checkbox
-														>
-													</div>
-													<div
-														class="col-3 card-item-icon"
-													>
-														<nb-icon
-															class="icon-item"
-															icon="layers"
-														>
-														</nb-icon>
-													</div>
-												</div>
-											</nb-card-body>
-										</nb-card>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="row button-next-prev">
-							<div class="col-2">
-								<button
-									nbButton
-									nbStepperPrevious
-									class="button-home"
-									status="basic"
-								>
-									<nb-icon
-										icon="arrow-back-outline"
-										class="icon-medium"
-									></nb-icon
-									>{{ 'BUTTONS.BACK' | translate }}
-								</button>
-							</div>
-							<div class="col-3">
-								<button
-									nbButton
-									nbStepperNext
-									class="btn-next"
-									status="primary"
+                                  ><span
+                                  class="card-item-label"
+                                  >{{
+                                  'TIMER_TRACKER.SETUP.GP_FEATURES'
+                                  | translate
+                                  }}</span
+                                  ></nb-checkbox
+                                  >
+                                </div>
+                                <div
+                                  class="col-3 card-item-icon"
+                                  >
+                                  <nb-icon
+                                    class="icon-item"
+                                    icon="layers"
+                                    >
+                                  </nb-icon>
+                                </div>
+                              </div>
+                            </nb-card-body>
+                          </nb-card>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row button-next-prev">
+                    <div class="col-2">
+                      <button
+                        nbButton
+                        nbStepperPrevious
+                        class="button-home"
+                        status="basic"
+                        >
+                        <nb-icon
+                          icon="arrow-back-outline"
+                          class="icon-medium"
+                          ></nb-icon
+                          >{{ 'BUTTONS.BACK' | translate }}
+                        </button>
+                      </div>
+                      <div class="col-3">
+                        <button
+                          nbButton
+                          nbStepperNext
+                          class="btn-next"
+                          status="primary"
 									[disabled]="
 										!desktopFeatures.gauzyPlatform &&
 										!desktopFeatures.timeTracking
 									"
-								>
-									{{ 'BUTTONS.CONTINUE' | translate
-									}}<nb-icon
-										icon="arrow-forward-outline"
-										class="icon-medium"
-									></nb-icon>
-								</button>
-							</div>
-						</div>
-					</nb-step>
-					<nb-step
-						label="CONNECTIVITY"
-						*ngIf="!isServer"
-					>
-						<div class="row content-body">
-							<div class="col-12 text-center margin-content">
-								<h4>
-									{{
-										'TIMER_TRACKER.SETUP.HOW_GONNA_USE_GP'
-											| translate
-									}}
-								</h4>
-								<p>
-									{{
-										'TIMER_TRACKER.SETUP.SELECT_ONE_OPTION'
-											| translate
-									}}
-								</p>
-							</div>
-							<div
-								class="col-12 text-center margin-content col-center"
-							>
-								<div class="row">
-									<!-- <nb-radio-group> -->
-									<div
-										class="col-4 pb-1 col-center"
-										*ngIf="!isDesktopTimer && !isAgent"
-									>
-										<nb-card class="card-small-item">
-											<nb-card-body>
-												<div class="row">
-													<div class="col-12">
-														<nb-radio
+                          >
+                          {{ 'BUTTONS.CONTINUE' | translate
+                          }}<nb-icon
+                          icon="arrow-forward-outline"
+                          class="icon-medium"
+                        ></nb-icon>
+                      </button>
+                    </div>
+                  </div>
+                </nb-step>
+              }
+              @if (!isServer) {
+                <nb-step
+                  label="CONNECTIVITY"
+                  >
+                  <div class="row content-body">
+                    <div class="col-12 text-center margin-content">
+                      <h4>
+                        {{
+                        'TIMER_TRACKER.SETUP.HOW_GONNA_USE_GP'
+                        | translate
+                        }}
+                      </h4>
+                      <p>
+                        {{
+                        'TIMER_TRACKER.SETUP.SELECT_ONE_OPTION'
+                        | translate
+                        }}
+                      </p>
+                    </div>
+                    <div
+                      class="col-12 text-center margin-content col-center"
+                      >
+                      <div class="row">
+                        <!-- <nb-radio-group> -->
+                        @if (!isDesktopTimer && !isAgent) {
+                          <div
+                            class="col-4 pb-1 col-center"
+                            >
+                            <nb-card class="card-small-item">
+                              <nb-card-body>
+                                <div class="row">
+                                  <div class="col-12">
+                                    <nb-radio
 															[checked]="
 																connectivity.integrated
 															"
@@ -228,38 +229,39 @@
 															[value]="
 																connectivity.integrated
 															"
-															><span
-																class="card-item-label"
-																>{{
-																	'TIMER_TRACKER.SETUP.INTEGRATED'
-																		| translate
-																}}</span
-															></nb-radio
-														>
-													</div>
-													<div class="col-12">
-														<span>{{
-															'TIMER_TRACKER.SETUP.INSTALL_GP_LOCAL'
-																| translate
-														}}</span>
-													</div>
-													<div
-														class="col-12 icon-connectivity"
-													>
-														<img
-															src="./assets/icons/monitor.svg"
-														/>
-													</div>
-												</div>
-											</nb-card-body>
-										</nb-card>
-									</div>
-									<div class="col-4 pb-1 col-center">
-										<nb-card class="card-small-item">
-											<nb-card-body>
-												<div class="row">
-													<div class="col-12">
-														<nb-radio
+                                      ><span
+                                      class="card-item-label"
+                                      >{{
+                                      'TIMER_TRACKER.SETUP.INTEGRATED'
+                                      | translate
+                                      }}</span
+                                      ></nb-radio
+                                      >
+                                    </div>
+                                    <div class="col-12">
+                                      <span>{{
+                                        'TIMER_TRACKER.SETUP.INSTALL_GP_LOCAL'
+                                        | translate
+                                      }}</span>
+                                    </div>
+                                    <div
+                                      class="col-12 icon-connectivity"
+                                      >
+                                      <img
+                                        src="./assets/icons/monitor.svg"
+                                        />
+                                      </div>
+                                    </div>
+                                  </nb-card-body>
+                                </nb-card>
+                              </div>
+                            }
+                            <div class="col-4 pb-1 col-center">
+                              <nb-card class="card-small-item">
+                                <nb-card-body>
+                                  <div class="row">
+                                    <div class="col-12">
+                                      <nb-radio
 															[checked]="
 																connectivity.custom
 															"
@@ -272,38 +274,38 @@
 															[value]="
 																connectivity.custom
 															"
-															><span
-																class="card-item-label"
-																>{{
-																	'TIMER_TRACKER.SETUP.CUSTOM_NETWORK'
-																		| translate
-																}}</span
-															></nb-radio
-														>
-													</div>
-													<div class="col-12">
-														<span>{{
-															'TIMER_TRACKER.SETUP.SEPARATE_SERVER'
-																| translate
-														}}</span>
-													</div>
-													<div
-														class="col-12 icon-connectivity"
-													>
-														<img
-															src="./assets/icons/icon local - network.svg"
-														/>
-													</div>
-												</div>
-											</nb-card-body>
-										</nb-card>
-									</div>
-									<div class="col-4 pb-1 col-center">
-										<nb-card class="card-small-item">
-											<nb-card-body>
-												<div class="row">
-													<div class="col-12">
-														<nb-radio
+                                        ><span
+                                        class="card-item-label"
+                                        >{{
+                                        'TIMER_TRACKER.SETUP.CUSTOM_NETWORK'
+                                        | translate
+                                        }}</span
+                                        ></nb-radio
+                                        >
+                                      </div>
+                                      <div class="col-12">
+                                        <span>{{
+                                          'TIMER_TRACKER.SETUP.SEPARATE_SERVER'
+                                          | translate
+                                        }}</span>
+                                      </div>
+                                      <div
+                                        class="col-12 icon-connectivity"
+                                        >
+                                        <img
+                                          src="./assets/icons/icon local - network.svg"
+                                          />
+                                        </div>
+                                      </div>
+                                    </nb-card-body>
+                                  </nb-card>
+                                </div>
+                                <div class="col-4 pb-1 col-center">
+                                  <nb-card class="card-small-item">
+                                    <nb-card-body>
+                                      <div class="row">
+                                        <div class="col-12">
+                                          <nb-radio
 															[checked]="
 																connectivity.live
 															"
@@ -316,57 +318,57 @@
 															[value]="
 																connectivity.live
 															"
-															><span
-																class="card-item-label"
-																>{{
-																	'TIMER_TRACKER.SETUP.LIVE'
-																		| translate
-																}}</span
-															></nb-radio
-														>
-													</div>
-													<div class="col-12">
-														<span>{{
-															'TIMER_TRACKER.SETUP.CONNECTED_LIVE_SERVER'
-																| translate
-														}}</span>
-													</div>
-													<div
-														class="col-12 icon-connectivity"
-													>
-														<img
-															src="./assets/icons/ic_payment_24px.svg"
-														/>
-													</div>
-												</div>
-											</nb-card-body>
-										</nb-card>
-									</div>
-									<!-- </nb-radio-group> -->
-								</div>
-							</div>
-						</div>
-						<div class="row button-next-prev">
-							<div class="col-2">
-								<button
-									nbButton
-									nbStepperPrevious
-									class="button-home"
-									status="basic"
-								>
-									<nb-icon
-										icon="arrow-back-outline"
-										class="icon-medium"
-									></nb-icon
-									>{{ 'BUTTONS.BACK' | translate }}
-								</button>
-							</div>
-							<div class="col-3">
-								<button
-									nbButton
-									nbStepperNext
-									class="btn-next"
-									status="primary"
+                                            ><span
+                                            class="card-item-label"
+                                            >{{
+                                            'TIMER_TRACKER.SETUP.LIVE'
+                                            | translate
+                                            }}</span
+                                            ></nb-radio
+                                            >
+                                          </div>
+                                          <div class="col-12">
+                                            <span>{{
+                                              'TIMER_TRACKER.SETUP.CONNECTED_LIVE_SERVER'
+                                              | translate
+                                            }}</span>
+                                          </div>
+                                          <div
+                                            class="col-12 icon-connectivity"
+                                            >
+                                            <img
+                                              src="./assets/icons/ic_payment_24px.svg"
+                                              />
+                                            </div>
+                                          </div>
+                                        </nb-card-body>
+                                      </nb-card>
+                                    </div>
+                                  <!-- </nb-radio-group> -->
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row button-next-prev">
+                              <div class="col-2">
+                                <button
+                                  nbButton
+                                  nbStepperPrevious
+                                  class="button-home"
+                                  status="basic"
+                                  >
+                                  <nb-icon
+                                    icon="arrow-back-outline"
+                                    class="icon-medium"
+                                    ></nb-icon
+                                    >{{ 'BUTTONS.BACK' | translate }}
+                                  </button>
+                                </div>
+                                <div class="col-3">
+                                  <button
+                                    nbButton
+                                    nbStepperNext
+                                    class="btn-next"
+                                    status="primary"
 									(click)="
 										desktopFeatures.timeTracking
 											? pingAw()
@@ -374,280 +376,283 @@
 											? saveChange()
 											: validation()
 									"
-								>
-									{{
-										(connectivity.live &&
-										!desktopFeatures.timeTracking
-											? 'BUTTONS.BACK'
-											: 'BUTTONS.CONTINUE'
-										) | translate
-									}}<nb-icon
-										*gauzySpinnerButton="isSaving"
-										icon="arrow-forward-outline"
-										class="icon-medium"
-									></nb-icon>
-								</button>
-							</div>
-						</div>
-					</nb-step>
-					<nb-step
-						label="INTEGRATION"
-						*ngIf="desktopFeatures.timeTracking"
-					>
-						<div class="row content-body">
-							<div class="col-12 text-center margin-content">
-								<h4>
-									{{
-										'TIMER_TRACKER.SETUP.GONNA_USE_3RD_PARTY'
-											| translate
-									}}
-								</h4>
-								<p>
-									{{
-										'TIMER_TRACKER.SETUP.SELECT_MULTIPLE_OPTIONS_3RD_PARTY'
-											| translate
-									}}
-								</p>
-							</div>
-							<div
-								class="col-10 text-center margin-content col-center"
-							>
-								<div class="row">
-									<div class="col-6">
-										<nb-card class="card-small-item">
-											<nb-card-body>
-												<div class="row">
-													<div class="col-12">
-														<div class="row">
-															<div class="col-10">
-																<nb-checkbox
+                                    >
+                                    {{
+                                    (connectivity.live &&
+                                    !desktopFeatures.timeTracking
+                                    ? 'BUTTONS.BACK'
+                                    : 'BUTTONS.CONTINUE'
+                                    ) | translate
+                                    }}<nb-icon
+                                    *gauzySpinnerButton="isSaving"
+                                    icon="arrow-forward-outline"
+                                    class="icon-medium"
+                                  ></nb-icon>
+                                </button>
+                              </div>
+                            </div>
+                          </nb-step>
+                        }
+                        @if (desktopFeatures.timeTracking) {
+                          <nb-step
+                            label="INTEGRATION"
+                            >
+                            <div class="row content-body">
+                              <div class="col-12 text-center margin-content">
+                                <h4>
+                                  {{
+                                  'TIMER_TRACKER.SETUP.GONNA_USE_3RD_PARTY'
+                                  | translate
+                                  }}
+                                </h4>
+                                <p>
+                                  {{
+                                  'TIMER_TRACKER.SETUP.SELECT_MULTIPLE_OPTIONS_3RD_PARTY'
+                                  | translate
+                                  }}
+                                </p>
+                              </div>
+                              <div
+                                class="col-10 text-center margin-content col-center"
+                                >
+                                <div class="row">
+                                  <div class="col-6">
+                                    <nb-card class="card-small-item">
+                                      <nb-card-body>
+                                        <div class="row">
+                                          <div class="col-12">
+                                            <div class="row">
+                                              <div class="col-10">
+                                                <nb-checkbox
 																	[(ngModel)]="
 																		thirdParty.activitywatch
 																	"
-																	><span
-																		class="card-item-label"
-																		>ActivityWatch</span
-																	></nb-checkbox
-																>
-															</div>
-															<div class="col-2">
-																<img
+                                                  ><span
+                                                  class="card-item-label"
+                                                  >ActivityWatch</span
+                                                  ></nb-checkbox
+                                                  >
+                                                </div>
+                                                <div class="col-2">
+                                                  <img
 																	[src]="
 																		iconAw
 																	"
-																/>
-															</div>
-														</div>
-													</div>
-													<div class="col-12">
-														<span
-															>Track more activity
-															metrics and bad
-															screen habits. See
-															more at
-															<a
-																href="#"
+                                                    />
+                                                  </div>
+                                                </div>
+                                              </div>
+                                              <div class="col-12">
+                                                <span
+                                                  >Track more activity
+                                                  metrics and bad
+                                                  screen habits. See
+                                                  more at
+                                                  <a
+                                                    href="#"
 																(click)="
 																	openLink(
 																		'https://activitywatch.net'
 																	)
 																"
-																>activitywatch.net</a
-															>
-															and
-															<a
-																href="#"
+                                                    >activitywatch.net</a
+                                                    >
+                                                    and
+                                                    <a
+                                                      href="#"
 																(click)="
 																	openLink(
 																		'https://github.com/ActivityWatch/activitywatch'
 																	)
 																"
-																>ActivityWatch
-																Github</a
-															></span
-														>
-													</div>
-												</div>
-											</nb-card-body>
-										</nb-card>
-									</div>
-									<div class="col-6">
-										<nb-card class="card-small-item">
-											<nb-card-body>
-												<div class="row">
-													<div class="col-12">
-														<div class="row">
-															<div class="col-10">
-																<nb-checkbox
+                                                      >ActivityWatch
+                                                      Github</a
+                                                      ></span
+                                                      >
+                                                    </div>
+                                                  </div>
+                                                </nb-card-body>
+                                              </nb-card>
+                                            </div>
+                                            <div class="col-6">
+                                              <nb-card class="card-small-item">
+                                                <nb-card-body>
+                                                  <div class="row">
+                                                    <div class="col-12">
+                                                      <div class="row">
+                                                        <div class="col-10">
+                                                          <nb-checkbox
 																	[(ngModel)]="
 																		thirdParty.wakatime
 																	"
-																	><span
-																		class="card-item-label"
-																		>Wakatime</span
-																	></nb-checkbox
-																>
-															</div>
-															<div class="col-2">
-																<img
-																	src="./assets/icons/toggle-right.svg"
-																/>
-															</div>
-														</div>
-													</div>
-													<div class="col-12">
-														<span
-															>Open-source plugins
-															for metrics about
-															your programming.
-															See more at
-															<a
-																href="#"
+                                                            ><span
+                                                            class="card-item-label"
+                                                            >Wakatime</span
+                                                            ></nb-checkbox
+                                                            >
+                                                          </div>
+                                                          <div class="col-2">
+                                                            <img
+                                                              src="./assets/icons/toggle-right.svg"
+                                                              />
+                                                            </div>
+                                                          </div>
+                                                        </div>
+                                                        <div class="col-12">
+                                                          <span
+                                                            >Open-source plugins
+                                                            for metrics about
+                                                            your programming.
+                                                            See more at
+                                                            <a
+                                                              href="#"
 																(click)="
 																	openLink(
 																		'https://wakatime.com'
 																	)
 																"
-																>wakatime.com</a
-															>
-															and
-															<a
-																href="#"
+                                                              >wakatime.com</a
+                                                              >
+                                                              and
+                                                              <a
+                                                                href="#"
 																(click)="
 																	openLink(
 																		'https://github.com/wakatime'
 																	)
 																"
-																>wakatime
-																Github</a
-															></span
-														>
-													</div>
-												</div>
-											</nb-card-body>
-										</nb-card>
-									</div>
-								</div>
-							</div>
-							<div
-								class="col-9 margin-setting-content col-center"
-							>
-								<span class="note">
-									{{
-										'TIMER_TRACKER.SETUP.LEGAL_NOTE'
-											| translate
-									}}
-								</span>
-							</div>
-						</div>
-						<div class="row button-next-prev">
-							<div class="col-2">
-								<button
-									nbButton
-									nbStepperPrevious
-									class="button-home"
-									status="basic"
-								>
-									<nb-icon
-										icon="arrow-back-outline"
-										class="icon-medium"
-									></nb-icon
-									>{{ 'BUTTONS.BACK' | translate }}
-								</button>
-							</div>
-							<div class="col-3">
-								<button
-									nbButton
-									nbStepperNext
-									class="btn-next"
-									status="primary"
+                                                                >wakatime
+                                                                Github</a
+                                                                ></span
+                                                                >
+                                                              </div>
+                                                            </div>
+                                                          </nb-card-body>
+                                                        </nb-card>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                  <div
+                                                    class="col-9 margin-setting-content col-center"
+                                                    >
+                                                    <span class="note">
+                                                      {{
+                                                      'TIMER_TRACKER.SETUP.LEGAL_NOTE'
+                                                      | translate
+                                                      }}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                                <div class="row button-next-prev">
+                                                  <div class="col-2">
+                                                    <button
+                                                      nbButton
+                                                      nbStepperPrevious
+                                                      class="button-home"
+                                                      status="basic"
+                                                      >
+                                                      <nb-icon
+                                                        icon="arrow-back-outline"
+                                                        class="icon-medium"
+                                                        ></nb-icon
+                                                        >{{ 'BUTTONS.BACK' | translate }}
+                                                      </button>
+                                                    </div>
+                                                    <div class="col-3">
+                                                      <button
+                                                        nbButton
+                                                        nbStepperNext
+                                                        class="btn-next"
+                                                        status="primary"
 									(click)="
 										connectivity.live
 											? saveChange()
 											: validation()
 									"
-								>
-									{{
-										(connectivity.live
-											? 'BUTTONS.SAVE'
-											: 'BUTTONS.CONTINUE'
-										) | translate
-									}}<nb-icon
-									    *gauzySpinnerButton="isSaving"
-										icon="arrow-forward-outline"
-										class="icon-medium"
-									></nb-icon>
-								</button>
-								<button
-									#dialogOpenBtn
-									(click)="open(true)"
-									style="display: none"
-									*ngIf="connectivity.live"
-								></button>
-							</div>
-						</div>
-					</nb-step>
-					<nb-step [label]="labelFour" *ngIf="!connectivity.live">
-						<ng-template #labelFour>{{
-							'TIMER_TRACKER.SETUP.SETTING'
-								| translate
-								| uppercase
-						}}</ng-template>
-						<div class="row content-body final-step">
-							<div class="col-12 text-center margin-content">
-								<h4>
-									{{
-										'TIMER_TRACKER.SETUP.READY_FOR_ADVANCED_SETTINGS'
-											| translate
-									}}
-								</h4>
-								<p>
-									{{
-										'TIMER_TRACKER.SETUP.FINAL_STEP_GP'
-											| translate
-									}}
-								</p>
-							</div>
-							<div
-								class="col-8 margin-setting-content col-center"
-								*ngIf="connectivity.integrated"
-							>
-								<div class="row">
-									<div
-										class="col-6 col-center margin-form"
-										*ngIf="!isServer"
-									>
-										<label class="integration-label">{{
-											'TIMER_TRACKER.SETUP.PORT'
-												| translate
-										}}</label>
-										<input
-											type="number"
-											nbInput
-											fullWidth
-											status="basic"
+                                                        >
+                                                        {{
+                                                        (connectivity.live
+                                                        ? 'BUTTONS.SAVE'
+                                                        : 'BUTTONS.CONTINUE'
+                                                        ) | translate
+                                                        }}<nb-icon
+                                                        *gauzySpinnerButton="isSaving"
+                                                        icon="arrow-forward-outline"
+                                                        class="icon-medium"
+                                                      ></nb-icon>
+                                                    </button>
+                                                    @if (connectivity.live) {
+                                                      <button
+                                                        #dialogOpenBtn
+                                                        (click)="open(true)"
+                                                        style="display: none"
+                                                      ></button>
+                                                    }
+                                                  </div>
+                                                </div>
+                                              </nb-step>
+                                            }
+                                            @if (!connectivity.live) {
+                                              <nb-step [label]="labelFour">
+                                                <ng-template #labelFour>{{
+                                                  'TIMER_TRACKER.SETUP.SETTING'
+                                                  | translate
+                                                  | uppercase
+                                                }}</ng-template>
+                                                <div class="row content-body final-step">
+                                                  <div class="col-12 text-center margin-content">
+                                                    <h4>
+                                                      {{
+                                                      'TIMER_TRACKER.SETUP.READY_FOR_ADVANCED_SETTINGS'
+                                                      | translate
+                                                      }}
+                                                    </h4>
+                                                    <p>
+                                                      {{
+                                                      'TIMER_TRACKER.SETUP.FINAL_STEP_GP'
+                                                      | translate
+                                                      }}
+                                                    </p>
+                                                  </div>
+                                                  @if (connectivity.integrated) {
+                                                    <div
+                                                      class="col-8 margin-setting-content col-center"
+                                                      >
+                                                      <div class="row">
+                                                        @if (!isServer) {
+                                                          <div
+                                                            class="col-6 col-center margin-form"
+                                                            >
+                                                            <label class="integration-label">{{
+                                                              'TIMER_TRACKER.SETUP.PORT'
+                                                              | translate
+                                                            }}</label>
+                                                            <input
+                                                              type="number"
+                                                              nbInput
+                                                              fullWidth
+                                                              status="basic"
 											[(ngModel)]="
 												serverConfig.integrated.port
 											"
-											(ngModelChange)="validation()"
-										/>
-									</div>
-									<ng-container
-										*ngIf="isServer"
-									>
-										<div class="col-4">
-											<label
-												class="integration-label"
-												>{{
-													'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME'
-														| translate
-												}}</label
-											>
-											<input
-												type="url"
-												nbInput
-												fullWidth
-												status="basic"
+                                                              (ngModelChange)="validation()"
+                                                              />
+                                                            </div>
+                                                          }
+                                                          @if (isServer) {
+                                                            <div class="col-4">
+                                                              <label
+                                                                class="integration-label"
+                                                                >{{
+                                                                'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME'
+                                                                | translate
+                                                                }}</label
+                                                                >
+                                                                <input
+                                                                  type="url"
+                                                                  nbInput
+                                                                  fullWidth
+                                                                  status="basic"
 												[(ngModel)]="
 													serverConfig.integrated
 														.host
@@ -655,21 +660,21 @@
 												(ngModelChange)="
 													validation()
 												"
-											/>
-										</div>
-										<div class="col-4">
-											<label
-												class="integration-label"
-												>{{
-													'TIMER_TRACKER.SETTINGS.API_SERVER_PORT'
-														| translate
-												}}</label
-											>
-											<input
-												type="number"
-												nbInput
-												fullWidth
-												status="basic"
+                                                                  />
+                                                                </div>
+                                                                <div class="col-4">
+                                                                  <label
+                                                                    class="integration-label"
+                                                                    >{{
+                                                                    'TIMER_TRACKER.SETTINGS.API_SERVER_PORT'
+                                                                    | translate
+                                                                    }}</label
+                                                                    >
+                                                                    <input
+                                                                      type="number"
+                                                                      nbInput
+                                                                      fullWidth
+                                                                      status="basic"
 												[(ngModel)]="
 													serverConfig.integrated
 														.port
@@ -677,24 +682,24 @@
 												(ngModelChange)="
 													validation()
 												"
-											/>
-										</div>
-										<div
-											class="col-4"
-											*ngIf="!isServerApi"
-										>
-											<label
-												class="integration-label"
-												>{{
-													'TIMER_TRACKER.SETTINGS.UI_SERVER_PORT'
-														| translate
-												}}</label
-											>
-											<input
-												type="number"
-												nbInput
-												fullWidth
-												status="basic"
+                                                                      />
+                                                                    </div>
+                                                                    @if (!isServerApi) {
+                                                                      <div
+                                                                        class="col-4"
+                                                                        >
+                                                                        <label
+                                                                          class="integration-label"
+                                                                          >{{
+                                                                          'TIMER_TRACKER.SETTINGS.UI_SERVER_PORT'
+                                                                          | translate
+                                                                          }}</label
+                                                                          >
+                                                                          <input
+                                                                            type="number"
+                                                                            nbInput
+                                                                            fullWidth
+                                                                            status="basic"
 												[(ngModel)]="
 													serverConfig.integrated
 														.portUi
@@ -702,23 +707,27 @@
 												(ngModelChange)="
 													validation()
 												"
-											/>
-										</div>
-									</ng-container>
-								</div>
-							</div>
-							<div *ngIf="isServer" class="col-8 col-center margin-setting-content">
-								<gauzy-ssl class="ssl" [config]="proxyOptions" (update)="onChangeProxyConfig($event)" ></gauzy-ssl>
-							</div>
-							<div
-								class="col-6 text-center margin-setting-content col-center"
-								*ngIf="connectivity.integrated"
-							>
-								<div class="row">
-									<div class="col-5">
-										<nb-card class="card-small-item">
-											<nb-card-body>
-												<nb-radio
+                                                                            />
+                                                                          </div>
+                                                                        }
+                                                                      }
+                                                                    </div>
+                                                                  </div>
+                                                                }
+                                                                @if (isServer) {
+                                                                  <div class="col-8 col-center margin-setting-content">
+                                                                    <gauzy-ssl class="ssl" [config]="proxyOptions" (update)="onChangeProxyConfig($event)" ></gauzy-ssl>
+                                                                  </div>
+                                                                }
+                                                                @if (connectivity.integrated) {
+                                                                  <div
+                                                                    class="col-6 text-center margin-setting-content col-center"
+                                                                    >
+                                                                    <div class="row">
+                                                                      <div class="col-5">
+                                                                        <nb-card class="card-small-item">
+                                                                          <nb-card-body>
+                                                                            <nb-radio
 													[checked]="
 														databaseDriver.sqlite
 													"
@@ -731,18 +740,18 @@
 													[value]="
 														databaseDriver.sqlite
 													"
-												>
-													<img
-														src="./assets/icons/1280px-SQLite370.svg.png"
-													/>
-												</nb-radio>
-											</nb-card-body>
-										</nb-card>
-									</div>
-									<div class="col-7">
-										<nb-card class="card-small-item">
-											<nb-card-body>
-												<nb-radio
+                                                                              >
+                                                                              <img
+                                                                                src="./assets/icons/1280px-SQLite370.svg.png"
+                                                                                />
+                                                                              </nb-radio>
+                                                                            </nb-card-body>
+                                                                          </nb-card>
+                                                                        </div>
+                                                                        <div class="col-7">
+                                                                          <nb-card class="card-small-item">
+                                                                            <nb-card-body>
+                                                                              <nb-radio
 													[checked]="
 														databaseDriver.postgre
 													"
@@ -755,36 +764,37 @@
 													[value]="
 														databaseDriver.postgre
 													"
-												>
-													<img
-														src="./assets/icons/2106620.png"
-													/>
-												</nb-radio>
-											</nb-card-body>
-										</nb-card>
-									</div>
-								</div>
-							</div>
-							<div class="col-8 col-center margin-setting-content">
-								<div class="row">
-									<div
-										class="col-6 margin-form"
-										*ngIf="connectivity.custom"
-									>
-										<div class="row">
-											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.API_HOST'
-															| translate
-													}}</label
-												>
-												<input
-													type="text"
-													nbInput
-													fullWidth
-													status="basic"
+                                                                                >
+                                                                                <img
+                                                                                  src="./assets/icons/2106620.png"
+                                                                                  />
+                                                                                </nb-radio>
+                                                                              </nb-card-body>
+                                                                            </nb-card>
+                                                                          </div>
+                                                                        </div>
+                                                                      </div>
+                                                                    }
+                                                                    <div class="col-8 col-center margin-setting-content">
+                                                                      <div class="row">
+                                                                        @if (connectivity.custom) {
+                                                                          <div
+                                                                            class="col-6 margin-form"
+                                                                            >
+                                                                            <div class="row">
+                                                                              <div class="col-12">
+                                                                                <label
+                                                                                  class="integration-label"
+                                                                                  >{{
+                                                                                  'TIMER_TRACKER.SETUP.API_HOST'
+                                                                                  | translate
+                                                                                  }}</label
+                                                                                  >
+                                                                                  <input
+                                                                                    type="text"
+                                                                                    nbInput
+                                                                                    fullWidth
+                                                                                    status="basic"
 													[(ngModel)]="
 														serverConfig.custom
 															.apiHost
@@ -792,59 +802,61 @@
 													(ngModelChange)="
 														validation()
 													"
-												/>
-											</div>
-										</div>
-									</div>
-									<div
-										class="col-6 col-center margin-form"
-										*ngIf="connectivity.custom"
-									>
-										<div class="row">
-											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.PORT'
-															| translate
-													}}</label
-												>
-												<input
-													type="number"
-													nbInput
-													fullWidth
-													status="basic"
+                                                                                    />
+                                                                                  </div>
+                                                                                </div>
+                                                                              </div>
+                                                                            }
+                                                                            @if (connectivity.custom) {
+                                                                              <div
+                                                                                class="col-6 col-center margin-form"
+                                                                                >
+                                                                                <div class="row">
+                                                                                  <div class="col-12">
+                                                                                    <label
+                                                                                      class="integration-label"
+                                                                                      >{{
+                                                                                      'TIMER_TRACKER.SETUP.PORT'
+                                                                                      | translate
+                                                                                      }}</label
+                                                                                      >
+                                                                                      <input
+                                                                                        type="number"
+                                                                                        nbInput
+                                                                                        fullWidth
+                                                                                        status="basic"
 													[(ngModel)]="
 														serverConfig.custom.port
 													"
 													(ngModelChange)="
 														validation()
 													"
-												/>
-											</div>
-										</div>
-									</div>
-									<div
-										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
-									>
-										<div class="row">
-											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.HOST'
-															| translate
-													}}</label
-												>
-												<input
-													type="text"
-													nbInput
-													fullWidth
-													status="basic"
+                                                                                        />
+                                                                                      </div>
+                                                                                    </div>
+                                                                                  </div>
+                                                                                }
+                                                                                @if (
+                                                                                  databaseDriver.postgre &&
+                                                                                  connectivity.integrated
+                                                                                  ) {
+                                                                                  <div
+                                                                                    class="col-6 col-center margin-form"
+                                                                                    >
+                                                                                    <div class="row">
+                                                                                      <div class="col-12">
+                                                                                        <label
+                                                                                          class="integration-label"
+                                                                                          >{{
+                                                                                          'TIMER_TRACKER.SETUP.HOST'
+                                                                                          | translate
+                                                                                          }}</label
+                                                                                          >
+                                                                                          <input
+                                                                                            type="text"
+                                                                                            nbInput
+                                                                                            fullWidth
+                                                                                            status="basic"
 													[(ngModel)]="
 														databaseConfig.postgre
 															.host
@@ -852,31 +864,32 @@
 													(ngModelChange)="
 														validation()
 													"
-												/>
-											</div>
-										</div>
-									</div>
-									<div
-										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
-									>
-										<div class="row">
-											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.DB_NAME'
-															| translate
-													}}</label
-												>
-												<input
-													type="text"
-													nbInput
-													fullWidth
-													status="basic"
+                                                                                            />
+                                                                                          </div>
+                                                                                        </div>
+                                                                                      </div>
+                                                                                    }
+                                                                                    @if (
+                                                                                      databaseDriver.postgre &&
+                                                                                      connectivity.integrated
+                                                                                      ) {
+                                                                                      <div
+                                                                                        class="col-6 col-center margin-form"
+                                                                                        >
+                                                                                        <div class="row">
+                                                                                          <div class="col-12">
+                                                                                            <label
+                                                                                              class="integration-label"
+                                                                                              >{{
+                                                                                              'TIMER_TRACKER.SETUP.DB_NAME'
+                                                                                              | translate
+                                                                                              }}</label
+                                                                                              >
+                                                                                              <input
+                                                                                                type="text"
+                                                                                                nbInput
+                                                                                                fullWidth
+                                                                                                status="basic"
 													[(ngModel)]="
 														databaseConfig.postgre
 															.dbName
@@ -884,31 +897,32 @@
 													(ngModelChange)="
 														validation()
 													"
-												/>
-											</div>
-										</div>
-									</div>
-									<div
-										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
-									>
-										<div class="row">
-											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.DB_PORT'
-															| translate
-													}}</label
-												>
-												<input
-													type="number"
-													nbInput
-													fullWidth
-													status="basic"
+                                                                                                />
+                                                                                              </div>
+                                                                                            </div>
+                                                                                          </div>
+                                                                                        }
+                                                                                        @if (
+                                                                                          databaseDriver.postgre &&
+                                                                                          connectivity.integrated
+                                                                                          ) {
+                                                                                          <div
+                                                                                            class="col-6 col-center margin-form"
+                                                                                            >
+                                                                                            <div class="row">
+                                                                                              <div class="col-12">
+                                                                                                <label
+                                                                                                  class="integration-label"
+                                                                                                  >{{
+                                                                                                  'TIMER_TRACKER.SETUP.DB_PORT'
+                                                                                                  | translate
+                                                                                                  }}</label
+                                                                                                  >
+                                                                                                  <input
+                                                                                                    type="number"
+                                                                                                    nbInput
+                                                                                                    fullWidth
+                                                                                                    status="basic"
 													[(ngModel)]="
 														databaseConfig.postgre
 															.dbPort
@@ -916,31 +930,32 @@
 													(ngModelChange)="
 														validation()
 													"
-												/>
-											</div>
-										</div>
-									</div>
-									<div
-										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
-									>
-										<div class="row">
-											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.USER'
-															| translate
-													}}</label
-												>
-												<input
-													type="text"
-													nbInput
-													fullWidth
-													status="basic"
+                                                                                                    />
+                                                                                                  </div>
+                                                                                                </div>
+                                                                                              </div>
+                                                                                            }
+                                                                                            @if (
+                                                                                              databaseDriver.postgre &&
+                                                                                              connectivity.integrated
+                                                                                              ) {
+                                                                                              <div
+                                                                                                class="col-6 col-center margin-form"
+                                                                                                >
+                                                                                                <div class="row">
+                                                                                                  <div class="col-12">
+                                                                                                    <label
+                                                                                                      class="integration-label"
+                                                                                                      >{{
+                                                                                                      'TIMER_TRACKER.SETUP.USER'
+                                                                                                      | translate
+                                                                                                      }}</label
+                                                                                                      >
+                                                                                                      <input
+                                                                                                        type="text"
+                                                                                                        nbInput
+                                                                                                        fullWidth
+                                                                                                        status="basic"
 													[(ngModel)]="
 														databaseConfig.postgre
 															.dbUser
@@ -948,46 +963,48 @@
 													(ngModelChange)="
 														validation()
 													"
-												/>
-											</div>
-										</div>
-									</div>
-									<div
-										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
-									>
-										<!-- <div class="row">
-								<div class="col-3">
-									<span class="integration-label">PASSWORD</span>
-								</div>
-								<div class="col-9">
-									<input type="text" nbInput fullWidth status="basic" placeholder="Default">
-								</div>
-							</div> -->
-									</div>
-									<div
-										class="col-6 col-center margin-form"
-										*ngIf="
-											databaseDriver.postgre &&
-											connectivity.integrated
-										"
-									>
-										<div class="row">
-											<div class="col-12">
-												<label
-													class="integration-label"
-													>{{
-														'TIMER_TRACKER.SETUP.PASSWORD'
-															| translate
-													}}</label
-												>
-												<nb-form-field>
-													<input
-														[type]="getInputType()"
-														nbInput
+                                                                                                        />
+                                                                                                      </div>
+                                                                                                    </div>
+                                                                                                  </div>
+                                                                                                }
+                                                                                                @if (
+                                                                                                  databaseDriver.postgre &&
+                                                                                                  connectivity.integrated
+                                                                                                  ) {
+                                                                                                  <div
+                                                                                                    class="col-6 col-center margin-form"
+                                                                                                    >
+                                                                                                    <!-- <div class="row">
+                                                                                                    <div class="col-3">
+                                                                                                      <span class="integration-label">PASSWORD</span>
+                                                                                                    </div>
+                                                                                                    <div class="col-9">
+                                                                                                      <input type="text" nbInput fullWidth status="basic" placeholder="Default">
+                                                                                                    </div>
+                                                                                                  </div> -->
+                                                                                                </div>
+                                                                                              }
+                                                                                              @if (
+                                                                                                databaseDriver.postgre &&
+                                                                                                connectivity.integrated
+                                                                                                ) {
+                                                                                                <div
+                                                                                                  class="col-6 col-center margin-form"
+                                                                                                  >
+                                                                                                  <div class="row">
+                                                                                                    <div class="col-12">
+                                                                                                      <label
+                                                                                                        class="integration-label"
+                                                                                                        >{{
+                                                                                                        'TIMER_TRACKER.SETUP.PASSWORD'
+                                                                                                        | translate
+                                                                                                        }}</label
+                                                                                                        >
+                                                                                                        <nb-form-field>
+                                                                                                          <input
+                                                                                                            [type]="getInputType()"
+                                                                                                            nbInput
 														[(ngModel)]="
 															databaseConfig
 																.postgre
@@ -996,131 +1013,139 @@
 														(ngModelChange)="
 															validation()
 														"
-														fullWidth
-													/>
-													<button
-														nbSuffix
-														nbButton
-														ghost
+                                                                                                            fullWidth
+                                                                                                            />
+                                                                                                            <button
+                                                                                                              nbSuffix
+                                                                                                              nbButton
+                                                                                                              ghost
 														(click)="
 															toggleShowPassword()
 														"
-													>
-														<nb-icon
+                                                                                                              >
+                                                                                                              <nb-icon
 															[icon]="
 																showPassword
 																	? 'eye-outline'
 																	: 'eye-off-2-outline'
 															"
-															pack="eva"
+                                                                                                                pack="eva"
 															[attr.aria-label]="
 																showPassword
 																	? 'hide password'
 																	: 'show password'
 															"
-														>
-														</nb-icon>
-													</button>
-												</nb-form-field>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="row button-next-prev" *ngIf="!onProgress">
-							<div class="col-2">
-								<button
-									nbButton
-									nbStepperPrevious
-									class="button-home"
-									status="basic"
-								>
-									<nb-icon
-										icon="arrow-back-outline"
-										class="icon-medium"
-									></nb-icon
-									>{{ 'BUTTONS.BACK' | translate }}
-								</button>
-							</div>
-							<div class="col-5">
-								<div class="row">
-									<div class="col-6">
-										<button
-											nbButton
-											nbStepperNext
-											class="btn-check"
-											status="success"
-											[disabled]="!buttonSave"
-											(click)="checkConnection(false)"
-										>
-											{{ 'BUTTONS.CHECK' | translate
-											}}<nb-icon
-												icon="checkmark-circle-outline"
-												class="icon-medium"
+                                                                                                                >
+                                                                                                              </nb-icon>
+                                                                                                            </button>
+                                                                                                          </nb-form-field>
+                                                                                                        </div>
+                                                                                                      </div>
+                                                                                                    </div>
+                                                                                                  }
+                                                                                                </div>
+                                                                                              </div>
+                                                                                            </div>
+                                                                                            @if (!onProgress) {
+                                                                                              <div class="row button-next-prev">
+                                                                                                <div class="col-2">
+                                                                                                  <button
+                                                                                                    nbButton
+                                                                                                    nbStepperPrevious
+                                                                                                    class="button-home"
+                                                                                                    status="basic"
+                                                                                                    >
+                                                                                                    <nb-icon
+                                                                                                      icon="arrow-back-outline"
+                                                                                                      class="icon-medium"
+                                                                                                      ></nb-icon
+                                                                                                      >{{ 'BUTTONS.BACK' | translate }}
+                                                                                                    </button>
+                                                                                                  </div>
+                                                                                                  <div class="col-5">
+                                                                                                    <div class="row">
+                                                                                                      <div class="col-6">
+                                                                                                        <button
+                                                                                                          nbButton
+                                                                                                          nbStepperNext
+                                                                                                          class="btn-check"
+                                                                                                          status="success"
+                                                                                                          [disabled]="!buttonSave"
+                                                                                                          (click)="checkConnection(false)"
+                                                                                                          >
+                                                                                                          {{ 'BUTTONS.CHECK' | translate
+                                                                                                          }}<nb-icon
+                                                                                                          icon="checkmark-circle-outline"
+                                                                                                          class="icon-medium"
 												*gauzySpinnerButton="
 													isCheckConnection
 												"
-											></nb-icon>
-										</button>
-										<button
-											#dialogOpenBtn
-											(click)="open(true)"
-											style="display: none"
-										></button>
-									</div>
-									<div class="col-6">
-										<button
-											nbButton
-											nbStepperNext
-											class="btn-next"
-											status="primary"
-											[disabled]="!buttonSave"
-											(click)="saveChange()"
-										>
-											{{ 'BUTTONS.SAVE' | translate
-											}}<nb-icon
-												icon="save"
-												class="icon-medium"
-												*gauzySpinnerButton="isSaving"
-											></nb-icon>
-										</button>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="progress-setup" *ngIf="onProgress" [ngClass]="{init: onProgress}">
-							<div class="progress-anim">
-								<div class="progress-header">
-									<div class="progress-icon">
-										<nb-icon
-												icon="settings-2-outline"
-												class="gear-small icon-spin"
-										></nb-icon>
-										<nb-icon
-												icon="settings-2-outline"
-												class="gear-medium icon-spin"
-										></nb-icon>
-									</div>
-									<nb-progress-bar
-											[value]="progressSetup"
-											status="primary"
-									>{{ progressSetup }}%
-									</nb-progress-bar
-									>
-								</div>
-								<div class="progress-message-container">
-									<div #logBox class="progress-message">
-										<p class="content-text" *ngFor="let content of logContents">
-											{{content}}
-										</p>
-									</div>
-								</div>
-							</div>
-						</div>
-					</nb-step>
-				</nb-stepper>
-			</nb-card-body>
-		</nb-card>
-	</nb-layout-column>
-</nb-layout>
+                                                                                                        ></nb-icon>
+                                                                                                      </button>
+                                                                                                      <button
+                                                                                                        #dialogOpenBtn
+                                                                                                        (click)="open(true)"
+                                                                                                        style="display: none"
+                                                                                                      ></button>
+                                                                                                    </div>
+                                                                                                    <div class="col-6">
+                                                                                                      <button
+                                                                                                        nbButton
+                                                                                                        nbStepperNext
+                                                                                                        class="btn-next"
+                                                                                                        status="primary"
+                                                                                                        [disabled]="!buttonSave"
+                                                                                                        (click)="saveChange()"
+                                                                                                        >
+                                                                                                        {{ 'BUTTONS.SAVE' | translate
+                                                                                                        }}<nb-icon
+                                                                                                        icon="save"
+                                                                                                        class="icon-medium"
+                                                                                                        *gauzySpinnerButton="isSaving"
+                                                                                                      ></nb-icon>
+                                                                                                    </button>
+                                                                                                  </div>
+                                                                                                </div>
+                                                                                              </div>
+                                                                                            </div>
+                                                                                          }
+                                                                                          @if (onProgress) {
+                                                                                            <div class="progress-setup" [ngClass]="{init: onProgress}">
+                                                                                              <div class="progress-anim">
+                                                                                                <div class="progress-header">
+                                                                                                  <div class="progress-icon">
+                                                                                                    <nb-icon
+                                                                                                      icon="settings-2-outline"
+                                                                                                      class="gear-small icon-spin"
+                                                                                                    ></nb-icon>
+                                                                                                    <nb-icon
+                                                                                                      icon="settings-2-outline"
+                                                                                                      class="gear-medium icon-spin"
+                                                                                                    ></nb-icon>
+                                                                                                  </div>
+                                                                                                  <nb-progress-bar
+                                                                                                    [value]="progressSetup"
+                                                                                                    status="primary"
+                                                                                                    >{{ progressSetup }}%
+                                                                                                    </nb-progress-bar
+                                                                                                    >
+                                                                                                  </div>
+                                                                                                  <div class="progress-message-container">
+                                                                                                    <div #logBox class="progress-message">
+                                                                                                      @for (content of logContents; track content) {
+                                                                                                        <p class="content-text">
+                                                                                                          {{content}}
+                                                                                                        </p>
+                                                                                                      }
+                                                                                                    </div>
+                                                                                                  </div>
+                                                                                                </div>
+                                                                                              </div>
+                                                                                            }
+                                                                                          </nb-step>
+                                                                                        }
+                                                                                      </nb-stepper>
+                                                                                    </nb-card-body>
+                                                                                  </nb-card>
+                                                                                </nb-layout-column>
+                                                                              </nb-layout>

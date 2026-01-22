@@ -1,97 +1,93 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="card-custom-header">
-		<div class="card-header-title">
-			<h4>
-				<ngx-back-navigation></ngx-back-navigation>
-				<ngx-header-title [allowEmployee]="" false>
-					{{ 'EQUIPMENT_SHARING_POLICY_PAGE.HEADER' | translate }}
-				</ngx-header-title>
-			</h4>
-		</div>
-		<div class="gauzy-button-container">
-			<ngx-gauzy-button-action
-				[isDisable]="disableButton"
-				[buttonTemplate]="actionButtons"
-				[componentName]="viewComponentName"
-				[buttonTemplateVisible]="visibleButton"
-			></ngx-gauzy-button-action>
-		</div>
-	</nb-card-header>
-	<nb-card-body>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
-			<div class="table-scroll-container">
-				<angular2-smart-table
-					style="cursor: pointer"
-					[settings]="settingsSmartTable"
-					[source]="smartTableSource"
-					(userRowSelect)="selectEquipmentSharingPolicy($event)"
-				></angular2-smart-table>
-			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination
-						[source]="smartTableSource"
-					></ngx-pagination>
-				</ng-container>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				[settings]="settingsSmartTable"
-				[source]="equipmentSharingPolicyData"
-				(onSelectedItem)="selectEquipmentSharingPolicy($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
-		</ng-template>
-	</nb-card-body>
+  <nb-card-header class="card-custom-header">
+    <div class="card-header-title">
+      <h4>
+        <ngx-back-navigation></ngx-back-navigation>
+        <ngx-header-title [allowEmployee]="" false>
+          {{ 'EQUIPMENT_SHARING_POLICY_PAGE.HEADER' | translate }}
+        </ngx-header-title>
+      </h4>
+    </div>
+    <div class="gauzy-button-container">
+      <ngx-gauzy-button-action
+        [isDisable]="disableButton"
+        [buttonTemplate]="actionButtons"
+        [componentName]="viewComponentName"
+        [buttonTemplateVisible]="visibleButton"
+      ></ngx-gauzy-button-action>
+    </div>
+  </nb-card-header>
+  <nb-card-body>
+    @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+      <div class="table-scroll-container">
+        <angular2-smart-table
+          style="cursor: pointer"
+          [settings]="settingsSmartTable"
+          [source]="smartTableSource"
+          (userRowSelect)="selectEquipmentSharingPolicy($event)"
+        ></angular2-smart-table>
+      </div>
+      <div class="pagination-container">
+        @if (smartTableSource) {
+          <ngx-pagination
+            [source]="smartTableSource"
+          ></ngx-pagination>
+        }
+      </div>
+    } @else {
+      <ga-card-grid
+        [totalItems]="pagination?.totalItems"
+        [settings]="settingsSmartTable"
+        [source]="equipmentSharingPolicyData"
+        (onSelectedItem)="selectEquipmentSharingPolicy($event)"
+        (scroll)="onScroll()"
+      ></ga-card-grid>
+    }
+  </nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
-	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">
-		<button
-			(click)="save()"
-			nbButton
-			status="success"
-			class="action"
-			size="small"
-		>
-			<nb-icon icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
-	</ng-container>
-</ng-template>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
-	<ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">
-		<div class="btn-group actions">
-			<button
-				(click)="save(selectedItem)"
-				nbButton
-				status="basic"
-				class="action primary"
-				[disabled]="!selectedItem && disableButton"
-				size="small"
-			>
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="delete(selectedItem)"
-				nbButton
-				status="basic"
-				class="action"
-				[disabled]="!selectedItem && disableButton"
-				size="small"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>
-		</div>
-	</ng-container>
-</ng-template>
+  <ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">
+    <button
+      (click)="save()"
+      nbButton
+      status="success"
+      class="action"
+      size="small"
+      >
+      <nb-icon icon="plus-outline"></nb-icon
+        >{{ 'BUTTONS.ADD' | translate }}
+      </button>
+    </ng-container>
+  </ng-template>
+  <ng-template
+    #actionButtons
+    let-buttonSize="buttonSize"
+    let-selectedItem="selectedItem"
+    >
+    <ng-container *ngxPermissionsOnly="ALL_ORG_EDIT">
+      <div class="btn-group actions">
+        <button
+          (click)="save(selectedItem)"
+          nbButton
+          status="basic"
+          class="action primary"
+          [disabled]="!selectedItem && disableButton"
+          size="small"
+          >
+          <nb-icon icon="edit-outline"></nb-icon>
+          {{ 'BUTTONS.EDIT' | translate }}
+        </button>
+        <button
+          (click)="delete(selectedItem)"
+          nbButton
+          status="basic"
+          class="action"
+          [disabled]="!selectedItem && disableButton"
+          size="small"
+          [nbTooltip]="'BUTTONS.DELETE' | translate"
+          >
+          <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+        </button>
+      </div>
+    </ng-container>
+  </ng-template>

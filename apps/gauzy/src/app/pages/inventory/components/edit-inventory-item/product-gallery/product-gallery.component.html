@@ -2,112 +2,120 @@
 	'image-container-notSelected': !gallery?.length,
 	'image-container-selected': gallery?.length
 }">
-	<img
-		*ngIf="displayImageUrl"
-		class="featured-image"
-		[src]="displayImageUrl"
-		alt="Feature image"
-	/>
-	<ga-no-image [fontSize]="14" *ngIf="!displayImageUrl"> </ga-no-image>
+  @if (displayImageUrl) {
+    <img
+      class="featured-image"
+      [src]="displayImageUrl"
+      alt="Feature image"
+      />
+  }
+  @if (!displayImageUrl) {
+    <ga-no-image [fontSize]="14"> </ga-no-image>
+  }
 </div>
 
 <div class="actions-container mt-2">
-	<ng-container *ngxPermissionsOnly="['INVENTORY_GALLERY_EDIT', 'INVENTORY_GALLERY_VIEW']">
-		<div class="gallery-plus">
-			<button
-				nbButton
-				size="small"
-				status="success"
-				(click)="onAddImageClick()"
-				[nbTooltip]="'INVENTORY_PAGE.ADD_GALLERY_IMAGE' | translate"
-				nbTooltipPlacement="top"
-				nbTooltipStatus="success"
-				outline
-			>
-				<i class="fas fa-plus"></i>
-			</button>
-		</div>
-		<div class="gallery-actions">
-			<button
-				nbButton
-				status="primary"
-				[disabled]="!gallery?.length || !selectedImage"
-				(click)="onSetFeaturedClick()"
-				[nbTooltip]="'INVENTORY_PAGE.SET_FEATURED_IMAGE' | translate"
-				nbTooltipPlacement="top"
-				nbTooltipStatus="primary"
-				outline
-				size="small"
-			>
-				<nb-icon icon="image-outline"></nb-icon>
-			</button>
-			<ng-container *ngxPermissionsOnly="'INVENTORY_GALLERY_VIEW'">
-				<button
-					nbButton
-					size="small"
-					[nbTooltip]="'INVENTORY_PAGE.VIEW_GALLERY' | translate"
-					nbTooltipPlacement="top"
-					nbTooltipStatus="basic"
-					status="basic"
-					outline
-					[disabled]="!gallery?.length"
-					(click)="onViewGalleryClick()"
-				>
-					<nb-icon icon="eye-outline"></nb-icon>
-					{{ 'BUTTONS.VIEW' | translate }}
-				</button>
-			</ng-container>
-			<button
-				nbButton
-				nbTooltipPlacement="top"
-				nbTooltipStatus="primary"
-				[disabled]="!selectedImage"
-				status="primary"
-				outline
-				(click)="onEditImageClick()"
-				size="small"
-			>
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				[nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
-				nbTooltipPlacement="top"
-				nbTooltipStatus="danger"
-				status="danger"
-				outline
-				[disabled]="!gallery?.length || !selectedImage"
-				(click)="onDeleteImageClick()"
-				size="small"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>
-		</div>
-	</ng-container>
+  <ng-container *ngxPermissionsOnly="['INVENTORY_GALLERY_EDIT', 'INVENTORY_GALLERY_VIEW']">
+    <div class="gallery-plus">
+      <button
+        nbButton
+        size="small"
+        status="success"
+        (click)="onAddImageClick()"
+        [nbTooltip]="'INVENTORY_PAGE.ADD_GALLERY_IMAGE' | translate"
+        nbTooltipPlacement="top"
+        nbTooltipStatus="success"
+        outline
+        >
+        <i class="fas fa-plus"></i>
+      </button>
+    </div>
+    <div class="gallery-actions">
+      <button
+        nbButton
+        status="primary"
+        [disabled]="!gallery?.length || !selectedImage"
+        (click)="onSetFeaturedClick()"
+        [nbTooltip]="'INVENTORY_PAGE.SET_FEATURED_IMAGE' | translate"
+        nbTooltipPlacement="top"
+        nbTooltipStatus="primary"
+        outline
+        size="small"
+        >
+        <nb-icon icon="image-outline"></nb-icon>
+      </button>
+      <ng-container *ngxPermissionsOnly="'INVENTORY_GALLERY_VIEW'">
+        <button
+          nbButton
+          size="small"
+          [nbTooltip]="'INVENTORY_PAGE.VIEW_GALLERY' | translate"
+          nbTooltipPlacement="top"
+          nbTooltipStatus="basic"
+          status="basic"
+          outline
+          [disabled]="!gallery?.length"
+          (click)="onViewGalleryClick()"
+          >
+          <nb-icon icon="eye-outline"></nb-icon>
+          {{ 'BUTTONS.VIEW' | translate }}
+        </button>
+      </ng-container>
+      <button
+        nbButton
+        nbTooltipPlacement="top"
+        nbTooltipStatus="primary"
+        [disabled]="!selectedImage"
+        status="primary"
+        outline
+        (click)="onEditImageClick()"
+        size="small"
+        >
+        <nb-icon icon="edit-outline"></nb-icon>
+        {{ 'BUTTONS.EDIT' | translate }}
+      </button>
+      <button
+        nbButton
+        [nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
+        nbTooltipPlacement="top"
+        nbTooltipStatus="danger"
+        status="danger"
+        outline
+        [disabled]="!gallery?.length || !selectedImage"
+        (click)="onDeleteImageClick()"
+        size="small"
+        >
+        <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+      </button>
+    </div>
+  </ng-container>
 </div>
 
 <div class="gallery-preview-items mt-3">
-	<div *ngIf="gallery?.length" class="row">
-		<div
-			class="col-sm-3 col-md-4 gallery-sm-preview"
-			*ngFor="let galleryItem of gallery"
-			(click)="onSmallImgPreviewClick(galleryItem)"
-		>
-			<img
-				class="gallery-sm-preview-item"
-				[src]="galleryItem?.fullUrl"
-				[ngClass]="{ selected: isSelected(galleryItem) }"
-			/>
-			<div class="featured-icon" *ngIf="isFeaturedImage(galleryItem)">
-				<div class="interview-info">
-					<nb-icon
-						icon="checkmark-circle-2-outline"
-						status="success"
-						class="icons"
-					></nb-icon>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
+  @if (gallery?.length) {
+    <div class="row">
+      @for (galleryItem of gallery; track galleryItem) {
+        <div
+          class="col-sm-3 col-md-4 gallery-sm-preview"
+          (click)="onSmallImgPreviewClick(galleryItem)"
+          >
+          <img
+            class="gallery-sm-preview-item"
+            [src]="galleryItem?.fullUrl"
+            [ngClass]="{ selected: isSelected(galleryItem) }"
+            />
+            @if (isFeaturedImage(galleryItem)) {
+              <div class="featured-icon">
+                <div class="interview-info">
+                  <nb-icon
+                    icon="checkmark-circle-2-outline"
+                    status="success"
+                    class="icons"
+                  ></nb-icon>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>

@@ -1,273 +1,169 @@
 @let installing = query.installing$() | async;
 
 <nb-card>
-	<nb-card-header>
-		<div class="header-content">
-			<div class="header-text">
-				<h4>{{ 'TIMER_TRACKER.SETTINGS.PLUGIN' | translate }}</h4>
-				<span class="subtitle">{{ 'TIMER_TRACKER.SETTINGS.PLUGIN_SUBTITLE' | translate }}</span>
-			</div>
-			<button
-				nbButton
-				ghost
-				size="small"
-				(click)="close()"
-				class="close-button"
-				[attr.aria-label]="'BUTTONS.CLOSE' | translate"
-			>
-				<nb-icon icon="close-outline"></nb-icon>
-			</button>
-		</div>
-	</nb-card-header>
-
-	<nb-card-body>
-		@if (isLocalContext()) {
-		<div class="plugin-options">
-			<p class="description">
-				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_INSTALLATION_DESCRIPTION' | translate }}
-			</p>
-
-			<div class="installation-grid">
-				<nb-card
-					class="installation-option"
-					[class.disabled]="installing"
-					(click)="!installing && localPluginInstall()"
-					(keydown.enter)="!installing && localPluginInstall()"
-					(keydown.space)="!installing && localPluginInstall()"
-					[tabindex]="installing ? -1 : 0"
-					[attr.aria-label]="'BUTTONS.LOAD_PLUGIN' | translate"
-					role="button"
-				>
-					<nb-card-body>
-						<div class="option-icon-container local">
-							<nb-icon
-								*gauzySpinnerButton="installing"
-								icon="monitor-outline"
-								class="option-icon"
-							></nb-icon>
-						</div>
-						<h6 class="option-title">{{ 'BUTTONS.LOAD_PLUGIN' | translate }}</h6>
-						<p class="option-description">
-							{{ 'TIMER_TRACKER.SETTINGS.INSTALL_FROM_COMPUTER' | translate }}
-						</p>
-					</nb-card-body>
-				</nb-card>
-
-				<nb-card
-					class="installation-option"
-					[class.disabled]="installing"
-					(click)="!installing && switchContext('cdn')"
-					(keydown.enter)="!installing && switchContext('cdn')"
-					(keydown.space)="!installing && switchContext('cdn')"
-					[tabindex]="installing ? -1 : 0"
-					[attr.aria-label]="'BUTTONS.FROM_CDN' | translate"
-					role="button"
-				>
-					<nb-card-body>
-						<div class="option-icon-container cdn">
-							<nb-icon icon="globe-outline" class="option-icon"></nb-icon>
-						</div>
-						<h6 class="option-title">{{ 'BUTTONS.FROM_CDN' | translate }}</h6>
-						<p class="option-description">
-							{{ 'TIMER_TRACKER.SETTINGS.INSTALL_FROM_CDN' | translate }}
-						</p>
-					</nb-card-body>
-				</nb-card>
-
-				<nb-card
-					class="installation-option"
-					[class.disabled]="installing"
-					(click)="!installing && switchContext('npm')"
-					(keydown.enter)="!installing && switchContext('npm')"
-					(keydown.space)="!installing && switchContext('npm')"
-					[tabindex]="installing ? -1 : 0"
-					[attr.aria-label]="'BUTTONS.FROM_NPM' | translate"
-					role="button"
-				>
-					<nb-card-body>
-						<div class="option-icon-container npm">
-							<nb-icon icon="cube-outline" class="option-icon"></nb-icon>
-						</div>
-						<h6 class="option-title">{{ 'BUTTONS.FROM_NPM' | translate }}</h6>
-						<p class="option-description">
-							{{ 'TIMER_TRACKER.SETTINGS.INSTALL_FROM_NPM' | translate }}
-						</p>
-					</nb-card-body>
-				</nb-card>
-			</div>
-		</div>
-		} @else if (isCdnContext()) {
-		<form class="plugin-form" (ngSubmit)="installPlugin(cdnUrl())">
-			<div class="form-header">
-				<button
-					nbButton
-					ghost
-					size="small"
-					(click)="reset()"
-					class="back-button"
-					type="button"
-					[attr.aria-label]="'BUTTONS.BACK' | translate"
-				>
-					<nb-icon icon="arrow-back-outline"></nb-icon>
-				</button>
-				<span class="form-title">{{ 'BUTTONS.ADD_PLUGIN' | translate }}</span>
-			</div>
-
-			<div class="description">
-				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_CDN_DESCRIPTION' | translate }}
-			</div>
-
-			<input
-				nbInput
-				fullWidth
-				[value]="cdnUrl()"
-				(input)="cdnUrl.set($any($event.target).value)"
-				type="url"
-				[status]="error() ? 'danger' : 'basic'"
-				placeholder="https://cdn.server.tld/public/plugin.zip"
-				[attr.aria-label]="'TIMER_TRACKER.SETTINGS.CDN_URL' | translate"
-				autocomplete="url"
-				required
-			/>
-
-			@if (error()) {
-			<nb-alert status="danger" class="error-alert">
-				{{ error() | translate }}
-			</nb-alert>
-			}
-
-			<button
-				nbButton
-				fullWidth
-				[disabled]="!cdnUrl() || installing"
-				status="primary"
-				type="submit"
-				class="submit-button"
-			>
-				<span>{{ 'BUTTONS.INSTALL' | translate }}</span>
-				<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
-			</button>
-		</form>
-		} @else if (isNpmContext()) {
-		<form class="plugin-form" (ngSubmit)="installPluginFromNPM()">
-			<div class="form-header">
-				<button
-					nbButton
-					ghost
-					size="small"
-					(click)="reset()"
-					class="back-button"
-					type="button"
-					[attr.aria-label]="'BUTTONS.BACK' | translate"
-				>
-					<nb-icon icon="arrow-back-outline"></nb-icon>
-				</button>
-				<span class="form-title">{{ 'BUTTONS.ADD_PLUGIN' | translate }}</span>
-			</div>
-
-			<div class="description">
-				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_NPM_DESCRIPTION' | translate }}
-			</div>
-
-			<div class="form-group">
-				<label for="pkgName" class="form-label">
-					{{ 'TIMER_TRACKER.SETTINGS.PACKAGE_NAME' | translate }} <span class="required">*</span>
-				</label>
-				<input
-					nbInput
-					fullWidth
-					type="text"
-					id="pkgName"
-					[value]="npmModel().pkg.name || ''"
-					(input)="updateNpmPackageName($any($event.target).value)"
-					required
-					[status]="error() ? 'danger' : 'basic'"
-					[placeholder]="'TIMER_TRACKER.SETTINGS.PACKAGE_NAME' | translate"
-					autocomplete="off"
-					aria-required="true"
-				/>
-			</div>
-
-			<div class="form-group">
-				<label for="pkgVersion" class="form-label">
-					{{ 'TIMER_TRACKER.SETTINGS.PACKAGE_VERSION' | translate }}
-				</label>
-				<input
-					nbInput
-					fullWidth
-					type="text"
-					id="pkgVersion"
-					[value]="npmModel().pkg.version || ''"
-					(input)="updateNpmPackageVersion($any($event.target).value)"
-					[status]="error() ? 'danger' : 'basic'"
-					[placeholder]="'TIMER_TRACKER.SETTINGS.PACKAGE_VERSION' | translate"
-				/>
-			</div>
-
-			<div class="registry-toggle">
-				<nb-toggle [checked]="showRegistry()" (checkedChange)="toggleRegistry($event)" status="primary">
-					{{ 'TIMER_TRACKER.SETTINGS.REGISTRY' | translate }}
-				</nb-toggle>
-			</div>
-
-			@if (showRegistry()) {
-			<div class="registry-fields">
-				<div class="form-group">
-					<label for="authToken" class="form-label">
-						{{ 'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate }}
-					</label>
-					<input
-						nbInput
-						fullWidth
-						gaTextMask
-						[config]="{
-							text: npmModel().registry.authToken,
-							replacement: 0.75,
-							maskFromLeft: false
-						}"
-						(unmaskedValueChange)="handleUnmaskedValueChange($event)"
-						type="text"
-						id="authToken"
-						[status]="error() ? 'danger' : 'basic'"
-						[placeholder]="'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate"
-					/>
-				</div>
-
-				<div class="form-group">
-					<label for="privateURL" class="form-label">
-						{{ 'TIMER_TRACKER.SETTINGS.PRIVATE_REGISTRY_URL' | translate }}
-					</label>
-					<input
-						nbInput
-						fullWidth
-						type="url"
-						id="privateURL"
-						[value]="npmModel().registry.privateURL || ''"
-						(input)="updatePrivateUrl($any($event.target).value)"
-						pattern="https?://.+"
-						[status]="error() ? 'danger' : 'basic'"
-						[placeholder]="'TIMER_TRACKER.SETTINGS.PRIVATE_REGISTRY_URL' | translate"
-					/>
-				</div>
-			</div>
-			} @if (error()) {
-			<nb-alert status="danger" class="error-alert">
-				{{ error() | translate }}
-			</nb-alert>
-			}
-
-			<button
-				nbButton
-				fullWidth
-				[disabled]="!npmModel().pkg.name || installing"
-				status="primary"
-				type="submit"
-				class="submit-button"
-			>
-				<span>{{ 'BUTTONS.INSTALL' | translate }}</span>
-				<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
-			</button>
-		</form>
-		}
-	</nb-card-body>
-</nb-card>
+  <nb-card-header class="d-flex flex-column">
+    <span class="cancel"><i (click)="close()" class="fas fa-times"></i></span>
+    <h4>{{ 'TIMER_TRACKER.SETTINGS.PLUGIN' | translate }}</h4>
+  </nb-card-header>
+  <nb-card-body>
+    @if (isLocalContext()) {
+      <div class="full-width mb-3 description">
+        {{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_INSTALLATION_DESCRIPTION' | translate }}
+      </div>
+      <div class="load-button">
+        <button
+          nbButton
+          [disabled]="installing"
+          class="full-width button"
+          status="primary"
+          type="submit"
+          (click)="localPluginInstall()"
+          >
+          <nb-icon *gauzySpinnerButton="installing" icon="monitor-outline"></nb-icon
+            >{{ 'BUTTONS.LOAD_PLUGIN' | translate }}
+          </button>
+          <button
+            nbButton
+            [disabled]="installing"
+            class="full-width button"
+            status="info"
+            type="submit"
+            (click)="switchContext('cdn')"
+            >
+            <nb-icon icon="globe-outline"></nb-icon>{{ 'BUTTONS.FROM_CDN' | translate }}
+          </button>
+          <button
+            nbButton
+            [disabled]="installing"
+            class="full-width button"
+            status="danger"
+            type="submit"
+            (click)="switchContext('npm')"
+            >
+            <i class="fab fa-npm"></i>
+          </button>
+          <button
+            nbButton
+            [disabled]="installing"
+            class="full-width button"
+            status="warning"
+            type="submit"
+            (click)="redirectToStore()"
+            >
+            <nb-icon icon="grid-outline"></nb-icon>
+            {{ 'BUTTONS.MARKETPLACE' | translate }}
+          </button>
+        </div>
+      } @else {
+        @if (isCdnContext()) {
+          <form class="form" (ngSubmit)="installPlugin(input.value)">
+            <label
+              ><button (click)="reset()" class="return" status="primary" size="small" outline nbButton>
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+            </button>
+            {{ 'BUTTONS.ADD_PLUGIN' | translate }}</label
+            >
+            <div class="description">
+              {{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_CDN_DESCRIPTION' | translate }}
+            </div>
+            <input
+              nbInput
+              #input
+              type="url"
+              [status]="error ? 'danger' : 'basic'"
+              placeholder="https://cdn.server.tld/public/plugin.zip"
+              />
+              @if (error) {
+                <div class="error">
+                  {{ error | translate }}
+                </div>
+              }
+              <button
+                nbButton
+                [disabled]="!input.value || installing"
+                status="primary"
+                type="submit"
+                (click)="installPlugin(input.value)"
+                >
+                {{ 'BUTTONS.INSTALL' | translate
+                }}<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
+              </button>
+            </form>
+          } @else {
+            @if (isNpmContext()) {
+              <form class="form" (ngSubmit)="installPluginFromNPM()">
+                <label>
+                  <button (click)="reset()" class="return" status="primary" size="small" outline nbButton>
+                    <nb-icon icon="arrow-back-outline"></nb-icon>
+                  </button>
+                  {{ 'BUTTONS.ADD_PLUGIN' | translate }}
+                </label>
+                <div class="description">
+                  {{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_NPM_DESCRIPTION' | translate }}
+                </div>
+                <input
+                  nbInput
+                  type="text"
+                  id="pkgName"
+                  name="pkgName"
+                  [(ngModel)]="npmModel.pkg.name"
+                  required
+                  #pkgName="ngModel"
+                  [status]="error ? 'danger' : 'basic'"
+                  [placeholder]="'TIMER_TRACKER.SETTINGS.PACKAGE_NAME' | translate"
+                  />
+                  <input
+                    nbInput
+                    type="text"
+                    id="pkgVersion"
+                    name="pkgVersion"
+                    [(ngModel)]="npmModel.pkg.version"
+                    [status]="error ? 'danger' : 'basic'"
+                    [placeholder]="'TIMER_TRACKER.SETTINGS.PACKAGE_VERSION' | translate"
+                    />
+                    <nb-toggle [checked]="showRegistry" (checkedChange)="toggleRegistry($event)" status="basic">
+                      {{ 'TIMER_TRACKER.SETTINGS.REGISTRY' | translate }}
+                    </nb-toggle>
+                    @if (showRegistry) {
+                      <input
+                        nbInput
+                        gaTextMask
+					[config]="{
+						text: npmModel.registry.authToken,
+						replacement: 0.75,
+						maskFromLeft: false
+					}"
+                        (unmaskedValueChange)="handleUnmaskedValueChange($event)"
+                        type="text"
+                        id="authToken"
+                        name="authToken"
+                        [status]="error ? 'danger' : 'basic'"
+                        [placeholder]="'TIMER_TRACKER.SETTINGS.AUTH_TOKEN' | translate"
+                        />
+                        <input
+                          nbInput
+                          type="url"
+                          id="privateURL"
+                          name="privateURL"
+                          [(ngModel)]="npmModel.registry.privateURL"
+                          pattern="https?://.+"
+                          #privateURL="ngModel"
+                          [status]="error ? 'danger' : 'basic'"
+                          [placeholder]="'TIMER_TRACKER.SETTINGS.PRIVATE_REGISTRY_URL' | translate"
+                          />
+                        }
+                        @if (error) {
+                          <div class="error">
+                            {{ error | translate }}
+                          </div>
+                        }
+                        <button nbButton [disabled]="!pkgName.value || installing" status="primary" type="submit">
+                          {{ 'BUTTONS.INSTALL' | translate }}
+                          <nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
+                        </button>
+                      </form>
+                    }
+                  }
+                }
+              </nb-card-body>
+            </nb-card>

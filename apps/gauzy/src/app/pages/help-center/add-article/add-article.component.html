@@ -1,120 +1,132 @@
 <nb-card class="main">
-	<nb-card-header>
-		<div class="header">
-			<span class="cancel"
-				><i class="fas fa-times" (click)="closeDialog()"></i
-			></span>
-			<h5 class="title" *ngIf="editType === 'add'">
-				{{ 'HELP_PAGE.ADD_ARTICLE' | translate }}
-			</h5>
-			<h5 class="title" *ngIf="editType === 'edit'">
-				{{ 'HELP_PAGE.EDIT_ARTICLE' | translate }}
-			</h5>
-		</div>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="selector">
-			<nb-toggle
-				class="select"
-				status="primary"
-				labelPosition="start"
-				[(ngModel)]="selectedStatus"
-				(checkedChange)="toggleStatus($event)"
-			>
-				<p class="select-label ml-3">
-					{{ 'HELP_PAGE.PRIVATE_STATUS' | translate }}:
-				</p>
-			</nb-toggle>
-			<nb-toggle
-				class="select"
-				status="primary"
-				labelPosition="start"
-				[(ngModel)]="selectedPrivacy"
-				(checkedChange)="togglePrivacy($event)"
-			>
-				<p class="select-label ml-3">
-					{{ 'HELP_PAGE.ONLY_FOR_EMPLOYEES' | translate }}:
-				</p>
-			</nb-toggle>
-		</div>
-		<form [formGroup]="form" (ngSubmit)="submit()">
-			<div class="edit-field">
-				<div class="first-row">
-					<div class="second-row">
-						<p class="label">
-							{{ 'HELP_PAGE.NAME_ARTICLE' | translate }}:
-						</p>
-						<input
-							formControlName="name"
-							type="text"
-							size="24"
-							nbInput
-							class="mb-1"
-						/>
-						<div *ngIf="name.touched && name.hasError('required')" class="caption status-danger">
-							{{ 'HELP_PAGE.ERRORS.ARTICLE_NAME_REQUIRE' | translate }}
-						</div>
-						<div *ngIf="name.hasError('maxlength')" class="caption status-danger">
-							{{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
-						</div>
-					</div>
-					<div class="second-row">
-						<p class="label">
-							{{ 'HELP_PAGE.DESCRIPTION' | translate }}:
-						</p>
-						<input
-							formControlName="desc"
-							type="text"
-							size="30"
-							nbInput
-							class="mb-1"
-							/>
-						<div *ngIf="desc.touched && desc.hasError('required')" class="caption status-danger">
-							{{ 'HELP_PAGE.ERRORS.ARTICLE_DESC_REQUIRE' | translate }}
-						</div>
-						<div *ngIf="desc.hasError('maxlength')" class="caption status-danger">
-							{{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="multi-select">
-				<ga-employee-multi-select
-					[allEmployees]="employees"
-					(selectedChange)="onMembersSelected($event)"
-					[selectedEmployeeIds]="employeeIds"
-				>
-				</ga-employee-multi-select>
-			</div>
-			<div class="edit-node-field">
-				<p class="label">{{ 'HELP_PAGE.ARTICLE_TEXT' | translate }}:</p>
-				<div class="ck-editor">
-					<ckeditor
-						formControlName="data"
-						[config]="ckConfig"
-					></ckeditor>
-				</div>
-			</div>
-			<div class="save-button">
-				<button
-					status="basic"
-					outline
-					size="small"
-					(click)="closeDialog()"
-					nbButton
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
-				<button
-					status="success"
-					size="small"
-					class="mr-3 ml-3"
-					[disabled]="form.invalid"
-					nbButton
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
-			</div>
-		</form>
-	</nb-card-body>
-</nb-card>
+  <nb-card-header>
+    <div class="header">
+      <span class="cancel"
+        ><i class="fas fa-times" (click)="closeDialog()"></i
+      ></span>
+      @if (editType === 'add') {
+        <h5 class="title">
+          {{ 'HELP_PAGE.ADD_ARTICLE' | translate }}
+        </h5>
+      }
+      @if (editType === 'edit') {
+        <h5 class="title">
+          {{ 'HELP_PAGE.EDIT_ARTICLE' | translate }}
+        </h5>
+      }
+    </div>
+  </nb-card-header>
+  <nb-card-body>
+    <div class="selector">
+      <nb-toggle
+        class="select"
+        status="primary"
+        labelPosition="start"
+        [(ngModel)]="selectedStatus"
+        (checkedChange)="toggleStatus($event)"
+        >
+        <p class="select-label ml-3">
+          {{ 'HELP_PAGE.PRIVATE_STATUS' | translate }}:
+        </p>
+      </nb-toggle>
+      <nb-toggle
+        class="select"
+        status="primary"
+        labelPosition="start"
+        [(ngModel)]="selectedPrivacy"
+        (checkedChange)="togglePrivacy($event)"
+        >
+        <p class="select-label ml-3">
+          {{ 'HELP_PAGE.ONLY_FOR_EMPLOYEES' | translate }}:
+        </p>
+      </nb-toggle>
+    </div>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="edit-field">
+        <div class="first-row">
+          <div class="second-row">
+            <p class="label">
+              {{ 'HELP_PAGE.NAME_ARTICLE' | translate }}:
+            </p>
+            <input
+              formControlName="name"
+              type="text"
+              size="24"
+              nbInput
+              class="mb-1"
+              />
+              @if (name.touched && name.hasError('required')) {
+                <div class="caption status-danger">
+                  {{ 'HELP_PAGE.ERRORS.ARTICLE_NAME_REQUIRE' | translate }}
+                </div>
+              }
+              @if (name.hasError('maxlength')) {
+                <div class="caption status-danger">
+                  {{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
+                </div>
+              }
+            </div>
+            <div class="second-row">
+              <p class="label">
+                {{ 'HELP_PAGE.DESCRIPTION' | translate }}:
+              </p>
+              <input
+                formControlName="desc"
+                type="text"
+                size="30"
+                nbInput
+                class="mb-1"
+                />
+                @if (desc.touched && desc.hasError('required')) {
+                  <div class="caption status-danger">
+                    {{ 'HELP_PAGE.ERRORS.ARTICLE_DESC_REQUIRE' | translate }}
+                  </div>
+                }
+                @if (desc.hasError('maxlength')) {
+                  <div class="caption status-danger">
+                    {{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="multi-select">
+            <ga-employee-multi-select
+              [allEmployees]="employees"
+              (selectedChange)="onMembersSelected($event)"
+              [selectedEmployeeIds]="employeeIds"
+              >
+            </ga-employee-multi-select>
+          </div>
+          <div class="edit-node-field">
+            <p class="label">{{ 'HELP_PAGE.ARTICLE_TEXT' | translate }}:</p>
+            <div class="ck-editor">
+              <ckeditor
+                formControlName="data"
+                [config]="ckConfig"
+              ></ckeditor>
+            </div>
+          </div>
+          <div class="save-button">
+            <button
+              status="basic"
+              outline
+              size="small"
+              (click)="closeDialog()"
+              nbButton
+              >
+              {{ 'BUTTONS.CANCEL' | translate }}
+            </button>
+            <button
+              status="success"
+              size="small"
+              class="mr-3 ml-3"
+              [disabled]="form.invalid"
+              nbButton
+              >
+              {{ 'BUTTONS.SAVE' | translate }}
+            </button>
+          </div>
+        </form>
+      </nb-card-body>
+    </nb-card>

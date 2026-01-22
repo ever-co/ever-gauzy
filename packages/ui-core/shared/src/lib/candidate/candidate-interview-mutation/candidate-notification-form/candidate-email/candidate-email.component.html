@@ -1,32 +1,40 @@
 <nb-card class="email-wrap">
-	<nb-card-body class="info-block">
-		<div *ngIf="isCandidate">
-			<span>{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.TO' | translate
-			}}</span>
-			<span class="email">{{ selectedCandidate?.user.email }}</span>
-		</div>
-		<div *ngIf="!isCandidate">
-			<span>{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.TO' | translate
-			}}</span>
-			<span class="email" *ngFor="let employee of employees">{{
-				employee?.user.email
-			}}</span>
-		</div>
-	</nb-card-body>
-	<nb-card-body class="info-block">
-		{{ templateData?.title }}
-		{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON' | translate }}
-		{{ dateTemplate }}
-	</nb-card-body>
-	<nb-card-body class="editor">
-		<form [formGroup]="form" *ngIf="form">
-			<ckeditor
-				formControlName="text"
-				(change)="onChange($event)"
-				[config]="ckConfig"
-			></ckeditor>
-		</form>
-	</nb-card-body>
+  <nb-card-body class="info-block">
+    @if (isCandidate) {
+      <div>
+        <span>{{
+          'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.TO' | translate
+        }}</span>
+        <span class="email">{{ selectedCandidate?.user.email }}</span>
+      </div>
+    }
+    @if (!isCandidate) {
+      <div>
+        <span>{{
+          'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.TO' | translate
+        }}</span>
+        @for (employee of employees; track employee) {
+          <span class="email">{{
+            employee?.user.email
+          }}</span>
+        }
+      </div>
+    }
+  </nb-card-body>
+  <nb-card-body class="info-block">
+    {{ templateData?.title }}
+    {{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON' | translate }}
+    {{ dateTemplate }}
+  </nb-card-body>
+  <nb-card-body class="editor">
+    @if (form) {
+      <form [formGroup]="form">
+        <ckeditor
+          formControlName="text"
+          (change)="onChange($event)"
+          [config]="ckConfig"
+        ></ckeditor>
+      </form>
+    }
+  </nb-card-body>
 </nb-card>

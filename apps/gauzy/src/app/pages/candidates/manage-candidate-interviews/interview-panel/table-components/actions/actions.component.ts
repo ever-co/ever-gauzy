@@ -7,74 +7,83 @@ import { TranslateService } from '@ngx-translate/core';
     selector: 'ga-interview-actions',
     template: `
 		<div class="update">
-			<div class="badges">
-				<div class="badge badge-primary" *ngIf="isPastInterview(rowData)">
-					{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST' | translate }}
-				</div>
-				<div class="badge badge-warning" *ngIf="rowData.isArchived && rowData.showArchive">
-					{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
-				</div>
-			</div>
-			<span class="title"> updated: </span>
-			<span class="title">
-				{{ rowData?.updatedAt | date : 'short' }}
-			</span>
-			<div class="btn" *ngIf="!rowData.hideActions">
-				<nb-icon
-					*ngIf="isPastInterview(rowData)"
-					(click)="addFeedback()"
+		  <div class="badges">
+		    @if (isPastInterview(rowData)) {
+		      <div class="badge badge-primary">
+		        {{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST' | translate }}
+		      </div>
+		    }
+		    @if (rowData.isArchived && rowData.showArchive) {
+		      <div class="badge badge-warning">
+		        {{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
+		      </div>
+		    }
+		  </div>
+		  <span class="title"> updated: </span>
+		  <span class="title">
+		    {{ rowData?.updatedAt | date : 'short' }}
+		  </span>
+		  @if (!rowData.hideActions) {
+		    <div class="btn">
+		      @if (isPastInterview(rowData)) {
+		        <nb-icon
+		          (click)="addFeedback()"
 					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK' | translate }}
 					({{ rowData.feedbacks.length }}/{{ rowData.interviewers.length }})"
-					nbTooltipPlacement="top"
-					icon="message-square-outline"
-					class="icons enabled"
-				></nb-icon>
-				<nb-icon
-					*ngIf="!isPastInterview(rowData)"
-					(click)="addFeedback()"
-					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK' | translate }} "
-					nbTooltipPlacement="top"
-					icon="message-square-outline"
-					class="icons disabled"
-				></nb-icon>
-				<nb-icon
-					(click)="editInterview()"
-					icon="edit-outline"
-					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.EDIT' | translate }}"
-					nbTooltipPlacement="top"
-					class="icons ml-2"
+		          nbTooltipPlacement="top"
+		          icon="message-square-outline"
+		          class="icons enabled"
+		        ></nb-icon>
+		      }
+		      @if (!isPastInterview(rowData)) {
+		        <nb-icon
+		          (click)="addFeedback()"
+		          nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK' | translate }} "
+		          nbTooltipPlacement="top"
+		          icon="message-square-outline"
+		          class="icons disabled"
+		        ></nb-icon>
+		      }
+		      <nb-icon
+		        (click)="editInterview()"
+		        icon="edit-outline"
+		        nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.EDIT' | translate }}"
+		        nbTooltipPlacement="top"
+		        class="icons ml-2"
 					[ngClass]="{
 						enabled: !isPastInterview(rowData),
 						disabled: isPastInterview(rowData)
 					}"
-				>
-				</nb-icon>
-				<nb-icon
-					(click)="archive()"
-					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ARCHIVE' | translate }}"
-					*ngIf="rowData.showArchive"
-					nbTooltipPlacement="top"
-					icon="archive-outline"
-					class="icons ml-2"
+		        >
+		      </nb-icon>
+		      @if (rowData.showArchive) {
+		        <nb-icon
+		          (click)="archive()"
+		          nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ARCHIVE' | translate }}"
+		          nbTooltipPlacement="top"
+		          icon="archive-outline"
+		          class="icons ml-2"
 					[ngClass]="{
 						enabled: !rowData.isArchived,
 						disabled: rowData.isArchived
 					}"
-				></nb-icon>
-				<nb-icon
-					(click)="removeInterview()"
-					icon="close"
-					class="icons ml-2"
-					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DELETE' | translate }}"
-					nbTooltipPlacement="top"
+		        ></nb-icon>
+		      }
+		      <nb-icon
+		        (click)="removeInterview()"
+		        icon="close"
+		        class="icons ml-2"
+		        nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DELETE' | translate }}"
+		        nbTooltipPlacement="top"
 					[ngClass]="{
 						enabled: !isPastInterview(rowData),
 						disabled: isPastInterview(rowData)
 					}"
-				></nb-icon>
-			</div>
+		      ></nb-icon>
+		    </div>
+		  }
 		</div>
-	`,
+		`,
     styles: [
         `
 			.badge-warning {

@@ -10,16 +10,18 @@ import { Store, TasksStoreService } from '@gauzy/ui-core/core';
 @Component({
     template: `
 		<nb-select
-			fullWidth
-			[placeholder]="'INVOICES_PAGE.SELECT_TASK' | translate"
-			[(ngModel)]="task"
-			(selectedChange)="selectTask($event)"
-		>
-			<nb-option *ngFor="let task of tasks" [value]="task">
-				{{ task.title }}
-			</nb-option>
+		  fullWidth
+		  [placeholder]="'INVOICES_PAGE.SELECT_TASK' | translate"
+		  [(ngModel)]="task"
+		  (selectedChange)="selectTask($event)"
+		  >
+		  @for (task of tasks; track task) {
+		    <nb-option [value]="task">
+		      {{ task.title }}
+		    </nb-option>
+		  }
 		</nb-select>
-	`,
+		`,
     styles: [],
     standalone: false
 })

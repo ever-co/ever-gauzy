@@ -32,11 +32,11 @@
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
-		"@nestjs/common": "^11.1.10",
+		"@nestjs/common": "^11.1.12",
 		"@nestjs/config": "^4.0.2",
-		"@nestjs/core": "^11.1.10",
+		"@nestjs/core": "^11.1.12",
 		"@nestjs/cqrs": "^11.0.3",
-		"@nestjs/swagger": "^11.1.5",
+		"@nestjs/swagger": "^11.2.5",
 		"@nestjs/typeorm": "^11.0.0",
 		"axios": "^1.9.0",
 		"chalk": "^4.1.0",
@@ -44,13 +44,13 @@
 		"class-validator": "^0.14.2",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.27",
+		"typeorm": "^0.3.28",
 		"zapier-platform-core": "16.5.0"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"typescript": "^5.8.3",
+		"typescript": "^5.9.3",
 		"zapier-platform-cli": "16.5.0"
 	},
 	"keywords": [

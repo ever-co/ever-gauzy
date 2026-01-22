@@ -1,8 +1,14 @@
-<div *ngIf="!progress" class="counter">
-  <div class="counter" *ngFor="let point of points">
-    <div [style.background]="'var(--color-'+point.color+'-default)'" [class]="'point '+point.className "></div>
+@if (!progress) {
+  <div class="counter">
+    @for (point of points; track point) {
+      <div class="counter">
+        <div [style.background]="'var(--color-'+point.color+'-default)'" [class]="'point '+point.className "></div>
+      </div>
+    }
   </div>
-</div>
-<div *ngIf="progress">
-  <nb-progress-bar [value]="value" [status] = "progressStatus(value)"></nb-progress-bar>
-</div>
+}
+@if (progress) {
+  <div>
+    <nb-progress-bar [value]="value" [status] = "progressStatus(value)"></nb-progress-bar>
+  </div>
+}

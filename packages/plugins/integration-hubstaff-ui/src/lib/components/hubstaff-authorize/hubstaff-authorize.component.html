@@ -1,60 +1,60 @@
 <nb-card class="card-scroll">
-	<nb-card-header class="d-flex">
-		<ngx-back-navigation></ngx-back-navigation>
-		<h5>{{ 'INTEGRATIONS.HUBSTAFF_PAGE.TITLE' | translate }}</h5>
-	</nb-card-header>
-	<nb-card-body>
-		<form
-			class="col-xl-6 col-12"
-			[formGroup]="clientIdForm"
-			(ngSubmit)="authorizeHubstaff()"
-			*ngIf="!clientSecretForm.get('authorization_code').value; else clientSecretTemplate"
-		>
-			<div class="form-group">
-				<label for="client_id" class="label">
-					{{ 'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_ID' | translate }}
-				</label>
-				<input
-					fullWidth
-					id="client_id"
-					formControlName="client_id"
-					type="text"
-					nbInput
-					[placeholder]="'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_ID' | translate"
-				/>
-			</div>
-			<div class="hint">
-				<nb-icon icon="info-outline"></nb-icon>
-				{{ 'INTEGRATIONS.HUBSTAFF_PAGE.GRANT_PERMISSION' | translate }}
-			</div>
-			<button nbButton type="submit" status="primary" size="small" outline [disabled]="clientIdForm.invalid">
-				{{ 'BUTTONS.NEXT' | translate }}
-			</button>
-		</form>
+  <nb-card-header class="d-flex">
+    <ngx-back-navigation></ngx-back-navigation>
+    <h5>{{ 'INTEGRATIONS.HUBSTAFF_PAGE.TITLE' | translate }}</h5>
+  </nb-card-header>
+  <nb-card-body>
+    @if (!clientSecretForm.get('authorization_code').value) {
+      <form
+        class="col-xl-6 col-12"
+        [formGroup]="clientIdForm"
+        (ngSubmit)="authorizeHubstaff()"
+        >
+        <div class="form-group">
+          <label for="client_id" class="label">
+            {{ 'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_ID' | translate }}
+          </label>
+          <input
+            fullWidth
+            id="client_id"
+            formControlName="client_id"
+            type="text"
+            nbInput
+            [placeholder]="'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_ID' | translate"
+            />
+          </div>
+          <div class="hint">
+            <nb-icon icon="info-outline"></nb-icon>
+            {{ 'INTEGRATIONS.HUBSTAFF_PAGE.GRANT_PERMISSION' | translate }}
+          </div>
+          <button nbButton type="submit" status="primary" size="small" outline [disabled]="clientIdForm.invalid">
+            {{ 'BUTTONS.NEXT' | translate }}
+          </button>
+        </form>
+      } @else {
+        <form [formGroup]="clientSecretForm" (ngSubmit)="addIntegration()">
+          <div class="form-group">
+            <label for="client_secret" class="label">{{
+              'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_SECRET' | translate
+            }}</label>
+            <input
+              fullWidth
+              id="client_secret"
+              formControlName="client_secret"
+              type="text"
+              nbInput
+              [placeholder]="'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_SECRET' | translate"
+              />
+            </div>
+            <div class="hint">
+              <nb-icon icon="info-outline"></nb-icon>
+              {{ 'INTEGRATIONS.HUBSTAFF_PAGE.ENTER_CLIENT_SECRET' | translate }}
+            </div>
+            <button nbButton type="submit" status="primary" [disabled]="clientSecretForm.invalid">
+              {{ 'BUTTONS.NEXT' | translate }}
+            </button>
+          </form>
+        }
 
-		<ng-template #clientSecretTemplate>
-			<form [formGroup]="clientSecretForm" (ngSubmit)="addIntegration()">
-				<div class="form-group">
-					<label for="client_secret" class="label">{{
-						'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_SECRET' | translate
-					}}</label>
-					<input
-						fullWidth
-						id="client_secret"
-						formControlName="client_secret"
-						type="text"
-						nbInput
-						[placeholder]="'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_SECRET' | translate"
-					/>
-				</div>
-				<div class="hint">
-					<nb-icon icon="info-outline"></nb-icon>
-					{{ 'INTEGRATIONS.HUBSTAFF_PAGE.ENTER_CLIENT_SECRET' | translate }}
-				</div>
-				<button nbButton type="submit" status="primary" [disabled]="clientSecretForm.invalid">
-					{{ 'BUTTONS.NEXT' | translate }}
-				</button>
-			</form>
-		</ng-template>
-	</nb-card-body>
-</nb-card>
+      </nb-card-body>
+    </nb-card>

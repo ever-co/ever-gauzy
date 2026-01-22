@@ -1,11 +1,10 @@
-<ng-container *ngIf="rowData?.taskStatus; else defaultView">
-	<gauzy-task-badge-view [taskBadge]="rowData?.taskStatus"></gauzy-task-badge-view>
-</ng-container>
-<ng-template #defaultView>
-	<nb-badge
-		[status]="status"
-		[text]="value | replace : '_' : ' ' | titlecase"
-		class="badge"
-		position="centered"
-	></nb-badge>
-</ng-template>
+@if (rowData?.taskStatus) {
+  <gauzy-task-badge-view [taskBadge]="rowData?.taskStatus"></gauzy-task-badge-view>
+} @else {
+  <nb-badge
+    [status]="status"
+    [text]="value | replace : '_' : ' ' | titlecase"
+    class="badge"
+    position="centered"
+  ></nb-badge>
+}

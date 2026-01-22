@@ -1,35 +1,42 @@
-<nb-accordion *ngIf="isAccordion" class="accordion workspace">
-	<nb-accordion-item [collapsed]="controlled" (collapsedChange)="onCollapse($event)">
-		<nb-accordion-item-header class="principal" (click)="toggleWorkspace()">
-			<ng-container *ngTemplateOutlet="logoTemplate"></ng-container>
-			<div class="organization" *ngIf="!isCollapse">
-				<img [src]="organization?.imageUrl" [alt]="organization?.name" />
-				<div class="description text">
-					<div [nbTooltip]="organization?.name">
-						{{ organization?.name }}
-					</div>
-					<div [nbTooltip]="organization?.website">
-						{{ organization?.website }}
-					</div>
-				</div>
-			</div>
-		</nb-accordion-item-header>
-	</nb-accordion-item>
-</nb-accordion>
+@if (isAccordion) {
+  <nb-accordion class="accordion workspace">
+    <nb-accordion-item [collapsed]="controlled" (collapsedChange)="onCollapse($event)">
+      <nb-accordion-item-header class="principal" (click)="toggleWorkspace()">
+        <ng-container *ngTemplateOutlet="logoTemplate"></ng-container>
+        @if (!isCollapse) {
+          <div class="organization">
+            <img [src]="organization?.imageUrl" [alt]="organization?.name" />
+            <div class="description text">
+              <div [nbTooltip]="organization?.name">
+                {{ organization?.name }}
+              </div>
+              <div [nbTooltip]="organization?.website">
+                {{ organization?.website }}
+              </div>
+            </div>
+          </div>
+        }
+      </nb-accordion-item-header>
+    </nb-accordion-item>
+  </nb-accordion>
+}
 
-<div *ngIf="!isAccordion">
-	<ng-container *ngTemplateOutlet="logoTemplate"></ng-container>
-</div>
+@if (!isAccordion) {
+  <div>
+    <ng-container *ngTemplateOutlet="logoTemplate"></ng-container>
+  </div>
+}
 
 <ng-template #logoTemplate>
-	<div *ngIf="isCollapse" class="logo" [ngClass]="{ 'white-svg': isWhiteSvg() }" (click)="navigateHome()">
-		<ng-container *ngIf="isSVG; else image">
-			<object [data]="logoUrl" type="image/svg+xml">
-				<img src="assets/images/logos/logo_Gauzy.png" />
-			</object>
-		</ng-container>
-		<ng-template #image>
-			<img [src]="logoUrl || 'assets/images/logos/logo_Gauzy.png'" />
-		</ng-template>
-	</div>
+  @if (isCollapse) {
+    <div class="logo" [ngClass]="{ 'white-svg': isWhiteSvg() }" (click)="navigateHome()">
+      @if (isSVG) {
+        <object [data]="logoUrl" type="image/svg+xml">
+          <img src="assets/images/logos/logo_Gauzy.png" />
+        </object>
+      } @else {
+        <img [src]="logoUrl || 'assets/images/logos/logo_Gauzy.png'" />
+      }
+    </div>
+  }
 </ng-template>

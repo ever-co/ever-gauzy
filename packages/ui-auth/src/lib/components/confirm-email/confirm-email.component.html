@@ -1,10 +1,16 @@
 <div [nbSpinner]="loading" nbSpinnerStatus="primary">
-	<div *ngIf="!loading">
-		<div *ngIf="errorMessage">
-			<h1>{{ errorMessage }}</h1>
-		</div>
-		<div *ngIf="successMessage">
-			<h1>{{ successMessage }}</h1>
-		</div>
-	</div>
+  @if (!loading) {
+    <div>
+      @if (errorMessage) {
+        <div>
+          <h1>{{ errorMessage }}</h1>
+        </div>
+      }
+      @if (successMessage) {
+        <div>
+          <h1>{{ successMessage }}</h1>
+        </div>
+      }
+    </div>
+  }
 </div>

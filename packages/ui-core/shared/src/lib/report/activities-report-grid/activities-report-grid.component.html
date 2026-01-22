@@ -69,7 +69,7 @@
 					<div class="table-inner-wrapper">
 						<div
 							class="responsive-table-row employee-column main-column-responsive"
-							*ngIf="activityIndex == 0 && projectIndex == 0; else noColumn"
+							*ngIf="activityIndex == 0 && projectIndex == 0; else noColumnDate"
 						>
 							<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 							<div class="responsive-table-content employee">
@@ -79,7 +79,7 @@
 								</ng-container>
 							</div>
 						</div>
-						<ng-template #noColumn>
+						<ng-template #noColumnDate>
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
 						<div class="responsive-table-row project-column">
@@ -134,14 +134,14 @@
 					<div class="table-inner-wrapper">
 						<div
 							class="responsive-table-row employee-column main-column-responsive"
-							*ngIf="projectIndex == 0 && activityIndex == 0; else noColumn"
+							*ngIf="projectIndex == 0 && activityIndex == 0; else noColumnEmployee"
 						>
 							<div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
 							<div class="responsive-table-content employee">
 								{{ dateRow.date | dateFormat }}
 							</div>
 						</div>
-						<ng-template #noColumn>
+						<ng-template #noColumnEmployee>
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
 						<div class="responsive-table-row project-column">
@@ -196,14 +196,14 @@
 					<div class="table-inner-wrapper">
 						<div
 							class="responsive-table-row employee-column main-column-responsive"
-							*ngIf="employeeIndex == 0 && activityIndex == 0; else noColumn"
+							*ngIf="employeeIndex == 0 && activityIndex == 0; else noColumnProject"
 						>
 							<div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
 							<div class="responsive-table-content employee">
 								{{ dateRow.date | dateFormat }}
 							</div>
 						</div>
-						<ng-template #noColumn>
+						<ng-template #noColumnProject>
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
 						<div class="responsive-table-row employee-column">
