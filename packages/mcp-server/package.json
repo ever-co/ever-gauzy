@@ -61,7 +61,7 @@
 		"@types/ws": "^8.18.1",
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/express-session": "^1.18.2",
-		"cross-env": "^7.0.3",
+		"cross-env": "^10.1.0",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.9.3"
 	},
