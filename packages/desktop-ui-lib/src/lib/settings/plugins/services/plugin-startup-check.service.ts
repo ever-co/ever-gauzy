@@ -259,6 +259,7 @@ export class PluginStartupCheckService implements OnDestroy {
 						.map((sub) => ({
 							plugin: sub.plugin,
 							subscriptionId: sub.subscriptionId,
+							installed: true,
 							isInstalling: false,
 							error: null,
 							// Pass through auto-install and mandatory flags from subscription

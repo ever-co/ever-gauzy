@@ -1,8 +1,13 @@
 <nb-card class="pending-installation-dialog">
 	<nb-card-header class="dialog-header">
 		<div class="header-content">
-			<nb-icon icon="download-outline" status="primary"></nb-icon>
-			<h5 class="title">{{ 'PLUGIN.PENDING_INSTALLATION.TITLE' | translate }}</h5>
+			<div class="header-icon">
+				<nb-icon icon="download-outline" status="primary"></nb-icon>
+			</div>
+			<div class="header-text">
+				<h5 class="title">{{ 'PLUGIN.PENDING_INSTALLATION.TITLE' | translate }}</h5>
+				<span class="subtitle">{{ 'PLUGIN.PENDING_INSTALLATION.DESCRIPTION' | translate }}</span>
+			</div>
 		</div>
 		<button
 			nbButton
@@ -12,6 +17,8 @@
 			class="close-btn"
 			(click)="close()"
 			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			nbTooltip="{{ 'BUTTONS.CLOSE' | translate }}"
+			nbTooltipPlacement="left"
 		>
 			<nb-icon icon="close-outline"></nb-icon>
 		</button>
@@ -20,58 +27,141 @@
 	<nb-card-body>
 		@if (loading()) {
 		<div class="loading-container">
-			<nb-spinner status="primary" size="medium"></nb-spinner>
+			<div class="loading-animation">
+				<nb-icon icon="cloud-download-outline" class="loading-icon"></nb-icon>
+			</div>
 			<span class="loading-text">{{ 'PLUGIN.PENDING_INSTALLATION.LOADING' | translate }}</span>
+			<span class="loading-subtext">{{ 'PLUGIN.PENDING_INSTALLATION.CHECKING_PLUGINS' | translate }}</span>
 		</div>
 		} @else {
-		<p class="description">
-			{{ 'PLUGIN.PENDING_INSTALLATION.DESCRIPTION' | translate }}
-		</p>
+		<!-- Progress Bar (shown during batch installation) -->
+		@if (isAnyInstalling() && pendingPlugins().length > 1) {
+		<div class="progress-section">
+			<div class="progress-header">
+				<span class="progress-label">{{ 'PLUGIN.PENDING_INSTALLATION.INSTALLING' | translate }}</span>
+				<span class="progress-count">{{ getInstallingCount() }} / {{ pendingPlugins().length }}</span>
+			</div>
+			<div class="progress-bar">
+				<div class="progress-fill" [style.width.%]="getProgressPercentage()"></div>
+			</div>
+		</div>
+		}
 
 		<div class="plugins-container">
 			@if (pendingPlugins().length === 0) {
-			<div class="no-plugins">
-				<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
-				<span>{{ 'PLUGIN.PENDING_INSTALLATION.ALL_INSTALLED' | translate }}</span>
+			<div class="empty-state">
+				<div class="empty-state-icon">
+					<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
+				</div>
+				<h6 class="empty-state-title">{{ 'PLUGIN.PENDING_INSTALLATION.ALL_INSTALLED' | translate }}</h6>
+				<p class="empty-state-description">
+					{{ 'PLUGIN.PENDING_INSTALLATION.ALL_INSTALLED_DESC' | translate }}
+				</p>
+				<button nbButton status="primary" outline size="small" (click)="close()">
+					{{ 'BUTTONS.DONE' | translate }}
+				</button>
 			</div>
 			} @else {
+			<div class="plugin-list-header">
+				<span class="list-title">{{ 'PLUGIN.PENDING_INSTALLATION.AVAILABLE_PLUGINS' | translate }}</span>
+				<span class="list-badge">{{ pendingPlugins().length }}</span>
+			</div>
 			<nb-list class="plugin-list">
 				@for (plugin of pendingPlugins(); track trackByPluginId($index, plugin)) {
-				<nb-list-item class="plugin-item">
+				<nb-list-item
+					class="plugin-item"
+					[class.is-installing]="plugin.isInstalling"
+					[class.has-error]="plugin.error"
+					[class.is-installed]="plugin.isInstalled"
+				>
 					<div class="plugin-info">
-						<div class="plugin-logo">
+						<div class="plugin-logo" [class.installing]="plugin.isInstalling">
+							@if (plugin.isInstalling) {
+							<nb-spinner size="tiny" status="primary"></nb-spinner>
+							} @else if (plugin.isInstalled) {
+							<nb-icon icon="checkmark-outline" class="installed-check"></nb-icon>
+							} @else {
 							<span class="plugin-initials">{{ getPluginInitials(plugin) }}</span>
+							}
 						</div>
 						<div class="plugin-details">
-							<span class="plugin-name">{{ plugin.plugin.name }}</span>
-							<span class="plugin-version"> v{{ plugin.plugin.version?.version || 'N/A' }} </span>
+							<div class="plugin-name-row">
+								<span class="plugin-name" [nbTooltip]="plugin.plugin.name" nbTooltipPlacement="top">
+									{{ plugin.plugin.name }}
+								</span>
+								<span class="plugin-version-badge">
+									v{{ plugin.plugin.version?.version || 'N/A' }}
+								</span>
+							</div>
 							@if (plugin.plugin.description) {
-							<span class="plugin-description">{{ plugin.plugin.description }}</span>
+							<span
+								class="plugin-description"
+								[nbTooltip]="plugin.plugin.description"
+								nbTooltipPlacement="bottom"
+							>
+								{{ plugin.plugin.description }}
+							</span>
+							} @if (plugin.isInstalling) {
+							<span class="status-text installing">
+								<nb-icon icon="sync-outline" class="spin-icon"></nb-icon>
+								{{ 'PLUGIN.PENDING_INSTALLATION.STATUS_INSTALLING' | translate }}
+							</span>
+							} @else if (plugin.isInstalled) {
+							<span class="status-text installed">
+								<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+								{{ 'PLUGIN.PENDING_INSTALLATION.STATUS_INSTALLED' | translate }}
+							</span>
 							}
 						</div>
 					</div>
 
 					<div class="plugin-actions">
-						@if (plugin.isInstalling) {
-						<nb-spinner status="info" size="small"></nb-spinner>
-						} @else if (plugin.error) {
+						@if (plugin.error) {
 						<div class="error-state">
-							<nb-icon icon="alert-circle-outline" status="danger"></nb-icon>
-							<span class="error-text">{{ plugin.error }}</span>
-							<button nbButton size="small" status="primary" ghost (click)="installPlugin(plugin)">
+							<div
+								class="error-badge"
+								[nbTooltip]="plugin.error"
+								nbTooltipPlacement="left"
+								nbTooltipStatus="danger"
+							>
+								<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+								<span>{{ 'PLUGIN.PENDING_INSTALLATION.FAILED' | translate }}</span>
+							</div>
+							<button
+								nbButton
+								size="tiny"
+								status="primary"
+								(click)="installPlugin(plugin)"
+								[nbTooltip]="'BUTTONS.RETRY' | translate"
+							>
+								<nb-icon icon="refresh-outline"></nb-icon>
 								{{ 'BUTTONS.RETRY' | translate }}
 							</button>
 						</div>
-						} @else {
-						<button nbButton size="small" status="basic" ghost (click)="skipPlugin(plugin.plugin.id)">
+						} @else if (plugin.isInstalled) {
+						<span class="installed-badge">
+							<nb-icon icon="checkmark-outline"></nb-icon>
+							{{ 'PLUGIN.PENDING_INSTALLATION.INSTALLED' | translate }}
+						</span>
+						} @else if (!plugin.isInstalling) {
+						<button
+							nbButton
+							size="tiny"
+							status="basic"
+							ghost
+							(click)="skipPlugin(plugin.plugin.id)"
+							[nbTooltip]="'PLUGIN.PENDING_INSTALLATION.SKIP_TOOLTIP' | translate"
+							[disabled]="isAnyInstalling()"
+						>
 							{{ 'BUTTONS.SKIP' | translate }}
 						</button>
 						<button
 							nbButton
-							size="small"
+							size="tiny"
 							status="primary"
 							(click)="installPlugin(plugin)"
-							[disabled]="!plugin.plugin.version?.id"
+							[disabled]="!plugin.plugin.version?.id || isAnyInstalling()"
+							[nbTooltip]="'PLUGIN.PENDING_INSTALLATION.INSTALL_TOOLTIP' | translate"
 						>
 							<nb-icon icon="download-outline"></nb-icon>
 							{{ 'BUTTONS.INSTALL' | translate }}
@@ -88,18 +178,44 @@
 
 	<nb-card-footer class="dialog-footer">
 		<div class="footer-info">
-			<span class="plugin-count">
-				{{ 'PLUGIN.PENDING_INSTALLATION.PLUGINS_COUNT' | translate : { count: pendingPlugins().length } }}
-			</span>
+			@if (pendingPlugins().length > 0) {
+			<div class="info-badge">
+				<nb-icon icon="cube-outline"></nb-icon>
+				<span>
+					{{ 'PLUGIN.PENDING_INSTALLATION.PLUGINS_COUNT' | translate : { count: pendingPlugins().length } }}
+				</span>
+			</div>
+			}
 		</div>
 		<div class="footer-actions">
-			<button nbButton status="basic" outline (click)="skipAll()" [disabled]="loading() || isAnyInstalling()">
+			@if (pendingPlugins().length > 0) {
+			<button
+				nbButton
+				status="basic"
+				ghost
+				(click)="skipAll()"
+				[disabled]="loading() || isAnyInstalling()"
+				[nbTooltip]="'PLUGIN.PENDING_INSTALLATION.SKIP_ALL_TOOLTIP' | translate"
+			>
 				{{ 'PLUGIN.PENDING_INSTALLATION.SKIP_ALL' | translate }}
 			</button>
-			@if (pendingPlugins().length > 0) {
-			<button nbButton status="primary" (click)="installAll()" [disabled]="loading() || isAnyInstalling()">
+			<button
+				nbButton
+				status="primary"
+				(click)="installAll()"
+				[disabled]="loading() || isAnyInstalling()"
+				[nbTooltip]="'PLUGIN.PENDING_INSTALLATION.INSTALL_ALL_TOOLTIP' | translate"
+			>
+				@if (isAnyInstalling()) {
+				<nb-spinner size="tiny" status="control"></nb-spinner>
+				} @else {
 				<nb-icon icon="download-outline"></nb-icon>
+				}
 				{{ 'PLUGIN.PENDING_INSTALLATION.INSTALL_ALL' | translate }}
+			</button>
+			} @else {
+			<button nbButton status="primary" (click)="close()">
+				{{ 'BUTTONS.DONE' | translate }}
 			</button>
 			}
 		</div>

@@ -124,7 +124,12 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	 * Get plugin initials for avatar fallback
 	 */
 	protected getPluginInitials(plugin: IPendingPluginInstallation): string {
-		return plugin.plugin.name?.charAt(0)?.toUpperCase() || 'P';
+		const name = plugin.plugin.name || 'Plugin';
+		const words = name.split(/\s+/);
+		if (words.length >= 2) {
+			return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+		}
+		return name.substring(0, 2).toUpperCase();
 	}
 
 	/**
@@ -132,5 +137,23 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	 */
 	protected trackByPluginId(index: number, item: IPendingPluginInstallation): string {
 		return item.plugin.id;
+	}
+
+	/**
+	 * Get count of plugins currently being installed
+	 */
+	protected getInstallingCount(): number {
+		return this.pendingPlugins().filter((p) => p.isInstalling || p.isInstalled).length;
+	}
+
+	/**
+	 * Get progress percentage for batch installation
+	 */
+	protected getProgressPercentage(): number {
+		const total = this.pendingPlugins().length;
+		if (total === 0) return 0;
+		const completed = this.pendingPlugins().filter((p) => p.isInstalled).length;
+		const installing = this.pendingPlugins().filter((p) => p.isInstalling).length;
+		return Math.round(((completed + installing * 0.5) / total) * 100);
 	}
 }
