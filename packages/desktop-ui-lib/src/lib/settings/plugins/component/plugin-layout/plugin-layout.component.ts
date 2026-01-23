@@ -50,9 +50,9 @@ export class PluginLayoutComponent implements OnInit, OnDestroy {
 	 * This just triggers the dialog display if needed.
 	 */
 	private checkPendingInstallations(): void {
-		if (this.pluginElectronService.isDesktop) {
-			this.actions.dispatch(PendingInstallationActions.checkAndShowDialog());
-		}
+		//if (this.pluginElectronService.isDesktop) {
+		this.actions.dispatch(PendingInstallationActions.openDialog());
+		//}
 	}
 
 	private get baseRoute(): string {
