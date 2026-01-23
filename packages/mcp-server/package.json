@@ -73,7 +73,7 @@
 		"mcp-server"
 	],
 	"engines": {
-		"node": ">=20",
+		"node": ">=22",
 		"yarn": ">=1.22"
 	},
 	"sideEffects": false

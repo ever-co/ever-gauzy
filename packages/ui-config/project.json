@@ -31,22 +31,13 @@
 			"defaultConfiguration": "production"
 		},
 		"setup-env": {
-			"executor": "nx:run-commands",
-			"options": {
-				"parallel": false
-			},
+			"executor": "nx:run-script",
 			"configurations": {
 				"production": {
-					"commands": [
-						"yarn cross-env NODE_ENV=production ts-node .scripts/configure.ts --environment=prod",
-						"yarn cross-env NODE_ENV=production ts-node packages/ui-config/scripts/replace-env-files.ts"
-					]
+					"script": "setup-env:prod"
 				},
 				"development": {
-					"commands": [
-						"yarn cross-env NODE_ENV=development ts-node .scripts/configure.ts --environment=dev",
-						"yarn cross-env NODE_ENV=development ts-node packages/ui-config/scripts/replace-env-files.ts"
-					]
+					"script": "setup-env:dev"
 				}
 			},
 			"defaultConfiguration": "production"

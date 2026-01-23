@@ -22,10 +22,15 @@
 		"lib:build": "yarn nx build ui-config --configuration=development",
 		"lib:build:prod": "yarn nx build ui-config --configuration=production",
 		"lib:watch": "yarn nx build ui-config --watch --configuration=development",
-		"generate-env:prod": "cross-env NODE_ENV=production ts-node ./.scripts/configure.ts --environment=prod",
-		"generate-env:dev": "cross-env NODE_ENV=development ts-node ./.scripts/configure.ts --environment=dev",
-		"replace-env:prod": "cross-env NODE_ENV=production ts-node packages/ui-config/scripts/replace-env-files.ts",
-		"replace-env:dev": "cross-env NODE_ENV=development ts-node packages/ui-config/scripts/replace-env-files.ts"
+		"generate-env": "cross-env ts-node ../../.scripts/configure.ts",
+		"generate-env:prod": "cross-env NODE_ENV=production yarn generate-env --environment=prod",
+		"generate-env:dev": "cross-env NODE_ENV=development yarn generate-env --environment=dev",
+		"replace-env": "cross-env ts-node scripts/replace-env-files.ts",
+		"replace-env:prod": "cross-env NODE_ENV=production yarn replace-env",
+		"replace-env:dev": "cross-env NODE_ENV=development yarn replace-env",
+		"setup-env": "yarn generate-env && yarn replace-env",
+		"setup-env:prod": "yarn generate-env:prod && yarn replace-env:prod",
+		"setup-env:dev": "yarn generate-env:dev && yarn replace-env:dev"
 	},
 	"peerDependencies": {
 		"@angular/common": "^20.0.0",

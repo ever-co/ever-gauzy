@@ -27,7 +27,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: buildjet/setup-node@v4
         with:
-          node-version: 24.12.0
+          node-version: 24.13.0
           cache: 'yarn'
 
       - name: Change permissions
@@ -101,7 +101,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: buildjet/setup-node@v4
         with:
-          node-version: 24.12.0
+          node-version: 24.13.0
           cache: 'yarn'
 
       - name: Change permissions
@@ -183,7 +183,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 24.12.0
+          node-version: 24.13.0
           cache: 'yarn'
 
       - name: Fix node-gyp and Python
@@ -250,7 +250,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 24.12.0
+          node-version: 24.13.0
           cache: 'yarn'
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
@@ -369,7 +369,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 24.12.0
+          node-version: 24.13.0
           cache: 'yarn'
 
       - name: Install Visual Studio 2022 Build Tools (VCTools with ARM64)

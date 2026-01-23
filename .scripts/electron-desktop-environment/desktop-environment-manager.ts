@@ -52,7 +52,7 @@ export class DesktopEnvironmentManager {
 		try {
 			// Dynamically import the environment file
 			const environmentPath = path.join('..', '..', this.instance.fileDir, this.instance.fileName);
-			console.log(`✔ Environment file path: ${environmentPath}`);
+			console.log(`✔ Environment file path: ${filePath}`);
 			return require(environmentPath).environment;
 		} catch (error) {
 			console.error(`✖ Error loading environment file (${filePath}): ${error.message}`);
