@@ -10,7 +10,7 @@ exports.default = async (context) => {
 		}
 	} = context;
 
-	const { APPLE_ID, APPLE_ID_APP_PASSWORD, APPLE_TEAM_ID, CSC_LINK } = process.env;
+	const { CSC_LINK, APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER } = process.env;
 	const appPath = `${appOutDir}/${appName}.app`;
 
 	if (
@@ -21,19 +21,19 @@ exports.default = async (context) => {
 		return;
 	}
 
-	if (!APPLE_ID || !APPLE_ID_APP_PASSWORD) {
-		console.warn('WARN: `APPLE_ID` or `APPLE_ID_APP_PASSWORD` is missing');
+	if (!APPLE_API_KEY || !APPLE_API_KEY_ID || !APPLE_API_ISSUER) {
+		console.warn('WARN: `APPLE_API_KEY`, `APPLE_API_KEY_ID` & `APPLE_API_ISSUER` are missing');
 		return;
 	}
 
 	try {
 		await notarize({
 			tool: 'notarytool',
-			appleId: APPLE_ID,
-			appleIdPassword: APPLE_ID_APP_PASSWORD,
-			teamId: APPLE_TEAM_ID,
 			appBundleId,
-			appPath
+			appPath,
+			appleApiKey: APPLE_API_KEY,
+			appleApiKeyId: APPLE_API_KEY_ID,
+			appleApiIssuer: APPLE_API_ISSUER
 		});
 	} catch (error) {
 		console.error(`ERROR: Failed to notarized: ${error}`);
