@@ -9,6 +9,7 @@ export interface IPendingPluginInstallation {
 	plugin: IPlugin;
 	subscriptionId: string;
 	isInstalling: boolean;
+	isInstalled?: boolean;
 	error: string | null;
 	/** Whether the plugin can be auto-installed without user interaction */
 	canAutoInstall?: boolean;
