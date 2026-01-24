@@ -37,7 +37,7 @@
 		"is-online": "^9.0.1"
 	},
 	"devDependencies": {
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"@types/unzipper": "^0.10.9",
 		"electron": "^38.1.2",
 		"@types/underscore": "^1.11.4",

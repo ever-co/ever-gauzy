@@ -48,7 +48,7 @@
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},
 	"keywords": [
@@ -64,7 +64,7 @@
 		"microservices"
 	],
 	"engines": {
-		"node": ">=20",
+		"node": ">=22",
 		"yarn": ">=1.22"
 	},
 	"sideEffects": false

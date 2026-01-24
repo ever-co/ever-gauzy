@@ -91,11 +91,11 @@
 		"ng2-charts": "^8.0.0",
 		"ng2-file-upload": "^9.0.0",
 		"ngx-clipboard": "^16.0.0",
-		"ngx-color-picker": "^19.0.0",
+		"ngx-color-picker": "^20.1.1",
 		"ngx-cookie-service": "^20.1.1",
-		"ngx-countdown": "^19.0.0",
+		"ngx-countdown": "^20.0.0",
 		"ngx-daterangepicker-material": "^6.0.4",
-		"ngx-draggable-dom": "^19.0.7",
+		"ngx-draggable-dom": "^20.0.0",
 		"ngx-infinite-scroll": "^20.0.0",
 		"ngx-moment": "^6.0.2",
 		"ngx-permissions": "^19.0.0",
@@ -111,7 +111,7 @@
 	"devDependencies": {
 		"@types/ckeditor": "^4.9.10",
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"cross-env": "^10.1.0",
 		"ts-node": "^10.9.2",
 		"jest-preset-angular": "14.6.2"

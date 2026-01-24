@@ -375,11 +375,16 @@ if (!isProd) {
 }
 
 // we always want first to remove old generated files (one of them is not needed for current build)
+// Use path relative to script location to ensure correct path regardless of working directory
+const scriptDir = __dirname;
+const workspaceRoot = path.resolve(scriptDir, '../');
+const environmentsFolder = path.resolve(workspaceRoot, 'packages/ui-config/src/lib/environments');
+
 try {
-	unlinkSync(`./packages/ui-config/src/lib/environments/environment.ts`);
+	unlinkSync(path.join(environmentsFolder, 'environment.ts'));
 } catch {}
 try {
-	unlinkSync(`./packages/ui-config/src/lib/environments/environment.prod.ts`);
+	unlinkSync(path.join(environmentsFolder, 'environment.prod.ts'));
 } catch {}
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
@@ -388,9 +393,6 @@ const envFileDestOther: string = !isProd ? 'environment.prod.ts' : 'environment.
 console.log(`Generating Angular environment file: ${envFileDest}`);
 console.log(`Generating Second Angular environment file: ${envFileDestOther}`);
 
-// Define the folder paths
-const environmentsFolder = './packages/ui-config/src/lib/environments';
-
 // Ensure the environments folder exists
 if (!existsSync(environmentsFolder)) {
 	mkdirSync(environmentsFolder, { recursive: true });
@@ -398,8 +400,8 @@ if (!existsSync(environmentsFolder)) {
 }
 
 // Paths to environment files
-const envFilePath = path.resolve(`${environmentsFolder}/${envFileDest}`);
-const envFileOtherPath = path.resolve(`${environmentsFolder}/${envFileDestOther}`);
+const envFilePath = path.join(environmentsFolder, envFileDest);
+const envFileOtherPath = path.join(environmentsFolder, envFileDestOther);
 
 writeFile(envFilePath, envFileContent, (error) => {
 	if (error) {
