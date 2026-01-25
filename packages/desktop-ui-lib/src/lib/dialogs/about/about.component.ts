@@ -40,7 +40,6 @@ export class AboutComponent implements OnInit {
 			)
 		});
 		this._electronService.ipcRenderer.send('get-arch');
-		// console.log(arch);
 	}
 
 	public async openLink(link: string) {
