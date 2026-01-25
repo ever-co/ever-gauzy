@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnInit, OnDestroy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ITask } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable } from 'rxjs';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
@@ -10,7 +9,6 @@ import { TaskSelectorQuery } from './+state/task-selector.query';
 import { TaskSelectorService } from './+state/task-selector.service';
 import { TaskSelectorStore } from './+state/task-selector.store';
 
-@UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-task-selector',
     templateUrl: './task-selector.component.html',
@@ -25,7 +23,7 @@ import { TaskSelectorStore } from './+state/task-selector.store';
     ],
     standalone: false
 })
-export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> implements OnInit {
+export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> implements OnInit, OnDestroy {
 	constructor(
 		private readonly selectorElectronService: SelectorElectronService,
 		public readonly taskSelectorStore: TaskSelectorStore,
@@ -37,10 +35,14 @@ export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> impl
 	}
 
 	public ngOnInit() {
-		// Subscribe to onScroll$
-		this.taskSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
-		// Handle search logic
+		const sub = this.taskSelectorService.onScroll$.subscribe();
+		this.subscriptions.add(sub);
+
 		this.handleSearch(this.taskSelectorService);
+	}
+
+	public override ngOnDestroy(): void {
+		super.ngOnDestroy();
 	}
 
 	public clear(): void {

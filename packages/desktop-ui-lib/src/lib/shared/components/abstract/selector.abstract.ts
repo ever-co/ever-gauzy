@@ -1,17 +1,16 @@
-import { Directive } from '@angular/core';
+import { Directive, OnDestroy } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
 import { SelectorService } from '../../+state/selector.service';
 
-@UntilDestroy({ checkProperties: true })
 @Directive()
-export abstract class AbstractSelectorComponent<T> implements ControlValueAccessor {
-	public search$ = new Subject<string>();
+export abstract class AbstractSelectorComponent<T> implements ControlValueAccessor, OnDestroy {
+	public search$: Subject<string>;
 	private onChange: (value: any) => void;
 	private onTouched: () => void;
-	protected isDisabled$ = new BehaviorSubject<boolean>(false);
+	protected isDisabled$: BehaviorSubject<boolean>;
+	protected subscriptions: Subscription = new Subscription();
 
 	// Flag to control whether to update the store
 	protected useStore: boolean = true;
@@ -23,7 +22,16 @@ export abstract class AbstractSelectorComponent<T> implements ControlValueAccess
 	public abstract disabled$: Observable<boolean>;
 	public abstract hasPermission$: Observable<boolean>;
 
-	constructor() {}
+	constructor() {
+		this.search$ = new Subject<string>();
+		this.isDisabled$ = new BehaviorSubject<boolean>(false);
+	}
+
+	ngOnDestroy(): void {
+		this.subscriptions.unsubscribe();
+		this.search$.complete();
+		this.isDisabled$.complete();
+	}
 
 	// Handle value change
 	public change(value: string): void {
@@ -56,15 +64,16 @@ export abstract class AbstractSelectorComponent<T> implements ControlValueAccess
 	protected abstract updateSelected(value: string): void;
 
 	// Common search handling logic
-	protected handleSearch(service: SelectorService<T>) {
-		this.search$
+	protected handleSearch(service: SelectorService<T>): void {
+		const sub = this.search$
 			.pipe(
 				debounceTime(300),
 				distinctUntilChanged(),
 				tap(() => service.resetPage()),
-				switchMap((searchTerm) => service.load({ searchTerm })),
-				untilDestroyed(this)
+				switchMap((searchTerm) => service.load({ searchTerm }))
 			)
 			.subscribe();
+
+		this.subscriptions.add(sub);
 	}
 }
