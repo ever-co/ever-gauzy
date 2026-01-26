@@ -15242,19 +15242,12 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.45.tgz#2c0fafd78705e7a18b7906b5201a522719dc5190"
   integrity sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==
 
-"@types/node@^20.14.9", "@types/node@^20.3.1":
+"@types/node@^20.3.1":
   version "20.17.46"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.46.tgz#75f805dfbbf21ca41fd2324ca7b485b459df51bc"
   integrity sha512-0PQHLhZPWOxGW4auogW0eOQAuNIlCYvibIpG67ja0TOJ6/sehu+1en7sfceUn+QQtx4Rk3GxbLNwPh0Cav7TWw==
   dependencies:
     undici-types "~6.19.2"
-
-"@types/node@^22.14.0":
-  version "22.16.4"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.16.4.tgz#00c763ad4d4e45f62d5a270c040ae1a799c7e38a"
-  integrity sha512-PYRhNtZdm2wH/NT2k/oAJ6/f2VD2N2Dag0lGlx2vWgMSJXGNmlce5MiTQzoWAiIJtso30mjnfQCOKVH+kAQC/g==
-  dependencies:
-    undici-types "~6.21.0"
 
 "@types/node@^22.7.7":
   version "22.18.11"
@@ -15262,6 +15255,13 @@
   integrity sha512-Gd33J2XIrXurb+eT2ktze3rJAfAp9ZNjlBdh4SVgyrKEOADwCbdUDaK7QgJno8Ue4kcajscsKqu6n8OBG3hhCQ==
   dependencies:
     undici-types "~6.21.0"
+
+"@types/node@^24.10.0":
+  version "24.10.9"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-24.10.9.tgz#1aeb5142e4a92957489cac12b07f9c7fe26057d0"
+  integrity sha512-ne4A0IpG3+2ETuREInjPNhUGis1SFjv1d5asp8MzEAGtOZeTeHVDOYqOgqfhvseqg/iXty2hjBf1zAOb7RNiNw==
+  dependencies:
+    undici-types "~7.16.0"
 
 "@types/nodemailer@*":
   version "6.4.17"
@@ -32387,10 +32387,10 @@ nerf-dart@^1.0.0:
   resolved "https://registry.yarnpkg.com/nerf-dart/-/nerf-dart-1.0.0.tgz#e6dab7febf5ad816ea81cf5c629c5a0ebde72c1a"
   integrity sha512-EZSPZB70jiVsivaBLYDCyntd5eH8NTSMOn3rB+HxwdmKThGELLdYv8qVIMWvZEFy9w8ZZpW9h9OB32l1rGtj7g==
 
-nest-knexjs@^0.0.26:
-  version "0.0.26"
-  resolved "https://registry.yarnpkg.com/nest-knexjs/-/nest-knexjs-0.0.26.tgz#6c6fa82b6728ac5209148c8b5cc806814567dc71"
-  integrity sha512-fePjc2F2dKsK77anw2wl779SEtVSesBcqJCu2UimGCZCTfvqHstTWOQdQ2KY6airL8ftBifff8NYPk9+hhzo/A==
+nest-knexjs@^0.0.29:
+  version "0.0.29"
+  resolved "https://registry.yarnpkg.com/nest-knexjs/-/nest-knexjs-0.0.29.tgz#784fee22c0af436e8b1ae1e3fe9a8d90fd48884b"
+  integrity sha512-eYhNJWcMo8nAwKNYRcHM5A4sHygGIu+YyFWnPqu8/fLXIicRCAK5KFMMSpMT7bxUT/oUXPcdrL+64hzEtMf3qQ==
 
 nestjs-cls@^5.4.3:
   version "5.4.3"
@@ -32478,10 +32478,10 @@ ngx-clipboard@^16.0.0:
     ngx-window-token ">=7.0.0"
     tslib "^2.0.0"
 
-ngx-color-picker@^19.0.0:
-  version "19.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-color-picker/-/ngx-color-picker-19.0.0.tgz#1084c332b7a7e9c8e2aae0e06e88c0f2bbedde25"
-  integrity sha512-jZs7nk/DJB6FryElYnfkojWYCgpEc650s800g+39ebocVMZ18fAHf/CQd5+Bdm4E3zoRod0a0sErJ+c8tGQcCg==
+ngx-color-picker@^20.1.1:
+  version "20.1.1"
+  resolved "https://registry.yarnpkg.com/ngx-color-picker/-/ngx-color-picker-20.1.1.tgz#59c196d6872d9e7ef3df0060d59dc32e12c34894"
+  integrity sha512-wFk1L9F3JBd1Th+auYexN4uyynaT2dhxVRn0Dd55HrhfVcxfylExITDJ+Bhrcl0W+QHtX6gVbfZuX2hBXeVMFA==
   dependencies:
     tslib "^2.3.0"
 
@@ -32492,10 +32492,10 @@ ngx-cookie-service@^20.1.1:
   dependencies:
     tslib "^2.8.0"
 
-ngx-countdown@^19.0.0:
-  version "19.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-countdown/-/ngx-countdown-19.0.0.tgz#935620d829bbc339f048360194feb1a89c494526"
-  integrity sha512-z4TtaWBQz/eozBS65dcE5leSPoCNjzADIRGpbxigquUPB3jqDfgRrdFvecdrcD3zbIqdhz8TKdGk/bto013rSg==
+ngx-countdown@^20.0.0:
+  version "20.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-countdown/-/ngx-countdown-20.0.0.tgz#354589bd6e189a86fed64d475f35134424fd4e57"
+  integrity sha512-8gTr6KWd1Sm8U5KSKqOro4s3Sx4VwnznNGK0ujQRpIg2EY9ZjjUhQkf0ib3HB1g/WmnUzEuIZONvnVJtcElAJA==
   dependencies:
     tslib "^2.3.0"
 
@@ -32506,13 +32506,6 @@ ngx-daterangepicker-material@^6.0.4:
   dependencies:
     dayjs "^1.11.5"
     tslib "^2.0.0"
-
-ngx-draggable-dom@^19.0.7:
-  version "19.0.7"
-  resolved "https://registry.yarnpkg.com/ngx-draggable-dom/-/ngx-draggable-dom-19.0.7.tgz#7536a3c93f41cf53e162081329c9da59a85489f3"
-  integrity sha512-6ePUyR3oNgA77rqAhfaP8v+iq5WVqo66u8aWZRs21dr7pm2ngH8xj50MFo+/G44la7/L2PeGhdw7DOmaOPF0JA==
-  dependencies:
-    tslib "^2.3.1"
 
 ngx-draggable-dom@^20.0.0:
   version "20.0.4"
@@ -41604,6 +41597,11 @@ undici-types@~6.21.0:
   version "6.21.0"
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.21.0.tgz#691d00af3909be93a7faa13be61b3a5b50ef12cb"
   integrity sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==
+
+undici-types@~7.16.0:
+  version "7.16.0"
+  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-7.16.0.tgz#ffccdff36aea4884cbfce9a750a0580224f58a46"
+  integrity sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==
 
 undici@^6.10.2:
   version "6.23.0"

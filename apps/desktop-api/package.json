@@ -47,7 +47,7 @@
 	},
 	"devDependencies": {
 		"@nestjs/testing": "^11.1.12",
-		"@types/node": "^20.14.9"
+		"@types/node": "^24.10.0"
 	},
 	"engines": {
 		"node": ">=22",

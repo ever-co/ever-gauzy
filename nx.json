@@ -129,7 +129,7 @@
   },
   "defaultProject": "gauzy",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "parallel": 1,
+  "parallel": 3,
   "targetDefaults": {
     "build": {
       "cache": false,

@@ -49,7 +49,7 @@
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3",
 		"zapier-platform-cli": "16.5.0"
 	},

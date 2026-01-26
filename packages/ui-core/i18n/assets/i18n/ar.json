@@ -4145,6 +4145,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "للحصول على تتبع وقت ونشاط أكثر مرونة، يُرجى <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">تنزيل</a> واستخدام <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">تطبيق مؤقت سطح المكتب غاوزي</a>.",
 		"STATUS": "يعمل متتبع الوقت بالفعل في {{ source }}",
 		"VERSION": "الإصدار v{{ version }}",
+		"ARCHITECTURE": "البنية: {{ arch }}",
 		"WAIT_FOR": "في انتظار {{ name }} للبدء...",
 		"SETUP": {
 			"WELCOME": "مرحبًا",

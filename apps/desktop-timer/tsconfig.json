@@ -8,6 +8,7 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
+		"skipLibCheck": true,
 		"types": ["node", "google.maps"]
 	},
 	"files": [],

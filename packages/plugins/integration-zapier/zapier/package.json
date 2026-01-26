@@ -16,7 +16,7 @@
     "zapier-platform-core": "16.5.0"
   },
   "devDependencies": {
-    "@types/node": "^20.14.9",
+    "@types/node": "^24.10.0",
     "rimraf": "^3.0.2",
     "typescript": "^5.9.3",
     "zapier-platform-cli": "16.5.0"

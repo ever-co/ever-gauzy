@@ -829,3 +829,6 @@ ipcMain.on('save_encrypted_file', (event, value) => {
 
 ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
+ipcMain.on('get-arch', (event) => {
+	event.sender.send('get-arch', process.arch);
+});

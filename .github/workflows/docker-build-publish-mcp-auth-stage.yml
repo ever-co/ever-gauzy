@@ -30,7 +30,7 @@ jobs:
           driver: docker
 
       - name: Build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./.deploy/mcp-auth/Dockerfile
