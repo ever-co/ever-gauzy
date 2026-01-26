@@ -39,7 +39,8 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-api-stage:latest
           cache-to: type=inline
           build-args: |
-            NODE_ENV=development
+            NODE_ENV=production
+            DEMO=false
 
       - name: Docker images list
         run: |
@@ -117,7 +118,8 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-webapp-stage:latest
           cache-to: type=inline
           build-args: |
-            NODE_ENV=development
+            NODE_ENV=production
+            DEMO=false
 
       - name: Docker images list
         run: |
