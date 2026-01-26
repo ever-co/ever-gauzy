@@ -17,7 +17,7 @@ export class AboutComponent implements OnInit {
 		version: 'dev',
 		iconPath: null,
 		companyName: 'Ever Co. LTD.',
-		arch: 'x64'
+		arch: ''
 	};
 	constructor(
 		private readonly _electronService: ElectronService,
@@ -33,11 +33,11 @@ export class AboutComponent implements OnInit {
 		this.getArch();
 	}
 
-	async getArch() {
+	getArch() {
 		this._electronService.ipcRenderer.once('get-arch', (_, arg) => {
-			this._ngZone.run(
+			this._ngZone.run(() => {
 				this._application.arch = arg
-			)
+			});
 		});
 		this._electronService.ipcRenderer.send('get-arch');
 	}

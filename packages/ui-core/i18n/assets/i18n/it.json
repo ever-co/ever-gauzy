@@ -4160,6 +4160,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Per una registrazione del tempo e delle attività più flessibile, ti preghiamo di <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">scaricare</a> e utilizzare l'applicazione Gauzy Timer per Desktop",
 		"STATUS": "Il tracker di tempo è già in funzione nel {{ source }}",
 		"VERSION": "Versione v{{ version }}",
+		"ARCHITECTURE": "Architettura: {{ arch }}",
 		"WAIT_FOR": "In attesa che {{ name }} inizi..",
 		"SETUP": {
 			"WELCOME": "Benvenuto",

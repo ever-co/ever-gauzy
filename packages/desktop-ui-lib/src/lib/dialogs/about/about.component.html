@@ -13,22 +13,25 @@
 							<span>{{ application?.name }}</span>
 						</div>
 						<div class="col-12 version-text">
-							<span>{{'TIMER_TRACKER.VERSION' | translate: {version: application?.version} }}</span>
+							<span>{{ 'TIMER_TRACKER.VERSION' | translate : { version: application?.version } }}</span>
 						</div>
 						<div class="col-12 version-text mb-2">
-							<span>{{ application.arch }}</span>
+							<span>{{ 'TIMER_TRACKER.ARCHITECTURE' | translate : { arch: application?.arch } }}</span>
 						</div>
 						<div class="col-12 copyright-text text-center mt-0">
 							<span>
-								Copyright © 2020-{{'FOOTER.PRESENT' | translate}}
-								<span class="link" (click)="openLink('EVER')">{{ application?.companyName}}</span>
+								Copyright © 2020-{{ 'FOOTER.PRESENT' | translate }}
+								<span class="link" (click)="openLink('EVER')">{{ application?.companyName }}</span>
 								<br />
-								{{'FOOTER.RIGHTS_RESERVED' | translate}}
+								{{ 'FOOTER.RIGHTS_RESERVED' | translate }}
 								<br />
-								<span class="link" (click)="openLink('TOS')">{{'FOOTER.TERMS_OF_SERVICE' |
-									translate}}</span> |
-								<span (click)="openLink('PRIVACY')" class="link">{{'FOOTER.PRIVACY_POLICY' |
-									translate}}</span>
+								<span class="link" (click)="openLink('TOS')">{{
+									'FOOTER.TERMS_OF_SERVICE' | translate
+									}}</span>
+								|
+								<span (click)="openLink('PRIVACY')" class="link">{{
+									'FOOTER.PRIVACY_POLICY' | translate
+									}}</span>
 							</span>
 						</div>
 					</div>

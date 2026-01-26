@@ -505,9 +505,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	ngOnInit(): void {
 		// this.electronService.ipcRenderer.send('request_permission');
 		this.electronService.ipcRenderer.once('get-arch', (_, arg) => {
-			this._ngZone.run(
+			this._ngZone.run(() => {
 				this.arch = arg
-			)
+			})
 		});
 		this.electronService.ipcRenderer.send('get-arch');
 		this.version = this.electronService.remote.app.getVersion();

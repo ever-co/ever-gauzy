@@ -12,18 +12,18 @@ import { TeamSelectorService } from './+state/team-selector.service';
 import { TeamSelectorStore } from './+state/team-selector.store';
 
 @Component({
-    selector: 'gauzy-team-selector',
-    templateUrl: './team-selector.component.html',
-    styleUrls: ['./team-selector.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TeamSelectorComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'gauzy-team-selector',
+	templateUrl: './team-selector.component.html',
+	styleUrls: ['./team-selector.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TeamSelectorComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizationTeam> implements OnInit, OnDestroy {
 	constructor(
@@ -39,7 +39,7 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 	}
 
 	public ngOnInit(): void {
-		const sub1 = this.taskSelectorService.onScroll$.subscribe();
+		const sub1 = this.teamSelectorService.onScroll$.subscribe();
 		this.subscriptions.add(sub1);
 
 		const sub2 = this.teamSelectorQuery.selected$
@@ -51,7 +51,7 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 			.subscribe();
 		this.subscriptions.add(sub2);
 
-		this.handleSearch(this.projectSelectorService);
+		this.handleSearch(this.teamSelectorService);
 	}
 
 	public override ngOnDestroy(): void {

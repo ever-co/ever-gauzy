@@ -4151,6 +4151,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Pour un suivi du temps et des activités plus flexible, veuillez <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">télécharger</a> et utiliser l'application de chronomètre Gauzy pour ordinateur.",
 		"STATUS": "Le suivi du temps est déjà en cours dans {{ source }}.",
 		"VERSION": "Version v{{ version }}",
+		"ARCHITECTURE": "Architecture: {{ arch }}",
 		"WAIT_FOR": "En attendant que {{ name }} commence...",
 		"SETUP": {
 			"WELCOME": "Bienvenue",
