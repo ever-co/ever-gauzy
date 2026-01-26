@@ -242,25 +242,16 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 		await defineConfig(applicationConfig);
 	}
 
-	// Configure migration settings
-	await defineConfig({
-		dbConnectionOptions: {
-			...getMigrationsConfig()
-		}
-	});
-
-	// Log the current database configuration (for debugging or informational purposes)
-	await logDBConfig();
-
 	// Register core and plugin entities and subscribers in parallel
 	const [entities, subscribers] = await Promise.all([
 		preBootstrapRegisterEntities(applicationConfig),
 		preBootstrapRegisterSubscribers(applicationConfig)
 	]);
 
-	// Update configuration with registered entities and subscribers
+	// Update configuration with migrations, registered entities and subscribers
 	await defineConfig({
 		dbConnectionOptions: {
+			...getMigrationsConfig(),
 			entities: entities as Array<Type<any>>, // Core and plugin entities
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>> // Core and plugin subscribers
 		},
@@ -272,6 +263,9 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 
 	// Apply additional plugin configurations
 	const config = await preBootstrapPluginConfigurations(getConfig());
+
+	// Log the current database configuration (for debugging or informational purposes)
+	logDBConfig(config);
 
 	// Register custom entity fields for Type ORM
 	await registerTypeOrmCustomFields(config);
@@ -314,90 +308,88 @@ async function preBootstrapPluginConfigurations(config: ApplicationPluginConfig)
  * Register entities from core and plugin configurations.
  * Ensures no conflicts between core entities and plugin entities.
  *
+ * Uses a Set for O(1) conflict detection instead of Array.some() which is O(n).
+ *
  * @param config - Plugin configuration containing plugin entities.
  * @returns A promise that resolves to an array of registered entity types.
+ * @throws ConflictException if a plugin entity conflicts with a core entity.
  */
 export async function preBootstrapRegisterEntities(
 	config: Partial<ApplicationPluginConfig>
 ): Promise<Array<Type<any>>> {
 	try {
 		console.time(chalk.yellow('✔ Pre Bootstrap Register Entities Time'));
+
 		// Retrieve core entities and plugin entities
 		const coreEntitiesList = [...coreEntities] as Array<Type<any>>;
 		const pluginEntitiesList = getEntitiesFromPlugins(config.plugins);
 
-		// Check for conflicts and merge entities
-		const registeredEntities = mergeEntities(coreEntitiesList, pluginEntitiesList);
+		// Build a Set of core entity names for O(1) conflict detection
+		const coreEntityNames = new Set(coreEntitiesList.map((entity) => entity.name));
+
+		// Check for conflicts - O(n) instead of O(n²) with Array.some()
+		for (const pluginEntity of pluginEntitiesList) {
+			if (coreEntityNames.has(pluginEntity.name)) {
+				throw new ConflictException({
+					message: `Entity conflict: ${pluginEntity.name} conflicts with core entities.`
+				});
+			}
+		}
+
+		// Merge entities - spread is more efficient than repeated push
+		const registeredEntities = [...coreEntitiesList, ...pluginEntitiesList];
 
 		console.timeEnd(chalk.yellow('✔ Pre Bootstrap Register Entities Time'));
 		return registeredEntities;
 	} catch (error) {
 		console.log(chalk.red('Error registering entities:'), error);
+		throw error;
 	}
-}
-
-/**
- * Merges core entities and plugin entities, ensuring no conflicts.
- *
- * @param coreEntities - Array of core entities.
- * @param pluginEntities - Array of plugin entities from the plugins.
- * @returns The merged array of entities.
- * @throws ConflictException if a plugin entity conflicts with a core entity.
- */
-function mergeEntities(coreEntities: Array<Type<any>>, pluginEntities: Array<Type<any>>): Array<Type<any>> {
-	for (const pluginEntity of pluginEntities) {
-		const entityName = pluginEntity.name;
-
-		if (coreEntities.some((entity) => entity.name === entityName)) {
-			throw new ConflictException({ message: `Entity conflict: ${entityName} conflicts with core entities.` });
-		}
-
-		coreEntities.push(pluginEntity);
-	}
-
-	return coreEntities;
 }
 
 /**
  * Registers subscriber entities from core and plugin configurations, ensuring no conflicts.
  *
+ * Uses a Set for O(1) conflict detection instead of Array.some() which is O(n).
+ *
  * @param config - The application configuration that might contain plugin subscribers.
  * @returns A promise that resolves to an array of registered subscriber entity types.
+ * @throws ConflictException if a plugin subscriber conflicts with a core subscriber.
  */
 async function preBootstrapRegisterSubscribers(
 	config: Partial<ApplicationPluginConfig>
 ): Promise<Array<Type<EntitySubscriberInterface>>> {
-	console.time(chalk.yellow('✔ Pre Bootstrap Register Subscribers Time'));
-
 	try {
+		console.time(chalk.yellow('✔ Pre Bootstrap Register Subscribers Time'));
+
 		// List of core subscribers
-		const subscribers = coreSubscribers as Array<Type<EntitySubscriberInterface>>;
+		const coreSubscribersList = [...coreSubscribers] as Array<Type<EntitySubscriberInterface>>;
 
 		// Get plugin subscribers from the application configuration
 		const pluginSubscribersList = getSubscribersFromPlugins(config.plugins);
 
-		// Check for conflicts and add new plugin subscribers
-		for (const pluginSubscriber of pluginSubscribersList) {
-			const subscriberName = pluginSubscriber.name;
+		// Build a Set of core subscriber names for O(1) conflict detection
+		const coreSubscriberNames = new Set(coreSubscribersList.map((subscriber) => subscriber.name));
 
-			// Check for name conflicts with core subscribers
-			if (subscribers.some((subscriber) => subscriber.name === subscriberName)) {
-				// Throw an exception if there's a conflict
+		// Check for conflicts - O(n) instead of O(n²) with Array.some()
+		for (const pluginSubscriber of pluginSubscribersList) {
+			if (coreSubscriberNames.has(pluginSubscriber.name)) {
 				throw new ConflictException({
-					message: `Error: ${subscriberName} conflicts with default subscribers.`
+					message: `Error: ${pluginSubscriber.name} conflicts with default subscribers.`
 				});
-			} else {
-				// Add the new plugin subscriber to the list if no conflict
-				subscribers.push(pluginSubscriber);
 			}
 		}
 
+		// Merge subscribers - spread is more efficient than repeated push
+		const registeredSubscribers = [...coreSubscribersList, ...pluginSubscribersList];
+
 		console.timeEnd(chalk.yellow('✔ Pre Bootstrap Register Subscribers Time'));
 
-		// Return the updated list of subscribers
-		return subscribers;
+		// Return the merged list of subscribers
+		return registeredSubscribers;
 	} catch (error) {
 		console.log(chalk.red('Error registering subscribers:'), error);
+		throw error;
 	}
 }
 
@@ -448,8 +440,10 @@ export function getMigrationsConfig() {
 
 /**
  * Logs the current database configuration for debugging or informational purposes.
+ * Excludes entities and subscribers arrays to keep the output readable.
  */
-async function logDBConfig(): Promise<void> {
-	const config = getConfig(); // Await the config first
-	console.log(chalk.green(`DB Config: ${JSON.stringify(config.dbConnectionOptions)}`));
+function logDBConfig(config: ApplicationPluginConfig): void {
+	// Destructure to exclude entities and subscribers from the log output
+	const { entities, subscribers, ...dbConfigWithoutEntities } = config.dbConnectionOptions;
+	console.log(chalk.green(`DB Config: ${JSON.stringify(dbConfigWithoutEntities)}`));
 }

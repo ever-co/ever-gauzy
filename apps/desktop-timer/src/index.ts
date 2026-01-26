@@ -805,6 +805,10 @@ ipcMain.handle('set-tray-icon', () => {
 	}
 });
 
+ipcMain.on('get-arch', (event) => {
+	event.sender.send('get-arch', process.arch);
+});
+
 nativeTheme.on('updated', () => {
 	const appSetting = LocalStore.getStore('appSetting');
 	timeTrackerWindow?.webContents?.send?.('custom_tray_icon', {

@@ -4160,6 +4160,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Voor meer flexibele tijd- en activiteitenregistratie, gelieve <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">te downloaden</a> en gebruik te maken van de <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 		"STATUS": "De tijdsregistratie is al actief in de {{ source }}",
 		"VERSION": "Versie v{{ version }}",
+		"ARCHITECTURE": "Architectuur: {{ arch }}",
 		"WAIT_FOR": "Wachten op {{ name }} om te beginnen...",
 		"SETUP": {
 			"WELCOME": "Welkom",

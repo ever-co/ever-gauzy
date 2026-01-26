@@ -4162,6 +4162,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Para un seguimiento más flexible del tiempo y las actividades, por favor <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">descargue</a> y utilice la <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Aplicación de temporizador de escritorio Gauzy</a>.",
 		"STATUS": "El rastreador de tiempo ya está en funcionamiento en {{ source }}.",
 		"VERSION": "Versión v{{ version }}",
+		"ARCHITECTURE": "Arquitectura: {{ arch }}",
 		"WAIT_FOR": "Esperando a {{name}} para empezar...",
 		"SETUP": {
 			"WELCOME": "Bienvenido",

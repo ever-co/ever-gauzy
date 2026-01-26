@@ -40,6 +40,7 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=development
+            DEMO=true
 
       - name: Docker images list
         run: |
@@ -118,6 +119,7 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=development
+            DEMO=true
 
       - name: Docker images list
         run: |

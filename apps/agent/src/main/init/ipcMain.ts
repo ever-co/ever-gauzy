@@ -333,5 +333,9 @@ export default function AppIpcMain() {
 		return true;
 	});
 
+	ipcMain.on('get-arch', (event) => {
+		event.sender.send('get-arch', process.arch);
+	});
+
 	pluginListeners();
 }
