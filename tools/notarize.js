@@ -13,12 +13,12 @@ exports.default = async (context) => {
 		}
 	} = context;
 
-	const { CSC_LINK, APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER } = process.env;
+	const { APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER } = process.env;
 
 	// Skip if not building for macOS or if the app is not signed
 	// In GitHub Actions, CSC_LINK is typically used for the certificate.
-	if (electronPlatformName !== 'darwin' || !CSC_LINK) {
-		console.log('Skipping notarization: Platform is not darwin or CSC_LINK is missing.');
+	if (electronPlatformName !== 'darwin') {
+		console.log('Skipping notarization: Platform is not darwin.');
 		return;
 	}
 
