@@ -1,97 +1,101 @@
 <nb-card>
-	<nb-card-header class="pb-0">
-		<div class="d-flex flex-column">
-			<div
-				class="d-flex flex-column align-items-end"
-			>
-				<ngx-gauzy-button-action
-					[buttonTemplate]="actions"
-					[buttonTemplateVisible]="visible"
-					[componentName]="viewComponentName"
-					[isDisable]="disabled"
-				></ngx-gauzy-button-action>
-			</div>
-		</div>
-	</nb-card-header>
-	<nb-card-body
-		[nbSpinner]="loading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-		class="custom-card-body"
-	>
-		<div *ngIf="allInterviews?.length > 0" class="checkboxes mb-3">
-			<nb-checkbox
-				(checkedChange)="changePast($event)"
-				status="basic"
-				[checked]="onlyPast"
-				class="mr-3 ml-3"
-				>{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
-			</nb-checkbox>
-			<nb-checkbox
-				(checkedChange)="changeFuture($event)"
-				status="basic"
-				[checked]="onlyFuture"
-				>{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
-			</nb-checkbox>
-		</div>
-		<ng-container *ngIf="interviewList?.length > 0">
-			<div
-				*ngIf="dataLayoutStyle === 'TABLE'"
-				class="table-scroll-container"
-			>
-				<angular2-smart-table
-					style="cursor: pointer"
-					[settings]="settingsSmartTable"
-					[source]="sourceSmartTable"
-					(userRowSelect)="selectInterview($event)"
-				></angular2-smart-table>
-			</div>
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-				[settings]="settingsSmartTable"
-				[source]="tableInterviewList"
-				(onSelectedItem)="selectInterview($event)"
-			></ga-card-grid>
-		</ng-container>
-	</nb-card-body>
+  <nb-card-header class="pb-0">
+    <div class="d-flex flex-column">
+      <div
+        class="d-flex flex-column align-items-end"
+        >
+        <ngx-gauzy-button-action
+          [buttonTemplate]="actions"
+          [buttonTemplateVisible]="visible"
+          [componentName]="viewComponentName"
+          [isDisable]="disabled"
+        ></ngx-gauzy-button-action>
+      </div>
+    </div>
+  </nb-card-header>
+  <nb-card-body
+    [nbSpinner]="loading"
+    nbSpinnerSize="giant"
+    nbSpinnerStatus="primary"
+    class="custom-card-body"
+    >
+    @if (allInterviews?.length > 0) {
+      <div class="checkboxes mb-3">
+        <nb-checkbox
+          (checkedChange)="changePast($event)"
+          status="basic"
+          [checked]="onlyPast"
+          class="mr-3 ml-3"
+          >{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
+        </nb-checkbox>
+        <nb-checkbox
+          (checkedChange)="changeFuture($event)"
+          status="basic"
+          [checked]="onlyFuture"
+          >{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
+        </nb-checkbox>
+      </div>
+    }
+    @if (interviewList?.length > 0) {
+      @if (dataLayoutStyle === 'TABLE') {
+        <div
+          class="table-scroll-container"
+          >
+          <angular2-smart-table
+            style="cursor: pointer"
+            [settings]="settingsSmartTable"
+            [source]="sourceSmartTable"
+            (userRowSelect)="selectInterview($event)"
+          ></angular2-smart-table>
+        </div>
+      }
+      @if (dataLayoutStyle === 'CARDS_GRID') {
+        <ga-card-grid
+          [totalItems]="pagination?.totalItems"
+          [settings]="settingsSmartTable"
+          [source]="tableInterviewList"
+          (onSelectedItem)="selectInterview($event)"
+        ></ga-card-grid>
+      }
+    }
+  </nb-card-body>
 </nb-card>
 <ng-template #visible>
-	<button nbButton status="success" class="action" (click)="add()">
-		<nb-icon icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
-	</button>
+  <button nbButton status="success" class="action" (click)="add()">
+    <nb-icon icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
+  </button>
 </ng-template>
 <ng-template #actions>
-	<div class="btn-group actions">
-		<button
-			nbButton
-			status="basic"
-			size="small"
-			class="action secondary"
-			(click)="addInterviewFeedback(selectedInterview?.id)"
-		>
-			<nb-icon class="mr-1" icon="message-square-outline"></nb-icon>
-			{{ 'BUTTONS.FEEDBACK' | translate }}
-		</button>
-		<button
-			nbButton
-			status="basic"
-			size="small"
-			class="action primary"
-			(click)="editInterview(selectedInterview?.id)"
-		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			nbButton
-			status="basic"
-			size="small"
-			class="action"
-			(click)="removeInterview(selectedInterview?.id)"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-		</button>
-	</div>
+  <div class="btn-group actions">
+    <button
+      nbButton
+      status="basic"
+      size="small"
+      class="action secondary"
+      (click)="addInterviewFeedback(selectedInterview?.id)"
+      >
+      <nb-icon class="mr-1" icon="message-square-outline"></nb-icon>
+      {{ 'BUTTONS.FEEDBACK' | translate }}
+    </button>
+    <button
+      nbButton
+      status="basic"
+      size="small"
+      class="action primary"
+      (click)="editInterview(selectedInterview?.id)"
+      >
+      <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+      {{ 'BUTTONS.EDIT' | translate }}
+    </button>
+    <button
+      nbButton
+      status="basic"
+      size="small"
+      class="action"
+      (click)="removeInterview(selectedInterview?.id)"
+      [nbTooltip]="'BUTTONS.DELETE' | translate"
+      >
+      <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+    </button>
+  </div>
 </ng-template>

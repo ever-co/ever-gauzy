@@ -4,24 +4,26 @@ import { Router } from '@angular/router';
 @Component({
     selector: 'ngx-employee-links',
     template: `
-		<ng-container *ngIf="value">
-			<a
-				*ngIf="value?.name"
-				(click)="navigateToEmployee()"
-				[ngClass]="{ 'link-text': isNavigation }"
-			>
-				<img
-					*ngIf="value.imageUrl"
-					width="18px"
-					height="18px"
-					[src]="value.imageUrl"
-				/>
-				<div class="names-wrapper">
-					{{ value.name }}
-				</div>
-			</a>
-		</ng-container>
-	`,
+		@if (value) {
+		  @if (value?.name) {
+		    <a
+		      (click)="navigateToEmployee()"
+		      [ngClass]="{ 'link-text': isNavigation }"
+		      >
+		      @if (value.imageUrl) {
+		        <img
+		          width="18px"
+		          height="18px"
+		          [src]="value.imageUrl"
+		          />
+		      }
+		      <div class="names-wrapper">
+		        {{ value.name }}
+		      </div>
+		    </a>
+		  }
+		}
+		`,
     styles: [
         `
 			.link-text {

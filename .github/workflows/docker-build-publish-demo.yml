@@ -25,7 +25,7 @@ jobs:
           driver: docker
 
       - name: Build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./.deploy/api/Dockerfile
@@ -40,6 +40,7 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=development
+            DEMO=true
 
       - name: Docker images list
         run: |
@@ -103,7 +104,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./.deploy/webapp/Dockerfile
@@ -118,6 +119,7 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=development
+            DEMO=true
 
       - name: Docker images list
         run: |

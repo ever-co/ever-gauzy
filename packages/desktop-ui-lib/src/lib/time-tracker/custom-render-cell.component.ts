@@ -4,16 +4,16 @@ import { Component, Input, OnInit } from '@angular/core';
     selector: 'ga-custom-render-selector',
     template: `
 		<div class="d-flex align-items-center">
-			<ng-container *ngIf="isSelected">
-				<nb-icon
-					class="running-task"
-					status="primary"
-					icon="arrow-right-outline"
-				></nb-icon>
-			</ng-container>
-			{{ rowData.taskNumber + ' ' + rowData.title }}
+		  @if (isSelected) {
+		    <nb-icon
+		      class="running-task"
+		      status="primary"
+		      icon="arrow-right-outline"
+		    ></nb-icon>
+		  }
+		  {{ rowData.taskNumber + ' ' + rowData.title }}
 		</div>
-	`,
+		`,
     styleUrls: ['./time-tracker.component.scss'],
     standalone: false
 })

@@ -1,132 +1,140 @@
 <nb-card>
-	<nb-card-header>
-		<div
+  <nb-card-header>
+    @if (!showAddCard) {
+      <div
 			[ngClass]="
 				allFeedbacks?.length > 0
 					? 'main-btn'
 					: 'main-btn justify-content-end'
 			"
-			*ngIf="!showAddCard"
-		>
-			<div class="filters" *ngIf="allFeedbacks?.length > 0">
-				<nb-select
-					[formControl]="selectInterview"
-					*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-					class="select mr-3 show"
-					placeholder="Select interview"
-					(selectedChange)="onInterviewSelected($event)"
-				>
-					<nb-option [value]="all">
-						{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.ALL_FEEDBACKS'
-								| translate
-						}}
-					</nb-option>
-					<nb-option
-						value="{{ interview.id }}"
-						*ngFor="let interview of interviewList"
-						>{{ interview.title }}</nb-option
-					>
-				</nb-select>
-				<ga-employee-multi-select
-					*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-					class="select mr-3"
-					[multiple]="false"
-					[label]="false"
-					[reset]="isEmployeeReset"
-					[allEmployees]="employeeList"
-					(selectedChange)="onEmployeeSelected($event)"
-					[reset]="isResetSelect"
-				>
-				</ga-employee-multi-select>
-			</div>
-			<ngx-gauzy-button-action
-				[buttonTemplate]="actionButtons"
-				[buttonTemplateVisible]="visible"
-				[componentName]="viewComponentName"
-				[isDisable]="disableButton"
-			></ngx-gauzy-button-action>
-		</div>
+        >
+        @if (allFeedbacks?.length > 0) {
+          <div class="filters">
+            @if (dataLayoutStyle === 'CARDS_GRID') {
+              <nb-select
+                [formControl]="selectInterview"
+                class="select mr-3 show"
+                placeholder="Select interview"
+                (selectedChange)="onInterviewSelected($event)"
+                >
+                <nb-option [value]="all">
+                  {{
+                  'CANDIDATES_PAGE.EDIT_CANDIDATE.ALL_FEEDBACKS'
+                  | translate
+                  }}
+                </nb-option>
+                @for (interview of interviewList; track interview) {
+                  <nb-option
+                    value="{{ interview.id }}"
+                    >{{ interview.title }}</nb-option
+                    >
+                  }
+                </nb-select>
+              }
+              @if (dataLayoutStyle === 'CARDS_GRID') {
+                <ga-employee-multi-select
+                  class="select mr-3"
+                  [multiple]="false"
+                  [label]="false"
+                  [reset]="isEmployeeReset"
+                  [allEmployees]="employeeList"
+                  (selectedChange)="onEmployeeSelected($event)"
+                  [reset]="isResetSelect"
+                  >
+                </ga-employee-multi-select>
+              }
+            </div>
+          }
+          <ngx-gauzy-button-action
+            [buttonTemplate]="actionButtons"
+            [buttonTemplateVisible]="visible"
+            [componentName]="viewComponentName"
+            [isDisable]="disableButton"
+          ></ngx-gauzy-button-action>
+        </div>
+      }
 
-		<div *ngIf="showAddCard" class="add-card">
-			<div class="feedbacks-card-wrap">
-				<form class="form" [formGroup]="form" *ngIf="form">
-					<div class="w-100" formArrayName="feedbacks">
-						<div
-							*ngFor="
-								let feedback of form.controls.feedbacks
-									?.controls;
-								let i = index
-							"
-						>
-							<div [formGroupName]="i">
-								<div
-									class="criterions-rating"
-									*ngIf="feedbackInterviewId"
-								>
-									<div class="criterions-rating-radio-group">
-										<ga-star-rating-output
-											[rate]="averageRating"
-											class="stars-output"
-											*ngIf="
-												technologiesList?.length > 0 ||
-												personalQualitiesList?.length >
-													0
-											"
-										></ga-star-rating-output>
-										<ga-star-rating-input
-											*ngIf="
-												technologiesList?.length ===
-													0 &&
-												personalQualitiesList?.length ===
-													0
-											"
-											formControlName="rating"
-											class="stars-optional"
-										></ga-star-rating-input>
-
-										<nb-radio-group
-											class="radio-group"
-											[(ngModel)]="status"
+      @if (showAddCard) {
+        <div class="add-card">
+          <div class="feedbacks-card-wrap">
+            @if (form) {
+              <form class="form" [formGroup]="form">
+                <div class="w-100" formArrayName="feedbacks">
+                  @for (
+                    feedback of form.controls.feedbacks
+                    ?.controls; track
+                    feedback; let i = $index) {
+                    <div
+                      >
+                      <div [formGroupName]="i">
+                        @if (feedbackInterviewId) {
+                          <div
+                            class="criterions-rating"
+                            >
+                            <div class="criterions-rating-radio-group">
+                              @if (
+                                technologiesList?.length > 0 ||
+                                personalQualitiesList?.length >
+                                0
+                                ) {
+                                <ga-star-rating-output
+                                  [rate]="averageRating"
+                                  class="stars-output"
+                                ></ga-star-rating-output>
+                              }
+                              @if (
+                                technologiesList?.length ===
+                                0 &&
+                                personalQualitiesList?.length ===
+                                0
+                                ) {
+                                <ga-star-rating-input
+                                  formControlName="rating"
+                                  class="stars-optional"
+                                ></ga-star-rating-input>
+                              }
+                              <nb-radio-group
+                                class="radio-group"
+                                [(ngModel)]="status"
 											[ngModelOptions]="{
 												standalone: true
 											}"
-										>
-											<nb-radio [value]="'HIRED'">
-												{{
-													'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
-														| translate
-												}}
-												<span
-													*ngIf="
-														interviewersHire?.length >
-														1
-													"
-												>
-													({{ statusHire }}/{{
-														interviewersHire?.length
-													}})
-												</span>
-
-												<i
-													class="fas fa-thumbs-up success"
-												></i>
-											</nb-radio>
-											<nb-radio [value]="'REJECTED'"
-												>{{
-													'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT'
-														| translate
-												}}
-												<i
-													class="fas error fa-thumbs-down"
-												></i
-											></nb-radio>
-										</nb-radio-group>
-									</div>
-
-									<div class="form-blocks">
-										<div
-											class="form-block"
+                                >
+                                <nb-radio [value]="'HIRED'">
+                                  {{
+                                  'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
+                                  | translate
+                                  }}
+                                  @if (
+                                    interviewersHire?.length >
+                                    1
+                                    ) {
+                                    <span
+                                      >
+                                      ({{ statusHire }}/{{
+                                      interviewersHire?.length
+                                      }})
+                                    </span>
+                                  }
+                                  <i
+                                    class="fas fa-thumbs-up success"
+                                  ></i>
+                                </nb-radio>
+                                <nb-radio [value]="'REJECTED'"
+                                  >{{
+                                  'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT'
+                                  | translate
+                                  }}
+                                  <i
+                                    class="fas error fa-thumbs-down"
+                                    ></i
+                                  ></nb-radio>
+                                </nb-radio-group>
+                              </div>
+                              <div class="form-blocks">
+                                @if (technologiesList?.length > 0) {
+                                  <div
+                                    class="form-block"
 											[ngStyle]="{
 												width:
 													personalQualitiesList?.length ===
@@ -134,17 +142,16 @@
 														? '100%'
 														: '48%'
 											}"
-											*ngIf="technologiesList?.length > 0"
-										>
-											<div class="label mb-2">
-												{{
-													'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK'
-														| translate
-												}}
-											</div>
-											<div class="form-block-criterion">
-												<div
-													class="form-block-criterion-item"
+                                    >
+                                    <div class="label mb-2">
+                                      {{
+                                      'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK'
+                                      | translate
+                                      }}
+                                    </div>
+                                    <div class="form-block-criterion">
+                                      <div
+                                        class="form-block-criterion-item"
 													*ngFor="
 														let technologyRating of form.get(
 															[
@@ -152,29 +159,35 @@
 																0,
 																'technologies'
 															]
-														).controls as controls;
+														).controls;
 														index as i
 													"
-												>
-													<span
-														class="form-block-criterion-title"
-														*ngIf="technologiesList"
-													>
-														{{
-															technologiesList[i]
-																?.name
-														}}
-													</span>
-													<ga-star-rating-input
+                                        >
+                                        @if (technologiesList) {
+                                          <span
+                                            class="form-block-criterion-title"
+                                            >
+                                            {{
+                                            technologiesList[i]
+                                            ?.name
+                                            }}
+                                          </span>
+                                        }
+                                        <ga-star-rating-input
 														[formControl]="
 															technologyRating
 														"
-													></ga-star-rating-input>
-												</div>
-											</div>
-										</div>
-										<div
-											class="form-block"
+                                        ></ga-star-rating-input>
+                                      </div>
+                                    </div>
+                                  </div>
+                                }
+                                @if (
+                                  personalQualitiesList?.length >
+                                  0
+                                  ) {
+                                  <div
+                                    class="form-block"
 											[ngStyle]="{
 												width:
 													technologiesList?.length ===
@@ -182,20 +195,16 @@
 														? '100%'
 														: '48%'
 											}"
-											*ngIf="
-												personalQualitiesList?.length >
-												0
-											"
-										>
-											<div class="label mb-2">
-												{{
-													'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES'
-														| translate
-												}}
-											</div>
-											<div class="form-block-criterion">
-												<div
-													class="form-block-criterion-item"
+                                    >
+                                    <div class="label mb-2">
+                                      {{
+                                      'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES'
+                                      | translate
+                                      }}
+                                    </div>
+                                    <div class="form-block-criterion">
+                                      <div
+                                        class="form-block-criterion-item"
 													*ngFor="
 														let personalQualityRating of form.get(
 															[
@@ -203,142 +212,151 @@
 																0,
 																'personalQualities'
 															]
-														).controls as controls;
+														).controls;
 														index as i
 													"
-												>
-													<span
-														class="form-block-criterion-title"
-														*ngIf="
-															personalQualitiesList
-														"
-													>
-														{{
-															personalQualitiesList[
-																i
-															]?.name
-														}}
-													</span>
-													<ga-star-rating-input
+                                        >
+                                        @if (
+                                          personalQualitiesList
+                                          ) {
+                                          <span
+                                            class="form-block-criterion-title"
+                                            >
+                                            {{
+                                            personalQualitiesList[
+                                            i
+                                            ]?.name
+                                            }}
+                                          </span>
+                                        }
+                                        <ga-star-rating-input
 														[formControl]="
 															personalQualityRating
 														"
-													></ga-star-rating-input>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
-								<div class="add-card-wrap">
-									<div class="label-wrap">
-										<label
-											for="description"
-											class="label"
-											>{{
-												'FORM.LABELS.FEEDBACK_DESCRIPTION'
-													| translate
-											}}</label
-										>
-										<ga-star-rating-input
-											*ngIf="!feedbackInterviewId"
-											formControlName="rating"
-											class="stars-optional"
-										></ga-star-rating-input>
-									</div>
-
-									<textarea
-										id="description"
-										class="description"
-										nbInput
-										formControlName="description"
+                                        ></ga-star-rating-input>
+                                      </div>
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          }
+                          <div class="add-card-wrap">
+                            <div class="label-wrap">
+                              <label
+                                for="description"
+                                class="label"
+                                >{{
+                                'FORM.LABELS.FEEDBACK_DESCRIPTION'
+                                | translate
+                                }}</label
+                                >
+                                @if (!feedbackInterviewId) {
+                                  <ga-star-rating-input
+                                    formControlName="rating"
+                                    class="stars-optional"
+                                  ></ga-star-rating-input>
+                                }
+                              </div>
+                              <textarea
+                                id="description"
+                                class="description"
+                                nbInput
+                                formControlName="description"
 										placeholder="{{
 											'FORM.PLACEHOLDERS.FEEDBACK_DESCRIPTION'
 												| translate
 										}}"
-									>
-									</textarea>
-								</div>
-							</div>
-						</div>
-					</div>
-				</form>
-
-				<div class="buttons">
-					<button
-						class="w-100"
-						(click)="submitForm()"
-						nbButton
-						status="success"
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button>
-					<button
-						class="w-100"
-						(click)="cancel()"
-						nbButton
-						status="basic"
-						outline
-					>
-						{{ 'BUTTONS.CANCEL' | translate }}
-					</button>
-				</div>
-			</div>
-		</div>
-	</nb-card-header>
-	<nb-card-body
-		[nbSpinner]="loading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-	>
-		<div *ngIf="dataLayoutStyle === 'TABLE'" class="table-scroll-container">
-			<angular2-smart-table
-				style="cursor: pointer"
-				[settings]="settingsSmartTable"
-				[source]="sourceSmartTable"
-				(userRowSelect)="selectFeedback($event)"
-			></angular2-smart-table>
-		</div>
-		<ga-card-grid
-			[totalItems]="pagination?.totalItems"
-			*ngIf="feedbackList?.length && dataLayoutStyle === 'CARDS_GRID'"
-			[settings]="settingsSmartTable"
-			[source]="feedbackList"
-			(onSelectedItem)="selectFeedback($event)"
-		></ga-card-grid>
-	</nb-card-body>
-</nb-card>
-<ng-template #visible>
-	<button nbButton status="success" class="action" (click)="cancel()">
-		<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-		>{{ 'BUTTONS.ADD' | translate }}
-	</button>
-</ng-template>
-<ng-template #actionButtons let-selectedItem="selectedItem">
-	<div
-		class="btn-group actions"
-		*ngIf="dataLayoutStyle === 'TABLE' && !showAddCard"
-	>
-		<button
-			(click)="editFeedback()"
-			nbButton
-			status="basic"
-			class="action primary"
-			[disabled]="!selectedItem && disableButton"
-			size="small"
-		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			(click)="removeFeedback()"
-			nbButton
-			status="basic"
-			class="action"
-			[disabled]="!selectedItem && disableButton"
-			size="small"
-			[nbTooltip]="'BUTTONS.DELETE' | translate"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-		</button>
-	</div>
-</ng-template>
+                                >
+                              </textarea>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </form>
+                }
+                <div class="buttons">
+                  <button
+                    class="w-100"
+                    (click)="submitForm()"
+                    nbButton
+                    status="success"
+                    >
+                    {{ 'BUTTONS.SAVE' | translate }}
+                  </button>
+                  <button
+                    class="w-100"
+                    (click)="cancel()"
+                    nbButton
+                    status="basic"
+                    outline
+                    >
+                    {{ 'BUTTONS.CANCEL' | translate }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </nb-card-header>
+        <nb-card-body
+          [nbSpinner]="loading"
+          nbSpinnerSize="giant"
+          nbSpinnerStatus="primary"
+          >
+          @if (dataLayoutStyle === 'TABLE') {
+            <div class="table-scroll-container">
+              <angular2-smart-table
+                style="cursor: pointer"
+                [settings]="settingsSmartTable"
+                [source]="sourceSmartTable"
+                (userRowSelect)="selectFeedback($event)"
+              ></angular2-smart-table>
+            </div>
+          }
+          @if (feedbackList?.length && dataLayoutStyle === 'CARDS_GRID') {
+            <ga-card-grid
+              [totalItems]="pagination?.totalItems"
+              [settings]="settingsSmartTable"
+              [source]="feedbackList"
+              (onSelectedItem)="selectFeedback($event)"
+            ></ga-card-grid>
+          }
+        </nb-card-body>
+      </nb-card>
+      <ng-template #visible>
+        <button nbButton status="success" class="action" (click)="cancel()">
+          <nb-icon class="mr-1" icon="plus-outline"></nb-icon
+            >{{ 'BUTTONS.ADD' | translate }}
+          </button>
+        </ng-template>
+        <ng-template #actionButtons let-selectedItem="selectedItem">
+          @if (dataLayoutStyle === 'TABLE' && !showAddCard) {
+            <div
+              class="btn-group actions"
+              >
+              <button
+                (click)="editFeedback()"
+                nbButton
+                status="basic"
+                class="action primary"
+                [disabled]="!selectedItem && disableButton"
+                size="small"
+                >
+                <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+                {{ 'BUTTONS.EDIT' | translate }}
+              </button>
+              <button
+                (click)="removeFeedback()"
+                nbButton
+                status="basic"
+                class="action"
+                [disabled]="!selectedItem && disableButton"
+                size="small"
+                [nbTooltip]="'BUTTONS.DELETE' | translate"
+                >
+                <nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+              </button>
+            </div>
+          }
+        </ng-template>

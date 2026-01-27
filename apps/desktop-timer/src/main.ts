@@ -1,5 +1,5 @@
 import { enableProdMode } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { platformBrowser } from '@angular/platform-browser';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 
 import { AppModule } from './app/app.module';
@@ -18,7 +18,7 @@ akitaConfig({
 	resettable: true
 });
 
-platformBrowserDynamic()
+platformBrowser()
 	.bootstrapModule(AppModule, {
 		preserveWhitespaces: false
 	})

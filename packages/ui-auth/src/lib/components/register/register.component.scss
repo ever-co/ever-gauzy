@@ -43,8 +43,14 @@
     @include hr-div-soft;
   }
   & .another-action {
-	margin-top: 12px;
+    margin-top: 12px;
     @include another-action;
+    .text-link {
+      text-decoration: none;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
   & .form-control-group {
     @include mobile-screen {
@@ -66,6 +72,18 @@
   margin-bottom: 42px;
   & .form-control-group {
     margin-bottom: 16px;
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      font-family: Inter;
+      font-weight: 600;
+      color: nb-theme(text-basic-color);
+    }
+    ::ng-deep input.input-full-width {
+      border: 1px solid rgba(98, 54, 255, 0.5) !important;
+      background-color: transparent;
+      color: nb-theme(text-basic-color);
+    }
   }
   & .btn-wrapper {
     text-align: end;
@@ -75,9 +93,79 @@
     & .submit-btn {
       @include submit-btn;
       padding: 13px 65px;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+      border-radius: 8px;
+      line-height: 20px;
+      transition: background-color 0.2s, border-color 0.2s;
+      // Disabled/Submitting state (MUST BE FIRST)
+      &[disabled],
+      &.btn-pulse {
+        cursor: not-allowed !important;
+        // Light theme: Visible grey with purple tint
+        @include nb-for-theme(default) {
+          background-color: rgba(98, 54, 255, 0.08) !important;
+          border-color: rgba(98, 54, 255, 0.25) !important;
+          color: rgba(98, 54, 255, 0.65) !important;
+        }
+        // Dark theme: Original subtle style
+        @include nb-for-theme(dark) {
+          background-color: nb-theme(background-basic-color-3) !important;
+          border-color: transparent !important;
+          color: nb-theme(text-hint-color) !important;
+        }
+        &:hover,
+        &:active,
+        &:focus {
+          @include nb-for-theme(default) {
+            background-color: rgba(98, 54, 255, 0.08) !important;
+            border-color: rgba(98, 54, 255, 0.25) !important;
+            color: rgba(98, 54, 255, 0.65) !important;
+          }
+          @include nb-for-theme(dark) {
+            background-color: nb-theme(background-basic-color-3) !important;
+            border-color: transparent !important;
+            color: nb-theme(text-hint-color) !important;
+          }
+        }
+      }
+      // Enabled state
+      &:not([disabled]):not(.btn-pulse) {
+        background-color: nb-theme(color-primary-default) !important;
+        border-color: nb-theme(color-primary-default) !important;
+        color: white !important;
+        &:hover,
+        &:active,
+        &:focus {
+          background-color: nb-theme(color-primary-hover) !important;
+          border-color: nb-theme(color-primary-hover) !important;
+          color: white !important;
+        }
+      }
     }
   }
   & .accept-group {
+    margin: 0 0 24px 0;
+    ::ng-deep nb-checkbox {
+      display: flex;
+      align-items: center;
+      .label {
+        margin-bottom: 0 !important;
+        padding-left: 0.5rem;
+        color: nb-theme(text-basic-color);
+      }
+      .custom-checkbox {
+        border-radius: 2px !important; // Make it square
+        border-color: #8f9bb3 !important; // Light grey border
+        background-color: transparent;
+        border-width: 1px !important;
+      }
+      .custom-checkbox.checked {
+        background-color: #6236ff !important;
+        border-color: #6236ff !important;
+      }
+    }
     @include mobile-screen {
       margin-left: -10px;
       min-width: calc(100% + 30px);

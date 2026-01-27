@@ -120,8 +120,8 @@ ENV NODE_ENV=development
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && npm i -g npm@9 \
-	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
-	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
+    && apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
+    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
 # Verify installed versions
 RUN node --version && npm --version && python3 --version
@@ -186,8 +186,8 @@ ARG NODE_ENV
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && npm i -g npm@9 \
-	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
-	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
+    && apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
+    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
 # Verify installed versions
 RUN node --version && npm --version && python3 --version
@@ -284,12 +284,16 @@ ENV IS_DOCKER=true
 ENV NX_NO_CLOUD=true
 
 RUN if [ "$NODE_ENV" = "production" ]; then \
-	yarn build:package:api:docker; \
-	else \
-	yarn build:package:api; \
-	fi
+    yarn build:package:api:docker; \
+    else \
+    yarn build:package:api:dev:docker; \
+    fi
 
-RUN yarn build:api:prod:docker
+RUN if [ "$NODE_ENV" = "production" ]; then \
+    yarn build:api:prod:docker; \
+    else \
+    yarn build:api:dev:docker; \
+    fi
 
 # Exclude @gauzy directories before copying because we copy
 # those within custom webpack in apps/api/config/custom-webpack.config.js
@@ -321,7 +325,7 @@ COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node
 RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
 
 RUN mkdir /import && chown node:node /import && touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
-	chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
+    chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
 
 # Clean up
 RUN yarn cache clean

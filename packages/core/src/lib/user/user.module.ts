@@ -14,6 +14,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { FactoryResetModule } from './factory-reset/factory-reset.module';
 import { TaskModule } from './../tasks/task.module';
 import { EmployeeModule } from './../employee/employee.module';
+import { PasswordHashModule } from '../password-hash/password-hash.module';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 
@@ -25,6 +26,7 @@ import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => TaskModule),
 		forwardRef(() => EmployeeModule),
+		PasswordHashModule,
 		FactoryResetModule
 	],
 	controllers: [UserController],

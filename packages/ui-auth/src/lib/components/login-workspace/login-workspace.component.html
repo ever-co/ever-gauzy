@@ -1,6 +1,8 @@
-<ng-container
-	*ngIf="show_popup; then workspacesTemplate; else singInTemplate">
-</ng-container>
+@if (show_popup) {
+<ng-container *ngTemplateOutlet="workspacesTemplate"></ng-container>
+} @else {
+<ng-container *ngTemplateOutlet="singInTemplate"></ng-container>
+}
 
 <ng-template #singInTemplate>
 	<section class="section-wrapper">
@@ -9,7 +11,7 @@
 				<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
 			</div>
 
-			<h1 class="title">{{ "WORKSPACES.SIGN_IN_TITLE" | translate }}</h1>
+			<h1 class="title">{{ 'WORKSPACES.SIGN_IN_TITLE' | translate }}</h1>
 
 			<div class="hr-div-strong"></div>
 
@@ -19,13 +21,13 @@
 
 			<section class="sign-in-or-up" aria-label="Sign in or sign up">
 				<p class="redirect-link-p">
-					<span>{{ "WORKSPACES.BACK_TO" | translate }}</span>
+					<span>{{ 'WORKSPACES.BACK_TO' | translate }}</span>
 					<a class="text-link" [routerLink]="['/auth/login']">
-						<span>{{ "BUTTONS.LOGIN" | translate }}</span>
+						<span>{{ 'BUTTONS.LOGIN' | translate }}</span>
 					</a>
 				</p>
 				<p class="redirect-link-p">
-					<a [routerLink]="['/auth/register']" class="text-link">{{ "BUTTONS.REGISTER" | translate }}</a>
+					<a [routerLink]="['/auth/register']" class="text-link">{{ 'BUTTONS.REGISTER' | translate }}</a>
 				</p>
 			</section>
 		</div>
@@ -34,15 +36,15 @@
 
 <ng-template #singInForm>
 	<form [formGroup]="form" class="form" (ngSubmit)="onSubmit()" autocomplete-off>
-		<div style="height: 0; overflow: hidden;">
-			<input style="opacity:0;" type="email" value="" class="" />
-			<input style="opacity:0;" type="password" value=""  class="d-" />
+		<div style="height: 0; overflow: hidden">
+			<input style="opacity: 0" type="email" value="" class="" />
+			<input style="opacity: 0" type="password" value="" class="d-" />
 		</div>
 		<div class="row">
 			<div class="col">
 				<div class="form-group">
 					<label class="label" for="email">
-						{{ "WORKSPACES.LABELS.EMAIL" | translate }}
+						{{ 'WORKSPACES.LABELS.EMAIL' | translate }}
 					</label>
 					<input
 						nbInput
@@ -54,7 +56,7 @@
 						fieldSize="large"
 						formControlName="email"
 						#email
-					>
+					/>
 				</div>
 				<ngx-password-form-field
 					id="password"
@@ -66,19 +68,26 @@
 			</div>
 		</div>
 		<div class="submit-btn-wrapper">
-			<button nbButton size="small" class="submit-btn" type="submit">
-				{{ "BUTTONS.SIGNIN" | translate }}
+			<button
+				nbButton
+				size="small"
+				class="submit-btn"
+				type="submit"
+				[disabled]="loading || !form.valid"
+				[class.btn-pulse]="loading"
+			>
+				{{ 'BUTTONS.SIGNIN' | translate }}
 			</button>
 		</div>
 	</form>
 </ng-template>
 
 <ng-template #workspacesTemplate>
-	<ng-container *ngIf="workspaces.length > 0">
-		<ngx-workspace-selection
-			[workspaces]="workspaces"
-			[confirmed_email]="confirmed_email"
-			(selectedWorkspace)="signInWorkspace($event)"
-		></ngx-workspace-selection>
-	</ng-container>
+	@if (workspaces.length > 0) {
+	<ngx-workspace-selection
+		[workspaces]="workspaces"
+		[confirmed_email]="confirmed_email"
+		(selectedWorkspace)="signInWorkspace($event)"
+	></ngx-workspace-selection>
+	}
 </ng-template>

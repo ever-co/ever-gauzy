@@ -5,37 +5,43 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 @Component({
     template: `
 		<div class="img-tags-container">
-			<div *ngIf="imageUrl" class="image-container">
-				<img [src]="imageUrl" />
-			</div>
-			<div *ngIf="!imageUrl" class="image-container">
-				<ga-no-image class="no-image" (mouseenter)="hoverState = true" (mouseleave)="hoverState = false">
-				</ga-no-image>
-			</div>
-			<div class="row">
-				<div class="col-12 text-truncate name">
-					{{ value || '-' }}
-				</div>
-				<div
-					*ngIf="isTags"
-					class="col-12 mt-2"
+		  @if (imageUrl) {
+		    <div class="image-container">
+		      <img [src]="imageUrl" />
+		    </div>
+		  }
+		  @if (!imageUrl) {
+		    <div class="image-container">
+		      <ga-no-image class="no-image" (mouseenter)="hoverState = true" (mouseleave)="hoverState = false">
+		      </ga-no-image>
+		    </div>
+		  }
+		  <div class="row">
+		    <div class="col-12 text-truncate name">
+		      {{ value || '-' }}
+		    </div>
+		    @if (isTags) {
+		      <div
+		        class="col-12 mt-2"
 					[ngClass]="{
 						'tags-right': layout === componentLayoutEnum.CARDS_GRID
 					}"
-				>
-					<nb-badge
-						*ngFor="let tag of rowData?.tags"
-						class="color"
-						position="centered"
-						[style.background]="tag?.color"
-						[style.color]="backgroundContrast(tag?.color)"
-						text="{{ tag?.name }}"
-					>
-					</nb-badge>
-				</div>
-			</div>
+		        >
+		        @for (tag of rowData?.tags; track tag) {
+		          <nb-badge
+		            class="color"
+		            position="centered"
+		            [style.background]="tag?.color"
+		            [style.color]="backgroundContrast(tag?.color)"
+		            text="{{ tag?.name }}"
+		            >
+		          </nb-badge>
+		        }
+		      </div>
+		    }
+		  </div>
 		</div>
-	`,
+		`,
     styles: [
         `
 			.img-tags-container {

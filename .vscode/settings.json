@@ -26,5 +26,6 @@
 		"**/public/**/*.pdf": true
 	},
 	"angular.enable-strict-mode-prompt": false,
-	"nxConsole.generateAiAgentRules": true
+	"nxConsole.generateAiAgentRules": true,
+	"git.ignoreLimitWarning": true
 }

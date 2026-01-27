@@ -1,7 +1,9 @@
 <nb-card>
-	<nb-card-body>
-		<div class="d-flex justify-content-center align-items-center" *ngIf="loading">
-			<nb-spinner></nb-spinner>
-		</div>
-	</nb-card-body>
+  <nb-card-body>
+    @if (loading) {
+      <div class="d-flex justify-content-center align-items-center">
+        <nb-spinner></nb-spinner>
+      </div>
+    }
+  </nb-card-body>
 </nb-card>

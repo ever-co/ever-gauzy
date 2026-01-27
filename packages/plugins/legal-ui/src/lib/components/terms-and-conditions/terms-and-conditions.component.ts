@@ -1,5 +1,6 @@
-import { DOCUMENT } from '@angular/common';
+
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { LegalService } from '../../providers/legal.service';
 
 export const TERM_AND_POLICY_ENDPOINT = 'https://www.iubenda.com/api/terms-and-conditions/7927924';

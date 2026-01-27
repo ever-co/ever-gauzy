@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnInit, OnDestroy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganizationTeam } from '@gauzy/contracts';
 import { combineLatest, concatMap, filter, map, Observable, of, tap } from 'rxjs';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
@@ -12,22 +11,21 @@ import { TeamSelectorQuery } from './+state/team-selector.query';
 import { TeamSelectorService } from './+state/team-selector.service';
 import { TeamSelectorStore } from './+state/team-selector.store';
 
-@UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-team-selector',
-    templateUrl: './team-selector.component.html',
-    styleUrls: ['./team-selector.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TeamSelectorComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'gauzy-team-selector',
+	templateUrl: './team-selector.component.html',
+	styleUrls: ['./team-selector.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TeamSelectorComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
-export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizationTeam> implements OnInit {
+export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizationTeam> implements OnInit, OnDestroy {
 	constructor(
 		private readonly selectorElectronService: SelectorElectronService,
 		private readonly teamSelectorStore: TeamSelectorStore,
@@ -39,18 +37,25 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 	) {
 		super();
 	}
+
 	public ngOnInit(): void {
-		this.taskSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
-		this.teamSelectorQuery.selected$
+		const sub1 = this.teamSelectorService.onScroll$.subscribe();
+		this.subscriptions.add(sub1);
+
+		const sub2 = this.teamSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
 				tap(() => this.projectSelectorService.resetPage()),
-				concatMap(() => this.projectSelectorService.load()),
-				untilDestroyed(this)
+				concatMap(() => this.projectSelectorService.load())
 			)
 			.subscribe();
-		// Handle search logic
-		this.handleSearch(this.projectSelectorService);
+		this.subscriptions.add(sub2);
+
+		this.handleSearch(this.teamSelectorService);
+	}
+
+	public override ngOnDestroy(): void {
+		super.ngOnDestroy();
 	}
 
 	public clear(): void {

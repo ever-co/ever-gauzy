@@ -29,22 +29,22 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.13.1",
-		"@nestjs/common": "^11.1.10",
-		"@nestjs/core": "^11.1.10",
-		"@nestjs/platform-express": "^11.1.10",
+		"@nestjs/common": "^11.1.12",
+		"@nestjs/core": "^11.1.12",
+		"@nestjs/platform-express": "^11.1.12",
 		"express": "^5.2.1",
 		"express-rate-limit": "^8.0.1",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.5",
 		"csrf-csrf": "4.0.3",
-		"axios": "^1.7.0",
-		"zod": "^3.25.67",
+		"axios": "^1.9.0",
+		"zod": "^4.3.5",
 		"ws": "^8.18.3",
 		"tslib": "^2.6.2",
 		"jose": "^6.0.13",
 		"jsonwebtoken": "^9.0.0",
 		"bcryptjs": "^3.0.2",
-		"uuid": "^11.1.0",
+		"uuid": "^13.0.0",
 		"express-session": "^1.18.1",
 		"connect-redis": "^7.1.0",
 		"ioredis": "^5.7.0",
@@ -54,16 +54,16 @@
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"@types/express": "^5.0.3",
 		"@types/cors": "^2.8.19",
 		"@types/cookie-parser": "^1.4.9",
 		"@types/ws": "^8.18.1",
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/express-session": "^1.18.2",
-		"cross-env": "^7.0.3",
+		"cross-env": "^10.1.0",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.8.3"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"api",
@@ -73,7 +73,7 @@
 		"mcp-server"
 	],
 	"engines": {
-		"node": ">=20",
+		"node": ">=22",
 		"yarn": ">=1.22"
 	},
 	"sideEffects": false

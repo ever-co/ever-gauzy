@@ -7,7 +7,7 @@
 <ng-template #staticTabs>
 	<nb-tabset>
 		<nb-tab
-			*ngFor="let tab of tabs"
+			*ngFor="let tab of tabs; let i = index"
 			[tabTitle]="tab?.title"
 			[tabIcon]="tab?.icon"
 			[tabId]="tab?.tabId"
@@ -17,7 +17,7 @@
 			[route]="tab?.route"
 		>
 			<!-- Placeholder for dynamic content -->
-			<ng-template #tabContent></ng-template>
+			<ng-container #tabContent></ng-container>
 		</nb-tab>
 	</nb-tabset>
 </ng-template>

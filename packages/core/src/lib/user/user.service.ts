@@ -27,7 +27,6 @@ import {
 	UserStats
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { ConfigService } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -45,7 +44,6 @@ export class UserService extends TenantAwareCrudService<User> {
 	constructor(
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
-		private readonly _configService: ConfigService,
 		private readonly _employeeService: EmployeeService,
 		private readonly _taskService: TaskService,
 		private readonly _passwordHashService: PasswordHashService
