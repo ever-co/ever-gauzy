@@ -94,25 +94,30 @@
 			"category": "Development"
 		},
 		"flatpak": {
-			"useWaylandFlags": false,
+			"useWaylandFlags": true,
 			"finishArgs": [
 				"--share=ipc",
 				"--socket=x11",
 				"--socket=wayland",
 				"--socket=pulseaudio",
 				"--share=network",
-				"--device=all",
+				"--device=dri",
 				"--filesystem=host",
 				"--talk-name=org.freedesktop.Notifications",
 				"--talk-name=org.kde.StatusNotifierWatcher",
-				"--own-name=org.kde.StatusNotifierItem-*",
-				"--system-talk-name=org.freedesktop.login1"
+				"--talk-name=org.freedesktop.portal.Desktop",
+				"--system-talk-name=org.freedesktop.login1",
+				"--env=ELECTRON_TRASH=gio",
+				"--env=TMPDIR=/var/tmp",
+				"--env=ELECTRON_ENABLE_LOGGING=1",
+				"--env=ELECTRON_OZONE_PLATFORM_HINT=auto"
 			],
+			"executableArgs": ["--no-sandbox"],
 			"runtime": "org.freedesktop.Platform",
-			"runtimeVersion": "23.08",
+			"runtimeVersion": "24.08",
 			"sdk": "org.freedesktop.Sdk",
 			"base": "org.electronjs.Electron2.BaseApp",
-			"baseVersion": "23.08"
+			"baseVersion": "24.08"
 		},
 		"rpm": {
 			"fpm": [
