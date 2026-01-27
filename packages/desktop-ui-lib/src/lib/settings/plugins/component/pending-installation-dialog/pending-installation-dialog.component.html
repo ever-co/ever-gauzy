@@ -67,6 +67,10 @@
 				@for (plugin of pendingPlugins(); track trackByPluginId($index, plugin)) {
 				<nb-list-item
 					class="plugin-item"
+					nbInfiniteList
+					[threshold]="500"
+					[throttleTime]="300"
+					(bottomThreshold)="loadMore()"
 					[class.is-installing]="plugin.isInstalling"
 					[class.has-error]="plugin.error"
 					[class.is-installed]="plugin.isInstalled"

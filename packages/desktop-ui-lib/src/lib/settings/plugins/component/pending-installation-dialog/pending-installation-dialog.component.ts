@@ -154,4 +154,8 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 		const installing = this.pendingPlugins().filter((p) => p.isInstalling).length;
 		return Math.round(((completed + installing * 0.5) / total) * 100);
 	}
+
+	loadMore() {
+		// TODO [GP-779]: Implement load more functionality if needed
+	}
 }
