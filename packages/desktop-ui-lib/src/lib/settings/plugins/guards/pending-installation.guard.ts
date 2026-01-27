@@ -17,8 +17,6 @@ import { PluginElectronService } from '../services/plugin-electron.service';
  * To show the pending installation dialog, use the PendingInstallationService
  * or dispatch PendingInstallationActions.openDialog() after the PluginsModule is loaded.
  *
- * For startup checks, use PluginStartupCheckService which handles authentication
- * events and shows the dialog at the appropriate time.
  */
 @Injectable({ providedIn: 'root' })
 export class PendingInstallationGuard implements CanActivate {

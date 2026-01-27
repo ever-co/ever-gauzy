@@ -78,7 +78,7 @@
 					<div class="plugin-info">
 						<div class="plugin-logo" [class.installing]="plugin.isInstalling">
 							@if (plugin.isInstalling) {
-							<nb-spinner size="tiny" status="primary"></nb-spinner>
+							<nb-spinner size="small" status="primary"></nb-spinner>
 							} @else if (plugin.isInstalled) {
 							<nb-icon icon="checkmark-outline" class="installed-check"></nb-icon>
 							} @else {
@@ -91,7 +91,7 @@
 									{{ plugin.plugin.name }}
 								</span>
 								<span class="plugin-version-badge">
-									v{{ plugin.plugin.version?.version || 'N/A' }}
+									v{{ plugin.plugin.version?.number || 'N/A' }}
 								</span>
 							</div>
 							@if (plugin.plugin.description) {
@@ -130,7 +130,7 @@
 							</div>
 							<button
 								nbButton
-								size="tiny"
+								size="small"
 								status="primary"
 								(click)="installPlugin(plugin)"
 								[nbTooltip]="'BUTTONS.RETRY' | translate"
@@ -147,7 +147,7 @@
 						} @else if (!plugin.isInstalling) {
 						<button
 							nbButton
-							size="tiny"
+							size="small"
 							status="basic"
 							ghost
 							(click)="skipPlugin(plugin.plugin.id)"
@@ -158,7 +158,7 @@
 						</button>
 						<button
 							nbButton
-							size="tiny"
+							size="small"
 							status="primary"
 							(click)="installPlugin(plugin)"
 							[disabled]="!plugin.plugin.version?.id || isAnyInstalling()"
@@ -208,7 +208,7 @@
 				[nbTooltip]="'PLUGIN.PENDING_INSTALLATION.INSTALL_ALL_TOOLTIP' | translate"
 			>
 				@if (isAnyInstalling()) {
-				<nb-spinner size="tiny" status="control"></nb-spinner>
+				<nb-spinner size="small" status="control"></nb-spinner>
 				} @else {
 				<nb-icon icon="download-outline"></nb-icon>
 				}

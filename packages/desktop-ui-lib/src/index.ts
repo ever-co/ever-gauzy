@@ -46,8 +46,6 @@ export * from './lib/settings/plugins/component/plugin-marketplace/plugin-market
 export * from './lib/settings/plugins/guards/pending-installation.guard';
 export * from './lib/settings/plugins/plugin-routing.module';
 export * from './lib/settings/plugins/plugins.module';
-export * from './lib/settings/plugins/services/pending-installation.service';
-export * from './lib/settings/plugins/services/plugin-startup-check.service';
 export * from './lib/settings/settings.component';
 export * from './lib/settings/settings.module';
 export * from './lib/setup/setup.component';

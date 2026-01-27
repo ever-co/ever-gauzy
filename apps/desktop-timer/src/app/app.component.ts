@@ -4,7 +4,6 @@ import {
 	AuthStrategy,
 	ElectronService,
 	LanguageElectronService,
-	PluginStartupCheckService,
 	Store,
 	TimeTrackerDateManager,
 	TokenRefreshService
@@ -34,8 +33,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private _renderer: Renderer2,
 		readonly activityWatchElectronService: ActivityWatchElectronService,
 		readonly languageElectronService: LanguageElectronService,
-		private readonly tokenRefreshService: TokenRefreshService,
-		private readonly pluginStartupCheckService: PluginStartupCheckService
+		private readonly tokenRefreshService: TokenRefreshService
 	) {
 		activityWatchElectronService.setupActivitiesCollection();
 	}
@@ -50,10 +48,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 		if (this.store.token && this.store.refreshToken) {
 			this.tokenRefreshService.start();
 		}
-
-		// Initialize plugin startup check service
-		// This will listen for authentication events and check for available plugins
-		this.pluginStartupCheckService.initialize();
 	}
 
 	ngAfterViewInit(): void {
