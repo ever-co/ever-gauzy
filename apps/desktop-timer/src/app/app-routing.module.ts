@@ -8,7 +8,6 @@ import {
 	AuthGuard,
 	DEFAULT_AUTH_CONNECTION_GUARD_CONFIG,
 	ImageViewerComponent,
-	PendingInstallationGuard,
 	ScreenCaptureComponent,
 	ServerDownPage,
 	SettingsComponent,
@@ -32,7 +31,7 @@ const routes: Routes = [
 	{
 		path: 'time-tracker',
 		component: TimeTrackerComponent,
-		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard, PendingInstallationGuard],
+		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.recapRoutes)
 	},
 	{
@@ -49,7 +48,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'plugins',
-		canActivate: [AuthConnectionGuard, PendingInstallationGuard],
+		canActivate: [AuthConnectionGuard],
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginsModule)
 	},
 	{

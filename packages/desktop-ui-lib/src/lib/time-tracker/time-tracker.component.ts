@@ -23,6 +23,7 @@ import {
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogRef, NbDialogService, NbIconLibraries, NbRouteTab, NbToastrService } from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -33,18 +34,18 @@ import {
 	BehaviorSubject,
 	concatMap,
 	debounceTime,
+	exhaustMap,
 	filter,
 	firstValueFrom,
 	from,
 	lastValueFrom,
+	mergeMap,
 	Observable,
 	of,
 	Subject,
 	Subscription,
 	tap,
-	timer,
-	exhaustMap,
-	mergeMap
+	timer
 } from 'rxjs';
 import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
 import { AuthStrategy } from '../auth';
@@ -69,6 +70,7 @@ import {
 	ToastrNotificationService,
 	ZoneEnum
 } from '../services';
+import { PendingInstallationActions } from '../settings/plugins/component/+state/pending-installation.action';
 import { ClientSelectorService } from '../shared/features/client-selector/+state/client-selector.service';
 import { NoteService } from '../shared/features/note/+state/note.service';
 import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
@@ -188,6 +190,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _authStrategy: AuthStrategy,
 		private _translateService: TranslateService,
 		private _alwaysOnService: AlwaysOnService,
+		private _actions: Actions,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 		private readonly _activityWatchViewService: ActivityWatchViewService,
@@ -397,14 +400,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		) {
 			// Verify if user are already started to work for organization, if yes you can run time tracker else no
 			if (!this.userData?.employee?.startedWorkOn) {
-				this._toastrNotifier.error(
-					this._translateService.instant('TIMER_TRACKER.TOASTR.NOT_AUTHORIZED')
-				);
+				this._toastrNotifier.error(this._translateService.instant('TIMER_TRACKER.TOASTR.NOT_AUTHORIZED'));
 			}
 			// Verify if user are deleted for organization, if yes can't run time tracker
 			if (this.userData?.employee?.startedWorkOn && !this.userData?.employee?.isActive) {
-				this._toastrNotifier.error(
-					this._translateService.instant('TIMER_TRACKER.TOASTR.ACCOUNT_DELETED'));
+				this._toastrNotifier.error(this._translateService.instant('TIMER_TRACKER.TOASTR.ACCOUNT_DELETED'));
 			}
 			isPassed = false;
 		} else isPassed = true;
@@ -475,8 +475,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.preventDuplicateApiRequest({ ...lastTimer, ...params }, (payload) =>
-								this.timeTrackerService.toggleApiStart(payload)
-							);
+									this.timeTrackerService.toggleApiStart(payload)
+							  );
 					} catch (error) {
 						lastTimer.isStartedOffline = true;
 						this._loggerService.error(error);
@@ -553,13 +553,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			organizationId,
 			...(this.projectSelectorService.selectedId
 				? {
-					projectId: this.projectSelectorService.selectedId
-				}
+						projectId: this.projectSelectorService.selectedId
+				  }
 				: {})
 		});
 	}
 
 	ngOnInit(): void {
+		this.checkPendingInstallations();
 		this._lastTotalWorkedToday$
 			.pipe(
 				tap((todayDuration: number) => {
@@ -1792,8 +1793,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				typeof img === 'object' && img.thumbUrl
 					? await this._imageViewerService.getBase64ImageFromUrl(img.thumbUrl)
 					: typeof img === 'string'
-						? img
-						: undefined;
+					? img
+					: undefined;
 
 			// Set timestamp, preferring recordedAt if available
 			const timestamp = typeof img === 'object' && img.recordedAt ? new Date(img.recordedAt) : new Date();
@@ -2451,4 +2452,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			disabled: this._isOffline
 		}
 	]);
+
+	private checkPendingInstallations(): void {
+		this._actions.dispatch(PendingInstallationActions.checkAndShowDialog());
+	}
 }
