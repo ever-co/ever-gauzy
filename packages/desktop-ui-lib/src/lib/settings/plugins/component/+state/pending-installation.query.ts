@@ -17,9 +17,6 @@ export class PendingInstallationQuery extends Query<IPendingInstallationState> {
 	/** Observable of loading state */
 	public readonly loading$: Observable<boolean> = this.select((state) => state.loading);
 
-	/** Observable of dialog open state */
-	public readonly dialogOpen$: Observable<boolean> = this.select((state) => state.dialogOpen);
-
 	/** Observable of global error state */
 	public readonly error$: Observable<string | null> = this.select((state) => state.error);
 
@@ -76,13 +73,6 @@ export class PendingInstallationQuery extends Query<IPendingInstallationState> {
 	 */
 	public get hasPendingPlugins(): boolean {
 		return this.pendingCount > 0;
-	}
-
-	/**
-	 * Gets the dialog open state
-	 */
-	public get dialogOpen(): boolean {
-		return this.getValue().dialogOpen;
 	}
 
 	/**

@@ -25,8 +25,6 @@ export interface IPendingInstallationState {
 	pendingPlugins: IPendingPluginInstallation[];
 	/** Loading state for fetching pending plugins */
 	loading: boolean;
-	/** Whether the pending installation dialog is open */
-	dialogOpen: boolean;
 	/** Global error state */
 	error: string | null;
 	/** Whether the check has been performed */
@@ -42,7 +40,6 @@ export function createInitialPendingInstallationState(): IPendingInstallationSta
 	return {
 		pendingPlugins: [],
 		loading: false,
-		dialogOpen: false,
 		error: null,
 		checked: false,
 		forceInstallEnabled: false
@@ -92,20 +89,6 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 		this.update((state) => ({
 			pendingPlugins: state.pendingPlugins.filter((p) => p.plugin.id !== pluginId)
 		}));
-	}
-
-	/**
-	 * Opens the dialog
-	 */
-	public openDialog(): void {
-		this.update({ dialogOpen: true });
-	}
-
-	/**
-	 * Closes the dialog
-	 */
-	public closeDialog(): void {
-		this.update({ dialogOpen: false });
 	}
 
 	/**

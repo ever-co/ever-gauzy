@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { catchError, filter, forkJoin, from, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
+import { catchError, exhaustMap, filter, forkJoin, from, map, of, switchMap, take, tap, withLatestFrom } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { UserSubscribedPluginsService } from '../../services/user-subscribed-plugins.service';
 import { PendingInstallationDialogComponent } from '../pending-installation-dialog/pending-installation-dialog.component';
@@ -104,26 +104,15 @@ export class PendingInstallationEffects {
 		() =>
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.openDialog),
-				filter(() => !this.query.dialogOpen),
-				tap(() => {
-					this.store.openDialog();
+				exhaustMap(() =>
 					this.dialog
 						.open(PendingInstallationDialogComponent, {
 							closeOnBackdropClick: false,
 							closeOnEsc: true,
 							hasBackdrop: true
 						})
-						.onClose.pipe(map(() => PendingInstallationActions.closeDialog()));
-				})
-			),
-		{ dispatch: true }
-	);
-
-	closeDialog$ = createEffect(
-		() =>
-			this.actions$.pipe(
-				ofType(PendingInstallationActions.closeDialog),
-				tap(() => this.store.closeDialog())
+						.onClose.pipe(take(1))
+				)
 			),
 		{ dispatch: false }
 	);
@@ -180,13 +169,7 @@ export class PendingInstallationEffects {
 		() =>
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.installationCompleted),
-				tap(({ pluginId }) => this.store.removePlugin(pluginId)),
-				withLatestFrom(this.query.pendingCount$),
-				tap(([_, count]) => {
-					if (count === 0) {
-						this.store.closeDialog();
-					}
-				})
+				tap(({ pluginId }) => this.store.removePlugin(pluginId))
 			),
 		{ dispatch: false }
 	);
@@ -211,7 +194,7 @@ export class PendingInstallationEffects {
 				switchMap(([_, plugins]) =>
 					from(plugins).pipe(
 						filter((p) => !p.isInstalling && !!p.plugin.version?.id),
-						map((p) => PendingInstallationActions.installPlugin(p.plugin.id, p.plugin.version!.id))
+						map((p) => PendingInstallationActions.installPlugin(p.plugin.id, p.plugin.version?.id))
 					)
 				)
 			),
@@ -229,7 +212,7 @@ export class PendingInstallationEffects {
 				switchMap(([_, plugins]) =>
 					from(plugins).pipe(
 						filter((p) => p.canAutoInstall),
-						map((p) => PendingInstallationActions.installPlugin(p.plugin.id, p.plugin.version!.id))
+						map((p) => PendingInstallationActions.installPlugin(p.plugin.id, p.plugin.version?.id))
 					)
 				)
 			),
@@ -244,15 +227,6 @@ export class PendingInstallationEffects {
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.skipPlugin),
 				tap(({ pluginId }) => this.store.removePlugin(pluginId))
-			),
-		{ dispatch: false }
-	);
-
-	skipAll$ = createEffect(
-		() =>
-			this.actions$.pipe(
-				ofType(PendingInstallationActions.skipAll),
-				tap(() => this.store.closeDialog())
 			),
 		{ dispatch: false }
 	);
