@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal }
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs';
 import { PendingInstallationActions } from '../+state/pending-installation.action';
 import { PendingInstallationQuery } from '../+state/pending-installation.query';
@@ -25,7 +24,6 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	private readonly dialogRef = inject(NbDialogRef<PendingInstallationDialogComponent>);
 	private readonly actions = inject(Actions);
 	private readonly query = inject(PendingInstallationQuery);
-	private readonly translateService = inject(TranslateService);
 
 	/** Pending plugins to display */
 	protected readonly pendingPlugins = signal<IPendingPluginInstallation[]>([]);
