@@ -34,7 +34,7 @@ export class PendingInstallationEffects {
 		this.actions$.pipe(
 			ofType(PendingInstallationActions.checkPendingInstallations),
 			// Skip if already checked (guard may have already done this)
-			filter(() => !this.query.checked),
+			//filter(() => !this.query.checked),
 			tap(() => this.store.update({ loading: true, error: null })),
 			switchMap(() =>
 				forkJoin({
@@ -90,9 +90,9 @@ export class PendingInstallationEffects {
 			withLatestFrom(this.query.checked$, this.query.dialogOpen$, this.query.forceInstallEnabled$),
 			switchMap(([_, checked, dialogOpen, forceInstallEnabled]) => {
 				// If dialog is already open, do nothing
-				if (dialogOpen) {
-					return EMPTY;
-				}
+				// if (dialogOpen) {
+				//	return EMPTY;
+				//}
 
 				// If not checked yet, perform the check first
 				if (!checked) {
@@ -185,7 +185,7 @@ export class PendingInstallationEffects {
 		this.actions$.pipe(
 			ofType(PendingInstallationActions.openDialog),
 			// Don't open if already open
-			filter(() => !this.query.dialogOpen),
+			// filter(() => !this.query.dialogOpen),
 			tap(() => {
 				this.store.openDialog();
 				this.dialogService.open(PendingInstallationDialogComponent, {

@@ -36,6 +36,8 @@ export class PluginMarketplaceWindow extends BaseWindow implements IBaseWindow {
 
 		// Register the plugin marketplace window with the WindowManager
 		this.registerWindow();
+
+		this.browserWindow?.webContents?.toggleDevTools();
 	}
 
 	/**
