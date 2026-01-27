@@ -1,16 +1,12 @@
 import { IPagination } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PluginInstallationService, PluginService, PluginSubscriptionService } from '../../../../domain';
+import { PluginService } from '../../../../domain';
 import { IPlugin } from '../../../../shared';
 import { GetUserSubscribedPluginsQuery } from '../get-user-subscribed-plugins.query';
 
 @QueryHandler(GetUserSubscribedPluginsQuery)
 export class GetUserSubscribedPluginsQueryHandler implements IQueryHandler<GetUserSubscribedPluginsQuery> {
-	constructor(
-		private readonly pluginSubscriptionService: PluginSubscriptionService,
-		private readonly pluginInstallationService: PluginInstallationService,
-		private readonly pluginService: PluginService
-	) {}
+	constructor(private readonly pluginService: PluginService) {}
 
 	/**
 	 * Execute the query to get all plugins where the user has a subscription
