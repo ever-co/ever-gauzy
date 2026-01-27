@@ -1,5 +1,5 @@
-@let plugins = query.plugins$ | async; @let available = plugins && plugins.length > 0; @let isLoading =
-(query.isLoading$ | async) && plugins.length === 0; @let uploading = query.uploading$() | async; @let progress =
+@let plugins = query.plugins$ | async; @let available = (plugins?.length || 0) > 0; @let isLoading =
+(query.isLoading$ | async) && ((plugins?.length || 0) === 0); @let uploading = query.uploading$() | async; @let progress =
 query.uploadProgress$() | async; @let isOffline = store.isOffline$ | async; @let totalCount = query.totalCount$ | async;
 @let filteredCount = query.filteredCount$ | async; @let showAdvancedFilters = query.showAdvancedFilters$ | async; @let
 selectedView = query.selectedView$ | async;
