@@ -1,4 +1,3 @@
-
 app-id: com.ever.gauzyagent
 runtime: org.freedesktop.Platform
 runtime-version: '24.08'
@@ -10,58 +9,40 @@ command: gauzy-agent
 separate-locales: false
 
 finish-args:
-  # Display
   - --share=ipc
   - --share=network
-  - --system-talk-name=org.freedesktop.login1
+  - --system-talk-name=org.freedesktop.portal.Inhibit
   - --system-talk-name=org.freedesktop.NetworkManager
   - --system-talk-name=org.freedesktop.UPower
   - --socket=wayland
   - --socket=fallback-x11
   - --device=dri
-  - --talk-name=org.freedesktop.portal.Desktop
-  - --filesystem=host
 
 modules:
   - name: gauzy-agent
     buildsystem: simple
     build-commands:
-      # Extract . deb package
       - ar x gauzy-agent.deb
       - tar xf data.tar.xz
-
-      # Install application
       - mkdir -p /app/lib/gauzy-agent
       - cp -r "opt/Gauzy Agent"/* /app/lib/gauzy-agent/
-      # Ensure binary name is lowercased for wrapper script
       - if [ -f "/app/lib/gauzy-agent/Gauzy Agent" ]; then mv "/app/lib/gauzy-agent/Gauzy Agent" /app/lib/gauzy-agent/gauzy-agent; fi
-
-      # Install wrapper script
       - install -Dm755 gauzy-agent.sh /app/bin/gauzy-agent
-
-      # Install desktop files
       - install -Dm644 com.ever.gauzyagent.desktop /app/share/applications/com.ever.gauzyagent.desktop
-
-      # Install AppStream metadata
       - install -Dm644 com.ever.gauzyagent.metainfo.xml /app/share/metainfo/com.ever.gauzyagent.metainfo.xml
 
-      # Install icons
       - install -Dm644 icons/16x16.png /app/share/icons/hicolor/16x16/apps/com.ever.gauzyagent.png
       - install -Dm644 icons/32x32.png /app/share/icons/hicolor/32x32/apps/com.ever.gauzyagent.png
       - install -Dm644 icons/64x64.png /app/share/icons/hicolor/64x64/apps/com.ever.gauzyagent.png
       - install -Dm644 icons/128x128.png /app/share/icons/hicolor/128x128/apps/com.ever.gauzyagent.png
       - install -Dm644 icons/256x256.png /app/share/icons/hicolor/256x256/apps/com.ever.gauzyagent.png
       - install -Dm644 icons/512x512.png /app/share/icons/hicolor/512x512/apps/com.ever.gauzyagent.png
-
-      # Install autostart file (optional)
-      # - install -Dm644 com.ever.gauzyagent-autostart.desktop /app/etc/xdg/autostart/com.ever.gauzyagent.desktop
-
     sources:
       - type: script
         dest-filename: gauzy-agent.sh
         commands:
           - export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
-          - ELECTRON_ENABLE_LOGGING=1 ELECTRON_ENABLE_STACK_DUMPING=1 /app/lib/gauzy-agent/gauzy-agent --disable-gpu --no-sandbox --ozone-platform=x11
+          - /app/lib/gauzy-agent/gauzy-agent --no-sandbox --ozone-platform=x11
 
       - type: file
         path: com.ever.gauzyagent.desktop
