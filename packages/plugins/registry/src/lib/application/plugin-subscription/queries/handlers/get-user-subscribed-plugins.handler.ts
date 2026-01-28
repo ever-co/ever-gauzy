@@ -1,5 +1,6 @@
 import { IPagination } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { In } from 'typeorm';
 import { PluginService } from '../../../../domain';
 import { IPlugin } from '../../../../shared';
 import { GetUserSubscribedPluginsQuery } from '../get-user-subscribed-plugins.query';
@@ -17,7 +18,7 @@ export class GetUserSubscribedPluginsQueryHandler implements IQueryHandler<GetUs
 	 */
 	async execute(query: GetUserSubscribedPluginsQuery): Promise<IPagination<IPlugin>> {
 		const { userId: subscriberId, tenantId, organizationId, options = {} } = query;
-		const { status, skip = 0, take = 10, relations = [] } = options;
+		const { status = [], skip = 0, take = 10 } = options;
 
 		try {
 			return this.pluginService.findAll({
@@ -25,10 +26,23 @@ export class GetUserSubscribedPluginsQueryHandler implements IQueryHandler<GetUs
 					subscriptions: {
 						tenantId,
 						subscriberId,
-						organizationId
+						organizationId,
+						pluginTenant: {
+							enabled: true
+						},
+						...(status.length > 0 && { status: In([...status]) })
 					}
 				},
-				relations: ['subscriptions'],
+				select: {
+					id: true,
+					name: true,
+					description: true,
+					subscriptions: {
+						id: true,
+						status: true
+					}
+				},
+				relations: ['subscriptions', 'subscriptions.pluginTenant'],
 				skip,
 				take
 			});
