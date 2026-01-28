@@ -3,7 +3,7 @@ import { PermissionGuard, RequestContext, TenantPermissionGuard } from '@gauzy/c
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { GetUserSubscribedPluginsQuery, HasPendingInstallationQuery } from '../../application';
+import { GetUserSubscribedPluginsQuery } from '../../application';
 import { Plugin } from '../../domain';
 import { IPlugin } from '../../shared';
 
@@ -82,47 +82,5 @@ export class UserSubscribedPluginsController {
 				relations: relations || []
 			})
 		);
-	}
-
-	/**
-	 * Check if the current user has at least one pending plugin installation
-	 */
-	@ApiOperation({
-		summary: 'Check for pending installations',
-		description:
-			'Checks if the current authenticated user has at least one pending (in-progress) plugin installation.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Returns true if there is at least one pending installation, false otherwise.',
-		schema: {
-			type: 'object',
-			properties: {
-				hasPending: {
-					type: 'boolean',
-					description: 'Indicates whether there is at least one pending installation'
-				}
-			}
-		}
-	})
-	@ApiResponse({
-		status: HttpStatus.UNAUTHORIZED,
-		description: 'Unauthorized access - user must be authenticated.'
-	})
-	@ApiResponse({
-		status: HttpStatus.FORBIDDEN,
-		description: 'Forbidden - insufficient permissions.'
-	})
-	@Get('pending')
-	public async hasPendingInstallation(): Promise<{ hasPending: boolean }> {
-		const userId = RequestContext.currentUserId();
-		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.currentOrganizationId();
-
-		const hasPending = await this.queryBus.execute(
-			new HasPendingInstallationQuery(userId, tenantId, organizationId)
-		);
-
-		return { hasPending };
 	}
 }
