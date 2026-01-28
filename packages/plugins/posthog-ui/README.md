@@ -169,10 +169,10 @@ import { PostHogServiceManager } from '@gauzy/plugin-posthog-ui';
 @Component({
 	selector: 'app-feature',
 	template: `
-		<div *ngIf="newFeatureEnabled">
+		@if (newFeatureEnabled) {
 			<h2>New Feature</h2>
 			<!-- Feature content -->
-		</div>
+		}
 	`
 })
 export class FeatureComponent implements OnInit {
