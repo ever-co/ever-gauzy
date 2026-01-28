@@ -150,35 +150,35 @@
                                       }}
                                     </div>
                                     <div class="form-block-criterion">
-                                      <div
-                                        class="form-block-criterion-item"
-													*ngFor="
-														let technologyRating of form.get(
-															[
-																'feedbacks',
-																0,
-																'technologies'
-															]
-														).controls;
-														index as i
-													"
-                                        >
-                                        @if (technologiesList) {
-                                          <span
-                                            class="form-block-criterion-title"
-                                            >
-                                            {{
-                                            technologiesList[i]
-                                            ?.name
-                                            }}
-                                          </span>
-                                        }
-                                        <ga-star-rating-input
+                                      @for (
+                                        technologyRating of form.get(
+                                        [
+                                        'feedbacks',
+                                        0,
+                                        'technologies'
+                                        ]
+                                        ).controls; track
+                                        technologyRating; let i = $index) {
+                                        <div
+                                          class="form-block-criterion-item"
+                                          >
+                                          @if (technologiesList) {
+                                            <span
+                                              class="form-block-criterion-title"
+                                              >
+                                              {{
+                                              technologiesList[i]
+                                              ?.name
+                                              }}
+                                            </span>
+                                          }
+                                          <ga-star-rating-input
 														[formControl]="
 															technologyRating
 														"
-                                        ></ga-star-rating-input>
-                                      </div>
+                                          ></ga-star-rating-input>
+                                        </div>
+                                      }
                                     </div>
                                   </div>
                                 }
@@ -203,38 +203,38 @@
                                       }}
                                     </div>
                                     <div class="form-block-criterion">
-                                      <div
-                                        class="form-block-criterion-item"
-													*ngFor="
-														let personalQualityRating of form.get(
-															[
-																'feedbacks',
-																0,
-																'personalQualities'
-															]
-														).controls;
-														index as i
-													"
-                                        >
-                                        @if (
-                                          personalQualitiesList
-                                          ) {
-                                          <span
-                                            class="form-block-criterion-title"
-                                            >
-                                            {{
-                                            personalQualitiesList[
-                                            i
-                                            ]?.name
-                                            }}
-                                          </span>
-                                        }
-                                        <ga-star-rating-input
+                                      @for (
+                                        personalQualityRating of form.get(
+                                        [
+                                        'feedbacks',
+                                        0,
+                                        'personalQualities'
+                                        ]
+                                        ).controls; track
+                                        personalQualityRating; let i = $index) {
+                                        <div
+                                          class="form-block-criterion-item"
+                                          >
+                                          @if (
+                                            personalQualitiesList
+                                            ) {
+                                            <span
+                                              class="form-block-criterion-title"
+                                              >
+                                              {{
+                                              personalQualitiesList[
+                                              i
+                                              ]?.name
+                                              }}
+                                            </span>
+                                          }
+                                          <ga-star-rating-input
 														[formControl]="
 															personalQualityRating
 														"
-                                        ></ga-star-rating-input>
-                                      </div>
+                                          ></ga-star-rating-input>
+                                        </div>
+                                      }
                                     </div>
                                   </div>
                                 }

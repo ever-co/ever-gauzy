@@ -19,26 +19,26 @@
 </nb-card>
 
 <ng-template #tableView>
-	<div class="row grow">
-		<div class="col-12 custom-table">
-			<div class="table-scroll-container grow" style="max-height: calc(100vh - 145px);">
-				<ng-container *ngIf="loading$ | async">
-					<div class="smart-table" [nbSpinner]="true" nbSpinnerSize="small"></div>
-				</ng-container>
-				<angular2-smart-table
-					#smartTable
-					[settings]="smartTableSettings"
-					[source]="smartTableSource"
-					style="cursor: pointer"
-					(userRowSelect)="onRowClick($event)"
-				>
-				</angular2-smart-table>
-			</div>
-		</div>
-		<ng-template #noTask>
-			<div class="no-data col-12">
-				<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TASK' | translate"> </ngx-no-data-message>
-			</div>
-		</ng-template>
-	</div>
+  <div class="row grow">
+    <div class="col-12 custom-table">
+      <div class="table-scroll-container grow" style="max-height: calc(100vh - 145px);">
+        @if (loading$ | async) {
+          <div class="smart-table" [nbSpinner]="true" nbSpinnerSize="small"></div>
+        }
+        <angular2-smart-table
+          #smartTable
+          [settings]="smartTableSettings"
+          [source]="smartTableSource"
+          style="cursor: pointer"
+          (userRowSelect)="onRowClick($event)"
+          >
+        </angular2-smart-table>
+      </div>
+    </div>
+    <ng-template #noTask>
+      <div class="no-data col-12">
+        <ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TASK' | translate"> </ngx-no-data-message>
+      </div>
+    </ng-template>
+  </div>
 </ng-template>
