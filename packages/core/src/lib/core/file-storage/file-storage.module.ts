@@ -1,6 +1,6 @@
 import { NestModule, MiddlewareConsumer, Module } from '@nestjs/common';
 import { environment } from '@gauzy/config';
-import { WasabiStorageModule, WasabiConfigAdapter } from '@gauzy/storage-provider-wasabi';
+import { WasabiStorageModule, WasabiConfigAdapter } from '@gauzy/file-wasabi-s3';
 import { RequestContext } from '../context/request-context';
 import { TenantSettingModule } from '../../tenant/tenant-setting/tenant-setting.module';
 import { TenantSettingsMiddleware } from '../../tenant/tenant-setting/tenant-settings.middleware';

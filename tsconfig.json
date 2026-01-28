@@ -65,7 +65,7 @@
 			"@gauzy/ui-core": ["./packages/ui-core/src/index.ts"],
 			"@gauzy/ui-core/*": ["./packages/ui-core/*/src/index.ts"],
 			"@gauzy/utils": ["./packages/utils/src/index.ts"],
-			"@gauzy/storage-provider-wasabi": ["./packages/modules/providers/storage-provider-wasabi/src/index.ts"],
+			"@gauzy/file-wasabi-s3": ["./packages/modules/providers/file-wasabi-s3/src/index.ts"],
 			"@nebular/*": ["./node_modules/@nebular/*"],
 			"ng2-completer": ["./node_modules/@akveo/ng2-completer"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"]

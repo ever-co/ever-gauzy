@@ -1,4 +1,4 @@
-# @gauzy/storage-provider-wasabi
+# @gauzy/file-wasabi-s3
 
 A flexible, reusable Wasabi S3-compatible storage provider for NestJS applications. This package can be used standalone, with NestJS dependency injection, or integrated with the Ever Gauzy platform.
 
@@ -15,7 +15,7 @@ A flexible, reusable Wasabi S3-compatible storage provider for NestJS applicatio
 ## Installation
 
 ```bash
-yarn add @gauzy/storage-provider-wasabi
+yarn add @gauzy/file-wasabi-s3
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ yarn add @gauzy/storage-provider-wasabi
 ### 1. Standalone Usage (No Framework)
 
 ```typescript
-import { WasabiS3Provider } from '@gauzy/storage-provider-wasabi';
+import { WasabiS3Provider } from '@gauzy/file-wasabi-s3';
 
 const provider = new WasabiS3Provider();
 
@@ -52,7 +52,7 @@ await provider.deleteFile('path/to/file.txt');
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { WasabiStorageModule } from '@gauzy/storage-provider-wasabi';
+import { WasabiStorageModule } from '@gauzy/file-wasabi-s3';
 
 @Module({
 	imports: [
@@ -75,7 +75,7 @@ export class AppModule {}
 ```typescript
 import { Module } from '@nestjs/common';
 import { ConfigService, ConfigModule } from '@nestjs/config';
-import { WasabiStorageModule } from '@gauzy/storage-provider-wasabi';
+import { WasabiStorageModule } from '@gauzy/file-wasabi-s3';
 
 @Module({
 	imports: [
@@ -100,7 +100,7 @@ export class AppModule {}
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { WasabiStorageModule, IWasabiConfigProvider, IWasabiConfig } from '@gauzy/storage-provider-wasabi';
+import { WasabiStorageModule, IWasabiConfigProvider, IWasabiConfig } from '@gauzy/file-wasabi-s3';
 
 // Create a custom config provider
 @Injectable()
@@ -134,7 +134,7 @@ export class AppModule {}
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { WasabiS3Provider } from '@gauzy/storage-provider-wasabi';
+import { WasabiS3Provider } from '@gauzy/file-wasabi-s3';
 
 @Injectable()
 export class FileService {
@@ -154,7 +154,7 @@ export class FileService {
 ### 6. Gauzy Platform Integration
 
 ```typescript
-import { createWasabiStoragePlugin, GauzyWasabiConfigAdapter } from '@gauzy/storage-provider-wasabi';
+import { createWasabiStoragePlugin, GauzyWasabiConfigAdapter } from '@gauzy/file-wasabi-s3';
 import { environment } from '@gauzy/config';
 import { RequestContext } from '@gauzy/core';
 
@@ -229,7 +229,7 @@ export const plugins = [
 You can use the `createConfigFromEnv()` helper to load configuration from environment variables:
 
 ```typescript
-import { createConfigFromEnv } from '@gauzy/storage-provider-wasabi';
+import { createConfigFromEnv } from '@gauzy/file-wasabi-s3';
 
 // Uses WASABI_* prefix by default
 const config = createConfigFromEnv();

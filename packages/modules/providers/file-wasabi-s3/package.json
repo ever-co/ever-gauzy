@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/storage-provider-wasabi",
+	"name": "@gauzy/file-wasabi-s3",
 	"version": "0.1.0",
 	"description": "Flexible Wasabi S3-compatible storage provider for NestJS applications",
 	"author": {
@@ -10,7 +10,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy",
-		"directory": "packages/modules/providers/storage-provider-wasabi"
+		"directory": "packages/modules/providers/file-wasabi-s3"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
@@ -22,9 +22,9 @@
 	"main": "./src/index.js",
 	"typings": "./src/index.d.ts",
 	"scripts": {
-		"lib:build": "yarn nx build storage-provider-wasabi",
-		"lib:build:prod": "yarn nx build storage-provider-wasabi",
-		"lib:watch": "yarn nx build storage-provider-wasabi --watch"
+		"lib:build": "yarn nx build file-wasabi-s3",
+		"lib:build:prod": "yarn nx build file-wasabi-s3",
+		"lib:watch": "yarn nx build file-wasabi-s3 --watch"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "3.717.0",

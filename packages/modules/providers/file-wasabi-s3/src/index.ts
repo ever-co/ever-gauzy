@@ -1,5 +1,5 @@
 /**
- * Public API Surface of @gauzy/storage-provider-wasabi
+ * Public API Surface of @gauzy/file-wasabi-s3
  *
  * A flexible, reusable Wasabi S3-compatible storage provider that can be used:
  * - Standalone without any framework
