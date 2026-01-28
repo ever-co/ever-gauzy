@@ -343,7 +343,7 @@ nb-card-body {
 
   .plugin-info {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.875rem;
     flex: 1;
     min-width: 0;
@@ -396,7 +396,8 @@ nb-card-body {
       flex-direction: column;
       gap: 0.25rem;
       min-width: 0;
-      flex: 1;
+      justify-content: flex-start;
+      align-items: flex-start;
 
       .plugin-name-row {
         display: flex;
@@ -427,11 +428,11 @@ nb-card-body {
       .plugin-description {
         font-size: 0.75rem;
         color: var(--gauzy-text-color-2);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 280px;
         line-height: 1.4;
+
+        button {
+          font-size: 0.75rem !important;
+        }
       }
 
       .status-text {

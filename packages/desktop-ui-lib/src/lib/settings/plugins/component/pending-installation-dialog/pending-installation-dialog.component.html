@@ -95,13 +95,16 @@
 								</span>
 							</div>
 							@if (pending.plugin.description) {
-							<span
+							<div
 								class="plugin-description"
+								[readMore]="120"
+								[readMoreText]="'BUTTONS.READ_MORE' | translate"
+								[readLessText]="'BUTTONS.READ_LESS' | translate"
 								[nbTooltip]="pending.plugin.description"
 								nbTooltipPlacement="bottom"
 							>
 								{{ pending.plugin.description }}
-							</span>
+							</div>
 							} @if (pending.isInstalling) {
 							<span class="status-text installing">
 								<nb-icon icon="sync-outline" class="spin-icon"></nb-icon>

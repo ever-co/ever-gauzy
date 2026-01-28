@@ -7,7 +7,7 @@ import {
 	EMPTY,
 	exhaustMap,
 	filter,
-	forkJoin,
+	finalize,
 	from,
 	map,
 	of,
@@ -16,6 +16,7 @@ import {
 	tap,
 	withLatestFrom
 } from 'rxjs';
+import { IPlugin } from '../../services/plugin-loader.service';
 import { UserSubscribedPluginsService } from '../../services/user-subscribed-plugins.service';
 import { PendingInstallationDialogComponent } from '../pending-installation-dialog/pending-installation-dialog.component';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
@@ -24,7 +25,6 @@ import { PendingInstallationActions } from './pending-installation.action';
 import { PendingInstallationQuery } from './pending-installation.query';
 import { IPendingPluginInstallation, PendingInstallationStore } from './pending-installation.store';
 import { PluginActions } from './plugin.action';
-import { PluginQuery } from './plugin.query';
 
 @Injectable({ providedIn: 'root' })
 export class PendingInstallationEffects {
@@ -33,19 +33,15 @@ export class PendingInstallationEffects {
 		private readonly query: PendingInstallationQuery,
 		private readonly actions$: Actions,
 		private readonly userSubscribedPluginsService: UserSubscribedPluginsService,
-		private readonly pluginQuery: PluginQuery,
 		private readonly dialog: NbDialogService
 	) {}
 
 	/* ---------------------------------------------------------------------
 	 * Shared loader (single source of truth)
 	 * -------------------------------------------------------------------*/
-	private loadPendingPlugins$() {
-		return forkJoin({
-			subscribed: this.userSubscribedPluginsService.getSubscribedPlugins(),
-			installed: this.pluginQuery.plugins$
-		}).pipe(
-			map(({ subscribed, installed }) => {
+	private loadPendingPlugins(installed: IPlugin[]) {
+		return this.userSubscribedPluginsService.getSubscribedPlugins().pipe(
+			map((subscribed) => {
 				const installedIds = new Set(installed.map((p) => p.marketplaceId).filter(Boolean));
 
 				return subscribed
@@ -72,9 +68,10 @@ export class PendingInstallationEffects {
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.checkPendingInstallations),
 				tap(() => this.store.update({ loading: true, error: null })),
-				switchMap(() =>
-					this.loadPendingPlugins$().pipe(
+				switchMap(({ plugins }) =>
+					this.loadPendingPlugins(plugins).pipe(
 						map((plugins) => PendingInstallationActions.setPendingPlugins(plugins)),
+						finalize(() => this.store.setLoading(false)),
 						catchError((err) =>
 							of(
 								PendingInstallationActions.installationFailed(
@@ -82,8 +79,7 @@ export class PendingInstallationEffects {
 									err?.message ?? 'Check failed'
 								)
 							)
-						),
-						tap(() => this.store.update({ loading: false, checked: true }))
+						)
 					)
 				)
 			),
@@ -137,7 +133,7 @@ export class PendingInstallationEffects {
 		() =>
 			this.actions$.pipe(
 				ofType(PluginActions.getPluginsSuccess),
-				map(() => PendingInstallationActions.checkPendingInstallations())
+				map(({ plugins }) => PendingInstallationActions.checkPendingInstallations(plugins))
 			),
 		{ dispatch: true }
 	);
@@ -160,6 +156,18 @@ export class PendingInstallationEffects {
 				)
 			),
 		{ dispatch: false }
+	);
+
+	closeDialog$ = createEffect(() =>
+		this.actions$.pipe(
+			ofType(PendingInstallationActions.closeDialog),
+			withLatestFrom(this.query.hasPendingPlugins$),
+			map(([_, hasPending]) =>
+				this.store.update({
+					checked: hasPending
+				})
+			)
+		)
 	);
 
 	/* ---------------------------------------------------------------------
@@ -274,6 +282,15 @@ export class PendingInstallationEffects {
 				tap(({ pluginId }) => this.store.removePlugin(pluginId))
 			),
 		{ dispatch: false }
+	);
+
+	skipAllPlugin$ = createEffect(
+		() =>
+			this.actions$.pipe(
+				ofType(PendingInstallationActions.skipAll),
+				map(() => PendingInstallationActions.reset())
+			),
+		{ dispatch: true }
 	);
 
 	reset$ = createEffect(

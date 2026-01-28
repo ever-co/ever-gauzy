@@ -1,4 +1,5 @@
 import { createAction } from '@ngneat/effects';
+import { IPlugin } from '../../services/plugin-loader.service';
 import { IPendingPluginInstallation } from './pending-installation.store';
 
 /**
@@ -8,7 +9,10 @@ export class PendingInstallationActions {
 	/**
 	 * Check for non-installed subscribed plugins
 	 */
-	public static readonly checkPendingInstallations = createAction('[Pending Installation] Check Pending');
+	public static readonly checkPendingInstallations = createAction(
+		'[Pending Installation] Check Pending',
+		(plugins: Array<IPlugin>) => ({ plugins })
+	);
 
 	/**
 	 * Check and show dialog if there are pending plugins.

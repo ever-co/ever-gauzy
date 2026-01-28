@@ -57,7 +57,7 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 	 * Sets the pending plugins list
 	 */
 	public setPendingPlugins(plugins: IPendingPluginInstallation[]): void {
-		this.update({ pendingPlugins: plugins, checked: true });
+		this.update({ pendingPlugins: plugins, checked: true, loading: false });
 	}
 
 	/**
