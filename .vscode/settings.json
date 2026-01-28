@@ -15,8 +15,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.organizeImports": "explicit"
+    "source.fixAll": "explicit"
   },
   "prettier.requireConfig": true,
   "prettier.configPath": ".prettierrc",
