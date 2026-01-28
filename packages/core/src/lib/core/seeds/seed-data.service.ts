@@ -386,9 +386,9 @@ export class SeedDataService {
 	}
 
 	/**
-	 * Seed Default & Random Data
+	 * Seed Default & Random Data for Demo
 	 */
-	public async executeDemoSeed() {
+	public async runDemoSeed() {
 		try {
 			console.log('Database Demo Seed Started');
 

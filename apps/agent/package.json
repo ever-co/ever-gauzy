@@ -50,7 +50,6 @@
 		"@grpc/grpc-js": "^1.6.7",
 		"@nebular/auth": "^16.0.0",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
-		"@nebular/eva-icons": "^16.0.0",
 		"@nebular/security": "^16.0.0",
 		"@nebular/theme": "^16.0.0",
 		"@ng-select/ng-select": "^14.9.0",

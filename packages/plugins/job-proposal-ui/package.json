@@ -24,8 +24,8 @@
 		"lib:watch": "yarn nx build plugin-job-proposal-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^20.0.0",
-		"@angular/core": "^20.0.0"
+		"@angular/common": "^20.2.4",
+		"@angular/core": "^20.2.4"
 	},
 	"dependencies": {
 		"@angular/forms": "^20.2.4",

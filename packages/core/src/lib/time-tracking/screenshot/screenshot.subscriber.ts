@@ -5,7 +5,7 @@ import { isObject } from '@gauzy/utils';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { Screenshot } from './screenshot.entity';
 import { FileStorage } from './../../core/file-storage';
-import { isSqliteDB } from './../../core/utils';
+import { getORMType, isSqliteDB, MultiORM, MultiORMEnum } from './../../core/utils';
 import {
 	MikroOrmEntityManager,
 	MultiOrmEntityManager,
@@ -22,12 +22,94 @@ export class ScreenshotSubscriber extends BaseEntityEventSubscriber<Screenshot> 
 	}
 
 	/**
+	 * Gets database connection options based on the entity manager type.
+	 *
+	 * @param em The entity manager (TypeORM or MikroORM)
+	 * @returns The database connection options
+	 */
+	private getDbOptions(em?: MultiOrmEntityManager): Partial<IDBConnectionOptions> {
+		if (em instanceof TypeOrmEntityManager) {
+			return em.connection?.options || getConfig().dbConnectionOptions;
+		}
+		return getConfig().dbMikroOrmConnectionOptions;
+	}
+
+	/**
+	 * Validates the entity manager matches the expected ORM type.
+	 *
+	 * @param em The entity manager to validate
+	 * @param ormType The expected ORM type
+	 * @returns True if the entity manager matches the expected ORM type
+	 */
+	private isValidEntityManager(em: MultiOrmEntityManager | undefined, ormType: MultiORM): boolean {
+		if (!em) return false;
+
+		switch (ormType) {
+			case MultiORMEnum.TypeORM:
+				return em instanceof TypeOrmEntityManager;
+			case MultiORMEnum.MikroORM:
+				return em instanceof MikroOrmEntityManager;
+			default:
+				return false;
+		}
+	}
+
+	/**
+	 * Converts the apps property to a JSON string for SQLite databases.
+	 *
+	 * @param entity The Screenshot entity
+	 * @param options The database connection options
+	 */
+	private stringifyAppsForSqlite(entity: Screenshot, options: Partial<IDBConnectionOptions>): void {
+		if (isSqliteDB(options) && isObject(entity.apps)) {
+			try {
+				entity.apps = JSON.stringify(entity.apps);
+			} catch (error) {
+				// Handle the error appropriately, set a default value
+				entity.apps = JSON.stringify([]);
+			}
+		}
+	}
+
+	/**
+	 * Parses the apps property from a JSON string for SQLite databases.
+	 *
+	 * @param entity The Screenshot entity
+	 * @param options The database connection options
+	 */
+	private parseAppsForSqlite(entity: Screenshot, options: Partial<IDBConnectionOptions>): void {
+		if (isSqliteDB(options) && typeof entity.apps === 'string') {
+			try {
+				entity.apps = JSON.parse(entity.apps);
+			} catch (error) {
+				console.error('ScreenshotSubscriber: JSON parse error while parsing apps:', error);
+				entity.apps = [];
+			}
+		}
+	}
+
+	/**
+	 * Populates the fullUrl and thumbUrl properties from storage.
+	 *
+	 * @param entity The Screenshot entity
+	 */
+	private async populateFileUrls(entity: Screenshot): Promise<void> {
+		const { storageProvider, file, thumb } = entity;
+		const instance = new FileStorage().setProvider(storageProvider).getProviderInstance();
+
+		// Retrieve URLs concurrently
+		const [fullUrl, thumbUrl] = await Promise.all([instance.url(file), instance.url(thumb)]);
+		entity.fullUrl = fullUrl;
+		entity.thumbUrl = thumbUrl;
+	}
+
+	/**
 	 * Called before a Screenshot entity is created in the database.
 	 * This method prepares the entity for creation, including handling database-specific logic such as converting certain properties to JSON
-	 * strings for SQLite databases when using TypeORM.
+	 * strings for SQLite databases.
 	 *
 	 * @param entity The Screenshot entity about to be created.
-	 * @param em An optional entity manager which can be either from TypeORM or MikroORM. Used for additional database operations if necessary.
+	 * @param em An optional entity manager which can be either from TypeORM or MikroORM.
 	 * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
 	 */
 	async beforeEntityCreate(entity: Screenshot, em?: MultiOrmEntityManager): Promise<void> {
@@ -35,25 +117,18 @@ export class ScreenshotSubscriber extends BaseEntityEventSubscriber<Screenshot> 
 			if (!(entity instanceof Screenshot)) {
 				return; // Early exit if the entity is not a Screenshot
 			}
-			// Handle TypeORM specific logic
-			if (em instanceof TypeOrmEntityManager) {
-				const options: Partial<IDBConnectionOptions> = em.connection.options || getConfig().dbConnectionOptions;
 
-				// If the database is SQLite and the entity has an 'apps' property, convert it to a JSON string
-				if (isSqliteDB(options) && isObject(entity.apps)) {
-					try {
-						entity.apps = JSON.stringify(entity.apps);
-					} catch (error) {
-						// Handle the error appropriately, set a default value or take another action.
-						entity.apps = JSON.stringify([]);
-					}
-				}
+			// Get ORM type dynamically at runtime to ensure correct environment selection
+			const ormType = getORMType();
+
+			// Validate entity manager matches the ORM type
+			if (!this.isValidEntityManager(em, ormType)) {
+				return;
 			}
-			// Handle MikroORM specific logic
-			else if (em instanceof MikroOrmEntityManager) {
-				// Placeholder for any MikroORM-specific logic, if needed
-				console.log(em.getConnection());
-			}
+
+			// Get database options and stringify apps for SQLite
+			const options = this.getDbOptions(em);
+			this.stringifyAppsForSqlite(entity, options);
 		} catch (error) {
 			console.error(
 				'ScreenshotSubscriber: An error occurred during the beforeEntityCreate process:',
@@ -67,7 +142,7 @@ export class ScreenshotSubscriber extends BaseEntityEventSubscriber<Screenshot> 
 	 * This method prepares the entity for update, including converting certain properties to JSON strings for specific database types.
 	 *
 	 * @param entity The Screenshot entity about to be updated.
-	 * @param em An optional entity manager which can be either from TypeORM or MikroORM. Used for additional database operations if necessary.
+	 * @param em An optional entity manager which can be either from TypeORM or MikroORM.
 	 * @returns {Promise<void>} A promise that resolves when the pre-update processing is complete.
 	 */
 	async beforeEntityUpdate(entity: Screenshot, em?: MultiOrmEntityManager): Promise<void> {
@@ -75,25 +150,18 @@ export class ScreenshotSubscriber extends BaseEntityEventSubscriber<Screenshot> 
 			if (!(entity instanceof Screenshot)) {
 				return; // Early exit if the entity is not a Screenshot
 			}
-			// Handle TypeORM specific logic
-			if (em instanceof TypeOrmEntityManager) {
-				const options: Partial<IDBConnectionOptions> = em.connection.options || getConfig().dbConnectionOptions;
 
-				// If the database is SQLite and the entity has an 'apps' property, convert it to a JSON string
-				if (isSqliteDB(options) && isObject(entity.apps)) {
-					try {
-						entity.apps = JSON.stringify(entity.apps);
-					} catch (error) {
-						// Handle the error appropriately, set a default value or take another action.
-						entity.apps = JSON.stringify([]);
-					}
-				}
+			// Get ORM type dynamically at runtime to ensure correct environment selection
+			const ormType = getORMType();
+
+			// Validate entity manager matches the ORM type
+			if (!this.isValidEntityManager(em, ormType)) {
+				return;
 			}
-			// Handle MikroORM specific logic
-			else if (em instanceof MikroOrmEntityManager) {
-				// Placeholder for any MikroORM-specific logic, if needed
-				console.log(em.getConnection());
-			}
+
+			// Get database options and stringify apps for SQLite
+			const options = this.getDbOptions(em);
+			this.stringifyAppsForSqlite(entity, options);
 		} catch (error) {
 			console.error(
 				'ScreenshotSubscriber: An error occurred during the beforeEntityUpdate process:',
@@ -107,7 +175,7 @@ export class ScreenshotSubscriber extends BaseEntityEventSubscriber<Screenshot> 
 	 * processing such as retrieving file URLs from a storage provider and handling specific data formats based on the database type.
 	 *
 	 * @param entity The loaded Screenshot entity.
-	 * @param em An optional entity manager which can be either from TypeORM or MikroORM. Used for additional database operations if necessary.
+	 * @param em An optional entity manager which can be either from TypeORM or MikroORM.
 	 * @returns {Promise<void>} A promise that resolves when the additional processing is complete.
 	 */
 	async afterEntityLoad(entity: Screenshot, em?: MultiOrmEntityManager): Promise<void> {
@@ -116,36 +184,20 @@ export class ScreenshotSubscriber extends BaseEntityEventSubscriber<Screenshot> 
 				return; // Early exit if the entity is not a Screenshot
 			}
 
-			// Handle TypeORM specific logic
-			if (em instanceof TypeOrmEntityManager) {
-				const { storageProvider, file, thumb, apps } = entity;
-				const instance = new FileStorage().setProvider(storageProvider).getProviderInstance();
+			// Get ORM type dynamically at runtime to ensure correct environment selection
+			const ormType = getORMType();
 
-				// Retrieve URLs concurrently
-				const [fullUrl, thumbUrl] = await Promise.all([instance.url(file), instance.url(thumb)]);
-				entity.fullUrl = fullUrl;
-				entity.thumbUrl = thumbUrl;
-
-				// Additional logic for specific database types
-				const options: Partial<IDBConnectionOptions> = em.connection.options || getConfig().dbConnectionOptions;
-
-				// If the database is SQLite and the entity has an 'apps' property, convert it to a JSON string
-				if (isSqliteDB(options) && typeof apps === 'string') {
-					try {
-						entity.apps = JSON.parse(apps);
-					} catch (error) {
-						console.error(
-							'ScreenshotSubscriber: JSON parse error during the afterEntityLoad process:',
-							error
-						);
-						entity.apps = [];
-					}
-				}
+			// Validate entity manager matches the ORM type
+			if (!this.isValidEntityManager(em, ormType)) {
+				return;
 			}
-			// Handle MikroORM specific logic
-			else if (em instanceof MikroOrmEntityManager) {
-				// Placeholder for any MikroORM-specific logic, if needed
-			}
+
+			// Populate file URLs from storage
+			await this.populateFileUrls(entity);
+
+			// Get database options and parse apps for SQLite
+			const options = this.getDbOptions(em);
+			this.parseAppsForSqlite(entity, options);
 		} catch (error) {
 			console.error('ScreenshotSubscriber: An error occurred during the afterEntityLoad process:', error.message);
 		}

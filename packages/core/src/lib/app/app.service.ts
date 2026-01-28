@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
 import { SeedDataService } from '../core/seeds/seed-data.service';
@@ -6,17 +6,10 @@ import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AppService {
-	public count: number = 0;
-
 	constructor(
-		@Inject(forwardRef(() => SeedDataService))
+		private readonly configService: ConfigService,
 		private readonly seedDataService: SeedDataService,
-
-		@Inject(forwardRef(() => UserService))
-		private readonly userService: UserService,
-
-		@Inject(forwardRef(() => ConfigService))
-		private readonly configService: ConfigService
+		private readonly userService: UserService
 	) {}
 
 	/**
@@ -24,19 +17,27 @@ export class AppService {
 	 * TODO: this should actually include more checks, e.g. if schema migrated and many other things
 	 */
 	async seedDBIfEmpty() {
-		this.count = await this.userService.countFast();
-		console.log(chalk.magenta(`Found ${this.count} users in DB`));
-		if (this.count === 0) {
-			await this.seedDataService.runDefaultSeed(true);
+		const userCount = await this.userService.countAll();
+		console.log(chalk.magenta(`Found ${userCount} users in DB`));
+
+		if (userCount > 0) {
+			// If users already exist, skip default seeding
+			return;
 		}
+
+		await this.seedDataService.runDefaultSeed(true);
 	}
 
 	/*
-	 * Seed DB for Demo server
+	 * Seed DB for Demo server if empty
 	 */
-	async executeDemoSeed() {
-		if (this.count === 0 && this.configService.get('demo') === true) {
-			this.seedDataService.executeDemoSeed();
+	async seedDemoIfEmpty() {
+		const userCount = await this.userService.countAll();
+		const isDemo = this.configService.get('demo') === true;
+
+		// Only run demo seed if no users exist and demo mode is enabled
+		if (userCount === 0 && isDemo) {
+			await this.seedDataService.runDemoSeed();
 		}
 	}
 }

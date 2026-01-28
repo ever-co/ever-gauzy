@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m *)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(yarn install)",
+      "Bash(yarn why:*)",
+      "Bash(yarn list:*)"
+    ]
+  }
+}

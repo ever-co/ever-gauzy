@@ -52,14 +52,17 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Counts the total number of records in the current repository/table.
-	 * This method utilizes the base `count` method from the parent class
-	 * to quickly return the total number of records without additional filters or conditions.
-	 *
-	 * @returns {Promise<number>} - A promise that resolves to the total count of records.
+	 * Returns the total number of users without any filters/options.
+	 * Uses the underlying ORM repositories directly.
 	 */
-	public async countFast(): Promise<number> {
-		return await super.count();
+	public async countAll(): Promise<number> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.count();
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmUserRepository.count();
+		}
 	}
 
 	/**

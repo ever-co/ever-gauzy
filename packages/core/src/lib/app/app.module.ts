@@ -18,7 +18,7 @@ import { ConfigService, environment } from '@gauzy/config';
 import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.guard';
 import { CoreModule } from '../core/core.module';
 import { RequestContext } from '../core/context/request-context';
-import { SharedModule } from '../shared/shared.module';
+import { ValidatorModule } from '../shared/validators/validator.module';
 import { ApiKeyAuthGuard } from '../shared/guards/api-key-auth.guard';
 import { HealthModule } from '../health/health.module';
 import { CandidateInterviewersModule } from '../candidate-interviewers/candidate-interviewers.module';
@@ -376,7 +376,7 @@ if (environment.THROTTLE_ENABLED) {
 			: []),
 		HealthModule,
 		CoreModule,
-		SharedModule,
+		ValidatorModule,
 		AuthModule,
 		EmailCheckModule,
 		UserModule,
