@@ -18,27 +18,27 @@
 		"lib:watch": "yarn nx build plugin-knowledge-base --watch"
 	},
 	"dependencies": {
-		"@faker-js/faker": "^9.8.0",
+		"@faker-js/faker": "^10.2.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@mikro-orm/nestjs": "^6.1.1",
-		"@nestjs/common": "^11.1.10",
-		"@nestjs/core": "^11.1.10",
+		"@nestjs/common": "^11.1.12",
+		"@nestjs/core": "^11.1.12",
 		"@nestjs/cqrs": "^11.0.3",
 		"@nestjs/passport": "^11.0.5",
-		"@nestjs/swagger": "^11.1.5",
+		"@nestjs/swagger": "^11.2.5",
 		"@nestjs/typeorm": "^11.0.0",
 		"chalk": "^4.1.0",
 		"class-validator": "^0.14.2",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.27"
+		"typeorm": "^0.3.28"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
-		"typescript": "^5.8.3"
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"knowledge-base",

@@ -4151,6 +4151,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Pour un suivi du temps et des activités plus flexible, veuillez <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">télécharger</a> et utiliser l'application de chronomètre Gauzy pour ordinateur.",
 		"STATUS": "Le suivi du temps est déjà en cours dans {{ source }}.",
 		"VERSION": "Version v{{ version }}",
+		"ARCHITECTURE": "Architecture: {{ arch }}",
 		"WAIT_FOR": "En attendant que {{ name }} commence...",
 		"SETUP": {
 			"WELCOME": "Bienvenue",
@@ -4795,6 +4796,38 @@
 				"DELIVERY_URL": "URL de livraison",
 				"SECURE": "Sécurisé"
 			}
+		}
+	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "Supervision & analytique",
+		"SERVICES": "Services",
+		"SCOPE": "Portée",
+		"GLOBAL": "Global",
+		"TENANT": "Locataire",
+		"POSTHOG": {
+			"TITLE": "Analyse PostHog",
+			"ENABLED": "Activer PostHog",
+			"API_KEY": "Clé API",
+			"API_KEY_PLACEHOLDER": "Saisissez la clé API de votre projet PostHog",
+			"HOST": "URL de l’hôte",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "Intervalle de vidage (ms)",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "Temps en millisecondes entre l’envoi des événements groupés"
+		},
+		"SENTRY": {
+			"TITLE": "Suivi des erreurs Sentry",
+			"ENABLED": "Activer Sentry",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "Analyse Jitsu",
+			"ENABLED": "Activer Jitsu",
+			"HOST": "URL de l’hôte",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "Clé d’écriture",
+			"WRITE_KEY_PLACEHOLDER": "Saisissez votre clé d’écriture Jitsu"
 		}
 	},
 	"CUSTOM_SMTP_PAGE": {

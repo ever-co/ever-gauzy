@@ -104,7 +104,7 @@ const NB_MODULES = [
 
 // Third Party Modules
 const THIRD_PARTY_MODULES = [
-	isProd ? [] : AkitaNgDevtools,
+	...(isProd ? [] : [AkitaNgDevtools]),
 	FeatureToggleModule,
 	FileUploadModule,
 	NgxPermissionsModule.forRoot(),

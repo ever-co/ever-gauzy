@@ -1,22 +1,29 @@
 <div class="svg-wrapper">
-	<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
-	<button
-		*ngIf="showCloseButton"
-		nbButton
-		ghost
-		size="small"
-		type="button"
-		(click)="onClose()"
-		class="close-button"
-		aria-label="Close"
-	>
-		<nb-icon icon="close-outline"></nb-icon>
-	</button>
+  <ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
+  @if (showCloseButton) {
+    <button
+      nbButton
+      ghost
+      size="small"
+      type="button"
+      (click)="onClose()"
+      class="close-button"
+      aria-label="Close"
+      >
+      <nb-icon icon="close-outline"></nb-icon>
+    </button>
+  }
 </div>
 
-<div class="headings" *ngIf="title || subtitle">
-	<div class="headings-inner">
-		<h2 *ngIf="title" id="title" class="title">{{ title | translate }}</h2>
-		<p *ngIf="subtitle" class="sub-title">{{ subtitle | translate }}</p>
-	</div>
-</div>
+@if (title || subtitle) {
+  <div class="headings">
+    <div class="headings-inner">
+      @if (title) {
+        <h2 id="title" class="title">{{ title | translate }}</h2>
+      }
+      @if (subtitle) {
+        <p class="sub-title">{{ subtitle | translate }}</p>
+      }
+    </div>
+  </div>
+}

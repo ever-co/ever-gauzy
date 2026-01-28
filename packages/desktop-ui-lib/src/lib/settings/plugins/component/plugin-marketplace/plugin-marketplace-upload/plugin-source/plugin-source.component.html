@@ -1,95 +1,96 @@
-<lib-form-section *ngIf="form" [formGroup]="form" title="{{ 'PLUGIN.FORM.SOURCE' | translate }}">
-	<!-- Platform Configuration -->
-	<div class="platform-section">
-		<div class="section-header">
-			<nb-icon icon="monitor-outline" status="info"></nb-icon>
-			<h6 class="section-title">{{ 'PLUGIN.FORM.PLATFORM_CONFIG' | translate }}</h6>
-		</div>
-
-		<lib-form-row>
-			<div *ngIf="form.get('operatingSystem')" class="form-group">
-				<label class="label">
-					<nb-icon icon="monitor-outline" class="label-icon"></nb-icon>
-					{{ 'PLUGIN.FORM.OPERATING_SYSTEM' | translate }}
-					<span class="required-indicator">*</span>
-				</label>
-				<nb-select
-					fullWidth
-					id="source-os"
-					formControlName="operatingSystem"
-					[status]="getFieldError('operatingSystem') ? 'danger' : 'basic'"
-				>
-					@for(os of sourceOs; track os) {
-					<nb-option [value]="os">
-						<div class="select-option-content">
-							<nb-icon icon="monitor-outline"></nb-icon>
-							<span>{{ os | translate | titlecase }}</span>
-						</div>
-					</nb-option>
-					}
-				</nb-select>
-				@if(form.get('operatingSystem')?.valid && form.get('operatingSystem')?.value) {
-				<nb-hint class="hint-success">
-					<nb-icon icon="checkmark-circle-outline"></nb-icon>
-					OS selected: {{ form.get('operatingSystem')?.value | translate | titlecase }}
-				</nb-hint>
-				}
-			</div>
-
-			<div *ngIf="form.get('architecture')" class="form-group">
-				<label class="label">
-					<nb-icon icon="cpu-outline" class="label-icon"></nb-icon>
-					{{ 'PLUGIN.FORM.ARCHITECTURE' | translate }}
-					<span class="required-indicator">*</span>
-				</label>
-				<nb-select
-					fullWidth
-					id="source-arch"
-					formControlName="architecture"
-					[status]="getFieldError('architecture') ? 'danger' : 'basic'"
-				>
-					@for(arch of sourceArchs; track arch) {
-					<nb-option [value]="arch">
-						<div class="select-option-content">
-							<nb-icon icon="cpu-outline"></nb-icon>
-							<span>{{ arch | translate }}</span>
-						</div>
-					</nb-option>
-					}
-				</nb-select>
-				@if(form.get('architecture')?.valid && form.get('architecture')?.value) {
-				<nb-hint class="hint-success">
-					<nb-icon icon="checkmark-circle-outline"></nb-icon>
-					Architecture: {{ form.get('architecture')?.value | translate }}
-				</nb-hint>
-				}
-			</div>
-		</lib-form-row>
-	</div>
-
-	<!-- Source-specific fields -->
-	<div class="source-container">
-		<div class="source-content">
-			<!-- choose source -->
-			@switch (form.get('type')?.value){
-			<!-- NPM -->
-			@case (pluginSourceType.NPM) {
-			<lib-npm-form [form]="form"></lib-npm-form>
-			}
-
-			<!-- CDN -->
-			@case (pluginSourceType.CDN) {
-			<lib-cdn-form [form]="form"></lib-cdn-form>
-			}
-			<!-- GAUZY -->
-			@case (pluginSourceType.GAUZY) {
-			<lib-gauzy-form [form]="form"></lib-gauzy-form>
-			}
-
-			<!-- DEFAULT -->
-			@default {
-			<ngx-no-data-message [message]="'PLUGIN.FORM.VALIDATION.INVALID_SOURCE' | translate"></ngx-no-data-message>
-			} }
-		</div>
-	</div>
-</lib-form-section>
+@if (form) {
+  <lib-form-section [formGroup]="form" title="{{ 'PLUGIN.FORM.SOURCE' | translate }}">
+    <!-- Platform Configuration -->
+    <div class="platform-section">
+      <div class="section-header">
+        <nb-icon icon="monitor-outline" status="info"></nb-icon>
+        <h6 class="section-title">{{ 'PLUGIN.FORM.PLATFORM_CONFIG' | translate }}</h6>
+      </div>
+      <lib-form-row>
+        @if (form.get('operatingSystem')) {
+          <div class="form-group">
+            <label class="label">
+              <nb-icon icon="monitor-outline" class="label-icon"></nb-icon>
+              {{ 'PLUGIN.FORM.OPERATING_SYSTEM' | translate }}
+              <span class="required-indicator">*</span>
+            </label>
+            <nb-select
+              fullWidth
+              id="source-os"
+              formControlName="operatingSystem"
+              [status]="getFieldError('operatingSystem') ? 'danger' : 'basic'"
+              >
+              @for(os of sourceOs; track os) {
+                <nb-option [value]="os">
+                  <div class="select-option-content">
+                    <nb-icon icon="monitor-outline"></nb-icon>
+                    <span>{{ os | translate | titlecase }}</span>
+                  </div>
+                </nb-option>
+              }
+            </nb-select>
+            @if(form.get('operatingSystem')?.valid && form.get('operatingSystem')?.value) {
+              <nb-hint class="hint-success">
+                <nb-icon icon="checkmark-circle-outline"></nb-icon>
+                OS selected: {{ form.get('operatingSystem')?.value | translate | titlecase }}
+              </nb-hint>
+            }
+          </div>
+        }
+        @if (form.get('architecture')) {
+          <div class="form-group">
+            <label class="label">
+              <nb-icon icon="cpu-outline" class="label-icon"></nb-icon>
+              {{ 'PLUGIN.FORM.ARCHITECTURE' | translate }}
+              <span class="required-indicator">*</span>
+            </label>
+            <nb-select
+              fullWidth
+              id="source-arch"
+              formControlName="architecture"
+              [status]="getFieldError('architecture') ? 'danger' : 'basic'"
+              >
+              @for(arch of sourceArchs; track arch) {
+                <nb-option [value]="arch">
+                  <div class="select-option-content">
+                    <nb-icon icon="cpu-outline"></nb-icon>
+                    <span>{{ arch | translate }}</span>
+                  </div>
+                </nb-option>
+              }
+            </nb-select>
+            @if(form.get('architecture')?.valid && form.get('architecture')?.value) {
+              <nb-hint class="hint-success">
+                <nb-icon icon="checkmark-circle-outline"></nb-icon>
+                Architecture: {{ form.get('architecture')?.value | translate }}
+              </nb-hint>
+            }
+          </div>
+        }
+      </lib-form-row>
+    </div>
+    <!-- Source-specific fields -->
+    <div class="source-container">
+      <div class="source-content">
+        <!-- choose source -->
+        @switch (form.get('type')?.value){
+          <!-- NPM -->
+          @case (pluginSourceType.NPM) {
+            <lib-npm-form [form]="form"></lib-npm-form>
+          }
+          <!-- CDN -->
+          @case (pluginSourceType.CDN) {
+            <lib-cdn-form [form]="form"></lib-cdn-form>
+          }
+          <!-- GAUZY -->
+          @case (pluginSourceType.GAUZY) {
+            <lib-gauzy-form [form]="form"></lib-gauzy-form>
+          }
+          <!-- DEFAULT -->
+          @default {
+            <ngx-no-data-message [message]="'PLUGIN.FORM.VALIDATION.INVALID_SOURCE' | translate"></ngx-no-data-message>
+            } }
+          </div>
+        </div>
+      </lib-form-section>
+    }

@@ -1,93 +1,95 @@
 <nb-card>
-	<nb-card-header>{{
-		'GOALS_PAGE.GOAL_TEMPLATES' | translate
-	}}</nb-card-header>
-	<nb-card-body>
-		<form [formGroup]="goalTemplateForm">
-			<label class="label" for="existing-goal">
-				{{ 'FORM.LABELS.SELECT_EXISTING_OBJECTIVE' | translate }}
-			</label>
-			<nb-select fullWidth id="existing-goal">
-				<nb-option></nb-option>
-			</nb-select>
-			<label for="objective-title" class="label">
-				{{ 'FORM.LABELS.NAME' | translate }}
-			</label>
-			<input
-				type="text"
-				id="objective-title"
-				nbInput
-				fullWidth
-				formControlName="goalName"
+  <nb-card-header>{{
+    'GOALS_PAGE.GOAL_TEMPLATES' | translate
+  }}</nb-card-header>
+  <nb-card-body>
+    <form [formGroup]="goalTemplateForm">
+      <label class="label" for="existing-goal">
+        {{ 'FORM.LABELS.SELECT_EXISTING_OBJECTIVE' | translate }}
+      </label>
+      <nb-select fullWidth id="existing-goal">
+        <nb-option></nb-option>
+      </nb-select>
+      <label for="objective-title" class="label">
+        {{ 'FORM.LABELS.NAME' | translate }}
+      </label>
+      <input
+        type="text"
+        id="objective-title"
+        nbInput
+        fullWidth
+        formControlName="goalName"
 				placeholder="{{
 					'GOALS_PAGE.FORM.PLACEHOLDERS.NAME' | translate
 				}}"
-			/>
+        />
 
-			<label for="objective-level" class="label mt-3">
-				{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}
-			</label>
-			<nb-select
-				id="objective-level"
-				formControlName="goalLevel"
+        <label for="objective-level" class="label mt-3">
+          {{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}
+        </label>
+        <nb-select
+          id="objective-level"
+          formControlName="goalLevel"
 				placeholder="{{
 					'GOALS_PAGE.FORM.PLACEHOLDERS.LEVEL' | translate
 				}}"
-				fullWidth
-			>
-				<nb-option
-					*ngFor="let level of goalLevelEnum | keyvalue"
-					[value]="level.value"
-					>{{ 'GOALS_PAGE.LEVELS.' + level.key | translate }}
-				</nb-option>
-			</nb-select>
-			<div [formGroup]="keyResultTemplateForm">
-				<label for="key-result-title" class="label">
-					{{ 'FORM.LABELS.NAME' | translate }}
-				</label>
-				<input
-					type="text"
-					id="key-result-title"
-					nbInput
-					fullWidth
-					formControlName="name"
+          fullWidth
+          >
+          @for (level of goalLevelEnum | keyvalue; track level) {
+            <nb-option
+              [value]="level.value"
+              >{{ 'GOALS_PAGE.LEVELS.' + level.key | translate }}
+            </nb-option>
+          }
+        </nb-select>
+        <div [formGroup]="keyResultTemplateForm">
+          <label for="key-result-title" class="label">
+            {{ 'FORM.LABELS.NAME' | translate }}
+          </label>
+          <input
+            type="text"
+            id="key-result-title"
+            nbInput
+            fullWidth
+            formControlName="name"
 					placeholder="{{
 						'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.NAME' | translate
 					}}"
-				/>
+            />
 
-				<label for="key-result-type" class="label mt-3">
-					{{
-						'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE'
-							| translate
-					}}
-				</label>
-				<nb-select
-					id="key-result-type"
-					fullWidth
-					formControlName="type"
-				>
-					<nb-option
-						*ngFor="let type of keyResultTypeEnum | keyvalue"
-						[value]="type.value"
-					>
-						{{ 'KEY_RESULT_PAGE.TYPE.' + type.key | translate }}
-					</nb-option>
-				</nb-select>
+            <label for="key-result-type" class="label mt-3">
+              {{
+              'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE'
+              | translate
+              }}
+            </label>
+            <nb-select
+              id="key-result-type"
+              fullWidth
+              formControlName="type"
+              >
+              @for (type of keyResultTypeEnum | keyvalue; track type) {
+                <nb-option
+                  [value]="type.value"
+                  >
+                  {{ 'KEY_RESULT_PAGE.TYPE.' + type.key | translate }}
+                </nb-option>
+              }
+            </nb-select>
 
-				<ga-goal-custom-unit-select
-					[parentFormGroup]="keyResultTemplateForm"
-					[numberUnits]="numberUnitsEnum"
-				></ga-goal-custom-unit-select>
-			</div>
-		</form>
-	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button class="mr-3" nbButton (click)="closeDialog()">
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button nbButton status="success">
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</nb-card-footer>
-</nb-card>
+            <ga-goal-custom-unit-select
+              [parentFormGroup]="keyResultTemplateForm"
+              [numberUnits]="numberUnitsEnum"
+            ></ga-goal-custom-unit-select>
+          </div>
+        </form>
+      </nb-card-body>
+      <nb-card-footer class="text-right">
+        <button class="mr-3" nbButton (click)="closeDialog()">
+          {{ 'BUTTONS.CANCEL' | translate }}
+        </button>
+        <button nbButton status="success">
+          {{ 'BUTTONS.SAVE' | translate }}
+        </button>
+      </nb-card-footer>
+    </nb-card>

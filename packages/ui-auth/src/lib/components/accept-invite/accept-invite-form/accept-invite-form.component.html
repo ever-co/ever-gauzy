@@ -1,84 +1,88 @@
 <form [formGroup]="form" class="accept-invite-form">
-	<div class="row">
-		<div class="col-12">
-			<div class="form-group">
-				<label for="fullNameInput" class="label">
-					{{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.FULL_NAME' | translate }}
-				</label>
-				<input
-					[placeholder]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.ENTER_YOUR_FULL_NAME' | translate"
-					fullWidth
-					id="fullNameInput"
-					nbInput
-					formControlName="fullName"
-					fieldSize="large"
+  <div class="row">
+    <div class="col-12">
+      <div class="form-group">
+        <label for="fullNameInput" class="label">
+          {{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.FULL_NAME' | translate }}
+        </label>
+        <input
+          [placeholder]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.ENTER_YOUR_FULL_NAME' | translate"
+          fullWidth
+          id="fullNameInput"
+          nbInput
+          formControlName="fullName"
+          fieldSize="large"
 					[ngClass]="{
 						'status-danger': FormHelpers.isInvalidControl(form, 'fullName'),
 						'status-success': FormHelpers.isValidControl(form, 'fullName')
 					}"
-				/>
-			</div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col-12">
-			<ngx-password-form-field
-				[id]="'passwordInput'"
-				[placeholder]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORD' | translate"
-				[label]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORD' | translate"
-				[ctrl]="form.get('password')"
-				formControlName="password"
-				[fieldSize]="'large'"
+          />
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <ngx-password-form-field
+          [id]="'passwordInput'"
+          [placeholder]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORD' | translate"
+          [label]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORD' | translate"
+          [ctrl]="form.get('password')"
+          formControlName="password"
+          [fieldSize]="'large'"
 				[ngClass]="{
 					'status-danger': FormHelpers.isInvalidControl(form, 'password'),
 					'status-success': FormHelpers.isValidControl(form, 'password')
 				}"
-			></ngx-password-form-field>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col-12">
-			<ngx-password-form-field
-				[id]="'repeatPasswordInput'"
-				[placeholder]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.REPEAT_PASSWORD' | translate"
-				[label]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.REPEAT_PASSWORD' | translate"
-				[ctrl]="form.get('repeatPassword')"
-				formControlName="repeatPassword"
-				[fieldSize]="'large'"
+        ></ngx-password-form-field>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <ngx-password-form-field
+          [id]="'repeatPasswordInput'"
+          [placeholder]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.REPEAT_PASSWORD' | translate"
+          [label]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.REPEAT_PASSWORD' | translate"
+          [ctrl]="form.get('repeatPassword')"
+          formControlName="repeatPassword"
+          [fieldSize]="'large'"
 				[ngClass]="{
 					'status-danger': FormHelpers.isInvalidControl(form, 'repeatPassword'),
 					'status-success': FormHelpers.isValidControl(form, 'repeatPassword')
 				}"
-			>
-				<div *ngIf="FormHelpers.isInvalidControl(form, 'repeatPassword')" class="invalid-feedback d-block">
-					<div *ngIf="form.get('repeatPassword').errors.mustMatch">
-						{{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORDS_DO_NOT_MATCH' | translate }}
-					</div>
-				</div>
-			</ngx-password-form-field>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col">
-			<div class="form-group">
-				<nb-checkbox formControlName="agreeTerms">
-					{{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.AGREE_TO' | translate }}
-					<a href="#" target="_blank">
-						{{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.TERMS_AND_CONDITIONS' | translate }}
-					</a>
-				</nb-checkbox >
-			</div>
-		</div>
-	</div>
-	<div class="actions">
-		<button
-			[disabled]="form.invalid"
-			(click)="saveInvites()"
-			nbButton
-			fullWidth
-			status="success"
-		>
-			{{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.COMPLETE_REGISTRATION' | translate }}
-		</button>
-	</div>
-</form>
+          >
+          @if (FormHelpers.isInvalidControl(form, 'repeatPassword')) {
+            <div class="invalid-feedback d-block">
+              @if (form.get('repeatPassword').errors.mustMatch) {
+                <div>
+                  {{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORDS_DO_NOT_MATCH' | translate }}
+                </div>
+              }
+            </div>
+          }
+        </ngx-password-form-field>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="form-group">
+          <nb-checkbox formControlName="agreeTerms">
+            {{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.AGREE_TO' | translate }}
+            <a href="#" target="_blank">
+              {{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.TERMS_AND_CONDITIONS' | translate }}
+            </a>
+          </nb-checkbox >
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button
+        [disabled]="form.invalid"
+        (click)="saveInvites()"
+        nbButton
+        fullWidth
+        status="success"
+        >
+        {{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.COMPLETE_REGISTRATION' | translate }}
+      </button>
+    </div>
+  </form>

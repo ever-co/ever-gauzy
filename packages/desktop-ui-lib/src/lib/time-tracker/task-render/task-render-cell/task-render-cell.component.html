@@ -1,20 +1,26 @@
 <div class="task-render">
-	<div (click)="showDetail()" class="detail">
-		<div *ngIf="number" class="task-number">
-			{{ number }}
-		</div>
-		<div class="task-title-container">
-			<div class="task-title">{{ title }}</div>
-		</div>
-	</div>
-	<div class="badges">
-		<div *ngIf="priority">
-			<gauzy-task-badge-view
-				[taskBadge]="priority"
-			></gauzy-task-badge-view>
-		</div>
-		<div *ngIf="size">
-			<gauzy-task-badge-view [taskBadge]="size"></gauzy-task-badge-view>
-		</div>
-	</div>
+  <div (click)="showDetail()" class="detail">
+    @if (number) {
+      <div class="task-number">
+        {{ number }}
+      </div>
+    }
+    <div class="task-title-container">
+      <div class="task-title">{{ title }}</div>
+    </div>
+  </div>
+  <div class="badges">
+    @if (priority) {
+      <div>
+        <gauzy-task-badge-view
+          [taskBadge]="priority"
+        ></gauzy-task-badge-view>
+      </div>
+    }
+    @if (size) {
+      <div>
+        <gauzy-task-badge-view [taskBadge]="size"></gauzy-task-badge-view>
+      </div>
+    }
+  </div>
 </div>

@@ -1,36 +1,42 @@
 <nb-layout>
-    <nb-layout-column class="p-0">
-        <div class="about-container h-100">
-            <nb-card class="h-100">
-                <nb-card-body>
-                    <div class="row">
-                        <div class="col-12 d-flex justify-content-center">
-                            <div class="logo">
-                                <img [src]="application?.iconPath" />
-                            </div>
-                        </div>
-                        <div class="col-12 name-text text-center mt-2">
-                            <span>{{ application?.name }}</span>
-                        </div>
-                        <div class="col-12 version-text mb-3">
-                            <span>{{'TIMER_TRACKER.VERSION' | translate: {version: application?.version} }}</span>
-                        </div>
-                        <div class="col-12 copyright-text text-center mt-0">
-                            <span>
-                                Copyright © 2020-{{'FOOTER.PRESENT' | translate}}
-                                <span class="link" (click)="openLink('EVER')">{{ application?.companyName}}</span>
-                                <br />
-                                {{'FOOTER.RIGHTS_RESERVED' | translate}}
-                                <br />
-                                <span class="link" (click)="openLink('TOS')">{{'FOOTER.TERMS_OF_SERVICE' |
-                                    translate}}</span> |
-                                <span (click)="openLink('PRIVACY')" class="link">{{'FOOTER.PRIVACY_POLICY' |
-                                    translate}}</span>
-                            </span>
-                        </div>
-                    </div>
-                </nb-card-body>
-            </nb-card>
-        </div>
-    </nb-layout-column>
+	<nb-layout-column class="p-0">
+		<div class="about-container h-100">
+			<nb-card class="h-100">
+				<nb-card-body>
+					<div class="row">
+						<div class="col-12 d-flex justify-content-center">
+							<div class="logo">
+								<img [src]="application?.iconPath" />
+							</div>
+						</div>
+						<div class="col-12 name-text text-center mt-2">
+							<span>{{ application?.name }}</span>
+						</div>
+						<div class="col-12 version-text">
+							<span>{{ 'TIMER_TRACKER.VERSION' | translate : { version: application?.version } }}</span>
+						</div>
+						<div class="col-12 version-text mb-2">
+							<span>{{ 'TIMER_TRACKER.ARCHITECTURE' | translate : { arch: application?.arch } }}</span>
+						</div>
+						<div class="col-12 copyright-text text-center mt-0">
+							<span>
+								Copyright © 2020-{{ 'FOOTER.PRESENT' | translate }}
+								<span class="link" (click)="openLink('EVER')">{{ application?.companyName }}</span>
+								<br />
+								{{ 'FOOTER.RIGHTS_RESERVED' | translate }}
+								<br />
+								<span class="link" (click)="openLink('TOS')">{{
+									'FOOTER.TERMS_OF_SERVICE' | translate
+									}}</span>
+								|
+								<span (click)="openLink('PRIVACY')" class="link">{{
+									'FOOTER.PRIVACY_POLICY' | translate
+									}}</span>
+							</span>
+						</div>
+					</div>
+				</nb-card-body>
+			</nb-card>
+		</div>
+	</nb-layout-column>
 </nb-layout>

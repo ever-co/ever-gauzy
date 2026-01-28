@@ -27,7 +27,6 @@ import {
 	UserStats
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { ConfigService } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -45,7 +44,6 @@ export class UserService extends TenantAwareCrudService<User> {
 	constructor(
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
-		private readonly _configService: ConfigService,
 		private readonly _employeeService: EmployeeService,
 		private readonly _taskService: TaskService,
 		private readonly _passwordHashService: PasswordHashService
@@ -54,14 +52,17 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Counts the total number of records in the current repository/table.
-	 * This method utilizes the base `count` method from the parent class
-	 * to quickly return the total number of records without additional filters or conditions.
-	 *
-	 * @returns {Promise<number>} - A promise that resolves to the total count of records.
+	 * Returns the total number of users without any filters/options.
+	 * Uses the underlying ORM repositories directly.
 	 */
-	public async countFast(): Promise<number> {
-		return await super.count();
+	public async countAll(): Promise<number> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.count();
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmUserRepository.count();
+		}
 	}
 
 	/**

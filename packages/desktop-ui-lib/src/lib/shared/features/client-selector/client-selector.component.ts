@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnInit, OnDestroy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IOrganizationContact } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, concatMap, filter, map, Observable, tap } from 'rxjs';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
@@ -11,7 +10,6 @@ import { ClientSelectorQuery } from './+state/client-selector.query';
 import { ClientSelectorService } from './+state/client-selector.service';
 import { ClientSelectorStore } from './+state/client-selector.store';
 
-@UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-client-selector',
     templateUrl: './client-selector.component.html',
@@ -26,7 +24,7 @@ import { ClientSelectorStore } from './+state/client-selector.store';
     ],
     standalone: false
 })
-export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganizationContact> implements OnInit {
+export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganizationContact> implements OnInit, OnDestroy {
 	constructor(
 		private readonly selectorElectronService: SelectorElectronService,
 		public readonly clientSelectorStore: ClientSelectorStore,
@@ -39,17 +37,24 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 	}
 
 	public ngOnInit(): void {
-		this.clientSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
-		this.clientSelectorQuery.selected$
+		const sub1 = this.clientSelectorService.onScroll$.subscribe();
+		this.subscriptions.add(sub1);
+
+		const sub2 = this.clientSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
 				tap(() => this.projectSelectorService.resetPage()),
-				concatMap(() => this.projectSelectorService.load()),
-				untilDestroyed(this)
+				concatMap(() => this.projectSelectorService.load())
 			)
 			.subscribe();
+		this.subscriptions.add(sub2);
+
 		// Handle search logic
 		this.handleSearch(this.clientSelectorService);
+	}
+
+	public override ngOnDestroy(): void {
+		super.ngOnDestroy();
 	}
 
 	public clear(): void {

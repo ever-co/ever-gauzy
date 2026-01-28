@@ -1,8 +1,5 @@
 <nb-card>
-  <nb-card-header class="d-flex justify-content-between align-items-center">
-
-  </nb-card-header>
-
+  <nb-card-header class="d-flex justify-content-between align-items-center"></nb-card-header>
   <nb-card-body>
     <nb-tabset (changeTab)="onChangeTab($event.tabTitle)">
       <nb-tab tabTitle="PENDING" [active]="tab === 'PENDING'">
@@ -37,9 +34,6 @@
 				>
 				</angular2-smart-table>
 			</div>
-			<!-- <div class="pagination-container"> -->
-			<!-- 	<ga-pagination [source]="smartTableSource"></ga-pagination> -->
-			<!-- </div> -->
 		</div>
 		<ng-template #noTask>
 			<div class="no-data col-12">

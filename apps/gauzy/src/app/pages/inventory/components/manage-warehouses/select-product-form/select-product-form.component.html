@@ -1,33 +1,33 @@
 <nb-card>
-	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"><i class="fas fa-times" (click)="dialogRef.close()"></i></span>
-		<h5 class="title">
-			{{ 'INVENTORY_PAGE.ADD_PRODUCTS' | translate }}
-		</h5>
-	</nb-card-header>
-	<nb-card-body class="content">
-		<div class="table-scroll-container">
-			<angular2-smart-table
-				style="cursor: pointer"
-				[settings]="settingsSmartTable"
-				[source]="smartTableSource"
-				(userRowSelect)="onUserRowSelect($event)"
-			></angular2-smart-table>
-		</div>
-		<ng-container *ngIf="smartTableSource">
-			<ngx-pagination
-				[source]="smartTableSource"
-			></ngx-pagination>
-		</ng-container>
-	</nb-card-body>
-	<nb-card-footer>
-		<button
-			(click)="dialogRef.close(selectedRows)"
-			status="success"
-			class="action"
-			nbButton
-		>
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</nb-card-footer>
+  <nb-card-header class="d-flex flex-column">
+    <span class="cancel"><i class="fas fa-times" (click)="dialogRef.close()"></i></span>
+    <h5 class="title">
+      {{ 'INVENTORY_PAGE.ADD_PRODUCTS' | translate }}
+    </h5>
+  </nb-card-header>
+  <nb-card-body class="content">
+    <div class="table-scroll-container">
+      <angular2-smart-table
+        style="cursor: pointer"
+        [settings]="settingsSmartTable"
+        [source]="smartTableSource"
+        (userRowSelect)="onUserRowSelect($event)"
+      ></angular2-smart-table>
+    </div>
+    @if (smartTableSource) {
+      <ngx-pagination
+        [source]="smartTableSource"
+      ></ngx-pagination>
+    }
+  </nb-card-body>
+  <nb-card-footer>
+    <button
+      (click)="dialogRef.close(selectedRows)"
+      status="success"
+      class="action"
+      nbButton
+      >
+      {{ 'BUTTONS.SAVE' | translate }}
+    </button>
+  </nb-card-footer>
 </nb-card>

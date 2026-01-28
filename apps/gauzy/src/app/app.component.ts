@@ -32,11 +32,13 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 @Component({
 	selector: 'ga-app',
 	template: `
-		<ga-dashboard-skeleton *ngIf="loading"></ga-dashboard-skeleton>
+		@if (loading) {
+		  <ga-dashboard-skeleton></ga-dashboard-skeleton>
+		}
 		<div [style.visibility]="loading ? 'hidden' : 'visible'">
-			<router-outlet></router-outlet>
+		  <router-outlet></router-outlet>
 		</div>
-	`,
+		`,
 	standalone: false
 })
 export class AppComponent implements OnInit, AfterViewInit {

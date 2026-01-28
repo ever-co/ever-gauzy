@@ -1,24 +1,35 @@
 <div class="avatar-wrapper">
-	<div class="inner-wrapper">
-		<div class="image-outer-wrapper" *ngIf="src">
-			<div class="image-container" [ngClass]="size" (click)="edit(id)">
-				<img class="rounded-circle" type="user" [src]="src" />
-				<span
-					*ngIf="employee"
-					class="status-indicator"
-					[ngClass]="{ online: online$ | async, offline: !(online$ | async) }"
-				></span>
-			</div>
-		</div>
-		<div class="names-wrapper">
-			<ng-container *ngIf="name">
-				<a *ngIf="!isOption" class="link-text" (click)="edit(id)" [title]="name">{{ name }}</a>
-				<div *ngIf="isOption">{{ name }}</div>
-			</ng-container>
-			<div class="text-caption caption" *ngIf="caption">
-				<ng-container *ngIf="appendCaption">{{ appendCaption }}</ng-container>
-				{{ caption }}
-			</div>
-		</div>
-	</div>
+  <div class="inner-wrapper">
+    @if (src) {
+      <div class="image-outer-wrapper">
+        <div class="image-container" [ngClass]="size" (click)="edit(id)">
+          <img class="rounded-circle" type="user" [src]="src" />
+          @if (employee) {
+            <span
+              class="status-indicator"
+              [ngClass]="{ online: online$ | async, offline: !(online$ | async) }"
+            ></span>
+          }
+        </div>
+      </div>
+    }
+    <div class="names-wrapper">
+      @if (name) {
+        @if (!isOption) {
+          <a class="link-text" (click)="edit(id)" [title]="name">{{ name }}</a>
+        }
+        @if (isOption) {
+          <div>{{ name }}</div>
+        }
+      }
+      @if (caption) {
+        <div class="text-caption caption">
+          @if (appendCaption) {
+            {{ appendCaption }}
+          }
+          {{ caption }}
+        </div>
+      }
+    </div>
+  </div>
 </div>

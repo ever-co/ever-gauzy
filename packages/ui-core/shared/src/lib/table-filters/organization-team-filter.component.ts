@@ -12,16 +12,18 @@ import { OrganizationTeamsService, Store } from '@gauzy/ui-core/core';
     selector: 'ga-organization-team-select-filter',
     template: `
 		<ng-select
-			[clearable]="true"
-			[closeOnSelect]="true"
-			[placeholder]="'TASKS_PAGE.SELECT' | translate"
-			(change)="onChange($event)"
-		>
-			<ng-option *ngFor="let team of teams" [value]="team">
-				{{ team.name }}
-			</ng-option>
+		  [clearable]="true"
+		  [closeOnSelect]="true"
+		  [placeholder]="'TASKS_PAGE.SELECT' | translate"
+		  (change)="onChange($event)"
+		  >
+		  @for (team of teams; track team) {
+		    <ng-option [value]="team">
+		      {{ team.name }}
+		    </ng-option>
+		  }
 		</ng-select>
-	`,
+		`,
     standalone: false
 })
 export class OrganizationTeamFilterComponent extends DefaultFilter implements OnInit, OnChanges {

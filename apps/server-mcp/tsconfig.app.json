@@ -3,7 +3,6 @@
     "compilerOptions": {
         "outDir": "./build",
         "module": "ES2022",
-        "moduleResolution": "bundler",
         "allowImportingTsExtensions": false,
         "types": ["node"]
     },

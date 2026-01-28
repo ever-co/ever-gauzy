@@ -86,7 +86,7 @@
 					<div class="table-inner-wrapper">
 						<div
 							class="responsive-table-row employee-column main-column-responsive responsive-heading-row"
-							*ngIf="expanseIndex == 0 && projectIndex == 0; else noEmployee"
+							*ngIf="expanseIndex == 0 && projectIndex == 0; else noEmployeeDate"
 						>
 							<div class="responsive-table-header">
 								{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
@@ -97,7 +97,7 @@
 								></ng-container>
 							</div>
 						</div>
-						<ng-template #noEmployee>
+						<ng-template #noEmployeeDate>
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
 						<div class="responsive-table-row project-column">
@@ -250,7 +250,7 @@
 						</ng-template>
 						<div
 							class="responsive-table-row employee-column main-column-responsive"
-							*ngIf="expanseIndex == 0; else noEmployee"
+							*ngIf="expanseIndex == 0; else noEmployeeProject"
 						>
 							<div class="responsive-table-header">
 								{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
@@ -262,7 +262,7 @@
 								</ng-container>
 							</div>
 						</div>
-						<ng-template #noEmployee>
+						<ng-template #noEmployeeProject>
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
 						<div class="responsive-table-row category-column">
@@ -305,17 +305,17 @@
 </ng-template>
 
 <ng-template let-project #projectEl>
-	<ga-project-column-view *ngIf="project; else noProjects" [project]="project"></ga-project-column-view>
-	<ng-template #noProjects>
+	<ga-project-column-view *ngIf="project; else noProjectsEl" [project]="project"></ga-project-column-view>
+	<ng-template #noProjectsEl>
 		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
 	</ng-template>
 </ng-template>
 
 <ng-template let-client #clientEl>
-	<span *ngIf="client; else noClient">
+	<span *ngIf="client; else noClientEl">
 		<ngx-contact-links [value]="client"></ngx-contact-links>
 	</span>
-	<ng-template #noClient>
+	<ng-template #noClientEl>
 		<span>
 			{{ 'REPORT_PAGE.NO_CLIENT' | translate }}
 		</span>
@@ -333,7 +333,7 @@
 			[employee]="employee"
 		></ngx-avatar>
 	</div>
-	<ng-template #noEmployee>
+	<ng-template #noEmployeeEl>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
 	</ng-template>
 </ng-template>

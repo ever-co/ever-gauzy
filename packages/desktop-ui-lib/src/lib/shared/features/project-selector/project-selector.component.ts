@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnInit, OnDestroy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IOrganizationProject } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, concatMap, filter, map, Observable, tap } from 'rxjs';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
@@ -12,7 +11,6 @@ import { ProjectSelectorQuery } from './+state/project-selector.query';
 import { ProjectSelectorService } from './+state/project-selector.service';
 import { ProjectSelectorStore } from './+state/project-selector.store';
 
-@UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-project-selector',
     templateUrl: './project-selector.component.html',
@@ -27,7 +25,7 @@ import { ProjectSelectorStore } from './+state/project-selector.store';
     ],
     standalone: false
 })
-export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganizationProject> implements OnInit {
+export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganizationProject> implements OnInit, OnDestroy {
 	constructor(
 		private readonly selectorElectronService: SelectorElectronService,
 		private readonly projectSelectorStore: ProjectSelectorStore,
@@ -41,18 +39,24 @@ export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganiz
 	}
 
 	public ngOnInit(): void {
-		this.projectSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
-		this.projectSelectorQuery.selected$
+		const sub1 = this.projectSelectorService.onScroll$.subscribe();
+		this.subscriptions.add(sub1);
+
+		const sub2 = this.projectSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
 				tap(() => this.teamSelectorService.resetPage()),
 				tap(() => this.taskSelectorService.resetPage()),
-				concatMap(() => Promise.allSettled([this.teamSelectorService.load(), this.taskSelectorService.load()])),
-				untilDestroyed(this)
+				concatMap(() => Promise.allSettled([this.teamSelectorService.load(), this.taskSelectorService.load()]))
 			)
 			.subscribe();
-		// Handle search logic
+		this.subscriptions.add(sub2);
+
 		this.handleSearch(this.projectSelectorService);
+	}
+
+	public override ngOnDestroy(): void {
+		super.ngOnDestroy();
 	}
 
 	public clear(): void {

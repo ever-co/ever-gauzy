@@ -4208,6 +4208,7 @@
 		"TODAY": "Днес",
 		"STATUS": "Проследяването на времето вече работи в {{ source }}",
 		"VERSION": "Версия v{{ version }}",
+		"ARCHITECTURE": "Архитектура: {{ arch }}",
 		"WAIT_FOR": "Изчаква се {{ name }} да започне...",
 		"SETUP": {
 			"WELCOME": "Добре дошли",
@@ -4833,6 +4834,38 @@
 				"BUCKET": "Кофа",
 				"SERVICE_URL": "URL на услугата"
 			}
+		}
+	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "Мониторинг и анализ",
+		"SERVICES": "Услуги",
+		"SCOPE": "Обхват",
+		"GLOBAL": "Глобален",
+		"TENANT": "Наемател",
+		"POSTHOG": {
+			"TITLE": "PostHog аналитика",
+			"ENABLED": "Активирай PostHog",
+			"API_KEY": "API ключ",
+			"API_KEY_PLACEHOLDER": "Въведете API ключа на вашия PostHog проект",
+			"HOST": "URL на хоста",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "Интервал на изпращане (ms)",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "Време в милисекунди между изпращането на групирани събития"
+		},
+		"SENTRY": {
+			"TITLE": "Следене на грешки със Sentry",
+			"ENABLED": "Активирай Sentry",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "Jitsu аналитика",
+			"ENABLED": "Активирай Jitsu",
+			"HOST": "URL на хоста",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "Ключ за запис",
+			"WRITE_KEY_PLACEHOLDER": "Въведете вашия Jitsu ключ за запис"
 		}
 	},
 	"CUSTOM_SMTP_PAGE": {

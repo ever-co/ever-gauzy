@@ -6,16 +6,18 @@ import { InviteStatusEnum } from '@gauzy/contracts';
 	selector: 'ga-invite-status-filter',
 	template: `
 		<ng-select
-			[clearable]="true"
-			[closeOnSelect]="true"
-			[placeholder]="'SM_TABLE.STATUS' | translate"
-			(change)="onChange($event)"
-		>
-			<ng-option *ngFor="let status of inviteStatuses" [value]="status">
-				{{ status }}
-			</ng-option>
+		  [clearable]="true"
+		  [closeOnSelect]="true"
+		  [placeholder]="'SM_TABLE.STATUS' | translate"
+		  (change)="onChange($event)"
+		  >
+		  @for (status of inviteStatuses; track status) {
+		    <ng-option [value]="status">
+		      {{ status }}
+		    </ng-option>
+		  }
 		</ng-select>
-	`,
+		`,
 	standalone: false
 })
 export class InviteStatusFilterComponent extends DefaultFilter {

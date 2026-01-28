@@ -1,87 +1,95 @@
 <div class="weekly-logs row-table" [nbSpinner]="isLoading$ | async" nbSpinnerSize="giant"
-			nbSpinnerStatus="primary">
-			<ng-template #columnsHeader>
-				<div class="columns-header">
-					<div class="table-inner-wrapper font-weight-bold align-items-center">
-						<div class="responsive-table-row project-column">
-							{{ 'REPORT_PAGE.PROJECT' | translate }}
-						</div>
-						<div class="responsive-table-row title-column">
-							{{ 'REPORT_PAGE.TITLE' | translate }}
-						</div>
-						<div class="responsive-table-row duration-column">
-							{{ 'REPORT_PAGE.DURATION' | translate }}
-						</div>
-						<div class="responsive-table-row progress-bar-column"></div>
-					</div>
-				</div>
-			</ng-template>
-			<ng-template [ngIf]="(dailyActivities$ | async)?.length > 0" [ngIfElse]="notFound">
-				<nb-card class="card" *ngFor="let day of dailyActivities$ | async">
-					<ng-container>
+  nbSpinnerStatus="primary">
+  <ng-template #columnsHeader>
+    <div class="columns-header">
+      <div class="table-inner-wrapper font-weight-bold align-items-center">
+        <div class="responsive-table-row project-column">
+          {{ 'REPORT_PAGE.PROJECT' | translate }}
+        </div>
+        <div class="responsive-table-row title-column">
+          {{ 'REPORT_PAGE.TITLE' | translate }}
+        </div>
+        <div class="responsive-table-row duration-column">
+          {{ 'REPORT_PAGE.DURATION' | translate }}
+        </div>
+        <div class="responsive-table-row progress-bar-column"></div>
+      </div>
+    </div>
+  </ng-template>
+  @if ((dailyActivities$ | async)?.length > 0) {
+    @for (day of dailyActivities$ | async; track day) {
+      <nb-card class="card">
+        <ng-container>
 						<ng-container *ngTemplateOutlet="
 								dailyEl;
 								context: { $implicit: day }
 							"></ng-container>
-					</ng-container>
-				</nb-card>
-			</ng-template>
-			<ng-template #notFound>
-				<ngx-no-data-message
-					[message]="'REPORT_PAGE.NO_DATA.APP_AND_URL_ACTIVITY' | translate"></ngx-no-data-message>
-			</ng-template>
-		</div>
+        </ng-container>
+      </nb-card>
+    }
+  } @else {
+    <ngx-no-data-message
+    [message]="'REPORT_PAGE.NO_DATA.APP_AND_URL_ACTIVITY' | translate"></ngx-no-data-message>
+  }
+</div>
 
 <ng-template let-day #dailyEl>
-	<nb-card-header class="card-title">
-		{{ day.date | dateTime: 'LL' }}
-	</nb-card-header>
-	<nb-card-body class="activities-container">
-		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-		<div class="cart-body project-row" *ngFor="let employeeRow of day.employees; let employeeIndex = index">
-			<div class="table-row-custom" *ngFor="let projectRow of employeeRow.projects;let projectIndex = index">
-				<div class="activity-row" *ngFor="let activityRow of projectRow.activity;let activityIndex = index">
-					<div class="table-inner-wrapper">
-						<div class="responsive-table-row project-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
-							<div class="responsive-table-content project-name">
-								<ng-template [ngIf]="activityIndex == 0">
+  <nb-card-header class="card-title">
+    {{ day.date | dateTime: 'LL' }}
+  </nb-card-header>
+  <nb-card-body class="activities-container">
+    <ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
+    @for (employeeRow of day.employees; track employeeRow; let employeeIndex = $index) {
+      <div class="cart-body project-row">
+        @for (projectRow of employeeRow.projects; track projectRow; let projectIndex = $index) {
+          <div class="table-row-custom">
+            @for (activityRow of projectRow.activity; track activityRow; let activityIndex = $index) {
+              <div class="activity-row">
+                <div class="table-inner-wrapper">
+                  <div class="responsive-table-row project-column">
+                    <div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
+                    <div class="responsive-table-content project-name">
+                      @if (activityIndex == 0) {
 									<ng-container *ngTemplateOutlet="
 										projectEl;
 										context: { $implicit: projectRow?.project }">
-									</ng-container>
-								</ng-template>
-							</div>
-						</div>
-						<div class="responsive-table-row title-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.TITLE' | translate }}</div>
-							<div class="responsive-table-content project-name title">
-								{{ activityRow?.title }}
-							</div>
-						</div>
-						<div class="responsive-table-row duration-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
-							<div class="responsive-table-content day-col duration">
-								{{ activityRow.duration | durationFormat }}
-							</div>
-						</div>
-						<div class="responsive-table-row progress-bar-column">
-							<div class="responsive-table-content day-col">
-								<ngx-progress-status [defaultStatus]="'success'" class="report-progress"
-									[percentage]="activityRow.duration_percentage">
-								</ngx-progress-status>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</nb-card-body>
+                        </ng-container>
+                      }
+                    </div>
+                  </div>
+                  <div class="responsive-table-row title-column">
+                    <div class="responsive-table-header">{{ 'REPORT_PAGE.TITLE' | translate }}</div>
+                    <div class="responsive-table-content project-name title">
+                      {{ activityRow?.title }}
+                    </div>
+                  </div>
+                  <div class="responsive-table-row duration-column">
+                    <div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
+                    <div class="responsive-table-content day-col duration">
+                      {{ activityRow.duration | durationFormat }}
+                    </div>
+                  </div>
+                  <div class="responsive-table-row progress-bar-column">
+                    <div class="responsive-table-content day-col">
+                      <ngx-progress-status [defaultStatus]="'success'" class="report-progress"
+                        [percentage]="activityRow.duration_percentage">
+                      </ngx-progress-status>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </nb-card-body>
 </ng-template>
 
 <ng-template let-project #projectEl>
-	<ga-project-column-view *ngIf="project; else noProjects" [project]="project"></ga-project-column-view>
-	<ng-template #noProjects>
-		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
-	</ng-template>
+  @if (project) {
+    <ga-project-column-view [project]="project"></ga-project-column-view>
+  } @else {
+    <span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+  }
 </ng-template>

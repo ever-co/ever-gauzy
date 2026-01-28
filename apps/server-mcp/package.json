@@ -26,7 +26,7 @@
 	},
 	"devDependencies": {
 		"@electron/rebuild": "^3.2.10",
-		"@types/node": "^22.14.0",
+		"@types/node": "^24.10.0",
 		"electron": "^38.1.2",
 		"@electron/notarize": "^2.5.0",
 		"electron-builder": "26.0.3",
@@ -34,20 +34,20 @@
 		"electron-packager": "^17.1.1",
 		"electron-reload": "~1.5.0",
 		"node-polyfill-webpack-plugin": "^1.1.4",
-		"terser-webpack-plugin": "^5.3.14",
+		"terser-webpack-plugin": "^5.3.16",
 		"rimraf": "^3.0.2",
-		"typescript": "^5.8.3"
+		"typescript": "^5.9.3"
 	},
 	"dependencies": {
 		"@gauzy/mcp-server": "^0.1.0",
 		"@modelcontextprotocol/sdk": "^1.13.1",
-		"axios": "^1.7.0",
-		"dotenv": "^16.4.5",
+		"axios": "^1.9.0",
+		"dotenv": "^17.2.3",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.18.1",
-		"zod": "^3.25.67",
+		"zod": "^4.3.5",
 		"custom-electron-titlebar": "^4.2.8"
 	}
 }

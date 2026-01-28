@@ -889,6 +889,9 @@ ipcMain.on('minimize_on_startup', (event, arg) => {
 
 ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
+ipcMain.on('get-arch', (event) => {
+	event.sender.send('get-arch', process.arch);
+});
 
 /**
  * Closes all application windows.

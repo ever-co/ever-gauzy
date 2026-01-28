@@ -25,18 +25,18 @@
 	</nb-select>
 </div>
 
-<ng-container [ngSwitch]="selectedChart">
-	<div class="chart-wrap">
-		<ng-template [ngSwitchCase]="EmployeeChartEnum.DOUGHNUT">
+<div class="chart-wrap">
+	<ng-container [ngSwitch]="selectedChart">
+		<ng-container *ngSwitchCase="EmployeeChartEnum.DOUGHNUT">
 			<ga-employee-doughnut-chart [employeeStatistics]="employeeStatistics"></ga-employee-doughnut-chart>
-		</ng-template>
-		<ng-template [ngSwitchCase]="EmployeeChartEnum.STACKED_BAR">
+		</ng-container>
+		<ng-container *ngSwitchCase="EmployeeChartEnum.STACKED_BAR">
 			<ga-employee-stacked-bar-chart [employeeStatistics]="employeeStatistics"></ga-employee-stacked-bar-chart>
-		</ng-template>
-		<ng-template [ngSwitchDefault]>
+		</ng-container>
+		<ng-container *ngSwitchDefault>
 			<ga-employee-horizontal-bar-chart
 				[employeeStatistics]="employeeStatistics"
 			></ga-employee-horizontal-bar-chart>
-		</ng-template>
-	</div>
-</ng-container>
+		</ng-container>
+	</ng-container>
+</div>

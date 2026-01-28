@@ -62,12 +62,14 @@
 					"brace",
 					"brace/mode/handlebars",
 					"camelcase",
+					"dayjs",
 					"eva-icons",
 					"file-saver",
 					"leaflet",
 					"localforage",
 					"mobx",
 					"moment",
+					"moment-duration-format",
 					"moment-range",
 					"moment-timezone",
 					"randomcolor",
@@ -115,6 +117,7 @@
 					"extractLicenses": false,
 					"sourceMap": true,
 					"namedChunks": true,
+					"progress": false,
 					"budgets": [
 						{
 							"type": "initial",
@@ -134,7 +137,8 @@
 			"executor": "@angular-builders/custom-webpack:dev-server",
 			"options": {
 				"buildTarget": "gauzy:build",
-				"proxyConfig": "apps/gauzy/proxy.conf.json"
+				"proxyConfig": "apps/gauzy/proxy.conf.json",
+				"liveReload": true
 			},
 			"configurations": {
 				"production": {
@@ -143,7 +147,9 @@
 				},
 				"local": {
 					"buildTarget": "gauzy:build:local",
-					"proxyConfig": "apps/gauzy/proxy.conf.json"
+					"proxyConfig": "apps/gauzy/proxy.conf.json",
+					"liveReload": true,
+					"poll": 0
 				}
 			},
 			"defaultConfiguration": "local"
@@ -158,7 +164,8 @@
 			"executor": "@nx/jest:jest",
 			"options": {
 				"jestConfig": "apps/gauzy/jest.config.js",
-				"setupFile": "apps/gauzy/src/test-setup.ts"
+				"setupFile": "apps/gauzy/src/test-setup.ts",
+				"tsConfig": "apps/gauzy/tsconfig.spec.json"
 			}
 		},
 		"desktop-ui": {
@@ -219,12 +226,14 @@
 					"brace",
 					"brace/mode/handlebars",
 					"camelcase",
+					"dayjs",
 					"eva-icons",
 					"file-saver",
 					"leaflet",
 					"localforage",
 					"mobx",
 					"moment",
+					"moment-duration-format",
 					"moment-range",
 					"moment-timezone",
 					"randomcolor",
@@ -316,12 +325,14 @@
 					"brace",
 					"brace/mode/handlebars",
 					"camelcase",
+					"dayjs",
 					"eva-icons",
 					"file-saver",
 					"leaflet",
 					"localforage",
 					"mobx",
 					"moment",
+					"moment-duration-format",
 					"moment-range",
 					"moment-timezone",
 					"randomcolor",

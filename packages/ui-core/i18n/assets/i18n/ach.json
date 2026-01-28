@@ -4192,6 +4192,38 @@
 			}
 		}
 	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "Neno ki kwano ngec",
+		"SERVICES": "Tic",
+		"SCOPE": "Wel",
+		"GLOBAL": "Piny weng",
+		"TENANT": "Lobo",
+		"POSTHOG": {
+			"TITLE": "Kwano ngec me PostHog",
+			"ENABLED": "Mi PostHog tii",
+			"API_KEY": "Lagony API",
+			"API_KEY_PLACEHOLDER": "Ket lagony API pa projek me PostHog mamegi",
+			"HOST": "URL me lacoo (host)",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "Kare me cwalo dwoko (ms)",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "Kare i millisekond ikare ma ki cwalo ngec mapolo i dwoko"
+		},
+		"SENTRY": {
+			"TITLE": "Luboo marac me Sentry",
+			"ENABLED": "Mi Sentry tii",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "Kwano ngec me Jitsu",
+			"ENABLED": "Mi Jitsu tii",
+			"HOST": "URL me lacoo (host)",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "Lagony me cono (write key)",
+			"WRITE_KEY_PLACEHOLDER": "Ket lagony me cono pa Jitsu mamegi"
+		}
+	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "crwdns9914:0{{ name }}crwdne9914:0",
 		"HOST": "crwdns8392:0crwdne8392:0",
