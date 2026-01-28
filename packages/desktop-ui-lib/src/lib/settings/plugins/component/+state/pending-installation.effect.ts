@@ -2,7 +2,20 @@ import { Injectable } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { catchError, exhaustMap, filter, forkJoin, from, map, of, switchMap, take, tap, withLatestFrom } from 'rxjs';
+import {
+	catchError,
+	EMPTY,
+	exhaustMap,
+	filter,
+	forkJoin,
+	from,
+	map,
+	of,
+	switchMap,
+	take,
+	tap,
+	withLatestFrom
+} from 'rxjs';
 import { UserSubscribedPluginsService } from '../../services/user-subscribed-plugins.service';
 import { PendingInstallationDialogComponent } from '../pending-installation-dialog/pending-installation-dialog.component';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
@@ -97,14 +110,24 @@ export class PendingInstallationEffects {
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.checkAndShowDialog),
 				withLatestFrom(this.query.checked$, this.query.hasPendingPlugins$, this.query.forceInstallEnabled$),
-				filter(([_, __, hasPending]) => hasPending),
-				map(([_, checked, __, force]) => {
+				switchMap(([_, checked, hasPending, force]) => {
+					// If we haven't checked yet, trigger plugin fetch so pending detection can run.
 					if (!checked) {
-						return PluginActions.getPlugins();
+						return of(PluginActions.getPlugins());
 					}
-					return force
-						? PendingInstallationActions.installAutoInstallablePlugins()
-						: PendingInstallationActions.openDialog();
+
+					// If there are pending plugins, show dialog.
+					if (hasPending) {
+						return of(PendingInstallationActions.openDialog());
+					}
+
+					// If force-install is enabled, start installing auto-installable plugins.
+					if (force) {
+						return of(PendingInstallationActions.installAutoInstallablePlugins());
+					}
+
+					// Nothing to do — avoid dispatching an unnecessary action.
+					return EMPTY;
 				})
 			),
 		{ dispatch: true }

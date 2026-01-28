@@ -64,7 +64,7 @@
 				<span class="list-badge">{{ pendingPlugins().length }}</span>
 			</div>
 			<nb-list class="plugin-list">
-				@for (pending of pendingPlugins(); track trackByPluginId($index, pending.plugin.id)) {
+				@for (pending of pendingPlugins(); track trackByPluginId($index, pending)) {
 				<nb-list-item
 					class="plugin-item"
 					nbInfiniteList
