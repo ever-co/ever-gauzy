@@ -1,6 +1,8 @@
 # Editor configuration, see http://editorconfig.org
+# This is the root config - stops EditorConfig from looking in parent directories
 root = true
 
+# Default settings for all files
 [*]
 charset = utf-8
 indent_style = space
@@ -11,13 +13,48 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 max_line_length = 120
 
+# TypeScript/JavaScript files
+[*.{ts,tsx,js,jsx}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+
+# HTML files
+[*.html]
+indent_style = space
+indent_size = 2
+tab_width = 2
+
+# SCSS/CSS files
+[*.{scss,css}]
+indent_style = space
+indent_size = 2
+
+# YAML files - must use spaces (YAML spec)
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# JSON files
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Markdown files
 [*.md]
 max_line_length = off
 trim_trailing_whitespace = false
 
-[*.yml]
+# Makefile - must use tabs
+[Makefile]
+indent_style = tab
+
+# Shell scripts
+[*.sh]
 indent_style = space
 indent_size = 2
+end_of_line = lf
 
-[*.json]
-indent_size = 2
+# Windows batch files
+[*.{cmd,bat}]
+end_of_line = crlf

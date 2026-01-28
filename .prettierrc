@@ -9,7 +9,7 @@
   "quoteProps": "as-needed",
   "insertPragma": false,
   "requirePragma": false,
-  "endOfLine": "lf",
+  "endOfLine": "auto",
   "overrides": [
     {
       "files": "*.scss",

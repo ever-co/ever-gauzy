@@ -1,3 +1,6 @@
+# Auto detect text files and normalize line endings to LF
+* text=auto eol=lf
+
 LICENSE    text
 Jenkinfile text
 
