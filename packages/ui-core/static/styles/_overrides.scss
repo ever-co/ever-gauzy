@@ -78,9 +78,30 @@ body {
     letter-spacing: 0em;
   }
 
-  // overrides bootstrap svg style
   nb-icon svg {
     vertical-align: top;
+    width: 100%;
+    height: 100%;
+  }
+
+  nb-icon svg:not([fill]) {
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  nb-icon svg *[stroke]:not([stroke='none']) {
+    stroke: currentColor;
+  }
+
+  nb-icon svg *[fill]:not([fill='none']):not([fill='transparent']) {
+    fill: currentColor;
+  }
+
+  nb-icon {
+    color: inherit;
   }
 
   nb-auth-block .links nb-icon {
@@ -96,29 +117,31 @@ body {
   }
 
   nb-card nb-list {
-    @include nb-scrollbars(
-      nb-theme(card-scrollbar-color),
+    @include nb-scrollbars(nb-theme(card-scrollbar-color),
       nb-theme(card-scrollbar-background-color),
-      nb-theme(card-scrollbar-width)
-    );
+      nb-theme(card-scrollbar-width));
   }
 
   nb-flip-card {
     .front-container {
       -webkit-backface-visibility: visible;
+      backface-visibility: visible;
     }
 
     .back-container {
       -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
 
     .flipped {
       .front-container {
         -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
       }
 
       .back-container {
         -webkit-backface-visibility: visible;
+        backface-visibility: visible;
       }
     }
   }

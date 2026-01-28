@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -53,6 +52,7 @@ import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-stat
 import { TimeTrackerComponent } from './time-tracker.component';
 import { TimeTrackerService } from './time-tracker.service';
 import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
 	declarations: [
@@ -71,7 +71,7 @@ import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog
 		NbButtonModule,
 		NbSpinnerModule,
 		NbIconModule,
-		NbEvaIconsModule,
+		NbTablerIconsModule,
 		NbSidebarModule,
 		FormsModule,
 		NbCheckboxModule,

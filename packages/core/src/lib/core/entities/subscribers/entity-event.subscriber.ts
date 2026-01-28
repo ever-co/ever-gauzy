@@ -6,11 +6,8 @@ import {
 	EntitySubscriberInterface as TypeOrmEntitySubscriberInterface,
 	UpdateEvent
 } from 'typeorm';
-import { MultiORM, MultiORMEnum, getORMType } from '../../utils';
+import { MultiORMEnum, getORMType } from '../../utils';
 import { MultiOrmEntityManager } from './entity-event-subscriber.types';
-
-// Get the type of the Object-Relational Mapping (ORM) used in the application.
-const ormType: MultiORM = getORMType();
 
 /**
  * Implements event handling for entity creation.
@@ -151,6 +148,8 @@ export abstract class EntityEventSubscriber<Entity>
 	 * @returns {Promise<void>} A promise that resolves when the pre-update process is complete. Any errors during processing are caught and logged.
 	 */
 	async beforeUpdate(event: EventArgs<Entity> | UpdateEvent<Entity>): Promise<void> {
+		// Get ORM type dynamically at runtime to ensure correct environment selection
+		const ormType = getORMType();
 		try {
 			let entity: Entity;
 			let entityManager: MultiOrmEntityManager;
@@ -193,6 +192,8 @@ export abstract class EntityEventSubscriber<Entity>
 	 * @returns {Promise<void>} A promise that resolves when the post-update process is complete. Any errors during processing are caught and logged.
 	 */
 	async afterUpdate(event: EventArgs<Entity> | UpdateEvent<Entity>): Promise<void> {
+		// Get ORM type dynamically at runtime to ensure correct environment selection
+		const ormType = getORMType();
 		try {
 			let entity: Entity;
 			let entityManager: MultiOrmEntityManager;

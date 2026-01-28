@@ -1,6 +1,6 @@
 import { EntityManager, EntityRepository, AnyEntity } from '@mikro-orm/knex';
 
-export class MikroOrmBaseEntityRepository<T extends Object> extends EntityRepository<T> {
+export class MikroOrmBaseEntityRepository<T extends object> extends EntityRepository<T> {
 
 	/**
 	 * Persists the given entity or array of entities in the database.

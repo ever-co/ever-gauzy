@@ -31,7 +31,7 @@ startTracing(); // Start tracing if OTEL is enabled.
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { EventSubscriber } from '@mikro-orm/core';
+import { EventSubscriber, MikroORM, RequestContext } from '@mikro-orm/core';
 import { useContainer } from 'class-validator';
 import * as helmet from 'helmet';
 import * as chalk from 'chalk';
@@ -42,11 +42,12 @@ import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, defineConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
+import { MultiORMEnum, getORMType } from '../core/utils';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AuthGuard } from '../shared/guards';
-import { SharedModule } from '../shared/shared.module';
+import { ValidatorModule } from '../shared/validators/validator.module';
 import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
 import { configureRedisSession } from './redis-store';
@@ -150,13 +151,16 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	const globalPrefix = 'api';
 	app.setGlobalPrefix(globalPrefix);
 
-	const service = app.select(AppModule).get(AppService);
-	await service.seedDBIfEmpty();
+	// Get the AppService
+	const appService = app.select(AppModule).get(AppService);
+
+	// Seed DB if empty, using ORM-specific behavior
+	await seedDatabaseIfEmpty(app, appService);
 
 	/**
 	 * Dependency injection with class-validator
 	 */
-	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
+	useContainer(app.select(ValidatorModule), { fallbackOnErrors: true });
 
 	// Start the server
 	const { port = 3000, host = '0.0.0.0' } = config.apiConfigOptions;
@@ -186,7 +190,9 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		}
 
 		if (env.demo) {
-			service.executeDemoSeed(); // Seed demo data if in demo mode
+			seedDemoIfEmpty(app, appService).catch((error) => {
+				console.error('Demo seed failed:', error);
+			});
 		}
 	});
 
@@ -224,6 +230,54 @@ function handleUnhandledRejection(reason: any, promise: Promise<any>) {
 export async function registerPluginConfig(config: Partial<ApplicationPluginConfig>): Promise<ApplicationPluginConfig> {
 	// Apply pre-bootstrap operations and return the updated configuration
 	return await preBootstrapApplicationConfig(config);
+}
+
+/**
+ * Run demo seed after the HTTP server starts.
+ * When MikroORM is selected, wrap in a RequestContext so repositories use a scoped EntityManager.
+ */
+async function seedDemoIfEmpty(app: INestApplication, appService: AppService): Promise<void> {
+	// Get the ORM type
+	const ormType = getORMType();
+
+	// Seed DB if empty based on the ORM type
+	if (ormType === MultiORMEnum.MikroORM) {
+		// Get the MikroORM instance
+		const mikroOrm = app.get(MikroORM);
+
+		// Seed DB if empty inside a MikroORM RequestContext
+		await RequestContext.create(mikroOrm.em, async () => {
+			await appService.seedDemoIfEmpty();
+		});
+	} else {
+		// Seed DB if empty for TypeORM
+		await appService.seedDemoIfEmpty();
+	}
+}
+
+/**
+ * Seed DB if empty.
+ * - When MikroORM is selected (DB_ORM=mikro-orm), run seeding inside a RequestContext
+ *   so repositories use a scoped EntityManager instead of the global instance.
+ * - Otherwise (TypeORM), keep the existing behavior.
+ */
+async function seedDatabaseIfEmpty(app: INestApplication, appService: AppService): Promise<void> {
+	// Get the ORM type
+	const ormType = getORMType();
+
+	// Seed DB if empty based on the ORM type
+	if (ormType === MultiORMEnum.MikroORM) {
+		// Get the MikroORM instance
+		const mikroOrm = app.get(MikroORM);
+
+		// Seed DB if empty inside a MikroORM RequestContext
+		await RequestContext.create(mikroOrm.em, async () => {
+			await appService.seedDBIfEmpty();
+		});
+	} else {
+		// Seed DB if empty for TypeORM
+		await appService.seedDBIfEmpty();
+	}
 }
 
 /**

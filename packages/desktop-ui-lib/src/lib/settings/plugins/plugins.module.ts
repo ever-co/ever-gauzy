@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbAlertModule,
 	NbBadgeModule,
@@ -152,6 +151,7 @@ import {
 } from './component/plugin-marketplace/shared';
 import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
 import { PluginRoutingModule } from './plugin-routing.module';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
 	declarations: [
@@ -221,6 +221,7 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		DesktopDirectiveModule,
 		NoDataMessageModule,
 		NbIconModule,
+		NbTablerIconsModule,
 		TranslateModule.forChild(),
 		RouterModule,
 		NbBadgeModule,
@@ -244,7 +245,6 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		PipeModule,
 		NbListModule,
 		SelectModule,
-		NbEvaIconsModule,
 		DragDropModule,
 		NbTagModule,
 		InfiniteScrollDirective,
