@@ -1,0 +1,62 @@
+{
+	"name": "@gauzy/storage-provider-wasabi",
+	"version": "0.1.0",
+	"description": "Flexible Wasabi S3-compatible storage provider for NestJS applications",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/modules/providers/storage-provider-wasabi"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build storage-provider-wasabi",
+		"lib:build:prod": "yarn nx build storage-provider-wasabi",
+		"lib:watch": "yarn nx build storage-provider-wasabi --watch"
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "3.717.0",
+		"@aws-sdk/s3-request-presigner": "3.717.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
+		"@nestjs/common": "^11.1.12",
+		"multer": "^2.0.0",
+		"multer-s3": "^3.0.1",
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/jest": "29.5.14",
+		"@types/multer": "^1.4.12",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	},
+	"keywords": [
+		"wasabi",
+		"s3",
+		"storage",
+		"provider",
+		"file-storage",
+		"cloud-storage",
+		"nestjs",
+		"typescript",
+		"aws-s3",
+		"object-storage"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}

@@ -1,7 +1,7 @@
 /* eslint-disable */
 export default {
 	name: 'gauzy',
-	preset: '../../jest.config.js',
+	preset: '../../jest.preset.js',
 	coverageDirectory: '../../coverage/apps/gauzy',
 	snapshotSerializers: [
 		'jest-preset-angular/AngularSnapshotSerializer.js',

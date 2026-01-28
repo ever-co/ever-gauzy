@@ -21,7 +21,9 @@
 			"@gauzy/plugin": ["./packages/plugin/src/index.ts"],
 			"@gauzy/plugin-changelog": ["./packages/plugins/changelog/src/index.ts"],
 			"@gauzy/plugin-integration-activepieces": ["./packages/plugins/integration-activepieces/src/index.ts"],
-			"@gauzy/plugin-integration-activepieces-ui": ["./packages/plugins/integration-activepieces-ui/src/index.ts"],
+			"@gauzy/plugin-integration-activepieces-ui": [
+				"./packages/plugins/integration-activepieces-ui/src/index.ts"
+			],
 			"@gauzy/plugin-integration-ai": ["./packages/plugins/integration-ai/src/index.ts"],
 			"@gauzy/plugin-integration-ai-ui": ["./packages/plugins/integration-ai-ui/src/index.ts"],
 			"@gauzy/plugin-integration-github": ["./packages/plugins/integration-github/src/index.ts"],
@@ -63,6 +65,7 @@
 			"@gauzy/ui-core": ["./packages/ui-core/src/index.ts"],
 			"@gauzy/ui-core/*": ["./packages/ui-core/*/src/index.ts"],
 			"@gauzy/utils": ["./packages/utils/src/index.ts"],
+			"@gauzy/storage-provider-wasabi": ["./packages/modules/providers/storage-provider-wasabi/src/index.ts"],
 			"@nebular/*": ["./node_modules/@nebular/*"],
 			"ng2-completer": ["./node_modules/@akveo/ng2-completer"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"]

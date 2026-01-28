@@ -47,6 +47,7 @@
 		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/storage-provider-wasabi": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@godaddy/terminus": "^4.12.1",
 		"@grpc/grpc-js": "^1.7.3",
