@@ -3,7 +3,6 @@ import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { catchError, exhaustMap, filter, forkJoin, from, map, of, switchMap, take, tap, withLatestFrom } from 'rxjs';
-import { PluginElectronService } from '../../services/plugin-electron.service';
 import { UserSubscribedPluginsService } from '../../services/user-subscribed-plugins.service';
 import { PendingInstallationDialogComponent } from '../pending-installation-dialog/pending-installation-dialog.component';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
@@ -11,6 +10,8 @@ import { PluginMarketplaceActions } from '../plugin-marketplace/+state/actions/p
 import { PendingInstallationActions } from './pending-installation.action';
 import { PendingInstallationQuery } from './pending-installation.query';
 import { IPendingPluginInstallation, PendingInstallationStore } from './pending-installation.store';
+import { PluginActions } from './plugin.action';
+import { PluginQuery } from './plugin.query';
 
 @Injectable({ providedIn: 'root' })
 export class PendingInstallationEffects {
@@ -19,7 +20,7 @@ export class PendingInstallationEffects {
 		private readonly query: PendingInstallationQuery,
 		private readonly actions$: Actions,
 		private readonly userSubscribedPluginsService: UserSubscribedPluginsService,
-		private readonly pluginElectronService: PluginElectronService,
+		private readonly pluginQuery: PluginQuery,
 		private readonly dialog: NbDialogService
 	) {}
 
@@ -29,7 +30,7 @@ export class PendingInstallationEffects {
 	private loadPendingPlugins$() {
 		return forkJoin({
 			subscribed: this.userSubscribedPluginsService.getSubscribedPlugins(),
-			installed: from(this.pluginElectronService.plugins)
+			installed: this.pluginQuery.plugins$
 		}).pipe(
 			map(({ subscribed, installed }) => {
 				const installedIds = new Set(installed.map((p) => p.marketplaceId).filter(Boolean));
@@ -76,6 +77,18 @@ export class PendingInstallationEffects {
 		{ dispatch: true }
 	);
 
+	setPendingPlugins$ = createEffect(
+		() =>
+			this.actions$.pipe(
+				ofType(PendingInstallationActions.setPendingPlugins),
+				map(({ pendings }) => {
+					this.store.setPendingPlugins(pendings);
+					return PendingInstallationActions.checkAndShowDialog();
+				})
+			),
+		{ dispatch: true }
+	);
+
 	/* ---------------------------------------------------------------------
 	 * Check + decide what to do next
 	 * -------------------------------------------------------------------*/
@@ -87,12 +100,21 @@ export class PendingInstallationEffects {
 				filter(([_, __, hasPending]) => hasPending),
 				map(([_, checked, __, force]) => {
 					if (!checked) {
-						return PendingInstallationActions.checkPendingInstallations();
+						return PluginActions.getPlugins();
 					}
 					return force
 						? PendingInstallationActions.installAutoInstallablePlugins()
 						: PendingInstallationActions.openDialog();
 				})
+			),
+		{ dispatch: true }
+	);
+
+	checkPluginSuccess$ = createEffect(
+		() =>
+			this.actions$.pipe(
+				ofType(PluginActions.getPluginsSuccess),
+				map(() => PendingInstallationActions.checkPendingInstallations())
 			),
 		{ dispatch: true }
 	);

@@ -71,13 +71,13 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	/**
 	 * Install a single plugin
 	 */
-	protected installPlugin(plugin: IPendingPluginInstallation): void {
-		if (!plugin.plugin.version?.id) {
+	protected installPlugin(pending: IPendingPluginInstallation): void {
+		if (!pending.plugin.version?.id) {
 			console.error('Plugin version ID is missing');
 			return;
 		}
 
-		this.actions.dispatch(PendingInstallationActions.installPlugin(plugin.plugin.id, plugin.plugin.version.id));
+		this.actions.dispatch(PendingInstallationActions.installPlugin(pending.plugin.id, pending.plugin.version.id));
 	}
 
 	/**
@@ -113,7 +113,7 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	/**
 	 * Get plugin logo URL or fallback
 	 */
-	protected getPluginLogo(plugin: IPendingPluginInstallation): string {
+	protected getPluginLogo(_: IPendingPluginInstallation): string {
 		// IPlugin doesn't have a logo property, return default
 		return 'assets/images/plugins/default-plugin-icon.png';
 	}
@@ -121,8 +121,8 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	/**
 	 * Get plugin initials for avatar fallback
 	 */
-	protected getPluginInitials(plugin: IPendingPluginInstallation): string {
-		const name = plugin.plugin.name || 'Plugin';
+	protected getPluginInitials(pending: IPendingPluginInstallation): string {
+		const name = pending.plugin.name || 'Plugin';
 		const words = name.split(/\s+/);
 		if (words.length >= 2) {
 			return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();

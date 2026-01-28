@@ -1,5 +1,5 @@
-import { IPlugin } from '@gauzy/contracts';
 import { createAction } from '@ngneat/effects';
+import { IPendingPluginInstallation } from './pending-installation.store';
 
 /**
  * Actions for managing pending plugin installations
@@ -22,7 +22,7 @@ export class PendingInstallationActions {
 	 */
 	public static readonly setPendingPlugins = createAction(
 		'[Pending Installation] Set Pending Plugins',
-		(plugins: Array<{ plugin: IPlugin; subscriptionId: string }>) => ({ plugins })
+		(pendings: Array<IPendingPluginInstallation>) => ({ pendings })
 	);
 
 	/**

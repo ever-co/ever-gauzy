@@ -75,7 +75,7 @@ export class UserSubscribedPluginsService {
 				return response.items.map((plugin) => {
 					// Extract pluginTenant info from the first subscription if available
 					const subscription = plugin.subscriptions?.[0];
-					const pluginTenant = (subscription as any)?.pluginTenant;
+					const pluginTenant = subscription?.pluginTenant;
 
 					return {
 						plugin,
