@@ -10,10 +10,12 @@ export interface IWasabiEnvironment {
 	secretAccessKey?: string;
 	region?: string;
 	serviceUrl?: string;
-	s3?: {
-		bucket?: string;
-		forcePathStyle?: boolean;
-	};
+
+	/**
+	 * The Wasabi bucket name.
+	 */
+	bucket?: string;
+	forcePathStyle?: boolean;
 }
 
 /**
@@ -52,10 +54,8 @@ export interface IRequestContextProvider {
  *   accessKeyId: process.env.WASABI_ACCESS_KEY_ID,
  *   secretAccessKey: process.env.WASABI_SECRET_ACCESS_KEY,
  *   region: process.env.WASABI_REGION,
- *   s3: {
- *     bucket: process.env.WASABI_BUCKET,
- *     forcePathStyle: true
- *   }
+ *   bucket: process.env.WASABI_BUCKET,
+ *   forcePathStyle: true
  * });
  *
  * @example
@@ -131,8 +131,8 @@ export class WasabiConfigAdapter implements IWasabiConfigProvider {
 			secretAccessKey: env?.secretAccessKey ?? '',
 			region: env?.region,
 			serviceUrl: env?.serviceUrl,
-			bucket: env?.s3?.bucket ?? '',
-			forcePathStyle: env?.s3?.forcePathStyle ?? false,
+			bucket: env?.bucket ?? '',
+			forcePathStyle: env?.forcePathStyle ?? false,
 			rootPath: ''
 		};
 	}
@@ -141,28 +141,32 @@ export class WasabiConfigAdapter implements IWasabiConfigProvider {
 	 * Merge default config with tenant-specific settings.
 	 */
 	private _mergeWithTenantSettings(baseConfig: IWasabiConfig, settings: ITenantWasabiSettings): IWasabiConfig {
-		const merged: IWasabiConfig = { ...baseConfig };
+		const merged = { ...baseConfig };
 
-		/**
-		 * Helper to assign a trimmed string value if present.
-		 */
-		const assignIfNotEmpty = (setter: (value: string) => void, raw?: string | boolean) => {
-			// For non-string values (e.g., booleans), skip trimming logic
-			if (typeof raw !== 'string') {
-				return;
-			}
+		const accessKeyId = trimIfNotEmpty(settings.wasabi_aws_access_key_id);
+		if (accessKeyId) {
+			merged.accessKeyId = accessKeyId;
+		}
 
-			const value = trimIfNotEmpty(raw);
-			if (value) {
-				setter(value);
-			}
-		};
+		const secretAccessKey = trimIfNotEmpty(settings.wasabi_aws_secret_access_key);
+		if (secretAccessKey) {
+			merged.secretAccessKey = secretAccessKey;
+		}
 
-		assignIfNotEmpty((v) => (merged.accessKeyId = v), settings.wasabi_aws_access_key_id);
-		assignIfNotEmpty((v) => (merged.secretAccessKey = v), settings.wasabi_aws_secret_access_key);
-		assignIfNotEmpty((v) => (merged.region = v), settings.wasabi_aws_default_region);
-		assignIfNotEmpty((v) => (merged.serviceUrl = ensureHttpPrefix(v)), settings.wasabi_aws_service_url);
-		assignIfNotEmpty((v) => (merged.bucket = v), settings.wasabi_aws_bucket);
+		const region = trimIfNotEmpty(settings.wasabi_aws_default_region);
+		if (region) {
+			merged.region = region;
+		}
+
+		const serviceUrl = trimIfNotEmpty(settings.wasabi_aws_service_url);
+		if (serviceUrl) {
+			merged.serviceUrl = ensureHttpPrefix(serviceUrl);
+		}
+
+		const bucket = trimIfNotEmpty(settings.wasabi_aws_bucket);
+		if (bucket) {
+			merged.bucket = bucket;
+		}
 
 		if (settings.wasabi_aws_force_path_style !== undefined) {
 			merged.forcePathStyle = parseToBoolean(settings.wasabi_aws_force_path_style);

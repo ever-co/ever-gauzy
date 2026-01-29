@@ -2,6 +2,7 @@ import { NestModule, MiddlewareConsumer, Module } from '@nestjs/common';
 import { environment, getConfig } from '@gauzy/config';
 import { getApiPublicPath } from '../util/path-util';
 import { WasabiStorageProviderModule, WasabiConfigAdapter } from '@gauzy/file-wasabi-s3';
+import { S3StorageProviderModule, S3ConfigAdapter } from '@gauzy/file-s3';
 import { LocalStorageProviderModule, LocalConfigAdapter } from '@gauzy/file-local';
 import { RequestContext } from '../context/request-context';
 import { TenantSettingModule } from '../../tenant/tenant-setting/tenant-setting.module';
@@ -59,6 +60,21 @@ function getLocalRootPath(): string {
 				publicPath: 'public'
 			})
 		}),
+		// Import S3 storage module with explicit Gauzy configuration adapter
+		S3StorageProviderModule.register({
+			isGlobal: false,
+			configProvider: new S3ConfigAdapter(
+				{
+					accessKeyId: environment.awsConfig?.accessKeyId ?? '',
+					secretAccessKey: environment.awsConfig?.secretAccessKey ?? '',
+					region: environment.awsConfig?.region,
+					bucket: environment.awsConfig?.s3?.bucket,
+					forcePathStyle: environment.awsConfig?.s3?.forcePathStyle
+				},
+				// Pass RequestContext provider for tenant-aware configuration
+				configProvider()
+			)
+		}),
 		// Import Wasabi storage module with explicit Gauzy configuration adapter
 		WasabiStorageProviderModule.register({
 			isGlobal: false,
@@ -67,10 +83,8 @@ function getLocalRootPath(): string {
 					accessKeyId: environment.wasabi.accessKeyId,
 					secretAccessKey: environment.wasabi.secretAccessKey,
 					region: environment.wasabi.region,
-					s3: {
-						bucket: environment.wasabi.s3.bucket,
-						forcePathStyle: environment.wasabi.s3.forcePathStyle
-					}
+					bucket: environment.wasabi.s3.bucket,
+					forcePathStyle: environment.wasabi.s3.forcePathStyle
 				},
 				// Pass RequestContext provider for tenant-aware configuration
 				configProvider()
@@ -78,7 +92,7 @@ function getLocalRootPath(): string {
 		})
 	],
 	providers: [TenantSettingsMiddleware],
-	exports: [LocalStorageProviderModule, WasabiStorageProviderModule]
+	exports: [LocalStorageProviderModule, S3StorageProviderModule, WasabiStorageProviderModule]
 })
 export class FileStorageModule implements NestModule {
 	/**

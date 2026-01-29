@@ -48,6 +48,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/file-wasabi-s3": "^0.1.0",
+		"@gauzy/file-s3": "^0.1.0",
 		"@gauzy/file-local": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@godaddy/terminus": "^4.12.1",
