@@ -5,7 +5,7 @@ A flexible, reusable local file storage provider for NestJS applications.
 This package is designed to be **loosely coupled** and can be used:
 
 -   As a **standalone module** in any NestJS application
--   As a **plugin** for the Gauzy platform's FileStorageModule
+-   As part of the Gauzy platform's FileStorageModule
 
 ## Features
 
@@ -14,7 +14,6 @@ This package is designed to be **loosely coupled** and can be used:
 -   **Tenant-Aware Configuration**: Dynamic configuration based on request context
 -   **Multer Integration**: Seamless file upload handling with Multer
 -   **Core Compatibility**: Fully compatible with @gauzy/core file storage system
--   **Plugin Ready**: Designed for loose coupling with Gauzy's plugin architecture
 
 ## Installation
 
@@ -55,11 +54,11 @@ await provider.deleteFile('uploads/image.png');
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { LocalStorageModule } from '@gauzy/file-local';
+import { LocalStorageProviderModule } from '@gauzy/file-local';
 
 @Module({
 	imports: [
-		LocalStorageModule.register({
+		LocalStorageProviderModule.register({
 			isGlobal: true,
 			config: {
 				rootPath: '/var/www/public',
@@ -77,11 +76,11 @@ export class AppModule {}
 ```typescript
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LocalStorageModule } from '@gauzy/file-local';
+import { LocalStorageProviderModule } from '@gauzy/file-local';
 
 @Module({
 	imports: [
-		LocalStorageModule.registerAsync({
+		LocalStorageProviderModule.registerAsync({
 			inject: [ConfigService],
 			useFactory: (configService: ConfigService) => ({
 				config: {
@@ -96,63 +95,27 @@ import { LocalStorageModule } from '@gauzy/file-local';
 export class AppModule {}
 ```
 
-### As a Gauzy Plugin
+### With Config Adapter
 
-The `LocalStorageModule` can be integrated as a plugin to extend Gauzy's file storage capabilities:
+For more advanced use cases, you can use the `LocalConfigAdapter`:
 
 ```typescript
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { GauzyPlugin, GauzyPluginMetadata } from '@gauzy/plugin';
-import { LocalStorageModule, LocalConfigAdapter } from '@gauzy/file-local';
-import { environment, getConfig } from '@gauzy/config';
-import { RequestContext, TenantSettingsMiddleware } from '@gauzy/core';
+import { Module } from '@nestjs/common';
+import { LocalStorageProviderModule, LocalConfigAdapter } from '@gauzy/file-local';
 
-@GauzyPluginMetadata({
-	id: 'gauzy-plugin-file-local',
-	name: 'Local File Storage Plugin',
-	description: 'Provides local file system storage for Gauzy',
-	version: '0.1.0'
-})
 @Module({
 	imports: [
-		LocalStorageModule.register({
-			isGlobal: true,
-			configProvider: new LocalConfigAdapter(
-				{
-					rootPath: getConfig().assetOptions?.assetPublicPath || 'public',
-					baseUrl: environment.baseUrl,
-					publicPath: 'public'
-				},
-				{
-					currentRequest: () => {
-						try {
-							return RequestContext.currentRequest();
-						} catch {
-							return null;
-						}
-					}
-				}
-			)
+		LocalStorageProviderModule.register({
+			isGlobal: false,
+			configProvider: new LocalConfigAdapter({
+				rootPath: '/var/www/public',
+				baseUrl: 'http://localhost:3000',
+				publicPath: 'public'
+			})
 		})
-	],
-	exports: [LocalStorageModule]
+	]
 })
-export class LocalStoragePlugin extends GauzyPlugin implements NestModule {
-	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(TenantSettingsMiddleware).forRoutes('*');
-	}
-}
-```
-
-Then register the plugin in your Gauzy configuration:
-
-```typescript
-// gauzy.config.ts
-import { LocalStoragePlugin } from '@gauzy/plugin-file-local';
-
-export default {
-	plugins: [LocalStoragePlugin]
-};
+export class AppModule {}
 ```
 
 ### Injecting the Provider
@@ -195,7 +158,7 @@ export class FileService {
 | `handler(options)`       | Get a Multer storage engine          |
 | `getRootPath()`          | Get the configured root path         |
 
-### LocalStorageModule
+### LocalStorageProviderModule
 
 | Method                   | Description                                  |
 | ------------------------ | -------------------------------------------- |
@@ -205,7 +168,7 @@ export class FileService {
 
 ### LocalConfigAdapter
 
-An adapter for Gauzy-specific configuration that supports:
+An adapter for configuration that supports:
 
 -   Environment-based default configuration
 -   Tenant-aware configuration via RequestContext
@@ -217,10 +180,7 @@ An adapter for Gauzy-specific configuration that supports:
 import {
 	LOCAL_CONFIG, // Injection token for static config
 	LOCAL_CONFIG_PROVIDER, // Injection token for config provider
-	LOCAL_STORAGE_PROVIDER, // Injection token for LocalProvider
-	DEFAULT_ROOT_PATH, // Default: 'public'
-	DEFAULT_PUBLIC_PATH, // Default: 'public'
-	DEFAULT_BASE_URL // Default: ''
+	LOCAL_STORAGE_PROVIDER // Injection token for LocalProvider
 } from '@gauzy/file-local';
 ```
 

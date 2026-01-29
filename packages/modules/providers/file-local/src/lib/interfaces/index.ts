@@ -1,31 +1,12 @@
+import { FileSystem } from '@gauzy/contracts';
+
 /**
  * Configuration interface for Local file storage provider.
+ * Extends FileSystem with local-specific configuration.
  */
-export interface ILocalConfig {
-	/** Root path for file storage (default: 'public') */
-	rootPath?: string;
-
-	/** Base URL for serving files (e.g., 'http://localhost:3000') */
-	baseUrl?: string;
-
+export interface ILocalConfig extends FileSystem {
 	/** Public path prefix for URLs (default: 'public') */
 	publicPath?: string;
-}
-
-/**
- * Configuration interface for Local file storage provider from tenant settings.
- * This interface is used to store local storage configuration in tenant settings database.
- * Property names use snake_case to match database column naming conventions.
- */
-export interface ILocalFileStorageProviderConfig {
-	/** Root path for file storage */
-	local_root_path?: string;
-
-	/** Base URL for serving files */
-	local_base_url?: string;
-
-	/** Public path prefix for URLs */
-	local_public_path?: string;
 }
 
 /**

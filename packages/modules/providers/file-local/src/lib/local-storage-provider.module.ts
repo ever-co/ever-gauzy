@@ -1,11 +1,6 @@
 import { Module, DynamicModule, Provider as NestProvider } from '@nestjs/common';
 import { LocalProvider } from './local.provider';
-import {
-	ILocalConfig,
-	ILocalConfigProvider,
-	ILocalStorageModuleOptions,
-	ILocalStorageModuleAsyncOptions
-} from './interfaces';
+import { ILocalConfig, ILocalStorageModuleOptions, ILocalStorageModuleAsyncOptions } from './interfaces';
 import { LOCAL_CONFIG, LOCAL_CONFIG_PROVIDER, LOCAL_STORAGE_PROVIDER } from './constants';
 
 /**
@@ -85,7 +80,7 @@ export class LocalStorageProviderModule {
 			module: LocalStorageProviderModule,
 			global: isGlobal,
 			providers,
-			exports: [LocalProvider, LOCAL_STORAGE_PROVIDER]
+			exports: [LocalProvider, LOCAL_STORAGE_PROVIDER, LOCAL_CONFIG_PROVIDER]
 		};
 	}
 
@@ -149,7 +144,7 @@ export class LocalStorageProviderModule {
 			module: LocalStorageProviderModule,
 			global: isGlobal,
 			providers,
-			exports: [LocalProvider, LOCAL_STORAGE_PROVIDER]
+			exports: [LocalProvider, LOCAL_CONFIG, LOCAL_CONFIG_PROVIDER, LOCAL_STORAGE_PROVIDER]
 		};
 	}
 
@@ -177,7 +172,7 @@ export class LocalStorageProviderModule {
 		return {
 			module: LocalStorageProviderModule,
 			providers,
-			exports: [LocalProvider, LOCAL_STORAGE_PROVIDER]
+			exports: [LocalProvider, LOCAL_CONFIG, LOCAL_STORAGE_PROVIDER]
 		};
 	}
 }
@@ -196,4 +191,3 @@ export function createConfigFromEnv(envPrefix: string = 'LOCAL'): ILocalConfig {
 		publicPath: process.env[`${envPrefix}_PUBLIC_PATH`] ?? 'public'
 	};
 }
-

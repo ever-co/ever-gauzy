@@ -26,17 +26,9 @@ export interface ILocalEnvironment {
  */
 export class LocalConfigAdapter implements ILocalConfigProvider {
 	private _defaultConfig: ILocalConfig;
-	private _detailedLogging = false;
 
 	constructor(environment?: ILocalEnvironment) {
 		this._defaultConfig = this._mapEnvironmentToConfig(environment);
-	}
-
-	/**
-	 * Enable detailed logging for debugging.
-	 */
-	setDetailedLogging(enabled: boolean): void {
-		this._detailedLogging = enabled;
 	}
 
 	/**
@@ -45,11 +37,6 @@ export class LocalConfigAdapter implements ILocalConfigProvider {
 	getConfig(): ILocalConfig {
 		// Start with default configuration
 		const config = { ...this._defaultConfig };
-
-		if (this._detailedLogging) {
-			console.log('[LocalConfigAdapter] Resolved config:', config);
-		}
-
 		return config;
 	}
 
