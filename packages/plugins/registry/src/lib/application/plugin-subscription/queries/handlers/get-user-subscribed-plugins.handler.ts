@@ -41,7 +41,8 @@ export class GetUserSubscribedPluginsQueryHandler implements IQueryHandler<GetUs
 					status: true,
 					versions: {
 						id: true,
-						number: true
+						number: true,
+						sources: true
 					},
 					subscriptions: {
 						id: true,
