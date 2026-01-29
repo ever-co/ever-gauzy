@@ -19,6 +19,7 @@ import {
 	tap,
 	withLatestFrom
 } from 'rxjs';
+import { PluginElectronService } from '../../services/plugin-electron.service';
 import { IPlugin } from '../../services/plugin-loader.service';
 import { UserSubscribedPluginsService } from '../../services/user-subscribed-plugins.service';
 import { PendingInstallationDialogComponent } from '../pending-installation-dialog/pending-installation-dialog.component';
@@ -36,6 +37,7 @@ export class PendingInstallationEffects {
 		private readonly query: PendingInstallationQuery,
 		private readonly actions$: Actions,
 		private readonly userSubscribedPluginsService: UserSubscribedPluginsService,
+		private readonly pluginElectronService: PluginElectronService,
 		private readonly dialog: NbDialogService
 	) {}
 
@@ -167,6 +169,7 @@ export class PendingInstallationEffects {
 		() =>
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.checkAndShowDialog),
+				filter(() => this.pluginElectronService.isDesktop),
 				withLatestFrom(
 					this.query.checked$,
 					this.query.hasPendingPlugins$,
