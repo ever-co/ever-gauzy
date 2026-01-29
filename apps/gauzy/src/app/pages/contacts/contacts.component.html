@@ -18,7 +18,7 @@
 		</div>
 		}
 	</nb-card-header>
-	<nb-card-body [ngClass]="{ mutation: showAddCard }" class="custom-card">
+	<nb-card-body [class.mutation]="showAddCard" class="custom-card">
 		@if (showAddCard) {
 		<ga-contact-mutation
 			class="w-100"

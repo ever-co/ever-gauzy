@@ -1,7 +1,7 @@
 <nb-card>
 	<nb-card-header>
 		@if (!showAddCard) {
-		<div [ngClass]="allFeedbacks?.length > 0 ? 'main-btn' : 'main-btn justify-content-end'">
+		<div class="main-btn" [class.justify-content-end]="!allFeedbacks?.length">
 			@if (allFeedbacks?.length > 0) {
 			<div class="filters">
 				@if (dataLayoutStyle === 'CARDS_GRID') {
@@ -87,9 +87,7 @@
 										@if (technologiesList?.length > 0) {
 										<div
 											class="form-block"
-											[ngStyle]="{
-												width: personalQualitiesList?.length === 0 ? '100%' : '48%'
-											}"
+											[style.width]="personalQualitiesList?.length === 0 ? '100%' : '48%'"
 										>
 											<div class="label mb-2">
 												{{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}
@@ -113,9 +111,7 @@
 										} @if ( personalQualitiesList?.length > 0 ) {
 										<div
 											class="form-block"
-											[ngStyle]="{
-												width: technologiesList?.length === 0 ? '100%' : '48%'
-											}"
+											[style.width]="technologiesList?.length === 0 ? '100%' : '48%'"
 										>
 											<div class="label mb-2">
 												{{ 'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate }}
