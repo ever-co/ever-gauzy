@@ -109,14 +109,4 @@ export class UserSubscribedPluginsService {
 			status: PluginSubscriptionStatus.ACTIVE
 		}).pipe(map((count) => count > 0));
 	}
-
-	/**
-	 * Check if the current user has at least one pending plugin installation
-	 * @returns Observable of boolean indicating if there is a pending installation
-	 */
-	public hasPendingInstallation(): Observable<boolean> {
-		return this.http
-			.get<{ hasPending: boolean }>(`${this.endPoint}/pending`)
-			.pipe(map((response) => response?.hasPending ?? false));
-	}
 }
