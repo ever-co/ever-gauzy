@@ -37,12 +37,24 @@ export class GetUserSubscribedPluginsQueryHandler implements IQueryHandler<GetUs
 					id: true,
 					name: true,
 					description: true,
+					type: true,
+					status: true,
+					versions: {
+						id: true,
+						number: true
+					},
 					subscriptions: {
 						id: true,
-						status: true
+						status: true,
+						pluginTenant: {
+							id: true,
+							enabled: true,
+							isMandatory: true,
+							autoInstall: true
+						}
 					}
 				},
-				relations: ['subscriptions', 'subscriptions.pluginTenant'],
+				relations: ['versions', 'subscriptions', 'subscriptions.pluginTenant'],
 				skip,
 				take
 			});
