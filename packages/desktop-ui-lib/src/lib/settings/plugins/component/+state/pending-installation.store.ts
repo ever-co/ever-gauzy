@@ -9,7 +9,7 @@ export interface IPendingPluginInstallation {
 	plugin: IPlugin;
 	subscriptionId: string;
 	isInstalling: boolean;
-	isInstalled?: boolean;
+	isInstalled: boolean;
 	error: string | null;
 	/** Whether the plugin can be auto-installed without user interaction */
 	canAutoInstall?: boolean;
@@ -57,7 +57,11 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 	 * Sets the pending plugins list
 	 */
 	public setPendingPlugins(plugins: IPendingPluginInstallation[]): void {
-		this.update({ pendingPlugins: plugins, checked: true, loading: false });
+		this.update({
+			pendingPlugins: plugins,
+			checked: true,
+			loading: false
+		});
 	}
 
 	/**
@@ -66,7 +70,22 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 	public setPluginInstalling(pluginId: string, isInstalling: boolean): void {
 		this.update((state) => ({
 			pendingPlugins: state.pendingPlugins.map((p) =>
-				p.plugin.id === pluginId ? { ...p, isInstalling, error: isInstalling ? null : p.error } : p
+				p.plugin.id === pluginId
+					? { ...p, isInstalling, error: isInstalling ? null : p.error }
+					: p
+			)
+		}));
+	}
+
+	/**
+	 * Marks a plugin as installed (shows success state before removal)
+	 */
+	public setPluginInstalled(pluginId: string, isInstalled: boolean): void {
+		this.update((state) => ({
+			pendingPlugins: state.pendingPlugins.map((p) =>
+				p.plugin.id === pluginId
+					? { ...p, isInstalling: false, isInstalled, error: null }
+					: p
 			)
 		}));
 	}
@@ -77,7 +96,9 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 	public setPluginError(pluginId: string, error: string | null): void {
 		this.update((state) => ({
 			pendingPlugins: state.pendingPlugins.map((p) =>
-				p.plugin.id === pluginId ? { ...p, error, isInstalling: false } : p
+				p.plugin.id === pluginId
+					? { ...p, error, isInstalling: false, isInstalled: false }
+					: p
 			)
 		}));
 	}

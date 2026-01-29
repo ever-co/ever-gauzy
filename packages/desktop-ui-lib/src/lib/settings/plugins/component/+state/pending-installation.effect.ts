@@ -4,11 +4,14 @@ import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import {
 	catchError,
+	concat,
+	concatMap,
 	EMPTY,
 	exhaustMap,
 	filter,
 	finalize,
 	from,
+	ignoreElements,
 	map,
 	of,
 	switchMap,
@@ -51,12 +54,70 @@ export class PendingInstallationEffects {
 							plugin: sub.plugin,
 							subscriptionId: sub.subscriptionId,
 							isInstalling: false,
+							isInstalled: false,
 							error: null,
 							canAutoInstall: sub.canAutoInstall,
 							isMandatory: sub.isMandatory
 						})
 					);
 			})
+		);
+	}
+
+	private uniqueByPluginId(plugins: IPendingPluginInstallation[]): IPendingPluginInstallation[] {
+		const seen = new Set<string>();
+		return plugins.filter((p) => {
+			if (seen.has(p.plugin.id)) {
+				return false;
+			}
+			seen.add(p.plugin.id);
+			return true;
+		});
+	}
+
+	/**
+	 * Wait for a specific plugin installation to complete or fail
+	 */
+	private waitForPluginEnd(pluginId: string) {
+		return this.actions$.pipe(
+			ofType(
+				PendingInstallationActions.installationCompleted,
+				PendingInstallationActions.installationFailed
+			),
+			filter((a) => a.pluginId === pluginId),
+			take(1)
+		);
+	}
+
+	/**
+	 * Improved installation queue with better error handling and progress tracking
+	 * Uses concatMap to ensure sequential installation
+	 */
+	private runInstallQueue(plugins: IPendingPluginInstallation[]) {
+		// Filter valid plugins and remove duplicates
+		const validPlugins = this.uniqueByPluginId(plugins).filter(
+			(p) => !p.isInstalling && !p.isInstalled && !!p.plugin.version?.id
+		);
+
+		if (validPlugins.length === 0) {
+			return EMPTY;
+		}
+
+		return from(validPlugins).pipe(
+			// Sequential processing - wait for each to complete before starting next
+			concatMap((pending) =>
+				concat(
+					// Start installation
+					of(PendingInstallationActions.installPlugin(pending.plugin.id, pending.plugin.version.id)),
+					// Wait for completion or failure
+					this.waitForPluginEnd(pending.plugin.id).pipe(
+						// Convert completion event to empty to continue queue
+						ignoreElements(),
+						// Ensure we continue even if this plugin fails
+						catchError(() => EMPTY)
+					)
+				)
+			)
 		);
 	}
 
@@ -72,14 +133,15 @@ export class PendingInstallationEffects {
 					this.loadPendingPlugins(plugins).pipe(
 						map((plugins) => PendingInstallationActions.setPendingPlugins(plugins)),
 						finalize(() => this.store.setLoading(false)),
-						catchError((err) =>
-							of(
+						catchError((err) => {
+							console.error('Failed to check pending installations:', err);
+							return of(
 								PendingInstallationActions.installationFailed(
 									'__check__',
-									err?.message ?? 'Check failed'
+									err?.message ?? 'Failed to check pending installations'
 								)
-							)
-						)
+							);
+						})
 					)
 				)
 			),
@@ -105,24 +167,28 @@ export class PendingInstallationEffects {
 		() =>
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.checkAndShowDialog),
-				withLatestFrom(this.query.checked$, this.query.hasPendingPlugins$, this.query.forceInstallEnabled$),
+				withLatestFrom(
+					this.query.checked$,
+					this.query.hasPendingPlugins$,
+					this.query.forceInstallEnabled$
+				),
 				switchMap(([_, checked, hasPending, force]) => {
-					// If we haven't checked yet, trigger plugin fetch so pending detection can run.
+					// If we haven't checked yet, trigger plugin fetch
 					if (!checked) {
 						return of(PluginActions.getPlugins());
 					}
 
-					// If there are pending plugins, show dialog.
+					// If there are pending plugins, show dialog
 					if (hasPending) {
 						return of(PendingInstallationActions.openDialog());
 					}
 
-					// If force-install is enabled, start installing auto-installable plugins.
+					// If force-install is enabled, start installing auto-installable plugins
 					if (force) {
 						return of(PendingInstallationActions.installAutoInstallablePlugins());
 					}
 
-					// Nothing to do — avoid dispatching an unnecessary action.
+					// Nothing to do
 					return EMPTY;
 				})
 			),
@@ -158,16 +224,16 @@ export class PendingInstallationEffects {
 		{ dispatch: false }
 	);
 
-	closeDialog$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(PendingInstallationActions.closeDialog),
-			withLatestFrom(this.query.hasPendingPlugins$),
-			map(([_, hasPending]) =>
-				this.store.update({
-					checked: hasPending
+	closeDialog$ = createEffect(
+		() =>
+			this.actions$.pipe(
+				ofType(PendingInstallationActions.closeDialog),
+				withLatestFrom(this.query.hasPendingPlugins$),
+				tap(([_, hasPending]) => {
+					this.store.update({ checked: hasPending });
 				})
-			)
-		)
+			),
+		{ dispatch: false }
 	);
 
 	/* ---------------------------------------------------------------------
@@ -180,10 +246,26 @@ export class PendingInstallationEffects {
 				withLatestFrom(this.query.pendingPlugins$),
 				map(([{ pluginId }, plugins]) => {
 					const pending = plugins.find((p) => p.plugin.id === pluginId);
+
 					if (!pending) {
-						return PluginInstallationActions.installationFailed('Plugin not found', pluginId);
+						console.error(`Plugin ${pluginId} not found in pending list`);
+						return PluginInstallationActions.installationFailed(
+							'Plugin not found in pending list',
+							pluginId
+						);
 					}
+
+					if (!pending.plugin.version?.id) {
+						console.error(`Plugin ${pluginId} has no version ID`);
+						return PluginInstallationActions.installationFailed(
+							'Plugin version not available',
+							pluginId
+						);
+					}
+
+					// Mark as installing
 					this.store.setPluginInstalling(pluginId, true);
+
 					return PluginMarketplaceActions.install(pending.plugin);
 				})
 			),
@@ -191,15 +273,19 @@ export class PendingInstallationEffects {
 	);
 
 	/* ---------------------------------------------------------------------
-	 * Marketplace bridge
+	 * Marketplace bridge - listen to marketplace installation events
 	 * -------------------------------------------------------------------*/
 	marketplaceCompleted$ = createEffect(
 		() =>
 			this.actions$.pipe(
 				ofType(PluginInstallationActions.installationCompleted),
 				withLatestFrom(this.query.pendingPlugins$),
-				filter(([{ marketplaceId }, plugins]) => plugins.some((p) => p.plugin.id === marketplaceId)),
-				map(([{ marketplaceId }]) => PendingInstallationActions.installationCompleted(marketplaceId))
+				filter(([{ marketplaceId }, plugins]) =>
+					plugins.some((p) => p.plugin.id === marketplaceId)
+				),
+				map(([{ marketplaceId }]) =>
+					PendingInstallationActions.installationCompleted(marketplaceId)
+				)
 			),
 		{ dispatch: true }
 	);
@@ -209,8 +295,12 @@ export class PendingInstallationEffects {
 			this.actions$.pipe(
 				ofType(PluginInstallationActions.installationFailed),
 				withLatestFrom(this.query.pendingPlugins$),
-				filter(([{ pluginId }, plugins]) => plugins.some((p) => p.plugin.id === pluginId)),
-				map(([{ pluginId, error }]) => PendingInstallationActions.installationFailed(pluginId, error))
+				filter(([{ pluginId }, plugins]) =>
+					!!pluginId && plugins.some((p) => p.plugin.id === pluginId)
+				),
+				map(([{ pluginId, error }]) =>
+					PendingInstallationActions.installationFailed(pluginId!, error)
+				)
 			),
 		{ dispatch: true }
 	);
@@ -222,7 +312,12 @@ export class PendingInstallationEffects {
 		() =>
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.installationCompleted),
-				tap(({ pluginId }) => this.store.removePlugin(pluginId))
+				tap(({ pluginId }) => {
+					// Mark as installed instead of removing immediately
+					this.store.setPluginInstalled(pluginId, true);
+					// Remove after a delay to show success state
+					setTimeout(() => this.store.removePlugin(pluginId), 2000);
+				})
 			),
 		{ dispatch: false }
 	);
@@ -231,23 +326,26 @@ export class PendingInstallationEffects {
 		() =>
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.installationFailed),
-				tap(({ pluginId, error }) => this.store.setPluginError(pluginId, error))
+				tap(({ pluginId, error }) => {
+					if (pluginId && pluginId !== '__check__') {
+						this.store.setPluginError(pluginId, error);
+					}
+				})
 			),
 		{ dispatch: false }
 	);
 
 	/* ---------------------------------------------------------------------
-	 * Install all
+	 * Install all - improved with progress tracking
 	 * -------------------------------------------------------------------*/
 	installAllPlugins$ = createEffect(
 		() =>
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.installAllPlugins),
-				withLatestFrom(this.query.pendingPlugins$),
-				switchMap(([_, plugins]) =>
-					from(plugins).pipe(
-						filter((p) => !p.isInstalling && !!p.plugin.version?.id),
-						map((p) => PendingInstallationActions.installPlugin(p.plugin.id, p.plugin.version?.id))
+				exhaustMap(() =>
+					this.query.pendingPlugins$.pipe(
+						take(1),
+						switchMap((plugins) => this.runInstallQueue(plugins))
 					)
 				)
 			),
@@ -261,11 +359,11 @@ export class PendingInstallationEffects {
 		() =>
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.installAutoInstallablePlugins),
-				withLatestFrom(this.query.pendingPlugins$),
-				switchMap(([_, plugins]) =>
-					from(plugins).pipe(
-						filter((p) => p.canAutoInstall),
-						map((p) => PendingInstallationActions.installPlugin(p.plugin.id, p.plugin.version?.id))
+				exhaustMap(() =>
+					this.query.pendingPlugins$.pipe(
+						take(1),
+						map((plugins) => plugins.filter((p) => p.canAutoInstall)),
+						switchMap((plugins) => this.runInstallQueue(plugins))
 					)
 				)
 			),
