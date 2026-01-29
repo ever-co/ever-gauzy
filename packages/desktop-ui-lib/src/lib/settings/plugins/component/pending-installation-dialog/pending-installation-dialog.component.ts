@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal }
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { tap } from 'rxjs';
+import { combineLatest, debounceTime, distinctUntilChanged, tap } from 'rxjs';
 import { PendingInstallationActions } from '../+state/pending-installation.action';
 import { PendingInstallationQuery } from '../+state/pending-installation.query';
 import { IPendingPluginInstallation } from '../+state/pending-installation.store';
@@ -34,6 +34,9 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	/** Whether any plugin is currently installing */
 	protected readonly isAnyInstalling = signal<boolean>(false);
 
+	/** Installation queue active */
+	protected readonly queueActive = signal<boolean>(false);
+
 	ngOnInit(): void {
 		this.observeState();
 	}
@@ -46,23 +49,26 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	 * Subscribe to state changes from the query
 	 */
 	private observeState(): void {
-		this.query.pendingPlugins$
+		// Combine all state observables for efficiency
+		combineLatest([
+			this.query.pendingPlugins$,
+			this.query.loading$,
+			this.query.isAnyInstalling$
+		])
 			.pipe(
-				tap((plugins) => this.pendingPlugins.set(plugins)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				debounceTime(10), // Small debounce to batch updates
+				distinctUntilChanged((prev, curr) =>
+					JSON.stringify(prev) === JSON.stringify(curr)
+				),
+				tap(([plugins, loading, installing]) => {
+					this.pendingPlugins.set(plugins);
+					this.loading.set(loading);
+					this.isAnyInstalling.set(installing);
 
-		this.query.loading$
-			.pipe(
-				tap((loading) => this.loading.set(loading)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-
-		this.query.isAnyInstalling$
-			.pipe(
-				tap((installing) => this.isAnyInstalling.set(installing)),
+					// Update queue status
+					const hasInstalling = plugins.some(p => p.isInstalling);
+					this.queueActive.set(hasInstalling);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -77,13 +83,30 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		this.actions.dispatch(PendingInstallationActions.installPlugin(pending.plugin.id, pending.plugin.version.id));
+		if (pending.isInstalling || pending.isInstalled) {
+			return;
+		}
+
+		this.actions.dispatch(
+			PendingInstallationActions.installPlugin(
+				pending.plugin.id,
+				pending.plugin.version.id
+			)
+		);
 	}
 
 	/**
 	 * Install all pending plugins
 	 */
 	protected installAll(): void {
+		const installablePlugins = this.pendingPlugins().filter(
+			p => !p.isInstalling && !p.isInstalled && !p.error
+		);
+
+		if (installablePlugins.length === 0) {
+			return;
+		}
+
 		this.actions.dispatch(PendingInstallationActions.installAllPlugins());
 	}
 
@@ -114,7 +137,6 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	 * Get plugin logo URL or fallback
 	 */
 	protected getPluginLogo(_: IPendingPluginInstallation): string {
-		// IPlugin doesn't have a logo property, return default
 		return 'assets/images/plugins/default-plugin-icon.png';
 	}
 
@@ -138,10 +160,24 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Get count of plugins currently being installed
+	 * Get count of plugins currently being installed or completed
 	 */
 	protected getInstallingCount(): number {
 		return this.pendingPlugins().filter((p) => p.isInstalling || p.isInstalled).length;
+	}
+
+	/**
+	 * Get count of successfully installed plugins
+	 */
+	protected getInstalledCount(): number {
+		return this.pendingPlugins().filter((p) => p.isInstalled).length;
+	}
+
+	/**
+	 * Get count of failed installations
+	 */
+	protected getFailedCount(): number {
+		return this.pendingPlugins().filter((p) => p.error && !p.isInstalling).length;
 	}
 
 	/**
@@ -150,12 +186,48 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	protected getProgressPercentage(): number {
 		const total = this.pendingPlugins().length;
 		if (total === 0) return 0;
-		const completed = this.pendingPlugins().filter((p) => p.isInstalled).length;
+
+		const completed = this.getInstalledCount();
 		const installing = this.pendingPlugins().filter((p) => p.isInstalling).length;
+
+		// Count completed plugins as 100%, installing as 50%
 		return Math.round(((completed + installing * 0.5) / total) * 100);
 	}
 
-	loadMore() {
+	/**
+	 * Check if all installations are complete (success or failure)
+	 */
+	protected allInstallationsComplete(): boolean {
+		const plugins = this.pendingPlugins();
+		if (plugins.length === 0) return true;
+
+		return plugins.every(p => p.isInstalled || (p.error && !p.isInstalling));
+	}
+
+	/**
+	 * Check if there are any retryable errors
+	 */
+	protected hasRetryableErrors(): boolean {
+		return this.getFailedCount() > 0;
+	}
+
+	/**
+	 * Retry all failed installations
+	 */
+	protected retryFailed(): void {
+		const failedPlugins = this.pendingPlugins().filter(p => p.error && !p.isInstalling);
+
+		failedPlugins.forEach(pending => {
+			if (pending.plugin.version?.id) {
+				this.installPlugin(pending);
+			}
+		});
+	}
+
+	/**
+	 * Load more functionality placeholder
+	 */
+	loadMore(): void {
 		// TODO [GP-779]: Implement load more functionality if needed
 	}
 }

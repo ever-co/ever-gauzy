@@ -52,6 +52,32 @@
   }
 }
 
+@keyframes checkmarkPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes progressFill {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 .pending-installation-dialog {
   width: 640px;
   max-width: 92vw;
@@ -137,7 +163,6 @@ nb-card-body {
   overflow-y: auto;
   padding: 1.25rem 1.5rem;
 
-  // Custom scrollbar
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -190,44 +215,112 @@ nb-card-body {
   }
 }
 
-// Progress Section
+// Enhanced Progress Section
 .progress-section {
   margin-bottom: 1rem;
-  padding: 0.875rem 1rem;
-  background: var(--color-primary-100);
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, var(--color-primary-100) 0%, var(--color-primary-50) 100%);
   border-radius: calc(var(--border-radius) * 1.5);
+  border: 1px solid var(--color-primary-200);
   animation: fadeIn 0.3s ease;
 
   .progress-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 
-    .progress-label {
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: var(--color-primary-600);
+    .progress-label-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .rotating-icon {
+        font-size: 1rem;
+        color: var(--color-primary-600);
+        animation: spin 2s linear infinite;
+      }
+
+      .progress-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-primary-700);
+      }
     }
 
-    .progress-count {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--color-primary-500);
+    .progress-stats {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .progress-count {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--color-primary-600);
+        background: var(--color-primary-200);
+        padding: 0.25rem 0.625rem;
+        border-radius: 12px;
+      }
+
+      .failed-count {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--color-danger-600);
+        background: var(--color-danger-100);
+        padding: 0.25rem 0.5rem;
+        border-radius: 10px;
+
+        nb-icon {
+          font-size: 0.875rem;
+        }
+      }
     }
   }
 
   .progress-bar {
-    height: 6px;
+    height: 8px;
     background: var(--color-primary-200);
-    border-radius: 3px;
+    border-radius: 4px;
     overflow: hidden;
+    position: relative;
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--color-primary-400) 0%, var(--color-primary-500) 100%);
-      border-radius: 3px;
-      transition: width 0.4s ease;
+      background: linear-gradient(
+        90deg,
+        var(--color-primary-500) 0%,
+        var(--color-primary-600) 50%,
+        var(--color-primary-500) 100%
+      );
+      background-size: 200% 100%;
+      border-radius: 4px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: progressFill 2s ease-in-out infinite;
+
+      &.has-errors {
+        background: linear-gradient(
+          90deg,
+          var(--color-warning-500) 0%,
+          var(--color-warning-600) 50%,
+          var(--color-warning-500) 100%
+        );
+        background-size: 200% 100%;
+      }
+    }
+  }
+
+  .progress-footer {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: center;
+
+    .progress-text {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--color-primary-600);
     }
   }
 }
@@ -312,32 +405,36 @@ nb-card-body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.875rem 1rem;
+    padding: 1rem 1.25rem;
     gap: 1rem;
     border-bottom: 1px solid var(--divider-color);
     background: var(--gauzy-card-2);
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: slideIn 0.3s ease;
 
     &:last-child {
       border-bottom: none;
     }
 
-    &:hover:not(.is-installing) {
+    &:hover:not(.is-installing):not(.is-installed) {
       background: var(--background-basic-color-2);
+      transform: translateX(2px);
     }
 
     &.is-installing {
       background: linear-gradient(90deg, var(--color-info-100) 0%, var(--gauzy-card-2) 100%);
+      border-left: 3px solid var(--color-info-500);
     }
 
     &.has-error {
       background: linear-gradient(90deg, var(--color-danger-100) 0%, var(--gauzy-card-2) 100%);
+      border-left: 3px solid var(--color-danger-500);
     }
 
     &.is-installed {
       background: linear-gradient(90deg, var(--color-success-100) 0%, var(--gauzy-card-2) 100%);
-      opacity: 0.85;
+      border-left: 3px solid var(--color-success-500);
+      opacity: 0.95;
     }
   }
 
@@ -349,8 +446,8 @@ nb-card-body {
     min-width: 0;
 
     .plugin-logo {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
       border-radius: calc(var(--border-radius) * 1.25);
       overflow: hidden;
       flex-shrink: 0;
@@ -378,8 +475,17 @@ nb-card-body {
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       }
 
+      .success-checkmark {
+        animation: checkmarkPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
       .installed-check {
         color: #fff;
+        font-size: 1.5rem;
+      }
+
+      .error-icon {
+        color: var(--color-danger-500);
         font-size: 1.25rem;
       }
 
@@ -394,7 +500,7 @@ nb-card-body {
     .plugin-details {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.375rem;
       min-width: 0;
       justify-content: flex-start;
       align-items: flex-start;
@@ -413,7 +519,7 @@ nb-card-body {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 200px;
+        max-width: 220px;
       }
 
       .plugin-version-badge {
@@ -425,10 +531,26 @@ nb-card-body {
         border-radius: 4px;
       }
 
+      .mandatory-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: var(--color-warning-600);
+        background: var(--color-warning-100);
+        padding: 0.125rem 0.5rem;
+        border-radius: 10px;
+
+        nb-icon {
+          font-size: 0.75rem;
+        }
+      }
+
       .plugin-description {
         font-size: 0.75rem;
         color: var(--gauzy-text-color-2);
-        line-height: 1.4;
+        line-height: 1.5;
 
         button {
           font-size: 0.75rem !important;
@@ -438,13 +560,16 @@ nb-card-body {
       .status-text {
         display: inline-flex;
         align-items: center;
-        gap: 0.25rem;
-        font-size: 0.6875rem;
+        gap: 0.375rem;
+        font-size: 0.75rem;
         font-weight: 600;
-        margin-top: 0.125rem;
+        margin-top: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
 
         &.installing {
-          color: var(--color-info-500);
+          color: var(--color-info-600);
+          background: var(--color-info-100);
 
           .spin-icon {
             animation: spin 1s linear infinite;
@@ -452,7 +577,13 @@ nb-card-body {
         }
 
         &.installed {
-          color: var(--color-success-500);
+          color: var(--color-success-600);
+          background: var(--color-success-100);
+        }
+
+        &.error {
+          color: var(--color-danger-600);
+          background: var(--color-danger-100);
         }
 
         nb-icon {
@@ -471,7 +602,7 @@ nb-card-body {
     .error-state {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.625rem;
 
       .error-badge {
         display: flex;
@@ -479,9 +610,9 @@ nb-card-body {
         gap: 0.25rem;
         font-size: 0.6875rem;
         font-weight: 600;
-        color: var(--color-danger-500);
+        color: var(--color-danger-600);
         background: var(--color-danger-100);
-        padding: 0.25rem 0.5rem;
+        padding: 0.25rem 0.625rem;
         border-radius: calc(var(--border-radius) * 0.75);
         cursor: help;
 
@@ -494,16 +625,32 @@ nb-card-body {
     .installed-badge {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
-      font-size: 0.75rem;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
       font-weight: 600;
-      color: var(--color-success-500);
+      color: var(--color-success-600);
       background: var(--color-success-100);
-      padding: 0.375rem 0.625rem;
+      padding: 0.5rem 0.875rem;
       border-radius: calc(var(--border-radius) * 0.75);
+      animation: fadeIn 0.3s ease;
 
       nb-icon {
-        font-size: 0.875rem;
+        font-size: 1rem;
+      }
+    }
+
+    .installing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      background: var(--color-info-100);
+      border-radius: calc(var(--border-radius) * 0.75);
+
+      .installing-text {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--color-info-600);
       }
     }
 
@@ -512,6 +659,11 @@ nb-card-body {
 
       &:not(:disabled):hover {
         transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      &:not(:disabled):active {
+        transform: translateY(0);
       }
     }
   }
@@ -527,19 +679,34 @@ nb-card-body {
   gap: 1rem;
 
   .footer-info {
-    .info-badge {
+    .info-badges {
       display: flex;
-      align-items: center;
-      gap: 0.375rem;
-      font-size: 0.8125rem;
-      color: var(--gauzy-text-color-2);
-      background: var(--background-basic-color-3);
-      padding: 0.375rem 0.75rem;
-      border-radius: calc(var(--border-radius) * 1.25);
+      gap: 0.5rem;
+      flex-wrap: wrap;
 
-      nb-icon {
-        font-size: 1rem;
-        color: var(--color-primary-500);
+      .info-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.8125rem;
+        color: var(--gauzy-text-color-2);
+        background: var(--background-basic-color-3);
+        padding: 0.375rem 0.75rem;
+        border-radius: calc(var(--border-radius) * 1.25);
+
+        &.error {
+          color: var(--color-danger-600);
+          background: var(--color-danger-100);
+
+          nb-icon {
+            color: var(--color-danger-600);
+          }
+        }
+
+        nb-icon {
+          font-size: 1rem;
+          color: var(--color-primary-500);
+        }
       }
     }
   }
@@ -556,6 +723,11 @@ nb-card-body {
 
       &:not(:disabled):hover {
         transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      &:not(:disabled):active {
+        transform: translateY(0);
       }
 
       nb-spinner {
@@ -571,14 +743,25 @@ nb-card-body {
   .pending-installation-dialog {
     width: 100%;
     max-width: 100vw;
-    max-height: 100vh;
+    max-height: calc(100% - 28px);
     border-radius: 0;
+    margin-top: 28px;
   }
 
   .dialog-header {
     .header-content {
       .header-text .subtitle {
         display: none;
+      }
+    }
+  }
+
+  .progress-section {
+    .progress-header {
+      .progress-stats {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.25rem;
       }
     }
   }
@@ -592,6 +775,11 @@ nb-card-body {
 
     .plugin-actions {
       justify-content: flex-end;
+
+      .error-state {
+        width: 100%;
+        justify-content: space-between;
+      }
     }
   }
 
