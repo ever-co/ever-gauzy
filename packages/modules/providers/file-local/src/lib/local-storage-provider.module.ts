@@ -1,63 +1,57 @@
-import { Module, DynamicModule, Provider as NestProvider, Type } from '@nestjs/common';
-import { WasabiS3Provider } from './wasabi-s3.provider';
+import { Module, DynamicModule, Provider as NestProvider } from '@nestjs/common';
+import { LocalProvider } from './local.provider';
 import {
-	IWasabiConfig,
-	IWasabiConfigProvider,
-	IWasabiStorageModuleOptions,
-	IWasabiStorageModuleAsyncOptions
+	ILocalConfig,
+	ILocalConfigProvider,
+	ILocalStorageModuleOptions,
+	ILocalStorageModuleAsyncOptions
 } from './interfaces';
-import {
-	WASABI_CONFIG,
-	WASABI_CONFIG_PROVIDER,
-	WASABI_S3_PROVIDER
-} from './constants';
+import { LOCAL_CONFIG, LOCAL_CONFIG_PROVIDER, LOCAL_STORAGE_PROVIDER } from './constants';
 
 /**
- * Wasabi Storage Module
+ * Local Storage Provider Module
  *
- * A flexible NestJS module for integrating Wasabi S3-compatible storage.
+ * A flexible NestJS module for integrating local file system storage.
  * Supports multiple configuration methods: static, async, and provider-based.
  *
  * @example
  * // Static configuration
- * WasabiStorageModule.register({
+ * LocalStorageProviderModule.register({
  *   config: {
- *     accessKeyId: 'your-access-key',
- *     secretAccessKey: 'your-secret-key',
- *     bucket: 'your-bucket',
- *     region: 'us-east-1'
+ *     rootPath: '/var/www/public',
+ *     baseUrl: 'http://localhost:3000',
+ *     publicPath: 'public'
  *   }
  * })
  *
  * @example
  * // Async configuration with factory
- * WasabiStorageModule.registerAsync({
+ * LocalStorageProviderModule.registerAsync({
  *   inject: [ConfigService],
  *   useFactory: (configService: ConfigService) => ({
  *     config: {
- *       accessKeyId: configService.get('WASABI_ACCESS_KEY'),
- *       secretAccessKey: configService.get('WASABI_SECRET_KEY'),
- *       bucket: configService.get('WASABI_BUCKET'),
- *       region: configService.get('WASABI_REGION')
+ *       rootPath: configService.get('STORAGE_PATH'),
+ *       baseUrl: configService.get('BASE_URL'),
+ *       publicPath: configService.get('PUBLIC_PATH')
  *     }
  *   })
  * })
  *
  * @example
  * // With custom config provider (e.g., tenant-aware)
- * WasabiStorageModule.registerAsync({
- *   useClass: TenantWasabiConfigProvider
+ * LocalStorageProviderModule.registerAsync({
+ *   useClass: TenantLocalConfigProvider
  * })
  */
 @Module({})
-export class WasabiStorageModule {
+export class LocalStorageProviderModule {
 	/**
 	 * Register the module with static configuration.
 	 *
 	 * @param options - Module options including configuration
 	 * @returns Dynamic module definition
 	 */
-	static register(options: IWasabiStorageModuleOptions = {}): DynamicModule {
+	static register(options: ILocalStorageModuleOptions = {}): DynamicModule {
 		const { isGlobal = false, config, configProvider } = options;
 
 		const providers: NestProvider[] = [];
@@ -65,7 +59,7 @@ export class WasabiStorageModule {
 		// Provide static config if available
 		if (config) {
 			providers.push({
-				provide: WASABI_CONFIG,
+				provide: LOCAL_CONFIG,
 				useValue: config
 			});
 		}
@@ -73,25 +67,25 @@ export class WasabiStorageModule {
 		// Provide config provider if available
 		if (configProvider) {
 			providers.push({
-				provide: WASABI_CONFIG_PROVIDER,
+				provide: LOCAL_CONFIG_PROVIDER,
 				useValue: configProvider
 			});
 		}
 
 		// Main provider
-		providers.push(WasabiS3Provider);
+		providers.push(LocalProvider);
 
 		// Alias for injection token
 		providers.push({
-			provide: WASABI_S3_PROVIDER,
-			useExisting: WasabiS3Provider
+			provide: LOCAL_STORAGE_PROVIDER,
+			useExisting: LocalProvider
 		});
 
 		return {
-			module: WasabiStorageModule,
+			module: LocalStorageProviderModule,
 			global: isGlobal,
 			providers,
-			exports: [WasabiS3Provider, WASABI_S3_PROVIDER]
+			exports: [LocalProvider, LOCAL_STORAGE_PROVIDER]
 		};
 	}
 
@@ -101,7 +95,7 @@ export class WasabiStorageModule {
 	 * @param options - Async module options
 	 * @returns Dynamic module definition
 	 */
-	static registerAsync(options: IWasabiStorageModuleAsyncOptions): DynamicModule {
+	static registerAsync(options: ILocalStorageModuleAsyncOptions): DynamicModule {
 		const { isGlobal = false, inject = [], useFactory, useClass, useExisting } = options;
 
 		const providers: NestProvider[] = [];
@@ -109,21 +103,21 @@ export class WasabiStorageModule {
 		// Handle useClass - register a custom config provider
 		if (useClass) {
 			providers.push({
-				provide: WASABI_CONFIG_PROVIDER,
+				provide: LOCAL_CONFIG_PROVIDER,
 				useClass
 			});
 		}
 		// Handle useExisting - use an existing provider
 		else if (useExisting) {
 			providers.push({
-				provide: WASABI_CONFIG_PROVIDER,
+				provide: LOCAL_CONFIG_PROVIDER,
 				useExisting
 			});
 		}
 		// Handle useFactory - create config dynamically
 		else if (useFactory) {
 			providers.push({
-				provide: WASABI_CONFIG,
+				provide: LOCAL_CONFIG,
 				useFactory: async (...args: any[]) => {
 					const result = await useFactory(...args);
 					return result.config ?? null;
@@ -133,7 +127,7 @@ export class WasabiStorageModule {
 
 			// Also handle configProvider from factory result
 			providers.push({
-				provide: WASABI_CONFIG_PROVIDER,
+				provide: LOCAL_CONFIG_PROVIDER,
 				useFactory: async (...args: any[]) => {
 					const result = await useFactory(...args);
 					return result.configProvider ?? null;
@@ -143,19 +137,19 @@ export class WasabiStorageModule {
 		}
 
 		// Main provider
-		providers.push(WasabiS3Provider);
+		providers.push(LocalProvider);
 
 		// Alias for injection token
 		providers.push({
-			provide: WASABI_S3_PROVIDER,
-			useExisting: WasabiS3Provider
+			provide: LOCAL_STORAGE_PROVIDER,
+			useExisting: LocalProvider
 		});
 
 		return {
-			module: WasabiStorageModule,
+			module: LocalStorageProviderModule,
 			global: isGlobal,
 			providers,
-			exports: [WasabiS3Provider, WASABI_S3_PROVIDER]
+			exports: [LocalProvider, LOCAL_STORAGE_PROVIDER]
 		};
 	}
 
@@ -167,42 +161,39 @@ export class WasabiStorageModule {
 	 * @param config - Configuration for this feature
 	 * @returns Dynamic module definition
 	 */
-	static forFeature(config: IWasabiConfig): DynamicModule {
+	static forFeature(config: ILocalConfig): DynamicModule {
 		const providers: NestProvider[] = [
 			{
-				provide: WASABI_CONFIG,
+				provide: LOCAL_CONFIG,
 				useValue: config
 			},
-			WasabiS3Provider,
+			LocalProvider,
 			{
-				provide: WASABI_S3_PROVIDER,
-				useExisting: WasabiS3Provider
+				provide: LOCAL_STORAGE_PROVIDER,
+				useExisting: LocalProvider
 			}
 		];
 
 		return {
-			module: WasabiStorageModule,
+			module: LocalStorageProviderModule,
 			providers,
-			exports: [WasabiS3Provider, WASABI_S3_PROVIDER]
+			exports: [LocalProvider, LOCAL_STORAGE_PROVIDER]
 		};
 	}
 }
 
 /**
- * Factory function to create a config provider from environment variables.
+ * Factory function to create a config from environment variables.
  * Useful as a starting point for custom implementations.
  *
- * @param envPrefix - Prefix for environment variable names (default: 'WASABI')
+ * @param envPrefix - Prefix for environment variable names (default: 'LOCAL')
  * @returns Configuration object
  */
-export function createConfigFromEnv(envPrefix: string = 'WASABI'): IWasabiConfig {
+export function createConfigFromEnv(envPrefix: string = 'LOCAL'): ILocalConfig {
 	return {
-		accessKeyId: process.env[`${envPrefix}_ACCESS_KEY_ID`] ?? '',
-		secretAccessKey: process.env[`${envPrefix}_SECRET_ACCESS_KEY`] ?? '',
-		bucket: process.env[`${envPrefix}_BUCKET`] ?? '',
-		region: process.env[`${envPrefix}_REGION`],
-		serviceUrl: process.env[`${envPrefix}_SERVICE_URL`],
-		forcePathStyle: process.env[`${envPrefix}_FORCE_PATH_STYLE`] === 'true',
-		rootPath: process.env[`${envPrefix}_ROOT_PATH`] ?? ''
+		rootPath: process.env[`${envPrefix}_ROOT_PATH`] ?? 'public',
+		baseUrl: process.env[`${envPrefix}_BASE_URL`] ?? '',
+		publicPath: process.env[`${envPrefix}_PUBLIC_PATH`] ?? 'public'
 	};
 }
+

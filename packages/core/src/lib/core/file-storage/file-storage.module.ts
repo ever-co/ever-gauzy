@@ -1,41 +1,84 @@
 import { NestModule, MiddlewareConsumer, Module } from '@nestjs/common';
-import { environment } from '@gauzy/config';
-import { WasabiStorageModule, WasabiConfigAdapter } from '@gauzy/file-wasabi-s3';
+import { environment, getConfig } from '@gauzy/config';
+import { getApiPublicPath } from '../util/path-util';
+import { WasabiStorageProviderModule, WasabiConfigAdapter } from '@gauzy/file-wasabi-s3';
+import { LocalStorageProviderModule, LocalConfigAdapter } from '@gauzy/file-local';
 import { RequestContext } from '../context/request-context';
 import { TenantSettingModule } from '../../tenant/tenant-setting/tenant-setting.module';
 import { TenantSettingsMiddleware } from '../../tenant/tenant-setting/tenant-settings.middleware';
 
 /**
+ * Creates a request context provider for tenant-aware configuration.
+ * This provider is shared between storage modules and provides access to
+ * the current request context for tenant-aware file storage configuration.
+ *
+ * @returns
+ */
+const configProvider = () => ({
+	/**
+	 * Gets the current HTTP request from the RequestContext.
+	 * Returns null if no request context is available (e.g., during startup or background jobs).
+	 */
+	currentRequest: () => RequestContext.currentRequest()
+});
+
+/**
+ * Gets the root path for local file storage.
+ * Handles Electron and standard environments.
+ */
+function getLocalRootPath(): string {
+	// If running in Electron, use the user path
+	if (environment.isElectron) {
+		return require('path').resolve(environment.gauzyUserPath, 'public');
+	}
+
+	// Otherwise, use the default asset public path
+	return getConfig().assetOptions?.assetPublicPath || getApiPublicPath();
+}
+
+/**
  * FileStorageModule
  *
  * This module configures file storage providers and middleware for the application.
- * It imports the WasabiStorageModule with WasabiConfigAdapter for tenant-aware
- * file storage configuration.
+ * It imports both LocalStorageProviderModule and WasabiStorageProviderModule with their respective
+ * config adapters for tenant-aware file storage configuration.
+ *
+ * Supported storage providers:
+ * - LOCAL: Local file system storage
+ * - WASABI: Wasabi S3-compatible cloud storage
  */
 @Module({
 	imports: [
 		TenantSettingModule,
+		// Import Local storage module with explicit Gauzy configuration adapter
+		LocalStorageProviderModule.register({
+			isGlobal: false,
+			configProvider: new LocalConfigAdapter({
+				rootPath: getLocalRootPath(),
+				baseUrl: environment.baseUrl,
+				publicPath: 'public'
+			})
+		}),
 		// Import Wasabi storage module with explicit Gauzy configuration adapter
-		WasabiStorageModule.register({
+		WasabiStorageProviderModule.register({
 			isGlobal: false,
 			configProvider: new WasabiConfigAdapter(
-				// Pass Gauzy environment configuration
-				environment?.wasabi,
-				// Pass RequestContext provider for tenant-aware configuration
 				{
-					currentRequest: () => {
-						try {
-							return RequestContext.currentRequest();
-						} catch {
-							return null;
-						}
+					accessKeyId: environment.wasabi.accessKeyId,
+					secretAccessKey: environment.wasabi.secretAccessKey,
+					region: environment.wasabi.region,
+					s3: {
+						bucket: environment.wasabi.s3.bucket,
+						forcePathStyle: environment.wasabi.s3.forcePathStyle
 					}
-				}
+				},
+				// Pass RequestContext provider for tenant-aware configuration
+				configProvider()
 			)
 		})
 	],
 	providers: [TenantSettingsMiddleware],
-	exports: [WasabiStorageModule]
+	exports: [LocalStorageProviderModule, WasabiStorageProviderModule]
 })
 export class FileStorageModule implements NestModule {
 	/**
