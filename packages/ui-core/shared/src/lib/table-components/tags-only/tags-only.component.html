@@ -1,37 +1,31 @@
-<div [ngClass]="layout === ComponentLayoutStyleEnum.CARDS_GRID ? 'contacts-img' : ''">
-  @if (value?.imageUrl) {
-    <div>
-      <img height="30" width="50" [src]="value?.imageUrl" alt="Avatar" class="avatar" />
-    </div>
-  }
-  @if (value?.name) {
-    <div>{{ value?.name }}</div>
-  }
+<div [class.contacts-img]="layout === ComponentLayoutStyleEnum.CARDS_GRID">
+	@if (value?.imageUrl) {
+	<div>
+		<img height="30" width="50" [src]="value?.imageUrl" alt="Avatar" class="avatar" />
+	</div>
+	} @if (value?.name) {
+	<div>{{ value?.name }}</div>
+	}
 </div>
 @if (value?.level) {
-  <div>{{ value?.level }}</div>
+<div>{{ value?.level }}</div>
 }
-<div class="tags mt-2" [ngClass]="layout === 'CARDS_GRID' ? 'tags-right' : ''">
-  @if ((data | async)?.labels?.length > 0) {
-    @for (tag of (data | async)?.labels; track tag) {
-      <nb-badge
-        class="color"
-        position="centered"
-        [style.background]="background(tag?.color)"
-        [style.color]="backgroundContrast(tag.color)"
-        [text]="tag.name"
-      ></nb-badge>
-    }
-  }
-  @if ((data | async)?.tags?.length > 0) {
-    @for (tag of (data | async)?.tags; track tag) {
-      <nb-badge
-        class="color"
-        position="centered"
-        [style.background]="background(tag?.color)"
-        [style.color]="backgroundContrast(tag.color)"
-        [text]="tag.name"
-      ></nb-badge>
-    }
-  }
+<div class="tags mt-2" [class.tags-right]="layout === 'CARDS_GRID'">
+	@if ((data | async)?.labels?.length > 0) { @for (tag of (data | async)?.labels; track tag) {
+	<nb-badge
+		class="color"
+		position="centered"
+		[style.background]="background(tag?.color)"
+		[style.color]="backgroundContrast(tag.color)"
+		[text]="tag.name"
+	></nb-badge>
+	} } @if ((data | async)?.tags?.length > 0) { @for (tag of (data | async)?.tags; track tag) {
+	<nb-badge
+		class="color"
+		position="centered"
+		[style.background]="background(tag?.color)"
+		[style.color]="backgroundContrast(tag.color)"
+		[text]="tag.name"
+	></nb-badge>
+	} }
 </div>

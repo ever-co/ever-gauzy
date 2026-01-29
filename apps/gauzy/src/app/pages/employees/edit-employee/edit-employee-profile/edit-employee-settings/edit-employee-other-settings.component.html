@@ -5,22 +5,22 @@
 		</h4>
 		<ul>
 			<span (click)="general.toggle()">
-				<li [ngClass]="{ active: general?.expanded }">
+				<li [class.active]="general?.expanded">
 					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.GENERAL_SETTINGS' | translate }}
 				</li>
 			</span>
 			<span (click)="timer.toggle()">
-				<li [ngClass]="{ active: timer?.expanded }">
+				<li [class.active]="timer?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
 				</li>
 			</span>
 			<span (click)="agent.toggle()">
-				<li [ngClass]="{ active: agent?.expanded }">
+				<li [class.active]="agent?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
 				</li>
 			</span>
 			<span (click)="integrations.toggle()">
-				<li [ngClass]="{ active: integrations?.expanded }">
+				<li [class.active]="integrations?.expanded">
 					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.INTEGRATIONS' | translate }}
 				</li>
 			</span>

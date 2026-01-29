@@ -1,88 +1,79 @@
-<div [ngClass]="{ block: selected }" class="setting-block">
-  <div class="setting-row" [ngClass]="{ active: selected }">
-    <div class="block-content">
-      <div class="block-info">
-        <div class="expense">
-          @if (employeeName) {
-            <div class="block-item-big">
-              @if (currentEmployee) {
-                <ngx-avatar
-                  [src]="currentEmployee?.user?.imageUrl"
-                  [name]="currentEmployee?.user?.name"
-                  [id]="currentEmployee?.id"
-                  [employee]="currentEmployee"
-                  class="report-table"
-                ></ngx-avatar>
-              }
-            </div>
-          }
-          <div class="block-item-big">
-            {{ getCategoryName(recurringExpense?.categoryName) }}
-          </div>
-          <div class="block-item">
-            {{ getStartDate() }}
-          </div>
-          <div class="block-item">
-            <span class="block-amount">
-              {{
-              recurringExpense?.value
-              | currency : recurringExpense?.currency
-              | position : selectedOrganization?.currencyPosition
-              }}
-              @if (splitExpense) {
-                <nb-icon
-                  [nbTooltip]="'EXPENSES_PAGE.SPLIT_WILL_BE_TOOLTIP' | translate"
-                  icon="pricetags-outline"
-                ></nb-icon>
-              }
-            </span>
-          </div>
-        </div>
-      </div>
-      <div class="block-panel">
-        <div class="block-value">
-          @if (showMenu) {
-            <nb-icon class="hide-menu" icon="log-in" (click)="showMenu = false"></nb-icon>
-          }
-          <small
-            (click)="showMenu = false"
-						[ngStyle]="{
-							visibility: showMenu ? 'visible' : 'hidden'
-						}"
-            >{{ 'BUTTONS.CLOSE' | translate }}</small
-            >
-            @if (!showMenu) {
-              <span class="block-actions open">
-                <nb-icon icon="settings-2-outline" (click)="showMenu = true"> </nb-icon>
-              </span>
-            }
-          </div>
-          <div
-            class="block-settings"
-					[ngStyle]="{
-						visibility: showMenu ? 'visible' : 'hidden'
-					}"
-            >
-            <div (click)="emitEdit()" class="single-setting">
-              <nb-icon icon="edit-outline"> </nb-icon>
-              <span>{{ 'BUTTONS.EDIT' | translate }}</span>
-            </div>
-            <div class="single-setting" (click)="emitFetchHistory()">
-              <nb-icon icon="link-2-outline"> </nb-icon>
-              <span>{{ 'BUTTONS.HISTORY' | translate }}</span>
-            </div>
-            <div (click)="emitDelete()" class="single-setting">
-              <nb-icon icon="close-outline"> </nb-icon>
-              <span>{{ 'BUTTONS.DELETE' | translate }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    @if (showHistory && selected) {
-      <div class="setting-table">
-        <ga-recurring-expense-history [recordsData]="fetchedHistories" (closeHistory)="this.showHistory = false">
-        </ga-recurring-expense-history>
-      </div>
-    }
-  </div>
+<div [class.block]="selected" class="setting-block">
+	<div class="setting-row" [class.active]="selected">
+		<div class="block-content">
+			<div class="block-info">
+				<div class="expense">
+					@if (employeeName) {
+					<div class="block-item-big">
+						@if (currentEmployee) {
+						<ngx-avatar
+							[src]="currentEmployee?.user?.imageUrl"
+							[name]="currentEmployee?.user?.name"
+							[id]="currentEmployee?.id"
+							[employee]="currentEmployee"
+							class="report-table"
+						></ngx-avatar>
+						}
+					</div>
+					}
+					<div class="block-item-big">
+						{{ getCategoryName(recurringExpense?.categoryName) }}
+					</div>
+					<div class="block-item">
+						{{ getStartDate() }}
+					</div>
+					<div class="block-item">
+						<span class="block-amount">
+							{{
+								recurringExpense?.value
+									| currency : recurringExpense?.currency
+									| position : selectedOrganization?.currencyPosition
+							}}
+							@if (splitExpense) {
+							<nb-icon
+								[nbTooltip]="'EXPENSES_PAGE.SPLIT_WILL_BE_TOOLTIP' | translate"
+								icon="pricetags-outline"
+							></nb-icon>
+							}
+						</span>
+					</div>
+				</div>
+			</div>
+			<div class="block-panel">
+				<div class="block-value">
+					@if (showMenu) {
+					<nb-icon class="hide-menu" icon="log-in" (click)="showMenu = false"></nb-icon>
+					}
+					<small (click)="showMenu = false" [style.visibility]="showMenu ? 'visible' : 'hidden'">{{
+						'BUTTONS.CLOSE' | translate
+					}}</small>
+					@if (!showMenu) {
+					<span class="block-actions open">
+						<nb-icon icon="settings-2-outline" (click)="showMenu = true"> </nb-icon>
+					</span>
+					}
+				</div>
+				<div class="block-settings" [style.visibility]="showMenu ? 'visible' : 'hidden'">
+					<div (click)="emitEdit()" class="single-setting">
+						<nb-icon icon="edit-outline"> </nb-icon>
+						<span>{{ 'BUTTONS.EDIT' | translate }}</span>
+					</div>
+					<div class="single-setting" (click)="emitFetchHistory()">
+						<nb-icon icon="link-2-outline"> </nb-icon>
+						<span>{{ 'BUTTONS.HISTORY' | translate }}</span>
+					</div>
+					<div (click)="emitDelete()" class="single-setting">
+						<nb-icon icon="close-outline"> </nb-icon>
+						<span>{{ 'BUTTONS.DELETE' | translate }}</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	@if (showHistory && selected) {
+	<div class="setting-table">
+		<ga-recurring-expense-history [recordsData]="fetchedHistories" (closeHistory)="this.showHistory = false">
+		</ga-recurring-expense-history>
+	</div>
+	}
+</div>

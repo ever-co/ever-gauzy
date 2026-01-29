@@ -1,16 +1,13 @@
 <div class="switch-container">
-  @if (hasText) {
-    <span
-      >{{ 'SETTINGS_MENU.LIGHT' | translate }}/{{
-      'SETTINGS_MENU.DARK' | translate
-      }}</span
-      >
-    }
-    <nb-toggle
-      class="switch"
-      [checked]="switch | async"
-      [ngClass]="(switch | async) ? 'dark' : 'light'"
-      (checkedChange)="switchTheme()"
-      size="small"
-    ></nb-toggle>
-  </div>
+	@if (hasText) {
+	<span>{{ 'SETTINGS_MENU.LIGHT' | translate }}/{{ 'SETTINGS_MENU.DARK' | translate }}</span>
+	}
+	<nb-toggle
+		class="switch"
+		[checked]="switch | async"
+		[class.dark]="switch | async"
+		[class.light]="!(switch | async)"
+		(checkedChange)="switchTheme()"
+		size="small"
+	></nb-toggle>
+</div>

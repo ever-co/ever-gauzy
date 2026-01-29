@@ -1,89 +1,74 @@
 <nb-card class="main">
-  <nb-card-header class="d-flex flex-column">
-    <span class="cancel"
-      ><i class="fas fa-times" (click)="close()"></i
-    ></span>
-    @if (!policy) {
-      <h5 class="title">
-        {{ 'TIME_OFF_PAGE.POLICY.ADD_POLICY' | translate }}
-      </h5>
-    } @else {
-      <h5 class="title">
-        {{ 'TIME_OFF_PAGE.POLICY.EDIT_POLICY' | translate }}
-      </h5>
-    }
-  </nb-card-header>
-  <nb-card-body class="pb-0">
-    <form class="row">
-      <div class="form-group col-6 mb-2">
-        <input
-          type="text"
-          name="name"
-          [(ngModel)]="name"
-          nbInput
-          fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.POLICY_NAME' | translate
-					}}"
-          />
-        </div>
-        <div class="form-group col-6 mb-2">
-          <nb-select
-            multiple
-            [selected]="selectedEmployees"
-            (selectedChange)="onEmployeesSelected($event)"
-            fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES' | translate
-					}}"
-            >
-            @for (employee of employees; track employee) {
-              <nb-option
-                [value]="employee.id"
-                >
-                <img
-                  src="{{ employee.user.imageUrl }}"
-                  alt="Smiley face"
-                  />
-                  {{ employee.user.firstName }}
-                  {{ employee.user.lastName }}</nb-option
-                  >
-              }
-            </nb-select>
-          </div>
-          <nb-card
-            class="col-12 mb-2"
-            accent="warning"
-            [ngStyle]="{ visibility: showWarning ? 'visible' : 'hidden' }"
-            >
-            <p style="color: red; font-size: 12px; margin: 0">
-              {{ 'TIME_OFF_PAGE.POLICY.NAME_IS_REQUIRED' | translate }}
-            </p>
-          </nb-card>
-          <div class="form-group col-6 checkboxes">
-            <nb-checkbox
-              (checkedChange)="changeRequiresApproval($event)"
-              class="my-auto align-center"
-              status="primary"
-              [checked]="requiresApproval"
-              >{{ 'TIME_OFF_PAGE.POLICY.REQUIRES_APPROVAL' | translate }}
-            </nb-checkbox>
-            <nb-checkbox
-              (checkedChange)="changePaidStatus($event)"
-              class="my-auto align-center"
-              status="primary"
-              [checked]="paid"
-              >{{ 'TIME_OFF_PAGE.POLICY.PAID' | translate }}
-            </nb-checkbox>
-          </div>
-        </form>
-      </nb-card-body>
-      <nb-card-footer class="text-left">
-        <button (click)="close()" status="basic" outline class="mr-3" nbButton>
-          {{ 'BUTTONS.CANCEL' | translate }}
-        </button>
-        <button (click)="addOrEditPolicy()" status="success" nbButton>
-          {{ 'BUTTONS.SAVE' | translate }}
-        </button>
-      </nb-card-footer>
-    </nb-card>
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
+		@if (!policy) {
+		<h5 class="title">
+			{{ 'TIME_OFF_PAGE.POLICY.ADD_POLICY' | translate }}
+		</h5>
+		} @else {
+		<h5 class="title">
+			{{ 'TIME_OFF_PAGE.POLICY.EDIT_POLICY' | translate }}
+		</h5>
+		}
+	</nb-card-header>
+	<nb-card-body class="pb-0">
+		<form class="row">
+			<div class="form-group col-6 mb-2">
+				<input
+					type="text"
+					name="name"
+					[(ngModel)]="name"
+					nbInput
+					fullWidth
+					placeholder="{{ 'FORM.PLACEHOLDERS.POLICY_NAME' | translate }}"
+				/>
+			</div>
+			<div class="form-group col-6 mb-2">
+				<nb-select
+					multiple
+					[selected]="selectedEmployees"
+					(selectedChange)="onEmployeesSelected($event)"
+					fullWidth
+					placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES' | translate }}"
+				>
+					@for (employee of employees; track employee) {
+					<nb-option [value]="employee.id">
+						<img src="{{ employee.user.imageUrl }}" alt="Smiley face" />
+						{{ employee.user.firstName }}
+						{{ employee.user.lastName }}</nb-option
+					>
+					}
+				</nb-select>
+			</div>
+			<nb-card class="col-12 mb-2" accent="warning" [style.visibility]="showWarning ? 'visible' : 'hidden'">
+				<p style="color: red; font-size: 12px; margin: 0">
+					{{ 'TIME_OFF_PAGE.POLICY.NAME_IS_REQUIRED' | translate }}
+				</p>
+			</nb-card>
+			<div class="form-group col-6 checkboxes">
+				<nb-checkbox
+					(checkedChange)="changeRequiresApproval($event)"
+					class="my-auto align-center"
+					status="primary"
+					[checked]="requiresApproval"
+					>{{ 'TIME_OFF_PAGE.POLICY.REQUIRES_APPROVAL' | translate }}
+				</nb-checkbox>
+				<nb-checkbox
+					(checkedChange)="changePaidStatus($event)"
+					class="my-auto align-center"
+					status="primary"
+					[checked]="paid"
+					>{{ 'TIME_OFF_PAGE.POLICY.PAID' | translate }}
+				</nb-checkbox>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-left">
+		<button (click)="close()" status="basic" outline class="mr-3" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button (click)="addOrEditPolicy()" status="success" nbButton>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

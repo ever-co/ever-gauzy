@@ -1,52 +1,40 @@
 <div>
-  @if (rowData?.notes) {
-    <div>{{ rowData.notes }}</div>
-  }
-  @if (rowData?.description) {
-    <div [hidden]="rowData?.title || rowData?.name">
-      {{ rowData.description }}
-    </div>
-  }
-  @if (rowData?.purpose) {
-    <div>{{ rowData?.purpose }}</div>
-  }
-  @if (rowData?.invoiceNumber) {
-    <div>{{ rowData?.invoiceNumber }}</div>
-  }
-  @if (rowData?.title) {
-    <div>{{ rowData?.title }}</div>
-  }
-  @if (rowData?.jobTitle) {
-    <div>{{ rowData?.jobTitle }}</div>
-  }
-  <div [ngClass]="{ 'contacts-img': (layout === 'CARDS_GRID') }">
-    @if (rowData?.imageUrl) {
-      <div>
-        <img
-          height="30"
-          width="50"
-          [src]="rowData?.imageUrl"
-          alt="Avatar"
-          class="avatar"
-          />
-        </div>
-      }
-      @if (rowData?.name) {
-        <div>{{ rowData?.name }}</div>
-      }
-    </div>
-    @if (rowData?.level) {
-      <div>{{ rowData?.level }}</div>
-    }
-    <div class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }} mt-2">
-      @for (tag of (data | async)?.tags; track tag) {
-        <nb-badge
-          class="color"
-          position="centered"
-          [text]="tag.name"
-          [style.background]="background(tag.color)"
-          [style.color]="backgroundContrast(tag.color)"
-        ></nb-badge>
-      }
-    </div>
-  </div>
+	@if (rowData?.notes) {
+	<div>{{ rowData.notes }}</div>
+	} @if (rowData?.description) {
+	<div [hidden]="rowData?.title || rowData?.name">
+		{{ rowData.description }}
+	</div>
+	} @if (rowData?.purpose) {
+	<div>{{ rowData?.purpose }}</div>
+	} @if (rowData?.invoiceNumber) {
+	<div>{{ rowData?.invoiceNumber }}</div>
+	} @if (rowData?.title) {
+	<div>{{ rowData?.title }}</div>
+	} @if (rowData?.jobTitle) {
+	<div>{{ rowData?.jobTitle }}</div>
+	}
+	<div [class.contacts-img]="layout === 'CARDS_GRID'">
+		@if (rowData?.imageUrl) {
+		<div>
+			<img height="30" width="50" [src]="rowData?.imageUrl" alt="Avatar" class="avatar" />
+		</div>
+		} @if (rowData?.name) {
+		<div>{{ rowData?.name }}</div>
+		}
+	</div>
+	@if (rowData?.level) {
+	<div>{{ rowData?.level }}</div>
+	}
+	<div class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }} mt-2">
+		@for (tag of (data | async)?.tags; track tag) {
+		<nb-badge
+			class="color"
+			position="centered"
+			[text]="tag.name"
+			[style.background]="background(tag.color)"
+			[style.color]="backgroundContrast(tag.color)"
+		></nb-badge>
+		}
+	</div>
+</div>

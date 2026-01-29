@@ -11,12 +11,7 @@
 			</div>
 			@if (isCodeSent) {
 			<div class="sent-code-container">
-				<p
-					[ngClass]="{
-						'normal-text': email?.value.length < 30,
-						'minimum-text': email?.value.length >= 30
-					}"
-				>
+				<p [class.normal-text]="email?.value.length < 30" [class.minimum-text]="email?.value.length >= 30">
 					{{ 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_TITLE' | translate }}
 					<b class="title">{{ email?.value }}</b>
 					<br />
@@ -45,7 +40,7 @@
 						autofocus
 						autocomplete-off
 						required
-						[ngClass]="isCodeSent ? 'not-allowed' : ''"
+						[class.not-allowed]="isCodeSent"
 					/>
 					@if (isCodeSent) {
 					<nb-icon
@@ -157,11 +152,7 @@
 								{{ 'BUTTONS.SEND_CODE' | translate }}
 							</span>
 							@if (isLoading) {
-							<nb-icon
-								class="btn-icon"
-								[ngClass]="isLoading ? 'spinner' : ''"
-								icon="loader-outline"
-							></nb-icon>
+							<nb-icon class="btn-icon" [class.spinner]="isLoading" icon="loader-outline"></nb-icon>
 							}
 						</button>
 					</ng-template>

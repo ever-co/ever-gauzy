@@ -2,7 +2,8 @@
 	<button
 		(click)="changeLayout(layoutStyles.CARDS_GRID)"
 		status="basic"
-		[ngClass]="componentLayoutStyle === layoutStyles.CARDS_GRID ? 'primary' : 'basic'"
+		[class.primary]="componentLayoutStyle === layoutStyles.CARDS_GRID"
+		[class.basic]="!(componentLayoutStyle === layoutStyles.CARDS_GRID)"
 		class="switch-button ml-1 mr-1"
 		nbButton
 		size="small"
@@ -13,7 +14,8 @@
 	<button
 		(click)="changeLayout(layoutStyles.TABLE)"
 		status="basic"
-		[ngClass]="componentLayoutStyle === layoutStyles.TABLE ? 'primary' : 'basic'"
+		[class.primary]="componentLayoutStyle === layoutStyles.TABLE"
+		[class.basic]="!(componentLayoutStyle === layoutStyles.TABLE)"
 		class="switch-button ml-1 mr-1"
 		nbButton
 		size="small"

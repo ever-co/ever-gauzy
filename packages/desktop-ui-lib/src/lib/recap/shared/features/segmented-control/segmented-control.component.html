@@ -1,11 +1,10 @@
 <div class="segment-container">
-  @for (segment of segments; track segment) {
-    <div [ngClass]="{selected: (segment$ | async).title === segment.title}"
-      class="segment" (click)="onSelect(segment)">
-      @if (segment.icon) {
-        <nb-icon [icon]="segment.icon" pack="font-awesome" size="tiny"></nb-icon>
-      }
-      <span>{{ segment.title | translate }}</span>
-    </div>
-  }
+	@for (segment of segments; track segment) {
+	<div [class.selected]="(segment$ | async).title === segment.title" class="segment" (click)="onSelect(segment)">
+		@if (segment.icon) {
+		<nb-icon [icon]="segment.icon" pack="font-awesome" size="tiny"></nb-icon>
+		}
+		<span>{{ segment.title | translate }}</span>
+	</div>
+	}
 </div>
