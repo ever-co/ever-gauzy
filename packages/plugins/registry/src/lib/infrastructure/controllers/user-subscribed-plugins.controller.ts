@@ -65,7 +65,7 @@ export class UserSubscribedPluginsController {
 	})
 	@Get()
 	public async getSubscribedPlugins(
-		@Query('status') status?: PluginSubscriptionStatus,
+		@Query('status') status?: PluginSubscriptionStatus[],
 		@Query('skip') skip?: number,
 		@Query('take') take?: number,
 		@Query('relations') relations?: string[]

@@ -6,7 +6,7 @@ import { IQuery } from '@nestjs/cqrs';
  */
 export interface GetUserSubscribedPluginsOptions {
 	/** Filter by subscription status */
-	status?: PluginSubscriptionStatus;
+	status?: Array<PluginSubscriptionStatus>;
 	/** Number of items to skip for pagination */
 	skip?: number;
 	/** Number of items to take for pagination */
