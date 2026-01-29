@@ -86,14 +86,16 @@
 				<span class="list-badge">{{ pendingPlugins().length }}</span>
 			</div>
 
-			<nb-list class="plugin-list">
+			<nb-list
+				nbInfiniteList
+				[threshold]="500"
+				[throttleTime]="300"
+				(bottomThreshold)="loadMore()"
+				class="plugin-list"
+			>
 				@for (pending of pendingPlugins(); track trackByPluginId($index, pending)) {
 				<nb-list-item
 					class="plugin-item"
-					nbInfiniteList
-					[threshold]="500"
-					[throttleTime]="300"
-					(bottomThreshold)="loadMore()"
 					[class.is-installing]="pending.isInstalling"
 					[class.has-error]="pending.error && !pending.isInstalling"
 					[class.is-installed]="pending.isInstalled"
