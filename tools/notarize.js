@@ -52,6 +52,7 @@ exports.default = async (context) => {
 		console.error(
 			'Invalid APPLE_API_KEY: Not valid base64.'
 		);
+		return;
 	}
 
 	const appPath = path.join(appOutDir, `${appName}.app`);
