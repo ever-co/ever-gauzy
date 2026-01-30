@@ -7,8 +7,8 @@ describe('PluginLayoutComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [PluginLayoutComponent]
-		}).compileComponents();
+    imports: [PluginLayoutComponent]
+}).compileComponents();
 
 		fixture = TestBed.createComponent(PluginLayoutComponent);
 		component = fixture.componentInstance;

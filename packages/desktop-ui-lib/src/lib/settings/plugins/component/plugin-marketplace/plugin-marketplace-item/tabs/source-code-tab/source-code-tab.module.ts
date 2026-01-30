@@ -5,7 +5,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SourceCodeTabComponent } from './source-code-tab.component';
 
 @NgModule({
-	declarations: [SourceCodeTabComponent],
-	imports: [CommonModule, TranslateModule, NbCardModule, NbIconModule, NbBadgeModule, NbTooltipModule]
+    imports: [CommonModule, TranslateModule, NbCardModule, NbIconModule, NbBadgeModule, NbTooltipModule, SourceCodeTabComponent]
 })
 export class SourceCodeTabModule { }
