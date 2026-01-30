@@ -4,6 +4,20 @@ const path = require('path');
 const os = require('os');
 require('dotenv').config();
 
+/**
+ * Validate that a string is valid base64
+ */
+
+function isValidBase64(str) {
+	try {
+		Buffer.from(str, 'base64');
+		return true;
+	} catch(e) {
+		console.error('Error validate base64', e);
+		return false;
+	}
+}
+
 exports.default = async (context) => {
 	const {
 		electronPlatformName,
@@ -12,16 +26,15 @@ exports.default = async (context) => {
 			appInfo: { productFilename: appName, id: appBundleId }
 		}
 	} = context;
-
 	const { APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER } = process.env;
 
-	// Skip if not building for macOS or if the app is not signed
-	// In GitHub Actions, CSC_LINK is typically used for the certificate.
+	// Skip if not building for macOS
 	if (electronPlatformName !== 'darwin') {
 		console.log('Skipping notarization: Platform is not darwin.');
 		return;
 	}
 
+	// Check if credentials are present
 	if (!APPLE_API_KEY || !APPLE_API_KEY_ID || !APPLE_API_ISSUER) {
 		console.warn(
 			'WARN: `APPLE_API_KEY`, `APPLE_API_KEY_ID` & `APPLE_API_ISSUER` are missing. Skipping notarization.'
@@ -29,12 +42,19 @@ exports.default = async (context) => {
 		return;
 	}
 
+	// Validate base64
+	if (!isValidBase64(APPLE_API_KEY)) {
+		console.error(
+			'Invalid APPLE_API_KEY: Not valid base64.'
+		);
+	}
+
 	const appPath = path.join(appOutDir, `${appName}.app`);
 	const privateKeyPath = path.join(os.tmpdir(), `AuthKey_${APPLE_API_KEY_ID}.p8`);
 
 	try {
 		// Write the base64 decoded key to a temporary file
-		fs.writeFileSync(privateKeyPath, Buffer.from(APPLE_API_KEY, 'base64'));
+		fs.writeFileSync(privateKeyPath, Buffer.from(APPLE_API_KEY, 'base64'), { mode: 0o600 });
 
 		console.log(`Notarizing ${appBundleId} found at ${appPath}...`);
 
