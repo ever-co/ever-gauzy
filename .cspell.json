@@ -825,7 +825,9 @@
 		"zfgk",
 		"zipkin",
 		"zoneinfo",
-		"Zrdm"
+		"Zrdm",
+		"keychain",
+		"reencoded"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

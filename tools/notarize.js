@@ -14,10 +14,10 @@ function isValidBase64(str) {
 	try {
 		// Decode and re-encode - they should match
 		const decoded = Buffer.from(str, 'base64');
-		const reencoded = decoded.toString('base64');
+		const reEncoded = decoded.toString('base64');
 
 		// Compare (ignoring whitespace in original)
-		return reencoded === str.replace(/\s/g, '');
+		return reEncoded === str.replace(/\s/g, '');
 	} catch {
 		return false;
 	}
