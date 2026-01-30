@@ -9,11 +9,16 @@ require('dotenv').config();
  */
 
 function isValidBase64(str) {
+	if (!str || typeof str !== 'string') return false;
+
 	try {
-		Buffer.from(str, 'base64');
-		return true;
-	} catch (e) {
-		console.error('Error validate base64', e);
+		// Decode and re-encode - they should match
+		const decoded = Buffer.from(str, 'base64');
+		const reencoded = decoded.toString('base64');
+
+		// Compare (ignoring whitespace in original)
+		return reencoded === str.replace(/\s/g, '');
+	} catch {
 		return false;
 	}
 }
