@@ -615,13 +615,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._timeTrackerStatus.external$
 			.pipe(
 				filter(
-					(remoteTimer: IRemoteTimer) =>
-						!!remoteTimer.lastLog &&
-						this.xor(this.start, remoteTimer.running) &&
-						!this._isLockSyncProcess &&
-						this._isReady &&
-						this.inQueue.size === 0
-				),
+					(remoteTimer: IRemoteTimer) => {
+						const { state } = this.timeTrackerQuery.ignition;
+						const isTransitional = [
+							IgnitionState.STOPPING,
+							IgnitionState.STARTING,
+							IgnitionState.RESTARTING
+						].includes(state);
+						return !isTransitional && !!remoteTimer.lastLog &&
+							this.xor(this.start, remoteTimer.running) &&
+							!this._isLockSyncProcess &&
+							this._isReady &&
+							this.inQueue.size === 0
+					}),
 				tap(async (remoteTimer: IRemoteTimer) => {
 					this.timeTrackerFormService.setState({
 						clientId: remoteTimer.lastLog.organizationContactId,
@@ -630,6 +636,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						note: remoteTimer.lastLog.description,
 						taskId: remoteTimer.lastLog.taskId
 					});
+					console.log('timerstatus external');
 					if (!this.isProcessingEnabled) {
 						await this.toggleStart(remoteTimer.running, false);
 					}
@@ -1651,6 +1658,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 			// Stop timer on server
 			console.log('Toggling timer');
+			// await new Promise((resolve) => setTimeout(() => {
+			// 	resolve(true);
+			// }, 40000));
+			console.log('Proceed to toggle');
 			await this._toggle(timer, onClick);
 			/**
 			 * End network processing

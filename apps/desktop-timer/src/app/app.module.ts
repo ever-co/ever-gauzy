@@ -174,12 +174,12 @@ if (environment.SENTRY_DSN) {
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
-			useClass: UnauthorizedInterceptor,
+			useClass: RefreshTokenInterceptor,
 			multi: true
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
-			useClass: RefreshTokenInterceptor,
+			useClass: UnauthorizedInterceptor,
 			multi: true
 		},
 		{
@@ -211,7 +211,7 @@ if (environment.SENTRY_DSN) {
 			deps: [Router]
 		},
 		provideAppInitializer(() => {
-			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
+			const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
 			return initializerFn();
 		}),
 		{ provide: DEFAULT_TIMEOUT, useValue: 80000 },
@@ -225,4 +225,4 @@ if (environment.SENTRY_DSN) {
 		provideHttpClient(withInterceptorsFromDi())
 	]
 })
-export class AppModule {}
+export class AppModule { }

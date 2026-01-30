@@ -472,7 +472,7 @@ export class TimeTrackerService {
 		return firstValueFrom(this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body }, options));
 	}
 
-	toggleApiStop(values) {
+	async toggleApiStop(values) {
 		const TIMEOUT = 15000;
 		const API_URL = `${API_PREFIX}/timesheet/timer/stop`;
 
@@ -513,6 +513,11 @@ export class TimeTrackerService {
 			organizationTeamId
 		};
 
+		// await new Promise((resolve) => {
+		// 	setTimeout(() => {
+		// 		resolve(true);
+		// 	}, 15000)
+		// });
 		// Log request details
 		this._loggerService.info<any>(`Toggle Stop Timer Request: ${moment().format()}`, body);
 
