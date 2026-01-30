@@ -155,7 +155,6 @@ import {
 	SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
-import { PluginRoutingModule } from './plugin-routing.module';
 import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
@@ -258,8 +257,7 @@ import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 		OverviewTabModule,
 		SourceCodeTabModule,
 		UserManagementTabModule,
-		SettingsTabModule,
-		PluginRoutingModule
+		SettingsTabModule
 	],
 	providers: [
 		PluginLoaderService,
