@@ -12,7 +12,7 @@ function isValidBase64(str) {
 	try {
 		Buffer.from(str, 'base64');
 		return true;
-	} catch(e) {
+	} catch (e) {
 		console.error('Error validate base64', e);
 		return false;
 	}
@@ -72,8 +72,11 @@ exports.default = async (context) => {
 		console.error(`ERROR: Failed to notarize: ${error}`);
 	} finally {
 		// Clean up the secret key file
-		if (fs.existsSync(privateKeyPath)) {
+		try {
 			fs.unlinkSync(privateKeyPath);
+		} catch (cleanupError) {
+			// Don't throw - just warn
+			console.warn(`Warning: Failed to cleanup temporary file: ${cleanupError.message}`);
 		}
 	}
 };
