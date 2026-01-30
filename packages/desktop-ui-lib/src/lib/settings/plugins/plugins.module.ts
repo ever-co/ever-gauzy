@@ -129,6 +129,7 @@ import { PluginService } from './services/plugin.service';
 import { UserSubscribedPluginsService } from './services/user-subscribed-plugins.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 import { ElectronService } from '../../electron/services';
 import { PluginCategoryEffects } from './component/plugin-marketplace/+state/effects/plugin-category.effect';
 import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
@@ -138,8 +139,6 @@ import { PluginUploadIntentQuery } from './component/plugin-marketplace/+state/q
 import { PluginPlanStore } from './component/plugin-marketplace/+state/stores/plugin-plan.store';
 import { PluginUploadIntentStore } from './component/plugin-marketplace/+state/stores/plugin-upload-intent.store';
 import { OverviewTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/overview-tab/overview-tab.module';
-
-
 import { UserManagementTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/user-management-tab/user-management-tab.module';
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
@@ -155,7 +154,6 @@ import {
 	SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
     imports: [
