@@ -145,7 +145,7 @@ export class IntegrationsModule {
 			data: { selectors: false },
 			location: 'integrations',
 			path: 'plugins',
-			loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule as any)
+			loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
 		});
 
 		// Register the routes for activepieces integration

@@ -1,5 +1,5 @@
 import { Type } from '@angular/core';
-import { Route } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 import { PageRouteRegistryId } from '../../common/component-registry.types';
 
 /**
@@ -25,7 +25,7 @@ export interface PageRouteRegistryConfig extends Route {
 	/**
 	 * Optional loadChildren function to load a module lazily.
 	 */
-	loadChildren?: () => Promise<Type<any>> | Type<any>;
+	loadChildren?: () => Promise<Type<any> | Routes> | Type<any> | Routes;
 
 	/**
 	 * Additional route configuration options.
