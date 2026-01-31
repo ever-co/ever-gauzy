@@ -38,7 +38,7 @@
 		"nest-knexjs": "^0.0.29",
 		"slugify": "^1.6.6",
 		"typeorm": "^0.3.28",
-		"tslib": "^2.3.0"
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",

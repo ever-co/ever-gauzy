@@ -27,7 +27,7 @@
 		"lib:watch": "yarn nx build constants --watch"
 	},
 	"dependencies": {
-		"tslib": "^2.3.0"
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/node": "^24.10.0"

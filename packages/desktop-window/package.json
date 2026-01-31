@@ -31,7 +31,7 @@
 		"@gauzy/desktop-core": "^0.1.0",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
-		"tslib": "^2.3.0"
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/node": "^24.10.0",

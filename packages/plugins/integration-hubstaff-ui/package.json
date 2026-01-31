@@ -37,7 +37,8 @@
 		"@ngx-translate/core": "^16.0.4",
 		"angular2-smart-table": "^4.1.1",
 		"ngx-permissions": "^19.0.0",
-		"rxjs": "^7.8.2"
+		"rxjs": "^7.8.2",
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",

@@ -41,6 +41,7 @@
 		"ngx-moment": "^6.0.2",
 		"ngx-permissions": "^19.0.0",
 		"rxjs": "^7.8.2",
+		"tslib": "^2.6.2",
 		"underscore": "^1.13.3"
 	},
 	"devDependencies": {

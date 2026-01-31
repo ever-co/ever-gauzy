@@ -186,7 +186,7 @@
 		"pg": "^8.17.2",
 		"sound-play": "1.1.0",
 		"squirrelly": "^8.0.8",
-		"tslib": "^2.3.0",
+		"tslib": "^2.6.2",
 		"twing": "^5.0.2",
 		"underscore": "^1.13.3",
 		"undici": "^6.10.2",

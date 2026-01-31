@@ -31,7 +31,8 @@
 		"@angular/router": "^20.2.4",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^16.0.0",
-		"@ngx-translate/core": "^16.0.4"
+		"@ngx-translate/core": "^16.0.4",
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",

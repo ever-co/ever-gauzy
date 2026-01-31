@@ -44,7 +44,7 @@
 		"dotenv": "^17.2.3",
 		"mikro-orm-soft-delete": "^1.0.0-alpha.1",
 		"nest-knexjs": "^0.0.29",
-		"tslib": "^2.3.0",
+		"tslib": "^2.6.2",
 		"typeorm": "^0.3.28"
 	},
 	"devDependencies": {

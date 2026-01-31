@@ -32,7 +32,7 @@
 		"@nestjs/common": "^11.1.12",
 		"@nestjs/core": "^11.1.12",
 		"chalk": "^4.1.0",
-		"tslib": "^2.3.0",
+		"tslib": "^2.6.2",
 		"underscore": "^1.13.3"
 	},
 	"devDependencies": {
