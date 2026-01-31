@@ -36,7 +36,7 @@
 		"node-polyfill-webpack-plugin": "^1.1.4",
 		"terser-webpack-plugin": "^5.3.16",
 		"rimraf": "^3.0.2",
-		"typescript": "^5.8.0"
+		"typescript": "^5.9.3"
 	},
 	"dependencies": {
 		"@gauzy/mcp-server": "^0.1.0",
