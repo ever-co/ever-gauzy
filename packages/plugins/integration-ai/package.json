@@ -45,7 +45,7 @@
 		"rxjs": "^7.8.2"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"typescript": "^5.8.0"
 	},

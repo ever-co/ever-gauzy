@@ -24,12 +24,12 @@
 		"lib:watch": "yarn nx build plugin-integration-upwork-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^20.2.4",
-		"@angular/core": "^20.2.4"
+		"@angular/common": "21.1.2",
+		"@angular/core": "21.1.2"
 	},
 	"dependencies": {
-		"@angular/forms": "^20.2.4",
-		"@angular/router": "^20.2.4",
+		"@angular/forms": "21.1.2",
+		"@angular/router": "21.1.2",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^16.0.0",
 		"@ngneat/until-destroy": "^10.0.0",
@@ -39,7 +39,7 @@
 		"rxjs": "^7.8.2"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"jest-preset-angular": "14.6.2"
 	},

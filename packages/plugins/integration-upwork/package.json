@@ -51,7 +51,7 @@
 	"devDependencies": {
 		"@types/express": "^5.0.1",
 		"@types/fs-extra": "5.0.2",
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"typescript": "^5.8.0"
 	},

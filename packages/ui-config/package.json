@@ -33,11 +33,11 @@
 		"setup-env:dev": "yarn generate-env:dev && yarn replace-env:dev"
 	},
 	"peerDependencies": {
-		"@angular/common": "^20.2.4",
-		"@angular/core": "^20.2.4"
+		"@angular/common": "21.1.2",
+		"@angular/core": "21.1.2"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"cross-env": "^10.1.0",
 		"ts-node": "^10.9.2",
