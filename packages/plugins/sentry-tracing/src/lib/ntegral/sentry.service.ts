@@ -42,6 +42,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		// Initialize Sentry with options
 		Sentry.init({
 			...sentryOptions,
+			profilesSampleRate,
 			integrations: allIntegrations
 		} as Parameters<typeof Sentry.init>[0]);
 	}
