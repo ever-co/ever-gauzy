@@ -36,6 +36,9 @@
 		"@angular/common": "21.1.2",
 		"@angular/core": "21.1.2"
 	},
+	"dependencies": {
+		"tslib": "^2.6.2"
+	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",

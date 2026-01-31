@@ -28,12 +28,12 @@
 	},
 	"dependencies": {
 		"@gauzy/constants": "^0.1.0",
-		"tslib": "^2.3.0"
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
-		"typescript": "^5.8.0"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"nestjs",

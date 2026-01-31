@@ -43,13 +43,13 @@
 		"chalk": "^4.1.0",
 		"class-validator": "^0.14.2",
 		"html-to-text": "^9.0.5",
-		"tslib": "^2.3.0",
+		"tslib": "^2.6.2",
 		"typeorm": "^0.3.28"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
-		"typescript": "^5.8.0"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"job-search",

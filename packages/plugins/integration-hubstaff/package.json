@@ -40,14 +40,14 @@
 		"express": "^5.2.1",
 		"moment": "^2.30.1",
 		"rxjs": "^7.8.2",
-		"tslib": "^2.3.0",
+		"tslib": "^2.6.2",
 		"typeorm": "^0.3.28"
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.1",
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
-		"typescript": "^5.8.0"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"Hubstaff",

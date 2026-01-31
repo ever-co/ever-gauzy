@@ -59,7 +59,7 @@
 		"passport-oauth2": "^1.8.0",
 		"passport-twitter": "^1.0.4",
 		"rxjs": "^7.8.2",
-		"tslib": "^2.3.0"
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/bcrypt": "^5.0.2",
@@ -72,7 +72,7 @@
 		"@types/passport-github2": "^1.2.9",
 		"@types/passport-google-oauth20": "^2.0.16",
 		"@types/passport-jwt": "^4.0.1",
-		"typescript": "^5.8.0"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"auth",

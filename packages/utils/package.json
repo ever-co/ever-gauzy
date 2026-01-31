@@ -30,12 +30,12 @@
 		"@gauzy/constants": "^0.1.0",
 		"generate-password": "^1.7.1",
 		"slugify": "^1.6.6",
-		"tslib": "^2.3.0"
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
-		"typescript": "^5.8.0"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"common",

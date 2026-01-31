@@ -72,6 +72,6 @@
 		"cross-env": "^10.1.0",
 		"nodemon": "^3.1.0",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.8.0"
+		"typescript": "^5.9.3"
 	}
 }

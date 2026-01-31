@@ -27,10 +27,10 @@
 		"lib:watch": "yarn nx build plugin-registry --watch"
 	},
 	"dependencies": {
-		"tslib": "^2.3.0"
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
-		"typescript": "^5.8.0"
+		"typescript": "^5.9.3"
 	},
 	"engines": {
 		"node": ">=22",
