@@ -1,3 +1,5 @@
+@use '@nebular/theme/styles/theming' as *;
+
 @mixin material-overrides() {
   @include nb-for-themes(material-dark, material-light) {
     nb-layout-header {

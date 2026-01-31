@@ -1,43 +1,50 @@
-@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap');
-@import url('https://fonts.googleapis.com/css?family=Crimson+Text:600i&display=swap');
-@import url('https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,600,700,800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
-
+// All @use statements must come first
 // themes - our custom or/and out of the box themes
-@import './themes';
+@use './themes' as *;
 
 // framework component themes (styles tied to theme variables)
-@import '@nebular/theme/styles/globals';
-@import '@nebular/auth/styles/globals';
+@use '@nebular/theme/styles/globals' as *;
+@use '@nebular/auth/styles/globals' as *;
 
+@use './material/angular-material' as *;
+
+// loading progress bar theme
+@use './pace.theme' as *;
+
+// Files that DON'T need Bootstrap can use @use
+@use './overrides' as *;
+@use './material/material-overrides' as *;
+@use './gauzy/gauzy-overrides' as *;
+
+@use './site-menu.scss' as *;
+
+@use './includes/fullcalendar' as *;
+@use './includes/tabset' as *;
+@use './includes/ng-select' as *;
+@use './includes/ng5-slider' as *;
+@use './includes/dialog' as *;
+@use './includes/scroll' as *;
+
+// install swiper.js
+@use 'swiper/css' as *;
+@use 'swiper/css/pagination' as *;
+@use 'swiper/css/navigation' as *;
+
+// Bootstrap must use @import due to internal circular dependencies
+// @import must come after all @use statements
 @import 'bootstrap/scss/functions';
 @import 'bootstrap/scss/variables';
 @import 'bootstrap/scss/mixins';
 @import 'bootstrap/scss/grid';
 
-@import './material/angular-material';
-
-// loading progress bar theme
-@import './pace.theme';
-
+// Files that NEED Bootstrap mixins must use @import (after Bootstrap)
 @import './layout';
-@import './overrides';
-@import './material/material-overrides';
-@import './gauzy/gauzy-overrides';
 
-@import './site-menu.scss';
-
-@import './includes/fullcalendar';
-@import './includes/tabset';
-@import './includes/ng-select';
-@import './includes/ng5-slider';
-@import './includes/dialog';
-@import './includes/scroll';
-
-// install swiper.js
-@import 'swiper/css';
-@import 'swiper/css/pagination';
-@import 'swiper/css/navigation';
+// Font imports - must come after @use/@import
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Crimson+Text:600i&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,600,700,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 // install the framework and custom global styles
 @include nb-install() {

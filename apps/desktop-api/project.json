@@ -11,9 +11,10 @@
 			"defaultConfiguration": "production",
 			"options": {
 				"target": "node",
-				"compiler": "tsc",
+				"compiler": "esbuild",
 				"outputPath": "dist/apps/desktop/desktop-api",
 				"main": "apps/desktop-api/src/main.ts",
+				"maxWorkers": 8,
 				"tsConfig": "apps/desktop-api/tsconfig.app.json",
 				"assets": [
 					"apps/desktop-api/src/assets",

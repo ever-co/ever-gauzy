@@ -1,5 +1,8 @@
-@import 'themes';
-@import 'var';
+// Forward so mixins/themes are available to importers
+@forward 'themes';
+@forward 'var';
+@use 'themes' as *;
+@use 'var' as *;
 
 @mixin f-window-mode($padding-top) {
   nb-layout.window-mode nb-layout-header.fixed {
@@ -102,9 +105,11 @@ body {
   }
 
   nb-card nb-list {
-    @include nb-scrollbars(var(--card-scrollbar-color),
+    @include nb-scrollbars(
+      var(--card-scrollbar-color),
       var(--card-scrollbar-background-color),
-      var(--card-scrollbar-width));
+      var(--card-scrollbar-width)
+    );
   }
 
   nb-flip-card {
@@ -134,7 +139,6 @@ body {
   }
 
   nb-layout .layout .layout-container nb-sidebar {
-
     &,
     .main-container-fixed {
       top: var(--header-height);
@@ -334,7 +338,7 @@ angular2-smart-table table {
     }
   }
 
-  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input>input {
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input > input {
     color: var(--gauzy-text-color-1);
   }
 
@@ -360,7 +364,7 @@ angular2-smart-table table {
     color: var(--text-basic-color) !important;
   }
 
-  a>nb-icon {
+  a > nb-icon {
     color: var(--text-basic-color) !important;
   }
 
@@ -411,7 +415,6 @@ angular2-smart-table tbody tr {
 }
 
 nb-card-header {
-
   &.card-header-title,
   .card-header-title {
     display: flex;
@@ -635,7 +638,7 @@ angular2-smart-table {
 }
 
 .nb-theme-material-light {
-  a>nb-icon {
+  a > nb-icon {
     color: #ffffff !important;
   }
 }
@@ -750,7 +753,7 @@ input {
   height: 2.625rem !important;
 }
 
-angular2-smart-table>div {
+angular2-smart-table > div {
   overflow-x: unset !important;
 }
 

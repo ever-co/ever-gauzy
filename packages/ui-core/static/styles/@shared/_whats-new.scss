@@ -1,5 +1,8 @@
-@import 'themes';
-@import './reusable';
+// Forward so mixins/themes are available to importers
+@forward 'themes';
+@forward './reusable';
+@use 'themes' as *;
+@use './reusable' as *;
 
 .section-wrapper {
   background: rgba(245, 109, 88, 0.05);
