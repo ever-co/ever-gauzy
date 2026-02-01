@@ -5,22 +5,17 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
-	"implicitDependencies": [
-		"constants",
-		"contracts",
-		"ui-config"
-	],
+	"implicitDependencies": ["constants", "contracts", "ui-config"],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:package",
-			"outputs": [
-				"{workspaceRoot}/dist/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"dependsOn": [
 				"^build",
 				{
 					"target": "config",
-					"projects": "self"
+					"projects": "self",
+					"params": "forward"
 				}
 			],
 			"options": {
@@ -41,23 +36,17 @@
 			"executor": "nx:run-commands",
 			"configurations": {
 				"production": {
-					"commands": [
-						"nx build ui-config --configuration=production"
-					]
+					"commands": ["nx build ui-config --configuration=production"]
 				},
 				"development": {
-					"commands": [
-						"nx build ui-config --configuration=development"
-					]
+					"commands": ["nx build ui-config --configuration=development"]
 				}
 			},
 			"defaultConfiguration": "development"
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": [
-				"{workspaceRoot}/coverage/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/ui-core/jest.config.ts",
 				"tsConfig": "packages/ui-core/tsconfig.spec.json"
