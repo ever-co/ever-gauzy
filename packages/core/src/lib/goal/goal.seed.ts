@@ -13,12 +13,8 @@ export const createDefaultGoals = async (
 	employees: IEmployee[]
 ): Promise<Goal[]> => {
 	const defaultGoals = [];
-	const goalTimeFrames: GoalTimeFrame[] = await dataSource.manager.find(
-		GoalTimeFrame
-	);
-	const orgTeams: OrganizationTeam[] = await dataSource.manager.find(
-		OrganizationTeam
-	);
+	const goalTimeFrames: GoalTimeFrame[] = await dataSource.manager.find(GoalTimeFrame);
+	const orgTeams: OrganizationTeam[] = await dataSource.manager.find(OrganizationTeam);
 
 	for await (const organization of organizations) {
 		DEFAULT_GOALS.forEach((goalData) => {
@@ -46,47 +42,33 @@ export const createDefaultGoals = async (
 	return defaultGoals;
 };
 
-export const updateDefaultGoalProgress = async (
-	dataSource: DataSource
-): Promise<Goal[]> => {
+export const updateDefaultGoalProgress = async (dataSource: DataSource): Promise<Goal[]> => {
 	const goals: Goal[] = await dataSource.manager.find(Goal, {
 		relations: ['keyResults']
 	});
 	if (goals && goals.length > 0) {
-		goals.forEach(async (goal) => {
-			if (goal.keyResults && goal.keyResults.length > 0) {
-				const progressTotal = goal.keyResults.reduce(
-					(a, b) => a + b.progress * +b.weight,
-					0
-				);
-				const weightTotal = goal.keyResults.reduce(
-					(a, b) => a + +b.weight,
-					0
-				);
-				const goalProgress = Math.round(progressTotal / weightTotal);
-				await dataSource.manager.update(
-					Goal,
-					{ id: goal.id },
-					{
-						progress: goalProgress
-					}
-				);
-			}
-		});
+		await Promise.all(
+			goals.map(async (goal) => {
+				if (goal.keyResults && goal.keyResults.length > 0) {
+					const progressTotal = goal.keyResults.reduce((a, b) => a + b.progress * +b.weight, 0);
+					const weightTotal = goal.keyResults.reduce((a, b) => a + +b.weight, 0);
+					const goalProgress = Math.round(progressTotal / weightTotal);
+					await dataSource.manager.update(
+						Goal,
+						{ id: goal.id },
+						{
+							progress: goalProgress
+						}
+					);
+				}
+			})
+		);
 		return goals;
 	}
 };
 
-const insertDefaultGoals = async (
-	dataSource: DataSource,
-	defaultGoals: Goal[]
-) => {
-	await dataSource
-		.createQueryBuilder()
-		.insert()
-		.into(Goal)
-		.values(defaultGoals)
-		.execute();
+const insertDefaultGoals = async (dataSource: DataSource, defaultGoals: Goal[]) => {
+	await dataSource.createQueryBuilder().insert().into(Goal).values(defaultGoals).execute();
 };
 
 export const createRandomGoal = async (
@@ -96,21 +78,15 @@ export const createRandomGoal = async (
 	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<Goal[]> => {
 	if (!tenantOrganizationsMap) {
-		console.warn(
-			'Warning: tenantOrganizationsMap not found, Random Goal will not be created'
-		);
+		console.warn('Warning: tenantOrganizationsMap not found, Random Goal will not be created');
 		return;
 	}
 	if (!organizationEmployeesMap) {
-		console.warn(
-			'Warning: organizationEmployeesMap not found, Random Goal will not be created'
-		);
+		console.warn('Warning: organizationEmployeesMap not found, Random Goal will not be created');
 		return;
 	}
 
-	const goalTimeFrames: GoalTimeFrame[] = await dataSource.manager.find(
-		GoalTimeFrame
-	);
+	const goalTimeFrames: GoalTimeFrame[] = await dataSource.manager.find(GoalTimeFrame);
 
 	const goals: Goal[] = [];
 
@@ -119,9 +95,7 @@ export const createRandomGoal = async (
 		for await (const organization of tenantOrgs) {
 			const tenantEmployees = organizationEmployeesMap.get(organization);
 			const organizationTeams = await dataSource.manager.find(OrganizationTeam, {
-				where: [
-					{ organizationId: organization.id }
-				]
+				where: [{ organizationId: organization.id }]
 			});
 
 			const goal = new Goal();

@@ -39,10 +39,13 @@ export class ProductDeleteHandler implements ICommandHandler<ProductDeleteComman
 
 		const optionGroups = product.optionGroups;
 
-		for await (const optionGroup of optionGroups) {
-			optionGroup.options.forEach(async (option) => {
-				await this.productOptionService.deleteOptionTranslationsBulk(option.translations);
-			});
+		for (const optionGroup of optionGroups) {
+			// Delete option translations for all options in parallel
+			await Promise.all(
+				optionGroup.options.map(async (option) => {
+					await this.productOptionService.deleteOptionTranslationsBulk(option.translations);
+				})
+			);
 
 			await this.productOptionService.deleteBulk(optionGroup.options);
 		}

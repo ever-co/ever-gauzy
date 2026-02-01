@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { environment } from '@gauzy/ui-config';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { map } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { IAppConfig } from '@gauzy/contracts';
 import { AppService } from '@gauzy/ui-core/core';
 

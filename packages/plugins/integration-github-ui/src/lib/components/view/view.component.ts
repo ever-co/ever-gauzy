@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnInit, QueryList, ViewChild, ViewChildren } 
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, of } from 'rxjs';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { NbPopoverDirective, NbTabComponent } from '@nebular/theme';
@@ -50,10 +50,10 @@ export enum SyncTabsEnum {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    styleUrls: ['./view.component.scss'],
-    templateUrl: './view.component.html',
-    providers: [TitleCasePipe],
-    standalone: false
+	styleUrls: ['./view.component.scss'],
+	templateUrl: './view.component.html',
+	providers: [TitleCasePipe],
+	standalone: false
 })
 export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	public syncTabsEnum: typeof SyncTabsEnum = SyncTabsEnum;

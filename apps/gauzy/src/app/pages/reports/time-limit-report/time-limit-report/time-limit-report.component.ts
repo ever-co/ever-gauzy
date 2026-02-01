@@ -2,8 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
@@ -12,10 +11,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-time-limit-report',
-    templateUrl: './time-limit-report.component.html',
-    styleUrls: ['./time-limit-report.component.scss'],
-    standalone: false
+	selector: 'ga-time-limit-report',
+	templateUrl: './time-limit-report.component.html',
+	styleUrls: ['./time-limit-report.component.scss'],
+	standalone: false
 })
 export class TimeLimitReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	filters: ITimeLogFilters;

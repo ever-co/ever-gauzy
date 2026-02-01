@@ -6,8 +6,8 @@ import { PostHogModuleConfig } from '../interfaces/posthog.interface';
  */
 export function initializePostHogFactory(posthogManager: PostHogServiceManager, config: PostHogModuleConfig) {
 	return () => {
-		// Return quickly if no API key provided
-		if (!config?.apiKey) {
+		// Return quickly if no API key provided or if it's a Docker placeholder
+		if (!config?.apiKey || config.apiKey === 'DOCKER_POSTHOG_KEY') {
 			return Promise.resolve();
 		}
 

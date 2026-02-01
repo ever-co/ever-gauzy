@@ -1,4 +1,6 @@
-@import 'var';
+// Forward so mixins/themes are available to importers
+@forward 'var';
+@use 'var' as *;
 
 :host .contact-links-container {
   width: 100%;

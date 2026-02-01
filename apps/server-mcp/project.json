@@ -10,9 +10,10 @@
 			"defaultConfiguration": "production",
 			"options": {
 				"target": "node",
-				"compiler": "tsc",
+				"compiler": "esbuild",
 				"outputPath": "dist/apps/server-mcp",
 				"main": "apps/server-mcp/src/electron-main.ts",
+				"maxWorkers": 8,
 				"tsConfig": "apps/server-mcp/tsconfig.electron.json",
 				"assets": [
 					"apps/server-mcp/src/static",

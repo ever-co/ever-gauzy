@@ -113,18 +113,15 @@ const THIRD_PARTY_MODULES = [
 			deps: [HttpClient]
 		}
 	}),
-
-	...(environment.POSTHOG_ENABLED && environment.POSTHOG_KEY && environment.POSTHOG_KEY !== 'DOCKER_POSTHOG_KEY'
-		? [
-				PostHogModule.forRoot({
-					apiKey: environment.POSTHOG_KEY,
-					options: {
-						api_host: environment.POSTHOG_HOST,
-						capture_pageview: true
-					}
-				})
-		  ]
-		: [])
+	// PostHog is always included but only initializes when apiKey is valid
+	// The PostHog init factory handles empty/invalid apiKey gracefully
+	PostHogModule.forRoot({
+		apiKey: environment.POSTHOG_KEY || '',
+		options: {
+			api_host: environment.POSTHOG_HOST,
+			capture_pageview: environment.POSTHOG_ENABLED
+		}
+	})
 ];
 
 // Feature Modules

@@ -19,12 +19,12 @@
 			"defaultConfiguration": "production",
 			"options": {
 				"target": "node",
-				"compiler": "tsc",
+				"compiler": "swc",
 				"outputPath": "dist/apps/api",
 				"main": "apps/api/src/main.ts",
 				"showCircularDependencies": false,
 				"sourceMap": true,
-				"maxWorkers": 4,
+				"maxWorkers": 8,
 				"memoryLimit": 7000,
 				"tsConfig": "apps/api/tsconfig.app.json",
 				"assets": [
@@ -86,11 +86,11 @@
 			"defaultConfiguration": "production",
 			"options": {
 				"target": "node",
-				"compiler": "tsc",
+				"compiler": "swc",
 				"outputPath": "dist/apps/desktop/api",
 				"main": "apps/api/src/main.ts",
 				"sourceMap": true,
-				"maxWorkers": 4,
+				"maxWorkers": 8,
 				"memoryLimit": 7000,
 				"tsConfig": "apps/api/tsconfig.app.json",
 				"assets": [
@@ -125,12 +125,12 @@
 			"defaultConfiguration": "production",
 			"options": {
 				"target": "node",
-				"compiler": "tsc",
+				"compiler": "swc",
 				"outputPath": "dist/apps/gauzy-api-server/api",
 				"main": "apps/api/src/main.ts",
 				"showCircularDependencies": false,
 				"sourceMap": true,
-				"maxWorkers": 4,
+				"maxWorkers": 8,
 				"memoryLimit": 7000,
 				"tsConfig": "apps/api/tsconfig.app.json",
 				"assets": [
@@ -164,12 +164,12 @@
 			"defaultConfiguration": "production",
 			"options": {
 				"target": "node",
-				"compiler": "tsc",
+				"compiler": "swc",
 				"outputPath": "dist/apps/gauzy-server/api",
 				"main": "apps/api/src/main.ts",
 				"showCircularDependencies": false,
 				"sourceMap": true,
-				"maxWorkers": 4,
+				"maxWorkers": 8,
 				"memoryLimit": 7000,
 				"tsConfig": "apps/api/tsconfig.app.json",
 				"assets": [

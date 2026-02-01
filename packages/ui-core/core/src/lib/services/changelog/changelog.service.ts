@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { IChangelog, IChangelogFindInput, IPagination } from '@gauzy/contracts';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';

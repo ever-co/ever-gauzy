@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, TemplateRef } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { BackupStrategy, GuiDrag } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';

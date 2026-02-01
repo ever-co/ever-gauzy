@@ -19,29 +19,32 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 			console.log('Sentry options not found. Did you use SentryModule.forRoot?');
 			return;
 		}
-		const { debug, integrations = [], ...sentryOptions } = opts;
+		const { integrations = [], close, profilesSampleRate, ...sentryOptions } = opts;
+		// Build the integrations array
+		const allIntegrations = [
+			Sentry.onUncaughtExceptionIntegration({
+				onFatalError: async (error) => {
+					console.error('Uncaught Exception Handler in Sentry Service', error);
+					if (error.name === 'SentryError') {
+						console.log(error);
+					} else {
+						Sentry.getClient()?.captureException(error);
+
+						Sentry.flush(3000).then(() => {
+							process.exit(1);
+						});
+					}
+				}
+			}),
+			Sentry.onUnhandledRejectionIntegration({ mode: 'warn' }),
+			...integrations
+		];
+		// Initialize Sentry with options
 		Sentry.init({
 			...sentryOptions,
-			integrations: [
-				Sentry.onUncaughtExceptionIntegration({
-					onFatalError: async (error) => {
-						console.error('Uncaught Exception Handler in Sentry Service', error);
-						if (error.name === 'SentryError') {
-							console.log(error);
-						} else {
-							Sentry.getClient()?.captureException(error);
-
-							Sentry.flush(3000).then(() => {
-								process.exit(1);
-							});
-						}
-					}
-				}),
-
-				Sentry.onUnhandledRejectionIntegration({ mode: 'warn' }),
-				...integrations
-			]
-		});
+			profilesSampleRate,
+			integrations: allIntegrations
+		} as Parameters<typeof Sentry.init>[0]);
 	}
 
 	/**

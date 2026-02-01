@@ -2,7 +2,14 @@
 	"extends": "./tsconfig.lib.json",
 	"compilerOptions": {
 		"declarationMap": false,
-		"types": ["node", "google.maps"]
+		"types": ["node", "google.maps"],
+		"baseUrl": "../..",
+		"paths": {
+			"@gauzy/ui-core/*": ["./packages/ui-core/*/src/index.ts"],
+			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
+			"@gauzy/contracts": ["./packages/contracts/src/index.ts"],
+			"@gauzy/constants": ["./packages/constants/src/index.ts"]
+		}
 	},
 	"angularCompilerOptions": {
 		"compilationMode": "partial"

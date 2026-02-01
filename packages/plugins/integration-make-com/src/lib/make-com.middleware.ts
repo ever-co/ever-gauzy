@@ -23,7 +23,9 @@ export class MakeComMiddleware implements NestMiddleware {
 	 */
 	async use(request: Request, _response: Response, next: NextFunction) {
 		try {
-			const integrationId = request.params['integrationId'];
+			const integrationIdParam = request.params['integrationId'];
+			// Handle case where integrationId could be string or string[]
+			const integrationId = Array.isArray(integrationIdParam) ? integrationIdParam[0] : integrationIdParam;
 
 			if (integrationId) {
 				const queryParameters = request.query;

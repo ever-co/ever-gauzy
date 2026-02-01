@@ -18,14 +18,14 @@ import {
 	PaginationFilterBaseComponent
 } from '@gauzy/ui-core/shared';
 import { ActivatedRoute } from '@angular/router';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-documents',
-    templateUrl: './documents.component.html',
-    styleUrls: ['documents.component.scss'],
-    standalone: false
+	selector: 'ga-documents',
+	templateUrl: './documents.component.html',
+	styleUrls: ['documents.component.scss'],
+	standalone: false
 })
 export class DocumentsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('uploadDoc') uploadDoc: UploadDocumentComponent;
