@@ -3978,10 +3978,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@bluehalo/ngx-leaflet@^20.0.0":
-  version "20.0.0"
-  resolved "https://registry.yarnpkg.com/@bluehalo/ngx-leaflet/-/ngx-leaflet-20.0.0.tgz#10133471d4c9f12a6c195846b125dec49a65e4d0"
-  integrity sha512-vXFn8+eozCuJtHRrbG+uEavt4sCHiTyicpfhlbMt2ZxanLFVqBRhNEsROqSTYdv0fXuGps7Q+7aZYmv15+W+nA==
+"@bluehalo/ngx-leaflet@^21.0.0":
+  version "21.0.0"
+  resolved "https://registry.yarnpkg.com/@bluehalo/ngx-leaflet/-/ngx-leaflet-21.0.0.tgz#79ee0c1831bab2eb25cb337012b0861a9604c0a2"
+  integrity sha512-VgoZAza2NZnnsu37CvO7h25OHGu5Y61yK71wucIyVttoEf96NsmYWyeYKgfOd8asVXQvIKfbKEw9R3zyW/Rfwg==
   dependencies:
     tslib "^2.8.0"
 
@@ -8894,10 +8894,10 @@
   dependencies:
     tslib "^2.0.0"
 
-"@ng-select/ng-select@^20.7.0":
-  version "20.7.0"
-  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-20.7.0.tgz#0fa734d4ee69c8ab3453073ded3c57ee9aa013f2"
-  integrity sha512-tOAhUnb4LFjTnn9gi6e6tSrUDi1GqCzjwnubBIxxa2XFHXqGOjYlqIMkPcSRByF4G9olzdZM38nLUtZOO3YKqg==
+"@ng-select/ng-select@^21.0.0":
+  version "21.2.0"
+  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-21.2.0.tgz#1970eb510ae4ae1fd22fdcb57d21dd4a212129e9"
+  integrity sha512-cO7pORQK1xs93d35ir3rlUU2eAGfK9xcp6CWMPbv85PqkI+yBca3OSM7YYYkjWFEO+QTi7xRgwh4dBYd5J1ZBA==
   dependencies:
     tslib "^2.8.1"
 
@@ -14731,7 +14731,7 @@
   dependencies:
     "@swc/counter" "^0.1.3"
 
-"@swimlane/ngx-charts@^23.0.0":
+"@swimlane/ngx-charts@^23.1.0":
   version "23.1.0"
   resolved "https://registry.yarnpkg.com/@swimlane/ngx-charts/-/ngx-charts-23.1.0.tgz#6f110ab5c07b943efe39e2e4c9fc01e1da126461"
   integrity sha512-f2lBc8M9164PtylLDLd98XqO6owSw4LQMT9L/vQovT3nIjMO7t5l9JnytyOB8s5KImo3p+7x+1/HYxBZ5iOVWA==
@@ -32631,15 +32631,15 @@ nest-knexjs@^0.0.29:
   resolved "https://registry.yarnpkg.com/nest-knexjs/-/nest-knexjs-0.0.29.tgz#784fee22c0af436e8b1ae1e3fe9a8d90fd48884b"
   integrity sha512-eYhNJWcMo8nAwKNYRcHM5A4sHygGIu+YyFWnPqu8/fLXIicRCAK5KFMMSpMT7bxUT/oUXPcdrL+64hzEtMf3qQ==
 
-nestjs-cls@^5.4.3:
-  version "5.4.3"
-  resolved "https://registry.yarnpkg.com/nestjs-cls/-/nestjs-cls-5.4.3.tgz#5a949525a5506f66e4c3d29fffe5c4f929bb9f04"
-  integrity sha512-yHEHyVoe6rsvj3XRPFonBKPXPjDREyHfKZ9PTStSLJTZAV3wey1Q89TquSj6QciqXB5387GiHv9DG+ja6iAUHw==
+nestjs-cls@^6.2.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/nestjs-cls/-/nestjs-cls-6.2.0.tgz#ed7c24607fe445624fd6f8301c236e0c6a0812f3"
+  integrity sha512-b2Remha7gV5gId3ezjr2tupjqqgYK7/JqjqX6oZ0ZIDFATUggKH1/32+ul2lOe7FepnHasDONDoePuWEE64cug==
 
-nestjs-i18n@^10.5.1:
-  version "10.5.1"
-  resolved "https://registry.yarnpkg.com/nestjs-i18n/-/nestjs-i18n-10.5.1.tgz#d8400c64edeb0541d3b081bb02bc8d5263c295c2"
-  integrity sha512-cJJFz+RUfav23QACpGCq1pdXNLYC3tBesrP14RGoE/YYcD4xosQPX2eyjvDNuo0Ti63Xtn6j57wDNEUKrZqmSw==
+nestjs-i18n@^10.6.0:
+  version "10.6.0"
+  resolved "https://registry.yarnpkg.com/nestjs-i18n/-/nestjs-i18n-10.6.0.tgz#5a7987fd44f91e23ffb7c6a2803fc0dfecac0a18"
+  integrity sha512-fPOgwrnb8u8UO6YXNlnamF7GDhNLOHQE8hD/pT/L7oUQibvL7PBZYZgquwppOFRaOPnH0uING2BzQGq7uQNNmQ==
   dependencies:
     accept-language-parser "^1.5.0"
     chokidar "^3.6.0"
@@ -32724,17 +32724,17 @@ ngx-color-picker@^20.1.1:
   dependencies:
     tslib "^2.3.0"
 
-ngx-cookie-service@^20.1.1:
-  version "20.1.1"
-  resolved "https://registry.yarnpkg.com/ngx-cookie-service/-/ngx-cookie-service-20.1.1.tgz#ea1873f56e7775f7b7a2393735cfdff4db981489"
-  integrity sha512-jGjjIqu+Kt8De6YjDqTQOaUHKB7gYs0eaDuLyXfNhfKnA78lA7D7oWcaIzjkmXhRqTnh2/ex1UHmZHN9MX0yoQ==
+ngx-cookie-service@^21.1.0:
+  version "21.1.0"
+  resolved "https://registry.yarnpkg.com/ngx-cookie-service/-/ngx-cookie-service-21.1.0.tgz#4afa25311adecf562b2af11f1f43b798f19feac2"
+  integrity sha512-W3IsoMImUVNt0ZuMesEuQJUGrEgKJaPkQGGfCg7zjUGM/EaeAIbIkfNktNIgUDmeUYapZQJa2pSg4YuK4v1gVQ==
   dependencies:
-    tslib "^2.8.0"
+    tslib "^2.8.1"
 
-ngx-countdown@^20.0.0:
-  version "20.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-countdown/-/ngx-countdown-20.0.0.tgz#354589bd6e189a86fed64d475f35134424fd4e57"
-  integrity sha512-8gTr6KWd1Sm8U5KSKqOro4s3Sx4VwnznNGK0ujQRpIg2EY9ZjjUhQkf0ib3HB1g/WmnUzEuIZONvnVJtcElAJA==
+ngx-countdown@^21.0.0:
+  version "21.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-countdown/-/ngx-countdown-21.0.0.tgz#ab232e9b2d8b4637e21b2b8d28f7bbc7b4e37994"
+  integrity sha512-uXPgy4JPk84WliaSLICN5MhasPufoCKPdpL+mImC74T/C9XOMrB4UNNnBVUuOdqGpIbAHLsVOZQnVoJ37Dnzsw==
   dependencies:
     tslib "^2.3.0"
 
@@ -32746,17 +32746,17 @@ ngx-daterangepicker-material@^6.0.4:
     dayjs "^1.11.5"
     tslib "^2.0.0"
 
-ngx-draggable-dom@^20.0.0:
-  version "20.0.4"
-  resolved "https://registry.yarnpkg.com/ngx-draggable-dom/-/ngx-draggable-dom-20.0.4.tgz#bbeaa7ffd9016e379140facf5ecb7bd1b7529a95"
-  integrity sha512-Re32CepTJOFYl51X0mGwJodWUbx4zVXXYv8ehWumxG2/emZNAQ7sBLKbr5byZHK4IYuPKIy/yJZdKlPB3aD7/g==
+ngx-draggable-dom@^21.0.7:
+  version "21.0.7"
+  resolved "https://registry.yarnpkg.com/ngx-draggable-dom/-/ngx-draggable-dom-21.0.7.tgz#e79426241a85da76fcd2a89ff14abbae6398b785"
+  integrity sha512-gW+phameu0OuG+X9Dp3SkA5yKO/dXz2vC8mkgpxy0HOQv3CFwUqTI6h/CWNP/8uz1KyWGn+zlf7Cok41K+w3mw==
   dependencies:
     tslib "^2.3.1"
 
-ngx-echarts@^19.0.0:
-  version "19.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-echarts/-/ngx-echarts-19.0.0.tgz#9b2c739366738f171efdd2430bfe5703a8f8ea99"
-  integrity sha512-CtW6RSNmUs5CENUDJqI9VSAVG9zqFjDLfzpJRLNn/HA35j10/D+sEuRH7RHB1/DLmojoD9rA6q0R57jlN0hqwg==
+ngx-echarts@^21.0.0:
+  version "21.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-echarts/-/ngx-echarts-21.0.0.tgz#858bb8aa34998191b8b109d76e90f19734136413"
+  integrity sha512-vivBRmGYMFlnPxK/uxliY+sexGwHqnFZ2pylGbIMF2wikt9RpZpGGSitLmuUXvzYwkVFGo6dQmiUQh1+6Pbfuw==
   dependencies:
     tslib "^2.3.0"
 
@@ -32775,10 +32775,10 @@ ngx-filepond@^7.0.3:
   dependencies:
     tslib "^2.3.0"
 
-ngx-infinite-scroll@^20.0.0:
-  version "20.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-infinite-scroll/-/ngx-infinite-scroll-20.0.0.tgz#928210affe13bcac1e8836760a936bde78ccd681"
-  integrity sha512-Mh7lg85jeDPzZirxPHjyMagCcC3vbk+yPO5uoXHNkmGer8MrO6vOydOX306qY4QYDyMJ+ngIQgpl5HJXfc590A==
+ngx-infinite-scroll@^21.0.0:
+  version "21.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-infinite-scroll/-/ngx-infinite-scroll-21.0.0.tgz#fb01a67e60662e410a3cb38c0d05fae0c1102458"
+  integrity sha512-bm1hCB7aoO9zyiNZBBOLHx9t+cwk/tLiFG5eQB8pWiNup6I2eQiHoT5B2gqlJjj4GfuER5phy5AIWl/B7YiwSQ==
   dependencies:
     tslib "^2.3.0"
 
