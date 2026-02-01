@@ -1,5 +1,8 @@
-@import './themes';
-@import 'var';
+// Forward so mixins/themes are available to importers
+@forward './themes';
+@forward 'var';
+@use './themes' as *;
+@use 'var' as *;
 
 /* Apply style on scrollbar for Firefox */
 * {
@@ -78,9 +81,30 @@ body {
     letter-spacing: 0em;
   }
 
-  // overrides bootstrap svg style
   nb-icon svg {
     vertical-align: top;
+    width: 100%;
+    height: 100%;
+  }
+
+  nb-icon svg:not([fill]) {
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  nb-icon svg *[stroke]:not([stroke='none']) {
+    stroke: currentColor;
+  }
+
+  nb-icon svg *[fill]:not([fill='none']):not([fill='transparent']) {
+    fill: currentColor;
+  }
+
+  nb-icon {
+    color: inherit;
   }
 
   nb-auth-block .links nb-icon {
@@ -106,19 +130,23 @@ body {
   nb-flip-card {
     .front-container {
       -webkit-backface-visibility: visible;
+      backface-visibility: visible;
     }
 
     .back-container {
       -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
 
     .flipped {
       .front-container {
         -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
       }
 
       .back-container {
         -webkit-backface-visibility: visible;
+        backface-visibility: visible;
       }
     }
   }

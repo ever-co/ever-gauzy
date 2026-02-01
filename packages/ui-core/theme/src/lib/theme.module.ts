@@ -24,7 +24,7 @@ import {
 	NbToggleModule,
 	NbCardModule
 } from '@nebular/theme';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
+import { NbTablerIconsModule } from './icons/tabler-icons.module';
 import { NbSecurityModule } from '@nebular/security';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
@@ -82,7 +82,7 @@ const NB_MODULES = [
 	NbIconModule,
 	NbTooltipModule,
 	NbPopoverModule,
-	NbEvaIconsModule,
+	NbTablerIconsModule,
 	NbAccordionModule,
 	NbToggleModule,
 	NbCardModule,
@@ -121,7 +121,7 @@ const EXPORT_IMPORT = [ThemeSidebarModule, MatRippleModule];
 
 @NgModule({
 	imports: [CommonModule, RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
-	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS],
+	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS, NbIconModule, NbTablerIconsModule],
 	declarations: [...COMPONENTS, ...PIPES],
 	providers: [
 		SelectorService,

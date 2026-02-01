@@ -27,6 +27,7 @@
 		"lib:watch": "yarn nx build plugin-integration-upwork --watch"
 	},
 	"dependencies": {
+		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
@@ -52,7 +53,7 @@
 		"@types/express": "^5.0.1",
 		"@types/fs-extra": "5.0.2",
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},
 	"keywords": [

@@ -31,7 +31,7 @@ startTracing(); // Start tracing if OTEL is enabled.
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { EventSubscriber } from '@mikro-orm/core';
+import { EventSubscriber, MikroORM, RequestContext } from '@mikro-orm/core';
 import { useContainer } from 'class-validator';
 import * as helmet from 'helmet';
 import * as chalk from 'chalk';
@@ -40,13 +40,14 @@ import * as path from 'path';
 import { urlencoded, json } from 'express';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
-import { getConfig, defineConfig, environment as env } from '@gauzy/config';
+import { getConfig, defineConfig, environment } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
+import { MultiORMEnum, getORMType } from '../core/utils';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AuthGuard } from '../shared/guards';
-import { SharedModule } from '../shared/shared.module';
+import { ValidatorModule } from '../shared/validators/validator.module';
 import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
 import { configureRedisSession } from './redis-store';
@@ -73,7 +74,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	console.time(chalk.yellow('✔ Create NestJS Application Time'));
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Set logging levels
-		bufferLogs: env.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
+		bufferLogs: environment.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
 	});
 	console.timeEnd(chalk.yellow('✔ Create NestJS Application Time'));
 
@@ -94,7 +95,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	app.useGlobalGuards(new AuthGuard(reflector));
 
 	// Configure Sentry for error tracking, if applicable
-	const { sentry } = env;
+	const { sentry } = environment;
 	if (sentry && sentry.dsn && config.logger) {
 		app.useLogger(config.logger); // Use Sentry logger
 	} else {
@@ -142,7 +143,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	await configureRedisSession(app);
 
 	// let's use helmet for security in production
-	if (env.envName === 'prod') {
+	if (environment.envName === 'prod') {
 		app.use(helmet());
 	}
 
@@ -150,13 +151,16 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	const globalPrefix = 'api';
 	app.setGlobalPrefix(globalPrefix);
 
-	const service = app.select(AppModule).get(AppService);
-	await service.seedDBIfEmpty();
+	// Get the AppService
+	const appService = app.select(AppModule).get(AppService);
+
+	// Seed DB if empty, using ORM-specific behavior
+	await seedDatabaseIfEmpty(app, appService);
 
 	/**
 	 * Dependency injection with class-validator
 	 */
-	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
+	useContainer(app.select(ValidatorModule), { fallbackOnErrors: true });
 
 	// Start the server
 	const { port = 3000, host = '0.0.0.0' } = config.apiConfigOptions;
@@ -185,8 +189,17 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			process.send(message);
 		}
 
-		if (env.demo) {
-			service.executeDemoSeed(); // Seed demo data if in demo mode
+		if (environment.demo) {
+			console.log(chalk.yellow('Application is running in DEMO mode'));
+
+			// Run demo seed after the HTTP server starts
+			seedDemoIfEmpty(app, appService)
+				.then(() => {
+					console.log(chalk.green('Demo environment seeded successfully'));
+				})
+				.catch((error) => {
+					console.log(chalk.red('Error seeding demo environment:'), error);
+				});
 		}
 	});
 
@@ -227,6 +240,58 @@ export async function registerPluginConfig(config: Partial<ApplicationPluginConf
 }
 
 /**
+ * Run demo seed after the HTTP server starts.
+ * When MikroORM is selected, wrap in a RequestContext so repositories use a scoped EntityManager.
+ */
+async function seedDemoIfEmpty(app: INestApplication, appService: AppService): Promise<void> {
+	console.log('Seeding demo data if database is empty...', environment.demo);
+
+	// Get the ORM type
+	const ormType = getORMType();
+
+	// Seed DB if empty based on the ORM type
+	if (ormType === MultiORMEnum.MikroORM) {
+		// Get the MikroORM instance
+		const mikroOrm = app.get(MikroORM);
+
+		// Seed DB if empty inside a MikroORM RequestContext
+		await RequestContext.create(mikroOrm.em, async () => {
+			await appService.seedDemoIfEmpty();
+		});
+	} else {
+		// Seed DB if empty for TypeORM
+		await appService.seedDemoIfEmpty();
+	}
+}
+
+/**
+ * Seed DB if empty.
+ * - When MikroORM is selected (DB_ORM=mikro-orm), run seeding inside a RequestContext
+ *   so repositories use a scoped EntityManager instead of the global instance.
+ * - Otherwise (TypeORM), keep the existing behavior.
+ */
+async function seedDatabaseIfEmpty(app: INestApplication, appService: AppService): Promise<void> {
+	console.log('Seeding database if empty...', environment.demo);
+
+	// Get the ORM type
+	const ormType = getORMType();
+
+	// Seed DB if empty based on the ORM type
+	if (ormType === MultiORMEnum.MikroORM) {
+		// Get the MikroORM instance
+		const mikroOrm = app.get(MikroORM);
+
+		// Seed DB if empty inside a MikroORM RequestContext
+		await RequestContext.create(mikroOrm.em, async () => {
+			await appService.seedDBIfEmpty();
+		});
+	} else {
+		// Seed DB if empty for TypeORM
+		await appService.seedDBIfEmpty();
+	}
+}
+
+/**
  * Prepares the application configuration before initializing plugins.
  * Configures migration settings, registers entities and subscribers,
  * and applies additional plugin configurations.
@@ -242,25 +307,16 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 		await defineConfig(applicationConfig);
 	}
 
-	// Configure migration settings
-	await defineConfig({
-		dbConnectionOptions: {
-			...getMigrationsConfig()
-		}
-	});
-
-	// Log the current database configuration (for debugging or informational purposes)
-	await logDBConfig();
-
 	// Register core and plugin entities and subscribers in parallel
 	const [entities, subscribers] = await Promise.all([
 		preBootstrapRegisterEntities(applicationConfig),
 		preBootstrapRegisterSubscribers(applicationConfig)
 	]);
 
-	// Update configuration with registered entities and subscribers
+	// Update configuration with migrations, registered entities and subscribers
 	await defineConfig({
 		dbConnectionOptions: {
+			...getMigrationsConfig(),
 			entities: entities as Array<Type<any>>, // Core and plugin entities
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>> // Core and plugin subscribers
 		},
@@ -272,6 +328,9 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 
 	// Apply additional plugin configurations
 	const config = await preBootstrapPluginConfigurations(getConfig());
+
+	// Log the current database configuration (for debugging or informational purposes)
+	logDBConfig(config);
 
 	// Register custom entity fields for Type ORM
 	await registerTypeOrmCustomFields(config);
@@ -314,90 +373,88 @@ async function preBootstrapPluginConfigurations(config: ApplicationPluginConfig)
  * Register entities from core and plugin configurations.
  * Ensures no conflicts between core entities and plugin entities.
  *
+ * Uses a Set for O(1) conflict detection instead of Array.some() which is O(n).
+ *
  * @param config - Plugin configuration containing plugin entities.
  * @returns A promise that resolves to an array of registered entity types.
+ * @throws ConflictException if a plugin entity conflicts with a core entity.
  */
 export async function preBootstrapRegisterEntities(
 	config: Partial<ApplicationPluginConfig>
 ): Promise<Array<Type<any>>> {
 	try {
 		console.time(chalk.yellow('✔ Pre Bootstrap Register Entities Time'));
+
 		// Retrieve core entities and plugin entities
 		const coreEntitiesList = [...coreEntities] as Array<Type<any>>;
 		const pluginEntitiesList = getEntitiesFromPlugins(config.plugins);
 
-		// Check for conflicts and merge entities
-		const registeredEntities = mergeEntities(coreEntitiesList, pluginEntitiesList);
+		// Build a Set of core entity names for O(1) conflict detection
+		const coreEntityNames = new Set(coreEntitiesList.map((entity) => entity.name));
+
+		// Check for conflicts - O(n) instead of O(n²) with Array.some()
+		for (const pluginEntity of pluginEntitiesList) {
+			if (coreEntityNames.has(pluginEntity.name)) {
+				throw new ConflictException({
+					message: `Entity conflict: ${pluginEntity.name} conflicts with core entities.`
+				});
+			}
+		}
+
+		// Merge entities - spread is more efficient than repeated push
+		const registeredEntities = [...coreEntitiesList, ...pluginEntitiesList];
 
 		console.timeEnd(chalk.yellow('✔ Pre Bootstrap Register Entities Time'));
 		return registeredEntities;
 	} catch (error) {
 		console.log(chalk.red('Error registering entities:'), error);
+		throw error;
 	}
-}
-
-/**
- * Merges core entities and plugin entities, ensuring no conflicts.
- *
- * @param coreEntities - Array of core entities.
- * @param pluginEntities - Array of plugin entities from the plugins.
- * @returns The merged array of entities.
- * @throws ConflictException if a plugin entity conflicts with a core entity.
- */
-function mergeEntities(coreEntities: Array<Type<any>>, pluginEntities: Array<Type<any>>): Array<Type<any>> {
-	for (const pluginEntity of pluginEntities) {
-		const entityName = pluginEntity.name;
-
-		if (coreEntities.some((entity) => entity.name === entityName)) {
-			throw new ConflictException({ message: `Entity conflict: ${entityName} conflicts with core entities.` });
-		}
-
-		coreEntities.push(pluginEntity);
-	}
-
-	return coreEntities;
 }
 
 /**
  * Registers subscriber entities from core and plugin configurations, ensuring no conflicts.
  *
+ * Uses a Set for O(1) conflict detection instead of Array.some() which is O(n).
+ *
  * @param config - The application configuration that might contain plugin subscribers.
  * @returns A promise that resolves to an array of registered subscriber entity types.
+ * @throws ConflictException if a plugin subscriber conflicts with a core subscriber.
  */
 async function preBootstrapRegisterSubscribers(
 	config: Partial<ApplicationPluginConfig>
 ): Promise<Array<Type<EntitySubscriberInterface>>> {
-	console.time(chalk.yellow('✔ Pre Bootstrap Register Subscribers Time'));
-
 	try {
+		console.time(chalk.yellow('✔ Pre Bootstrap Register Subscribers Time'));
+
 		// List of core subscribers
-		const subscribers = coreSubscribers as Array<Type<EntitySubscriberInterface>>;
+		const coreSubscribersList = [...coreSubscribers] as Array<Type<EntitySubscriberInterface>>;
 
 		// Get plugin subscribers from the application configuration
 		const pluginSubscribersList = getSubscribersFromPlugins(config.plugins);
 
-		// Check for conflicts and add new plugin subscribers
-		for (const pluginSubscriber of pluginSubscribersList) {
-			const subscriberName = pluginSubscriber.name;
+		// Build a Set of core subscriber names for O(1) conflict detection
+		const coreSubscriberNames = new Set(coreSubscribersList.map((subscriber) => subscriber.name));
 
-			// Check for name conflicts with core subscribers
-			if (subscribers.some((subscriber) => subscriber.name === subscriberName)) {
-				// Throw an exception if there's a conflict
+		// Check for conflicts - O(n) instead of O(n²) with Array.some()
+		for (const pluginSubscriber of pluginSubscribersList) {
+			if (coreSubscriberNames.has(pluginSubscriber.name)) {
 				throw new ConflictException({
-					message: `Error: ${subscriberName} conflicts with default subscribers.`
+					message: `Error: ${pluginSubscriber.name} conflicts with default subscribers.`
 				});
-			} else {
-				// Add the new plugin subscriber to the list if no conflict
-				subscribers.push(pluginSubscriber);
 			}
 		}
 
+		// Merge subscribers - spread is more efficient than repeated push
+		const registeredSubscribers = [...coreSubscribersList, ...pluginSubscribersList];
+
 		console.timeEnd(chalk.yellow('✔ Pre Bootstrap Register Subscribers Time'));
 
-		// Return the updated list of subscribers
-		return subscribers;
+		// Return the merged list of subscribers
+		return registeredSubscribers;
 	} catch (error) {
 		console.log(chalk.red('Error registering subscribers:'), error);
+		throw error;
 	}
 }
 
@@ -409,7 +466,7 @@ async function preBootstrapRegisterSubscribers(
 export function getMigrationsConfig() {
 	// Determine if running from dist or source
 	const isDist = __dirname.includes('dist');
-	const isElectron = !!env.isElectron; // check if electron
+	const isElectron = !!environment.isElectron; // check if electron
 
 	console.log('Migration isDist: ->', isDist);
 	console.log('Migration isElectron: ->', isElectron);
@@ -448,8 +505,10 @@ export function getMigrationsConfig() {
 
 /**
  * Logs the current database configuration for debugging or informational purposes.
+ * Excludes entities and subscribers arrays to keep the output readable.
  */
-async function logDBConfig(): Promise<void> {
-	const config = getConfig(); // Await the config first
-	console.log(chalk.green(`DB Config: ${JSON.stringify(config.dbConnectionOptions)}`));
+function logDBConfig(config: ApplicationPluginConfig): void {
+	// Destructure to exclude entities and subscribers from the log output
+	const { entities, subscribers, ...dbConfigWithoutEntities } = config.dbConnectionOptions;
+	console.log(chalk.green(`DB Config: ${JSON.stringify(dbConfigWithoutEntities)}`));
 }

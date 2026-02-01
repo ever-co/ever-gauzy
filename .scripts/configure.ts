@@ -2,7 +2,7 @@
 // We are using dotenv (.env) for consistency with other Platform projects
 // This is Angular app and all settings will be loaded into the client browser!
 
-import { existsSync, mkdirSync, writeFileSync, unlinkSync } from 'fs';
+import { existsSync, mkdirSync, writeFile, unlinkSync } from 'fs';
 import * as path from 'path';
 import { argv } from 'yargs';
 import { env } from './env';
@@ -272,7 +272,7 @@ if (!isDocker) {
 		POSTHOG_KEY: 'DOCKER_POSTHOG_KEY',
 		POSTHOG_HOST: 'DOCKER_POSTHOG_HOST',
 		// @ts-ignore
-		POSTHOG_ENABLED: 'DOCKER_POSTHOG_ENABLED' == 'true',
+		POSTHOG_ENABLED: String('DOCKER_POSTHOG_ENABLED').toLowerCase() === 'true',
 		// @ts-ignore
 		POSTHOG_FLUSH_INTERVAL: parseInt('DOCKER_POSTHOG_FLUSH_INTERVAL'),
 
@@ -284,7 +284,7 @@ if (!isDocker) {
 		GOOGLE_MAPS_API_KEY: 'DOCKER_GOOGLE_MAPS_API_KEY',
 
 		// @ts-ignore
-		GOOGLE_PLACE_AUTOCOMPLETE: 'DOCKER_GOOGLE_PLACE_AUTOCOMPLETE' == 'true',
+		GOOGLE_PLACE_AUTOCOMPLETE: String('DOCKER_GOOGLE_PLACE_AUTOCOMPLETE').toLowerCase() === 'true',
 
 		DEFAULT_LATITUDE: ${env.DEFAULT_LATITUDE},
 		DEFAULT_LONGITUDE: ${env.DEFAULT_LONGITUDE},
@@ -292,7 +292,7 @@ if (!isDocker) {
 		DEFAULT_COUNTRY: 'DOCKER_DEFAULT_COUNTRY',
 
 		// @ts-ignore
-		DEMO: 'DOCKER_DEMO' == 'true',
+		DEMO: String('DOCKER_DEMO').toLowerCase() === 'true',
 
 		DEMO_SUPER_ADMIN_EMAIL: '${env.DEMO_SUPER_ADMIN_EMAIL}',
 		DEMO_SUPER_ADMIN_PASSWORD: '${env.DEMO_SUPER_ADMIN_PASSWORD}',
@@ -403,21 +403,23 @@ if (!existsSync(environmentsFolder)) {
 const envFilePath = path.join(environmentsFolder, envFileDest);
 const envFileOtherPath = path.join(environmentsFolder, envFileDestOther);
 
-try {
-	writeFileSync(envFilePath, envFileContent, 'utf8');
-	console.log(`Generated Angular environment file: ${envFilePath}`);
-} catch (error) {
-	console.error(`Error writing environment file: ${error}`);
-	throw error;
-}
+writeFile(envFilePath, envFileContent, (error) => {
+	if (error) {
+		console.error(`Error writing environment file: ${error}`);
+	} else {
+		// Paths to environment files
+		const envFilePath = path.resolve(`./packages/ui-config/src/lib/environments/${envFileDest}`);
+		console.log(`Generated Angular environment file: ${envFilePath}`);
+	}
+});
 
 let envFileDestOtherContent = `export const environment = { production: ${!isProd} }`;
 
-try {
-	writeFileSync(envFileOtherPath, envFileDestOtherContent, 'utf8');
-	console.log(`Generated Second Empty Angular environment file: ${envFileOtherPath}`);
-	console.log('Environment configuration completed successfully');
-} catch (error) {
-	console.error(`Error writing environment file: ${error}`);
-	throw error;
-}
+writeFile(envFileOtherPath, envFileDestOtherContent, (error) => {
+	if (error) {
+		console.error(`Error writing environment file: ${error}`);
+	} else {
+		const envFileOtherPath = path.resolve(`./packages/ui-config/src/lib/environments/${envFileDestOther}`);
+		console.log(`Generated Second Empty Angular environment file: ${envFileOtherPath}`);
+	}
+});

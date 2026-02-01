@@ -4172,6 +4172,7 @@
 		"TODAY": "היום",
 		"STATUS": "גשש הזמן כבר פועל ב- {{ source }}",
 		"VERSION": "גרסה v{{ version }}",
+		"ARCHITECTURE": "ארכיטקטורה: {{ arch }}",
 		"WAIT_FOR": "ממתין ש-{{ name }} יתחיל...",
 		"SETUP": {
 			"WELCOME": "ברוכים הבאים",

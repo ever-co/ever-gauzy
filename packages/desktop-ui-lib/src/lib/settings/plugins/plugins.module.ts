@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbAlertModule,
 	NbBadgeModule,
@@ -42,10 +41,14 @@ import { SelectModule } from '../../shared/components/ui/select/select.module';
 import { NoDataMessageModule } from '../../time-tracker/no-data-message/no-data-message.module';
 import { PaginationModule } from '../../time-tracker/pagination/pagination.module';
 import { PipeModule } from '../../time-tracker/pipes/pipe.module';
+import { PendingInstallationEffects } from './component/+state/pending-installation.effect';
+import { PendingInstallationQuery } from './component/+state/pending-installation.query';
+import { PendingInstallationStore } from './component/+state/pending-installation.store';
 import { PluginEffects } from './component/+state/plugin.effect';
 import { PluginQuery } from './component/+state/plugin.query';
 import { PluginStore } from './component/+state/plugin.store';
 import { AddPluginComponent } from './component/add-plugin/add-plugin.component';
+import { PendingInstallationDialogComponent } from './component/pending-installation-dialog/pending-installation-dialog.component';
 import { PluginLayoutComponent } from './component/plugin-layout/plugin-layout.component';
 import { PluginListComponent } from './component/plugin-list/plugin-list.component';
 import { PluginStatusComponent } from './component/plugin-list/plugin-status/plugin-status.component';
@@ -123,6 +126,7 @@ import { PluginSubscriptionService } from './services/plugin-subscription.servic
 import { PluginTagsService } from './services/plugin-tags.service';
 import { PluginUserAssignmentService } from './services/plugin-user-assignment.service';
 import { PluginService } from './services/plugin.service';
+import { UserSubscribedPluginsService } from './services/user-subscribed-plugins.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
 import { ElectronService } from '../../electron/services';
@@ -152,6 +156,7 @@ import {
 } from './component/plugin-marketplace/shared';
 import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
 import { PluginRoutingModule } from './plugin-routing.module';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
 	declarations: [
@@ -206,7 +211,8 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		CardDetailsSectionComponent,
 		BillingContactSectionComponent,
 		SubscriptionConsentSectionComponent,
-		UploadSelectionComponent
+		UploadSelectionComponent,
+		PendingInstallationDialogComponent
 	],
 	imports: [
 		CommonModule,
@@ -221,6 +227,7 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		DesktopDirectiveModule,
 		NoDataMessageModule,
 		NbIconModule,
+		NbTablerIconsModule,
 		TranslateModule.forChild(),
 		RouterModule,
 		NbBadgeModule,
@@ -244,7 +251,6 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		PipeModule,
 		NbListModule,
 		SelectModule,
-		NbEvaIconsModule,
 		DragDropModule,
 		NbTagModule,
 		InfiniteScrollDirective,
@@ -267,6 +273,7 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		PluginAnalyticsService,
 		PluginSecurityService,
 		PluginUserAssignmentService,
+		UserSubscribedPluginsService,
 		// Shared subscription services
 		SubscriptionPlanService,
 		SubscriptionFormService,
@@ -290,7 +297,8 @@ import { PluginRoutingModule } from './plugin-routing.module';
 			AvailableUsersEffects,
 			PluginToggleEffects,
 			PluginCategoryEffects,
-			PluginUploadIntentEffects
+			PluginUploadIntentEffects,
+			PendingInstallationEffects
 		),
 		PluginQuery,
 		PluginStore,
@@ -311,6 +319,8 @@ import { PluginRoutingModule } from './plugin-routing.module';
 		UserManagementFacade,
 		PluginUploadIntentStore,
 		PluginUploadIntentQuery,
+		PendingInstallationStore,
+		PendingInstallationQuery,
 		NbInfiniteListDirective
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]

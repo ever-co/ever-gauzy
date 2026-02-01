@@ -5,11 +5,12 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["contracts", "ui-config", "ui-core"],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:package",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"dependsOn": ["^build"],
 			"options": {
 				"project": "packages/plugins/maintenance-ui/ng-package.json",
 				"tsConfig": "packages/plugins/maintenance-ui/tsconfig.json"
@@ -22,7 +23,7 @@
 					"tsConfig": "packages/plugins/maintenance-ui/tsconfig.lib.json"
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development"
 		},
 		"test": {
 			"executor": "@nx/jest:jest",

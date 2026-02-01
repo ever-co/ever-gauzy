@@ -4156,6 +4156,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Für eine flexiblere Zeit- und Aktivitätsverfolgung laden Sie bitte die <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a> herunter und verwenden Sie diese.",
 		"STATUS": "Der Zeitverfolger läuft bereits in der {{ source }}.",
 		"VERSION": "Version v{{ version }}",
+		"ARCHITECTURE": "Architektur: {{ arch }}",
 		"WAIT_FOR": "Warten auf den Beginn von {{ name }}...",
 		"SETUP": {
 			"WELCOME": "Willkommen",

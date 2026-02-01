@@ -132,15 +132,15 @@ class ElectronPluginListener {
 		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugins loaded' });
 	}
 
-	private initializePlugins(event: IpcMainEvent): void {
+	private async initializePlugins(event: IpcMainEvent): Promise<void> {
 		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugins initializing' });
-		this.pluginManager.initializePlugins();
+		await this.pluginManager.initializePlugins();
 		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugins initialized' });
 	}
 
-	private disposePlugins(event: IpcMainEvent): void {
+	private async disposePlugins(event: IpcMainEvent): Promise<void> {
 		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugins Disposing...' });
-		this.pluginManager.disposePlugins();
+		await this.pluginManager.disposePlugins();
 		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugins Disposed' });
 	}
 

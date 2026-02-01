@@ -36,7 +36,6 @@
 					"node_modules/ionicons/dist/scss/ionicons.scss",
 					"node_modules/@fortawesome/fontawesome-free/css/all.css",
 					"node_modules/socicon/css/socicon.css",
-					"node_modules/nebular-icons/scss/nebular-icons.scss",
 					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 					"node_modules/leaflet/dist/leaflet.css",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css",
@@ -75,8 +74,8 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "20mb",
-							"maximumError": "40mb"
+							"maximumWarning": "45mb",
+							"maximumError": "50mb"
 						},
 						{
 							"type": "anyComponentStyle",
@@ -88,11 +87,26 @@
 				},
 				"development": {
 					"optimization": false,
+					"sourceMap": true,
+					"namedChunks": true,
 					"extractLicenses": false,
-					"sourceMap": true
+					"vendorChunk": true,
+					"buildOptimizer": false,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "45mb",
+							"maximumError": "50mb"
+						},
+						{
+							"type": "anyComponentStyle",
+							"maximumWarning": "100kb",
+							"maximumError": "200kb"
+						}
+					]
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development"
 		},
 		"serve": {
 			"executor": "@angular-devkit/build-angular:dev-server",

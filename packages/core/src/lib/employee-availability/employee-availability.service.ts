@@ -5,7 +5,7 @@ import { RequestContext } from '../core/context/request-context';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
 import { MultiORMEnum } from '../core/utils';
 import { TypeOrmEmployeeAvailabilityRepository } from './repository/type-orm-employee-availability.repository';
-import { MikroOrmEmployeeAvailabilityRepository } from './repository/micro-orm-employee-availability.repository';
+import { MikroOrmEmployeeAvailabilityRepository } from './repository/mikro-orm-employee-availability.repository';
 import { EmployeeAvailability } from './employee-availability.entity';
 
 @Injectable()

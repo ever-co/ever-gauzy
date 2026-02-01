@@ -15,7 +15,7 @@ const envPaths = [
 // Try to load .env file from multiple locations (silently in production)
 envPaths.forEach((envPath) => {
 	try {
-		dotenv.config({ path: envPath, quiet: true });
+		dotenv.config({ path: envPath });
 		// Only log in debug mode and only to stderr to avoid interfering with MCP responses
 		if (process.env.GAUZY_MCP_DEBUG === 'true') {
 			console.error(`✓ Loaded environment from: ${envPath}`);

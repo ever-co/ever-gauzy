@@ -4159,6 +4159,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Aby uzyskać bardziej elastyczne śledzenie czasu i aktywności, proszę <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">pobrać</a> i używać <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">aplikacji Gauzy Desktop Timer</a>",
 		"STATUS": "Śledzenie czasu jest już uruchomione w {{ source }}",
 		"VERSION": "Wersja v{{ version }}",
+		"ARCHITECTURE": "Architektura: {{ arch }}",
 		"WAIT_FOR": "Oczekiwanie na rozpoczęcie przez {{ name }}..",
 		"SETUP": {
 			"WELCOME": "Witaj",

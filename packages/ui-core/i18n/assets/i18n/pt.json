@@ -4160,6 +4160,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Para um acompanhamento de tempo e atividades mais flexível, por favor, faça o <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Download</a> e utilize o <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Aplicativo Gauzy Desktop Timer</a>.",
 		"STATUS": "O rastreador de tempo já está em execução em {{ source }}.",
 		"VERSION": "Versão v{{ version }}",
+		"ARCHITECTURE": "Arquitetura: {{ arch }}",
 		"WAIT_FOR": "Aguardando {{name}} começar...",
 		"SETUP": {
 			"WELCOME": "Bem-vindo.",

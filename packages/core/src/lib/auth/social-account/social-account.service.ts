@@ -5,13 +5,13 @@ import { UserService } from '../../user/user.service';
 import { TenantAwareCrudService } from '../../core/crud';
 import { SocialAccount } from './social-account.entity';
 import { TypeOrmSocialAccountRepository } from './repository/type-orm-social-account.repository';
-import { MicroOrmSocialAccountRepository } from './repository/micro-orm-social-account.repository';
+import { MikroOrmSocialAccountRepository } from './repository/mikro-orm-social-account.repository';
 
 @Injectable()
 export class SocialAccountService extends TenantAwareCrudService<SocialAccount> {
 	constructor(
 		readonly typeOrmSocialAccountRepository: TypeOrmSocialAccountRepository,
-		readonly mikroOrmSocialAccountRepository: MicroOrmSocialAccountRepository,
+		readonly mikroOrmSocialAccountRepository: MikroOrmSocialAccountRepository,
 		private readonly userService: UserService
 	) {
 		super(typeOrmSocialAccountRepository, mikroOrmSocialAccountRepository);

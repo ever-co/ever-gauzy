@@ -7,12 +7,13 @@
 		"build": {
 			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
-				"compiler": "tsc",
+				"compiler": "esbuild",
 				"outputPath": "dist/apps/server-mcp",
 				"main": "apps/server-mcp/src/electron-main.ts",
+				"maxWorkers": 8,
 				"tsConfig": "apps/server-mcp/tsconfig.electron.json",
 				"assets": [
 					"apps/server-mcp/src/static",
@@ -30,7 +31,11 @@
 				"webpackConfig": "apps/server-mcp/webpack.config.js"
 			},
 			"configurations": {
-				"development": {},
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
+				},
 				"production": {
 					"optimization": true,
 					"extractLicenses": true,

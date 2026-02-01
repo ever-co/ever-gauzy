@@ -62,7 +62,7 @@
 		"uiohook-napi": "^1.5.4"
 	},
 	"devDependencies": {
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"@types/unzipper": "^0.10.9",
 		"electron": "^38.1.2"
 	},

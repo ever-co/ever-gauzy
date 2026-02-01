@@ -1,7 +1,7 @@
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { IOrganization, ITimeOffPolicy } from '@gauzy/contracts';
@@ -10,17 +10,17 @@ import { TimeOffService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-time-off-policy-select',
-    templateUrl: './time-off-policy-select.component.html',
-    styleUrls: [],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TimeOffPolicySelectComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ga-time-off-policy-select',
+	templateUrl: './time-off-policy-select.component.html',
+	styleUrls: [],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TimeOffPolicySelectComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class TimeOffPolicySelectComponent implements OnInit {
 	policies: ITimeOffPolicy[] = [];

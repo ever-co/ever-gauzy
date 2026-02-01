@@ -1,4 +1,4 @@
-import { RegisteredWindow, store, WindowManager } from '@gauzy/desktop-core';
+import { IBaseWindow, RegisteredWindow, store, WindowManager } from '@gauzy/desktop-core';
 import { getApiBaseUrl, loginPage, settingsPage, timeTrackerPage } from '@gauzy/desktop-window';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
 import * as path from 'node:path';
@@ -408,6 +408,15 @@ export class TrayIcon {
 					console.error('An error occurred while loading settings Page', error);
 				}
 
+				try {
+					const window = manager.getOne(RegisteredWindow.PLUGINS) as IBaseWindow;
+					if (window) {
+						await window.loadURL();
+					}
+				} catch (error) {
+					console.error('An error occurred while loading plugin Page', error);
+				}
+
 				manager.webContents(timeTrackerWindow).send('auth_success_tray_init', arg);
 
 				if (!isGauzyWindow) {
@@ -462,6 +471,16 @@ export class TrayIcon {
 
 			manager.hide(RegisteredWindow.WIDGET);
 
+			try {
+				const window = manager.getOne(RegisteredWindow.PLUGINS) as IBaseWindow;
+				if (window) {
+					window.hide();
+					await window.loadURL();
+				}
+			} catch (error) {
+				console.error('An error occurred while loading plugin Page', error);
+			}
+
 			await userService.remove();
 
 			LocalStore.updateAuthSetting({ isLogout: true });
@@ -485,7 +504,6 @@ export class TrayIcon {
 				const image = nativeImage.createFromDataURL(dataUrl);
 				this.tray.setImage(image);
 			}
-
 		});
 
 		manager.webContents(timeTrackerWindow).send('custom_tray_icon', { event: 'initCustomIcon' });

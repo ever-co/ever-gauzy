@@ -28,6 +28,7 @@
 	},
 	"dependencies": {
 		"@faker-js/faker": "^10.2.0",
+		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
@@ -48,7 +49,7 @@
 	"devDependencies": {
 		"@nestjs/testing": "^11.1.12",
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},
 	"keywords": [

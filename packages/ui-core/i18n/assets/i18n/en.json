@@ -190,7 +190,9 @@
 		"RECOVER": "Recover",
 		"ADD_MORE_SOURCES": "Add More Sources",
 		"REMOVE_FROM_FAVORITES": "Remove from favorites",
-		"ADD_TO_FAVORITES": "Add to favorites"
+		"ADD_TO_FAVORITES": "Add to favorites",
+		"DONE": "Done",
+		"SKIP": "Skip"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4295,6 +4297,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "For more flexible time and activity tracking, please <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Download</a> and use the <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 		"STATUS": "The time tracker is already running in the {{ source }}",
 		"VERSION": "Version v{{ version }}",
+		"ARCHITECTURE": "Architecture: {{ arch }}",
 		"WAIT_FOR": "Waiting for {{ name }} to start...",
 		"SETUP": {
 			"WELCOME": "Welcome",
@@ -5285,6 +5288,34 @@
 		"DOWNLOADS": "downloads",
 		"FREE": "Free",
 		"NO_DESCRIPTION": "No description available",
+		"PENDING_INSTALLATION": {
+			"TITLE": "Pending Plugin Installation",
+			"DESCRIPTION": "The following plugins are waiting to be installed",
+			"LOADING": "Loading plugins...",
+			"CHECKING_PLUGINS": "Checking for pending plugins",
+			"INSTALLING": "Installing plugins",
+			"COMPLETE": "complete",
+			"ALL_INSTALLED": "All Plugins Installed",
+			"ALL_INSTALLED_DESC": "All pending plugins have been successfully installed.",
+			"AVAILABLE_PLUGINS": "Available Plugins",
+			"MANDATORY": "Required plugin",
+			"STATUS_INSTALLING": "Installing...",
+			"STATUS_INSTALLED": "Installed",
+			"STATUS_FAILED": "Failed",
+			"FAILED": "Failed",
+			"INSTALLED": "Installed",
+			"SKIP_TOOLTIP": "Skip this plugin installation",
+			"INSTALL_TOOLTIP": "Install this plugin",
+			"PLUGINS_COUNT": "{{ count }} plugin(s) pending",
+			"INSTALLING_TEXT": "Installing...",
+			"FAILED_LOWERCASE": "failed",
+			"RETRY_FAILED_TOOLTIP": "Retry installing failed plugins",
+			"RETRY_FAILED": "Retry Failed",
+			"SKIP_ALL": "Skip All",
+			"SKIP_ALL_TOOLTIP": "Skip all pending plugin installations",
+			"INSTALL_ALL": "Install All",
+			"INSTALL_ALL_TOOLTIP": "Install all pending plugins"
+		},
 		"SUBSCRIPTION_REQUIRED": "Subscription Required",
 		"INSTALLING": "Installing...",
 		"UNINSTALLING": "Uninstalling...",

@@ -28,12 +28,13 @@
 	},
 	"dependencies": {
 		"@gauzy/config": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@nestjs/common": "^11.1.12",
 		"@nestjs/core": "^11.1.12",
 		"@nestjs/graphql": "^13.2.3",
-		"@sentry/node": "9.43.0",
-		"@sentry/core": "9.43.0",
+		"@sentry/node": "10.36.0",
+		"@sentry/core": "10.36.0",
 		"chalk": "^4.1.0",
 		"express": "^5.2.1",
 		"rxjs": "^7.8.2",
@@ -41,7 +42,7 @@
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},
 	"keywords": [

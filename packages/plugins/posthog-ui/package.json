@@ -24,17 +24,18 @@
 		"lib:watch": "yarn nx build plugin-posthog-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^20.0.0",
-		"@angular/core": "^20.0.0"
+		"@angular/common": "^20.2.4",
+		"@angular/core": "^20.2.4"
 	},
 	"dependencies": {
+		"@gauzy/ui-core": "^0.1.0",
 		"posthog-js": "^1.236.2",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"jest-preset-angular": "14.6.2"
 	},
 	"keywords": [

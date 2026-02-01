@@ -56,6 +56,6 @@ export const socialLinks = [
 	{
 		url: env?.MICROSOFT_AUTH_LINK,
 		target: '_blank',
-		icon: 'grid'
+		icon: 'microsoft'
 	}
 ];

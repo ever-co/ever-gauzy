@@ -1,9 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbRouteTab } from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
+import { PendingInstallationActions } from '../+state/pending-installation.action';
 
 @Component({
 	selector: 'ngx-plugin-layout',
@@ -12,6 +14,8 @@ import { PluginElectronService } from '../../services/plugin-electron.service';
 	standalone: false
 })
 export class PluginLayoutComponent implements OnInit, OnDestroy {
+	private readonly actions = inject(Actions);
+
 	public tabs: NbRouteTab[] = [];
 	private destroy$ = new Subject<void>();
 
@@ -28,12 +32,19 @@ export class PluginLayoutComponent implements OnInit, OnDestroy {
 
 		// Use takeUntil for cleaner subscription management
 		this.translateService.onLangChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.updateTabs());
+
+		// Check pending installations
+		this.checkPendingInstallations();
 	}
 
 	ngOnDestroy() {
 		// Emit completion and clean up all subscriptions
 		this.destroy$.next();
 		this.destroy$.complete();
+	}
+
+	private checkPendingInstallations() {
+		this.actions.dispatch(PendingInstallationActions.checkAndShowDialog());
 	}
 
 	private get baseRoute(): string {

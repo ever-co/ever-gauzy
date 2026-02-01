@@ -28,7 +28,7 @@
 					"tsConfig": "packages/ui-config/tsconfig.lib.json"
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development"
 		},
 		"setup-env": {
 			"executor": "nx:run-script",
@@ -40,7 +40,7 @@
 					"script": "setup-env:dev"
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development"
 		},
 		"test": {
 			"executor": "@nx/jest:jest",

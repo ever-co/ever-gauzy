@@ -394,6 +394,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		autoStart: true
 	};
 	version = '0.0.0';
+	arch = '';
 	message = {
 		text: 'TIMER_TRACKER.SETTINGS.MESSAGES.APP_UPDATE',
 		status: 'basic'
@@ -503,6 +504,12 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	ngOnInit(): void {
 		// this.electronService.ipcRenderer.send('request_permission');
+		this.electronService.ipcRenderer.once('get-arch', (_, arg) => {
+			this._ngZone.run(() => {
+				this.arch = arg
+			})
+		});
+		this.electronService.ipcRenderer.send('get-arch');
 		this.version = this.electronService.remote.app.getVersion();
 		this.isConnectedDatabase$
 			.pipe(
@@ -581,12 +588,12 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			this.menus = this.isServer
 				? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
 				: [
-						...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
-						'TIMER_TRACKER.TIMER',
-						'TIMER_TRACKER.SETTINGS.UPDATE',
-						'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
-						'MENU.ABOUT'
-				  ];
+					...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
+					'TIMER_TRACKER.TIMER',
+					'TIMER_TRACKER.SETTINGS.UPDATE',
+					'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
+					'MENU.ABOUT'
+				];
 			const lastMenu =
 				this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
 			this._selectedMenu$.next(lastMenu);

@@ -7,22 +7,34 @@
 		"version": {
 			"currentVersionResolver": "git-tag",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+			"manifestRootsToUpdate": [
+				"dist/{projectRoot}"
+			]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": [
+		"contracts",
+		"core"
+	],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
 			"options": {
 				"outputPath": "dist/packages/plugins/integration-wakatime",
 				"tsConfig": "packages/plugins/integration-wakatime/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-wakatime/package.json",
 				"main": "packages/plugins/integration-wakatime/src/index.ts",
-				"assets": ["packages/plugins/integration-wakatime/*.md"]
-			}
+				"assets": [
+					"packages/plugins/integration-wakatime/*.md"
+				]
+			},
+			"dependsOn": [
+				"^build"
+			]
 		},
 		"nx-release-publish": {
 			"options": {
@@ -34,7 +46,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "packages/plugins/integration-wakatime/jest.config.ts"
 			}

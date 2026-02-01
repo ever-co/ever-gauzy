@@ -27,6 +27,7 @@
 		"lib:watch": "yarn nx build auth --watch"
 	},
 	"dependencies": {
+		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
@@ -66,7 +67,7 @@
 		"@types/cookie-parser": "^1.4.9",
 		"@types/express-session": "^1.18.2",
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"@types/passport": "^1.0.17",
 		"@types/passport-facebook": "^3.0.3",
 		"@types/passport-github2": "^1.2.9",

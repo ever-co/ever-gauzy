@@ -238,7 +238,7 @@ export const assignOrganizationProjectToEmployee = async (dataSource: DataSource
 	]);
 
 	// Check if there are enough projects to assign
-	if (organizationProjects.length == 0) {
+	if (organizationProjects.length === 0) {
 		console.warn('Not enough projects to assign. At least 1 projects are required.');
 		return;
 	}

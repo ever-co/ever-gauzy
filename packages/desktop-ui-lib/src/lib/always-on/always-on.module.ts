@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbButtonModule, NbCardModule, NbIconModule, NbLayoutModule, NbTooltipModule } from '@nebular/theme';
 import { LanguageModule } from '../language/language.module';
 import { AlwaysOnComponent } from './always-on.component';
 import { AlwaysOnService } from './always-on.service';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
 	declarations: [AlwaysOnComponent],
@@ -15,13 +15,13 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 		NbLayoutModule,
 		LanguageModule.forChild(),
 		NbIconModule,
+		NbTablerIconsModule,
 		NbTooltipModule,
 		NbButtonModule,
-		NbEvaIconsModule,
 		NbCardModule,
 		FormsModule,
 		FontAwesomeModule
 	],
 	providers: [AlwaysOnService]
 })
-export class AlwaysOnModule { }
+export class AlwaysOnModule {}

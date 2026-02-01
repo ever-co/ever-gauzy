@@ -28,9 +28,11 @@
 	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
 		"@nestjs/common": "^11.1.12",
 		"@nestjs/config": "^4.0.2",
@@ -48,7 +50,7 @@
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
+		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},
 	"keywords": [

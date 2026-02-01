@@ -45,7 +45,6 @@
 					"node_modules/ionicons/dist/scss/ionicons.scss",
 					"node_modules/@fortawesome/fontawesome-free/css/all.css",
 					"node_modules/socicon/css/socicon.css",
-					"node_modules/nebular-icons/scss/nebular-icons.scss",
 					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 					"node_modules/leaflet/dist/leaflet.css",
 					"packages/ui-core/static/styles/styles.scss",
@@ -63,7 +62,6 @@
 					"brace/mode/handlebars",
 					"camelcase",
 					"dayjs",
-					"eva-icons",
 					"file-saver",
 					"leaflet",
 					"localforage",
@@ -171,7 +169,7 @@
 		"desktop-ui": {
 			"executor": "@angular-builders/custom-webpack:browser",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"customWebpackConfig": {
 					"path": "apps/desktop/config/custom-webpack.config.js"
@@ -209,7 +207,6 @@
 					"node_modules/ionicons/dist/scss/ionicons.scss",
 					"node_modules/@fortawesome/fontawesome-free/css/all.css",
 					"node_modules/socicon/css/socicon.css",
-					"node_modules/nebular-icons/scss/nebular-icons.scss",
 					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 					"node_modules/leaflet/dist/leaflet.css",
 					"packages/ui-core/static/styles/styles.scss",
@@ -227,7 +224,6 @@
 					"brace/mode/handlebars",
 					"camelcase",
 					"dayjs",
-					"eva-icons",
 					"file-saver",
 					"leaflet",
 					"localforage",
@@ -243,6 +239,21 @@
 				]
 			},
 			"configurations": {
+				"development": {
+					"optimization": false,
+					"sourceMap": true,
+					"namedChunks": true,
+					"extractLicenses": false,
+					"vendorChunk": true,
+					"buildOptimizer": false,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "20mb",
+							"maximumError": "40mb"
+						}
+					]
+				},
 				"production": {
 					"fileReplacements": [
 						{
@@ -277,7 +288,7 @@
 		"server-ui": {
 			"executor": "@angular-builders/custom-webpack:browser",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"customWebpackConfig": {
 					"path": "apps/gauzy/config/custom-webpack.config.js"
@@ -308,7 +319,6 @@
 					"node_modules/ionicons/dist/scss/ionicons.scss",
 					"node_modules/@fortawesome/fontawesome-free/css/all.css",
 					"node_modules/socicon/css/socicon.css",
-					"node_modules/nebular-icons/scss/nebular-icons.scss",
 					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 					"node_modules/leaflet/dist/leaflet.css",
 					"packages/ui-core/static/styles/styles.scss",
@@ -326,7 +336,6 @@
 					"brace/mode/handlebars",
 					"camelcase",
 					"dayjs",
-					"eva-icons",
 					"file-saver",
 					"leaflet",
 					"localforage",
@@ -341,6 +350,21 @@
 				]
 			},
 			"configurations": {
+				"development": {
+					"optimization": false,
+					"sourceMap": true,
+					"namedChunks": true,
+					"extractLicenses": false,
+					"vendorChunk": true,
+					"buildOptimizer": false,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "20mb",
+							"maximumError": "40mb"
+						}
+					]
+				},
 				"production": {
 					"fileReplacements": [
 						{

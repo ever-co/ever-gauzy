@@ -5,11 +5,16 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": [
+		"ui-core",
+		"ui-config"
+	],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:package",
-			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/dist/{projectRoot}"
+			],
 			"options": {
 				"project": "packages/plugins/legal-ui/ng-package.json",
 				"tsConfig": "packages/plugins/legal-ui/tsconfig.json"
@@ -22,11 +27,16 @@
 					"tsConfig": "packages/plugins/legal-ui/tsconfig.lib.json"
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development",
+			"dependsOn": [
+				"^build"
+			]
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "packages/plugins/legal-ui/jest.config.ts",
 				"tsConfig": "packages/plugins/legal-ui/tsconfig.spec.json"
