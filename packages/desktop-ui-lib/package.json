@@ -67,7 +67,7 @@
 		"@types/moment-duration-format": "^2.2.7",
 		"@types/node": "^24.10.0",
 		"electron": "^38.1.2",
-		"jest-preset-angular": "14.6.2"
+		"jest-preset-angular": "16.0.0"
 	},
 	"keywords": [
 		"angular",
