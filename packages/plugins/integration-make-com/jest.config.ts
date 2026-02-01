@@ -1,4 +1,4 @@
-export default {
+module.exports = {
 	displayName: 'plugin-integration-make-com',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',

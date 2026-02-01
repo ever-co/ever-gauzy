@@ -1,4 +1,4 @@
-export default {
+module.exports = {
 	displayName: 'mcp-auth',
 	preset: '../../jest.preset.js',
 	testEnvironment: 'node',

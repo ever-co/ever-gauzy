@@ -1,4 +1,4 @@
-export default {
+module.exports = {
 	displayName: 'desktop-lib',
 	preset: '../../jest.preset.js',
 	testEnvironment: 'node',
