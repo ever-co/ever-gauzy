@@ -18,5 +18,5 @@ akitaConfig({
 });
 
 platformBrowser()
-	.bootstrapModule(AppModule, { applicationProviders: [provideZoneChangeDetection()], applicationProviders: [object Object],})
+	.bootstrapModule(AppModule, { applicationProviders: [provideZoneChangeDetection()] })
 	.catch((error) => console.error(error));
