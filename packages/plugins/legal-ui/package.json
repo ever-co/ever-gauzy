@@ -29,7 +29,7 @@
 	},
 	"dependencies": {
 		"@angular/router": "21.1.2",
-		"@nebular/auth": "^16.0.0",
+		"@nebular/auth": "^17.0.0",
 		"@ngx-translate/core": "^16.0.4",
 		"tslib": "^2.6.2"
 	},

@@ -9078,10 +9078,10 @@
     "@emnapi/runtime" "^1.7.1"
     "@tybys/wasm-util" "^0.10.1"
 
-"@nebular/auth@^16.0.0":
-  version "16.0.0"
-  resolved "https://registry.yarnpkg.com/@nebular/auth/-/auth-16.0.0.tgz#93b59b75ed2c5a578a131d2eb032fb84d627daa4"
-  integrity sha512-6KiwH8BuCWyT07Yrn4EpC7KYf4/noC89tSOONNIeeOKc4/cQSbh/ShPPrtGtK1WOoB2j0l9Y7k/30yH3z65fgg==
+"@nebular/auth@^17.0.0":
+  version "17.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/auth/-/auth-17.0.0.tgz#76bc2ecd865745aa6a5a0af51eea1ad6d6d92936"
+  integrity sha512-8maef5DGMBOPeeHNYY8ZhAD40zTiqCClsFgd2WqTAvRXfsdFInobW9KlJc0CbK1ycLek8LzA2cdt9XIkwA9cdg==
   dependencies:
     tslib "^2.3.0"
 
@@ -9090,10 +9090,10 @@
   resolved "https://registry.yarnpkg.com/@nebular/bootstrap/-/bootstrap-9.1.0-rc.6.tgz#526996ff2029427f9a3c116d50398120df8291af"
   integrity sha512-xVb6fztyO8NVFVXV2EOPe2vuwbQ97s2DOve5se0DjaiyZjy5ExSigkKjImNCa+CCMROWNp6UxhjmPlYlsdAIEA==
 
-"@nebular/security@^16.0.0":
-  version "16.0.0"
-  resolved "https://registry.yarnpkg.com/@nebular/security/-/security-16.0.0.tgz#01c7da0480439503cdf0a797345a99d4a6092f1f"
-  integrity sha512-LyXl06m2Cvdx9Aqo90UDrDXHncperLCCYEqDEVuTpS3sLpOY/QRo/OVSLxnDRWnRGjzAfgq2C5iRFcJ1m4kEQg==
+"@nebular/security@^17.0.0":
+  version "17.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/security/-/security-17.0.0.tgz#aacbc0a027dc7198fd6970b0d75d786d87231a53"
+  integrity sha512-0ssE3nan3a8mhAtYH0EOOI971HzrSAf8yD3z4lpLAYgZAYc4fMclndFL3jWBkmEygoiLi3GtXMJOnNsxcHSEFA==
   dependencies:
     tslib "^2.3.0"
 
@@ -9101,6 +9101,13 @@
   version "16.0.0"
   resolved "https://registry.yarnpkg.com/@nebular/theme/-/theme-16.0.0.tgz#f3e07802f92c19dd8fe531af489aafa3a2c9e1ec"
   integrity sha512-3bt+Luiilos05sMcYXZdqQJmFXx02OFe+jR9iV2YRph+Sx3ouCjDtn4WNW+4n3ePRjQ0vuWCT1+zsYILuxXZZA==
+  dependencies:
+    tslib "^2.3.0"
+
+"@nebular/theme@^17.0.0":
+  version "17.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/theme/-/theme-17.0.0.tgz#9d6894bdca54a109866526c2e6ed1a70e7359410"
+  integrity sha512-176Aryv0eESabYd6p+UWvsrFqVsh3oj7BhSqSXus0p5wiZCa1uh4o2uVtcTDpGWB5al3sxCZ7MBG9Xj5OtobWg==
   dependencies:
     tslib "^2.3.0"
 
@@ -18741,7 +18748,7 @@ bootstrap.native@^5.0.13:
     "@thednp/position-observer" "^1.0.7"
     "@thednp/shorty" "^2.0.10"
 
-bootstrap@^4.3.1:
+bootstrap@^4.3.1, bootstrap@^4.6.0:
   version "4.6.2"
   resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-4.6.2.tgz#8e0cd61611728a5bf65a3a2b8d6ff6c77d5d7479"
   integrity sha512-51Bbp/Uxr9aTuy6ca/8FbFloBUJZLHwnhTcnjIeRn2suQWsWzcuJhGjKDB5eppVte/8oCdOL3VuwxvZDUggwGQ==
