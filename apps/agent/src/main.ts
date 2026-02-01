@@ -20,6 +20,6 @@ akitaConfig({
 });
 
 platformBrowser()
-	.bootstrapModule(AppModule, { applicationProviders: [provideZoneChangeDetection()], preserveWhitespaces: false,})
+	.bootstrapModule(AppModule, { applicationProviders: [provideZoneChangeDetection()], applicationProviders: [object Object],, preserveWhitespaces: false,})
 	.then(() => console.log(`Bootstrap Success!`))
 	.catch((error) => console.error(error));
