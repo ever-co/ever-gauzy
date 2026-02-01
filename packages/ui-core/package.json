@@ -24,8 +24,8 @@
 		"lib:watch": "yarn nx build ui-core --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^21.1.2",
-		"@angular/core": "^21.1.2",
+		"@angular/common": "^21.1.0",
+		"@angular/core": "^21.1.0",
 		"rxjs": "^7.8.2"
 	},
 	"dependencies": {
