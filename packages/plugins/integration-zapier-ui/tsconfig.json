@@ -11,7 +11,9 @@
 		"baseUrl": ".",
 		"paths": {
 			"@gauzy/ui-core/*": ["./../../../dist/packages/ui-core/*/index.d.ts"]
-		}
+		},
+		"module": "preserve",
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],

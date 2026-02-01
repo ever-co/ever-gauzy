@@ -1,4 +1,4 @@
-import { enableProdMode } from '@angular/core';
+import { enableProdMode, provideZoneChangeDetection } from '@angular/core';
 import { platformBrowser } from '@angular/platform-browser';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 
@@ -19,8 +19,6 @@ akitaConfig({
 });
 
 platformBrowser()
-	.bootstrapModule(AppModule, {
-		preserveWhitespaces: false
-	})
+	.bootstrapModule(AppModule, { applicationProviders: [provideZoneChangeDetection()], preserveWhitespaces: false,})
 	.then(() => console.log(`Bootstrap Success!`))
 	.catch((error) => console.error(error));

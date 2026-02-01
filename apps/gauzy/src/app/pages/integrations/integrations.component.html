@@ -1,117 +1,125 @@
 <nb-card [nbSpinner]="isLoading$ | async" class="card-scroll">
-	<nb-card-header>
-		<h4>{{ 'INTEGRATIONS.AVAILABLE_INTEGRATIONS' | translate }}</h4>
-		<button
-			nbButton
-			status="basic"
-			size="medium"
-			class="plugins-navigation-button"
-			[routerLink]="['..', 'plugins']"
-		>
-			<nb-icon icon="cube-outline" pack="eva"></nb-icon>
-			<span>{{ 'INTEGRATIONS.PLUGINS' | translate }}</span>
-		</button>
-	</nb-card-header>
-	<nb-card-body>
-		<ng-template [ngxPermissionsOnly]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
-			<ng-template [ngxPermissionsOnly]="['INTEGRATION_VIEW']">
-				<div class="integration-filters">
-					<div class="container">
-						<div class="row">
-							<div class="col-xl-7 col-12">
-								<input
-									#searchElement
-									fullWidth
-									id="integrationSearch"
-									type="text"
-									nbInput
-									[placeholder]="'INTEGRATIONS.SEARCH_INTEGRATIONS' | translate"
-									(input)="doSearch($event)"
-								/>
-							</div>
-						</div>
-						<div class="row mt-4">
-							<div class="col-xl-4 col-6">
-								<div class="selectors">
-									<div *ngIf="integrationGroups$ | async as integrationGroups">
-										<label>{{ 'INTEGRATIONS.INTEGRATION' | translate }}</label>
-										<nb-select
-											fullWidth
-											class="integration-selector"
-											[placeholder]="'INTEGRATIONS.SELECT_GROUPS' | translate"
-											[selected]="selectedIntegrationTypeId$ | async"
-											(selectedChange)="setSelectedIntegrationType($event)"
-										>
-											<nb-option-group
-												*ngFor="let integrationGroup of integrationGroups"
-												[title]="integrationGroup.groupName"
-											>
-												<nb-option
-													*ngFor="let integrationType of integrationGroup.integrationTypes"
-													[value]="integrationType.id"
-												>
-													{{ integrationType.name }}
-												</nb-option>
-											</nb-option-group>
-										</nb-select>
-									</div>
-									<div>
-										<label>{{ 'INTEGRATIONS.PAID' | translate }}</label>
-										<nb-select
-											[placeholder]="'INTEGRATIONS.FILTER_INTEGRATIONS' | translate"
-											fullWidth
-											[selected]="selectedIntegrationFilter$ | async"
-											(selectedChange)="setSelectedIntegrationFilter($event)"
-										>
-											<nb-option *ngFor="let filter of filters" [value]="filter.value">
-												{{ filter.label }}
-											</nb-option>
-										</nb-select>
-									</div>
-								</div>
-							</div>
-							<div class="col-xl-3 col-6 d-flex align-items-end justify-content-end">
-								<div class="clear-filter">
-									<button (click)="clearFilter()" status="danger" size="small" nbButton>
-										{{ 'BUTTONS.CLEAR_ALL' | translate }}
-									</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="grid-container">
-					<div class="integrations-list" *ngIf="integrations$ | async as integrations">
-						<ng-container *ngFor="let integration of integrations">
-							<a
-								class="list-item"
-								[ngClass]="integration.isComingSoon ? 'disabled' : ''"
-								[routerLink]="['../', integration.redirectUrl]"
-							>
-								<img
-									[src]="integration.fullImgUrl"
-									width="100%"
-									height="100%"
-									alt="image not found"
-									[title]="integration.name | replace : '_' : ' '"
-								/>
-								<ng-container *ngIf="integration.isComingSoon">
-									<div class="coming-soon-wrapper">
-										<span class="coming-soon">
-											{{ 'INTEGRATIONS.COMING_SOON' | translate }}
-										</span>
-									</div>
-								</ng-container>
-							</a>
-						</ng-container>
-					</div>
-				</div>
-			</ng-template>
-		</ng-template>
-		<ng-template [ngxPermissionsExcept]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
-			<div>
-				<!-- Content to display if the user does not have 'canEditComponent' permission -->
-			</div>
-		</ng-template>
-	</nb-card-body>
-</nb-card>
+  <nb-card-header>
+    <h4>{{ 'INTEGRATIONS.AVAILABLE_INTEGRATIONS' | translate }}</h4>
+    <button
+      nbButton
+      status="basic"
+      size="medium"
+      class="plugins-navigation-button"
+      [routerLink]="['..', 'plugins']"
+      >
+      <nb-icon icon="cube-outline" pack="eva"></nb-icon>
+      <span>{{ 'INTEGRATIONS.PLUGINS' | translate }}</span>
+    </button>
+  </nb-card-header>
+  <nb-card-body>
+    <ng-template [ngxPermissionsOnly]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
+      <ng-template [ngxPermissionsOnly]="['INTEGRATION_VIEW']">
+        <div class="integration-filters">
+          <div class="container">
+            <div class="row">
+              <div class="col-xl-7 col-12">
+                <input
+                  #searchElement
+                  fullWidth
+                  id="integrationSearch"
+                  type="text"
+                  nbInput
+                  [placeholder]="'INTEGRATIONS.SEARCH_INTEGRATIONS' | translate"
+                  (input)="doSearch($event)"
+                  />
+                </div>
+              </div>
+              <div class="row mt-4">
+                <div class="col-xl-4 col-6">
+                  <div class="selectors">
+                    @if (integrationGroups$ | async; as integrationGroups) {
+                      <div>
+                        <label>{{ 'INTEGRATIONS.INTEGRATION' | translate }}</label>
+                        <nb-select
+                          fullWidth
+                          class="integration-selector"
+                          [placeholder]="'INTEGRATIONS.SELECT_GROUPS' | translate"
+                          [selected]="selectedIntegrationTypeId$ | async"
+                          (selectedChange)="setSelectedIntegrationType($event)"
+                          >
+                          @for (integrationGroup of integrationGroups; track integrationGroup) {
+                            <nb-option-group
+                              [title]="integrationGroup.groupName"
+                              >
+                              @for (integrationType of integrationGroup.integrationTypes; track integrationType) {
+                                <nb-option
+                                  [value]="integrationType.id"
+                                  >
+                                  {{ integrationType.name }}
+                                </nb-option>
+                              }
+                            </nb-option-group>
+                          }
+                        </nb-select>
+                      </div>
+                    }
+                    <div>
+                      <label>{{ 'INTEGRATIONS.PAID' | translate }}</label>
+                      <nb-select
+                        [placeholder]="'INTEGRATIONS.FILTER_INTEGRATIONS' | translate"
+                        fullWidth
+                        [selected]="selectedIntegrationFilter$ | async"
+                        (selectedChange)="setSelectedIntegrationFilter($event)"
+                        >
+                        @for (filter of filters; track filter) {
+                          <nb-option [value]="filter.value">
+                            {{ filter.label }}
+                          </nb-option>
+                        }
+                      </nb-select>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-xl-3 col-6 d-flex align-items-end justify-content-end">
+                  <div class="clear-filter">
+                    <button (click)="clearFilter()" status="danger" size="small" nbButton>
+                      {{ 'BUTTONS.CLEAR_ALL' | translate }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid-container">
+            @if (integrations$ | async; as integrations) {
+              <div class="integrations-list">
+                @for (integration of integrations; track integration) {
+                  <a
+                    class="list-item"
+                    [ngClass]="integration.isComingSoon ? 'disabled' : ''"
+                    [routerLink]="['../', integration.redirectUrl]"
+                    >
+                    <img
+                      [src]="integration.fullImgUrl"
+                      width="100%"
+                      height="100%"
+                      alt="image not found"
+                      [title]="integration.name | replace : '_' : ' '"
+                      />
+                      @if (integration.isComingSoon) {
+                        <div class="coming-soon-wrapper">
+                          <span class="coming-soon">
+                            {{ 'INTEGRATIONS.COMING_SOON' | translate }}
+                          </span>
+                        </div>
+                      }
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+          </ng-template>
+        </ng-template>
+        <ng-template [ngxPermissionsExcept]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
+          <div>
+            <!-- Content to display if the user does not have 'canEditComponent' permission -->
+          </div>
+        </ng-template>
+      </nb-card-body>
+    </nb-card>

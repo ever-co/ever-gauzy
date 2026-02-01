@@ -60,20 +60,20 @@
                         <div class="label mb-2">
                           {{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}
                         </div>
-                        <div
-                          class="criterion"
-								*ngFor="
-									let technologyRating of form.get('technologies').controls;
-									index as i
-								"
-                          >
-                          @if (technologiesList) {
-                            <div>
-                              {{ technologiesList[i]?.name }}
-                            </div>
-                          }
-                          <ga-star-rating-input [formControl]="technologyRating"></ga-star-rating-input>
-                        </div>
+                        @for (
+                          technologyRating of form.get('technologies').controls; track
+                          technologyRating; let i = $index) {
+                          <div
+                            class="criterion"
+                            >
+                            @if (technologiesList) {
+                              <div>
+                                {{ technologiesList[i]?.name }}
+                              </div>
+                            }
+                            <ga-star-rating-input [formControl]="technologyRating"></ga-star-rating-input>
+                          </div>
+                        }
                       </div>
                     }
                     @if (personalQualitiesList.length > 0) {
@@ -85,20 +85,20 @@
                         <div class="label mb-2">
                           {{ 'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate }}
                         </div>
-                        <div
-                          class="criterion"
-								*ngFor="
-									let personalQualityRating of form.get('personalQualities').controls;
-									index as i
-								"
-                          >
-                          @if (personalQualitiesList) {
-                            <div>
-                              {{ personalQualitiesList[i]?.name }}
-                            </div>
-                          }
-                          <ga-star-rating-input [formControl]="personalQualityRating"></ga-star-rating-input>
-                        </div>
+                        @for (
+                          personalQualityRating of form.get('personalQualities').controls; track
+                          personalQualityRating; let i = $index) {
+                          <div
+                            class="criterion"
+                            >
+                            @if (personalQualitiesList) {
+                              <div>
+                                {{ personalQualitiesList[i]?.name }}
+                              </div>
+                            }
+                            <ga-star-rating-input [formControl]="personalQualityRating"></ga-star-rating-input>
+                          </div>
+                        }
                       </div>
                     }
                   </div>

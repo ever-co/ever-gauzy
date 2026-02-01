@@ -12,7 +12,9 @@
 		"paths": {
 			"@gauzy/ui-core/*": ["./../../dist/packages/ui-core/*/index.d.ts"],
 			"@gauzy/ui-config": ["./../../dist/packages/ui-config"]
-		}
+		},
+		"module": "preserve",
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],

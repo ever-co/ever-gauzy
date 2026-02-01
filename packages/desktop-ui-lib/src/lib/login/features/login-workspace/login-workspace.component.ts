@@ -46,7 +46,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
 		private readonly _errorHandlingService: ErrorHandlerService,
 		private readonly _router: Router
 	) {
-		const navigation = this._router.getCurrentNavigation();
+		const navigation = this._router.currentNavigation();
 		this.state = navigation?.extras?.state;
 	}
 
