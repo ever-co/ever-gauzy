@@ -830,7 +830,8 @@
 		"Zrdm",
 		"keychain",
 		"reencoded",
-		"retryable"
+		"retryable",
+		"Retryable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
