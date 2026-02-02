@@ -254,6 +254,11 @@ jobs:
           AGENT_APP_DESCRIPTION: 'Gauzy Agent'
           AGENT_APP_ID: 'com.ever.gauzyagent'
 
+      - name: Prepare Apple API Key
+        run: |
+          echo "${{ secrets.APPLE_API_KEY_BASE64 }}" | base64 --decode > /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+          chmod 600 /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+
       - name: Build Agent
         run: 'yarn build:agent:mac:release'
         env:
@@ -275,7 +280,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           CSC_LINK: ${{ secrets.CSC_LINK_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY_BASE64 }}
+          APPLE_API_KEY: /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
 
