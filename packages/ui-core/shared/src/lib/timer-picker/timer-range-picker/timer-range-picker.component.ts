@@ -1,31 +1,23 @@
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
-import {
-	Component,
-	OnInit,
-	forwardRef,
-	Input,
-	ViewChild,
-	ChangeDetectorRef,
-	AfterViewInit
-} from '@angular/core';
+import moment from 'moment';
+import timezone from 'moment-timezone';
+import { Component, OnInit, forwardRef, Input, ViewChild, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { IDateRange } from '@gauzy/contracts';
 import { merge } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 @Component({
-    selector: 'ngx-timer-range-picker',
-    templateUrl: './timer-range-picker.component.html',
-    styleUrls: ['./timer-range-picker.component.scss'],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TimerRangePickerComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ngx-timer-range-picker',
+	templateUrl: './timer-range-picker.component.html',
+	styleUrls: ['./timer-range-picker.component.scss'],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TimerRangePickerComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	private _maxDate: Date = null;
@@ -102,54 +94,29 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 			const minTime = moment(this._minDate);
 
 			this.minSlotStartTime = minTime.format('HH:mm');
-			this.maxSlotStartTime = moment(maxTime, 'HH:mm')
-				.subtract(5, 'minutes')
-				.format('HH:mm');
+			this.maxSlotStartTime = moment(maxTime, 'HH:mm').subtract(5, 'minutes').format('HH:mm');
 			this.maxSlotEndTime = maxTime.format('HH:mm');
-			this.minSlotEndTime = moment(minTime, 'HH:mm')
-				.add(5, 'minutes')
-				.format('HH:mm');
+			this.minSlotEndTime = moment(minTime, 'HH:mm').add(5, 'minutes').format('HH:mm');
 		}
 	}
 
 	ngAfterViewInit() {
-		this.timezoneOffset =
-			this.timezoneOffset || timezone.tz(timezone.tz.guess()).format('Z');
-		merge(
-			this.dateModel.valueChanges,
-			this.startTimeModel.valueChanges,
-			this.endTimeModel.valueChanges
-		)
+		this.timezoneOffset = this.timezoneOffset || timezone.tz(timezone.tz.guess()).format('Z');
+		merge(this.dateModel.valueChanges, this.startTimeModel.valueChanges, this.endTimeModel.valueChanges)
 			.pipe(debounceTime(10))
 			.subscribe((data) => {
 				const start = new Date(
-					moment(this.date).format('YYYY-MM-DD') +
-						' ' +
-						this.startTime +
-						this.timezoneOffset
+					moment(this.date).format('YYYY-MM-DD') + ' ' + this.startTime + this.timezoneOffset
 				);
-				const end = new Date(
-					moment(this.date).format('YYYY-MM-DD') +
-						' ' +
-						this.endTime +
-						this.timezoneOffset
-				);
+				const end = new Date(moment(this.date).format('YYYY-MM-DD') + ' ' + this.endTime + this.timezoneOffset);
 
-				if (
-					this.slotStartTime &&
-					this.slotEndTime &&
-					this.allowedDuration
-				) {
-					this.minSlotStartTime = moment(this.slotStartTime)
-						.clone()
-						.format('HH:mm');
+				if (this.slotStartTime && this.slotEndTime && this.allowedDuration) {
+					this.minSlotStartTime = moment(this.slotStartTime).clone().format('HH:mm');
 					this.maxSlotStartTime = moment(this.slotEndTime)
 						.clone()
 						.subtract(this.allowedDuration, 'minutes')
 						.format('HH:mm');
-					this.endTime = moment(this.startTime, 'HH:mm')
-						.add(this.allowedDuration, 'minutes')
-						.format('HH:mm');
+					this.endTime = moment(this.startTime, 'HH:mm').add(this.allowedDuration, 'minutes').format('HH:mm');
 				}
 
 				this.selectedRange = {
@@ -174,10 +141,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 				this.date = mTime.toDate();
 			}
 			if (!this.startTime) {
-				this.startTime = mTime
-					.clone()
-					.subtract(30, 'minutes')
-					.format('HH:mm');
+				this.startTime = mTime.clone().subtract(30, 'minutes').format('HH:mm');
 			}
 			if (!this.endTime) {
 				this.endTime = mTime.format('HH:mm');
@@ -186,10 +150,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 
 		if (mTime.isSame(new Date(), 'day')) {
 			this.minSlotStartTime = '00:00';
-			this.maxSlotStartTime = mTime
-				.clone()
-				.subtract(10, 'minutes')
-				.format('HH:mm');
+			this.maxSlotStartTime = mTime.clone().subtract(10, 'minutes').format('HH:mm');
 			this.maxSlotEndTime = mTime.format('HH:mm');
 		} else {
 			this.minSlotStartTime = '00:00';
@@ -202,14 +163,10 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 
 	changeStartTime(time: string) {
 		if (this.slotStartTime && this.allowedDuration) {
-			this.endTime = moment(time, 'HH:mm')
-				.add(this.allowedDuration, 'minutes')
-				.format('HH:mm');
+			this.endTime = moment(time, 'HH:mm').add(this.allowedDuration, 'minutes').format('HH:mm');
 		} else if (time) {
 			this.updateEndTimeSlot(time);
-			if (
-				!moment(time, 'HH:mm').isBefore(moment(this.endTime, 'HH:mm'))
-			) {
+			if (!moment(time, 'HH:mm').isBefore(moment(this.endTime, 'HH:mm'))) {
 				this.endTime = moment(time, 'HH:mm')
 					.add(this.fromEmployeeAppointment ? 5 : 30, 'minutes')
 					.format('HH:mm');
@@ -243,9 +200,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 
 			const end = moment(value.end);
 			hour = end.get('hour');
-			minute = this.fromEmployeeAppointment
-				? end.get('minute')
-				: end.get('minute') - (end.minutes() % 10);
+			minute = this.fromEmployeeAppointment ? end.get('minute') : end.get('minute') - (end.minutes() % 10);
 			this.endTime = `${hour}:${minute}`;
 
 			this.date = end.toDate();

@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, OnDestroy, Output } from '@angular/core';
 import { IOrganization, ITimeLog, PermissionsEnum, TimeLogSourceEnum } from '@gauzy/contracts';
-import * as moment from 'moment';
+import moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
@@ -10,10 +10,10 @@ import { ViewTimeLogModalComponent } from './../view-time-log-modal';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-view-time-log',
-    templateUrl: './view-time-log.component.html',
-    styleUrls: ['./view-time-log.component.scss'],
-    standalone: false
+	selector: 'ngx-view-time-log',
+	templateUrl: './view-time-log.component.html',
+	styleUrls: ['./view-time-log.component.scss'],
+	standalone: false
 })
 export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	organization: IOrganization;

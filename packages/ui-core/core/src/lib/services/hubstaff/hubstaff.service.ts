@@ -4,7 +4,7 @@ import { Observable, BehaviorSubject, forkJoin, debounceTime } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { switchMap, tap } from 'rxjs/operators';
 import { clone } from 'underscore';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
 	IIntegrationTenant,
 	IIntegrationSetting,
@@ -74,10 +74,9 @@ export class HubstaffService {
 	updateSettings(integrationId): Observable<IIntegrationEntitySetting[]> {
 		const { currentValue } = this._entitiesToSync$.getValue();
 		return this._http
-			.put<IIntegrationEntitySetting[]>(
-				`${API_PREFIX}/integration-entity-setting/integration/${integrationId}`,
-				currentValue
-			)
+			.put<
+				IIntegrationEntitySetting[]
+			>(`${API_PREFIX}/integration-entity-setting/integration/${integrationId}`, currentValue)
 			.pipe(tap((entitySettings) => this._setSettingsValue(entitySettings)));
 	}
 

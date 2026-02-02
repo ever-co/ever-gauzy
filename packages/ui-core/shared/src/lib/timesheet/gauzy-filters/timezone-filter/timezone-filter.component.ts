@@ -5,7 +5,7 @@ import { combineLatest, filter } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { NbPopoverDirective } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment-timezone';
+import moment from 'moment-timezone';
 import { DEFAULT_TIME_FORMATS } from '@gauzy/constants';
 import { IOrganization, IUser, PermissionsEnum, TimeFormatEnum, TimeZoneEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
@@ -15,10 +15,10 @@ import { TimeZoneService } from './time-zone.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-timezone-filter',
-    templateUrl: './timezone-filter.component.html',
-    styleUrls: ['./timezone-filter.component.scss'],
-    standalone: false
+	selector: 'ga-timezone-filter',
+	templateUrl: './timezone-filter.component.html',
+	styleUrls: ['./timezone-filter.component.scss'],
+	standalone: false
 })
 export class TimezoneFilterComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	timeZoneOptions: { value: TimeZoneEnum; label: string }[] = [

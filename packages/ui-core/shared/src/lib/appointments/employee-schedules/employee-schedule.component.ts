@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import * as timezone from 'moment-timezone';
+import timezone from 'moment-timezone';
 
 /**
  * Interface for the employee schedule
@@ -14,9 +14,9 @@ export interface EmployeeSchedule {
 }
 
 @Component({
-    selector: 'ga-employee-schedules',
-    templateUrl: './employee-schedule.component.html',
-    standalone: false
+	selector: 'ga-employee-schedules',
+	templateUrl: './employee-schedule.component.html',
+	standalone: false
 })
 export class EmployeeScheduleComponent extends TranslationBaseComponent implements OnInit {
 	schedule: EmployeeSchedule;

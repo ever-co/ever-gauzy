@@ -4,7 +4,7 @@ import { NbSidebarService, NbThemeService, NbMenuItem, NbDialogService, NbDialog
 import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import hotkeys, { HotkeysEvent } from 'hotkeys-js';
 import {
@@ -724,7 +724,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(!!this.user.employee
 				? [
@@ -743,7 +743,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_INCOMES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -762,7 +762,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EXPENSES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -781,7 +781,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 
 			...(this.store.hasAnyPermission(PermissionsEnum.ESTIMATES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
@@ -798,7 +798,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(!!this.user.employee
 				? [
@@ -817,7 +817,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PAYMENT_ADD_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -836,7 +836,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			// Divider (Organization)
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
@@ -856,7 +856,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -872,7 +872,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EQUIPMENT_EDIT, PermissionsEnum.ALL_ORG_EDIT) ||
 			!!this.user.employee
@@ -892,7 +892,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -911,7 +911,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -930,7 +930,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 
 			// Divider (Project Management)
@@ -951,7 +951,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasPermission(PermissionsEnum.ORG_TASK_ADD)
 				? [
@@ -970,7 +970,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROJECT_ADD, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -986,7 +986,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TASK_VIEW, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -1002,7 +1002,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TASK_VIEW, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -1018,7 +1018,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 
 			// Divider (Jobs)
@@ -1039,7 +1039,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_PROPOSALS_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -1055,7 +1055,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTRACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -1071,7 +1071,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			// Divider (Contacts)
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
@@ -1091,7 +1091,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -1110,7 +1110,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
@@ -1129,7 +1129,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(!!this.user.employee
 				? [
@@ -1145,7 +1145,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			// Divider (Time Tracking)
 			...(this.store.hasAnyPermission(PermissionsEnum.TIMESHEET_EDIT_TIME, PermissionsEnum.ALL_ORG_EDIT)
@@ -1162,7 +1162,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
 				? [
@@ -1178,7 +1178,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
 				? [
@@ -1194,7 +1194,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(!!this.user.employee
 				? [
@@ -1210,7 +1210,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: []),
 			...(!this.store.hasAnyPermission(PermissionsEnum.TIMESHEET_EDIT_TIME)
 				? [
@@ -1226,7 +1226,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								status: 'control'
 							}
 						}
-				  ]
+					]
 				: [])
 		];
 	}

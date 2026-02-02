@@ -4,7 +4,7 @@ import { IEmployee, ITimeOffPolicy, IOrganization, StatusTypesEnum, IUser } from
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
+import moment from 'moment';
 import Holidays from 'date-holidays';
 import { CompareDateValidator, EmployeesService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { distinctUntilChange } from '@gauzy/ui-core/common';

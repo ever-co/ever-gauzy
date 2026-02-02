@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
 import { tap, switchMap, map } from 'rxjs/operators';
-import * as moment from 'moment';
+import moment from 'moment';
 import { ID, IEngagement, IOrganization, IUpworkApiConfig, IUpworkDateRange } from '@gauzy/contracts';
 import { UpworkService } from './upwork.service';
 import { Store } from '../store/store.service';
@@ -69,7 +69,10 @@ export class UpworkStoreService {
 	private _reports$: BehaviorSubject<any[]> = new BehaviorSubject(null);
 	public reports$: Observable<any> = this._reports$.asObservable();
 
-	constructor(private readonly _upworkService: UpworkService, private readonly _storeService: Store) {}
+	constructor(
+		private readonly _upworkService: UpworkService,
+		private readonly _storeService: Store
+	) {}
 
 	/**
 	 * Retrieves contracts from Upwork service.
