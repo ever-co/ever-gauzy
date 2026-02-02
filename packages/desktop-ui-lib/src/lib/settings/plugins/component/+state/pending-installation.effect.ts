@@ -293,7 +293,7 @@ export class PendingInstallationEffects {
 				ofType(PluginInstallationActions.installationFailed),
 				withLatestFrom(this.query.pendingPlugins$),
 				filter(([{ pluginId }, plugins]) => !!pluginId && plugins.some((p) => p.plugin.id === pluginId)),
-				map(([{ pluginId, error }]) => PendingInstallationActions.installationFailed(pluginId!, error))
+				map(([{ pluginId, error }]) => PendingInstallationActions.installationFailed(pluginId, error))
 			),
 		{ dispatch: true }
 	);
