@@ -13,7 +13,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { CKEditor4 } from 'ckeditor4-angular';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { richTextCKEditorConfig } from '@gauzy/ui-core/shared';
 import {

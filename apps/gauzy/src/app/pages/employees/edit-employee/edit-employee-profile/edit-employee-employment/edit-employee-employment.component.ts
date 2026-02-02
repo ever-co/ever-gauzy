@@ -14,7 +14,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { CKEditor4 } from 'ckeditor4-angular';
 import { ckEditorConfig } from '@gauzy/ui-core/shared';
 import {
 	EmployeeLevelService,
@@ -28,10 +28,10 @@ import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-edit-employee-employment',
-    templateUrl: './edit-employee-employment.component.html',
-    styleUrls: ['./edit-employee-employment.component.scss'],
-    standalone: false
+	selector: 'ga-edit-employee-employment',
+	templateUrl: './edit-employee-employment.component.html',
+	styleUrls: ['./edit-employee-employment.component.scss'],
+	standalone: false
 })
 export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;

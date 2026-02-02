@@ -9,10 +9,10 @@ const DEFAULTS = {
 };
 
 @Component({
-    selector: 'ngx-sprint-dialog',
-    templateUrl: './sprint-dialog.component.html',
-    styleUrls: ['./sprint-dialog.component.scss'],
-    standalone: false
+	selector: 'ngx-sprint-dialog',
+	templateUrl: './sprint-dialog.component.html',
+	styleUrls: ['./sprint-dialog.component.scss'],
+	standalone: false
 })
 export class SprintDialogComponent implements OnInit {
 	@Input() action: 'create' | 'edit';

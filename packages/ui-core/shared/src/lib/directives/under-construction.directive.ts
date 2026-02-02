@@ -1,9 +1,10 @@
 import {
 	ApplicationRef,
-	ComponentFactoryResolver,
 	ComponentRef,
+	createComponent,
 	Directive,
 	ElementRef,
+	EnvironmentInjector,
 	HostListener,
 	Injector
 } from '@angular/core';
@@ -14,8 +15,8 @@ import { UnderConstructionPopupComponent } from '../components/popup/popup.compo
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-    selector: '[underConstruction]',
-    standalone: false
+	selector: '[underConstruction]',
+	standalone: false
 })
 export class UnderConstructionDirective {
 	private _popupComponentRef: ComponentRef<UnderConstructionPopupComponent>;
@@ -25,15 +26,18 @@ export class UnderConstructionDirective {
 		private readonly _elementRef: ElementRef,
 		private readonly _dialogService: NbDialogService,
 		private readonly _injector: Injector,
-		private readonly _applicationRef: ApplicationRef,
-		private readonly _componentFactoryResolver: ComponentFactoryResolver
+		private readonly _environmentInjector: EnvironmentInjector,
+		private readonly _applicationRef: ApplicationRef
 	) {
 		// Create element
 		const popup = document.createElement('popup-component');
 
-		// Create the component and wire it up with the element
-		const factory = this._componentFactoryResolver.resolveComponentFactory(UnderConstructionPopupComponent);
-		this._popupComponentRef = factory.create(this._injector, [], popup);
+		// Create the component using the modern API (Angular 13+)
+		this._popupComponentRef = createComponent(UnderConstructionPopupComponent, {
+			elementInjector: this._injector,
+			environmentInjector: this._environmentInjector,
+			hostElement: popup
+		});
 
 		// Attach to the view so that the change detector knows to run
 		this._applicationRef.attachView(this._popupComponentRef.hostView);
@@ -61,7 +65,8 @@ export class UnderConstructionDirective {
 		}
 		const clicked = this._elementRef.nativeElement.contains(targetElement);
 		if (clicked) {
-			this._dialogRef = this._dialogService.open(this._popupComponentRef.instance.popup);
+			// Type assertion needed due to multiple @angular/core versions in monorepo causing TemplateRef type mismatch
+			this._dialogRef = this._dialogService.open(this._popupComponentRef.instance.popup as any);
 		}
 	}
 }

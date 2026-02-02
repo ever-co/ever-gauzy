@@ -3,8 +3,8 @@ import * as moment from 'moment';
 import { toTimezone } from '@gauzy/ui-core/common';
 
 @Pipe({
-    name: 'utcToTimezone',
-    standalone: false
+	name: 'utcToTimezone',
+	standalone: false
 })
 export class UtcToTimezone implements PipeTransform {
 	/**

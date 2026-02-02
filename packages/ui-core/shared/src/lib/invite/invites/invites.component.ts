@@ -256,12 +256,12 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 				...(this.invitationType === InvitationTypeEnum.EMPLOYEE
 					? {
 							role: [RolesEnum.EMPLOYEE]
-					  }
+						}
 					: {}),
 				...(this.invitationType === InvitationTypeEnum.CANDIDATE
 					? {
 							role: [RolesEnum.CANDIDATE]
-					  }
+						}
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},

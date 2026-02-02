@@ -5,7 +5,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { CKEditor4 } from 'ckeditor4-angular';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, ProposalTemplateService, Store, ToastrService } from '@gauzy/ui-core/core';
@@ -13,10 +13,10 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy()
 @Component({
-    selector: 'ga-add-edit-proposal-template',
-    templateUrl: './add-edit-proposal-template.component.html',
-    styleUrls: ['./add-edit-proposal-template.component.scss'],
-    standalone: false
+	selector: 'ga-add-edit-proposal-template',
+	templateUrl: './add-edit-proposal-template.component.html',
+	styleUrls: ['./add-edit-proposal-template.component.scss'],
+	standalone: false
 })
 export class AddEditProposalTemplateComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;

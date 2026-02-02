@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, TemplateRef } from '@angular/core';
+import { inject, Injectable, OnDestroy, TemplateRef } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -13,6 +13,7 @@ import { LocalStorageStrategy } from '../concretes/strategies/local-storage-stra
 	providedIn: 'root'
 })
 export class WidgetService implements OnDestroy {
+	private readonly store = inject(Store);
 	private _widgetsRef: TemplateRef<HTMLElement>[] = [];
 	private _widgets: GuiDrag[] = [];
 	private _widgetLayoutPersistance: LayoutPersistance;
@@ -21,7 +22,7 @@ export class WidgetService implements OnDestroy {
 	private _widgets$: Subject<Partial<GuiDrag[]>>;
 	private _strategy: BackupStrategy;
 
-	constructor(private readonly store: Store) {
+	constructor() {
 		this._widgetLayoutPersistance = new LayoutPersistance();
 		this._localStorage = new LocalStorageStrategy();
 		this._widgetsTakers = new PersistanceTakers(this._widgetLayoutPersistance);
@@ -35,19 +36,19 @@ export class WidgetService implements OnDestroy {
 					this.retrieve().length === 0
 						? this.save()
 						: this.retrieve().forEach((deserialized: GuiDrag) =>
-								this.widgetsRef.push(deserialized.templateRef)
-						  );
+								this.widgetsRef.push(deserialized.templateRef as unknown as TemplateRef<HTMLElement>)
+							);
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	public get widgetsRef(): TemplateRef<HTMLElement>[] {
+	public get widgetsRef(): any[] {
 		return this._widgetsRef;
 	}
 
-	public set widgetsRef(value: TemplateRef<HTMLElement>[]) {
+	public set widgetsRef(value: any[]) {
 		this._widgetsRef = value;
 		this.sorting();
 	}
@@ -56,7 +57,7 @@ export class WidgetService implements OnDestroy {
 		const buffers: GuiDrag[] = [];
 		this.widgetsRef.forEach((widgetRef: TemplateRef<HTMLElement>) => {
 			this.widgets.forEach((widget: GuiDrag) => {
-				if (widgetRef === widget.templateRef) {
+				if ((widgetRef as unknown) === (widget.templateRef as unknown)) {
 					buffers.push(widget);
 				}
 			});
@@ -68,7 +69,7 @@ export class WidgetService implements OnDestroy {
 		const buffers: TemplateRef<HTMLElement>[] = [];
 		this.widgets.forEach((widget: GuiDrag) => {
 			this.widgetsRef.forEach((widgetRef: TemplateRef<HTMLElement>) => {
-				if (widgetRef === widget.templateRef) {
+				if ((widgetRef as unknown) === (widget.templateRef as unknown)) {
 					buffers.push(widgetRef);
 				}
 			});

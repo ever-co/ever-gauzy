@@ -11,7 +11,6 @@ import {
 	NbInputModule,
 	NbSelectModule
 } from '@nebular/theme';
-import { CountdownModule } from 'ngx-countdown';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService, CandidatesService, IncomeService, RoleService, TagsService } from '@gauzy/ui-core/core';
@@ -24,7 +23,6 @@ import {
 	ArchiveConfirmationComponent,
 	BasicInfoFormComponent,
 	CandidateActionConfirmationComponent,
-	CountdownConfirmationComponent,
 	DeleteConfirmationComponent
 } from './';
 
@@ -33,8 +31,7 @@ const COMPONENTS = [
 	DeleteConfirmationComponent,
 	ActionConfirmationComponent,
 	ArchiveConfirmationComponent,
-	CandidateActionConfirmationComponent,
-	CountdownConfirmationComponent
+	CandidateActionConfirmationComponent
 ];
 
 @NgModule({
@@ -55,7 +52,6 @@ const COMPONENTS = [
 		SharedModule,
 		FileUploaderModule,
 		TagsColorInputModule,
-		CountdownModule,
 		PasswordFormFieldModule,
 		RoleFormFieldModule
 	],

@@ -36,7 +36,7 @@ export class WindowService implements OnDestroy {
 						? this.save()
 						: this.retrieve().forEach((deserialized: GuiDrag) =>
 								this.windowsRef.push(deserialized.templateRef)
-						  );
+							);
 				}),
 				untilDestroyed(this)
 			)
@@ -54,7 +54,7 @@ export class WindowService implements OnDestroy {
 		const buffers: GuiDrag[] = [];
 		this.windowsRef.forEach((windowsRef: TemplateRef<HTMLElement>) => {
 			this.windows.forEach((window: GuiDrag) => {
-				if (windowsRef === window.templateRef) {
+				if ((windowsRef as unknown) === (window.templateRef as unknown)) {
 					buffers.push(window);
 				}
 			});
@@ -94,7 +94,7 @@ export class WindowService implements OnDestroy {
 		const buffers: TemplateRef<HTMLElement>[] = [];
 		this.windows.forEach((windows: GuiDrag) => {
 			this.windowsRef.forEach((windowsRef: TemplateRef<HTMLElement>) => {
-				if (windowsRef === windows.templateRef) {
+				if ((windowsRef as unknown) === (windows.templateRef as unknown)) {
 					buffers.push(windowsRef);
 				}
 			});

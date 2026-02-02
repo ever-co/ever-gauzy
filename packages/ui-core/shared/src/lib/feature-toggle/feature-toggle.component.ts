@@ -9,16 +9,15 @@ import * as _ from 'underscore';
 import { environment } from '@gauzy/ui-config';
 import { IFeature, IFeatureOrganization, IFeatureToggle, IOrganization, IUser } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/core';
-import { FeatureStoreService } from '@gauzy/ui-core/core';
-import { CountdownConfirmationComponent } from '../user/forms';
+import { FeatureStoreService, Store } from '@gauzy/ui-core/core';
+import { CountdownConfirmationComponent } from '../user/forms/countdown-confirmation/countdown-confirmation.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-feature-toggle',
-    templateUrl: './feature-toggle.component.html',
-    styleUrls: ['./feature-toggle.component.scss'],
-    standalone: false
+	selector: 'ga-feature-toggle',
+	templateUrl: './feature-toggle.component.html',
+	styleUrls: ['./feature-toggle.component.scss'],
+	standalone: false
 })
 export class FeatureToggleComponent extends TranslationBaseComponent implements OnInit, OnChanges {
 	@Input() organization: IOrganization;
@@ -110,7 +109,7 @@ export class FeatureToggleComponent extends TranslationBaseComponent implements 
 				...(this.organization && this.isOrganization
 					? {
 							organizationId: this.organization.id
-					  }
+						}
 					: {})
 			})
 			.pipe(untilDestroyed(this))

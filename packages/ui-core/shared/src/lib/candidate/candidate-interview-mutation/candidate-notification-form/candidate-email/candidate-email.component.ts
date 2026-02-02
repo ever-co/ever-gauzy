@@ -1,17 +1,20 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, inject } from '@angular/core';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { CKEditor4 } from 'ckeditor4-angular';
 import { CandidatesService } from '@gauzy/ui-core/core';
 import { ckEditorConfig } from '../../../../ckeditor.config';
 
 @Component({
-    selector: 'ga-candidate-email',
-    templateUrl: 'candidate-email.component.html',
-    styleUrls: ['candidate-email.component.scss'],
-    standalone: false
+	selector: 'ga-candidate-email',
+	templateUrl: 'candidate-email.component.html',
+	styleUrls: ['candidate-email.component.scss'],
+	standalone: false
 })
 export class CandidateEmailComponent implements OnInit {
+	protected readonly candidatesService = inject(CandidatesService);
+	private readonly fb = inject(UntypedFormBuilder);
+
 	@Input() isCandidate: boolean;
 	@Input() templateData: ICandidateInterview;
 	@Input() selectedCandidate: ICandidate;
@@ -24,8 +27,6 @@ export class CandidateEmailComponent implements OnInit {
 	candidateNameTemplate: string;
 	textTemplate: string;
 	ckConfig: CKEditor4.Config = ckEditorConfig;
-
-	constructor(protected readonly candidatesService: CandidatesService, private readonly fb: UntypedFormBuilder) {}
 
 	ngOnInit() {
 		this.loadFormData();

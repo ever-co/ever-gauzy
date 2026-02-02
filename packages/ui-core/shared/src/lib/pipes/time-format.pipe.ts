@@ -7,9 +7,9 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({
-    name: 'timeFormat',
-    pure: false,
-    standalone: false
+	name: 'timeFormat',
+	pure: false,
+	standalone: false
 })
 export class TimeFormatPipe implements PipeTransform, OnDestroy {
 	private format: TimeFormatEnum;
