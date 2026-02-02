@@ -225,7 +225,7 @@ jobs:
             ${{ runner.os }}-${{ runner.arch }}-yarn-
 
       - name: Fix node-gyp and Python
-        run: python3 -m pip install --break-system-packages packaging setuptools
+        run: python3 -m pip install --break-system-packages packaging setuptools || python3 -m pip install packaging setuptools
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
