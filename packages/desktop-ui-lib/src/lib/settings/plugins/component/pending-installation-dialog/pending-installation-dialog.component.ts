@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { NbDialogRef, NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbListModule, NbSpinnerModule } from '@nebular/theme';
+import { NbButtonModule, NbCardModule, NbDialogRef, NbIconModule, NbListModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslatePipe } from '@ngx-translate/core';
 import { combineLatest, debounceTime, distinctUntilChanged, tap } from 'rxjs';
 import { PendingInstallationActions } from '../+state/pending-installation.action';
 import { PendingInstallationQuery } from '../+state/pending-installation.query';
 import { IPendingPluginInstallation } from '../+state/pending-installation.store';
 import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
-import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Dialog component that displays pending plugin installations
@@ -16,6 +16,11 @@ import { TranslatePipe } from '@ngx-translate/core';
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
+    selector: 'ngx-pending-installation-dialog',
+    templateUrl: './pending-installation-dialog.component.html',
+    styleUrls: ['./pending-installation-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbListModule, NbSpinnerModule, DesktopDirectiveModule, TranslatePipe]
     selector: 'ngx-pending-installation-dialog',
     templateUrl: './pending-installation-dialog.component.html',
     styleUrls: ['./pending-installation-dialog.component.scss'],
@@ -227,9 +232,9 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Load more functionality placeholder
+	 * Load more functionality
 	 */
 	loadMore(): void {
-		// TODO [GP-779]: Implement load more functionality if needed
+		this.actions.dispatch(PendingInstallationActions.loadMore());
 	}
 }
