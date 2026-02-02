@@ -11,7 +11,7 @@
 			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
-				"compiler": "esbuild",
+				"compiler": "swc",
 				"outputPath": "dist/apps/desktop/desktop-api",
 				"main": "apps/desktop-api/src/main.ts",
 				"maxWorkers": 8,

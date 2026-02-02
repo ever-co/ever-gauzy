@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbListModule, NbSpinnerModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, debounceTime, distinctUntilChanged, tap } from 'rxjs';
 import { PendingInstallationActions } from '../+state/pending-installation.action';
 import { PendingInstallationQuery } from '../+state/pending-installation.query';
 import { IPendingPluginInstallation } from '../+state/pending-installation.store';
+import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Dialog component that displays pending plugin installations
@@ -14,11 +16,11 @@ import { IPendingPluginInstallation } from '../+state/pending-installation.store
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-pending-installation-dialog',
-	templateUrl: './pending-installation-dialog.component.html',
-	styleUrls: ['./pending-installation-dialog.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'ngx-pending-installation-dialog',
+    templateUrl: './pending-installation-dialog.component.html',
+    styleUrls: ['./pending-installation-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbListModule, NbSpinnerModule, DesktopDirectiveModule, TranslatePipe]
 })
 export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	private readonly dialogRef = inject(NbDialogRef<PendingInstallationDialogComponent>);

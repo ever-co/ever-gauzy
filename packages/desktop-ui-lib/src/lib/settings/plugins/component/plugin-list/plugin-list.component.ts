@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { Angular2SmartTableComponent, Cell, LocalDataSource } from 'angular2-smart-table';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { Angular2SmartTableComponent, Cell, LocalDataSource, Angular2SmartTableModule } from 'angular2-smart-table';
 import { BehaviorSubject, concatMap, filter, Observable, take, tap } from 'rxjs';
 import { PluginActions } from '../+state/plugin.action';
 import { PluginQuery } from '../+state/plugin.query';
@@ -14,13 +14,17 @@ import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/
 import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/plugin-installation.query';
 import { PluginStatusComponent } from './plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
+import { NoDataMessageModule } from '../../../../time-tracker/no-data-message/no-data-message.module';
+import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
+import { PaginationModule } from '../../../../time-tracker/pagination/pagination.module';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-plugin-list',
-	templateUrl: './plugin-list.component.html',
-	styleUrls: ['./plugin-list.component.scss'],
-	standalone: false
+    selector: 'ngx-plugin-list',
+    templateUrl: './plugin-list.component.html',
+    styleUrls: ['./plugin-list.component.scss'],
+    imports: [NoDataMessageModule, NbButtonModule, NbIconModule, DesktopDirectiveModule, Angular2SmartTableModule, PaginationModule, AsyncPipe, TranslatePipe]
 })
 export class PluginListComponent implements OnInit, AfterViewInit, OnDestroy {
 	private readonly translateService = inject(TranslateService);
