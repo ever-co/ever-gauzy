@@ -1,4 +1,4 @@
-export default {
+module.exports = {
 	displayName: 'plugin-videos',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
