@@ -7,7 +7,7 @@
 		"build": {
 			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
 				"compiler": "esbuild",
@@ -31,7 +31,11 @@
 				"webpackConfig": "apps/server-mcp/webpack.config.js"
 			},
 			"configurations": {
-				"development": {},
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
+				},
 				"production": {
 					"optimization": true,
 					"extractLicenses": true,

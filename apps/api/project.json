@@ -16,7 +16,7 @@
 		"build": {
 			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
 				"compiler": "swc",
@@ -83,7 +83,7 @@
 		"desktop-api": {
 			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
 				"compiler": "swc",
@@ -122,7 +122,7 @@
 		"server-api": {
 			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
 				"compiler": "swc",
@@ -144,6 +144,11 @@
 				"webpackConfig": "apps/api/config/custom-webpack.config.js"
 			},
 			"configurations": {
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
+				},
 				"production": {
 					"optimization": true,
 					"extractLicenses": false,
@@ -161,7 +166,7 @@
 		"gauzy-server-api": {
 			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
 				"compiler": "swc",
@@ -183,6 +188,11 @@
 				"webpackConfig": "apps/api/config/custom-webpack.config.js"
 			},
 			"configurations": {
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
+				},
 				"production": {
 					"optimization": true,
 					"extractLicenses": false,

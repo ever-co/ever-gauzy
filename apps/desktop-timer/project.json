@@ -86,8 +86,8 @@
 						},
 						{
 							"type": "anyComponentStyle",
-							"maximumWarning": "60kb",
-							"maximumError": "120kb"
+							"maximumWarning": "400kb",
+							"maximumError": "600kb"
 						}
 					],
 					"outputHashing": "all",
@@ -95,11 +95,26 @@
 				},
 				"development": {
 					"optimization": false,
+					"sourceMap": true,
+					"namedChunks": true,
 					"extractLicenses": false,
-					"sourceMap": true
+					"vendorChunk": true,
+					"buildOptimizer": false,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "45mb",
+							"maximumError": "50mb"
+						},
+						{
+							"type": "anyComponentStyle",
+							"maximumWarning": "400kb",
+							"maximumError": "600kb"
+						}
+					]
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development"
 		},
 		"serve": {
 			"executor": "@angular-devkit/build-angular:dev-server",

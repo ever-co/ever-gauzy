@@ -1,4 +1,5 @@
 {
+	"nxCloudId": "64f8c5bcd09b086be3baeccf",
 	"namedInputs": {
 		"default": [
 			"{projectRoot}/**/*",
@@ -196,6 +197,7 @@
 		}
 	},
 	"useInferencePlugins": false,
+	"useDaemon": true,
 	"defaultBase": "develop",
 	"release": {
 		"version": {
