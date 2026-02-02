@@ -541,7 +541,9 @@
 		"node-abi": "^3.78.0",
 		"@electron/rebuild/node-abi": "^3.78.0",
 		"app-builder-lib/node-abi": "^3.78.0",
-		"camelcase": "^9.0.0"
+		"camelcase": "^9.0.0",
+		"caniuse-lite": "^1.0.30001699",
+		"browserslist": "^4.24.4"
 	},
 	"dependencies": {
 		"@angular/animations": "^21.1.2",
