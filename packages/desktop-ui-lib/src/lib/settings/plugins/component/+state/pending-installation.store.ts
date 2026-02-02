@@ -86,6 +86,26 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 	}
 
 	/**
+	 * Appends more pending plugins to the existing list (for pagination)
+	 */
+	public appendPendingPlugins(plugins: IPendingPluginInstallation[], total: number): void {
+		this.update((state) => {
+			const existingIds = new Set(state.pendingPlugins.map((p) => p.plugin.id));
+			const newPlugins = plugins.filter((p) => !existingIds.has(p.plugin.id));
+			return {
+				pendingPlugins: [...state.pendingPlugins, ...newPlugins],
+				checked: true,
+				loading: false,
+				pagination: {
+					...state.pagination,
+					skip: state.pagination.skip + 1,
+					total
+				}
+			};
+		});
+	}
+
+	/**
 	 * Updates the installing state for a specific plugin
 	 */
 	public setPluginInstalling(pluginId: string, isInstalling: boolean): void {

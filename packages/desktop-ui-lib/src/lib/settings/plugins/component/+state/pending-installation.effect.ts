@@ -417,9 +417,7 @@ export class PendingInstallationEffects {
 								skip: pagination.skip,
 								take: pagination.take
 							}).pipe(
-								map(({ plugins, total }) =>
-									PendingInstallationActions.setPendingPlugins(plugins, total)
-								),
+								tap(({ plugins, total }) => this.store.appendPendingPlugins(plugins, total)),
 								finalize(() => this.store.update({ loading: false })),
 								catchError((error) => {
 									console.error('Failed to load more plugins:', error);
@@ -433,6 +431,6 @@ export class PendingInstallationEffects {
 					)
 				)
 			),
-		{ dispatch: true }
+		{ dispatch: false }
 	);
 }
