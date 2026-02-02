@@ -10,7 +10,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '@gauzy/ui-core/core';
@@ -30,7 +30,7 @@ import { ExpenseCategoryMutationComponent } from './expense-categories/expense-c
 
 @NgModule({
 	imports: [
-		InfiniteScrollModule,
+		InfiniteScrollDirective,
 		NbActionsModule,
 		NbBadgeModule,
 		NbButtonModule,

@@ -10,9 +10,9 @@ import {
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
-    selector: 'ga-custom-component',
-    template: ` <ng-template #dynamicTarget></ng-template> `,
-    standalone: false
+	selector: 'ga-custom-component',
+	template: ` <ng-template #dynamicTarget></ng-template> `,
+	standalone: false
 })
 export class CustomViewComponent implements OnInit, OnDestroy {
 	@Input() renderComponent: any;
@@ -36,12 +36,8 @@ export class CustomViewComponent implements OnInit, OnDestroy {
 	}
 
 	protected createCustomComponent() {
-		const componentFactory = this.resolver.resolveComponentFactory(
-			this.renderComponent
-		);
-		this.customComponent = this.dynamicTarget.createComponent(
-			componentFactory
-		);
+		const componentFactory = this.resolver.resolveComponentFactory(this.renderComponent);
+		this.customComponent = this.dynamicTarget.createComponent(componentFactory);
 	}
 
 	protected patchInstance() {

@@ -1,7 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { NbButtonModule, NbCardModule, NbDialogRef } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
-import { CountdownComponent, CountdownConfig, CountdownEvent } from 'ngx-countdown';
+import { NbDialogRef } from '@nebular/theme';
+import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 
 @Component({
 	selector: 'ga-countdown-confirmation',
@@ -46,8 +45,7 @@ import { CountdownComponent, CountdownConfig, CountdownEvent } from 'ngx-countdo
 			}
 		`
 	],
-	standalone: true,
-	imports: [NbCardModule, NbButtonModule, TranslateModule, CountdownComponent]
+	standalone: false
 })
 export class CountdownConfirmationComponent {
 	protected readonly dialogRef = inject(NbDialogRef<CountdownConfirmationComponent>);

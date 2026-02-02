@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TranslateModule } from '@ngx-translate/core';
 import { Store } from '@gauzy/ui-core/core';
 import { CardGridComponent } from './card-grid.component';
@@ -14,7 +13,6 @@ import { NoDataMessageModule } from '../smart-data-layout/no-data-message/no-dat
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
-		InfiniteScrollModule,
 		TranslateModule.forChild(),
 		NoDataMessageModule
 	],

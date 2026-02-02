@@ -11,7 +11,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
@@ -35,7 +35,7 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 		NbBadgeModule,
 		NbDialogModule.forChild(),
 		NbSpinnerModule,
-		InfiniteScrollModule,
+		InfiniteScrollDirective,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		SharedModule,

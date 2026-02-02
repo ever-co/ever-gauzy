@@ -26,21 +26,22 @@ import { WindowService } from '../window/window.service';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: false
 })
-export class WindowLayoutComponent
-	extends LayoutWithDraggableObject
-	implements OnInit, AfterViewInit, OnDestroy
-{
+export class WindowLayoutComponent extends LayoutWithDraggableObject implements OnInit, AfterViewInit, OnDestroy {
 	private readonly windowService = inject(WindowService);
 	private readonly cdr = inject(ChangeDetectorRef);
 
 	@ViewChildren(WindowComponent) listWindows: QueryList<GuiDrag>;
 
-	@Input() set windows(value: TemplateRef<HTMLElement>[]) {
+	@Input()
+	set windows(value: TemplateRef<HTMLElement>[]) {
 		this.draggableObject = value as any;
 	}
 
 	get windows() {
-		if (this.windowService.windowsRef.length > 0 && (this.draggableObject as any) !== this.windowService.windowsRef) {
+		if (
+			this.windowService.windowsRef.length > 0 &&
+			(this.draggableObject as any) !== this.windowService.windowsRef
+		) {
 			this.draggableObject = this.windowService.windowsRef as any;
 		}
 		return this.draggableObject as any;
