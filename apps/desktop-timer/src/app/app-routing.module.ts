@@ -49,7 +49,7 @@ const routes: Routes = [
 	{
 		path: 'plugins',
 		canActivate: [AuthConnectionGuard],
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginsModule)
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
 	},
 	{
 		path: 'updater',

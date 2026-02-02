@@ -7,8 +7,8 @@ describe('PluginUpdateComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [PluginUpdateComponent]
-		}).compileComponents();
+    imports: [PluginUpdateComponent]
+}).compileComponents();
 
 		fixture = TestBed.createComponent(PluginUpdateComponent);
 		component = fixture.componentInstance;

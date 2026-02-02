@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { NbIconModule, NbButtonModule, NbAlertModule } from '@nebular/theme';
 
 @Component({
-	selector: 'lib-file-upload',
-	templateUrl: './file-upload.component.html',
-	styleUrls: ['./file-upload.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-file-upload',
+    templateUrl: './file-upload.component.html',
+    styleUrls: ['./file-upload.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbIconModule, NbButtonModule, NbAlertModule]
 })
 export class FileUploadComponent {
 	@ViewChild('fileInput') fileInput: ElementRef;

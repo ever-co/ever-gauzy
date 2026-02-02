@@ -1,17 +1,17 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { NbRouteTab } from '@nebular/theme';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { NbRouteTab, NbLayoutModule, NbRouteTabsetModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PendingInstallationActions } from '../+state/pending-installation.action';
 
 @Component({
-	selector: 'ngx-plugin-layout',
-	templateUrl: './plugin-layout.component.html',
-	styleUrls: ['./plugin-layout.component.scss'],
-	standalone: false
+    selector: 'ngx-plugin-layout',
+    templateUrl: './plugin-layout.component.html',
+    styleUrls: ['./plugin-layout.component.scss'],
+    imports: [NbLayoutModule, RouterLink, NbRouteTabsetModule, TranslatePipe]
 })
 export class PluginLayoutComponent implements OnInit, OnDestroy {
 	private readonly actions = inject(Actions);

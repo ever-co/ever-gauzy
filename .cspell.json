@@ -829,7 +829,9 @@
 		"zoneinfo",
 		"Zrdm",
 		"keychain",
-		"reencoded"
+		"reencoded",
+		"retryable",
+		"Retryable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

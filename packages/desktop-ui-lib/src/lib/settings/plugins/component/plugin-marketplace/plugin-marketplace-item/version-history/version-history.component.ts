@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ID, IPluginVersion } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbCardModule, NbIconModule, NbButtonModule, NbListModule, NbBadgeModule, NbTooltipModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChanged, filter, map, take, tap } from 'rxjs';
@@ -10,14 +10,18 @@ import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../../services';
 import { DialogCreateVersionComponent } from '../dialog-create-version/dialog-create-version.component';
+import { DesktopDirectiveModule } from '../../../../../../directives/desktop-directive.module';
+import { NoDataMessageModule } from '../../../../../../time-tracker/no-data-message/no-data-message.module';
+import { AsyncPipe, TitleCasePipe, DatePipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'lib-version-history',
-	templateUrl: './version-history.component.html',
-	styleUrls: ['./version-history.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-version-history',
+    templateUrl: './version-history.component.html',
+    styleUrls: ['./version-history.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, NbButtonModule, NbListModule, NbBadgeModule, DesktopDirectiveModule, NbTooltipModule, NoDataMessageModule, AsyncPipe, TitleCasePipe, DatePipe, TranslatePipe]
 })
 export class VersionHistoryComponent implements OnInit, OnDestroy {
 	private skip = 1;

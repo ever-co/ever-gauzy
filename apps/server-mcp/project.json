@@ -10,7 +10,7 @@
 			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
-				"compiler": "esbuild",
+				"compiler": "swc",
 				"outputPath": "dist/apps/server-mcp",
 				"main": "apps/server-mcp/src/electron-main.ts",
 				"maxWorkers": 8,
