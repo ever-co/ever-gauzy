@@ -33,7 +33,7 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { EventSubscriber, MikroORM, RequestContext } from '@mikro-orm/core';
 import { useContainer } from 'class-validator';
-import * as helmet from 'helmet';
+import helmet from 'helmet';
 import * as chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
