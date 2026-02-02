@@ -28,7 +28,7 @@
 		"lib:watch": "cross-env NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server --watch"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.13.1",
+		"@modelcontextprotocol/sdk": "^1.25.3",
 		"@nestjs/common": "^11.1.12",
 		"@nestjs/core": "^11.1.12",
 		"@nestjs/platform-express": "^11.1.12",
