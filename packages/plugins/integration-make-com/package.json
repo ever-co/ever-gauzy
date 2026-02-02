@@ -40,7 +40,7 @@
 		"@nestjs/cqrs": "^11.0.3",
 		"@nestjs/swagger": "^11.2.5",
 		"@nestjs/typeorm": "^11.0.0",
-		"axios": "^1.9.0",
+		"axios": "^1.13.4",
 		"chalk": "^4.1.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.2",
