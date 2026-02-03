@@ -13,7 +13,9 @@
 	"targets": {
 		"build": {
 			"executor": "@angular-builders/custom-webpack:browser",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
 			"options": {
 				"customWebpackConfig": {
 					"path": "apps/desktop-timer/config/custom-webpack.config.js"
@@ -25,7 +27,10 @@
 				"tsConfig": "apps/desktop-timer/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": ["apps/desktop-timer/src/assets/styles", "packages/ui-core/static/styles"]
+					"includePaths": [
+						"apps/desktop-timer/src/assets/styles",
+						"packages/ui-core/static/styles"
+					]
 				},
 				"assets": [
 					"apps/desktop-timer/src/favicon.ico",
@@ -33,12 +38,13 @@
 					{
 						"glob": "**/*",
 						"input": "apps/desktop-timer/src/",
-						"ignore": ["**/*.ts"],
+						"ignore": [
+							"**/*.ts"
+						],
 						"output": ""
 					}
 				],
 				"styles": [
-					"apps/desktop-timer/src/styles.css",
 					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
 					"node_modules/typeface-exo/index.css",
@@ -117,7 +123,10 @@
 			"defaultConfiguration": "development"
 		},
 		"serve": {
-			"executor": "@angular-devkit/build-angular:dev-server",
+			"executor": "@angular-builders/custom-webpack:dev-server",
+			"options": {
+				"buildTarget": "desktop-timer:build"
+			},
 			"configurations": {
 				"production": {
 					"buildTarget": "desktop-timer:build:production"
@@ -126,8 +135,7 @@
 					"buildTarget": "desktop-timer:build:development"
 				}
 			},
-			"defaultConfiguration": "development",
-			"continuous": true
+			"defaultConfiguration": "development"
 		},
 		"extract-i18n": {
 			"executor": "@angular-devkit/build-angular:extract-i18n",
@@ -140,7 +148,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "apps/desktop-timer/jest.config.ts",
 				"tsConfig": "apps/desktop-timer/tsconfig.spec.json"
