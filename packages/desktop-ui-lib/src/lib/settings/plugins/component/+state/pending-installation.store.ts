@@ -143,11 +143,7 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 	 */
 	public removePlugin(pluginId: string): void {
 		this.update((state) => ({
-			pendingPlugins: state.pendingPlugins.filter((p) => p.plugin.id !== pluginId),
-			pagination: {
-				...state.pagination,
-				total: state.pagination.total - 1
-			}
+			pendingPlugins: state.pendingPlugins.filter((p) => p.plugin.id !== pluginId)
 		}));
 	}
 
