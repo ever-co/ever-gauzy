@@ -1,14 +1,17 @@
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormArray } from '@angular/forms';
 import { PluginSourceType } from '@gauzy/contracts';
+import { NbIconModule, NbButtonModule, NbTooltipModule } from '@nebular/theme';
+import { PluginSourceComponent } from '../../../component/plugin-marketplace/plugin-marketplace-upload/plugin-source/plugin-source.component';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
-	selector: 'lib-source-container',
-	standalone: false,
-	templateUrl: './source-container.component.html',
-	styleUrl: './source-container.component.scss',
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-source-container',
+    templateUrl: './source-container.component.html',
+    styleUrl: './source-container.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CdkDropList, CdkDrag, CdkDragHandle, NbIconModule, NbButtonModule, NbTooltipModule, PluginSourceComponent, TranslatePipe]
 })
 export class SourceContainerComponent {
 	@Input() sources: FormArray;

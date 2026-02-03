@@ -6,14 +6,16 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChanged, map, tap } from 'rxjs';
 import { PluginVersionActions } from '../../+state/actions/plugin-version.action';
 import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
+import { SelectModule } from '../../../../../../shared/components/ui/select/select.module';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-version-selector',
-	templateUrl: './version-selector.component.html',
-	styleUrls: ['./version-selector.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-version-selector',
+    templateUrl: './version-selector.component.html',
+    styleUrls: ['./version-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [SelectModule, AsyncPipe]
 })
 export class VersionSelectorComponent implements OnInit, OnChanges {
 	@ViewChild(NbSelectComponent) select: NbSelectComponent;

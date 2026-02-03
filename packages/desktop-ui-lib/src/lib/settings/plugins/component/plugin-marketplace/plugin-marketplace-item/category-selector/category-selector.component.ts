@@ -5,14 +5,17 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChanged, tap } from 'rxjs';
 import { PluginCategoryActions } from '../../+state/actions/plugin-category.action';
 import { PluginCategoryQuery } from '../../+state/queries/plugin-category.query';
+import { SelectModule } from '../../../../../../shared/components/ui/select/select.module';
+import { NbIconModule } from '@nebular/theme';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-category-selector',
-	templateUrl: './category-selector.component.html',
-	styleUrls: ['./category-selector.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-category-selector',
+    templateUrl: './category-selector.component.html',
+    styleUrls: ['./category-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [SelectModule, NbIconModule, AsyncPipe]
 })
 export class CategorySelectorComponent implements OnInit, OnChanges {
 	private skip = 0;

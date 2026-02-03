@@ -63,7 +63,7 @@
           @include nb-ltr(float, right);
           @include nb-rtl(float, left);
           .action {
-            box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+            box-shadow: var(--gauzy-shadow);
           }
       }
   }

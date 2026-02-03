@@ -1,9 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbCardModule, NbButtonModule, NbIconModule, NbInputModule, NbToggleModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { PluginInstallationQuery } from '../plugin-marketplace/+state';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
+import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
+import { FormsModule } from '@angular/forms';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 type PluginContext = 'local' | 'cdn' | 'npm';
 
@@ -20,11 +24,11 @@ interface NpmModel {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-add-plugin',
-	templateUrl: './add-plugin.component.html',
-	styleUrls: ['./add-plugin.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'ngx-add-plugin',
+    templateUrl: './add-plugin.component.html',
+    styleUrls: ['./add-plugin.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbButtonModule, DesktopDirectiveModule, NbIconModule, FormsModule, NbInputModule, NbToggleModule, AsyncPipe, TranslatePipe]
 })
 export class AddPluginComponent {
 	private readonly dialogRef = inject(NbDialogRef<AddPluginComponent>);

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output, AfterViewInit } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,16 +21,16 @@ import { TaskSizesService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-task-size-select',
-    templateUrl: './task-size-select.component.html',
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TaskSizeSelectComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ga-task-size-select',
+	templateUrl: './task-size-select.component.html',
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TaskSizeSelectComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class TaskSizeSelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	private subject$: Subject<boolean> = new Subject();

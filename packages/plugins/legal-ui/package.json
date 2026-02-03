@@ -29,6 +29,7 @@
 	},
 	"dependencies": {
 		"@angular/router": "^20.2.4",
+		"@gauzy/ui-core": "^0.1.0",
 		"@nebular/auth": "^16.0.0",
 		"@ngx-translate/core": "^16.0.4",
 		"tslib": "^2.6.2"

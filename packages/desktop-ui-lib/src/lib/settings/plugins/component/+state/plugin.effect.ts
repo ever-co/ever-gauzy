@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { catchError, EMPTY, filter, finalize, from, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, filter, finalize, from, map, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginService } from '../../services/plugin.service';
@@ -16,22 +16,37 @@ export class PluginEffects {
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly pluginService: PluginService,
 		private readonly toastrService: ToastrNotificationService
-	) { }
+	) {}
 
-	getAllPlugins$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginActions.getPlugins),
-			tap(() => this.pluginStore.setLoading(true)), // Start loading state
-			switchMap(() =>
-				from(this.pluginElectronService.plugins).pipe(
-					tap((plugins) => this.pluginStore.update({ plugins })),
-					finalize(() => this.pluginStore.setLoading(false)), // Always stop loading
-					catchError((error) => {
-						this.toastrService.error(error); // Handle error properly
-						return EMPTY; // Return a fallback observable
-					})
+	getAllPlugins$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginActions.getPlugins),
+				tap(() => this.pluginStore.setLoading(true)), // Start loading state
+				switchMap(() =>
+					from(this.pluginElectronService.plugins).pipe(
+						map((plugins) => PluginActions.getPluginsSuccess(plugins)),
+						finalize(() => this.pluginStore.setLoading(false)), // Always stop loading
+						catchError((error) => {
+							this.toastrService.error(error); // Handle error properly
+							return EMPTY; // Return a fallback observable
+						})
+					)
 				)
-			)
+			),
+		{ dispatch: true }
+	);
+
+	getAllPluginsSuccess$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginActions.getPluginsSuccess),
+			tap(({ plugins }) => {
+				this.pluginStore.update({ plugins });
+			}),
+			catchError((error) => {
+				this.toastrService.error(error);
+				return EMPTY;
+			})
 		)
 	);
 

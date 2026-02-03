@@ -5,8 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { distinctUntilChanged, filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { chain } from 'underscore';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
@@ -20,10 +19,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-manual-time-report',
-    templateUrl: './manual-time.component.html',
-    styleUrls: ['./manual-time.component.scss'],
-    standalone: false
+	selector: 'ga-manual-time-report',
+	templateUrl: './manual-time.component.html',
+	styleUrls: ['./manual-time.component.scss'],
+	standalone: false
 })
 export class ManualTimeComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public control = new FormControl();

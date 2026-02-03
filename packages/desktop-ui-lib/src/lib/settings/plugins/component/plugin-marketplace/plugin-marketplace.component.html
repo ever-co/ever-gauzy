@@ -1,5 +1,5 @@
-@let plugins = query.plugins$ | async; @let available = plugins && plugins.length > 0; @let isLoading =
-(query.isLoading$ | async) && plugins.length === 0; @let uploading = query.uploading$() | async; @let progress =
+@let plugins = query.plugins$ | async; @let available = (plugins?.length || 0) > 0; @let isLoading = (query.isLoading$ |
+async) && ((plugins?.length || 0) === 0); @let uploading = query.uploading$() | async; @let progress =
 query.uploadProgress$() | async; @let isOffline = store.isOffline$ | async; @let totalCount = query.totalCount$ | async;
 @let filteredCount = query.filteredCount$ | async; @let showAdvancedFilters = query.showAdvancedFilters$ | async; @let
 selectedView = query.selectedView$ | async;
@@ -7,16 +7,9 @@ selectedView = query.selectedView$ | async;
 <div class="marketplace-container content-active first">
 	<!-- Filter Panel -->
 	<div class="filter-panel">
-		<lib-plugin-marketplace-filter
-			[plugins]="plugins"
-			[isLoading]="isLoading"
-			[totalCount]="totalCount || 0"
-			[showAdvanced]="showAdvancedFilters"
-			[isMobile]="isMobile"
-			(filterChange)="onFilterChange($event)"
-			(clearFilters)="onClearFilters()"
-			(toggleAdvanced)="onToggleAdvancedFilters($event)"
-		>
+		<lib-plugin-marketplace-filter [plugins]="plugins" [isLoading]="isLoading" [totalCount]="totalCount || 0"
+			[showAdvanced]="showAdvancedFilters" [isMobile]="isMobile" (filterChange)="onFilterChange($event)"
+			(clearFilters)="onClearFilters()" (toggleAdvanced)="onToggleAdvancedFilters($event)">
 		</lib-plugin-marketplace-filter>
 	</div>
 
@@ -40,34 +33,18 @@ selectedView = query.selectedView$ | async;
 			<div class="results-actions">
 				<!-- View Toggle -->
 				<nb-button-group class="view-toggle">
-					<button
-						nbButton
-						[status]="selectedView === 'grid' ? 'primary' : 'basic'"
-						(click)="setViewMode('grid')"
-						nbTooltip="Grid view"
-						size="medium"
-					>
+					<button nbButton [status]="selectedView === 'grid' ? 'primary' : 'basic'"
+						(click)="setViewMode('grid')" nbTooltip="Grid view" size="medium">
 						<nb-icon icon="grid-outline"></nb-icon>
 					</button>
-					<button
-						nbButton
-						[status]="selectedView === 'list' ? 'primary' : 'basic'"
-						(click)="setViewMode('list')"
-						nbTooltip="List view"
-						size="medium"
-					>
+					<button nbButton [status]="selectedView === 'list' ? 'primary' : 'basic'"
+						(click)="setViewMode('list')" nbTooltip="List view" size="medium">
 						<nb-icon icon="list-outline"></nb-icon>
 					</button>
 				</nb-button-group>
 				<!-- Advanced Filters Toggle -->
-				<button
-					nbButton
-					[status]="showAdvancedFilters ? 'primary' : 'basic'"
-					(click)="toggleAdvancedFilters()"
-					nbTooltip="Toggle advanced filters"
-					size="medium"
-					class="filter-toggle-btn"
-				>
+				<button nbButton [status]="showAdvancedFilters ? 'primary' : 'basic'" (click)="toggleAdvancedFilters()"
+					nbTooltip="Toggle advanced filters" size="medium" class="filter-toggle-btn">
 					<nb-icon icon="options-outline"></nb-icon>
 					<span class="btn-text">Advanced</span>
 				</button>
@@ -76,27 +53,15 @@ selectedView = query.selectedView$ | async;
 		}
 
 		<!-- Plugin List -->
-		<nb-card
-			nbInfiniteList
-			[threshold]="500"
-			[throttleTime]="300"
-			(bottomThreshold)="loadMore()"
-			class="plugin-list"
-			[class.grid-view]="selectedView === 'grid'"
-			[class.list-view]="selectedView === 'list'"
-			[class.unavailable]="!available && !isLoading"
-			[class.loading]="isLoading"
-		>
+		<nb-card nbInfiniteList [threshold]="500" [throttleTime]="300" (bottomThreshold)="loadMore()"
+			class="plugin-list" [class.grid-view]="selectedView === 'grid'" [class.list-view]="selectedView === 'list'"
+			[class.unavailable]="!available && !isLoading" [class.loading]="isLoading">
 			@if (available) {
 			<!-- Debug info - remove in production -->
 			<!-- Plugins count: {{ plugins?.length || 0 }} -->
 			@for (plugin of plugins; track plugin.id; let isLast = $last) { @defer (on viewport) {
-			<lib-plugin-marketplace-detail
-				class="plugin"
-				[class.none]="isLast"
-				[plugin]="plugin"
-				[viewMode]="selectedView || 'grid'"
-			>
+			<lib-plugin-marketplace-detail class="plugin" [class.none]="isLast" [plugin]="plugin"
+				[viewMode]="selectedView || 'grid'">
 			</lib-plugin-marketplace-detail>
 			} @placeholder (minimum 500ms) {
 			<div class="plugin-container skeleton-loader">
@@ -123,20 +88,13 @@ selectedView = query.selectedView$ | async;
 			} @else {
 			<div class="no-data">
 				<ngx-no-data-message
-					[message]="(isOffline ? 'PLUGIN.MARKETPLACE.OFFLINE' : 'SM_TABLE.NO_DATA.PLUGIN') | translate"
-				>
+					[message]="(isOffline ? 'PLUGIN.MARKETPLACE.OFFLINE' : 'SM_TABLE.NO_DATA.PLUGIN') | translate">
 				</ngx-no-data-message>
 			</div>
 			} @if (isUploadAvailable) { @defer (on idle) {
 			<div class="button-upload">
-				<button
-					(click)="upload()"
-					[nbTooltip]="'PLUGIN.MARKETPLACE.UPLOAD' | translate"
-					status="primary"
-					nbButton
-					[disabled]="isOffline"
-					class="upload-fab"
-				>
+				<button (click)="upload()" [nbTooltip]="'PLUGIN.MARKETPLACE.UPLOAD' | translate" status="primary"
+					nbButton [disabled]="isOffline" class="upload-fab">
 					<nb-icon *gauzySpinnerButton="uploading" icon="cloud-upload-outline"></nb-icon>
 					@if (uploading) {
 					<span class="upload-progress">{{ progress | percent : '1.2-2' }}</span>

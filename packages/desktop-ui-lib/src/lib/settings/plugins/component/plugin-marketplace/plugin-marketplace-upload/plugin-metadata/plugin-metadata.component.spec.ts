@@ -8,8 +8,8 @@ describe('PluginMetadataComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [PluginMetadataComponent]
-    })
+    imports: [PluginMetadataComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(PluginMetadataComponent);

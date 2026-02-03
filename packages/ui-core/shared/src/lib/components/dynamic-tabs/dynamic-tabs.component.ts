@@ -14,7 +14,7 @@ import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import {
 	CustomNbRouteTab,
 	PageTabRegistryConfig,
@@ -25,11 +25,11 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy()
 @Component({
-    selector: 'gz-dynamic-tabs',
-    templateUrl: './dynamic-tabs.component.html',
-    styleUrls: ['./dynamic-tabs.component.scss'],
-    providers: [],
-    standalone: false
+	selector: 'gz-dynamic-tabs',
+	templateUrl: './dynamic-tabs.component.html',
+	styleUrls: ['./dynamic-tabs.component.scss'],
+	providers: [],
+	standalone: false
 })
 export class DynamicTabsComponent implements OnInit, OnDestroy {
 	public tabs: CustomNbRouteTab[] = []; // Define the structure of tabs according to your needs

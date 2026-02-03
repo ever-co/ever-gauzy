@@ -3,7 +3,7 @@ import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
@@ -12,16 +12,16 @@ import { TasksService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-task-number-field',
-    templateUrl: './task-number-field.component.html',
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TaskNumberFieldComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ngx-task-number-field',
+	templateUrl: './task-number-field.component.html',
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TaskNumberFieldComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class TaskNumberFieldComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() formControl: FormControl = new FormControl();

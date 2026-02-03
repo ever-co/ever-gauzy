@@ -3,7 +3,7 @@ import { ICountsStatistics, IGetCountsStatistics, ITimeLogFilters, PermissionsEn
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick } from 'underscore';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
@@ -18,10 +18,10 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../../timesheet
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-daily-statistics',
-    templateUrl: './daily-statistics.component.html',
-    styleUrls: ['./daily-statistics.component.scss'],
-    standalone: false
+	selector: 'ga-daily-statistics',
+	templateUrl: './daily-statistics.component.html',
+	styleUrls: ['./daily-statistics.component.scss'],
+	standalone: false
 })
 export class DailyStatisticsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);

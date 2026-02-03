@@ -28,8 +28,10 @@
 	},
 	"dependencies": {
 		"@apollo/client": "^3.13.8",
+		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
 		"@nestjs/cache-manager": "^3.1.0",

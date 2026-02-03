@@ -686,7 +686,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			});
 			return await query.getOneOrFail();
 		} catch (error) {
-			console.error(`Cant validate code '${code}' for email '${email}'`, error);
+			console.error(`Can't validate code '${code}' for email '${email}'`, error);
 			throw new BadRequestException();
 		}
 	}

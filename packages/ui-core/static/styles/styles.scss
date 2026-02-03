@@ -1,43 +1,49 @@
+// All @use and @forward statements must come first
 @use 'fonts/google-fonts';
 
 // framework component themes (styles tied to theme variables)
 @use '@nebular/theme/styles/globals' as nb-theme-globals;
 @use '@nebular/auth/styles/globals' as nb-auth-globals;
 
+// install swiper.js
+@use 'swiper/css' as *;
+@use 'swiper/css/pagination' as *;
+@use 'swiper/css/navigation' as *;
+
+@use './spinner' as *; // loading spinner
+@use './chat-woot' as *; // chat woot widget
+
+@use './material/angular-material' as *;
+
+// loading progress bar theme
+@use './pace.theme' as *;
+
+// Files that DON'T need Bootstrap can use @use
+@use './overrides' as *;
+@use './material/material-overrides' as *;
+@use './gauzy/gauzy-overrides' as *;
+
+@use './site-menu.scss' as *;
+
+@use './includes/fullcalendar' as *;
+@use './includes/tabset' as *;
+@use './includes/ng-select' as *;
+@use './includes/ng5-slider' as *;
+@use './includes/dialog' as *;
+@use './includes/scroll' as *;
+
 // themes - our custom or/and out of the box themes
 @forward 'themes';
 
+// Bootstrap must use @import due to internal circular dependencies
+// @import must come after all @use/@forward statements
 @import 'bootstrap/scss/functions';
 @import 'bootstrap/scss/variables';
 @import 'bootstrap/scss/mixins';
 @import 'bootstrap/scss/grid';
 
-// install swiper.js
-@import 'swiper/css';
-@import 'swiper/css/pagination';
-@import 'swiper/css/navigation';
-
-@import './spinner'; // loading spinner
-@import './chat-woot'; // chat woot widget
-
-@import './material/angular-material';
-
-// loading progress bar theme
-@import './pace.theme';
-
+// Files that NEED Bootstrap mixins must use @import (after Bootstrap)
 @import './layout';
-@import './overrides';
-@import './material/material-overrides';
-@import './gauzy/gauzy-overrides';
-
-@import './site-menu.scss';
-
-@import './includes/fullcalendar';
-@import './includes/tabset';
-@import './includes/ng-select';
-@import './includes/ng5-slider';
-@import './includes/dialog';
-@import './includes/scroll';
 
 // install the framework and custom global styles
 @include nb-install() {

@@ -7,22 +7,35 @@
 		"version": {
 			"currentVersionResolver": "git-tag",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+			"manifestRootsToUpdate": [
+				"dist/{projectRoot}"
+			]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": [
+		"config",
+		"core",
+		"plugin"
+	],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
 			"options": {
 				"outputPath": "dist/packages/plugins/jitsu-analytics",
 				"tsConfig": "packages/plugins/jitsu-analytics/tsconfig.lib.json",
 				"packageJson": "packages/plugins/jitsu-analytics/package.json",
 				"main": "packages/plugins/jitsu-analytics/src/index.ts",
-				"assets": ["packages/plugins/jitsu-analytics/*.md"]
-			}
+				"assets": [
+					"packages/plugins/jitsu-analytics/*.md"
+				]
+			},
+			"dependsOn": [
+				"^build"
+			]
 		},
 		"nx-release-publish": {
 			"options": {
@@ -34,7 +47,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "packages/plugins/jitsu-analytics/jest.config.ts"
 			}

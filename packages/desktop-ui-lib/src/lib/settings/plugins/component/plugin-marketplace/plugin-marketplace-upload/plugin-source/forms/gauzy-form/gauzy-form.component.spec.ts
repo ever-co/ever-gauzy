@@ -8,8 +8,8 @@ describe('GauzyFormComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [GauzyFormComponent]
-    })
+    imports: [GauzyFormComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(GauzyFormComponent);

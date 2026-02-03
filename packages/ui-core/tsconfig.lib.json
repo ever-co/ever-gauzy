@@ -5,7 +5,14 @@
 		"declaration": true,
 		"declarationMap": true,
 		"inlineSources": true,
-		"incremental": true
+		"incremental": true,
+		"baseUrl": "../..",
+		"paths": {
+			"@gauzy/ui-core/*": ["./packages/ui-core/*/src/index.ts"],
+			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
+			"@gauzy/contracts": ["./packages/contracts/src/index.ts"],
+			"@gauzy/constants": ["./packages/constants/src/index.ts"]
+		}
 	},
 	"exclude": ["src/**/*.spec.ts", "src/test-setup.ts", "jest.config.ts", "src/**/*.test.ts"],
 	"include": [

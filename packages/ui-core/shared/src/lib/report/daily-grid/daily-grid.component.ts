@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick } from 'underscore';
@@ -18,10 +18,10 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-daily-grid',
-    templateUrl: './daily-grid.component.html',
-    styleUrls: ['./daily-grid.component.scss'],
-    standalone: false
+	selector: 'ga-daily-grid',
+	templateUrl: './daily-grid.component.html',
+	styleUrls: ['./daily-grid.component.scss'],
+	standalone: false
 })
 export class DailyGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	// This constant holds the URL for downloading content from the platform's website.

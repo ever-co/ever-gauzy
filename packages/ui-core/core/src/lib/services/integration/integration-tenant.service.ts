@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { IIntegrationTenantFindInput, IIntegrationTenant, IPagination } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-core/common';
 import { API_PREFIX } from '@gauzy/ui-core/common';

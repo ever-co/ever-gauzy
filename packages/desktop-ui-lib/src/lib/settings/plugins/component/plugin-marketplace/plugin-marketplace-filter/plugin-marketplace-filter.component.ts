@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IPlugin, ITag, PluginStatus, PluginType } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -18,6 +18,8 @@ import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.servi
 import { IPluginFilter } from '../+state/stores/plugin-market.store';
 import { FilterStrategyService } from '../services/filter-strategy.service';
 import { ReactiveFilterStateService, ToggleCategoryCommand } from '../services/reactive-filter-state.service';
+import { NbIconModule, NbBadgeModule, NbButtonModule, NbTooltipModule, NbFormFieldModule, NbInputModule, NbOptionModule, NbSelectModule, NbButtonGroupModule, NbSpinnerModule, NbCheckboxModule, NbTagModule, NbDatepickerModule } from '@nebular/theme';
+import { AsyncPipe, TitleCasePipe } from '@angular/common';
 
 interface IPriceRange {
 	min: number;
@@ -63,10 +65,10 @@ enum PluginPriceCategory {
 
 @UntilDestroy()
 @Component({
-	selector: 'lib-plugin-marketplace-filter',
-	templateUrl: './plugin-marketplace-filter.component.html',
-	styleUrls: ['./plugin-marketplace-filter.component.scss'],
-	standalone: false
+    selector: 'lib-plugin-marketplace-filter',
+    templateUrl: './plugin-marketplace-filter.component.html',
+    styleUrls: ['./plugin-marketplace-filter.component.scss'],
+    imports: [NbIconModule, NbBadgeModule, NbButtonModule, NbTooltipModule, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, NbOptionModule, NbSelectModule, NbButtonGroupModule, NbSpinnerModule, NbCheckboxModule, NbTagModule, NbDatepickerModule, AsyncPipe, TitleCasePipe]
 })
 export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDestroy {
 	@Input() plugins: IPlugin[] = [];
