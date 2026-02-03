@@ -256,12 +256,14 @@
 					/>
 				</div>
 			</div>
-			} @if (error()) {
+			}
+			<!-- Check if there errors and show alert -->
+			@if (error()) {
 			<nb-alert status="danger" class="error-alert">
 				{{ error() | translate }}
 			</nb-alert>
 			}
-
+			<!-- Submit Button -->
 			<button
 				nbButton
 				fullWidth
