@@ -58,17 +58,15 @@ export class PendingInstallationQuery extends Query<IPendingInstallationState> {
 		map((plugins) => plugins.length > 0)
 	);
 
-	public readonly pagination$: Observable<IPendingPagination> = this.select(
-		(state) => state.pagination
-	);
+	public readonly pagination$: Observable<IPendingPagination> = this.select((state) => state.pagination);
 
 	constructor(readonly store: PendingInstallationStore) {
 		super(store);
 	}
 
 	public get hasNext$(): Observable<boolean> {
-	 return this.select((state) => this._hasNext(state.pagination));
-}
+		return this.select((state) => this._hasNext(state.pagination));
+	}
 
 	public get hasNext(): boolean {
 		return this._hasNext(this.getValue().pagination);
