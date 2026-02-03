@@ -1,13 +1,13 @@
+import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { NbDialogRef, NbCardModule, NbButtonModule, NbIconModule, NbInputModule, NbToggleModule } from '@nebular/theme';
+import { FormsModule } from '@angular/forms';
+import { NbButtonModule, NbCardModule, NbDialogRef, NbIconModule, NbInputModule, NbToggleModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy } from '@ngneat/until-destroy';
+import { TranslatePipe } from '@ngx-translate/core';
+import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
 import { PluginInstallationQuery } from '../plugin-marketplace/+state';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
-import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
-import { FormsModule } from '@angular/forms';
-import { AsyncPipe } from '@angular/common';
-import { TranslatePipe } from '@ngx-translate/core';
 
 type PluginContext = 'local' | 'cdn' | 'npm';
 
@@ -24,11 +24,21 @@ interface NpmModel {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-add-plugin',
-    templateUrl: './add-plugin.component.html',
-    styleUrls: ['./add-plugin.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, NbButtonModule, DesktopDirectiveModule, NbIconModule, FormsModule, NbInputModule, NbToggleModule, AsyncPipe, TranslatePipe]
+	selector: 'ngx-add-plugin',
+	templateUrl: './add-plugin.component.html',
+	styleUrls: ['./add-plugin.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		NbCardModule,
+		NbButtonModule,
+		DesktopDirectiveModule,
+		NbIconModule,
+		FormsModule,
+		NbInputModule,
+		NbToggleModule,
+		AsyncPipe,
+		TranslatePipe
+	]
 })
 export class AddPluginComponent {
 	private readonly dialogRef = inject(NbDialogRef<AddPluginComponent>);
@@ -67,7 +77,7 @@ export class AddPluginComponent {
 		this.action.dispatch(PluginInstallationActions.install({ contextType: 'local' }));
 	}
 
-	protected handleUnmaskedValueChange(authToken: string): void {
+	protected updateRegistryAuthToken(authToken: string): void {
 		this.npmModel.update((model) => ({
 			...model,
 			registry: { ...model.registry, authToken }

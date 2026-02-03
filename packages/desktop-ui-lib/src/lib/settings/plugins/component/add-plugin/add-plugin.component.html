@@ -225,7 +225,7 @@
 							replacement: 0.75,
 							maskFromLeft: false
 						}"
-						(unmaskedValueChange)="handleUnmaskedValueChange($event)"
+						(unmaskedValueChange)="updateRegistryAuthToken($event)"
 						type="text"
 						id="authToken"
 						[status]="error() ? 'danger' : 'basic'"
