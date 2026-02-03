@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { RecapComponent } from './features/recap/recap.component';
 import { recapChildRoutes } from './recap-children-routing.module';
+import { WeeklyRecapComponent } from './weekly/features/weekly-recap/weekly-recap.component';
+import { MonthlyRecapComponent } from './monthly/features/monthly-recap/monthly-recap.component';
 
 export const recapRoutes: Routes = [
 	{
@@ -15,13 +17,11 @@ export const recapRoutes: Routes = [
 	},
 	{
 		path: 'weekly',
-		loadChildren: () =>
-			import('./recap.module').then((m) => m.RecapModule)
+		component: WeeklyRecapComponent
 	},
 	{
 		path: 'monthly',
-		loadChildren: () =>
-			import('./recap.module').then((m) => m.RecapModule)
+		component: MonthlyRecapComponent
 	},
 	{
 		path: 'tasks',
