@@ -33,9 +33,10 @@
 					[class.disabled]="installing"
 					(click)="!installing && localPluginInstall()"
 					(keydown.enter)="!installing && localPluginInstall()"
-					(keydown.space)="!installing && localPluginInstall()"
+					(keydown.space)="$event.preventDefault(); !installing && localPluginInstall()"
 					[tabindex]="installing ? -1 : 0"
 					[attr.aria-label]="'BUTTONS.LOAD_PLUGIN' | translate"
+					[attr.aria-disabled]="installing"
 					role="button"
 				>
 					<nb-card-body>
@@ -58,9 +59,10 @@
 					[class.disabled]="installing"
 					(click)="!installing && switchContext('cdn')"
 					(keydown.enter)="!installing && switchContext('cdn')"
-					(keydown.space)="!installing && switchContext('cdn')"
+					(keydown.space)="$event.preventDefault(); !installing && switchContext('cdn')"
 					[tabindex]="installing ? -1 : 0"
 					[attr.aria-label]="'BUTTONS.FROM_CDN' | translate"
+					[attr.aria-disabled]="installing"
 					role="button"
 				>
 					<nb-card-body>
@@ -79,9 +81,10 @@
 					[class.disabled]="installing"
 					(click)="!installing && switchContext('npm')"
 					(keydown.enter)="!installing && switchContext('npm')"
-					(keydown.space)="!installing && switchContext('npm')"
+					(keydown.space)="$event.preventDefault(); !installing && switchContext('npm')"
 					[tabindex]="installing ? -1 : 0"
 					[attr.aria-label]="'BUTTONS.FROM_NPM' | translate"
+					[attr.aria-disabled]="installing"
 					role="button"
 				>
 					<nb-card-body>
