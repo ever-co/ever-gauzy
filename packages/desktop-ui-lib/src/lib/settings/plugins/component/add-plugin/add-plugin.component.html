@@ -117,15 +117,18 @@
 				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_CDN_DESCRIPTION' | translate }}
 			</div>
 
+			<label for="cdnUrl" class="form-label">
+				{{ 'TIMER_TRACKER.SETTINGS.CDN_URL' | translate }} <span class="required">*</span>
+			</label>
 			<input
 				nbInput
 				fullWidth
+				id="cdnUrl"
 				[value]="cdnUrl()"
 				(input)="cdnUrl.set($any($event.target).value)"
 				type="url"
 				[status]="error() ? 'danger' : 'basic'"
 				placeholder="https://cdn.server.tld/public/plugin.zip"
-				[attr.aria-label]="'TIMER_TRACKER.SETTINGS.CDN_URL' | translate"
 				autocomplete="url"
 				required
 			/>
