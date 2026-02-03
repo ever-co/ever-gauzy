@@ -11,6 +11,7 @@ import {
 	TimerTO,
 	UserTO,
 	IntervalTO,
+	SyncState
 } from '../dto';
 import { TimerTransaction } from '../transactions';
 import { IntervalDAO } from './interval.dao';
@@ -196,5 +197,12 @@ export class TimerDAO implements DAO<TimerTO> {
 					"(stoppedAt/1000 - startedAt/1000)"
 				)
 			});
+	}
+
+	public async findUnfinishedSync(user: UserTO): Promise<TimerTO[]> {
+		return await this._provider
+			.connection<TimerTO>(TABLE_NAME_TIMERS)
+			.where('employeeId', user.employeeId)
+			.andWhere('syncState', SyncState.SYNCING)
 	}
 }

@@ -153,4 +153,15 @@ export class TimerService implements ITimerService<TimerTO> {
 			return 0;
 		}
 	}
+
+	public async findUnfinishedSync(): Promise<TimerTO[]> {
+		try {
+			const user = await this._userService.retrieve();
+			const res =  await this._timerDAO.findUnfinishedSync(user);
+			return res;
+		} catch (error) {
+			console.error('Failed to get unfinished sync timer');
+			return [];
+		}
+	}
 }

@@ -1,5 +1,5 @@
 import { Serializable } from '../../interfaces';
-import { TimerTO } from '../dto';
+import { TimerTO, SyncState } from '../dto';
 
 export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _id?: number;
@@ -19,6 +19,7 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _version: string;
 	private _organizationTeamId: string;
 	private _description: string;
+	private _syncState: SyncState;
 
 	constructor(timer: TimerTO) {
 		this._id = timer.id;
@@ -37,7 +38,8 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._isStoppedOffline = timer.isStoppedOffline;
 		this._version = timer.version;
 		this._organizationTeamId = timer.organizationTeamId;
-		this._description  = timer.description;
+		this._description = timer.description;
+		this._syncState = timer.syncState;
 	}
 
 	public get isStoppedOffline(): boolean {
@@ -154,6 +156,14 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._description = value;
 	}
 
+	public get syncState(): SyncState {
+		return this._syncState;
+	}
+
+	public set syncState(value: SyncState) {
+		this._syncState = value;
+	}
+
 	public toObject(): TimerTO {
 		return {
 			day: this._day,
@@ -171,7 +181,8 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 			isStoppedOffline: this._isStoppedOffline,
 			version: this._version,
 			organizationTeamId: this._organizationTeamId,
-			description: this._description
+			description: this._description,
+			syncState: this._syncState
 		};
 	}
 }
