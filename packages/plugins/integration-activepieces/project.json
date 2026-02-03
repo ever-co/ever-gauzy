@@ -8,38 +8,23 @@
 			"currentVersionResolver": "git-tag",
 			"fallbackCurrentVersionResolver": "disk",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": [
-				"dist/{projectRoot}"
-			]
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [
-		"common",
-		"config",
-		"contracts",
-		"core",
-		"plugin",
-		"utils"
-	],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": [
-				"{options.outputPath}"
-			],
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/plugins/integration-activepieces",
 				"tsConfig": "packages/plugins/integration-activepieces/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-activepieces/package.json",
 				"main": "packages/plugins/integration-activepieces/src/index.ts",
-				"assets": [
-					"packages/plugins/integration-activepieces/*.md"
-				]
+				"assets": ["packages/plugins/integration-activepieces/*.md"]
 			},
-			"dependsOn": [
-				"^build"
-			]
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {
@@ -51,9 +36,7 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": [
-				"{workspaceRoot}/coverage/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/plugins/integration-activepieces/jest.config.ts"
 			}

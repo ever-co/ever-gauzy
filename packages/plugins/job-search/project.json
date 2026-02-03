@@ -7,39 +7,23 @@
 		"version": {
 			"currentVersionResolver": "git-tag",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": [
-				"dist/{projectRoot}"
-			]
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [
-		"common",
-		"config",
-		"contracts",
-		"core",
-		"plugin",
-		"plugin-integration-ai",
-		"utils"
-	],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "plugin-integration-ai", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": [
-				"{options.outputPath}"
-			],
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/plugins/job-search",
 				"tsConfig": "packages/plugins/job-search/tsconfig.lib.json",
 				"packageJson": "packages/plugins/job-search/package.json",
 				"main": "packages/plugins/job-search/src/index.ts",
-				"assets": [
-					"packages/plugins/job-search/*.md"
-				]
+				"assets": ["packages/plugins/job-search/*.md"]
 			},
-			"dependsOn": [
-				"^build"
-			]
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {
@@ -51,9 +35,7 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": [
-				"{workspaceRoot}/coverage/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/plugins/job-search/jest.config.ts"
 			}

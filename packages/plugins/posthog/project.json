@@ -7,30 +7,22 @@
 		"version": {
 			"currentVersionResolver": "git-tag",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": [
-				"dist/{projectRoot}"
-			]
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
 	"tags": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": [
-				"{options.outputPath}"
-			],
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/plugins/posthog",
 				"tsConfig": "packages/plugins/posthog/tsconfig.lib.json",
 				"packageJson": "packages/plugins/posthog/package.json",
 				"main": "packages/plugins/posthog/src/index.ts",
-				"assets": [
-					"packages/plugins/posthog/*.md"
-				]
+				"assets": ["packages/plugins/posthog/*.md"]
 			},
-			"dependsOn": [
-				"^build"
-			]
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {
@@ -42,19 +34,11 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": [
-				"{workspaceRoot}/coverage/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/plugins/posthog/jest.config.ts"
 			}
 		}
 	},
-	"implicitDependencies": [
-		"common",
-		"config",
-		"contracts",
-		"core",
-		"plugin"
-	]
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin"]
 }
