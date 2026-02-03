@@ -29150,9 +29150,9 @@ lockfile@1.0.4:
     signal-exit "^3.0.2"
 
 locutus@^2.0.11, locutus@^2.0.30:
-  version "2.0.38"
-  resolved "https://registry.yarnpkg.com/locutus/-/locutus-2.0.38.tgz#1e7f6077a9fc2985cf58aef5591e2ff4eb961df0"
-  integrity sha512-7da0VqzP8gor2VsqnLjV3m88ELplov22887Ux558zkIjRdkcc9qsXN5Ifx15ImSg8y+0VY3VXBmwUZYGYR0Drg==
+  version "2.0.39"
+  resolved "https://registry.yarnpkg.com/locutus/-/locutus-2.0.39.tgz#080277b4c766fdc58c053ecfdbd2ad7254db9d85"
+  integrity sha512-v2iub44UtGpbIv+pFkkYhZ+JsbIM0bJsQcQ1+VayUNGVA/YhM8+CkBiRACcpuuE9Q0xI1pgNzGNwzZDCp1MCww==
 
 lodash-es@^4.17.15, lodash-es@^4.17.21:
   version "4.17.23"

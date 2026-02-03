@@ -831,7 +831,8 @@
 		"keychain",
 		"reencoded",
 		"retryable",
-		"Retryable"
+		"Retryable",
+		"pendings"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
