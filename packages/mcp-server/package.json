@@ -24,7 +24,7 @@
 	"scripts": {
 		"start": "nx serve mcp",
 		"lib:build": "cross-env NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server",
-		"lib:build:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn nx build mcp-server",
+		"lib:build:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server",
 		"lib:watch": "cross-env NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server --watch"
 	},
 	"dependencies": {

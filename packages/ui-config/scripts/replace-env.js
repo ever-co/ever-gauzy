@@ -4,13 +4,13 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-console.log('Running replace-env-files.js script...', __dirname);
+console.log('Running replace-envr.js script...', __dirname);
 
 /**
  * Replaces the environment.ts file with environment.prod.ts if the environment is set to production.
  * Always operates within packages/ui-config/src/lib/environments directory.
  */
-function replaceEnvironmentFiles() {
+function replaceEnv() {
 	console.log('Replacing environment files for production build...', process.env['NODE_ENV']);
 
 	const env = process.env['NODE_ENV'] || 'development';
@@ -50,4 +50,4 @@ function replaceEnvironmentFiles() {
 }
 
 // Replace environment files for production build
-replaceEnvironmentFiles();
+replaceEnv();
