@@ -76,7 +76,7 @@ export class PendingInstallationQuery extends Query<IPendingInstallationState> {
 
 	private _hasNext(pagination: IPendingPagination): boolean {
 		const { skip, take, total } = pagination;
-		return (skip - 1) * take < total;
+		return skip * take < total;
 	}
 
 	/**
