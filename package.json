@@ -532,9 +532,9 @@
 		]
 	},
 	"resolutions": {
+		"@angular/cdk": "21.0.0",
 		"@angular-devkit/architect": "^0.2100.0",
 		"@angular-devkit/core": "^21.0.0",
-		"@angular/cdk": "21.0.0",
 		"@typescript-eslint/scope-manager": "^8.0.0",
 		"@typescript-eslint/utils": "^8.0.0",
 		"@typescript-eslint/visitor-keys": "^8.0.0",
