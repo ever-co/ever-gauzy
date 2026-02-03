@@ -18,6 +18,15 @@ export interface IPendingPluginInstallation {
 }
 
 /**
+ * Pagination details for pending installations
+ */
+export interface IPendingPagination {
+	total: number;
+	skip: number;
+	take: number;
+}
+
+/**
  * State interface for pending plugin installations
  */
 export interface IPendingInstallationState {
@@ -31,6 +40,8 @@ export interface IPendingInstallationState {
 	checked: boolean;
 	/** Whether force install mode is enabled (auto-install without dialog) */
 	forceInstallEnabled: boolean;
+	/** Pagination details for pending plugins*/
+	pagination: IPendingPagination;
 }
 
 /**
@@ -42,7 +53,12 @@ export function createInitialPendingInstallationState(): IPendingInstallationSta
 		loading: false,
 		error: null,
 		checked: false,
-		forceInstallEnabled: false
+		forceInstallEnabled: false,
+		pagination: {
+			total: 0,
+			skip: 1,
+			take: 10
+		}
 	};
 }
 
@@ -56,11 +72,36 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 	/**
 	 * Sets the pending plugins list
 	 */
-	public setPendingPlugins(plugins: IPendingPluginInstallation[]): void {
-		this.update({
+	public setPendingPlugins(plugins: IPendingPluginInstallation[], total: number): void {
+		this.update((state) => ({
 			pendingPlugins: plugins,
 			checked: true,
-			loading: false
+			loading: false,
+			pagination: {
+				...state.pagination,
+				skip: state.pagination.skip + 1,
+				total
+			}
+		}));
+	}
+
+	/**
+	 * Appends more pending plugins to the existing list (for pagination)
+	 */
+	public appendPendingPlugins(plugins: IPendingPluginInstallation[], total: number): void {
+		this.update((state) => {
+			const existingIds = new Set(state.pendingPlugins.map((p) => p.plugin.id));
+			const newPlugins = plugins.filter((p) => !existingIds.has(p.plugin.id));
+			return {
+				pendingPlugins: [...state.pendingPlugins, ...newPlugins],
+				checked: true,
+				loading: false,
+				pagination: {
+					...state.pagination,
+					skip: state.pagination.skip + 1,
+					total
+				}
+			};
 		});
 	}
 
@@ -70,9 +111,7 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 	public setPluginInstalling(pluginId: string, isInstalling: boolean): void {
 		this.update((state) => ({
 			pendingPlugins: state.pendingPlugins.map((p) =>
-				p.plugin.id === pluginId
-					? { ...p, isInstalling, error: isInstalling ? null : p.error }
-					: p
+				p.plugin.id === pluginId ? { ...p, isInstalling, error: isInstalling ? null : p.error } : p
 			)
 		}));
 	}
@@ -83,9 +122,7 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 	public setPluginInstalled(pluginId: string, isInstalled: boolean): void {
 		this.update((state) => ({
 			pendingPlugins: state.pendingPlugins.map((p) =>
-				p.plugin.id === pluginId
-					? { ...p, isInstalling: false, isInstalled, error: null }
-					: p
+				p.plugin.id === pluginId ? { ...p, isInstalling: false, isInstalled, error: null } : p
 			)
 		}));
 	}
@@ -96,9 +133,7 @@ export class PendingInstallationStore extends Store<IPendingInstallationState> {
 	public setPluginError(pluginId: string, error: string | null): void {
 		this.update((state) => ({
 			pendingPlugins: state.pendingPlugins.map((p) =>
-				p.plugin.id === pluginId
-					? { ...p, error, isInstalling: false, isInstalled: false }
-					: p
+				p.plugin.id === pluginId ? { ...p, error, isInstalling: false, isInstalled: false } : p
 			)
 		}));
 	}

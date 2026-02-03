@@ -59,7 +59,9 @@ export class UserSubscribedPluginsService {
 	 * @param params Query parameters for filtering
 	 * @returns Observable of subscribed plugins with subscription details
 	 */
-	public getSubscribedPlugins(params: ISubscribedPluginsQueryParams = {}): Observable<ISubscribedPlugin[]> {
+	public getSubscribedPlugins(
+		params: ISubscribedPluginsQueryParams = {}
+	): Observable<IPagination<ISubscribedPlugin>> {
 		const defaultParams: ISubscribedPluginsQueryParams = {
 			take: 10, // Get a reasonable batch
 			relations: ['version', 'version.sources', 'pluginTenant'],
@@ -69,24 +71,27 @@ export class UserSubscribedPluginsService {
 		return this.getSubscribedPluginsPaginated(defaultParams).pipe(
 			map((response) => {
 				if (!response?.items) {
-					return [];
+					return { total: 0, items: [] };
 				}
 
-				return response.items.map((plugin) => {
-					// Extract pluginTenant info from the first subscription if available
-					const subscription = plugin.subscriptions?.[0];
-					const pluginTenant = subscription?.pluginTenant;
+				return {
+					total: response.total,
+					items: response.items.map((plugin) => {
+						// Extract pluginTenant info from the first subscription if available
+						const subscription = plugin.subscriptions?.[0];
+						const pluginTenant = subscription?.pluginTenant;
 
-					return {
-						plugin,
-						subscriptionId: subscription?.id,
-						status: subscription?.status || PluginSubscriptionStatus.SUSPENDED,
-						// Check if plugin can be auto-installed (from pluginTenant configuration)
-						canAutoInstall: pluginTenant?.autoInstall === true && pluginTenant?.enabled === true,
-						// Check if plugin is mandatory for the tenant/organization
-						isMandatory: pluginTenant?.isMandatory === true
-					};
-				});
+						return {
+							plugin,
+							subscriptionId: subscription?.id,
+							status: subscription?.status || PluginSubscriptionStatus.SUSPENDED,
+							// Check if plugin can be auto-installed (from pluginTenant configuration)
+							canAutoInstall: pluginTenant?.autoInstall === true && pluginTenant?.enabled === true,
+							// Check if plugin is mandatory for the tenant/organization
+							isMandatory: pluginTenant?.isMandatory === true
+						};
+					})
+				};
 			})
 		);
 	}

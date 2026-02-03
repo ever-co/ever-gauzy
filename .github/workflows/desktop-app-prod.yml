@@ -403,6 +403,7 @@ jobs:
           yarn build:desktop:windows:release:gh:x64
         env:
           USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           EP_GH_IGNORE_TIME: true
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
@@ -535,6 +536,7 @@ jobs:
           yarn build:desktop:windows:release:gh:arm64
         env:
           USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           EP_GH_IGNORE_TIME: true
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
