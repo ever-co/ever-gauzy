@@ -1,4 +1,9 @@
-import { IOrganization, IOrganizationFindInput, IOrganizationStoreState, IOrganizationUpdateInput } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IOrganizationFindInput,
+	IOrganizationStoreState,
+	IOrganizationUpdateInput
+} from '@gauzy/contracts';
 import { BehaviorSubject } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { Query, Store as AkitaStore, StoreConfig } from '@datorama/akita';
@@ -26,7 +31,7 @@ export class OrganizationEditStore {
 	private _selectedOrganization: IOrganization;
 	private _organizationForm: IOrganizationFindInput;
 
-	constructor(protected organizationStore: OrganizationStore, protected organizationQuery: OrganizationQuery) { }
+	constructor(protected organizationStore: OrganizationStore, protected organizationQuery: OrganizationQuery) {}
 
 	selectedOrganization$: BehaviorSubject<IOrganization> = new BehaviorSubject(this.selectedOrganization);
 
@@ -68,7 +73,7 @@ export class OrganizationEditStore {
 	 */
 
 	async updateOrganizationForm(formData: Partial<IOrganizationUpdateInput>) {
-		this.organizationForm = { ...this.organizationForm, ...formData } as IOrganizationUpdateInput;;
+		this.organizationForm = { ...this.organizationForm, ...formData } as IOrganizationUpdateInput;
 	}
 
 	destroy() {

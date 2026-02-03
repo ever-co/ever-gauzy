@@ -7,20 +7,31 @@
 		"version": {
 			"currentVersionResolver": "git-tag",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+			"manifestRootsToUpdate": [
+				"dist/{projectRoot}"
+			]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": [
+		"desktop-core"
+	],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
+			"dependsOn": [
+				"^build"
+			],
 			"options": {
 				"outputPath": "dist/packages/desktop-window",
 				"main": "packages/desktop-window/src/index.ts",
 				"tsConfig": "packages/desktop-window/tsconfig.lib.json",
-				"assets": ["packages/desktop-window/*.md"]
+				"assets": [
+					"packages/desktop-window/*.md"
+				]
 			}
 		},
 		"nx-release-publish": {
@@ -33,7 +44,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "packages/desktop-window/jest.config.ts"
 			}

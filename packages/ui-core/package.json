@@ -25,7 +25,8 @@
 	},
 	"peerDependencies": {
 		"@angular/common": "^20.2.4",
-		"@angular/core": "^20.2.4"
+		"@angular/core": "^20.2.4",
+		"rxjs": "^7.8.2"
 	},
 	"dependencies": {
 		"@ali-hm/angular-tree-component": "^20.1.6",
@@ -54,6 +55,7 @@
 		"@fullcalendar/timegrid": "^6.1.20",
 		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/ui-config": "^0.1.0",
 		"@jitsu/js": "^1.10.4",
 		"@kurkle/color": "^0.4.0",
 		"@nebular/auth": "^16.0.0",
@@ -64,12 +66,12 @@
 		"@ng-icons/tabler-icons": "^32.4.0",
 		"@ng-maps/core": "^8.0.0",
 		"@ng-maps/google": "^8.0.0",
-		"@ng-select/ng-select": "^14.9.0",
+		"@ng-select/ng-select": "^20.7.0",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",
 		"@ngx-translate/http-loader": "^16.0.1",
-		"@sentry/angular": "9.43.0",
-		"@sentry/core": "9.43.0",
+		"@sentry/angular": "10.36.0",
+		"@sentry/core": "10.36.0",
 		"angular2-smart-table": "^4.1.1",
 		"bootstrap": "^4.3.1",
 		"camelcase": "^9.0.0",
@@ -99,7 +101,6 @@
 		"ngx-moment": "^6.0.2",
 		"ngx-permissions": "^19.0.0",
 		"randomcolor": "^0.6.2",
-		"rxjs": "^7.8.2",
 		"slugify": "^1.6.6",
 		"swiper": "^8.3.1",
 		"tslib": "^2.6.2",

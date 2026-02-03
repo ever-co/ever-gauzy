@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IPlugin, ITag } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbIconModule, NbButtonModule, NbTooltipModule, NbTagModule, NbFormFieldModule, NbInputModule, NbSelectModule, NbOptionModule, NbCheckboxModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
+import { AsyncPipe, DatePipe } from '@angular/common';
 
 interface IPluginTag extends ITag {
 	isFeatured?: boolean;
@@ -23,10 +24,10 @@ interface ITagSuggestion {
 
 @UntilDestroy()
 @Component({
-	selector: 'lib-plugin-tags-manager',
-	templateUrl: './plugin-tags-manager.component.html',
-	styleUrls: ['./plugin-tags-manager.component.scss'],
-	standalone: false
+    selector: 'lib-plugin-tags-manager',
+    templateUrl: './plugin-tags-manager.component.html',
+    styleUrls: ['./plugin-tags-manager.component.scss'],
+    imports: [NbIconModule, NbButtonModule, NbTooltipModule, NbTagModule, NbFormFieldModule, NbInputModule, FormsModule, ReactiveFormsModule, NbSelectModule, NbOptionModule, NbCheckboxModule, AsyncPipe, DatePipe]
 })
 export class PluginTagsManagerComponent implements OnInit, OnDestroy {
 	@Input() plugin: IPlugin;

@@ -8,7 +8,7 @@
 		"build": {
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
 				"compiler": "tsc",

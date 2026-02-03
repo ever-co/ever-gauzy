@@ -354,8 +354,6 @@
     border-radius: calc(var(--border-radius) * 1.25);
 
     ::ng-deep ngx-no-data-message {
-      max-width: 280px;
-
       nb-icon,
       .icon {
         font-size: 2.5rem;

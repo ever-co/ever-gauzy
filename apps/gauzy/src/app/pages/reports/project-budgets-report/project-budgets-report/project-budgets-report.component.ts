@@ -1,8 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IGetTimeLogReportInput,
@@ -18,10 +17,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-project-budgets-report',
-    templateUrl: './project-budgets-report.component.html',
-    styleUrls: ['./project-budgets-report.component.scss'],
-    standalone: false
+	selector: 'ga-project-budgets-report',
+	templateUrl: './project-budgets-report.component.html',
+	styleUrls: ['./project-budgets-report.component.scss'],
+	standalone: false
 })
 export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public loading: boolean = false;

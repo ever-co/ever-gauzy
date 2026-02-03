@@ -10,12 +10,19 @@ import {
 	SimpleChanges,
 	inject
 } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PluginSubscriptionType } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IPluginSubscriptionPlan, PluginBillingPeriod } from '../../../../../services/plugin-subscription.service';
 import { SubscriptionFormService } from '../../services/subscription-form.service';
 import { BillingOption, BillingPeriodKey, PaymentMethod } from './types';
+import { NbIconModule, NbBadgeModule, NbButtonModule } from '@nebular/theme';
+import { BillingCycleSectionComponent } from './billing-cycle-section/billing-cycle-section.component';
+import { PaymentMethodSectionComponent } from './payment-method-section/payment-method-section.component';
+import { CardDetailsSectionComponent } from './card-details-section/card-details-section.component';
+import { BillingContactSectionComponent } from './billing-contact-section/billing-contact-section.component';
+import { SubscriptionConsentSectionComponent } from './subscription-consent-section/subscription-consent-section.component';
+import { DesktopDirectiveModule } from '../../../../../../../directives/desktop-directive.module';
 export { BillingOption, BillingPeriodKey, PaymentMethod } from './types';
 
 /**
@@ -38,11 +45,11 @@ export { BillingOption, BillingPeriodKey, PaymentMethod } from './types';
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-subscription-billing-form',
-	templateUrl: './subscription-billing-form.component.html',
-	styleUrls: ['./subscription-billing-form.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'gauzy-subscription-billing-form',
+    templateUrl: './subscription-billing-form.component.html',
+    styleUrls: ['./subscription-billing-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbIconModule, NbBadgeModule, FormsModule, ReactiveFormsModule, BillingCycleSectionComponent, PaymentMethodSectionComponent, CardDetailsSectionComponent, BillingContactSectionComponent, SubscriptionConsentSectionComponent, NbButtonModule, DesktopDirectiveModule]
 })
 export class SubscriptionBillingFormComponent implements OnInit, OnDestroy, OnChanges {
 	private readonly formService = inject(SubscriptionFormService);

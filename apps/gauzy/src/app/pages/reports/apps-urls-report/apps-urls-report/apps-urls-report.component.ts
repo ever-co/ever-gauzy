@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { IGetActivitiesInput, ITimeLogFilters } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
@@ -8,10 +8,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-apps-urls-report',
-    templateUrl: './apps-urls-report.component.html',
-    styleUrls: ['./apps-urls-report.component.scss'],
-    standalone: false
+	selector: 'ga-apps-urls-report',
+	templateUrl: './apps-urls-report.component.html',
+	styleUrls: ['./apps-urls-report.component.scss'],
+	standalone: false
 })
 export class AppsUrlsReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	filters: IGetActivitiesInput;

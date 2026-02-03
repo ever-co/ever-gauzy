@@ -1,5 +1,8 @@
-@import 'themes';
-@import 'var';
+// Forward so mixins/themes are available to importers
+@forward 'themes';
+@forward 'var';
+@use 'themes' as *;
+@use 'var' as *;
 
 /* Apply style on scrollbar for Firefox */
 * {
@@ -173,7 +176,7 @@ body {
 
   .ng-dropdown-panel {
     background-color: var(--gauzy-card-5) !important;
-	border-radius: var(--border-radius) !important;
+    border-radius: var(--border-radius) !important;
 
     .scroll-host {
       scrollbar-width: thin;
@@ -278,7 +281,7 @@ body {
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
-	color: var(--gauzy-text-color-1) !important;
+    color: var(--gauzy-text-color-1) !important;
     background-color: var(--background-basic-color-1) !important;
   }
 
@@ -737,13 +740,13 @@ angular2-smart-table a:hover {
 }
 
 nb-toastr-container {
-  position:  absolute !important;
-  top: 20px !important;        /* change this value to what you want */
-  right: 0px !important;      /* keep consistent with your toast position */
+  position: absolute !important;
+  top: 20px !important; /* change this value to what you want */
+  right: 0px !important; /* keep consistent with your toast position */
 }
 
 nb-toast {
-	width: 21rem !important;
+  width: 21rem !important;
 }
 
 .sentry-error-embed {

@@ -1,19 +1,23 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ID, IPluginSource, IPluginVersion } from '@gauzy/contracts';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbCardModule, NbIconModule, NbButtonModule, NbInputModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, filter, map, Observable, tap } from 'rxjs';
 import { PluginSourceQuery } from '../../+state/queries/plugin-source.query';
 import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
+import { VersionSelectorComponent } from '../version-selector/version-selector.component';
+import { SourceSelectorComponent } from '../source-selector/source-selector.component';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'lib-dialog-installation-validation',
-	templateUrl: './dialog-installation-validation.component.html',
-	styleUrls: ['./dialog-installation-validation.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-dialog-installation-validation',
+    templateUrl: './dialog-installation-validation.component.html',
+    styleUrls: ['./dialog-installation-validation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormsModule, ReactiveFormsModule, NbCardModule, NbIconModule, NbButtonModule, VersionSelectorComponent, SourceSelectorComponent, NbInputModule, AsyncPipe, TranslatePipe]
 })
 export class DialogInstallationValidationComponent implements OnInit {
 	public form: FormGroup;

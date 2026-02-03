@@ -15,11 +15,7 @@
       [ngClass]="choice?.length > 0 ? ['off'] : ['on']"
       (click)="choice = '';onChange()"
       >
-      @if (choice?.length > 0) {
-        <fa-icon [icon]="faBan"></fa-icon>
-      } @else {
-        <fa-icon [icon]=""></fa-icon>
-      }
+      <fa-icon [icon]="faBan"></fa-icon>
 
     </button>
     <button

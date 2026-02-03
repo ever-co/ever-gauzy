@@ -1,6 +1,10 @@
-@import './themes';
-@import './var';
-@import './gauzy/gauzy-overrides';
+// Forward so mixins are available to importers
+@forward './themes';
+@forward './var';
+@forward './gauzy/gauzy-overrides';
+@use './themes' as *;
+@use './var' as *;
+@use './gauzy/gauzy-overrides' as *;
 
 @mixin mobile-table-styles {
   :host ::ng-deep {

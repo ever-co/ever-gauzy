@@ -15,19 +15,19 @@ import { PipeModule } from '../../../../../../../time-tracker/pipes/pipe.module'
 import { OverviewTabComponent } from './overview-tab.component';
 
 @NgModule({
-	declarations: [OverviewTabComponent],
-	imports: [
-		CommonModule,
-		FormsModule,
-		TranslateModule,
-		NbCardModule,
-		NbIconModule,
-		NbBadgeModule,
-		NbButtonModule,
-		NbSelectModule,
-		NbTooltipModule,
-		DesktopDirectiveModule,
-		PipeModule
-	]
+    imports: [
+        CommonModule,
+        FormsModule,
+        TranslateModule,
+        NbCardModule,
+        NbIconModule,
+        NbBadgeModule,
+        NbButtonModule,
+        NbSelectModule,
+        NbTooltipModule,
+        DesktopDirectiveModule,
+        PipeModule,
+        OverviewTabComponent
+    ]
 })
 export class OverviewTabModule { }

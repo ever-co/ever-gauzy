@@ -104,6 +104,8 @@ ARG REDIS_PORT
 ARG REDIS_USER
 ARG REDIS_TLS
 ARG REDIS_URL
+ARG NX_CLOUD_ACCESS_TOKEN
+ARG NX_BRANCH
 
 FROM node:24.12.0-alpine3.23 AS dependencies
 
@@ -273,6 +275,8 @@ ENV CI=true
 ARG NODE_ENV
 ARG DEMO
 ARG NODE_OPTIONS
+ARG NX_CLOUD_ACCESS_TOKEN
+ARG NX_BRANCH
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
 ENV NODE_ENV=${NODE_ENV}
@@ -280,14 +284,10 @@ ENV DEMO=${DEMO:-false}
 
 ENV IS_DOCKER=true
 
-# Temporary disable caching in NX Cloud for builds
-ENV NX_NO_CLOUD=true
-
-RUN if [ "$NODE_ENV" = "production" ]; then \
-    yarn build:package:api:docker; \
-    else \
-    yarn build:package:api:dev:docker; \
-    fi
+# Enable NX Cloud caching for faster builds
+ENV NX_NO_CLOUD=false
+ENV NX_CLOUD_ACCESS_TOKEN=${NX_CLOUD_ACCESS_TOKEN}
+ENV NX_BRANCH=${NX_BRANCH}
 
 RUN if [ "$NODE_ENV" = "production" ]; then \
     yarn build:api:prod:docker; \

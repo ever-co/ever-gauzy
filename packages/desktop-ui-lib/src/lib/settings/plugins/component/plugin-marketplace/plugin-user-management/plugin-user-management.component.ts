@@ -1,13 +1,16 @@
 import { ChangeDetectionStrategy, Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IPlugin, IUser } from '@gauzy/contracts';
-import { NB_DIALOG_CONFIG, NbDialogRef, NbDialogService } from '@nebular/theme';
+import { NB_DIALOG_CONFIG, NbDialogRef, NbDialogService, NbCardModule, NbIconModule, NbBadgeModule, NbTabsetModule, NbFormFieldModule, NbInputModule, NbUserModule, NbButtonModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, distinctUntilChanged, filter, map, Observable, startWith, switchMap, take, tap } from 'rxjs';
 import { UserManagementDialogViewModel, UserManagementFacade } from '../+state/facades/user-management.facade';
 import { PluginUserAssignment } from '../+state/stores/plugin-user-assignment.store';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../services';
+import { InfiniteScrollDirective } from '../../../../../directives/infinite-scroll.directive';
+import { DesktopDirectiveModule } from '../../../../../directives/desktop-directive.module';
+import { AsyncPipe, DatePipe } from '@angular/common';
 
 export interface PluginUserManagementDialogData {
 	plugin: IPlugin;
@@ -35,11 +38,11 @@ export interface PluginUserManagementDialogData {
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'lib-plugin-user-management',
-	templateUrl: './plugin-user-management.component.html',
-	styleUrls: ['./plugin-user-management.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'lib-plugin-user-management',
+    templateUrl: './plugin-user-management.component.html',
+    styleUrls: ['./plugin-user-management.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, NbBadgeModule, NbTabsetModule, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, NbUserModule, NbButtonModule, NbSpinnerModule, InfiniteScrollDirective, DesktopDirectiveModule, NbTooltipModule, AsyncPipe, DatePipe]
 })
 export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	public plugin: IPlugin;

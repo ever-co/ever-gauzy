@@ -7,22 +7,35 @@
 		"version": {
 			"currentVersionResolver": "git-tag",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+			"manifestRootsToUpdate": [
+				"dist/{projectRoot}"
+			]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": [
+		"config",
+		"core",
+		"plugin"
+	],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
 			"options": {
 				"outputPath": "dist/packages/plugins/sentry-tracing",
 				"tsConfig": "packages/plugins/sentry-tracing/tsconfig.lib.json",
 				"packageJson": "packages/plugins/sentry-tracing/package.json",
 				"main": "packages/plugins/sentry-tracing/src/index.ts",
-				"assets": ["packages/plugins/sentry-tracing/*.md"]
-			}
+				"assets": [
+					"packages/plugins/sentry-tracing/*.md"
+				]
+			},
+			"dependsOn": [
+				"^build"
+			]
 		},
 		"nx-release-publish": {
 			"options": {
@@ -34,7 +47,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "packages/plugins/sentry-tracing/jest.config.ts"
 			}

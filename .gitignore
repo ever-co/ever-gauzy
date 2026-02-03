@@ -148,3 +148,5 @@ apps/server-api/src/assets/icons/menu
 **/certs/**/*.{pem,key,crt,csr,pfx,p12}
 !**/certs/**/README.md
 !**/certs/**/.gitkeep
+
+/Tempnx-console-tmp**/**

@@ -8,8 +8,8 @@ describe('DialogCreateSourceComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [DialogCreateSourceComponent]
-    })
+    imports: [DialogCreateSourceComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(DialogCreateSourceComponent);

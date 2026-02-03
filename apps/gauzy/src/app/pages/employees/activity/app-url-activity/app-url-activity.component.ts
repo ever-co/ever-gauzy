@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, filter } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { chain, reduce } from 'underscore';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,10 +21,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-app-url-activity',
-    styleUrls: ['./app-url-activity.component.scss'],
-    templateUrl: './app-url-activity.component.html',
-    standalone: false
+	selector: 'ngx-app-url-activity',
+	styleUrls: ['./app-url-activity.component.scss'],
+	templateUrl: './app-url-activity.component.html',
+	standalone: false
 })
 export class AppUrlActivityComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	filters: ITimeLogFilters = this.request;

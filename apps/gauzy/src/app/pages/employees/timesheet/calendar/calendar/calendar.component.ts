@@ -35,10 +35,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-calendar-timesheet',
-    templateUrl: './calendar.component.html',
-    styleUrls: ['./calendar.component.scss'],
-    standalone: false
+	selector: 'ngx-calendar-timesheet',
+	templateUrl: './calendar.component.html',
+	styleUrls: ['./calendar.component.scss'],
+	standalone: false
 })
 export class CalendarComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
@@ -98,7 +98,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 			.pipe(
 				filter(() => !!this.calendar.getApi() && !!this.organization),
 				tap(() => this.setCalendarOptions()),
-				tap(() => this.setCalenderInitialView()),
+				tap(() => this.setCalendarInitialView()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -174,7 +174,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	/**
 	 * Sets the initial view of the calendar based on organization settings and request parameters.
 	 */
-	setCalenderInitialView(): void {
+	setCalendarInitialView(): void {
 		if (!this.organization || !this.calendar.getApi()) {
 			return;
 		}

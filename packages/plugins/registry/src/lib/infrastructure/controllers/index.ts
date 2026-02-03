@@ -25,6 +25,7 @@ import {
 } from './plugin-user-assignment.controller';
 import { PluginVersionController } from './plugin-version.controller';
 import { PluginController } from './plugin.controller';
+import { UserSubscribedPluginsController } from './user-subscribed-plugins.controller';
 
 export const controllers = [
 	PluginUserAssignmentController,
@@ -49,7 +50,8 @@ export const controllers = [
 	PluginUserAssignmentManagementController,
 	PluginAnalyticsController,
 	PluginSubscriptionAnalyticsController,
-	PluginTenantController
+	PluginTenantController,
+	UserSubscribedPluginsController
 ];
 
 export * from './plugin-activation.controller';
@@ -71,3 +73,4 @@ export * from './plugin-tenant.controller';
 export * from './plugin-user-assignment.controller';
 export * from './plugin-version.controller';
 export * from './plugin.controller';
+export * from './user-subscribed-plugins.controller';
