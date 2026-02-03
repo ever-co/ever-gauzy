@@ -26,6 +26,7 @@ import { SearchTermQuery } from './search/+state/search-term.query';
 import { SearchTermStore } from './search/+state/search-term.store';
 import { SearchComponent } from './search/search.component';
 import { TaskTableComponent } from './table/task-table.component';
+import { RouterModule } from '@angular/router';
 
 @NgModule({
 	declarations: [TaskTableComponent, SearchComponent, ActionButtonComponent],
@@ -45,7 +46,11 @@ import { TaskTableComponent } from './table/task-table.component';
 		TeamSelectorModule,
 		LanguageModule.forChild(),
 		Angular2SmartTableModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		RouterModule.forChild([{
+			path: '',
+			component: TaskTableComponent
+		}])
 	],
 	providers: [
 		ActionButtonStore,

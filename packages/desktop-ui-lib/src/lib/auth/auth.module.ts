@@ -6,6 +6,8 @@ import { Store } from '../services';
 import { AuthGuard } from './auth.guard';
 import { NoAuthGuard } from './no-auth.guard';
 import { AuthService, AuthStrategy } from './services';
+import { RouterModule } from '@angular/router';
+import { authRoutes } from './auth.routes';
 
 export * from './auth.guard';
 export * from './no-auth.guard';
@@ -20,7 +22,7 @@ const nbAuthModule = NbAuthModule.forRoot({
 });
 
 @NgModule({
-	imports: [CommonModule, nbAuthModule],
+	imports: [CommonModule, nbAuthModule, RouterModule.forChild(authRoutes)],
 	providers: [...nbAuthModule.providers, AuthGuard, NoAuthGuard, AuthStrategy, AuthService, Store]
 })
 export class AuthModule {}
