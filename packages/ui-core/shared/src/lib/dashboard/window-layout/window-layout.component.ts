@@ -33,7 +33,7 @@ export class WindowLayoutComponent extends LayoutWithDraggableObject implements 
 	@ViewChildren(WindowComponent) listWindows: QueryList<GuiDrag>;
 
 	@Input()
-	set windows(value: TemplateRef<HTMLElement>[]) {
+	set windows(value: TemplateRef<any>[]) {
 		this.draggableObject = value as any;
 	}
 

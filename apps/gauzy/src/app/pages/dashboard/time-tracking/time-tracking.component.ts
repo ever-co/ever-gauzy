@@ -139,10 +139,10 @@ export class TimeTrackingComponent
 	public filters: ITimeLogFilters = { timeFormat: TimeFormatEnum.FORMAT_12_HOURS };
 	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
-	@ViewChildren('widget') listOfWidgets: QueryList<TemplateRef<HTMLElement>>;
-	@ViewChildren('window') listOfWindows: QueryList<TemplateRef<HTMLElement>>;
-	public widgetsRef: TemplateRef<HTMLElement>[] = [];
-	public windowsRef: TemplateRef<HTMLElement>[] = [];
+	@ViewChildren('widget') listOfWidgets: QueryList<TemplateRef<any>>;
+	@ViewChildren('window') listOfWindows: QueryList<TemplateRef<any>>;
+	public widgetsRef: TemplateRef<any>[] = [];
+	public windowsRef: TemplateRef<any>[] = [];
 	public widgets: GuiDrag[];
 	public windows: GuiDrag[];
 

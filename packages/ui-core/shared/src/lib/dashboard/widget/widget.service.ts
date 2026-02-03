@@ -14,7 +14,7 @@ import { LocalStorageStrategy } from '../concretes/strategies/local-storage-stra
 })
 export class WidgetService implements OnDestroy {
 	private readonly store = inject(Store);
-	private _widgetsRef: TemplateRef<HTMLElement>[] = [];
+	private _widgetsRef: TemplateRef<any>[] = [];
 	private _widgets: GuiDrag[] = [];
 	private _widgetLayoutPersistance: LayoutPersistance;
 	private _widgetsTakers: PersistanceTakers;
@@ -36,7 +36,7 @@ export class WidgetService implements OnDestroy {
 					this.retrieve().length === 0
 						? this.save()
 						: this.retrieve().forEach((deserialized: GuiDrag) =>
-								this.widgetsRef.push(deserialized.templateRef as unknown as TemplateRef<HTMLElement>)
+								this.widgetsRef.push(deserialized.templateRef as unknown as TemplateRef<any>)
 							);
 				}),
 				untilDestroyed(this)
@@ -55,7 +55,7 @@ export class WidgetService implements OnDestroy {
 
 	protected sorting(): void {
 		const buffers: GuiDrag[] = [];
-		this.widgetsRef.forEach((widgetRef: TemplateRef<HTMLElement>) => {
+		this.widgetsRef.forEach((widgetRef: TemplateRef<any>) => {
 			this.widgets.forEach((widget: GuiDrag) => {
 				if ((widgetRef as unknown) === (widget.templateRef as unknown)) {
 					buffers.push(widget);
@@ -66,9 +66,9 @@ export class WidgetService implements OnDestroy {
 	}
 
 	protected sortingReverse(): void {
-		const buffers: TemplateRef<HTMLElement>[] = [];
+		const buffers: TemplateRef<any>[] = [];
 		this.widgets.forEach((widget: GuiDrag) => {
-			this.widgetsRef.forEach((widgetRef: TemplateRef<HTMLElement>) => {
+			this.widgetsRef.forEach((widgetRef: TemplateRef<any>) => {
 				if ((widgetRef as unknown) === (widget.templateRef as unknown)) {
 					buffers.push(widgetRef);
 				}

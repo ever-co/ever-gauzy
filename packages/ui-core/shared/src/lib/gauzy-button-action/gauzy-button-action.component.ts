@@ -12,8 +12,8 @@ export class GauzyButtonActionComponent implements OnInit {
 	@Input() hasLayoutSelector: boolean = true;
 	@Input() componentName: ComponentEnum;
 
-	@Input() buttonTemplate: TemplateRef<HTMLElement>;
-	@Input() buttonTemplateVisible: TemplateRef<HTMLElement>;
+	@Input() buttonTemplate: TemplateRef<any>;
+	@Input() buttonTemplateVisible: TemplateRef<any>;
 
 	constructor() {}
 	/**

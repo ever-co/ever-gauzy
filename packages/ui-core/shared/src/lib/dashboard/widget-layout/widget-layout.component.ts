@@ -33,7 +33,7 @@ export class WidgetLayoutComponent
 	private readonly cdr = inject(ChangeDetectorRef);
 
 	@Input()
-	set widgets(value: TemplateRef<HTMLElement>[]) {
+	set widgets(value: TemplateRef<any>[]) {
 		this.draggableObject = value as any;
 	}
 	@ViewChildren(WidgetComponent) listWidgets: QueryList<GuiDrag>;
