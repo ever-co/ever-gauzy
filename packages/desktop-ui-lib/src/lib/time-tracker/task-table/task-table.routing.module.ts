@@ -8,7 +8,7 @@ export const taskTableRoutes: Routes = [
 	},
 	{
 		path: 'table',
-		loadComponent: () => import('./table/task-table.component').then((m) => m.TaskTableComponent)
+		loadChildren: () => import('./task-table.module').then((m) => m.TaskTableModule)
 	},
 	{
 		path: '**',

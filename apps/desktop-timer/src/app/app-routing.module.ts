@@ -25,14 +25,14 @@ const routes: Routes = [
 	},
 	{
 		path: 'auth',
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.authRoutes),
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule),
 		canActivate: [AppModuleGuard, AuthConnectionGuard]
 	},
 	{
 		path: 'time-tracker',
 		component: TimeTrackerComponent,
 		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.recapRoutes)
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
 	},
 	{
 		path: 'screen-capture',
@@ -70,7 +70,8 @@ const routes: Routes = [
 	{
 		path: '',
 		component: TimeTrackerComponent,
-		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard]
+		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
 	},
 	{
 		path: 'about',
@@ -95,4 +96,4 @@ const config: ExtraOptions = {
 		}
 	]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

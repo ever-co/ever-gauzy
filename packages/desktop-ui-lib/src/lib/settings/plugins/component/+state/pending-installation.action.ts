@@ -26,7 +26,7 @@ export class PendingInstallationActions {
 	 */
 	public static readonly setPendingPlugins = createAction(
 		'[Pending Installation] Set Pending Plugins',
-		(pendings: Array<IPendingPluginInstallation>) => ({ pendings })
+		(pendings: Array<IPendingPluginInstallation>, total: number) => ({ pendings, total })
 	);
 
 	/**
@@ -108,4 +108,9 @@ export class PendingInstallationActions {
 	 * Reset the state
 	 */
 	public static readonly reset = createAction('[Pending Installation] Reset');
+
+	/**
+	 * Load more plugins (pagination)
+	 */
+	public static readonly loadMore = createAction('[Pending Installation] Load More Plugins');
 }

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnInit, ViewChild } from '@angular/core';
 import { ITask, ITaskStatus, ITaskUpdateInput, TaskStatusEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,6 +27,7 @@ import { SearchTermStore } from '../search/+state/search-term.store';
 	selector: 'ngx-task-table',
 	templateUrl: './task-table.component.html',
 	styleUrls: ['./task-table.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: false
 })
 export class TaskTableComponent implements OnInit, AfterViewInit {
@@ -75,6 +76,7 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this.loadSmartTableSettings();
 		this.setSmartTableSource();
+		this.monitorLoadingState();
 	}
 
 	ngAfterViewInit(): void {
@@ -82,7 +84,6 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 			this.loadSmartTableSettings();
 		});
 		this.onChangedSource();
-		this.monitorLoadingState();
 	}
 
 	private monitorLoadingState(): void {

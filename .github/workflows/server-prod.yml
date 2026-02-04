@@ -403,6 +403,7 @@ jobs:
           yarn build:gauzy-server:windows:release:gh:x64
         env:
           USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           EP_GH_IGNORE_TIME: true
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
@@ -432,6 +433,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24.13.0
+          architecture: arm64
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -522,19 +524,37 @@ jobs:
           Write-Host "Added to GITHUB_PATH: $localBin, $npmGlobalBin, $yarnPath, $nodePath"
 
       - name: Build Server
-        shell: powershell
+        shell: pwsh
         run: |
-          Write-Host "=== Command locations ==="
-          Write-Host "Node: $((Get-Command node -ErrorAction SilentlyContinue).Source)"
-          Write-Host "Yarn: $((Get-Command yarn -ErrorAction SilentlyContinue).Source)"
+          $ErrorActionPreference = "Stop"
+
+          # Get paths
+          $nodePath = (Get-Command node -ErrorAction Stop).Source | Split-Path -Parent
+          $yarnCmd = Get-Command yarn -ErrorAction SilentlyContinue
+          $yarnPath = if ($yarnCmd) { Split-Path $yarnCmd.Source -Parent } else { "" }
+          $localBin = Join-Path $PWD "node_modules\.bin"
+
+          # IMMEDIATE: Set PATH for current step and child processes (fixes NX spawn)
+          $env:PATH = "$nodePath;$yarnPath;$localBin;$env:PATH"
+
+          Write-Host "=== Command locations (PowerShell) ==="
+          Write-Host "Node: $((Get-Command node).Source)"
+          Write-Host "Yarn: $($yarnCmd.Source)"
           Write-Host "ts-node: $((Get-Command ts-node -ErrorAction SilentlyContinue).Source)"
           Write-Host "cross-env: $((Get-Command cross-env -ErrorAction SilentlyContinue).Source)"
           Write-Host "nx: $((Get-Command nx -ErrorAction SilentlyContinue).Source)"
           Write-Host ""
+
+          Write-Host "=== cmd.exe visibility check ==="
+          cmd /c "where node"
+          cmd /c "node -p process.arch"
+          Write-Host ""
+
           Write-Host "=== Starting build ==="
           yarn build:gauzy-server:windows:release:gh:arm64
         env:
           USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           EP_GH_IGNORE_TIME: true
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

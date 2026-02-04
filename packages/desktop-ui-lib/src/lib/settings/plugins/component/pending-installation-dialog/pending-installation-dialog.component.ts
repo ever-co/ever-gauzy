@@ -1,13 +1,21 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { NbDialogRef, NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbListModule, NbSpinnerModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDialogRef,
+	NbIconModule,
+	NbListModule,
+	NbSpinnerModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslatePipe } from '@ngx-translate/core';
 import { combineLatest, debounceTime, distinctUntilChanged, tap } from 'rxjs';
 import { PendingInstallationActions } from '../+state/pending-installation.action';
 import { PendingInstallationQuery } from '../+state/pending-installation.query';
 import { IPendingPluginInstallation } from '../+state/pending-installation.store';
 import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
-import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Dialog component that displays pending plugin installations
@@ -16,11 +24,20 @@ import { TranslatePipe } from '@ngx-translate/core';
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-pending-installation-dialog',
-    templateUrl: './pending-installation-dialog.component.html',
-    styleUrls: ['./pending-installation-dialog.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbListModule, NbSpinnerModule, DesktopDirectiveModule, TranslatePipe]
+	selector: 'ngx-pending-installation-dialog',
+	templateUrl: './pending-installation-dialog.component.html',
+	styleUrls: ['./pending-installation-dialog.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		NbCardModule,
+		NbIconModule,
+		NbButtonModule,
+		NbTooltipModule,
+		NbListModule,
+		NbSpinnerModule,
+		DesktopDirectiveModule,
+		TranslatePipe
+	]
 })
 export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	private readonly dialogRef = inject(NbDialogRef<PendingInstallationDialogComponent>);
@@ -52,23 +69,17 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	 */
 	private observeState(): void {
 		// Combine all state observables for efficiency
-		combineLatest([
-			this.query.pendingPlugins$,
-			this.query.loading$,
-			this.query.isAnyInstalling$
-		])
+		combineLatest([this.query.pendingPlugins$, this.query.loading$, this.query.isAnyInstalling$])
 			.pipe(
 				debounceTime(10), // Small debounce to batch updates
-				distinctUntilChanged((prev, curr) =>
-					JSON.stringify(prev) === JSON.stringify(curr)
-				),
+				distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
 				tap(([plugins, loading, installing]) => {
 					this.pendingPlugins.set(plugins);
 					this.loading.set(loading);
 					this.isAnyInstalling.set(installing);
 
 					// Update queue status
-					const hasInstalling = plugins.some(p => p.isInstalling);
+					const hasInstalling = plugins.some((p) => p.isInstalling);
 					this.queueActive.set(hasInstalling);
 				}),
 				untilDestroyed(this)
@@ -89,21 +100,14 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		this.actions.dispatch(
-			PendingInstallationActions.installPlugin(
-				pending.plugin.id,
-				pending.plugin.version.id
-			)
-		);
+		this.actions.dispatch(PendingInstallationActions.installPlugin(pending.plugin.id, pending.plugin.version.id));
 	}
 
 	/**
 	 * Install all pending plugins
 	 */
 	protected installAll(): void {
-		const installablePlugins = this.pendingPlugins().filter(
-			p => !p.isInstalling && !p.isInstalled && !p.error
-		);
+		const installablePlugins = this.pendingPlugins().filter((p) => !p.isInstalling && !p.isInstalled && !p.error);
 
 		if (installablePlugins.length === 0) {
 			return;
@@ -203,7 +207,7 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 		const plugins = this.pendingPlugins();
 		if (plugins.length === 0) return true;
 
-		return plugins.every(p => p.isInstalled || (p.error && !p.isInstalling));
+		return plugins.every((p) => p.isInstalled || (p.error && !p.isInstalling));
 	}
 
 	/**
@@ -217,9 +221,9 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	 * Retry all failed installations
 	 */
 	protected retryFailed(): void {
-		const failedPlugins = this.pendingPlugins().filter(p => p.error && !p.isInstalling);
+		const failedPlugins = this.pendingPlugins().filter((p) => p.error && !p.isInstalling);
 
-		failedPlugins.forEach(pending => {
+		failedPlugins.forEach((pending) => {
 			if (pending.plugin.version?.id) {
 				this.installPlugin(pending);
 			}
@@ -227,9 +231,9 @@ export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Load more functionality placeholder
+	 * Load more functionality
 	 */
 	loadMore(): void {
-		// TODO [GP-779]: Implement load more functionality if needed
+		this.actions.dispatch(PendingInstallationActions.loadMore());
 	}
 }

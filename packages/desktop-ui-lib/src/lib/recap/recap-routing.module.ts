@@ -1,4 +1,8 @@
 import { Routes } from '@angular/router';
+import { RecapComponent } from './features/recap/recap.component';
+import { recapChildRoutes } from './recap-children-routing.module';
+import { WeeklyRecapComponent } from './weekly/features/weekly-recap/weekly-recap.component';
+import { MonthlyRecapComponent } from './monthly/features/monthly-recap/monthly-recap.component';
 
 export const recapRoutes: Routes = [
 	{
@@ -8,23 +12,21 @@ export const recapRoutes: Routes = [
 	},
 	{
 		path: 'daily',
-		loadComponent: () => import('./features/recap/recap.component').then((m) => m.RecapComponent),
-		loadChildren: () => import('./recap-children-routing.module').then((m) => m.recapChildRoutes)
+		component: RecapComponent,
+		children: recapChildRoutes
 	},
 	{
 		path: 'weekly',
-		loadComponent: () =>
-			import('./weekly/features/weekly-recap/weekly-recap.component').then((m) => m.WeeklyRecapComponent)
+		component: WeeklyRecapComponent
 	},
 	{
 		path: 'monthly',
-		loadComponent: () =>
-			import('./monthly/features/monthly-recap/monthly-recap.component').then((m) => m.MonthlyRecapComponent)
+		component: MonthlyRecapComponent
 	},
 	{
 		path: 'tasks',
 		loadChildren: () =>
-			import('../time-tracker/task-table/task-table.routing.module').then((m) => m.taskTableRoutes)
+			import('../time-tracker/task-table/task-table.module').then((m) => m.TaskTableModule)
 	},
 	{
 		path: '**',
