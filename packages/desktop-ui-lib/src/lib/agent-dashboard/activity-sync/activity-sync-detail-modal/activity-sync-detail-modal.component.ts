@@ -2,13 +2,13 @@ import { Component, Input } from '@angular/core';
 import { NbDialogRef, NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { QueueItem } from '../../models/logs.models';
 import { StatusMapper } from '../../../shared/utils/queue-status-mapper.util';
-import { NgIf } from '@angular/common';
+
 
 @Component({
     selector: 'app-activity-sync-detail-modal',
     templateUrl: './activity-sync-detail-modal.component.html',
     styleUrls: ['./activity-sync-detail-modal.component.scss'],
-    imports: [NbCardModule, NbButtonModule, NbIconModule, NgIf]
+    imports: [NbCardModule, NbButtonModule, NbIconModule]
 })
 export class ActivitySyncDetailModalComponent {
 	@Input() data: QueueItem;

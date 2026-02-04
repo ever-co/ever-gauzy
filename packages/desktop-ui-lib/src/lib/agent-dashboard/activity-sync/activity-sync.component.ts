@@ -9,13 +9,13 @@ import { StatusBadgeComponent } from './activity-render/status-render';
 import { LocalDateParse } from '../pipes/date.pipe';
 import { NbDialogService, NbCardModule, NbTabsetModule, NbSpinnerModule } from '@nebular/theme';
 import { StatusMapper } from '../../shared/utils/queue-status-mapper.util';
-import { NgTemplateOutlet, NgIf, AsyncPipe } from '@angular/common';
+import { NgTemplateOutlet, AsyncPipe } from '@angular/common';
 
 @Component({
     selector: 'app-sync-page',
     templateUrl: './activity-sync.component.html',
     styleUrls: ['./activity-sync.component.scss'],
-    imports: [NbCardModule, NbTabsetModule, NgTemplateOutlet, NgIf, NbSpinnerModule, Angular2SmartTableModule, AsyncPipe]
+    imports: [NbCardModule, NbTabsetModule, NgTemplateOutlet, NbSpinnerModule, Angular2SmartTableModule, AsyncPipe]
 })
 export class SyncPageComponent implements OnInit, OnDestroy {
 	items$: Observable<QueueItem[]> = this.svc.queueStream$;
