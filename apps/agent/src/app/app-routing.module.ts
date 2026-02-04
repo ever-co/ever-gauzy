@@ -10,8 +10,8 @@ const routes: Routes = [
 	},
 	{
 		path: 'auth',
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.authRoutes),
-		canActivate: [AppModuleGuard]
+		canActivate: [AppModuleGuard],
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule)
 	},
 	{
 		path: 'plugins',

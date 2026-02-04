@@ -16,8 +16,8 @@ const routes: Routes = [
 	},
 	{
 		path: 'auth',
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule),
-		canActivate: [AppModuleGuard, AuthConnectionGuard]
+		canActivate: [AppModuleGuard, AuthConnectionGuard],
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule)
 	},
 	{
 		path: 'time-tracker',
@@ -60,8 +60,8 @@ const routes: Routes = [
 	},
 	{
 		path: '',
-		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
 		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
 	},
 	{
