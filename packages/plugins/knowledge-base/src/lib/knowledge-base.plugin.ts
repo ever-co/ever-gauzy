@@ -4,11 +4,12 @@ import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPlu
 import { HelpCenterAuthor, HelpCenterAuthorModule } from './help-center-author';
 import { HelpCenter, HelpCenterModule } from './help-center';
 import { HelpCenterArticle, HelpCenterArticleModule } from './help-center-article';
+import { HelpCenterArticleVersion } from './help-center-article/help-center-article-version.entity';
 import { HelpCenterSeederService } from './help-center-seeder.service';
 
 @Plugin({
 	imports: [HelpCenterModule, HelpCenterArticleModule, HelpCenterAuthorModule, SeederModule],
-	entities: [HelpCenter, HelpCenterArticle, HelpCenterAuthor],
+	entities: [HelpCenter, HelpCenterArticle, HelpCenterArticleVersion, HelpCenterAuthor],
 	providers: [HelpCenterSeederService]
 })
 export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable {

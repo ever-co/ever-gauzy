@@ -4,20 +4,23 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '@gauzy/core';
 import { HelpCenterArticle } from './help-center-article.entity';
+import { HelpCenterArticleVersion } from './help-center-article-version.entity';
 import { HelpCenterArticleService } from './help-center-article.service';
 import { HelpCenterArticleController } from './help-center-article.controller';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmHelpCenterArticleRepository } from './repository/type-orm-help-center-article.repository';
+import { TypeOrmHelpCenterArticleVersionRepository } from './repository/type-orm-help-center-article-version.repository';
 
 @Module({
 	imports: [
 		CqrsModule,
-		TypeOrmModule.forFeature([HelpCenterArticle]),
-		MikroOrmModule.forFeature([HelpCenterArticle]),
+		TypeOrmModule.forFeature([HelpCenterArticle, HelpCenterArticleVersion]),
+		MikroOrmModule.forFeature([HelpCenterArticle, HelpCenterArticleVersion]),
 		RolePermissionModule
 	],
 	controllers: [HelpCenterArticleController],
-	providers: [HelpCenterArticleService, TypeOrmHelpCenterArticleRepository, ...CommandHandlers],
-	exports: [HelpCenterArticleService, TypeOrmHelpCenterArticleRepository]
+	providers: [HelpCenterArticleService, TypeOrmHelpCenterArticleRepository, TypeOrmHelpCenterArticleVersionRepository, ...CommandHandlers],
+	exports: [HelpCenterArticleService, TypeOrmHelpCenterArticleRepository, TypeOrmHelpCenterArticleVersionRepository]
 })
 export class HelpCenterArticleModule {}
+

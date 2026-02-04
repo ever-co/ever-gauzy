@@ -1,15 +1,16 @@
 import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ID, IEmployee, IHelpCenterArticle, IHelpCenterArticleVersion } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
-    ColumnIndex,
-    Employee,
-    MultiORMColumn,
-    MultiORMEntity,
-    MultiORMManyToOne,
-    TenantOrganizationBaseEntity
+	ColumnIndex,
+	Employee,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { HelpCenterArticle } from './help-center-article.entity';
 import { MikroOrmHelpCenterArticleVersionRepository } from './repository/mikro-orm-help-center-article-version.repository';
@@ -36,7 +37,10 @@ export class HelpCenterArticleVersion extends TenantOrganizationBaseEntity imple
 	 * When this version was saved 
 	*/
 	@ApiProperty({ type: () => Date })
-	@MultiORMColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+	@Type(() => Date)
+	@IsNotEmpty()
+	@IsDate()
+	@MultiORMColumn()
 	lastSavedAt: Date;
 
 	/*
