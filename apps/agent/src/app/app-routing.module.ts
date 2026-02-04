@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
-import { AuthConnectionGuard } from '@gauzy/desktop-ui-lib';
+import { AuthConnectionGuard, AuthGuard } from '@gauzy/desktop-ui-lib';
 import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [
@@ -44,6 +44,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'server-dashboard',
+		canActivate: [AppModuleGuard, AuthConnectionGuard, AuthGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AgentDashboardComponent),
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.agentDashboardRoutes)
 	},
