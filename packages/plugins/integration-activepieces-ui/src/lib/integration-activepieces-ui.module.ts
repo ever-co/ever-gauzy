@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 // Angular core modules
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+
 import {
 	NbActionsModule,
 	NbAlertModule,
@@ -22,7 +22,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { provideTranslateHttpLoader, TranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	SelectorsModule,
@@ -71,8 +71,7 @@ import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-s
 			defaultLanguage: getBrowserLanguage(),
 			loader: {
 				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
+				useClass: TranslateHttpLoader
 			}
 		}),
 		IntegrationActivepiecesRoutes,
@@ -80,6 +79,7 @@ import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-s
 		SelectorsModule,
 		SharedModule,
 		TableComponentsModule
-	]
+	],
+	providers: [...provideTranslateHttpLoader()]
 })
 export class IntegrationActivepiecesUiModule {}

@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ErrorHandler, Injector, NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -17,7 +17,8 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
+	provideTranslateHttpLoader,
+	TranslateHttpLoader,
 	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
@@ -113,8 +114,7 @@ if (environment.SENTRY_DSN) {
 			extend: true,
 			loader: {
 				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
+				useClass: TranslateHttpLoader
 			}
 		}),
 		LanguageModule.forRoot(),
@@ -126,6 +126,7 @@ if (environment.SENTRY_DSN) {
 		PluginsModule
 	],
 	providers: [
+		...provideTranslateHttpLoader(),
 		AppService,
 		NbDialogService,
 		AuthGuard,

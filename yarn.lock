@@ -8017,10 +8017,10 @@
   dependencies:
     tslib "^2.3.0"
 
-"@ngx-translate/http-loader@^16.0.1":
-  version "16.0.1"
-  resolved "https://registry.yarnpkg.com/@ngx-translate/http-loader/-/http-loader-16.0.1.tgz#01219d623ea810fd36ba2911d1452975cd32a041"
-  integrity sha512-xJEOUpvs6Zfc8G4cmQmegFOEpfYSoplTHHoisPNrATXjRBjpaKsBaPOXlZsuFUW2XV00s16gIyI4+9z1XkO5bw==
+"@ngx-translate/http-loader@^17.0.0":
+  version "17.0.0"
+  resolved "https://registry.yarnpkg.com/@ngx-translate/http-loader/-/http-loader-17.0.0.tgz#6ab727e780189a9a5e80059c758dc95de93608ea"
+  integrity sha512-hgS8sa0ARjH9ll3PhkLTufeVXNI2DNR2uFKDhBgq13siUXzzVr/a31M6zgecrtwbA34iaBV01hsTMbMS8V7iIw==
   dependencies:
     tslib "^2.3.0"
 

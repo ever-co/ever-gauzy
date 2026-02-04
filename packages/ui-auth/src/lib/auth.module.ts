@@ -1,6 +1,6 @@
 import { Inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+
 import { NbAuthModule } from '@nebular/auth';
 import {
 	NbAccordionModule,
@@ -28,7 +28,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { NgxFaqModule, PasswordFormFieldModule, SharedModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { provideTranslateHttpLoader, TranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { createAuthRoutes } from './auth.routes';
 import { WorkspaceSelectionComponent } from './components/workspace-selection/workspace-selection.component';
 import { SocialLinksComponent } from './components/social-links/social-links.component';
@@ -97,8 +97,7 @@ const THIRD_PARTY_MODULES = [
 		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
 		loader: {
 			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
+			useClass: TranslateHttpLoader
 		}
 	})
 ];
@@ -116,6 +115,7 @@ const THIRD_PARTY_MODULES = [
 	],
 	declarations: [...COMPONENTS],
 	providers: [
+		...provideTranslateHttpLoader(),
 		ElectronService,
 		{
 			provide: ROUTES,

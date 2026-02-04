@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ErrorHandler, inject, NgModule, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -15,7 +15,8 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
+	provideTranslateHttpLoader,
+	TranslateHttpLoader,
 	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
@@ -96,8 +97,7 @@ if (environment.SENTRY_DSN) {
 			extend: true,
 			loader: {
 				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
+				useClass: TranslateHttpLoader
 			}
 		}),
 		LanguageModule.forRoot(),
@@ -107,6 +107,7 @@ if (environment.SENTRY_DSN) {
 		PluginsModule
 	],
 	providers: [
+		...provideTranslateHttpLoader(),
 		AppService,
 		NbDialogService,
 		ElectronService,
@@ -147,7 +148,7 @@ if (environment.SENTRY_DSN) {
 			deps: [Router]
 		},
 		provideAppInitializer(() => {
-			const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
+			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
 			return initializerFn();
 		}),
 		{
@@ -191,4 +192,4 @@ if (environment.SENTRY_DSN) {
 	],
 	bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {}
