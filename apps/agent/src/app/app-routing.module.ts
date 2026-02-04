@@ -1,23 +1,12 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
-import {
-    AboutComponent,
-    AgentDashboardComponent,
-    AlwaysOnComponent,
-    AuthConnectionGuard,
-    ScreenCaptureComponent,
-    ServerDownPage,
-    SettingsComponent,
-    SetupComponent,
-    SplashScreenComponent,
-    UpdaterComponent
-} from '@gauzy/desktop-ui-lib';
+import { AuthConnectionGuard } from '@gauzy/desktop-ui-lib';
 import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [
 	{
 		path: 'setup',
-		component: SetupComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SetupComponent)
 	},
 	{
 		path: 'auth',
@@ -31,36 +20,36 @@ const routes: Routes = [
 	},
 	{
 		path: 'settings',
-		component: SettingsComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SettingsComponent)
 	},
 	{
 		path: 'updater',
-		component: UpdaterComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.UpdaterComponent)
 	},
 	{
 		path: 'splash-screen',
-		component: SplashScreenComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SplashScreenComponent)
 	},
 	{
 		path: 'server-down',
-		component: ServerDownPage
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ServerDownPage)
 	},
 	{
 		path: 'always-on',
-		component: AlwaysOnComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AlwaysOnComponent)
 	},
 	{
 		path: 'about',
-		component: AboutComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AboutComponent)
 	},
 	{
 		path: 'server-dashboard',
-		component: AgentDashboardComponent,
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AgentDashboardComponent),
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.agentDashboardRoutes)
 	},
 	{
 		path: 'screen-capture',
-		component: ScreenCaptureComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ScreenCaptureComponent)
 	}
 ];
 
