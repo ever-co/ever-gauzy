@@ -13,13 +13,14 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { AppService } from './app.service';
+import { RouterOutlet } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'agent-root',
-	template: '<router-outlet></router-outlet>',
-	styleUrls: ['./app.component.scss'],
-	standalone: false
+    selector: 'agent-root',
+    template: '<router-outlet></router-outlet>',
+    styleUrls: ['./app.component.scss'],
+    imports: [RouterOutlet]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 	@HostBinding('class.login-small-height') isLoginPage = false;
