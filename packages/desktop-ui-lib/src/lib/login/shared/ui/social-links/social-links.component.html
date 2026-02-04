@@ -11,7 +11,7 @@
 		>
 			<ng-container *ngTemplateOutlet="linkContentEl; context: { $implicit: socialLink }"></ng-container>
 		</a>
-		} @if (socialLink.url) {
+		} @else if (socialLink.url) {
 		<a
 			[attr.href]="socialLink.url"
 			[attr.target]="socialLink.target"
