@@ -58,7 +58,7 @@
 </div>
 
 <!-- Reusable template for activity row details (title, duration, progress bar) -->
-<ng-template #activityRowDetailsEl let-activityRow>
+<ng-template `#activityRowDetailsEl` let-activityRow>
 	<div class="responsive-table-row title-column">
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.TITLE' | translate }}</div>
 		<div class="responsive-table-content project-name">
@@ -68,7 +68,7 @@
 	<div class="responsive-table-row duration-column">
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
 		<div class="responsive-table-content day-col">
-			{{ activityRow.duration | durationFormat }}
+			{{ activityRow?.duration | durationFormat }}
 		</div>
 	</div>
 	<div class="responsive-table-row progress-bar-column">
@@ -76,7 +76,7 @@
 			<ngx-progress-status
 				[defaultStatus]="'success'"
 				class="report-progress"
-				[percentage]="activityRow.duration_percentage"
+				[percentage]="activityRow?.duration_percentage"
 			>
 			</ngx-progress-status>
 		</div>
