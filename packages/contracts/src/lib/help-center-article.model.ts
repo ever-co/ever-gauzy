@@ -1,8 +1,11 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
+import { IOrganizationProject } from './organization-projects.model';
+import { ITag } from './tag.model';
 
 export interface IHelpCenterArticle
 	extends IBasePerTenantAndOrganizationEntityModel {
+	// Existing fields (For original articles)
 	name: string;
 	description: string;
 	data: string;
@@ -12,6 +15,35 @@ export interface IHelpCenterArticle
 	categoryId: string;
 	employees?: IEmployee[];
 	authors?: IHelpCenterAuthor[];
+
+	// Rich content for collaborative articles
+	descriptionHtml?: string;
+	descriptionJson?: object;
+
+	// Parent-child hierarchy (self-referencing)
+	parentId?: ID;
+	parent?: IHelpCenterArticle;
+	children?: IHelpCenterArticle[];
+
+	// Owner (distinct from authors who can edit)
+	ownedById?: ID;
+	ownedBy?: IEmployee;
+
+	// Project relation
+	projectId?: ID;
+	project?: IOrganizationProject;
+
+	// Metadata
+	isLocked?: boolean;
+	color?: string;
+	order?: number;
+
+	// External integration
+	externalId?: string;
+	externalSource?: string;
+
+	// Tags
+	tags?: ITag[];
 }
 
 export interface IHelpCenterAuthor
