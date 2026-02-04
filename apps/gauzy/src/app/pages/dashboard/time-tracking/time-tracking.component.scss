@@ -12,14 +12,6 @@
         }
       }
     }
-
-    nb-progress-bar {
-      .progress-value {
-        span {
-          display: none;
-        }
-      }
-    }
   }
 
   // Include Swiper styles from separate file (doesn't need ng-deep for Custom Elements in template)
