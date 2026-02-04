@@ -7,13 +7,14 @@ import { ProgressStatusComponent } from '../../../shared/ui/progress-status/prog
 import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
+import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
 
 @Component({
 	selector: 'ngx-weekly-progress',
 	templateUrl: './weekly-progress.component.html',
 	styleUrls: ['./weekly-progress.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ProgressStatusComponent, NoDataMessageComponent, AsyncPipe, TranslatePipe]
+	imports: [ProgressStatusComponent, NoDataMessageComponent, AsyncPipe, TranslatePipe, PipeModule]
 })
 export class WeeklyProgressComponent {
 	public weekDays: string[] = [];

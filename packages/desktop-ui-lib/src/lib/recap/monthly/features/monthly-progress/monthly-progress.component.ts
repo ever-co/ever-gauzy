@@ -8,6 +8,7 @@ import { ProgressStatusComponent } from '../../../shared/ui/progress-status/prog
 import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
+import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
 
 export interface IMonthWeekdays {
 	week: string;
@@ -19,7 +20,7 @@ export interface IMonthWeekdays {
 	templateUrl: './monthly-progress.component.html',
 	styleUrls: ['./monthly-progress.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ProgressStatusComponent, NoDataMessageComponent, AsyncPipe, TranslatePipe]
+	imports: [ProgressStatusComponent, NoDataMessageComponent, AsyncPipe, TranslatePipe, PipeModule]
 })
 export class MonthlyProgressComponent {
 	public monthWeekdays: IMonthWeekdays[] = [];

@@ -6,26 +6,24 @@ import { NbLayoutModule, NbSidebarModule } from '@nebular/theme';
 import { LanguageModule } from '../language/language.module';
 import { ServerConnectionService, Store } from '../services';
 
-
 export * from './server-down.page';
 
 const routes: Routes = [
 	{
 		path: '',
-		loadComponent: () => import('./server-down.page').then(m => m.ServerDownPage)
+		loadComponent: () => import('./server-down.page').then((m) => m.ServerDownPage)
 	}
 ];
 
 @NgModule({
-    imports: [
-        CommonModule,
-        FormsModule,
-        NbSidebarModule,
-        NbLayoutModule,
-        RouterModule.forChild(routes),
-        LanguageModule.forChild(),
-        ServerDownPage
-    ],
-    providers: [Store, ServerConnectionService]
+	imports: [
+		CommonModule,
+		FormsModule,
+		NbSidebarModule,
+		NbLayoutModule,
+		RouterModule.forChild(routes),
+		LanguageModule.forChild()
+	],
+	providers: [Store, ServerConnectionService]
 })
 export class ServerDownModule {}
