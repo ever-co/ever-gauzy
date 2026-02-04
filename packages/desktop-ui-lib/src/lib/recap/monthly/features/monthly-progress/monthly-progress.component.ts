@@ -6,9 +6,7 @@ import { updateMonthWeeks, weekDateRange } from '../../../shared/features/date-r
 import { ProgressStatusComponent } from '../../../shared/ui/progress-status/progress-status.component';
 
 import { AsyncPipe } from '@angular/common';
-import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
 import { TranslatePipe } from '@ngx-translate/core';
-import { PipesModule } from '../../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
 import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
 
 export interface IMonthWeekdays {
@@ -17,11 +15,11 @@ export interface IMonthWeekdays {
 }
 
 @Component({
-    selector: 'ngx-monthly-progress',
-    templateUrl: './monthly-progress.component.html',
-    styleUrls: ['./monthly-progress.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ProgressStatusComponent, NoDataMessageComponent, AsyncPipe, PipeModule, TranslatePipe, PipesModule]
+	selector: 'ngx-monthly-progress',
+	templateUrl: './monthly-progress.component.html',
+	styleUrls: ['./monthly-progress.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [ProgressStatusComponent, NoDataMessageComponent, AsyncPipe, TranslatePipe]
 })
 export class MonthlyProgressComponent {
 	public monthWeekdays: IMonthWeekdays[] = [];

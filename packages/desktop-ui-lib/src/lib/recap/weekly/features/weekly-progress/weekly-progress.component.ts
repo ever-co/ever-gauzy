@@ -5,17 +5,15 @@ import { updateWeekDays } from '../../../shared/features/date-range-picker';
 import { ProgressStatusComponent } from '../../../shared/ui/progress-status/progress-status.component';
 
 import { AsyncPipe } from '@angular/common';
-import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
 import { TranslatePipe } from '@ngx-translate/core';
-import { PipesModule } from '../../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
 import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
 
 @Component({
-    selector: 'ngx-weekly-progress',
-    templateUrl: './weekly-progress.component.html',
-    styleUrls: ['./weekly-progress.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ProgressStatusComponent, NoDataMessageComponent, AsyncPipe, PipeModule, TranslatePipe, PipesModule]
+	selector: 'ngx-weekly-progress',
+	templateUrl: './weekly-progress.component.html',
+	styleUrls: ['./weekly-progress.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [ProgressStatusComponent, NoDataMessageComponent, AsyncPipe, TranslatePipe]
 })
 export class WeeklyProgressComponent {
 	public weekDays: string[] = [];

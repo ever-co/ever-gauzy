@@ -1,13 +1,12 @@
 import { Component } from '@angular/core';
-import { TaskRenderComponent } from '../task-render.component';
 import { DurationFormatPipe } from '../../pipes/duration-format.pipe';
-import { PipesModule } from '../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
+import { TaskRenderComponent } from '../task-render.component';
 
 @Component({
-    selector: 'gauzy-task-duration',
-    templateUrl: './task-duration.component.html',
-    styleUrls: ['./task-duration.component.scss'],
-    imports: [DurationFormatPipe, PipesModule]
+	selector: 'gauzy-task-duration',
+	templateUrl: './task-duration.component.html',
+	styleUrls: ['./task-duration.component.scss'],
+	imports: [DurationFormatPipe]
 })
 export class TaskDurationComponent extends TaskRenderComponent {
 	public get total(): number {

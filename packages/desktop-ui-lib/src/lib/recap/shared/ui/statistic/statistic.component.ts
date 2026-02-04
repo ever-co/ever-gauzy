@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { progressStatus } from '@gauzy/ui-core/common';
 import { NbListModule, NbProgressBarModule } from '@nebular/theme';
-import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
-import { PipesModule } from '../../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
 
 export interface IStatisticItem {
 	imageUrl?: string;
@@ -12,11 +10,11 @@ export interface IStatisticItem {
 }
 
 @Component({
-    selector: 'ngx-statistic',
-    templateUrl: './statistic.component.html',
-    styleUrls: ['./statistic.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbListModule, NbProgressBarModule, PipeModule, PipesModule]
+	selector: 'ngx-statistic',
+	templateUrl: './statistic.component.html',
+	styleUrls: ['./statistic.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NbListModule, NbProgressBarModule]
 })
 export class StatisticComponent {
 	private _items: IStatisticItem[] = [];

@@ -1,30 +1,35 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ITimeSlot } from '@gauzy/contracts';
 import { progressStatus } from '@gauzy/ui-core/common';
+import { NbBadgeModule, NbCardModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, combineLatest, concatMap, from, map } from 'rxjs';
-import { Observable } from 'rxjs';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { BehaviorSubject, combineLatest, concatMap, from, map, Observable } from 'rxjs';
 import { AutoRefreshService } from '../../+state/auto-refresh/auto-refresh.service';
 import { RecapQuery } from '../../+state/recap.query';
 import { RecapService } from '../../+state/recap.service';
 import { RequestQuery } from '../../+state/request/request.query';
 import { IChartData } from '../../shared/utils/adapters/chart.adapter';
-import { NbCardModule, NbBadgeModule } from '@nebular/theme';
-import { BarChartModule } from '@swimlane/ngx-charts';
 
 import { AsyncPipe, PercentPipe } from '@angular/common';
-import { PipeModule } from '../../../time-tracker/pipes/pipe.module';
 import { TranslatePipe } from '@ngx-translate/core';
-import { PipesModule } from '../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
 import { NoDataMessageComponent } from '../../../time-tracker/no-data-message/no-data-message.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-time-tracking-charts',
-    templateUrl: './time-tracking-charts.component.html',
-    styleUrls: ['./time-tracking-charts.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, BarChartModule, NbBadgeModule, NoDataMessageComponent, AsyncPipe, PercentPipe, PipeModule, TranslatePipe, PipesModule]
+	selector: 'ngx-time-tracking-charts',
+	templateUrl: './time-tracking-charts.component.html',
+	styleUrls: ['./time-tracking-charts.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		NbCardModule,
+		BarChartModule,
+		NbBadgeModule,
+		NoDataMessageComponent,
+		AsyncPipe,
+		PercentPipe,
+		TranslatePipe
+	]
 })
 export class TimeTrackingChartsComponent implements OnInit {
 	private readonly _chartData$: BehaviorSubject<IChartData[]> = new BehaviorSubject([]);
