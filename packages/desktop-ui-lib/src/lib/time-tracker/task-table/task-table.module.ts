@@ -25,7 +25,7 @@ import { ActionButtonComponent } from './action-button/action-button.component';
 import { SearchTermQuery } from './search/+state/search-term.query';
 import { SearchTermStore } from './search/+state/search-term.store';
 import { SearchComponent } from './search/search.component';
-import { TaskTableComponent } from './table/task-table.component';
+
 import { RouterModule } from '@angular/router';
 
 @NgModule({
@@ -46,7 +46,7 @@ import { RouterModule } from '@angular/router';
     NbSpinnerModule,
     RouterModule.forChild([{
             path: '',
-            component: TaskTableComponent
+            loadComponent: () => import('./table/task-table.component').then(m => m.TaskTableComponent)
         }]),
     TaskTableComponent, SearchComponent, ActionButtonComponent
 ],

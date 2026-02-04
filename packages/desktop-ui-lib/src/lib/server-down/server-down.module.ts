@@ -5,14 +5,14 @@ import { RouterModule, Routes } from '@angular/router';
 import { NbLayoutModule, NbSidebarModule } from '@nebular/theme';
 import { LanguageModule } from '../language/language.module';
 import { ServerConnectionService, Store } from '../services';
-import { ServerDownPage } from './server-down.page';
+
 
 export * from './server-down.page';
 
 const routes: Routes = [
 	{
 		path: '',
-		component: ServerDownPage
+		loadComponent: () => import('./server-down.page').then(m => m.ServerDownPage)
 	}
 ];
 
