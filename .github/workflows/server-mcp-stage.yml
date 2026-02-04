@@ -347,14 +347,6 @@ jobs:
           "npm_config_python=$py" | Out-File -FilePath $env:GITHUB_ENV -Append
           "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Show tool versions
-        shell: powershell
-        run: |
-          node -v
-          npm -v
-          python --version
-          python -c "import sys; print(sys.executable)"
-
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
@@ -481,14 +473,6 @@ jobs:
           "npm_config_python=$py" | Out-File -FilePath $env:GITHUB_ENV -Append
           "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Show tool versions
-        shell: powershell
-        run: |
-          node -v
-          npm -v
-          python --version
-          python -c "import sys; print(sys.executable)"
-
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
@@ -510,48 +494,41 @@ jobs:
           DESKTOP_MCP_SERVER_APP_DESCRIPTION: 'Gauzy MCP Server'
           DESKTOP_MCP_SERVER_APP_ID: 'com.ever.gauzymcpserver'
 
-      - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
-        shell: powershell
-        run: |
-          $yarnPath = (Get-Command yarn).Source | Split-Path -Parent
-          $nodePath = (Get-Command node).Source | Split-Path -Parent
-          $npmGlobalBin = npm config get prefix
-          $localBin = Join-Path $PWD "node_modules\.bin"
-          echo $localBin >> $env:GITHUB_PATH
-          echo $npmGlobalBin >> $env:GITHUB_PATH
-          echo $yarnPath >> $env:GITHUB_PATH
-          if ($nodePath -ne $yarnPath) { echo $nodePath >> $env:GITHUB_PATH }
-          Write-Host "Added to GITHUB_PATH: $localBin, $npmGlobalBin, $yarnPath, $nodePath"
-
-      - name: Build Server MCP
+      - name: Fix Node.js PATH for child processes
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-
-          # Get paths
-          $nodePath = (Get-Command node -ErrorAction Stop).Source | Split-Path -Parent
+          $nodeExe = (Get-Command node -ErrorAction Stop).Source
+          $nodePath = Split-Path $nodeExe -Parent
+          $npmGlobalBin = & npm config get prefix
+          $localBin = Join-Path $PWD "node_modules\.bin"
           $yarnCmd = Get-Command yarn -ErrorAction SilentlyContinue
           $yarnPath = if ($yarnCmd) { Split-Path $yarnCmd.Source -Parent } else { "" }
-          $localBin = Join-Path $PWD "node_modules\.bin"
 
-          # IMMEDIATE: Set PATH for current step and child processes (fixes NX spawn)
-          $env:PATH = "$nodePath;$yarnPath;$localBin;$env:PATH"
+          $npmNodeExe = Join-Path $npmGlobalBin "node.exe"
+          if (-not (Test-Path $npmNodeExe)) { Copy-Item $nodeExe $npmNodeExe -Force }
 
-          Write-Host "=== Command locations (PowerShell) ==="
-          Write-Host "Node: $((Get-Command node).Source)"
-          Write-Host "Yarn: $($yarnCmd.Source)"
-          Write-Host "ts-node: $((Get-Command ts-node -ErrorAction SilentlyContinue).Source)"
-          Write-Host "cross-env: $((Get-Command cross-env -ErrorAction SilentlyContinue).Source)"
-          Write-Host "nx: $((Get-Command nx -ErrorAction SilentlyContinue).Source)"
-          Write-Host ""
+          $localNodeExe = Join-Path $localBin "node.exe"
+          if (-not (Test-Path $localNodeExe)) { Copy-Item $nodeExe $localNodeExe -Force }
 
-          Write-Host "=== cmd.exe visibility check ==="
-          cmd /c "where node"
-          cmd /c "node -p process.arch"
-          Write-Host ""
+          $newPath = "$nodePath;$npmGlobalBin;$localBin;$yarnPath;$($env:PATH)"
+          "PATH=$newPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-          Write-Host "=== Starting build ==="
-          yarn build:gauzy-mcp-server:windows:release:gh:arm64
+          @($nodePath, $npmGlobalBin, $localBin, $yarnPath) | Where-Object { $_ } | ForEach-Object {
+            $_ | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          }
+
+          "NODE=$nodeExe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "NODE_PATH=$nodePath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          npm config set scripts-prepend-node-path true
+
+          $env:PATH = $newPath
+          [System.Environment]::SetEnvironmentVariable("PATH", $newPath, "Process")
+
+      - name: Build Server MCP
+        shell: cmd
+        run: yarn build:gauzy-mcp-server:windows:release:gh:arm64
         env:
           USE_HARD_LINKS: false
           ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
