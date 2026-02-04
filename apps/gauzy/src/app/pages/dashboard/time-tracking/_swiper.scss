@@ -2,6 +2,29 @@
 // This file contains all Swiper-related styles
 
 @mixin swiper-styles() {
+  // Custom navigation button container and styles
+  .swiper-button-container {
+    display: flex;
+    gap: 4px;
+
+    .swiper-button {
+      padding: 2px 7.5px;
+      border: 2px solid var(--gauzy-background-transparent);
+      color: var(--text-primary-color);
+      border-radius: var(--button-rectangle-border-radius);
+      cursor: pointer;
+      height: fit-content;
+
+      i {
+        font-weight: 900;
+      }
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
+
   swiper-container {
     swiper-slide {
       width: 100%;
@@ -38,10 +61,13 @@
       display: none;
     }
 
-    .swiper-button-next:after,
-    .swiper-button-prev:after {
-      font-size: 8px;
-      font-weight: 900;
+    // Legacy styles for default buttons (hidden above)
+    .swiper-button-next,
+    .swiper-button-prev {
+      &:after {
+        font-size: 8px;
+        font-weight: 900;
+      }
     }
 
     // Pagination styles
@@ -51,29 +77,6 @@
 
     &::part(bullet-active) {
       background-color: var(--text-primary-color);
-    }
-  }
-
-  // Custom navigation button container and styles
-  .swiper-button-container {
-    display: flex;
-    gap: 4px;
-
-    .swiper-button {
-      padding: 2px 7.5px;
-      border: 2px solid var(--gauzy-background-transparent);
-      color: var(--text-primary-color);
-      border-radius: var(--button-rectangle-border-radius);
-      cursor: pointer;
-      height: fit-content;
-
-      i {
-        font-weight: 900;
-      }
-
-      &:hover {
-        opacity: 0.8;
-      }
     }
   }
 }
