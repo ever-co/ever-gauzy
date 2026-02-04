@@ -20,9 +20,8 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { BaseChartDirective } from 'ng2-charts';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
-
 import {
 	ActivityItemModule,
 	CounterPointModule,
@@ -78,13 +77,16 @@ const NB_MODULES = [
 	NbTreeGridModule
 ];
 
+// Standalone Modules
+const STANDALONE_MODULES = [
+	InfiniteScrollDirective // Standalone directive must be imported, not declared
+];
+
 // Third Party Modules
 const THIRD_PARTY_MODULES = [
-	InfiniteScrollModule,
 	LineChartModule,
 	NgSelectModule,
 	NgxPermissionsModule.forChild(),
-
 	TranslateModule.forChild()
 ];
 
@@ -113,6 +115,7 @@ const COMPONENTS = [
 		DashboardRoutingModule,
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
+		...STANDALONE_MODULES,
 		BaseChartDirective,
 		// Feature Modules
 		RecordsHistoryModule,
