@@ -2,7 +2,7 @@ import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppIn
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
 import {
@@ -17,6 +17,7 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
+	HttpLoaderFactory,
 	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
@@ -47,6 +48,7 @@ import {
 	NbThemeModule,
 	NbToastrModule
 } from '@nebular/theme';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
@@ -99,6 +101,14 @@ bootstrapApplication(AppComponent, {
 			TimeTrackerModule,
 			SettingsModule,
 			ImageViewerModule,
+			TranslateModule.forRoot({
+				extend: true,
+				loader: {
+					provide: TranslateLoader,
+					useFactory: HttpLoaderFactory,
+					deps: [HttpClient]
+				}
+			}),
 			NbDatepickerModule.forRoot(),
 			LanguageModule.forRoot(),
 			AboutModule,
