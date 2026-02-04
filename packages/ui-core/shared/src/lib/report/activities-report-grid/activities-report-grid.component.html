@@ -88,9 +88,9 @@
 	<div class="responsive-table-row project-column">
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
 		<div class="responsive-table-content project-name">
-			<ng-template [ngIf]="activityIndex == 0">
-				<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"></ng-container>
-			</ng-template>
+			@if (activityIndex === 0) {
+			<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"></ng-container>
+			}
 		</div>
 	</div>
 </ng-template>
@@ -100,11 +100,9 @@
 	<div class="responsive-table-row employee-column">
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 		<div class="responsive-table-content project-name">
-			<ng-template [ngIf]="activityIndex == 0">
-				<ng-container
-					*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"
-				></ng-container>
-			</ng-template>
+			@if (activityIndex === 0) {
+			<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"></ng-container>
+			}
 		</div>
 	</div>
 </ng-template>

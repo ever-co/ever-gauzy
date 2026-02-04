@@ -81,11 +81,11 @@
 			{{ 'REPORT_PAGE.CATEGORY' | translate }}
 		</div>
 		<div class="responsive-table-content project-name">
-			<ng-container *ngIf="expanseRow?.category">
-				<span class="category-span">
-					{{ expanseRow?.category?.name }}
-				</span>
-			</ng-container>
+			@if (expanseRow?.category) {
+			<span class="category-span">
+				{{ expanseRow?.category?.name }}
+			</span>
+			} @else { — }
 		</div>
 	</div>
 	<div class="responsive-table-row description-column">
@@ -93,7 +93,9 @@
 			{{ 'REPORT_PAGE.DESCRIPTION' | translate }}
 		</div>
 		<div class="responsive-table-content project-name">
-			{{ expanseRow?.purpose ? expanseRow.purpose : '&#8212;' }}
+			@if (expanseRow?.purpose) {
+			{{ expanseRow.purpose }}
+			} @else { — }
 		</div>
 	</div>
 	<div class="responsive-table-row amount-column">
@@ -113,9 +115,9 @@
 			{{ 'REPORT_PAGE.PROJECT' | translate }}
 		</div>
 		<div class="responsive-table-content project-name">
-			<ng-template [ngIf]="expanseIndex == 0">
-				<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"></ng-container>
-			</ng-template>
+			@if (expanseIndex == 0) {
+			<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"></ng-container>
+			}
 		</div>
 	</div>
 </ng-template>
