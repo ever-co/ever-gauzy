@@ -433,6 +433,7 @@
 		"build:agent:linux:release:gh:x64": "yarn run pack --desktop=agent --arch=x64 --platform=linux && cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=30000 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=38.2.2 build --linux --x64 --publish=always --project dist/apps/agent",
 		"build:agent:linux:release:gh:arm64": "yarn run pack --desktop=agent --arch=arm64 --platform=linux && cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=30000 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=38.2.2 build --linux --arm64 --publish=always --project dist/apps/agent",
 		"build:agent:mac": "yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=38.2.2 build --mac --project dist/apps/agent",
+		"build:agent:mac:quick": "yarn run build:agent:mac -c.mac.identity=null",
 		"build:agent:mac:release": "yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=38.2.2 build --mac --publish=always --project dist/apps/agent",
 		"copy-assets-agent": "copyfiles -f apps/desktop/src/assets/snapshot-sound.wav dist/apps/agent/data/sound/",
 		"build:mcp-server": "yarn nx build mcp-server",
