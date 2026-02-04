@@ -16,9 +16,9 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { LanguageModule } from '../language/language.module';
 import { ToastrNotificationService } from '../services';
 
+import { TranslateModule } from '@ngx-translate/core';
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { AutoRefreshQuery } from './+state/auto-refresh/auto-refresh.query';
 import { AutoRefreshService } from './+state/auto-refresh/auto-refresh.service';
@@ -52,7 +52,7 @@ import { GauzyFiltersModule } from './shared/features/gauzy-filters';
 		NbBadgeModule,
 		NbToggleModule,
 		NbSpinnerModule,
-		LanguageModule.forChild(),
+		TranslateModule.forChild(),
 		RouterModule.forChild(recapRoutes)
 	],
 	providers: [

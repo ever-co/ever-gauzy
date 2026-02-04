@@ -13,6 +13,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs';
+import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,7 +31,8 @@ import { tap } from 'rxjs';
 		NgxSliderModule,
 		TitleCasePipe,
 		KeyValuePipe,
-		TranslatePipe
+		TranslatePipe,
+		PipeModule
 	]
 })
 export class GauzyFiltersComponent implements OnInit, OnDestroy {
