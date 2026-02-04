@@ -15,8 +15,8 @@ import { TaskCacheService } from '../../services';
 import { ProjectSelectorModule } from '../../shared/features/project-selector/project-selector.module';
 import { TaskSelectorModule } from '../../shared/features/task-selector/task-selector.module';
 import { TeamSelectorModule } from '../../shared/features/team-selector/team-selector.module';
-import { NoDataMessageModule } from '../no-data-message/no-data-message.module';
-import { PaginationModule } from '../pagination/pagination.module';
+
+
 import { TaskTableQuery } from './+state/task-table.query';
 import { TaskTableStore } from './+state/task-table.store';
 import { ActionButtonQuery } from './action-button/+state/action-button.query';
@@ -31,27 +31,25 @@ import { RouterModule } from '@angular/router';
 @NgModule({
     exports: [TaskTableComponent],
     imports: [
-        CommonModule,
-        PaginationModule,
-        NbButtonModule,
-        NbTooltipModule,
-        NbIconModule,
-        NbCardModule,
-        NbFormFieldModule,
-        NoDataMessageModule,
-        NbInputModule,
-        TaskSelectorModule,
-        ProjectSelectorModule,
-        TeamSelectorModule,
-        LanguageModule.forChild(),
-        Angular2SmartTableModule,
-        NbSpinnerModule,
-        RouterModule.forChild([{
-                path: '',
-                component: TaskTableComponent
-            }]),
-        TaskTableComponent, SearchComponent, ActionButtonComponent
-    ],
+    CommonModule,
+    NbButtonModule,
+    NbTooltipModule,
+    NbIconModule,
+    NbCardModule,
+    NbFormFieldModule,
+    NbInputModule,
+    TaskSelectorModule,
+    ProjectSelectorModule,
+    TeamSelectorModule,
+    LanguageModule.forChild(),
+    Angular2SmartTableModule,
+    NbSpinnerModule,
+    RouterModule.forChild([{
+            path: '',
+            component: TaskTableComponent
+        }]),
+    TaskTableComponent, SearchComponent, ActionButtonComponent
+],
     providers: [
         ActionButtonStore,
         SearchTermStore,

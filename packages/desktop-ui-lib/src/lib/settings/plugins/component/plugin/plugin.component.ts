@@ -5,14 +5,14 @@ import { DynamicDirective } from '../../../../directives/dynamic.directive';
 import { concatMap, from } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginLoaderService } from '../../services/plugin-loader.service';
-import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
+
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ngx-plugin',
     templateUrl: './plugin.component.html',
     styleUrls: ['./plugin.component.scss'],
-    imports: [DesktopDirectiveModule]
+    imports: [DynamicDirective]
 })
 export class PluginComponent implements AfterViewInit {
 	private readonly loaderService = inject(PluginLoaderService);

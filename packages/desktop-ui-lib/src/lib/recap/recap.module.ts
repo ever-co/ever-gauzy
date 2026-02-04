@@ -18,7 +18,7 @@ import {
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { LanguageModule } from '../language/language.module';
 import { ToastrNotificationService } from '../services';
-import { NoDataMessageModule } from '../time-tracker/no-data-message/no-data-message.module';
+
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { AutoRefreshQuery } from './+state/auto-refresh/auto-refresh.query';
 import { AutoRefreshService } from './+state/auto-refresh/auto-refresh.service';
@@ -44,8 +44,8 @@ import { DateRangePickerModule } from './shared/features/date-range-picker/date-
 import { GauzyFiltersModule } from './shared/features/gauzy-filters';
 import { SegmentedControlComponent } from './shared/features/segmented-control/segmented-control.component';
 import { AutoRefreshComponent } from './shared/ui/auto-refresh/auto-refresh.component';
-import { ProgressStatusModule } from './shared/ui/progress-status/progress-status.module';
-import { ProjectColumnViewModule } from './shared/ui/project-column-view/project-column-view.module';
+
+
 import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 import { WeeklyCalendarComponent } from './weekly/features/weekly-calendar/weekly-calendar.component';
 import { WeeklyProgressComponent } from './weekly/features/weekly-progress/weekly-progress.component';
@@ -55,47 +55,44 @@ import { recapRoutes } from './recap-routing.module';
 
 @NgModule({
     imports: [
-        CommonModule,
-        NbLayoutModule,
-        NbCardModule,
-        NbListModule,
-        NbProgressBarModule,
-        NbIconModule,
-        NbButtonModule,
-        NoDataMessageModule,
-        NbPopoverModule,
-        NbTableModule,
-        NgxChartsModule,
-        NbRouteTabsetModule,
-        PipeModule,
-        DateRangePickerModule,
-        GauzyFiltersModule,
-        NbBadgeModule,
-        NbToggleModule,
-        ProjectColumnViewModule,
-        ProgressStatusModule,
-        NbSpinnerModule,
-        LanguageModule.forChild(),
-        RouterModule.forChild(recapRoutes),
-        RecapComponent,
-        ProjectsComponent,
-        TasksComponent,
-        ActivitiesComponent,
-        TimeTrackingChartsComponent,
-        FilterComponent,
-        StatisticComponent,
-        AutoRefreshComponent,
-        ActivityReportComponent,
-        SegmentedControlComponent,
-        WeeklyRecapComponent,
-        WeeklyCalendarComponent,
-        WeeklyProgressComponent,
-        WeeklyStatisticComponent,
-        MonthlyRecapComponent,
-        MonthlyCalendarComponent,
-        MonthlyProgressComponent,
-        MonthlyStatisticComponent
-    ],
+    CommonModule,
+    NbLayoutModule,
+    NbCardModule,
+    NbListModule,
+    NbProgressBarModule,
+    NbIconModule,
+    NbButtonModule,
+    NbPopoverModule,
+    NbTableModule,
+    NgxChartsModule,
+    NbRouteTabsetModule,
+    PipeModule,
+    DateRangePickerModule,
+    GauzyFiltersModule,
+    NbBadgeModule,
+    NbToggleModule,
+    NbSpinnerModule,
+    LanguageModule.forChild(),
+    RouterModule.forChild(recapRoutes),
+    RecapComponent,
+    ProjectsComponent,
+    TasksComponent,
+    ActivitiesComponent,
+    TimeTrackingChartsComponent,
+    FilterComponent,
+    StatisticComponent,
+    AutoRefreshComponent,
+    ActivityReportComponent,
+    SegmentedControlComponent,
+    WeeklyRecapComponent,
+    WeeklyCalendarComponent,
+    WeeklyProgressComponent,
+    WeeklyStatisticComponent,
+    MonthlyRecapComponent,
+    MonthlyCalendarComponent,
+    MonthlyProgressComponent,
+    MonthlyStatisticComponent
+],
     providers: [
         RecapQuery,
         RecapStore,

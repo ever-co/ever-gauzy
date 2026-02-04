@@ -8,12 +8,13 @@ import { RecapService } from '../../../+state/recap.service';
 import { RequestQuery } from '../../../+state/request/request.query';
 import { NbSpinnerModule, NbCardModule } from '@nebular/theme';
 import { NgTemplateOutlet, AsyncPipe } from '@angular/common';
-import { NoDataMessageModule } from '../../../../time-tracker/no-data-message/no-data-message.module';
+
 import { ProgressStatusComponent } from '../../ui/progress-status/progress-status.component';
 import { ProjectColumnViewComponent } from '../../ui/project-column-view/project-column-view.component';
 import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PipesModule } from '../../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
+import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,7 +22,7 @@ import { PipesModule } from '../../../../../../../ui-core/shared/src/lib/pipes/p
     templateUrl: './activity-report.component.html',
     styleUrls: ['./activity-report.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbSpinnerModule, NbCardModule, NgTemplateOutlet, NoDataMessageModule, ProgressStatusComponent, ProjectColumnViewComponent, AsyncPipe, PipeModule, TranslatePipe, PipesModule]
+    imports: [NbSpinnerModule, NbCardModule, NgTemplateOutlet, NoDataMessageComponent, ProgressStatusComponent, ProjectColumnViewComponent, AsyncPipe, PipeModule, TranslatePipe, PipesModule]
 })
 export class ActivityReportComponent implements OnInit {
 	public isLoading$ = new BehaviorSubject<boolean>(false);

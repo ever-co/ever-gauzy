@@ -22,7 +22,8 @@ import { PaymentMethodSectionComponent } from './payment-method-section/payment-
 import { CardDetailsSectionComponent } from './card-details-section/card-details-section.component';
 import { BillingContactSectionComponent } from './billing-contact-section/billing-contact-section.component';
 import { SubscriptionConsentSectionComponent } from './subscription-consent-section/subscription-consent-section.component';
-import { DesktopDirectiveModule } from '../../../../../../../directives/desktop-directive.module';
+
+import { SpinnerButtonDirective } from '../../../../../../../directives/spinner-button.directive';
 export { BillingOption, BillingPeriodKey, PaymentMethod } from './types';
 
 /**
@@ -49,7 +50,7 @@ export { BillingOption, BillingPeriodKey, PaymentMethod } from './types';
     templateUrl: './subscription-billing-form.component.html',
     styleUrls: ['./subscription-billing-form.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbIconModule, NbBadgeModule, FormsModule, ReactiveFormsModule, BillingCycleSectionComponent, PaymentMethodSectionComponent, CardDetailsSectionComponent, BillingContactSectionComponent, SubscriptionConsentSectionComponent, NbButtonModule, DesktopDirectiveModule]
+    imports: [NbIconModule, NbBadgeModule, FormsModule, ReactiveFormsModule, BillingCycleSectionComponent, PaymentMethodSectionComponent, CardDetailsSectionComponent, BillingContactSectionComponent, SubscriptionConsentSectionComponent, NbButtonModule, SpinnerButtonDirective]
 })
 export class SubscriptionBillingFormComponent implements OnInit, OnDestroy, OnChanges {
 	private readonly formService = inject(SubscriptionFormService);

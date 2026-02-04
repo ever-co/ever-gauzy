@@ -8,9 +8,10 @@ import { RequestQuery } from '../../+state/request/request.query';
 import { IStatisticItem, StatisticComponent } from '../../shared/ui/statistic/statistic.component';
 import { TaskStatisticsAdapter } from '../../shared/utils/adapters/task.adapter';
 import { NbCardModule } from '@nebular/theme';
-import { NoDataMessageModule } from '../../../time-tracker/no-data-message/no-data-message.module';
+
 import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
+import { NoDataMessageComponent } from '../../../time-tracker/no-data-message/no-data-message.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -18,7 +19,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     templateUrl: './tasks.component.html',
     styleUrls: ['./tasks.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, StatisticComponent, NoDataMessageModule, AsyncPipe, TranslatePipe]
+    imports: [NbCardModule, StatisticComponent, NoDataMessageComponent, AsyncPipe, TranslatePipe]
 })
 export class TasksComponent implements OnInit {
 	constructor(

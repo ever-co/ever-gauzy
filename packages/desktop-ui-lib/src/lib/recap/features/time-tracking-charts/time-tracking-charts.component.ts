@@ -11,11 +11,12 @@ import { RequestQuery } from '../../+state/request/request.query';
 import { IChartData } from '../../shared/utils/adapters/chart.adapter';
 import { NbCardModule, NbBadgeModule } from '@nebular/theme';
 import { BarChartModule } from '@swimlane/ngx-charts';
-import { NoDataMessageModule } from '../../../time-tracker/no-data-message/no-data-message.module';
+
 import { AsyncPipe, PercentPipe } from '@angular/common';
 import { PipeModule } from '../../../time-tracker/pipes/pipe.module';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PipesModule } from '../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
+import { NoDataMessageComponent } from '../../../time-tracker/no-data-message/no-data-message.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,7 +24,7 @@ import { PipesModule } from '../../../../../../ui-core/shared/src/lib/pipes/pipe
     templateUrl: './time-tracking-charts.component.html',
     styleUrls: ['./time-tracking-charts.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, BarChartModule, NbBadgeModule, NoDataMessageModule, AsyncPipe, PercentPipe, PipeModule, TranslatePipe, PipesModule]
+    imports: [NbCardModule, BarChartModule, NbBadgeModule, NoDataMessageComponent, AsyncPipe, PercentPipe, PipeModule, TranslatePipe, PipesModule]
 })
 export class TimeTrackingChartsComponent implements OnInit {
 	private readonly _chartData$: BehaviorSubject<IChartData[]> = new BehaviorSubject([]);

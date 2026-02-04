@@ -20,7 +20,7 @@ import {
 	NbStepperModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+
 import { LanguageModule } from '../language/language.module';
 import { SslModule } from '../settings/ssl';
 import { SetupService } from './setup.service';
@@ -28,28 +28,27 @@ import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
     imports: [
-        CommonModule,
-        NbLayoutModule,
-        NbCardModule,
-        NbToggleModule,
-        NbSelectModule,
-        NbInputModule,
-        NbButtonModule,
-        FormsModule,
-        NbSpinnerModule,
-        NbCheckboxModule,
-        NbIconModule,
-        NbTablerIconsModule,
-        NbStepperModule,
-        NbRadioModule,
-        NbProgressBarModule,
-        NbFormFieldModule,
-        NbDialogModule,
-        DesktopDirectiveModule,
-        LanguageModule.forChild(),
-        SslModule,
-        SetupComponent
-    ],
+    CommonModule,
+    NbLayoutModule,
+    NbCardModule,
+    NbToggleModule,
+    NbSelectModule,
+    NbInputModule,
+    NbButtonModule,
+    FormsModule,
+    NbSpinnerModule,
+    NbCheckboxModule,
+    NbIconModule,
+    NbTablerIconsModule,
+    NbStepperModule,
+    NbRadioModule,
+    NbProgressBarModule,
+    NbFormFieldModule,
+    NbDialogModule,
+    LanguageModule.forChild(),
+    SslModule,
+    SetupComponent
+],
     exports: [SetupComponent],
     providers: [SetupService, NbDialogService]
 })

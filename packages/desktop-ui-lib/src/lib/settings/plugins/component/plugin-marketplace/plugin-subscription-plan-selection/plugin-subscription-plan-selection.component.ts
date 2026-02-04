@@ -34,9 +34,10 @@ import { IPlanComparisonResult, PlanActionType, PlanComparisonService } from './
 import { PlanFormatterService } from './services/plan-formatter.service';
 import { SubscriptionStatusBadgeComponent } from '../shared/components/subscription-status-badge/subscription-status-badge.component';
 import { PlanCardComponent } from './components/plan-card/plan-card.component';
-import { DesktopDirectiveModule } from '../../../../../directives/desktop-directive.module';
+
 import { SubscriptionPreviewComponent } from './components/subscription-preview/subscription-preview.component';
 import { AsyncPipe, TitleCasePipe } from '@angular/common';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 
 export interface IPluginSubscriptionPlanSelectionContext {
 	plugin: IPlugin;
@@ -64,7 +65,7 @@ export interface IPluginSubscriptionPlanSelectionResult {
     templateUrl: './plugin-subscription-plan-selection.component.html',
     styleUrls: ['./plugin-subscription-plan-selection.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbAlertModule, SubscriptionStatusBadgeComponent, FormsModule, ReactiveFormsModule, PlanCardComponent, NbButtonGroupModule, NbFormFieldModule, NbInputModule, DesktopDirectiveModule, NbCheckboxModule, SubscriptionPreviewComponent, AsyncPipe, TitleCasePipe]
+    imports: [NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbAlertModule, SubscriptionStatusBadgeComponent, FormsModule, ReactiveFormsModule, PlanCardComponent, NbButtonGroupModule, NbFormFieldModule, NbInputModule, SpinnerButtonDirective, NbCheckboxModule, SubscriptionPreviewComponent, AsyncPipe, TitleCasePipe]
 })
 export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestroy {
 	@Input() plugin: IPlugin;

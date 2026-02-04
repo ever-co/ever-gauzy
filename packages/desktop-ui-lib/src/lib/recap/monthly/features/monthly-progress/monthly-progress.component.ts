@@ -4,11 +4,12 @@ import { map, tap } from 'rxjs';
 import { MonthlyRecapService } from '../../+state/monthly.service';
 import { updateMonthWeeks, weekDateRange } from '../../../shared/features/date-range-picker';
 import { ProgressStatusComponent } from '../../../shared/ui/progress-status/progress-status.component';
-import { NoDataMessageModule } from '../../../../time-tracker/no-data-message/no-data-message.module';
+
 import { AsyncPipe } from '@angular/common';
 import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PipesModule } from '../../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
+import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
 
 export interface IMonthWeekdays {
 	week: string;
@@ -20,7 +21,7 @@ export interface IMonthWeekdays {
     templateUrl: './monthly-progress.component.html',
     styleUrls: ['./monthly-progress.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ProgressStatusComponent, NoDataMessageModule, AsyncPipe, PipeModule, TranslatePipe, PipesModule]
+    imports: [ProgressStatusComponent, NoDataMessageComponent, AsyncPipe, PipeModule, TranslatePipe, PipesModule]
 })
 export class MonthlyProgressComponent {
 	public monthWeekdays: IMonthWeekdays[] = [];

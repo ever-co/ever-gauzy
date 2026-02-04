@@ -22,10 +22,10 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+
 import { LanguageModule } from '../language/language.module';
 import { Store } from '../services';
-import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.module';
+
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { TaskRenderModule } from '../time-tracker/task-render';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
@@ -34,33 +34,31 @@ import { SslModule } from './ssl';
 
 @NgModule({
     imports: [
-        CommonModule,
-        NbLayoutModule,
-        NbSidebarModule,
-        NbMenuModule.forRoot(),
-        NbCardModule,
-        NbIconModule,
-        NbListModule,
-        NbSelectModule,
-        NbFormFieldModule,
-        FormsModule,
-        NbToggleModule,
-        NbInputModule,
-        NbButtonModule,
-        NbAlertModule,
-        NbProgressBarModule,
-        NbTabsetModule,
-        NbAccordionModule,
-        NbTooltipModule,
-        NbSpinnerModule,
-        DesktopDirectiveModule,
-        LanguageModule.forChild(),
-        TaskRenderModule,
-        SslModule,
-        PipeModule,
-        SwitchThemeModule,
-        SettingsComponent
-    ],
+    CommonModule,
+    NbLayoutModule,
+    NbSidebarModule,
+    NbMenuModule.forRoot(),
+    NbCardModule,
+    NbIconModule,
+    NbListModule,
+    NbSelectModule,
+    NbFormFieldModule,
+    FormsModule,
+    NbToggleModule,
+    NbInputModule,
+    NbButtonModule,
+    NbAlertModule,
+    NbProgressBarModule,
+    NbTabsetModule,
+    NbAccordionModule,
+    NbTooltipModule,
+    NbSpinnerModule,
+    LanguageModule.forChild(),
+    TaskRenderModule,
+    SslModule,
+    PipeModule,
+    SettingsComponent
+],
     providers: [NbToastrService, TimeTrackerService, NbDialogService, Store],
     exports: [SettingsComponent]
 })

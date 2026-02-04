@@ -24,8 +24,9 @@ import {
 	PluginSettingType
 } from '../../../services/plugin-settings.service';
 import { CategorySelectorComponent } from '../plugin-marketplace-item/category-selector/category-selector.component';
-import { DesktopDirectiveModule } from '../../../../../directives/desktop-directive.module';
+
 import { AsyncPipe } from '@angular/common';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 
 export interface PluginSettingsDialogData {
 	plugin: IPlugin;
@@ -42,7 +43,7 @@ export interface PluginSettingsDialogData {
     templateUrl: './plugin-settings-management.component.html',
     styleUrls: ['./plugin-settings-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, NbIconModule, DesktopDirectiveModule, NbButtonModule, NbTooltipModule, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, CategorySelectorComponent, NbBadgeModule, NbToggleModule, NbSelectModule, NbOptionModule, AsyncPipe]
+    imports: [NbCardModule, NbIconModule, SpinnerButtonDirective, NbButtonModule, NbTooltipModule, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, CategorySelectorComponent, NbBadgeModule, NbToggleModule, NbSelectModule, NbOptionModule, AsyncPipe]
 })
 export class PluginSettingsManagementComponent implements OnInit, OnDestroy, AfterViewInit {
 	public plugin: IPlugin;
