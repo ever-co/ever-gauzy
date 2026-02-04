@@ -1,7 +1,7 @@
 import { JoinTable, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ID, IEmployee, IHelpCenter, IHelpCenterArticle, IHelpCenterAuthor, IOrganizationProject, ITag } from '@gauzy/contracts';
+import { ID, IEmployee, IHelpCenter, IHelpCenterArticle, IHelpCenterArticleVersion, IHelpCenterAuthor, IOrganizationProject, ITag, JsonData } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ColumnIndex,
@@ -15,7 +15,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
-import { HelpCenter, HelpCenterAuthor } from './../entities';
+import { HelpCenter, HelpCenterArticleVersion, HelpCenterAuthor } from './../entities';
 import { MikroOrmHelpCenterArticleRepository } from './repository/mikro-orm-help-center-article.repository';
 
 @MultiORMEntity('knowledge_base_article', { mikroOrmRepository: () => MikroOrmHelpCenterArticleRepository })
@@ -63,7 +63,7 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
-	descriptionJson?: object;
+	descriptionJson?: JsonData;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -95,8 +95,12 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 
 	/*
 	|--------------------------------------------------------------------------
-	| @ManyToOne - Category (HelpCenter)
+	| @ManyToOne
 	|--------------------------------------------------------------------------
+	*/
+
+	/** 
+	 * Category (HelpCenter) 
 	*/
 	@MultiORMManyToOne(() => HelpCenter, (center) => center.articles, {
 		onDelete: 'CASCADE'
@@ -110,10 +114,8 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	@MultiORMColumn({ relationId: true })
 	categoryId: string;
 
-	/*
-	|--------------------------------------------------------------------------
-	| @ManyToOne - Parent-child hierarchy (self-referencing)
-	|--------------------------------------------------------------------------
+	/** 
+	 * Parent-child hierarchy (self-referencing) 
 	*/
 	@MultiORMManyToOne(() => HelpCenterArticle, (article) => article.children, {
 		nullable: true,
@@ -129,10 +131,8 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: ID;
 
-	/*
-	|--------------------------------------------------------------------------
-	| @ManyToOne - Owner (Employee)
-	|--------------------------------------------------------------------------
+	/** 
+	 * Owner (Employee) 
 	*/
 	@MultiORMManyToOne(() => Employee, {
 		nullable: true,
@@ -148,10 +148,8 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	@MultiORMColumn({ nullable: true, relationId: true })
 	ownedById?: ID;
 
-	/*
-	|--------------------------------------------------------------------------
-	| @ManyToOne - Project relation
-	|--------------------------------------------------------------------------
+	/** 
+	 * Project relation 
 	*/
 	@MultiORMManyToOne(() => OrganizationProject, {
 		nullable: true,
@@ -169,26 +167,39 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 
 	/*
 	|--------------------------------------------------------------------------
-	| @OneToMany - Children articles
+	| @OneToMany
 	|--------------------------------------------------------------------------
+	*/
+	/** 
+	 * Children articles 
 	*/
 	@MultiORMOneToMany(() => HelpCenterArticle, (article) => article.parent)
 	children?: IHelpCenterArticle[];
 
-	/*
-	|--------------------------------------------------------------------------
-	| @OneToMany - Authors
-	|--------------------------------------------------------------------------
+	/** 
+	 * Authors 
 	*/
 	@MultiORMOneToMany(() => HelpCenterAuthor, (author) => author.article, {
 		cascade: true
 	})
 	authors?: IHelpCenterAuthor[];
 
+	/** 
+	 * Versions 
+	*/
+	@MultiORMOneToMany(() => HelpCenterArticleVersion, (version) => version.article, {
+		cascade: true
+	})
+	versions?: IHelpCenterArticleVersion[];
+
 	/*
 	|--------------------------------------------------------------------------
-	| @ManyToMany - Tags
+	| @ManyToMany
 	|--------------------------------------------------------------------------
+	*/
+
+	/** 
+	 * Tags 
 	*/
 	@MultiORMManyToMany(() => Tag, {
 		/**  Database cascade action on update. */

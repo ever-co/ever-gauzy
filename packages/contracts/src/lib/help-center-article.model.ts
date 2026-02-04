@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { ITag } from './tag.model';
@@ -18,7 +18,7 @@ export interface IHelpCenterArticle
 
 	// Rich content for collaborative articles
 	descriptionHtml?: string;
-	descriptionJson?: object;
+	descriptionJson?: JsonData;
 
 	// Parent-child hierarchy (self-referencing)
 	parentId?: ID;
@@ -42,6 +42,31 @@ export interface IHelpCenterArticle
 
 	// Tags
 	tags?: ITag[];
+
+	// Versions
+	versions?: IHelpCenterArticleVersion[];
+}
+
+/**
+ * Article version
+ * This is used to track changes to articles over time
+ */
+export interface IHelpCenterArticleVersion
+	extends IBasePerTenantAndOrganizationEntityModel {
+	// Article relation
+	articleId: ID;
+	article?: IHelpCenterArticle;
+
+	// Who created this version
+	ownedById: ID;
+	ownedBy?: IEmployee;
+
+	// When this version was saved
+	lastSavedAt: Date;
+
+	// Content snapshot
+	descriptionHtml?: string;
+	descriptionJson?: object;
 }
 
 export interface IHelpCenterAuthor
