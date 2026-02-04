@@ -9,7 +9,7 @@
 		   class="social-link">
 			<ng-container *ngTemplateOutlet="linkContentEl; context: { $implicit: socialLink }"></ng-container>
 		</a>
-		} `@if` (socialLink.url) {
+		} @if (socialLink.url) {
 		<a [attr.href]="socialLink.url"
 		   [attr.target]="socialLink.target"
 		   [attr.rel]="socialLink.target === '_blank' ? 'noopener noreferrer' : null"
