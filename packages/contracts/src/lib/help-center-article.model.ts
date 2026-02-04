@@ -36,7 +36,6 @@ export interface IHelpCenterArticle
 	// Metadata
 	isLocked?: boolean;
 	color?: string;
-	order?: number;
 
 	// External integration
 	externalId?: string;
