@@ -2,6 +2,7 @@ import { JoinTable, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ID, IEmployee, IHelpCenter, IHelpCenterArticle, IHelpCenterAuthor, IOrganizationProject, ITag } from '@gauzy/contracts';
+import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ColumnIndex,
 	Employee,
@@ -61,7 +62,7 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: 'json', nullable: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	descriptionJson?: object;
 
 	/*
@@ -91,12 +92,6 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	@IsString()
 	@MultiORMColumn({ nullable: true })
 	externalId?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsString()
-	@MultiORMColumn({ nullable: true })
-	externalSource?: string;
 
 	/*
 	|--------------------------------------------------------------------------

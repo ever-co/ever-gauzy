@@ -39,7 +39,6 @@ export interface IHelpCenterArticle
 
 	// External integration
 	externalId?: string;
-	externalSource?: string;
 
 	// Tags
 	tags?: ITag[];
