@@ -3,12 +3,19 @@
 	{{ 'LOGIN_PAGE.OR_SIGN_IN_WITH' | translate }}
 	<div class="socials">
 		@for (socialLink of socialLinks; track socialLink) { @if (socialLink.link) {
-		<a [routerLink]="socialLink.link" [attr.target]="socialLink.target" class="social-link">
+		<a [routerLink]="socialLink.link"
+		   [attr.target]="socialLink.target"
+		   [attr.rel]="socialLink.target === '_blank' ? 'noopener noreferrer' : null"
+		   class="social-link">
 			<ng-container *ngTemplateOutlet="linkContentEl; context: { $implicit: socialLink }"></ng-container>
 		</a>
-		} @if (socialLink.url) {
-		<a [attr.href]="socialLink.url" [attr.target]="socialLink.target" class="social-link">
+		} `@if` (socialLink.url) {
+		<a [attr.href]="socialLink.url"
+		   [attr.target]="socialLink.target"
+		   [attr.rel]="socialLink.target === '_blank' ? 'noopener noreferrer' : null"
+		   class="social-link">
 			<ng-container *ngTemplateOutlet="linkContentEl; context: { $implicit: socialLink }"></ng-container>
+		</a>
 		</a>
 		} }
 	</div>
