@@ -28,85 +28,46 @@ import { RecapService } from './+state/recap.service';
 import { RecapStore } from './+state/recap.store';
 import { RequestQuery } from './+state/request/request.query';
 import { RequestStore } from './+state/request/request.store';
-import { ActivitiesComponent } from './features/activities/activities.component';
-import { FilterComponent } from './features/filter/filter.component';
-import { ProjectsComponent } from './features/projects/projects.component';
-import { RecapComponent } from './features/recap/recap.component';
-import { TasksComponent } from './features/tasks/tasks.component';
-import { TimeTrackingChartsComponent } from './features/time-tracking-charts/time-tracking-charts.component';
-import { MonthlyCalendarComponent } from './monthly/features/monthly-calendar/monthly-calendar.component';
-import { MonthlyProgressComponent } from './monthly/features/monthly-progress/monthly-progress.component';
-import { MonthlyRecapComponent } from './monthly/features/monthly-recap/monthly-recap.component';
-import { MonthlyStatisticComponent } from './monthly/features/monthly-statistic/monthly-statistic.component';
+import { recapRoutes } from './recap-routing.module';
 import { ActivityService, TimesheetService, TimesheetStatisticsService } from './services/timesheet';
-import { ActivityReportComponent } from './shared/features/activity-report/activity-report.component';
 import { DateRangePickerModule } from './shared/features/date-range-picker/date-range-picker.module';
 import { GauzyFiltersModule } from './shared/features/gauzy-filters';
-import { SegmentedControlComponent } from './shared/features/segmented-control/segmented-control.component';
-import { AutoRefreshComponent } from './shared/ui/auto-refresh/auto-refresh.component';
-
-
-import { StatisticComponent } from './shared/ui/statistic/statistic.component';
-import { WeeklyCalendarComponent } from './weekly/features/weekly-calendar/weekly-calendar.component';
-import { WeeklyProgressComponent } from './weekly/features/weekly-progress/weekly-progress.component';
-import { WeeklyRecapComponent } from './weekly/features/weekly-recap/weekly-recap.component';
-import { WeeklyStatisticComponent } from './weekly/features/weekly-statistic/weekly-statistic.component';
-import { recapRoutes } from './recap-routing.module';
 
 @NgModule({
-    imports: [
-    CommonModule,
-    NbLayoutModule,
-    NbCardModule,
-    NbListModule,
-    NbProgressBarModule,
-    NbIconModule,
-    NbButtonModule,
-    NbPopoverModule,
-    NbTableModule,
-    NgxChartsModule,
-    NbRouteTabsetModule,
-    PipeModule,
-    DateRangePickerModule,
-    GauzyFiltersModule,
-    NbBadgeModule,
-    NbToggleModule,
-    NbSpinnerModule,
-    LanguageModule.forChild(),
-    RouterModule.forChild(recapRoutes),
-    RecapComponent,
-    ProjectsComponent,
-    TasksComponent,
-    ActivitiesComponent,
-    TimeTrackingChartsComponent,
-    FilterComponent,
-    StatisticComponent,
-    AutoRefreshComponent,
-    ActivityReportComponent,
-    SegmentedControlComponent,
-    WeeklyRecapComponent,
-    WeeklyCalendarComponent,
-    WeeklyProgressComponent,
-    WeeklyStatisticComponent,
-    MonthlyRecapComponent,
-    MonthlyCalendarComponent,
-    MonthlyProgressComponent,
-    MonthlyStatisticComponent
-],
-    providers: [
-        RecapQuery,
-        RecapStore,
-        RecapService,
-        ToastrNotificationService,
-        TimesheetService,
-        TimesheetStatisticsService,
-        ActivityService,
-        AutoRefreshService,
-        AutoRefreshQuery,
-        AutoRefreshStore,
-        RequestQuery,
-        RequestStore
-    ],
-    exports: [RecapComponent, WeeklyRecapComponent, MonthlyRecapComponent]
+	imports: [
+		CommonModule,
+		NbLayoutModule,
+		NbCardModule,
+		NbListModule,
+		NbProgressBarModule,
+		NbIconModule,
+		NbButtonModule,
+		NbPopoverModule,
+		NbTableModule,
+		NgxChartsModule,
+		NbRouteTabsetModule,
+		PipeModule,
+		DateRangePickerModule,
+		GauzyFiltersModule,
+		NbBadgeModule,
+		NbToggleModule,
+		NbSpinnerModule,
+		LanguageModule.forChild(),
+		RouterModule.forChild(recapRoutes)
+	],
+	providers: [
+		RecapQuery,
+		RecapStore,
+		RecapService,
+		ToastrNotificationService,
+		TimesheetService,
+		TimesheetStatisticsService,
+		ActivityService,
+		AutoRefreshService,
+		AutoRefreshQuery,
+		AutoRefreshStore,
+		RequestQuery,
+		RequestStore
+	]
 })
 export class RecapModule {}
