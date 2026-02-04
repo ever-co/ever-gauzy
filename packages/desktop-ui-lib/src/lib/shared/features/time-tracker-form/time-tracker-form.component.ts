@@ -4,13 +4,20 @@ import { Store } from '../../../services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { IgnitionState, TimerStartMode, TimeTrackerStore } from '../../../time-tracker/+state/time-tracker.store';
 import { TeamSelectorService } from './../team-selector/+state/team-selector.service';
+import { NbIconModule } from '@nebular/theme';
+import { ClientSelectorComponent } from '../client-selector/client-selector.component';
+import { ProjectSelectorComponent } from '../project-selector/project-selector.component';
+import { TeamSelectorComponent } from '../team-selector/team-selector.component';
+import { TaskSelectorComponent } from '../task-selector/task-selector.component';
+import { NoteComponent } from '../note/note.component';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
     selector: 'gauzy-time-tracker-form',
     templateUrl: './time-tracker-form.component.html',
     styleUrls: ['./time-tracker-form.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbIconModule, ClientSelectorComponent, ProjectSelectorComponent, TeamSelectorComponent, TaskSelectorComponent, NoteComponent, AsyncPipe]
 })
 export class TimeTrackerFormComponent {
 	constructor(

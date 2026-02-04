@@ -18,24 +18,24 @@ import { LanguageModule } from '../../language/language.module';
 import { DesktopDirectiveModule } from '../../directives/desktop-directive.module';
 
 @NgModule({
-	declarations: [SslComponent],
-	imports: [
-		CommonModule,
-		NbMenuModule.forRoot(),
-		NbCardModule,
-		NbIconModule,
-		NbSelectModule,
-		FormsModule,
-		NbToggleModule,
-		NbInputModule,
-		NbButtonModule,
-		NbTooltipModule,
-		NbSpinnerModule,
-		LanguageModule,
-		TranslateModule,
-		DesktopDirectiveModule
-	],
-	providers: [],
-	exports: [SslComponent]
+    imports: [
+        CommonModule,
+        NbMenuModule.forRoot(),
+        NbCardModule,
+        NbIconModule,
+        NbSelectModule,
+        FormsModule,
+        NbToggleModule,
+        NbInputModule,
+        NbButtonModule,
+        NbTooltipModule,
+        NbSpinnerModule,
+        LanguageModule,
+        TranslateModule,
+        DesktopDirectiveModule,
+        SslComponent
+    ],
+    providers: [],
+    exports: [SslComponent]
 })
 export class SslModule {}

@@ -5,8 +5,12 @@ import { AutoRefreshService } from '../../+state/auto-refresh/auto-refresh.servi
 import { RecapQuery } from '../../+state/recap.query';
 import { RecapService } from '../../+state/recap.service';
 import { RequestQuery } from '../../+state/request/request.query';
-import { IStatisticItem } from '../../shared/ui/statistic/statistic.component';
+import { IStatisticItem, StatisticComponent } from '../../shared/ui/statistic/statistic.component';
 import { ProjectStatisticsAdapter } from '../../shared/utils/adapters/project.adapter';
+import { NbCardModule } from '@nebular/theme';
+import { NoDataMessageModule } from '../../../time-tracker/no-data-message/no-data-message.module';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,7 +18,7 @@ import { ProjectStatisticsAdapter } from '../../shared/utils/adapters/project.ad
     templateUrl: './projects.component.html',
     styleUrls: ['./projects.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbCardModule, StatisticComponent, NoDataMessageModule, AsyncPipe, TranslatePipe]
 })
 export class ProjectsComponent implements OnInit {
 	constructor(

@@ -11,16 +11,16 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-	declarations: [AlertComponent],
-	imports: [
-		CommonModule,
-		NbLayoutModule,
-		NbCardModule,
-		NbIconModule,
-		NbButtonModule,
-		NbAlertModule,
-		TranslateModule
-	],
+    imports: [
+        CommonModule,
+        NbLayoutModule,
+        NbCardModule,
+        NbIconModule,
+        NbButtonModule,
+        NbAlertModule,
+        TranslateModule,
+        AlertComponent
+    ],
     exports: [AlertComponent]
 })
 export class AlertModule {}

@@ -11,17 +11,16 @@ import { ClientSelectorStore } from './+state/client-selector.store';
 import { ClientSelectorComponent } from './client-selector.component';
 
 @NgModule({
-	declarations: [ClientSelectorComponent],
-	exports: [ClientSelectorComponent],
-	imports: [CommonModule, SelectModule],
-	providers: [
-		ClientSelectorStore,
-		ClientSelectorQuery,
-		ClientSelectorService,
-		ProjectSelectorService,
-		TaskSelectorService,
-		TeamSelectorService,
-		TimeTrackerQuery
-	]
+    exports: [ClientSelectorComponent],
+    imports: [CommonModule, SelectModule, ClientSelectorComponent],
+    providers: [
+        ClientSelectorStore,
+        ClientSelectorQuery,
+        ClientSelectorService,
+        ProjectSelectorService,
+        TaskSelectorService,
+        TeamSelectorService,
+        TimeTrackerQuery
+    ]
 })
 export class ClientSelectorModule {}

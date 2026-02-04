@@ -1,9 +1,13 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ChangeContext, Options } from '@angular-slider/ngx-slider';
+import { ChangeContext, Options, NgxSliderModule } from '@angular-slider/ngx-slider';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { tap } from 'rxjs';
 import { ITimeLogFilters, PermissionsEnum, TimeFormatEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { NbCardModule, NbButtonModule, NbIconModule, NbSelectModule, NbOptionModule, NbPopoverModule } from '@nebular/theme';
+import { TitleCasePipe, KeyValuePipe } from '@angular/common';
+import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
+import { PipesModule } from '../../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -11,7 +15,7 @@ import { ITimeLogFilters, PermissionsEnum, TimeFormatEnum, TimeLogSourceEnum, Ti
     templateUrl: './gauzy-filters.component.html',
     styleUrls: ['./gauzy-filters.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbCardModule, NbButtonModule, NbIconModule, NbSelectModule, NbOptionModule, NbPopoverModule, NgxSliderModule, TitleCasePipe, KeyValuePipe, TranslatePipe, PipeModule, PipesModule]
 })
 export class GauzyFiltersComponent implements OnInit, OnDestroy {
 	// declaration of variables

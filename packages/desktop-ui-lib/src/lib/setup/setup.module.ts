@@ -27,30 +27,30 @@ import { SetupService } from './setup.service';
 import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
-	declarations: [SetupComponent],
-	imports: [
-		CommonModule,
-		NbLayoutModule,
-		NbCardModule,
-		NbToggleModule,
-		NbSelectModule,
-		NbInputModule,
-		NbButtonModule,
-		FormsModule,
-		NbSpinnerModule,
-		NbCheckboxModule,
-		NbIconModule,
-		NbTablerIconsModule,
-		NbStepperModule,
-		NbRadioModule,
-		NbProgressBarModule,
-		NbFormFieldModule,
-		NbDialogModule,
-		DesktopDirectiveModule,
-		LanguageModule.forChild(),
-		SslModule
-	],
-	exports: [SetupComponent],
-	providers: [SetupService, NbDialogService]
+    imports: [
+        CommonModule,
+        NbLayoutModule,
+        NbCardModule,
+        NbToggleModule,
+        NbSelectModule,
+        NbInputModule,
+        NbButtonModule,
+        FormsModule,
+        NbSpinnerModule,
+        NbCheckboxModule,
+        NbIconModule,
+        NbTablerIconsModule,
+        NbStepperModule,
+        NbRadioModule,
+        NbProgressBarModule,
+        NbFormFieldModule,
+        NbDialogModule,
+        DesktopDirectiveModule,
+        LanguageModule.forChild(),
+        SslModule,
+        SetupComponent
+    ],
+    exports: [SetupComponent],
+    providers: [SetupService, NbDialogService]
 })
 export class SetupModule {}

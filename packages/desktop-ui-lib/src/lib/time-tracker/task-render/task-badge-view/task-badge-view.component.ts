@@ -4,6 +4,9 @@ import { Observable } from 'rxjs';
 import { ITaskPriority, ITaskSize, ITaskStatus } from '@gauzy/contracts';
 import { ColorAdapter } from '../../../utils';
 import { StatusIconService } from '../../../services/status-icon-service';
+import { AsyncPipe, TitleCasePipe } from '@angular/common';
+import { ReplacePipe } from '../../pipes/replace.pipe';
+import { PipesModule } from '../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
 
 export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
 
@@ -11,7 +14,7 @@ export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
     selector: 'gauzy-task-badge-view',
     templateUrl: './task-badge-view.component.html',
     styleUrls: ['./task-badge-view.component.scss'],
-    standalone: false
+    imports: [AsyncPipe, TitleCasePipe, ReplacePipe, PipesModule]
 })
 export class TaskBadgeViewComponent {
 	constructor(private _statusIconService: StatusIconService) {

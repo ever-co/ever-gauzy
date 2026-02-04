@@ -2,13 +2,15 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { map } from 'rxjs';
 import { WeeklyRecapService } from '../../+state/weekly.service';
 import { IDateRangePicker } from '../../../shared/features/date-range-picker/date-picker.interface';
+import { DateRangePickerComponent } from '../../../shared/features/date-range-picker/date-range-picker.component';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
     selector: 'ngx-weekly-calendar',
     templateUrl: './weekly-calendar.component.html',
     styleUrls: ['./weekly-calendar.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [DateRangePickerComponent, AsyncPipe]
 })
 export class WeeklyCalendarComponent {
 	constructor(private readonly weeklyRecapService: WeeklyRecapService) {}

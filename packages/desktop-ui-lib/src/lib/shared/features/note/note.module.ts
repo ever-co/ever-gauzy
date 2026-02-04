@@ -8,9 +8,8 @@ import { NoteService } from './+state/note.service';
 import { NoteComponent } from './note.component';
 
 @NgModule({
-	declarations: [NoteComponent],
-	exports: [NoteComponent],
-	imports: [CommonModule, TextAreaModule],
-	providers: [NoteSelectorStore, NoteSelectorQuery, NoteService, TimeTrackerQuery]
+    exports: [NoteComponent],
+    imports: [CommonModule, TextAreaModule, NoteComponent],
+    providers: [NoteSelectorStore, NoteSelectorQuery, NoteService, TimeTrackerQuery]
 })
 export class NoteModule {}

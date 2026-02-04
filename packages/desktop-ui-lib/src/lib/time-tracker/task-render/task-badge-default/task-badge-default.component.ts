@@ -1,12 +1,15 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TaskStatusEnum } from '@gauzy/contracts';
-import { NbComponentStatus } from '@nebular/theme';
+import { NbComponentStatus, NbBadgeModule } from '@nebular/theme';
+import { TitleCasePipe } from '@angular/common';
+import { ReplacePipe } from '../../pipes/replace.pipe';
+import { PipesModule } from '../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
 
 @Component({
     selector: 'gauzy-task-badge-default',
     templateUrl: './task-badge-default.component.html',
     styleUrls: ['./task-badge-default.component.scss'],
-    standalone: false
+    imports: [NbBadgeModule, TitleCasePipe, ReplacePipe, PipesModule]
 })
 export class TaskBadgeDefaultComponent implements OnInit {
 	@Input() taskBadge: string;

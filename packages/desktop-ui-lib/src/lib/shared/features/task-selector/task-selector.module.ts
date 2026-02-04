@@ -8,9 +8,8 @@ import { TaskSelectorStore } from './+state/task-selector.store';
 import { TaskSelectorComponent } from './task-selector.component';
 
 @NgModule({
-	declarations: [TaskSelectorComponent],
-	exports: [TaskSelectorComponent],
-	imports: [CommonModule, SelectModule],
-	providers: [TaskSelectorStore, TaskSelectorQuery, TaskSelectorService, TimeTrackerQuery]
+    exports: [TaskSelectorComponent],
+    imports: [CommonModule, SelectModule, TaskSelectorComponent],
+    providers: [TaskSelectorStore, TaskSelectorQuery, TaskSelectorService, TimeTrackerQuery]
 })
 export class TaskSelectorModule {}

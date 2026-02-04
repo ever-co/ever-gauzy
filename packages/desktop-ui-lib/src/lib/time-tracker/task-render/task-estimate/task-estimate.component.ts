@@ -4,13 +4,19 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TaskStatusEnum } from '@gauzy/contracts';
+import { NbIconModule } from '@nebular/theme';
+import { TaskEstimateInputComponent } from './task-estimate-input/task-estimate-input.component';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
+import { DurationFormatPipe } from '../../pipes/duration-format.pipe';
+import { PipesModule } from '../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-task-estimate',
     templateUrl: './task-estimate.component.html',
     styleUrls: ['./task-estimate.component.scss'],
-    standalone: false
+    imports: [NbIconModule, TaskEstimateInputComponent, AsyncPipe, TranslatePipe, DurationFormatPipe, PipesModule]
 })
 export class TaskEstimateComponent {
 	public isEdit = false;

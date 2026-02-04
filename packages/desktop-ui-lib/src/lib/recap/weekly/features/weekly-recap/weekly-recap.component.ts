@@ -5,6 +5,12 @@ import { WeeklyRecapService } from '../../+state/weekly.service';
 import { AutoRefreshService } from '../../../+state/auto-refresh/auto-refresh.service';
 import { RequestQuery } from '../../../+state/request/request.query';
 import { LoggerService } from '../../../../electron/services';
+import { NbCardModule, NbIconModule } from '@nebular/theme';
+import { WeeklyCalendarComponent } from '../weekly-calendar/weekly-calendar.component';
+import { FilterComponent } from '../../../features/filter/filter.component';
+import { WeeklyStatisticComponent } from '../weekly-statistic/weekly-statistic.component';
+import { WeeklyProgressComponent } from '../weekly-progress/weekly-progress.component';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -12,7 +18,7 @@ import { LoggerService } from '../../../../electron/services';
     templateUrl: './weekly-recap.component.html',
     styleUrls: ['./weekly-recap.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbCardModule, NbIconModule, WeeklyCalendarComponent, FilterComponent, WeeklyStatisticComponent, WeeklyProgressComponent, AsyncPipe]
 })
 export class WeeklyRecapComponent implements OnInit {
 	public isLoading$ = new BehaviorSubject(false);

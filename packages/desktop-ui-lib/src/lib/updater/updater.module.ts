@@ -11,15 +11,15 @@ import {
 } from '@nebular/theme';
 
 @NgModule({
-	declarations: [UpdaterComponent],
-	imports: [
-		CommonModule,
-		NbLayoutModule,
-		NbCardModule,
-		NbIconModule,
-		NbButtonModule,
-		NbAlertModule,
-		NbAccordionModule
-	]
+    imports: [
+        CommonModule,
+        NbLayoutModule,
+        NbCardModule,
+        NbIconModule,
+        NbButtonModule,
+        NbAlertModule,
+        NbAccordionModule,
+        UpdaterComponent
+    ]
 })
 export class UpdaterModule {}

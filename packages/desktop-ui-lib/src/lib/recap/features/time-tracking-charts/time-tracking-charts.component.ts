@@ -9,14 +9,21 @@ import { RecapQuery } from '../../+state/recap.query';
 import { RecapService } from '../../+state/recap.service';
 import { RequestQuery } from '../../+state/request/request.query';
 import { IChartData } from '../../shared/utils/adapters/chart.adapter';
+import { NbCardModule, NbBadgeModule } from '@nebular/theme';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { NoDataMessageModule } from '../../../time-tracker/no-data-message/no-data-message.module';
+import { AsyncPipe, PercentPipe } from '@angular/common';
+import { PipeModule } from '../../../time-tracker/pipes/pipe.module';
+import { TranslatePipe } from '@ngx-translate/core';
+import { PipesModule } from '../../../../../../ui-core/shared/src/lib/pipes/pipes.module';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-time-tracking-charts',
-	templateUrl: './time-tracking-charts.component.html',
-	styleUrls: ['./time-tracking-charts.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'ngx-time-tracking-charts',
+    templateUrl: './time-tracking-charts.component.html',
+    styleUrls: ['./time-tracking-charts.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, BarChartModule, NbBadgeModule, NoDataMessageModule, AsyncPipe, PercentPipe, PipeModule, TranslatePipe, PipesModule]
 })
 export class TimeTrackingChartsComponent implements OnInit {
 	private readonly _chartData$: BehaviorSubject<IChartData[]> = new BehaviorSubject([]);

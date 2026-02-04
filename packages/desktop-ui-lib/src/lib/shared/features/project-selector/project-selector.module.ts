@@ -10,16 +10,15 @@ import { ProjectSelectorStore } from './+state/project-selector.store';
 import { ProjectSelectorComponent } from './project-selector.component';
 
 @NgModule({
-	declarations: [ProjectSelectorComponent],
-	exports: [ProjectSelectorComponent],
-	imports: [CommonModule, SelectModule],
-	providers: [
-		ProjectSelectorStore,
-		ProjectSelectorQuery,
-		ProjectSelectorService,
-		TaskSelectorService,
-		TeamSelectorService,
-		TimeTrackerQuery
-	]
+    exports: [ProjectSelectorComponent],
+    imports: [CommonModule, SelectModule, ProjectSelectorComponent],
+    providers: [
+        ProjectSelectorStore,
+        ProjectSelectorQuery,
+        ProjectSelectorService,
+        TaskSelectorService,
+        TeamSelectorService,
+        TimeTrackerQuery
+    ]
 })
 export class ProjectSelectorModule {}

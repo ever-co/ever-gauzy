@@ -22,10 +22,10 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDialogRef, NbDialogService, NbIconLibraries, NbRouteTab, NbToastrService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService, NbIconLibraries, NbRouteTab, NbToastrService, NbLayoutModule, NbSpinnerModule, NbButtonModule, NbIconModule, NbCardModule, NbTooltipModule, NbToggleModule, NbRouteTabsetModule, NbBadgeModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment';
 import 'moment-duration-format';
 import {
@@ -85,6 +85,12 @@ import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { TimeTrackerService } from './time-tracker.service';
 import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
+import { NgClass, NgStyle, AsyncPipe } from '@angular/common';
+import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
+import { TimeTrackerStatusComponent } from './time-tracker-status/time-tracker-status.component';
+import { TimeTrackerFormComponent } from '../shared/features/time-tracker-form/time-tracker-form.component';
+import { ActivityWatchComponent } from '../integrations/activity-watch/view/activity-watch.component';
+import { HumanizePipe } from './pipes/humanize.pipe';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -94,17 +100,17 @@ enum TimerStartMode {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-desktop-time-tracker',
-	templateUrl: './time-tracker.component.html',
-	styleUrls: ['./time-tracker.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TimeTrackerComponent),
-			multi: true
-		}
-	],
-	standalone: false
+    selector: 'ngx-desktop-time-tracker',
+    templateUrl: './time-tracker.component.html',
+    styleUrls: ['./time-tracker.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeTrackerComponent),
+            multi: true
+        }
+    ],
+    imports: [NbLayoutModule, NbSpinnerModule, NbButtonModule, NbIconModule, NgClass, NbCardModule, OrganizationSelectorComponent, NgStyle, NbTooltipModule, TimeTrackerStatusComponent, TimeTrackerFormComponent, ActivityWatchComponent, NbToggleModule, NbRouteTabsetModule, NbBadgeModule, AsyncPipe, TranslatePipe, HumanizePipe]
 })
 export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _lastTotalWorkedToday$: BehaviorSubject<number> = new BehaviorSubject(0);

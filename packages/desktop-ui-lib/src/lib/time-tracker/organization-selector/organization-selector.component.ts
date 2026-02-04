@@ -4,12 +4,16 @@ import { uniq } from 'underscore';
 import { ElectronService } from '../../electron/services';
 import { Store } from '../../services';
 import { UserOrganizationService } from './user-organization.service';
+import { NgSelectComponent, NgOptionTemplateDirective, NgLabelTemplateDirective } from '@ng-select/ng-select';
+import { NbTooltipModule } from '@nebular/theme';
+import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
     selector: 'ngx-desktop-timer-organization-selector',
     templateUrl: './organization-selector.component.html',
     styleUrls: ['./organization-selector.component.scss'],
-    standalone: false
+    imports: [NgSelectComponent, NbTooltipModule, FormsModule, NgOptionTemplateDirective, NgLabelTemplateDirective, TranslatePipe]
 })
 export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 	public organizations: IOrganization[] = [];

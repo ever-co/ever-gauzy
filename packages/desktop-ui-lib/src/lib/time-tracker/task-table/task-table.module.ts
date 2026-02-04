@@ -29,37 +29,37 @@ import { TaskTableComponent } from './table/task-table.component';
 import { RouterModule } from '@angular/router';
 
 @NgModule({
-	declarations: [TaskTableComponent, SearchComponent, ActionButtonComponent],
-	exports: [TaskTableComponent],
-	imports: [
-		CommonModule,
-		PaginationModule,
-		NbButtonModule,
-		NbTooltipModule,
-		NbIconModule,
-		NbCardModule,
-		NbFormFieldModule,
-		NoDataMessageModule,
-		NbInputModule,
-		TaskSelectorModule,
-		ProjectSelectorModule,
-		TeamSelectorModule,
-		LanguageModule.forChild(),
-		Angular2SmartTableModule,
-		NbSpinnerModule,
-		RouterModule.forChild([{
-			path: '',
-			component: TaskTableComponent
-		}])
-	],
-	providers: [
-		ActionButtonStore,
-		SearchTermStore,
-		TaskTableStore,
-		ActionButtonQuery,
-		SearchTermQuery,
-		TaskTableQuery,
-		TaskCacheService
-	]
+    exports: [TaskTableComponent],
+    imports: [
+        CommonModule,
+        PaginationModule,
+        NbButtonModule,
+        NbTooltipModule,
+        NbIconModule,
+        NbCardModule,
+        NbFormFieldModule,
+        NoDataMessageModule,
+        NbInputModule,
+        TaskSelectorModule,
+        ProjectSelectorModule,
+        TeamSelectorModule,
+        LanguageModule.forChild(),
+        Angular2SmartTableModule,
+        NbSpinnerModule,
+        RouterModule.forChild([{
+                path: '',
+                component: TaskTableComponent
+            }]),
+        TaskTableComponent, SearchComponent, ActionButtonComponent
+    ],
+    providers: [
+        ActionButtonStore,
+        SearchTermStore,
+        TaskTableStore,
+        ActionButtonQuery,
+        SearchTermQuery,
+        TaskTableQuery,
+        TaskCacheService
+    ]
 })
 export class TaskTableModule {}

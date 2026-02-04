@@ -6,11 +6,11 @@ import { TranslateModule } from '@ngx-translate/core'; // Import ngx-translate M
 import { SwitchThemeComponent } from './switch-theme.component';
 
 @NgModule({
-    declarations: [SwitchThemeComponent],
     imports: [
         CommonModule,
         NbToggleModule,
-        TranslateModule
+        TranslateModule,
+        SwitchThemeComponent
     ],
     exports: [SwitchThemeComponent]
 })

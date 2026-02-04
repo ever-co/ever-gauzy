@@ -4,8 +4,7 @@ import { ScreenCaptureComponent } from './screen-capture.component';
 import { NbLayoutModule, NbCardModule } from '@nebular/theme';
 
 @NgModule({
-	declarations: [ScreenCaptureComponent],
-	imports: [CommonModule, NbLayoutModule, NbCardModule],
-	exports: [ScreenCaptureComponent],
+    imports: [CommonModule, NbLayoutModule, NbCardModule, ScreenCaptureComponent],
+    exports: [ScreenCaptureComponent],
 })
 export class ScreenCaptureModule {}

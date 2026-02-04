@@ -33,26 +33,26 @@ const shared = [
 ];
 
 @NgModule({
-	imports: [
-		CommonModule,
-		FormsModule,
-		RouterModule,
-		NbAlertModule,
-		NbAuthModule,
-		NbButtonModule,
-		NbCardModule,
-		NbCheckboxModule,
-		NbIconModule,
-		NbInputModule,
-		NbFormFieldModule,
-		DesktopDirectiveModule,
-		LanguageModule.forChild(),
-		ReactiveFormsModule,
-		SwitchThemeModule,
-		NbListModule,
-		AvatarModule
-	],
-	declarations: [LogoComponent, SocialLinksComponent, WorkspaceSelectionComponent, ...shared],
-	exports: [...shared]
+    imports: [
+        CommonModule,
+        FormsModule,
+        RouterModule,
+        NbAlertModule,
+        NbAuthModule,
+        NbButtonModule,
+        NbCardModule,
+        NbCheckboxModule,
+        NbIconModule,
+        NbInputModule,
+        NbFormFieldModule,
+        DesktopDirectiveModule,
+        LanguageModule.forChild(),
+        ReactiveFormsModule,
+        SwitchThemeModule,
+        NbListModule,
+        AvatarModule,
+        LogoComponent, SocialLinksComponent, WorkspaceSelectionComponent, ...shared
+    ],
+    exports: [...shared]
 })
 export class NgxLoginModule {}

@@ -4,8 +4,7 @@ import { NbProgressBarModule } from '@nebular/theme';
 import { ProgressStatusComponent } from './progress-status.component';
 
 @NgModule({
-	imports: [CommonModule, NbProgressBarModule],
-	declarations: [ProgressStatusComponent],
-	exports: [ProgressStatusComponent]
+    imports: [CommonModule, NbProgressBarModule, ProgressStatusComponent],
+    exports: [ProgressStatusComponent]
 })
 export class ProgressStatusModule {}

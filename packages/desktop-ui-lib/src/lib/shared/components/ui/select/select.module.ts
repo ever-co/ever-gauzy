@@ -7,8 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SelectComponent } from './select.component';
 
 @NgModule({
-	declarations: [SelectComponent],
-	exports: [SelectComponent],
-	imports: [CommonModule, TranslateModule, NgSelectModule, NbTooltipModule, FormsModule, ReactiveFormsModule]
+    exports: [SelectComponent],
+    imports: [CommonModule, TranslateModule, NgSelectModule, NbTooltipModule, FormsModule, ReactiveFormsModule, SelectComponent]
 })
 export class SelectModule {}

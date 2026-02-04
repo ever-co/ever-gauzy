@@ -10,16 +10,15 @@ import { TeamSelectorStore } from './+state/team-selector.store';
 import { TeamSelectorComponent } from './team-selector.component';
 
 @NgModule({
-	declarations: [TeamSelectorComponent],
-	exports: [TeamSelectorComponent],
-	imports: [CommonModule, SelectModule],
-	providers: [
-		TeamSelectorStore,
-		TeamSelectorQuery,
-		TeamSelectorService,
-		ProjectSelectorService,
-		TaskSelectorService,
-		TimeTrackerQuery
-	]
+    exports: [TeamSelectorComponent],
+    imports: [CommonModule, SelectModule, TeamSelectorComponent],
+    providers: [
+        TeamSelectorStore,
+        TeamSelectorQuery,
+        TeamSelectorService,
+        ProjectSelectorService,
+        TaskSelectorService,
+        TimeTrackerQuery
+    ]
 })
 export class TeamSelectorModule {}

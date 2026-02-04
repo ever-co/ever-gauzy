@@ -7,8 +7,8 @@ describe('ImageViewerComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [ImageViewerComponent],
-		}).compileComponents();
+    imports: [ImageViewerComponent],
+}).compileComponents();
 	});
 
 	beforeEach(() => {

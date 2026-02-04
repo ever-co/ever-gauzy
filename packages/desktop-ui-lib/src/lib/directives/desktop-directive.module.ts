@@ -8,14 +8,11 @@ import { TextMaskDirective } from './text-mask.directive';
 import { ReadMoreDirective } from './read-more.directive';
 
 @NgModule({
-	declarations: [
-		SpinnerButtonDirective,
-		DynamicDirective,
-		TextMaskDirective,
-		DebounceClickDirective,
-		ReadMoreDirective
-	],
-	exports: [SpinnerButtonDirective, DynamicDirective, TextMaskDirective, DebounceClickDirective, ReadMoreDirective],
-	imports: [CommonModule, NbSpinnerModule]
+    exports: [SpinnerButtonDirective, DynamicDirective, TextMaskDirective, DebounceClickDirective, ReadMoreDirective],
+    imports: [CommonModule, NbSpinnerModule, SpinnerButtonDirective,
+        DynamicDirective,
+        TextMaskDirective,
+        DebounceClickDirective,
+        ReadMoreDirective]
 })
 export class DesktopDirectiveModule {}

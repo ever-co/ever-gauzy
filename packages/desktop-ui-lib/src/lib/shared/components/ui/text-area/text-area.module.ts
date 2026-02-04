@@ -7,16 +7,16 @@ import { TranslateModule } from '@ngx-translate/core';
 import { TextAreaComponent } from './text-area.component';
 
 @NgModule({
-	declarations: [TextAreaComponent],
-	exports: [TextAreaComponent],
-	imports: [
-		CommonModule,
-		NbInputModule,
-		TranslateModule,
-		NgSelectModule,
-		NbTooltipModule,
-		FormsModule,
-		ReactiveFormsModule
-	]
+    exports: [TextAreaComponent],
+    imports: [
+        CommonModule,
+        NbInputModule,
+        TranslateModule,
+        NgSelectModule,
+        NbTooltipModule,
+        FormsModule,
+        ReactiveFormsModule,
+        TextAreaComponent
+    ]
 })
 export class TextAreaModule {}

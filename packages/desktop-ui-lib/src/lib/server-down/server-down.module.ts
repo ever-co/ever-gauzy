@@ -17,15 +17,15 @@ const routes: Routes = [
 ];
 
 @NgModule({
-	imports: [
-		CommonModule,
-		FormsModule,
-		NbSidebarModule,
-		NbLayoutModule,
-		RouterModule.forChild(routes),
-		LanguageModule.forChild()
-	],
-	declarations: [ServerDownPage],
-	providers: [Store, ServerConnectionService]
+    imports: [
+        CommonModule,
+        FormsModule,
+        NbSidebarModule,
+        NbLayoutModule,
+        RouterModule.forChild(routes),
+        LanguageModule.forChild(),
+        ServerDownPage
+    ],
+    providers: [Store, ServerConnectionService]
 })
 export class ServerDownModule {}

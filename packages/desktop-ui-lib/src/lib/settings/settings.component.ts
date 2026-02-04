@@ -12,9 +12,9 @@ import {
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS } from '@gauzy/constants';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService, NbToastrService, NbLayoutModule, NbSpinnerModule, NbSidebarModule, NbListModule, NbCardModule, NbIconModule, NbToggleModule, NbSelectModule, NbOptionModule, NbButtonModule, NbTooltipModule, NbProgressBarModule, NbAccordionModule, NbTabsetModule, NbInputModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { BehaviorSubject, Observable, filter, firstValueFrom, tap } from 'rxjs';
 import { AuthStrategy } from '../auth';
@@ -25,20 +25,28 @@ import { LanguageElectronService } from '../language/language-electron.service';
 import { TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
 import { SetupService } from '../setup/setup.service';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
+import { LanguageSelectorComponent } from '../language/language-selector.component';
+import { SwitchThemeComponent } from '../theme-selector/switch-theme/switch-theme.component';
+import { NgClass, NgTemplateOutlet, AsyncPipe, LowerCasePipe, TitleCasePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
+import { SslComponent } from './ssl/ssl.component';
+import { ReplacePipe } from '../time-tracker/pipes/replace.pipe';
+import { PipesModule } from '../../../../ui-core/shared/src/lib/pipes/pipes.module';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-settings',
-	templateUrl: './settings.component.html',
-	styleUrls: ['./settings.component.scss'],
-	styles: [
-		`
+    selector: 'ngx-settings',
+    templateUrl: './settings.component.html',
+    styleUrls: ['./settings.component.scss'],
+    styles: [
+        `
 			:host nb-tab {
 				padding: 1rem;
 			}
 		`
-	],
-	standalone: false
+    ],
+    imports: [NbLayoutModule, NbSpinnerModule, NbSidebarModule, NbListModule, LanguageSelectorComponent, SwitchThemeComponent, NgClass, NbCardModule, NbIconModule, NbToggleModule, FormsModule, NbSelectModule, NbOptionModule, NbButtonModule, NbTooltipModule, NbProgressBarModule, NbAccordionModule, NbTabsetModule, NbInputModule, SpinnerButtonDirective, NgTemplateOutlet, SslComponent, AsyncPipe, LowerCasePipe, TitleCasePipe, TranslatePipe, ReplacePipe, PipesModule]
 })
 export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;

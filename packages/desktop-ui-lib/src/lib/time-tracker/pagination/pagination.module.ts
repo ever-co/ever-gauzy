@@ -6,14 +6,14 @@ import { NbIconModule, NbSelectModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-	declarations: [PaginationComponent],
-	imports: [
-		CommonModule,
-		Angular2SmartTableModule,
-		NbIconModule,
-		NbSelectModule,
-		TranslateModule
-	],
-	exports: [PaginationComponent],
+    imports: [
+        CommonModule,
+        Angular2SmartTableModule,
+        NbIconModule,
+        NbSelectModule,
+        TranslateModule,
+        PaginationComponent
+    ],
+    exports: [PaginationComponent],
 })
 export class PaginationModule { }

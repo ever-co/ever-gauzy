@@ -6,18 +6,18 @@ import { LanguageModule } from '../language/language.module';
 import { SplashScreenComponent } from './splash-screen.component';
 
 @NgModule({
-	declarations: [SplashScreenComponent],
-	imports: [
-		CommonModule,
-		NbLayoutModule,
-		NbCardModule,
-		NbSpinnerModule,
-		NbButtonModule,
-		DesktopDirectiveModule,
-		NbIconModule,
-		LanguageModule.forChild()
-	],
-	exports: [SplashScreenComponent],
-	providers: []
+    imports: [
+        CommonModule,
+        NbLayoutModule,
+        NbCardModule,
+        NbSpinnerModule,
+        NbButtonModule,
+        DesktopDirectiveModule,
+        NbIconModule,
+        LanguageModule.forChild(),
+        SplashScreenComponent
+    ],
+    exports: [SplashScreenComponent],
+    providers: []
 })
 export class SplashScreenModule {}
