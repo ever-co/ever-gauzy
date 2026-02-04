@@ -1,35 +1,24 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
-import {
-    AboutComponent,
-    AlwaysOnComponent,
-    AuthConnectionGuard,
-    ImageViewerComponent,
-    ScreenCaptureComponent,
-    SettingsComponent,
-    SetupComponent,
-    SplashScreenComponent,
-    TimeTrackerComponent,
-    UpdaterComponent
-} from '@gauzy/desktop-ui-lib';
+import { AuthConnectionGuard } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
 	{
 		path: '',
-		component: TimeTrackerComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent)
 	},
 	{
 		path: 'setup',
-		component: SetupComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SetupComponent)
 	},
 	{
 		path: 'time-tracker',
-		component: TimeTrackerComponent,
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.recapRoutes)
 	},
 	{
 		path: 'screen-capture',
-		component: ScreenCaptureComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ScreenCaptureComponent)
 	},
 	{
 		path: 'plugins',
@@ -38,27 +27,27 @@ const routes: Routes = [
 	},
 	{
 		path: 'settings',
-		component: SettingsComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SettingsComponent)
 	},
 	{
 		path: 'updater',
-		component: UpdaterComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.UpdaterComponent)
 	},
 	{
 		path: 'viewer',
-		component: ImageViewerComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ImageViewerComponent)
 	},
 	{
 		path: 'about',
-		component: AboutComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AboutComponent)
 	},
 	{
 		path: 'splash-screen',
-		component: SplashScreenComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SplashScreenComponent)
 	},
 	{
 		path: 'always-on',
-		component: AlwaysOnComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AlwaysOnComponent)
 	}
 ];
 
