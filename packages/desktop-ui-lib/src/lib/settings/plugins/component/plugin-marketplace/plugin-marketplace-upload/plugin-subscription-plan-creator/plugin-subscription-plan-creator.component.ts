@@ -9,7 +9,7 @@ import {
 	OnInit,
 	Output
 } from '@angular/core';
-import { FormArray, FormGroup } from '@angular/forms';
+import { FormArray, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Actions } from '@ngneat/effects-ng';
 import { asyncScheduler, filter, Observable, of, Subject, take, takeUntil, withLatestFrom } from 'rxjs';
 import { PluginPlanActions } from '../../+state/actions/plugin-plan.action';
@@ -22,6 +22,8 @@ import {
 } from '../../../../services/plugin-subscription.service';
 import { SubscriptionPlanFormBuilderService } from './services/subscription-plan-form-builder.service';
 import { SubscriptionPlanFormatService } from './services/subscription-plan-format.service';
+import { NbAlertModule, NbIconModule, NbBadgeModule, NbSpinnerModule, NbButtonModule, NbTooltipModule, NbFormFieldModule, NbInputModule, NbSelectModule, NbOptionModule, NbCheckboxModule } from '@nebular/theme';
+import { AsyncPipe, TitleCasePipe, KeyValuePipe } from '@angular/common';
 
 /**
  * Component for creating and managing subscription plans for plugins
@@ -32,11 +34,11 @@ import { SubscriptionPlanFormatService } from './services/subscription-plan-form
  * @pattern Builder Pattern - Uses SubscriptionPlanFormBuilderService for form creation
  */
 @Component({
-	selector: 'lib-plugin-subscription-plan-creator',
-	templateUrl: './plugin-subscription-plan-creator.component.html',
-	styleUrls: ['./plugin-subscription-plan-creator.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-plugin-subscription-plan-creator',
+    templateUrl: './plugin-subscription-plan-creator.component.html',
+    styleUrls: ['./plugin-subscription-plan-creator.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbAlertModule, NbIconModule, NbBadgeModule, FormsModule, ReactiveFormsModule, NbSpinnerModule, NbButtonModule, NbTooltipModule, NbFormFieldModule, NbInputModule, NbSelectModule, NbOptionModule, NbCheckboxModule, AsyncPipe, TitleCasePipe, KeyValuePipe]
 })
 export class PluginSubscriptionPlanCreatorComponent implements OnInit, OnDestroy {
 	@Input() set pluginId(value: string | undefined) {

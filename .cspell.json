@@ -587,6 +587,7 @@
 		"pricetags",
 		"PRKILL",
 		"PRMIG",
+		"pwsh",
 		"Probot",
 		"PROGRAMFILES",
 		"PROGRAMFILES",
@@ -828,7 +829,10 @@
 		"zoneinfo",
 		"Zrdm",
 		"keychain",
-		"reencoded"
+		"reencoded",
+		"retryable",
+		"Retryable",
+		"pendings"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

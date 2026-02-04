@@ -1,5 +1,8 @@
-@import './themes';
-@import 'var';
+// Forward so mixins/themes are available to importers
+@forward './themes';
+@forward 'var';
+@use './themes' as *;
+@use 'var' as *;
 
 /* Apply style on scrollbar for Firefox */
 * {
@@ -117,9 +120,11 @@ body {
   }
 
   nb-card nb-list {
-    @include nb-scrollbars(nb-theme(card-scrollbar-color),
+    @include nb-scrollbars(
+      nb-theme(card-scrollbar-color),
       nb-theme(card-scrollbar-background-color),
-      nb-theme(card-scrollbar-width));
+      nb-theme(card-scrollbar-width)
+    );
   }
 
   nb-flip-card {

@@ -1,61 +1,210 @@
-@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap');
-@import url('https://fonts.googleapis.com/css?family=Crimson+Text:600i&display=swap');
-@import url('https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,600,700,800&display=swap');
-
+// All @use statements must come first
 // themes - our custom or/and out of the box themes
-@import 'themes';
+@use 'themes' as *;
 
 // framework component themes (styles tied to theme variables)
-@import '@nebular/theme/styles/globals';
-@import '@nebular/auth/styles/globals';
+@use '@nebular/theme/styles/globals' as *;
+@use '@nebular/auth/styles/globals' as *;
 
+@use './material/angular-material' as *;
+
+// loading progress bar theme
+@use './pace.theme' as *;
+
+// Files that DON'T need Bootstrap can use @use
+@use './overrides' as *;
+@use './material/material-overrides' as *;
+@use './gauzy/gauzy-overrides' as *;
+
+@use './site-menu.scss' as *;
+
+// install ng-select default theme
+@use './includes/fullcalendar' as *;
+@use './includes/tabset' as *;
+@use './includes/ng-select' as *;
+@use './includes/ng5-slider' as *;
+@use './includes/dialog' as *;
+@use './includes/scroll' as *;
+
+// install swiper.js
+@use 'swiper/css' as *;
+@use 'swiper/css/pagination' as *;
+@use 'swiper/css/navigation' as *;
+
+// Bootstrap must use @import due to internal circular dependencies
+// @import must come after all @use statements
 @import 'bootstrap/scss/functions';
 @import 'bootstrap/scss/variables';
 @import 'bootstrap/scss/mixins';
 @import 'bootstrap/scss/grid';
 
-@import './material/angular-material';
-
-// loading progress bar theme
-@import './pace.theme';
-
+// Files that NEED Bootstrap mixins must use @import (after Bootstrap)
 @import './layout';
-@import './overrides';
-@import './material/material-overrides';
-@import './gauzy/gauzy-overrides';
 
-@import './site-menu.scss';
+// Font faces - CSS rules must come after @use/@import
+@font-face {
+  font-family: 'Inter';
+  src: url('../fonts/inter/Inter-VariableFont_slnt\,wght.ttf');
+}
 
-// install ng-select default theme
-@import './includes/fullcalendar';
-@import './includes/tabset';
-@import './includes/ng-select';
-@import './includes/ng5-slider';
-@import './includes/dialog';
-@import './includes/scroll';
+// Open Sans Variable Font
+@font-face {
+  font-family: 'Open Sans';
+  src: url('../fonts/open-sans/OpenSans-VariableFont_wdth\,wght.ttf') format('truetype');
+  font-style: normal;
+}
 
-// install swiper.js
-@import 'swiper/css';
-@import 'swiper/css/pagination';
-@import 'swiper/css/navigation';
+@font-face {
+  font-family: 'Open Sans';
+  src: url('../fonts/open-sans/OpenSans-Italic-VariableFont_wdth\,wght.ttf') format('truetype');
+  font-style: italic;
+}
+
+// Roboto Font Family
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-ThinItalic.ttf') format('truetype');
+  font-weight: 100;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-LightItalic.ttf') format('truetype');
+  font-weight: 300;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/roboto/Roboto-BlackItalic.ttf') format('truetype');
+  font-weight: 900;
+  font-style: italic;
+}
+
+// Crimson Text Font Family
+@font-face {
+  font-family: 'Crimson Text';
+  src: url('../fonts/crimson-text/CrimsonText-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Crimson Text';
+  src: url('../fonts/crimson-text/CrimsonText-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Crimson Text';
+  src: url('../fonts/crimson-text/CrimsonText-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Crimson Text';
+  src: url('../fonts/crimson-text/CrimsonText-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Crimson Text';
+  src: url('../fonts/crimson-text/CrimsonText-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Crimson Text';
+  src: url('../fonts/crimson-text/CrimsonText-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+}
 
 // install the framework and custom global styles
 @include nb-install() {
-	@include angular-material();
+  @include angular-material();
 
-	// framework global styles
-	@include nb-theme-global();
-	@include nb-auth-global();
+  // framework global styles
+  @include nb-theme-global();
+  @include nb-auth-global();
 
-	@include ngx-layout();
-	// loading progress bar
-	@include ngx-pace-theme();
+  @include ngx-layout();
+  // loading progress bar
+  @include ngx-pace-theme();
 
-	@include nb-overrides();
-	@include material-overrides();
-	@include gauzy-overrides();
+  @include nb-overrides();
+  @include material-overrides();
+  @include gauzy-overrides();
 }
 
 ::-webkit-scrollbar {
-	display: none;
+  display: none;
 }

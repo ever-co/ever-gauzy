@@ -45,6 +45,8 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+            NX_BRANCH=${{ github.ref_name }}
 
       - name: Docker images list
         run: |

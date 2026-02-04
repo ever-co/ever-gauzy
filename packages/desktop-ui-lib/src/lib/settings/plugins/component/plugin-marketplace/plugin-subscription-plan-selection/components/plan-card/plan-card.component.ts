@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { PluginSubscriptionType } from '../../../../../services/plugin-subscription.service';
 import { IPlanViewModel } from '../../models/plan-view.model';
 import { PlanFormatterService } from '../../services/plan-formatter.service';
+import { NbCardModule, NbIconModule, NbBadgeModule } from '@nebular/theme';
+import { TitleCasePipe } from '@angular/common';
 
 /**
  * Presentational component for displaying a subscription plan card
@@ -9,11 +11,11 @@ import { PlanFormatterService } from '../../services/plan-formatter.service';
  * Follows SOLID principle: Open/Closed - can be extended without modification
  */
 @Component({
-	selector: 'lib-plan-card',
-	templateUrl: './plan-card.component.html',
-	styleUrls: ['./plan-card.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-plan-card',
+    templateUrl: './plan-card.component.html',
+    styleUrls: ['./plan-card.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, NbBadgeModule, TitleCasePipe]
 })
 export class PlanCardComponent {
 	@Input() plan!: IPlanViewModel;

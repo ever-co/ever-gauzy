@@ -27,6 +27,7 @@
 		"lib:watch": "yarn nx build auth --watch"
 	},
 	"dependencies": {
+		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
@@ -72,7 +73,7 @@
 		"@types/passport-github2": "^1.2.9",
 		"@types/passport-google-oauth20": "^2.0.16",
 		"@types/passport-jwt": "^4.0.1",
-		"typescript": "^5.8.0"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"auth",

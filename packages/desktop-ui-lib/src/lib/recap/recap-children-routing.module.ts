@@ -1,4 +1,8 @@
 import { Routes } from '@angular/router';
+import { TimeTrackingChartsComponent } from './features/time-tracking-charts/time-tracking-charts.component';
+import { ActivityReportComponent } from './shared/features/activity-report/activity-report.component';
+import { TasksComponent } from './features/tasks/tasks.component';
+import { ProjectsComponent } from './features/projects/projects.component';
 
 export const recapChildRoutes: Routes = [
 	{
@@ -8,23 +12,19 @@ export const recapChildRoutes: Routes = [
 	},
 	{
 		path: 'hourly',
-		loadComponent: () =>
-			import('./features/time-tracking-charts/time-tracking-charts.component').then(
-				(m) => m.TimeTrackingChartsComponent
-			)
+		component: TimeTrackingChartsComponent
 	},
 	{
 		path: 'activities',
-		loadComponent: () =>
-			import('./shared/features/activity-report/activity-report.component').then((m) => m.ActivityReportComponent)
+		component: ActivityReportComponent
 	},
 	{
 		path: 'tasks',
-		loadComponent: () => import('./features/tasks/tasks.component').then((m) => m.TasksComponent)
+		component: TasksComponent
 	},
 	{
 		path: 'projects',
-		loadComponent: () => import('./features/projects/projects.component').then((m) => m.ProjectsComponent)
+		component: ProjectsComponent
 	},
 	{
 		path: '**',

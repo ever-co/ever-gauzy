@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { filter, first, tap, debounceTime } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { pluck } from 'underscore';
@@ -32,10 +32,10 @@ import { ApprovalPolicyComponent } from './table-components/approval-policy/appr
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-approvals',
-    templateUrl: './approvals.component.html',
-    styleUrls: ['./approvals.component.scss'],
-    standalone: false
+	selector: 'ngx-approvals',
+	templateUrl: './approvals.component.html',
+	styleUrls: ['./approvals.component.scss'],
+	standalone: false
 })
 export class ApprovalsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public settingsSmartTable: object;

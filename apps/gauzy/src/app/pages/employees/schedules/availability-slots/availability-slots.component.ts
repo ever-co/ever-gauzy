@@ -30,10 +30,10 @@ import { AvailabilitySlotsService, TimeOffService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-availability-slots',
-    templateUrl: './availability-slots.component.html',
-    styleUrls: ['./availability-slots.component.scss'],
-    standalone: false
+	selector: 'ngx-availability-slots',
+	templateUrl: './availability-slots.component.html',
+	styleUrls: ['./availability-slots.component.scss'],
+	standalone: false
 })
 export class AvailabilitySlotsComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	@ViewChild('calendar', { static: false })
@@ -277,8 +277,8 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent impleme
 		const { id: employeeId } = this.selectedEmployee;
 
 		const payload: IAvailabilitySlotsCreateInput[] = [];
-		const calender = this.calendar.getApi();
-		const range = calender.getCurrentData().dateProfile.currentRange;
+		const calendarApi = this.calendar.getApi();
+		const range = calendarApi.getCurrentData().dateProfile.currentRange;
 		let start = range.start;
 		while (start < range.end) {
 			const date = moment(start).format('YYYY-MM-DD');

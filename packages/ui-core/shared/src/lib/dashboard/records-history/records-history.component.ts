@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { debounceTime, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
@@ -16,10 +16,10 @@ import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent 
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-records-history',
-    templateUrl: './records-history.component.html',
-    styleUrls: ['./records-history.component.scss'],
-    standalone: false
+	selector: 'ngx-records-history',
+	templateUrl: './records-history.component.html',
+	styleUrls: ['./records-history.component.scss'],
+	standalone: false
 })
 export class RecordsHistoryComponent extends PaginationFilterBaseComponent implements OnInit {
 	type: HistoryType;

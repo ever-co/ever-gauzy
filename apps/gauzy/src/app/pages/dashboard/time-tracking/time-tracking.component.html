@@ -237,10 +237,10 @@
 								<div></div>
 								<div class="button-container">
 									<div class="swiper-button-container">
-										<div class="swiper-button" (click)="slidePrev(swiper)">
+										<div class="swiper-button" (click)="slidePrev(swiperRef)">
 											<i class="fas fa-angle-left"></i>
 										</div>
-										<div class="swiper-button" (click)="slideNext(swiper)">
+										<div class="swiper-button" (click)="slideNext(swiperRef)">
 											<i class="fas fa-angle-right"></i>
 										</div>
 									</div>
@@ -263,22 +263,18 @@
 								</div>
 							</div>
 							<div>
-								<swiper
-									[slidesPerView]="3"
-									[spaceBetween]="16"
-									[slidesPerGroup]="3"
-									[loop]="false"
-									[loopFillGroupWithBlank]="true"
-									[pagination]="{
-										clickable: true
-									}"
-									[navigation]="true"
-									[virtual]="true"
-									#swiper
+								<swiper-container
+									#swiperRef
+									slides-per-view="3"
+									space-between="16"
+									slides-per-group="3"
+									loop="false"
+									navigation="true"
+									[pagination]="{ clickable: true }"
 									class="m-swiper"
 								>
 									<ng-container *ngFor="let timeSlot of employee.timeSlots">
-										<ng-template swiperSlide>
+										<swiper-slide>
 											<ngx-screenshots-item
 												[timeFormat]="filters?.timeFormat"
 												[timezone]="filters?.timeZone"
@@ -287,9 +283,9 @@
 												[multiple]="false"
 												[employeeId]="timeSlot?.employee?.id"
 											></ngx-screenshots-item>
-										</ng-template>
+										</swiper-slide>
 									</ng-container>
-								</swiper>
+								</swiper-container>
 							</div>
 						</div>
 					</ng-container>

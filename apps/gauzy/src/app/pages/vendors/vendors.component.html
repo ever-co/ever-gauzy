@@ -1,251 +1,249 @@
 <nb-card class="card-scroll">
-  <nb-card-header class="d-flex flex-column pb-0">
-    <div class="card-header-title">
-      <h4>
-        <ngx-header-title [allowEmployee]="false">
-          {{ 'ORGANIZATIONS_PAGE.VENDORS' | translate }}
-        </ngx-header-title>
-      </h4>
-    </div>
-    <div class="gauzy-button-container">
-      <ngx-gauzy-button-action
-        [buttonTemplate]="actionButtons"
-        [componentName]="viewComponentName"
-        [buttonTemplateVisible]="visibleButton"
-        [isDisable]="disabled"
-        >
-      </ngx-gauzy-button-action>
-    </div>
-    @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
-      <div class="columns-header row align-items-center">
-        <div class="col-md-2 pl-3 float-left text-truncate">
-          {{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
-        </div>
-        <div class="col-md-2 p-0 float-left text-truncate">
-          {{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}
-        </div>
-        <div class="col-md-2 p-0 float-left text-truncate">
-          {{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}
-        </div>
-        <div class="col-md-3 p-0 float-left text-truncate">
-          {{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}
-        </div>
-        <div class="col-md-3 p-0 float-left text-truncate">
-          {{ 'ORGANIZATIONS_PAGE.TAGS' | translate }}
-        </div>
-      </div>
-    }
-  </nb-card-header>
-  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-    @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
-      <div class="table-scroll-container" infinite-scroll [scrollWindow]="false" (scrolled)="onScroll()">
-        @for (vendor of vendors; track vendor) {
-          <nb-card class="p-0">
-            <nb-card-body
-              class="custom-table"
-              [ngClass]="{ selected: selected?.state && vendor === selected?.vendor }"
-              (click)="selectVendor(vendor)"
-              >
-              <div class="row align-items-center">
-                <div class="col-md-2 p-0 float-left text-truncate">
-                  <ga-company-logo [rowData]="vendor"></ga-company-logo>
-                  {{ vendor.name }}
-                </div>
-                <div class="col-md-2 p-0 float-left text-truncate">
-                  {{ vendor.phone }}
-                </div>
-                <div class="col-md-2 p-0 float-left text-truncate">
-                  <gauzy-email [rowData]="vendor"></gauzy-email>
-                </div>
-                <div class="col-md-3 p-0 float-left text-truncate">
-                  <gauzy-external-link [rowData]="vendor"></gauzy-external-link>
-                </div>
-                <div class="col-md-3 float-left p-0 text-truncate">
-                  <ga-only-tags [rowData]="vendor"></ga-only-tags>
-                </div>
-              </div>
-            </nb-card-body>
-          </nb-card>
-        }
-      </div>
-    }
-    @if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) {
-      @if (vendors?.length > 0) {
-        <ga-card-grid
-          [totalItems]="pagination?.totalItems"
-          [settings]="settingsSmartTable"
-          [source]="vendors"
-          (onSelectedItem)="selectVendor($event)"
-          (scroll)="onScroll()"
-        ></ga-card-grid>
-      } @else {
-        <div class="no-data">
-          <ngx-no-data-message
-            [message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
-          ></ngx-no-data-message>
-        </div>
-      }
-      <ng-template #noVendorTemplate>
-        <div class="no-data">
-          <ngx-no-data-message
-            [message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
-          ></ngx-no-data-message>
-        </div>
-      </ng-template>
-    }
-  </nb-card-body>
+	<nb-card-header class="d-flex flex-column pb-0">
+		<div class="card-header-title">
+			<h4>
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'ORGANIZATIONS_PAGE.VENDORS' | translate }}
+				</ngx-header-title>
+			</h4>
+		</div>
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
+				[componentName]="viewComponentName"
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="disabled"
+			>
+			</ngx-gauzy-button-action>
+		</div>
+		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+		<div class="columns-header row align-items-center">
+			<div class="col-md-2 pl-3 float-left text-truncate">
+				{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
+			</div>
+			<div class="col-md-2 p-0 float-left text-truncate">
+				{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}
+			</div>
+			<div class="col-md-2 p-0 float-left text-truncate">
+				{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}
+			</div>
+			<div class="col-md-3 p-0 float-left text-truncate">
+				{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}
+			</div>
+			<div class="col-md-3 p-0 float-left text-truncate">
+				{{ 'ORGANIZATIONS_PAGE.TAGS' | translate }}
+			</div>
+		</div>
+		}
+	</nb-card-header>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+		<div class="table-scroll-container" infiniteScroll [scrollWindow]="false" (scrolled)="onScroll()">
+			@for (vendor of vendors; track vendor) {
+			<nb-card class="p-0">
+				<nb-card-body
+					class="custom-table"
+					[ngClass]="{ selected: selected?.state && vendor === selected?.vendor }"
+					(click)="selectVendor(vendor)"
+				>
+					<div class="row align-items-center">
+						<div class="col-md-2 p-0 float-left text-truncate">
+							<ga-company-logo [rowData]="vendor"></ga-company-logo>
+							{{ vendor.name }}
+						</div>
+						<div class="col-md-2 p-0 float-left text-truncate">
+							{{ vendor.phone }}
+						</div>
+						<div class="col-md-2 p-0 float-left text-truncate">
+							<gauzy-email [rowData]="vendor"></gauzy-email>
+						</div>
+						<div class="col-md-3 p-0 float-left text-truncate">
+							<gauzy-external-link [rowData]="vendor"></gauzy-external-link>
+						</div>
+						<div class="col-md-3 float-left p-0 text-truncate">
+							<ga-only-tags [rowData]="vendor"></ga-only-tags>
+						</div>
+					</div>
+				</nb-card-body>
+			</nb-card>
+			}
+		</div>
+		} @if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) { @if (vendors?.length > 0) {
+		<ga-card-grid
+			[totalItems]="pagination?.totalItems"
+			[settings]="settingsSmartTable"
+			[source]="vendors"
+			(onSelectedItem)="selectVendor($event)"
+			(scroll)="onScroll()"
+		></ga-card-grid>
+		} @else {
+		<div class="no-data">
+			<ngx-no-data-message
+				[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
+			></ngx-no-data-message>
+		</div>
+		}
+		<ng-template #noVendorTemplate>
+			<div class="no-data">
+				<ngx-no-data-message
+					[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
+				></ngx-no-data-message>
+			</div>
+		</ng-template>
+		}
+	</nb-card-body>
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
-  @if (selectedItem) {
-    <ngx-favorite-toggle
-      [entityType]="'OrganizationVendor'"
-      [entityId]="selectedItem.id"
-      [entityName]="selectedItem.name"
-      size="small"
-      status="basic"
-      spacing="list"
-      [disabled]="disabled"
-      [showLabel]="false"
-      (favoriteToggled)="onVendorFavoriteToggled($event)"
-    ></ngx-favorite-toggle>
-  }
-  <ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
-    <div class="actions">
-      <button
-        (click)="openDialog(addEditTemplate, true)"
-        nbButton
-        status="basic"
-        class="action primary"
-        [disabled]="disabled"
-        size="small"
-        >
-        <nb-icon icon="edit-outline"></nb-icon>
-        {{ 'BUTTONS.EDIT' | translate }}
-      </button>
-      <button
-        (click)="removeVendor(selected.vendor.id, selected.vendor.name)"
-        nbButton
-        status="basic"
-        class="action"
-        [disabled]="isDisabled"
-        size="small"
-        [nbTooltip]="'BUTTONS.DELETE' | translate"
-        >
-        <nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-      </button>
-    </div>
-  </ng-container>
+	@if (selectedItem) {
+	<ngx-favorite-toggle
+		[entityType]="'OrganizationVendor'"
+		[entityId]="selectedItem.id"
+		[entityName]="selectedItem.name"
+		size="small"
+		status="basic"
+		spacing="list"
+		[disabled]="disabled"
+		[showLabel]="false"
+		(favoriteToggled)="onVendorFavoriteToggled($event)"
+	></ngx-favorite-toggle>
+	}
+	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
+		<div class="actions">
+			<button
+				(click)="openDialog(addEditTemplate, true)"
+				nbButton
+				status="basic"
+				class="action primary"
+				[disabled]="disabled"
+				size="small"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="removeVendor(selected.vendor.id, selected.vendor.name)"
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="isDisabled"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			</button>
+		</div>
+	</ng-container>
 </ng-template>
 <ng-template #visibleButton>
-  <ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
-    <button nbButton status="success" size="small" (click)="openDialog(addEditTemplate, false)">
-      <nb-icon icon="plus-outline"> </nb-icon>
-      {{ 'BUTTONS.ADD' | translate }}
-    </button>
-  </ng-container>
+	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
+		<button nbButton status="success" size="small" (click)="openDialog(addEditTemplate, false)">
+			<nb-icon icon="plus-outline"> </nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-container>
 </ng-template>
 <ng-template #addEditTemplate let-ref="dialogRef" class="add-edit-dialog">
-  <div class="editable">
-    <div class="container">
-      <div class="row">
-        <div class="col-sm-12 d-flex justify-content-end">
-          <i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
-        </div>
-      </div>
-      <div class="row mb-3">
-        <h5 class="title mr-3 ml-3">
-          {{
-          selectedVendor && selectedVendor?.id
-          ? ('POP_UPS.EDIT' | translate)
-          : ('POP_UPS.ADD' | translate)
-          }}
-        </h5>
-      </div>
-      @if (form) {
-        <form [formGroup]="form" class="form">
-          <div class="row mb-3">
-            <div class="col-sm-12 d-flex flex-column">
-              <label class="label" for="name">{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}</label>
-              <input
-                nbInput
-                type="text"
-                fullWidth
-                placeholder="{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}"
-                id="name"
-                formControlName="name"
-                [status]="isInvalidControl('name') ? 'danger' : 'basic'"
-                />
-              </div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-sm-12 d-flex flex-column">
-                <label class="label" for="phone">{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}</label>
-                <input
-                  nbInput
-                  type="text"
-                  fullWidth
-                  placeholder="{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}"
-                  id="phone"
-                  formControlName="phone"
-                  />
-                </div>
-              </div>
-              <div class="row mb-3">
-                <div class="col-sm-12 d-flex flex-column">
-                  <label class="label" for="email">{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}</label>
-                  <input
-                    nbInput
-                    type="text"
-                    fullWidth
-                    placeholder="{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}"
-                    id="email"
-                    formControlName="email"
-                    [status]="isInvalidControl('email') ? 'danger' : 'basic'"
-                    />
-                  </div>
-                </div>
-                <div class="row mb-3">
-                  <div class="col-sm-12 d-flex flex-column">
-                    <label class="label" for="website">{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}</label>
-                    <input
-                      nbInput
-                      type="text"
-                      fullWidth
-                      placeholder="{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}"
-                      id="website"
-                      formControlName="website"
-                      />
-                    </div>
-                  </div>
-                  <div class="row mb-3">
-                    <div class="col-sm-12 d-flex flex-column">
-                      <ga-tags-color-input
-                        [selectedTags]="tags"
-                        (selectedTagsEvent)="selectedTagsEvent($event)"
-                        class="add-tags"
-                        [isOrgLevel]="true"
-                        >
-                      </ga-tags-color-input>
-                    </div>
-                  </div>
-                </form>
-              }
-              <div class="row mb-3">
-                <div class="d-flex">
-                  <button
-                    class="delete mr-3 ml-3"
-                    outline
-                    (click)="cancel(); ref.close(); disabled = true"
-                    nbButton
-                    status="basic"
-                    >
-                    {{ 'BUTTONS.CANCEL' | translate }}
-                  </button>
-                  <button (click)="save()" nbButton status="success" [disabled]="form.invalid || saveDisabled">
-                    {{ 'BUTTONS.SAVE' | translate }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ng-template>
+	<div class="editable">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 d-flex justify-content-end">
+					<i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
+				</div>
+			</div>
+			<div class="row mb-3">
+				<h5 class="title mr-3 ml-3">
+					{{
+						selectedVendor && selectedVendor?.id
+							? ('POP_UPS.EDIT' | translate)
+							: ('POP_UPS.ADD' | translate)
+					}}
+				</h5>
+			</div>
+			@if (form) {
+			<form [formGroup]="form" class="form">
+				<div class="row mb-3">
+					<div class="col-sm-12 d-flex flex-column">
+						<label class="label" for="name">{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}</label>
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}"
+							id="name"
+							formControlName="name"
+							[status]="isInvalidControl('name') ? 'danger' : 'basic'"
+						/>
+					</div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-sm-12 d-flex flex-column">
+						<label class="label" for="phone">{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}</label>
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}"
+							id="phone"
+							formControlName="phone"
+						/>
+					</div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-sm-12 d-flex flex-column">
+						<label class="label" for="email">{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}</label>
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}"
+							id="email"
+							formControlName="email"
+							[status]="isInvalidControl('email') ? 'danger' : 'basic'"
+						/>
+					</div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-sm-12 d-flex flex-column">
+						<label class="label" for="website">{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}</label>
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}"
+							id="website"
+							formControlName="website"
+						/>
+					</div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-sm-12 d-flex flex-column">
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							class="add-tags"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+				</div>
+			</form>
+			}
+			<div class="row mb-3">
+				<div class="d-flex">
+					<button
+						class="delete mr-3 ml-3"
+						outline
+						(click)="cancel(); ref.close(); disabled = true"
+						nbButton
+						status="basic"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+					<button (click)="save()" nbButton status="success" [disabled]="form.invalid || saveDisabled">
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</ng-template>

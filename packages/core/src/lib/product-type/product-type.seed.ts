@@ -14,7 +14,7 @@ export const createDefaultProductTypes = async (
 ): Promise<ProductType[]> => {
 	const seedProductTypes = [];
 
-	organizations.forEach(async (organization) => {
+	organizations.forEach((organization) => {
 		seed.forEach((seedProductType) => {
 			const newType = new ProductType();
 
@@ -37,10 +37,7 @@ export const createDefaultProductTypes = async (
 	return seedProductTypes;
 };
 
-const insertProductTypes = async (
-	dataSource: DataSource,
-	productTypes: ProductType[]
-): Promise<void> => {
+const insertProductTypes = async (dataSource: DataSource, productTypes: ProductType[]): Promise<void> => {
 	await dataSource.manager.save(productTypes);
 };
 
@@ -50,9 +47,7 @@ export const createRandomProductType = async (
 	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<ProductType[]> => {
 	if (!tenantOrganizationsMap) {
-		console.warn(
-			'Warning: tenantOrganizationsMap not found, ProductType will not be created'
-		);
+		console.warn('Warning: tenantOrganizationsMap not found, ProductType will not be created');
 		return;
 	}
 
@@ -82,9 +77,7 @@ export const createRandomProductType = async (
 				const productType = new ProductType();
 				const productTypeTranslation: ProductTypeTranslation[] = [];
 
-				productType.icon = faker.helpers.arrayElement(
-					Object.keys(ProductTypesIconsEnum)
-				);
+				productType.icon = faker.helpers.arrayElement(Object.keys(ProductTypesIconsEnum));
 				productType.products = products;
 				productType.organization = tenantOrg;
 				productType.translations = productTypeTranslation;

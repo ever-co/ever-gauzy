@@ -3,7 +3,7 @@ import { ITimeSlot } from '@gauzy/contracts';
 import { progressStatus } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, combineLatest, concatMap, from, map } from 'rxjs';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { AutoRefreshService } from '../../+state/auto-refresh/auto-refresh.service';
 import { RecapQuery } from '../../+state/recap.query';
 import { RecapService } from '../../+state/recap.service';
@@ -12,11 +12,11 @@ import { IChartData } from '../../shared/utils/adapters/chart.adapter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-time-tracking-charts',
-    templateUrl: './time-tracking-charts.component.html',
-    styleUrls: ['./time-tracking-charts.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+	selector: 'ngx-time-tracking-charts',
+	templateUrl: './time-tracking-charts.component.html',
+	styleUrls: ['./time-tracking-charts.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	standalone: false
 })
 export class TimeTrackingChartsComponent implements OnInit {
 	private readonly _chartData$: BehaviorSubject<IChartData[]> = new BehaviorSubject([]);

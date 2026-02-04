@@ -28,6 +28,7 @@
 		"@angular/core": "^20.2.4"
 	},
 	"dependencies": {
+		"@gauzy/ui-core": "^0.1.0",
 		"posthog-js": "^1.236.2",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2"

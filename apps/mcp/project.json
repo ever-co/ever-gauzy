@@ -8,7 +8,7 @@
 		"build": {
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
 				"compiler": "tsc",
@@ -18,7 +18,11 @@
 				"isolatedConfig": true
 			},
 			"configurations": {
-				"development": {},
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
+				},
 				"production": {
 					"optimization": true,
 					"extractLicenses": true,

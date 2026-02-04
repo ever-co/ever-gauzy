@@ -1,16 +1,16 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
 import {
-	AboutComponent,
-	AgentDashboardComponent,
-	AlwaysOnComponent,
-	AuthConnectionGuard,
-	ScreenCaptureComponent,
-	ServerDownPage,
-	SettingsComponent,
-	SetupComponent,
-	SplashScreenComponent,
-	UpdaterComponent
+    AboutComponent,
+    AgentDashboardComponent,
+    AlwaysOnComponent,
+    AuthConnectionGuard,
+    ScreenCaptureComponent,
+    ServerDownPage,
+    SettingsComponent,
+    SetupComponent,
+    SplashScreenComponent,
+    UpdaterComponent
 } from '@gauzy/desktop-ui-lib';
 import { AppModuleGuard } from './app.module.guards';
 
@@ -27,7 +27,7 @@ const routes: Routes = [
 	{
 		path: 'plugins',
 		canActivate: [AuthConnectionGuard],
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginsModule)
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
 	},
 	{
 		path: 'settings',

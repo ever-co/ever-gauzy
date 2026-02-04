@@ -1,3 +1,5 @@
+/// <reference types="google.maps" />
+
 /**
  * @license
  * Copyright Akveo. All Rights Reserved.

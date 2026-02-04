@@ -8,13 +8,18 @@ import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketpla
 import { PluginVersionQuery } from '../../../+state/queries/plugin-version.query';
 import { Store } from '../../../../../../../services';
 import { PluginMarketplaceUtilsService } from '../../../plugin-marketplace-utils.service';
+import { NbIconModule, NbBadgeModule, NbSelectModule, NbOptionModule, NbButtonModule } from '@nebular/theme';
+import { DesktopDirectiveModule } from '../../../../../../../directives/desktop-directive.module';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
+import { PipeModule } from '../../../../../../../time-tracker/pipes/pipe.module';
 
 @Component({
-	selector: 'gauzy-plugin-overview-tab',
-	standalone: false,
-	templateUrl: './overview-tab.component.html',
-	styleUrls: ['./overview-tab.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-plugin-overview-tab',
+    templateUrl: './overview-tab.component.html',
+    styleUrls: ['./overview-tab.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbIconModule, DesktopDirectiveModule, NbBadgeModule, NbSelectModule, NbOptionModule, NbButtonModule, AsyncPipe, TranslatePipe, PipeModule]
 })
 export class OverviewTabComponent implements OnDestroy {
 	private readonly destroy$ = new Subject<void>();

@@ -1,6 +1,4 @@
 import { Routes } from '@angular/router';
-import { pluginInstalledRoutes } from './component/plugin-installed-routing.module';
-import { pluginMarketplaceRoutes } from './component/plugin-marketplace/plugin-marketplace-routing.module';
 import { PluginUploadResolver } from './services/resolvers';
 
 export const routes: Routes = [
@@ -11,12 +9,12 @@ export const routes: Routes = [
 	},
 	{
 		path: 'marketplace',
-		children: pluginMarketplaceRoutes,
+		loadChildren: () => import('./component/plugin-marketplace/plugin-marketplace-routing.module').then(m => m.pluginMarketplaceRoutes),
 		resolve: { isUploadAvailable: PluginUploadResolver }
 	},
 	{
 		path: 'installed',
-		children: pluginInstalledRoutes
+		loadChildren: () => import('./component/plugin-installed-routing.module').then(m => m.pluginInstalledRoutes)
 	},
 	{
 		path: '**',

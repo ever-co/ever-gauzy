@@ -11,7 +11,7 @@ import {
 import { NbMenuService } from '@nebular/theme';
 import { filter, map, takeUntil, tap } from 'rxjs/operators';
 import { combineLatest, debounceTime, Subject } from 'rxjs';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -20,10 +20,10 @@ import { Store, TaskStatusesService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-sprint-task',
-    templateUrl: './task.component.html',
-    styleUrls: ['./task.component.scss'],
-    standalone: false
+	selector: 'ga-sprint-task',
+	templateUrl: './task.component.html',
+	styleUrls: ['./task.component.scss'],
+	standalone: false
 })
 export class SprintTaskComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, OnDestroy {
 	private onDestroy$ = new Subject<void>();

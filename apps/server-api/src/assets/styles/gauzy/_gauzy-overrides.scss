@@ -1,4 +1,6 @@
-@import '../themes';
+// Forward themes so files importing this also get nb-theme() etc.
+@forward '../themes';
+@use '../themes' as *;
 
 $default-box-shadow-inset: var(--gauzy-shadow) inset;
 $default-height: 42px;
@@ -52,16 +54,8 @@ $default-box-shadow: var(--gauzy-shadow);
     height: $height !important;
   }
 
-  ::ng-deep
-    .ng-select.ng-select-multiple
-    .ng-select-container
-    .ng-value-container
-    .ng-placeholder,
-  ::ng-deep
-    .ng-select.ng-select-single
-    .ng-select-container
-    .ng-value-container
-    .ng-input {
+  ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder,
+  ::ng-deep .ng-select.ng-select-single .ng-select-container .ng-value-container .ng-input {
     top: unset !important;
   }
 
@@ -264,17 +258,9 @@ $default-box-shadow: var(--gauzy-shadow);
 */
 
 @mixin gauzy-overrides() {
-  @include nb-select-overrides(
-    $default-height,
-    $default-radius,
-    $default-box-shadow-inset
-  );
+  @include nb-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
   @include text-inputs-overrides;
-  @include ng-select-overrides(
-    $default-height,
-    $default-radius,
-    $default-box-shadow-inset
-  );
+  @include ng-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
   @include nb-stepper;
   @include full-calendar();
   @include ck-editor();

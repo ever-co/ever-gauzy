@@ -1,7 +1,7 @@
 import { Cascade, EntityName, OneToOneOptions } from '@mikro-orm/core';
 import { omit } from 'underscore';
 import { deepClone, isObject } from '@gauzy/utils';
-import { MultiORMEnum } from '../../../../core/utils';
+import { MultiORMEnum, getORMType } from '../../../../core/utils';
 import {
 	MikroORMInverseSide,
 	TypeORMInverseSide,
@@ -67,22 +67,29 @@ export function MultiORMOneToOne<T, O>(
 		// If options are not provided, initialize an empty object
 		if (!options) options = {} as RelationOptions<T, O>;
 
-		// Use TypeORM decorator for One-to-One
-		TypeOrmOneToOne(
-			typeFunctionOrTarget as TypeORMTarget<T>,
-			inverseSideOrOptions as TypeORMInverseSide<T>,
-			options as TypeORMRelationOptions
-		)(target, propertyKey);
+		// Determine which ORM is in use
+		const ormType = getORMType();
 
-		// Use MikroORM decorator for One-to-One
-		MikroOrmOneToOne(
-			mapOneToOneArgsForMikroORM({
-				typeFunctionOrTarget,
-				inverseSideOrOptions: inverseSideProperty as InverseSide<T>,
-				options,
-				propertyKey
-			})
-		)(target, propertyKey);
+		// Apply TypeORM decorator when using TypeORM
+		if (ormType === MultiORMEnum.TypeORM) {
+			TypeOrmOneToOne(
+				typeFunctionOrTarget as TypeORMTarget<T>,
+				inverseSideOrOptions as TypeORMInverseSide<T>,
+				options as TypeORMRelationOptions
+			)(target, propertyKey);
+		}
+
+		// Apply MikroORM decorator when using MikroORM
+		if (ormType === MultiORMEnum.MikroORM) {
+			MikroOrmOneToOne(
+				mapOneToOneArgsForMikroORM({
+					typeFunctionOrTarget,
+					inverseSideOrOptions: inverseSideProperty as InverseSide<T>,
+					options,
+					propertyKey
+				})
+			)(target, propertyKey);
+		}
 	};
 }
 

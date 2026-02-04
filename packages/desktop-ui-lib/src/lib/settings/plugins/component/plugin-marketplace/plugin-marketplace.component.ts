@@ -8,13 +8,20 @@ import { PluginMarketplaceActions } from './+state/actions/plugin-marketplace.ac
 import { PluginUploadIntentActions } from './+state/actions/plugin-upload-intent.action';
 import { PluginMarketplaceQuery } from './+state/queries/plugin-marketplace.query';
 import { IPluginFilter, PluginMarketplaceStore } from './+state/stores/plugin-market.store';
+import { PluginMarketplaceFilterComponent } from './plugin-marketplace-filter/plugin-marketplace-filter.component';
+import { NbIconModule, NbButtonGroupModule, NbButtonModule, NbTooltipModule, NbCardModule, NbListModule } from '@nebular/theme';
+import { PluginMarketplaceDetailComponent } from './plugin-marketplace-detail/plugin-marketplace-detail.component';
+import { NgClass, AsyncPipe, PercentPipe } from '@angular/common';
+import { NoDataMessageModule } from '../../../../time-tracker/no-data-message/no-data-message.module';
+import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'lib-plugin-marketplace',
-	templateUrl: './plugin-marketplace.component.html',
-	styleUrls: ['./plugin-marketplace.component.scss'],
-	standalone: false
+    selector: 'lib-plugin-marketplace',
+    templateUrl: './plugin-marketplace.component.html',
+    styleUrls: ['./plugin-marketplace.component.scss'],
+    imports: [PluginMarketplaceFilterComponent, NbIconModule, NbButtonGroupModule, NbButtonModule, NbTooltipModule, NbCardModule, NbListModule, PluginMarketplaceDetailComponent, NgClass, NoDataMessageModule, DesktopDirectiveModule, AsyncPipe, PercentPipe, TranslatePipe]
 })
 export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 	private skip = 1;

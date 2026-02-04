@@ -51,6 +51,7 @@ import { WeeklyCalendarComponent } from './weekly/features/weekly-calendar/weekl
 import { WeeklyProgressComponent } from './weekly/features/weekly-progress/weekly-progress.component';
 import { WeeklyRecapComponent } from './weekly/features/weekly-recap/weekly-recap.component';
 import { WeeklyStatisticComponent } from './weekly/features/weekly-statistic/weekly-statistic.component';
+import { recapRoutes } from './recap-routing.module';
 
 @NgModule({
 	declarations: [
@@ -95,7 +96,7 @@ import { WeeklyStatisticComponent } from './weekly/features/weekly-statistic/wee
 		ProgressStatusModule,
 		NbSpinnerModule,
 		LanguageModule.forChild(),
-		RouterModule
+		RouterModule.forChild(recapRoutes)
 	],
 	providers: [
 		RecapQuery,

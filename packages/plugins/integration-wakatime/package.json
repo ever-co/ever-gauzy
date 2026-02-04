@@ -42,7 +42,7 @@
 		"@nestjs/testing": "^11.1.12",
 		"@types/jest": "29.5.14",
 		"@types/node": "^24.10.0",
-		"typescript": "^5.8.0"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"Ever Gauzy",

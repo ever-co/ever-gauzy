@@ -8,7 +8,7 @@ import {
 	PluginScope,
 	PluginSubscriptionType
 } from '@gauzy/contracts';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbCardModule, NbIconModule, NbButtonModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, combineLatest } from 'rxjs';
@@ -19,14 +19,19 @@ import { PluginSubscriptionFacade } from '../+state/plugin-subscription.facade';
 import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { IPlanViewModel, PlanFormatterService } from '../plugin-subscription-plan-selection';
 import { SubscriptionFormService, SubscriptionPlanService, SubscriptionStatusService } from '../shared';
+import { DesktopDirectiveModule } from '../../../../../directives/desktop-directive.module';
+import { PlanCardComponent } from '../plugin-subscription-plan-selection/components/plan-card/plan-card.component';
+import { SubscriptionBillingFormComponent } from '../shared/components/subscription-billing-form/subscription-billing-form.component';
+import { AsyncPipe, TitleCasePipe, CurrencyPipe, DatePipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy()
 @Component({
-	selector: 'lib-plugin-subscription-manager',
-	templateUrl: './plugin-subscription-manager.component.html',
-	styleUrls: ['./plugin-subscription-manager.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'lib-plugin-subscription-manager',
+    templateUrl: './plugin-subscription-manager.component.html',
+    styleUrls: ['./plugin-subscription-manager.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, NbButtonModule, NbSpinnerModule, NbTooltipModule, DesktopDirectiveModule, PlanCardComponent, SubscriptionBillingFormComponent, AsyncPipe, TitleCasePipe, CurrencyPipe, DatePipe, TranslatePipe]
 })
 export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	@Input() plugin: IPlugin;

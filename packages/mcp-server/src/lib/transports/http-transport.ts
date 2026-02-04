@@ -82,7 +82,9 @@ export class HttpTransport {
 			// OAuth endpoints should ONLY be available on the dedicated OAuth Server (port 3003)
 			// This server only needs to VALIDATE tokens, not issue them
 			logger.log('OAuth 2.0 authorization enabled with external server configuration');
-			logger.log(`External OAuth Server: ${this.authorizationConfig.authorizationServers[0]?.issuer || 'Not configured'}`);
+			logger.log(
+				`External OAuth Server: ${this.authorizationConfig.authorizationServers[0]?.issuer || 'Not configured'}`
+			);
 			logger.log(`Resource URI: ${this.authorizationConfig.resourceUri || 'Not configured'}`);
 
 			this.authorizationMiddleware = new AuthorizationMiddleware(this.authorizationConfig);
@@ -100,11 +102,13 @@ export class HttpTransport {
 
 		// Configure trust proxy to honor X-Forwarded-For headers from trusted proxies
 		if (this.transportConfig.trustedProxies && this.transportConfig.trustedProxies.length > 0) {
-			const normalizedProxies = this.transportConfig.trustedProxies.map(p => p.trim()).filter(Boolean);
+			const normalizedProxies = this.transportConfig.trustedProxies.map((p) => p.trim()).filter(Boolean);
 			this.app.set('trust proxy', normalizedProxies);
 			logger.log(`Trust proxy enabled for: ${normalizedProxies.join(', ')}`);
 		} else if (process.env.NODE_ENV === 'production') {
-			this.securityLogger.warn('⚠️  Trusted proxies not configured in production. Trusting all proxies may allow IP spoofing.');
+			this.securityLogger.warn(
+				'⚠️  Trusted proxies not configured in production. Trusting all proxies may allow IP spoofing.'
+			);
 			this.app.set('trust proxy', true);
 			logger.log('Trust proxy enabled for all proxies (production mode)');
 		}
@@ -338,7 +342,8 @@ export class HttpTransport {
 					authorization: {
 						enabled: true,
 						resourceUri: this.authorizationConfig.resourceUri,
-						externalAuthServer: this.authorizationConfig.authorizationServers[0]?.issuer || 'Not configured',
+						externalAuthServer:
+							this.authorizationConfig.authorizationServers[0]?.issuer || 'Not configured',
 						note: 'This server validates tokens. OAuth endpoints are on the external auth server.'
 					}
 				}),
@@ -471,7 +476,12 @@ export class HttpTransport {
 					}
 				}
 
-				logger.log(`Session created: ${session.id} for user ${session.userId} from ${this.getClientIP(req, this.transportConfig.trustedProxies || [])}`);
+				logger.log(
+					`Session created: ${session.id} for user ${session.userId} from ${this.getClientIP(
+						req,
+						this.transportConfig.trustedProxies || []
+					)}`
+				);
 
 				res.json({
 					sessionId: session.id,
@@ -497,7 +507,7 @@ export class HttpTransport {
 
 		// Delete session endpoint
 		this.app.delete('/sse/session/:sessionId', sessionRateLimit, async (req, res) => {
-			const sessionId = req.params.sessionId;
+			const sessionId = req.params.sessionId as string;
 
 			try {
 				// Require authenticated user
@@ -545,7 +555,12 @@ export class HttpTransport {
 							logger.warn('Failed to clear session cookie:', err);
 						}
 					}
-					logger.log(`Session deleted: ${sessionId} by user ${requesterUserId} from ${this.getClientIP(req, this.transportConfig.trustedProxies || [])}`);
+					logger.log(
+						`Session deleted: ${sessionId} by user ${requesterUserId} from ${this.getClientIP(
+							req,
+							this.transportConfig.trustedProxies || []
+						)}`
+					);
 					res.status(204).send();
 				} else {
 					res.status(404).json({ error: 'Session not found' });
@@ -565,7 +580,7 @@ export class HttpTransport {
 			sessionRateLimit,
 			sessionMiddleware.createAuthorizationMiddleware(),
 			async (req, res): Promise<void> => {
-				const sessionId = req.params.sessionId;
+				const sessionId = req.params.sessionId as string;
 
 				try {
 					// Only allow accessing own session
@@ -917,7 +932,7 @@ export class HttpTransport {
 
 		// Only trust headers if request comes from a trusted proxy
 		const remoteAddress = this.normalizeIP(req.socket.remoteAddress || '');
-		const normalizedProxies = trustedProxies.map(proxy => this.normalizeIP(proxy));
+		const normalizedProxies = trustedProxies.map((proxy) => this.normalizeIP(proxy));
 
 		if (!normalizedProxies.includes(remoteAddress)) {
 			return remoteAddress;

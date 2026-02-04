@@ -8,8 +8,8 @@ describe('FormSectionComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [FormSectionComponent]
-    })
+    imports: [FormSectionComponent]
+})
     .compileComponents();
 
     fixture = TestBed.createComponent(FormSectionComponent);

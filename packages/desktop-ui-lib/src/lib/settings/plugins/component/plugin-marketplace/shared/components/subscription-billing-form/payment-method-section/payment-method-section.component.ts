@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PaymentMethod } from '../types';
+import { NbCardModule, NbIconModule, NbBadgeModule } from '@nebular/theme';
 
 @Component({
-	selector: 'gauzy-payment-method-section',
-	templateUrl: './payment-method-section.component.html',
-	styleUrls: ['./payment-method-section.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'gauzy-payment-method-section',
+    templateUrl: './payment-method-section.component.html',
+    styleUrls: ['./payment-method-section.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, FormsModule, ReactiveFormsModule, NbIconModule, NbBadgeModule]
 })
 export class PaymentMethodSectionComponent {
 	readonly form = input.required<FormGroup>();

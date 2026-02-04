@@ -7,8 +7,8 @@ describe('PluginComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [PluginComponent]
-		}).compileComponents();
+    imports: [PluginComponent]
+}).compileComponents();
 
 		fixture = TestBed.createComponent(PluginComponent);
 		component = fixture.componentInstance;

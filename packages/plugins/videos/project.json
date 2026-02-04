@@ -7,22 +7,35 @@
 		"version": {
 			"currentVersionResolver": "git-tag",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+			"manifestRootsToUpdate": [
+				"dist/{projectRoot}"
+			]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": [
+		"contracts",
+		"core",
+		"plugin"
+	],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
 			"options": {
 				"outputPath": "dist/packages/plugins/videos",
 				"tsConfig": "packages/plugins/videos/tsconfig.lib.json",
 				"packageJson": "packages/plugins/videos/package.json",
 				"main": "packages/plugins/videos/src/index.ts",
-				"assets": ["packages/plugins/videos/*.md"]
-			}
+				"assets": [
+					"packages/plugins/videos/*.md"
+				]
+			},
+			"dependsOn": [
+				"^build"
+			]
 		},
 		"nx-release-publish": {
 			"options": {
@@ -34,7 +47,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "packages/plugins/videos/jest.config.ts"
 			}
