@@ -1,0 +1,79 @@
+// Swiper styles for time-tracking component
+// This file contains all Swiper-related styles
+
+@mixin swiper-styles() {
+  swiper-container {
+    swiper-slide {
+      width: 100%;
+      height: 100%;
+      padding-bottom: 1rem;
+    }
+
+    swiper-slide {
+      text-align: center;
+      /* Center slide text vertically */
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
+      -webkit-justify-content: center;
+      justify-content: center;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
+      -webkit-align-items: center;
+      align-items: center;
+    }
+
+    swiper-slide {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    // Hide default Swiper navigation buttons
+    &::part(button-prev),
+    &::part(button-next) {
+      display: none;
+    }
+
+    .swiper-button-next:after,
+    .swiper-button-prev:after {
+      font-size: 8px;
+      font-weight: 900;
+    }
+
+    // Pagination styles
+    &::part(pagination) {
+      bottom: -2px;
+    }
+
+    &::part(bullet-active) {
+      background-color: var(--text-primary-color);
+    }
+  }
+
+  // Custom navigation button container and styles
+  .swiper-button-container {
+    display: flex;
+    gap: 4px;
+
+    .swiper-button {
+      padding: 2px 7.5px;
+      border: 2px solid var(--gauzy-background-transparent);
+      color: var(--text-primary-color);
+      border-radius: var(--button-rectangle-border-radius);
+      cursor: pointer;
+      height: fit-content;
+
+      i {
+        font-weight: 900;
+      }
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
+}

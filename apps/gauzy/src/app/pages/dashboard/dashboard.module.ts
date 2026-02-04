@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import {
 	NbAlertModule,
 	NbBadgeModule,
@@ -22,7 +22,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { SwiperModule } from 'swiper/angular';
+
 import {
 	ActivityItemModule,
 	CounterPointModule,
@@ -84,7 +84,7 @@ const THIRD_PARTY_MODULES = [
 	LineChartModule,
 	NgSelectModule,
 	NgxPermissionsModule.forChild(),
-	SwiperModule,
+
 	TranslateModule.forChild()
 ];
 
@@ -132,6 +132,7 @@ const COMPONENTS = [
 		WidgetLayoutModule,
 		WindowLayoutModule
 	],
-	declarations: [...COMPONENTS]
+	declarations: [...COMPONENTS],
+	schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class DashboardModule {}
