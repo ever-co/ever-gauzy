@@ -76,6 +76,7 @@ export function provideI18n(options?: I18nProviderOptions): EnvironmentProviders
 		// Configure ngx-translate with the new standalone API
 		provideTranslateService({
 			defaultLanguage: config.defaultLanguage,
+			fallbackLang: config.fallbackLanguage,
 			useDefaultLang: true,
 			loader: config.customLoader ?? provideTranslateHttpLoader(config.loader)
 		})

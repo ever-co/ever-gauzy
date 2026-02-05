@@ -101,9 +101,13 @@ export abstract class TranslationBaseComponent {
 	 * Get translation synchronously for the given key.
 	 * Uses `instant()` which returns immediately from cached translations.
 	 *
+	 * **Note:** This method returns synchronously. If translations are not yet loaded,
+	 * it will return the key itself (or fallback). For cases where translations may
+	 * not be loaded yet, use `getTranslationAsync()` or `getTranslation$()` instead.
+	 *
 	 * @param key The translation key.
 	 * @param params Optional parameters to be interpolated into the translation.
-	 * @returns The translated string (or the key if not found).
+	 * @returns The translated string (or the key if not found/not loaded yet).
 	 */
 	getTranslation(key: string, params?: TranslateParams): string {
 		return this.translateService.instant(key, params);

@@ -94,7 +94,7 @@ export class ProductFormComponent extends TranslationBaseComponent implements On
 			productCategory: [this.inventoryItem ? this.inventoryItem.productCategory : null],
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
 			description: [this.activeTranslation ? this.activeTranslation.description : ''],
-			languageCode: [this.translateService.getCurrentLang(), Validators.required]
+			languageCode: [this.selectedLanguage, Validators.required]
 		});
 	}
 

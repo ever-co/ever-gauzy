@@ -48,9 +48,9 @@ export class I18nModule {
 			ngModule: I18nModule,
 			providers: [
 				I18nService,
-				...TranslateModule.forRoot({
+				...(TranslateModule.forRoot({
 					loader: provideTranslateHttpLoader()
-				}).providers!
+				}).providers ?? [])
 			]
 		};
 	}
