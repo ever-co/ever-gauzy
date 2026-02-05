@@ -19,7 +19,9 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _version: string;
 	private _organizationTeamId: string;
 	private _description: string;
-	private _syncState: SyncState;
+	private _startSyncState: SyncState;
+	private _stopSyncState: SyncState;
+	private _syncDuration: number;
 
 	constructor(timer: TimerTO) {
 		this._id = timer.id;
@@ -39,7 +41,9 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._version = timer.version;
 		this._organizationTeamId = timer.organizationTeamId;
 		this._description = timer.description;
-		this._syncState = timer.syncState;
+		this._startSyncState = timer.startSyncState;
+		this._stopSyncState = timer.stopSyncState;
+		this._syncDuration = timer.syncDuration;
 	}
 
 	public get isStoppedOffline(): boolean {
@@ -156,12 +160,28 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._description = value;
 	}
 
-	public get syncState(): SyncState {
-		return this._syncState;
+	public get startSyncState(): SyncState {
+		return this._startSyncState;
 	}
 
-	public set syncState(value: SyncState) {
-		this._syncState = value;
+	public set startSyncState(value: SyncState) {
+		this._startSyncState = value;
+	}
+
+	public get stopSyncState(): SyncState {
+		return this._stopSyncState;
+	}
+
+	public set stopSyncState(value: SyncState) {
+		this._stopSyncState = value;
+	}
+
+	public get syncDuration(): number {
+		return this._syncDuration;
+	}
+
+	public set syncDuration(value: number) {
+		this._syncDuration = value;
 	}
 
 	public toObject(): TimerTO {
@@ -182,7 +202,9 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 			version: this._version,
 			organizationTeamId: this._organizationTeamId,
 			description: this._description,
-			syncState: this._syncState
+			startSyncState: this._startSyncState,
+			stopSyncState: this._stopSyncState,
+			syncDuration: this._syncDuration
 		};
 	}
 }

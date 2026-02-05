@@ -1,7 +1,8 @@
 export enum SyncState {
 	PENDING = 'pending',
 	SYNCING = 'syncing',
-	SYNCED = 'synced'
+	SYNCED = 'synced',
+	FAILED = 'failed'
 }
 
 export interface TimerTO {
@@ -22,7 +23,9 @@ export interface TimerTO {
 	version?: string;
 	organizationTeamId?: string;
 	description?: string;
-	syncState?: SyncState;
+	startSyncState?: SyncState;
+	stopSyncState?: SyncState;
+	syncDuration?: number;
 }
 
 export const TABLE_NAME_TIMERS: string = 'timers';

@@ -18,7 +18,7 @@ import {
 	ActivityWatchWindowService
 } from './integrations';
 import { IOfflineMode } from './interfaces';
-import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
+import { DesktopOfflineModeHandler, SyncState, Timer, TimerService, UserService } from './offline';
 import { logger } from '@gauzy/desktop-core';
 
 const EmbeddedQueue = require('embedded-queue');
@@ -276,7 +276,8 @@ export default class TimerHandler {
 					id: this.lastTimer ? this.lastTimer.id : null,
 					stoppedAt: new Date(),
 					synced: !this._offlineMode.enabled,
-					isStoppedOffline: this._offlineMode.enabled
+					isStoppedOffline: this._offlineMode.enabled,
+					stopSyncState: SyncState.PENDING
 				})
 			);
 		} catch (error) {
@@ -601,7 +602,8 @@ export default class TimerHandler {
 						synced: !this._offlineMode.enabled,
 						isStartedOffline: this._offlineMode.enabled,
 						isStoppedOffline: false,
-						version: 'v' + app.getVersion()
+						version: 'v' + app.getVersion(),
+						startSyncState: SyncState.PENDING
 					})
 				);
 			} else {
@@ -793,5 +795,18 @@ export default class TimerHandler {
 		});
 
 		console.log(`Job Created for ${queName}`);
+	}
+
+	async updateTimerSyncState(type: 'startTimer' | 'stopTimer', data: {
+		state: SyncState,
+		duration: number,
+		timerId: number
+	}) {
+		const lastTimer = await this._timerService.findById({ id: data.timerId });
+		await this._timerService.update(new Timer({
+			...lastTimer,
+			...(type === 'startTimer' ? { startSyncState: data.state } : { stopSyncState: data.state }),
+			...(data.duration ? { syncDuration: data.duration } : {})
+		}));
 	}
 }

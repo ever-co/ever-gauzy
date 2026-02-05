@@ -30,6 +30,7 @@ import {
 	Interval,
 	IntervalService,
 	IntervalTO,
+	SyncState,
 	Timer,
 	TimerService,
 	TimerTO,
@@ -921,6 +922,18 @@ export function ipcTimer(
 		}
 	});
 
+	ipcMain.handle('UPDATE_SYNC_STATE', async (_, arg: {
+		actionType: 'startTimer' | 'stopTimer',
+		data: {
+			state: SyncState,
+			duration: number,
+			timerId: number
+		}
+	}) => {
+		await timerHandler.updateTimerSyncState(arg.actionType, arg.data);
+		return;
+	});
+
 	function resizeWindow(window: BrowserWindow, isExpanded: boolean): void {
 		const display = screen.getPrimaryDisplay();
 		const { height, width } = display.workAreaSize;
@@ -1216,7 +1229,8 @@ export function removeTimerHandlers() {
 		'MARK_AS_STOPPED_OFFLINE',
 		'CURRENT_TIMER',
 		'LAST_SYNCED_INTERVAL',
-		'UPDATE_SELECTOR'
+		'UPDATE_SELECTOR',
+		'UPDATE_SYNC_STATE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
