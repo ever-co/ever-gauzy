@@ -1,8 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { ModuleWithProviders, NgModule } from '@angular/core';
+import { ModuleWithProviders, NgModule, provideAppInitializer, inject } from '@angular/core';
 import { NbSelectModule } from '@nebular/theme';
-import { NgxTranslateModule } from '../ngx-translate';
+import { I18nModule } from '@gauzy/ui-core/i18n';
+import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../services';
+import { ElectronService } from '../electron/services';
+import { LanguageInitializerFactory } from './language-initializer.factory';
 import { UserOrganizationService } from '../time-tracker/organization-selector/user-organization.service';
 import { LanguageElectronService } from './language-electron.service';
 import { LanguageSelectorComponent } from './language-selector.component';
@@ -11,8 +14,8 @@ import { LanguageService } from './language.service';
 
 @NgModule({
 	declarations: [LanguageSelectorComponent],
-	imports: [CommonModule, NgxTranslateModule, NbSelectModule],
-	exports: [LanguageSelectorComponent, NgxTranslateModule]
+	imports: [CommonModule, NbSelectModule, I18nModule.forChild()],
+	exports: [LanguageSelectorComponent, I18nModule]
 })
 export class LanguageModule {
 	static forRoot(): ModuleWithProviders<LanguageModule> {
@@ -23,7 +26,11 @@ export class LanguageModule {
 				UserOrganizationService,
 				Store,
 				LanguageSelectorService,
-				LanguageElectronService
+				LanguageElectronService,
+				provideAppInitializer(() => {
+					const initializerFn = LanguageInitializerFactory(inject(TranslateService), inject(ElectronService));
+					return initializerFn();
+				})
 			]
 		};
 	}

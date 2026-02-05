@@ -17,8 +17,6 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	provideTranslateHttpLoader,
-	TranslateHttpLoader,
 	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
@@ -59,7 +57,7 @@ import {
 	NbToastrModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { I18nModule } from '@gauzy/ui-core/i18n';
 import * as Sentry from '@sentry/angular';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
@@ -110,13 +108,7 @@ if (environment.SENTRY_DSN) {
 		SplashScreenModule,
 		ServerDownModule,
 		AlwaysOnModule,
-		TranslateModule.forRoot({
-			extend: true,
-			loader: {
-				provide: TranslateLoader,
-				useClass: TranslateHttpLoader
-			}
-		}),
+		I18nModule.forRoot(),
 		LanguageModule.forRoot(),
 		NbDatepickerModule.forRoot(),
 		AboutModule,
@@ -126,7 +118,6 @@ if (environment.SENTRY_DSN) {
 		PluginsModule
 	],
 	providers: [
-		...provideTranslateHttpLoader(),
 		AppService,
 		NbDialogService,
 		AuthGuard,

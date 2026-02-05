@@ -34,13 +34,7 @@ import { provideTranslateHttpLoader } from './translate-http-loader';
  * @see {@link provideI18n} for standalone applications
  */
 @NgModule({
-	imports: [
-		TranslateModule.forRoot({
-			loader: provideTranslateHttpLoader()
-		})
-	],
-	exports: [TranslateModule],
-	providers: [I18nService]
+	exports: [TranslateModule]
 })
 export class I18nModule {
 	/**
@@ -52,7 +46,35 @@ export class I18nModule {
 	static forRoot(): ModuleWithProviders<I18nModule> {
 		return {
 			ngModule: I18nModule,
-			providers: [I18nService]
+			providers: [
+				I18nService,
+				...TranslateModule.forRoot({
+					loader: provideTranslateHttpLoader()
+				}).providers!
+			]
+		};
+	}
+
+	/**
+	 * Returns a ModuleWithProviders object for lazy-loaded child modules.
+	 * Use this method in feature modules that need access to translation services.
+	 *
+	 * @return {ModuleWithProviders<I18nModule>} A ModuleWithProviders object for child modules.
+	 */
+	static forChild(): ModuleWithProviders<I18nModule> {
+		return {
+			ngModule: I18nChildModule,
+			providers: []
 		};
 	}
 }
+
+/**
+ * Child module for lazy-loaded feature modules.
+ * This module imports TranslateModule.forChild() to share the root translate service.
+ */
+@NgModule({
+	imports: [TranslateModule.forChild()],
+	exports: [TranslateModule]
+})
+export class I18nChildModule {}

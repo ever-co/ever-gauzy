@@ -26,7 +26,6 @@ export * from './lib/language/language.module';
 export * from './lib/login/features/login-magic/login-magic.component';
 export * from './lib/login/features/login-workspace/login-workspace.component';
 export * from './lib/login/features/magic-login-workspace/magic-login-workspace.component';
-export * from './lib/ngx-translate';
 export * from './lib/recap/features/recap/recap.component';
 export * from './lib/recap/monthly/features/monthly-recap/monthly-recap.component';
 export * from './lib/recap/recap-routing.module';

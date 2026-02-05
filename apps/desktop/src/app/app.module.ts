@@ -15,8 +15,6 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	provideTranslateHttpLoader,
-	TranslateHttpLoader,
 	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
@@ -38,6 +36,7 @@ import {
 	TokenInterceptor,
 	UpdaterModule
 } from '@gauzy/desktop-ui-lib';
+import { I18nModule } from '@gauzy/ui-core/i18n';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
 	NbButtonModule,
@@ -55,7 +54,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { AppService } from './app.service';
 import { initializeSentry } from './sentry';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 
 /**
  * Initializes Sentry based on the environment configuration.
@@ -93,13 +91,7 @@ if (environment.SENTRY_DSN) {
 		UpdaterModule,
 		ImageViewerModule,
 		NbDatepickerModule.forRoot(),
-		TranslateModule.forRoot({
-			extend: true,
-			loader: {
-				provide: TranslateLoader,
-				useClass: TranslateHttpLoader
-			}
-		}),
+		I18nModule.forRoot(),
 		LanguageModule.forRoot(),
 		AboutModule,
 		AlwaysOnModule,
@@ -107,7 +99,6 @@ if (environment.SENTRY_DSN) {
 		PluginsModule
 	],
 	providers: [
-		...provideTranslateHttpLoader(),
 		AppService,
 		NbDialogService,
 		ElectronService,
