@@ -1,4 +1,4 @@
-import { Inject, NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
 
 import { NbAuthModule } from '@nebular/auth';
@@ -117,9 +117,10 @@ const COMPONENTS = [
 	]
 })
 export class NgxAuthModule {
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(@Inject(PageRouteRegistryService) readonly _pageRouteRegistryService: PageRouteRegistryService) {
+	constructor() {
 		// Register the routes
 		this.registerPageRoutes();
 	}
@@ -130,7 +131,7 @@ export class NgxAuthModule {
 	 *
 	 * @returns {void}
 	 */
-	registerPageRoutes(): void {
+	private registerPageRoutes(): void {
 		if (NgxAuthModule.hasRegisteredPageRoutes) {
 			return;
 		}

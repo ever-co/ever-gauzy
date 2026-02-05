@@ -17,7 +17,14 @@ export function LanguageInitializerFactory(translate: TranslateService, electron
 			try {
 				const preferredLanguage = await electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE');
 				if (preferredLanguage) {
-					language = preferredLanguage;
+					// Validate that preferredLanguage is a supported value
+					if (languages.includes(preferredLanguage as LanguagesEnum)) {
+						language = preferredLanguage;
+					} else {
+						console.warn(
+							`Invalid preferred language '${preferredLanguage}' from Electron. Falling back to default language.`
+						);
+					}
 				}
 			} catch (error) {
 				console.warn('Error getting preferred language from Electron:', error);

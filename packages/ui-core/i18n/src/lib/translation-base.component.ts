@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 /**
  * Global type alias for translation parameters.
@@ -91,9 +92,7 @@ export abstract class TranslationBaseComponent {
 	 * @returns Observable of language code strings.
 	 */
 	get onLangChange$(): Observable<string> {
-		return this.translateService.onLangChange.pipe(
-			map((event) => event.lang)
-		);
+		return this.translateService.onLangChange.pipe(map((event) => event.lang));
 	}
 
 	// ==================== Translation Methods ====================

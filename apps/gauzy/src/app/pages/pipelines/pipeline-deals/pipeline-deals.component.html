@@ -1,24 +1,22 @@
 <nb-card [nbSpinner]="loading" class="card-scroll" nbSpinnerSize="large" nbSpinnerStatus="primary">
-	@if (pipeline$ | async; as pipeline) {
-	<ng-container ngProjectAs="nb-card-header">
-		<nb-card-header class="card-header-title">
-			<div class="card-header-title">
-				<ngx-back-navigation></ngx-back-navigation>
-				<h4>
-					<span> {{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }} </span> | <span> {{ pipeline?.name }} </span>
-				</h4>
-			</div>
-			<div class="gauzy-button-container">
-				<ngx-gauzy-button-action
-					[buttonTemplateVisible]="visibleButton"
-					[buttonTemplate]="actionButtons"
-					[componentName]="viewComponentName"
-					[isDisable]="disableButton"
-				></ngx-gauzy-button-action>
-			</div>
-		</nb-card-header>
-	</ng-container>
-	}
+	<nb-card-header class="card-header-title">
+		@if (pipeline$ | async; as pipeline) {
+		<div class="card-header-title">
+			<ngx-back-navigation></ngx-back-navigation>
+			<h4>
+				<span> {{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }} </span> | <span> {{ pipeline?.name }} </span>
+			</h4>
+		</div>
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[buttonTemplateVisible]="visibleButton"
+				[buttonTemplate]="actionButtons"
+				[componentName]="viewComponentName"
+				[isDisable]="disableButton"
+			></ngx-gauzy-button-action>
+		</div>
+		}
+	</nb-card-header>
 	<nb-card-body>
 		<div class="row btn-container mb-3">
 			<div class="col">

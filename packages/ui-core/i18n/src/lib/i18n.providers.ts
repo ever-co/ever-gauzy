@@ -5,12 +5,6 @@ import { provideTranslateHttpLoader, HttpLoaderOptions, DEFAULT_HTTP_LOADER_OPTI
 import { I18nService } from './i18n.service';
 
 /**
- * Re-export provideTranslateService from @ngx-translate/core for convenience.
- * This allows consumers to use the raw ngx-translate API if needed.
- */
-export { provideTranslateService, TranslateLoader } from '@ngx-translate/core';
-
-/**
  * Configuration options for the I18n providers.
  */
 export interface I18nProviderOptions {
@@ -87,3 +81,9 @@ export function provideI18n(options?: I18nProviderOptions): EnvironmentProviders
 		})
 	]);
 }
+
+/**
+ * Re-export provideTranslateService from @ngx-translate/core for convenience.
+ * This allows consumers to use the raw ngx-translate API if needed.
+ */
+export { provideTranslateService, TranslateLoader } from '@ngx-translate/core';

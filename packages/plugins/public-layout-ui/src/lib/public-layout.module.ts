@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-
 import { ROUTES, RouterModule } from '@angular/router';
 import {
 	NbActionsModule,
@@ -27,7 +26,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { LanguagesService, PageRouteRegistryService, SkillsService } from '@gauzy/ui-core/core';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import {
 	AppointmentCalendarModule,
 	CurrencyModule,
@@ -41,8 +39,7 @@ import {
 	SkillsInputModule,
 	TableComponentsModule,
 	TagsColorInputModule,
-	WorkInProgressModule,
-	getBrowserLanguage
+	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { COMPONENTS } from './components';
@@ -78,10 +75,7 @@ const THIRD_PARTY_MODULES = [
 	CKEditorModule,
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
-		loader: provideTranslateHttpLoader()
-	})
+	TranslateModule.forChild()
 ];
 
 /**
