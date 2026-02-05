@@ -513,11 +513,6 @@ export class TimeTrackerService {
 			organizationTeamId
 		};
 
-		// await new Promise((resolve) => {
-		// 	setTimeout(() => {
-		// 		resolve(true);
-		// 	}, 15000)
-		// });
 		// Log request details
 		this._loggerService.info<any>(`Toggle Stop Timer Request: ${moment().format()}`, body);
 

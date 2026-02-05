@@ -1712,10 +1712,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 			// Stop timer on server
 			console.log('Toggling timer');
-			// await new Promise((resolve) => setTimeout(() => {
-			// 	resolve(true);
-			// }, 40000));
-			console.log('Proceed to toggle');
 			await this._toggle(timer, onClick);
 			/**
 			 * End network processing
