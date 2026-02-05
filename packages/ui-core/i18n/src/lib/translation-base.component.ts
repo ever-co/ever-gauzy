@@ -91,12 +91,9 @@ export abstract class TranslationBaseComponent {
 	 * @returns Observable of language code strings.
 	 */
 	get onLangChange$(): Observable<string> {
-		return new Observable((subscriber) => {
-			const subscription = this.translateService.onLangChange.subscribe((event) => {
-				subscriber.next(event.lang);
-			});
-			return () => subscription.unsubscribe();
-		});
+		return this.translateService.onLangChange.pipe(
+			map((event) => event.lang)
+		);
 	}
 
 	// ==================== Translation Methods ====================
