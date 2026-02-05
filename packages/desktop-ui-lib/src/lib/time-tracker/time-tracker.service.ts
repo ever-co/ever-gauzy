@@ -472,7 +472,7 @@ export class TimeTrackerService {
 		return firstValueFrom(this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body }, options));
 	}
 
-	async toggleApiStop(values) {
+	toggleApiStop(values) {
 		const TIMEOUT = 15000;
 		const API_URL = `${API_PREFIX}/timesheet/timer/stop`;
 

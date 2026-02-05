@@ -510,6 +510,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					try {
 						// Combine all conditions into a single descriptive boolean
 						const isRetrieveRemoteLog =
+							!isRemoteTimerRunning ||
 							isRemote ||
 							this._remoteSleepLock ||
 							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp));
