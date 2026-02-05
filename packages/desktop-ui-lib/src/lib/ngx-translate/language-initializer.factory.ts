@@ -1,24 +1,29 @@
-import { from } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ElectronService } from '../electron/services';
 
-export function LanguageInitializerFactory(
-	translate: TranslateService,
-	electronService: ElectronService
-) {
+export function LanguageInitializerFactory(translate: TranslateService, electronService: ElectronService) {
 	return async () => {
+		const DEFAULT_LANG = LanguagesEnum.ENGLISH;
 		const languages = Object.values(LanguagesEnum);
-		let language = 'en';
-		try {
-			language = await electronService.ipcRenderer.invoke(
-				'PREFERRED_LANGUAGE'
-			);
-		} catch(error) {
-			// this catch to handle if channel not define in electron index
-		}
+
 		translate.addLangs(languages);
-		translate.setDefaultLang(language || LanguagesEnum.ENGLISH);
-		return from(translate.use(language || LanguagesEnum.ENGLISH));
+		translate.setFallbackLang(DEFAULT_LANG);
+
+		let language: string = DEFAULT_LANG;
+
+		if (electronService.isElectron) {
+			try {
+				const preferredLanguage = await electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE');
+				if (preferredLanguage) {
+					language = preferredLanguage;
+				}
+			} catch (error) {
+				console.warn('Error getting preferred language from Electron:', error);
+			}
+		}
+
+		return await firstValueFrom(translate.use(language));
 	};
 }

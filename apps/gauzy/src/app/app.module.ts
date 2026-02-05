@@ -3,7 +3,7 @@
 
 import { VERSION } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -20,7 +20,6 @@ import {
 	NbCalendarModule,
 	NbCalendarKitModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { FileUploadModule } from 'ng2-file-upload';
 import { CookieService } from 'ngx-cookie-service';
@@ -53,7 +52,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { CommonModule } from '@gauzy/ui-core/common';
-import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n';
+import { I18nModule, I18nService } from '@gauzy/ui-core/i18n';
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
@@ -106,15 +105,6 @@ const THIRD_PARTY_MODULES = [
 	FeatureToggleModule,
 	FileUploadModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	}),
-	// PostHog is always included but only initializes when apiKey is valid
-	// The PostHog init factory handles empty/invalid apiKey gracefully
 	PostHogModule.forRoot({
 		apiKey: environment.POSTHOG_KEY || '',
 		options: {

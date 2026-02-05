@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -16,9 +16,9 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { getBrowserLanguage, SmartDataViewLayoutModule, SharedModule } from '@gauzy/ui-core/shared';
 import { IntegrationHubstaffRoutes } from './integration-hubstaff.routes';
 import { IntegrationHubstaffLayoutComponent } from './integration-hubstaff.layout.component';
@@ -50,12 +50,8 @@ import { SettingsDialogComponent } from './components/settings-dialog/settings-d
 		NgSelectModule,
 		NgxPermissionsModule.forRoot(),
 		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
+			defaultLanguage: getBrowserLanguage(),
+			loader: provideTranslateHttpLoader()
 		}),
 		IntegrationHubstaffRoutes,
 		SharedModule,

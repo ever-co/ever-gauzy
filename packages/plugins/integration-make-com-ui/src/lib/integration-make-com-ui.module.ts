@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -17,8 +17,8 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	SelectorsModule,
@@ -51,11 +51,7 @@ import { MakeComSettingsComponent } from './components/make-com-settings/make-co
 		NbTooltipModule,
 		TranslateModule.forChild({
 			defaultLanguage: getBrowserLanguage(),
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
+			loader: provideTranslateHttpLoader()
 		}),
 		IntegrationMakeComRoutes,
 		SmartDataViewLayoutModule,

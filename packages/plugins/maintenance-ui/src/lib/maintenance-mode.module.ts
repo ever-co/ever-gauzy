@@ -1,11 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
 import { NbLayoutModule } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { getBrowserLanguage } from '@gauzy/ui-core/shared';
 import { createMaintenanceRoutes } from './maintenance-mode.routes';
 import { MaintenanceModeComponent } from './maintenance-mode.component';
@@ -14,12 +13,8 @@ import { MaintenanceModeComponent } from './maintenance-mode.component';
 	imports: [
 		CommonModule,
 		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
+			defaultLanguage: getBrowserLanguage(),
+			loader: provideTranslateHttpLoader()
 		}),
 		NbLayoutModule
 	],

@@ -18,7 +18,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	ElectronService,
 	InviteService,
@@ -27,8 +27,7 @@ import {
 	RoleService
 } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
-import { NgxFaqModule, PasswordFormFieldModule, SharedModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
-import { provideTranslateHttpLoader, TranslateHttpLoader } from '@gauzy/ui-core/i18n';
+import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createAuthRoutes } from './auth.routes';
 import { WorkspaceSelectionComponent } from './components/workspace-selection/workspace-selection.component';
 import { SocialLinksComponent } from './components/social-links/social-links.component';
@@ -92,21 +91,11 @@ const COMPONENTS = [
 	WorkspaceSelectionComponent
 ];
 
-const THIRD_PARTY_MODULES = [
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-		loader: {
-			provide: TranslateLoader,
-			useClass: TranslateHttpLoader
-		}
-	})
-];
-
 @NgModule({
 	imports: [
-		RouterModule.forChild([]),
 		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
+		RouterModule.forChild([]),
+		TranslateModule.forChild(),
 		ThemeSelectorModule,
 		NgxFaqModule,
 		ThemeModule,
@@ -115,7 +104,6 @@ const THIRD_PARTY_MODULES = [
 	],
 	declarations: [...COMPONENTS],
 	providers: [
-		...provideTranslateHttpLoader(),
 		ElectronService,
 		{
 			provide: ROUTES,

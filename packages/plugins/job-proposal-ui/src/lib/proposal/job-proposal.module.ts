@@ -1,5 +1,5 @@
 import { Inject, NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+
 import { ROUTES, RouterModule } from '@angular/router';
 import {
 	NbBadgeModule,
@@ -13,13 +13,13 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { BaseChartDirective } from 'ng2-charts';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	SharedModule,
@@ -71,12 +71,8 @@ const THIRD_PARTY_MODULES = [
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
+		defaultLanguage: getBrowserLanguage(),
+		loader: provideTranslateHttpLoader()
 	})
 ];
 

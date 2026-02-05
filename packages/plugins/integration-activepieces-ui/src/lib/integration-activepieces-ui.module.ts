@@ -21,8 +21,8 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { provideTranslateHttpLoader, TranslateHttpLoader } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	SelectorsModule,
@@ -69,17 +69,13 @@ import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-s
 		NbTooltipModule,
 		TranslateModule.forRoot({
 			defaultLanguage: getBrowserLanguage(),
-			loader: {
-				provide: TranslateLoader,
-				useClass: TranslateHttpLoader
-			}
+			loader: provideTranslateHttpLoader()
 		}),
 		IntegrationActivepiecesRoutes,
 		SmartDataViewLayoutModule,
 		SelectorsModule,
 		SharedModule,
 		TableComponentsModule
-	],
-	providers: [...provideTranslateHttpLoader()]
+	]
 })
 export class IntegrationActivepiecesUiModule {}
