@@ -48,7 +48,6 @@
 					"node_modules/socicon/css/socicon.css",
 					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 					"node_modules/leaflet/dist/leaflet.css",
-					"apps/server/src/styles.css",
 					"apps/server/src/assets/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],

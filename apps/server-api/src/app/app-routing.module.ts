@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
-import { AuthConnectionGuard } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
 	{
@@ -13,7 +12,6 @@ const routes: Routes = [
 	},
 	{
 		path: 'plugins',
-		canActivate: [AuthConnectionGuard],
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
 	},
 	{

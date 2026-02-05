@@ -1,33 +1,22 @@
 import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
 import {
-	AboutModule,
 	ElectronService,
 	GAUZY_ENV,
+	HttpLoaderFactory,
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
-	PluginsModule,
-	ServerDashboardModule,
-	SettingsModule,
-	SetupModule
+	Store
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbDialogModule,
-	NbDialogService,
-	NbLayoutModule,
-	NbMenuModule,
-	NbSidebarModule,
-	NbThemeModule,
-	NbToastrModule
-} from '@nebular/theme';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
+import { NbDialogModule, NbDialogService, NbMenuModule, NbSidebarModule, NbToastrModule } from '@nebular/theme';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
@@ -51,29 +40,30 @@ if (environment.SENTRY_DSN) {
 bootstrapApplication(AppComponent, {
 	providers: [
 		importProvidersFrom(
-			NbLayoutModule,
 			NbDialogModule.forRoot(),
 			NbToastrModule.forRoot(),
-			NbCardModule,
-			NbButtonModule,
 			BrowserModule,
 			RouterModule,
 			AppRoutingModule,
-			NbThemeModule,
-			NgxDesktopThemeModule,
 			NbMenuModule.forRoot(),
 			NbSidebarModule.forRoot(),
-			SetupModule,
-			SettingsModule,
-			ServerDashboardModule,
-			AboutModule,
 			LanguageModule.forRoot(),
-			PluginsModule
+			NgxDesktopThemeModule,
+			NbTablerIconsModule,
+			TranslateModule.forRoot({
+				extend: true,
+				loader: {
+					provide: TranslateLoader,
+					useFactory: HttpLoaderFactory,
+					deps: [HttpClient]
+				}
+			})
 		),
 		AppService,
 		NbDialogService,
 		ElectronService,
 		LoggerService,
+		Store,
 		{
 			provide: ErrorHandler,
 			useValue: Sentry.createErrorHandler({
