@@ -1,8 +1,14 @@
 import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
-import { provideTranslateService, TranslateLoader } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { provideTranslateHttpLoader, HttpLoaderOptions, DEFAULT_HTTP_LOADER_OPTIONS } from './translate-http-loader';
 import { I18nService } from './i18n.service';
+
+/**
+ * Re-export provideTranslateService from @ngx-translate/core for convenience.
+ * This allows consumers to use the raw ngx-translate API if needed.
+ */
+export { provideTranslateService, TranslateLoader } from '@ngx-translate/core';
 
 /**
  * Configuration options for the I18n providers.
@@ -81,9 +87,3 @@ export function provideI18n(options?: I18nProviderOptions): EnvironmentProviders
 		})
 	]);
 }
-
-/**
- * Re-export provideTranslateService from @ngx-translate/core for convenience.
- * This allows consumers to use the raw ngx-translate API if needed.
- */
-export { provideTranslateService, TranslateLoader };

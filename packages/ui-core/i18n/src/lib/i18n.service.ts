@@ -33,7 +33,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 @Injectable({ providedIn: 'root' })
 export class I18nService {
 	private _availableLanguages: LanguagesEnum[] = [];
-	private _preferredLanguage$ = new BehaviorSubject<NullableString>(null);
+	private readonly _preferredLanguage$ = new BehaviorSubject<NullableString>(null);
 
 	/**
 	 * The underlying TranslateService from @ngx-translate/core.
