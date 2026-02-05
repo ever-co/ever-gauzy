@@ -61,7 +61,7 @@ export class I18nModule {
 	 *
 	 * @return {ModuleWithProviders<I18nModule>} A ModuleWithProviders object for child modules.
 	 */
-	static forChild(): ModuleWithProviders<I18nModule> {
+	static forChild(): ModuleWithProviders<I18nChildModule> {
 		return {
 			ngModule: I18nChildModule,
 			providers: []
