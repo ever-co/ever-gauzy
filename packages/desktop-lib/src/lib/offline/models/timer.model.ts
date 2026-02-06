@@ -1,5 +1,6 @@
 import { Serializable } from '../../interfaces';
-import { TimerTO, SyncState } from '../dto';
+import { TimerTO } from '../dto';
+import { TimerSyncStateEnum } from '@gauzy/contracts';
 
 export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _id?: number;
@@ -19,8 +20,8 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _version: string;
 	private _organizationTeamId: string;
 	private _description: string;
-	private _startSyncState: SyncState;
-	private _stopSyncState: SyncState;
+	private _startSyncState: TimerSyncStateEnum;
+	private _stopSyncState: TimerSyncStateEnum;
 	private _syncDuration: number;
 
 	constructor(timer: TimerTO) {
@@ -160,19 +161,19 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._description = value;
 	}
 
-	public get startSyncState(): SyncState {
+	public get startSyncState(): TimerSyncStateEnum {
 		return this._startSyncState;
 	}
 
-	public set startSyncState(value: SyncState) {
+	public set startSyncState(value: TimerSyncStateEnum) {
 		this._startSyncState = value;
 	}
 
-	public get stopSyncState(): SyncState {
+	public get stopSyncState(): TimerSyncStateEnum {
 		return this._stopSyncState;
 	}
 
-	public set stopSyncState(value: SyncState) {
+	public set stopSyncState(value: TimerSyncStateEnum) {
 		this._stopSyncState = value;
 	}
 
