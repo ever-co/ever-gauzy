@@ -4,7 +4,7 @@
 			nbButton
 			class="check"
 			[class.on]="choice === 'accept'"
-			[class.off]="!(choice === 'accept')"
+			[class.off]="choice !== 'accept'"
 			type="button"
 			(click)="choice = 'accept'; onChange()"
 		>
@@ -13,21 +13,17 @@
 		<button
 			nbButton
 			class="na"
-			[class.off]="choice?.length > 0"
 			[class.on]="!(choice?.length > 0)"
+			[class.off]="choice?.length > 0"
 			(click)="choice = ''; onChange()"
 		>
-			@if (choice?.length > 0) {
 			<fa-icon [icon]="faBan"></fa-icon>
-			} @else {
-			<fa-icon [icon]=""></fa-icon>
-			}
 		</button>
 		<button
 			nbButton
 			class="deny"
 			[class.on]="choice === 'deny'"
-			[class.off]="!(choice === 'deny')"
+			[class.off]="choice !== 'deny'"
 			(click)="choice = 'deny'; onChange()"
 		>
 			<fa-icon [icon]="faTimes"></fa-icon>
