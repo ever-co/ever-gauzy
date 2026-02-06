@@ -16,8 +16,12 @@
 		</nb-select>
 	</div>
 </div>
-<div class="weekly-logs row-table expense-report-grid" [nbSpinner]="loading" [nbSpinnerSize]="'giant'"
-	[nbSpinnerStatus]="'primary'">
+<div
+	class="weekly-logs row-table expense-report-grid"
+	[nbSpinner]="loading"
+	[nbSpinnerSize]="'giant'"
+	[nbSpinnerStatus]="'primary'"
+>
 	<ng-template #columnsHeader>
 		@if (dailyData?.length > 0) {
 		<div class="columns-header">
@@ -136,18 +140,22 @@
 							</div>
 							<div class="responsive-table-content employee">
 								<ng-container
-									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"></ng-container>
+									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"
+								></ng-container>
 							</div>
 						</div>
 						} @else {
 						<div class="responsive-table-row employee-column no-height"></div>
 						}
-						<ng-container *ngTemplateOutlet="
+						<ng-container
+							*ngTemplateOutlet="
 								projectColumnEl;
 								context: { $implicit: projectRow, expanseIndex: expanseIndex }
-							"></ng-container>
+							"
+						></ng-container>
 						<ng-container
-							*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"></ng-container>
+							*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"
+						></ng-container>
 					</div>
 				</div>
 				}
@@ -179,12 +187,15 @@
 								{{ projectIndex == 0 && expanseIndex == 0 ? (dateRow.date | dateFormat) : '' }}
 							</div>
 						</div>
-						<ng-container *ngTemplateOutlet="
+						<ng-container
+							*ngTemplateOutlet="
 								projectColumnEl;
 								context: { $implicit: projectRow, expanseIndex: expanseIndex }
-							"></ng-container>
+							"
+						></ng-container>
 						<ng-container
-							*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"></ng-container>
+							*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"
+						></ng-container>
 					</div>
 				</div>
 				}
@@ -226,7 +237,8 @@
 							</div>
 							<div class="responsive-table-content employee">
 								<ng-container
-									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }">
+									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"
+								>
 								</ng-container>
 							</div>
 						</div>
@@ -234,7 +246,8 @@
 						<div class="responsive-table-row employee-column no-height"></div>
 						}
 						<ng-container
-							*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"></ng-container>
+							*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"
+						></ng-container>
 					</div>
 				</div>
 				}
@@ -268,8 +281,13 @@
 <ng-template let-employee #employeeEl>
 	<div class="avatar-wrapper-outer">
 		@if (employee) {
-		<ngx-avatar class="report-table" [src]="employee?.user?.imageUrl" [name]="employee?.user?.name"
-			[id]="employee?.id" [employee]="employee"></ngx-avatar>
+		<ngx-avatar
+			class="report-table"
+			[src]="employee?.user?.imageUrl"
+			[name]="employee?.user?.name"
+			[id]="employee?.id"
+			[employee]="employee"
+		></ngx-avatar>
 		}
 	</div>
 	<ng-template #noEmployeeEl>

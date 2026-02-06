@@ -74,8 +74,11 @@
 	</div>
 	<div class="responsive-table-row progress-bar-column">
 		<div class="responsive-table-content day-col">
-			<ngx-progress-status [defaultStatus]="'success'" class="report-progress"
-				[percentage]="activityRow?.duration_percentage">
+			<ngx-progress-status
+				[defaultStatus]="'success'"
+				class="report-progress"
+				[percentage]="activityRow?.duration_percentage"
+			>
 			</ngx-progress-status>
 		</div>
 	</div>
@@ -123,19 +126,23 @@
 							<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 							<div class="responsive-table-content employee">
 								<ng-container
-									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }">
+									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"
+								>
 								</ng-container>
 							</div>
 						</div>
 						} @else {
 						<div class="responsive-table-row employee-column no-height"></div>
 						}
-						<ng-container *ngTemplateOutlet="
+						<ng-container
+							*ngTemplateOutlet="
 								projectColumnEl;
 								context: { $implicit: projectRow, activityIndex: activityIndex }
-							"></ng-container>
+							"
+						></ng-container>
 						<ng-container
-							*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"></ng-container>
+							*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
+						></ng-container>
 					</div>
 				</div>
 				}
@@ -169,12 +176,15 @@
 						} @else {
 						<div class="responsive-table-row employee-column no-height"></div>
 						}
-						<ng-container *ngTemplateOutlet="
+						<ng-container
+							*ngTemplateOutlet="
 								projectColumnEl;
 								context: { $implicit: projectRow, activityIndex: activityIndex }
-							"></ng-container>
+							"
+						></ng-container>
 						<ng-container
-							*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"></ng-container>
+							*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
+						></ng-container>
 					</div>
 				</div>
 				}
@@ -208,12 +218,15 @@
 						} @else {
 						<div class="responsive-table-row employee-column no-height"></div>
 						}
-						<ng-container *ngTemplateOutlet="
+						<ng-container
+							*ngTemplateOutlet="
 								employeeColumnEl;
 								context: { $implicit: employeeRow, activityIndex: activityIndex }
-							"></ng-container>
+							"
+						></ng-container>
 						<ng-container
-							*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"></ng-container>
+							*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
+						></ng-container>
 					</div>
 				</div>
 				}
@@ -243,8 +256,13 @@
 <ng-template let-employee #employeeEl>
 	@if (employee) {
 	<div class="avatar-wrapper-outer">
-		<ngx-avatar class="report-table" [src]="employee?.user?.imageUrl" [name]="employee?.user?.name"
-			[id]="employee?.id" [employee]="employee"></ngx-avatar>
+		<ngx-avatar
+			class="report-table"
+			[src]="employee?.user?.imageUrl"
+			[name]="employee?.user?.name"
+			[id]="employee?.id"
+			[employee]="employee"
+		></ngx-avatar>
 	</div>
 	} @else {
 	<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>

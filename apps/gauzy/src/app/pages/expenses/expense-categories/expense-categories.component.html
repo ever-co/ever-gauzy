@@ -11,16 +11,22 @@
 	</nb-card-header>
 	<nb-card-body class="content-body">
 		<div class="gauzy-button-container">
-			<ngx-gauzy-button-action [buttonTemplate]="actionButtons" [componentName]="viewComponentName"
-				[buttonTemplateVisible]="visibleButton" [isDisable]="disableButton"></ngx-gauzy-button-action>
+			<ngx-gauzy-button-action
+				[buttonTemplate]="actionButtons"
+				[componentName]="viewComponentName"
+				[buttonTemplateVisible]="visibleButton"
+				[isDisable]="disableButton"
+			></ngx-gauzy-button-action>
 		</div>
 		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) { @if (expenseCategories?.length > 0) {
 		<div class="table-scroll-container" infiniteScroll [scrollWindow]="false" (scrolled)="onScroll()">
 			@for (item of expenseCategories; track item) {
 			<nb-card class="p-0">
-				<nb-card-body class="custom-table"
+				<nb-card-body
+					class="custom-table"
 					[class.selected]="selected?.state && item === selected?.expenseCategory"
-					(click)="selectExpenseCategory(item)">
+					(click)="selectExpenseCategory(item)"
+				>
 					<ga-notes-with-tags [rowData]="item"> </ga-notes-with-tags>
 				</nb-card-body>
 			</nb-card>
@@ -32,9 +38,13 @@
 		</div>
 		} } @else {
 		<div class="grid">
-			<ga-card-grid [totalItems]="pagination?.totalItems" [settings]="settingsSmartTable"
-				[source]="expenseCategories" (onSelectedItem)="selectExpenseCategory($event)"
-				(scroll)="onScroll()"></ga-card-grid>
+			<ga-card-grid
+				[totalItems]="pagination?.totalItems"
+				[settings]="settingsSmartTable"
+				[source]="expenseCategories"
+				(onSelectedItem)="selectExpenseCategory($event)"
+				(scroll)="onScroll()"
+			></ga-card-grid>
 		</div>
 		}
 	</nb-card-body>
@@ -46,9 +56,15 @@
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
-		<button (click)="removeCategory(selected.expenseCategory.id, selected.expenseCategory.name)" nbButton
-			status="basic" class="action" [disabled]="disableButton" size="small"
-			[nbTooltip]="'BUTTONS.DELETE' | translate">
+		<button
+			(click)="removeCategory(selected.expenseCategory.id, selected.expenseCategory.name)"
+			nbButton
+			status="basic"
+			class="action"
+			[disabled]="disableButton"
+			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
+		>
 			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 		</button>
 	</div>
