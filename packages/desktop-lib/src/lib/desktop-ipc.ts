@@ -929,7 +929,11 @@ export function ipcTimer(
 			timerId: number
 		}
 	}) => {
-		await timerHandler.updateTimerSyncState(arg.actionType, arg.data);
+		try {
+			await timerHandler.updateTimerSyncState(arg.actionType, arg.data);
+		} catch (error) {
+			console.error(`ERROR_UPDATE_SYNC_STATE: ${error}`);
+		}
 		return;
 	});
 

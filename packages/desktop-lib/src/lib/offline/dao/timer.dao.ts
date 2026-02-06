@@ -203,6 +203,11 @@ export class TimerDAO implements DAO<TimerTO> {
 		return await this._provider
 			.connection<TimerTO>(TABLE_NAME_TIMERS)
 			.where('employeeId', user.employeeId)
-			.andWhere('stopSyncState', TimerSyncStateEnum.SYNCING);
+			.andWhere((qb) =>
+				qb
+					.where('stopSyncState', TimerSyncStateEnum.SYNCING)
+					.orWhere('startSyncState', TimerSyncStateEnum.SYNCING)
+			)
+			.andWhere('synced', true);
 	}
 }

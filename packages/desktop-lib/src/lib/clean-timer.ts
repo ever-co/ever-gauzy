@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
 import { TimerService, TimerTO, Timer } from './offline/index';
 export class CleanTimer {
-	static instance: CleanTimer;
+	private static instance: CleanTimer;
 	readonly timerService: TimerService;
 
 	private constructor() {
