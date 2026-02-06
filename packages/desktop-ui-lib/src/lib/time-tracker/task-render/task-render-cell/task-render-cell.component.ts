@@ -6,13 +6,14 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITaskPriority, ITaskSize } from '@gauzy/contracts';
 import {NbDialogService, NbPopoverDirective} from '@nebular/theme';
 import {TaskDetailComponent} from "../task-detail/task-detail.component";
+import { TaskBadgeViewComponent } from '../task-badge-view/task-badge-view.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-task-render-cell',
     templateUrl: './task-render-cell.component.html',
     styleUrls: ['./task-render-cell.component.scss'],
-    standalone: false
+    imports: [TaskBadgeViewComponent]
 })
 export class TaskRenderCellComponent extends TaskRenderComponent {
 	private _popover: NbPopoverDirective;

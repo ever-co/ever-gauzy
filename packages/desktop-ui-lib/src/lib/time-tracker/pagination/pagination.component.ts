@@ -11,13 +11,16 @@ import {
 import { LocalDataSource } from 'angular2-smart-table';
 import { Subscription, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbIconModule, NbSelectModule, NbOptionModule } from '@nebular/theme';
+import { NgClass } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ga-pagination',
     templateUrl: './pagination.component.html',
     styleUrls: ['./pagination.component.scss'],
-    standalone: false
+    imports: [NbIconModule, NgClass, NbSelectModule, NbOptionModule, TranslatePipe]
 })
 export class PaginationComponent implements OnChanges, OnDestroy {
 	private _source: LocalDataSource;

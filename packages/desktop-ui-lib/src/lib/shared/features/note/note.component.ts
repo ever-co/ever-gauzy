@@ -5,6 +5,8 @@ import { SelectorElectronService } from '../../services/selector-electron.servic
 import { NoteSelectorQuery } from './+state/note-selector.query';
 import { NoteSelectorStore } from './+state/note-selector.store';
 import { NoteService } from './+state/note.service';
+import { TextAreaComponent } from '../../components/ui/text-area/text-area.component';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
     selector: 'gauzy-note',
@@ -18,7 +20,7 @@ import { NoteService } from './+state/note.service';
             multi: true
         }
     ],
-    standalone: false
+    imports: [TextAreaComponent, AsyncPipe]
 })
 export class NoteComponent implements ControlValueAccessor {
 	private onChange: (value: string) => void;

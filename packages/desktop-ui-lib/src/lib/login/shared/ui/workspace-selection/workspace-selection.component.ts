@@ -1,11 +1,17 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { IWorkspaceResponse } from '@gauzy/contracts';
+import { LogoComponent } from '../logo/logo.component';
+import { NbCardModule, NbListModule, NbIconModule } from '@nebular/theme';
+import { DebounceClickDirective } from '../../../../directives/debounce-click.directive';
+import { AvatarComponent } from '../../../../shared/components/ui/avatar/avatar.component';
+import { SpinnerButtonDirective } from '../../../../directives/spinner-button.directive';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
     selector: 'ngx-workspace-selection',
     templateUrl: './workspace-selection.component.html',
     styleUrls: ['./workspace-selection.component.scss'],
-    standalone: false
+    imports: [LogoComponent, NbCardModule, NbListModule, DebounceClickDirective, AvatarComponent, SpinnerButtonDirective, NbIconModule, TranslatePipe]
 })
 export class WorkspaceSelectionComponent {
 	selected: IWorkspaceResponse = null;

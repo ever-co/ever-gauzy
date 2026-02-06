@@ -9,19 +9,19 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
-	declarations: [AlwaysOnComponent],
-	imports: [
-		CommonModule,
-		NbLayoutModule,
-		LanguageModule.forChild(),
-		NbIconModule,
-		NbTablerIconsModule,
-		NbTooltipModule,
-		NbButtonModule,
-		NbCardModule,
-		FormsModule,
-		FontAwesomeModule
-	],
-	providers: [AlwaysOnService]
+    imports: [
+        CommonModule,
+        NbLayoutModule,
+        LanguageModule.forChild(),
+        NbIconModule,
+        NbTablerIconsModule,
+        NbTooltipModule,
+        NbButtonModule,
+        NbCardModule,
+        FormsModule,
+        FontAwesomeModule,
+        AlwaysOnComponent
+    ],
+    providers: [AlwaysOnService]
 })
 export class AlwaysOnModule {}
