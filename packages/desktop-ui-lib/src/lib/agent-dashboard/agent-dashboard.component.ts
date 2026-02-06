@@ -4,7 +4,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { GAUZY_ENV } from '../constants';
 import { IpcService } from './services/ipc.service';
 import { TasksService } from './services/tasks-service';
-import { NgClass } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 
 @Component({

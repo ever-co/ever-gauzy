@@ -1,4 +1,4 @@
-import { AsyncPipe, NgClass, NgStyle } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
@@ -112,10 +112,8 @@ enum TimerStartMode {
 		NbSpinnerModule,
 		NbButtonModule,
 		NbIconModule,
-		NgClass,
 		NbCardModule,
 		OrganizationSelectorComponent,
-		NgStyle,
 		NbTooltipModule,
 		TimeTrackerStatusComponent,
 		TimeTrackerFormComponent,

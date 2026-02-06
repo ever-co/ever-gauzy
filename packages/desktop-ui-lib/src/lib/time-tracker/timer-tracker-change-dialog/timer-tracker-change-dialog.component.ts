@@ -16,7 +16,7 @@ import {
 	TimeTrackerFormService
 } from '../../shared/features/time-tracker-form/time-tracker-form.service';
 import { DynamicSelectorValidation } from '../../shared/utils/validation/dynamic-selector-factory.validator';
-import { NgClass, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { ClientSelectorComponent } from '../../shared/features/client-selector/client-selector.component';
 import { ErrorMessageComponent } from '../../shared/components/ui/error-message/error-message.component';
 import { ProjectSelectorComponent } from '../../shared/features/project-selector/project-selector.component';
@@ -36,7 +36,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 		FormsModule,
 		ReactiveFormsModule,
 		NbCardModule,
-		NgClass,
 		ClientSelectorComponent,
 		ErrorMessageComponent,
 		ProjectSelectorComponent,

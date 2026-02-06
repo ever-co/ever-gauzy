@@ -1,4 +1,4 @@
-import { AsyncPipe, LowerCasePipe, NgClass, NgTemplateOutlet, TitleCasePipe } from '@angular/common';
+import { AsyncPipe, LowerCasePipe, NgTemplateOutlet, TitleCasePipe } from '@angular/common';
 import {
 	AfterViewInit,
 	Component,
@@ -70,7 +70,6 @@ import { SslComponent } from './ssl/ssl.component';
 		NbListModule,
 		LanguageSelectorComponent,
 		SwitchThemeComponent,
-		NgClass,
 		NbCardModule,
 		NbIconModule,
 		NbToggleModule,

@@ -9,7 +9,6 @@ import { GAUZY_ENV, patterns } from '../../../constants';
 import { ErrorHandlerService } from '../../../services';
 import { LogoComponent } from '../../shared/ui/logo/logo.component';
 import { SwitchThemeComponent } from '../../../theme-selector/switch-theme/switch-theme.component';
-import { NgClass, NgStyle } from '@angular/common';
 import { NbFormFieldModule, NbInputModule, NbIconModule, NbButtonModule } from '@nebular/theme';
 import { DebounceClickDirective } from '../../../directives/debounce-click.directive';
 import { SpinnerButtonDirective } from '../../../directives/spinner-button.directive';
@@ -18,10 +17,24 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-login-magic',
-    templateUrl: './login-magic.component.html',
-    styleUrls: ['./login-magic.component.scss'],
-    imports: [LogoComponent, SwitchThemeComponent, NgClass, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, NbIconModule, DebounceClickDirective, NbButtonModule, SpinnerButtonDirective, NgStyle, RouterLink, SocialLinksComponent, TranslatePipe]
+	selector: 'ngx-login-magic',
+	templateUrl: './login-magic.component.html',
+	styleUrls: ['./login-magic.component.scss'],
+	imports: [
+		LogoComponent,
+		SwitchThemeComponent,
+		FormsModule,
+		ReactiveFormsModule,
+		NbFormFieldModule,
+		NbInputModule,
+		NbIconModule,
+		DebounceClickDirective,
+		NbButtonModule,
+		SpinnerButtonDirective,
+		RouterLink,
+		SocialLinksComponent,
+		TranslatePipe
+	]
 })
 export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	public countdown: number;
