@@ -12,7 +12,7 @@ import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, finalize, switchMap, take } from 'rxjs/operators';
 import { AuthStrategy } from '../auth';
 import { AUTH_ENDPOINTS } from '../constants';
-import { Store } from '../services';
+import { Store, ErrorMapping } from '../services';
 
 /**
  * Interceptor that handles automatic token refresh when receiving 401 Unauthorized responses.
@@ -23,7 +23,11 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
 	private isRefreshing = false;
 	private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
-	constructor(private readonly authStrategy: AuthStrategy, private readonly store: Store) {}
+	constructor(
+		private readonly authStrategy: AuthStrategy,
+		private readonly store: Store,
+		private _errorMapping: ErrorMapping
+	) { }
 
 	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 		return next.handle(request).pipe(
@@ -73,7 +77,7 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
 				}),
 				catchError((error) => {
 					// Token refresh failed completely
-					return throwError(() => error);
+					return throwError(() => new Error(this._errorMapping.mapErrorMessage(error)));
 				}),
 				finalize(() => {
 					this.isRefreshing = false;
