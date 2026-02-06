@@ -23,7 +23,6 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { TagService } from '../services';
 import { ClientSelectorModule } from '../shared/features/client-selector/client-selector.module';
 import { ProjectSelectorModule } from '../shared/features/project-selector/project-selector.module';
@@ -31,10 +30,8 @@ import { TaskSelectorModule } from '../shared/features/task-selector/task-select
 import { TeamSelectorModule } from '../shared/features/team-selector/team-selector.module';
 import { TaskRenderModule } from '../time-tracker/task-render';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
-import { TasksComponent } from './tasks.component';
 
 @NgModule({
-	declarations: [TasksComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -56,7 +53,6 @@ import { TasksComponent } from './tasks.component';
 		NgSelectModule,
 		ReactiveFormsModule,
 		NbBadgeModule,
-		DesktopDirectiveModule,
 		TranslateModule,
 		CKEditorModule,
 		TaskRenderModule,
@@ -65,7 +61,6 @@ import { TasksComponent } from './tasks.component';
 		TeamSelectorModule,
 		ProjectSelectorModule
 	],
-	providers: [NbToastrService, TimeTrackerService, TagService],
-	exports: [TasksComponent]
+	providers: [NbToastrService, TimeTrackerService, TagService]
 })
 export class TasksModule {}

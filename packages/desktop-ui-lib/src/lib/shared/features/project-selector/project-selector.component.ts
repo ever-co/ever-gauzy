@@ -10,6 +10,8 @@ import { TeamSelectorService } from '../team-selector/+state/team-selector.servi
 import { ProjectSelectorQuery } from './+state/project-selector.query';
 import { ProjectSelectorService } from './+state/project-selector.service';
 import { ProjectSelectorStore } from './+state/project-selector.store';
+import { SelectComponent } from '../../components/ui/select/select.component';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
     selector: 'gauzy-project-selector',
@@ -23,7 +25,7 @@ import { ProjectSelectorStore } from './+state/project-selector.store';
             multi: true
         }
     ],
-    standalone: false
+    imports: [SelectComponent, AsyncPipe]
 })
 export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganizationProject> implements OnInit, OnDestroy {
 	constructor(

@@ -13,8 +13,7 @@ import { LanguageSelectorService } from './language-selector.service';
 import { LanguageService } from './language.service';
 
 @NgModule({
-	declarations: [LanguageSelectorComponent],
-	imports: [CommonModule, NbSelectModule, I18nModule.forChild()],
+	imports: [CommonModule, NbSelectModule, LanguageSelectorComponent, I18nModule.forChild()],
 	exports: [LanguageSelectorComponent, I18nModule]
 })
 export class LanguageModule {

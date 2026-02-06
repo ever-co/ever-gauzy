@@ -19,11 +19,12 @@ import { PluginSubscriptionFacade } from '../+state/plugin-subscription.facade';
 import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { IPlanViewModel, PlanFormatterService } from '../plugin-subscription-plan-selection';
 import { SubscriptionFormService, SubscriptionPlanService, SubscriptionStatusService } from '../shared';
-import { DesktopDirectiveModule } from '../../../../../directives/desktop-directive.module';
+
 import { PlanCardComponent } from '../plugin-subscription-plan-selection/components/plan-card/plan-card.component';
 import { SubscriptionBillingFormComponent } from '../shared/components/subscription-billing-form/subscription-billing-form.component';
 import { AsyncPipe, TitleCasePipe, CurrencyPipe, DatePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 
 @UntilDestroy()
 @Component({
@@ -31,7 +32,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     templateUrl: './plugin-subscription-manager.component.html',
     styleUrls: ['./plugin-subscription-manager.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, NbIconModule, NbButtonModule, NbSpinnerModule, NbTooltipModule, DesktopDirectiveModule, PlanCardComponent, SubscriptionBillingFormComponent, AsyncPipe, TitleCasePipe, CurrencyPipe, DatePipe, TranslatePipe]
+    imports: [NbCardModule, NbIconModule, NbButtonModule, NbSpinnerModule, NbTooltipModule, SpinnerButtonDirective, PlanCardComponent, SubscriptionBillingFormComponent, AsyncPipe, TitleCasePipe, CurrencyPipe, DatePipe, TranslatePipe]
 })
 export class PluginSubscriptionManagerComponent implements OnInit, OnDestroy {
 	@Input() plugin: IPlugin;

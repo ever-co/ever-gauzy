@@ -1,10 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import * as moment from 'moment';
 
-@Pipe({
-    name: 'dateTime',
-    standalone: false
-})
+@Pipe({ name: 'dateTime' })
 export class DateTimePipe implements PipeTransform {
 	/**
 	 * It takes a string value, and returns a string value

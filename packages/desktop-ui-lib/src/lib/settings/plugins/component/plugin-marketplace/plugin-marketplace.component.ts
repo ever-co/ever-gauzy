@@ -12,16 +12,18 @@ import { PluginMarketplaceFilterComponent } from './plugin-marketplace-filter/pl
 import { NbIconModule, NbButtonGroupModule, NbButtonModule, NbTooltipModule, NbCardModule, NbListModule } from '@nebular/theme';
 import { PluginMarketplaceDetailComponent } from './plugin-marketplace-detail/plugin-marketplace-detail.component';
 import { NgClass, AsyncPipe, PercentPipe } from '@angular/common';
-import { NoDataMessageModule } from '../../../../time-tracker/no-data-message/no-data-message.module';
-import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
+
+
 import { TranslatePipe } from '@ngx-translate/core';
+import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
+import { SpinnerButtonDirective } from '../../../../directives/spinner-button.directive';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'lib-plugin-marketplace',
     templateUrl: './plugin-marketplace.component.html',
     styleUrls: ['./plugin-marketplace.component.scss'],
-    imports: [PluginMarketplaceFilterComponent, NbIconModule, NbButtonGroupModule, NbButtonModule, NbTooltipModule, NbCardModule, NbListModule, PluginMarketplaceDetailComponent, NgClass, NoDataMessageModule, DesktopDirectiveModule, AsyncPipe, PercentPipe, TranslatePipe]
+    imports: [PluginMarketplaceFilterComponent, NbIconModule, NbButtonGroupModule, NbButtonModule, NbTooltipModule, NbCardModule, NbListModule, PluginMarketplaceDetailComponent, NgClass, NoDataMessageComponent, SpinnerButtonDirective, AsyncPipe, PercentPipe, TranslatePipe]
 })
 export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 	private skip = 1;

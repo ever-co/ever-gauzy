@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, Input, NgZone, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { UserOrganizationService } from '../time-tracker/organization-selector/user-organization.service';
@@ -9,13 +9,15 @@ import { tap, filter, from, BehaviorSubject, Observable, concatMap, Subject } fr
 import { Store } from '../services';
 import { LanguageSelectorService } from './language-selector.service';
 import { ElectronService } from '../electron/services';
+import { NbSelectModule, NbOptionModule } from '@nebular/theme';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-language-selector',
     templateUrl: './language-selector.component.html',
     styleUrls: ['./language-selector.component.scss'],
-    standalone: false
+    imports: [NbSelectModule, NbOptionModule, AsyncPipe, TranslatePipe]
 })
 export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 	private _user: IUser;

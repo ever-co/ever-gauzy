@@ -3,18 +3,19 @@ import { combineLatest, Subject, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { QueueItem, SyncHealth } from '../models/logs.models';
 import { LogService } from '../services/logs.service';
-import { Angular2SmartTableComponent, Cell, LocalDataSource } from 'angular2-smart-table';
+import { Angular2SmartTableComponent, Cell, LocalDataSource, Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { StatusBadgeComponent } from './activity-render/status-render';
 import { LocalDateParse } from '../pipes/date.pipe';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbCardModule, NbTabsetModule, NbSpinnerModule } from '@nebular/theme';
 import { StatusMapper } from '../../shared/utils/queue-status-mapper.util';
+import { NgTemplateOutlet, AsyncPipe } from '@angular/common';
 
 @Component({
-	selector: 'app-sync-page',
-	templateUrl: './activity-sync.component.html',
-	styleUrls: ['./activity-sync.component.scss'],
-	standalone: false
+    selector: 'app-sync-page',
+    templateUrl: './activity-sync.component.html',
+    styleUrls: ['./activity-sync.component.scss'],
+    imports: [NbCardModule, NbTabsetModule, NgTemplateOutlet, NbSpinnerModule, Angular2SmartTableModule, AsyncPipe]
 })
 export class SyncPageComponent implements OnInit, OnDestroy {
 	items$: Observable<QueueItem[]> = this.svc.queueStream$;

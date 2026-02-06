@@ -14,11 +14,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import {
-	DaterangepickerDirective as DateRangePickerDirective,
-	LocaleConfig,
-	DaterangepickerComponent as NgxDateRangePickerComponent
-} from 'ngx-daterangepicker-material';
+import { DaterangepickerDirective as DateRangePickerDirective, LocaleConfig, DaterangepickerComponent as NgxDateRangePickerComponent, NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { BehaviorSubject, filter, Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 import { RecapQuery } from '../../../+state/recap.query';
@@ -27,14 +23,17 @@ import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { DateRangeKeyEnum, DateRanges, IDateRangePicker, TimePeriod } from './date-picker.interface';
 import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
+import { NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
+import { FormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-date-range-picker',
-	templateUrl: './date-range-picker.component.html',
-	styleUrls: ['./date-range-picker.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'ngx-date-range-picker',
+    templateUrl: './date-range-picker.component.html',
+    styleUrls: ['./date-range-picker.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbButtonModule, NbIconModule, NbInputModule, NgxDaterangepickerMd, FormsModule, NgClass]
 })
 export class DateRangePickerComponent implements OnInit, OnDestroy {
 	public picker: NgxDateRangePickerComponent;

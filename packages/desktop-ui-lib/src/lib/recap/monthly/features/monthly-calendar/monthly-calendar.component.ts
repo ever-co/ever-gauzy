@@ -2,13 +2,15 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { map } from 'rxjs';
 import { MonthlyRecapService } from '../../+state/monthly.service';
 import { IDateRangePicker } from '../../../shared/features/date-range-picker/date-picker.interface';
+import { DateRangePickerComponent } from '../../../shared/features/date-range-picker/date-range-picker.component';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
     selector: 'ngx-monthly-calendar',
     templateUrl: './monthly-calendar.component.html',
     styleUrls: ['./monthly-calendar.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [DateRangePickerComponent, AsyncPipe]
 })
 export class MonthlyCalendarComponent {
 	constructor(private readonly monthlyRecapService: MonthlyRecapService) {}

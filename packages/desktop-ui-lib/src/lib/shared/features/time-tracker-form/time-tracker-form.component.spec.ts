@@ -8,8 +8,8 @@ describe('TimeTrackerFormComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TimeTrackerFormComponent]
-    });
+    imports: [TimeTrackerFormComponent]
+});
     fixture = TestBed.createComponent(TimeTrackerFormComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

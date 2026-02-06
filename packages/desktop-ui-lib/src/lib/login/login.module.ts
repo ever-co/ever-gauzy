@@ -13,10 +13,10 @@ import {
 	NbInputModule,
 	NbListModule
 } from '@nebular/theme';
-import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+
 import { LanguageModule } from '../language/language.module';
-import { AvatarModule } from '../shared/components/ui/avatar/avatar.module';
-import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.module';
+
+
 import { NgxLoginMagicComponent } from './features/login-magic/login-magic.component';
 import { NgxLoginWorkspaceComponent } from './features/login-workspace/login-workspace.component';
 import { NgxMagicSignInWorkspaceComponent } from './features/magic-login-workspace/magic-login-workspace.component';
@@ -33,26 +33,23 @@ const shared = [
 ];
 
 @NgModule({
-	imports: [
-		CommonModule,
-		FormsModule,
-		RouterModule,
-		NbAlertModule,
-		NbAuthModule,
-		NbButtonModule,
-		NbCardModule,
-		NbCheckboxModule,
-		NbIconModule,
-		NbInputModule,
-		NbFormFieldModule,
-		DesktopDirectiveModule,
-		LanguageModule.forChild(),
-		ReactiveFormsModule,
-		SwitchThemeModule,
-		NbListModule,
-		AvatarModule
-	],
-	declarations: [LogoComponent, SocialLinksComponent, WorkspaceSelectionComponent, ...shared],
-	exports: [...shared]
+    imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    NbAlertModule,
+    NbAuthModule,
+    NbButtonModule,
+    NbCardModule,
+    NbCheckboxModule,
+    NbIconModule,
+    NbInputModule,
+    NbFormFieldModule,
+    LanguageModule.forChild(),
+    ReactiveFormsModule,
+    NbListModule,
+    LogoComponent, SocialLinksComponent, WorkspaceSelectionComponent, ...shared
+],
+    exports: [...shared]
 })
 export class NgxLoginModule {}

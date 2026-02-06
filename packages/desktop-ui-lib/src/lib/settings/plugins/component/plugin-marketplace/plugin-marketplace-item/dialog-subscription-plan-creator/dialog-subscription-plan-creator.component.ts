@@ -6,16 +6,17 @@ import { filter, Observable, pairwise, take } from 'rxjs';
 import { PluginPlanActions } from '../../+state/actions/plugin-plan.action';
 import { PluginPlanQuery } from '../../+state/queries/plugin-plan.query';
 import { PluginSubscriptionPlanCreatorComponent } from '../../plugin-marketplace-upload/plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
-import { DesktopDirectiveModule } from '../../../../../../directives/desktop-directive.module';
+
 import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
+import { SpinnerButtonDirective } from '../../../../../../directives/spinner-button.directive';
 
 @Component({
     selector: 'lib-dialog-subscription-plan-creator',
     templateUrl: './dialog-subscription-plan-creator.component.html',
     styleUrls: ['./dialog-subscription-plan-creator.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, NbIconModule, NbButtonModule, PluginSubscriptionPlanCreatorComponent, DesktopDirectiveModule, AsyncPipe, TranslatePipe]
+    imports: [NbCardModule, NbIconModule, NbButtonModule, PluginSubscriptionPlanCreatorComponent, SpinnerButtonDirective, AsyncPipe, TranslatePipe]
 })
 export class DialogSubscriptionPlanCreatorComponent {
 	public readonly plugin!: IPlugin;

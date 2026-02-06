@@ -7,8 +7,8 @@ describe('AutoRefreshComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [AutoRefreshComponent]
-		}).compileComponents();
+    imports: [AutoRefreshComponent]
+}).compileComponents();
 
 		fixture = TestBed.createComponent(AutoRefreshComponent);
 		component = fixture.componentInstance;

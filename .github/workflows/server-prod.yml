@@ -521,8 +521,6 @@ jobs:
           "NODE=$nodeExe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "NODE_PATH=$nodePath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-          npm config set scripts-prepend-node-path true
-
           $env:PATH = $newPath
           [System.Environment]::SetEnvironmentVariable("PATH", $newPath, "Process")
 
