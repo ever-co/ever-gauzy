@@ -9,7 +9,9 @@ import {
 	ITimeLog,
 	ITimeSlotTimeLogs,
 	PermissionsEnum,
-	TaskStatusEnum
+	TaskStatusEnum,
+	TimerSyncStateEnum,
+	TimerActionTypeEnum
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -65,7 +67,7 @@ import {
 	ISequence,
 	SequenceQueue,
 	TimeSlotQueueService,
-	ViewQueueStateUpdater
+	ViewQueueStateUpdater,
 } from '../offline-sync';
 import {
 	ErrorHandlerService,
@@ -494,13 +496,34 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			if (isStarted) {
 				if (!this._isOffline && !this._remoteSleepLock) {
 					try {
+						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.START_TIMER,
+							data: {
+								timerId: lastTimer.id,
+								state: TimerSyncStateEnum.SYNCING
+							}
+						});
 						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.preventDuplicateApiRequest({ ...lastTimer, ...params }, (payload) =>
 									this.timeTrackerService.toggleApiStart(payload)
 							  );
+						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.START_TIMER,
+							data: {
+								timerId: lastTimer.id,
+								state: TimerSyncStateEnum.SYNCED
+							}
+						});
 					} catch (error) {
 						lastTimer.isStartedOffline = true;
+						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.START_TIMER,
+							data: {
+								timerId: lastTimer.id,
+								state: TimerSyncStateEnum.FAILED
+							}
+						});
 						this._loggerService.error(error);
 					}
 				}
@@ -523,14 +546,36 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								...params,
 								...lastTimer
 							};
+							await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+								actionType: TimerActionTypeEnum.STOP_TIMER,
+								data: {
+									timerId: lastTimer.id,
+									state: TimerSyncStateEnum.SYNCING
+								}
+							});
 							// Execute API request to stop timer and store the result in timelog
 							timelog = await this.preventDuplicateApiRequest(requestParams, (payload) =>
 								this.timeTrackerService.toggleApiStop(payload)
 							);
+							await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+								actionType: TimerActionTypeEnum.STOP_TIMER,
+								data: {
+									timerId: lastTimer.id,
+									state: TimerSyncStateEnum.SYNCED,
+									duration: timelog.duration
+								}
+							});
 						}
 					} catch (error) {
 						// Handle any error during the process
 						lastTimer.isStoppedOffline = true;
+						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.STOP_TIMER,
+							data: {
+								timerId: lastTimer.id,
+								state: TimerSyncStateEnum.FAILED
+							}
+						});
 						await this.electronService.ipcRenderer.invoke('MARK_AS_STOPPED_OFFLINE');
 						this._loggerService.error(error);
 					}
@@ -637,14 +682,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this._timeTrackerStatus.external$
 			.pipe(
-				filter(
-					(remoteTimer: IRemoteTimer) =>
+				filter((remoteTimer: IRemoteTimer) => {
+					const { state } = this.timeTrackerQuery.ignition;
+					const isTransitional = [
+						IgnitionState.STOPPING,
+						IgnitionState.STARTING,
+						IgnitionState.RESTARTING
+					].includes(state);
+					return (
+						!isTransitional &&
 						!!remoteTimer.lastLog &&
 						this.xor(this.start, remoteTimer.running) &&
 						!this._isLockSyncProcess &&
 						this._isReady &&
 						this.inQueue.size === 0
-				),
+					);
+				}),
 				tap(async (remoteTimer: IRemoteTimer) => {
 					this.timeTrackerFormService.setState({
 						clientId: remoteTimer.lastLog.organizationContactId,
@@ -690,7 +743,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this._alwaysOnService.state$
 			.pipe(
-				filter((state: AlwaysOnStateEnum) => state === AlwaysOnStateEnum.LOADING),
+				filter((state: AlwaysOnStateEnum) => {
+					const { state: ignitionState } = this.timeTrackerQuery.ignition;
+					const isTransitional = [
+						IgnitionState.STOPPING,
+						IgnitionState.STARTING,
+						IgnitionState.RESTARTING
+					].includes(ignitionState);
+					return !isTransitional && state === AlwaysOnStateEnum.LOADING;
+				}),
 				concatMap(() => this.toggleStart(!this.start, true)),
 				untilDestroyed(this)
 			)
