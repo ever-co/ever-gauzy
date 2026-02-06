@@ -10,9 +10,8 @@ import { LanguageSelectorService } from './language-selector.service';
 import { LanguageService } from './language.service';
 
 @NgModule({
-	declarations: [LanguageSelectorComponent],
-	imports: [CommonModule, NgxTranslateModule, NbSelectModule],
-	exports: [LanguageSelectorComponent, NgxTranslateModule]
+    imports: [CommonModule, NgxTranslateModule, NbSelectModule, LanguageSelectorComponent],
+    exports: [LanguageSelectorComponent, NgxTranslateModule]
 })
 export class LanguageModule {
 	static forRoot(): ModuleWithProviders<LanguageModule> {

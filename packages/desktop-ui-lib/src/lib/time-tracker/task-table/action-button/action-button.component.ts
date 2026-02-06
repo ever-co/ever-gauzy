@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ITask } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { filter, Observable, of, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { ToastrNotificationService } from '../../../services';
@@ -9,13 +9,15 @@ import { TasksComponent } from '../../../tasks/tasks.component';
 import { TaskDetailComponent } from '../../task-render/task-detail/task-detail.component';
 import { ActionButtonQuery } from './+state/action-button.query';
 import { ActionButton, ActionButtonStore } from './+state/action-button.store';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
-	selector: 'ngx-action-button',
-	templateUrl: './action-button.component.html',
-	styleUrls: ['./action-button.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-action-button',
+    templateUrl: './action-button.component.html',
+    styleUrls: ['./action-button.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbButtonModule, NbIconModule, AsyncPipe, TranslatePipe]
 })
 export class ActionButtonComponent {
 	constructor(

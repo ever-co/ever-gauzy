@@ -5,13 +5,16 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { asyncScheduler, catchError, EMPTY, filter, firstValueFrom, tap } from 'rxjs';
 import { AuthService } from '../../../auth';
 import { ErrorHandlerService, Store, TimeTrackerDateManager } from '../../../services';
+import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
+import { LogoComponent } from '../../shared/ui/logo/logo.component';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ngx-magic-sign-in-workspace',
     templateUrl: './magic-login-workspace.component.html',
     styleUrls: ['./magic-login-workspace.component.scss'],
-    standalone: false
+    imports: [WorkspaceSelectionComponent, LogoComponent, TranslatePipe]
 })
 export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	public error: boolean = false;

@@ -1,14 +1,15 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ITaskRender } from '../task-render.component';
 import { ITag, ITaskPriority, ITaskSize, ITaskStatus } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
-import { NbDialogRef } from '@nebular/theme';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { NbDialogRef, NbCardModule } from '@nebular/theme';
+import { TaskBadgeViewComponent } from '../task-badge-view/task-badge-view.component';
 
 @Component({
     selector: 'gauzy-task-detail',
     templateUrl: './task-detail.component.html',
     styleUrls: ['./task-detail.component.scss'],
-    standalone: false
+    imports: [NbCardModule, TaskBadgeViewComponent, TranslatePipe]
 })
 export class TaskDetailComponent {
 	@Input()

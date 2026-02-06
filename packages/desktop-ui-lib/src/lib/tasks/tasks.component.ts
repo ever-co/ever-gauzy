@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	IEmployee,
 	IOrganizationContact,
@@ -14,9 +14,9 @@ import {
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbCardModule, NbInputModule, NbBadgeModule, NbDatepickerModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { combineLatest, concatMap, from, map, Observable, startWith, tap } from 'rxjs';
 import { Store, TagService } from '../services';
@@ -25,13 +25,21 @@ import { ProjectSelectorService } from '../shared/features/project-selector/+sta
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { CkEditorConfig, ColorAdapter } from '../utils';
+import { ClientSelectorComponent } from '../shared/features/client-selector/client-selector.component';
+import { ProjectSelectorComponent } from '../shared/features/project-selector/project-selector.component';
+import { TeamSelectorComponent } from '../shared/features/team-selector/team-selector.component';
+import { NgSelectComponent, NgOptionTemplateDirective, NgLabelTemplateDirective } from '@ng-select/ng-select';
+import { TaskBadgeViewComponent } from '../time-tracker/task-render/task-badge-view/task-badge-view.component';
+import { CKEditorModule } from 'ckeditor4-angular';
+import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
+import { NgStyle, AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ngx-tasks',
     templateUrl: './tasks.component.html',
     styleUrls: ['./tasks.component.scss'],
-    standalone: false
+    imports: [NbCardModule, FormsModule, ReactiveFormsModule, ClientSelectorComponent, ProjectSelectorComponent, TeamSelectorComponent, NgSelectComponent, NgOptionTemplateDirective, TaskBadgeViewComponent, NgLabelTemplateDirective, NbInputModule, NbBadgeModule, NbDatepickerModule, CKEditorModule, NbButtonModule, SpinnerButtonDirective, NbIconModule, NgStyle, AsyncPipe, TranslatePipe]
 })
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization = this.store.user as any;

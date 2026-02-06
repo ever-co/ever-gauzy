@@ -1,16 +1,18 @@
 import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
-import { NbMenuItem, NbSidebarState } from '@nebular/theme';
+import { NbMenuItem, NbSidebarState, NbLayoutModule, NbSidebarModule, NbMenuModule } from '@nebular/theme';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { GAUZY_ENV } from '../constants';
 import { IpcService } from './services/ipc.service';
 import { TasksService } from './services/tasks-service';
+import { NgClass } from '@angular/common';
+import { RouterOutlet } from '@angular/router';
 
 
 @Component({
-	selector: 'ngx-agent-dashboard',
-	templateUrl: './agent-dashboard.component.html',
-	styleUrls: ['./agent-dashboard.component.scss'],
-	standalone: false
+    selector: 'ngx-agent-dashboard',
+    templateUrl: './agent-dashboard.component.html',
+    styleUrls: ['./agent-dashboard.component.scss'],
+    imports: [NbLayoutModule, NbSidebarModule, NgClass, NbMenuModule, RouterOutlet]
 })
 export class AgentDashboardComponent implements OnInit, OnDestroy {
 	menu: NbMenuItem[] = [

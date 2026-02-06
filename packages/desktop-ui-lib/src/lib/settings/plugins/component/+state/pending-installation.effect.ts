@@ -21,7 +21,10 @@ import {
 } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { IPlugin } from '../../services/plugin-loader.service';
-import { UserSubscribedPluginsService } from '../../services/user-subscribed-plugins.service';
+import {
+	ISubscribedPluginsQueryParams,
+	UserSubscribedPluginsService
+} from '../../services/user-subscribed-plugins.service';
 import { PendingInstallationDialogComponent } from '../pending-installation-dialog/pending-installation-dialog.component';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../plugin-marketplace/+state/actions/plugin-marketplace.action';
@@ -29,6 +32,7 @@ import { PendingInstallationActions } from './pending-installation.action';
 import { PendingInstallationQuery } from './pending-installation.query';
 import { IPendingPluginInstallation, PendingInstallationStore } from './pending-installation.store';
 import { PluginActions } from './plugin.action';
+import { PluginQuery } from './plugin.query';
 
 @Injectable({ providedIn: 'root' })
 export class PendingInstallationEffects {
@@ -37,6 +41,7 @@ export class PendingInstallationEffects {
 		private readonly query: PendingInstallationQuery,
 		private readonly actions$: Actions,
 		private readonly userSubscribedPluginsService: UserSubscribedPluginsService,
+		private readonly installedPluginQuery: PluginQuery,
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly dialog: NbDialogService
 	) {}
@@ -44,24 +49,27 @@ export class PendingInstallationEffects {
 	/* ---------------------------------------------------------------------
 	 * Shared loader (single source of truth)
 	 * -------------------------------------------------------------------*/
-	private loadPendingPlugins(installed: IPlugin[]) {
-		return this.userSubscribedPluginsService.getSubscribedPlugins().pipe(
-			map((subscribed) => {
+	private loadPendingPlugins(installed: IPlugin[], params?: ISubscribedPluginsQueryParams) {
+		return this.userSubscribedPluginsService.getSubscribedPlugins(params).pipe(
+			map(({ items, total }) => {
 				const installedIds = new Set(installed.map((p) => p.marketplaceId).filter(Boolean));
 
-				return subscribed
-					.filter((s) => s.plugin && !installedIds.has(s.plugin.id))
-					.map(
-						(sub): IPendingPluginInstallation => ({
-							plugin: sub.plugin,
-							subscriptionId: sub.subscriptionId,
-							isInstalling: false,
-							isInstalled: false,
-							error: null,
-							canAutoInstall: sub.canAutoInstall,
-							isMandatory: sub.isMandatory
-						})
-					);
+				return {
+					plugins: items
+						.filter((s) => s.plugin && !installedIds.has(s.plugin.id))
+						.map(
+							(sub): IPendingPluginInstallation => ({
+								plugin: sub.plugin,
+								subscriptionId: sub.subscriptionId,
+								isInstalling: false,
+								isInstalled: false,
+								error: null,
+								canAutoInstall: sub.canAutoInstall,
+								isMandatory: sub.isMandatory
+							})
+						),
+					total
+				};
 			})
 		);
 	}
@@ -82,10 +90,7 @@ export class PendingInstallationEffects {
 	 */
 	private waitForPluginEnd(pluginId: string) {
 		return this.actions$.pipe(
-			ofType(
-				PendingInstallationActions.installationCompleted,
-				PendingInstallationActions.installationFailed
-			),
+			ofType(PendingInstallationActions.installationCompleted, PendingInstallationActions.installationFailed),
 			filter((a) => a.pluginId === pluginId),
 			take(1)
 		);
@@ -132,8 +137,8 @@ export class PendingInstallationEffects {
 				ofType(PendingInstallationActions.checkPendingInstallations),
 				tap(() => this.store.update({ loading: true, error: null })),
 				switchMap(({ plugins }) =>
-					this.loadPendingPlugins(plugins).pipe(
-						map((plugins) => PendingInstallationActions.setPendingPlugins(plugins)),
+					this.loadPendingPlugins(plugins, { skip: 1, take: 10 }).pipe(
+						map(({ plugins, total }) => PendingInstallationActions.setPendingPlugins(plugins, total)),
 						finalize(() => this.store.setLoading(false)),
 						catchError((err) => {
 							console.error('Failed to check pending installations:', err);
@@ -154,8 +159,8 @@ export class PendingInstallationEffects {
 		() =>
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.setPendingPlugins),
-				map(({ pendings }) => {
-					this.store.setPendingPlugins(pendings);
+				map(({ pendings, total }) => {
+					this.store.setPendingPlugins(pendings, total);
 					return PendingInstallationActions.checkAndShowDialog();
 				})
 			),
@@ -170,11 +175,7 @@ export class PendingInstallationEffects {
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.checkAndShowDialog),
 				filter(() => this.pluginElectronService.isDesktop),
-				withLatestFrom(
-					this.query.checked$,
-					this.query.hasPendingPlugins$,
-					this.query.forceInstallEnabled$
-				),
+				withLatestFrom(this.query.checked$, this.query.hasPendingPlugins$, this.query.forceInstallEnabled$),
 				switchMap(([_, checked, hasPending, force]) => {
 					// If we haven't checked yet, trigger plugin fetch
 					if (!checked) {
@@ -260,10 +261,7 @@ export class PendingInstallationEffects {
 
 					if (!pending.plugin.version?.id) {
 						console.error(`Plugin ${pluginId} has no version ID`);
-						return PluginInstallationActions.installationFailed(
-							'Plugin version not available',
-							pluginId
-						);
+						return PluginInstallationActions.installationFailed('Plugin version not available', pluginId);
 					}
 
 					// Mark as installing
@@ -283,12 +281,8 @@ export class PendingInstallationEffects {
 			this.actions$.pipe(
 				ofType(PluginInstallationActions.installationCompleted),
 				withLatestFrom(this.query.pendingPlugins$),
-				filter(([{ marketplaceId }, plugins]) =>
-					plugins.some((p) => p.plugin.id === marketplaceId)
-				),
-				map(([{ marketplaceId }]) =>
-					PendingInstallationActions.installationCompleted(marketplaceId)
-				)
+				filter(([{ marketplaceId }, plugins]) => plugins.some((p) => p.plugin.id === marketplaceId)),
+				map(([{ marketplaceId }]) => PendingInstallationActions.installationCompleted(marketplaceId))
 			),
 		{ dispatch: true }
 	);
@@ -298,12 +292,8 @@ export class PendingInstallationEffects {
 			this.actions$.pipe(
 				ofType(PluginInstallationActions.installationFailed),
 				withLatestFrom(this.query.pendingPlugins$),
-				filter(([{ pluginId }, plugins]) =>
-					!!pluginId && plugins.some((p) => p.plugin.id === pluginId)
-				),
-				map(([{ pluginId, error }]) =>
-					PendingInstallationActions.installationFailed(pluginId!, error)
-				)
+				filter(([{ pluginId }, plugins]) => !!pluginId && plugins.some((p) => p.plugin.id === pluginId)),
+				map(([{ pluginId, error }]) => PendingInstallationActions.installationFailed(pluginId, error))
 			),
 		{ dispatch: true }
 	);
@@ -408,6 +398,38 @@ export class PendingInstallationEffects {
 			this.actions$.pipe(
 				ofType(PendingInstallationActions.setForceInstall),
 				tap(({ enabled }) => this.store.setForceInstallEnabled(enabled))
+			),
+		{ dispatch: false }
+	);
+
+	$loadMorePlugins = createEffect(
+		() =>
+			this.actions$.pipe(
+				ofType(PendingInstallationActions.loadMore),
+				filter(() => this.query.hasNext),
+				exhaustMap(() =>
+					this.query.pagination$.pipe(
+						take(1),
+						withLatestFrom(this.installedPluginQuery.plugins$),
+						tap(() => this.store.update({ loading: true })),
+						switchMap(([pagination, installed]) =>
+							this.loadPendingPlugins(installed, {
+								skip: pagination.skip,
+								take: pagination.take
+							}).pipe(
+								tap(({ plugins, total }) => this.store.appendPendingPlugins(plugins, total)),
+								finalize(() => this.store.update({ loading: false })),
+								catchError((error) => {
+									console.error('Failed to load more plugins:', error);
+									this.store.update({
+										error: error.message || 'Failed to load more plugins'
+									});
+									return EMPTY;
+								})
+							)
+						)
+					)
+				)
 			),
 		{ dispatch: false }
 	);

@@ -9,13 +9,14 @@ import {
 } from '@angular/core';
 import { ElectronService } from '../electron/services';
 import { Event } from 'electron';
+import { NbLayoutModule, NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 
 @Component({
     selector: 'ngx-updater',
     templateUrl: './updater.component.html',
     styleUrls: ['./updater.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbLayoutModule, NbCardModule, NbButtonModule, NbIconModule]
 })
 export class UpdaterComponent implements OnInit, OnDestroy {
 	@ViewChild('logBox') logBox: ElementRef;

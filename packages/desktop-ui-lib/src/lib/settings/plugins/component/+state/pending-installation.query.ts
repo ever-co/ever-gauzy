@@ -3,6 +3,7 @@ import { Query } from '@datorama/akita';
 import { map, Observable } from 'rxjs';
 import {
 	IPendingInstallationState,
+	IPendingPagination,
 	IPendingPluginInstallation,
 	PendingInstallationStore
 } from './pending-installation.store';
@@ -57,8 +58,23 @@ export class PendingInstallationQuery extends Query<IPendingInstallationState> {
 		map((plugins) => plugins.length > 0)
 	);
 
+	public readonly pagination$: Observable<IPendingPagination> = this.select((state) => state.pagination);
+
 	constructor(readonly store: PendingInstallationStore) {
 		super(store);
+	}
+
+	public get hasNext$(): Observable<boolean> {
+		return this.select((state) => this._hasNext(state.pagination));
+	}
+
+	public get hasNext(): boolean {
+		return this._hasNext(this.getValue().pagination);
+	}
+
+	private _hasNext(pagination: IPendingPagination): boolean {
+		const { skip, take, total } = pagination;
+		return skip * take < total;
 	}
 
 	/**

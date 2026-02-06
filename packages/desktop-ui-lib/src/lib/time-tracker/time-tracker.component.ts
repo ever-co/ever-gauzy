@@ -1,15 +1,5 @@
-import {
-	AfterViewInit,
-	Component,
-	ElementRef,
-	forwardRef,
-	Inject,
-	NgZone,
-	OnInit,
-	TemplateRef,
-	ViewChild
-} from '@angular/core';
-import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { AsyncPipe, NgClass, NgStyle } from '@angular/common';
+import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
 	IOrganization,
@@ -22,10 +12,25 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDialogRef, NbDialogService, NbIconLibraries, NbRouteTab, NbToastrService } from '@nebular/theme';
+import {
+	NbBadgeModule,
+	NbButtonModule,
+	NbCardModule,
+	NbDialogRef,
+	NbDialogService,
+	NbIconLibraries,
+	NbIconModule,
+	NbLayoutModule,
+	NbRouteTab,
+	NbRouteTabsetModule,
+	NbSpinnerModule,
+	NbToastrService,
+	NbToggleModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import 'moment-duration-format';
 import {
@@ -53,6 +58,7 @@ import { BLOCK_DELAY, GAUZY_ENV } from '../constants';
 import { ElectronService, LoggerService } from '../electron/services';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { ActivityWatchViewService } from '../integrations';
+import { ActivityWatchComponent } from '../integrations/activity-watch/view/activity-watch.component';
 import { LanguageElectronService } from '../language/language-electron.service';
 import {
 	InterruptedSequenceQueue,
@@ -76,12 +82,16 @@ import { NoteService } from '../shared/features/note/+state/note.service';
 import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../shared/features/task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
+import { TimeTrackerFormComponent } from '../shared/features/time-tracker-form/time-tracker-form.component';
 import { TimeTrackerFormService } from '../shared/features/time-tracker-form/time-tracker-form.service';
 import { hasAllPermissions } from '../shared/utils/permission.util';
 import { SelectorValidator } from '../shared/utils/validation/selector.validator';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
+import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
+import { HumanizePipe } from './pipes/humanize.pipe';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
+import { TimeTrackerStatusComponent } from './time-tracker-status/time-tracker-status.component';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { TimeTrackerService } from './time-tracker.service';
 import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
@@ -97,14 +107,26 @@ enum TimerStartMode {
 	selector: 'ngx-desktop-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TimeTrackerComponent),
-			multi: true
-		}
-	],
-	standalone: false
+	imports: [
+		NbLayoutModule,
+		NbSpinnerModule,
+		NbButtonModule,
+		NbIconModule,
+		NgClass,
+		NbCardModule,
+		OrganizationSelectorComponent,
+		NgStyle,
+		NbTooltipModule,
+		TimeTrackerStatusComponent,
+		TimeTrackerFormComponent,
+		ActivityWatchComponent,
+		NbToggleModule,
+		NbRouteTabsetModule,
+		NbBadgeModule,
+		AsyncPipe,
+		TranslatePipe,
+		HumanizePipe
+	]
 })
 export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _lastTotalWorkedToday$: BehaviorSubject<number> = new BehaviorSubject(0);

@@ -1,17 +1,19 @@
+import { AsyncPipe, TitleCasePipe } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { SafeUrl } from '@angular/platform-browser';
-import { Observable } from 'rxjs';
 import { ITaskPriority, ITaskSize, ITaskStatus } from '@gauzy/contracts';
-import { ColorAdapter } from '../../../utils';
+import { Observable } from 'rxjs';
 import { StatusIconService } from '../../../services/status-icon-service';
+import { ColorAdapter } from '../../../utils';
+import { ReplacePipe } from '../../pipes/replace.pipe';
 
 export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
 
 @Component({
-    selector: 'gauzy-task-badge-view',
-    templateUrl: './task-badge-view.component.html',
-    styleUrls: ['./task-badge-view.component.scss'],
-    standalone: false
+	selector: 'gauzy-task-badge-view',
+	templateUrl: './task-badge-view.component.html',
+	styleUrls: ['./task-badge-view.component.scss'],
+	imports: [AsyncPipe, TitleCasePipe, ReplacePipe]
 })
 export class TaskBadgeViewComponent {
 	constructor(private _statusIconService: StatusIconService) {

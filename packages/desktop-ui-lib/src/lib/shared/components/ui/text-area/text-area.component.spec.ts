@@ -7,8 +7,8 @@ describe('TextAreaComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [TextAreaComponent]
-		}).compileComponents();
+    imports: [TextAreaComponent]
+}).compileComponents();
 
 		fixture = TestBed.createComponent(TextAreaComponent);
 		component = fixture.componentInstance;
