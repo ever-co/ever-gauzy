@@ -15,7 +15,7 @@
 				<form class="step-container" [formGroup]="form">
 					<div class="row step-form">
 						<div class="col-md-3 col-sm-12 image-container">
-							<ng-container *ngTemplateOutlet="warehouseImage"></ng-container>
+							<ng-container [ngTemplateOutlet]="warehouseImage"></ng-container>
 						</div>
 						<div class="col-md-9 col-sm-12 pl-5">
 							<div class="row">
@@ -163,7 +163,7 @@
 							<button class="green" outline nbButton nbStepperNext>
 								{{ 'BUTTONS.NEXT' | translate }}
 							</button>
-							} @if (!isActiveInventoryTab()) {
+							} @else {
 							<button [disabled]="form.invalid" status="success" nbButton (click)="onSaveRequest()">
 								{{ 'BUTTONS.SAVE' | translate }}
 							</button>
@@ -232,7 +232,7 @@
 		<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
 		@if (!logo || !logo.url) {
 		<ga-no-image [fontSize]="14" [placeholder]="'NO_IMAGE.ADD_DROP'" class="store-image"></ga-no-image>
-		} @if (logo && logo.url) {
+		} @else {
 		<img class="store-image" [src]="logo.url" alt="Warehouse Photo" />
 		}
 	</div>

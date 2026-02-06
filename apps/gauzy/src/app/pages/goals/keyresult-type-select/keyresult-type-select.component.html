@@ -5,7 +5,7 @@
 				{{ 'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE' | translate }}
 			</label>
 			<nb-select (selectedChange)="taskTypeValidators()" id="key-result-type" fullWidth formControlName="type">
-				@for (type of keyResultTypeEnum | keyvalue; track type) {
+				@for (type of keyResultTypeEnum | keyvalue; track type.key) {
 				<nb-option
 					[hidden]="
 						type.value == keyResultTypeEnum.KPI
@@ -64,13 +64,13 @@
 				</label>
 				@if (KPIs.length > 0) {
 				<nb-select id="kpi" fullWidth formControlName="kpiId">
-					@for (kpi of KPIs; track kpi) {
+					@for (kpi of KPIs; track kpi.id) {
 					<nb-option [value]="kpi.id">
 						{{ kpi.name }}
 					</nb-option>
 					}
 				</nb-select>
-				} @if (KPIs.length === 0) {
+				} @else {
 				<p>
 					<button nbButton status="primary" id="kpi" (click)="openEditKPI()">
 						{{ 'BUTTONS.ADD_KPI' | translate }}
@@ -85,7 +85,7 @@
 		}
 	</div>
 
-	@if ( parentFormGroup.value.type == keyResultTypeEnum.NUMERICAL || parentFormGroup.value.type ==
+	@if ( parentFormGroup.value.type === keyResultTypeEnum.NUMERICAL || parentFormGroup.value.type ===
 	keyResultTypeEnum.CURRENCY ) {
 	<div [class.row]="enableHelperText">
 		<div [class.col-md-7]="enableHelperText">

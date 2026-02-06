@@ -21,9 +21,9 @@
 		<div class="content-container">
 			<aside class="email-list">
 				<nb-list nbInfiniteList [threshold]="20" (bottomThreshold)="loadNext()">
-					@for (email of emails; track email) {
+					@for (email of emails; track email.id) {
 					<nb-list-item (click)="selectEmail(email)">
-						<div class="email-list-item w-100" [class.selected]="selectedEmail.id === email.id">
+						<div class="email-list-item w-100" [class.selected]="selectedEmail?.id === email.id">
 							<div class="image-container">
 								<ngx-avatar
 									[name]="
@@ -84,7 +84,7 @@
 				</div>
 				}
 				<div class="email-history-archive">
-					@if ( selectedEmail?.status && selectedEmail?.status == EmailStatusEnum.FAILED ) {
+					@if (selectedEmail?.status === EmailStatusEnum.FAILED) {
 					<button status="basic" outline nbButton size="small" (click)="resend()">
 						{{ 'SETTINGS.EMAIL_HISTORY.RESEND' | translate }}
 					</button>

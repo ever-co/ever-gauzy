@@ -22,7 +22,7 @@
 			<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.BROWSE' | translate" [tabId]="employmentTypeTabsEnum.BROWSE">
 				@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE && organizationEmploymentTypes?.length) {
 				<div class="table-scroll-container">
-					@for (employmentType of organizationEmploymentTypes; track employmentType) {
+					@for (employmentType of organizationEmploymentTypes; track employmentType.id) {
 					<nb-card class="p-0">
 						<nb-card-body
 							class="custom-table"
@@ -74,7 +74,6 @@
 			class="action primary"
 			[disabled]="disabled"
 			size="small"
-			nbButton
 		>
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}

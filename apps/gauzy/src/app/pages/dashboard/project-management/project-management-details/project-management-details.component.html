@@ -24,7 +24,7 @@
 				class="card-body-content"
 				[style.height]="!tasks?.length ? '100%' : ''"
 			>
-				@for (task of tasks; track task) {
+				@for (task of tasks; track task.id) {
 				<div class="card todo">
 					<div [class.checked]="status.COMPLETED === task?.status" class="dot"></div>
 					<div>
@@ -59,7 +59,7 @@
 					{{ 'BUTTONS.VIEW_ALL' | translate }}
 				</button>
 				<div class="card-body-content">
-					@for (project of projects; track project) {
+					@for (project of projects; track project.id) {
 					<div class="card project">
 						<ngx-project [rowData]="{ project: project }"></ngx-project>
 					</div>
@@ -81,7 +81,7 @@
 				</button>
 				}
 				<div [style.max-height]="!isMyTask ? 'calc(100% - 28px)' : ''" class="card-body-content">
-					@for (task of assigned; track task) {
+					@for (task of assigned; track task.id) {
 					<div class="card assigned">
 						<div class="">
 							<div class="title">

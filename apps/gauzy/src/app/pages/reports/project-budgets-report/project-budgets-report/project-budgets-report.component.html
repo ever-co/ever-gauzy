@@ -24,7 +24,7 @@
 						[hasActivityLevelFilter]="false"
 						[hasSourceFilter]="false"
 						[hasLogTypeFilter]="false"
-						[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+						[saveFilters]="(datePickerConfig$ | async)?.isSaveDatePicker"
 						(filtersChange)="filtersChange($event)"
 					></ngx-gauzy-filters>
 				</div>
@@ -62,7 +62,7 @@
 								</div>
 							</div>
 						</div>
-						@for (project of projects; track project) {
+						@for (project of projects; track project.id) {
 						<div class="cart-body project-row">
 							<div class="table-row">
 								<div class="table-inner-wrapper">
@@ -88,12 +88,13 @@
 											{{ 'REPORT_PAGE.SPENT' | translate }}
 										</div>
 										<div class="responsive-table-content day-col">
-											@if ( project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS ) {
+											@switch (project.budgetType) { @case
+											(OrganizationProjectBudgetTypeEnum.HOURS) {
 											<span>
 												{{ project?.spent * 3600 | durationFormat }}
 												{{ 'REPORT_PAGE.HOURS' | translate }}
 											</span>
-											} @if ( project.budgetType === OrganizationProjectBudgetTypeEnum.COST ) {
+											} @case (OrganizationProjectBudgetTypeEnum.COST) {
 											<span>
 												{{
 													project?.spent
@@ -101,7 +102,7 @@
 														| position : organization?.currencyPosition
 												}}
 											</span>
-											}
+											} }
 										</div>
 									</div>
 									<div class="responsive-table-row remaining-column">
@@ -109,12 +110,13 @@
 											{{ 'REPORT_PAGE.REMAINING' | translate }}
 										</div>
 										<div class="responsive-table-content day-col">
-											@if ( project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS ) {
+											@switch (project.budgetType) { @case
+											(OrganizationProjectBudgetTypeEnum.HOURS) {
 											<span>
 												{{ project.remainingBudget * 3600 | durationFormat }}
 												{{ 'REPORT_PAGE.HOURS' | translate }}
 											</span>
-											} @if ( project.budgetType === OrganizationProjectBudgetTypeEnum.COST ) {
+											} @case (OrganizationProjectBudgetTypeEnum.COST) {
 											<span>
 												{{
 													project.remainingBudget
@@ -122,7 +124,7 @@
 														| position : organization?.currencyPosition
 												}}
 											</span>
-											}
+											} }
 										</div>
 									</div>
 									<div class="responsive-table-row budget-column">
@@ -130,12 +132,13 @@
 											{{ 'REPORT_PAGE.BUDGET' | translate }}
 										</div>
 										<div class="responsive-table-content day-col budget-row">
-											@if ( project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS ) {
+											@switch (project.budgetType) { @case
+											(OrganizationProjectBudgetTypeEnum.HOURS) {
 											<span class="currency-span">
 												{{ project?.budget * 3600 | durationFormat }}
 												{{ 'REPORT_PAGE.HOURS' | translate }}
 											</span>
-											} @if ( project.budgetType === OrganizationProjectBudgetTypeEnum.COST ) {
+											} @case (OrganizationProjectBudgetTypeEnum.COST) {
 											<span class="currency-span">
 												{{
 													project.budget
@@ -143,7 +146,7 @@
 														| position : organization?.currencyPosition
 												}}
 											</span>
-											}
+											} }
 											<div class="progress-wrapper">
 												<ngx-progress-status
 													class="report-progress"

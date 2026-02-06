@@ -60,7 +60,7 @@
 			>
 				@if (timesheets?.length > 0) {
 				<div class="content-approval">
-					@for (timesheet of timesheets; track timesheet; let last = $last) {
+					@for (timesheet of timesheets; track timesheet.id; let last = $last) {
 					<div
 						(click)="userRowSelect(timesheet)"
 						class="row item m-0 py-3 align-items-center"
@@ -152,7 +152,7 @@
 			<nb-icon icon="email-outline"></nb-icon>
 			{{ 'TIMESHEET.SUBMIT_TIMESHEET' | translate }}
 		</button>
-		} @if (selectedItem.submittedAt) {
+		} @else {
 		<button
 			(click)="submitTimesheet(selectedItem.id, 'unsubmit')"
 			class="action primary"
@@ -167,7 +167,6 @@
 		} @if (selectedItem.status != TimesheetStatus.APPROVED) {
 		<button
 			(click)="updateStatus(selectedItem.id, TimesheetStatus.APPROVED)"
-			nbButton
 			class="action success"
 			status="basic"
 			nbButton
@@ -180,7 +179,6 @@
 		} @if (selectedItem.status != TimesheetStatus.DENIED) {
 		<button
 			(click)="updateStatus(selectedItem.id, TimesheetStatus.DENIED)"
-			nbButton
 			class="action warning"
 			status="basic"
 			nbButton

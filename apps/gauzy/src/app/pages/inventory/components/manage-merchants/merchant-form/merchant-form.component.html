@@ -120,7 +120,7 @@
 													FormHelpers.isInvalidControl(form, 'phone') ? 'danger' : 'basic'
 												"
 											/>
-											@if ( FormHelpers.isInvalidControl(form, 'phone') ) {
+											@if (FormHelpers.isInvalidControl(form, 'phone')) {
 											<div class="text-danger">
 												{{ 'INVENTORY_PAGE.PHONE_WRONG_FORMAT' | translate }}
 											</div>
@@ -287,7 +287,7 @@
 										fullWidth
 										[placeholder]="'INVENTORY_PAGE.WAREHOUSES' | translate"
 									>
-										@for (warehouse of warehouses; track warehouse) {
+										@for (warehouse of warehouses; track warehouse.id) {
 										<nb-option [value]="warehouse.id">
 											<img
 												[src]="warehouse?.logo?.url"
@@ -351,7 +351,7 @@
 		<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
 		@if (!image || !image.url) {
 		<ga-no-image [fontSize]="14" [placeholder]="'NO_IMAGE.ADD_DROP'" class="store-image"></ga-no-image>
-		} @if (image && image.url) {
+		} @else {
 		<img class="store-image" [src]="image.url" alt="Product Item Photo" />
 		}
 	</div>

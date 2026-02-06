@@ -39,7 +39,7 @@
 	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 		<div class="table-scroll-container" infiniteScroll [scrollWindow]="false" (scrolled)="onScroll()">
-			@for (vendor of vendors; track vendor) {
+			@for (vendor of vendors; track vendor.id) {
 			<nb-card class="p-0">
 				<nb-card-body
 					class="custom-table"
@@ -66,9 +66,15 @@
 					</div>
 				</nb-card-body>
 			</nb-card>
+			} @empty {
+			<div class="no-data">
+				<ngx-no-data-message
+					[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
+				></ngx-no-data-message>
+			</div>
 			}
 		</div>
-		} @if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) { @if (vendors?.length > 0) {
+		} @else if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) { @if (vendors?.length > 0) {
 		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"
@@ -82,15 +88,7 @@
 				[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
 			></ngx-no-data-message>
 		</div>
-		}
-		<ng-template #noVendorTemplate>
-			<div class="no-data">
-				<ngx-no-data-message
-					[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
-				></ngx-no-data-message>
-			</div>
-		</ng-template>
-		}
+		} }
 	</nb-card-body>
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
@@ -239,7 +237,7 @@
 					>
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
-					<button (click)="save()" nbButton status="success" [disabled]="form.invalid || saveDisabled">
+					<button (click)="save()" nbButton status="success" [disabled]="form?.invalid || saveDisabled">
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 				</div>

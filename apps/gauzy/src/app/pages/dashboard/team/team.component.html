@@ -2,7 +2,7 @@
 	<nb-card-header class="mb-3">
 		<h4 class="header-title">
 			<div>
-				@if (selectedTeam && selectedTeam?.isSelected) {
+				@if (selectedTeam?.isSelected) {
 				<button (click)="reset()" nbButton outline size="small" status="primary">
 					<nb-icon icon="arrow-back-outline"></nb-icon>
 				</button>
@@ -16,12 +16,12 @@
 	<nb-card-body [nbSpinner]="isLoading" class="card-body-content" nbSpinnerSize="large" nbSpinnerStatus="primary">
 		@if (todayTeamsWorkers.length > 0) {
 		<div class="team-selected">
-			@if (selectedTeam && selectedTeam?.isSelected) {
+			@if (selectedTeam?.isSelected) {
 			<div class="team-card">
 				@for (team of todayTeamsWorkers; track fnTracker($index, team)) {
 				<gauzy-team-card
 					(click)="select(team)"
-					[class.team-selected-card]="selectedTeam?.isSelected && selectedTeam?.data.id === team?.id"
+					[class.team-selected-card]="selectedTeam?.data.id === team?.id"
 					[team]="team"
 				>
 				</gauzy-team-card>

@@ -12,16 +12,16 @@
 			<div class="col-md-3">
 				<div class="product-container">
 					<div class="product-container-inner">
-						@if ( inventoryItem.featuredImage && inventoryItem.featuredImage.fullUrl ) {
+						@if (inventoryItem.featuredImage?.fullUrl) {
 						<img class="featured-image" [src]="inventoryItem.featuredImage.fullUrl" alt="Feature image" />
-						} @if ( !inventoryItem?.featuredImage && !inventoryItem?.featuredImage?.fullUrl ) {
+						} @else {
 						<ga-no-image class="no-image" [fontSize]="16"></ga-no-image>
 						}
 					</div>
 					@if (inventoryItem.gallery) {
 					<div class="gallery-preview-items mt-3">
 						<div class="row">
-							@for ( galleryItem of inventoryItem.gallery ; track galleryItem) {
+							@for ( galleryItem of inventoryItem.gallery ; track galleryItem.id) {
 							<div class="col-sm-3 col-md-4 gallery-sm-preview" (click)="onGalleryItemClick(galleryItem)">
 								<img class="gallery-sm-preview-item" [src]="galleryItem.fullUrl" />
 							</div>
@@ -55,7 +55,7 @@
 								<span class="key-description">{{ 'INVENTORY_PAGE.ENABLED' | translate }}:</span>
 								@if (inventoryItem.enabled) {
 								<nb-icon icon="checkmark" status="success"></nb-icon>
-								} @if (!inventoryItem.enabled) {
+								} @else {
 								<nb-icon icon="close" status="danger"></nb-icon>
 								}
 							</p>
@@ -63,7 +63,7 @@
 								<div class="key-description">{{ 'INVENTORY_PAGE.OPTIONS' | translate }}:</div>
 								@if (inventoryItem) {
 								<div class="options">
-									@for (option of options; track option) {
+									@for (option of options; track option.id) {
 									<div class="option-item">
 										{{ option.name }}
 									</div>
@@ -76,7 +76,7 @@
 						<div class="col-md-6 col-sm-12">
 							<span class="key-description mb-2">{{ 'INVENTORY_PAGE.TAGS' | translate }}:</span>
 							<div class="inventory-item-tags">
-								@for (tag of inventoryItem.tags; track tag) {
+								@for (tag of inventoryItem.tags; track tag.id) {
 								<div class="tag-item" [style.background]="tag.color">
 									{{ tag.name }}
 								</div>

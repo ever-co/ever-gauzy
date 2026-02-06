@@ -11,7 +11,7 @@
 		/>
 		@if (list.length > 0 && showList) {
 		<nb-list [class.department-list-active]="showList">
-			@for (item of list; track item; let i = $index) {
+			@for (item of list; track $index; let i = $index) {
 			<nb-list-item>
 				<div>
 					<span>{{ item }}</span>

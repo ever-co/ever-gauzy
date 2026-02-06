@@ -37,12 +37,12 @@
 			<ng-template [ngxPermissionsOnly]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
 				<ng-template [ngxPermissionsOnly]="['INTEGRATION_VIEW']">
 					@if (integrations$ | async; as integrations) { @if (integrations?.length > 0) { @for (integration of
-					integrations; track integration) {
+					integrations; track integration.id) {
 					<nb-card>
 						<nb-card-body class="card-body-table">
 							<div class="col-1 p-0 float-left text-truncate">
 								<img
-									[alt]="[integration?.integration?.title]"
+									[alt]="integration?.integration?.title"
 									[src]="integration?.integration?.fullImgUrl"
 									[title]="integration?.integration?.name | replace : '_' : ' '"
 									height="100%"
@@ -116,11 +116,6 @@
 					</div>
 					} }
 				</ng-template>
-			</ng-template>
-			<ng-template [ngxPermissionsExcept]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
-				<div>
-					<!-- Content to display if the user does not have 'canEditComponent' permission -->
-				</div>
 			</ng-template>
 		</div>
 	</nb-card-body>
