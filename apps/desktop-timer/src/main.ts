@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {
 	enableProdMode,
 	ErrorHandler,
@@ -25,7 +25,6 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
 	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
@@ -52,7 +51,6 @@ import {
 	TokenInterceptor,
 	UnauthorizedInterceptor
 } from '@gauzy/desktop-ui-lib';
-import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -64,8 +62,9 @@ import {
 	NbToastrModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { I18nModule } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppModuleGuard } from './app/app.module.guards';
@@ -117,14 +116,7 @@ bootstrapApplication(AppComponent, {
 			SplashScreenModule,
 			ServerDownModule,
 			AlwaysOnModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: {
-					provide: TranslateLoader,
-					useFactory: HttpLoaderFactory,
-					deps: [HttpClient]
-				}
-			}),
+			I18nModule.forRoot({ extend: true }),
 			LanguageModule.forRoot(),
 			NbDatepickerModule.forRoot(),
 			AboutModule,

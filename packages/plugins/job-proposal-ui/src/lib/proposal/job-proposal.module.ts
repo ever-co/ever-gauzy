@@ -19,7 +19,6 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { BaseChartDirective } from 'ng2-charts';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	SharedModule,
@@ -31,8 +30,7 @@ import {
 	UserFormsModule,
 	TableComponentsModule,
 	TagsColorInputModule,
-	DateRangePickerResolver,
-	getBrowserLanguage
+	DateRangePickerResolver
 } from '@gauzy/ui-core/shared';
 import { createProposalsRoutes } from './job-proposal.routes';
 import { COMPONENTS, ProposalDetailsComponent, ProposalEditComponent, ProposalRegisterComponent } from './components';
@@ -70,10 +68,7 @@ const THIRD_PARTY_MODULES = [
 	CKEditorModule,
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
-		loader: provideTranslateHttpLoader()
-	})
+	TranslateModule.forChild()
 ];
 
 @NgModule({

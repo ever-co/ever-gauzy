@@ -12,8 +12,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
-import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
+import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 import { createJobEmployeeRoutes } from './job-employee.routes';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
 
@@ -25,13 +24,7 @@ const NB_MODULES = [NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule,
 /*
  * Third party modules
  */
-const THIRD_PARTY_MODULES = [
-	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
-		loader: provideTranslateHttpLoader()
-	})
-];
+const THIRD_PARTY_MODULES = [NgxPermissionsModule.forRoot(), TranslateModule.forChild()];
 
 @NgModule({
 	declarations: [JobEmployeeComponent],

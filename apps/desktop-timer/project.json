@@ -13,9 +13,7 @@
 	"targets": {
 		"build": {
 			"executor": "@angular-builders/custom-webpack:browser",
-			"outputs": [
-				"{options.outputPath}"
-			],
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"customWebpackConfig": {
 					"path": "apps/desktop-timer/config/custom-webpack.config.js"
@@ -27,10 +25,7 @@
 				"tsConfig": "apps/desktop-timer/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": [
-						"apps/desktop-timer/src/assets/styles",
-						"packages/ui-core/static/styles"
-					]
+					"includePaths": ["apps/desktop-timer/src/assets/styles", "packages/ui-core/static/styles"]
 				},
 				"assets": [
 					"apps/desktop-timer/src/favicon.ico",
@@ -38,9 +33,7 @@
 					{
 						"glob": "**/*",
 						"input": "apps/desktop-timer/src/",
-						"ignore": [
-							"**/*.ts"
-						],
+						"ignore": ["**/*.ts"],
 						"output": ""
 					}
 				],
@@ -63,7 +56,10 @@
 					"localforage",
 					"moment-duration-format",
 					"rxjs",
-					"rxjs/operators"
+					"rxjs/operators",
+					"@gauzy/desktop-ui-lib",
+					"@gauzy/ui-config",
+					"@gauzy/ui-core/i18n"
 				]
 			},
 			"configurations": {
@@ -87,8 +83,8 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "100mb",
-							"maximumError": "150mb"
+							"maximumWarning": "150mb",
+							"maximumError": "200mb"
 						},
 						{
 							"type": "anyComponentStyle",
@@ -109,8 +105,8 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "100mb",
-							"maximumError": "150mb"
+							"maximumWarning": "150mb",
+							"maximumError": "200mb"
 						},
 						{
 							"type": "anyComponentStyle",
@@ -148,9 +144,7 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": [
-				"{workspaceRoot}/coverage/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "apps/desktop-timer/jest.config.ts",
 				"tsConfig": "apps/desktop-timer/tsconfig.spec.json"

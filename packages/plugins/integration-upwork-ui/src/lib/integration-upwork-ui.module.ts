@@ -16,14 +16,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
-import {
-	SmartDataViewLayoutModule,
-	SelectorsModule,
-	SharedModule,
-	TableComponentsModule,
-	getBrowserLanguage
-} from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationUpworkRoutes } from './integration-upwork.routes';
 import { UpworkComponent } from './components/upwork/upwork.component';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
@@ -32,6 +25,22 @@ import { ContractsComponent } from './components/contracts/contracts.component';
 import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
 import { ReportsComponent } from './components/reports/reports.component';
 import { IntegrationUpworkLayoutComponent } from './integration-upwork.layout.component';
+
+const NB_MODULES = [
+	NbActionsModule,
+	NbButtonModule,
+	NbCalendarKitModule,
+	NbCardModule,
+	NbCheckboxModule,
+	NbContextMenuModule,
+	NbDatepickerModule,
+	NbIconModule,
+	NbInputModule,
+	NbRouteTabsetModule,
+	NbTabsetModule,
+	NbToggleModule,
+	NbTooltipModule
+];
 
 @NgModule({
 	declarations: [
@@ -44,23 +53,8 @@ import { IntegrationUpworkLayoutComponent } from './integration-upwork.layout.co
 		ReportsComponent
 	],
 	imports: [
-		NbActionsModule,
-		NbButtonModule,
-		NbCalendarKitModule,
-		NbCardModule,
-		NbCheckboxModule,
-		NbContextMenuModule,
-		NbDatepickerModule,
-		NbIconModule,
-		NbInputModule,
-		NbRouteTabsetModule,
-		NbTabsetModule,
-		NbToggleModule,
-		NbTooltipModule,
-		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(),
-			loader: provideTranslateHttpLoader()
-		}),
+		...NB_MODULES,
+		TranslateModule.forChild(),
 		IntegrationUpworkRoutes,
 		SmartDataViewLayoutModule,
 		SelectorsModule,

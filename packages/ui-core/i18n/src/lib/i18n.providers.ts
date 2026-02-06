@@ -1,16 +1,17 @@
 import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
 import { provideTranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { provideTranslateHttpLoader, HttpLoaderOptions, DEFAULT_HTTP_LOADER_OPTIONS } from './translate-http-loader';
 import { I18nService } from './i18n.service';
+import { provideTranslateHttpLoader, HttpLoaderOptions, DEFAULT_HTTP_LOADER_OPTIONS } from './translate-http-loader';
+import { getBrowserLanguage } from './utils/get-browser-language';
 
 /**
  * Configuration options for the I18n providers.
  */
 export interface I18nProviderOptions {
-	/** The default language to use. Default: 'en' */
+	/** The default language to use. Default: Browser language */
 	defaultLanguage?: string;
-	/** The fallback language when a translation is not found. Default: 'en' */
+	/** The fallback language when a translation is not found. Default: Browser language */
 	fallbackLanguage?: string;
 	/** HTTP loader options for translation files. */
 	loader?: HttpLoaderOptions;
@@ -23,7 +24,7 @@ export interface I18nProviderOptions {
  */
 export const DEFAULT_I18N_OPTIONS: Required<Omit<I18nProviderOptions, 'customLoader'>> = {
 	defaultLanguage: LanguagesEnum.ENGLISH,
-	fallbackLanguage: LanguagesEnum.ENGLISH,
+	fallbackLanguage: getBrowserLanguage(),
 	loader: DEFAULT_HTTP_LOADER_OPTIONS
 };
 
@@ -43,7 +44,6 @@ export const DEFAULT_I18N_OPTIONS: Required<Omit<I18nProviderOptions, 'customLoa
  *   providers: [
  *     provideHttpClient(),
  *     provideI18n({
- *       defaultLanguage: 'en',
  *       fallbackLanguage: 'en',
  *       loader: {
  *         prefix: './assets/i18n/',

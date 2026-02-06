@@ -4,20 +4,11 @@ import { RouterModule, ROUTES } from '@angular/router';
 import { NbLayoutModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
-import { getBrowserLanguage } from '@gauzy/ui-core/shared';
 import { createMaintenanceRoutes } from './maintenance-mode.routes';
 import { MaintenanceModeComponent } from './maintenance-mode.component';
 
 @NgModule({
-	imports: [
-		CommonModule,
-		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(),
-			loader: provideTranslateHttpLoader()
-		}),
-		NbLayoutModule
-	],
+	imports: [CommonModule, TranslateModule.forChild(), NbLayoutModule],
 	declarations: [MaintenanceModeComponent],
 	exports: [RouterModule],
 	providers: [

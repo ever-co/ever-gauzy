@@ -12,8 +12,7 @@ import {
 	RoleGuard,
 	TenantService
 } from '@gauzy/ui-core/core';
-import { OrganizationsStepFormModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
+import { OrganizationsStepFormModule } from '@gauzy/ui-core/shared';
 import { ThemeModule, ThemeSelectorModule, ThemeSettingsModule } from '@gauzy/ui-core/theme';
 import { createOnboardingRoutes } from './onboarding.routes';
 import { OnboardingComponent } from './components/onboarding.component';
@@ -24,13 +23,7 @@ import { OnboardingCompleteComponent } from './components/onboarding-complete/on
 const NB_MODULES = [NbButtonModule, NbCardModule, NbIconModule, NbLayoutModule, NbSpinnerModule];
 
 // Third Party Modules
-const THIRD_PARTY_MODULES = [
-	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
-		loader: provideTranslateHttpLoader()
-	})
-];
+const THIRD_PARTY_MODULES = [NgxPermissionsModule.forRoot(), TranslateModule.forChild()];
 
 @NgModule({
 	imports: [

@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -11,8 +10,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
-import { SharedModule, WorkInProgressModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
+import { SharedModule, WorkInProgressModule } from '@gauzy/ui-core/shared';
 import { IntegrationAiRoutes } from './integration-ai.routes';
 import { IntegrationAILayoutComponent } from './integration-ai.layout.component';
 import { IntegrationAIAuthorizationComponent } from './components/authorization/authorization.component';
@@ -35,10 +33,7 @@ import { IntegrationSettingCardComponent } from './components/integration-settin
 		NbToggleModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forRoot(),
-		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(),
-			loader: provideTranslateHttpLoader()
-		}),
+		TranslateModule.forChild(),
 		IntegrationAiRoutes,
 		WorkInProgressModule,
 		SharedModule

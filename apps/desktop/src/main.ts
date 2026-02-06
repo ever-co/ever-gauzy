@@ -1,10 +1,20 @@
 import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
-
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbDialogService,
+	NbLayoutModule,
+	NbThemeModule,
+	NbToastrModule
+} from '@nebular/theme';
+import * as Sentry from '@sentry/angular';
 import {
 	AboutModule,
 	ActivityWatchInterceptor,
@@ -17,7 +27,6 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
 	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
@@ -38,18 +47,7 @@ import {
 	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbDialogService,
-	NbLayoutModule,
-	NbThemeModule,
-	NbToastrModule
-} from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
+import { I18nModule } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
@@ -101,15 +99,8 @@ bootstrapApplication(AppComponent, {
 			TimeTrackerModule,
 			SettingsModule,
 			ImageViewerModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: {
-					provide: TranslateLoader,
-					useFactory: HttpLoaderFactory,
-					deps: [HttpClient]
-				}
-			}),
 			NbDatepickerModule.forRoot(),
+			I18nModule.forRoot({ extend: true }),
 			LanguageModule.forRoot(),
 			AboutModule,
 			AlwaysOnModule,

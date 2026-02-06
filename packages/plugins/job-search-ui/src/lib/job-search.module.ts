@@ -21,15 +21,13 @@ import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileUploadModule } from 'ng2-file-upload';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	DialogsModule,
 	ProposalTemplateSelectModule,
 	SelectorsModule,
 	SharedModule,
-	StatusBadgeModule,
-	getBrowserLanguage
+	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
 import { createJobSearchRoutes } from './job-search.routes';
 import { JobSearchComponent } from './components/job-search/job-search.component';
@@ -61,10 +59,7 @@ const THIRD_PARTY_MODULES = [
 	FileUploadModule,
 	MomentModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
-		loader: provideTranslateHttpLoader()
-	})
+	TranslateModule.forChild()
 ];
 
 @NgModule({

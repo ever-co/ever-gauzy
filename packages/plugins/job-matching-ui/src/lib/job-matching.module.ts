@@ -17,8 +17,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
-import { DialogsModule, SharedModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
+import { DialogsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createJobMatchingRoutes } from './job-matching.routes';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';
 import { COMPONENTS } from './components';
@@ -42,14 +41,7 @@ const NB_MODULES = [
 /*
  * Third party modules
  */
-const THIRD_PARTY_MODULES = [
-	NgxPermissionsModule.forRoot(),
-	NgSelectModule,
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
-		loader: provideTranslateHttpLoader()
-	})
-];
+const THIRD_PARTY_MODULES = [NgxPermissionsModule.forRoot(), NgSelectModule, TranslateModule.forChild()];
 
 @NgModule({
 	declarations: [JobMatchingComponent, ...COMPONENTS],

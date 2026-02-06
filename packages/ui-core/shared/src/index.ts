@@ -74,4 +74,3 @@ export * from './lib/workspaces';
 export * from './lib/work-in-progress';
 export * from './lib/goal';
 export * from './lib/miscellaneous';
-export * from './lib/utils';

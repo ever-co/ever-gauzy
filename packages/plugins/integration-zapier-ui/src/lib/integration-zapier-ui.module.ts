@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
-// Angular core modules
 import { CommonModule } from '@angular/common';
-
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -19,14 +17,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
-import {
-	SmartDataViewLayoutModule,
-	SelectorsModule,
-	SharedModule,
-	TableComponentsModule,
-	getBrowserLanguage
-} from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationZapierRoutes } from './integration-zapier.routes';
 import { ZapierAuthorizeComponent } from './components/zapier-authorize/zapier-authorize.component';
 import { IntegrationZapierLayoutComponent } from './integration-zapier.layout.component';
@@ -37,26 +28,27 @@ import { ZapierTriggersComponent } from './components/zapier-triggers/zapier-tri
 import { ZapierActionsComponent } from './components/zapier-actions/zapier-actions.component';
 import { ZapierWebhooksComponent } from './components/zapier-webhooks/zapier-webhooks.component';
 
+const NB_MODULES = [
+	NbActionsModule,
+	NbButtonModule,
+	NbSpinnerModule,
+	NbCalendarKitModule,
+	NbCardModule,
+	NbCheckboxModule,
+	NbContextMenuModule,
+	NbDatepickerModule,
+	NbIconModule,
+	NbInputModule,
+	NbRouteTabsetModule,
+	NbTabsetModule,
+	NbToggleModule,
+	NbTooltipModule
+];
+
 @NgModule({
 	imports: [
-		NbActionsModule,
-		NbButtonModule,
-		NbSpinnerModule,
-		NbCalendarKitModule,
-		NbCardModule,
-		NbCheckboxModule,
-		NbContextMenuModule,
-		NbDatepickerModule,
-		NbIconModule,
-		NbInputModule,
-		NbRouteTabsetModule,
-		NbTabsetModule,
-		NbToggleModule,
-		NbTooltipModule,
-		TranslateModule.forChild({
-			defaultLanguage: getBrowserLanguage(),
-			loader: provideTranslateHttpLoader()
-		}),
+		...NB_MODULES,
+		TranslateModule.forChild(),
 		IntegrationZapierRoutes,
 		SmartDataViewLayoutModule,
 		SelectorsModule,

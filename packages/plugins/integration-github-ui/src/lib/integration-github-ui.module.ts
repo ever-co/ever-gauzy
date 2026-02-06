@@ -13,13 +13,11 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	ProjectSelectModule,
 	RepositorySelectorModule,
-	SharedModule,
-	getBrowserLanguage
+	SharedModule
 } from '@gauzy/ui-core/shared';
 import { IntegrationGithubRoutes } from './integration-github.routes';
 import { IntegrationGithubLayoutComponent } from './integration-github.layout.component';
@@ -47,10 +45,7 @@ import { GithubSettingsComponent } from './components/settings/settings.componen
 		NbToggleModule,
 		NgSelectModule,
 		NgxPermissionsModule.forRoot(),
-		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(),
-			loader: provideTranslateHttpLoader()
-		}),
+		TranslateModule.forChild(),
 		IntegrationGithubRoutes,
 		SharedModule,
 		SmartDataViewLayoutModule,

@@ -18,8 +18,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
-import { getBrowserLanguage, SmartDataViewLayoutModule, SharedModule } from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, SharedModule } from '@gauzy/ui-core/shared';
 import { IntegrationHubstaffRoutes } from './integration-hubstaff.routes';
 import { IntegrationHubstaffLayoutComponent } from './integration-hubstaff.layout.component';
 import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
@@ -49,10 +48,7 @@ import { SettingsDialogComponent } from './components/settings-dialog/settings-d
 		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forRoot(),
-		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(),
-			loader: provideTranslateHttpLoader()
-		}),
+		TranslateModule.forChild(),
 		IntegrationHubstaffRoutes,
 		SharedModule,
 		SmartDataViewLayoutModule
