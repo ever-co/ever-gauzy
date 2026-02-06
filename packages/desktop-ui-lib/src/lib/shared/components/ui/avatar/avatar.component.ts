@@ -2,13 +2,13 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ID, IEmployee } from '@gauzy/contracts';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { NgClass, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
-    selector: 'ngx-avatar',
-    templateUrl: './avatar.component.html',
-    styleUrls: ['./avatar.component.scss'],
-    imports: [NgClass, AsyncPipe]
+	selector: 'ngx-avatar',
+	templateUrl: './avatar.component.html',
+	styleUrls: ['./avatar.component.scss'],
+	imports: [AsyncPipe]
 })
 export class AvatarComponent implements OnInit {
 	public online$: Observable<boolean>;

@@ -8,17 +8,30 @@ import { AuthService } from '../../../auth';
 import { ErrorHandlerService, Store, TimeTrackerDateManager } from '../../../services';
 import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
 import { LogoComponent } from '../../shared/ui/logo/logo.component';
-import { NgTemplateOutlet, NgStyle } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { NbInputModule, NbFormFieldModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { SpinnerButtonDirective } from '../../../directives/spinner-button.directive';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-login-workspace',
-    templateUrl: './login-workspace.component.html',
-    styleUrls: ['./login-workspace.component.scss'],
-    imports: [WorkspaceSelectionComponent, LogoComponent, NgTemplateOutlet, RouterLink, FormsModule, ReactiveFormsModule, NbInputModule, NbFormFieldModule, NbButtonModule, NbIconModule, SpinnerButtonDirective, NgStyle, TranslatePipe]
+	selector: 'ngx-login-workspace',
+	templateUrl: './login-workspace.component.html',
+	styleUrls: ['./login-workspace.component.scss'],
+	imports: [
+		WorkspaceSelectionComponent,
+		LogoComponent,
+		NgTemplateOutlet,
+		RouterLink,
+		FormsModule,
+		ReactiveFormsModule,
+		NbInputModule,
+		NbFormFieldModule,
+		NbButtonModule,
+		NbIconModule,
+		SpinnerButtonDirective,
+		TranslatePipe
+	]
 })
 export class NgxLoginWorkspaceComponent implements OnInit {
 	public confirmedEmail: string;

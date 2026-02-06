@@ -18,7 +18,7 @@ import {
 	NbListModule
 } from '@nebular/theme';
 import { PluginMarketplaceDetailComponent } from './plugin-marketplace-detail/plugin-marketplace-detail.component';
-import { NgClass, AsyncPipe, PercentPipe } from '@angular/common';
+import { AsyncPipe, PercentPipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
 import { SpinnerButtonDirective } from '../../../../directives/spinner-button.directive';
@@ -37,7 +37,6 @@ import { SpinnerButtonDirective } from '../../../../directives/spinner-button.di
 		NbCardModule,
 		NbListModule,
 		PluginMarketplaceDetailComponent,
-		NgClass,
 		NoDataMessageComponent,
 		SpinnerButtonDirective,
 		AsyncPipe,

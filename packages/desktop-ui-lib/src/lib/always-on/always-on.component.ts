@@ -1,5 +1,12 @@
 import { Component, NgZone, OnDestroy, OnInit, Inject, Renderer2, HostBinding, HostListener } from '@angular/core';
-import { NbIconLibraries, NbLayoutModule, NbCardModule, NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
+import {
+	NbIconLibraries,
+	NbLayoutModule,
+	NbCardModule,
+	NbButtonModule,
+	NbIconModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable, Subscription, tap } from 'rxjs';
 import { LanguageElectronService } from '../language/language-electron.service';
@@ -7,15 +14,24 @@ import { AlwaysOnService, AlwaysOnStateEnum, ITimeCounter, ITimerStatus } from '
 import { faPlay, faPause, faStopwatch, faBars, faDollar } from '@fortawesome/free-solid-svg-icons';
 import { GAUZY_ENV } from '../constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-always-on',
-    templateUrl: './always-on.component.html',
-    styleUrls: ['./always-on.component.scss'],
-    imports: [NbLayoutModule, NbCardModule, FaIconComponent, NgClass, NbButtonModule, NbIconModule, NbTooltipModule, AsyncPipe, TranslatePipe]
+	selector: 'gauzy-always-on',
+	templateUrl: './always-on.component.html',
+	styleUrls: ['./always-on.component.scss'],
+	imports: [
+		NbLayoutModule,
+		NbCardModule,
+		FaIconComponent,
+		NbButtonModule,
+		NbIconModule,
+		NbTooltipModule,
+		AsyncPipe,
+		TranslatePipe
+	]
 })
 export class AlwaysOnComponent implements OnInit, OnDestroy {
 	@HostBinding('class.rounded-theme') isRounded = false;
@@ -95,12 +111,14 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 			)
 			.subscribe();
 		if (this.isExpandMode) {
-			this._alwaysOnService.checkTimerStatus$.pipe(
-				tap(() => {
-					this.checkAndRunTimer();
-				}),
-				untilDestroyed(this)
-			).subscribe();
+			this._alwaysOnService.checkTimerStatus$
+				.pipe(
+					tap(() => {
+						this.checkAndRunTimer();
+					}),
+					untilDestroyed(this)
+				)
+				.subscribe();
 			this.checkAndRunTimer();
 			this.renderer.setStyle(document.body, 'background-color', 'transparent');
 			this.renderer.setStyle(document.body, 'overflow', 'hidden');
@@ -137,7 +155,6 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 			console.error('Failed to toggle timer:', error);
 			this.setLoading(false);
 		}
-
 	}
 
 	async setLoading(isLoading: boolean) {
@@ -176,7 +193,6 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 	public get isAgent(): boolean {
 		return this._environment.IS_AGENT;
 	}
-
 
 	public get counter$(): Observable<ITimeCounter> {
 		return this._counter$.asObservable();
