@@ -9,7 +9,9 @@ import {
 	ITimeLog,
 	ITimeSlotTimeLogs,
 	PermissionsEnum,
-	TaskStatusEnum
+	TaskStatusEnum,
+	TimerSyncStateEnum,
+	TimerActionTypeEnum
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -66,8 +68,6 @@ import {
 	SequenceQueue,
 	TimeSlotQueueService,
 	ViewQueueStateUpdater,
-	ActionType,
-	SyncState
 } from '../offline-sync';
 import {
 	ErrorHandlerService,
@@ -497,10 +497,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isOffline && !this._remoteSleepLock) {
 					try {
 						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-							actionType: ActionType.START_TIMER,
+							actionType: TimerActionTypeEnum.START_TIMER,
 							data: {
 								timerId: lastTimer.id,
-								state: SyncState.SYNCING
+								state: TimerSyncStateEnum.SYNCING
 							}
 						});
 						timelog = isRemote
@@ -509,19 +509,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									this.timeTrackerService.toggleApiStart(payload)
 							  );
 						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-							actionType: ActionType.START_TIMER,
+							actionType: TimerActionTypeEnum.START_TIMER,
 							data: {
 								timerId: lastTimer.id,
-								state: SyncState.SYNCED
+								state: TimerSyncStateEnum.SYNCED
 							}
 						});
 					} catch (error) {
 						lastTimer.isStartedOffline = true;
 						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-							actionType: ActionType.START_TIMER,
+							actionType: TimerActionTypeEnum.START_TIMER,
 							data: {
 								timerId: lastTimer.id,
-								state: SyncState.FAILED
+								state: TimerSyncStateEnum.FAILED
 							}
 						});
 						this._loggerService.error(error);
@@ -547,10 +547,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								...lastTimer
 							};
 							await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-								actionType: ActionType.STOP_TIMER,
+								actionType: TimerActionTypeEnum.STOP_TIMER,
 								data: {
 									timerId: lastTimer.id,
-									state: SyncState.SYNCING
+									state: TimerSyncStateEnum.SYNCING
 								}
 							});
 							// Execute API request to stop timer and store the result in timelog
@@ -558,10 +558,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								this.timeTrackerService.toggleApiStop(payload)
 							);
 							await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-								actionType: ActionType.STOP_TIMER,
+								actionType: TimerActionTypeEnum.STOP_TIMER,
 								data: {
 									timerId: lastTimer.id,
-									state: SyncState.SYNCED,
+									state: TimerSyncStateEnum.SYNCED,
 									duration: timelog.duration
 								}
 							});
@@ -570,10 +570,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						// Handle any error during the process
 						lastTimer.isStoppedOffline = true;
 						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-							actionType: ActionType.STOP_TIMER,
+							actionType: TimerActionTypeEnum.STOP_TIMER,
 							data: {
 								timerId: lastTimer.id,
-								state: SyncState.FAILED
+								state: TimerSyncStateEnum.FAILED
 							}
 						});
 						await this.electronService.ipcRenderer.invoke('MARK_AS_STOPPED_OFFLINE');
@@ -744,12 +744,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._alwaysOnService.state$
 			.pipe(
 				filter((state: AlwaysOnStateEnum) => {
-					const { state: iginitionState } = this.timeTrackerQuery.ignition;
+					const { state: ignitionState } = this.timeTrackerQuery.ignition;
 					const isTransitional = [
 						IgnitionState.STOPPING,
 						IgnitionState.STARTING,
 						IgnitionState.RESTARTING
-					].includes(iginitionState);
+					].includes(ignitionState);
 					return !isTransitional && state === AlwaysOnStateEnum.LOADING;
 				}),
 				concatMap(() => this.toggleStart(!this.start, true)),

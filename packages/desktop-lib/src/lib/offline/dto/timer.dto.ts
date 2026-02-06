@@ -1,9 +1,4 @@
-export enum SyncState {
-	PENDING = 'pending',
-	SYNCING = 'syncing',
-	SYNCED = 'synced',
-	FAILED = 'failed'
-}
+import { TimerSyncStateEnum } from '@gauzy/contracts';
 
 export interface TimerTO {
 	id?: number;
@@ -23,8 +18,8 @@ export interface TimerTO {
 	version?: string;
 	organizationTeamId?: string;
 	description?: string;
-	startSyncState?: SyncState;
-	stopSyncState?: SyncState;
+	startSyncState?: TimerSyncStateEnum;
+	stopSyncState?: TimerSyncStateEnum;
 	syncDuration?: number;
 }
 

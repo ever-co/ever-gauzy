@@ -162,6 +162,7 @@ export * from './lib/camshot.model';
 export * from './lib/clone.model';
 export * from './lib/soundshot.model';
 export * from './lib/zapier.model';
+export * from './lib/desktop-timer.model';
 
 export {
 	ActorTypeEnum,

@@ -1,4 +1,4 @@
-import { ITimeSlot } from '@gauzy/contracts';
+import { ITimeSlot, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
 import { asapScheduler, concatMap, defer, of, repeat, timer as synchronizer } from 'rxjs';
 import { BACKGROUND_SYNC_OFFLINE_INTERVAL } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
@@ -7,7 +7,6 @@ import { TimeTrackerStatusService } from '../../time-tracker/time-tracker-status
 import { TimeTrackerService } from '../../time-tracker/time-tracker.service';
 import { OfflineQueue } from '../interfaces/offline-queue';
 import { TimeSlotQueueService } from '../time-slot-queue.service';
-import { ActionType, SyncState } from '../enums';
 import { BlockedSequenceState, CompletedSequenceState, InProgressSequenceState } from './states';
 import { TimeSlotQueue } from './time-slot-queue';
 
@@ -57,9 +56,10 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 					...params
 				});
 				await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-					actionType: ActionType.START_TIMER,
+					actionType: TimerActionTypeEnum.START_TIMER,
 					data: {
-						state: SyncState.SYNCED
+						state: TimerSyncStateEnum.SYNCED,
+						timerId: timer.id
 					}
 				});
 			} else if (timer.isStartedOffline && !timer.timelogId && timer.startedAt && timer.stoppedAt) {
@@ -71,9 +71,10 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 					description: timer.description
 				});
 				await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-					actionType: ActionType.START_TIMER,
+					actionType: TimerActionTypeEnum.START_TIMER,
 					data: {
-						state: SyncState.SYNCED
+						state: TimerSyncStateEnum.SYNCED,
+						timerId: timer.id
 					}
 				});
 			}
@@ -109,10 +110,11 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 							...params
 						});
 						await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-							actionType: ActionType.STOP_TIMER,
+							actionType: TimerActionTypeEnum.STOP_TIMER,
 							data: {
-								state: SyncState.SYNCED,
-								duration: latest.duration || null
+								state: TimerSyncStateEnum.SYNCED,
+								duration: latest.duration || null,
+								timerId: timer.id
 							}
 						});
 					} else if (currentTimeLog.id && timer.stoppedAt) {
@@ -124,10 +126,11 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 							taskId: timer.taskId
 						});
 						await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-							actionType: ActionType.STOP_TIMER,
+							actionType: TimerActionTypeEnum.STOP_TIMER,
 							data: {
-								state: SyncState.SYNCED,
-								duration: latest.duration || null
+								state: TimerSyncStateEnum.SYNCED,
+								duration: latest.duration || null,
+								timerId: timer.id
 							}
 						});
 					}
@@ -137,10 +140,11 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 						...params
 					});
 					await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-						actionType: ActionType.STOP_TIMER,
+						actionType: TimerActionTypeEnum.STOP_TIMER,
 						data: {
-							state: SyncState.SYNCED,
-							duration: latest.duration || null
+							state: TimerSyncStateEnum.SYNCED,
+							duration: latest.duration || null,
+							timerId: timer.id
 						}
 					});
 				}

@@ -1,7 +1,7 @@
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
-import { IActivityWatchEventResult } from '@gauzy/contracts';
+import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
 import { RegisteredWindow, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
 import { TrackingSleepInactivity } from './contexts';
@@ -30,7 +30,6 @@ import {
 	Interval,
 	IntervalService,
 	IntervalTO,
-	SyncState,
 	Timer,
 	TimerService,
 	TimerTO,
@@ -923,9 +922,9 @@ export function ipcTimer(
 	});
 
 	ipcMain.handle('UPDATE_SYNC_STATE', async (_, arg: {
-		actionType: 'startTimer' | 'stopTimer',
+		actionType: TimerActionTypeEnum,
 		data: {
-			state: SyncState,
+			state: TimerSyncStateEnum,
 			duration: number,
 			timerId: number
 		}

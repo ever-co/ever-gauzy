@@ -1,9 +1,9 @@
-export enum ActionType {
+export enum TimerActionTypeEnum {
 	START_TIMER = 'startTimer',
 	STOP_TIMER = 'stopTimer'
 }
 
-export enum SyncState {
+export enum TimerSyncStateEnum {
 	PENDING = 'pending',
 	SYNCING = 'syncing',
 	SYNCED = 'synced',
