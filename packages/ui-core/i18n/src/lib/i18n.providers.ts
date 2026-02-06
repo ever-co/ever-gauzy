@@ -9,9 +9,9 @@ import { getBrowserLanguage } from './utils/get-browser-language';
  * Configuration options for the I18n providers.
  */
 export interface I18nProviderOptions {
-	/** The default language to use. Default: Browser language */
+	/** The initial language to use on startup. Default: Browser language */
 	defaultLanguage?: string;
-	/** The fallback language when a translation is not found. Default: Browser language */
+	/** The fallback language when a translation is not found. Default: English */
 	fallbackLanguage?: string;
 	/** HTTP loader options for translation files. */
 	loader?: HttpLoaderOptions;
@@ -24,7 +24,7 @@ export interface I18nProviderOptions {
  */
 export const DEFAULT_I18N_OPTIONS: Required<Omit<I18nProviderOptions, 'customLoader'>> = {
 	defaultLanguage: LanguagesEnum.ENGLISH,
-	fallbackLanguage: getBrowserLanguage(),
+	fallbackLanguage: LanguagesEnum.ENGLISH,
 	loader: DEFAULT_HTTP_LOADER_OPTIONS
 };
 
@@ -70,13 +70,19 @@ export const DEFAULT_I18N_OPTIONS: Required<Omit<I18nProviderOptions, 'customLoa
 export function provideI18n(options?: I18nProviderOptions): EnvironmentProviders {
 	const config = { ...DEFAULT_I18N_OPTIONS, ...options };
 
+	// Set default language and fallback language
+	const defaultLanguage = options?.defaultLanguage ?? getBrowserLanguage();
+
+	// Set fallback language
+	const fallbackLanguage = options?.fallbackLanguage ?? LanguagesEnum.ENGLISH;
+
 	return makeEnvironmentProviders([
 		// Provide the I18nService
 		I18nService,
 		// Configure ngx-translate with the new standalone API
 		provideTranslateService({
-			defaultLanguage: config.defaultLanguage,
-			fallbackLang: config.fallbackLanguage,
+			defaultLanguage: defaultLanguage,
+			fallbackLang: fallbackLanguage,
 			useDefaultLang: true,
 			loader: config.customLoader ?? provideTranslateHttpLoader(config.loader)
 		})

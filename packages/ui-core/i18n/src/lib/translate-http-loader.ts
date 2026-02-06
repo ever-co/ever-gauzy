@@ -38,7 +38,6 @@ export const DEFAULT_HTTP_LOADER_OPTIONS: Required<HttpLoaderOptions> = {
  *   providers: [
  *     provideHttpClient(),
  *     provideTranslateService({
- *       defaultLanguage: 'en',
  *       fallbackLang: 'en',
  *       loader: provideTranslateHttpLoader()
  *     })
@@ -54,7 +53,6 @@ export const DEFAULT_HTTP_LOADER_OPTIONS: Required<HttpLoaderOptions> = {
  * @NgModule({
  *   imports: [
  *     TranslateModule.forRoot({
- *       defaultLanguage: 'en',
  *       fallbackLang: 'en',
  *       loader: provideTranslateHttpLoader()
  *     })
