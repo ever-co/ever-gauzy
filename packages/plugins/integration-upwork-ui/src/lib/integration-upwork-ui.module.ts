@@ -16,6 +16,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { SmartDataViewLayoutModule, SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationUpworkRoutes } from './integration-upwork.routes';
 import { UpworkComponent } from './components/upwork/upwork.component';
@@ -54,7 +55,10 @@ const NB_MODULES = [
 	],
 	imports: [
 		...NB_MODULES,
-		TranslateModule.forChild(),
+		TranslateModule.forRoot({
+			defaultLanguage: getBrowserLanguage(),
+			loader: provideTranslateHttpLoader()
+		}),
 		IntegrationUpworkRoutes,
 		SmartDataViewLayoutModule,
 		SelectorsModule,

@@ -15,6 +15,7 @@ import {
 	NbToastrModule
 } from '@nebular/theme';
 import * as Sentry from '@sentry/angular';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	AboutModule,
 	ActivityWatchInterceptor,
@@ -47,7 +48,7 @@ import {
 	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import { I18nModule } from '@gauzy/ui-core/i18n';
+import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
@@ -100,7 +101,10 @@ bootstrapApplication(AppComponent, {
 			SettingsModule,
 			ImageViewerModule,
 			NbDatepickerModule.forRoot(),
-			I18nModule.forRoot({ extend: true }),
+			TranslateModule.forRoot({
+				extend: true,
+				loader: provideTranslateHttpLoader()
+			}),
 			LanguageModule.forRoot(),
 			AboutModule,
 			AlwaysOnModule,

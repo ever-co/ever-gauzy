@@ -10,6 +10,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
@@ -24,7 +25,13 @@ const NB_MODULES = [NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule,
 /*
  * Third party modules
  */
-const THIRD_PARTY_MODULES = [NgxPermissionsModule.forRoot(), TranslateModule.forChild()];
+const THIRD_PARTY_MODULES = [
+	NgxPermissionsModule.forRoot(),
+	TranslateModule.forRoot({
+		defaultLanguage: getBrowserLanguage(),
+		loader: provideTranslateHttpLoader()
+	})
+];
 
 @NgModule({
 	declarations: [JobEmployeeComponent],

@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import { ROUTES, RouterModule } from '@angular/router';
 import { NbButtonModule, NbCardModule, NbIconModule, NbLayoutModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
@@ -13,6 +12,7 @@ import {
 	TenantService
 } from '@gauzy/ui-core/core';
 import { OrganizationsStepFormModule } from '@gauzy/ui-core/shared';
+import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { ThemeModule, ThemeSelectorModule, ThemeSettingsModule } from '@gauzy/ui-core/theme';
 import { createOnboardingRoutes } from './onboarding.routes';
 import { OnboardingComponent } from './components/onboarding.component';
@@ -23,7 +23,13 @@ import { OnboardingCompleteComponent } from './components/onboarding-complete/on
 const NB_MODULES = [NbButtonModule, NbCardModule, NbIconModule, NbLayoutModule, NbSpinnerModule];
 
 // Third Party Modules
-const THIRD_PARTY_MODULES = [NgxPermissionsModule.forRoot(), TranslateModule.forChild()];
+const THIRD_PARTY_MODULES = [
+	NgxPermissionsModule.forRoot(),
+	TranslateModule.forRoot({
+		fallbackLang: getBrowserLanguage(),
+		loader: provideTranslateHttpLoader()
+	})
+];
 
 @NgModule({
 	imports: [

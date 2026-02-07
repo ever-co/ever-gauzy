@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ModuleWithProviders, NgModule, provideAppInitializer, inject } from '@angular/core';
 import { NbSelectModule } from '@nebular/theme';
-import { I18nModule } from '@gauzy/ui-core/i18n';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Store } from '../services';
 import { ElectronService } from '../electron/services';
 import { LanguageInitializerFactory } from './language-initializer.factory';
@@ -13,8 +12,8 @@ import { LanguageSelectorService } from './language-selector.service';
 import { LanguageService } from './language.service';
 
 @NgModule({
-	imports: [CommonModule, NbSelectModule, LanguageSelectorComponent, I18nModule.forChild()],
-	exports: [LanguageSelectorComponent, I18nModule]
+	imports: [CommonModule, NbSelectModule, LanguageSelectorComponent, TranslateModule.forChild()],
+	exports: [LanguageSelectorComponent, TranslateModule]
 })
 export class LanguageModule {
 	static forRoot(): ModuleWithProviders<LanguageModule> {

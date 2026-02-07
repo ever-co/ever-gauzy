@@ -17,6 +17,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
+import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { SmartDataViewLayoutModule, SharedModule } from '@gauzy/ui-core/shared';
 import { IntegrationHubstaffRoutes } from './integration-hubstaff.routes';
@@ -48,7 +49,10 @@ import { SettingsDialogComponent } from './components/settings-dialog/settings-d
 		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forRoot(),
-		TranslateModule.forChild(),
+		TranslateModule.forRoot({
+			fallbackLang: getBrowserLanguage(),
+			loader: provideTranslateHttpLoader()
+		}),
 		IntegrationHubstaffRoutes,
 		SharedModule,
 		SmartDataViewLayoutModule

@@ -16,6 +16,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -59,7 +60,10 @@ const THIRD_PARTY_MODULES = [
 	FileUploadModule,
 	MomentModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forChild()
+	TranslateModule.forRoot({
+		fallbackLang: getBrowserLanguage(),
+		loader: provideTranslateHttpLoader()
+	})
 ];
 
 @NgModule({

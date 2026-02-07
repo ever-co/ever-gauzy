@@ -12,6 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { WorkspaceSigninComponent } from './workspace-signin.component';
@@ -38,7 +39,10 @@ const routes: Routes = [
 		NbFormFieldModule,
 		NbSpinnerModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslateModule.forRoot({
+			fallbackLang: getBrowserLanguage(),
+			loader: provideTranslateHttpLoader()
+		}),
 		SharedModule,
 		ThemeModule,
 		WorkspaceSharedModule

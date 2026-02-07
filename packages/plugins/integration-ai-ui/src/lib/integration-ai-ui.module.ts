@@ -10,6 +10,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
+import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { SharedModule, WorkInProgressModule } from '@gauzy/ui-core/shared';
 import { IntegrationAiRoutes } from './integration-ai.routes';
 import { IntegrationAILayoutComponent } from './integration-ai.layout.component';
@@ -33,7 +34,10 @@ import { IntegrationSettingCardComponent } from './components/integration-settin
 		NbToggleModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forRoot(),
-		TranslateModule.forChild(),
+		TranslateModule.forRoot({
+			defaultLanguage: getBrowserLanguage(),
+			loader: provideTranslateHttpLoader()
+		}),
 		IntegrationAiRoutes,
 		WorkInProgressModule,
 		SharedModule

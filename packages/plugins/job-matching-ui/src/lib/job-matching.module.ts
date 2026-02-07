@@ -15,6 +15,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
+import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { DialogsModule, SharedModule } from '@gauzy/ui-core/shared';
@@ -41,7 +42,14 @@ const NB_MODULES = [
 /*
  * Third party modules
  */
-const THIRD_PARTY_MODULES = [NgxPermissionsModule.forRoot(), NgSelectModule, TranslateModule.forChild()];
+const THIRD_PARTY_MODULES = [
+	NgxPermissionsModule.forRoot(),
+	NgSelectModule,
+	TranslateModule.forRoot({
+		defaultLanguage: getBrowserLanguage(),
+		loader: provideTranslateHttpLoader()
+	})
+];
 
 @NgModule({
 	declarations: [JobMatchingComponent, ...COMPONENTS],
