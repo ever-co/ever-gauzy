@@ -47,7 +47,7 @@ import { GithubSettingsComponent } from './components/settings/settings.componen
 		NgSelectModule,
 		NgxPermissionsModule.forRoot(),
 		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(),
+			fallbackLang: getBrowserLanguage(),
 			loader: provideTranslateHttpLoader()
 		}),
 		IntegrationGithubRoutes,

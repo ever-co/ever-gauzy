@@ -56,7 +56,7 @@ const NB_MODULES = [
 	imports: [
 		...NB_MODULES,
 		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(),
+			fallbackLang: getBrowserLanguage(),
 			loader: provideTranslateHttpLoader()
 		}),
 		IntegrationUpworkRoutes,

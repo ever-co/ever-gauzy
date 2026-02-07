@@ -35,7 +35,7 @@ import { IntegrationSettingCardComponent } from './components/integration-settin
 		NbTooltipModule,
 		NgxPermissionsModule.forRoot(),
 		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(),
+			fallbackLang: getBrowserLanguage(),
 			loader: provideTranslateHttpLoader()
 		}),
 		IntegrationAiRoutes,

@@ -46,7 +46,7 @@ const THIRD_PARTY_MODULES = [
 	NgxPermissionsModule.forRoot(),
 	NgSelectModule,
 	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
+		fallbackLang: getBrowserLanguage(),
 		loader: provideTranslateHttpLoader()
 	})
 ];

@@ -60,7 +60,7 @@ import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-s
 		NbToggleModule,
 		NbTooltipModule,
 		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(),
+			fallbackLang: getBrowserLanguage(),
 			loader: provideTranslateHttpLoader()
 		}),
 		IntegrationActivepiecesRoutes,

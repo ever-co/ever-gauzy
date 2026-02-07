@@ -28,7 +28,7 @@ const NB_MODULES = [NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule,
 const THIRD_PARTY_MODULES = [
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
+		fallbackLang: getBrowserLanguage(),
 		loader: provideTranslateHttpLoader()
 	})
 ];

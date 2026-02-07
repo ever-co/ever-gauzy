@@ -2,6 +2,7 @@ import { ModuleWithProviders, NgModule } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from './i18n.service';
 import { provideTranslateHttpLoader } from './translate-http-loader';
+import { getBrowserLanguage } from './utils/get-browser-language';
 
 /**
  * `I18nModule` provides centralized internationalization support for Angular applications based on `@ngx-translate/core`.
