@@ -1,4 +1,4 @@
-import { ActivityType, IActivityWatchCollectEventData, ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
+import { ActivityType, IActivityWatchCollectEventData, ITimeLog, TimeLogSourceEnum, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
 import { app, screen } from 'electron';
 import * as moment from 'moment';
 import { DesktopActiveWindow } from './desktop-active-window';
@@ -276,7 +276,8 @@ export default class TimerHandler {
 					id: this.lastTimer ? this.lastTimer.id : null,
 					stoppedAt: new Date(),
 					synced: !this._offlineMode.enabled,
-					isStoppedOffline: this._offlineMode.enabled
+					isStoppedOffline: this._offlineMode.enabled,
+					stopSyncState: TimerSyncStateEnum.PENDING
 				})
 			);
 		} catch (error) {
@@ -601,7 +602,8 @@ export default class TimerHandler {
 						synced: !this._offlineMode.enabled,
 						isStartedOffline: this._offlineMode.enabled,
 						isStoppedOffline: false,
-						version: 'v' + app.getVersion()
+						version: 'v' + app.getVersion(),
+						startSyncState: TimerSyncStateEnum.PENDING
 					})
 				);
 			} else {
@@ -793,5 +795,22 @@ export default class TimerHandler {
 		});
 
 		console.log(`Job Created for ${queName}`);
+	}
+
+	async updateTimerSyncState(type: TimerActionTypeEnum, data: {
+		state: TimerSyncStateEnum,
+		duration: number,
+		timerId: number
+	}) {
+		const lastTimer = await this._timerService.findById({ id: data.timerId });
+		if (!lastTimer) {
+			console.error(`Timer with id ${data.timerId} not found`);
+			return;
+		}
+		await this._timerService.update(new Timer({
+			...lastTimer,
+			...(type === 'startTimer' ? { startSyncState: data.state } : { stopSyncState: data.state }),
+			...(data.duration ? { syncDuration: data.duration } : {})
+		}));
 	}
 }

@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { NbInputModule } from '@nebular/theme';
+import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
     selector: 'gauzy-text-area',
     templateUrl: './text-area.component.html',
     styleUrls: ['./text-area.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbInputModule, FormsModule, TranslatePipe]
 })
 export class TextAreaComponent {
 	private _text: string = '';

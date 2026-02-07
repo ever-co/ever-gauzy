@@ -4,8 +4,9 @@ import { IPlugin } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService, NbIconModule, NbButtonModule, NbTooltipModule, NbFormFieldModule, NbInputModule, NbToggleModule, NbSelectModule, NbOptionModule } from '@nebular/theme';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { BehaviorSubject } from 'rxjs';
-import { DesktopDirectiveModule } from '../../../../../directives/desktop-directive.module';
+
 import { AsyncPipe, TitleCasePipe } from '@angular/common';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 
 // Define setting data types locally
 enum PluginSettingDataType {
@@ -53,7 +54,7 @@ interface IPluginSetting {
     selector: 'lib-plugin-settings-manager',
     templateUrl: './plugin-settings-manager.component.html',
     styleUrls: ['./plugin-settings-manager.component.scss'],
-    imports: [NbIconModule, DesktopDirectiveModule, NbButtonModule, NbTooltipModule, NbFormFieldModule, NbInputModule, NbToggleModule, FormsModule, ReactiveFormsModule, NbSelectModule, NbOptionModule, AsyncPipe, TitleCasePipe]
+    imports: [NbIconModule, SpinnerButtonDirective, NbButtonModule, NbTooltipModule, NbFormFieldModule, NbInputModule, NbToggleModule, FormsModule, ReactiveFormsModule, NbSelectModule, NbOptionModule, AsyncPipe, TitleCasePipe]
 })
 export class PluginSettingsManagerComponent implements OnInit, OnDestroy {
 	@Input() plugin: IPlugin;

@@ -1,4 +1,4 @@
-import { ITimeSlot } from '@gauzy/contracts';
+import { ITimeSlot, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
 import { asapScheduler, concatMap, defer, of, repeat, timer as synchronizer } from 'rxjs';
 import { BACKGROUND_SYNC_OFFLINE_INTERVAL } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
@@ -55,6 +55,13 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 					...timer,
 					...params
 				});
+				await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+					actionType: TimerActionTypeEnum.START_TIMER,
+					data: {
+						state: TimerSyncStateEnum.SYNCED,
+						timerId: timer.id
+					}
+				});
 			} else if (timer.isStartedOffline && !timer.timelogId && timer.startedAt && timer.stoppedAt) {
 				latest = await this._timeTrackerService.addTimeLog({
 					startedAt: timer.startedAt,
@@ -62,6 +69,13 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 					taskId: timer.taskId,
 					projectId: timer.projectId,
 					description: timer.description
+				});
+				await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+					actionType: TimerActionTypeEnum.START_TIMER,
+					data: {
+						state: TimerSyncStateEnum.SYNCED,
+						timerId: timer.id
+					}
 				});
 			}
 
@@ -95,22 +109,43 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 							...timer,
 							...params
 						});
-					} else if (currentTimeLog.id && timer.stoppedAt) {
-						latest = await this._timeTrackerService.updateTimeLog(
-							timer.timelogId,
-							{
-								startedAt: timer.startedAt || currentTimeLog.startedAt,
-								stoppedAt: timer.stoppedAt,
-								description: timer.description,
-								projectId: timer.projectId,
-								taskId: timer.taskId
+						await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.STOP_TIMER,
+							data: {
+								state: TimerSyncStateEnum.SYNCED,
+								duration: latest.duration || null,
+								timerId: timer.id
 							}
-						)
+						});
+					} else if (currentTimeLog.id && timer.stoppedAt) {
+						latest = await this._timeTrackerService.updateTimeLog(timer.timelogId, {
+							startedAt: timer.startedAt || currentTimeLog.startedAt,
+							stoppedAt: timer.stoppedAt,
+							description: timer.description,
+							projectId: timer.projectId,
+							taskId: timer.taskId
+						});
+						await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.STOP_TIMER,
+							data: {
+								state: TimerSyncStateEnum.SYNCED,
+								duration: latest.duration || null,
+								timerId: timer.id
+							}
+						});
 					}
 				} else if (latest && latest.id && latest.isRunning) {
 					latest = await this._timeTrackerService.toggleApiStop({
 						...timer,
 						...params
+					});
+					await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+						actionType: TimerActionTypeEnum.STOP_TIMER,
+						data: {
+							state: TimerSyncStateEnum.SYNCED,
+							duration: latest.duration || null,
+							timerId: timer.id
+						}
 					});
 				}
 			}
@@ -123,9 +158,9 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 						lastTimer: latest
 							? latest
 							: {
-								...timer,
-								id: status?.lastLog?.id
-							},
+									...timer,
+									id: status?.lastLog?.id
+							  },
 						...timer
 					});
 					console.log('⏱ - local database updated');

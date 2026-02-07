@@ -4,6 +4,12 @@ import { Observable } from 'rxjs';
 import { RecapQuery } from '../../+state/recap.query';
 import { RecapStore } from '../../+state/recap.store';
 import { IDateRangePicker } from '../../shared/features/date-range-picker/date-picker.interface';
+import { NbCardModule, NbIconModule } from '@nebular/theme';
+import { SegmentedControlComponent } from '../../shared/features/segmented-control/segmented-control.component';
+import { DateRangePickerComponent } from '../../shared/features/date-range-picker/date-range-picker.component';
+import { FilterComponent } from '../filter/filter.component';
+import { RouterOutlet } from '@angular/router';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -11,7 +17,7 @@ import { IDateRangePicker } from '../../shared/features/date-range-picker/date-p
     templateUrl: './recap.component.html',
     styleUrls: ['./recap.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbCardModule, SegmentedControlComponent, NbIconModule, DateRangePickerComponent, FilterComponent, RouterOutlet, AsyncPipe]
 })
 export class RecapComponent {
 	private readonly basePath = ['/', 'time-tracker', 'daily'];

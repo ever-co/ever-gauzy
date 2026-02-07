@@ -1,12 +1,91 @@
-import { enableProdMode } from '@angular/core';
-import { platformBrowser } from '@angular/platform-browser';
-import { AppModule } from './app/app.module';
+import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
+import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
+
+import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { Router, RouterModule } from '@angular/router';
+import {
+	ElectronService,
+	GAUZY_ENV,
+	HttpLoaderFactory,
+	LanguageModule,
+	LoggerService,
+	NgxDesktopThemeModule,
+	Store
+} from '@gauzy/desktop-ui-lib';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
+import { NbDialogModule, NbDialogService, NbMenuModule, NbSidebarModule, NbToastrModule } from '@nebular/theme';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import * as Sentry from '@sentry/angular';
+import { AppRoutingModule } from './app/app-routing.module';
+import { AppComponent } from './app/app.component';
+import { AppService } from './app/app.service';
+import { initializeSentry } from './app/sentry';
 import { environment } from './environments/environment';
 
 if (environment.production) {
 	enableProdMode();
 }
 
-platformBrowser()
-	.bootstrapModule(AppModule)
-	.catch((err) => console.error(err));
+if (environment.SENTRY_DSN) {
+	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
+		console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
+	} else {
+		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
+		initializeSentry();
+	}
+}
+
+bootstrapApplication(AppComponent, {
+	providers: [
+		importProvidersFrom(
+			NbDialogModule.forRoot(),
+			NbToastrModule.forRoot(),
+			BrowserModule,
+			RouterModule,
+			AppRoutingModule,
+			NbMenuModule.forRoot(),
+			NbSidebarModule.forRoot(),
+			LanguageModule.forRoot(),
+			NgxDesktopThemeModule,
+			NbTablerIconsModule,
+			TranslateModule.forRoot({
+				extend: true,
+				loader: {
+					provide: TranslateLoader,
+					useFactory: HttpLoaderFactory,
+					deps: [HttpClient]
+				}
+			})
+		),
+		AppService,
+		NbDialogService,
+		ElectronService,
+		LoggerService,
+		Store,
+		{
+			provide: ErrorHandler,
+			useValue: Sentry.createErrorHandler({
+				showDialog: true
+			})
+		},
+		{
+			provide: Sentry.TraceService,
+			deps: [Router]
+		},
+		provideAppInitializer(() => {
+			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
+			return initializerFn();
+		}),
+		{
+			provide: GAUZY_ENV,
+			useValue: {
+				...gauzyEnvironment,
+				...environment
+			}
+		},
+		provideHttpClient(withInterceptorsFromDi()),
+		provideAnimations()
+	]
+}).catch((err) => console.error(err));

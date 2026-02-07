@@ -31,9 +31,11 @@ import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 import { SubscriptionStatusBadgeComponent } from '../shared/components/subscription-status-badge/subscription-status-badge.component';
-import { NoDataMessageModule } from '../../../../../time-tracker/no-data-message/no-data-message.module';
-import { DesktopDirectiveModule } from '../../../../../directives/desktop-directive.module';
+
+
 import { AsyncPipe, PercentPipe, TitleCasePipe } from '@angular/common';
+import { NoDataMessageComponent } from '../../../../../time-tracker/no-data-message/no-data-message.component';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 // Installation and subscription side-effects moved to effects
 
 @Component({
@@ -41,7 +43,7 @@ import { AsyncPipe, PercentPipe, TitleCasePipe } from '@angular/common';
     templateUrl: './plugin-marketplace-item.component.html',
     styleUrls: ['./plugin-marketplace-item.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, NbIconModule, NbBadgeModule, SubscriptionStatusBadgeComponent, NbButtonModule, NbSpinnerModule, NoDataMessageModule, DesktopDirectiveModule, NbTooltipModule, NbRouteTabsetModule, NbPopoverModule, NbListModule, AsyncPipe, PercentPipe, TitleCasePipe, TranslatePipe]
+    imports: [NbCardModule, NbIconModule, NbBadgeModule, SubscriptionStatusBadgeComponent, NbButtonModule, NbSpinnerModule, NoDataMessageComponent, SpinnerButtonDirective, NbTooltipModule, NbRouteTabsetModule, NbPopoverModule, NbListModule, AsyncPipe, PercentPipe, TitleCasePipe, TranslatePipe]
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private readonly destroy$ = new Subject<void>();

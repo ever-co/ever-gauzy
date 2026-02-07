@@ -8,8 +8,7 @@ import { ReplacePipe } from './replace.pipe';
 
 const pipes = [DateTimePipe, DurationFormatPipe, HumanizePipe, ReplacePipe, DayjsPipe];
 @NgModule({
-	declarations: [...pipes],
-	imports: [CommonModule],
-	exports: [...pipes]
+    imports: [CommonModule, ...pipes],
+    exports: [...pipes]
 })
 export class PipeModule {}

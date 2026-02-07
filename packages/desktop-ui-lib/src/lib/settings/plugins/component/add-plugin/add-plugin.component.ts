@@ -5,9 +5,11 @@ import { NbButtonModule, NbCardModule, NbDialogRef, NbIconModule, NbInputModule,
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
-import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
+
 import { PluginInstallationQuery } from '../plugin-marketplace/+state';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
+import { SpinnerButtonDirective } from '../../../../directives/spinner-button.directive';
+import { TextMaskDirective } from '../../../../directives/text-mask.directive';
 
 type PluginContext = 'local' | 'cdn' | 'npm';
 
@@ -29,16 +31,17 @@ interface NpmModel {
 	styleUrls: ['./add-plugin.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
-		NbCardModule,
-		NbButtonModule,
-		DesktopDirectiveModule,
-		NbIconModule,
-		FormsModule,
-		NbInputModule,
-		NbToggleModule,
-		AsyncPipe,
-		TranslatePipe
-	]
+    NbCardModule,
+    NbButtonModule,
+    SpinnerButtonDirective,
+    TextMaskDirective,
+    NbIconModule,
+    FormsModule,
+    NbInputModule,
+    NbToggleModule,
+    AsyncPipe,
+    TranslatePipe
+]
 })
 export class AddPluginComponent {
 	private readonly dialogRef = inject(NbDialogRef<AddPluginComponent>);

@@ -10,10 +10,13 @@ import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../../services';
 import { DialogCreateVersionComponent } from '../dialog-create-version/dialog-create-version.component';
-import { DesktopDirectiveModule } from '../../../../../../directives/desktop-directive.module';
-import { NoDataMessageModule } from '../../../../../../time-tracker/no-data-message/no-data-message.module';
+
+
 import { AsyncPipe, TitleCasePipe, DatePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
+import { SpinnerButtonDirective } from '../../../../../../directives/spinner-button.directive';
+import { ReadMoreDirective } from '../../../../../../directives/read-more.directive';
+import { NoDataMessageComponent } from '../../../../../../time-tracker/no-data-message/no-data-message.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,7 +24,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     templateUrl: './version-history.component.html',
     styleUrls: ['./version-history.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, NbIconModule, NbButtonModule, NbListModule, NbBadgeModule, DesktopDirectiveModule, NbTooltipModule, NoDataMessageModule, AsyncPipe, TitleCasePipe, DatePipe, TranslatePipe]
+    imports: [NbCardModule, NbIconModule, NbButtonModule, NbListModule, NbBadgeModule, SpinnerButtonDirective, ReadMoreDirective, NbTooltipModule, NoDataMessageComponent, AsyncPipe, TitleCasePipe, DatePipe, TranslatePipe]
 })
 export class VersionHistoryComponent implements OnInit, OnDestroy {
 	private skip = 1;

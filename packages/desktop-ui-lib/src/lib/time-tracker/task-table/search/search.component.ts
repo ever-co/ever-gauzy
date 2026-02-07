@@ -5,6 +5,9 @@ import { debounceTime, filter, fromEvent, map, Observable } from 'rxjs';
 import { TimeTrackerQuery } from '../../+state/time-tracker.query';
 import { SearchTermQuery } from './+state/search-term.query';
 import { SearchTermStore } from './+state/search-term.store';
+import { NbFormFieldModule, NbIconModule, NbInputModule } from '@nebular/theme';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -12,7 +15,7 @@ import { SearchTermStore } from './+state/search-term.store';
     templateUrl: './search.component.html',
     styleUrls: ['./search.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbFormFieldModule, NbIconModule, NbInputModule, AsyncPipe, TranslatePipe]
 })
 export class SearchComponent implements AfterViewInit {
 	@ViewChild('search') search!: ElementRef;

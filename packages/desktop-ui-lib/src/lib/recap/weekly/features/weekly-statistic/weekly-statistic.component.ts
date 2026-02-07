@@ -1,13 +1,17 @@
+import { AsyncPipe, PercentPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { NbCardModule } from '@nebular/theme';
+import { TranslatePipe } from '@ngx-translate/core';
 import { map } from 'rxjs';
 import { WeeklyRecapService } from '../../+state/weekly.service';
+import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
 
 @Component({
-    selector: 'ngx-weekly-statistic',
-    templateUrl: './weekly-statistic.component.html',
-    styleUrls: ['./weekly-statistic.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+	selector: 'ngx-weekly-statistic',
+	templateUrl: './weekly-statistic.component.html',
+	styleUrls: ['./weekly-statistic.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NbCardModule, AsyncPipe, PercentPipe, TranslatePipe, PipeModule]
 })
 export class WeeklyStatisticComponent {
 	constructor(private readonly weeklyRecapService: WeeklyRecapService) {}

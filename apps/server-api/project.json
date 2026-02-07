@@ -48,9 +48,9 @@
 					"node_modules/socicon/css/socicon.css",
 					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 					"node_modules/leaflet/dist/leaflet.css",
-					"apps/server-api/src/styles.css",
+					"node_modules/@ng-select/ng-select/themes/default.theme.css",
 					"apps/server-api/src/assets/styles/styles.scss",
-					"node_modules/@ng-select/ng-select/themes/default.theme.css"
+					"packages/ui-core/static/styles/styles.scss"
 				],
 				"scripts": [],
 				"allowedCommonJsDependencies": [

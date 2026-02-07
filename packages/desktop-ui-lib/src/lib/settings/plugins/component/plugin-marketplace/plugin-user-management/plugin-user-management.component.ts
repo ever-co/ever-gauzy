@@ -9,8 +9,9 @@ import { PluginUserAssignment } from '../+state/stores/plugin-user-assignment.st
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../services';
 import { InfiniteScrollDirective } from '../../../../../directives/infinite-scroll.directive';
-import { DesktopDirectiveModule } from '../../../../../directives/desktop-directive.module';
+
 import { AsyncPipe, DatePipe } from '@angular/common';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 
 export interface PluginUserManagementDialogData {
 	plugin: IPlugin;
@@ -42,7 +43,7 @@ export interface PluginUserManagementDialogData {
     templateUrl: './plugin-user-management.component.html',
     styleUrls: ['./plugin-user-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, NbIconModule, NbBadgeModule, NbTabsetModule, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, NbUserModule, NbButtonModule, NbSpinnerModule, InfiniteScrollDirective, DesktopDirectiveModule, NbTooltipModule, AsyncPipe, DatePipe]
+    imports: [NbCardModule, NbIconModule, NbBadgeModule, NbTabsetModule, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, NbUserModule, NbButtonModule, NbSpinnerModule, InfiniteScrollDirective, SpinnerButtonDirective, NbTooltipModule, AsyncPipe, DatePipe]
 })
 export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	public plugin: IPlugin;

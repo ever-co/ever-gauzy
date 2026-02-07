@@ -6,8 +6,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChanged, map, tap } from 'rxjs';
 import { PluginVersionActions } from '../../+state/actions/plugin-version.action';
 import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
-import { SelectModule } from '../../../../../../shared/components/ui/select/select.module';
+
 import { AsyncPipe } from '@angular/common';
+import { SelectComponent } from '../../../../../../shared/components/ui/select/select.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -15,7 +16,7 @@ import { AsyncPipe } from '@angular/common';
     templateUrl: './version-selector.component.html',
     styleUrls: ['./version-selector.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [SelectModule, AsyncPipe]
+    imports: [SelectComponent, AsyncPipe]
 })
 export class VersionSelectorComponent implements OnInit, OnChanges {
 	@ViewChild(NbSelectComponent) select: NbSelectComponent;
