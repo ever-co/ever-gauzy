@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, Injector } from '@angular/core';
 import {
 	IAuthResponse,
 	IUser,
@@ -20,12 +20,21 @@ import { ElectronService } from '../../electron/services';
 
 @Injectable()
 export class AuthService {
+	private _http: HttpClient;
+
 	constructor(
-		private http: HttpClient,
+		private readonly injector: Injector,
 		private readonly electronService: ElectronService,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any
 	) {}
+
+	private get http(): HttpClient {
+		if (!this._http) {
+			this._http = this.injector.get(HttpClient);
+		}
+		return this._http;
+	}
 
 	isAuthenticated(): Promise<boolean> {
 		return firstValueFrom(this.http.get<boolean>(`${API_PREFIX}/auth/authenticated`));

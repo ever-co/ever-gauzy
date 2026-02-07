@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ModuleWithProviders, NgModule, provideAppInitializer, inject } from '@angular/core';
+import { ModuleWithProviders, NgModule, APP_INITIALIZER } from '@angular/core';
 import { NbSelectModule } from '@nebular/theme';
 import { I18nModule } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,10 +26,14 @@ export class LanguageModule {
 				Store,
 				LanguageSelectorService,
 				LanguageElectronService,
-				provideAppInitializer(() => {
-					const initializerFn = LanguageInitializerFactory(inject(TranslateService), inject(ElectronService));
-					return initializerFn();
-				})
+				{
+					provide: APP_INITIALIZER,
+					useFactory: (translateService: TranslateService, electronService: ElectronService) => {
+						return LanguageInitializerFactory(translateService, electronService);
+					},
+					deps: [TranslateService, ElectronService],
+					multi: true
+				}
 			]
 		};
 	}

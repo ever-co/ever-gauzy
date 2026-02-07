@@ -1,16 +1,24 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 @Injectable({
 	providedIn: 'root',
 })
 export class ErrorMapping {
+	private _translateService: TranslateService;
+
 	constructor(
-		private readonly _translateService: TranslateService
-	) {}
+		private readonly injector: Injector
+	) { }
 	public mapErrorMessage(error: HttpErrorResponse): string {
+		if (!this._translateService) {
+			this._translateService = this.injector.get(TranslateService);
+		}
+
 		if (error.error instanceof ErrorEvent) {
-			return this._translateService.instant('TIMER_TRACKER.TOASTR.NETWORK_ERROR', { message: error.error.message });
+			return this._translateService.instant('TIMER_TRACKER.TOASTR.NETWORK_ERROR', {
+				message: error.error.message
+			});
 		}
 
 		switch (error.status) {
@@ -33,10 +41,12 @@ export class ErrorMapping {
 			case 503:
 				return this._translateService.instant('TIMER_TRACKER.TOASTR.SERVICE_UNAVAILABLE');
 			default:
-				return this.extractMessage(error, this._translateService.instant('TIMER_TRACKER.TOASTR.UNEXPECTED_ERROR'));
+				return this.extractMessage(
+					error,
+					this._translateService.instant('TIMER_TRACKER.TOASTR.UNEXPECTED_ERROR')
+				);
 		}
 	}
-
 
 	private extractMessage(error: HttpErrorResponse, fallback: string): string {
 		if (error.error?.message) return error.error.message;

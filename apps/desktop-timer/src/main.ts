@@ -191,11 +191,12 @@ bootstrapApplication(AppComponent, {
 			useClass: ErrorHandlerService
 		},
 		provideAppInitializer(() => {
+			const injector = inject(Injector);
 			const initializerFn = serverConnectionFactory(
-				inject(ServerConnectionService),
-				inject(Store),
-				inject(Router),
-				inject(Injector)
+				injector.get(ServerConnectionService),
+				injector.get(Store),
+				injector.get(Router),
+				injector
 			);
 			return initializerFn();
 		}),

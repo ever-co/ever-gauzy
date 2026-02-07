@@ -1,5 +1,5 @@
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpStatusCode } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { concatMap, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -10,13 +10,15 @@ import { ErrorMapping, Store } from '../services';
 
 @Injectable()
 export class UnauthorizedInterceptor implements HttpInterceptor {
+	private authStrategy: AuthStrategy;
+
 	constructor(
-		private authStrategy: AuthStrategy,
+		private injector: Injector,
 		private electronService: ElectronService,
 		private router: Router,
 		private store: Store,
 		private _errorMapping: ErrorMapping
-	) { }
+	) {}
 
 	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 		return next.handle(request).pipe(
@@ -39,6 +41,11 @@ export class UnauthorizedInterceptor implements HttpInterceptor {
 					// Only force logout if it's an auth endpoint failure or no refresh token
 					// The RefreshTokenInterceptor will handle other 401s
 					if (isAuthEndpoint || !hasRefreshToken) {
+						// Lazy-load AuthStrategy to avoid circular dependency
+						if (!this.authStrategy) {
+							this.authStrategy = this.injector.get(AuthStrategy);
+						}
+
 						// Log out the user
 						this.authStrategy.logout();
 						// logout from desktop

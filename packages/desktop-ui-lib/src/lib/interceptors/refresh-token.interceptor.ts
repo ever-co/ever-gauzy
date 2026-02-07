@@ -6,7 +6,7 @@ import {
 	HttpRequest,
 	HttpStatusCode
 } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { NbAuthResult } from '@nebular/auth';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, finalize, switchMap, take } from 'rxjs/operators';
@@ -16,18 +16,20 @@ import { Store, ErrorMapping } from '../services';
 
 /**
  * Interceptor that handles automatic token refresh when receiving 401 Unauthorized responses.
+ * Uses lazy injection of AuthStrategy to avoid circular dependency issues.
  * */
 
 @Injectable()
 export class RefreshTokenInterceptor implements HttpInterceptor {
 	private isRefreshing = false;
 	private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
+	private authStrategy: AuthStrategy;
 
 	constructor(
-		private readonly authStrategy: AuthStrategy,
+		private readonly injector: Injector,
 		private readonly store: Store,
 		private _errorMapping: ErrorMapping
-	) { }
+	) {}
 
 	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 		return next.handle(request).pipe(
@@ -62,6 +64,11 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
 			if (!refreshToken) {
 				this.isRefreshing = false;
 				return throwError(() => new Error('No refresh token available'));
+			}
+
+			// Lazy-load AuthStrategy to avoid circular dependency
+			if (!this.authStrategy) {
+				this.authStrategy = this.injector.get(AuthStrategy);
 			}
 
 			return this.authStrategy.refreshToken().pipe(
