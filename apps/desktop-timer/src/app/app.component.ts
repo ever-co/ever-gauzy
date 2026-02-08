@@ -41,7 +41,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	ngOnInit(): void {
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
-		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
+		if (nebularLinkMedia) this._renderer?.setAttribute(nebularLinkMedia, 'media', 'all');
 
 		this.electronService.ipcRenderer.send('app_is_init');
 		// Start token refresh timer if we have a token and refresh token

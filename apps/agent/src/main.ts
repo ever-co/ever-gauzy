@@ -6,7 +6,6 @@ import { Router } from '@angular/router';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 import {
 	APIInterceptor,
-	AboutModule,
 	AgentDashboardModule,
 	AlwaysOnModule,
 	AuthGuard,
@@ -18,7 +17,6 @@ import {
 	ErrorHandlerService,
 	GAUZY_ENV,
 	HttpLoaderFactory,
-	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
@@ -31,9 +29,6 @@ import {
 	ServerDashboardModule,
 	ServerDownModule,
 	ServerErrorInterceptor,
-	SettingsModule,
-	SetupModule,
-	SplashScreenModule,
 	Store,
 	TenantInterceptor,
 	TimeoutInterceptor,
@@ -107,12 +102,8 @@ bootstrapApplication(AppComponent, {
 			NbSidebarModule.forRoot(),
 			NgxDesktopThemeModule,
 			NgxLoginModule,
-			SetupModule,
-			SettingsModule,
 			ServerDashboardModule,
-			ImageViewerModule,
 			NgSelectModule,
-			SplashScreenModule,
 			ServerDownModule,
 			TranslateModule.forRoot({
 				extend: true,
@@ -124,7 +115,6 @@ bootstrapApplication(AppComponent, {
 			}),
 			LanguageModule.forRoot(),
 			NbDatepickerModule.forRoot(),
-			AboutModule,
 			AgentDashboardModule,
 			AlwaysOnModule
 		),

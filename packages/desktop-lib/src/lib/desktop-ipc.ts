@@ -1,4 +1,4 @@
-import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
+import { BrowserWindow, app, desktopCapturer, ipcMain, ipcRenderer, screen, systemPreferences } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
@@ -426,7 +426,7 @@ export function ipcTimer(
 		log.info('Offline mode triggered...');
 		const windows = [alwaysOn, timeTrackerWindow];
 		for (const window of windows) {
-			windowManager.webContents(window).send('offline-handler', true);
+			windowManager.webContents(window)?.send?.('offline-handler', true);
 		}
 	});
 
@@ -435,7 +435,7 @@ export function ipcTimer(
 		try {
 			const windows = [alwaysOn, timeTrackerWindow];
 			for (const window of windows) {
-				windowManager.webContents(window).send('offline-handler', false);
+				windowManager.webContents(window)?.send?.('offline-handler', false);
 			}
 			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
@@ -483,13 +483,14 @@ export function ipcTimer(
 
 			// Start Timer
 			const timerResponse = await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg?.timeLog);
-
-			settingWindow.webContents.send('setting_page_ipc', {
-				type: 'app_setting_update',
-				data: {
-					setting: LocalStore.getStore('appSetting')
-				}
-			});
+			if (appWindowManager?._settingWindow) {
+				appWindowManager._settingWindow.webContents?.send?.('setting_page_ipc', {
+					type: 'app_setting_update',
+					data: {
+						setting: LocalStore.getStore('appSetting')
+					}
+				});
+			}
 
 			if (setting && setting.preventDisplaySleep) {
 				log.info('Prevent Display Sleep');
@@ -741,7 +742,7 @@ export function ipcTimer(
 
 			console.log('Timer Stopped ...');
 
-			settingWindow.webContents.send('setting_page_ipc', {
+			settingWindow?.webContents?.send?.('setting_page_ipc', {
 				type: 'app_setting_update',
 				data: {
 					setting: LocalStore.getStore('appSetting')
@@ -835,8 +836,10 @@ export function ipcTimer(
 	ipcMain.on('show_image', async (event, arg) => {
 		const imageViewWindow = await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
 		imageViewWindow?.show();
-		imageViewWindow?.webContents?.send?.('show_image', arg);
-		imageViewWindow?.webContents?.send?.('refresh_menu');
+		ipcMain.once('image_view_ready', () => {
+			imageViewWindow?.webContents?.send?.('show_image', arg);
+			imageViewWindow?.webContents?.send?.('refresh_menu');
+		});
 	});
 
 	ipcMain.on('close_image_view', async () => {
@@ -863,22 +866,23 @@ export function ipcTimer(
 		const addSetting = LocalStore.getStore('additionalSetting');
 
 		if (!settingWindow) {
-			settingWindow = await createSettingsWindow(settingWindow, windowPath.timeTrackerUi, windowPath.preloadPath);
+			settingWindow = await appWindowManager.initSettingWindow(windowPath.timeTrackerUi, windowPath.preloadPath);
 		}
 
 		settingWindow.show();
+		ipcMain.once('settine_window_ready', () => {
+			settingWindow.webContents.send('app_setting', {
+				...LocalStore.beforeRequestParams(),
+				setting: appSetting,
+				config: config,
+				auth,
+				additionalSetting: addSetting
+			});
 
-		settingWindow.webContents.send('app_setting', {
-			...LocalStore.beforeRequestParams(),
-			setting: appSetting,
-			config: config,
-			auth,
-			additionalSetting: addSetting
-		});
-
-		settingWindow.webContents.send('setting_page_ipc', {
-			type: 'goto_top_menu'
-		});
+			settingWindow.webContents.send('setting_page_ipc', {
+				type: 'goto_top_menu'
+			});
+		})
 	});
 
 	ipcMain.on('switch_aw_option', (event, arg) => {
@@ -905,8 +909,8 @@ export function ipcTimer(
 
 			LocalStore.updateAuthSetting({ isLogout: true });
 
-			if (settingWindow) {
-				settingWindow.webContents.send('setting_page_ipc', {
+			if (appWindowManager?._settingWindow) {
+				appWindowManager._settingWindow.webContents?.send?.('setting_page_ipc', {
 					type: 'logout_success'
 				});
 			}
@@ -1121,12 +1125,12 @@ export function ipcTimer(
 	ipcMain.on('change_state_from_ao', async (event, arg) => {
 		const windows = [alwaysOn, timeTrackerWindow];
 		for (const window of windows) {
-			windowManager.webContents(window).send('change_state_from_ao', arg);
+			windowManager.webContents(window)?.send?.('change_state_from_ao', arg);
 		}
 	});
 
 	ipcMain.on('ao_time_update', (event, arg) => {
-		windowManager.webContents(alwaysOn).send('ao_time_update', arg);
+		windowManager.webContents(alwaysOn)?.send?.('ao_time_update', arg);
 	});
 
 	ipcMain.handle('MARK_AS_STOPPED_OFFLINE', async () => {

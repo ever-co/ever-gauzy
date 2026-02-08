@@ -6,7 +6,6 @@ import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromD
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
 import {
-	AboutModule,
 	ActivityWatchInterceptor,
 	AlwaysOnModule,
 	APIInterceptor,
@@ -18,7 +17,6 @@ import {
 	ErrorHandlerService,
 	GAUZY_ENV,
 	HttpLoaderFactory,
-	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
@@ -29,12 +27,9 @@ import {
 	RecapModule,
 	RefreshTokenInterceptor,
 	ServerErrorInterceptor,
-	SettingsModule,
-	SetupModule,
 	Store,
 	TenantInterceptor,
 	TimeoutInterceptor,
-	TimeTrackerModule,
 	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
@@ -97,10 +92,6 @@ bootstrapApplication(AppComponent, {
 			AppRoutingModule,
 			NbThemeModule,
 			NgxDesktopThemeModule,
-			SetupModule,
-			TimeTrackerModule,
-			SettingsModule,
-			ImageViewerModule,
 			TranslateModule.forRoot({
 				extend: true,
 				loader: {
@@ -111,7 +102,6 @@ bootstrapApplication(AppComponent, {
 			}),
 			NbDatepickerModule.forRoot(),
 			LanguageModule.forRoot(),
-			AboutModule,
 			AlwaysOnModule,
 			RecapModule,
 			PluginsModule

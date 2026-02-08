@@ -1,11 +1,12 @@
 import { RegisteredWindow, WindowManager, logger } from '@gauzy/desktop-core';
 import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
-import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
+import { BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerService } from './offline';
 import { PluginManager } from './plugin-system/data-access/plugin-manager';
 import { PluginEventManager } from './plugin-system/events/plugin-event.manager';
 import { TranslateService } from './translation';
+import { AppWindowManager } from './app-window-manager';
 
 export class AppMenu {
 	public menu: MenuItemConstructorOptions[] = [];
@@ -59,11 +60,14 @@ export class AppMenu {
 					label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 					async click() {
 						if (!settingsWindow) {
-							settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+							const appWindowManager = AppWindowManager.getInstance();
+							settingsWindow = await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+							settingsWindow.show();
+							ipcMain.once('setting_window_ready', () => {
+								settingsWindow.webContents.send('goto_update');
+								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+							});
 						}
-						settingsWindow.show();
-						settingsWindow.webContents.send('goto_update');
-						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 					}
 				},
 				{
@@ -84,7 +88,14 @@ export class AppMenu {
 					enabled: true,
 					async click() {
 						if (!settingsWindow) {
-							settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+							// settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+							const appWindowManager = AppWindowManager.getInstance();
+							settingsWindow = await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+							settingsWindow.show();
+							ipcMain.once('setting_window_ready', () => {
+								settingsWindow.webContents.send('goto_update');
+								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+							});
 						}
 						settingsWindow.webContents.toggleDevTools();
 					}
@@ -141,16 +152,16 @@ export class AppMenu {
 					enabled: true,
 					async click() {
 						if (!settingsWindow) {
-							settingsWindow = await createSettingsWindow(
-								settingsWindow,
-								windowPath.timeTrackerUi,
-								windowPath.preloadPath
-							);
+							// settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+							const appWindowManager = AppWindowManager.getInstance();
+							settingsWindow = await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+							settingsWindow.show();
+							ipcMain.once('setting_window_ready', () => {
+								settingsWindow.webContents.send('goto_update');
+								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+								settingsWindow.webContents.send('refresh_menu');
+							});
 						}
-						settingsWindow.show();
-						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-						settingsWindow.webContents.send(timeTrackerWindow ? 'goto_top_menu' : 'goto_update');
-						settingsWindow.webContents.send('refresh_menu');
 					}
 				},
 				{

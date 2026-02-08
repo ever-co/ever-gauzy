@@ -3,22 +3,29 @@ import { BrowserWindow } from 'electron';
 import {
 	createAboutWindow,
 	createSetupWindow,
-	createImageViewerWindow
+	createImageViewerWindow,
+	createSettingsWindow
 } from '@gauzy/desktop-window';
 
 enum WindowName {
 	ABOUT = 'about',
 	SETUP = 'setup',
-	IMAGE_VIEW = 'imageView'
+	IMAGE_VIEW = 'imageView',
+	SETTING = 'setting'
 }
 
 export class AppWindowManager {
 	aboutWindow: BrowserWindow | null = null;
 	setupWindow: BrowserWindow | null = null;
 	imageView: BrowserWindow | null = null;
+	settingWindow: BrowserWindow | null = null;
 
 	private static instance: AppWindowManager;
 	constructor() {};
+
+	get _settingWindow(): BrowserWindow {
+		return this.settingWindow;
+	}
 
 	static getInstance(): AppWindowManager {
 		if (!AppWindowManager.instance) {
@@ -53,6 +60,15 @@ export class AppWindowManager {
 		return this.imageView;
 	}
 
+	async initSettingWindow(filePath: string, preloadPath?: string): Promise<BrowserWindow> {
+		if (this.settingWindow) {
+			return this.settingWindow;
+		}
+		this.settingWindow = await createSettingsWindow(this.settingWindow, filePath, preloadPath);
+		this.eventCloseWindow(this.settingWindow, WindowName.SETTING);
+		return this.settingWindow;
+	}
+
 	eventCloseWindow(window: BrowserWindow, windowName: WindowName) {
 		window.once('close', () => {
 			window.destroy();
@@ -70,6 +86,9 @@ export class AppWindowManager {
 				break;
 			 case WindowName.IMAGE_VIEW:
 				this.imageView = null;
+				break;
+			 case WindowName.SETTING:
+				this.settingWindow = null;
 				break;
 			default:
 				break;

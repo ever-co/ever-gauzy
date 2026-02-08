@@ -90,21 +90,14 @@ akitaConfig({
 bootstrapApplication(AppComponent, {
 	providers: [
 		importProvidersFrom(
-			NbLayoutModule,
-			AuthModule,
+			BrowserModule,
+			AppRoutingModule,
+			NgxDesktopThemeModule, // Required for custom Gauzy themes and theme initializer
 			NbDialogModule.forRoot(),
 			NbToastrModule.forRoot(),
 			NbSidebarModule.forRoot(), // Provides NbSidebarService
 			NbMenuModule.forRoot(), // Provides NbMenuService
-			NbCardModule,
-			NbButtonModule,
-			BrowserModule,
-			AppRoutingModule,
-			NbThemeModule,
-			NgxDesktopThemeModule,
-			NgxLoginModule,
-			NgSelectModule,
-			NbEvaIconsModule, // Eva icons module for Nebular
+			NbEvaIconsModule, // Required for eva icon pack
 			TranslateModule.forRoot({
 				extend: true,
 				loader: {

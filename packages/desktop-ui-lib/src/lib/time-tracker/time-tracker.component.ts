@@ -1486,6 +1486,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			});
 		});
+		this.electronService.ipcRenderer.send('setting_window_ready');
 	}
 
 	/*

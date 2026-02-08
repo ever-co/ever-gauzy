@@ -406,7 +406,6 @@ app.on('ready', async () => {
 			pathWindow.timeTrackerUi,
 			pathWindow.preloadPath
 		);
-		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
@@ -427,8 +426,8 @@ app.on('ready', async () => {
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
-
-	updater.settingWindow = settingsWindow;
+	initializeAppManager()
+	updater.settingWindow = appWindowManager?._settingWindow;
 	updater.gauzyWindow = gauzyWindow;
 	try {
 		await updater.checkUpdate();
@@ -608,7 +607,7 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 	if (arg) {
 		if (!setting) LocalStore.setDefaultApplicationSetting();
 		TranslateService.preferredLanguage = arg;
-		settingsWindow?.webContents?.send('preferred_language_change', arg);
+		settingsWindow?.webContents?.send?.('preferred_language_change', arg);
 	}
 	return TranslateService.preferredLanguage;
 });
