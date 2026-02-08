@@ -244,8 +244,6 @@ export class AppModule {
 	 */
 	constructor(readonly _i18nService: I18nService) {
 		console.log(`Angular Version: ${VERSION.full}`);
-		console.log(`Angular Minor Version: ${VERSION.minor}`);
-		console.log(`Angular Patch Version: ${VERSION.patch}`);
 
 		// Initialize UI languages and Update Locale
 		this.initializeUiLanguagesAndLocale();

@@ -1,16 +1,21 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, EventEmitter, Input } from '@angular/core';
-import { ITaskRender } from '../task-render.component';
+import { TaskStatusEnum } from '@gauzy/contracts';
+import { NbIconModule } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TaskStatusEnum } from '@gauzy/contracts';
+import { DurationFormatPipe } from '../../pipes/duration-format.pipe';
+import { ITaskRender } from '../task-render.component';
+import { TaskEstimateInputComponent } from './task-estimate-input/task-estimate-input.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-task-estimate',
-    templateUrl: './task-estimate.component.html',
-    styleUrls: ['./task-estimate.component.scss'],
-    standalone: false
+	selector: 'gauzy-task-estimate',
+	templateUrl: './task-estimate.component.html',
+	styleUrls: ['./task-estimate.component.scss'],
+	imports: [NbIconModule, TaskEstimateInputComponent, AsyncPipe, TranslatePipe, DurationFormatPipe]
 })
 export class TaskEstimateComponent {
 	public isEdit = false;
@@ -31,9 +36,7 @@ export class TaskEstimateComponent {
 
 	public get isEditDisabled$(): Observable<boolean> {
 		return this.task$.pipe(
-			map(
-				(task: ITaskRender) => task?.status === TaskStatusEnum.COMPLETED
-			),
+			map((task: ITaskRender) => task?.status === TaskStatusEnum.COMPLETED),
 			untilDestroyed(this)
 		);
 	}

@@ -18,8 +18,10 @@ import { PluginToggleQuery } from '../+state/queries/plugin-toggle.query';
 import { Store } from '../../../../../services';
 import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
-import { DesktopDirectiveModule } from '../../../../../directives/desktop-directive.module';
+
 import { AsyncPipe, DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe } from '@angular/common';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
+import { ReadMoreDirective } from '../../../../../directives/read-more.directive';
 
 @UntilDestroy()
 @Component({
@@ -27,7 +29,7 @@ import { AsyncPipe, DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe } from '@
     templateUrl: './plugin-marketplace-detail.component.html',
     styleUrls: ['./plugin-marketplace-detail.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbBadgeModule, NbTooltipModule, NbIconModule, DesktopDirectiveModule, NbButtonModule, NbContextMenuModule, NbToggleModule, AsyncPipe, DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe, TranslatePipe]
+    imports: [NbBadgeModule, NbTooltipModule, NbIconModule, SpinnerButtonDirective, ReadMoreDirective, NbButtonModule, NbContextMenuModule, NbToggleModule, AsyncPipe, DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe, TranslatePipe]
 })
 export class PluginMarketplaceDetailComponent implements OnInit {
 	@Input()

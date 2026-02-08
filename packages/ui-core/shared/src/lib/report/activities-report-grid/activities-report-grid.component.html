@@ -57,6 +57,56 @@
 	</ng-template>
 </div>
 
+<!-- Reusable template for activity row details (title, duration, progress bar) -->
+<ng-template #activityRowDetailsEl let-activityRow>
+	<div class="responsive-table-row title-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.TITLE' | translate }}</div>
+		<div class="responsive-table-content project-name">
+			{{ activityRow?.title }}
+		</div>
+	</div>
+	<div class="responsive-table-row duration-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
+		<div class="responsive-table-content day-col">
+			{{ activityRow?.duration | durationFormat }}
+		</div>
+	</div>
+	<div class="responsive-table-row progress-bar-column">
+		<div class="responsive-table-content day-col">
+			<ngx-progress-status
+				[defaultStatus]="'success'"
+				class="report-progress"
+				[percentage]="activityRow?.duration_percentage"
+			>
+			</ngx-progress-status>
+		</div>
+	</div>
+</ng-template>
+
+<!-- Reusable template for project column -->
+<ng-template #projectColumnEl let-projectRow let-activityIndex="activityIndex">
+	<div class="responsive-table-row project-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
+		<div class="responsive-table-content project-name">
+			@if (activityIndex === 0) {
+			<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"></ng-container>
+			}
+		</div>
+	</div>
+</ng-template>
+
+<!-- Reusable template for employee column (used in groupByProject) -->
+<ng-template #employeeColumnEl let-employeeRow let-activityIndex="activityIndex">
+	<div class="responsive-table-row employee-column">
+		<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
+		<div class="responsive-table-content project-name">
+			@if (activityIndex === 0) {
+			<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"></ng-container>
+			}
+		</div>
+	</div>
+</ng-template>
+
 <ng-template let-day #groupByDateCardEl>
 	<nb-card-header class="card-title">
 		{{ day.date | dateFormat }}
@@ -82,39 +132,15 @@
 						<ng-template #noColumnDate>
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
-						<div class="responsive-table-row project-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
-							<div class="responsive-table-content project-name">
-								<ng-template [ngIf]="activityIndex == 0">
-									<ng-container
-										*ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"
-									>
-									</ng-container>
-								</ng-template>
-							</div>
-						</div>
-						<div class="responsive-table-row title-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.TITLE' | translate }}</div>
-							<div class="responsive-table-content project-name">
-								{{ activityRow?.title }}
-							</div>
-						</div>
-						<div class="responsive-table-row duration-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
-							<div class="responsive-table-content day-col">
-								{{ activityRow.duration | durationFormat }}
-							</div>
-						</div>
-						<div class="responsive-table-row progress-bar-column">
-							<div class="responsive-table-content day-col">
-								<ngx-progress-status
-									[defaultStatus]="'success'"
-									class="report-progress"
-									[percentage]="activityRow.duration_percentage"
-								>
-								</ngx-progress-status>
-							</div>
-						</div>
+						<ng-container
+							*ngTemplateOutlet="
+								projectColumnEl;
+								context: { $implicit: projectRow, activityIndex: activityIndex }
+							"
+						></ng-container>
+						<ng-container
+							*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
+						></ng-container>
 					</div>
 				</div>
 			</div>
@@ -144,39 +170,15 @@
 						<ng-template #noColumnEmployee>
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
-						<div class="responsive-table-row project-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
-							<div class="responsive-table-content project-name">
-								<ng-template [ngIf]="activityIndex == 0">
-									<ng-container
-										*ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"
-									>
-									</ng-container>
-								</ng-template>
-							</div>
-						</div>
-						<div class="responsive-table-row title-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.TITLE' | translate }}</div>
-							<div class="responsive-table-content project-name">
-								{{ activityRow?.title }}
-							</div>
-						</div>
-						<div class="responsive-table-row duration-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
-							<div class="responsive-table-content day-col">
-								{{ activityRow.duration | durationFormat }}
-							</div>
-						</div>
-						<div class="responsive-table-row progress-bar-column">
-							<div class="responsive-table-content day-col">
-								<ngx-progress-status
-									[defaultStatus]="'success'"
-									class="report-progress"
-									[percentage]="activityRow.duration_percentage"
-								>
-								</ngx-progress-status>
-							</div>
-						</div>
+						<ng-container
+							*ngTemplateOutlet="
+								projectColumnEl;
+								context: { $implicit: projectRow, activityIndex: activityIndex }
+							"
+						></ng-container>
+						<ng-container
+							*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
+						></ng-container>
 					</div>
 				</div>
 			</div>
@@ -206,39 +208,15 @@
 						<ng-template #noColumnProject>
 							<div class="responsive-table-row employee-column no-height"></div>
 						</ng-template>
-						<div class="responsive-table-row employee-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
-							<div class="responsive-table-content project-name">
-								<ng-template [ngIf]="activityIndex == 0">
-									<ng-container
-										*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"
-									>
-									</ng-container>
-								</ng-template>
-							</div>
-						</div>
-						<div class="responsive-table-row title-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.TITLE' | translate }}</div>
-							<div class="responsive-table-content project-name">
-								{{ activityRow?.title }}
-							</div>
-						</div>
-						<div class="responsive-table-row duration-column">
-							<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
-							<div class="responsive-table-content day-col">
-								{{ activityRow.duration | durationFormat }}
-							</div>
-						</div>
-						<div class="responsive-table-row progress-bar-column">
-							<div class="responsive-table-content day-col">
-								<ngx-progress-status
-									[defaultStatus]="'success'"
-									class="report-progress"
-									[percentage]="activityRow.duration_percentage"
-								>
-								</ngx-progress-status>
-							</div>
-						</div>
+						<ng-container
+							*ngTemplateOutlet="
+								employeeColumnEl;
+								context: { $implicit: employeeRow, activityIndex: activityIndex }
+							"
+						></ng-container>
+						<ng-container
+							*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
+						></ng-container>
 					</div>
 				</div>
 			</div>
@@ -269,8 +247,7 @@
 			[name]="employee?.user?.name"
 			[id]="employee?.id"
 			[employee]="employee"
-		>
-		</ngx-avatar>
+		></ngx-avatar>
 	</div>
 	<ng-template #noEmployee>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>

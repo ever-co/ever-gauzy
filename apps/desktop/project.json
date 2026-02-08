@@ -25,7 +25,7 @@
 				"tsConfig": "apps/desktop/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": ["apps/desktop-timer/src/assets/styles", "packages/ui-core/static/styles"]
+					"includePaths": ["apps/desktop/src/assets/styles", "packages/ui-core/static/styles"]
 				},
 				"assets": ["apps/desktop/src/favicon.ico", "apps/desktop/src/assets"],
 				"styles": [
@@ -40,7 +40,6 @@
 					"node_modules/leaflet/dist/leaflet.css",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css",
 					"apps/desktop/src/assets/styles/styles.scss",
-					"apps/desktop/src/styles.css",
 					"packages/ui-core/static/styles/styles.scss"
 				],
 				"scripts": [],

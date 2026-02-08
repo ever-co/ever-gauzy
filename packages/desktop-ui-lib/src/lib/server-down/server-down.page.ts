@@ -6,12 +6,14 @@ import { catchError, distinctUntilChanged, filter, switchMap, takeUntil, tap } f
 import { GAUZY_ENV } from '../constants';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { ServerConnectionService, Store } from '../services';
+import { NbLayoutModule } from '@nebular/theme';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     styleUrls: ['./server-down.page.scss'],
     templateUrl: 'server-down.page.html',
-    standalone: false
+    imports: [NbLayoutModule, TranslatePipe]
 })
 export class ServerDownPage implements OnInit, OnDestroy {
 	public noInternetLogo: string;

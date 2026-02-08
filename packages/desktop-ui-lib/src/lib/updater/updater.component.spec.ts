@@ -8,8 +8,8 @@ describe('UpdaterComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [UpdaterComponent]
-		}).compileComponents();
+    imports: [UpdaterComponent]
+}).compileComponents();
 	});
 
 	beforeEach(() => {

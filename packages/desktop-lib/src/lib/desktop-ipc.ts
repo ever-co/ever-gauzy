@@ -1,7 +1,7 @@
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
-import { IActivityWatchEventResult } from '@gauzy/contracts';
+import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
 import { RegisteredWindow, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
 import { TrackingSleepInactivity } from './contexts';
@@ -921,6 +921,22 @@ export function ipcTimer(
 		}
 	});
 
+	ipcMain.handle('UPDATE_SYNC_STATE', async (_, arg: {
+		actionType: TimerActionTypeEnum,
+		data: {
+			state: TimerSyncStateEnum,
+			duration: number,
+			timerId: number
+		}
+	}) => {
+		try {
+			await timerHandler.updateTimerSyncState(arg.actionType, arg.data);
+		} catch (error) {
+			console.error(`ERROR_UPDATE_SYNC_STATE: ${error}`);
+		}
+		return;
+	});
+
 	function resizeWindow(window: BrowserWindow, isExpanded: boolean): void {
 		const display = screen.getPrimaryDisplay();
 		const { height, width } = display.workAreaSize;
@@ -1216,7 +1232,8 @@ export function removeTimerHandlers() {
 		'MARK_AS_STOPPED_OFFLINE',
 		'CURRENT_TIMER',
 		'LAST_SYNCED_INTERVAL',
-		'UPDATE_SELECTOR'
+		'UPDATE_SELECTOR',
+		'UPDATE_SYNC_STATE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

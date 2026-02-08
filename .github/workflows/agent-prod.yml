@@ -81,6 +81,10 @@ jobs:
           AGENT_APP_DESCRIPTION: 'Gauzy Agent'
           AGENT_APP_ID: 'com.ever.gauzyagent'
 
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
       - name: Build Agent
         run: 'yarn build:agent:linux:release:gh:x64'
         env:
@@ -96,7 +100,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: true
+          NX_NO_CLOUD: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
 
   release-linux-arm64:
@@ -174,6 +178,10 @@ jobs:
           AGENT_APP_DESCRIPTION: 'Gauzy Agent'
           AGENT_APP_ID: 'com.ever.gauzyagent'
 
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
       - name: Build Agent
         run: 'yarn build:agent:linux:release:gh:arm64'
         env:
@@ -190,7 +198,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: true
+          NX_NO_CLOUD: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
           SNAPCRAFT_BUILD_ENVIRONMENT: host
 
@@ -259,6 +267,10 @@ jobs:
           echo "${{ secrets.APPLE_API_KEY_BASE64 }}" | base64 --decode > /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           chmod 600 /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
 
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
       - name: Build Agent
         run: 'yarn build:agent:mac:release'
         env:
@@ -274,7 +286,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: true
+          NX_NO_CLOUD: false
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_APP_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -347,14 +359,6 @@ jobs:
           "npm_config_python=$py" | Out-File -FilePath $env:GITHUB_ENV -Append
           "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Show tool versions
-        shell: powershell
-        run: |
-          node -v
-          npm -v
-          python --version
-          python -c "import sys; print(sys.executable)"
-
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
@@ -389,6 +393,10 @@ jobs:
           if ($nodePath -ne $yarnPath) { echo $nodePath >> $env:GITHUB_PATH }
           Write-Host "Added to GITHUB_PATH: $localBin, $npmGlobalBin, $yarnPath, $nodePath"
 
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
       - name: Build Agent
         shell: powershell
         run: |
@@ -415,7 +423,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: true
+          NX_NO_CLOUD: false
 
   release-windows-arm64:
     runs-on: ${{ matrix.os }}
@@ -481,14 +489,6 @@ jobs:
           "npm_config_python=$py" | Out-File -FilePath $env:GITHUB_ENV -Append
           "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Show tool versions
-        shell: powershell
-        run: |
-          node -v
-          npm -v
-          python --version
-          python -c "import sys; print(sys.executable)"
-
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
@@ -510,48 +510,43 @@ jobs:
           AGENT_APP_DESCRIPTION: 'Gauzy Agent'
           AGENT_APP_ID: 'com.ever.gauzyagent'
 
-      - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
-        shell: powershell
-        run: |
-          $yarnPath = (Get-Command yarn).Source | Split-Path -Parent
-          $nodePath = (Get-Command node).Source | Split-Path -Parent
-          $npmGlobalBin = npm config get prefix
-          $localBin = Join-Path $PWD "node_modules\.bin"
-          echo $localBin >> $env:GITHUB_PATH
-          echo $npmGlobalBin >> $env:GITHUB_PATH
-          echo $yarnPath >> $env:GITHUB_PATH
-          if ($nodePath -ne $yarnPath) { echo $nodePath >> $env:GITHUB_PATH }
-          Write-Host "Added to GITHUB_PATH: $localBin, $npmGlobalBin, $yarnPath, $nodePath"
-
-      - name: Build Agent
+      - name: Fix Node.js PATH for child processes
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-
-          # Get paths
-          $nodePath = (Get-Command node -ErrorAction Stop).Source | Split-Path -Parent
+          $nodeExe = (Get-Command node -ErrorAction Stop).Source
+          $nodePath = Split-Path $nodeExe -Parent
+          $npmGlobalBin = & npm config get prefix
+          $localBin = Join-Path $PWD "node_modules\.bin"
           $yarnCmd = Get-Command yarn -ErrorAction SilentlyContinue
           $yarnPath = if ($yarnCmd) { Split-Path $yarnCmd.Source -Parent } else { "" }
-          $localBin = Join-Path $PWD "node_modules\.bin"
 
-          # IMMEDIATE: Set PATH for current step and child processes (fixes NX spawn)
-          $env:PATH = "$nodePath;$yarnPath;$localBin;$env:PATH"
+          $npmNodeExe = Join-Path $npmGlobalBin "node.exe"
+          if (-not (Test-Path $npmNodeExe)) { Copy-Item $nodeExe $npmNodeExe -Force }
 
-          Write-Host "=== Command locations (PowerShell) ==="
-          Write-Host "Node: $((Get-Command node).Source)"
-          Write-Host "Yarn: $($yarnCmd.Source)"
-          Write-Host "ts-node: $((Get-Command ts-node -ErrorAction SilentlyContinue).Source)"
-          Write-Host "cross-env: $((Get-Command cross-env -ErrorAction SilentlyContinue).Source)"
-          Write-Host "nx: $((Get-Command nx -ErrorAction SilentlyContinue).Source)"
-          Write-Host ""
+          $localNodeExe = Join-Path $localBin "node.exe"
+          if (-not (Test-Path $localNodeExe)) { Copy-Item $nodeExe $localNodeExe -Force }
 
-          Write-Host "=== cmd.exe visibility check ==="
-          cmd /c "where node"
-          cmd /c "node -p process.arch"
-          Write-Host ""
+          $newPath = "$nodePath;$npmGlobalBin;$localBin;$yarnPath;$($env:PATH)"
+          "PATH=$newPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-          Write-Host "=== Starting build ==="
-          yarn build:agent:windows:release:gh:arm64
+          @($nodePath, $npmGlobalBin, $localBin, $yarnPath) | Where-Object { $_ } | ForEach-Object {
+            $_ | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          }
+
+          "NODE=$nodeExe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "NODE_PATH=$nodePath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          $env:PATH = $newPath
+          [System.Environment]::SetEnvironmentVariable("PATH", $newPath, "Process")
+
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
+      - name: Build Agent
+        shell: cmd
+        run: yarn build:agent:windows:release:gh:arm64
         env:
           USE_HARD_LINKS: false
           ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
@@ -566,4 +561,4 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: true
+          NX_NO_CLOUD: false

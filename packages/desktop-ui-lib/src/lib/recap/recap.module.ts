@@ -16,9 +16,9 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { LanguageModule } from '../language/language.module';
 import { ToastrNotificationService } from '../services';
-import { NoDataMessageModule } from '../time-tracker/no-data-message/no-data-message.module';
+
+import { TranslateModule } from '@ngx-translate/core';
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { AutoRefreshQuery } from './+state/auto-refresh/auto-refresh.query';
 import { AutoRefreshService } from './+state/auto-refresh/auto-refresh.service';
@@ -28,52 +28,12 @@ import { RecapService } from './+state/recap.service';
 import { RecapStore } from './+state/recap.store';
 import { RequestQuery } from './+state/request/request.query';
 import { RequestStore } from './+state/request/request.store';
-import { ActivitiesComponent } from './features/activities/activities.component';
-import { FilterComponent } from './features/filter/filter.component';
-import { ProjectsComponent } from './features/projects/projects.component';
-import { RecapComponent } from './features/recap/recap.component';
-import { TasksComponent } from './features/tasks/tasks.component';
-import { TimeTrackingChartsComponent } from './features/time-tracking-charts/time-tracking-charts.component';
-import { MonthlyCalendarComponent } from './monthly/features/monthly-calendar/monthly-calendar.component';
-import { MonthlyProgressComponent } from './monthly/features/monthly-progress/monthly-progress.component';
-import { MonthlyRecapComponent } from './monthly/features/monthly-recap/monthly-recap.component';
-import { MonthlyStatisticComponent } from './monthly/features/monthly-statistic/monthly-statistic.component';
+import { recapRoutes } from './recap-routing.module';
 import { ActivityService, TimesheetService, TimesheetStatisticsService } from './services/timesheet';
-import { ActivityReportComponent } from './shared/features/activity-report/activity-report.component';
 import { DateRangePickerModule } from './shared/features/date-range-picker/date-range-picker.module';
 import { GauzyFiltersModule } from './shared/features/gauzy-filters';
-import { SegmentedControlComponent } from './shared/features/segmented-control/segmented-control.component';
-import { AutoRefreshComponent } from './shared/ui/auto-refresh/auto-refresh.component';
-import { ProgressStatusModule } from './shared/ui/progress-status/progress-status.module';
-import { ProjectColumnViewModule } from './shared/ui/project-column-view/project-column-view.module';
-import { StatisticComponent } from './shared/ui/statistic/statistic.component';
-import { WeeklyCalendarComponent } from './weekly/features/weekly-calendar/weekly-calendar.component';
-import { WeeklyProgressComponent } from './weekly/features/weekly-progress/weekly-progress.component';
-import { WeeklyRecapComponent } from './weekly/features/weekly-recap/weekly-recap.component';
-import { WeeklyStatisticComponent } from './weekly/features/weekly-statistic/weekly-statistic.component';
-import { recapRoutes } from './recap-routing.module';
 
 @NgModule({
-	declarations: [
-		RecapComponent,
-		ProjectsComponent,
-		TasksComponent,
-		ActivitiesComponent,
-		TimeTrackingChartsComponent,
-		FilterComponent,
-		StatisticComponent,
-		AutoRefreshComponent,
-		ActivityReportComponent,
-		SegmentedControlComponent,
-		WeeklyRecapComponent,
-		WeeklyCalendarComponent,
-		WeeklyProgressComponent,
-		WeeklyStatisticComponent,
-		MonthlyRecapComponent,
-		MonthlyCalendarComponent,
-		MonthlyProgressComponent,
-		MonthlyStatisticComponent
-	],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -82,7 +42,6 @@ import { recapRoutes } from './recap-routing.module';
 		NbProgressBarModule,
 		NbIconModule,
 		NbButtonModule,
-		NoDataMessageModule,
 		NbPopoverModule,
 		NbTableModule,
 		NgxChartsModule,
@@ -92,10 +51,8 @@ import { recapRoutes } from './recap-routing.module';
 		GauzyFiltersModule,
 		NbBadgeModule,
 		NbToggleModule,
-		ProjectColumnViewModule,
-		ProgressStatusModule,
 		NbSpinnerModule,
-		LanguageModule.forChild(),
+		TranslateModule.forChild(),
 		RouterModule.forChild(recapRoutes)
 	],
 	providers: [
@@ -111,7 +68,6 @@ import { recapRoutes } from './recap-routing.module';
 		AutoRefreshStore,
 		RequestQuery,
 		RequestStore
-	],
-	exports: [RecapComponent, WeeklyRecapComponent, MonthlyRecapComponent]
+	]
 })
 export class RecapModule {}

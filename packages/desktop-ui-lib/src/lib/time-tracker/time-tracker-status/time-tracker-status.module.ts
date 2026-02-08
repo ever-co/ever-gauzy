@@ -7,15 +7,15 @@ import { TimeTrackerStatusService } from './time-tracker-status.service';
 import { TimeTrackerStatusComponent } from './time-tracker-status.component';
 
 @NgModule({
-	declarations: [TimeTrackerStatusComponent],
-	imports: [
-		CommonModule,
-		FontAwesomeModule,
-		TranslateModule,
-		NbTooltipModule,
-		TranslateModule,
-	],
-	exports: [TimeTrackerStatusComponent],
-	providers: [TimeTrackerStatusService],
+    imports: [
+        CommonModule,
+        FontAwesomeModule,
+        TranslateModule,
+        NbTooltipModule,
+        TranslateModule,
+        TimeTrackerStatusComponent,
+    ],
+    exports: [TimeTrackerStatusComponent],
+    providers: [TimeTrackerStatusService],
 })
 export class TimeTrackerStatusModule {}

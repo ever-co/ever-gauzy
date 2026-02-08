@@ -10,20 +10,22 @@ import { TaskSelectorService } from '../task-selector/+state/task-selector.servi
 import { TeamSelectorQuery } from './+state/team-selector.query';
 import { TeamSelectorService } from './+state/team-selector.service';
 import { TeamSelectorStore } from './+state/team-selector.store';
+import { SelectComponent } from '../../components/ui/select/select.component';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
-	selector: 'gauzy-team-selector',
-	templateUrl: './team-selector.component.html',
-	styleUrls: ['./team-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TeamSelectorComponent),
-			multi: true
-		}
-	],
-	standalone: false
+    selector: 'gauzy-team-selector',
+    templateUrl: './team-selector.component.html',
+    styleUrls: ['./team-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TeamSelectorComponent),
+            multi: true
+        }
+    ],
+    imports: [SelectComponent, AsyncPipe]
 })
 export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizationTeam> implements OnInit, OnDestroy {
 	constructor(

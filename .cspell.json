@@ -832,7 +832,8 @@
 		"reencoded",
 		"retryable",
 		"Retryable",
-		"pendings"
+		"pendings",
+		"SICO"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

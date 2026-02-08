@@ -4,7 +4,9 @@ import { ElectronService } from '../electron/services';
 import { SafeUrl } from '@angular/platform-browser';
 import { ImageViewerService } from './image-viewer.service';
 import { from } from 'rxjs';
-import { NbIconLibraries } from '@nebular/theme';
+import { NbIconLibraries, NbLayoutModule, NbButtonModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
+import { NgTemplateOutlet, NgClass, AsyncPipe } from '@angular/common';
+import { DateTimePipe } from '../time-tracker/pipes/date-time.pipe';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -19,11 +21,11 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 ]);
 
 @Component({
-	selector: 'ngx-image-viewer',
-	templateUrl: './image-viewer.component.html',
-	styleUrls: ['./image-viewer.component.scss'],
-	animations: [fadeInOutAnimation],
-	standalone: false
+    selector: 'ngx-image-viewer',
+    templateUrl: './image-viewer.component.html',
+    styleUrls: ['./image-viewer.component.scss'],
+    animations: [fadeInOutAnimation],
+    imports: [NbLayoutModule, NbButtonModule, NbIconModule, NbSpinnerModule, NgTemplateOutlet, NgClass, AsyncPipe, DateTimePipe]
 })
 export class ImageViewerComponent implements OnInit {
 	active_index: number;
