@@ -37,28 +37,26 @@
 			draggable="true"
 		>
 			@if (!(start$ | async)) {
-			<button
-				nbButton
-				status="success"
-				class="button-ghost"
-				(click)="run()"
-				[disabled]="loading || !isTrackingEnabled"
+			<span
+				[nbTooltip]="'TIMER_TRACKER.TIME_TRACKER_DISABLED' | translate"
+				[nbTooltipIcon]="{
+					icon: 'alert-triangle-outline',
+					pack: 'eva'
+				}"
+				nbTooltipStatus="warning"
+				[nbTooltipDisabled]="isTrackingEnabled"
+				nbTooltipPlacement="bottom"
 			>
-				<nb-icon
-					class="start-button"
-					icon="play"
-					pack="font-awesome"
-					[nbTooltip]="'TIMER_TRACKER.TIME_TRACKER_DISABLED' | translate"
-					[nbTooltipIcon]="{
-						icon: 'alert-triangle-outline',
-						pack: 'eva'
-					}"
-					nbTooltipStatus="warning"
-					[nbTooltipDisabled]="isTrackingEnabled"
-					nbTooltipPlacement="bottom"
+				<button
+					nbButton
+					status="success"
+					class="button-ghost"
+					(click)="run()"
+					[disabled]="loading || !isTrackingEnabled"
 				>
-				</nb-icon>
-			</button>
+					<nb-icon class="start-button" icon="play" pack="font-awesome"> </nb-icon>
+				</button>
+			</span>
 			} @if (start$ | async) {
 			<button nbButton status="danger" (click)="run()" [disabled]="loading" class="button-ghost">
 				<nb-icon class="start-button" icon="pause" pack="font-awesome"> </nb-icon>

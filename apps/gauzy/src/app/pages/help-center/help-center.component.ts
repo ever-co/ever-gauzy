@@ -16,10 +16,10 @@ import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-help-center',
-    templateUrl: './help-center.component.html',
-    styleUrls: ['./help-center.component.scss'],
-    standalone: false
+	selector: 'ga-help-center',
+	templateUrl: './help-center.component.html',
+	styleUrls: ['./help-center.component.scss'],
+	standalone: false
 })
 export class HelpCenterComponent extends TranslationBaseComponent implements OnDestroy, OnInit {
 	constructor(
@@ -35,8 +35,8 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		super(translateService);
 	}
 
-	public showData: boolean[] = [];
-	public dataArray: SafeHtml[] = [];
+	public expandedArticles: Set<string> = new Set();
+	public articleContent: Map<string, SafeHtml> = new Map();
 	public employees: IEmployee[] = [];
 	public articleList: IHelpCenterArticle[] = [];
 	public isResetSelect = false;
@@ -49,7 +49,6 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 	loading: boolean;
 	organization: IOrganization;
 	selectedItem = {
-		index: null,
 		isSelected: false,
 		article: null
 	};
@@ -87,8 +86,12 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		this.loadArticles(this.categoryId);
 	}
 
-	openArticle(i) {
-		this.showData[i] = !this.showData[i];
+	openArticle(article: IHelpCenterArticle) {
+		if (this.expandedArticles.has(article.id)) {
+			this.expandedArticles.delete(article.id);
+		} else {
+			this.expandedArticles.add(article.id);
+		}
 	}
 
 	deletedNode() {
@@ -99,14 +102,18 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 
 	async loadArticles(id) {
 		this.loading = true;
-		this.showData = [];
-		this.dataArray = [];
+		this.expandedArticles.clear();
+		this.articleContent.clear();
 		const result = await this.helpCenterArticleService.findByCategoryId(id);
 		if (result) {
 			this.articleList = result;
 			for (let i = 0; i < this.articleList.length; i++) {
-				this.showData.push(false);
-				this.dataArray.push(this.sanitizer.bypassSecurityTrustHtml(this.articleList[i].data));
+				if (this.articleList[i].data) {
+					this.articleContent.set(
+						this.articleList[i].id,
+						this.sanitizer.bypassSecurityTrustHtml(this.articleList[i].data)
+					);
+				}
 			}
 		}
 		this.filteredArticles = this.articleList;
@@ -196,10 +203,10 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		}
 	}
 
-	async deleteNode(i: number) {
+	async deleteNode(article: IHelpCenterArticle) {
 		const dialog = this.dialogService.open(DeleteArticleComponent, {
 			context: {
-				article: this.articleList[i]
+				article: article
 			}
 		});
 		const data = await firstValueFrom(dialog.onClose);
@@ -211,11 +218,11 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		}
 	}
 
-	async editNode(i: number) {
+	async editNode(article: IHelpCenterArticle) {
 		const chosenType = 'edit';
 		const dialog = this.dialogService.open(AddArticleComponent, {
 			context: {
-				article: this.articleList[i],
+				article: article,
 				editType: chosenType,
 				length: this.articleList.length,
 				id: this.categoryId
@@ -230,27 +237,21 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		}
 	}
 
-	selectItem(index: number, article: IHelpCenterArticle) {
-		this.selectedItem = this.isSelected(index, article)
+	selectItem(article: IHelpCenterArticle) {
+		this.selectedItem = this.isSelected(article)
 			? {
-					index: null,
 					isSelected: !this.selectedItem.isSelected,
 					article: null
 			  }
 			: {
-					index: index,
 					isSelected: true,
 					article: article
 			  };
 		this.isDisable = !this.selectedItem.isSelected;
 	}
 
-	isSelected(index: number, article: IHelpCenterArticle) {
-		return (
-			this.selectedItem.isSelected &&
-			this.selectedItem.index === index &&
-			article.id === this.selectedItem.article.id
-		);
+	isSelected(article: IHelpCenterArticle) {
+		return this.selectedItem.isSelected && this.selectedItem.article && article.id === this.selectedItem.article.id;
 	}
 
 	ngOnDestroy() {}
