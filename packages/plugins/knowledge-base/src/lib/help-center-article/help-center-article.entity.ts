@@ -1,6 +1,6 @@
 import { JoinTable, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ID, IEmployee, IHelpCenter, IHelpCenterArticle, IHelpCenterArticleVersion, IHelpCenterAuthor, IOrganizationProject, ITag, JsonData } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
@@ -26,24 +26,34 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
 	@MultiORMColumn()
 	name: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
-	description: string;
+	description?: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
-	data: string;
+	data?: string;
 
-	@ApiProperty({ type: () => Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ default: false })
-	draft: boolean;
+	draft?: boolean;
 
-	@ApiProperty({ type: () => Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ default: false })
-	privacy: boolean;
+	privacy?: boolean;
 
 	@ApiProperty({ type: () => Number })
 	@MultiORMColumn()
@@ -99,8 +109,8 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	|--------------------------------------------------------------------------
 	*/
 
-	/** 
-	 * Category (HelpCenter) 
+	/**
+	 * Category (HelpCenter)
 	*/
 	@MultiORMManyToOne(() => HelpCenter, (center) => center.articles, {
 		onDelete: 'CASCADE'
@@ -108,14 +118,15 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	category?: IHelpCenter;
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
 	@RelationId((it: HelpCenterArticle) => it.category)
-	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	categoryId: string;
+	categoryId: ID;
 
-	/** 
-	 * Parent-child hierarchy (self-referencing) 
+	/**
+	 * Parent-child hierarchy (self-referencing)
 	*/
 	@MultiORMManyToOne(() => HelpCenterArticle, (article) => article.children, {
 		nullable: true,
@@ -131,8 +142,8 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: ID;
 
-	/** 
-	 * Owner (Employee) 
+	/**
+	 * Owner (Employee)
 	*/
 	@MultiORMManyToOne(() => Employee, {
 		nullable: true,
@@ -148,8 +159,8 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	@MultiORMColumn({ nullable: true, relationId: true })
 	ownedById?: ID;
 
-	/** 
-	 * Project relation 
+	/**
+	 * Project relation
 	*/
 	@MultiORMManyToOne(() => OrganizationProject, {
 		nullable: true,
@@ -170,22 +181,22 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-	/** 
-	 * Children articles 
+	/**
+	 * Children articles
 	*/
 	@MultiORMOneToMany(() => HelpCenterArticle, (article) => article.parent)
 	children?: IHelpCenterArticle[];
 
-	/** 
-	 * Authors 
+	/**
+	 * Authors
 	*/
 	@MultiORMOneToMany(() => HelpCenterAuthor, (author) => author.article, {
 		cascade: true
 	})
 	authors?: IHelpCenterAuthor[];
 
-	/** 
-	 * Versions 
+	/**
+	 * Versions
 	*/
 	@MultiORMOneToMany(() => HelpCenterArticleVersion, (version) => version.article, {
 		cascade: true
@@ -198,8 +209,8 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	|--------------------------------------------------------------------------
 	*/
 
-	/** 
-	 * Tags 
+	/**
+	 * Tags
 	*/
 	@MultiORMManyToMany(() => Tag, {
 		/**  Database cascade action on update. */
@@ -216,6 +227,8 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({ name: 'tag_help_center_article' })
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
 	tags?: ITag[];
 }
-

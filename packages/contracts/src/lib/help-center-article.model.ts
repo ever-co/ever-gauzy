@@ -7,12 +7,12 @@ export interface IHelpCenterArticle
 	extends IBasePerTenantAndOrganizationEntityModel {
 	// Existing fields (For original articles)
 	name: string;
-	description: string;
-	data: string;
+	description?: string;
+	data?: string;
 	index: number;
-	draft: boolean;
-	privacy: boolean;
-	categoryId: string;
+	draft?: boolean;
+	privacy?: boolean;
+	categoryId: ID;
 	employees?: IEmployee[];
 	authors?: IHelpCenterAuthor[];
 
