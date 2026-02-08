@@ -14,9 +14,6 @@
 		<nb-stepper #stepper disableStepNavigation>
 			<!-- Step 1 Contact Main Form -->
 			<nb-step [stepControl]="contMainForm" [label]="'CONTACTS_PAGE.MAIN' | translate">
-				<ng-template #mainStep>
-					{{ 'CONTACTS_PAGE.MAIN' | translate }}
-				</ng-template>
 				<div class="custom-card">
 					<form
 						[formGroup]="contMainForm"
@@ -61,7 +58,7 @@
 									(mouseenter)="hoverState = true"
 									(mouseleave)="hoverState = false"
 								/>
-								} @if (!contMainForm || !contMainForm.get('imageUrl').value) {
+								} @else {
 								<div class="image">
 									<span><i class="fas fa-image"></i>Add or Drop Image</span>
 								</div>
@@ -235,7 +232,6 @@
 
 			<!-- Step 2 Address Form -->
 			<nb-step [stepControl]="locationForm" [label]="'CONTACTS_PAGE.ADDRESS' | translate">
-				<ng-template #addressStep>{{ 'CONTACTS_PAGE.ADDRESS' | translate }}</ng-template>
 				@if (locationForm) {
 				<form
 					class="step-container custom-card"
@@ -274,7 +270,7 @@
 								</div>
 							</div>
 							<div class="col-7">
-								@if (stepper._selectedIndex === 1) {
+								@if (stepper.selectedIndex === 1) {
 								<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)"> </ga-leaflet-map>
 								}
 							</div>
@@ -320,7 +316,7 @@
 								[placeholder]="'FORM.PLACEHOLDERS.HOURS' | translate"
 							/>
 						</div>
-						} @if (budgetType === organizationContactBudgetTypeEnum.COST) {
+						} @else if (budgetType === organizationContactBudgetTypeEnum.COST) {
 						<div class="form-group col-3">
 							<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.COST' | translate"></label>
 							<input
@@ -359,7 +355,6 @@
 
 			<!-- Step 4 Members Form -->
 			<nb-step [label]="'CONTACTS_PAGE.MEMBERS' | translate">
-				<ng-template #membersStep>{{ 'CONTACTS_PAGE.MEMBERS' | translate }}</ng-template>
 				<div class="fields custom-card">
 					<div class="row">
 						<div class="col-6">
@@ -375,7 +370,7 @@
 						@if (selectedMembers) {
 						<div class="col-6">
 							<div class="team-card">
-								@for (member of selectedMembers; track member) {
+								@for (member of selectedMembers; track member.id) {
 								<div class="name-container">
 									<ngx-avatar
 										class="report-table"

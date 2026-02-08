@@ -25,12 +25,12 @@
 					@if (helper === '') {
 					<p
 						class="mt-3 position-absolute"
-						innerHtml="{{ 'GOALS_PAGE.HELPER_TEXT.KPI_GENERAL' | translate }}"
+						[innerHTML]="'GOALS_PAGE.HELPER_TEXT.KPI_GENERAL' | translate"
 					></p>
-					} @if (helper === 'kpi-title') {
+					} @else if (helper === 'kpi-title') {
 					<div
 						class="mt-3 position-absolute"
-						innerHtml="{{ 'GOALS_PAGE.HELPER_TEXT.KPI_NAME' | translate }}"
+						[innerHTML]="'GOALS_PAGE.HELPER_TEXT.KPI_NAME' | translate"
 					></div>
 					}
 				</div>
@@ -78,7 +78,7 @@
 								{{ 'GOALS_PAGE.FORM.LABELS.KPI_METRIC' | translate }}
 							</label>
 							<nb-select id="kpi-type" fullWidth formControlName="type">
-								@for ( type of kpiMetricEnum | keyvalue ; track type) {
+								@for ( type of kpiMetricEnum | keyvalue ; track type.key) {
 								<nb-option [value]="type.value">{{
 									'GOALS_PAGE.KPI_METRIC.' + type.key | translate
 								}}</nb-option>
@@ -153,7 +153,7 @@
 								{{ 'GOALS_PAGE.FORM.LABELS.KPI_SHOULD_BE' | translate }}
 							</label>
 							<nb-select fullWidth id="kpi-operator" formControlName="operator">
-								@for ( operator of kpiOperatorEnum | keyvalue ; track operator) {
+								@for ( operator of kpiOperatorEnum | keyvalue ; track operator.key) {
 								<nb-option [value]="operator.value"
 									>{{ 'GOALS_PAGE.KPI_OPERATOR.' + operator.key | translate }}
 								</nb-option>

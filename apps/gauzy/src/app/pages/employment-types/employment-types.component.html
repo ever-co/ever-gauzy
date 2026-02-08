@@ -34,14 +34,14 @@
 					</nb-card>
 					}
 				</div>
-				} @if (organizationEmploymentTypes?.length == 0) {
+				} @else if (organizationEmploymentTypes?.length === 0) {
 				<div class="no-data">
 					<ngx-no-data-message
 						[message]="'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NO_DATA_MESSAGE' | translate"
 					></ngx-no-data-message>
 				</div>
-				} @if ( dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && organizationEmploymentTypes?.length )
-				{
+				} @else if ( dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
+				organizationEmploymentTypes?.length ) {
 				<div class="grid">
 					<ga-card-grid
 						[totalItems]="pagination?.totalItems"

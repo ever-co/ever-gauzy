@@ -15,7 +15,7 @@
 			nbSpinnerStatus="primary"
 			class="h-100"
 		>
-			@if (timeSlots?.length > 0) { @for (hourSlot of timeSlots; track hourSlot; let i = $index) {
+			@if (timeSlots?.length > 0) { @for (hourSlot of timeSlots; track i; let i = $index) {
 			<div class="row hour-slot-group">
 				<div class="col p-0">
 					<div class="mb-4">
@@ -25,7 +25,7 @@
 						</h6>
 					</div>
 					<div class="row grid-container">
-						@for (timeSlot of hourSlot.timeSlots; track timeSlot) {
+						@for (timeSlot of hourSlot.timeSlots; track timeSlot.id) {
 						<div>
 							<ngx-screenshots-item
 								[timeFormat]="filters?.timeFormat"
@@ -52,7 +52,7 @@
 		<div class="selected-items-action">
 			<div class="card p-4 w-100">
 				<div class="row align-items-center">
-					<div class="col">{{ this.selectedIdsCount }} Screen selected</div>
+					<div class="col">{{ selectedIdsCount }} {{ 'SCREEN_SELECTED' | translate }}</div>
 					<div class="col-auto">
 						<button
 							class="ml-auto mr-2 select-hidden"
@@ -61,7 +61,7 @@
 							size="small"
 							(click)="toggleAllSelect()"
 						>
-							{{ this.allSelected ? 'Unselect All' : 'Select All' }}
+							{{ (allSelected ? 'UNSELECT_ALL' : 'SELECT_ALL') | translate }}
 						</button>
 						<button
 							class="ml-auto select-hidden"

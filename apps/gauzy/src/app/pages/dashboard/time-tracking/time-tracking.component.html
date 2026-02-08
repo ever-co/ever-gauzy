@@ -276,7 +276,7 @@
 				</div>
 				}
 			</div>
-			} } @else { @if (!timeSlotLoading) {
+			} } @else if (!timeSlotLoading) {
 			<div class="text-center">
 				@switch (selectedPeriod) { @case (RangePeriod.DAY) {
 				{{ 'TIMESHEET.NO_SCREENSHOT_DAY' | translate }}
@@ -286,7 +286,7 @@
 				{{ 'TIMESHEET.NO_SCREENSHOT_PERIOD' | translate }}
 				} }
 			</div>
-			} }
+			}
 		</nb-card-body>
 	</nb-card>
 </ng-template>
@@ -350,7 +350,7 @@
 				}
 			</nb-list>
 		</nb-card-body>
-		} @else { @if (!manualTimeLoading) {
+		} @else if (!manualTimeLoading) {
 		<div class="text-center p-3">
 			@switch (selectedPeriod) { @case (RangePeriod.DAY) {
 			{{ 'TIMESHEET.NO_MANUAL_TIME_DAY' | translate }}
@@ -360,7 +360,7 @@
 			{{ 'TIMESHEET.NO_MANUAL_TIME_PERIOD' | translate }}
 			} }
 		</div>
-		} }
+		}
 	</nb-card>
 </ng-template>
 <ng-template #window>
@@ -405,7 +405,7 @@
 				}
 			</nb-list>
 		</nb-card-body>
-		} @else { @if (!tasksLoading) {
+		} @else if (!tasksLoading) {
 		<div class="text-center p-3">
 			@switch (selectedPeriod) { @case (RangePeriod.DAY) {
 			{{ 'TIMESHEET.NO_TASK_ACTIVITY_DAY' | translate }}
@@ -415,7 +415,7 @@
 			{{ 'TIMESHEET.NO_TASK_ACTIVITY_PERIOD' | translate }}
 			} }
 		</div>
-		} }
+		}
 	</nb-card>
 </ng-template>
 <ng-template #window>
@@ -453,7 +453,7 @@
 				}
 			</nb-list>
 		</nb-card-body>
-		} @else { @if (!projectsLoading) {
+		} @else if (!projectsLoading) {
 		<div class="text-center p-3">
 			@switch (selectedPeriod) { @case (RangePeriod.DAY) {
 			{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_DAY' | translate }}
@@ -463,7 +463,7 @@
 			{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD' | translate }}
 			} }
 		</div>
-		} }
+		}
 	</nb-card>
 </ng-template>
 <ng-template #window>
@@ -490,7 +490,7 @@
 				}
 			</nb-list>
 		</nb-card-body>
-		} @else { @if (!activitiesLoading) {
+		} @else if (!activitiesLoading) {
 		<div class="text-center p-3">
 			@switch (selectedPeriod) { @case (RangePeriod.DAY) {
 			{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate }}
@@ -500,7 +500,7 @@
 			{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD' | translate }}
 			} }
 		</div>
-		} }
+		}
 	</nb-card>
 </ng-template>
 <ng-template #window>
@@ -592,7 +592,7 @@
 					}
 				</nb-list>
 			</div>
-			} @else { @if (!memberLoading) {
+			} @else if (!memberLoading) {
 			<div class="text-center">
 				@switch (selectedPeriod) { @case (RangePeriod.DAY) {
 				{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
@@ -602,7 +602,7 @@
 				{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD' | translate }}
 				} }
 			</div>
-			} }
+			}
 		</nb-card-body>
 	</nb-card>
 </ng-template>

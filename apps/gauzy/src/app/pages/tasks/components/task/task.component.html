@@ -3,13 +3,13 @@
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
-					@switch (true) { @case (isTasksPage()) {
+					@if (isTasksPage()) {
 					{{ 'TASKS_PAGE.HEADER' | translate }}
-					} @case (isMyTasksPage()) {
+					} @else if (isMyTasksPage()) {
 					{{ 'TASKS_PAGE.MY_TASK_HEADER' | translate }}
-					} @case (isTeamTaskPage()) {
+					} @else if (isTeamTaskPage()) {
 					{{ 'TASKS_PAGE.TEAM_TASKS_HEADER' | translate }}
-					} }
+					}
 				</ngx-header-title>
 			</h4>
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">

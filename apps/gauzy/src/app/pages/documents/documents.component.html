@@ -19,7 +19,7 @@
 	<nb-card-body>
 		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE && documentList?.length) {
 		<div class="table-scroll-container">
-			@for (document of documentList; track document) {
+			@for (document of documentList; track document.id) {
 			<nb-card class="p-0">
 				<nb-card-body
 					class="custom-table"
@@ -39,13 +39,13 @@
 			</nb-card>
 			}
 		</div>
-		} @if (!documentList?.length) {
+		} @else if (!documentList?.length) {
 		<div class="no-data">
 			<ngx-no-data-message
 				[message]="'ORGANIZATIONS_PAGE.DOCUMENTS_NO_DATA_MESSAGE' | translate"
 			></ngx-no-data-message>
 		</div>
-		} @if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && documentList?.length) {
+		} @else if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && documentList?.length) {
 		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"

@@ -29,7 +29,7 @@
 			<div [style.opacity]="hoverState ? '0.2' : '0'"></div>
 			@if (form) {
 			<img
-				[src]="form.get('imageUrl').value"
+				[src]="form.get('imageUrl')?.value"
 				alt="Profile Photo"
 				(mouseenter)="hoverState = true"
 				(mouseleave)="hoverState = false"

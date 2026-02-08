@@ -20,7 +20,7 @@
 	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		@if (employeeLevels?.length && dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 		<div class="table-scroll-container">
-			@for (employee of employeeLevels; track employee) {
+			@for (employee of employeeLevels; track employee.id) {
 			<nb-card class="p-0">
 				<nb-card-body
 					class="custom-table"
@@ -32,7 +32,7 @@
 			</nb-card>
 			}
 		</div>
-		} @if (employeeLevels?.length && dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) {
+		} @else if (employeeLevels?.length && dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) {
 		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"
@@ -40,7 +40,7 @@
 			(onSelectedItem)="selectEmployee($event)"
 			(scroll)="onScroll()"
 		></ga-card-grid>
-		} @if (!loading && employeeLevels?.length == 0) {
+		} @else if (!loading && employeeLevels?.length == 0) {
 		<div class="no-data">
 			<ngx-no-data-message
 				[message]="'ORGANIZATIONS_PAGE.EMPLOYEE_LEVEL_NO_DATA_MESSAGE' | translate"

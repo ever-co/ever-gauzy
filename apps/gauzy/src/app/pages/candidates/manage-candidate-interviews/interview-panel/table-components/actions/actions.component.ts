@@ -33,9 +33,9 @@ import { TranslateService } from '@ngx-translate/core';
 					icon="message-square-outline"
 					class="icons enabled"
 				></nb-icon>
-				} @if (!isPastInterview(rowData)) {
+				} @else {
 				<nb-icon
-					(click)="addFeedback()"
+					(click)="!isPastInterview(rowData) && addFeedback()"
 					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK' | translate }} "
 					nbTooltipPlacement="top"
 					icon="message-square-outline"
@@ -152,6 +152,9 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 	}
 
 	removeInterview() {
+		if (this.isPastInterview(this.rowData)) {
+			return;
+		}
 		const params = {
 			type: 'remove',
 			data: this.rowData
@@ -160,6 +163,10 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 	}
 
 	archive() {
+		// Enabled if !rowData.isArchived
+		if (this.rowData.isArchived) {
+			return;
+		}
 		const params = {
 			type: 'archive',
 			data: this.rowData
@@ -176,6 +183,9 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 	}
 
 	editInterview() {
+		if (this.isPastInterview(this.rowData)) {
+			return;
+		}
 		const params = {
 			type: 'edit',
 			data: this.rowData

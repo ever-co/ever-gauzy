@@ -43,10 +43,11 @@
 											[selected]="selectedIntegrationTypeId$ | async"
 											(selectedChange)="setSelectedIntegrationType($event)"
 										>
-											@for (integrationGroup of integrationGroups; track integrationGroup) {
+											@for (integrationGroup of integrationGroups; track
+											integrationGroup.groupName) {
 											<nb-option-group [title]="integrationGroup.groupName">
 												@for (integrationType of integrationGroup.integrationTypes; track
-												integrationType) {
+												integrationType.id) {
 												<nb-option [value]="integrationType.id">
 													{{ integrationType.name }}
 												</nb-option>
@@ -64,7 +65,7 @@
 											[selected]="selectedIntegrationFilter$ | async"
 											(selectedChange)="setSelectedIntegrationFilter($event)"
 										>
-											@for (filter of filters; track filter) {
+											@for (filter of filters; track filter.value) {
 											<nb-option [value]="filter.value">
 												{{ filter.label }}
 											</nb-option>
@@ -86,7 +87,7 @@
 				<div class="grid-container">
 					@if (integrations$ | async; as integrations) {
 					<div class="integrations-list">
-						@for (integration of integrations; track integration) {
+						@for (integration of integrations; track integration.id) {
 						<a
 							class="list-item"
 							[class.disabled]="integration.isComingSoon"

@@ -72,7 +72,6 @@
 					(openInfo)="openHistoryDialog('INCOME')"
 				>
 					<!-- Expanded Accordion Income info block -->
-					@if (directIncomeBonus !== 0) {
 					<ga-info-block
 						listItem="true"
 						title="{{ 'INCOME_PAGE.INCOME' | translate }}"
@@ -87,9 +86,8 @@
 						(openInfo)="openHistoryDialog('NON_BONUS_INCOME')"
 					>
 					</ga-info-block>
-					}
+
 					<!-- Expanded Accordion Direct Income info block -->
-					@if (directIncomeBonus !== 0) {
 					<ga-info-block
 						listItem="true"
 						title="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME' | translate }}"
@@ -105,7 +103,6 @@
 						(openInfo)="openHistoryDialog('BONUS_INCOME')"
 					>
 					</ga-info-block>
-					}
 				</ga-info-block>
 				}
 				<!-- Total Income block with no income -->
@@ -298,7 +295,7 @@
 										  }
 							}}
 						</div>
-						} @if ( directIncomeBonus === 0 && bonusType === 'PROFIT_BASED_BONUS' ) {
+						} @else if ( bonusType === 'PROFIT_BASED_BONUS' ) {
 						<div>
 							<!-- Profit based bonus  -->
 							{{
@@ -329,7 +326,7 @@
       TODO: handle non-defaultCurrency case differently.
       currently same thing is rendered in both cases
       -->
-						@if (!defaultCurrency) {
+						} @else {
 						<div [class.negative-bonus-color]="bonus < 0">
 							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
 							:
@@ -356,9 +353,6 @@
 			<ga-employee-charts [employeeStatistics]="employeeStatistics"></ga-employee-charts>
 		</div>
 		}
-		<ng-template #noRole>
-			<span>{{ 'DASHBOARD_PAGE.INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS' | translate }}</span>
-		</ng-template>
 	</nb-card-body>
 </nb-card>
 }

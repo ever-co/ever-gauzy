@@ -14,11 +14,10 @@
 					<nb-option [value]="all">
 						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.ALL_FEEDBACKS' | translate }}
 					</nb-option>
-					@for (interview of interviewList; track interview) {
+					@for (interview of interviewList; track interview.id) {
 					<nb-option value="{{ interview.id }}">{{ interview.title }}</nb-option>
 					}
 				</nb-select>
-				} @if (dataLayoutStyle === 'CARDS_GRID') {
 				<ga-employee-multi-select
 					class="select mr-3"
 					[multiple]="false"
@@ -26,7 +25,6 @@
 					[reset]="isEmployeeReset"
 					[allEmployees]="employeeList"
 					(selectedChange)="onEmployeeSelected($event)"
-					[reset]="isResetSelect"
 				>
 				</ga-employee-multi-select>
 				}
@@ -39,7 +37,7 @@
 				[isDisable]="disableButton"
 			></ngx-gauzy-button-action>
 		</div>
-		} @if (showAddCard) {
+		} @else {
 		<div class="add-card">
 			<div class="feedbacks-card-wrap">
 				@if (form) {
@@ -56,8 +54,7 @@
 											[rate]="averageRating"
 											class="stars-output"
 										></ga-star-rating-output>
-										} @if ( technologiesList?.length === 0 && personalQualitiesList?.length === 0 )
-										{
+										} @else {
 										<ga-star-rating-input
 											formControlName="rating"
 											class="stars-optional"

@@ -18,7 +18,7 @@
 		<div class="team-selected">
 			@if (selectedTeam?.isSelected) {
 			<div class="team-card">
-				@for (team of todayTeamsWorkers; track fnTracker($index, team)) {
+				@for (team of todayTeamsWorkers; track team.id) {
 				<gauzy-team-card
 					(click)="select(team)"
 					[class.team-selected-card]="selectedTeam?.data.id === team?.id"
@@ -70,7 +70,7 @@
 					</nb-card>
 				</div>
 				<div class="team-list">
-					@for (member of members; track fnTracker($index, member)) {
+					@for (member of members; track member.id) {
 					<gauzy-team-member [member]="member"></gauzy-team-member>
 					}
 				</div>

@@ -25,9 +25,7 @@
 			</div>
 			@if (!isClassic) {
 			<div class="col-8">
-				@if (!member?.tasks?.length) {
-				<div class="col-6">&#8212;</div>
-				} @for (task of member?.tasks; track task) {
+				@for (task of member?.tasks; track task.id) {
 				<div class="row">
 					<div class="col-6">
 						{{ task.title ? task.title : ('REPORT_PAGE.NO_TASK' | translate) }}
@@ -54,6 +52,8 @@
 						</div>
 					</div>
 				</div>
+				} @empty {
+				<div class="col-6">&#8212;</div>
 				}
 			</div>
 			@if (member?.isWorkingToday) {

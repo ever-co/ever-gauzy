@@ -74,7 +74,7 @@
 			</div>
 			}
 		</div>
-		} @else if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) { @if (vendors?.length > 0) {
+		} @else if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && vendors?.length > 0) {
 		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"
@@ -88,7 +88,7 @@
 				[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
 			></ngx-no-data-message>
 		</div>
-		} }
+		}
 	</nb-card-body>
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
