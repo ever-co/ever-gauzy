@@ -3,10 +3,13 @@ import { SeederModule } from '@gauzy/core';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { HelpCenterAuthor, HelpCenterAuthorModule } from './help-center-author';
 import { HelpCenter, HelpCenterModule } from './help-center';
-import { HelpCenterArticle, HelpCenterArticleModule } from './help-center-article';
-import { HelpCenterArticleVersion } from './help-center-article/help-center-article-version.entity';
-import { HelpCenterArticleSubscriber } from './help-center-article/help-center-article.subscriber';
-import { HelpCenterArticleVersionSubscriber } from './help-center-article/help-center-article-version.subscriber';
+import {
+	HelpCenterArticle,
+	HelpCenterArticleModule,
+	HelpCenterArticleVersion,
+	HelpCenterArticleSubscriber,
+	HelpCenterArticleVersionSubscriber
+} from './help-center-article';
 import { HelpCenterSeederService } from './help-center-seeder.service';
 
 @Plugin({
