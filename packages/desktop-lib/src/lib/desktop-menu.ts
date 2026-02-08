@@ -209,7 +209,7 @@ export class AppMenu {
 
 		// Updater Window Menu
 		if (updaterWindow) {
-			updaterWindow.webContents.send('refresh_menu');
+			updaterWindow?.webContents?.send?.('refresh_menu');
 		}
 
 		// Plugin Event Manager Listener

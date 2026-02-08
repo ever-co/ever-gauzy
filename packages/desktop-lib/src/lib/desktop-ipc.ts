@@ -3,7 +3,7 @@ import * as moment from 'moment';
 import * as _ from 'underscore';
 import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
 import { RegisteredWindow, WindowManager, logger as log } from '@gauzy/desktop-core';
-import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
+import { ScreenCaptureNotification, loginPage, createImageViewerWindow } from '@gauzy/desktop-window';
 import { TrackingSleepInactivity } from './contexts';
 import {
 	DialogStopTimerLogoutConfirmation,
@@ -38,6 +38,7 @@ import {
 import { pluginListeners } from './plugin-system';
 import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
+import { AppWindowManager } from './app-window-manager';
 
 const timerHandler = new TimerHandler();
 const offlineMode = DesktopOfflineModeHandler.instance;
@@ -45,6 +46,7 @@ const userService = new UserService();
 const intervalService = new IntervalService();
 const timerService = new TimerService();
 const windowManager = WindowManager.getInstance();
+const appWindowManager = AppWindowManager.getInstance();
 
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	log.info('IPC Main Handler');
@@ -830,14 +832,16 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('show_image', (event, arg) => {
-		imageView.show();
-		imageView.webContents.send('show_image', arg);
-		imageView.webContents.send('refresh_menu');
+	ipcMain.on('show_image', async (event, arg) => {
+		const imageViewWindow = await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
+		imageViewWindow?.show();
+		imageViewWindow?.webContents?.send?.('show_image', arg);
+		imageViewWindow?.webContents?.send?.('refresh_menu');
 	});
 
-	ipcMain.on('close_image_view', () => {
-		imageView.hide();
+	ipcMain.on('close_image_view', async () => {
+		const imageViewWindow = await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
+		imageViewWindow?.close?.();
 	});
 
 	ipcMain.on('save_temp_screenshot', async (event, arg) => {

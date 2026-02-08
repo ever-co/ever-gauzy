@@ -12,10 +12,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 import {
-	AboutModule,
 	ActivityWatchInterceptor,
-	ActivityWatchModule,
-	AlwaysOnModule,
 	APIInterceptor,
 	AuthGuard,
 	AuthModule,
@@ -26,7 +23,6 @@ import {
 	ErrorHandlerService,
 	GAUZY_ENV,
 	HttpLoaderFactory,
-	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
@@ -34,21 +30,13 @@ import {
 	NgxLoginModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
-	PluginsModule,
-	RecapModule,
 	RefreshTokenInterceptor,
 	serverConnectionFactory,
 	ServerConnectionService,
-	ServerDownModule,
 	ServerErrorInterceptor,
-	SettingsModule,
-	SetupModule,
-	SplashScreenModule,
 	Store,
-	TaskTableModule,
 	TenantInterceptor,
 	TimeoutInterceptor,
-	TimeTrackerModule,
 	TokenInterceptor,
 	UnauthorizedInterceptor
 } from '@gauzy/desktop-ui-lib';
@@ -60,12 +48,16 @@ import {
 	NbDialogModule,
 	NbDialogService,
 	NbLayoutModule,
+	NbMenuModule,
+	NbSidebarModule,
 	NbThemeModule,
 	NbToastrModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
+import { NbIconLibraries } from '@nebular/theme';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppModuleGuard } from './app/app.module.guards';
@@ -102,6 +94,8 @@ bootstrapApplication(AppComponent, {
 			AuthModule,
 			NbDialogModule.forRoot(),
 			NbToastrModule.forRoot(),
+			NbSidebarModule.forRoot(), // Provides NbSidebarService
+			NbMenuModule.forRoot(), // Provides NbMenuService
 			NbCardModule,
 			NbButtonModule,
 			BrowserModule,
@@ -109,14 +103,8 @@ bootstrapApplication(AppComponent, {
 			NbThemeModule,
 			NgxDesktopThemeModule,
 			NgxLoginModule,
-			SetupModule,
-			TimeTrackerModule,
-			SettingsModule,
-			ImageViewerModule,
 			NgSelectModule,
-			SplashScreenModule,
-			ServerDownModule,
-			AlwaysOnModule,
+			NbEvaIconsModule, // Eva icons module for Nebular
 			TranslateModule.forRoot({
 				extend: true,
 				loader: {
@@ -126,12 +114,7 @@ bootstrapApplication(AppComponent, {
 				}
 			}),
 			LanguageModule.forRoot(),
-			NbDatepickerModule.forRoot(),
-			AboutModule,
-			ActivityWatchModule,
-			RecapModule,
-			TaskTableModule,
-			PluginsModule
+			NbDatepickerModule.forRoot()
 		),
 		AppService,
 		NbDialogService,
@@ -220,6 +203,17 @@ bootstrapApplication(AppComponent, {
 		provideAppInitializer(() => {
 			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
 			return initializerFn();
+		}),
+		// Register icon packs for Nebular
+		provideAppInitializer(() => {
+			const iconLibraries = inject(NbIconLibraries);
+
+			iconLibraries.registerFontPack('font-awesome', {
+				packClass: 'fas',
+				iconClassPrefix: 'fa'
+			});
+
+			iconLibraries.setDefaultPack('eva');
 		}),
 		{ provide: DEFAULT_TIMEOUT, useValue: 80000 },
 		{

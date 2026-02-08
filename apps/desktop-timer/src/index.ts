@@ -47,15 +47,13 @@ import {
 	TranslateLoader,
 	TranslateService,
 	TrayIcon,
-	UIError
+	UIError,
+	AppWindowManager
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
-	createImageViewerWindow,
 	createSettingsWindow,
-	createSetupWindow,
 	createTimeTrackerWindow,
-	createUpdaterWindow,
 	PluginMarketplaceWindow,
 	ScreenCaptureNotification,
 	SplashScreen,
@@ -94,7 +92,7 @@ ipcMain.handle('PREFERRED_THEME', () => {
 	const setting = LocalStore.getStore('appSetting');
 	return !setting ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : setting.theme;
 });
-
+let appWindowManager: AppWindowManager;
 let notificationWindow = null;
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
@@ -225,6 +223,10 @@ eventErrorManager.onShowError(async (message) => {
 	}
 });
 
+function initializeAppManager() {
+	appWindowManager = AppWindowManager.getInstance();
+}
+
 async function startServer(value, restart = false) {
 	try {
 		const project = LocalStore.getStore('project') || {};
@@ -253,7 +255,7 @@ async function startServer(value, restart = false) {
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
-		setupWindow.hide();
+		setupWindow?.close();
 		try {
 			if (!timeTrackerWindow) {
 				timeTrackerWindow = await createTimeTrackerWindow(
@@ -405,8 +407,6 @@ app.on('ready', async () => {
 			pathWindow.preloadPath
 		);
 		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
-		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
-		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
@@ -417,10 +417,10 @@ app.on('ready', async () => {
 				API_BASE_URL: getApiBaseUrl(configs),
 				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
-			setupWindow = await createSetupWindow(setupWindow, true, pathWindow.timeTrackerUi);
 			await startServer(configs);
 		} else {
-			setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
+			initializeAppManager();
+			setupWindow = await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
 			setupWindow.show();
 			splashScreen.close();
 		}
