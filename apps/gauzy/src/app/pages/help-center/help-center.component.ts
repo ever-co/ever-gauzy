@@ -1,4 +1,3 @@
-import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
 import { IHelpCenterArticle, IHelpCenter, IHelpCenterAuthor, IEmployee, IOrganization } from '@gauzy/contracts';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -29,14 +28,13 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		private readonly toastrService: ToastrService,
 		private helpCenterAuthorService: HelpCenterAuthorService,
 		private employeeService: EmployeesService,
-		private sanitizer: DomSanitizer,
 		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	public expandedArticles: Set<string> = new Set();
-	public articleContent: Map<string, SafeHtml> = new Map();
+	public articleContent: Map<string, string> = new Map();
 	public employees: IEmployee[] = [];
 	public articleList: IHelpCenterArticle[] = [];
 	public isResetSelect = false;
@@ -109,10 +107,7 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 			this.articleList = result;
 			for (let i = 0; i < this.articleList.length; i++) {
 				if (this.articleList[i].data) {
-					this.articleContent.set(
-						this.articleList[i].id,
-						this.sanitizer.bypassSecurityTrustHtml(this.articleList[i].data)
-					);
+					this.articleContent.set(this.articleList[i].id, this.articleList[i].data);
 				}
 			}
 		}

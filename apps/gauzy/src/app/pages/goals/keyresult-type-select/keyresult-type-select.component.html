@@ -43,7 +43,8 @@
 					<ga-task-selector
 						id="task-selector"
 						formControlName="taskId"
-						[(projectId)]="parentFormGroup.value.projectId"
+						[projectId]="parentFormGroup.get('projectId').value"
+						(projectIdChange)="parentFormGroup.get('projectId').setValue($event)"
 					>
 					</ga-task-selector>
 				</div>
