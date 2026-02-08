@@ -24,8 +24,8 @@ import { HelpCenterArticleVersionService } from './help-center-article-version.s
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller('/help-center-article-version')
 export class HelpCenterArticleVersionController extends CrudController<HelpCenterArticleVersion> {
-	constructor(private readonly versionService: HelpCenterArticleVersionService) {
-		super(versionService);
+	constructor(private readonly articleVersionService: HelpCenterArticleVersionService) {
+		super(articleVersionService);
 	}
 
 	/**
@@ -43,7 +43,7 @@ export class HelpCenterArticleVersionController extends CrudController<HelpCente
 	async findAll(
 		@Query() options: BaseQueryDTO<HelpCenterArticleVersion>
 	): Promise<IPagination<HelpCenterArticleVersion>> {		
-		return this.versionService.findAll(options);
+		return this.articleVersionService.findAll(options);
 	}
 
 	/**
@@ -61,9 +61,10 @@ export class HelpCenterArticleVersionController extends CrudController<HelpCente
 	})
 	@Get(':id')
 	async findById(
-		@Param('id', UUIDValidationPipe) id: ID
+		@Param('id', UUIDValidationPipe) id: ID,
+        @Query() options: BaseQueryDTO<HelpCenterArticleVersion>
 	): Promise<IHelpCenterArticleVersion> {
-		return this.versionService.findOneByIdString(id);
+		return this.articleVersionService.findOneByIdString(id, options);
 	}
 
 	/**
@@ -85,6 +86,6 @@ export class HelpCenterArticleVersionController extends CrudController<HelpCente
 	async restoreVersion(
 		@Param('id', UUIDValidationPipe) versionId: ID
 	): Promise<IHelpCenterArticle | UpdateResult> {
-		return this.versionService.restoreToVersion(versionId);
+		return this.articleVersionService.restoreToVersion(versionId);
 	}
 }
