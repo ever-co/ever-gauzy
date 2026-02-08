@@ -15,18 +15,20 @@ export class HelpCenterArticleUpdateHandler implements ICommandHandler<HelpCente
 	): Promise<void> {
 		const { id, input } = command;
 
-		// Check if content fields are being updated (versioning needed)
-		const isContentUpdate = 'descriptionHtml' in input || 'descriptionJson' in input;
+		// Check if content fields are being updated with actual values (versioning needed)
+		const isContentUpdate = input.descriptionHtml !== undefined || input.descriptionJson !== undefined;
 
 		if (isContentUpdate) {
 			// Get current user's employee ID for version ownership
-			const employeeId = RequestContext.currentEmployeeId();
+			// Use currentUser().employeeId and currentEmployeeId() 
+			// because currentEmployeeId() returns null for users with CHANGE_SELECTED_EMPLOYEE permission (admins)
+			const employeeId = RequestContext.currentEmployeeId() || RequestContext.currentUser()?.employeeId;
 
 			if (employeeId) {
 				// Create version snapshot before updating
 				await this.helpCenterArticle.updateWithVersioning(id, input, employeeId);
 			} else {
-				// No employee context, just update without versioning
+				// No employee context (system/admin without employee), update without versioning
 				await this.helpCenterArticle.updateArticleById(id, input);
 			}
 		} else {

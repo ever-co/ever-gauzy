@@ -2,15 +2,15 @@ import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ID, IEmployee, IHelpCenterArticle, IHelpCenterArticleVersion } from '@gauzy/contracts';
+import { ID, IEmployee, IHelpCenterArticle, IHelpCenterArticleVersion, JsonData } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
-	ColumnIndex,
-	Employee,
-	MultiORMColumn,
-	MultiORMEntity,
-	MultiORMManyToOne,
-	TenantOrganizationBaseEntity
+    ColumnIndex,
+    Employee,
+    MultiORMColumn,
+    MultiORMEntity,
+    MultiORMManyToOne,
+    TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { HelpCenterArticle } from './help-center-article.entity';
 import { MikroOrmHelpCenterArticleVersionRepository } from './repository/mikro-orm-help-center-article-version.repository';
@@ -31,7 +31,7 @@ export class HelpCenterArticleVersion extends TenantOrganizationBaseEntity imple
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
-	descriptionJson?: object;
+	descriptionJson?: JsonData;
 
 	/** 
 	 * When this version was saved 
@@ -73,10 +73,11 @@ export class HelpCenterArticleVersion extends TenantOrganizationBaseEntity imple
 	})
 	ownedBy?: IEmployee;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsUUID()
 	@RelationId((it: HelpCenterArticleVersion) => it.ownedBy)
 	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
-	ownedById: ID;
+	@MultiORMColumn({ nullable: true, relationId: true })
+	ownedById?: ID;
 }

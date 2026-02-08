@@ -58,7 +58,7 @@ export interface IHelpCenterArticleVersion
 	article?: IHelpCenterArticle;
 
 	// Who created this version
-	ownedById: ID;
+	ownedById?: ID;
 	ownedBy?: IEmployee;
 
 	// When this version was saved
@@ -66,7 +66,7 @@ export interface IHelpCenterArticleVersion
 
 	// Content snapshot
 	descriptionHtml?: string;
-	descriptionJson?: object;
+	descriptionJson?: JsonData;
 }
 
 export interface IHelpCenterAuthor
