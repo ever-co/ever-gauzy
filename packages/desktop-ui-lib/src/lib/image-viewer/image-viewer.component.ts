@@ -70,7 +70,6 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 		this._electronService.ipcRenderer.on('show_image', this.getImages.bind(this));
 		this._electronService.ipcRenderer.send('image_view_ready');
 		this.active_index = 0;
-		this._electronService.ipcRenderer.send('')
 	}
 
 	ngOnDestroy(): void {

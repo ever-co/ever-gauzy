@@ -45,7 +45,12 @@ const routes: Routes = [
 	{
 		path: 'plugins',
 		canActivate: [AuthConnectionGuard],
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
+		children: [
+			{
+				path: '',
+				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
+			}
+		]
 	},
 	{
 		path: 'updater',
@@ -105,4 +110,4 @@ const config: ExtraOptions = {
 		}
 	]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

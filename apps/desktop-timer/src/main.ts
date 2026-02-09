@@ -15,7 +15,6 @@ import {
 	ActivityWatchInterceptor,
 	APIInterceptor,
 	AuthGuard,
-	AuthModule,
 	AuthService,
 	AuthStrategy,
 	DEFAULT_TIMEOUT,
@@ -27,7 +26,6 @@ import {
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
-	NgxLoginModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
 	RefreshTokenInterceptor,
@@ -42,28 +40,24 @@ import {
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
-	NbButtonModule,
-	NbCardModule,
 	NbDatepickerModule,
 	NbDialogModule,
 	NbDialogService,
-	NbLayoutModule,
 	NbMenuModule,
 	NbSidebarModule,
 	NbThemeModule,
 	NbToastrModule
 } from '@nebular/theme';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
-import { NbIconLibraries } from '@nebular/theme';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppModuleGuard } from './app/app.module.guards';
 import { AppService } from './app/app.service';
 import { initializeSentry } from './app/sentry';
 import { environment } from './environments/environment';
+import { NbIconLibraries } from '@nebular/theme';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 if (environment.production) {
 	enableProdMode();
@@ -95,9 +89,10 @@ bootstrapApplication(AppComponent, {
 			NgxDesktopThemeModule, // Required for custom Gauzy themes and theme initializer
 			NbDialogModule.forRoot(),
 			NbToastrModule.forRoot(),
+			NbThemeModule,
 			NbSidebarModule.forRoot(), // Provides NbSidebarService
 			NbMenuModule.forRoot(), // Provides NbMenuService
-			NbEvaIconsModule, // Required for eva icon pack
+			NbTablerIconsModule,
 			TranslateModule.forRoot({
 				extend: true,
 				loader: {
@@ -194,7 +189,7 @@ bootstrapApplication(AppComponent, {
 			deps: [Router]
 		},
 		provideAppInitializer(() => {
-			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
+			const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
 			return initializerFn();
 		}),
 		// Register icon packs for Nebular

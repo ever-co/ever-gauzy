@@ -9,7 +9,8 @@
 	},
 	"files": [
 		"src/main.ts",
-		"src/polyfills.ts"
+		"src/polyfills.ts",
+		"src/app/date-holidays.mock.ts"
 	],
 	"include": [
 		"src/**/*.d.ts"
