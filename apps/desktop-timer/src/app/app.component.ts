@@ -104,6 +104,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('__logout__', (event, arg) =>
 			this._ngZone.run(async () => {
 				try {
+					// Stop proactive token refresh before logout
+					this.tokenRefreshService.stop();
 					await firstValueFrom(this.authStrategy.logout());
 					this.electronService.ipcRenderer.send('navigate_to_login');
 					if (arg) this.electronService.ipcRenderer.send('restart_and_update');

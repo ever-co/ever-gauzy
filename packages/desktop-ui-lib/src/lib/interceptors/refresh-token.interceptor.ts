@@ -37,14 +37,10 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
 	 * Guards that short-circuit error handling:
 	 * - Offline mode — no network, nothing to retry.
 	 * - Non-401 status — not an auth problem.
+	 * - Auth endpoint — prevent infinite refresh loops.
 	 */
 	private shouldSkipErrorHandling(url: string, error: HttpErrorResponse): boolean {
-		return (
-			this.store.isOffline ||
-			error.status !== HttpStatusCode.Unauthorized ||
-			this.isAuthEndpoint(url) ||
-			!this.store.isTokenExpired()
-		);
+		return this.store.isOffline || error.status !== HttpStatusCode.Unauthorized || this.isAuthEndpoint(url);
 	}
 
 	/**
