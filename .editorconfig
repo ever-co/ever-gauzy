@@ -6,8 +6,8 @@ root = true
 [*]
 charset = utf-8
 indent_style = space
-indent_size = 2
-tab_width = 2
+indent_size = 4
+tab_width = 4
 end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
@@ -16,29 +16,31 @@ max_line_length = 120
 # TypeScript/JavaScript files
 [*.{ts,tsx,js,jsx}]
 indent_style = space
-indent_size = 2
-tab_width = 2
+indent_size = 4
+tab_width = 4
 
 # HTML files
 [*.html]
 indent_style = space
-indent_size = 2
-tab_width = 2
+indent_size = 4
+tab_width = 4
 
 # SCSS/CSS files
 [*.{scss,css}]
 indent_style = space
 indent_size = 2
+tab_width = 2
 
 # YAML files - must use spaces (YAML spec)
 [*.{yml,yaml}]
 indent_style = space
 indent_size = 2
+tab_width = 2
 
 # JSON files
 [*.json]
 indent_style = space
-indent_size = 2
+indent_size = 4
 
 # Markdown files
 [*.md]
@@ -52,7 +54,7 @@ indent_style = tab
 # Shell scripts
 [*.sh]
 indent_style = space
-indent_size = 2
+indent_size = 4
 end_of_line = lf
 
 # Windows batch files

@@ -23,7 +23,7 @@
   "prettier.trailingComma": "none",
   "prettier.singleQuote": true,
   "eslint.format.enable": true,
-  "editor.tabSize": 2,
+  "editor.tabSize": 4,
   "editor.insertSpaces": true,
   "editor.detectIndentation": false,
   "files.insertFinalNewline": true,
