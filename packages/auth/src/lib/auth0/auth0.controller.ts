@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response, Request } from 'express';
 import { Public } from '@gauzy/common';
@@ -27,8 +27,53 @@ export class Auth0Controller {
 	 * @returns {Promise<void>} - A promise that resolves after redirecting the user.
 	 */
 	@Get('/auth0/callback')
-	async auth0LoginCallback(@RequestCtx() context: IIncomingRequest, @Res() res: Response): Promise<any> {
+	async auth0LoginCallback(
+		@RequestCtx() context: IIncomingRequest,
+		@Req() req: Request,
+		@Res() res: Response
+	): Promise<any> {
 		const { user } = context;
+
+		const session = (req as any).session;
+		const oauthRequest = session?.oauthApp as
+			| { clientId: string; redirectUri: string; scope?: string; state?: string }
+			| undefined;
+
+		if (oauthRequest) {
+			const oauthUser = await this.service.getOAuthLoginUser(user.emails);
+			if (!oauthUser) {
+				const errorParams = new URLSearchParams({
+					error: 'access_denied',
+					...(oauthRequest.state ? { state: oauthRequest.state } : {})
+				});
+				const redirectUrl = `${oauthRequest.redirectUri}?${errorParams.toString()}`;
+				session.oauthApp = undefined;
+				return res.redirect(redirectUrl);
+			}
+
+			try {
+				const code = await this.service.createOAuthAppAuthorizationCode({
+					userId: oauthUser.id,
+					tenantId: oauthUser.tenantId,
+					clientId: oauthRequest.clientId,
+					redirectUri: oauthRequest.redirectUri,
+					scope: oauthRequest.scope,
+					state: oauthRequest.state
+				});
+
+				const params = new URLSearchParams({
+					code,
+					...(oauthRequest.state ? { state: oauthRequest.state } : {})
+				});
+
+				const redirectUrl = `${oauthRequest.redirectUri}?${params.toString()}`;
+				session.oauthApp = undefined;
+				return res.redirect(redirectUrl);
+			} catch (error: any) {
+				throw new HttpException(error?.message || 'OAuth authorization failed', HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
 	}

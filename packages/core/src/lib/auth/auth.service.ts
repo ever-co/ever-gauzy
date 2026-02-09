@@ -70,11 +70,21 @@ import {
 	verifyGoogleToken,
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
+import { SocialAccountService } from './social-account/social-account.service';
+import { PasswordHashService } from '../password-hash/password-hash.service';
+import { createHmac, randomBytes } from 'node:crypto';
+import {
+	OAuthAppAuthorizationRequest,
+	OAuthAppTokenRequest,
+	OAuthAppTokenResponse
+} from '@gauzy/auth';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
 	// Get the type of the Object-Relational Mapping (ORM) used in the application.
 	private readonly ormType: MultiORM = getORMType();
+	private readonly oauthAppCodeState = new Map<string, { used: boolean; expiresAt: number }>();
+	private readonly oauthAppCodeTtlSeconds = 10 * 60;
 
 	constructor(
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
@@ -108,6 +118,160 @@ export class AuthService extends SocialAuthService {
 		}
 		// If using other ORM types, return the entity as is
 		return entity;
+	}
+
+	private cleanupOAuthAppCodes(): void {
+		const now = Math.floor(Date.now() / 1000);
+		for (const [key, value] of this.oauthAppCodeState.entries()) {
+			if (value.expiresAt <= now) {
+				this.oauthAppCodeState.delete(key);
+			}
+		}
+	}
+
+	private signOAuthAppPayload(payload: string, secret: string): string {
+		return createHmac('sha256', secret).update(payload).digest('base64url');
+	}
+
+	private parseOAuthAppCode(code: string, secret: string): {
+		jti: string;
+		userId: string;
+		tenantId: string;
+		clientId: string;
+		redirectUri: string;
+		scope: string;
+		exp: number;
+	} {
+		const [version, payloadB64, sig] = code.split('.');
+		if (version !== 'v1' || !payloadB64 || !sig) {
+			throw new Error('Invalid authorization code');
+		}
+
+		const expectedSig = this.signOAuthAppPayload(payloadB64, secret);
+		if (sig !== expectedSig) {
+			throw new Error('Invalid authorization code signature');
+		}
+
+		const payloadJson = Buffer.from(payloadB64, 'base64url').toString();
+		const payload = JSON.parse(payloadJson) as {
+			jti: string;
+			userId: string;
+			tenantId: string;
+			clientId: string;
+			redirectUri: string;
+			scope: string;
+			exp: number;
+		};
+
+		if (!payload.jti || !payload.userId || !payload.tenantId || !payload.clientId || !payload.redirectUri) {
+			throw new Error('Invalid authorization code payload');
+		}
+
+		return payload;
+	}
+
+	public async getOAuthLoginUser(
+		emails: Array<{ value: string; verified: boolean }>
+	): Promise<IUser | null> {
+		for (const { value } of emails) {
+			const userExist = await this.userService.checkIfExistsEmail(value);
+			if (userExist) {
+				return await this.userService.getOAuthLoginEmail(value);
+			}
+		}
+		return null;
+	}
+
+	public async createOAuthAppAuthorizationCode(
+		request: OAuthAppAuthorizationRequest
+	): Promise<string> {
+		this.cleanupOAuthAppCodes();
+		const config = this.getOAuthAppConfig();
+
+		if (!config.clientId || !config.clientSecret || !config.redirectUris.length || !config.codeSecret) {
+			throw new Error('OAuth app is not configured');
+		}
+
+		if (request.clientId !== config.clientId) {
+			throw new Error('Invalid client_id');
+		}
+
+		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
+			throw new Error('Invalid redirect_uri');
+		}
+
+		const now = Math.floor(Date.now() / 1000);
+		const jti = randomBytes(32).toString('base64url');
+		const exp = now + this.oauthAppCodeTtlSeconds;
+		const scope = request.scope ?? '';
+
+		const payload = {
+			jti,
+			userId: request.userId,
+			tenantId: request.tenantId,
+			clientId: request.clientId,
+			redirectUri: request.redirectUri,
+			scope,
+			exp
+		};
+
+		const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+		const signature = this.signOAuthAppPayload(payloadB64, config.codeSecret);
+
+		this.oauthAppCodeState.set(jti, { used: false, expiresAt: exp });
+
+		return `v1.${payloadB64}.${signature}`;
+	}
+
+	public async exchangeOAuthAppAuthorizationCode(
+		request: OAuthAppTokenRequest
+	): Promise<OAuthAppTokenResponse> {
+		this.cleanupOAuthAppCodes();
+		const config = this.getOAuthAppConfig();
+
+		if (!config.clientId || !config.clientSecret || !config.redirectUris.length || !config.codeSecret) {
+			throw new Error('OAuth app is not configured');
+		}
+
+		if (request.clientId !== config.clientId || request.clientSecret !== config.clientSecret) {
+			throw new Error('Invalid client credentials');
+		}
+
+		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
+			throw new Error('Invalid redirect_uri');
+		}
+
+		const payload = this.parseOAuthAppCode(request.code, config.codeSecret);
+		const now = Math.floor(Date.now() / 1000);
+
+		if (payload.exp <= now) {
+			throw new Error('Authorization code expired');
+		}
+
+		if (payload.clientId !== request.clientId || payload.redirectUri !== request.redirectUri) {
+			throw new Error('Authorization code mismatch');
+		}
+
+		const state = this.oauthAppCodeState.get(payload.jti);
+		if (!state || state.used || state.expiresAt <= now) {
+			throw new Error('Authorization code already used');
+		}
+
+		state.used = true;
+
+		const accessToken = await this.getJwtAccessToken({
+			id: payload.userId,
+			tenantId: payload.tenantId
+		});
+
+		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 3600;
+
+		return {
+			accessToken,
+			expiresIn,
+			tokenType: 'Bearer',
+			scope: payload.scope ?? ''
+		};
 	}
 
 	/**

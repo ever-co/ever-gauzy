@@ -1,6 +1,37 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import { hashPassword } from '@gauzy/utils';
+import { IUser } from '@gauzy/contracts';
+
+export interface OAuthAppConfig {
+	clientId: string;
+	clientSecret: string;
+	redirectUris: string[];
+	codeSecret: string;
+}
+
+export interface OAuthAppAuthorizationRequest {
+	userId: string;
+	tenantId: string;
+	clientId: string;
+	redirectUri: string;
+	scope?: string;
+	state?: string;
+}
+
+export interface OAuthAppTokenRequest {
+	code: string;
+	clientId: string;
+	clientSecret: string;
+	redirectUri: string;
+}
+
+export interface OAuthAppTokenResponse {
+	accessToken: string;
+	expiresIn: number;
+	tokenType: string;
+	scope: string;
+}
 
 /**
  * Base class for social authentication.
@@ -27,6 +58,43 @@ export class SocialAuthService extends BaseSocialAuth {
 	}
 
 	public validateOAuthLoginEmail(args: []): any {}
+
+	public getOAuthAppConfig(): OAuthAppConfig {
+		const redirectUris = (process.env.GAUZY_OAUTH_APP_REDIRECT_URIS ?? '')
+			.split(',')
+			.map((uri) => uri.trim())
+			.filter(Boolean);
+
+		return {
+			clientId: process.env.GAUZY_OAUTH_APP_CLIENT_ID ?? '',
+			clientSecret: process.env.GAUZY_OAUTH_APP_CLIENT_SECRET ?? '',
+			redirectUris,
+			codeSecret: process.env.GAUZY_OAUTH_APP_CODE_SECRET ?? ''
+		};
+	}
+
+	public isOAuthAppRedirectUriAllowed(redirectUri: string, config?: OAuthAppConfig): boolean {
+		const resolved = config ?? this.getOAuthAppConfig();
+		return resolved.redirectUris.includes(redirectUri);
+	}
+
+	public async getOAuthLoginUser(
+		_emails: Array<{ value: string; verified: boolean }>
+	): Promise<IUser | null> {
+		return null;
+	}
+
+	public async createOAuthAppAuthorizationCode(
+		_request: OAuthAppAuthorizationRequest
+	): Promise<string> {
+		throw new Error('OAuth app authorization is not implemented');
+	}
+
+	public async exchangeOAuthAppAuthorizationCode(
+		_request: OAuthAppTokenRequest
+	): Promise<OAuthAppTokenResponse> {
+		throw new Error('OAuth app token exchange is not implemented');
+	}
 
 	/**
 	 * Generate a hash for the provided password using scrypt.
