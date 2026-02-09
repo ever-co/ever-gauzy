@@ -38,7 +38,6 @@ import {
 	TenantInterceptor,
 	TimeoutInterceptor,
 	TokenInterceptor,
-	UnauthorizedInterceptor,
 	serverConnectionFactory
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
@@ -173,11 +172,6 @@ bootstrapApplication(AppComponent, {
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TimeoutInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: UnauthorizedInterceptor,
 			multi: true
 		},
 		{
