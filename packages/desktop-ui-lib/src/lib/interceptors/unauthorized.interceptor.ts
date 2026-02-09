@@ -16,7 +16,7 @@ export class UnauthorizedInterceptor implements HttpInterceptor {
 		private router: Router,
 		private store: Store,
 		private _errorMapping: ErrorMapping
-	) {}
+	) { }
 
 	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 		return next.handle(request).pipe(
@@ -52,7 +52,7 @@ export class UnauthorizedInterceptor implements HttpInterceptor {
 					}
 				}
 
-				return throwError(() => new Error(this._errorMapping.mapErrorMessage(error)));
+				return throwError(() => error);
 			})
 		);
 	}

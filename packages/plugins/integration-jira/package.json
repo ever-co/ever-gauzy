@@ -27,6 +27,7 @@
 		"lib:watch": "yarn nx build plugin-integration-jira --watch"
 	},
 	"dependencies": {
+		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",

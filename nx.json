@@ -1,4 +1,5 @@
 {
+  "nxCloudId": "64f8c5bcd09b086be3baeccf",
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",
@@ -10,10 +11,26 @@
     "sharedGlobals": [
       "{workspaceRoot}/package.json",
       "{workspaceRoot}/tsconfig.json",
-      "{workspaceRoot}/.eslintrc.json"
+      "{workspaceRoot}/.eslintrc.json",
+      "{workspaceRoot}/.env",
+      "{workspaceRoot}/.env.local",
+      {
+        "runtime": "node -p process.platform"
+      },
+      {
+        "runtime": "node -p process.arch"
+      },
+      {
+        "runtime": "node -p process.versions.node"
+      },
+      {
+        "env": "NODE_ENV"
+      }
     ],
     "production": [
-      "default"
+      "default",
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/**/*.test.ts"
     ]
   },
   "cli": {
@@ -129,26 +146,29 @@
   },
   "defaultProject": "gauzy",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "parallel": 3,
+  "parallel": 8,
   "targetDefaults": {
     "build": {
-      "cache": false,
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
       "inputs": [
         "production",
         "^production"
       ]
     },
     "lint": {
-      "cache": false
+      "cache": true
     },
     "test": {
-      "cache": false
+      "cache": true
     },
     "e2e": {
-      "cache": false
+      "cache": true
     },
     "@nx/eslint:lint": {
-      "cache": false,
+      "cache": true,
       "inputs": [
         "default",
         "{workspaceRoot}/.eslintrc.json",
@@ -156,7 +176,7 @@
       ]
     },
     "@nx/jest:jest": {
-      "cache": false,
+      "cache": true,
       "inputs": [
         "default",
         "^production",
@@ -173,7 +193,7 @@
       }
     },
     "@nx/angular:package": {
-      "cache": false,
+      "cache": true,
       "dependsOn": [
         "^build"
       ],
@@ -183,7 +203,7 @@
       ]
     },
     "@nx/webpack:webpack": {
-      "cache": false,
+      "cache": true,
       "dependsOn": [
         "^build"
       ],
@@ -203,7 +223,7 @@
       ]
     },
     "@angular-devkit/build-angular:application": {
-      "cache": false,
+      "cache": true,
       "dependsOn": [
         "^build"
       ],
@@ -214,7 +234,8 @@
     }
   },
   "useInferencePlugins": false,
-  "defaultBase": "master",
+  "useDaemon": true,
+  "defaultBase": "develop",
   "release": {
     "version": {
       "preVersionCommand": "yarn nx run-many -t build"

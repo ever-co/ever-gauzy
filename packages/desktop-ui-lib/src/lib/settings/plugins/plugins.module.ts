@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbAlertModule,
 	NbBadgeModule,
@@ -35,17 +34,21 @@ import {
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { AlertModule } from '../../dialogs/alert/alert.module';
-import { DesktopDirectiveModule } from '../../directives/desktop-directive.module';
+
+
 import { InfiniteScrollDirective } from '../../directives/infinite-scroll.directive';
-import { SelectModule } from '../../shared/components/ui/select/select.module';
-import { NoDataMessageModule } from '../../time-tracker/no-data-message/no-data-message.module';
-import { PaginationModule } from '../../time-tracker/pagination/pagination.module';
+
+
+
 import { PipeModule } from '../../time-tracker/pipes/pipe.module';
+import { PendingInstallationEffects } from './component/+state/pending-installation.effect';
+import { PendingInstallationQuery } from './component/+state/pending-installation.query';
+import { PendingInstallationStore } from './component/+state/pending-installation.store';
 import { PluginEffects } from './component/+state/plugin.effect';
 import { PluginQuery } from './component/+state/plugin.query';
 import { PluginStore } from './component/+state/plugin.store';
 import { AddPluginComponent } from './component/add-plugin/add-plugin.component';
+import { PendingInstallationDialogComponent } from './component/pending-installation-dialog/pending-installation-dialog.component';
 import { PluginLayoutComponent } from './component/plugin-layout/plugin-layout.component';
 import { PluginListComponent } from './component/plugin-list/plugin-list.component';
 import { PluginStatusComponent } from './component/plugin-list/plugin-status/plugin-status.component';
@@ -123,8 +126,10 @@ import { PluginSubscriptionService } from './services/plugin-subscription.servic
 import { PluginTagsService } from './services/plugin-tags.service';
 import { PluginUserAssignmentService } from './services/plugin-user-assignment.service';
 import { PluginService } from './services/plugin.service';
+import { UserSubscribedPluginsService } from './services/user-subscribed-plugins.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 import { ElectronService } from '../../electron/services';
 import { PluginCategoryEffects } from './component/plugin-marketplace/+state/effects/plugin-category.effect';
 import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
@@ -134,8 +139,6 @@ import { PluginUploadIntentQuery } from './component/plugin-marketplace/+state/q
 import { PluginPlanStore } from './component/plugin-marketplace/+state/stores/plugin-plan.store';
 import { PluginUploadIntentStore } from './component/plugin-marketplace/+state/stores/plugin-upload-intent.store';
 import { OverviewTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/overview-tab/overview-tab.module';
-import { SettingsTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/settings-tab/settings-tab.module';
-import { SourceCodeTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/source-code-tab/source-code-tab.module';
 import { UserManagementTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/user-management-tab/user-management-tab.module';
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
@@ -151,168 +154,145 @@ import {
 	SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
-import { PluginRoutingModule } from './plugin-routing.module';
 
 @NgModule({
-	declarations: [
-		AddPluginComponent,
-		PluginListComponent,
-		PluginComponent,
-		PluginLayoutComponent,
-		PluginStatusComponent,
-		PluginUpdateComponent,
-		PluginMarketplaceComponent,
-		PluginMarketplaceDetailComponent,
-		PluginMarketplaceFilterComponent,
-		PluginSettingsManagerComponent,
-		PluginSettingsManagementComponent,
-		PluginCreateSettingDialogComponent,
-		PluginSubscriptionManagerComponent,
-		PluginSubscriptionPlanSelectionComponent,
-		PlanCardComponent,
-		PlanCardComparisonComponent,
-		SubscriptionConfirmationComponent,
-		SubscriptionPreviewComponent,
-		PluginTagsManagerComponent,
-		PluginUserManagementComponent,
-		PluginMarketplaceUploadComponent,
-		PluginMarketplaceItemComponent,
-		PluginVersionComponent,
-		PluginSourceComponent,
-		PluginMetadataComponent,
-		PluginBasicInformationComponent,
-		PluginSubscriptionPlanCreatorComponent,
-		FormSectionComponent,
-		FormRowComponent,
-		FileUploadComponent,
-		DialogCreateVersionComponent,
-		VersionHistoryComponent,
-		VersionSelectorComponent,
-		SourceSelectorComponent,
-		CategorySelectorComponent,
-		CreateCategoryDialogComponent,
-		DialogInstallationValidationComponent,
-		DialogSubscriptionPlanCreatorComponent,
-		CdnFormComponent,
-		GauzyFormComponent,
-		NpmFormComponent,
-		DialogCreateSourceComponent,
-		SourceContainerComponent,
-		PluginSubscriptionHierarchyComponent,
-		SubscriptionStatusBadgeComponent,
-		SubscriptionBillingFormComponent,
-		BillingCycleSectionComponent,
-		PaymentMethodSectionComponent,
-		CardDetailsSectionComponent,
-		BillingContactSectionComponent,
-		SubscriptionConsentSectionComponent,
-		UploadSelectionComponent
-	],
-	imports: [
-		CommonModule,
-		NbLayoutModule,
-		Angular2SmartTableModule,
-		PaginationModule,
-		NbButtonModule,
-		NbButtonGroupModule,
-		NbDialogModule.forChild(),
-		NbInputModule,
-		NbCardModule,
-		DesktopDirectiveModule,
-		NoDataMessageModule,
-		NbIconModule,
-		TranslateModule.forChild(),
-		RouterModule,
-		NbBadgeModule,
-		FormsModule,
-		NbToggleModule,
-		ReactiveFormsModule,
-		NbRouteTabsetModule,
-		AlertModule,
-		NbFormFieldModule,
-		NbSelectModule,
-		NbTooltipModule,
-		NbSpinnerModule,
-		NbDatepickerModule.forRoot(), // This might need to be forChild() depending on your setup
-		NbStepperModule,
-		NbAlertModule,
-		NbCheckboxModule,
-		NbContextMenuModule,
-		NbTabsetModule,
-		NbUserModule,
-		NbRadioModule,
-		PipeModule,
-		NbListModule,
-		SelectModule,
-		NbEvaIconsModule,
-		DragDropModule,
-		NbTagModule,
-		InfiniteScrollDirective,
-		NbPopoverModule,
-		OverviewTabModule,
-		SourceCodeTabModule,
-		UserManagementTabModule,
-		SettingsTabModule,
-		PluginRoutingModule
-	],
-	providers: [
-		PluginLoaderService,
-		ElectronService,
-		PluginElectronService,
-		PluginService,
-		PluginSubscriptionService,
-		PluginSubscriptionAccessService,
-		PluginTagsService,
-		PluginSettingsService,
-		PluginAnalyticsService,
-		PluginSecurityService,
-		PluginUserAssignmentService,
-		// Shared subscription services
-		SubscriptionPlanService,
-		SubscriptionFormService,
-		SubscriptionStatusService,
-		// Plan selection services
-		PlanFormatterService,
-		PlanComparisonService,
-		provideEffectsManager(),
-		provideEffects(
-			PluginEffects,
-			PluginInstallationEffects,
-			PluginMarketplaceEffects,
-			PluginVersionEffects,
-			PluginSourceEffects,
-			PluginUserAssignmentEffects,
-			PluginSettingsEffects,
-			PluginSubscriptionEffects,
-			PluginPlanEffects,
-			PluginPlanComparisonEffects,
-			PluginSubscriptionAccessEffects,
-			AvailableUsersEffects,
-			PluginToggleEffects,
-			PluginCategoryEffects,
-			PluginUploadIntentEffects
-		),
-		PluginQuery,
-		PluginStore,
-		PluginPlanStore,
-		PluginPlanQuery,
-		PluginSettingsQuery,
-		PluginSettingsStore,
-		PluginSubscriptionQuery,
-		PluginSubscriptionStore,
-		PluginSubscriptionAccessQuery,
-		PluginSubscriptionAccessStore,
-		PluginSubscriptionFacade,
-		PluginSubscriptionAccessFacade,
-		PluginUserAssignmentQuery,
-		PluginUserAssignmentStore,
-		AvailableUsersStore,
-		AvailableUsersQuery,
-		UserManagementFacade,
-		PluginUploadIntentStore,
-		PluginUploadIntentQuery,
-		NbInfiniteListDirective
-	],
-	schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    imports: [
+    CommonModule,
+    NbLayoutModule,
+    Angular2SmartTableModule,
+    NbButtonModule,
+    NbButtonGroupModule,
+    NbDialogModule.forChild(),
+    NbInputModule,
+    NbCardModule,
+    NbIconModule,
+    NbTablerIconsModule,
+    TranslateModule.forChild(),
+    RouterModule,
+    NbBadgeModule,
+    FormsModule,
+    NbToggleModule,
+    ReactiveFormsModule,
+    NbRouteTabsetModule,
+    NbFormFieldModule,
+    NbSelectModule,
+    NbTooltipModule,
+    NbSpinnerModule,
+    NbDatepickerModule.forRoot(), // This might need to be forChild() depending on your setup
+    NbStepperModule,
+    NbAlertModule,
+    NbCheckboxModule,
+    NbContextMenuModule,
+    NbTabsetModule,
+    NbUserModule,
+    NbRadioModule,
+    PipeModule,
+    NbListModule,
+    DragDropModule,
+    NbTagModule,
+    InfiniteScrollDirective,
+    NbPopoverModule,
+    OverviewTabModule,
+    UserManagementTabModule,
+    AddPluginComponent,
+    PluginListComponent,
+    PluginComponent,
+    PluginLayoutComponent,
+    PluginStatusComponent,
+    PluginUpdateComponent,
+    PluginMarketplaceComponent,
+    PluginMarketplaceDetailComponent,
+    PluginMarketplaceFilterComponent,
+    PluginSettingsManagerComponent,
+    PluginSettingsManagementComponent,
+    PluginCreateSettingDialogComponent,
+    PluginSubscriptionManagerComponent,
+    PluginSubscriptionPlanSelectionComponent,
+    PlanCardComponent,
+    PlanCardComparisonComponent,
+    SubscriptionConfirmationComponent,
+    SubscriptionPreviewComponent,
+    PluginTagsManagerComponent,
+    PluginUserManagementComponent,
+    PluginMarketplaceUploadComponent,
+    PluginMarketplaceItemComponent,
+    PluginVersionComponent,
+    PluginSourceComponent,
+    PluginMetadataComponent,
+    PluginBasicInformationComponent,
+    PluginSubscriptionPlanCreatorComponent,
+    FormSectionComponent,
+    FormRowComponent,
+    FileUploadComponent,
+    DialogCreateVersionComponent,
+    VersionHistoryComponent,
+    VersionSelectorComponent,
+    SourceSelectorComponent,
+    CategorySelectorComponent,
+    CreateCategoryDialogComponent,
+    DialogInstallationValidationComponent,
+    DialogSubscriptionPlanCreatorComponent,
+    CdnFormComponent,
+    GauzyFormComponent,
+    NpmFormComponent,
+    DialogCreateSourceComponent,
+    SourceContainerComponent,
+    PluginSubscriptionHierarchyComponent,
+    SubscriptionStatusBadgeComponent,
+    SubscriptionBillingFormComponent,
+    BillingCycleSectionComponent,
+    PaymentMethodSectionComponent,
+    CardDetailsSectionComponent,
+    BillingContactSectionComponent,
+    SubscriptionConsentSectionComponent,
+    UploadSelectionComponent,
+    PendingInstallationDialogComponent
+],
+    providers: [
+        PluginLoaderService,
+        ElectronService,
+        PluginElectronService,
+        PluginService,
+        PluginSubscriptionService,
+        PluginSubscriptionAccessService,
+        PluginTagsService,
+        PluginSettingsService,
+        PluginAnalyticsService,
+        PluginSecurityService,
+        PluginUserAssignmentService,
+        UserSubscribedPluginsService,
+        // Shared subscription services
+        SubscriptionPlanService,
+        SubscriptionFormService,
+        SubscriptionStatusService,
+        // Plan selection services
+        PlanFormatterService,
+        PlanComparisonService,
+        provideEffectsManager(),
+        provideEffects(PluginEffects, PluginInstallationEffects, PluginMarketplaceEffects, PluginVersionEffects, PluginSourceEffects, PluginUserAssignmentEffects, PluginSettingsEffects, PluginSubscriptionEffects, PluginPlanEffects, PluginPlanComparisonEffects, PluginSubscriptionAccessEffects, AvailableUsersEffects, PluginToggleEffects, PluginCategoryEffects, PluginUploadIntentEffects, PendingInstallationEffects),
+        PluginQuery,
+        PluginStore,
+        PluginPlanStore,
+        PluginPlanQuery,
+        PluginSettingsQuery,
+        PluginSettingsStore,
+        PluginSubscriptionQuery,
+        PluginSubscriptionStore,
+        PluginSubscriptionAccessQuery,
+        PluginSubscriptionAccessStore,
+        PluginSubscriptionFacade,
+        PluginSubscriptionAccessFacade,
+        PluginUserAssignmentQuery,
+        PluginUserAssignmentStore,
+        AvailableUsersStore,
+        AvailableUsersQuery,
+        UserManagementFacade,
+        PluginUploadIntentStore,
+        PluginUploadIntentQuery,
+        PendingInstallationStore,
+        PendingInstallationQuery,
+        NbInfiniteListDirective
+    ],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class PluginsModule {}

@@ -3,7 +3,6 @@ import { NgModule } from '@angular/core';
 import { SetupComponent } from './setup.component';
 // import { AlertComponent } from '../../@shared/dialogs/alert/alert.component';
 import { FormsModule } from '@angular/forms';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -21,37 +20,36 @@ import {
 	NbStepperModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+
 import { LanguageModule } from '../language/language.module';
 import { SslModule } from '../settings/ssl';
 import { SetupService } from './setup.service';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
-	declarations: [SetupComponent],
-	imports: [
-		CommonModule,
-		NbLayoutModule,
-		NbCardModule,
-		NbToggleModule,
-		NbSelectModule,
-		NbInputModule,
-		NbButtonModule,
-		FormsModule,
-		NbSpinnerModule,
-		NbCheckboxModule,
-		NbIconModule,
-		NbEvaIconsModule,
-		NbStepperModule,
-		NbIconModule,
-		NbRadioModule,
-		NbProgressBarModule,
-		NbFormFieldModule,
-		NbDialogModule,
-		DesktopDirectiveModule,
-		LanguageModule.forChild(),
-		SslModule
-	],
-	exports: [SetupComponent],
-	providers: [SetupService, NbDialogService]
+    imports: [
+    CommonModule,
+    NbLayoutModule,
+    NbCardModule,
+    NbToggleModule,
+    NbSelectModule,
+    NbInputModule,
+    NbButtonModule,
+    FormsModule,
+    NbSpinnerModule,
+    NbCheckboxModule,
+    NbIconModule,
+    NbTablerIconsModule,
+    NbStepperModule,
+    NbRadioModule,
+    NbProgressBarModule,
+    NbFormFieldModule,
+    NbDialogModule,
+    LanguageModule.forChild(),
+    SslModule,
+    SetupComponent
+],
+    exports: [SetupComponent],
+    providers: [SetupService, NbDialogService]
 })
 export class SetupModule {}

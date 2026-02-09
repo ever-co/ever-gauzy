@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { environment } from '@gauzy/ui-config';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { map } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { IAppConfig } from '@gauzy/contracts';
 import { AppService } from '@gauzy/ui-core/core';
 
@@ -26,17 +26,15 @@ export interface ISocialLink {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-social-links',
-    templateUrl: './social-links.component.html',
-    styleUrls: ['./social-links.component.scss'],
-    standalone: false
+	selector: 'ngx-social-links',
+	templateUrl: './social-links.component.html',
+	styleUrls: ['./social-links.component.scss'],
+	standalone: false
 })
 export class SocialLinksComponent implements OnInit {
-	/** */
 	public socialLinks$: Observable<ISocialLink[]>; // Observable for an array of social links
 	public configs: IAppConfig;
-
-	constructor(private readonly _appService: AppService) {}
+	private readonly _appService = inject(AppService);
 
 	/**
 	 * Lifecycle hook called after Angular has initialized all data-bound properties of a directive.
@@ -90,7 +88,7 @@ export class SocialLinksComponent implements OnInit {
 			},
 			{
 				url: environment.MICROSOFT_AUTH_LINK,
-				icon: 'grid',
+				icon: 'microsoft',
 				show: configs.microsoft_login
 			}
 		].filter((item: ISocialLink) => !!item.show);

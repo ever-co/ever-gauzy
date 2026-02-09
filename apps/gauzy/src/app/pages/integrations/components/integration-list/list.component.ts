@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { EMPTY, Subject, catchError, first, map, of, tap } from 'rxjs';
 import { debounceTime, filter, switchMap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -27,10 +27,10 @@ import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-integration-list',
-    templateUrl: './list.component.html',
-    styleUrls: ['./list.component.scss'],
-    standalone: false
+	selector: 'ga-integration-list',
+	templateUrl: './list.component.html',
+	styleUrls: ['./list.component.scss'],
+	standalone: false
 })
 export class IntegrationListComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public loading: boolean = false; // Flag to indicate if data loading is in progress

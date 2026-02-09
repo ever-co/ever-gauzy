@@ -8,8 +8,8 @@ describe('TimeTrackerComponent', () => {
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [TimeTrackerComponent]
-		}).compileComponents();
+    imports: [TimeTrackerComponent]
+}).compileComponents();
 	}));
 
 	beforeEach(() => {

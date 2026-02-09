@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { IOrganization, IUser } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
@@ -10,8 +10,8 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    template: '',
-    standalone: false
+	template: '',
+	standalone: false
 })
 export class ImageUploaderBaseComponent {
 	public organization: IOrganization;

@@ -21,7 +21,7 @@ export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
 				try {
 					await RolePermissionUtils.migrateRolePermissions(queryRunner);
 				} catch (error) {
-					console.log(chalk.red(`Error while migrating missing role permisions: ${error}`));
+					console.log(chalk.red(`Error while migrating missing role permissions: ${error}`));
 				}
 				break;
 			case DatabaseTypeEnum.mysql:

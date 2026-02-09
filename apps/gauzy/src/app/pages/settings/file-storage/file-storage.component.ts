@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { environment } from '@gauzy/ui-config';
@@ -21,11 +21,11 @@ import { FileStorageService, TenantService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-file-storage',
-    templateUrl: './file-storage.component.html',
-    styleUrls: ['./file-storage.component.scss'],
-    providers: [FileStorageService, TenantService],
-    standalone: false
+	selector: 'ga-file-storage',
+	templateUrl: './file-storage.component.html',
+	styleUrls: ['./file-storage.component.scss'],
+	providers: [FileStorageService, TenantService],
+	standalone: false
 })
 export class FileStorageComponent extends TranslationBaseComponent implements OnInit {
 	secureOptions = [

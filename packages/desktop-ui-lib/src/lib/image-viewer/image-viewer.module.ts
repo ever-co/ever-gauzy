@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -14,21 +13,22 @@ import { ImageCacheService, StorageService, Store } from '../services';
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { ImageViewerComponent } from './image-viewer.component';
 import { ImageViewerService } from './image-viewer.service';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 
 @NgModule({
-	declarations: [ImageViewerComponent],
-	imports: [
-		CommonModule,
-		NbLayoutModule,
-		NbCardModule,
-		NbIconModule,
-		NbDialogModule,
-		NbButtonModule,
-		NbSpinnerModule,
-		NbEvaIconsModule,
-		PipeModule
-	],
-	exports: [ImageViewerComponent],
-	providers: [NbDialogService, ImageViewerService, ImageCacheService, StorageService, Store]
+    imports: [
+        CommonModule,
+        NbLayoutModule,
+        NbCardModule,
+        NbIconModule,
+        NbTablerIconsModule,
+        NbDialogModule,
+        NbButtonModule,
+        NbSpinnerModule,
+        PipeModule,
+        ImageViewerComponent
+    ],
+    exports: [ImageViewerComponent],
+    providers: [NbDialogService, ImageViewerService, ImageCacheService, StorageService, Store]
 })
 export class ImageViewerModule {}

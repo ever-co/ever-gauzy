@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty } from '@gauzy/ui-core/common';
@@ -18,10 +18,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-timesheet-approvals',
-    templateUrl: './approvals.component.html',
-    styleUrls: ['./approvals.component.scss'],
-    standalone: false
+	selector: 'ngx-timesheet-approvals',
+	templateUrl: './approvals.component.html',
+	styleUrls: ['./approvals.component.scss'],
+	standalone: false
 })
 export class ApprovalsComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
 	timesheets: ITimesheet[] = [];

@@ -9,6 +9,10 @@ import {
 import { PluginSubscriptionAccessFacade } from '../../../+state/plugin-subscription-access.facade';
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
 import { PluginUserAssignment } from '../../../+state/stores/plugin-user-assignment.store';
+import { NbIconModule, NbButtonModule, NbAlertModule, NbSpinnerModule, NbUserModule, NbBadgeModule, NbTooltipModule } from '@nebular/theme';
+import { InfiniteScrollDirective } from '../../../../../../../directives/infinite-scroll.directive';
+import { AsyncPipe, DatePipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * User Management Tab Component
@@ -34,11 +38,11 @@ import { PluginUserAssignment } from '../../../+state/stores/plugin-user-assignm
  */
 @UntilDestroy()
 @Component({
-	selector: 'gauzy-plugin-user-management-tab',
-	standalone: false,
-	templateUrl: './user-management-tab.component.html',
-	styleUrls: ['./user-management-tab.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-plugin-user-management-tab',
+    templateUrl: './user-management-tab.component.html',
+    styleUrls: ['./user-management-tab.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbIconModule, NbButtonModule, NbAlertModule, NbSpinnerModule, InfiniteScrollDirective, NbUserModule, NbBadgeModule, NbTooltipModule, AsyncPipe, DatePipe, TranslatePipe]
 })
 export class UserManagementTabComponent implements OnInit, OnDestroy {
 	// ============================================================================

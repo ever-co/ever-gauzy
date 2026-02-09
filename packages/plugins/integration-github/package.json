@@ -27,6 +27,7 @@
 		"lib:watch": "yarn nx build plugin-integration-github --watch"
 	},
 	"dependencies": {
+		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",

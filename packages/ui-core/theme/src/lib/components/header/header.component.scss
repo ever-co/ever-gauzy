@@ -1,6 +1,10 @@
 @use '@nebular/theme/styles/global/breakpoints' as *;
-@use 'bootstrap/scss/mixins/breakpoints';
 @use 'themes' as *;
+
+// Bootstrap must use @import due to internal circular dependencies
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
 
 $orange: #f56d58;
 

@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { Angular2SmartTableComponent, Cell, LocalDataSource } from 'angular2-smart-table';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { Angular2SmartTableComponent, Cell, LocalDataSource, Angular2SmartTableModule } from 'angular2-smart-table';
 import { BehaviorSubject, concatMap, filter, Observable, take, tap } from 'rxjs';
 import { PluginActions } from '../+state/plugin.action';
 import { PluginQuery } from '../+state/plugin.query';
@@ -15,12 +15,19 @@ import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/pl
 import { PluginStatusComponent } from './plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
 
+
+
+import { AsyncPipe } from '@angular/common';
+import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
+import { SpinnerButtonDirective } from '../../../../directives/spinner-button.directive';
+import { PaginationComponent } from '../../../../time-tracker/pagination/pagination.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-plugin-list',
-	templateUrl: './plugin-list.component.html',
-	styleUrls: ['./plugin-list.component.scss'],
-	standalone: false
+    selector: 'ngx-plugin-list',
+    templateUrl: './plugin-list.component.html',
+    styleUrls: ['./plugin-list.component.scss'],
+    imports: [NoDataMessageComponent, NbButtonModule, NbIconModule, SpinnerButtonDirective, Angular2SmartTableModule, PaginationComponent, AsyncPipe, TranslatePipe]
 })
 export class PluginListComponent implements OnInit, AfterViewInit, OnDestroy {
 	private readonly translateService = inject(TranslateService);

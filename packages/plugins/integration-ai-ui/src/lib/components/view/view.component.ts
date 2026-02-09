@@ -3,7 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data } from '@angular/router';
 import { EMPTY } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -27,10 +27,10 @@ import { SettingTitlesEnum } from '../integration-setting-card/integration-setti
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    styleUrls: ['./view.component.scss'],
-    templateUrl: './view.component.html',
-    providers: [TitleCasePipe],
-    standalone: false
+	styleUrls: ['./view.component.scss'],
+	templateUrl: './view.component.html',
+	providers: [TitleCasePipe],
+	standalone: false
 })
 export class IntegrationAIViewComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;

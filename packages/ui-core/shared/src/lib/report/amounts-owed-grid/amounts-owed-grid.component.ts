@@ -9,17 +9,17 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { DateRangePickerBuilderService, Store, TimesheetService } from '@gauzy/ui-core/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/gauzy-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-amounts-owed-grid',
-    templateUrl: './amounts-owed-grid.component.html',
-    styleUrls: ['./amounts-owed-grid.component.scss'],
-    standalone: false
+	selector: 'ga-amounts-owed-grid',
+	templateUrl: './amounts-owed-grid.component.html',
+	styleUrls: ['./amounts-owed-grid.component.scss'],
+	standalone: false
 })
 export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public loading: boolean;

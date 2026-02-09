@@ -36,7 +36,7 @@ const socialLinks = [
 	{
 		url: environment.MICROSOFT_AUTH_LINK,
 		target: '_blank',
-		icon: 'grid'
+		icon: 'microsoft'
 	}
 ];
 

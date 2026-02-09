@@ -6,10 +6,10 @@ import {
 	NbRequestPasswordComponent,
 	NbResetPasswordComponent
 } from '@nebular/auth';
-import { NgxLoginComponent } from '../login';
-import { NgxLoginMagicComponent } from '../login/features/login-magic/login-magic.component';
-import { NgxLoginWorkspaceComponent } from '../login/features/login-workspace/login-workspace.component';
-import { NgxMagicSignInWorkspaceComponent } from '../login/features/magic-login-workspace/magic-login-workspace.component';
+
+
+
+
 import { NoAuthGuard } from './no-auth.guard';
 
 export const authRoutes: Route[] = [
@@ -24,7 +24,7 @@ export const authRoutes: Route[] = [
 			},
 			{
 				path: 'login',
-				component: NgxLoginComponent,
+				loadComponent: () => import('../login').then(m => m.NgxLoginComponent),
 				canActivate: [NoAuthGuard]
 			},
 			{
@@ -50,7 +50,7 @@ export const authRoutes: Route[] = [
 				// Register the path 'login-workspace'
 				path: 'login-workspace',
 				// Register the component to load component: NgxLoginWorkspaceComponent,
-				component: NgxLoginWorkspaceComponent,
+				loadComponent: () => import('../login/features/login-workspace/login-workspace.component').then(m => m.NgxLoginWorkspaceComponent),
 				// Register the data object
 				canActivate: [NoAuthGuard]
 			},
@@ -58,7 +58,7 @@ export const authRoutes: Route[] = [
 				// Register the path 'login-magic'
 				path: 'login-magic',
 				// Register the component to load component: NgxLoginMagicComponent,
-				component: NgxLoginMagicComponent,
+				loadComponent: () => import('../login/features/login-magic/login-magic.component').then(m => m.NgxLoginMagicComponent),
 				// Register the data object
 				canActivate: [NoAuthGuard]
 			},
@@ -66,7 +66,7 @@ export const authRoutes: Route[] = [
 				// Register the path 'magic-sign-in'
 				path: 'magic-sign-in',
 				// Register the component to load component: NgxMagicSignInWorkspaceComponent,
-				component: NgxMagicSignInWorkspaceComponent,
+				loadComponent: () => import('../login/features/magic-login-workspace/magic-login-workspace.component').then(m => m.NgxMagicSignInWorkspaceComponent),
 				// Register the data object
 				canActivate: [NoAuthGuard]
 			}

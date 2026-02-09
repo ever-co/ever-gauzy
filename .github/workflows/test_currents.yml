@@ -19,7 +19,7 @@ jobs:
         # take the current commit + timestamp together
         # the typical value would be something like
         # "sha-5d3fe...35d3-time-1620841214"
-        run: echo "::set-output name=value::sha-$GITHUB_SHA-time-$(date +"%s")"
+        run: echo "value=sha-$GITHUB_SHA-time-$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Print unique ID 🖨`
         run: echo "Generated Unique Build ID ${{ steps.uuid.outputs.value }}"
@@ -69,15 +69,18 @@ jobs:
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+        shell: pwsh
+        run: |
+          $cacheDir = yarn cache dir
+          "dir=$cacheDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - uses: actions/cache@v4
         id: yarn-cache
         with:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-yarn-${{ hashFiles('yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-
+            ${{ runner.os }}-${{ runner.arch }}-yarn-
 
       # - name: Increase file limit
       #  run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p

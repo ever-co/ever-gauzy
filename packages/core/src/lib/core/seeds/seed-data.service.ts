@@ -1687,7 +1687,7 @@ export class SeedDataService {
 				this.log(chalk.green(`✅ DISCONNECTED TO DATABASE!`));
 			}
 		} catch (error) {
-			this.log('NOTE: DATABASE CONNECTION DOES NOT EXIST YET. CANT CLOSE CONNECTION!');
+			this.log("NOTE: DATABASE CONNECTION DOES NOT EXIST YET. CAN'T CLOSE CONNECTION!");
 		}
 	}
 

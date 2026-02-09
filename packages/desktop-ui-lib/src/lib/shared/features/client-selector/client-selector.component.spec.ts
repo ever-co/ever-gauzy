@@ -8,8 +8,8 @@ describe('ClientSelectorComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [ClientSelectorComponent]
-    });
+    imports: [ClientSelectorComponent]
+});
     fixture = TestBed.createComponent(ClientSelectorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

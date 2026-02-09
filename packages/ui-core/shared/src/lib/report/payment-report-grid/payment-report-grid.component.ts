@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -16,10 +16,10 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-payment-report-grid',
-    templateUrl: './payment-report-grid.component.html',
-    styleUrls: ['./payment-report-grid.component.scss'],
-    standalone: false
+	selector: 'ga-payment-report-grid',
+	templateUrl: './payment-report-grid.component.html',
+	styleUrls: ['./payment-report-grid.component.scss'],
+	standalone: false
 })
 export class PaymentReportGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	dailyData: IPaymentReportData[] = [];

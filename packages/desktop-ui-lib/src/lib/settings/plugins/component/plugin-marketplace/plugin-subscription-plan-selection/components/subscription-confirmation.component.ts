@@ -2,17 +2,19 @@ import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core
 import { IPluginSubscription, PluginSubscriptionType } from '../../../../services/plugin-subscription.service';
 import { IPlanViewModel, ISubscriptionPreviewViewModel } from '../models/plan-view.model';
 import { IPlanComparisonResult, PlanActionType } from '../services/plan-comparison.service';
+import { NgClass } from '@angular/common';
+import { NbIconModule, NbAlertModule } from '@nebular/theme';
 
 /**
  * Component for displaying subscription confirmation details
  * Shows exactly what action will be taken and any payment/proration information
  */
 @Component({
-	selector: 'lib-subscription-confirmation',
-	templateUrl: './subscription-confirmation.component.html',
-	styleUrls: ['./subscription-confirmation.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'lib-subscription-confirmation',
+    templateUrl: './subscription-confirmation.component.html',
+    styleUrls: ['./subscription-confirmation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NgClass, NbIconModule, NbAlertModule]
 })
 export class SubscriptionConfirmationComponent implements OnInit {
 	@Input() selectedPlan!: IPlanViewModel;

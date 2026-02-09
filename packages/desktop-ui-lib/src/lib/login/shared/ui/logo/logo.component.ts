@@ -5,8 +5,7 @@ import { GAUZY_ENV } from '../../../../constants';
 @Component({
     selector: 'gauzy-logo',
     templateUrl: './logo.component.html',
-    styleUrls: ['./logo.component.scss'],
-    standalone: false
+    styleUrls: ['./logo.component.scss']
 })
 export class LogoComponent {
 	constructor(

@@ -9,9 +9,9 @@ import {
 	OnInit,
 	ViewChild
 } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IPlugin } from '@gauzy/contracts';
-import { NB_DIALOG_CONFIG, NbDialogRef } from '@nebular/theme';
+import { NB_DIALOG_CONFIG, NbDialogRef, NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbFormFieldModule, NbInputModule, NbBadgeModule, NbToggleModule, NbSelectModule, NbOptionModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, distinctUntilChanged, filter, map, Observable, startWith, switchMap, take, tap } from 'rxjs';
@@ -25,6 +25,9 @@ import {
 } from '../../../services/plugin-settings.service';
 import { CategorySelectorComponent } from '../plugin-marketplace-item/category-selector/category-selector.component';
 
+import { AsyncPipe } from '@angular/common';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
+
 export interface PluginSettingsDialogData {
 	plugin: IPlugin;
 	installationId?: string;
@@ -36,11 +39,11 @@ export interface PluginSettingsDialogData {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'lib-plugin-settings-management',
-	templateUrl: './plugin-settings-management.component.html',
-	styleUrls: ['./plugin-settings-management.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'lib-plugin-settings-management',
+    templateUrl: './plugin-settings-management.component.html',
+    styleUrls: ['./plugin-settings-management.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, SpinnerButtonDirective, NbButtonModule, NbTooltipModule, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, CategorySelectorComponent, NbBadgeModule, NbToggleModule, NbSelectModule, NbOptionModule, AsyncPipe]
 })
 export class PluginSettingsManagementComponent implements OnInit, OnDestroy, AfterViewInit {
 	public plugin: IPlugin;

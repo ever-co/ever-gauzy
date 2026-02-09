@@ -29,10 +29,9 @@ import {
 	NbCheckboxModule,
 	NbAlertModule,
 	NbRouteTabsetModule,
-	NbDialogModule,
+	NbDialogModule
 } from '@nebular/theme';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
-
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
 import { AgentDashboardComponent } from './agent-dashboard.component';
 import { LogsPageComponent } from './logs/logs.component';
 import { SyncPageComponent } from './activity-sync/activity-sync.component';
@@ -43,52 +42,47 @@ import { StatusBadgeComponent } from './activity-sync/activity-render/status-ren
 import { ActivitySyncDetailModalComponent } from './activity-sync/activity-sync-detail-modal/activity-sync-detail-modal.component';
 
 @NgModule({
-	declarations: [
-		AgentDashboardComponent, 
-		LogsPageComponent, 
-		SyncPageComponent, 
-		StatusBadgeComponent,
-		ActivitySyncDetailModalComponent
-	],
-	imports: [
-		CommonModule,
-		BrowserModule,
-		BrowserAnimationsModule,
-		FormsModule,
-		ReactiveFormsModule,
-		RouterModule,
-		NbThemeModule.forRoot({ name: 'dark' }),
-		NbLayoutModule,
-		NbSidebarModule.forRoot(),
-		NbMenuModule,
-		NbIconModule,
-		NbEvaIconsModule,
-		NbButtonModule,
-		NbCardModule,
-		NbActionsModule,
-		NbSelectModule,
-		NbToggleModule,
-		NbListModule,
-		NbBadgeModule,
-		NbUserModule,
-		NbTabsetModule,
-		NbTooltipModule,
-		NbProgressBarModule,
-		NbSpinnerModule,
-		NbContextMenuModule,
-		NbInputModule,
-		NbCheckboxModule,
-		NbAlertModule,
-		FilterStatusPipe,
-		LocalDateParse,
-		NbRouteTabsetModule,
-		NbDialogModule.forChild(),
-		TasksModule,
-		Angular2SmartTableModule
-	],
-	exports: [
-		FilterStatusPipe,
-		LocalDateParse
-	]
+    imports: [
+        CommonModule,
+        BrowserModule,
+        BrowserAnimationsModule,
+        FormsModule,
+        ReactiveFormsModule,
+        RouterModule,
+        NbThemeModule.forRoot({ name: 'dark' }),
+        NbLayoutModule,
+        NbSidebarModule.forRoot(),
+        NbMenuModule,
+        NbIconModule,
+        NbTablerIconsModule,
+        NbButtonModule,
+        NbCardModule,
+        NbActionsModule,
+        NbSelectModule,
+        NbToggleModule,
+        NbListModule,
+        NbBadgeModule,
+        NbUserModule,
+        NbTabsetModule,
+        NbTooltipModule,
+        NbProgressBarModule,
+        NbSpinnerModule,
+        NbContextMenuModule,
+        NbInputModule,
+        NbCheckboxModule,
+        NbAlertModule,
+        FilterStatusPipe,
+        LocalDateParse,
+        NbRouteTabsetModule,
+        NbDialogModule.forChild(),
+        TasksModule,
+        Angular2SmartTableModule,
+        AgentDashboardComponent,
+        LogsPageComponent,
+        SyncPageComponent,
+        StatusBadgeComponent,
+        ActivitySyncDetailModalComponent
+    ],
+    exports: [FilterStatusPipe, LocalDateParse]
 })
-export class AgentDashboardModule { }
+export class AgentDashboardModule {}

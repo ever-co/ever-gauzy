@@ -1,4 +1,5 @@
 @use '@angular/material' as mat;
+@use '@nebular/theme/styles/theming' as *;
 
 @mixin angular-material() {
   @include mat.elevation-classes();

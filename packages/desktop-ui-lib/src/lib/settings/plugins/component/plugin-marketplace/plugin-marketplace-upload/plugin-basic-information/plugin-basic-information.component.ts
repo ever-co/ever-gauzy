@@ -1,18 +1,22 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, inject, Input, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChanged, filter, map, tap } from 'rxjs';
 import { PluginCategoryQuery } from '../../+state';
 import { CategorySelectorComponent } from '../../plugin-marketplace-item/category-selector/category-selector.component';
 import { BasePluginFormComponent } from '../base-plugin-form/base-plugin-form.component';
+import { FormSectionComponent } from '../form-section/form-section.component';
+import { NbIconModule, NbFormFieldModule, NbInputModule, NbSelectModule, NbOptionModule } from '@nebular/theme';
+import { FormRowComponent } from '../form-row/form-row.component';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'lib-plugin-basic-information',
-	templateUrl: './plugin-basic-information.component.html',
-	styleUrls: ['./plugin-basic-information.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-plugin-basic-information',
+    templateUrl: './plugin-basic-information.component.html',
+    styleUrls: ['./plugin-basic-information.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormSectionComponent, FormsModule, ReactiveFormsModule, NbIconModule, FormRowComponent, NbFormFieldModule, NbInputModule, NbSelectModule, NbOptionModule, CategorySelectorComponent, TranslatePipe]
 })
 export class PluginBasicInformationComponent extends BasePluginFormComponent implements AfterViewInit {
 	@Input() pluginTypes: string[];

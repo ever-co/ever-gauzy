@@ -5,11 +5,17 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": [
+		"contracts",
+		"ui-config",
+		"ui-core"
+	],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:package",
-			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/dist/{projectRoot}"
+			],
 			"options": {
 				"project": "packages/plugins/integration-ai-ui/ng-package.json",
 				"tsConfig": "packages/plugins/integration-ai-ui/tsconfig.json"
@@ -22,11 +28,16 @@
 					"tsConfig": "packages/plugins/integration-ai-ui/tsconfig.lib.json"
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development",
+			"dependsOn": [
+				"^build"
+			]
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "packages/plugins/integration-ai-ui/jest.config.ts",
 				"tsConfig": "packages/plugins/integration-ai-ui/tsconfig.spec.json"

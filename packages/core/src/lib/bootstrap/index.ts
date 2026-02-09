@@ -40,7 +40,7 @@ import * as path from 'path';
 import { urlencoded, json } from 'express';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
-import { getConfig, defineConfig, environment as env } from '@gauzy/config';
+import { getConfig, defineConfig, environment } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
 import { MultiORMEnum, getORMType } from '../core/utils';
 import { coreEntities } from '../core/entities';
@@ -74,7 +74,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	console.time(chalk.yellow('✔ Create NestJS Application Time'));
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Set logging levels
-		bufferLogs: env.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
+		bufferLogs: environment.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
 	});
 	console.timeEnd(chalk.yellow('✔ Create NestJS Application Time'));
 
@@ -95,7 +95,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	app.useGlobalGuards(new AuthGuard(reflector));
 
 	// Configure Sentry for error tracking, if applicable
-	const { sentry } = env;
+	const { sentry } = environment;
 	if (sentry && sentry.dsn && config.logger) {
 		app.useLogger(config.logger); // Use Sentry logger
 	} else {
@@ -143,7 +143,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	await configureRedisSession(app);
 
 	// let's use helmet for security in production
-	if (env.envName === 'prod') {
+	if (environment.envName === 'prod') {
 		app.use(helmet());
 	}
 
@@ -189,10 +189,17 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			process.send(message);
 		}
 
-		if (env.demo) {
-			seedDemoIfEmpty(app, appService).catch((error) => {
-				console.error('Demo seed failed:', error);
-			});
+		if (environment.demo) {
+			console.log(chalk.yellow('Application is running in DEMO mode'));
+
+			// Run demo seed after the HTTP server starts
+			seedDemoIfEmpty(app, appService)
+				.then(() => {
+					console.log(chalk.green('Demo environment seeded successfully'));
+				})
+				.catch((error) => {
+					console.log(chalk.red('Error seeding demo environment:'), error);
+				});
 		}
 	});
 
@@ -237,6 +244,8 @@ export async function registerPluginConfig(config: Partial<ApplicationPluginConf
  * When MikroORM is selected, wrap in a RequestContext so repositories use a scoped EntityManager.
  */
 async function seedDemoIfEmpty(app: INestApplication, appService: AppService): Promise<void> {
+	console.log('Seeding demo data if database is empty...', environment.demo);
+
 	// Get the ORM type
 	const ormType = getORMType();
 
@@ -262,6 +271,8 @@ async function seedDemoIfEmpty(app: INestApplication, appService: AppService): P
  * - Otherwise (TypeORM), keep the existing behavior.
  */
 async function seedDatabaseIfEmpty(app: INestApplication, appService: AppService): Promise<void> {
+	console.log('Seeding database if empty...', environment.demo);
+
 	// Get the ORM type
 	const ormType = getORMType();
 
@@ -455,7 +466,7 @@ async function preBootstrapRegisterSubscribers(
 export function getMigrationsConfig() {
 	// Determine if running from dist or source
 	const isDist = __dirname.includes('dist');
-	const isElectron = !!env.isElectron; // check if electron
+	const isElectron = !!environment.isElectron; // check if electron
 
 	console.log('Migration isDist: ->', isDist);
 	console.log('Migration isElectron: ->', isElectron);

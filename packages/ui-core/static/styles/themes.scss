@@ -1,11 +1,12 @@
-@use "sass:string";
-// @nebular theming framework
-@import '@nebular/theme/styles/theming';
+@use 'sass:string';
+// @nebular theming framework - forward so nb-theme() is available to importers
+@forward '@nebular/theme/styles/theming';
+@use '@nebular/theme/styles/theming' as *;
 // @nebular out of the box themes
-@import '@nebular/theme/styles/themes';
+@use '@nebular/theme/styles/themes' as *;
 // material themes
-@import './material/material-dark';
-@import './material/material-light';
+@use './material/material-dark' as *;
+@use './material/material-light' as *;
 
 $nb-themes: nb-register-theme(
   (

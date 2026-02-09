@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IPlugin, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts';
-import { NbMenuItem, NbMenuService } from '@nebular/theme';
+import { NbMenuItem, NbMenuService, NbBadgeModule, NbTooltipModule, NbIconModule, NbButtonModule, NbContextMenuModule, NbToggleModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs';
 import { PluginSettingsActions, PluginSubscriptionActions } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
@@ -19,13 +19,17 @@ import { Store } from '../../../../../services';
 import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 
+import { AsyncPipe, DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe } from '@angular/common';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
+import { ReadMoreDirective } from '../../../../../directives/read-more.directive';
+
 @UntilDestroy()
 @Component({
-	selector: 'lib-plugin-marketplace-detail',
-	templateUrl: './plugin-marketplace-detail.component.html',
-	styleUrls: ['./plugin-marketplace-detail.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-plugin-marketplace-detail',
+    templateUrl: './plugin-marketplace-detail.component.html',
+    styleUrls: ['./plugin-marketplace-detail.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbBadgeModule, NbTooltipModule, NbIconModule, SpinnerButtonDirective, ReadMoreDirective, NbButtonModule, NbContextMenuModule, NbToggleModule, AsyncPipe, DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe, TranslatePipe]
 })
 export class PluginMarketplaceDetailComponent implements OnInit {
 	@Input()

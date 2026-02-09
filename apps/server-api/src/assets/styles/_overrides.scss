@@ -1,5 +1,8 @@
-@import 'themes';
-@import 'var';
+// Forward so mixins/themes are available to importers
+@forward 'themes';
+@forward 'var';
+@use 'themes' as *;
+@use 'var' as *;
 
 /* Apply style on scrollbar for Firefox */
 * {
@@ -211,7 +214,7 @@ body {
       }
     }
 
-        .angular2-smart-filter .ng-select .ng-select-container .ng-value-container .ng-placeholder {
+    .angular2-smart-filter .ng-select .ng-select-container .ng-value-container .ng-placeholder {
       font-size: 13px;
       font-weight: 400;
       line-height: 16px;
