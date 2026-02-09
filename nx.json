@@ -27,7 +27,11 @@
                 "env": "NODE_ENV"
             }
         ],
-        "production": ["default", "!{projectRoot}/**/*.spec.ts", "!{projectRoot}/**/*.test.ts"]
+        "production": [
+            "default",
+            "!{projectRoot}/**/*.spec.ts",
+            "!{projectRoot}/**/*.test.ts"
+        ]
     },
     "cli": {
         "warnings": {
@@ -146,8 +150,13 @@
     "targetDefaults": {
         "build": {
             "cache": true,
-            "dependsOn": ["^build"],
-            "inputs": ["production", "^production"]
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "production",
+                "^production"
+            ]
         },
         "lint": {
             "cache": true
@@ -160,11 +169,19 @@
         },
         "@nx/eslint:lint": {
             "cache": true,
-            "inputs": ["default", "{workspaceRoot}/.eslintrc.json", "{workspaceRoot}/tools/eslint-rules/**/*"]
+            "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*"
+            ]
         },
         "@nx/jest:jest": {
             "cache": true,
-            "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+            "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js"
+            ],
             "options": {
                 "passWithNoTests": true
             },
@@ -177,23 +194,43 @@
         },
         "@nx/angular:package": {
             "cache": true,
-            "dependsOn": ["^build"],
-            "inputs": ["production", "^production"]
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "production",
+                "^production"
+            ]
         },
         "@nx/webpack:webpack": {
             "cache": true,
-            "dependsOn": ["^build"],
-            "inputs": ["production", "^production"]
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "production",
+                "^production"
+            ]
         },
         "@nx/js:tsc": {
             "cache": true,
-            "dependsOn": ["^build"],
-            "inputs": ["production", "^production"]
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "production",
+                "^production"
+            ]
         },
         "@angular-devkit/build-angular:application": {
             "cache": true,
-            "dependsOn": ["^build"],
-            "inputs": ["production", "^production"]
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "production",
+                "^production"
+            ]
         }
     },
     "useInferencePlugins": false,
