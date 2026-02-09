@@ -45,7 +45,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.send('app_is_init');
 		// Start token refresh timer if we have a token and refresh token
-		this.tokenRefreshService.start();
+		if (this.store.token && this.store.refreshToken) {
+			this.tokenRefreshService.start();
+		}
 	}
 
 	ngAfterViewInit(): void {

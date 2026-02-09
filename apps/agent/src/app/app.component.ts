@@ -50,7 +50,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
 		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
 		this.electronService.ipcRenderer.send('app_is_init');
-		this.tokenRefreshService.start();
+		if (this.store.token && this.store.refreshToken) {
+			this.tokenRefreshService.start();
+		}
 	}
 
 	ngOnDestroy(): void {
