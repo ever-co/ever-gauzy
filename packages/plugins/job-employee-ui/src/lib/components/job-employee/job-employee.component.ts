@@ -57,17 +57,6 @@ export enum JobSearchTabsEnum {
 	standalone: false
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
-	public readonly jobSearchTabsEnum = JobSearchTabsEnum;
-	public readonly employees$ = new Subject<boolean>();
-	public readonly nbTab$ = new BehaviorSubject<JobSearchTabsEnum>(JobSearchTabsEnum.BROWSE);
-	public loading = false;
-	public settingsSmartTable: unknown;
-	public smartTableSource: ServerDataSource;
-	public organization: IOrganization | null = null;
-	public selectedEmployeeId: ID | null = null;
-	public selectedEmployee: IEmployee | null = null;
-	public disableButton = true;
-
 	private readonly _http = inject(HttpClient);
 	private readonly _route = inject(ActivatedRoute);
 	private readonly _router = inject(Router);
@@ -81,6 +70,17 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	private readonly _pageDataTableRegistryService = inject(PageDataTableRegistryService);
 	private readonly _pageTabRegistryService = inject(PageTabRegistryService);
 
+	public readonly jobSearchTabsEnum = JobSearchTabsEnum;
+	public readonly employees$ = new Subject<boolean>();
+	public readonly nbTab$ = new BehaviorSubject<JobSearchTabsEnum>(JobSearchTabsEnum.BROWSE);
+	public loading = false;
+	public settingsSmartTable: any;
+	public smartTableSource: ServerDataSource;
+	public organization: IOrganization | null = null;
+	public selectedEmployeeId: ID | null = null;
+	public selectedEmployee: IEmployee | null = null;
+	public disableButton = true;
+
 	public readonly tabsetId: PageTabsetRegistryId = this._route.snapshot.data['tabsetId'];
 	public readonly dataTableId: PageDataTableRegistryId = this._route.snapshot.data['dataTableId'];
 
@@ -93,8 +93,8 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 	/** Initialize permissions, locale, page tabs/columns, smart table settings, and translation listener. */
 	ngOnInit(): void {
-		this.initializeUiPermissions();
-		this.initializeUiLanguagesAndLocale();
+		this._initializeUiPermissions();
+		this._initializeUiLanguagesAndLocale();
 		this._initializePageElements();
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
@@ -312,7 +312,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	 * Loads the current user's permissions into NgxPermissionsService.
 	 * @returns void
 	 */
-	private initializeUiPermissions(): void {
+	private _initializeUiPermissions(): void {
 		const permissions = this._store.userRolePermissions.map(({ permission }) => permission);
 		this._ngxPermissionsService.flushPermissions();
 		this._ngxPermissionsService.loadPermissions(permissions);
@@ -322,7 +322,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	 * Subscribes to preferred language and applies it via TranslateService.
 	 * @returns void
 	 */
-	private initializeUiLanguagesAndLocale(): void {
+	private _initializeUiLanguagesAndLocale(): void {
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
