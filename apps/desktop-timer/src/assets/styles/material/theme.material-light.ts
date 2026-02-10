@@ -174,7 +174,7 @@ export const MATERIAL_LIGHT_THEME = {
 			chartLineBottomShadowColor: baseThemeVariables.primary,
 
 			chartInnerLineColor: baseThemeVariables.bg2
-		}
+		},
 
 		chartjs: {
 			axisLineColor: baseThemeVariables.separator,

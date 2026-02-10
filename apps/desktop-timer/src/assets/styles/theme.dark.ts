@@ -169,7 +169,7 @@ export const DARK_THEME = {
 			chartLineBottomShadowColor: theme.primary,
 
 			chartInnerLineColor: theme.bg2
-		}
+		},
 
 		chartjs: {
 			axisLineColor: theme.separator,
