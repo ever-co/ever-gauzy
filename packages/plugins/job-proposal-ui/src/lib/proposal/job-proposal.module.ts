@@ -14,7 +14,6 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { BaseChartDirective } from 'ng2-charts';
@@ -69,10 +68,7 @@ const THIRD_PARTY_MODULES = [
 	CKEditorModule,
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		fallbackLang: getBrowserLanguage(),
-		loader: provideTranslateHttpLoader()
-	})
+	TranslateModule.forChild()
 ];
 
 @NgModule({

@@ -17,7 +17,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { SmartDataViewLayoutModule, SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationZapierRoutes } from './integration-zapier.routes';
 import { ZapierAuthorizeComponent } from './components/zapier-authorize/zapier-authorize.component';
@@ -49,10 +48,7 @@ const NB_MODULES = [
 @NgModule({
 	imports: [
 		...NB_MODULES,
-		TranslateModule.forRoot({
-			fallbackLang: getBrowserLanguage(),
-			loader: provideTranslateHttpLoader()
-		}),
+		TranslateModule.forChild(),
 		IntegrationZapierRoutes,
 		SmartDataViewLayoutModule,
 		SelectorsModule,

@@ -96,10 +96,7 @@ const COMPONENTS = [
 	imports: [
 		...NB_MODULES,
 		RouterModule.forChild([]),
-		TranslateModule.forRoot({
-			fallbackLang: getBrowserLanguage(),
-			loader: provideTranslateHttpLoader()
-		}),
+		TranslateModule.forChild(),
 		ThemeSelectorModule,
 		NgxFaqModule,
 		ThemeModule,

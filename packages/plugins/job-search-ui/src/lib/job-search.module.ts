@@ -1,5 +1,4 @@
 import { Inject, NgModule } from '@angular/core';
-
 import { RouterModule, ROUTES } from '@angular/router';
 import {
 	NbButtonModule,
@@ -16,7 +15,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -60,10 +58,7 @@ const THIRD_PARTY_MODULES = [
 	FileUploadModule,
 	MomentModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		fallbackLang: getBrowserLanguage(),
-		loader: provideTranslateHttpLoader()
-	})
+	TranslateModule.forChild()
 ];
 
 @NgModule({

@@ -17,7 +17,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { SmartDataViewLayoutModule, SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationMakeComRoutes } from './integration-make-com.routes';
 import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout.component';
@@ -46,10 +45,7 @@ const NB_MODULES = [
 @NgModule({
 	imports: [
 		...NB_MODULES,
-		TranslateModule.forRoot({
-			fallbackLang: getBrowserLanguage(),
-			loader: provideTranslateHttpLoader()
-		}),
+		TranslateModule.forChild(),
 		IntegrationMakeComRoutes,
 		SmartDataViewLayoutModule,
 		SelectorsModule,

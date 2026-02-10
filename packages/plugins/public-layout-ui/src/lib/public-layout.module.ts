@@ -22,7 +22,6 @@ import {
 	NbUserModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -76,10 +75,7 @@ const THIRD_PARTY_MODULES = [
 	CKEditorModule,
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		fallbackLang: getBrowserLanguage(),
-		loader: provideTranslateHttpLoader()
-	})
+	TranslateModule.forChild()
 ];
 
 /**

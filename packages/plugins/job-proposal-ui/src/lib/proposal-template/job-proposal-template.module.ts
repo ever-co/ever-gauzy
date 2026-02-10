@@ -1,5 +1,4 @@
 import { Inject, NgModule } from '@angular/core';
-
 import { ROUTES, RouterModule } from '@angular/router';
 import {
 	NbButtonModule,
@@ -16,7 +15,6 @@ import {
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -44,14 +42,7 @@ const NB_MODULES = [
 ];
 
 // Third Party Modules
-const THIRD_PARTY_MODULES = [
-	CKEditorModule,
-	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		fallbackLang: getBrowserLanguage(),
-		loader: provideTranslateHttpLoader()
-	})
-];
+const THIRD_PARTY_MODULES = [CKEditorModule, NgxPermissionsModule.forRoot(), TranslateModule.forChild()];
 
 @NgModule({
 	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],

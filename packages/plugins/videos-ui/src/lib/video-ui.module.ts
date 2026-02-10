@@ -18,7 +18,6 @@ import {
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
-import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 import { MomentModule } from 'ngx-moment';
 import { VideoEffects } from './+state/video.effect';
 import { VideoQuery } from './+state/video.query';
@@ -93,10 +92,7 @@ import { SoundshotPlayerSkeletonComponent } from './shared/ui/soundshot/soundsho
 		NbProgressBarModule,
 		NbListModule,
 		MomentModule,
-		TranslateModule.forRoot({
-			fallbackLang: getBrowserLanguage(),
-			loader: provideTranslateHttpLoader()
-		}),
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		NbTabsetModule,
 		NgOptimizedImage
