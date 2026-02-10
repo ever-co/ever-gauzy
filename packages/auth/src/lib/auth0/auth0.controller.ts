@@ -38,15 +38,21 @@ export class Auth0Controller {
 		const oauthRequest = session?.oauthApp as OAuthAppSessionData | undefined;
 
 		if (oauthRequest) {
+			// Always clear OAuth session data before any redirect to prevent replay
+			session.oauthApp = undefined;
+
+			// Re-validate redirect_uri against the allowlist (defense-in-depth against session tampering)
+			if (!this.service.isOAuthAppRedirectUriAllowed(oauthRequest.redirectUri)) {
+				throw new HttpException('Invalid redirect_uri', HttpStatus.BAD_REQUEST);
+			}
+
 			const oauthUser = await this.service.getOAuthLoginUser(user.emails);
 			if (!oauthUser) {
 				const errorParams = new URLSearchParams({
 					error: 'access_denied',
 					...(oauthRequest.state ? { state: oauthRequest.state } : {})
 				});
-				const redirectUrl = `${oauthRequest.redirectUri}?${errorParams.toString()}`;
-				session.oauthApp = undefined;
-				return res.redirect(redirectUrl);
+				return res.redirect(`${oauthRequest.redirectUri}?${errorParams.toString()}`);
 			}
 
 			try {
@@ -63,18 +69,13 @@ export class Auth0Controller {
 					code,
 					...(oauthRequest.state ? { state: oauthRequest.state } : {})
 				});
-
-				const redirectUrl = `${oauthRequest.redirectUri}?${params.toString()}`;
-				session.oauthApp = undefined;
-				return res.redirect(redirectUrl);
+				return res.redirect(`${oauthRequest.redirectUri}?${params.toString()}`);
 			} catch (error: any) {
 				const errorParams = new URLSearchParams({
 					error: 'server_error',
 					...(oauthRequest.state ? { state: oauthRequest.state } : {})
 				});
-				const redirectUrl = `${oauthRequest.redirectUri}?${errorParams.toString()}`;
-				session.oauthApp = undefined;
-				return res.redirect(redirectUrl);
+				return res.redirect(`${oauthRequest.redirectUri}?${errorParams.toString()}`);
 			}
 		}
 

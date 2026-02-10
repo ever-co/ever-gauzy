@@ -68,15 +68,11 @@ export class SocialAuthService extends BaseSocialAuth {
 
 	public getOAuthAppConfig(): OAuthAppConfig {
 		const oauthApp = this.configService.get('oauthApp');
-		const redirectUris = (oauthApp?.redirectUris ?? '')
-			.split(',')
-			.map((uri) => uri.trim())
-			.filter(Boolean);
 
 		return {
 			clientId: oauthApp?.clientId ?? '',
 			clientSecret: oauthApp?.clientSecret ?? '',
-			redirectUris,
+			redirectUris: oauthApp?.redirectUris ?? [],
 			codeSecret: oauthApp?.codeSecret ?? ''
 		};
 	}

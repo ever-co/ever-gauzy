@@ -95,10 +95,15 @@ export class OAuthAppController {
 				scope: token.scope
 			};
 		} catch (error: any) {
-			const message = error?.message || 'OAuth token exchange failed';
-			const isServerError = message.includes('not configured') || message.includes('not implemented');
-			const status = isServerError ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.BAD_REQUEST;
-			throw new HttpException(message, status);
+			this.logger.error('OAuth token exchange failed', error?.stack);
+
+			// Re-throw NestJS HTTP exceptions (they already have safe messages)
+			if (error instanceof HttpException) {
+				throw error;
+			}
+
+			// Never forward raw error.message to the client to avoid leaking internals
+			throw new HttpException('OAuth token exchange failed', HttpStatus.BAD_REQUEST);
 		}
 	}
 }

@@ -168,7 +168,10 @@ export class AuthService extends SocialAuthService {
 	public async getOAuthLoginUser(
 		emails: Array<{ value: string; verified: boolean }>
 	): Promise<IUser | null> {
-		for (const { value } of emails) {
+		for (const { value, verified } of emails) {
+			// Skip unverified emails to prevent account takeover via unverified OAuth addresses
+			if (!verified) continue;
+
 			const userExist = await this.userService.checkIfExistsEmail(value);
 			if (userExist) {
 				return await this.userService.getOAuthLoginEmail(value);
@@ -227,7 +230,13 @@ export class AuthService extends SocialAuthService {
 			throw new InternalServerErrorException('OAuth app is not configured');
 		}
 
-		if (request.clientId !== config.clientId || request.clientSecret !== config.clientSecret) {
+		if (request.clientId !== config.clientId) {
+			throw new UnauthorizedException('Invalid client credentials');
+		}
+		
+		const secretBuf = Buffer.from(request.clientSecret, 'utf8');
+		const expectedBuf = Buffer.from(config.clientSecret, 'utf8');
+		if (secretBuf.length !== expectedBuf.length || !timingSafeEqual(secretBuf, expectedBuf)) {
 			throw new UnauthorizedException('Invalid client credentials');
 		}
 
@@ -246,14 +255,15 @@ export class AuthService extends SocialAuthService {
 			throw new UnauthorizedException('Authorization code mismatch');
 		}
 
-		// Atomic check-and-delete: get the code state then immediately delete it.
-		// If the key is absent the code was already redeemed or expired (TTL).
+		// Single-use enforcement: delete first, then verify the key existed.
+		// Deleting before checking minimises the race window where two concurrent
+		// requests could both read 'valid' before either deletes.
 		const cacheKey = `${AuthService.OAUTH_CODE_CACHE_PREFIX}${payload.jti}`;
 		const codeState = await this.cacheManager.get<string>(cacheKey);
+		await this.cacheManager.del(cacheKey);
 		if (!codeState) {
 			throw new UnauthorizedException('Authorization code already used');
 		}
-		await this.cacheManager.del(cacheKey);
 
 		const accessToken = await this.getJwtAccessToken({
 			id: payload.userId,
@@ -1021,7 +1031,10 @@ export class AuthService extends SocialAuthService {
 			authData: { jwt: null, userId: null }
 		};
 		try {
-			for (const { value } of emails) {
+			for (const { value, verified } of emails) {
+				// Skip unverified emails to prevent account takeover via unverified OAuth addresses
+				if (!verified) continue;
+
 				const userExist = await this.userService.checkIfExistsEmail(value);
 				if (userExist) {
 					const user = await this.userService.getOAuthLoginEmail(value);
