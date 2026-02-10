@@ -170,7 +170,7 @@ export const GAUZY_DARK = {
 			chartLineBottomShadowColor: theme.primary,
 
 			chartInnerLineColor: theme.bg2
-		}
+		},
 
 		chartjs: {
 			axisLineColor: theme.separator,
