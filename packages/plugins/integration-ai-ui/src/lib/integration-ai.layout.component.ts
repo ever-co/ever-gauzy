@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, merge, tap } from 'rxjs';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -14,7 +14,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 	template: `<router-outlet></router-outlet>`,
 	standalone: false
 })
-export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
+export class IntegrationAILayoutComponent implements OnInit {
 	constructor(
 		private readonly _translateService: TranslateService,
 		private readonly _ngxPermissionsService: NgxPermissionsService,
@@ -53,6 +53,4 @@ export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 		// Start the subscription
 		preferredLanguage$.subscribe();
 	}
-
-	ngOnDestroy(): void {}
 }
