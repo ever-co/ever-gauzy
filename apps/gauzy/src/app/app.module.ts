@@ -31,7 +31,7 @@ import { ColorPickerService } from 'ngx-color-picker';
 // Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/
 import * as Sentry from '@sentry/angular';
 import * as moment from 'moment';
-import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
+import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
 import { UiCoreModule } from '@gauzy/ui-core';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import {
@@ -40,6 +40,7 @@ import {
 	AuthRefreshInterceptor,
 	CoreModule,
 	FeatureService,
+	getAppUIConfig,
 	GoogleMapsLoaderService,
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
@@ -54,7 +55,7 @@ import {
 import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { CommonModule } from '@gauzy/ui-core/common';
 import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n';
-import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
+import { SharedModule, TimeTrackerModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
@@ -137,7 +138,7 @@ const FEATURE_MODULES = [
 
 @NgModule({
 	declarations: [AppComponent],
-	bootstrap: [AppComponent],
+	exports: [AppComponent],
 	imports: [
 		BrowserModule,
 		BrowserAnimationsModule,
@@ -250,20 +251,19 @@ export class AppModule {
 	}
 
 	/**
-	 * Initialize UI languages and Update Locale
+	 * Initialize UI languages and Update Locale using `ui-plugin.config.ts`.
 	 */
 	private initializeUiLanguagesAndLocale(): void {
-		// Set Monday as start of the week
-		moment.updateLocale(LanguagesEnum.ENGLISH, {
-			week: { dow: dayOfWeekAsString(WeekDaysEnum.MONDAY) },
-			fallbackLocale: LanguagesEnum.ENGLISH
+		const uiConfig = getAppUIConfig();
+
+		// Set default locale; week start (dow) comes from ui-plugin.config.ts
+		moment.updateLocale(uiConfig.defaultLanguage, {
+			...(uiConfig.week && { week: uiConfig.week }),
+			fallbackLocale: uiConfig.defaultLanguage
 		});
 
-		// Get the list of available languages from the LanguagesEnum
-		const availableLanguages: LanguagesEnum[] = Object.values(LanguagesEnum);
-
-		// Set the available languages in the translation service
-		this._i18nService.setAvailableLanguages(availableLanguages);
+		// Set available languages from the UI plugin configuration
+		this._i18nService.setAvailableLanguages(uiConfig.availableLanguages as LanguagesEnum[]);
 	}
 }
 

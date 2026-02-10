@@ -1,4 +1,4 @@
-import { Inject, NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ROUTES, RouterModule } from '@angular/router';
 import {
@@ -16,7 +16,14 @@ import {
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { PermissionsEnum } from '@gauzy/contracts';
+import {
+	GauzyUIPlugin,
+	IOnUIPluginBootstrap,
+	IOnUIPluginDestroy,
+	NavMenuBuilderService,
+	PageRouteRegistryService
+} from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
@@ -49,7 +56,7 @@ const THIRD_PARTY_MODULES = [
 	CKEditorModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
+		defaultLanguage: getBrowserLanguage(),
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,
@@ -79,36 +86,49 @@ const THIRD_PARTY_MODULES = [
 		}
 	]
 })
-export class JobProposalTemplateModule {
-	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+export class JobProposalTemplateModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
+	private static hasRegisteredPageRoutes = false;
 
-	constructor(
-		@Inject(PageRouteRegistryService) private readonly _pageRouteRegistryService: PageRouteRegistryService
-	) {
-		// Register the routes
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+
+	constructor() {
 		this.registerPageRoutes();
+		this.registerNavMenuItems();
+	}
+
+	// ─── Plugin Lifecycle ─────────────────────────────────────────
+
+	/**
+	 * Called by `UIPluginModule` after the module is instantiated.
+	 */
+	onPluginBootstrap(): void {
+		console.log('[JobProposalTemplateModule] Plugin bootstrapped');
 	}
 
 	/**
-	 * Registers routes for the Jobs proposal template module.
-	 * Ensures that routes are registered only once.
-	 *
-	 * @returns {void}
+	 * Called by `UIPluginModule` when the application is shutting down.
 	 */
-	async registerPageRoutes(): Promise<void> {
+	onPluginDestroy(): void {
+		console.log('[JobProposalTemplateModule] Plugin destroyed');
+	}
+
+	// ─── Route & Menu Registration ────────────────────────────────
+
+	/**
+	 * Registers routes for the Job Proposal Template module.
+	 * Ensures that routes are registered only once.
+	 */
+	registerPageRoutes(): void {
 		if (JobProposalTemplateModule.hasRegisteredPageRoutes) {
 			return;
 		}
 
 		// Register Job Proposal Template Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
 			location: 'jobs',
-			// Register the path 'proposal-template'
 			path: 'proposal-template',
-			// Register the loadChildren function to load the ProposalTemplateModule lazy module
 			loadChildren: () => import('./job-proposal-template.module').then((m) => m.JobProposalTemplateModule),
-			// Register the data object
 			data: {
 				selectors: {
 					project: false,
@@ -120,4 +140,32 @@ export class JobProposalTemplateModule {
 		// Set hasRegisteredRoutes to true
 		JobProposalTemplateModule.hasRegisteredPageRoutes = true;
 	}
+
+	/**
+	 * Register navigation menu items for the Job Proposal Template plugin.
+	 */
+	private registerNavMenuItems(): void {
+		this._navMenuBuilderService.addNavMenuItem(
+			{
+				id: 'jobs-proposal-template',
+				title: 'Proposal Template',
+				icon: 'far fa-file-alt',
+				link: '/pages/jobs/proposal-template',
+				data: {
+					translationKey: 'MENU.PROPOSAL_TEMPLATE',
+					permissionKeys: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW]
+				}
+			},
+			'jobs' // The parent section id
+		);
+	}
 }
+
+/**
+ * Plugin definition for the Job Proposal Template UI plugin.
+ */
+export const JobProposalTemplatePlugin: GauzyUIPlugin = {
+	id: 'job-proposal-template',
+	module: JobProposalTemplateModule,
+	location: 'jobs'
+};

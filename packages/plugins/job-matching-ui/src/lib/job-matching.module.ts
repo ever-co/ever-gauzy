@@ -1,4 +1,4 @@
-import { Inject, NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
 import {
@@ -16,7 +16,14 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { PermissionsEnum } from '@gauzy/contracts';
+import {
+	GauzyUIPlugin,
+	IOnUIPluginBootstrap,
+	IOnUIPluginDestroy,
+	NavMenuBuilderService,
+	PageRouteRegistryService
+} from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import { DialogsModule, SharedModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
 import { createJobMatchingRoutes } from './job-matching.routes';
@@ -46,7 +53,7 @@ const THIRD_PARTY_MODULES = [
 	NgxPermissionsModule.forRoot(),
 	NgSelectModule,
 	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
+		defaultLanguage: getBrowserLanguage(),
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,
@@ -68,21 +75,37 @@ const THIRD_PARTY_MODULES = [
 		}
 	]
 })
-export class JobMatchingModule {
-	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+export class JobMatchingModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
+	private static hasRegisteredPageRoutes = false;
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 
-	constructor(
-		@Inject(PageRouteRegistryService) private readonly _pageRouteRegistryService: PageRouteRegistryService
-	) {
-		// Register the routes
+	constructor() {
 		this.registerPageRoutes();
+		this.registerNavMenuItems();
+	}
+
+	// ─── Plugin Lifecycle ─────────────────────────────────────────
+
+	/**
+	 * Called by `UIPluginModule` after the module is instantiated.
+	 */
+	onPluginBootstrap(): void {
+		console.log('[JobMatchingModule] Plugin bootstrapped');
 	}
 
 	/**
-	 * Registers routes for the Jobs browser module.
+	 * Called by `UIPluginModule` when the application is shutting down.
+	 */
+	onPluginDestroy(): void {
+		console.log('[JobMatchingModule] Plugin destroyed');
+	}
+
+	// ─── Route & Menu Registration ────────────────────────────────
+
+	/**
+	 * Registers routes for the Job Matching module.
 	 * Ensures that routes are registered only once.
-	 *
-	 * @returns {void}
 	 */
 	registerPageRoutes(): void {
 		if (JobMatchingModule.hasRegisteredPageRoutes) {
@@ -91,13 +114,9 @@ export class JobMatchingModule {
 
 		// Register Job Matching Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
 			location: 'jobs',
-			// Register the path 'matching'
 			path: 'matching',
-			// Register the loadChildren function to load the MatchingModule lazy module
 			loadChildren: () => import('./job-matching.module').then((m) => m.JobMatchingModule),
-			// Register the data object
 			data: {
 				selectors: {
 					date: true,
@@ -111,4 +130,33 @@ export class JobMatchingModule {
 		// Set hasRegisteredRoutes to true
 		JobMatchingModule.hasRegisteredPageRoutes = true;
 	}
+
+	/**
+	 * Register navigation menu items for the Job Matching plugin.
+	 */
+	private registerNavMenuItems(): void {
+		this._navMenuBuilderService.addNavMenuItem(
+			{
+				id: 'jobs-matching',
+				title: 'Matching',
+				icon: 'fas fa-user',
+				link: '/pages/jobs/matching',
+				data: {
+					translationKey: 'MENU.JOBS_MATCHING',
+					permissionKeys: [PermissionsEnum.ORG_JOB_MATCHING_VIEW]
+				}
+			},
+			'jobs',
+			'jobs-proposal-template' // Insert before proposal-template
+		);
+	}
 }
+
+/**
+ * Plugin definition for the Job Matching UI plugin.
+ */
+export const JobMatchingPlugin: GauzyUIPlugin = {
+	id: 'job-matching',
+	module: JobMatchingModule,
+	location: 'jobs'
+};

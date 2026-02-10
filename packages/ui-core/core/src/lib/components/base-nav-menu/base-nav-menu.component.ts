@@ -432,34 +432,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 					translationKey: 'MENU.JOBS',
 					featureKey: FeatureEnum.FEATURE_JOB
 				},
-				items: [
-					{
-						id: 'jobs-employee',
-						title: 'Employee',
-						icon: 'fas fa-user-friends',
-						link: '/pages/jobs/employee',
-						data: {
-							translationKey: 'MENU.EMPLOYEES',
-							permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW]
-						}
-					},
-					{
-						id: 'jobs-proposal-template',
-						title: 'Proposal Template',
-						icon: 'far fa-file-alt',
-						link: '/pages/jobs/proposal-template',
-						data: {
-							translationKey: 'MENU.PROPOSAL_TEMPLATE',
-							permissionKeys: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
-							...(this._store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT
-							) && {
-								add: '/pages/jobs/proposal-template?openAddDialog=true'
-							})
-						}
-					}
-				]
+				// Child items are registered dynamically by each job plugin module.
+				// See GauzyUIPlugin / plugin-config.ts for the list of active plugins.
+				items: []
 			},
 			{
 				id: 'employees',

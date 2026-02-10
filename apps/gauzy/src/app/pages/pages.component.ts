@@ -27,12 +27,12 @@ import { ReportService } from './reports/all-report/report.service';
 	styleUrls: ['pages.component.scss'],
 	template: `
 		@if (!!menu && user) {
-		  <ngx-one-column-layout>
-		    <ga-main-nav-menu></ga-main-nav-menu>
-		    <router-outlet></router-outlet>
-		  </ngx-one-column-layout>
+		<ngx-one-column-layout>
+			<ga-main-nav-menu></ga-main-nav-menu>
+			<router-outlet></router-outlet>
+		</ngx-one-column-layout>
 		}
-		`,
+	`,
 	standalone: false
 })
 export class PagesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

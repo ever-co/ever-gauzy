@@ -1,4 +1,4 @@
-import { Inject, NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
 import {
@@ -20,7 +20,14 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileUploadModule } from 'ng2-file-upload';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { PermissionsEnum } from '@gauzy/contracts';
+import {
+	GauzyUIPlugin,
+	IOnUIPluginBootstrap,
+	IOnUIPluginDestroy,
+	NavMenuBuilderService,
+	PageRouteRegistryService
+} from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
@@ -62,7 +69,7 @@ const THIRD_PARTY_MODULES = [
 	MomentModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
+		defaultLanguage: getBrowserLanguage(),
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,
@@ -94,19 +101,38 @@ const THIRD_PARTY_MODULES = [
 		}
 	]
 })
-export class JobSearchModule {
-	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+export class JobSearchModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
+	private static hasRegisteredPageRoutes = false;
 
-	constructor(@Inject(PageRouteRegistryService) readonly _pageRouteRegistryService: PageRouteRegistryService) {
-		// Register the routes
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+
+	constructor() {
 		this.registerPageRoutes();
+		this.registerNavMenuItems();
+	}
+
+	// ─── Plugin Lifecycle ─────────────────────────────────────────
+
+	/**
+	 * Called by `UIPluginModule` after the module is instantiated.
+	 */
+	onPluginBootstrap(): void {
+		console.log('[JobSearchModule] Plugin bootstrapped');
 	}
 
 	/**
-	 * Registers routes for the jobs browser module.
+	 * Called by `UIPluginModule` when the application is shutting down.
+	 */
+	onPluginDestroy(): void {
+		console.log('[JobSearchModule] Plugin destroyed');
+	}
+
+	// ─── Route & Menu Registration ────────────────────────────────
+
+	/**
+	 * Registers routes for the Job Search (Browse) module.
 	 * Ensures that routes are registered only once.
-	 *
-	 * @returns {void}
 	 */
 	registerPageRoutes(): void {
 		if (JobSearchModule.hasRegisteredPageRoutes) {
@@ -115,13 +141,9 @@ export class JobSearchModule {
 
 		// Register Job Browser Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
 			location: 'jobs',
-			// Register the path 'search'
 			path: 'search',
-			// Register the loadChildren function to load the JobSearchModule lazy module
 			loadChildren: () => import('./job-search.module').then((m) => m.JobSearchModule),
-			// Register the data object
 			data: {
 				selectors: {
 					date: true,
@@ -135,4 +157,33 @@ export class JobSearchModule {
 		// Set hasRegisteredRoutes to true
 		JobSearchModule.hasRegisteredPageRoutes = true;
 	}
+
+	/**
+	 * Register navigation menu items for the Job Search (Browse) plugin.
+	 */
+	private registerNavMenuItems(): void {
+		this._navMenuBuilderService.addNavMenuItem(
+			{
+				id: 'jobs-browse',
+				title: 'Browse',
+				icon: 'fas fa-list',
+				link: '/pages/jobs/search',
+				data: {
+					translationKey: 'MENU.JOBS_SEARCH',
+					permissionKeys: [PermissionsEnum.ORG_JOB_SEARCH]
+				}
+			},
+			'jobs',
+			'jobs-proposal-template' // Insert before proposal-template
+		);
+	}
 }
+
+/**
+ * Plugin definition for the Job Search UI plugin.
+ */
+export const JobSearchPlugin: GauzyUIPlugin = {
+	id: 'job-search',
+	module: JobSearchModule,
+	location: 'jobs'
+};

@@ -11,7 +11,14 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
+import {
+	GauzyUIPlugin,
+	IOnUIPluginBootstrap,
+	IOnUIPluginDestroy,
+	NavMenuBuilderService,
+	PageRouteRegistryService,
+	PermissionsGuard
+} from '@gauzy/ui-core/core';
 import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
 
@@ -33,48 +40,58 @@ import { JobEmployeeComponent } from './components/job-employee/job-employee.com
 	],
 	exports: [JobEmployeeComponent]
 })
-export class JobEmployeeModule {
-	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+export class JobEmployeeModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
+	private static hasRegisteredPageRoutes = false;
+
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 
 	constructor() {
-		this.registerPageRoutes(this._pageRouteRegistryService); // Register the routes
+		this.registerPageRoutes();
+		this.registerNavMenuItems();
+	}
+
+	// ─── Plugin Lifecycle ─────────────────────────────────────────
+
+	/**
+	 * Called by `UIPluginModule` after the module is instantiated.
+	 */
+	onPluginBootstrap(): void {
+		console.log('[JobEmployeeModule] Plugin bootstrapped');
 	}
 
 	/**
-	 * Register routes for the JobEmployeeModule
-	 *
-	 * @param _pageRouteRegistryService
-	 * @returns {void}
+	 * Called by `UIPluginModule` when the application is shutting down.
 	 */
-	private registerPageRoutes(_pageRouteRegistryService: PageRouteRegistryService): void {
+	onPluginDestroy(): void {
+		console.log('[JobEmployeeModule] Plugin destroyed');
+	}
+
+	// ─── Route & Menu Registration ────────────────────────────────
+
+	/**
+	 * Register routes for the JobEmployeeModule.
+	 */
+	private registerPageRoutes(): void {
 		if (JobEmployeeModule.hasRegisteredPageRoutes) {
 			return;
 		}
 
 		// Register Job Employee Page Routes
-		_pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
+		this._pageRouteRegistryService.registerPageRoute({
 			location: 'jobs',
-			// Register the path 'employee'
 			path: 'employee',
-			// Directly render the JobEmployeeComponent for this route
 			component: JobEmployeeComponent,
-			// Protect the route with permissions guard
 			canActivate: [PermissionsGuard],
-			// Register the data object
 			data: {
-				// Tabset and datatable identifiers used by the page layout
 				tabsetId: 'job-employee',
 				dataTableId: 'job-employee',
-				// Global page selectors configuration
 				selectors: {
 					date: true,
 					employee: true,
 					project: false,
 					team: false
 				},
-				// Route permissions configuration
 				permissions: {
 					only: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW],
 					redirectTo: '/pages/jobs/search'
@@ -85,4 +102,32 @@ export class JobEmployeeModule {
 		// Set hasRegisteredRoutes to true
 		JobEmployeeModule.hasRegisteredPageRoutes = true;
 	}
+
+	/**
+	 * Register navigation menu items for the Job Employee plugin.
+	 */
+	private registerNavMenuItems(): void {
+		this._navMenuBuilderService.addNavMenuItem(
+			{
+				id: 'jobs-employee',
+				title: 'Employee',
+				icon: 'fas fa-user-friends',
+				link: '/pages/jobs/employee',
+				data: {
+					translationKey: 'MENU.EMPLOYEES',
+					permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW]
+				}
+			},
+			'jobs' // The parent section id
+		);
+	}
 }
+
+/**
+ * Plugin definition for the Job Employee UI plugin.
+ */
+export const JobEmployeePlugin: GauzyUIPlugin = {
+	id: 'job-employee',
+	module: JobEmployeeModule,
+	location: 'jobs'
+};
