@@ -1,6 +1,5 @@
 import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-
 import { NbAuthModule } from '@nebular/auth';
 import {
 	NbAccordionModule,
@@ -48,7 +47,6 @@ import { AcceptInviteFormComponent } from './components/accept-invite/accept-inv
 import { AcceptClientInviteComponent } from './components/accept-client-invite/accept-client-invite.component';
 import { AcceptClientInviteFormComponent } from './components/accept-client-invite/accept-client-invite-form/accept-client-invite-form.component';
 import { EstimateEmailComponent } from './components/estimate-email/estimate-email.component';
-import { getBrowserLanguage, provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
 
 // Nebular Modules
 const NB_MODULES = [
