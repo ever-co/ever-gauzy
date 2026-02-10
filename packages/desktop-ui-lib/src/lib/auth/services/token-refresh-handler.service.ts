@@ -22,7 +22,7 @@ export class TokenRefreshHandler {
 	private isRefreshing = false;
 
 	/** Gate subject — emits `null` while refreshing, the new token on success. */
-	private refreshTokenSubject = new BehaviorSubject<string | null>(null);
+	private refreshToken$ = new BehaviorSubject<string | null>(null);
 
 	/**
 	 * Entry point called by the interceptor on every 401 response.
@@ -52,7 +52,7 @@ export class TokenRefreshHandler {
 		originalError: HttpErrorResponse
 	): Observable<HttpEvent<any>> {
 		this.isRefreshing = true;
-		this.refreshTokenSubject.next(null);
+		this.refreshToken$.next(null);
 
 		// No refresh token available → session is unrecoverable
 		if (!this.store.refreshToken) {
@@ -65,25 +65,25 @@ export class TokenRefreshHandler {
 				if (result.isSuccess()) {
 					const newToken = this.store.token;
 					// Unblock any queued requests
-					this.refreshTokenSubject.next(newToken);
+					this.refreshToken$.next(newToken);
 					return next.handle(this.cloneWithToken(request, newToken));
 				}
 
 				// Refresh returned a non-success result → force logout
 				// Signal failure to queued requests by erroring the subject
-				this.refreshTokenSubject.error(originalError);
+				this.refreshToken$.error(originalError);
 				return this.handleSessionExpiry(originalError);
 			}),
 			catchError(() => {
 				// Network/server error during refresh → force logout,
 				// Signal failure to queued requests by erroring the subject
-				this.refreshTokenSubject.error(originalError);
+				this.refreshToken$.error(originalError);
 				return this.handleSessionExpiry(originalError);
 			}),
 			finalize(() => {
 				this.isRefreshing = false;
 				// Recreate the subject for subsequent refresh cycles
-				this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
+				this.refreshToken$ = new BehaviorSubject<string | null>(null);
 			})
 		);
 	}
@@ -94,7 +94,7 @@ export class TokenRefreshHandler {
 	 * If the refresh fails, the error is propagated to all queued requests.
 	 */
 	private waitForRefresh(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-		return this.refreshTokenSubject.pipe(
+		return this.refreshToken$.pipe(
 			filter((token): token is string => token !== null),
 			take(1),
 			switchMap((token) => next.handle(this.cloneWithToken(request, token))),
