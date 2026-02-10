@@ -43,6 +43,33 @@ export enum JobSearchTabsEnum {
 }
 
 /**
+ * Represents the confirm/reject actions available in smart-table edit events.
+ */
+interface SmartTableConfirm {
+	resolve(): void;
+	reject(): void;
+}
+
+/**
+ * Event structure for smart-table edit confirm action.
+ * Contains the original data, new data, and confirm/reject callbacks.
+ */
+interface EditConfirmEvent {
+	data: IEmployee;
+	newData: Partial<IEmployee>;
+	confirm: SmartTableConfirm;
+}
+
+/**
+ * Event structure for smart-table edit cancel action.
+ * Contains the original data and confirm/reject callbacks.
+ */
+interface EditCancelEvent {
+	data: IEmployee;
+	confirm: SmartTableConfirm;
+}
+
+/**
  * Job Employee Component
  *
  * Displays and manages job employees: browse list with statistics (available/applied jobs,
@@ -61,8 +88,8 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	public readonly employees$ = new Subject<boolean>();
 	public readonly nbTab$ = new BehaviorSubject<JobSearchTabsEnum>(JobSearchTabsEnum.BROWSE);
 	public loading = false;
-	public settingsSmartTable: any;
-	public smartTableSource: ServerDataSource;
+	public settingsSmartTable!: unknown;
+	public smartTableSource: ServerDataSource | undefined;
 	public organization: IOrganization | null = null;
 	public selectedEmployeeId: ID | null = null;
 	public selectedEmployee: IEmployee | null = null;
@@ -81,11 +108,11 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	private readonly _pageDataTableRegistryService = inject(PageDataTableRegistryService);
 	private readonly _pageTabRegistryService = inject(PageTabRegistryService);
 
-	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data['tabsetId'];
-	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data['dataTableId'];
+	public tabsetId!: PageTabsetRegistryId;
+	public dataTableId!: PageDataTableRegistryId;
 
-	@ViewChild('tableLayout', { static: true }) tableLayout!: TemplateRef<unknown>;
-	@ViewChild('comingSoon', { static: true }) comingSoon!: TemplateRef<unknown>;
+	@ViewChild('tableLayout', { static: true }) readonly tableLayout!: TemplateRef<unknown>;
+	@ViewChild('comingSoon', { static: true }) readonly comingSoon!: TemplateRef<unknown>;
 
 	constructor() {
 		super(inject(TranslateService));
@@ -93,11 +120,41 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 	/** Initialize permissions, locale, page tabs/columns, smart table settings, and translation listener. */
 	ngOnInit(): void {
+		this._validateRouteData();
 		this.initializeUiPermissions();
 		this.initializeUiLanguagesAndLocale();
 		this._initializePageElements();
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
+	}
+
+	/**
+	 * Reads and validates `tabsetId` and `dataTableId` from the activated route snapshot data.
+	 * Throws a descriptive error if either value is missing so misconfigured routes fail fast
+	 * instead of silently passing `undefined` to downstream registry calls.
+	 */
+	private _validateRouteData(): void {
+		const data = this._route.snapshot.data;
+
+		const tabsetId = data['tabsetId'] as PageTabsetRegistryId | undefined;
+		const dataTableId = data['dataTableId'] as PageDataTableRegistryId | undefined;
+
+		if (!tabsetId) {
+			throw new Error(
+				`JobEmployeeComponent: Missing required route data property "tabsetId". ` +
+					`Ensure the route configuration for this component includes data: { tabsetId: '<PageTabsetRegistryId>' }.`
+			);
+		}
+
+		if (!dataTableId) {
+			throw new Error(
+				`JobEmployeeComponent: Missing required route data property "dataTableId". ` +
+					`Ensure the route configuration for this component includes data: { dataTableId: '<PageDataTableRegistryId>' }.`
+			);
+		}
+
+		this.tabsetId = tabsetId;
+		this.dataTableId = dataTableId;
 	}
 
 	/** Subscribe to employees$, pagination$, and store (organization + employee) to load and refresh job employees. */
@@ -139,18 +196,15 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	 * with the tab and data table registry services.
 	 */
 	private _initializePageElements(): void {
-		this.registerPageTabs(this._pageTabRegistryService);
-		this.registerDataTableColumns(this._pageDataTableRegistryService);
+		this.registerPageTabs();
+		this.registerDataTableColumns();
 	}
 
 	/**
 	 * Registers the Browse, Search, and History tabs for the job employee tabset.
-	 *
-	 * @param _pageTabRegistryService - The PageTabRegistryService to register the tabs with.
-	 * @returns void
 	 */
-	private registerPageTabs(_pageTabRegistryService: PageTabRegistryService): void {
-		_pageTabRegistryService.registerPageTab({
+	private registerPageTabs(): void {
+		this._pageTabRegistryService.registerPageTab({
 			tabsetId: this.tabsetId,
 			tabId: 'browse',
 			tabIcon: 'globe-2-outline',
@@ -161,7 +215,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			template: this.tableLayout
 		});
 
-		_pageTabRegistryService.registerPageTab({
+		this._pageTabRegistryService.registerPageTab({
 			tabsetId: this.tabsetId,
 			tabId: 'search',
 			tabIcon: 'search-outline',
@@ -172,7 +226,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			template: this.comingSoon
 		});
 
-		_pageTabRegistryService.registerPageTab({
+		this._pageTabRegistryService.registerPageTab({
 			tabsetId: this.tabsetId,
 			tabId: 'history',
 			tabIcon: 'clock-outline',
@@ -186,11 +240,9 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 	/**
 	 * Registers data table columns (employee, available/applied jobs, billing rates, job search status).
-	 * @param _pageDataTableRegistryService - The PageDataTableRegistryService to register the columns with.
-	 * @returns void
 	 */
-	private registerDataTableColumns(_pageDataTableRegistryService: PageDataTableRegistryService): void {
-		_pageDataTableRegistryService.registerPageDataTableColumn({
+	private registerDataTableColumns(): void {
+		this._pageDataTableRegistryService.registerPageDataTableColumn({
 			dataTableId: this.dataTableId,
 			columnId: 'name',
 			order: 0,
@@ -211,7 +263,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			}
 		});
 
-		_pageDataTableRegistryService.registerPageDataTableColumn({
+		this._pageDataTableRegistryService.registerPageDataTableColumn({
 			dataTableId: this.dataTableId,
 			columnId: 'availableJobs',
 			order: 1,
@@ -227,7 +279,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			}
 		});
 
-		_pageDataTableRegistryService.registerPageDataTableColumn({
+		this._pageDataTableRegistryService.registerPageDataTableColumn({
 			dataTableId: this.dataTableId,
 			columnId: 'appliedJobs',
 			order: 2,
@@ -243,7 +295,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			}
 		});
 
-		_pageDataTableRegistryService.registerPageDataTableColumn({
+		this._pageDataTableRegistryService.registerPageDataTableColumn({
 			dataTableId: this.dataTableId,
 			columnId: 'billRateValue',
 			order: 3,
@@ -262,7 +314,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			}
 		});
 
-		_pageDataTableRegistryService.registerPageDataTableColumn({
+		this._pageDataTableRegistryService.registerPageDataTableColumn({
 			dataTableId: this.dataTableId,
 			columnId: 'minimumBillingRate',
 			order: 4,
@@ -281,7 +333,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			}
 		});
 
-		_pageDataTableRegistryService.registerPageDataTableColumn({
+		this._pageDataTableRegistryService.registerPageDataTableColumn({
 			dataTableId: this.dataTableId,
 			columnId: 'isJobSearchActive',
 			order: 5,
@@ -366,10 +418,12 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				relations: ['user'],
 				where: { ...whereClause },
 				finalize: () => {
-					this.setPagination({
-						...this.getPagination(),
-						totalItems: this.smartTableSource.count()
-					});
+					if (this.smartTableSource) {
+						this.setPagination({
+							...this.getPagination(),
+							totalItems: this.smartTableSource.count()
+						});
+					}
 				}
 			});
 		} catch (error) {
@@ -390,6 +444,10 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			}
 
 			this.setSmartTableSource();
+
+			if (!this.smartTableSource) {
+				return;
+			}
 
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
@@ -453,10 +511,10 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 	/**
 	 * Handles smart table edit confirm: updates employee bill rate and minimum billing rate, then refreshes the list.
-	 * @param event - The event object.
+	 * @param event - The smart-table edit confirm event with data, newData, and confirm callbacks.
 	 * @returns void
 	 */
-	async onEditConfirm(event: any): Promise<void> {
+	async onEditConfirm(event: EditConfirmEvent): Promise<void> {
 		try {
 			if (!this.organization) {
 				return;
@@ -482,12 +540,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 	/**
 	 * Handles smart table edit cancel: refreshes the table to revert in-place changes.
-	 * @param event - The event object.
+	 * @param event - The smart-table edit cancel event with data and confirm callbacks.
 	 * @returns void
 	 */
-	onEditCancel(event: any): void {
+	onEditCancel(event: EditCancelEvent): void {
 		console.log('Edit canceled for row:', event);
-		this.smartTableSource.refresh();
+		if (this.smartTableSource) {
+			this.smartTableSource.refresh();
+		}
 	}
 
 	/** Re-applies smart table settings when the application language changes. */

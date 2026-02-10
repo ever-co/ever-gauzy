@@ -21388,14 +21388,6 @@ ecdsa-sig-formatter@1.0.11:
   dependencies:
     safe-buffer "^5.0.1"
 
-echarts@^6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/echarts/-/echarts-6.0.0.tgz#2935aa7751c282d1abbbf7d719d397199a15b9e7"
-  integrity sha512-Tte/grDQRiETQP4xz3iZWSvoHrkCQtwqd6hs+mifXcjrCuo2iKWbajFObuLJVBlDIJlOzgQPd1hsaKt/3+OMkQ==
-  dependencies:
-    tslib "2.3.0"
-    zrender "6.0.0"
-
 editorconfig@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/editorconfig/-/editorconfig-1.0.4.tgz#040c9a8e9a6c5288388b87c2db07028aa89f53a3"
@@ -31319,13 +31311,6 @@ ngx-draggable-dom@^20.0.0:
   dependencies:
     tslib "^2.3.1"
 
-ngx-echarts@^20.0.2:
-  version "20.0.2"
-  resolved "https://registry.yarnpkg.com/ngx-echarts/-/ngx-echarts-20.0.2.tgz#028affcbed1f81d7aeaa7f0a5c9c75831d1e1507"
-  integrity sha512-kDoIFp7SrWCPWG9nX9IX9ARnIh4f5p8VYtRWvhXwlf5gW+GxUbeDKYpvIvBVjaftudLZIMwZ/N4GADQSIus57Q==
-  dependencies:
-    tslib "^2.3.0"
-
 ngx-feature-toggle@^12.0.0:
   version "12.0.0"
   resolved "https://registry.yarnpkg.com/ngx-feature-toggle/-/ngx-feature-toggle-12.0.0.tgz#dd8b9537784ba626950827cd29d485d4ef747d6a"
@@ -39731,11 +39716,6 @@ tsconfig-paths@4.2.0, tsconfig-paths@^4.0.0, tsconfig-paths@^4.1.2, tsconfig-pat
     minimist "^1.2.6"
     strip-bom "^3.0.0"
 
-tslib@2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.0.tgz#803b8cdab3e12ba581a4ca41c8839bbb0dacb09e"
-  integrity sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==
-
 tslib@2.8.1, tslib@^2.0.0, tslib@^2.0.1, tslib@^2.1.0, tslib@^2.2.0, tslib@^2.3.0, tslib@^2.3.1, tslib@^2.4.0, tslib@^2.4.1, tslib@^2.5.0, tslib@^2.6.2, tslib@^2.6.3, tslib@^2.8.0, tslib@^2.8.1:
   version "2.8.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.8.1.tgz#612efe4ed235d567e8aba5f2a5fab70280ade83f"
@@ -42233,10 +42213,3 @@ zone.js@0.15.0:
   version "0.15.0"
   resolved "https://registry.yarnpkg.com/zone.js/-/zone.js-0.15.0.tgz#4810624e58d6dcf7b8379c1631765589917a0d8f"
   integrity sha512-9oxn0IIjbCZkJ67L+LkhYWRyAy7axphb3VgE2MBDlOqnmHMPWGYMxJxBYFueFq/JGY2GMwS0rU+UCLunEmy5UA==
-
-zrender@6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/zrender/-/zrender-6.0.0.tgz#947077bc69cdea744134984927f132f3727f8079"
-  integrity sha512-41dFXEEXuJpNecuUQq6JlbybmnHaqqpGlbH1yxnA5V9MMP4SbohSVZsJIwz+zdjQXSSlR1Vc34EgH1zxyTDvhg==
-  dependencies:
-    tslib "2.3.0"

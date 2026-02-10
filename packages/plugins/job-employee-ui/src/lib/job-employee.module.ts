@@ -18,14 +18,14 @@ import { JobEmployeeComponent } from './components/job-employee/job-employee.com
 @NgModule({
 	declarations: [JobEmployeeComponent],
 	imports: [
-		RouterModule.forChild([]),
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,
 		NbSpinnerModule,
 		NbTabsetModule,
 		NbToggleModule,
-		NgxPermissionsModule,
+		RouterModule.forChild([]),
+		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
 		SharedModule,
 		SmartDataViewLayoutModule,
@@ -64,7 +64,7 @@ export class JobEmployeeModule {
 			canActivate: [PermissionsGuard],
 			// Register the data object
 			data: {
-				// Tabset and datatable identifiers used by the page layout
+				// Tabset and data table identifiers used by the page layout
 				tabsetId: 'job-employee',
 				dataTableId: 'job-employee',
 				// Global page selectors configuration

@@ -61,8 +61,9 @@ export type PageRouteRegistryId =
  * - 'timesheet': A timesheet tab.
  * - 'time-activity': A time and activity tab.
  * - 'employee-edit': An employee edit tab.
+ * - 'job-employee': A job employee tab.
  */
-export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity' | 'employee-edit';
+export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity' | 'employee-edit' | 'job-employee';
 
 /**
  * @description
