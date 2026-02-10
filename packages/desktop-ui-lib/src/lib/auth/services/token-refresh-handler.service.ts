@@ -22,7 +22,7 @@ export class TokenRefreshHandler {
 	private isRefreshing = false;
 
 	/** Gate subject — emits `null` while refreshing, the new token on success. */
-	private readonly refreshTokenSubject = new BehaviorSubject<string | null>(null);
+	private refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
 	/**
 	 * Entry point called by the interceptor on every 401 response.
@@ -70,15 +70,20 @@ export class TokenRefreshHandler {
 				}
 
 				// Refresh returned a non-success result → force logout
+				// Signal failure to queued requests by erroring the subject
+				this.refreshTokenSubject.error(originalError);
 				return this.handleSessionExpiry(originalError);
 			}),
 			catchError(() => {
 				// Network/server error during refresh → force logout,
-				// but always re-throw the **original** 401 error.
+				// Signal failure to queued requests by erroring the subject
+				this.refreshTokenSubject.error(originalError);
 				return this.handleSessionExpiry(originalError);
 			}),
 			finalize(() => {
 				this.isRefreshing = false;
+				// Recreate the subject for subsequent refresh cycles
+				this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
 			})
 		);
 	}
@@ -86,12 +91,14 @@ export class TokenRefreshHandler {
 	/**
 	 * Queues concurrent 401 requests behind the in-flight refresh.
 	 * They resume as soon as `refreshTokenSubject` emits a non-null token.
+	 * If the refresh fails, the error is propagated to all queued requests.
 	 */
 	private waitForRefresh(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 		return this.refreshTokenSubject.pipe(
 			filter((token): token is string => token !== null),
 			take(1),
-			switchMap((token) => next.handle(this.cloneWithToken(request, token)))
+			switchMap((token) => next.handle(this.cloneWithToken(request, token))),
+			catchError((error) => throwError(() => error))
 		);
 	}
 
