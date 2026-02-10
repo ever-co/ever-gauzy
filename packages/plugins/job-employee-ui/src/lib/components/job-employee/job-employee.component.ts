@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, inject, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectionStrategy,
+	Component,
+	inject,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -54,6 +62,7 @@ export enum JobSearchTabsEnum {
 	templateUrl: './job-employee.component.html',
 	styleUrls: ['./job-employee.component.scss'],
 	providers: [CurrencyPipe],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: false
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
@@ -61,7 +70,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	public readonly employees$ = new Subject<boolean>();
 	public readonly nbTab$ = new BehaviorSubject<JobSearchTabsEnum>(JobSearchTabsEnum.BROWSE);
 	public loading = false;
-	public settingsSmartTable: unknown;
+	public settingsSmartTable: any;
 	public smartTableSource: ServerDataSource | undefined;
 	public organization: IOrganization | null = null;
 	public selectedEmployeeId: ID | null = null;
@@ -225,7 +234,10 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			isSortable: true,
 			isEditable: false,
 			renderComponent: EmployeeLinksComponent,
-			valuePrepareFunction: (_: any, cell: Cell) => this.prepareEmployeeValue(_, cell),
+			// Smart-table's ColumnValuePrepareFunction is typed to return string,
+			// but for custom renderers we return a structured object. Cast here
+			// to satisfy the library type while keeping strong typing internally.
+			valuePrepareFunction: ((_: unknown, cell: Cell) => this.prepareEmployeeValue(_, cell)) as any,
 			componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 				instance.rowData = cell.getRow().getData();
 				instance.value = cell.getValue();
@@ -245,7 +257,8 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			width: '10%',
 			isSortable: false,
 			isEditable: false,
-			valuePrepareFunction: (rawValue: any) => (isNotNullOrUndefined(rawValue) ? rawValue : 0),
+			valuePrepareFunction: (rawValue: number | null): string =>
+				String(isNotNullOrUndefined(rawValue) ? rawValue : 0),
 			editor: {
 				type: 'custom',
 				component: NonEditableNumberEditorComponent
@@ -261,7 +274,8 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			width: '10%',
 			isSortable: false,
 			isEditable: false,
-			valuePrepareFunction: (rawValue: any) => (isNotNullOrUndefined(rawValue) ? rawValue : 0),
+			valuePrepareFunction: (rawValue: number | null): string =>
+				String(isNotNullOrUndefined(rawValue) ? rawValue : 0),
 			editor: {
 				type: 'custom',
 				component: NonEditableNumberEditorComponent
@@ -281,7 +295,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				type: 'custom',
 				component: NumberEditorComponent
 			},
-			valuePrepareFunction: (rawValue: any, cell: Cell) => {
+			valuePrepareFunction: (rawValue: number | null, cell: Cell) => {
 				const employee: IEmployee = cell.getRow().getData();
 				return this._currencyPipe.transform(rawValue, employee?.billRateCurrency);
 			}
@@ -300,7 +314,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				type: 'custom',
 				component: NumberEditorComponent
 			},
-			valuePrepareFunction: (value: number, cell: Cell) => {
+			valuePrepareFunction: (value: number | null, cell: Cell) => {
 				const employee: IEmployee = cell.getRow().getData();
 				return this._currencyPipe.transform(value, employee?.billRateCurrency);
 			}
@@ -463,11 +477,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 	/**
 	 * Prepares the employee cell value (name, imageUrl, id) for the employee links column.
-	 * @param _ - The event object.
-	 * @param cell - The cell object.
-	 * @returns The employee cell value.
+	 * @param _ - The raw cell value (unused).
+	 * @param cell - The smart-table cell being rendered.
+	 * @returns The typed employee cell value.
 	 */
-	private prepareEmployeeValue(_: any, cell: Cell): any {
+	private prepareEmployeeValue(
+		_: unknown,
+		cell: Cell
+	): { name: string | null; imageUrl: string | null; id: ID | null } {
 		const employee: IEmployee | undefined = cell.getRow().getData();
 
 		if (employee) {
