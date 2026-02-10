@@ -67,6 +67,12 @@ export class OAuthAppController {
 		};
 		session.oauthApp = oauthAppSession;
 
+		// Explicitly persist the session before redirecting to ensure async stores
+		// (e.g. Redis) finish writing before the browser follows the redirect.
+		await new Promise<void>((resolve, reject) => {
+			session.save((err: any) => (err ? reject(err) : resolve()));
+		});
+
 		return res.redirect('/api/auth/auth0');
 	}
 
