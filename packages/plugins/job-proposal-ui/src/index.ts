@@ -18,7 +18,6 @@ export * from './lib/proposal/components/proposal-layout.component';
 export * from './lib/proposal/components/proposal-register/proposal-register.component';
 export * from './lib/proposal/components/proposal-details/proposal-details.component';
 export * from './lib/proposal/components/proposal-edit/proposal-edit.component';
-export * from './lib/proposal/components/proposal-pie-chart/proposal-pie-chart.component';
 
 // Table Components
 export * from './lib/proposal/components/table-components/job-title/job-title.component';

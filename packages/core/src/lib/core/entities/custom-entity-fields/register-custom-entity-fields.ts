@@ -118,11 +118,18 @@ async function registerCustomFieldsForEntity<T>(
 	 * So we have to add a "fake" column to the customFields embedded type to prevent this error from occurring.
 	 */
 	if (customFields.length > 0) {
-		MultiORMColumn({
-			type: 'boolean',
-			nullable: true,
-			select: false // This ensures the property is not selected by default
-		})(instance, __FIX_RELATIONAL_CUSTOM_FIELDS__);
+		try {
+			MultiORMColumn({
+				type: 'boolean',
+				nullable: true,
+				select: false // This ensures the property is not selected by default
+			})(instance, __FIX_RELATIONAL_CUSTOM_FIELDS__);
+		} catch (error) {
+			console.warn(
+				`Warning: Failed to apply decorator for ${__FIX_RELATIONAL_CUSTOM_FIELDS__} on ${entityName}:`,
+				error.message
+			);
+		}
 	}
 }
 

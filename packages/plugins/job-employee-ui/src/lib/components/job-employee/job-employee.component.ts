@@ -1,10 +1,9 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, inject, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, combineLatest, merge, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
@@ -35,7 +34,7 @@ import {
 } from '@gauzy/ui-core/shared';
 
 /**
- * Job Employee Component
+ * Tab identifiers for the job employee page (Browse, Search, History).
  */
 export enum JobSearchTabsEnum {
 	BROWSE = 'BROWSE',
@@ -43,204 +42,184 @@ export enum JobSearchTabsEnum {
 	HISTORY = 'HISTORY'
 }
 
-@UntilDestroy({ checkProperties: true })
+/**
+ * Job Employee Component
+ *
+ * Displays and manages job employees: browse list with statistics (available/applied jobs,
+ * billing rates, job search status), pagination, and integration with the page tab and data table registries.
+ */
+@UntilDestroy()
 @Component({
-    selector: 'ga-job-employees',
-    templateUrl: './job-employee.component.html',
-    styleUrls: ['./job-employee.component.scss'],
-    providers: [CurrencyPipe],
-    standalone: false
+	selector: 'ga-job-employees',
+	templateUrl: './job-employee.component.html',
+	styleUrls: ['./job-employee.component.scss'],
+	providers: [CurrencyPipe],
+	standalone: false
 })
-export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
-	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
-	public jobSearchTabsEnum = JobSearchTabsEnum;
-	public loading: boolean = false;
-	public settingsSmartTable: any;
-	public employees$: Subject<any> = new Subject();
-	public nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.BROWSE);
+export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
+	public readonly jobSearchTabsEnum = JobSearchTabsEnum;
+	public readonly employees$ = new Subject<boolean>();
+	public readonly nbTab$ = new BehaviorSubject<JobSearchTabsEnum>(JobSearchTabsEnum.BROWSE);
+	public loading = false;
+	public settingsSmartTable: unknown;
 	public smartTableSource: ServerDataSource;
-	public organization: IOrganization;
-	public selectedEmployeeId: ID;
-	public selectedEmployee: IEmployee;
-	public disableButton: boolean = true;
+	public organization: IOrganization | null = null;
+	public selectedEmployeeId: ID | null = null;
+	public selectedEmployee: IEmployee | null = null;
+	public disableButton = true;
 
-	// Template References
-	@ViewChild('tableLayout', { static: true }) tableLayout: TemplateRef<any>; // Template reference for the table layout tab
-	@ViewChild('comingSoon', { static: true }) comingSoon: TemplateRef<any>; // Template reference for the coming soon tab
+	private readonly _http = inject(HttpClient);
+	private readonly _route = inject(ActivatedRoute);
+	private readonly _router = inject(Router);
+	private readonly _ngxPermissionsService = inject(NgxPermissionsService);
+	private readonly _store = inject(Store);
+	private readonly _employeesService = inject(EmployeesService);
+	private readonly _jobSearchStoreService = inject(JobSearchStoreService);
+	private readonly _toastrService = inject(ToastrService);
+	private readonly _currencyPipe = inject(CurrencyPipe);
+	private readonly _i18nService = inject(I18nService);
+	private readonly _pageDataTableRegistryService = inject(PageDataTableRegistryService);
+	private readonly _pageTabRegistryService = inject(PageTabRegistryService);
 
-	constructor(
-		translateService: TranslateService,
-		private readonly _http: HttpClient,
-		private readonly _route: ActivatedRoute,
-		private readonly _router: Router,
-		private readonly _ngxPermissionsService: NgxPermissionsService,
-		private readonly _store: Store,
-		private readonly _employeesService: EmployeesService,
-		private readonly _jobSearchStoreService: JobSearchStoreService,
-		private readonly _toastrService: ToastrService,
-		private readonly _currencyPipe: CurrencyPipe,
-		private readonly _i18nService: I18nService,
-		readonly _pageDataTableRegistryService: PageDataTableRegistryService,
-		readonly _pageTabRegistryService: PageTabRegistryService
-	) {
-		super(translateService);
+	public readonly tabsetId: PageTabsetRegistryId = this._route.snapshot.data['tabsetId'];
+	public readonly dataTableId: PageDataTableRegistryId = this._route.snapshot.data['dataTableId'];
+
+	@ViewChild('tableLayout', { static: true }) readonly tableLayout!: TemplateRef<unknown>;
+	@ViewChild('comingSoon', { static: true }) readonly comingSoon!: TemplateRef<unknown>;
+
+	constructor() {
+		super(inject(TranslateService));
 	}
 
+	/** Initialize permissions, locale, page tabs/columns, smart table settings, and translation listener. */
 	ngOnInit(): void {
-		this.initializeUiPermissions(); // Initialize UI permissions
-		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
-		this._initializePageElements(); // Register page elements
-		this._applyTranslationOnSmartTable(); //
-		this._loadSmartTableSettings(); // Load smart table settings
+		this.initializeUiPermissions();
+		this.initializeUiLanguagesAndLocale();
+		this._initializePageElements();
+		this._applyTranslationOnSmartTable();
+		this._loadSmartTableSettings();
 	}
 
+	/** Subscribe to employees$, pagination$, and store (organization + employee) to load and refresh job employees. */
 	ngAfterViewInit(): void {
-		// Subscribe to the employees$ observable with debounce time and untilDestroyed operators
 		this.employees$
 			.pipe(
-				// Debounce the observable to wait for 100 milliseconds of inactivity
 				debounceTime(100),
-				// Perform side effect by triggering the getActiveJobEmployees method
 				tap(() => this.getActiveJobEmployees()),
-				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
-		// Subscribe to the pagination$ observable with debounce time, distinctUntilChange, and untilDestroyed operators
+
 		this.pagination$
 			.pipe(
-				// Debounce the observable to wait for 100 milliseconds of inactivity
 				debounceTime(100),
-				// Ensure that the value has changed before emitting it
 				distinctUntilChange(),
-				// Perform side effect by triggering the employees$ observable with true
 				tap(() => this.employees$.next(true)),
-				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
-		// Combine selectedOrganization$ and selectedEmployee$ observables
-		const storeOrganization$ = this._store.selectedOrganization$;
-		const storeEmployee$ = this._store.selectedEmployee$;
 
-		// Subscribe to the combined observables with debounce time, distinctUntilChange, filter, tap, and untilDestroyed operators
-		combineLatest([storeOrganization$, storeEmployee$])
+		combineLatest([this._store.selectedOrganization$, this._store.selectedEmployee$])
 			.pipe(
-				// Debounce the observable to wait for 100 milliseconds of inactivity
 				debounceTime(100),
-				// Ensure that the value has changed before emitting it
 				distinctUntilChange(),
-				// Filter out combinations where organization is falsy
 				filter(([organization]) => !!organization),
-				// Perform side effects: update organization and selectedEmployeeId, trigger employees$ observable
 				tap(([organization, employee]) => {
 					this.organization = organization;
 					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
 				tap(() => this.employees$.next(true)),
-				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	/**
-	 * Initializes page elements by registering page tabs and data table columns.
-	 *
-	 * This method centralizes the logic for setting up page-related configurations,
-	 * ensuring that the necessary page tabs and data table columns are registered
-	 * upon initialization.
+	 * Initializes page elements by registering page tabs and data table columns
+	 * with the tab and data table registry services.
 	 */
 	private _initializePageElements(): void {
-		// Register page elements
-		this.registerPageTabs(this._pageTabRegistryService); // Register page tabs
-		this.registerDataTableColumns(this._pageDataTableRegistryService); // Register data table columns
+		this.registerPageTabs(this._pageTabRegistryService);
+		this.registerDataTableColumns(this._pageDataTableRegistryService);
 	}
 
 	/**
-	 * Register page tabs for the JobEmployee
+	 * Registers the Browse, Search, and History tabs for the job employee tabset.
 	 *
-	 * @param _pageTabRegistryService
+	 * @param _pageTabRegistryService - The PageTabRegistryService to register the tabs with.
+	 * @returns void
 	 */
-	registerPageTabs(_pageTabRegistryService: PageTabRegistryService): void {
-		// Register the browse tab
+	private registerPageTabs(_pageTabRegistryService: PageTabRegistryService): void {
 		_pageTabRegistryService.registerPageTab({
-			tabsetId: this.tabsetId, // The identifier for the tabset
-			tabId: 'browse', // The identifier for the tab
-			tabIcon: 'globe-2-outline', // The icon for the tab
-			tabsetType: 'standard', // The type of tabset to use
-			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.BROWSE'), // The title for the tab
-			order: 1, // The order of the tab,
-			responsive: true, // Whether the tab is responsive,
-			template: this.tableLayout // The template to be rendered in the tab
+			tabsetId: this.tabsetId,
+			tabId: 'browse',
+			tabIcon: 'globe-2-outline',
+			tabsetType: 'standard',
+			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.BROWSE'),
+			order: 1,
+			responsive: true,
+			template: this.tableLayout
 		});
 
-		// Register the search tab
 		_pageTabRegistryService.registerPageTab({
-			tabsetId: this.tabsetId, // The identifier for the tabset
-			tabId: 'search', // The identifier for the tab
-			tabIcon: 'search-outline', // The icon for the tab
-			tabsetType: 'standard', // The type of tabset to use
-			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.SEARCH'), // The title for the tab
-			order: 2, // The order of the tab,
-			responsive: true, // Whether the tab is responsive,
-			template: this.comingSoon // The template to be rendered in the tab
+			tabsetId: this.tabsetId,
+			tabId: 'search',
+			tabIcon: 'search-outline',
+			tabsetType: 'standard',
+			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.SEARCH'),
+			order: 2,
+			responsive: true,
+			template: this.comingSoon
 		});
 
-		// Register the history tab
 		_pageTabRegistryService.registerPageTab({
-			tabsetId: this.tabsetId, // The identifier for the tabset
-			tabId: 'history', // The identifier for the tab
-			tabIcon: 'clock-outline', // The icon for the tab
-			tabsetType: 'standard', // The type of tabset to use
-			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.HISTORY'), // The title for the tab
-			order: 3, // The order of the tab,
-			responsive: true, // Whether the tab is responsive,
-			template: this.comingSoon // The template to be rendered in the tab
+			tabsetId: this.tabsetId,
+			tabId: 'history',
+			tabIcon: 'clock-outline',
+			tabsetType: 'standard',
+			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.HISTORY'),
+			order: 3,
+			responsive: true,
+			template: this.comingSoon
 		});
 	}
 
 	/**
-	 * Register data table columns for the JobEmployee
-	 *
-	 * @param _pageDataTableRegistryService
+	 * Registers data table columns (employee, available/applied jobs, billing rates, job search status).
+	 * @param _pageDataTableRegistryService - The PageDataTableRegistryService to register the columns with.
+	 * @returns void
 	 */
-	registerDataTableColumns(_pageDataTableRegistryService: PageDataTableRegistryService): void {
-		// Register the data table column
+	private registerDataTableColumns(_pageDataTableRegistryService: PageDataTableRegistryService): void {
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: this.dataTableId, // The identifier for the data table location
-			columnId: 'name', // The identifier for the column
-			order: 0, // The order of the column in the table
-			title: () => this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'), // The title of the column
-			type: 'custom', // The type of the column
-			width: '20%', // The width of the column
-			isSortable: true, // Indicates whether the column is sortable
-			isEditable: false, // Indicates whether the column is editable
+			dataTableId: this.dataTableId,
+			columnId: 'name',
+			order: 0,
+			title: () => this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'),
+			type: 'custom',
+			width: '20%',
+			isSortable: true,
+			isEditable: false,
 			renderComponent: EmployeeLinksComponent,
 			valuePrepareFunction: (_: any, cell: Cell) => this.prepareEmployeeValue(_, cell),
 			componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
-				// Get the row data from the cell
 				instance.rowData = cell.getRow().getData();
-				// Get the value from the cell
 				instance.value = cell.getValue();
 			},
 			editor: {
 				type: 'custom',
-				component: EmployeeLinkEditorComponent // Use the custom component for display
+				component: EmployeeLinkEditorComponent
 			}
 		});
 
-		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: this.dataTableId, // The identifier for the data table location
-			columnId: 'availableJobs', // The identifier for the column
-			order: 1, // The order of the column in the table
-			title: () => this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'), // The title of the column
-			type: 'text', // The type of the column
-			width: '10%', // The width of the column
-			isSortable: false, // Indicates whether the column is sortable
-			isEditable: false, // Indicates whether the column is editable
+			dataTableId: this.dataTableId,
+			columnId: 'availableJobs',
+			order: 1,
+			title: () => this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'),
+			type: 'text',
+			width: '10%',
+			isSortable: false,
+			isEditable: false,
 			valuePrepareFunction: (rawValue: any) => (isNotNullOrUndefined(rawValue) ? rawValue : 0),
 			editor: {
 				type: 'custom',
@@ -248,16 +227,15 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			}
 		});
 
-		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: this.dataTableId, // The identifier for the data table location
-			columnId: 'appliedJobs', // The identifier for the column
-			order: 2, // The order of the column in the table
-			title: () => this.getTranslation('JOB_EMPLOYEE.APPLIED_JOBS'), // The title of the column
-			type: 'text', // The type of the column
-			width: '10%', // The width of the column
-			isSortable: false, // Indicates whether the column is sortable
-			isEditable: false, // Indicates whether the column is editable
+			dataTableId: this.dataTableId,
+			columnId: 'appliedJobs',
+			order: 2,
+			title: () => this.getTranslation('JOB_EMPLOYEE.APPLIED_JOBS'),
+			type: 'text',
+			width: '10%',
+			isSortable: false,
+			isEditable: false,
 			valuePrepareFunction: (rawValue: any) => (isNotNullOrUndefined(rawValue) ? rawValue : 0),
 			editor: {
 				type: 'custom',
@@ -265,38 +243,34 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			}
 		});
 
-		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: this.dataTableId, // The identifier for the data table location
-			columnId: 'billRateValue', // The identifier for the column
-			order: 3, // The order of the column in the table
-			title: () => this.getTranslation('JOB_EMPLOYEE.BILLING_RATE'), // The title of the column
-			type: 'text', // The type of the column
-			width: '10%', // The width of the column
-			isSortable: false, // Indicates whether the column is sortable
-			isEditable: true, // Indicates whether the column is editable
+			dataTableId: this.dataTableId,
+			columnId: 'billRateValue',
+			order: 3,
+			title: () => this.getTranslation('JOB_EMPLOYEE.BILLING_RATE'),
+			type: 'text',
+			width: '10%',
+			isSortable: false,
+			isEditable: true,
 			editor: {
 				type: 'custom',
 				component: NumberEditorComponent
 			},
 			valuePrepareFunction: (rawValue: any, cell: Cell) => {
-				// Get the employee data from the cell
 				const employee: IEmployee = cell.getRow().getData();
-				// Return the transformed value
 				return this._currencyPipe.transform(rawValue, employee?.billRateCurrency);
 			}
 		});
 
-		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: this.dataTableId, // The identifier for the data table location
-			columnId: 'minimumBillingRate', // The identifier for the column
-			order: 4, // The order of the column in the table
-			title: () => this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'), // The title of the column
-			type: 'text', // The type of the column
-			width: '20%', // The width of the column
-			isSortable: false, // Indicates whether the column is sortable
-			isEditable: true, // Indicates whether the column is editable
+			dataTableId: this.dataTableId,
+			columnId: 'minimumBillingRate',
+			order: 4,
+			title: () => this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'),
+			type: 'text',
+			width: '20%',
+			isSortable: false,
+			isEditable: true,
 			editor: {
 				type: 'custom',
 				component: NumberEditorComponent
@@ -307,29 +281,23 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			}
 		});
 
-		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: this.dataTableId, // The identifier for the data table location
-			columnId: 'isJobSearchActive', // The identifier for the column
-			order: 5, // The order of the column in the table
-			title: () => this.getTranslation('JOB_EMPLOYEE.JOB_SEARCH_STATUS'), // The title of the column
-			type: 'custom', // The type of the column
-			width: '20%', // The width of the column
-			isSortable: false, // Indicates whether the column is sortable
-			isEditable: true, // Indicates whether the column is editable
+			dataTableId: this.dataTableId,
+			columnId: 'isJobSearchActive',
+			order: 5,
+			title: () => this.getTranslation('JOB_EMPLOYEE.JOB_SEARCH_STATUS'),
+			type: 'custom',
+			width: '20%',
+			isSortable: false,
+			isEditable: true,
 			renderComponent: ToggleSwitcherComponent,
 			componentInitFunction: (instance: ToggleSwitcherComponent, cell: Cell) => {
-				// Get the employee data from the cell
 				const employee: IEmployee = cell.getRow().getData();
-
-				// Set the label property to false to hide the label
 				instance.label = false;
-				// Set the initial value of the toggle
 				instance.value = employee.isJobSearchActive;
 
-				// Subscribe to the toggleChange event
-				instance.onSwitched.subscribe((toggle: boolean) => {
-					// Call the JobSearchStoreService to update the job search availability
+				/** Subscribe to the onSwitched event and update the job search availability. */
+				instance.onSwitched.pipe(untilDestroyed(instance)).subscribe((toggle: boolean) => {
 					this._jobSearchStoreService.updateJobSearchAvailability(this.organization, employee, toggle);
 				});
 			},
@@ -341,20 +309,20 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
-	 * Initialize UI permissions
+	 * Loads the current user's permissions into NgxPermissionsService.
+	 * @returns void
 	 */
-	private initializeUiPermissions() {
-		// Load permissions
+	private initializeUiPermissions(): void {
 		const permissions = this._store.userRolePermissions.map(({ permission }) => permission);
-		this._ngxPermissionsService.flushPermissions(); // Flush permissions
-		this._ngxPermissionsService.loadPermissions(permissions); // Load permissions
+		this._ngxPermissionsService.flushPermissions();
+		this._ngxPermissionsService.loadPermissions(permissions);
 	}
 
 	/**
-	 * Initialize UI languages and Update Locale
+	 * Subscribes to preferred language and applies it via TranslateService.
+	 * @returns void
 	 */
-	private initializeUiLanguagesAndLocale() {
-		// Observable that emits when preferred language changes.
+	private initializeUiLanguagesAndLocale(): void {
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
@@ -364,24 +332,21 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			untilDestroyed(this)
 		);
 
-		// Subscribe to initiate the stream
 		preferredLanguage$.subscribe();
 	}
 
 	/**
-	 * Registers and configures the Smart Table source.
+	 * Builds and assigns the Smart Table ServerDataSource for job employee statistics
+	 * (organization/tenant filter, optional employee filter, permission-based restrictions).
 	 */
 	setSmartTableSource(): void {
-		// Check if organization context is available
 		if (!this.organization) {
 			return;
 		}
 
-		// Set loading state to true while fetching data
 		this.loading = true;
 
 		try {
-			// Destructure properties for clarity
 			const { id: organizationId, tenantId } = this.organization;
 
 			const whereClause = {
@@ -393,22 +358,16 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				...(this.filters.where ? this.filters.where : {})
 			};
 
-			// Filter by current employee ID if the permission is not present
 			if (!this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-				// Filter by current employee ID if the permission is not present
 				const employeeId = this._store.user?.employee?.id;
 				whereClause.id = employeeId;
 			}
 
-			// Create a new ServerDataSource for Smart Table
 			this.smartTableSource = new ServerDataSource(this._http, {
 				endPoint: `${API_PREFIX}/employee-job/statistics`,
 				relations: ['user'],
-				// Define query parameters for the API request
 				where: { ...whereClause },
-				// Finalize callback to handle post-processing
 				finalize: () => {
-					// Update pagination based on the count of items in the source
 					this.setPagination({
 						...this.getPagination(),
 						totalItems: this.smartTableSource.count()
@@ -416,48 +375,38 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				}
 			});
 		} catch (error) {
-			// Display an error toastr notification in case of any exceptions.
 			this._toastrService.danger(error);
 		} finally {
-			// Set loading state to false once data fetching is complete
 			this.loading = false;
 		}
 	}
 
 	/**
-	 * Retrieves employees with active jobs.
-	 *
-	 * @returns {Promise<void>} - A Promise resolving to void.
+	 * Loads active job employees into the smart table and applies current pagination.
+	 * @returns void
 	 */
 	async getActiveJobEmployees(): Promise<void> {
 		try {
-			// Ensure the organization context is available before proceeding.
 			if (!this.organization) {
 				return;
 			}
 
-			// Set up the smart table source for displaying active job employees.
 			this.setSmartTableSource();
 
-			// Retrieve pagination settings.
 			const { activePage, itemsPerPage } = this.getPagination();
-
-			// Set paging for the smart table source.
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		} catch (error) {
-			// Display an error toastr notification in case of any exceptions.
 			this._toastrService.danger(error);
 		}
 	}
 
 	/**
-	 * Loads the Smart Table settings.
+	 * Builds smart table settings (pager, columns from registry, edit actions, no-data message).
+	 * @returns void
 	 */
 	private _loadSmartTableSettings(): void {
-		// Retrieve pagination settings
 		const pagination: IPaginationBase = this.getPagination();
 
-		// Configure smart table settings
 		this.settingsSmartTable = {
 			selectedRowIndex: -1,
 			hideSubHeader: true,
@@ -484,16 +433,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
-	 * Prepares the value for the employee cell.
-	 * @param _ The row data.
-	 * @param cell The cell to prepare the value for.
-	 * @returns The prepared value.
+	 * Prepares the employee cell value (name, imageUrl, id) for the employee links column.
+	 * @param _ - The event object.
+	 * @param cell - The cell object.
+	 * @returns The employee cell value.
 	 */
 	private prepareEmployeeValue(_: any, cell: Cell): any {
-		// Get the employee data from the cell
 		const employee: IEmployee | undefined = cell.getRow().getData();
 
-		// Prepare the value for the cell
 		if (employee) {
 			const { user, id } = employee;
 			return {
@@ -503,30 +450,24 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			};
 		}
 
-		// Return default values if the employee is undefined
 		return { name: null, imageUrl: null, id: null };
 	}
 
 	/**
-	 * Handles the event for confirming the edit of an editable field.
-	 *
-	 * @param event - The event containing the edited data.
+	 * Handles smart table edit confirm: updates employee bill rate and minimum billing rate, then refreshes the list.
+	 * @param event - The event object.
+	 * @returns void
 	 */
 	async onEditConfirm(event: any): Promise<void> {
 		try {
-			// Ensure the organization context is available before proceeding.
 			if (!this.organization) {
 				return;
 			}
 
-			// Destructure properties for clarity.
 			const { id: organizationId, tenantId } = this.organization;
-			// Get the employee ID from the event data
 			const employeeId = event.data?.id;
-			// Get the new data from the event
 			const { billRateValue, minimumBillingRate } = event.newData ?? {};
 
-			// Update employee bill rates.
 			await this._employeesService.updateProfile(employeeId, {
 				minimumBillingRate: +minimumBillingRate,
 				billRateValue: +billRateValue,
@@ -534,91 +475,68 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				organizationId
 			});
 
-			// If successful, refresh the smart table source.
 			this.employees$.next(true);
+			await event.confirm.resolve(event.newData);
 		} catch (error) {
 			console.error('Error while updating employee rates', error);
-			// If an error occurs, reject the edit and log the error.
 			await event.confirm.reject();
 		}
 	}
 
 	/**
-	 * Handles the cancellation of an edit operation in the smart table.
-	 * Refreshes the data table to reflect any changes made.
-	 *
-	 * @param event - The event object containing details about the canceled edit.
-	 *
+	 * Handles smart table edit cancel: refreshes the table to revert in-place changes.
+	 * @param event - The event object.
+	 * @returns void
 	 */
 	onEditCancel(event: any): void {
-		// Optionally, you can log the event for debugging purposes
-		console.log('Edit canceled for row:', event);
-
-		// Refresh the data table to revert any changes made during the edit
 		this.smartTableSource.refresh();
 	}
 
-	/**
-	 * Applies translations to the Smart Table settings when the language changes.
-	 * This method listens for the onLangChange event from the translateService.
-	 */
+	/** Re-applies smart table settings when the application language changes. */
 	private _applyTranslationOnSmartTable(): void {
-		// Subscribe to language changes using onLangChange
 		this.translateService.onLangChange
 			.pipe(
-				// Trigger the loading of Smart Table settings when the language changes
 				tap(() => this._loadSmartTableSettings()),
-				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	/**
-	 * Handles the change of a tab.
-	 *
-	 * @param tab - The NbTabComponent representing the selected tab.
+	 * Updates selected employee and edit button state when a row is selected or deselected.
+	 * @param isSelected - Whether the employee is selected.
+	 * @param data - The employee data.
+	 * @returns void
 	 */
-	onTabChange(tab: NbTabComponent) {}
-
-	/**
-	 * Handles the selection or deselection of an employee.
-	 *
-	 * @param param0 - Object containing selection information ({ isSelected, data }).
-	 */
-	onSelectEmployee({ isSelected, data }): void {
-		// Update the disableButton flag based on whether an employee is selected
+	onSelectEmployee({ isSelected, data }: { isSelected: boolean; data: IEmployee }): void {
 		this.disableButton = !isSelected;
-
-		// Update the selectedEmployee based on the selection status
 		this.selectedEmployee = isSelected ? data : null;
 	}
 
 	/**
-	 * Edit employee.
-	 *
-	 * @param selectedItem - The employee to be edited.
+	 * Navigates to the employee edit page for the selected or given employee.
+	 * @param selectedItem - The employee to edit.
+	 * @returns void
 	 */
 	edit(selectedItem?: IEmployee): void {
-		// If a specific employee is selected, update the selected employee state
 		if (selectedItem) {
 			this.onSelectEmployee({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-
-		// Navigate to the employee edit page
-		this._router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
+		const employeeId = this.selectedEmployee?.id;
+		if (employeeId) {
+			this._router.navigate(['/pages/employees/edit/', employeeId]);
+		}
 	}
 
 	/**
-	 * Navigates to the employee addition page and opens the add dialog.
-	 *
-	 * @param event - The pointer event that triggered this method.
-	 * @returns A promise that resolves when the navigation is complete or exits early if there is no organization.
+	 * Navigates to the employees page with the add-dialog query param to open the add-employee dialog.
+	 * @param event - The mouse event that triggered the navigation.
+	 * @returns void
 	 */
-	addNew = async (event: MouseEvent): Promise<void> => {
+	async addNew(event?: MouseEvent): Promise<void> {
 		if (!this.organization) {
 			return;
 		}
@@ -629,7 +547,5 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		} catch (error) {
 			this._toastrService.error(error.message || error);
 		}
-	};
-
-	ngOnDestroy(): void {}
+	}
 }
