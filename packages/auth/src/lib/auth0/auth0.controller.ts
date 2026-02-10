@@ -2,7 +2,7 @@ import { Controller, Get, HttpException, HttpStatus, Req, Res, UseGuards } from 
 import { AuthGuard } from '@nestjs/passport';
 import { Response, Request } from 'express';
 import { Public } from '@gauzy/common';
-import { SocialAuthService } from './../social-auth.service';
+import { OAuthAppSessionData, SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
 @UseGuards(AuthGuard('auth0'))
@@ -35,9 +35,7 @@ export class Auth0Controller {
 		const { user } = context;
 
 		const session = (req as any).session;
-		const oauthRequest = session?.oauthApp as
-			| { clientId: string; redirectUri: string; scope?: string; state?: string }
-			| undefined;
+		const oauthRequest = session?.oauthApp as OAuthAppSessionData | undefined;
 
 		if (oauthRequest) {
 			const oauthUser = await this.service.getOAuthLoginUser(user.emails);
@@ -70,7 +68,13 @@ export class Auth0Controller {
 				session.oauthApp = undefined;
 				return res.redirect(redirectUrl);
 			} catch (error: any) {
-				throw new HttpException(error?.message || 'OAuth authorization failed', HttpStatus.INTERNAL_SERVER_ERROR);
+				const errorParams = new URLSearchParams({
+					error: 'server_error',
+					...(oauthRequest.state ? { state: oauthRequest.state } : {})
+				});
+				const redirectUrl = `${oauthRequest.redirectUri}?${errorParams.toString()}`;
+				session.oauthApp = undefined;
+				return res.redirect(redirectUrl);
 			}
 		}
 

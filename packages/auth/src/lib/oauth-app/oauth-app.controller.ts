@@ -1,7 +1,7 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Logger, Post, Query, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Public } from '@gauzy/common';
-import { SocialAuthService } from '../social-auth.service';
+import { OAuthAppSessionData, SocialAuthService } from '../social-auth.service';
 
 interface OAuthAppAuthorizeQuery {
 	client_id?: string;
@@ -22,6 +22,8 @@ interface OAuthAppTokenRequest {
 @Public()
 @Controller('/integration/ever-gauzy/oauth')
 export class OAuthAppController {
+	private readonly logger = new Logger(OAuthAppController.name);
+
 	constructor(private readonly service: SocialAuthService) {}
 
 	@Get('/authorize')
@@ -57,12 +59,13 @@ export class OAuthAppController {
 			throw new HttpException('OAuth session is not available', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		session.oauthApp = {
+		const oauthAppSession: OAuthAppSessionData = {
 			clientId: query.client_id,
 			redirectUri: query.redirect_uri,
 			scope: query.scope,
 			state: query.state
 		};
+		session.oauthApp = oauthAppSession;
 
 		return res.redirect('/api/auth/auth0');
 	}
@@ -73,8 +76,8 @@ export class OAuthAppController {
 			throw new HttpException('Missing token request parameters', HttpStatus.BAD_REQUEST);
 		}
 
-		if (body.grant_type && body.grant_type !== 'authorization_code') {
-			throw new HttpException('Unsupported grant_type', HttpStatus.BAD_REQUEST);
+		if (!body.grant_type || body.grant_type !== 'authorization_code') {
+			throw new HttpException('Missing or unsupported grant_type', HttpStatus.BAD_REQUEST);
 		}
 
 		try {
@@ -92,7 +95,10 @@ export class OAuthAppController {
 				scope: token.scope
 			};
 		} catch (error: any) {
-			throw new HttpException(error?.message || 'OAuth token exchange failed', HttpStatus.BAD_REQUEST);
+			const message = error?.message || 'OAuth token exchange failed';
+			const isServerError = message.includes('not configured') || message.includes('not implemented');
+			const status = isServerError ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.BAD_REQUEST;
+			throw new HttpException(message, status);
 		}
 	}
 }

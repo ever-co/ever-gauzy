@@ -10,6 +10,13 @@ export interface OAuthAppConfig {
 	codeSecret: string;
 }
 
+export interface OAuthAppSessionData {
+	clientId: string;
+	redirectUri: string;
+	scope?: string;
+	state?: string;
+}
+
 export interface OAuthAppAuthorizationRequest {
 	userId: string;
 	tenantId: string;
@@ -60,16 +67,17 @@ export class SocialAuthService extends BaseSocialAuth {
 	public validateOAuthLoginEmail(args: []): any {}
 
 	public getOAuthAppConfig(): OAuthAppConfig {
-		const redirectUris = (process.env.GAUZY_OAUTH_APP_REDIRECT_URIS ?? '')
+		const oauthApp = this.configService.get('oauthApp');
+		const redirectUris = (oauthApp?.redirectUris ?? '')
 			.split(',')
 			.map((uri) => uri.trim())
 			.filter(Boolean);
 
 		return {
-			clientId: process.env.GAUZY_OAUTH_APP_CLIENT_ID ?? '',
-			clientSecret: process.env.GAUZY_OAUTH_APP_CLIENT_SECRET ?? '',
+			clientId: oauthApp?.clientId ?? '',
+			clientSecret: oauthApp?.clientSecret ?? '',
 			redirectUris,
-			codeSecret: process.env.GAUZY_OAUTH_APP_CODE_SECRET ?? ''
+			codeSecret: oauthApp?.codeSecret ?? ''
 		};
 	}
 
@@ -81,7 +89,7 @@ export class SocialAuthService extends BaseSocialAuth {
 	public async getOAuthLoginUser(
 		_emails: Array<{ value: string; verified: boolean }>
 	): Promise<IUser | null> {
-		return null;
+		throw new Error('OAuth app user lookup is not implemented');
 	}
 
 	public async createOAuthAppAuthorizationCode(

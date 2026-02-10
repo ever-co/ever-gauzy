@@ -34,11 +34,14 @@ import { wrap } from '@mikro-orm/core';
 import { HttpService } from '@nestjs/axios';
 import {
 	BadRequestException,
+	Inject,
 	Injectable,
 	InternalServerErrorException,
 	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { CommandBus } from '@nestjs/cqrs';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as moment from 'moment';
@@ -70,9 +73,7 @@ import {
 	verifyGoogleToken,
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
-import { SocialAccountService } from './social-account/social-account.service';
-import { PasswordHashService } from '../password-hash/password-hash.service';
-import { createHmac, randomBytes } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import {
 	OAuthAppAuthorizationRequest,
 	OAuthAppTokenRequest,
@@ -83,8 +84,8 @@ import {
 export class AuthService extends SocialAuthService {
 	// Get the type of the Object-Relational Mapping (ORM) used in the application.
 	private readonly ormType: MultiORM = getORMType();
-	private readonly oauthAppCodeState = new Map<string, { used: boolean; expiresAt: number }>();
-	private readonly oauthAppCodeTtlSeconds = 10 * 60;
+	private static readonly OAUTH_CODE_CACHE_PREFIX = 'oauth_app_code:';
+	private static readonly OAUTH_CODE_TTL_MS = 10 * 60 * 1000;
 
 	constructor(
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
@@ -101,7 +102,8 @@ export class AuthService extends SocialAuthService {
 		private readonly httpService: HttpService,
 		private readonly socialAccountService: SocialAccountService,
 		private readonly eventBus: EventBus,
-		private readonly passwordHashService: PasswordHashService
+		private readonly passwordHashService: PasswordHashService,
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache
 	) {
 		super();
 	}
@@ -120,15 +122,6 @@ export class AuthService extends SocialAuthService {
 		return entity;
 	}
 
-	private cleanupOAuthAppCodes(): void {
-		const now = Math.floor(Date.now() / 1000);
-		for (const [key, value] of this.oauthAppCodeState.entries()) {
-			if (value.expiresAt <= now) {
-				this.oauthAppCodeState.delete(key);
-			}
-		}
-	}
-
 	private signOAuthAppPayload(payload: string, secret: string): string {
 		return createHmac('sha256', secret).update(payload).digest('base64url');
 	}
@@ -144,12 +137,14 @@ export class AuthService extends SocialAuthService {
 	} {
 		const [version, payloadB64, sig] = code.split('.');
 		if (version !== 'v1' || !payloadB64 || !sig) {
-			throw new Error('Invalid authorization code');
+			throw new UnauthorizedException('Invalid authorization code');
 		}
 
 		const expectedSig = this.signOAuthAppPayload(payloadB64, secret);
-		if (sig !== expectedSig) {
-			throw new Error('Invalid authorization code signature');
+		const sigBuf = Buffer.from(sig, 'base64url');
+		const expectedBuf = Buffer.from(expectedSig, 'base64url');
+		if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) {
+			throw new UnauthorizedException('Invalid authorization code signature');
 		}
 
 		const payloadJson = Buffer.from(payloadB64, 'base64url').toString();
@@ -164,7 +159,7 @@ export class AuthService extends SocialAuthService {
 		};
 
 		if (!payload.jti || !payload.userId || !payload.tenantId || !payload.clientId || !payload.redirectUri) {
-			throw new Error('Invalid authorization code payload');
+			throw new UnauthorizedException('Invalid authorization code payload');
 		}
 
 		return payload;
@@ -185,24 +180,23 @@ export class AuthService extends SocialAuthService {
 	public async createOAuthAppAuthorizationCode(
 		request: OAuthAppAuthorizationRequest
 	): Promise<string> {
-		this.cleanupOAuthAppCodes();
 		const config = this.getOAuthAppConfig();
 
 		if (!config.clientId || !config.clientSecret || !config.redirectUris.length || !config.codeSecret) {
-			throw new Error('OAuth app is not configured');
+			throw new InternalServerErrorException('OAuth app is not configured');
 		}
 
 		if (request.clientId !== config.clientId) {
-			throw new Error('Invalid client_id');
+			throw new BadRequestException('Invalid client_id');
 		}
 
 		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
-			throw new Error('Invalid redirect_uri');
+			throw new BadRequestException('Invalid redirect_uri');
 		}
 
 		const now = Math.floor(Date.now() / 1000);
 		const jti = randomBytes(32).toString('base64url');
-		const exp = now + this.oauthAppCodeTtlSeconds;
+		const exp = now + AuthService.OAUTH_CODE_TTL_MS / 1000;
 		const scope = request.scope ?? '';
 
 		const payload = {
@@ -218,7 +212,8 @@ export class AuthService extends SocialAuthService {
 		const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
 		const signature = this.signOAuthAppPayload(payloadB64, config.codeSecret);
 
-		this.oauthAppCodeState.set(jti, { used: false, expiresAt: exp });
+		const cacheKey = `${AuthService.OAUTH_CODE_CACHE_PREFIX}${jti}`;
+		await this.cacheManager.set(cacheKey, 'valid', AuthService.OAUTH_CODE_TTL_MS);
 
 		return `v1.${payloadB64}.${signature}`;
 	}
@@ -226,38 +221,39 @@ export class AuthService extends SocialAuthService {
 	public async exchangeOAuthAppAuthorizationCode(
 		request: OAuthAppTokenRequest
 	): Promise<OAuthAppTokenResponse> {
-		this.cleanupOAuthAppCodes();
 		const config = this.getOAuthAppConfig();
 
 		if (!config.clientId || !config.clientSecret || !config.redirectUris.length || !config.codeSecret) {
-			throw new Error('OAuth app is not configured');
+			throw new InternalServerErrorException('OAuth app is not configured');
 		}
 
 		if (request.clientId !== config.clientId || request.clientSecret !== config.clientSecret) {
-			throw new Error('Invalid client credentials');
+			throw new UnauthorizedException('Invalid client credentials');
 		}
 
 		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
-			throw new Error('Invalid redirect_uri');
+			throw new BadRequestException('Invalid redirect_uri');
 		}
 
 		const payload = this.parseOAuthAppCode(request.code, config.codeSecret);
 		const now = Math.floor(Date.now() / 1000);
 
 		if (payload.exp <= now) {
-			throw new Error('Authorization code expired');
+			throw new UnauthorizedException('Authorization code expired');
 		}
 
 		if (payload.clientId !== request.clientId || payload.redirectUri !== request.redirectUri) {
-			throw new Error('Authorization code mismatch');
+			throw new UnauthorizedException('Authorization code mismatch');
 		}
 
-		const state = this.oauthAppCodeState.get(payload.jti);
-		if (!state || state.used || state.expiresAt <= now) {
-			throw new Error('Authorization code already used');
+		// Atomic check-and-delete: get the code state then immediately delete it.
+		// If the key is absent the code was already redeemed or expired (TTL).
+		const cacheKey = `${AuthService.OAUTH_CODE_CACHE_PREFIX}${payload.jti}`;
+		const codeState = await this.cacheManager.get<string>(cacheKey);
+		if (!codeState) {
+			throw new UnauthorizedException('Authorization code already used');
 		}
-
-		state.used = true;
+		await this.cacheManager.del(cacheKey);
 
 		const accessToken = await this.getJwtAccessToken({
 			id: payload.userId,
