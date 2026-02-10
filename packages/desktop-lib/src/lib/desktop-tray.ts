@@ -37,15 +37,13 @@ export class TrayIcon {
 				accelerator: 'CmdOrCtrl+,',
 				async click() {
 					const appWindowManager = AppWindowManager.getInstance();
-					const settingsWindow = await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
-					settingsWindow.show();
-					ipcMain.once('setting_window_ready', () => {
-						settingsWindow?.webContents?.send?.('app_setting', LocalStore.getApplicationConfig());
-						settingsWindow?.webContents?.send?.('setting_page_ipc', {
-							type: 'goto_top_menu'
+					if (!appWindowManager._settingWindow) {
+						await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+						ipcMain.once('setting_window_ready', () => {
+							appWindowManager.settingShow('goto_top_menu');
 						});
-						settingsWindow?.webContents?.send?.('refresh_menu');
-					});
+						appWindowManager._settingWindow?.show?.();
+					}
 				}
 			}
 		];
@@ -57,29 +55,33 @@ export class TrayIcon {
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
 					const appWindowManager = AppWindowManager.getInstance();
-					const settingsWindow = await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
-					settingsWindow.show();
-					ipcMain.once('setting_window_ready', () => {
-						settingsWindow?.webContents?.send?.('app_setting', LocalStore.getApplicationConfig());
-						manager.webContents(settingsWindow).send('setting_page_ipc', {
-							type: 'goto_update'
+					if (!appWindowManager._settingWindow) {
+						await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+						ipcMain.once('setting_window_ready', () => {
+							appWindowManager.settingShow('goto_update');
 						});
-						settingsWindow?.webContents?.send?.('refresh_menu');
-					});
+					}
+					appWindowManager._settingWindow?.show?.();
 				}
 			}
 		];
 
-		this.contextMenu = [
-			...settingMenu,
+		const pluginsMenu: MenuItemConstructorOptions[] = [
 			{
 				id: '6-0',
 				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
 				accelerator: 'CmdOrCtrl+P',
 				async click() {
-					manager.show(RegisteredWindow.PLUGINS);
+					const appWindowManager = AppWindowManager.getInstance();
+					await appWindowManager.initPluginsWindow(windowPath.timeTrackerUi);
+					appWindowManager.pluginsWindow.show();
 				}
-			},
+			}
+		]
+
+		this.contextMenu = [
+			...settingMenu,
+			,
 			...updateMenu,
 			{
 				type: 'separator'
@@ -105,14 +107,7 @@ export class TrayIcon {
 				}
 			},
 			...settingMenu,
-			{
-				id: '6-0',
-				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
-				accelerator: 'CmdOrCtrl+P',
-				async click() {
-					manager.show(RegisteredWindow.PLUGINS);
-				}
-			},
+			...pluginsMenu,
 			...updateMenu,
 			{
 				type: 'separator'
@@ -180,14 +175,7 @@ export class TrayIcon {
 				type: 'separator',
 				visible: appConfig.timeTrackerWindow
 			},
-			{
-				id: '6-0',
-				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
-				accelerator: 'CmdOrCtrl+P',
-				async click() {
-					manager.show(RegisteredWindow.PLUGINS);
-				}
-			},
+			...pluginsMenu,
 			...updateMenu,
 			...settingMenu,
 			{
@@ -219,6 +207,8 @@ export class TrayIcon {
 				}
 			}
 		];
+
+		const appWindowManager = AppWindowManager.getInstance();
 
 		if (!!appConfig.gauzyWindow && mainWindow) {
 			// Prepare open main window option.
@@ -371,21 +361,6 @@ export class TrayIcon {
 					console.error('An error occurred while loading Time Tracker Page', error);
 				}
 
-				// try {
-				// 	await settingsWindow.loadURL(settingsPage(windowPath.timeTrackerUi));
-				// } catch (error) {
-				// 	console.error('An error occurred while loading settings Page', error);
-				// }
-
-				try {
-					const window = manager.getOne(RegisteredWindow.PLUGINS) as IBaseWindow;
-					if (window) {
-						await window.loadURL();
-					}
-				} catch (error) {
-					console.error('An error occurred while loading plugin Page', error);
-				}
-
 				manager.webContents(timeTrackerWindow).send('auth_success_tray_init', arg);
 
 				if (!isGauzyWindow) {
@@ -441,10 +416,8 @@ export class TrayIcon {
 			manager.hide(RegisteredWindow.WIDGET);
 
 			try {
-				const window = manager.getOne(RegisteredWindow.PLUGINS) as IBaseWindow;
-				if (window) {
-					window.hide();
-					await window.loadURL();
+				if (appWindowManager.pluginsWindow) {
+					appWindowManager.pluginsWindow.close?.();
 				}
 			} catch (error) {
 				console.error('An error occurred while loading plugin Page', error);

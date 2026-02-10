@@ -13,6 +13,7 @@ export class AppMenu {
 	public applicationMenu: MenuItemConstructorOptions;
 	public windowMenu: MenuItemConstructorOptions;
 	public editMenu: MenuItemConstructorOptions;
+	private windowPath: any;
 
 	private readonly pluginManager = PluginManager.getInstance();
 	private readonly pluginEventManager = PluginEventManager.getInstance();
@@ -40,6 +41,7 @@ export class AppMenu {
 		isZoomVisible?: boolean,
 		isCustomMenu?: boolean
 	) {
+		this.windowPath = windowPath;
 		const isZoomEnabled = isZoomVisible ?? false;
 		this.applicationMenu = {
 			label: 'Gauzy',
@@ -59,15 +61,14 @@ export class AppMenu {
 				{
 					label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 					async click() {
-						if (!settingsWindow) {
-							const appWindowManager = AppWindowManager.getInstance();
-							settingsWindow = await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
-							settingsWindow.show();
+						const appWindowManager = AppWindowManager.getInstance();
+						if (!appWindowManager._settingWindow) {
+							await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
 							ipcMain.once('setting_window_ready', () => {
-								settingsWindow.webContents.send('goto_update');
-								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+								appWindowManager.settingShow('goto_update');
 							});
 						}
+						appWindowManager._settingWindow?.show?.();
 					}
 				},
 				{
@@ -87,17 +88,15 @@ export class AppMenu {
 					label: TranslateService.instant('TIMER_TRACKER.MENU.SETTING_DEV_MODE'),
 					enabled: true,
 					async click() {
-						if (!settingsWindow) {
-							// settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-							const appWindowManager = AppWindowManager.getInstance();
-							settingsWindow = await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
-							settingsWindow.show();
+						const appWindowManager = AppWindowManager.getInstance();
+						if (!appWindowManager._settingWindow) {
+							await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
 							ipcMain.once('setting_window_ready', () => {
-								settingsWindow.webContents.send('goto_update');
-								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+								appWindowManager.settingShow('goto_top_menu');
 							});
 						}
-						settingsWindow.webContents.toggleDevTools();
+						appWindowManager._settingWindow?.show?.();
+						appWindowManager._settingWindow?.webContents?.toggleDevTools?.();
 					}
 				},
 				{
@@ -151,17 +150,14 @@ export class AppMenu {
 					label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 					enabled: true,
 					async click() {
-						if (!settingsWindow) {
-							// settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-							const appWindowManager = AppWindowManager.getInstance();
-							settingsWindow = await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
-							settingsWindow.show();
+						const appWindowManager = AppWindowManager.getInstance();
+						if (!appWindowManager._settingWindow) {
+							await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
 							ipcMain.once('setting_window_ready', () => {
-								settingsWindow.webContents.send('goto_update');
-								settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-								settingsWindow.webContents.send('refresh_menu');
+								appWindowManager.settingShow('goto_top_menu');
 							});
 						}
+						appWindowManager._settingWindow?.show?.();
 					}
 				},
 				{
@@ -279,9 +275,11 @@ export class AppMenu {
 	/**
 	 * Opens the plugin window.
 	 */
-	private openPlugin(): void {
+	private async openPlugin(): Promise<void> {
 		// Show the plugins window
-		this.windowManager.show(RegisteredWindow.PLUGINS);
+		const appWindowManager = AppWindowManager.getInstance();
+		await appWindowManager.initPluginsWindow(this.windowPath?.timeTrackerUi);
+		appWindowManager.pluginsWindow?.show?.();
 	}
 
 	/**

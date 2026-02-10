@@ -263,8 +263,6 @@ async function startServer(value, restart = false) {
 					pathWindow.timeTrackerUi,
 					pathWindow.preloadPath
 				);
-			} else {
-				await timeTrackerWindow.loadURL(timeTrackerPage(pathWindow.timeTrackerUi));
 			}
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);
 			await notificationWindow.loadURL();
@@ -401,15 +399,16 @@ app.on('ready', async () => {
 	];
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 	try {
+		initializeAppManager();
 		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi,
 			pathWindow.preloadPath
 		);
-		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
-		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
-		await alwaysOn.loadURL();
-		await marketplace.loadURL();
+		if (settings?.alwaysOn) {
+			await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
+			appWindowManager.alwaysOnWindow.show();
+		}
 
 		if (configs && configs.isSetup) {
 			global.variableGlobal = {
@@ -418,7 +417,6 @@ app.on('ready', async () => {
 			};
 			await startServer(configs);
 		} else {
-			initializeAppManager();
 			setupWindow = await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
 			setupWindow.show();
 			splashScreen.close();
@@ -436,6 +434,7 @@ app.on('ready', async () => {
 	}
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+	appWindowManager.updater = updater;
 });
 
 app.on('window-all-closed', () => {
@@ -492,6 +491,7 @@ ipcMain.on('restore', () => {
 });
 
 ipcMain.on('restart_app', async (event, arg) => {
+	initializeAppManager();
 	LocalStore.updateConfigSetting(arg);
 	const configs = LocalStore.getStore('configs');
 	global.variableGlobal = {
@@ -503,7 +503,7 @@ ipcMain.on('restart_app', async (event, arg) => {
 	/* Creating a database if not exit. */
 	await ProviderFactory.instance.createDatabase();
 	/* Kill all windows */
-	if (alwaysOn) alwaysOn.close();
+	if (appWindowManager.alwaysOnWindow) appWindowManager.alwaysOnWindow.close();
 	if (settingsWindow && !settingsWindow.isDestroyed()) {
 		settingsWindow.hide();
 		settingsWindow.destroy();

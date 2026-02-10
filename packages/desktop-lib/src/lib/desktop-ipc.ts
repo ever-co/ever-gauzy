@@ -39,6 +39,7 @@ import { pluginListeners } from './plugin-system';
 import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
 import { AppWindowManager } from './app-window-manager';
+import { DesktopUpdater } from './desktop-updater';
 
 const timerHandler = new TimerHandler();
 const offlineMode = DesktopOfflineModeHandler.instance;
@@ -424,7 +425,10 @@ export function ipcTimer(
 
 	offlineMode.on('offline', async () => {
 		log.info('Offline mode triggered...');
-		const windows = [alwaysOn, timeTrackerWindow];
+		const windows = [timeTrackerWindow];
+		if (appWindowManager.alwaysOnWindow?.browserWindow) {
+			windows.unshift(appWindowManager.alwaysOnWindow.browserWindow);
+		}
 		for (const window of windows) {
 			windowManager.webContents(window)?.send?.('offline-handler', true);
 		}
@@ -433,7 +437,10 @@ export function ipcTimer(
 	offlineMode.on('connection-restored', async () => {
 		log.info('Api connected...');
 		try {
-			const windows = [alwaysOn, timeTrackerWindow];
+			const windows = [timeTrackerWindow];
+			if (appWindowManager.alwaysOnWindow?.browserWindow) {
+				windows.unshift(appWindowManager.alwaysOnWindow.browserWindow);
+			}
 			for (const window of windows) {
 				windowManager.webContents(window)?.send?.('offline-handler', false);
 			}
@@ -742,7 +749,7 @@ export function ipcTimer(
 
 			console.log('Timer Stopped ...');
 
-			settingWindow?.webContents?.send?.('setting_page_ipc', {
+			appWindowManager._settingWindow?.webContents?.send?.('setting_page_ipc', {
 				type: 'app_setting_update',
 				data: {
 					setting: LocalStore.getStore('appSetting')
@@ -859,30 +866,13 @@ export function ipcTimer(
 
 	ipcMain.on('open_setting_window', async (event, arg) => {
 		log.info(`Open Setting Window: ${moment().format()}`);
-
-		const appSetting = LocalStore.getStore('appSetting');
-		const config = LocalStore.getStore('configs');
-		const auth = LocalStore.getStore('auth');
-		const addSetting = LocalStore.getStore('additionalSetting');
-
-		if (!settingWindow) {
-			settingWindow = await appWindowManager.initSettingWindow(windowPath.timeTrackerUi, windowPath.preloadPath);
+		if (!appWindowManager._settingWindow) {
+			await appWindowManager.initSettingWindow(windowPath.timeTrackerUi, windowPath.preloadPath);
+			ipcMain.once('setting_window_ready', () => {
+				appWindowManager.settingShow('goto_top_menu');
+			});
 		}
-
-		settingWindow.show();
-		ipcMain.once('settine_window_ready', () => {
-			settingWindow.webContents.send('app_setting', {
-				...LocalStore.beforeRequestParams(),
-				setting: appSetting,
-				config: config,
-				auth,
-				additionalSetting: addSetting
-			});
-
-			settingWindow.webContents.send('setting_page_ipc', {
-				type: 'goto_top_menu'
-			});
-		})
+		appWindowManager._settingWindow?.show?.();
 	});
 
 	ipcMain.on('switch_aw_option', (event, arg) => {
@@ -1114,23 +1104,29 @@ export function ipcTimer(
 		const setting = LocalStore.getStore('appSetting');
 		const auth = LocalStore.getStore('auth');
 		if (setting?.alwaysOn && auth?.employeeId) {
-			windowManager.show(RegisteredWindow.WIDGET);
+			await appWindowManager.initAlwaysOnWindow(windowPath.timeTrackerUi);
+			appWindowManager.alwaysOnWindow.show?.();
 		}
 	});
 
 	ipcMain.on('hide_ao', (event, arg) => {
-		windowManager.hide(RegisteredWindow.WIDGET);
+		if (appWindowManager.alwaysOnWindow) {
+			appWindowManager.alwaysOnWindow.close?.();
+		}
 	});
 
 	ipcMain.on('change_state_from_ao', async (event, arg) => {
-		const windows = [alwaysOn, timeTrackerWindow];
+		const windows = [timeTrackerWindow];
+		if (appWindowManager.alwaysOnWindow?.browserWindow) {
+			windows.unshift(appWindowManager.alwaysOnWindow.browserWindow);
+		}
 		for (const window of windows) {
 			windowManager.webContents(window)?.send?.('change_state_from_ao', arg);
 		}
 	});
 
 	ipcMain.on('ao_time_update', (event, arg) => {
-		windowManager.webContents(alwaysOn)?.send?.('ao_time_update', arg);
+		appWindowManager.alwaysOnWindow?.browserWindow?.webContents?.send?.('ao_time_update', arg);
 	});
 
 	ipcMain.handle('MARK_AS_STOPPED_OFFLINE', async () => {
