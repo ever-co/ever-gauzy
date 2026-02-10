@@ -1,18 +1,4 @@
-import {
-	Controller,
-	Post,
-	HttpStatus,
-	HttpCode,
-	Body,
-	Get,
-	Headers,
-	Query,
-	UseGuards,
-	BadRequestException
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestResponse } from '@nestjs/swagger';
-import { CommandBus } from '@nestjs/cqrs';
-import { I18nLang } from 'nestjs-i18n';
+import { Public } from '@gauzy/common';
 import {
 	IAuthResponse,
 	ISocialAccount,
@@ -21,31 +7,45 @@ import {
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { Public } from '@gauzy/common';
 import { parseToBoolean } from '@gauzy/utils';
-import { AuthService } from './auth.service';
+import {
+	BadRequestException,
+	Body,
+	Controller,
+	Get,
+	Headers,
+	HttpCode,
+	HttpStatus,
+	Post,
+	Query,
+	UseGuards
+} from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { I18nLang } from 'nestjs-i18n';
+import { RequestContext } from '../core/context';
+import { UseValidationPipe } from '../shared/pipes';
 import { User as IUser } from '../user/user.entity';
+import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
+import { Permissions } from './../shared/decorators';
+import { AuthRefreshGuard, PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
+import { UserService } from './../user/user.service';
+import { AuthService } from './auth.service';
 import {
 	AuthLoginCommand,
 	AuthRegisterCommand,
 	WorkspaceSigninSendCodeCommand,
 	WorkspaceSigninVerifyTokenCommand
 } from './commands';
-import { RequestContext } from '../core/context';
-import { AuthRefreshGuard, PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
-import { UseValidationPipe } from '../shared/pipes';
-import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
-import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
-import { UserService } from './../user/user.service';
 import {
 	HasPermissionsQueryDTO,
 	HasRoleQueryDTO,
 	RefreshTokenDto,
-	WorkspaceSigninEmailVerifyDTO,
-	WorkspaceSigninDTO,
 	SwitchOrganizationDTO,
-	SwitchWorkspaceDTO
+	SwitchWorkspaceDTO,
+	WorkspaceSigninDTO,
+	WorkspaceSigninEmailVerifyDTO
 } from './dto';
 import { FindUserBySocialLoginDTO, SocialLoginBodyRequestDTO } from './social-account/dto';
 
@@ -304,7 +304,7 @@ export class AuthController {
 	@UseGuards(AuthRefreshGuard)
 	@Post('/refresh-token')
 	@UseValidationPipe()
-	async refreshToken(@Body() input: RefreshTokenDto): Promise<{ token: string } | null> {
+	async refreshToken(@Body() input: RefreshTokenDto): Promise<{ token: string; refresh_token: string } | null> {
 		return await this.authService.getAccessTokenFromRefreshToken();
 	}
 

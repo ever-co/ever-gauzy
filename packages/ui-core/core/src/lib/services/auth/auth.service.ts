@@ -144,7 +144,7 @@ export class AuthService {
 	 * @param refresh_token
 	 * @returns
 	 */
-	refreshToken(refresh_token: string): Promise<{ token: string } | null> {
+	refreshToken(refresh_token: string): Promise<{ token: string, refresh_token: string } | null> {
 		return firstValueFrom(this.http.post<any>(`${API_PREFIX}/auth/refresh-token`, { refresh_token }));
 	}
 
