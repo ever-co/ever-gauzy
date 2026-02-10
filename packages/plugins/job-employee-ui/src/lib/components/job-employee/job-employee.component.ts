@@ -6,7 +6,7 @@ import { BehaviorSubject, combineLatest, merge, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Cell } from 'angular2-smart-table';
+import { Cell, EditCancelEvent, EditConfirmEvent } from 'angular2-smart-table';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { ID, IEmployee, IOrganization, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { API_PREFIX, distinctUntilChange, isNotNullOrUndefined } from '@gauzy/ui-core/common';
@@ -43,33 +43,6 @@ export enum JobSearchTabsEnum {
 }
 
 /**
- * Represents the confirm/reject actions available in smart-table edit events.
- */
-interface SmartTableConfirm {
-	resolve(): void;
-	reject(): void;
-}
-
-/**
- * Event structure for smart-table edit confirm action.
- * Contains the original data, new data, and confirm/reject callbacks.
- */
-interface EditConfirmEvent {
-	data: IEmployee;
-	newData: Partial<IEmployee>;
-	confirm: SmartTableConfirm;
-}
-
-/**
- * Event structure for smart-table edit cancel action.
- * Contains the original data and confirm/reject callbacks.
- */
-interface EditCancelEvent {
-	data: IEmployee;
-	confirm: SmartTableConfirm;
-}
-
-/**
  * Job Employee Component
  *
  * Displays and manages job employees: browse list with statistics (available/applied jobs,
@@ -88,7 +61,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	public readonly employees$ = new Subject<boolean>();
 	public readonly nbTab$ = new BehaviorSubject<JobSearchTabsEnum>(JobSearchTabsEnum.BROWSE);
 	public loading = false;
-	public settingsSmartTable!: unknown;
+	public settingsSmartTable: unknown;
 	public smartTableSource: ServerDataSource | undefined;
 	public organization: IOrganization | null = null;
 	public selectedEmployeeId: ID | null = null;
@@ -534,17 +507,17 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			this.employees$.next(true);
 		} catch (error) {
 			console.error('Error while updating employee rates', error);
-			await event.confirm.reject();
+			event.confirm.reject();
 		}
 	}
 
 	/**
 	 * Handles smart table edit cancel: refreshes the table to revert in-place changes.
-	 * @param event - The smart-table edit cancel event with data and confirm callbacks.
+	 *
+	 * @param event - The smart-table edit cancel event with row data and discarded data.
 	 * @returns void
 	 */
 	onEditCancel(event: EditCancelEvent): void {
-		console.log('Edit canceled for row:', event);
 		if (this.smartTableSource) {
 			this.smartTableSource.refresh();
 		}
