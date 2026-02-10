@@ -1,6 +1,6 @@
 import { inject, Injectable, OnDestroy } from '@angular/core';
 import { EMPTY, interval, Subscription } from 'rxjs';
-import { catchError, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { Store } from '../../services';
 import { AuthStrategy } from './auth-strategy.service';
 import { RefreshStateManager } from './refresh-state-manager.service';
