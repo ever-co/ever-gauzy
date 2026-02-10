@@ -233,7 +233,7 @@ export class AuthService extends SocialAuthService {
 		if (request.clientId !== config.clientId) {
 			throw new UnauthorizedException('Invalid client credentials');
 		}
-		
+
 		const secretBuf = Buffer.from(request.clientSecret, 'utf8');
 		const expectedBuf = Buffer.from(config.clientSecret, 'utf8');
 		if (secretBuf.length !== expectedBuf.length || !timingSafeEqual(secretBuf, expectedBuf)) {
@@ -256,7 +256,6 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// Single-use enforcement: delete first, then verify the key existed.
-		// Deleting before checking minimises the race window where two concurrent
 		// requests could both read 'valid' before either deletes.
 		const cacheKey = `${AuthService.OAUTH_CODE_CACHE_PREFIX}${payload.jti}`;
 		const codeState = await this.cacheManager.get<string>(cacheKey);
