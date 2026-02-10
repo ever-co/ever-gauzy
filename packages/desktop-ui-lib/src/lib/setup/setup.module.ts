@@ -24,7 +24,7 @@ import {
 import { LanguageModule } from '../language/language.module';
 import { SslModule } from '../settings/ssl';
 import { SetupService } from './setup.service';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme/src/lib/icons/tabler-icons.module';
 
 @NgModule({
     imports: [

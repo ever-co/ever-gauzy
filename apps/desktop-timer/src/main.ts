@@ -57,7 +57,7 @@ import { AppService } from './app/app.service';
 import { initializeSentry } from './app/sentry';
 import { environment } from './environments/environment';
 import { NbIconLibraries } from '@nebular/theme';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme-icons';
 
 if (environment.production) {
 	enableProdMode();
