@@ -31,7 +31,7 @@ export class TokenRefreshExecutor {
 		this.refreshStateManager.startRefresh();
 
 		if (!this.store.refreshToken) {
-			return this.handleSessionExpiry(originalError);
+			return this.handleRefreshError(originalError);
 		}
 
 		return this.authStrategy.refreshToken().pipe(
