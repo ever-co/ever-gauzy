@@ -52,7 +52,7 @@ export class TokenRefreshExecutor {
 			return next.handle(this.requestCloner.cloneWithToken(request, newToken));
 		}
 
-		return this.handleRefreshError(originalError);
+		return throwError(() => originalError);
 	}
 
 	private handleRefreshError(originalError: HttpErrorResponse): Observable<never> {
