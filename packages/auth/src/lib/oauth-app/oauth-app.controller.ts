@@ -103,7 +103,7 @@ export class OAuthAppController {
 			}
 
 			// Never forward raw error.message to the client to avoid leaking internals
-			throw new HttpException('OAuth token exchange failed', HttpStatus.BAD_REQUEST);
+			throw new HttpException('OAuth token exchange failed', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 }

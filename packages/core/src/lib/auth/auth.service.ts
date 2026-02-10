@@ -1,4 +1,9 @@
-import { SocialAuthService } from '@gauzy/auth';
+import {
+	SocialAuthService,
+	OAuthAppAuthorizationRequest,
+	OAuthAppTokenRequest,
+	OAuthAppTokenResponse
+} from '@gauzy/auth';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
 import { DEMO_PASSWORD_LESS_MAGIC_CODE } from '@gauzy/constants';
@@ -74,11 +79,6 @@ import {
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import {
-	OAuthAppAuthorizationRequest,
-	OAuthAppTokenRequest,
-	OAuthAppTokenResponse
-} from '@gauzy/auth';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -147,8 +147,7 @@ export class AuthService extends SocialAuthService {
 			throw new UnauthorizedException('Invalid authorization code signature');
 		}
 
-		const payloadJson = Buffer.from(payloadB64, 'base64url').toString();
-		const payload = JSON.parse(payloadJson) as {
+		let payload: {
 			jti: string;
 			userId: string;
 			tenantId: string;
@@ -157,6 +156,12 @@ export class AuthService extends SocialAuthService {
 			scope: string;
 			exp: number;
 		};
+		try {
+			const payloadJson = Buffer.from(payloadB64, 'base64url').toString();
+			payload = JSON.parse(payloadJson);
+		} catch {
+			throw new UnauthorizedException('Invalid authorization code payload');
+		}
 
 		if (!payload.jti || !payload.userId || !payload.tenantId || !payload.clientId || !payload.redirectUri) {
 			throw new UnauthorizedException('Invalid authorization code payload');
