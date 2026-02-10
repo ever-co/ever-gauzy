@@ -63,6 +63,8 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 							if (response?.token) {
 								// Update the token in the store
 								this.store.token = response.token;
+								// Update refresh token
+								this.store.refresh_token = response.refresh_token;
 								// Emit the new token to all waiting requests
 								this.refreshTokenSubject.next(response.token);
 								return next.handle(this.addToken(req, response.token));
@@ -99,7 +101,7 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 	 * Refreshes the access token by calling the AuthService.
 	 * @returns An Observable that emits the response of the token refresh request.
 	 */
-	private refreshAccessToken(): Observable<{ token: string } | null> {
+	private refreshAccessToken(): Observable<{ token: string, refresh_token: string } | null> {
 		const refresh_token = this.store.refresh_token;
 
 		if (!refresh_token) {
