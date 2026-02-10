@@ -56,8 +56,8 @@
 <!-- Coming Soon Template -->
 <ng-template #comingSoon>
 	<div>
-		<div [style]="{ display: 'flex', 'flex-direction': 'column', 'align-items': 'center', margin: '100px 0px' }">
-			<nb-icon icon="flash-outline" [style]="{ 'font-size': '50px', color: '#cacaca' }"></nb-icon>
+		<div class="empty-state-container">
+			<nb-icon icon="flash-outline" class="empty-state-icon"></nb-icon>
 			<div>{{ 'COMING_SOON' | translate }}</div>
 		</div>
 	</div>

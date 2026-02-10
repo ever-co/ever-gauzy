@@ -77,3 +77,15 @@ nb-accordion-item-header ::ng-deep nb-icon {
     }
   }
 }
+
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 100px 0;
+}
+
+.empty-state-icon {
+  font-size: 50px;
+  color: #cacaca;
+}

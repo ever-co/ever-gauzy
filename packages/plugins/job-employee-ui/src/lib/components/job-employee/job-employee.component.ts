@@ -334,7 +334,8 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				const employee: IEmployee = cell.getRow().getData();
 				instance.label = false;
 				instance.value = employee.isJobSearchActive;
-				instance.onSwitched.subscribe((toggle: boolean) => {
+				instance.onSwitched.pipe(untilDestroyed(this)).subscribe((toggle: boolean) => {
+					console.log('Updating job search availability for employee:', employee.id, toggle);
 					this._jobSearchStoreService.updateJobSearchAvailability(this.organization, employee, toggle);
 				});
 			},
@@ -397,7 +398,10 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 			if (!this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				const employeeId = this._store.user?.employee?.id;
-				whereClause.id = employeeId;
+
+				if (employeeId) {
+					whereClause.id = employeeId;
+				}
 			}
 
 			this.smartTableSource = new ServerDataSource(this._http, {
@@ -521,10 +525,15 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				organizationId
 			});
 
+			// Notify smart table that the edit operation succeeded.
+			// Use `newData` as the resolved row data so the table updates its view.
+			event.confirm.resolve(event.newData ?? event.data);
+
 			this.employees$.next(true);
 		} catch (error) {
 			console.error('Error while updating employee rates', error);
-			event.confirm.reject();
+			// If an error occurs, reject the edit and log the error.
+			await event.confirm.reject();
 		}
 	}
 
