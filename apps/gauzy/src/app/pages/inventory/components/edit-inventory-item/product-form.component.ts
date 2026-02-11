@@ -19,10 +19,10 @@ import { InventoryStore, ProductService, ProductVariantService, Store, ToastrSer
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-product-form',
-    templateUrl: './product-form.component.html',
-    styleUrls: ['./product-form.component.scss'],
-    standalone: false
+	selector: 'ngx-product-form',
+	templateUrl: './product-form.component.html',
+	styleUrls: ['./product-form.component.scss'],
+	standalone: false
 })
 export class ProductFormComponent extends TranslationBaseComponent implements OnInit {
 	form: UntypedFormGroup;
@@ -94,7 +94,7 @@ export class ProductFormComponent extends TranslationBaseComponent implements On
 			productCategory: [this.inventoryItem ? this.inventoryItem.productCategory : null],
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
 			description: [this.activeTranslation ? this.activeTranslation.description : ''],
-			languageCode: [this.translateService.currentLang, Validators.required]
+			languageCode: [this.selectedLanguage, Validators.required]
 		});
 	}
 
@@ -254,7 +254,7 @@ export class ProductFormComponent extends TranslationBaseComponent implements On
 
 	setTranslationSettings(): void {
 		this.selectedLanguage =
-			this.translateService.currentLang || this.store.preferredLanguage || LanguagesEnum.ENGLISH;
+			this.translateService.getCurrentLang() || this.store.preferredLanguage || LanguagesEnum.ENGLISH;
 
 		this.translations = this.inventoryItem ? this.inventoryItem.translations : [];
 

@@ -13,7 +13,7 @@ import { ImageCacheService, StorageService, Store } from '../services';
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { ImageViewerComponent } from './image-viewer.component';
 import { ImageViewerService } from './image-viewer.service';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme/src/lib/icons/tabler-icons.module';
 
 @NgModule({
     imports: [

@@ -110,4 +110,4 @@ import { SoundshotPlayerSkeletonComponent } from './shared/ui/soundshot/soundsho
 		NbInfiniteListDirective
 	]
 })
-export class VideoUiModule { }
+export class VideoUiModule {}

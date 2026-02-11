@@ -1,5 +1,4 @@
 import { Inject, NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { ROUTES, RouterModule } from '@angular/router';
 import {
 	NbButtonModule,
@@ -15,16 +14,14 @@ import {
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	DialogsModule,
 	EmployeeMultiSelectModule,
 	SharedModule,
-	StatusBadgeModule,
-	getBrowserLanguage
+	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
 import { createJobProposalTemplateRoutes } from './job-proposal-template.routes';
 import { ProposalTemplateComponent } from './components/proposal-template/proposal-template.component';
@@ -45,18 +42,7 @@ const NB_MODULES = [
 ];
 
 // Third Party Modules
-const THIRD_PARTY_MODULES = [
-	CKEditorModule,
-	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
-];
+const THIRD_PARTY_MODULES = [CKEditorModule, NgxPermissionsModule.forRoot(), TranslateModule.forChild()];
 
 @NgModule({
 	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],

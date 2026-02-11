@@ -13,7 +13,7 @@ import {
 	PluginSubscriptionStatus,
 	PluginSubscriptionType
 } from '@gauzy/contracts';
-import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { toParams, API_PREFIX } from '@gauzy/ui-core/common';
 import { map, Observable, of } from 'rxjs';
 
 // Re-export all types for backward compatibility with existing code

@@ -1,6 +1,5 @@
-import { Inject, NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { NbAuthModule } from '@nebular/auth';
 import {
 	NbAccordionModule,
@@ -18,7 +17,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	ElectronService,
 	InviteService,
@@ -27,8 +26,7 @@ import {
 	RoleService
 } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
-import { NgxFaqModule, PasswordFormFieldModule, SharedModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createAuthRoutes } from './auth.routes';
 import { WorkspaceSelectionComponent } from './components/workspace-selection/workspace-selection.component';
 import { SocialLinksComponent } from './components/social-links/social-links.component';
@@ -92,22 +90,11 @@ const COMPONENTS = [
 	WorkspaceSelectionComponent
 ];
 
-const THIRD_PARTY_MODULES = [
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
-];
-
 @NgModule({
 	imports: [
-		RouterModule.forChild([]),
 		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
+		RouterModule.forChild([]),
+		TranslateModule.forChild(),
 		ThemeSelectorModule,
 		NgxFaqModule,
 		ThemeModule,
@@ -129,9 +116,10 @@ const THIRD_PARTY_MODULES = [
 	]
 })
 export class NgxAuthModule {
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(@Inject(PageRouteRegistryService) readonly _pageRouteRegistryService: PageRouteRegistryService) {
+	constructor() {
 		// Register the routes
 		this.registerPageRoutes();
 	}
@@ -142,7 +130,7 @@ export class NgxAuthModule {
 	 *
 	 * @returns {void}
 	 */
-	registerPageRoutes(): void {
+	private registerPageRoutes(): void {
 		if (NgxAuthModule.hasRegisteredPageRoutes) {
 			return;
 		}

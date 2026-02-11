@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ExtraOptions, RouterModule, Routes } from '@angular/router';
+import { ExtraOptions, NoPreloading, RouterModule, Routes } from '@angular/router';
 
 import {
 	AUTH_CONNECTION_GUARD_CONFIG,
@@ -23,7 +23,12 @@ const routes: Routes = [
 		path: 'time-tracker',
 		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
+		children: [
+			{
+				path: '',
+				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
+			}
+		]
 	},
 	{
 		path: 'screen-capture',
@@ -40,7 +45,12 @@ const routes: Routes = [
 	{
 		path: 'plugins',
 		canActivate: [AuthConnectionGuard],
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
+		children: [
+			{
+				path: '',
+				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
+			}
+		]
 	},
 	{
 		path: 'updater',
@@ -62,19 +72,32 @@ const routes: Routes = [
 		path: '',
 		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
+		children: [
+			{
+				path: '',
+				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
+			}
+		]
 	},
 	{
 		path: 'about',
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AboutComponent)
+	},
+	{
+		path: '**',
+		redirectTo: ''
 	}
 ];
 
 /**
  * Configures the router for the application.
+ * Uses NoPreloading strategy to minimize memory usage on app load.
  */
 const config: ExtraOptions = {
-	useHash: true
+	useHash: true,
+	preloadingStrategy: NoPreloading,
+	initialNavigation: 'enabledBlocking',
+	canceledNavigationResolution: 'replace'
 };
 
 @NgModule({
@@ -87,4 +110,4 @@ const config: ExtraOptions = {
 		}
 	]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

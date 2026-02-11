@@ -1,5 +1,5 @@
 import { Inject, NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+
 import { RouterModule, ROUTES } from '@angular/router';
 import {
 	NbButtonModule,
@@ -14,11 +14,10 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
-import { DialogsModule, SharedModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
+import { DialogsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createJobMatchingRoutes } from './job-matching.routes';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';
 import { COMPONENTS } from './components';
@@ -42,18 +41,7 @@ const NB_MODULES = [
 /*
  * Third party modules
  */
-const THIRD_PARTY_MODULES = [
-	NgxPermissionsModule.forRoot(),
-	NgSelectModule,
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
-];
+const THIRD_PARTY_MODULES = [NgxPermissionsModule.forRoot(), NgSelectModule, TranslateModule.forChild()];
 
 @NgModule({
 	declarations: [JobMatchingComponent, ...COMPONENTS],

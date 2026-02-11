@@ -81,6 +81,10 @@ jobs:
           DESKTOP_API_SERVER_APP_DESCRIPTION: 'Gauzy API Server'
           DESKTOP_API_SERVER_APP_ID: 'com.ever.gauzyapiserver'
 
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
       - name: Build Server
         run: 'yarn build:gauzy-api-server:linux:release:gh:x64'
         env:
@@ -96,7 +100,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: true
+          NX_NO_CLOUD: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
 
   release-linux-arm64:
@@ -174,6 +178,10 @@ jobs:
           DESKTOP_API_SERVER_APP_DESCRIPTION: 'Gauzy API Server'
           DESKTOP_API_SERVER_APP_ID: 'com.ever.gauzyapiserver'
 
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
       - name: Build Server API
         run: 'yarn build:gauzy-api-server:linux:release:gh:arm64'
         env:
@@ -190,7 +198,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: true
+          NX_NO_CLOUD: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
           SNAPCRAFT_BUILD_ENVIRONMENT: host
 
@@ -259,6 +267,10 @@ jobs:
           echo "${{ secrets.APPLE_API_KEY_BASE64 }}" | base64 --decode > /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           chmod 600 /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
 
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
       - name: Build Server
         run: 'yarn build:gauzy-api-server:mac:release'
         env:
@@ -274,7 +286,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: true
+          NX_NO_CLOUD: false
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_APP_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -381,6 +393,10 @@ jobs:
           if ($nodePath -ne $yarnPath) { echo $nodePath >> $env:GITHUB_PATH }
           Write-Host "Added to GITHUB_PATH: $localBin, $npmGlobalBin, $yarnPath, $nodePath"
 
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
       - name: Build Server
         shell: powershell
         run: |
@@ -407,7 +423,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: true
+          NX_NO_CLOUD: false
 
   release-windows-arm64:
     runs-on: ${{ matrix.os }}
@@ -524,6 +540,10 @@ jobs:
           $env:PATH = $newPath
           [System.Environment]::SetEnvironmentVariable("PATH", $newPath, "Process")
 
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
       - name: Build Server API
         shell: cmd
         run: yarn build:gauzy-api-server:windows:release:gh:arm64
@@ -541,4 +561,4 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: true
+          NX_NO_CLOUD: false
