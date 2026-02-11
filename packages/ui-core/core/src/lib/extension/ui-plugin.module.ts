@@ -11,6 +11,7 @@ import { getAppUIConfig } from './ui-plugin.loader';
 import { UIPluginLifecycleMethods } from './ui-plugin.interface';
 import { getUIPluginModules, hasUILifecycleMethod } from './ui-plugin.helper';
 import { UIPluginRegistryService } from './ui-plugin-registry.service';
+import { LoggerService } from '../logger';
 
 /**
  * Angular module responsible for managing UI plugin lifecycles.
@@ -45,6 +46,10 @@ import { UIPluginRegistryService } from './ui-plugin-registry.service';
  */
 @NgModule({})
 export class UIPluginModule implements OnDestroy {
+	private readonly _envInjector = inject(EnvironmentInjector);
+	private readonly _registry = inject(UIPluginRegistryService);
+	private readonly _log = inject(LoggerService).withContext('UIPluginModule');
+
 	/**
 	 * Plugin instances created during app initializer.
 	 * Stored so lifecycle methods can be called on destroy.
@@ -77,11 +82,6 @@ export class UIPluginModule implements OnDestroy {
 		};
 	}
 
-	constructor(
-		private readonly _envInjector: EnvironmentInjector,
-		private readonly _registry: UIPluginRegistryService
-	) {}
-
 	/**
 	 * Lifecycle hook called when the module is being destroyed.
 	 * Deregisters plugin instances from the global registry and calls
@@ -92,7 +92,7 @@ export class UIPluginModule implements OnDestroy {
 			this._registry.deregister(instance);
 
 			const pluginName = instance.constructor?.name || '(anonymous plugin)';
-			console.log(`Destroyed UI Plugin [${pluginName}]`);
+			this._log.debug(`Destroyed UI Plugin [${pluginName}]`);
 		});
 	}
 
@@ -112,7 +112,7 @@ export class UIPluginModule implements OnDestroy {
 			this._registry.register(instance);
 
 			const pluginName = instance.constructor?.name || '(anonymous plugin)';
-			console.log(`Bootstrapped UI Plugin [${pluginName}]`);
+			this._log.debug(`Bootstrapped UI Plugin [${pluginName}]`);
 		});
 	}
 
@@ -134,7 +134,8 @@ export class UIPluginModule implements OnDestroy {
 					// plugin module class resolve from the root EnvironmentInjector.
 					return runInInjectionContext(this._envInjector, () => new mod());
 				} catch (e: any) {
-					console.error(`Error creating UI plugin [${mod.name}]:`, e?.stack || e);
+					const trace = typeof e?.stack === 'string' ? e.stack : undefined;
+					this._log.error(`Error creating UI plugin [${mod.name}]`, trace, e);
 					return null;
 				}
 			})
@@ -162,7 +163,8 @@ export class UIPluginModule implements OnDestroy {
 					}
 				} catch (e: any) {
 					const name = instance.constructor?.name || '(anonymous plugin)';
-					console.error(`Error in ${lifecycleMethod} for plugin [${name}]:`, e?.stack || e);
+					const trace = typeof e?.stack === 'string' ? e.stack : undefined;
+					this._log.error(`Error in ${String(lifecycleMethod)} for plugin [${name}]`, trace, e);
 				}
 			}
 		}
