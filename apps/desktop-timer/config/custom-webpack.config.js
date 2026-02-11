@@ -1,12 +1,10 @@
-const webpack = require('webpack');
+require('webpack');
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
 const TerserPlugin = require('terser-webpack-plugin');
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-const MomentTimezoneDataPlugin = require('moment-timezone-data-webpack-plugin');
-const path = require('path');
+// const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 console.log('Using custom Webpack config...');
 
@@ -23,10 +21,7 @@ if (isCircleEnv) {
 module.exports = {
 	target: 'electron-renderer',
 	resolve: {
-		mainFields: ['es2016', 'browser', 'module', 'main'],
-		alias: {
-			'date-holidays': path.resolve(__dirname, '../src/app/date-holidays.mock.ts')
-		}
+		mainFields: ['es2016', 'browser', 'module', 'main']
 	},
 	module: {
 		rules: [
@@ -48,7 +43,7 @@ module.exports = {
 				parallel: isCircleEnv ? 2 : true,
 				terserOptions: {
 					ecma: 2020,
-					sourceMap: false,
+					sourceMap: !isCircleEnv,
 					compress: true
 				},
 				extractComments: !isCircleEnv
@@ -63,13 +58,7 @@ module.exports = {
 		new NodePolyfillPlugin({
 			excludeAliases: ['console']
 		}),
-		new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
-		new BundleAnalyzerPlugin({ analyzerMode: 'static', openAnalyzer: false }),
-		new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
-		new MomentTimezoneDataPlugin({
-			startYear: 2024,
-			endYear: 2030,
-		}),
+		// new BundleAnalyzerPlugin({ analyzerMode: 'static', openAnalyzer: false }),
 	],
 	output: {
 		globalObject: 'globalThis'
