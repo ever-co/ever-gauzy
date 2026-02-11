@@ -55,15 +55,15 @@ export class UIPluginRegistryService {
 	}
 
 	/**
-	 * Invoke `onPluginDestroy` on every registered plugin and clear the registry.
+	 * Invoke `ngOnPluginDestroy` on every registered plugin and clear the registry.
 	 *
 	 * Called by the root bootstrap module's `ngOnDestroy()` during application shutdown.
 	 */
 	async destroyAll(): Promise<void> {
 		for (const instance of this._instances) {
-			if (hasUILifecycleMethod(instance, 'onPluginDestroy')) {
+			if (hasUILifecycleMethod(instance, 'ngOnPluginDestroy')) {
 				try {
-					await instance.onPluginDestroy();
+					await instance.ngOnPluginDestroy();
 					const name = instance.constructor?.name || '(anonymous plugin)';
 					console.log(`Destroyed UI Plugin [${name}]`);
 				} catch (err) {

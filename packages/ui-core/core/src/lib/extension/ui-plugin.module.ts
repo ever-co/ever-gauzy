@@ -20,7 +20,7 @@ import { LoggerService } from '../logger';
  * During application startup the module creates every plugin instance
  * inside the root injection context (via `provideAppInitializer`) so that
  * `inject()` calls in plugin classes resolve correctly, then invokes
- * `onPluginBootstrap` / `onPluginDestroy` lifecycle hooks.
+ * `ngOnPluginBootstrap` / `ngOnPluginDestroy` lifecycle hooks.
  *
  * Plugin creation is deferred to the app initializer (not the module
  * constructor) because the root injector is not fully initialized
@@ -85,10 +85,10 @@ export class UIPluginModule implements OnDestroy {
 	/**
 	 * Lifecycle hook called when the module is being destroyed.
 	 * Deregisters plugin instances from the global registry and calls
-	 * `onPluginDestroy` on each plugin.
+	 * `ngOnPluginDestroy` on each plugin.
 	 */
 	ngOnDestroy(): void {
-		this.invokeLifecycleMethod('onPluginDestroy', (instance: any) => {
+		this.invokeLifecycleMethod('ngOnPluginDestroy', (instance: any) => {
 			this._registry.deregister(instance);
 
 			const pluginName = instance.constructor?.name || '(anonymous plugin)';
@@ -99,7 +99,7 @@ export class UIPluginModule implements OnDestroy {
 	// ─── Bootstrap ───────────────────────────────────────────────
 
 	/**
-	 * Creates all plugin instances and invokes `onPluginBootstrap`.
+	 * Creates all plugin instances and invokes `ngOnPluginBootstrap`.
 	 *
 	 * Called by the app initializer — at this point the root
 	 * injector is fully initialized, so `inject()` calls inside
@@ -108,7 +108,7 @@ export class UIPluginModule implements OnDestroy {
 	async bootstrapPlugins(): Promise<void> {
 		this._pluginInstances.push(...this.createPluginInstances());
 
-		await this.invokeLifecycleMethod('onPluginBootstrap', (instance: any) => {
+		await this.invokeLifecycleMethod('ngOnPluginBootstrap', (instance: any) => {
 			this._registry.register(instance);
 
 			const pluginName = instance.constructor?.name || '(anonymous plugin)';

@@ -1,76 +1,35 @@
 import { inject, NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { ROUTES, RouterModule } from '@angular/router';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbDialogModule,
-	NbIconModule,
-	NbInputModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbTabsetModule,
-	NbToggleModule,
-	NbTooltipModule
-} from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import {
 	GauzyUIPlugin,
 	IOnUIPluginBootstrap,
 	IOnUIPluginDestroy,
+	LoggerService,
 	NavMenuBuilderService,
 	PageRouteRegistryService
 } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	DialogsModule,
 	EmployeeMultiSelectModule,
+	NebularModule,
 	SharedModule,
-	StatusBadgeModule,
-	getBrowserLanguage
+	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
 import { createJobProposalTemplateRoutes } from './job-proposal-template.routes';
 import { ProposalTemplateComponent } from './components/proposal-template/proposal-template.component';
 import { AddEditProposalTemplateComponent } from './components/add-edit-proposal-template/add-edit-proposal-template.component';
 
-// Nebular Modules
-const NB_MODULES = [
-	NbButtonModule,
-	NbCardModule,
-	NbDialogModule.forChild(),
-	NbIconModule,
-	NbInputModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbTabsetModule,
-	NbToggleModule,
-	NbTooltipModule
-];
-
-// Third Party Modules
-const THIRD_PARTY_MODULES = [
-	CKEditorModule,
-	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
-];
-
 @NgModule({
 	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],
 	imports: [
 		RouterModule.forChild([]),
-		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
+		NebularModule,
+		CKEditorModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		SmartDataViewLayoutModule,
 		StatusBadgeModule,
@@ -89,6 +48,7 @@ const THIRD_PARTY_MODULES = [
 export class JobProposalTemplateModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
 	private static hasRegisteredPageRoutes = false;
 
+	private readonly _log = inject(LoggerService).withContext('JobProposalTemplateModule');
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 
@@ -102,15 +62,15 @@ export class JobProposalTemplateModule implements IOnUIPluginBootstrap, IOnUIPlu
 	/**
 	 * Called by `UIPluginModule` after the module is instantiated.
 	 */
-	onPluginBootstrap(): void {
-		console.log('[JobProposalTemplateModule] Plugin bootstrapped');
+	ngOnPluginBootstrap(): void {
+		this._log.log('Plugin bootstrapped');
 	}
 
 	/**
 	 * Called by `UIPluginModule` when the application is shutting down.
 	 */
-	onPluginDestroy(): void {
-		console.log('[JobProposalTemplateModule] Plugin destroyed');
+	ngOnPluginDestroy(): void {
+		this._log.log('Plugin destroyed');
 	}
 
 	// ─── Route & Menu Registration ────────────────────────────────

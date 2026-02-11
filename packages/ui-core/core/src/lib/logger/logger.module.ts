@@ -1,5 +1,4 @@
 import { ModuleWithProviders, NgModule } from '@angular/core';
-import { LoggerService } from './logger.service';
 import { LOGGER_CONTEXT } from './logger.tokens';
 
 /**

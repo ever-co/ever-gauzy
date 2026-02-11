@@ -8,7 +8,7 @@
  * ```ts
  * @NgModule({ … })
  * export class JobEmployeeModule implements IOnUIPluginBootstrap {
- *     onPluginBootstrap(): void {
+ *     ngOnPluginBootstrap(): void {
  *         console.log('JobEmployeeModule bootstrapped');
  *     }
  * }
@@ -19,7 +19,7 @@ export interface IOnUIPluginBootstrap {
 	 * Called when the plugin module is being initialized.
 	 * @returns A void or a Promise representing the completion of the operation.
 	 */
-	onPluginBootstrap(): void | Promise<void>;
+	ngOnPluginBootstrap(): void | Promise<void>;
 }
 
 /**
@@ -32,7 +32,7 @@ export interface IOnUIPluginBootstrap {
  * ```ts
  * @NgModule({ … })
  * export class JobEmployeeModule implements IOnUIPluginDestroy {
- *     onPluginDestroy(): void {
+ *     ngOnPluginDestroy(): void {
  *         console.log('JobEmployeeModule destroyed');
  *     }
  * }
@@ -43,7 +43,7 @@ export interface IOnUIPluginDestroy {
 	 * Called when the plugin module is being destroyed.
 	 * @returns A void or a Promise representing the completion of the operation.
 	 */
-	onPluginDestroy(): void | Promise<void>;
+	ngOnPluginDestroy(): void | Promise<void>;
 }
 
 /**

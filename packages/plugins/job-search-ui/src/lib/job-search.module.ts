@@ -1,21 +1,6 @@
 import { inject, NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbDialogModule,
-	NbFormFieldModule,
-	NbIconModule,
-	NbInputModule,
-	NbPopoverModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbTabsetModule,
-	NbToggleModule,
-	NbTooltipModule
-} from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -25,65 +10,32 @@ import {
 	GauzyUIPlugin,
 	IOnUIPluginBootstrap,
 	IOnUIPluginDestroy,
+	LoggerService,
 	NavMenuBuilderService,
 	PageRouteRegistryService
 } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	DialogsModule,
+	NebularModule,
 	ProposalTemplateSelectModule,
 	SelectorsModule,
 	SharedModule,
-	StatusBadgeModule,
-	getBrowserLanguage
+	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
 import { createJobSearchRoutes } from './job-search.routes';
 import { JobSearchComponent } from './components/job-search/job-search.component';
 import { COMPONENTS } from './components';
 
-/**
- * Nebular Modules
- */
-const NB_MODULES = [
-	NbButtonModule,
-	NbCardModule,
-	NbDialogModule.forChild(),
-	NbFormFieldModule,
-	NbIconModule,
-	NbInputModule,
-	NbPopoverModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbTabsetModule,
-	NbTooltipModule,
-	NbToggleModule
-];
-
-/*
- * Third Party Modules
- */
-const THIRD_PARTY_MODULES = [
-	CKEditorModule,
-	FileUploadModule,
-	MomentModule,
-	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
-];
-
 @NgModule({
 	declarations: [JobSearchComponent, ...COMPONENTS],
 	imports: [
 		RouterModule.forChild([]),
-		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
+		NebularModule,
+		CKEditorModule,
+		FileUploadModule,
+		MomentModule,
+		TranslateModule.forChild(),
 		SmartDataViewLayoutModule,
 		DialogsModule,
 		ProposalTemplateSelectModule,
@@ -104,6 +56,7 @@ const THIRD_PARTY_MODULES = [
 export class JobSearchModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
 	private static hasRegisteredPageRoutes = false;
 
+	private readonly _log = inject(LoggerService).withContext('JobSearchModule');
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 
@@ -117,15 +70,15 @@ export class JobSearchModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy
 	/**
 	 * Called by `UIPluginModule` after the module is instantiated.
 	 */
-	onPluginBootstrap(): void {
-		console.log('[JobSearchModule] Plugin bootstrapped');
+	ngOnPluginBootstrap(): void {
+		this._log.log('Plugin bootstrapped');
 	}
 
 	/**
 	 * Called by `UIPluginModule` when the application is shutting down.
 	 */
-	onPluginDestroy(): void {
-		console.log('[JobSearchModule] Plugin destroyed');
+	ngOnPluginDestroy(): void {
+		this._log.log('Plugin destroyed');
 	}
 
 	// ─── Route & Menu Registration ────────────────────────────────

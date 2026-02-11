@@ -1,70 +1,31 @@
 import { inject, NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbCheckboxModule,
-	NbIconModule,
-	NbInputModule,
-	NbPopoverModule,
-	NbRadioModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbTooltipModule
-} from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { NgxPermissionsModule } from 'ngx-permissions';
+import { TranslateModule } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import {
 	GauzyUIPlugin,
 	IOnUIPluginBootstrap,
 	IOnUIPluginDestroy,
+	LoggerService,
 	NavMenuBuilderService,
 	PageRouteRegistryService
 } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
-import { DialogsModule, SharedModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
+import { DialogsModule, NebularModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createJobMatchingRoutes } from './job-matching.routes';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';
 import { COMPONENTS } from './components';
 
-/**
- * Nebular modules
- */
-const NB_MODULES = [
-	NbButtonModule,
-	NbCardModule,
-	NbCheckboxModule,
-	NbIconModule,
-	NbInputModule,
-	NbPopoverModule,
-	NbRadioModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbTooltipModule
-];
-
-/*
- * Third party modules
- */
-const THIRD_PARTY_MODULES = [
-	NgxPermissionsModule.forRoot(),
-	NgSelectModule,
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(),
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
-];
-
 @NgModule({
 	declarations: [JobMatchingComponent, ...COMPONENTS],
-	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, SharedModule, DialogsModule],
+	imports: [
+		RouterModule.forChild([]),
+		NebularModule,
+		TranslateModule.forChild(),
+		NgSelectModule,
+		SharedModule,
+		DialogsModule
+	],
 	exports: [RouterModule, ...COMPONENTS],
 	providers: [
 		{
@@ -77,6 +38,8 @@ const THIRD_PARTY_MODULES = [
 })
 export class JobMatchingModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
 	private static hasRegisteredPageRoutes = false;
+
+	private readonly _log = inject(LoggerService).withContext('JobMatchingModule');
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 
@@ -90,15 +53,15 @@ export class JobMatchingModule implements IOnUIPluginBootstrap, IOnUIPluginDestr
 	/**
 	 * Called by `UIPluginModule` after the module is instantiated.
 	 */
-	onPluginBootstrap(): void {
-		console.log('[JobMatchingModule] Plugin bootstrapped');
+	ngOnPluginBootstrap(): void {
+		this._log.log('Plugin bootstrapped');
 	}
 
 	/**
 	 * Called by `UIPluginModule` when the application is shutting down.
 	 */
-	onPluginDestroy(): void {
-		console.log('[JobMatchingModule] Plugin destroyed');
+	ngOnPluginDestroy(): void {
+		this._log.log('Plugin destroyed');
 	}
 
 	// ─── Route & Menu Registration ────────────────────────────────

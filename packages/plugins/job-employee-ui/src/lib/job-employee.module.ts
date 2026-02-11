@@ -1,38 +1,24 @@
 import { inject, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbIconModule,
-	NbSpinnerModule,
-	NbTabsetModule,
-	NbToggleModule
-} from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
 import {
 	GauzyUIPlugin,
 	IOnUIPluginBootstrap,
 	IOnUIPluginDestroy,
+	LoggerService,
 	NavMenuBuilderService,
 	PageRouteRegistryService,
 	PermissionsGuard
 } from '@gauzy/ui-core/core';
-import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
+import { DynamicTabsModule, NebularModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
 
 @NgModule({
 	declarations: [JobEmployeeComponent],
 	imports: [
 		RouterModule.forChild([]),
-		NbButtonModule,
-		NbCardModule,
-		NbIconModule,
-		NbSpinnerModule,
-		NbTabsetModule,
-		NbToggleModule,
-		NgxPermissionsModule,
+		NebularModule,
 		TranslateModule.forChild(),
 		SharedModule,
 		SmartDataViewLayoutModule,
@@ -43,6 +29,7 @@ import { JobEmployeeComponent } from './components/job-employee/job-employee.com
 export class JobEmployeeModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
 	private static hasRegisteredPageRoutes = false;
 
+	private readonly _log = inject(LoggerService).withContext('JobEmployeeModule');
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 
@@ -56,15 +43,15 @@ export class JobEmployeeModule implements IOnUIPluginBootstrap, IOnUIPluginDestr
 	/**
 	 * Called by `UIPluginModule` after the module is instantiated.
 	 */
-	onPluginBootstrap(): void {
-		console.log('[JobEmployeeModule] Plugin bootstrapped');
+	ngOnPluginBootstrap(): void {
+		this._log.log('Plugin bootstrapped');
 	}
 
 	/**
 	 * Called by `UIPluginModule` when the application is shutting down.
 	 */
-	onPluginDestroy(): void {
-		console.log('[JobEmployeeModule] Plugin destroyed');
+	ngOnPluginDestroy(): void {
+		this._log.log('Plugin destroyed');
 	}
 
 	// ─── Route & Menu Registration ────────────────────────────────
