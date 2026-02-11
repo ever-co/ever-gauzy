@@ -14,8 +14,8 @@ import {
 	Store
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
-import { NbDialogModule, NbDialogService, NbMenuModule, NbSidebarModule, NbToastrModule } from '@nebular/theme';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme-icons';
+import { NbDialogModule, NbDialogService, NbMenuModule, NbSidebarModule, NbToastrModule, NbIconLibraries} from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
 import { AppRoutingModule } from './app/app-routing.module';
@@ -75,8 +75,18 @@ bootstrapApplication(AppComponent, {
 			deps: [Router]
 		},
 		provideAppInitializer(() => {
-			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
+			const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
 			return initializerFn();
+		}),
+		provideAppInitializer(() => {
+			const iconLibraries = inject(NbIconLibraries);
+
+			iconLibraries.registerFontPack('font-awesome', {
+				packClass: 'fas',
+				iconClassPrefix: 'fa'
+			});
+
+			iconLibraries.setDefaultPack('eva');
 		}),
 		{
 			provide: GAUZY_ENV,
