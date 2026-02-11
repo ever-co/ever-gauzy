@@ -130,14 +130,14 @@ export class AuthStrategy extends NbAuthStrategy {
 		}
 
 		return this.authService.refreshToken(refreshToken).pipe(
-			map((res: { token: string }) => {
-				if (!res || !res.token) {
+			map((res: { token: string; refresh_token: string }) => {
+				if (!res || !res.token || !res.refresh_token) {
 					return new NbAuthResult(false, res, false, ['Failed to refresh token']);
 				}
 
-				// Update access token in store
-				// Note: Refresh token stays the same on backend
+				// Update access token and refresh token in store
 				this.store.token = res.token;
+				this.store.refreshToken = res.refresh_token;
 
 				// Set token expiry (extract exp claim from JWT or use default 1 hour)
 				this.setTokenExpiry(res.token);
