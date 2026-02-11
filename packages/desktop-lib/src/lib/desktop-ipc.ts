@@ -489,8 +489,8 @@ export function ipcTimer(
 
 			// Start Timer
 			const timerResponse = await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg?.timeLog);
-			if (appWindowManager?._settingWindow) {
-				appWindowManager._settingWindow.webContents?.send?.('setting_page_ipc', {
+			if (appWindowManager?.settingWindow) {
+				appWindowManager.settingWindow.webContents?.send?.('setting_page_ipc', {
 					type: 'app_setting_update',
 					data: {
 						setting: LocalStore.getStore('appSetting')
@@ -748,7 +748,7 @@ export function ipcTimer(
 
 			console.log('Timer Stopped ...');
 
-			appWindowManager._settingWindow?.webContents?.send?.('setting_page_ipc', {
+			appWindowManager.settingWindow?.webContents?.send?.('setting_page_ipc', {
 				type: 'app_setting_update',
 				data: {
 					setting: LocalStore.getStore('appSetting')
@@ -851,7 +851,7 @@ export function ipcTimer(
 			appWindowManager.imageView?.webContents?.send?.('refresh_menu');
 		}
 
-		imageViewWindow?.show();
+		appWindowManager.imageView?.show();
 
 	});
 
@@ -872,13 +872,13 @@ export function ipcTimer(
 
 	ipcMain.on('open_setting_window', async (event, arg) => {
 		log.info(`Open Setting Window: ${moment().format()}`);
-		if (!appWindowManager._settingWindow) {
+		if (!appWindowManager.settingWindow) {
 			await appWindowManager.initSettingWindow(windowPath.timeTrackerUi, windowPath.preloadPath);
 			ipcMain.once('setting_window_ready', () => {
 				appWindowManager.settingShow('goto_top_menu');
 			});
 		}
-		appWindowManager._settingWindow?.show?.();
+		appWindowManager.settingWindow?.show?.();
 	});
 
 	ipcMain.on('switch_aw_option', (event, arg) => {
@@ -905,8 +905,8 @@ export function ipcTimer(
 
 			LocalStore.updateAuthSetting({ isLogout: true });
 
-			if (appWindowManager?._settingWindow) {
-				appWindowManager._settingWindow.webContents?.send?.('setting_page_ipc', {
+			if (appWindowManager?.settingWindow) {
+				appWindowManager.settingWindow.webContents?.send?.('setting_page_ipc', {
 					type: 'logout_success'
 				});
 			}

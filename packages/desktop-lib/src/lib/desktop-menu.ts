@@ -61,7 +61,7 @@ export class AppMenu {
 					label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 					async click() {
 						const appWindowManager = AppWindowManager.getInstance();
-						if (!appWindowManager._settingWindow) {
+						if (!appWindowManager.settingWindow) {
 							await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
 							ipcMain.once('setting_window_ready', () => {
 								appWindowManager.settingShow('goto_update');
@@ -69,7 +69,7 @@ export class AppMenu {
 						} else {
 							appWindowManager.settingShow('goto_update');
 						}
-						appWindowManager._settingWindow?.show?.();
+						appWindowManager.settingWindow?.show?.();
 					}
 				},
 				{
@@ -90,14 +90,14 @@ export class AppMenu {
 					enabled: true,
 					async click() {
 						const appWindowManager = AppWindowManager.getInstance();
-						if (!appWindowManager._settingWindow) {
+						if (!appWindowManager.settingWindow) {
 							await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
 							ipcMain.once('setting_window_ready', () => {
 								appWindowManager.settingShow('goto_top_menu');
 							});
 						}
-						appWindowManager._settingWindow?.show?.();
-						appWindowManager._settingWindow?.webContents?.toggleDevTools?.();
+						appWindowManager.settingWindow?.show?.();
+						appWindowManager.settingWindow?.webContents?.toggleDevTools?.();
 					}
 				},
 				{
@@ -152,7 +152,7 @@ export class AppMenu {
 					enabled: true,
 					async click() {
 						const appWindowManager = AppWindowManager.getInstance();
-						if (!appWindowManager._settingWindow) {
+						if (!appWindowManager.settingWindow) {
 							await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
 							ipcMain.once('setting_window_ready', () => {
 								appWindowManager.settingShow('goto_top_menu');
@@ -160,7 +160,7 @@ export class AppMenu {
 						} else {
 							appWindowManager.settingShow('goto_top_menu');
 						}
-						appWindowManager._settingWindow?.show?.();
+						appWindowManager.settingWindow?.show?.();
 					}
 				},
 				{

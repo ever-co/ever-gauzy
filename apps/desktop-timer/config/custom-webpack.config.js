@@ -39,6 +39,7 @@ module.exports = {
 		// for now let's disable minimize in CircleCI
 		minimize: !isCircleCI,
 		minimizer: [
+			'...',
 			new TerserPlugin({
 				parallel: isCircleEnv ? 2 : true,
 				terserOptions: {
@@ -57,7 +58,7 @@ module.exports = {
 	plugins: [
 		new NodePolyfillPlugin({
 			excludeAliases: ['console']
-		}),
+		})
 		// new BundleAnalyzerPlugin({ analyzerMode: 'static', openAnalyzer: false }),
 	],
 	output: {

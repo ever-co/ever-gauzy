@@ -36,12 +36,12 @@ export class TrayIcon {
 				accelerator: 'CmdOrCtrl+,',
 				async click() {
 					const appWindowManager = AppWindowManager.getInstance();
-					if (!appWindowManager._settingWindow) {
+					if (!appWindowManager.settingWindow) {
 						await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
 						ipcMain.once('setting_window_ready', () => {
 							appWindowManager.settingShow('goto_top_menu');
 						});
-						appWindowManager._settingWindow?.show?.();
+						appWindowManager.settingWindow?.show?.();
 					} else {
 						appWindowManager.settingShow('goto_top_menu');
 					}
@@ -56,7 +56,7 @@ export class TrayIcon {
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
 					const appWindowManager = AppWindowManager.getInstance();
-					if (!appWindowManager._settingWindow) {
+					if (!appWindowManager.settingWindow) {
 						await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
 						ipcMain.once('setting_window_ready', () => {
 							appWindowManager.settingShow('goto_update');
@@ -64,7 +64,7 @@ export class TrayIcon {
 					} else {
 						appWindowManager.settingShow('goto_update');
 					}
-					appWindowManager._settingWindow?.show?.();
+					appWindowManager.settingWindow?.show?.();
 				}
 			}
 		];

@@ -477,7 +477,7 @@ app.on('ready', async () => {
 
 		updater.settingWindow = settingsWindow;
 		updater.gauzyWindow = serverWindow;
-		appWindowManager._updater = updater;
+		appWindowManager.updater = updater;
 		await updater.checkUpdate();
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);

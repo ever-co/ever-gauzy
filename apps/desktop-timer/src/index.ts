@@ -224,6 +224,7 @@ eventErrorManager.onShowError(async (message) => {
 
 function initializeAppManager() {
 	appWindowManager = AppWindowManager.getInstance();
+	appWindowManager.preloadPath = pathWindow.preloadPath;
 }
 
 async function startServer(value, restart = false) {
@@ -427,7 +428,8 @@ app.on('ready', async () => {
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
-	updater.settingWindow = appWindowManager?._settingWindow;
+	initializeAppManager()
+	updater.settingWindow = appWindowManager?.settingWindow;
 	updater.gauzyWindow = gauzyWindow;
 	appWindowManager.updater = updater;
 	try {

@@ -128,9 +128,7 @@ setupTitlebar();
 
 console.log('App UI Render Path:', path.join(__dirname, './index.html'));
 
-function initAppWindowManager() {
-	appWindowManager = AppWindowManager.getInstance();
-}
+
 const pathWindow = {
 	gauzyWindow: path.join(__dirname, './index.html'),
 	timeTrackerUi: path.join(__dirname, './ui/index.html'),
@@ -143,6 +141,11 @@ const updater = new DesktopUpdater({
 	owner: process.env.REPO_OWNER,
 	typeRelease: 'releases'
 });
+
+function initAppWindowManager() {
+	appWindowManager = AppWindowManager.getInstance();
+	appWindowManager.preloadPath = pathWindow.preloadPath;
+}
 
 const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
 
@@ -571,7 +574,7 @@ app.on('ready', async () => {
 
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = gauzyWindow;
-	appWindowManager._updater = updater;
+	appWindowManager.updater = updater;
 	try {
 		await updater.checkUpdate();
 	} catch (error) {
