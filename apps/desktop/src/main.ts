@@ -4,10 +4,9 @@ import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita'
 
 import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { Router, RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 import {
 	ActivityWatchInterceptor,
-	AlwaysOnModule,
 	APIInterceptor,
 	AuthGuard,
 	AuthService,
@@ -23,8 +22,6 @@ import {
 	NgxDesktopThemeModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
-	PluginsModule,
-	RecapModule,
 	RefreshTokenInterceptor,
 	ServerErrorInterceptor,
 	Store,
@@ -34,12 +31,9 @@ import {
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
-	NbButtonModule,
-	NbCardModule,
 	NbDatepickerModule,
 	NbDialogModule,
 	NbDialogService,
-	NbLayoutModule,
 	NbThemeModule,
 	NbToastrModule,
 	NbSidebarModule,

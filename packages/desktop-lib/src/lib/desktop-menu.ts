@@ -1,5 +1,5 @@
-import { RegisteredWindow, WindowManager, logger } from '@gauzy/desktop-core';
-import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
+import { WindowManager, logger } from '@gauzy/desktop-core';
+import { createAboutWindow } from '@gauzy/desktop-window';
 import { BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerService } from './offline';
@@ -17,7 +17,6 @@ export class AppMenu {
 
 	private readonly pluginManager = PluginManager.getInstance();
 	private readonly pluginEventManager = PluginEventManager.getInstance();
-	private readonly windowManager = WindowManager.getInstance();
 
 	/**
 	 * Constructs and initializes the application menu.

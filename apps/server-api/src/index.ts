@@ -57,8 +57,6 @@ import {
 import {
 	createAboutWindow,
 	createServerWindow,
-	createSettingsWindow,
-	createSetupWindow,
 	PluginMarketplaceWindow,
 	SplashScreen
 } from '@gauzy/desktop-window';

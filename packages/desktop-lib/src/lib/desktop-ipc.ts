@@ -1,9 +1,9 @@
-import { BrowserWindow, app, desktopCapturer, ipcMain, ipcRenderer, screen, systemPreferences } from 'electron';
+import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
-import { RegisteredWindow, WindowManager, logger as log } from '@gauzy/desktop-core';
-import { ScreenCaptureNotification, loginPage, createImageViewerWindow } from '@gauzy/desktop-window';
+import { WindowManager, logger as log } from '@gauzy/desktop-core';
+import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
 import { TrackingSleepInactivity } from './contexts';
 import {
 	DialogStopTimerLogoutConfirmation,
@@ -39,7 +39,6 @@ import { pluginListeners } from './plugin-system';
 import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
 import { AppWindowManager } from './app-window-manager';
-import { DesktopUpdater } from './desktop-updater';
 
 const timerHandler = new TimerHandler();
 const offlineMode = DesktopOfflineModeHandler.instance;

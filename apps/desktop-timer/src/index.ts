@@ -54,7 +54,6 @@ import {
 	AlwaysOn,
 	createSettingsWindow,
 	createTimeTrackerWindow,
-	PluginMarketplaceWindow,
 	ScreenCaptureNotification,
 	SplashScreen,
 	timeTrackerPage
@@ -508,9 +507,8 @@ ipcMain.on('restart_app', async (event, arg) => {
 	await ProviderFactory.instance.createDatabase();
 	/* Kill all windows */
 	if (appWindowManager.alwaysOnWindow) appWindowManager.alwaysOnWindow.close();
-	if (settingsWindow && !settingsWindow.isDestroyed()) {
-		settingsWindow.hide();
-		settingsWindow.destroy();
+	if (appWindowManager.settingWindow && !appWindowManager.settingWindow?.isDestroyed()) {
+		appWindowManager.settingWindow?.close();
 	}
 	if (timeTrackerWindow && !timeTrackerWindow.isDestroyed()) {
 		timeTrackerWindow.destroy();
@@ -611,7 +609,7 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 	if (arg) {
 		if (!setting) LocalStore.setDefaultApplicationSetting();
 		TranslateService.preferredLanguage = arg;
-		settingsWindow?.webContents?.send?.('preferred_language_change', arg);
+		appWindowManager.settingWindow?.webContents?.send?.('preferred_language_change', arg);
 	}
 	return TranslateService.preferredLanguage;
 });

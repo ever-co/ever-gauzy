@@ -58,9 +58,6 @@ import {
 import {
 	createAboutWindow,
 	createServerWindow,
-	createSettingsWindow,
-	createSetupWindow,
-	PluginMarketplaceWindow,
 	SplashScreen
 } from '@gauzy/desktop-window';
 import * as Sentry from '@sentry/electron/main';
@@ -337,7 +334,7 @@ const runServer = async () => {
 	}
 };
 
-const initializeAppWinodwManager = () => {
+const initializeAppWindowManager = () => {
 	appWindowManager = AppWindowManager.getInstance();
 }
 
@@ -467,7 +464,7 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 
 app.on('ready', async () => {
 	console.log('App is ready');
-	initializeAppWinodwManager();
+	initializeAppWindowManager();
 	try {
 		splashScreen = new SplashScreen(pathWindow.ui);
 

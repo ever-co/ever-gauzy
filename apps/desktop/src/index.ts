@@ -361,7 +361,7 @@ async function startServer(value, restart = false) {
 	notificationWindow = new ScreenCaptureNotification(pathWindow.screenshotWindow);
 	await notificationWindow.loadURL();
 
-	setupWindow?.close();
+	appWindowManager.setupWindow?.close?.();
 
 	if (gauzyWindow) {
 		gauzyWindow.setVisibleOnAllWorkspaces(false);
@@ -782,8 +782,8 @@ app.on('activate', async () => {
 			pathWindow.preloadPath
 		);
 	} else {
-		if (setupWindow) {
-			setupWindow.show();
+		if (appWindowManager.setupWindow) {
+			appWindowManager.setupWindow?.show?.();
 			closeSplashScreen();
 		}
 	}
