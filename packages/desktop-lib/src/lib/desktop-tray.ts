@@ -80,7 +80,6 @@ export class TrayIcon {
 
 		this.contextMenu = [
 			...settingMenu,
-			,
 			...updateMenu,
 			{
 				type: 'separator'

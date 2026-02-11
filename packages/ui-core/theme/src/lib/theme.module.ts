@@ -24,7 +24,6 @@ import {
 	NbToggleModule,
 	NbCardModule
 } from '@nebular/theme';
-import { NbTablerIconsModule } from './icons/tabler-icons.module';
 import { NbSecurityModule } from '@nebular/security';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
@@ -42,6 +41,7 @@ import {
 	TimeTrackerStatusModule,
 	WorkspacesModule
 } from '@gauzy/ui-core/shared';
+import { NbTablerIconsModule } from './icons/tabler-icons.module';
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,

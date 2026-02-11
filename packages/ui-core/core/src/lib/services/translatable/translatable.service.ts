@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Injectable()
 export class TranslatableService {
-	constructor(private readonly translateService: TranslateService) { }
+	constructor(private readonly translateService: TranslateService) {}
 
 	/**
 	 * Retrieves the translated properties of an ITranslatable object based on the current language.
@@ -18,7 +18,7 @@ export class TranslatableService {
 			console.warn('Invalid translatable object or translations property:', translatable);
 			return translatable;
 		}
-		const currentLangCode = this.translateService.currentLang || LanguagesEnum.ENGLISH;
+		const currentLangCode = this.translateService.getCurrentLang() || LanguagesEnum.ENGLISH;
 		const currentLangTranslation = translatable.translations.find((tr) => tr.languageCode == currentLangCode);
 
 		translateProps.forEach((prop) => {

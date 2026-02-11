@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {
 	enableProdMode,
 	ErrorHandler,
@@ -21,7 +21,6 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
@@ -37,7 +36,6 @@ import {
 	TimeoutInterceptor,
 	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
-import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
 	NbDatepickerModule,
 	NbDialogModule,
@@ -45,17 +43,18 @@ import {
 	NbMenuModule,
 	NbSidebarModule,
 	NbThemeModule,
-	NbToastrModule
+	NbToastrModule,
+	NbIconLibraries
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { provideI18n } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppModuleGuard } from './app/app.module.guards';
 import { AppService } from './app/app.service';
 import { initializeSentry } from './app/sentry';
 import { environment } from './environments/environment';
-import { NbIconLibraries } from '@nebular/theme';
 import { NbTablerIconsModule } from '@gauzy/ui-core/theme-icons';
 
 if (environment.production) {
@@ -92,17 +91,10 @@ bootstrapApplication(AppComponent, {
 			NbSidebarModule.forRoot(), // Provides NbSidebarService
 			NbMenuModule.forRoot(), // Provides NbMenuService
 			NbTablerIconsModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: {
-					provide: TranslateLoader,
-					useFactory: HttpLoaderFactory,
-					deps: [HttpClient]
-				}
-			}),
 			LanguageModule.forRoot(),
 			NbDatepickerModule.forRoot()
 		),
+		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
 		AuthGuard,

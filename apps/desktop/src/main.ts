@@ -1,10 +1,11 @@
 import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
-
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
+
+import * as Sentry from '@sentry/angular';
 import {
 	ActivityWatchInterceptor,
 	APIInterceptor,
@@ -15,7 +16,6 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
@@ -40,8 +40,7 @@ import {
 	NbMenuModule,
 	NbIconLibraries
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
+import { provideI18n } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
@@ -89,17 +88,10 @@ bootstrapApplication(AppComponent, {
 			NbSidebarModule.forRoot(), // Provides NbSidebarService
 			NbMenuModule.forRoot(), // Provides NbMenuService
 			NbTablerIconsModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: {
-					provide: TranslateLoader,
-					useFactory: HttpLoaderFactory,
-					deps: [HttpClient]
-				}
-			}),
 			LanguageModule.forRoot(),
 			NbDatepickerModule.forRoot()
 		),
+		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
 		ElectronService,

@@ -1,13 +1,13 @@
 import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
-
-import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
+import { NbDialogModule, NbDialogService, NbMenuModule, NbSidebarModule, NbToastrModule, NbIconLibraries } from '@nebular/theme';
+import * as Sentry from '@sentry/angular';
 import {
 	ElectronService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
@@ -15,9 +15,7 @@ import {
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { NbTablerIconsModule } from '@gauzy/ui-core/theme-icons';
-import { NbDialogModule, NbDialogService, NbMenuModule, NbSidebarModule, NbToastrModule, NbIconLibraries } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
+import { provideI18n } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
@@ -49,16 +47,9 @@ bootstrapApplication(AppComponent, {
 			NbSidebarModule.forRoot(),
 			LanguageModule.forRoot(),
 			NgxDesktopThemeModule,
-			NbTablerIconsModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: {
-					provide: TranslateLoader,
-					useFactory: HttpLoaderFactory,
-					deps: [HttpClient]
-				}
-			})
+			NbTablerIconsModule
 		),
+		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
 		ElectronService,

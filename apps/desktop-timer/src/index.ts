@@ -410,7 +410,7 @@ app.on('ready', async () => {
 		if (settings?.alwaysOn) {
 			appWindowManager.alwaysOnWindow.show();
 		} else {
-			appWindowManager.alwaysOnWindow.close();
+			appWindowManager.alwaysOnWindow.browserWindow.close();
 		}
 
 		if (configs && configs.isSetup) {

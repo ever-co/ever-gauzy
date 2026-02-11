@@ -21,10 +21,10 @@ import { PipelineDealProbabilityComponent } from '../table-components/pipeline-d
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-pipeline-deals',
-    templateUrl: './pipeline-deals.component.html',
-    styleUrls: ['./pipeline-deals.component.scss'],
-    standalone: false
+	selector: 'ga-pipeline-deals',
+	templateUrl: './pipeline-deals.component.html',
+	styleUrls: ['./pipeline-deals.component.scss'],
+	standalone: false
 })
 export class PipelineDealsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public viewComponentName: ComponentEnum = ComponentEnum.PIPELINE_DEALS;
@@ -349,6 +349,13 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 		} finally {
 			this.subject$.next(true);
 		}
+	}
+
+	/**
+	 * Loads more deals when the user scrolls (pagination).
+	 */
+	loadMoreDeals(): void {
+		super.onScroll();
 	}
 
 	/**

@@ -1110,7 +1110,7 @@ export function ipcTimer(
 
 	ipcMain.on('hide_ao', (event, arg) => {
 		if (appWindowManager.alwaysOnWindow) {
-			appWindowManager.alwaysOnWindow.close?.();
+			appWindowManager.alwaysOnWindow.browserWindow?.close?.();
 		}
 	});
 

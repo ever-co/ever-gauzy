@@ -98,16 +98,13 @@ export class AppWindowManager {
 	async initAlwaysOnWindow(filePath: string): Promise<AlwaysOn> {
 		try {
 			if (!this.alwaysOnWindow || this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
-				console.log('new alwaysOnWindow');
 				this.alwaysOnWindow = new AlwaysOn(filePath);
 				await this.alwaysOnWindow.loadURL();
 				this.alwaysOnWindow.browserWindow.removeAllListeners('close');
 				this.alwaysOnWindow.browserWindow.on('close', () => {
-					console.log('close alwaysOnWindow');
 					if (!this.alwaysOnWindow?.browserWindow?.isDestroyed()) {
 						this.alwaysOnWindow?.browserWindow?.destroy();
 					}
-
 					this.alwaysOnWindow = null;
 				});
 			}
