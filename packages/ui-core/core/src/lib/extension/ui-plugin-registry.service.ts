@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { IOnUIPluginBootstrap, IOnUIPluginDestroy } from './ui-plugin.interface';
+import { IUIPluginLifecycleMethods } from './ui-plugin.interface';
 import { hasUILifecycleMethod } from './ui-plugin.helper';
 
 /**
- * A plugin module instance that may implement bootstrap and/or destroy
- * lifecycle hooks. Used as the type constraint for the registry.
+ * A plugin module instance that may implement one or both lifecycle
+ * hooks. Used as the type constraint for the registry.
  */
-export type UIPluginInstance = Partial<IOnUIPluginBootstrap & IOnUIPluginDestroy>;
+export type UIPluginInstance = Partial<IUIPluginLifecycleMethods>;
 
 /**
  * Root-level registry that tracks all bootstrapped UI plugin module instances.

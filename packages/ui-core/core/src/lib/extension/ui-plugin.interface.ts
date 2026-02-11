@@ -26,17 +26,7 @@ export interface IOnUIPluginBootstrap {
  * Interface for UI plugins with a destroy lifecycle method.
  *
  * Implement this in your Angular module class so the `UIPluginModule`
- * can call it when the application is shutting down.
- *
- * @example
- * ```ts
- * @NgModule({ … })
- * export class JobEmployeeModule implements IOnUIPluginDestroy {
- *     ngOnPluginDestroy(): void {
- *         console.log('JobEmployeeModule destroyed');
- *     }
- * }
- * ```
+ * can call it before the module is destroyed.
  */
 export interface IOnUIPluginDestroy {
 	/**
@@ -47,7 +37,33 @@ export interface IOnUIPluginDestroy {
 }
 
 /**
- * Represents the combined lifecycle methods for a UI plugin.
- * This type combines interfaces for bootstrapping and destroying a plugin.
+ * Combined lifecycle contract for UI plugins (bootstrap + destroy).
+ *
+ * Use this when you want a **single interface** that expresses both
+ * lifecycle hooks:
+ *
+ * ```ts
+ * export class JobEmployeeModule implements IUIPluginLifecycleMethods {
+ *   ngOnPluginBootstrap(): void { … }
+ *   ngOnPluginDestroy(): void { … }
+ * }
+ * ```
  */
-export type UIPluginLifecycleMethods = IOnUIPluginBootstrap & IOnUIPluginDestroy;
+export interface IUIPluginLifecycleMethods {
+	/**
+	 * Called when the plugin module is being initialized.
+	 * @returns A void or a Promise representing the completion of the operation.
+	 */
+	ngOnPluginBootstrap(): void | Promise<void>;
+
+	/**
+	 * Called when the plugin module is being destroyed.
+	 * @returns A void or a Promise representing the completion of the operation.
+	 */
+	ngOnPluginDestroy(): void | Promise<void>;
+}
+
+/**
+ * Backwards‑compatible alias used by helper utilities.
+ */
+export type UIPluginLifecycleMethods = IUIPluginLifecycleMethods;
