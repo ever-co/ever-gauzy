@@ -27,7 +27,6 @@ export class TrayIcon {
 		const manager = WindowManager.getInstance();
 
 		let timeTrackerWindow = (manager.getOne(RegisteredWindow.TIMER) || {}) as BrowserWindow;
-		let settingsWindow = (manager.getOne(RegisteredWindow.SETTINGS) || {}) as BrowserWindow;
 		let mainWindow = (manager.getOne(RegisteredWindow.MAIN) || {}) as BrowserWindow;
 
 		const settingMenu: MenuItemConstructorOptions[] = [

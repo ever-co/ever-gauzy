@@ -1,4 +1,4 @@
-import { WindowManager, logger } from '@gauzy/desktop-core';
+import { logger } from '@gauzy/desktop-core';
 import { createAboutWindow } from '@gauzy/desktop-window';
 import { BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';

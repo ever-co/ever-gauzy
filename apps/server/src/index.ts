@@ -392,7 +392,7 @@ const contextMenu = () => {
 						appWindowManager.settingShow('goto_update');
 					});
 				}
-				settingsWindow.show();
+				appWindowManager.setupWindow?.show?.();
 			}
 		},
 		{
