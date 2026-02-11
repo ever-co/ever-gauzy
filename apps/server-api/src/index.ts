@@ -277,7 +277,7 @@ const runMainWindow = async () => {
 
 	if (menuWindowSetting) menuWindowSetting.enabled = true;
 
-	if (setupWindow) setupWindow.close();
+	if (appWindowManager.setupWindow) appWindowManager.setupWindow.close?.();
 
 	serverWindow.webContents.send('dashboard_ready', {
 		setting: serverConfig.setting
@@ -379,7 +379,7 @@ const contextMenu = () => {
 					})
 				} else {
                     appWindowManager.settingShow('goto_update');
-                }  
+                }
 				appWindowManager.settingWindow.show();
 			}
 		},

@@ -429,7 +429,7 @@ app.on('ready', async () => {
 		throw new AppError('MAINWININIT', error);
 	}
 	initializeAppManager()
-	updater.settingWindow = appWindowManager?.settingWindow;
+	updater.settingWindow = appWindowManager.settingWindow;
 	updater.gauzyWindow = gauzyWindow;
 	appWindowManager.updater = updater;
 	try {
