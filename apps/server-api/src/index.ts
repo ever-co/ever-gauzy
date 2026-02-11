@@ -85,7 +85,6 @@ try {
 	log.error(error);
 }
 
-let setupWindow: BrowserWindow;
 let serverWindow: BrowserWindow;
 let settingsWindow: BrowserWindow;
 let splashScreen: SplashScreen;
