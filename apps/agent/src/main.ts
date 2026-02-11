@@ -54,9 +54,8 @@ import {
 	NbToastrModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
+import { provideI18n } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppModuleGuard } from './app/app.module.guards';
@@ -114,16 +113,13 @@ bootstrapApplication(AppComponent, {
 			NgSelectModule,
 			SplashScreenModule,
 			ServerDownModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: provideTranslateHttpLoader()
-			}),
 			LanguageModule.forRoot(),
 			NbDatepickerModule.forRoot(),
 			AboutModule,
 			AgentDashboardModule,
 			AlwaysOnModule
 		),
+		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
 		NbSidebarService,

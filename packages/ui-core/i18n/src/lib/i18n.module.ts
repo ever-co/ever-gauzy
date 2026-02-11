@@ -1,6 +1,5 @@
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { I18nService } from './i18n.service';
 import { provideTranslateHttpLoader } from './translate-http-loader';
 
 /**
@@ -8,6 +7,16 @@ import { provideTranslateHttpLoader } from './translate-http-loader';
  *
  * It streamlines the setup of translation services, standardizing the loader configuration.
  * This module should be imported once in the root module using `forRoot()`.
+ *
+ * `I18nService` is not listed here — it uses `providedIn: 'root'` and is
+ * available globally without explicit registration.
+ *
+ * **Important:** `fallbackLang` and `lang` are intentionally NOT set in the provider
+ * config. Setting them here causes `TranslateService` to eagerly load translations
+ * during DI initialization, which triggers an `NG0200` circular dependency in apps
+ * that have HTTP interceptors depending on `TranslateService` (e.g. `LanguageInterceptor`).
+ * Instead, set the fallback/default language imperatively after bootstrap
+ * (e.g. via `translateService.setFallbackLang()` or an `APP_INITIALIZER`).
  *
  * Usage:
  *
@@ -34,20 +43,21 @@ import { provideTranslateHttpLoader } from './translate-http-loader';
 			loader: provideTranslateHttpLoader()
 		})
 	],
-	exports: [TranslateModule],
-	providers: [I18nService]
+	exports: [TranslateModule]
 })
 export class I18nModule {
 	/**
-	 * Returns a ModuleWithProviders object that configures I18nModule for the root module.
-	 * Use this method in your root AppModule to initialize the translation services.
+	 * Configures I18nModule for the root module.
 	 *
-	 * @return {ModuleWithProviders<I18nModule>} A ModuleWithProviders object with the I18nModule and its providers.
+	 * The ngx-translate root providers (`TranslateService`, `TranslateStore`, HTTP loader)
+	 * are registered via `TranslateModule.forRoot()` in the `@NgModule` decorator.
+	 *
+	 * @return {ModuleWithProviders<I18nModule>} A ModuleWithProviders object with the I18nModule.
 	 */
 	static forRoot(): ModuleWithProviders<I18nModule> {
 		return {
 			ngModule: I18nModule,
-			providers: [I18nService]
+			providers: []
 		};
 	}
 }

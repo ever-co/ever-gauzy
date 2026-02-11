@@ -5,7 +5,6 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
 import { NbDialogModule, NbDialogService, NbMenuModule, NbSidebarModule, NbToastrModule } from '@nebular/theme';
 import * as Sentry from '@sentry/angular';
-import { TranslateModule } from '@ngx-translate/core';
 import {
 	ElectronService,
 	GAUZY_ENV,
@@ -16,7 +15,7 @@ import {
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
-import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
+import { provideI18n } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
@@ -48,12 +47,9 @@ bootstrapApplication(AppComponent, {
 			AppRoutingModule,
 			NbMenuModule.forRoot(),
 			NgxDesktopThemeModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: provideTranslateHttpLoader()
-			}),
 			LanguageModule.forRoot()
 		),
+		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
 		ElectronService,
