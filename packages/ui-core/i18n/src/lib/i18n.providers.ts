@@ -15,7 +15,7 @@ export interface I18nProviderOptions {
 	fallbackLanguage?: string;
 	/** HTTP loader options for translation files. */
 	loader?: HttpLoaderOptions;
-	/** Custom loader provider. If provided, overrides the HTTP loader. */
+	/** Custom loader provider (single Provider). If provided, overrides the HTTP loader. */
 	customLoader?: ReturnType<typeof provideTranslateHttpLoader>;
 }
 

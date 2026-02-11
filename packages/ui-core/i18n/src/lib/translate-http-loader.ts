@@ -26,8 +26,13 @@ export const DEFAULT_HTTP_LOADER_OPTIONS: Required<HttpLoaderOptions> = {
  * In v17, the TranslateHttpLoader uses dependency injection internally,
  * so configuration is done via providers rather than constructor arguments.
  *
+ * Returns a single `Provider` (which Angular DI treats as a flat array of providers
+ * containing the HTTP loader config token and the `TranslateLoader` class provider).
+ * This aligns with the `TranslateProviders.loader` type expected by
+ * `TranslateModule.forRoot()` and `provideTranslateService()` in ngx-translate v17.
+ *
  * @param options Optional configuration for prefix and suffix.
- * @returns Provider configuration for the TranslateHttpLoader.
+ * @returns A single Provider compatible with `TranslateProviders.loader`.
  *
  * @example
  * ```typescript
@@ -61,7 +66,7 @@ export const DEFAULT_HTTP_LOADER_OPTIONS: Required<HttpLoaderOptions> = {
  * export class AppModule {}
  * ```
  */
-export function provideTranslateHttpLoader(options?: HttpLoaderOptions): Provider[] {
+export function provideTranslateHttpLoader(options?: HttpLoaderOptions): Provider {
 	const { prefix, suffix } = { ...DEFAULT_HTTP_LOADER_OPTIONS, ...options };
 	return ngxProvideTranslateHttpLoader({ prefix, suffix });
 }
