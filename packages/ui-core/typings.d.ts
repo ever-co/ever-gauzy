@@ -13,8 +13,6 @@ interface NodeModule {
 	id: string;
 }
 
-declare var echarts: any;
-
 interface Window {
 	require: NodeRequire;
 }

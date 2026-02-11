@@ -1,6 +1,7 @@
 import { Index as TypeOrmIndex, IndexOptions as TypeOrmIndexOptions } from 'typeorm';
 import { Index as MikroOrmIndex, IndexOptions as MikroOrmIndexOptions, Unique as MikroUnique } from '@mikro-orm/core';
 import { isPlainObject } from '@gauzy/utils';
+import { MultiORMEnum, getORMType } from '../../utils';
 
 // Extend your TypeOrmIndexOptions to include MikroOrm options as well
 type CombinedIndexOptions<T> =
@@ -21,6 +22,7 @@ export function ColumnIndex<T>(fields: string[], options?: CombinedIndexOptions<
 
 /**
  * ColumnIndex decorator for TypeOrm and MikroOrm.
+ * Applies only the active ORM's index decorator based on the DB_ORM environment variable.
  *
  * @param nameOrFieldsOrOptions
  * @param maybeFieldsOrOptions
@@ -54,12 +56,18 @@ export function ColumnIndex<T>(
 	 * @param propertyKey The name of the property to which the decorator is applied. This is undefined for class decorators.
 	 */
 	return (target: any, propertyKey?: string) => {
-		// Apply TypeORM index. If 'name' and 'fields' are specified it creates a named index on the specified properties.
-		// Otherwise, it uses 'options' to determine the indexing strategy.
-		applyTypeOrmIndex(target, propertyKey, name, fields, options as TypeOrmIndexOptions);
+		// Determine which ORM is in use
+		const ormType = getORMType();
 
-		// Apply MikroORM index. It behaves similarly to the TypeORM index application, but with specifics to MikroORM.
-		applyMikroOrmIndex(target, propertyKey as never, name, fields as never[], options as TypeOrmIndexOptions);
+		// Apply TypeORM index when using TypeORM
+		if (ormType === MultiORMEnum.TypeORM) {
+			applyTypeOrmIndex(target, propertyKey, name, fields, options as TypeOrmIndexOptions);
+		}
+
+		// Apply MikroORM index when using MikroORM
+		if (ormType === MultiORMEnum.MikroORM) {
+			applyMikroOrmIndex(target, propertyKey as never, name, fields as never[], options as TypeOrmIndexOptions);
+		}
 	};
 }
 
