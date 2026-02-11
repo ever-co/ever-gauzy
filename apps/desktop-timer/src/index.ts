@@ -343,6 +343,7 @@ const getApiBaseUrl = (configs) => {
 // More details at https://github.com/electron/electron/issues/15947
 
 app.on('ready', async () => {
+	initializeAppManager();
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 
@@ -399,7 +400,6 @@ app.on('ready', async () => {
 	];
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 	try {
-		initializeAppManager();
 		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi,
@@ -427,9 +427,9 @@ app.on('ready', async () => {
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
-	initializeAppManager()
 	updater.settingWindow = appWindowManager?._settingWindow;
 	updater.gauzyWindow = gauzyWindow;
+	appWindowManager.updater = updater;
 	try {
 		await updater.checkUpdate();
 	} catch (error) {
@@ -437,7 +437,6 @@ app.on('ready', async () => {
 	}
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
-	appWindowManager.updater = updater;
 });
 
 app.on('window-all-closed', () => {

@@ -391,6 +391,8 @@ const contextMenu = () => {
 					ipcMain.once('setting_window_ready', () => {
 						appWindowManager.settingShow('goto_update');
 					});
+				} else {
+					appWindowManager.settingShow('goto_update');
 				}
 				appWindowManager.setupWindow?.show?.();
 			}

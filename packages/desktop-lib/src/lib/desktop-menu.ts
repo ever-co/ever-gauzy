@@ -13,7 +13,7 @@ export class AppMenu {
 	public applicationMenu: MenuItemConstructorOptions;
 	public windowMenu: MenuItemConstructorOptions;
 	public editMenu: MenuItemConstructorOptions;
-	private windowPath: any;
+	private readonly windowPath: any;
 
 	private readonly pluginManager = PluginManager.getInstance();
 	private readonly pluginEventManager = PluginEventManager.getInstance();
@@ -66,6 +66,8 @@ export class AppMenu {
 							ipcMain.once('setting_window_ready', () => {
 								appWindowManager.settingShow('goto_update');
 							});
+						} else {
+							appWindowManager.settingShow('goto_update');
 						}
 						appWindowManager._settingWindow?.show?.();
 					}
@@ -155,6 +157,8 @@ export class AppMenu {
 							ipcMain.once('setting_window_ready', () => {
 								appWindowManager.settingShow('goto_top_menu');
 							});
+						} else {
+							appWindowManager.settingShow('goto_top_menu');
 						}
 						appWindowManager._settingWindow?.show?.();
 					}

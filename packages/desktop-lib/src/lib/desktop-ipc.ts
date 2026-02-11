@@ -840,17 +840,24 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('show_image', async (event, arg) => {
-		const imageViewWindow = await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
+		if (!appWindowManager.imageView) {
+			await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
+			ipcMain.once('image_view_ready', () => {
+				appWindowManager.imageView?.webContents?.send?.('show_image', arg);
+				appWindowManager.imageView?.webContents?.send?.('refresh_menu');
+			});
+		} else {
+			appWindowManager.imageView?.webContents?.send?.('show_image', arg);
+			appWindowManager.imageView?.webContents?.send?.('refresh_menu');
+		}
+
 		imageViewWindow?.show();
-		ipcMain.once('image_view_ready', () => {
-			imageViewWindow?.webContents?.send?.('show_image', arg);
-			imageViewWindow?.webContents?.send?.('refresh_menu');
-		});
+
 	});
 
 	ipcMain.on('close_image_view', async () => {
-		const imageViewWindow = await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
-		imageViewWindow?.close?.();
+		await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
+		appWindowManager.imageView?.close?.();
 	});
 
 	ipcMain.on('save_temp_screenshot', async (event, arg) => {

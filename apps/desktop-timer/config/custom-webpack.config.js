@@ -37,7 +37,7 @@ module.exports = {
 	optimization: {
 		concatenateModules: false,
 		// for now let's disable minimize in CircleCI
-		minimize: !isCircleEnv,
+		minimize: !isCircleCI,
 		minimizer: [
 			new TerserPlugin({
 				parallel: isCircleEnv ? 2 : true,

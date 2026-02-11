@@ -242,10 +242,10 @@ const closeSplashScreen = () => {
 const runSetup = async () => {
 	// Set default configuration
 	LocalStore.setDefaultServerConfig();
-	if (!setupWindow) {
-		setupWindow = await appWindowManager.initSetupWindow(pathWindow.ui);
+	if (!appWindowManager.setupWindow) {
+		await appWindowManager.initSetupWindow(pathWindow.ui);
 	}
-	setupWindow.show();
+	appWindowManager.setupWindow.show();
 	closeSplashScreen();
 };
 
@@ -377,7 +377,9 @@ const contextMenu = () => {
 					ipcMain.once('setting_window_ready', () => {
 						appWindowManager.settingShow('goto_update');
 					})
-				}
+				} else {
+                    appWindowManager.settingShow('goto_update');
+                }  
 				appWindowManager.settingWindow.show();
 			}
 		},

@@ -42,6 +42,8 @@ export class TrayIcon {
 							appWindowManager.settingShow('goto_top_menu');
 						});
 						appWindowManager._settingWindow?.show?.();
+					} else {
+						appWindowManager.settingShow('goto_top_menu');
 					}
 				}
 			}
@@ -59,6 +61,8 @@ export class TrayIcon {
 						ipcMain.once('setting_window_ready', () => {
 							appWindowManager.settingShow('goto_update');
 						});
+					} else {
+						appWindowManager.settingShow('goto_update');
 					}
 					appWindowManager._settingWindow?.show?.();
 				}
