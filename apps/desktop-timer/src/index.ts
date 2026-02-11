@@ -263,6 +263,8 @@ async function startServer(value, restart = false) {
 					pathWindow.timeTrackerUi,
 					pathWindow.preloadPath
 				);
+			} else {
+				await timeTrackerWindow.loadURL(timeTrackerPage(pathWindow.timeTrackerUi));
 			}
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);
 			await notificationWindow.loadURL();
@@ -273,7 +275,6 @@ async function startServer(value, restart = false) {
 		gauzyWindow.setVisibleOnAllWorkspaces(false);
 		gauzyWindow.show();
 		splashScreen.close();
-		// timeTrackerWindow.webContents.toggleDevTools();
 	}
 	const auth = store.get('auth');
 	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
@@ -405,9 +406,12 @@ app.on('ready', async () => {
 			pathWindow.timeTrackerUi,
 			pathWindow.preloadPath
 		);
+
+		await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
 		if (settings?.alwaysOn) {
-			await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
 			appWindowManager.alwaysOnWindow.show();
+		} else {
+			appWindowManager.alwaysOnWindow.close();
 		}
 
 		if (configs && configs.isSetup) {
