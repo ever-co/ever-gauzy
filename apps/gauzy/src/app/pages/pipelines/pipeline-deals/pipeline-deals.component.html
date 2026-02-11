@@ -39,6 +39,7 @@
 		@if (deals$ | async; as deals) {
 		<ng-template
 			[ngTemplateOutlet]="dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout"
+			[ngTemplateOutletContext]="{ deals: deals }"
 		></ng-template>
 		}
 	</nb-card-body>
@@ -61,11 +62,11 @@
 	</div>
 </ng-template>
 
-<ng-template #gridLayout>
+<ng-template #gridLayout let-deals="deals">
 	<div class="grid">
 		<ga-card-grid
 			(onSelectedItem)="selectPipelineDeals($event)"
-			(scroll)="onScroll()"
+			(scroll)="loadMoreDeals()"
 			[settings]="smartTableSettings"
 			[source]="deals"
 			[totalItems]="pagination?.totalItems"
