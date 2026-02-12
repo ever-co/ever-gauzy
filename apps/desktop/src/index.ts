@@ -25,6 +25,7 @@ remoteMain.initialize();
 import {
 	AppError,
 	AppMenu,
+	AppWindowManager,
 	DesktopServer,
 	DesktopThemeListener,
 	DesktopUpdater,
@@ -42,7 +43,7 @@ import {
 	ipcTimer,
 	removeMainListener,
 	removeTimerListener,
-	AppWindowManager
+	setupAkitaStorageHandler
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -127,7 +128,6 @@ let appWindowManager: AppWindowManager = null;
 setupTitlebar();
 
 console.log('App UI Render Path:', path.join(__dirname, './index.html'));
-
 
 const pathWindow = {
 	gauzyWindow: path.join(__dirname, './index.html'),
@@ -339,7 +339,12 @@ async function startServer(value, restart = false) {
 
 		try {
 			console.log('Starting local server...', path.join(__dirname, 'api/main.js'));
-			await server.start({ api: path.join(__dirname, 'api/main.js') }, process.env, appWindowManager.setupWindow, signal);
+			await server.start(
+				{ api: path.join(__dirname, 'api/main.js') },
+				process.env,
+				appWindowManager.setupWindow,
+				signal
+			);
 		} catch (error) {
 			console.error('ERROR: Occurred while server start:' + error);
 			throw new AppError('MAINWININIT', error);
@@ -480,6 +485,9 @@ const closeSplashScreen = () => {
 
 app.on('ready', async () => {
 	console.log('App is ready');
+	// Setup Akita storage handler for IPC communication
+	setupAkitaStorageHandler();
+
 	initAppWindowManager();
 
 	const configs: any = store.get('configs');
