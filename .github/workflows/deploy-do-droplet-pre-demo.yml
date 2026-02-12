@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubicloud-standard-4
-    timeout-minutes: 150
+    timeout-minutes: 300
 
     environment: demo
 
@@ -20,7 +20,7 @@ jobs:
         run: |
           echo "INGRESS_CERT_TYPE=${{ env.INGRESS_CERT_TYPE }}" >> $GITHUB_ENV
         env:
-          INGRESS_CERT_TYPE: "letsencrypt"
+          INGRESS_CERT_TYPE: 'letsencrypt'
 
       - name: Generate TLS Secrets for DO Droplet
         run: |
@@ -35,8 +35,8 @@ jobs:
           host: ${{secrets.DO_DROPLET_DEMO_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: ".deploy/ssh/with-cloudflare/demo/docker-compose.api.demo.cloudflare.pre.yml,.deploy/ssh/with-cloudflare/demo/nginx.demo.pre.cloudflare.conf,.deploy/ssh/with-cloudflare/demo/ingress.api.crt,.deploy/ssh/with-cloudflare/demo/ingress.api.key"
-          target: "."
+          source: '.deploy/ssh/with-cloudflare/demo/docker-compose.api.demo.cloudflare.pre.yml,.deploy/ssh/with-cloudflare/demo/nginx.demo.pre.cloudflare.conf,.deploy/ssh/with-cloudflare/demo/ingress.api.crt,.deploy/ssh/with-cloudflare/demo/ingress.api.key'
+          target: '.'
       - name: Copy file via scp - letsencrypt
         if: ${{ env.INGRESS_CERT_TYPE == 'letsencrypt' }}
         uses: appleboy/scp-action@master
@@ -44,8 +44,8 @@ jobs:
           host: ${{secrets.DO_DROPLET_DEMO_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: ".deploy/ssh/with-letsencrypt/demo/docker-compose.api.demo.letsencrypt.pre.yml,.deploy/ssh/with-letsencrypt/demo/user_conf.d,.deploy/ssh/with-letsencrypt/demo/nginx-certbot.env"
-          target: "."
+          source: '.deploy/ssh/with-letsencrypt/demo/docker-compose.api.demo.letsencrypt.pre.yml,.deploy/ssh/with-letsencrypt/demo/user_conf.d,.deploy/ssh/with-letsencrypt/demo/nginx-certbot.env'
+          target: '.'
 
       - name: Install Docker
         uses: appleboy/ssh-action@master

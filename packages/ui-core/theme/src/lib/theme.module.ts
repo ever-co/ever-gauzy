@@ -41,7 +41,7 @@ import {
 	TimeTrackerStatusModule,
 	WorkspacesModule
 } from '@gauzy/ui-core/shared';
-import { NbTablerIconsModule } from './icons/tabler-icons.module';
+import { TablerIconsModule } from './icons/tabler-icons.module';
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
@@ -82,7 +82,7 @@ const NB_MODULES = [
 	NbIconModule,
 	NbTooltipModule,
 	NbPopoverModule,
-	NbTablerIconsModule,
+	TablerIconsModule,
 	NbAccordionModule,
 	NbToggleModule,
 	NbCardModule,
@@ -121,7 +121,7 @@ const EXPORT_IMPORT = [ThemeSidebarModule, MatRippleModule];
 
 @NgModule({
 	imports: [CommonModule, RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
-	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS, NbIconModule, NbTablerIconsModule],
+	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS, NbIconModule, TablerIconsModule],
 	declarations: [...COMPONENTS, ...PIPES],
 	providers: [
 		SelectorService,

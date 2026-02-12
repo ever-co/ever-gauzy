@@ -15,7 +15,6 @@ import {
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { provideI18n } from '@gauzy/ui-core/i18n';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme-icons';
 import {
 	NbDialogModule,
 	NbDialogService,
@@ -55,8 +54,7 @@ bootstrapApplication(AppComponent, {
 			NbMenuModule.forRoot(),
 			NbSidebarModule.forRoot(),
 			LanguageModule.forRoot(),
-			NgxDesktopThemeModule,
-			NbTablerIconsModule
+			NgxDesktopThemeModule
 		),
 		provideI18n({ extend: true }),
 		AppService,

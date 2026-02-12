@@ -31,7 +31,7 @@ import {
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { provideI18n } from '@gauzy/ui-core/i18n';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme-icons';
+import { TablerIconsModule } from '@gauzy/ui-core/theme';
 import {
 	NbDatepickerModule,
 	NbDialogModule,
@@ -80,7 +80,7 @@ bootstrapApplication(AppComponent, {
 			NbThemeModule,
 			NbSidebarModule.forRoot(), // Provides NbSidebarService
 			NbMenuModule.forRoot(), // Provides NbMenuService
-			NbTablerIconsModule,
+			TablerIconsModule,
 			LanguageModule.forRoot(),
 			NbDatepickerModule.forRoot()
 		),
