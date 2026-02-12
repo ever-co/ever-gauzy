@@ -104,7 +104,7 @@
 			@if (form) {
 			<form [formGroup]="form">
 				<div formArrayName="documents">
-					@for (document of documentControls; track $index) {
+					@for (document of documentControls; track $index; let i = $index) {
 					<div>
 						<div [formGroupName]="i">
 							<div class="row mb-3">
