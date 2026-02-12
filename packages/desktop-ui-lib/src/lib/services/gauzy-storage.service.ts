@@ -7,19 +7,19 @@ import { ElectronService } from '../electron/services';
 export class GauzyStorageService {
 	public readonly electronService = inject(ElectronService);
 
-	public async getItem(key: string) {
+	public async getItem(key: string): Promise<any> {
 		return this.electronService.invoke('akita::storage::getItem', key);
 	}
 
-	public async setItem(key: string, value: any) {
-		this.electronService.invoke('akita::storage::setItem', { key, value });
+	public async setItem(key: string, value: any): Promise<void> {
+		await this.electronService.invoke('akita::storage::setItem', { key, value });
 	}
 
-	public async removeItem(key: string) {
-		this.electronService.invoke('akita::storage::removeItem', key);
+	public async removeItem(key: string): Promise<void> {
+		await this.electronService.invoke('akita::storage::removeItem', key);
 	}
 
-	public async clear() {
-		this.electronService.invoke('akita::storage::clear');
+	public async clear(): Promise<void> {
+		await this.electronService.invoke('akita::storage::clear');
 	}
 }
