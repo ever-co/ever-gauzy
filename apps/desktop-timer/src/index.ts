@@ -30,6 +30,7 @@ remoteMain.initialize();
 import {
 	AppError,
 	AppMenu,
+	AppWindowManager,
 	DesktopDialog,
 	DesktopThemeListener,
 	DesktopUpdater,
@@ -44,11 +45,11 @@ import {
 	ProviderFactory,
 	removeMainListener,
 	removeTimerListener,
+	setupAkitaStorageHandler,
 	TranslateLoader,
 	TranslateService,
 	TrayIcon,
-	UIError,
-	AppWindowManager
+	UIError
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -353,6 +354,8 @@ app.on('ready', async () => {
 		LocalStore.setAllDefaultConfig();
 	}
 
+	// Setup Akita storage handler for IPC communication
+	setupAkitaStorageHandler();
 	// Set up theme listener for desktop windows
 	new DesktopThemeListener();
 	// default global
@@ -428,7 +431,7 @@ app.on('ready', async () => {
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
-	initializeAppManager()
+	initializeAppManager();
 	updater.settingWindow = appWindowManager.settingWindow;
 	updater.gauzyWindow = gauzyWindow;
 	appWindowManager.updater = updater;
@@ -804,7 +807,7 @@ ipcMain.handle('set-tray-icon', () => {
 	return {
 		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
 		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon_gray.png')
-	}
+	};
 });
 
 ipcMain.on('get-arch', (event) => {
