@@ -2588,6 +2588,7 @@
 		"TIME_OFF": "Tempo libero/ferie"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "Non hai il permesso di visualizzare questa pagina",
 		"HEADER": "Tempo libero",
 		"REQUEST": "Richiesta",
 		"REQUEST_TIME_OFF": "Richiesta di tempo libero",
