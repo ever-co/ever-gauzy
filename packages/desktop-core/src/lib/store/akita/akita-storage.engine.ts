@@ -9,7 +9,7 @@ export class AkitaStorageEngine {
 	 * @param store - Optional ElectronStore instance.
 	 */
 	constructor(store?: ElectronStore) {
-		this.store = store ?? new ElectronStore({ name: '_gauzy_akita_store' });
+		this.store = store ?? new ElectronStore({ name: 'window-state' });
 	}
 
 	/**
