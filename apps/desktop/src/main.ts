@@ -1,11 +1,10 @@
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
-import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
+import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 
-import * as Sentry from '@sentry/angular';
 import {
 	ActivityWatchInterceptor,
 	APIInterceptor,
@@ -16,6 +15,7 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
+	GauzyStorageService,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
@@ -30,23 +30,24 @@ import {
 	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { provideI18n } from '@gauzy/ui-core/i18n';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme-icons';
 import {
 	NbDatepickerModule,
 	NbDialogModule,
 	NbDialogService,
-	NbThemeModule,
-	NbToastrModule,
-	NbSidebarModule,
+	NbIconLibraries,
 	NbMenuModule,
-	NbIconLibraries
+	NbSidebarModule,
+	NbThemeModule,
+	NbToastrModule
 } from '@nebular/theme';
-import { provideI18n } from '@gauzy/ui-core/i18n';
+import * as Sentry from '@sentry/angular';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
 import { initializeSentry } from './app/sentry';
 import { environment } from './environments/environment';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme-icons';
 
 if (environment.production) {
 	enableProdMode();
@@ -67,14 +68,6 @@ if (environment.SENTRY_DSN) {
 		initializeSentry();
 	}
 }
-
-persistState({
-	key: '_gauzyStore'
-});
-
-akitaConfig({
-	resettable: true
-});
 
 bootstrapApplication(AppComponent, {
 	providers: [
@@ -101,6 +94,17 @@ bootstrapApplication(AppComponent, {
 		AuthStrategy,
 		AuthService,
 		Store,
+		provideAppInitializer(() => {
+			const storage = inject(GauzyStorageService);
+			persistState({
+				key: '_gauzyStore',
+				enableInNonBrowser: true,
+				storage
+			});
+			akitaConfig({
+				resettable: true
+			});
+		}),
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
@@ -132,7 +136,7 @@ bootstrapApplication(AppComponent, {
 			deps: [Router]
 		},
 		provideAppInitializer(() => {
-			const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
+			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
 			return initializerFn();
 		}),
 		{

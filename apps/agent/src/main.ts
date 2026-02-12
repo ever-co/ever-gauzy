@@ -1,5 +1,13 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { APP_INITIALIZER, ErrorHandler, Injector, enableProdMode, importProvidersFrom } from '@angular/core';
+import {
+	APP_INITIALIZER,
+	ErrorHandler,
+	Injector,
+	enableProdMode,
+	importProvidersFrom,
+	inject,
+	provideAppInitializer
+} from '@angular/core';
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -16,6 +24,7 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
+	GauzyStorageService,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
@@ -35,6 +44,7 @@ import {
 	serverConnectionFactory
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { provideI18n } from '@gauzy/ui-core/i18n';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -49,7 +59,6 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import * as Sentry from '@sentry/angular';
-import { provideI18n } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppModuleGuard } from './app/app.module.guards';
@@ -76,14 +85,6 @@ if (environment.SENTRY_DSN) {
 		initializeSentry();
 	}
 }
-
-persistState({
-	key: '_gauzyStore'
-});
-
-akitaConfig({
-	resettable: true
-});
 
 bootstrapApplication(AppComponent, {
 	providers: [
@@ -121,6 +122,17 @@ bootstrapApplication(AppComponent, {
 		ElectronService,
 		LoggerService,
 		Store,
+		provideAppInitializer(() => {
+			const storage = inject(GauzyStorageService);
+			persistState({
+				key: '_gauzyStore',
+				enableInNonBrowser: true,
+				storage
+			});
+			akitaConfig({
+				resettable: true
+			});
+		}),
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
@@ -183,7 +195,7 @@ bootstrapApplication(AppComponent, {
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
 			multi: true
 		},
