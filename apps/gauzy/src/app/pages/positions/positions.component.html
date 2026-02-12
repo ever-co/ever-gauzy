@@ -100,7 +100,7 @@
 						type="text"
 						[placeholder]="'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate"
 						fullWidth
-						[ngModel]="isGridEdit ? selectPosition.level : ''"
+						[ngModel]="isGridEdit ? selectedPosition.name : ''"
 						required
 					/>
 				</div>
@@ -181,10 +181,10 @@
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
 					<button
-						(click)="editPosition(selected.position.id, editInput.value); disabled = true; ref.close()"
+						(click)="editPosition(selected.position.id, editInput.value); ref.close()"
 						nbButton
 						status="success"
-						[disabled]="disabled"
+						[disabled]="editInput.invalid"
 					>
 						{{ 'BUTTONS.UPDATE' | translate }}
 					</button>

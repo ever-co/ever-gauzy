@@ -39,9 +39,9 @@
 							</svg>
 							}
 							<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
-							@if (!image && !image?.fullUrl) {
+							@if (!image || !image?.fullUrl) {
 							<ga-no-image [fontSize]="14" [placeholder]="'NO_IMAGE.ADD_DROP'"></ga-no-image>
-							} @if (image && image.fullUrl) {
+							} @else {
 							<img [src]="image.url" alt="Product Item Photo" />
 							}
 						</div>
