@@ -113,7 +113,7 @@
 		<ng-template [ngxPermissionsExcept]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW]">
 			<div>
 				<!-- Content to display if the user does not have the 'TIME_OFF_VIEW' permission -->
-				<p>You don't have permission to view this page</p>
+				<p>{{ 'TIME_OFF_PAGE.NO_PERMISSION' | translate }}</p>
 			</div>
 		</ng-template>
 	</nb-card-body>
@@ -123,31 +123,29 @@
 <ng-template #actionButtons let-selectedItem="selectedItem">
 	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'TIME_OFF_EDIT']">
 		<div class="btn-group actions">
-			<ng-container>
-				@if (!selectedTimeOffRecord?.isHoliday) {
-				<button (click)="updateTimeOffRecord()" nbButton status="basic" size="small" class="action primary">
-					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-					{{ 'BUTTONS.EDIT' | translate }}
-				</button>
-				}
-				<button
-					(click)="deleteRequest(selectedItem)"
-					nbButton
-					status="basic"
-					size="small"
-					class="action"
-					[nbTooltip]="'BUTTONS.DELETE' | translate"
-				>
-					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-				</button>
+			@if (!selectedTimeOffRecord?.isHoliday) {
+			<button (click)="updateTimeOffRecord()" nbButton status="basic" size="small" class="action primary">
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			}
+			<button
+				(click)="deleteRequest(selectedItem)"
+				nbButton
+				status="basic"
+				size="small"
+				class="action"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			</button>
 
-				<!-- Show Actions Button -->
-				@if (!showActions) {
-				<button nbButton (click)="showActions = true" status="basic" size="small" class="action">
-					<nb-icon icon="more-horizontal-outline" cursor="pointer"></nb-icon>
-				</button>
-				}
-			</ng-container>
+			<!-- Show Actions Button -->
+			@if (!showActions) {
+			<button nbButton (click)="showActions = true" status="basic" size="small" class="action">
+				<nb-icon icon="more-horizontal-outline" cursor="pointer"></nb-icon>
+			</button>
+			}
 		</div>
 
 		@if (showActions) {

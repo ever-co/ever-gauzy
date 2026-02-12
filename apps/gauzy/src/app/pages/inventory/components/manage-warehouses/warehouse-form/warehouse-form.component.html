@@ -228,12 +228,11 @@
 				<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 			</g>
 		</svg>
-		}
 		<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
-		@if (!logo || !logo.url) {
-		<ga-no-image [fontSize]="14" [placeholder]="'NO_IMAGE.ADD_DROP'" class="store-image"></ga-no-image>
-		} @else {
 		<img class="store-image" [src]="logo.url" alt="Warehouse Photo" />
+		} @else {
+		<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
+		<ga-no-image [fontSize]="14" [placeholder]="'NO_IMAGE.ADD_DROP'" class="store-image"></ga-no-image>
 		}
 	</div>
 </ng-template>

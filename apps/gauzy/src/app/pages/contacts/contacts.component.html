@@ -28,7 +28,7 @@
 			(canceled)="cancel()"
 			(addOrEditOrganizationContact)="addOrEditOrganizationContact($event)"
 		></ga-contact-mutation>
-		} @else { @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+		} @else if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 		<div class="table-scroll-container">
 			<angular2-smart-table
 				style="cursor: pointer"
@@ -50,7 +50,7 @@
 			[source]="organizationContacts"
 			(scroll)="onScroll()"
 		></ga-card-grid>
-		} }
+		}
 	</nb-card-body>
 </nb-card>
 

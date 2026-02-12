@@ -6,16 +6,7 @@
 			</label>
 			<nb-select (selectedChange)="taskTypeValidators()" id="key-result-type" fullWidth formControlName="type">
 				@for (type of keyResultTypeEnum | keyvalue; track type.key) {
-				<nb-option
-					[hidden]="
-						type.value == keyResultTypeEnum.KPI
-							? !settings?.krTypeKPI
-							: type.value == keyResultTypeEnum.TASK
-							? !settings?.krTypeTask
-							: false
-					"
-					[value]="type.value"
-				>
+				<nb-option [hidden]="isTypeHidden(type.value)" [value]="type.value">
 					{{ 'KEY_RESULT_PAGE.TYPE.' + type.key | translate }}
 				</nb-option>
 				}
@@ -43,8 +34,7 @@
 					<ga-task-selector
 						id="task-selector"
 						formControlName="taskId"
-						[projectId]="parentFormGroup.get('projectId').value"
-						(projectIdChange)="parentFormGroup.get('projectId').setValue($event)"
+						[projectId]="parentFormGroup.value.projectId"
 					>
 					</ga-task-selector>
 				</div>

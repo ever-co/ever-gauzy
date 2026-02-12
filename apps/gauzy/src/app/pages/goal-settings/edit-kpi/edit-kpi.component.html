@@ -64,16 +64,7 @@
 			<div class="row">
 				<div class="col-md-7" (mouseenter)="helper = 'kpi-type'" (mouseleave)="helperText(null)">
 					<div class="row mt-3">
-						<div
-							[class.col-md-6]="
-								kpiForm.value.type == kpiMetricEnum.NUMERICAL ||
-								kpiForm.value.type == kpiMetricEnum.CURRENCY
-							"
-							[class.col-md-12]="
-								kpiForm.value.type != kpiMetricEnum.NUMERICAL &&
-								kpiForm.value.type != kpiMetricEnum.CURRENCY
-							"
-						>
+						<div [class]="kpiColClass">
 							<label for="kpi-type" class="label">
 								{{ 'GOALS_PAGE.FORM.LABELS.KPI_METRIC' | translate }}
 							</label>
@@ -85,8 +76,7 @@
 								}
 							</nb-select>
 						</div>
-						@if ( kpiForm.value.type == kpiMetricEnum.NUMERICAL || kpiForm.value.type ==
-						kpiMetricEnum.CURRENCY ) {
+						@if (isNumericOrCurrency) {
 						<div class="col-md-6">
 							<ga-goal-custom-unit-select
 								[parentFormGroup]="kpiForm"

@@ -36,7 +36,7 @@
 			/>
 			}
 		</div>
-		@if (selectedEmployee && selectedEmployee.isVetted) {
+		@if (selectedEmployee?.isVetted) {
 		<nb-badge
 			status="success"
 			style="position: relative; margin-top: 20px"
@@ -46,21 +46,21 @@
 		</nb-badge>
 		} @if (selectedEmployee) {
 		<div>
-			@if (selectedEmployee.jobSuccess) {
+			@if (selectedEmployee?.jobSuccess) {
 			<div class="employee-optional-info">
 				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.JOB_SUCCESS' | translate }}: {{ selectedEmployee.jobSuccess }}%
 			</div>
-			} @if (selectedEmployee.totalJobs) {
+			} @if (selectedEmployee?.totalJobs) {
 			<div class="employee-optional-info">
 				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_JOBS' | translate }}:
 				{{ selectedEmployee.totalJobs }}
 			</div>
-			} @if (selectedEmployee.totalWorkHours) {
+			} @if (selectedEmployee?.totalWorkHours) {
 			<div class="employee-optional-info">
 				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_HOURS' | translate }}:
 				{{ selectedEmployee.totalWorkHours }}
 			</div>
-			} @if ( selectedEmployee.billRateCurrency && selectedEmployee.billRateValue ) {
+			} @if ( selectedEmployee?.billRateCurrency && selectedEmployee?.billRateValue ) {
 			<div class="employee-optional-info">
 				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATE' | translate }}:
 				{{ selectedEmployee.billRateCurrency }}

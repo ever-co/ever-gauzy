@@ -80,7 +80,7 @@
 			nbButton
 			status="basic"
 			class="action"
-			[disabled]="isDisabled"
+			[disabled]="disabled"
 			size="small"
 		>
 			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
@@ -98,13 +98,13 @@
 			</div>
 			<div class="row mb-3">
 				<h5 class="title mr-3 ml-3">
-					{{ this.selected.document ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}
+					{{ selected.document ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}
 				</h5>
 			</div>
 			@if (form) {
 			<form [formGroup]="form">
 				<div formArrayName="documents">
-					@for (document of form.controls.documents['controls']; track document; let i = $index) {
+					@for (document of documentControls; track $index) {
 					<div>
 						<div [formGroupName]="i">
 							<div class="row mb-3">

@@ -36,35 +36,19 @@ import {
 	TaskSelectModule
 } from '@gauzy/ui-core/shared';
 import { GoalsRoutingModule } from './goals-routing.module';
-import { GoalsComponent } from './goals.component';
-import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
-import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
-import { GoalDetailsComponent } from './goal-details/goal-details.component';
-import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
-import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
-import { KeyResultProgressChartComponent } from './keyresult-progress-chart/keyresult-progress-chart.component';
+import { GoalsComponentsModule } from './goals-components.module';
 import { GoalSettingsModule } from '../goal-settings/goal-settings.module';
-import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 import { GoalTemplateSelectModule } from './goal-template-select/goal-template-select.module';
 import { KeyresultTypeSelectModule } from './keyresult-type-select/keyresult-type-select.module';
 
 @NgModule({
-	declarations: [
-		GoalsComponent,
-		EditObjectiveComponent,
-		EditKeyResultsComponent,
-		GoalDetailsComponent,
-		KeyResultDetailsComponent,
-		KeyResultUpdateComponent,
-		KeyResultProgressChartComponent,
-		KeyResultParametersComponent
-	],
 	imports: [
-		CommonModule,
-		BaseChartDirective,
+		GoalsComponentsModule,
+		CommonModule, // Still needed? Likely transitively or for other things?
+		// BaseChartDirective, // Removed as it is in ComponentsModule
 		GoalsRoutingModule,
 		NbSpinnerModule,
-		ReactiveFormsModule,
+		// ReactiveFormsModule, // In ComponentsModule
 		NbCardModule,
 		NbAccordionModule,
 		NbButtonModule,

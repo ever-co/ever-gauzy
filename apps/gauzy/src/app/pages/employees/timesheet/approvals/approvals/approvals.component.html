@@ -3,7 +3,7 @@
 		<div class="gauzy-action">
 			<ngx-gauzy-button-action
 				[hasLayoutSelector]="false"
-				[isDisable]="isRowSelected() ? false : !isCheckboxSelected()"
+				[isDisable]="!isRowSelected() && !isCheckboxSelected()"
 			>
 				<ng-container
 					buttonTemplate
@@ -128,7 +128,9 @@
 			{{ 'TIMESHEET.BULK_ACTION' | translate }}
 			<nb-icon icon="chevron-down-outline"></nb-icon>
 		</button>
-		} @if (selectedItem) {
+		}
+		<!-- Row-selection actions -->
+		@else if (selectedItem) {
 		<button
 			(click)="redirectToView(selectedItem)"
 			class="action secondary"

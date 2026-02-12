@@ -11,11 +11,11 @@
 		/>
 		@if (list.length > 0 && showList) {
 		<nb-list [class.department-list-active]="showList">
-			@for (item of list; track $index; let i = $index) {
+			@for (item of list; track $index) {
 			<nb-list-item>
 				<div>
 					<span>{{ item }}</span>
-					<nb-icon class="ml-auto mt-1 close" (click)="deleteFromList(i)" icon="close-outline"></nb-icon>
+					<nb-icon class="ml-auto mt-1 close" (click)="deleteFromList($index)" icon="close-outline"></nb-icon>
 				</div>
 			</nb-list-item>
 			}

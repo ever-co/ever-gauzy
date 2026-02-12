@@ -58,6 +58,12 @@
 						<nb-option [value]="approvalPolicy.id"> {{ approvalPolicy.name }}</nb-option>
 						}
 					</nb-select>
+					@if (approvalPolicies?.length === 0) {
+					<div class="caption-2 mt-1 status-danger">
+						{{ 'SM_TABLE.NO_DATA.APPROVAL_POLICY' | translate }}
+						<a href="javascript:void(0)" (click)="navigateToPolicy()">{{ 'BUTTONS.CREATE' | translate }}</a>
+					</div>
+					}
 				</div>
 			</div>
 			<div class="row">

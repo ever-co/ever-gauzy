@@ -43,7 +43,7 @@
 				@if (form) {
 				<form class="form" [formGroup]="form">
 					<div class="w-100" formArrayName="feedbacks">
-						@for ( feedback of form.controls.feedbacks ?.controls; track feedback; let i = $index) {
+						@for ( feedback of form.controls.feedbacks ?.controls; track $index; let i = $index) {
 						<div>
 							<div [formGroupName]="i">
 								@if (feedbackInterviewId) {
@@ -182,7 +182,7 @@
 				(userRowSelect)="selectFeedback($event)"
 			></angular2-smart-table>
 		</div>
-		} @if (feedbackList?.length && dataLayoutStyle === 'CARDS_GRID') {
+		} @else if (feedbackList?.length && dataLayoutStyle === 'CARDS_GRID') {
 		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"

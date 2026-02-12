@@ -32,11 +32,8 @@
 			<div>
 				@if (noGoals === false) {
 				<h6>{{ group }}</h6>
-				} @for (goal of goals; track goal; let index = $index) {
-				<nb-accordion
-					[hidden]="objectiveGroup == 'timeFrames' ? goal.deadline != group : goal.level != group"
-					class="my-3"
-				>
+				} @for (goal of goalsForGroup(group); track goal.id; let index = $index) {
+				<nb-accordion class="my-3">
 					<nb-accordion-item>
 						<nb-accordion-item-header (click)="onClickObjective(goal, index)">
 							<div class="w-100 d-flex align-items-center justify-content-between">
@@ -58,10 +55,10 @@
 						</nb-accordion-item-header>
 						@for (keyResult of goal.keyResults; track keyResult.id) {
 						<nb-accordion-item-body
-							[class.item]="selectedKeyResult.isSelected && selectedKeyResult.data.id === keyResult.id"
-							[class.selected]="
-								selectedKeyResult.isSelected && selectedKeyResult.data.id === keyResult.id
-							"
+							[ngClass]="{
+								'selected item':
+									selectedKeyResult.isSelected && selectedKeyResult.data.id === keyResult.id
+							}"
 						>
 							<div
 								(click)="onClickKeyResult(keyResult, index)"
@@ -160,7 +157,7 @@
 			nbButton
 			status="basic"
 			class="action"
-			[disabled]="!selectedItem && disableButton"
+			[disabled]="!selectedGoal.isSelected"
 			size="small"
 			(click)="deleteGoal()"
 			[nbTooltip]="'BUTTONS.DELETE' | translate"

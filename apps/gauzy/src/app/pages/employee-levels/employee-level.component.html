@@ -40,7 +40,7 @@
 			(onSelectedItem)="selectEmployee($event)"
 			(scroll)="onScroll()"
 		></ga-card-grid>
-		} @else if (!loading && employeeLevels?.length == 0) {
+		} @else if (!loading && !employeeLevels?.length) {
 		<div class="no-data">
 			<ngx-no-data-message
 				[message]="'ORGANIZATIONS_PAGE.EMPLOYEE_LEVEL_NO_DATA_MESSAGE' | translate"

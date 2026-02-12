@@ -235,7 +235,7 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 	selectItem(article: IHelpCenterArticle) {
 		this.selectedItem = this.isSelected(article)
 			? {
-					isSelected: !this.selectedItem.isSelected,
+					isSelected: false,
 					article: null
 			  }
 			: {
@@ -245,8 +245,12 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		this.isDisable = !this.selectedItem.isSelected;
 	}
 
-	isSelected(article: IHelpCenterArticle) {
-		return this.selectedItem.isSelected && this.selectedItem.article && article.id === this.selectedItem.article.id;
+	isSelected(article: IHelpCenterArticle): boolean {
+		return !!(
+			this.selectedItem.isSelected &&
+			this.selectedItem.article &&
+			article.id === this.selectedItem.article.id
+		);
 	}
 
 	ngOnDestroy() {}

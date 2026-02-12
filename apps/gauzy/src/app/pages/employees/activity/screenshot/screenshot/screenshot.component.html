@@ -15,7 +15,7 @@
 			nbSpinnerStatus="primary"
 			class="h-100"
 		>
-			@if (timeSlots?.length > 0) { @for (hourSlot of timeSlots; track i; let i = $index) {
+			@if (timeSlots?.length > 0) { @for (hourSlot of timeSlots; track hourSlot.startTime; let i = $index) {
 			<div class="row hour-slot-group">
 				<div class="col p-0">
 					<div class="mb-4">
