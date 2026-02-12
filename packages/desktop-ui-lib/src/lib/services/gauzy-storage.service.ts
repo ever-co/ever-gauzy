@@ -5,7 +5,7 @@ import { ElectronService } from '../electron/services';
 	providedIn: 'root'
 })
 export class GauzyStorageService {
-	public readonly electronService = inject(ElectronService);
+	private readonly electronService = inject(ElectronService);
 
 	public async getItem(key: string): Promise<any> {
 		return this.electronService.invoke('akita::storage::getItem', key);
