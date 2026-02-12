@@ -614,14 +614,14 @@
 				{{ 'TIMESHEET.VIEW_WIDGETS' | translate }}
 				<button class="manage-widget undo" (click)="undo()" nbButton><i class="fas fa-undo"></i>Undo</button>
 			</div>
-			@if (widgets.length > 0) { @for (widget of widgets; track widget.position) {
+			@for (widget of widgets; track widget.position) {
 			<div (click)="updateWidgetVisibility(widget)" class="title">
 				<i [style.visibility]="widget.hide ? 'hidden' : 'visible'" class="fas fa-check"></i>
 				<div>
 					{{ titleMapper(widget.position) | translate }}
 				</div>
 			</div>
-			} }
+			}
 		</div>
 		<div class="line"></div>
 		<div class="category">
@@ -631,14 +631,14 @@
 					<i class="fas fa-undo"></i>Undo
 				</button>
 			</div>
-			@if (windows.length > 0) { @for (window of windows; track window.position) {
+			@for (window of windows; track window.position) {
 			<div (click)="updateWindowVisibility(window)" class="title">
 				<i [style.visibility]="window.hide ? 'hidden' : 'visible'" class="fas fa-check"></i>
 				<div>
 					{{ titleMapper(window.position, false) | translate }}
 				</div>
 			</div>
-			} }
+			}
 		</div>
 	</div>
 </ng-template>
