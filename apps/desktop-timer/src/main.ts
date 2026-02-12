@@ -21,6 +21,7 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
+	GauzyStorageService,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
@@ -36,26 +37,26 @@ import {
 	TimeoutInterceptor,
 	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { provideI18n } from '@gauzy/ui-core/i18n';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme-icons';
 import {
 	NbDatepickerModule,
 	NbDialogModule,
 	NbDialogService,
+	NbIconLibraries,
 	NbMenuModule,
 	NbSidebarModule,
 	NbThemeModule,
-	NbToastrModule,
-	NbIconLibraries
+	NbToastrModule
 } from '@nebular/theme';
 import * as Sentry from '@sentry/angular';
-import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import { provideI18n } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppModuleGuard } from './app/app.module.guards';
 import { AppService } from './app/app.service';
 import { initializeSentry } from './app/sentry';
 import { environment } from './environments/environment';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme-icons';
 
 if (environment.production) {
 	enableProdMode();
@@ -70,14 +71,6 @@ if (environment.SENTRY_DSN) {
 		initializeSentry();
 	}
 }
-
-persistState({
-	key: '_gauzyStore'
-});
-
-akitaConfig({
-	resettable: true
-});
 
 bootstrapApplication(AppComponent, {
 	providers: [
@@ -106,6 +99,17 @@ bootstrapApplication(AppComponent, {
 		ElectronService,
 		LoggerService,
 		Store,
+		provideAppInitializer(() => {
+			const storage = inject(GauzyStorageService);
+			persistState({
+				key: '_gauzyStore',
+				enableInNonBrowser: true,
+				storage
+			});
+			akitaConfig({
+				resettable: true
+			});
+		}),
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
@@ -175,7 +179,7 @@ bootstrapApplication(AppComponent, {
 			deps: [Router]
 		},
 		provideAppInitializer(() => {
-			const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
+			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
 			return initializerFn();
 		}),
 		// Register icon packs for Nebular
