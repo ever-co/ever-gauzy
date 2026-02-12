@@ -1,5 +1,6 @@
 import { Serializable } from '../../interfaces';
 import { TimerTO } from '../dto';
+import { TimerSyncStateEnum } from '@gauzy/contracts';
 
 export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _id?: number;
@@ -19,6 +20,9 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _version: string;
 	private _organizationTeamId: string;
 	private _description: string;
+	private _startSyncState: TimerSyncStateEnum;
+	private _stopSyncState: TimerSyncStateEnum;
+	private _syncDuration: number;
 
 	constructor(timer: TimerTO) {
 		this._id = timer.id;
@@ -37,7 +41,10 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._isStoppedOffline = timer.isStoppedOffline;
 		this._version = timer.version;
 		this._organizationTeamId = timer.organizationTeamId;
-		this._description  = timer.description;
+		this._description = timer.description;
+		this._startSyncState = timer.startSyncState;
+		this._stopSyncState = timer.stopSyncState;
+		this._syncDuration = timer.syncDuration;
 	}
 
 	public get isStoppedOffline(): boolean {
@@ -154,6 +161,30 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._description = value;
 	}
 
+	public get startSyncState(): TimerSyncStateEnum {
+		return this._startSyncState;
+	}
+
+	public set startSyncState(value: TimerSyncStateEnum) {
+		this._startSyncState = value;
+	}
+
+	public get stopSyncState(): TimerSyncStateEnum {
+		return this._stopSyncState;
+	}
+
+	public set stopSyncState(value: TimerSyncStateEnum) {
+		this._stopSyncState = value;
+	}
+
+	public get syncDuration(): number {
+		return this._syncDuration;
+	}
+
+	public set syncDuration(value: number) {
+		this._syncDuration = value;
+	}
+
 	public toObject(): TimerTO {
 		return {
 			day: this._day,
@@ -171,7 +202,10 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 			isStoppedOffline: this._isStoppedOffline,
 			version: this._version,
 			organizationTeamId: this._organizationTeamId,
-			description: this._description
+			description: this._description,
+			startSyncState: this._startSyncState,
+			stopSyncState: this._stopSyncState,
+			syncDuration: this._syncDuration
 		};
 	}
 }

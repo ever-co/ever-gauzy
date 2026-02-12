@@ -1,6 +1,5 @@
-import { Inject, NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { RouterModule, ROUTES } from '@angular/router';
+import { inject, NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -9,60 +8,36 @@ import {
 	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
-import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
-import { createJobEmployeeRoutes } from './job-employee.routes';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
+import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
-
-/**
- * Nebular Modules
- */
-const NB_MODULES = [NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, NbTabsetModule, NbToggleModule];
-
-/*
- * Third party modules
- */
-const THIRD_PARTY_MODULES = [
-	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
-];
 
 @NgModule({
 	declarations: [JobEmployeeComponent],
 	imports: [
 		RouterModule.forChild([]),
-		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
+		NbButtonModule,
+		NbCardModule,
+		NbIconModule,
+		NbSpinnerModule,
+		NbTabsetModule,
+		NbToggleModule,
+		NgxPermissionsModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		SmartDataViewLayoutModule,
 		DynamicTabsModule
 	],
-	providers: [
-		{
-			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createJobEmployeeRoutes(service),
-			deps: [PageRouteRegistryService],
-			multi: true
-		}
-	]
+	exports: [JobEmployeeComponent]
 })
 export class JobEmployeeModule {
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 
-	constructor(
-		@Inject(PageRouteRegistryService)
-		private readonly _pageRouteRegistryService: PageRouteRegistryService
-	) {
+	constructor() {
 		this.registerPageRoutes(this._pageRouteRegistryService); // Register the routes
 	}
 
@@ -72,7 +47,7 @@ export class JobEmployeeModule {
 	 * @param _pageRouteRegistryService
 	 * @returns {void}
 	 */
-	registerPageRoutes(_pageRouteRegistryService: PageRouteRegistryService): void {
+	private registerPageRoutes(_pageRouteRegistryService: PageRouteRegistryService): void {
 		if (JobEmployeeModule.hasRegisteredPageRoutes) {
 			return;
 		}
@@ -83,15 +58,25 @@ export class JobEmployeeModule {
 			location: 'jobs',
 			// Register the path 'employee'
 			path: 'employee',
-			// Register the loadChildren function to load the EmployeesModule lazy module
-			loadChildren: () => import('./job-employee.module').then((m) => m.JobEmployeeModule),
-			// Register the data object
+			// Directly render the JobEmployeeComponent for this route
+			component: JobEmployeeComponent,
+			// Protect the route with permissions guard
+			canActivate: [PermissionsGuard],
 			data: {
+				// Tabset and data table identifiers used by the page layout
+				tabsetId: 'job-employee',
+				dataTableId: 'job-employee',
+				// Global page selectors configuration
 				selectors: {
 					date: true,
 					employee: true,
 					project: false,
 					team: false
+				},
+				// Route permissions configuration
+				permissions: {
+					only: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW],
+					redirectTo: '/pages/jobs/search'
 				}
 			}
 		});

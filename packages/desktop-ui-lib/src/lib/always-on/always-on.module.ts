@@ -6,7 +6,7 @@ import { AlwaysOnComponent } from './always-on.component';
 import { AlwaysOnService } from './always-on.service';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme/src/lib/icons/tabler-icons.module';
 
 @NgModule({
     imports: [

@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { ROUTES, RouterModule } from '@angular/router';
 import {
 	NbActionsModule,
@@ -22,12 +21,11 @@ import {
 	NbTooltipModule,
 	NbUserModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { LanguagesService, PageRouteRegistryService, SkillsService } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	AppointmentCalendarModule,
 	CurrencyModule,
@@ -41,8 +39,7 @@ import {
 	SkillsInputModule,
 	TableComponentsModule,
 	TagsColorInputModule,
-	WorkInProgressModule,
-	getBrowserLanguage
+	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { COMPONENTS } from './components';
@@ -78,14 +75,7 @@ const THIRD_PARTY_MODULES = [
 	CKEditorModule,
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
+	TranslateModule.forChild()
 ];
 
 /**
