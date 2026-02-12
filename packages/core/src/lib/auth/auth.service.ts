@@ -43,6 +43,7 @@ import {
 	Injectable,
 	InternalServerErrorException,
 	NotFoundException,
+	Optional,
 	UnauthorizedException
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -79,6 +80,7 @@ import {
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -103,7 +105,8 @@ export class AuthService extends SocialAuthService {
 		private readonly socialAccountService: SocialAccountService,
 		private readonly eventBus: EventBus,
 		private readonly passwordHashService: PasswordHashService,
-		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+		@Optional() @Inject(EVER_REDIS_CLIENT) private readonly redisClient: any
 	) {
 		super();
 	}
@@ -221,7 +224,11 @@ export class AuthService extends SocialAuthService {
 		const signature = this.signOAuthAppPayload(payloadB64, config.codeSecret);
 
 		const cacheKey = `${AuthService.OAUTH_CODE_CACHE_PREFIX}${jti}`;
-		await this.cacheManager.set(cacheKey, 'valid', AuthService.OAUTH_CODE_TTL_MS);
+		if (this.redisClient) {
+			await this.redisClient.set(cacheKey, 'valid', { PX: AuthService.OAUTH_CODE_TTL_MS });
+		} else {
+			await this.cacheManager.set(cacheKey, 'valid', AuthService.OAUTH_CODE_TTL_MS);
+		}
 
 		return `v1.${payloadB64}.${signature}`;
 	}
@@ -260,11 +267,19 @@ export class AuthService extends SocialAuthService {
 			throw new UnauthorizedException('Authorization code mismatch');
 		}
 
-		// Single-use enforcement: delete first, then verify the key existed.
-		// requests could both read 'valid' before either deletes.
+		// Single-use enforcement via atomic GETDEL (Redis) or get-then-del fallback
 		const cacheKey = `${AuthService.OAUTH_CODE_CACHE_PREFIX}${payload.jti}`;
-		const codeState = await this.cacheManager.get<string>(cacheKey);
-		await this.cacheManager.del(cacheKey);
+		let codeState: string | null;
+
+		if (this.redisClient) {
+			// Atomic get-and-delete: prevents race conditions in multi-instance deployments
+			codeState = await this.redisClient.getDel(cacheKey);
+		} else {
+			// Non-Redis fallback (single-instance safe)
+			codeState = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			await this.cacheManager.del(cacheKey);
+		}
+
 		if (!codeState) {
 			throw new UnauthorizedException('Authorization code already used');
 		}

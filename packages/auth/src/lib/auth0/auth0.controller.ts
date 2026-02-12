@@ -38,24 +38,32 @@ export class Auth0Controller {
 		const oauthRequest = session?.oauthApp as OAuthAppSessionData | undefined;
 
 		if (oauthRequest) {
-			// Always clear OAuth session data before any redirect to prevent replay
-			session.oauthApp = undefined;
+			// Regenerate the session to prevent session fixation and clear OAuth
+			// state atomically. The old session (including oauthApp) is destroyed
+			// and a new session ID is issued. We already captured oauthRequest above.
+			try {
+				await new Promise<void>((resolve, reject) => {
+					session.regenerate((err: any) => (err ? reject(err) : resolve()));
+				});
+			} catch {
+				throw new HttpException('Failed to initialize secure session', HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 
 			// Re-validate redirect_uri against the allowlist (defense-in-depth against session tampering)
 			if (!this.service.isOAuthAppRedirectUriAllowed(oauthRequest.redirectUri)) {
 				throw new HttpException('Invalid redirect_uri', HttpStatus.BAD_REQUEST);
 			}
 
-			const oauthUser = await this.service.getOAuthLoginUser(user.emails);
-			if (!oauthUser) {
-				const errorParams = new URLSearchParams({
-					error: 'access_denied',
-					...(oauthRequest.state ? { state: oauthRequest.state } : {})
-				});
-				return res.redirect(`${oauthRequest.redirectUri}?${errorParams.toString()}`);
-			}
-
 			try {
+				const oauthUser = await this.service.getOAuthLoginUser(user.emails);
+				if (!oauthUser) {
+					const errorParams = new URLSearchParams({
+						error: 'access_denied',
+						...(oauthRequest.state ? { state: oauthRequest.state } : {})
+					});
+					return res.redirect(`${oauthRequest.redirectUri}?${errorParams.toString()}`);
+				}
+
 				const code = await this.service.createOAuthAppAuthorizationCode({
 					userId: oauthUser.id,
 					tenantId: oauthUser.tenantId,
