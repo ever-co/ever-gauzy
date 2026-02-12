@@ -3,17 +3,10 @@ import { RouterModule, ROUTES } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileUploadModule } from 'ng2-file-upload';
 import { PermissionsEnum } from '@gauzy/contracts';
-import {
-	GauzyUIPlugin,
-	IOnUIPluginBootstrap,
-	IOnUIPluginDestroy,
-	LoggerService,
-	NavMenuBuilderService,
-	PageRouteRegistryService
-} from '@gauzy/ui-core/core';
+import { PluginUiDefinition, IOnPluginUiBootstrap, IOnPluginUiDestroy } from '@gauzy/plugin-ui';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
 	DialogsModule,
@@ -53,7 +46,7 @@ import { COMPONENTS } from './components';
 		}
 	]
 })
-export class JobSearchModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
+export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 	private static hasRegisteredPageRoutes = false;
 
 	private readonly _log = inject(LoggerService).withContext('JobSearchModule');
@@ -68,14 +61,14 @@ export class JobSearchModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
 	/**
-	 * Called by `UIPluginModule` after the module is instantiated.
+	 * Called by `PluginUiModule` after the module is instantiated.
 	 */
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
 	}
 
 	/**
-	 * Called by `UIPluginModule` when the application is shutting down.
+	 * Called by `PluginUiModule` when the application is shutting down.
 	 */
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
@@ -135,7 +128,7 @@ export class JobSearchModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy
 /**
  * Plugin definition for the Job Search UI plugin.
  */
-export const JobSearchPlugin: GauzyUIPlugin = {
+export const JobSearchPlugin: PluginUiDefinition = {
 	id: 'job-search',
 	module: JobSearchModule,
 	location: 'jobs'

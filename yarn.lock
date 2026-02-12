@@ -14691,7 +14691,7 @@
     tinyglobby "^0.2.15"
     ts-api-utils "^2.4.0"
 
-"@typescript-eslint/utils@8.54.0", "@typescript-eslint/utils@^5.58.0", "@typescript-eslint/utils@^8.0.0":
+"@typescript-eslint/utils@8.54.0", "@typescript-eslint/utils@^5.58.0", "@typescript-eslint/utils@^8.0.0", "@typescript-eslint/utils@^8.40.0":
   version "8.54.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/utils/-/utils-8.54.0.tgz#c79a4bcbeebb4f571278c0183ed1cb601d84c6c8"
   integrity sha512-9Cnda8GS57AQakvRyG0PTejJNlA2xhvyNtEVIMlDWOOeEyBkYWhGPnfrIAnqxLMTSTo6q8g12XVjjev5l1NvMA==
@@ -15521,7 +15521,7 @@ analytics@0.8.9:
     "@analytics/core" "^0.12.7"
     "@analytics/storage-utils" "^0.4.2"
 
-angular-eslint@^20.0.6:
+angular-eslint@^20.2.0:
   version "20.7.0"
   resolved "https://registry.yarnpkg.com/angular-eslint/-/angular-eslint-20.7.0.tgz#b6468b0fd5c0eaa1d45e755550356180d9e1470a"
   integrity sha512-BCiTCLO3dr8pGPaM7qLcCruWNcoNNHnLn4DPqE5tHk1TAnTx5TcGy0p/FygharZw5RjWfDHLBjFfpeh4XWLMmQ==

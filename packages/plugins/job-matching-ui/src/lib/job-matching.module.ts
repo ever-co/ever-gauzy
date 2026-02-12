@@ -3,10 +3,8 @@ import { RouterModule, ROUTES } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { PluginUiDefinition, IOnPluginUiBootstrap, IOnPluginUiDestroy } from '@gauzy/plugin-ui';
 import {
-	GauzyUIPlugin,
-	IOnUIPluginBootstrap,
-	IOnUIPluginDestroy,
 	LoggerService,
 	NavMenuBuilderService,
 	PageRouteRegistryService
@@ -36,7 +34,7 @@ import { COMPONENTS } from './components';
 		}
 	]
 })
-export class JobMatchingModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
+export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 	private static hasRegisteredPageRoutes = false;
 
 	private readonly _log = inject(LoggerService).withContext('JobMatchingModule');
@@ -51,14 +49,14 @@ export class JobMatchingModule implements IOnUIPluginBootstrap, IOnUIPluginDestr
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
 	/**
-	 * Called by `UIPluginModule` after the module is instantiated.
+	 * Called by `PluginUiModule` after the module is instantiated.
 	 */
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
 	}
 
 	/**
-	 * Called by `UIPluginModule` when the application is shutting down.
+	 * Called by `PluginUiModule` when the application is shutting down.
 	 */
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
@@ -118,7 +116,7 @@ export class JobMatchingModule implements IOnUIPluginBootstrap, IOnUIPluginDestr
 /**
  * Plugin definition for the Job Matching UI plugin.
  */
-export const JobMatchingPlugin: GauzyUIPlugin = {
+export const JobMatchingPlugin: PluginUiDefinition = {
 	id: 'job-matching',
 	module: JobMatchingModule,
 	location: 'jobs'

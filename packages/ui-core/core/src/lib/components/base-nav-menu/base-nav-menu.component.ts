@@ -433,7 +433,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 					featureKey: FeatureEnum.FEATURE_JOB
 				},
 				// Child items are registered dynamically by each job plugin module.
-				// See GauzyUIPlugin / plugin-config.ts for the list of active plugins.
+				// See PluginUiDefinition / ui-plugin.config.ts for the list of active plugins.
 				items: []
 			},
 			{

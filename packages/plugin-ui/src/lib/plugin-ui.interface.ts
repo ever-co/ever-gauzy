@@ -1,20 +1,10 @@
 /**
  * Interface for UI plugins with a bootstrap lifecycle method.
  *
- * Implement this in your Angular module class so the `UIPluginModule`
+ * Implement this in your Angular module class so the `PluginUiModule`
  * can call it after the module has been instantiated.
- *
- * @example
- * ```ts
- * @NgModule({ … })
- * export class JobEmployeeModule implements IOnUIPluginBootstrap {
- *     ngOnPluginBootstrap(): void {
- *         console.log('JobEmployeeModule bootstrapped');
- *     }
- * }
- * ```
  */
-export interface IOnUIPluginBootstrap {
+export interface IOnPluginUiBootstrap {
 	/**
 	 * Called when the plugin module is being initialized.
 	 * @returns A void or a Promise representing the completion of the operation.
@@ -25,10 +15,10 @@ export interface IOnUIPluginBootstrap {
 /**
  * Interface for UI plugins with a destroy lifecycle method.
  *
- * Implement this in your Angular module class so the `UIPluginModule`
+ * Implement this in your Angular module class so the `PluginUiModule`
  * can call it before the module is destroyed.
  */
-export interface IOnUIPluginDestroy {
+export interface IOnPluginUiDestroy {
 	/**
 	 * Called when the plugin module is being destroyed.
 	 * @returns A void or a Promise representing the completion of the operation.
@@ -39,17 +29,9 @@ export interface IOnUIPluginDestroy {
 /**
  * Combined lifecycle contract for UI plugins (bootstrap + destroy).
  *
- * Use this when you want a **single interface** that expresses both
- * lifecycle hooks:
- *
- * ```ts
- * export class JobEmployeeModule implements IUIPluginLifecycleMethods {
- *   ngOnPluginBootstrap(): void { … }
- *   ngOnPluginDestroy(): void { … }
- * }
- * ```
+ * Use this when you want a single interface that expresses both lifecycle hooks.
  */
-export interface IUIPluginLifecycleMethods {
+export interface IPluginUiLifecycleMethods {
 	/**
 	 * Called when the plugin module is being initialized.
 	 * @returns A void or a Promise representing the completion of the operation.
@@ -66,4 +48,5 @@ export interface IUIPluginLifecycleMethods {
 /**
  * Backwards‑compatible alias used by helper utilities.
  */
-export type UIPluginLifecycleMethods = IUIPluginLifecycleMethods;
+export type PluginUiLifecycleMethods = IPluginUiLifecycleMethods;
+

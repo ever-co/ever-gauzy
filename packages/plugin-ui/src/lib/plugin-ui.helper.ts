@@ -1,14 +1,14 @@
 import { Type } from '@angular/core';
-import { GauzyUIPlugin } from './ui-plugin.types';
-import { UIPluginLifecycleMethods } from './ui-plugin.interface';
+import { PluginUiDefinition } from './plugin-ui.types';
+import { PluginUiLifecycleMethods } from './plugin-ui.interface';
 
 /**
  * Extract Angular module classes from an array of UI plugin definitions.
  *
- * @param plugins An array of `GauzyUIPlugin` entries.
+ * @param plugins An array of `PluginUiDefinition` entries.
  * @returns An array of Angular module `Type` references.
  */
-export function getUIPluginModules(plugins: GauzyUIPlugin[]): Type<any>[] {
+export function getUIPluginModules(plugins: PluginUiDefinition[]): Type<any>[] {
 	return plugins.map((plugin) => plugin.module);
 }
 
@@ -21,9 +21,10 @@ export function getUIPluginModules(plugins: GauzyUIPlugin[]): Type<any>[] {
  * @param lifecycleMethod The lifecycle method name to look for.
  * @returns `true` if the instance has a callable method with that name.
  */
-export function hasUILifecycleMethod<M extends keyof UIPluginLifecycleMethods>(
+export function hasPluginUiLifecycleMethod<M extends keyof PluginUiLifecycleMethods>(
 	plugin: any,
 	lifecycleMethod: M
-): plugin is { [key in M]: UIPluginLifecycleMethods[M] } {
+): plugin is { [key in M]: PluginUiLifecycleMethods[M] } {
 	return typeof plugin?.[lifecycleMethod] === 'function';
 }
+

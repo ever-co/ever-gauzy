@@ -3,10 +3,8 @@ import { ROUTES, RouterModule } from '@angular/router';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { PluginUiDefinition, IOnPluginUiBootstrap, IOnPluginUiDestroy } from '@gauzy/plugin-ui';
 import {
-	GauzyUIPlugin,
-	IOnUIPluginBootstrap,
-	IOnUIPluginDestroy,
 	LoggerService,
 	NavMenuBuilderService,
 	PageRouteRegistryService
@@ -45,7 +43,7 @@ import { AddEditProposalTemplateComponent } from './components/add-edit-proposal
 		}
 	]
 })
-export class JobProposalTemplateModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
+export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 	private static hasRegisteredPageRoutes = false;
 
 	private readonly _log = inject(LoggerService).withContext('JobProposalTemplateModule');
@@ -60,14 +58,14 @@ export class JobProposalTemplateModule implements IOnUIPluginBootstrap, IOnUIPlu
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
 	/**
-	 * Called by `UIPluginModule` after the module is instantiated.
+	 * Called by `PluginUiModule` after the module is instantiated.
 	 */
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
 	}
 
 	/**
-	 * Called by `UIPluginModule` when the application is shutting down.
+	 * Called by `PluginUiModule` when the application is shutting down.
 	 */
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
@@ -124,7 +122,7 @@ export class JobProposalTemplateModule implements IOnUIPluginBootstrap, IOnUIPlu
 /**
  * Plugin definition for the Job Proposal Template UI plugin.
  */
-export const JobProposalTemplatePlugin: GauzyUIPlugin = {
+export const JobProposalTemplatePlugin: PluginUiDefinition = {
 	id: 'job-proposal-template',
 	module: JobProposalTemplateModule,
 	location: 'jobs'

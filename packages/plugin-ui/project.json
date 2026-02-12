@@ -1,0 +1,40 @@
+{
+	"name": "plugin-ui",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugin-ui/src",
+	"prefix": "lib",
+	"projectType": "library",
+	"tags": [],
+	"implicitDependencies": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/angular:ng-packagr-lite",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/plugin-ui/ng-package.json",
+				"tsConfig": "packages/plugin-ui/tsconfig.lib.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/plugin-ui/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/plugin-ui/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "development",
+			"dependsOn": ["^build"]
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugin-ui/jest.config.ts",
+				"tsConfig": "packages/plugin-ui/tsconfig.spec.json"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

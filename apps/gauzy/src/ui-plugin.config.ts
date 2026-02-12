@@ -1,5 +1,5 @@
 import { LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
-import { AppUIConfig } from '@gauzy/ui-core/core';
+import { PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { JobEmployeePlugin } from '@gauzy/plugin-job-employee-ui';
 import { JobMatchingPlugin } from '@gauzy/plugin-job-matching-ui';
@@ -18,7 +18,7 @@ import { JobProposalTemplatePlugin } from '@gauzy/plugin-job-proposal-ui';
  * │  self-registers its own routes AND sidebar menu items.    │
  * └──────────────────────────────────────────────────────────┘
  */
-export const uiPluginConfig: AppUIConfig = {
+export const uiPluginConfig: PluginUiConfig = {
 	// ── Internationalization ───────────────────────────────
 	defaultLanguage: LanguagesEnum.ENGLISH,
 	defaultLocale: 'en-US',

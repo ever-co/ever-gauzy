@@ -33,6 +33,7 @@ import * as Sentry from '@sentry/angular';
 import * as moment from 'moment';
 import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
 import { UiCoreModule } from '@gauzy/ui-core';
+import { getPluginUiConfig } from '@gauzy/plugin-ui';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import {
 	APIInterceptor,
@@ -40,7 +41,6 @@ import {
 	AuthRefreshInterceptor,
 	CoreModule,
 	FeatureService,
-	getAppUIConfig,
 	GoogleMapsLoaderService,
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
@@ -254,7 +254,7 @@ export class AppModule {
 	 * Initialize UI languages and Update Locale using `ui-plugin.config.ts`.
 	 */
 	private initializeUiLanguagesAndLocale(): void {
-		const uiConfig = getAppUIConfig();
+		const uiConfig = getPluginUiConfig();
 
 		// Set default locale; week start (dow) comes from ui-plugin.config.ts
 		moment.updateLocale(uiConfig.defaultLanguage, {

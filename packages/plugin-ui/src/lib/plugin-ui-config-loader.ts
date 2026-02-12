@@ -1,56 +1,71 @@
-import { setAppUIConfig } from '@gauzy/ui-core/core';
+import { PluginUiConfig } from './plugin-ui.types';
+import { setPluginUiConfig } from './plugin-ui.loader';
+
+/**
+ * Config loader function type. Applications provide this to load their
+ * own UI configuration (e.g. from a compile-time module or runtime endpoint).
+ */
+export type PluginUiConfigLoader = () => Promise<{ uiPluginConfig: PluginUiConfig }>;
 
 /**
  * Loads, validates, and stores the application UI configuration,
- * making it available via `getAppUIConfig()` from `@gauzy/ui-core/core`.
+ * making it available via `getPluginUiConfig()` from `@gauzy/plugin-ui`.
  *
  * Must be awaited **before** `platformBrowser().bootstrapModule()`
  * so that every Angular module, service, and component can safely
- * call `getAppUIConfig()` during initialization.
+ * call `getPluginUiConfig()` during initialization.
  *
- * The config source is a compile-time TypeScript module today, but this
- * async boundary keeps the door open for runtime sources (e.g. a JSON
- * endpoint or feature-flag service) without changing the call-site.
+ * The config source is supplied by the host application (e.g. a compile-time
+ * TypeScript module or a JSON endpoint), keeping the door open for runtime
+ * sources without changing the plugin-ui package.
  *
+ * @param configLoader Async function that returns the application's UI config.
  * @throws If the configuration is structurally invalid.
+ *
+ * @example
+ * ```ts
+ * loadPluginUiConfig(() => import('./app/ui-plugin.config'))
+ *   .then(() => platformBrowser().bootstrapModule(AppBootstrapModule))
+ *   .catch((err) => console.error(err));
+ * ```
  */
-export async function loadAppUIConfig(): Promise<void> {
-	const { uiPluginConfig } = await import('./ui-plugin.config');
+export async function loadPluginUiConfig(configLoader: PluginUiConfigLoader): Promise<void> {
+	const { uiPluginConfig } = await configLoader();
 
 	// ── Validate plugins ────────────────────────────────────
 	if (!uiPluginConfig?.plugins || !Array.isArray(uiPluginConfig.plugins)) {
-		throw new Error('[AppUIConfig] Invalid configuration: "plugins" must be an array.');
+		throw new Error('[PluginUiConfig] Invalid configuration: "plugins" must be an array.');
 	}
 
 	const ids = uiPluginConfig.plugins.map((p) => p.id);
 	const duplicates = ids.filter((id, i) => ids.indexOf(id) !== i);
 	if (duplicates.length > 0) {
-		throw new Error(`[AppUIConfig] Duplicate plugin id(s) detected: ${duplicates.join(', ')}`);
+		throw new Error(`[PluginUiConfig] Duplicate plugin id(s) detected: ${duplicates.join(', ')}`);
 	}
 
 	// ── Validate i18n ───────────────────────────────────────
 	if (!uiPluginConfig.defaultLanguage) {
-		throw new Error('[AppUIConfig] "defaultLanguage" is required.');
+		throw new Error('[PluginUiConfig] "defaultLanguage" is required.');
 	}
 
 	if (!Array.isArray(uiPluginConfig.availableLanguages) || uiPluginConfig.availableLanguages.length === 0) {
-		throw new Error('[AppUIConfig] "availableLanguages" must be a non-empty array.');
+		throw new Error('[PluginUiConfig] "availableLanguages" must be a non-empty array.');
 	}
 
 	if (!uiPluginConfig.availableLanguages.includes(uiPluginConfig.defaultLanguage)) {
 		throw new Error(
-			`[AppUIConfig] "defaultLanguage" (${uiPluginConfig.defaultLanguage}) must be listed in "availableLanguages".`
+			`[PluginUiConfig] "defaultLanguage" (${uiPluginConfig.defaultLanguage}) must be listed in "availableLanguages".`
 		);
 	}
 
 	// ── Store (freeze + publish via library) ────────────────
-	setAppUIConfig(uiPluginConfig);
+	setPluginUiConfig(uiPluginConfig);
 
 	// ── Log summary ─────────────────────────────────────────
 	const locations = [...new Set(uiPluginConfig.plugins.map((p) => p.location).filter(Boolean))];
 
 	console.log(
-		`[AppUIConfig] Loaded — ` +
+		`[PluginUiConfig] Loaded — ` +
 			`${uiPluginConfig.plugins.length} plugin(s) [${locations.join(', ') || 'none'}], ` +
 			`${uiPluginConfig.availableLanguages.length} language(s), ` +
 			`default: ${uiPluginConfig.defaultLanguage} / ${uiPluginConfig.defaultLocale}`

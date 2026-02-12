@@ -102,6 +102,7 @@ COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
+COPY --chown=node:node packages/plugin-ui/package.json ./packages/plugin-ui/
 COPY --chown=node:node packages/desktop-ui-lib/package.json ./packages/desktop-ui-lib/
 COPY --chown=node:node packages/plugins/integration-ai-ui/package.json ./packages/plugins/integration-ai-ui/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/

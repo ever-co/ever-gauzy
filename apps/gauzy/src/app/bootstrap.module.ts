@@ -1,5 +1,5 @@
 import { NgModule, OnDestroy } from '@angular/core';
-import { APP_UI_CONFIG, getAppUIConfig, UIPluginModule, UIPluginRegistryService } from '@gauzy/ui-core/core';
+import { PLUGIN_UI_CONFIG, getPluginUiConfig, PluginUiModule, PluginUiRegistryService } from '@gauzy/plugin-ui';
 import { AppModule } from './app.module';
 import { AppComponent } from './app.component';
 
@@ -8,10 +8,10 @@ import { AppComponent } from './app.component';
  *
  * **Responsibilities:**
  *
- * - Provides `APP_UI_CONFIG` injection token (via `getAppUIConfig()`)
- * - Registers `UIPluginModule` to bootstrap all UI plugins and
- *   invoke their lifecycle hooks (`onPluginBootstrap` / `onPluginDestroy`)
- * - Calls `UIPluginRegistryService.destroyAll()` on application shutdown
+ * - Provides `PLUGIN_UI_CONFIG` injection token (via `getPluginUiConfig()`)
+ * - Registers `PluginUiModule` to bootstrap all UI plugins and
+ *   invoke their lifecycle hooks (`ngOnPluginBootstrap` / `ngOnPluginDestroy`)
+ * - Calls `PluginUiRegistryService.destroyAll()` on application shutdown
  * - Wraps `AppModule` (core application logic, routes, providers)
  * - Declares the bootstrap component (`AppComponent`)
  *
@@ -19,23 +19,20 @@ import { AppComponent } from './app.component';
  */
 @NgModule({
 	imports: [
-		// Plugin lifecycle management (onPluginBootstrap / onPluginDestroy)
-		UIPluginModule.init(),
-
-		// Core application module (declares AppComponent + all app logic)
-		AppModule
+		PluginUiModule.init(), // Plugin lifecycle management (ngOnPluginBootstrap / ngOnPluginDestroy
+		AppModule // Core application module (declares AppComponent + all app logic)
 	],
 	providers: [
 		{
-			provide: APP_UI_CONFIG,
-			useFactory: () => getAppUIConfig()
+			provide: PLUGIN_UI_CONFIG,
+			useFactory: () => getPluginUiConfig()
 		}
 	],
 	bootstrap: [AppComponent]
 })
 export class AppBootstrapModule implements OnDestroy {
-	constructor(private readonly _registry: UIPluginRegistryService) {
-		const config = getAppUIConfig();
+	constructor(private readonly _registry: PluginUiRegistryService) {
+		const config = getPluginUiConfig();
 		const locations = [...new Set(config.plugins.map((p) => p.location).filter(Boolean))];
 
 		console.log(
@@ -46,7 +43,7 @@ export class AppBootstrapModule implements OnDestroy {
 		);
 	}
 
-	/** Invokes `onPluginDestroy` on every registered plugin during application shutdown. */
+	/** Invokes `ngOnPluginDestroy` on every registered plugin during application shutdown. */
 	async ngOnDestroy(): Promise<void> {
 		console.log('[AppBootstrapModule] Application shutting down. Destroying plugins...');
 		await this._registry.destroyAll();

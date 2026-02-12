@@ -2,17 +2,10 @@ import { inject, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
-import {
-	GauzyUIPlugin,
-	IOnUIPluginBootstrap,
-	IOnUIPluginDestroy,
-	LoggerService,
-	NavMenuBuilderService,
-	PageRouteRegistryService,
-	PermissionsGuard
-} from '@gauzy/ui-core/core';
+import { PluginUiDefinition, IOnPluginUiBootstrap, IOnPluginUiDestroy } from '@gauzy/plugin-ui';
 import { DynamicTabsModule, NebularModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
 
 @NgModule({
 	declarations: [JobEmployeeComponent],
@@ -26,7 +19,7 @@ import { JobEmployeeComponent } from './components/job-employee/job-employee.com
 	],
 	exports: [JobEmployeeComponent]
 })
-export class JobEmployeeModule implements IOnUIPluginBootstrap, IOnUIPluginDestroy {
+export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 	private static hasRegisteredPageRoutes = false;
 
 	private readonly _log = inject(LoggerService).withContext('JobEmployeeModule');
@@ -41,14 +34,14 @@ export class JobEmployeeModule implements IOnUIPluginBootstrap, IOnUIPluginDestr
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
 	/**
-	 * Called by `UIPluginModule` after the module is instantiated.
+	 * Called by `PluginUiModule` after the module is instantiated.
 	 */
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
 	}
 
 	/**
-	 * Called by `UIPluginModule` when the application is shutting down.
+	 * Called by `PluginUiModule` when the application is shutting down.
 	 */
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
@@ -113,7 +106,7 @@ export class JobEmployeeModule implements IOnUIPluginBootstrap, IOnUIPluginDestr
 /**
  * Plugin definition for the Job Employee UI plugin.
  */
-export const JobEmployeePlugin: GauzyUIPlugin = {
+export const JobEmployeePlugin: PluginUiDefinition = {
 	id: 'job-employee',
 	module: JobEmployeeModule,
 	location: 'jobs'
