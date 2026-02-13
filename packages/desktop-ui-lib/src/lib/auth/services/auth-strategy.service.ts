@@ -135,6 +135,17 @@ export class AuthStrategy extends NbAuthStrategy {
 					return new NbAuthResult(false, res, false, ['Failed to refresh token']);
 				}
 
+				// Validate the new tokens before storing
+				if (!this.isValidToken(res.token)) {
+					console.error('Received invalid access token from refresh');
+					return new NbAuthResult(false, res, false, ['Invalid access token received']);
+				}
+
+				if (!this.isValidToken(res.refresh_token)) {
+					console.error('Received invalid refresh token from refresh');
+					return new NbAuthResult(false, res, false, ['Invalid refresh token received']);
+				}
+
 				// Update access token and refresh token in store
 				this.store.token = res.token;
 				this.store.refreshToken = res.refresh_token;
@@ -252,15 +263,76 @@ export class AuthStrategy extends NbAuthStrategy {
 			const payload = JSON.parse(atob(token.split('.')[1]));
 			if (payload.exp) {
 				// exp is in seconds, convert to milliseconds
-				this.store.tokenExpiresAt = payload.exp * 1000;
+				const expiryTime = payload.exp * 1000;
+
+				// Validate that expiry is in the future
+				if (expiryTime > Date.now()) {
+					this.store.tokenExpiresAt = expiryTime;
+					return;
+				} else {
+					console.warn('Token expiry is in the past, using default 1 hour');
+				}
 			} else {
-				// Default to 1 hour if no exp claim
-				this.store.tokenExpiresAt = Date.now() + 60 * 60 * 1000;
+				console.warn('Token has no exp claim, using default 1 hour');
 			}
 		} catch (error) {
 			console.warn('Failed to parse token expiry, using default 1 hour:', error);
-			// Default to 1 hour
-			this.store.tokenExpiresAt = Date.now() + 60 * 60 * 1000;
+		}
+
+		// Default to 1 hour if parsing failed or expiry is invalid
+		this.store.tokenExpiresAt = Date.now() + 60 * 60 * 1000;
+	}
+
+	/**
+	 * Validates that a token is a properly formatted JWT with valid claims.
+	 * @param token Token to validate
+	 * @returns true if token appears valid
+	 */
+	private isValidToken(token: string): boolean {
+		if (!token || typeof token !== 'string') {
+			return false;
+		}
+
+		// JWT should have 3 parts separated by dots
+		const parts = token.split('.');
+		if (parts.length !== 3) {
+			return false;
+		}
+
+		// Try to decode and validate the payload
+		try {
+			const payload = JSON.parse(atob(parts[1]));
+
+			// Validate required JWT claims
+			if (!payload.exp) {
+				console.warn('[AuthStrategy] Token missing exp claim');
+				return false;
+			}
+
+			// Check if token is expired (with small buffer for clock skew)
+			const now = Math.floor(Date.now() / 1000);
+			const clockSkewBuffer = 60; // 60 seconds buffer
+			if (payload.exp < now - clockSkewBuffer) {
+				console.warn('[AuthStrategy] Token is expired');
+				return false;
+			}
+
+			// Validate token is not from the future (with buffer)
+			if (payload.iat && payload.iat > now + clockSkewBuffer) {
+				console.warn('[AuthStrategy] Token issued in the future');
+				return false;
+			}
+
+			// Validate nbf (not before) claim if present
+			if (payload.nbf && payload.nbf > now + clockSkewBuffer) {
+				console.warn('[AuthStrategy] Token not yet valid (nbf)');
+				return false;
+			}
+
+			return true;
+		} catch (error) {
+			console.error('[AuthStrategy] Token validation error:', error);
+			return false;
 		}
 	}
 }

@@ -363,11 +363,16 @@ export class Store {
 
 	/**
 	 * Checks if the token is expired or close to expiring (within 5 minutes).
+	 * Returns true if token should be refreshed.
 	 */
 	isTokenExpired(): boolean {
 		const expiresAt = this.tokenExpiresAt;
 		if (!expiresAt) {
-			return false; // If no expiry set, assume not expired
+			// If no expiry is set, we cannot determine expiration
+			// Return false to avoid unnecessary refresh attempts
+			// The server will return 401 if token is actually expired
+			console.warn('[Store] Token expiry not set, assuming token is valid');
+			return false;
 		}
 		const now = Date.now();
 		const bufferTime = 5 * 60 * 1000; // 5 minutes buffer
