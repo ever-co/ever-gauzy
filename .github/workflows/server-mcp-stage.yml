@@ -14,7 +14,7 @@ concurrency:
 jobs:
   release-linux:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 150
+    timeout-minutes: 300
 
     strategy:
       matrix:
@@ -105,7 +105,7 @@ jobs:
 
   release-linux-arm64:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 150
+    timeout-minutes: 300
 
     strategy:
       matrix:
@@ -204,7 +204,7 @@ jobs:
 
   release-mac:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 150
+    timeout-minutes: 300
 
     strategy:
       matrix:
@@ -298,7 +298,7 @@ jobs:
 
   release-windows:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 150
+    timeout-minutes: 300
 
     strategy:
       matrix:
@@ -427,7 +427,7 @@ jobs:
 
   release-windows-arm64:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 150
+    timeout-minutes: 300
 
     strategy:
       matrix:

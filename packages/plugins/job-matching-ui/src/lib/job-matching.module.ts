@@ -4,11 +4,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PluginUiDefinition, IOnPluginUiBootstrap, IOnPluginUiDestroy } from '@gauzy/plugin-ui';
-import {
-	LoggerService,
-	NavMenuBuilderService,
-	PageRouteRegistryService
-} from '@gauzy/ui-core/core';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { DialogsModule, NebularModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createJobMatchingRoutes } from './job-matching.routes';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';

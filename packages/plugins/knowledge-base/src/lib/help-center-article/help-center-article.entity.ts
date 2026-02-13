@@ -1,34 +1,59 @@
-import { RelationId } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
-import { IHelpCenter, IHelpCenterArticle, IHelpCenterAuthor } from '@gauzy/contracts';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany, TenantOrganizationBaseEntity } from '@gauzy/core';
-import { HelpCenter, HelpCenterAuthor } from './../entities';
+import { JoinTable, RelationId } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ID, IEmployee, IHelpCenter, IHelpCenterArticle, IHelpCenterArticleVersion, IHelpCenterAuthor, IOrganizationProject, ITag, JsonData } from '@gauzy/contracts';
+import { isMySQL, isPostgres } from '@gauzy/config';
+import {
+	ColumnIndex,
+	Employee,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	OrganizationProject,
+	Tag,
+	TenantOrganizationBaseEntity
+} from '@gauzy/core';
+import { HelpCenter, HelpCenterArticleVersion, HelpCenterAuthor } from './../entities';
 import { MikroOrmHelpCenterArticleRepository } from './repository/mikro-orm-help-center-article.repository';
 
 @MultiORMEntity('knowledge_base_article', { mikroOrmRepository: () => MikroOrmHelpCenterArticleRepository })
-export class HelpCenterArticle extends TenantOrganizationBaseEntity
-	implements IHelpCenterArticle {
-
+export class HelpCenterArticle extends TenantOrganizationBaseEntity implements IHelpCenterArticle {
+	/*
+	|--------------------------------------------------------------------------
+	| Existing fields (For original articles)
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
 	@MultiORMColumn()
 	name: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
-	description: string;
+	description?: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
-	data: string;
+	data?: string;
 
-	@ApiProperty({ type: () => Boolean })
-	@MultiORMColumn()
-	draft: boolean;
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	draft?: boolean;
 
-	@ApiProperty({ type: () => Boolean })
-	@MultiORMColumn()
-	privacy: boolean;
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	privacy?: boolean;
 
 	@ApiProperty({ type: () => Number })
 	@MultiORMColumn()
@@ -36,8 +61,56 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity
 
 	/*
 	|--------------------------------------------------------------------------
+	| Rich content for collaborative articles
+	|--------------------------------------------------------------------------
+	*/
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ type: 'text', nullable: true })
+	descriptionHtml?: string;
+
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	descriptionJson?: JsonData;
+
+	/*
+	|--------------------------------------------------------------------------
+	| Metadata
+	|--------------------------------------------------------------------------
+	*/
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	isLocked?: boolean;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ nullable: true })
+	color?: string;
+
+	/*
+	|--------------------------------------------------------------------------
+	| External integration
+	|--------------------------------------------------------------------------
+	*/
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ nullable: true })
+	externalId?: string;
+
+	/*
+	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Category (HelpCenter)
 	*/
 	@MultiORMManyToOne(() => HelpCenter, (center) => center.articles, {
 		onDelete: 'CASCADE'
@@ -45,19 +118,117 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity
 	category?: IHelpCenter;
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
 	@RelationId((it: HelpCenterArticle) => it.category)
-	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	categoryId: string;
+	categoryId: ID;
+
+	/**
+	 * Parent-child hierarchy (self-referencing)
+	*/
+	@MultiORMManyToOne(() => HelpCenterArticle, (article) => article.children, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	parent?: IHelpCenterArticle;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: HelpCenterArticle) => it.parent)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	parentId?: ID;
+
+	/**
+	 * Owner (Employee)
+	*/
+	@MultiORMManyToOne(() => Employee, {
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
+	ownedBy?: IEmployee;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: HelpCenterArticle) => it.ownedBy)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	ownedById?: ID;
+
+	/**
+	 * Project relation
+	*/
+	@MultiORMManyToOne(() => OrganizationProject, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	project?: IOrganizationProject;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: HelpCenterArticle) => it.project)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	projectId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
+	/**
+	 * Children articles
+	*/
+	@MultiORMOneToMany(() => HelpCenterArticle, (article) => article.parent)
+	children?: IHelpCenterArticle[];
+
+	/**
+	 * Authors
+	*/
 	@MultiORMOneToMany(() => HelpCenterAuthor, (author) => author.article, {
 		cascade: true
 	})
 	authors?: IHelpCenterAuthor[];
+
+	/**
+	 * Versions
+	*/
+	@MultiORMOneToMany(() => HelpCenterArticleVersion, (version) => version.article, {
+		cascade: true
+	})
+	versions?: IHelpCenterArticleVersion[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Tags
+	*/
+	@MultiORMManyToMany(() => Tag, {
+		/**  Database cascade action on update. */
+		onUpdate: 'CASCADE',
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE',
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
+		owner: true,
+		/** Pivot table for many-to-many relationship. */
+		pivotTable: 'tag_help_center_article',
+		/** Column in pivot table referencing 'help_center_article' primary key. */
+		joinColumn: 'helpCenterArticleId',
+		/** Column in pivot table referencing 'tag' primary key. */
+		inverseJoinColumn: 'tagId'
+	})
+	@JoinTable({ name: 'tag_help_center_article' })
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
+	tags?: ITag[];
 }

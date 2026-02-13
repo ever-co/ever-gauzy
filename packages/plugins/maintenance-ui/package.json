@@ -32,7 +32,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/ui-core": "^0.1.0",
 		"@nebular/theme": "^16.0.0",
-		"@ngx-translate/core": "^16.0.4",
+		"@ngx-translate/core": "^17.0.0",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {

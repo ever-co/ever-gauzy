@@ -50,11 +50,7 @@
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": [
-					"node_modules/echarts/dist/echarts.min.js",
-					"node_modules/echarts/dist/extension/bmap.min.js",
-					"node_modules/chart.js/dist/chart.umd.min.js"
-				],
+				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
 					"@gauzy/contracts",
 					"@gauzy/ui-config",
@@ -212,11 +208,7 @@
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": [
-					"node_modules/echarts/dist/echarts.min.js",
-					"node_modules/echarts/dist/extension/bmap.min.js",
-					"node_modules/chart.js/dist/chart.umd.min.js"
-				],
+				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
 					"@gauzy/contracts",
 					"@gauzy/ui-config",
@@ -324,11 +316,7 @@
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": [
-					"node_modules/echarts/dist/echarts.min.js",
-					"node_modules/echarts/dist/extension/bmap.min.js",
-					"node_modules/chart.js/dist/chart.umd.min.js"
-				],
+				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
 					"@gauzy/contracts",
 					"@gauzy/ui-config",

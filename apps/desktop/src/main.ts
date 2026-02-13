@@ -1,14 +1,13 @@
 import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
-
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { Router, RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
+
+import * as Sentry from '@sentry/angular';
 import {
-	AboutModule,
 	ActivityWatchInterceptor,
-	AlwaysOnModule,
 	APIInterceptor,
 	AuthGuard,
 	AuthService,
@@ -17,39 +16,32 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
-	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
-	PluginsModule,
-	RecapModule,
 	RefreshTokenInterceptor,
 	ServerErrorInterceptor,
-	SettingsModule,
-	SetupModule,
 	Store,
 	TenantInterceptor,
 	TimeoutInterceptor,
-	TimeTrackerModule,
 	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
-	NbButtonModule,
-	NbCardModule,
 	NbDatepickerModule,
 	NbDialogModule,
 	NbDialogService,
-	NbLayoutModule,
 	NbThemeModule,
-	NbToastrModule
+	NbToastrModule,
+	NbSidebarModule,
+	NbMenuModule,
+	NbIconLibraries
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
+import { provideI18n } from '@gauzy/ui-core/i18n';
+import { TablerIconsModule } from '@gauzy/ui-core/theme';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
@@ -87,35 +79,19 @@ akitaConfig({
 bootstrapApplication(AppComponent, {
 	providers: [
 		importProvidersFrom(
-			NbLayoutModule,
+			BrowserModule,
+			AppRoutingModule,
+			NgxDesktopThemeModule, // Required for custom Gauzy themes and theme initializer
 			NbDialogModule.forRoot(),
 			NbToastrModule.forRoot(),
-			NbCardModule,
-			NbButtonModule,
-			BrowserModule,
-			RouterModule,
-			AppRoutingModule,
 			NbThemeModule,
-			NgxDesktopThemeModule,
-			SetupModule,
-			TimeTrackerModule,
-			SettingsModule,
-			ImageViewerModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: {
-					provide: TranslateLoader,
-					useFactory: HttpLoaderFactory,
-					deps: [HttpClient]
-				}
-			}),
-			NbDatepickerModule.forRoot(),
+			NbSidebarModule.forRoot(), // Provides NbSidebarService
+			NbMenuModule.forRoot(), // Provides NbMenuService
+			TablerIconsModule,
 			LanguageModule.forRoot(),
-			AboutModule,
-			AlwaysOnModule,
-			RecapModule,
-			PluginsModule
+			NbDatepickerModule.forRoot()
 		),
+		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
 		ElectronService,
@@ -196,6 +172,16 @@ bootstrapApplication(AppComponent, {
 				...environment
 			}
 		},
+		provideAppInitializer(() => {
+			const iconLibraries = inject(NbIconLibraries);
+
+			iconLibraries.registerFontPack('font-awesome', {
+				packClass: 'fas',
+				iconClassPrefix: 'fa'
+			});
+
+			iconLibraries.setDefaultPack('eva');
+		}),
 		provideHttpClient(withInterceptorsFromDi()),
 		provideAnimations()
 	]

@@ -4,11 +4,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PluginUiDefinition, IOnPluginUiBootstrap, IOnPluginUiDestroy } from '@gauzy/plugin-ui';
-import {
-	LoggerService,
-	NavMenuBuilderService,
-	PageRouteRegistryService
-} from '@gauzy/ui-core/core';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
 	DialogsModule,

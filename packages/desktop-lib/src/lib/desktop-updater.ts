@@ -61,7 +61,7 @@ export class DesktopUpdater {
 			console.log('Url update', localUpdate.url);
 			console.log('Server started', this._updateServer.running);
 			this._updateContext.strategy = localUpdate;
-			this._settingWindow.webContents.send('setting_page_ipc', {
+			this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 				type: 'update_files_directory',
 				data: {
 					uri: files
@@ -70,7 +70,7 @@ export class DesktopUpdater {
 			try {
 				await this._updateContext.checkUpdate();
 			} catch (e) {
-				this._settingWindow.webContents.send('setting_page_ipc', {
+				this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 					type: 'error_update',
 					data: e
 				});
@@ -89,7 +89,7 @@ export class DesktopUpdater {
 				try {
 					await this._updateContext.checkUpdate();
 				} catch (e) {
-					this._settingWindow.webContents.send('setting_page_ipc', {
+					this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 						type: 'error_update',
 						data: e
 					});
@@ -102,7 +102,7 @@ export class DesktopUpdater {
 			try {
 				await this._updateContext.checkUpdate();
 			} catch (e) {
-				this._settingWindow.webContents.send('setting_page_ipc', {
+				this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 					type: 'error_update',
 					data: e
 				});
@@ -146,7 +146,7 @@ export class DesktopUpdater {
 
 		autoUpdater.on('update-downloaded', async (event: UpdateDownloadedEvent) => {
 			const setting = LocalStore.getStore('appSetting');
-			this._settingWindow.webContents.send('setting_page_ipc', {
+			this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 				type: 'update_downloaded'
 			});
 			if (setting && !setting.automaticUpdate) return;
@@ -162,7 +162,7 @@ export class DesktopUpdater {
 			});
 			const button = await dialog.show();
 			if (button?.response === 0) {
-				this._settingWindow.webContents.send('setting_page_ipc', {
+				this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 					type: '_logout_quit_install_'
 				});
 			}
@@ -170,7 +170,7 @@ export class DesktopUpdater {
 		});
 
 		autoUpdater.on('update-available', (info: UpdateInfo) => {
-			this._settingWindow.webContents.send('setting_page_ipc', {
+			this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 				type: 'update_available'
 			});
 			this._updateContext.notify(info);
@@ -181,7 +181,7 @@ export class DesktopUpdater {
 		};
 
 		autoUpdater.on('update-not-available', () => {
-			this._settingWindow.webContents.send('setting_page_ipc', {
+			this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 				type: 'update_not_available'
 			});
 			this._updateServer.stop();
@@ -190,7 +190,7 @@ export class DesktopUpdater {
 		autoUpdater.on('download-progress', (event) => {
 			console.log('update log', event);
 			if (this._settingWindow) {
-				this._settingWindow.webContents.send('setting_page_ipc', {
+				this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 					type: 'download_on_progress',
 					data: event
 				});
@@ -198,7 +198,7 @@ export class DesktopUpdater {
 		});
 
 		autoUpdater.on('error', (e) => {
-			this._settingWindow.webContents.send('setting_page_ipc', {
+			this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 				type: 'error_update',
 				data: e
 			});
@@ -230,7 +230,7 @@ export class DesktopUpdater {
 			try {
 				await this._updateContext.checkUpdate();
 			} catch (e) {
-				this._settingWindow.webContents.send('setting_page_ipc', {
+				this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 					type: 'error_update',
 					data: e
 				});

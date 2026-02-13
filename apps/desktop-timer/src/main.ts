@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {
 	enableProdMode,
 	ErrorHandler,
@@ -12,60 +12,44 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 import {
-	AboutModule,
 	ActivityWatchInterceptor,
-	ActivityWatchModule,
-	AlwaysOnModule,
 	APIInterceptor,
 	AuthGuard,
-	AuthModule,
 	AuthService,
 	AuthStrategy,
 	DEFAULT_TIMEOUT,
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
-	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
-	NgxLoginModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
-	PluginsModule,
-	RecapModule,
 	RefreshTokenInterceptor,
 	serverConnectionFactory,
 	ServerConnectionService,
-	ServerDownModule,
 	ServerErrorInterceptor,
-	SettingsModule,
-	SetupModule,
-	SplashScreenModule,
 	Store,
-	TaskTableModule,
 	TenantInterceptor,
 	TimeoutInterceptor,
-	TimeTrackerModule,
-	TokenInterceptor,
-	UnauthorizedInterceptor
+	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
-import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
-	NbButtonModule,
-	NbCardModule,
 	NbDatepickerModule,
 	NbDialogModule,
 	NbDialogService,
-	NbLayoutModule,
+	NbMenuModule,
+	NbSidebarModule,
 	NbThemeModule,
-	NbToastrModule
+	NbToastrModule,
+	NbIconLibraries
 } from '@nebular/theme';
-import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { provideI18n } from '@gauzy/ui-core/i18n';
+import { TablerIconsModule } from '@gauzy/ui-core/theme';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppModuleGuard } from './app/app.module.guards';
@@ -98,41 +82,19 @@ akitaConfig({
 bootstrapApplication(AppComponent, {
 	providers: [
 		importProvidersFrom(
-			NbLayoutModule,
-			AuthModule,
-			NbDialogModule.forRoot(),
-			NbToastrModule.forRoot(),
-			NbCardModule,
-			NbButtonModule,
 			BrowserModule,
 			AppRoutingModule,
+			NgxDesktopThemeModule, // Required for custom Gauzy themes and theme initializer
+			NbDialogModule.forRoot(),
+			NbToastrModule.forRoot(),
 			NbThemeModule,
-			NgxDesktopThemeModule,
-			NgxLoginModule,
-			SetupModule,
-			TimeTrackerModule,
-			SettingsModule,
-			ImageViewerModule,
-			NgSelectModule,
-			SplashScreenModule,
-			ServerDownModule,
-			AlwaysOnModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: {
-					provide: TranslateLoader,
-					useFactory: HttpLoaderFactory,
-					deps: [HttpClient]
-				}
-			}),
+			NbSidebarModule.forRoot(), // Provides NbSidebarService
+			NbMenuModule.forRoot(), // Provides NbMenuService
+			TablerIconsModule,
 			LanguageModule.forRoot(),
-			NbDatepickerModule.forRoot(),
-			AboutModule,
-			ActivityWatchModule,
-			RecapModule,
-			TaskTableModule,
-			PluginsModule
+			NbDatepickerModule.forRoot()
 		),
+		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
 		AuthGuard,
@@ -186,11 +148,6 @@ bootstrapApplication(AppComponent, {
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
-			useClass: UnauthorizedInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
 			useClass: ServerErrorInterceptor,
 			multi: true
 		},
@@ -220,6 +177,17 @@ bootstrapApplication(AppComponent, {
 		provideAppInitializer(() => {
 			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
 			return initializerFn();
+		}),
+		// Register icon packs for Nebular
+		provideAppInitializer(() => {
+			const iconLibraries = inject(NbIconLibraries);
+
+			iconLibraries.registerFontPack('font-awesome', {
+				packClass: 'fas',
+				iconClassPrefix: 'fa'
+			});
+
+			iconLibraries.setDefaultPack('eva');
 		}),
 		{ provide: DEFAULT_TIMEOUT, useValue: 80000 },
 		{
