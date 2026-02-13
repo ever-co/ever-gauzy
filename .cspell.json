@@ -832,7 +832,10 @@
 		"retryable",
 		"Retryable",
 		"pendings",
-		"SICO"
+		"SICO",
+		"deregister",
+		"Deregisters",
+		"lifecycles"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
