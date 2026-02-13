@@ -5,7 +5,8 @@ import {
 	importProvidersFrom,
 	inject,
 	Injector,
-	provideAppInitializer
+	provideAppInitializer,
+	provideZoneChangeDetection
 } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -81,6 +82,7 @@ akitaConfig({
 
 bootstrapApplication(AppComponent, {
 	providers: [
+		provideZoneChangeDetection(),
 		importProvidersFrom(
 			BrowserModule,
 			AppRoutingModule,

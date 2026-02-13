@@ -1,5 +1,12 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { APP_INITIALIZER, ErrorHandler, Injector, enableProdMode, importProvidersFrom } from '@angular/core';
+import {
+	APP_INITIALIZER,
+	ErrorHandler,
+	Injector,
+	enableProdMode,
+	importProvidersFrom,
+	provideZoneChangeDetection
+} from '@angular/core';
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -87,6 +94,7 @@ akitaConfig({
 
 bootstrapApplication(AppComponent, {
 	providers: [
+		provideZoneChangeDetection(),
 		importProvidersFrom(
 			NbLayoutModule,
 			AuthModule,

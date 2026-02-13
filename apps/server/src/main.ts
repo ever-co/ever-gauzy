@@ -1,4 +1,11 @@
-import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
+import {
+	enableProdMode,
+	ErrorHandler,
+	importProvidersFrom,
+	inject,
+	provideAppInitializer,
+	provideZoneChangeDetection
+} from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -44,6 +51,7 @@ if (environment.SENTRY_DSN) {
 
 bootstrapApplication(AppComponent, {
 	providers: [
+		provideZoneChangeDetection(),
 		importProvidersFrom(
 			NbDialogModule.forRoot(),
 			NbSidebarModule.forRoot(),

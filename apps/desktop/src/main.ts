@@ -1,4 +1,11 @@
-import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
+import {
+	enableProdMode,
+	ErrorHandler,
+	importProvidersFrom,
+	inject,
+	provideAppInitializer,
+	provideZoneChangeDetection
+} from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -77,6 +84,7 @@ akitaConfig({
 
 bootstrapApplication(AppComponent, {
 	providers: [
+		provideZoneChangeDetection(),
 		importProvidersFrom(
 			BrowserModule,
 			AppRoutingModule,
