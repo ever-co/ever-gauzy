@@ -5,7 +5,7 @@ root = true
 # Default settings for all files
 [*]
 charset = utf-8
-indent_style = space
+indent_style = tab
 indent_size = 4
 tab_width = 4
 end_of_line = lf
@@ -15,13 +15,13 @@ max_line_length = 120
 
 # TypeScript/JavaScript files
 [*.{ts,tsx,js,jsx}]
-indent_style = space
+indent_style = tab
 indent_size = 4
 tab_width = 4
 
 # HTML files
 [*.html]
-indent_style = space
+indent_style = tab
 indent_size = 4
 tab_width = 4
 
@@ -39,8 +39,9 @@ tab_width = 2
 
 # JSON files
 [*.json]
-indent_style = space
+indent_style = tab
 indent_size = 4
+tab_width = 4
 
 # Markdown files
 [*.md]
@@ -53,8 +54,9 @@ indent_style = tab
 
 # Shell scripts
 [*.sh]
-indent_style = space
+indent_style = tab
 indent_size = 4
+tab_width = 4
 end_of_line = lf
 
 # Windows batch files
