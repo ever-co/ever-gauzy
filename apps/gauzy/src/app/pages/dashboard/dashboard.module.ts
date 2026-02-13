@@ -77,9 +77,13 @@ const NB_MODULES = [
 	NbTreeGridModule
 ];
 
+// Standalone Modules
+const STANDALONE_MODULES = [
+	InfiniteScrollDirective // Standalone directive must be imported, not declared
+];
+
 // Third Party Modules
 const THIRD_PARTY_MODULES = [
-	InfiniteScrollDirective,
 	LineChartModule,
 	NgSelectModule,
 	NgxPermissionsModule.forChild(),
@@ -111,6 +115,7 @@ const COMPONENTS = [
 		DashboardRoutingModule,
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
+		...STANDALONE_MODULES,
 		BaseChartDirective,
 		// Feature Modules
 		RecordsHistoryModule,

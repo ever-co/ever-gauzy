@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, HostBinding, NgZone, OnDestroy, OnInit, Renderer2 } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import {
 	ActivityWatchElectronService,
 	AuthStrategy,
@@ -19,7 +20,7 @@ import { AppService } from './app.service';
 	selector: 'agent-root',
 	template: '<router-outlet></router-outlet>',
 	styleUrls: ['./app.component.scss'],
-	standalone: false
+	imports: [RouterOutlet]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 	@HostBinding('class.login-small-height') isLoginPage = false;
@@ -48,10 +49,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.checkAuthValidation();
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
 		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
-
 		this.electronService.ipcRenderer.send('app_is_init');
-
-		// Start token refresh timer if user is authenticated
 		if (this.store.token && this.store.refreshToken) {
 			this.tokenRefreshService.start();
 		}
@@ -113,6 +111,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 	handleLogout(_: unknown, arg: any) {
 		this._ngZone.run(async () => {
 			try {
+				// Stop proactive token refresh before logout
+				this.tokenRefreshService.stop();
 				await firstValueFrom(this.authStrategy.logout());
 				this.electronService.ipcRenderer.send('navigate_to_login');
 				if (arg) this.electronService.ipcRenderer.send('restart_and_update');

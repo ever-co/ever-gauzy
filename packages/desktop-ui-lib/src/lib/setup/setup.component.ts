@@ -10,8 +10,8 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IProxyConfig } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
+import { NbDialogService, NbLayoutModule, NbCardModule, NbStepperModule, NbButtonModule, NbCheckboxModule, NbIconModule, NbRadioModule, NbInputModule, NbFormFieldModule, NbProgressBarModule } from '@nebular/theme';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
 import { GAUZY_ENV } from '../constants';
 import { ElectronService, LoggerService } from '../electron/services';
@@ -19,13 +19,17 @@ import { LanguageElectronService } from '../language/language-electron.service';
 import { LanguageSelectorComponent } from '../language/language-selector.component';
 import { ErrorHandlerService, Store, ToastrNotificationService } from '../services';
 import { SetupService } from './setup.service';
+import { FormsModule } from '@angular/forms';
+import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
+import { SslComponent } from '../settings/ssl/ssl.component';
+import { NgClass, UpperCasePipe } from '@angular/common';
 
 @Component({
     selector: 'ngx-setup',
     templateUrl: './setup.component.html',
     styleUrls: ['./setup.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbLayoutModule, NbCardModule, NbStepperModule, LanguageSelectorComponent, NbButtonModule, NbCheckboxModule, FormsModule, NbIconModule, NbRadioModule, SpinnerButtonDirective, NbInputModule, SslComponent, NbFormFieldModule, NgClass, NbProgressBarModule, UpperCasePipe, TranslatePipe]
 })
 export class SetupComponent implements OnInit, OnDestroy {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;

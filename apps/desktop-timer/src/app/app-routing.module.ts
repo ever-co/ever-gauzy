@@ -1,89 +1,103 @@
 import { NgModule } from '@angular/core';
-import { ExtraOptions, RouterModule, Routes } from '@angular/router';
+import { ExtraOptions, NoPreloading, RouterModule, Routes } from '@angular/router';
+
 import {
-	AboutComponent,
-	AlwaysOnComponent,
 	AUTH_CONNECTION_GUARD_CONFIG,
 	AuthConnectionGuard,
 	AuthGuard,
-	DEFAULT_AUTH_CONNECTION_GUARD_CONFIG,
-	ImageViewerComponent,
-	ScreenCaptureComponent,
-	ServerDownPage,
-	SettingsComponent,
-	SetupComponent,
-	SplashScreenComponent,
-	TimeTrackerComponent,
-	UpdaterComponent
+	DEFAULT_AUTH_CONNECTION_GUARD_CONFIG
 } from '@gauzy/desktop-ui-lib';
 import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [
 	{
 		path: 'setup',
-		component: SetupComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SetupComponent)
 	},
 	{
 		path: 'auth',
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule),
-		canActivate: [AppModuleGuard, AuthConnectionGuard]
+		canActivate: [AppModuleGuard, AuthConnectionGuard],
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule)
 	},
 	{
 		path: 'time-tracker',
-		component: TimeTrackerComponent,
 		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
+		children: [
+			{
+				path: '',
+				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
+			}
+		]
 	},
 	{
 		path: 'screen-capture',
-		component: ScreenCaptureComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ScreenCaptureComponent)
 	},
 	{
 		path: 'always-on',
-		component: AlwaysOnComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AlwaysOnComponent)
 	},
 	{
 		path: 'settings',
-		component: SettingsComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SettingsComponent)
 	},
 	{
 		path: 'plugins',
 		canActivate: [AuthConnectionGuard],
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
+		children: [
+			{
+				path: '',
+				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
+			}
+		]
 	},
 	{
 		path: 'updater',
-		component: UpdaterComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.UpdaterComponent)
 	},
 	{
 		path: 'viewer',
-		component: ImageViewerComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ImageViewerComponent)
 	},
 	{
 		path: 'splash-screen',
-		component: SplashScreenComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SplashScreenComponent)
 	},
 	{
 		path: 'server-down',
-		component: ServerDownPage
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ServerDownPage)
 	},
 	{
 		path: '',
-		component: TimeTrackerComponent,
 		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
+		children: [
+			{
+				path: '',
+				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
+			}
+		]
 	},
 	{
 		path: 'about',
-		component: AboutComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AboutComponent)
+	},
+	{
+		path: '**',
+		redirectTo: ''
 	}
 ];
 
 /**
  * Configures the router for the application.
+ * Uses NoPreloading strategy to minimize memory usage on app load.
  */
 const config: ExtraOptions = {
-	useHash: true
+	useHash: true,
+	preloadingStrategy: NoPreloading,
+	initialNavigation: 'enabledBlocking',
+	canceledNavigationResolution: 'replace'
 };
 
 @NgModule({

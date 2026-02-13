@@ -1,4 +1,36 @@
-import { CommandBus } from '@nestjs/cqrs';
+import { SocialAuthService } from '@gauzy/auth';
+import { IAppIntegrationConfig } from '@gauzy/common';
+import { environment } from '@gauzy/config';
+import { DEMO_PASSWORD_LESS_MAGIC_CODE } from '@gauzy/constants';
+import {
+	IAuthResponse,
+	IChangePasswordRequest,
+	ID,
+	ILastOrganization,
+	ILastTeam,
+	IOrganizationTeam,
+	IPasswordReset,
+	IResetPasswordRequest,
+	ISocialAccount,
+	ISocialAccountBase,
+	ISocialAccountExistUser,
+	ISocialAccountLogin,
+	ITenant,
+	IUser,
+	IUserCodeInput,
+	IUserEmailInput,
+	IUserLoginInput,
+	IUserRegistrationInput,
+	IUserSigninWorkspaceResponse,
+	IUserTokenInput,
+	IUserLoginInput as IUserWorkspaceSigninInput,
+	IWorkspaceResponse,
+	LanguagesEnum,
+	PermissionsEnum,
+	ProviderEnum
+} from '@gauzy/contracts';
+import { buildQueryString, deepMerge, generateAlphaNumericCode, isNotEmpty } from '@gauzy/utils';
+import { wrap } from '@mikro-orm/core';
 import { HttpService } from '@nestjs/axios';
 import {
 	BadRequestException,
@@ -7,69 +39,37 @@ import {
 	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
-import * as moment from 'moment';
+import { CommandBus } from '@nestjs/cqrs';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
+import * as moment from 'moment';
+import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
-import { IAppIntegrationConfig } from '@gauzy/common';
-import { environment } from '@gauzy/config';
-import { DEMO_PASSWORD_LESS_MAGIC_CODE } from '@gauzy/constants';
-import {
-	IUserRegistrationInput,
-	LanguagesEnum,
-	IAuthResponse,
-	IUser,
-	IChangePasswordRequest,
-	IPasswordReset,
-	IResetPasswordRequest,
-	PermissionsEnum,
-	IUserEmailInput,
-	IUserSigninWorkspaceResponse,
-	IUserCodeInput,
-	IUserLoginInput,
-	IUserLoginInput as IUserWorkspaceSigninInput,
-	IUserTokenInput,
-	IOrganizationTeam,
-	IWorkspaceResponse,
-	ITenant,
-	ProviderEnum,
-	ISocialAccountBase,
-	ISocialAccountExistUser,
-	ISocialAccountLogin,
-	ISocialAccount,
-	ILastTeam,
-	ILastOrganization,
-	ID
-} from '@gauzy/contracts';
-import { SocialAuthService } from '@gauzy/auth';
-import { buildQueryString, deepMerge, generateAlphaNumericCode, isNotEmpty } from '@gauzy/utils';
-import { AccountRegistrationEvent } from '../event-bus/events';
-import { EventBus } from '../event-bus/event-bus';
-import { EmailService } from './../email-send/email.service';
-import { UserService } from '../user/user.service';
 import { EmployeeService } from '../employee/employee.service';
-import { RoleService } from './../role/role.service';
-import { UserOrganizationService } from '../user-organization/user-organization.services';
-import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
-import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
-import { RequestContext } from './../core/context';
-import { freshTimestamp, MultiORM, MultiORMEnum, getORMType, parseTypeORMFindToMikroOrm } from './../core/utils';
-import { wrap } from '@mikro-orm/core';
-import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
-import { EmailConfirmationService } from './email-confirmation.service';
-import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
-import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { EventBus } from '../event-bus/event-bus';
+import { AccountRegistrationEvent } from '../event-bus/events';
+import { PasswordHashService } from '../password-hash/password-hash.service';
+import { UserOrganizationService } from '../user-organization/user-organization.services';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { UserService } from '../user/user.service';
+import { RequestContext } from './../core/context';
+import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
+import { freshTimestamp, getORMType, MultiORM, MultiORMEnum, parseTypeORMFindToMikroOrm } from './../core/utils';
+import { prepareSQLQuery as p } from './../database/database.helper';
+import { EmailService } from './../email-send/email.service';
+import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { TypeOrmOrganizationTeamRepository } from './../organization-team/repository/type-orm-organization-team.repository';
+import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
+import { RoleService } from './../role/role.service';
+import { EmailConfirmationService } from './email-confirmation.service';
+import { SocialAccountService } from './social-account/social-account.service';
 import {
 	verifyFacebookToken,
 	verifyGithubToken,
 	verifyGoogleToken,
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
-import { SocialAccountService } from './social-account/social-account.service';
-import { PasswordHashService } from '../password-hash/password-hash.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -1023,9 +1023,9 @@ export class AuthService extends SocialAuthService {
 	 * When refreshing, the new access token will use the same organization context.
 	 * To switch organizations, use the /auth/switch-organization endpoint instead.
 	 *
-	 * @returns {Promise<{ token: string } | null>}
+	 * @returns {Promise<{ token: string, refresh_token: string } | null>}
 	 */
-	async getAccessTokenFromRefreshToken(): Promise<{ token: string } | null> {
+	async getAccessTokenFromRefreshToken(): Promise<{ token: string; refresh_token: string } | null> {
 		try {
 			// Get the current user from the request context
 			const user = RequestContext.currentUser();
@@ -1038,8 +1038,16 @@ export class AuthService extends SocialAuthService {
 			const organizationId = RequestContext.currentOrganizationId() || user.lastOrganizationId;
 
 			// Get and return the JWT access token for the user with organization context
-			const token = await this.getJwtAccessToken(user, organizationId);
-			return { token };
+			const [access_token, refresh_token] = await Promise.all([
+				this.getJwtAccessToken(user, organizationId),
+				this.getJwtRefreshToken(user, organizationId)
+			]);
+
+			// Update the user's current refresh token in the database
+			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+
+			// Return both the new access token and refresh token
+			return { token: access_token, refresh_token };
 		} catch (error) {
 			// Use console.error for error logging with more descriptive context
 			console.error('Error while retrieving JWT access token from refresh token:', error);

@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
-// Angular core modules
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import {
 	NbActionsModule,
 	NbAlertModule,
@@ -21,15 +19,8 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
-import {
-	SmartDataViewLayoutModule,
-	SelectorsModule,
-	SharedModule,
-	TableComponentsModule,
-	getBrowserLanguage
-} from '@gauzy/ui-core/shared';
+import { TranslateModule } from '@ngx-translate/core';
+import { SmartDataViewLayoutModule, SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationActivepiecesRoutes } from './integration-activepieces.routes';
 import { ActivepiecesAuthorizeComponent } from './components/activepieces-authorize/activepieces-authorize.component';
 import { IntegrationActivepiecesLayoutComponent } from './integration-activepieces.layout.component';
@@ -67,14 +58,7 @@ import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-s
 		NbTabsetModule,
 		NbToggleModule,
 		NbTooltipModule,
-		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(),
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule.forChild(),
 		IntegrationActivepiecesRoutes,
 		SmartDataViewLayoutModule,
 		SelectorsModule,

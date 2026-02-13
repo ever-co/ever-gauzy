@@ -1,10 +1,12 @@
-import { Component, OnInit, ViewChild, ElementRef, NgZone } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, NgZone, OnDestroy } from '@angular/core';
 import { transition, trigger, style, animate } from '@angular/animations';
 import { ElectronService } from '../electron/services';
 import { SafeUrl } from '@angular/platform-browser';
 import { ImageViewerService } from './image-viewer.service';
 import { from } from 'rxjs';
-import { NbIconLibraries } from '@nebular/theme';
+import { NbIconLibraries, NbLayoutModule, NbButtonModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
+import { NgTemplateOutlet, NgClass, AsyncPipe } from '@angular/common';
+import { DateTimePipe } from '../time-tracker/pipes/date-time.pipe';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -23,9 +25,9 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 	templateUrl: './image-viewer.component.html',
 	styleUrls: ['./image-viewer.component.scss'],
 	animations: [fadeInOutAnimation],
-	standalone: false
+	imports: [NbLayoutModule, NbButtonModule, NbIconModule, NbSpinnerModule, NgTemplateOutlet, NgClass, AsyncPipe, DateTimePipe]
 })
-export class ImageViewerComponent implements OnInit {
+export class ImageViewerComponent implements OnInit, OnDestroy {
 	active_index: number;
 
 	@ViewChild('customScroll', { static: true })
@@ -47,24 +49,31 @@ export class ImageViewerComponent implements OnInit {
 		});
 	}
 
-	ngOnInit(): void {
-		this._electronService.ipcRenderer.on('show_image', (event, arg: any[]) => {
-			this._ngZone.run(() => {
-				this.items = arg
-					.sort((a, b) => {
-						const c: any = new Date(b.recordedAt);
-						const d: any = new Date(a.recordedAt);
-						return c - d;
-					})
-					.map((img) => ({
-						...img,
-						fullUrl: from(this.sanitizeImgUrl(img.fullUrl)),
-						thumbUrl: from(this.sanitizeImgUrl(img.thumbUrl))
-					}));
-				this.item = this.items[0];
-			});
+	getImages(_, arg: any[]) {
+		this._ngZone.run(() => {
+			this.items = arg
+				.sort((a, b) => {
+					const c: any = new Date(b.recordedAt);
+					const d: any = new Date(a.recordedAt);
+					return c - d;
+				})
+				.map((img) => ({
+					...img,
+					fullUrl: from(this.sanitizeImgUrl(img.fullUrl)),
+					thumbUrl: from(this.sanitizeImgUrl(img.thumbUrl))
+				}));
+			this.item = this.items[0];
 		});
+	}
+
+	ngOnInit(): void {
+		this._electronService.ipcRenderer.on('show_image', this.getImages.bind(this));
+		this._electronService.ipcRenderer.send('image_view_ready');
 		this.active_index = 0;
+	}
+
+	ngOnDestroy(): void {
+		this._electronService.ipcRenderer.removeListener('show_image', this.getImages.bind(this));
 	}
 
 	close() {

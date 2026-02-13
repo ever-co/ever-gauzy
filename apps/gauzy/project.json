@@ -50,11 +50,7 @@
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": [
-					"node_modules/echarts/dist/echarts.min.js",
-					"node_modules/echarts/dist/extension/bmap.min.js",
-					"node_modules/chart.js/dist/chart.js"
-				],
+				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
 					"@gauzy/contracts",
 					"@gauzy/ui-config",
@@ -200,7 +196,7 @@
 					}
 				],
 				"styles": [
-					"apps/desktop/src/styles.css",
+					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
 					"node_modules/typeface-exo/index.css",
 					"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
@@ -212,11 +208,7 @@
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": [
-					"node_modules/echarts/dist/echarts.min.js",
-					"node_modules/echarts/dist/extension/bmap.min.js",
-					"node_modules/chart.js/dist/chart.js"
-				],
+				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
 					"@gauzy/contracts",
 					"@gauzy/ui-config",
@@ -324,11 +316,7 @@
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": [
-					"node_modules/echarts/dist/echarts.min.js",
-					"node_modules/echarts/dist/extension/bmap.min.js",
-					"node_modules/chart.js/dist/chart.js"
-				],
+				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
 					"@gauzy/contracts",
 					"@gauzy/ui-config",

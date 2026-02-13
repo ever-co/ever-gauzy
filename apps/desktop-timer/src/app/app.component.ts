@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, NgZone, OnInit, Renderer2 } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import {
 	ActivityWatchElectronService,
 	AuthStrategy,
@@ -19,7 +20,7 @@ import { AppService } from './app.service';
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>',
 	styleUrls: ['./app.component.scss'],
-	standalone: false
+	imports: [RouterOutlet]
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	constructor(
@@ -40,11 +41,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	ngOnInit(): void {
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
-		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
+		if (nebularLinkMedia) this._renderer?.setAttribute(nebularLinkMedia, 'media', 'all');
 
 		this.electronService.ipcRenderer.send('app_is_init');
-
-		// Start token refresh timer if user is authenticated
+		// Start token refresh timer if we have a token and refresh token
 		if (this.store.token && this.store.refreshToken) {
 			this.tokenRefreshService.start();
 		}
@@ -104,6 +104,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('__logout__', (event, arg) =>
 			this._ngZone.run(async () => {
 				try {
+					// Stop proactive token refresh before logout
+					this.tokenRefreshService.stop();
 					await firstValueFrom(this.authStrategy.logout());
 					this.electronService.ipcRenderer.send('navigate_to_login');
 					if (arg) this.electronService.ipcRenderer.send('restart_and_update');

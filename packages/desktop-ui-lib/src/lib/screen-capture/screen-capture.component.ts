@@ -7,12 +7,14 @@ import {
 } from '@angular/platform-browser';
 import { ElectronService } from '../electron/services';
 import { GAUZY_ENV } from '../constants';
+import { NbLayoutModule, NbCardModule } from '@nebular/theme';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
-	selector: 'ngx-screen-capture',
-	templateUrl: './screen-capture.component.html',
-	styleUrls: ['./screen-capture.component.scss'],
-	standalone: false
+    selector: 'ngx-screen-capture',
+    templateUrl: './screen-capture.component.html',
+    styleUrls: ['./screen-capture.component.scss'],
+    imports: [NbLayoutModule, NbCardModule, AsyncPipe]
 })
 export class ScreenCaptureComponent implements OnInit {
 	private _screenCaptureUrl$: BehaviorSubject<SafeUrl>;

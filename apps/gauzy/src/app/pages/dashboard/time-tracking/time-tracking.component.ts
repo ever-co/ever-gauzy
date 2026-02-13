@@ -18,6 +18,7 @@ import { indexBy, range, reduce } from 'underscore';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
+// Import and register Swiper custom elements (Web Component)
 import { register } from 'swiper/element/bundle';
 import {
 	IOrganization,
@@ -63,7 +64,7 @@ import {
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
 
-// Register Swiper custom elements
+// Register Swiper custom elements globally
 register();
 
 export enum RangePeriod {

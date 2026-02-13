@@ -5,7 +5,7 @@ describe('ImageViewerComponent', () => {
 	let fixture: ComponentFixture<ImageViewerComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [ImageViewerComponent]
+			imports: [ImageViewerComponent]
 		}).compileComponents();
 	});
 	beforeEach(() => {

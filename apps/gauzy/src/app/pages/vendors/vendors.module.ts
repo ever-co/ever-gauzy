@@ -24,20 +24,32 @@ import {
 import { VendorsComponent } from './vendors.component';
 import { VendorsRoutingModule } from './vendors-routing.module';
 
+// Nebular Modules
+const NB_MODULES = [
+	NbCardModule,
+	NbButtonModule,
+	NbInputModule,
+	NbIconModule,
+	NbTooltipModule,
+	NbActionsModule,
+	NbBadgeModule,
+	NbDialogModule.forChild(),
+	NbSpinnerModule
+];
+
+// Standalone Modules
+const STANDALONE_MODULES = [
+	InfiniteScrollDirective // Standalone directive must be imported, not declared
+];
+
+// Third Party Modules
+const THIRD_PARTY_MODULES = [TranslateModule.forChild(), NgxPermissionsModule.forChild()];
+
 @NgModule({
 	imports: [
-		NbCardModule,
-		NbButtonModule,
-		NbInputModule,
-		NbIconModule,
-		NbTooltipModule,
-		NbActionsModule,
-		NbBadgeModule,
-		NbDialogModule.forChild(),
-		NbSpinnerModule,
-		InfiniteScrollDirective,
-		TranslateModule.forChild(),
-		NgxPermissionsModule.forChild(),
+		...STANDALONE_MODULES,
+		...NB_MODULES,
+		...THIRD_PARTY_MODULES,
 		SharedModule,
 		TagsColorInputModule,
 		TableComponentsModule,

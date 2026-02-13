@@ -2,6 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { Observable, of } from 'rxjs';
 import { socialLinks } from '../../../../constants';
+import { AsyncPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { NbIconModule } from '@nebular/theme';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Interface representing a social link.
@@ -24,7 +28,7 @@ export interface ISocialLink {
     selector: 'ngx-social-links',
     templateUrl: './social-links.component.html',
     styleUrls: ['./social-links.component.scss'],
-    standalone: false
+    imports: [RouterLink, NbIconModule, AsyncPipe, TranslatePipe]
 })
 export class SocialLinksComponent implements OnInit {
 	/** */

@@ -5,8 +5,9 @@ describe('TaskTableComponent', () => {
 	let fixture: ComponentFixture<TaskTableComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [TaskTableComponent]
+			imports: [TaskTableComponent]
 		}).compileComponents();
+
 		fixture = TestBed.createComponent(TaskTableComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

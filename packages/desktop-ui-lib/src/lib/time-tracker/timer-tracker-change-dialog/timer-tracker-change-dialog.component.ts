@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, concatMap, filter, map, Observable, startWith, tap } from 'rxjs';
 import { TimeTrackerQuery } from '../+state/time-tracker.query';
@@ -16,6 +16,15 @@ import {
 	TimeTrackerFormService
 } from '../../shared/features/time-tracker-form/time-tracker-form.service';
 import { DynamicSelectorValidation } from '../../shared/utils/validation/dynamic-selector-factory.validator';
+import { NgClass, NgStyle, AsyncPipe } from '@angular/common';
+import { ClientSelectorComponent } from '../../shared/features/client-selector/client-selector.component';
+import { ErrorMessageComponent } from '../../shared/components/ui/error-message/error-message.component';
+import { ProjectSelectorComponent } from '../../shared/features/project-selector/project-selector.component';
+import { TeamSelectorComponent } from '../../shared/features/team-selector/team-selector.component';
+import { TaskSelectorComponent } from '../../shared/features/task-selector/task-selector.component';
+import { NoteComponent } from '../../shared/features/note/note.component';
+import { SpinnerButtonDirective } from '../../directives/spinner-button.directive';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,7 +32,7 @@ import { DynamicSelectorValidation } from '../../shared/utils/validation/dynamic
     templateUrl: './timer-tracker-change-dialog.component.html',
     styleUrls: ['./timer-tracker-change-dialog.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [FormsModule, ReactiveFormsModule, NbCardModule, NgClass, ClientSelectorComponent, ErrorMessageComponent, ProjectSelectorComponent, TeamSelectorComponent, TaskSelectorComponent, NoteComponent, NbButtonModule, SpinnerButtonDirective, NbIconModule, NgStyle, AsyncPipe, TranslatePipe]
 })
 export class TimerTrackerChangeDialogComponent implements OnInit {
 	private lastSelectorState: ITimeTrackerFormState;

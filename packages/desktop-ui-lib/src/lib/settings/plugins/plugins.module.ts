@@ -34,12 +34,12 @@ import {
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { AlertModule } from '../../dialogs/alert/alert.module';
-import { DesktopDirectiveModule } from '../../directives/desktop-directive.module';
+
+
 import { InfiniteScrollDirective } from '../../directives/infinite-scroll.directive';
-import { SelectModule } from '../../shared/components/ui/select/select.module';
-import { NoDataMessageModule } from '../../time-tracker/no-data-message/no-data-message.module';
-import { PaginationModule } from '../../time-tracker/pagination/pagination.module';
+
+
+
 import { PipeModule } from '../../time-tracker/pipes/pipe.module';
 import { PendingInstallationEffects } from './component/+state/pending-installation.effect';
 import { PendingInstallationQuery } from './component/+state/pending-installation.query';
@@ -129,7 +129,7 @@ import { PluginService } from './services/plugin.service';
 import { UserSubscribedPluginsService } from './services/user-subscribed-plugins.service';
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
+import { NbTablerIconsModule } from '@gauzy/ui-core/theme/src/lib/icons/tabler-icons.module';
 import { ElectronService } from '../../electron/services';
 import { PluginCategoryEffects } from './component/plugin-marketplace/+state/effects/plugin-category.effect';
 import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
@@ -160,14 +160,11 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
     CommonModule,
     NbLayoutModule,
     Angular2SmartTableModule,
-    PaginationModule,
     NbButtonModule,
     NbButtonGroupModule,
     NbDialogModule.forChild(),
     NbInputModule,
     NbCardModule,
-    DesktopDirectiveModule,
-    NoDataMessageModule,
     NbIconModule,
     NbTablerIconsModule,
     TranslateModule.forChild(),
@@ -177,7 +174,6 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
     NbToggleModule,
     ReactiveFormsModule,
     NbRouteTabsetModule,
-    AlertModule,
     NbFormFieldModule,
     NbSelectModule,
     NbTooltipModule,
@@ -192,7 +188,6 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
     NbRadioModule,
     PipeModule,
     NbListModule,
-    SelectModule,
     DragDropModule,
     NbTagModule,
     InfiniteScrollDirective,

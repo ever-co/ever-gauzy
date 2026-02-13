@@ -1,11 +1,12 @@
-import { IBaseWindow, RegisteredWindow, store, WindowManager } from '@gauzy/desktop-core';
-import { getApiBaseUrl, loginPage, settingsPage, timeTrackerPage } from '@gauzy/desktop-window';
+import { RegisteredWindow, store, WindowManager } from '@gauzy/desktop-core';
+import { getApiBaseUrl, loginPage, timeTrackerPage } from '@gauzy/desktop-window';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
 import * as path from 'node:path';
 import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
 import { User, UserService } from './offline';
 import { TranslateService } from './translation';
+import { AppWindowManager } from './app-window-manager';
 
 export class TrayIcon {
 	tray: Tray;
@@ -26,44 +27,64 @@ export class TrayIcon {
 		const manager = WindowManager.getInstance();
 
 		let timeTrackerWindow = (manager.getOne(RegisteredWindow.TIMER) || {}) as BrowserWindow;
-		let settingsWindow = (manager.getOne(RegisteredWindow.SETTINGS) || {}) as BrowserWindow;
 		let mainWindow = (manager.getOne(RegisteredWindow.MAIN) || {}) as BrowserWindow;
 
-		this.contextMenu = [
+		const settingMenu: MenuItemConstructorOptions[] = [
 			{
 				id: '4',
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				accelerator: 'CmdOrCtrl+,',
 				async click() {
-					manager.show(RegisteredWindow.SETTINGS);
-					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					manager.webContents(settingsWindow).send('setting_page_ipc', {
-						type: 'goto_top_menu'
-					});
-					manager.webContents(settingsWindow).send('refresh_menu');
+					const appWindowManager = AppWindowManager.getInstance();
+					if (!appWindowManager.settingWindow) {
+						await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+						ipcMain.once('setting_window_ready', () => {
+							appWindowManager.settingShow('goto_top_menu');
+						});
+						appWindowManager.settingWindow?.show?.();
+					} else {
+						appWindowManager.settingShow('goto_top_menu');
+					}
 				}
-			},
-			{
-				id: '6-0',
-				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
-				accelerator: 'CmdOrCtrl+P',
-				async click() {
-					manager.show(RegisteredWindow.PLUGINS);
-				}
-			},
+			}
+		];
+
+		const updateMenu: MenuItemConstructorOptions[] = [
 			{
 				id: '6',
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
-					manager.show(RegisteredWindow.SETTINGS);
-					manager.webContents(settingsWindow).send('setting_page_ipc', {
-						type: 'goto_update'
-					});
-					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					manager.webContents(settingsWindow).send('refresh_menu');
+					const appWindowManager = AppWindowManager.getInstance();
+					if (!appWindowManager.settingWindow) {
+						await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+						ipcMain.once('setting_window_ready', () => {
+							appWindowManager.settingShow('goto_update');
+						});
+					} else {
+						appWindowManager.settingShow('goto_update');
+					}
+					appWindowManager.settingWindow?.show?.();
 				}
-			},
+			}
+		];
+
+		const pluginsMenu: MenuItemConstructorOptions[] = [
+			{
+				id: '6-0',
+				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
+				accelerator: 'CmdOrCtrl+P',
+				async click() {
+					const appWindowManager = AppWindowManager.getInstance();
+					await appWindowManager.initPluginsWindow(windowPath.timeTrackerUi);
+					appWindowManager.pluginsWindow.show();
+				}
+			}
+		]
+
+		this.contextMenu = [
+			...settingMenu,
+			...updateMenu,
 			{
 				type: 'separator'
 			},
@@ -87,40 +108,9 @@ export class TrayIcon {
 					manager.show(RegisteredWindow.TIMER);
 				}
 			},
-			{
-				id: '4',
-				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
-				accelerator: 'CmdOrCtrl+,',
-				async click() {
-					manager.show(RegisteredWindow.SETTINGS);
-					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					manager.webContents(settingsWindow).send('setting_page_ipc', {
-						type: 'goto_top_menu'
-					});
-					manager.webContents(settingsWindow).send('refresh_menu');
-				}
-			},
-			{
-				id: '6-0',
-				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
-				accelerator: 'CmdOrCtrl+P',
-				async click() {
-					manager.show(RegisteredWindow.PLUGINS);
-				}
-			},
-			{
-				id: '6',
-				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
-				accelerator: 'CmdOrCtrl+U',
-				async click() {
-					manager.show(RegisteredWindow.SETTINGS);
-					manager.webContents(settingsWindow).send('setting_page_ipc', {
-						type: 'goto_update'
-					});
-					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					manager.webContents(settingsWindow).send('refresh_menu');
-				}
-			},
+			...settingMenu,
+			...pluginsMenu,
+			...updateMenu,
 			{
 				type: 'separator'
 			},
@@ -187,40 +177,9 @@ export class TrayIcon {
 				type: 'separator',
 				visible: appConfig.timeTrackerWindow
 			},
-			{
-				id: '6-0',
-				label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
-				accelerator: 'CmdOrCtrl+P',
-				async click() {
-					manager.show(RegisteredWindow.PLUGINS);
-				}
-			},
-			{
-				id: '6',
-				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
-				accelerator: 'CmdOrCtrl+U',
-				async click() {
-					manager.show(RegisteredWindow.SETTINGS);
-					manager.webContents(settingsWindow).send('setting_page_ipc', {
-						type: 'goto_update'
-					});
-					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					manager.webContents(settingsWindow).send('refresh_menu');
-				}
-			},
-			{
-				id: '4',
-				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
-				accelerator: 'CmdOrCtrl+,',
-				async click() {
-					manager.show(RegisteredWindow.SETTINGS);
-					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					manager.webContents(settingsWindow).send('setting_page_ipc', {
-						type: 'goto_top_menu'
-					});
-					manager.webContents(settingsWindow).send('refresh_menu');
-				}
-			},
+			...pluginsMenu,
+			...updateMenu,
+			...settingMenu,
 			{
 				id: '7',
 				label: TranslateService.instant('BUTTONS.LOGOUT'),
@@ -250,6 +209,8 @@ export class TrayIcon {
 				}
 			}
 		];
+
+		const appWindowManager = AppWindowManager.getInstance();
 
 		if (!!appConfig.gauzyWindow && mainWindow) {
 			// Prepare open main window option.
@@ -402,21 +363,6 @@ export class TrayIcon {
 					console.error('An error occurred while loading Time Tracker Page', error);
 				}
 
-				try {
-					await settingsWindow.loadURL(settingsPage(windowPath.timeTrackerUi));
-				} catch (error) {
-					console.error('An error occurred while loading settings Page', error);
-				}
-
-				try {
-					const window = manager.getOne(RegisteredWindow.PLUGINS) as IBaseWindow;
-					if (window) {
-						await window.loadURL();
-					}
-				} catch (error) {
-					console.error('An error occurred while loading plugin Page', error);
-				}
-
 				manager.webContents(timeTrackerWindow).send('auth_success_tray_init', arg);
 
 				if (!isGauzyWindow) {
@@ -472,10 +418,8 @@ export class TrayIcon {
 			manager.hide(RegisteredWindow.WIDGET);
 
 			try {
-				const window = manager.getOne(RegisteredWindow.PLUGINS) as IBaseWindow;
-				if (window) {
-					window.hide();
-					await window.loadURL();
+				if (appWindowManager.pluginsWindow) {
+					appWindowManager.pluginsWindow.close?.();
 				}
 			} catch (error) {
 				console.error('An error occurred while loading plugin Page', error);

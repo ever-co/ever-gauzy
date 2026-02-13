@@ -51,13 +51,12 @@ import {
 	ReverseUiProxy,
 	ServerConfig,
 	TranslateLoader,
-	TranslateService
+	TranslateService,
+	AppWindowManager
 } from '@gauzy/desktop-lib';
 import {
 	createAboutWindow,
 	createServerWindow,
-	createSettingsWindow,
-	createSetupWindow,
 	PluginMarketplaceWindow,
 	SplashScreen
 } from '@gauzy/desktop-window';
@@ -86,13 +85,13 @@ try {
 	log.error(error);
 }
 
-let setupWindow: BrowserWindow;
 let serverWindow: BrowserWindow;
 let settingsWindow: BrowserWindow;
 let splashScreen: SplashScreen;
 let tray: Tray;
 let isServerRun: boolean;
 let willQuit = false;
+let appWindowManager: AppWindowManager = null;
 
 setupTitlebar();
 
@@ -242,10 +241,10 @@ const closeSplashScreen = () => {
 const runSetup = async () => {
 	// Set default configuration
 	LocalStore.setDefaultServerConfig();
-	if (!setupWindow) {
-		setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
+	if (!appWindowManager.setupWindow) {
+		await appWindowManager.initSetupWindow(pathWindow.ui);
 	}
-	setupWindow.show();
+	appWindowManager.setupWindow.show();
 	closeSplashScreen();
 };
 
@@ -277,7 +276,7 @@ const runMainWindow = async () => {
 
 	if (menuWindowSetting) menuWindowSetting.enabled = true;
 
-	if (setupWindow) setupWindow.hide();
+	if (appWindowManager.setupWindow) appWindowManager.setupWindow.close?.();
 
 	serverWindow.webContents.send('dashboard_ready', {
 		setting: serverConfig.setting
@@ -343,6 +342,10 @@ const getEnvApi = () => {
 	};
 };
 
+const initializeAppWindowManager = () => {
+	appWindowManager = AppWindowManager.getInstance();
+}
+
 const createTray = () => {
 	try {
 		const iconNativePath = nativeImage.createFromPath(path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
@@ -367,12 +370,16 @@ const contextMenu = () => {
 		{
 			id: 'check_for_update',
 			label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
-			click() {
-				settingsWindow.show();
-				settingsWindow.webContents.send('setting_page_ipc', {
-					type: 'goto_update'
-				});
-				settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+			async click() {
+				if (!appWindowManager.settingWindow) {
+					await appWindowManager.initSettingWindow(uiPath);
+					ipcMain.once('setting_window_ready', () => {
+						appWindowManager.settingShow('goto_update');
+					})
+				} else {
+                    appWindowManager.settingShow('goto_update');
+                }
+				appWindowManager.settingWindow.show();
 			}
 		},
 		{
@@ -444,7 +451,7 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 
 app.on('ready', async () => {
 	console.log('App is ready');
-
+	initializeAppWindowManager();
 	try {
 		splashScreen = new SplashScreen(pathWindow.ui);
 
@@ -462,10 +469,6 @@ app.on('ready', async () => {
 			IS_INTEGRATED_DESKTOP: false
 		};
 
-		if (!settingsWindow) {
-			settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui, pathWindow.preloadPath);
-		}
-
 		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
 		await marketplace.loadURL();
 
@@ -473,7 +476,7 @@ app.on('ready', async () => {
 
 		updater.settingWindow = settingsWindow;
 		updater.gauzyWindow = serverWindow;
-
+		appWindowManager.updater = updater;
 		await updater.checkUpdate();
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
@@ -560,13 +563,13 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 
 ipcMain.on('resp_msg_server', (event, arg) => {
 	console.log('resp_msg_server');
-	settingsWindow.webContents.send('resp_msg', arg);
+	appWindowManager.settingWindow?.webContents?.send?.('resp_msg', arg);
 });
 
 ipcMain.on('running_state', (event, arg) => {
 	console.log('running_state');
 
-	settingsWindow.webContents.send('setting_page_ipc', {
+	appWindowManager.settingWindow?.webContents?.send?.('setting_page_ipc', {
 		type: 'server_status',
 		data: arg
 	});
@@ -739,7 +742,7 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 	if (arg) {
 		if (!setting) LocalStore.setDefaultApplicationSetting();
 		TranslateService.preferredLanguage = arg;
-		settingsWindow?.webContents?.send('preferred_language_change', arg);
+		appWindowManager.settingWindow?.webContents?.send?.('preferred_language_change', arg);
 	}
 	return TranslateService.preferredLanguage;
 });

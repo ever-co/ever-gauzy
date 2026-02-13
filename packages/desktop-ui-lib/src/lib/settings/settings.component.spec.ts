@@ -5,8 +5,8 @@ describe('SettingsComponent', () => {
 	let fixture: ComponentFixture<SettingsComponent>;
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [SettingsComponent]
-		}).compileComponents();
+    imports: [SettingsComponent]
+}).compileComponents();
 	}));
 	beforeEach(() => {
 		fixture = TestBed.createComponent(SettingsComponent);

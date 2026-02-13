@@ -10,8 +10,9 @@ import {
 	TABLE_NAME_INTERVALS,
 	TimerTO,
 	UserTO,
-	IntervalTO,
+	IntervalTO
 } from '../dto';
+import { TimerSyncStateEnum } from '@gauzy/contracts';
 import { TimerTransaction } from '../transactions';
 import { IntervalDAO } from './interval.dao';
 
@@ -196,5 +197,17 @@ export class TimerDAO implements DAO<TimerTO> {
 					"(stoppedAt/1000 - startedAt/1000)"
 				)
 			});
+	}
+
+	public async findUnfinishedSync(user: UserTO): Promise<TimerTO[]> {
+		return await this._provider
+			.connection<TimerTO>(TABLE_NAME_TIMERS)
+			.where('employeeId', user.employeeId)
+			.andWhere((qb) =>
+				qb
+					.where('stopSyncState', TimerSyncStateEnum.SYNCING)
+					.orWhere('startSyncState', TimerSyncStateEnum.SYNCING)
+			)
+			.andWhere('synced', true);
 	}
 }

@@ -14,17 +14,20 @@ import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/
 import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/plugin-installation.query';
 import { PluginStatusComponent } from './plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
-import { NoDataMessageModule } from '../../../../time-tracker/no-data-message/no-data-message.module';
-import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
-import { PaginationModule } from '../../../../time-tracker/pagination/pagination.module';
+
+
+
 import { AsyncPipe } from '@angular/common';
+import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
+import { SpinnerButtonDirective } from '../../../../directives/spinner-button.directive';
+import { PaginationComponent } from '../../../../time-tracker/pagination/pagination.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ngx-plugin-list',
     templateUrl: './plugin-list.component.html',
     styleUrls: ['./plugin-list.component.scss'],
-    imports: [NoDataMessageModule, NbButtonModule, NbIconModule, DesktopDirectiveModule, Angular2SmartTableModule, PaginationModule, AsyncPipe, TranslatePipe]
+    imports: [NoDataMessageComponent, NbButtonModule, NbIconModule, SpinnerButtonDirective, Angular2SmartTableModule, PaginationComponent, AsyncPipe, TranslatePipe]
 })
 export class PluginListComponent implements OnInit, AfterViewInit, OnDestroy {
 	private readonly translateService = inject(TranslateService);

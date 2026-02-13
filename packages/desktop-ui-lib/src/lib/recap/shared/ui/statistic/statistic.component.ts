@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { progressStatus } from '@gauzy/ui-core/common';
+import { NbListModule, NbProgressBarModule } from '@nebular/theme';
 
 export interface IStatisticItem {
 	imageUrl?: string;
@@ -9,11 +10,11 @@ export interface IStatisticItem {
 }
 
 @Component({
-    selector: 'ngx-statistic',
-    templateUrl: './statistic.component.html',
-    styleUrls: ['./statistic.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+	selector: 'ngx-statistic',
+	templateUrl: './statistic.component.html',
+	styleUrls: ['./statistic.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NbListModule, NbProgressBarModule]
 })
 export class StatisticComponent {
 	private _items: IStatisticItem[] = [];

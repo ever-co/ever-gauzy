@@ -3,9 +3,11 @@ import { Column as TypeORMColumn } from 'typeorm';
 import { isObject } from '@gauzy/utils';
 import { ColumnDataType, ColumnOptions } from './column-options.types';
 import { parseMikroOrmColumnOptions, resolveDbType } from './column.helper';
+import { MultiORMEnum, getORMType } from '../../utils';
 
 /**
  * Decorator for creating column definitions for both MikroORM and TypeORM.
+ * Applies only the active ORM's decorator based on the DB_ORM environment variable.
  *
  * @template T - The type of the column.
  * @param typeOrOptions - The column type or additional options if provided.
@@ -32,7 +34,17 @@ export function MultiORMColumn<T>(
 	if (!options) options = {} as ColumnOptions<T>;
 
 	return (target: any, propertyKey: string) => {
-		TypeORMColumn({ type, ...options })(target, propertyKey);
-		MikroORMColumn(parseMikroOrmColumnOptions({ type, options }))(target, propertyKey);
+		// Determine which ORM is in use
+		const ormType = getORMType();
+
+		// Apply TypeORM decorator when using TypeORM
+		if (ormType === MultiORMEnum.TypeORM) {
+			TypeORMColumn({ type, ...options })(target, propertyKey);
+		}
+
+		// Apply MikroORM decorator when using MikroORM
+		if (ormType === MultiORMEnum.MikroORM) {
+			MikroORMColumn(parseMikroOrmColumnOptions({ type, options }))(target, propertyKey);
+		}
 	};
 }

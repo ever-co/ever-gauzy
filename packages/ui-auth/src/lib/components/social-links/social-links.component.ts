@@ -32,13 +32,9 @@ export interface ISocialLink {
 	standalone: false
 })
 export class SocialLinksComponent implements OnInit {
-	/** */
 	public socialLinks$: Observable<ISocialLink[]>; // Observable for an array of social links
 	public configs: IAppConfig;
-
 	private readonly _appService = inject(AppService);
-
-	constructor() {}
 
 	/**
 	 * Lifecycle hook called after Angular has initialized all data-bound properties of a directive.

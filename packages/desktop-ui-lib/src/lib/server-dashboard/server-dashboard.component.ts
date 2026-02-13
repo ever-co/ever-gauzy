@@ -15,6 +15,10 @@ import { GAUZY_ENV } from '../constants';
 import { ElectronService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { LanguageSelectorService } from '../language/language-selector.service';
+import { NbLayoutModule, NbCardModule, NbAccordionModule, NbButtonModule, NbIconModule } from '@nebular/theme';
+import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
+import { UpperCasePipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 export enum ServerStatus {
 	START = 'BUTTONS.START',
@@ -23,11 +27,11 @@ export enum ServerStatus {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-server-dashboard',
-	templateUrl: './server-dashboard.component.html',
-	styleUrls: ['./server-dashboard.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'ngx-server-dashboard',
+    templateUrl: './server-dashboard.component.html',
+    styleUrls: ['./server-dashboard.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbLayoutModule, NbCardModule, NbAccordionModule, NbButtonModule, SpinnerButtonDirective, NbIconModule, UpperCasePipe, TranslatePipe]
 })
 export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	@ViewChild('logBox') logBox: ElementRef;

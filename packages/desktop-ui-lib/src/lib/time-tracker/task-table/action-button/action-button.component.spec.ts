@@ -5,8 +5,9 @@ describe('ActionButtonComponent', () => {
 	let fixture: ComponentFixture<ActionButtonComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [ActionButtonComponent]
+			imports: [ActionButtonComponent]
 		}).compileComponents();
+
 		fixture = TestBed.createComponent(ActionButtonComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

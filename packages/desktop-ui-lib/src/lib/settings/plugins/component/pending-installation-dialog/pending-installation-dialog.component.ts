@@ -15,7 +15,8 @@ import { combineLatest, debounceTime, distinctUntilChanged, tap } from 'rxjs';
 import { PendingInstallationActions } from '../+state/pending-installation.action';
 import { PendingInstallationQuery } from '../+state/pending-installation.query';
 import { IPendingPluginInstallation } from '../+state/pending-installation.store';
-import { DesktopDirectiveModule } from '../../../../directives/desktop-directive.module';
+
+import { ReadMoreDirective } from '../../../../directives/read-more.directive';
 
 /**
  * Dialog component that displays pending plugin installations
@@ -29,15 +30,15 @@ import { DesktopDirectiveModule } from '../../../../directives/desktop-directive
 	styleUrls: ['./pending-installation-dialog.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
-		NbCardModule,
-		NbIconModule,
-		NbButtonModule,
-		NbTooltipModule,
-		NbListModule,
-		NbSpinnerModule,
-		DesktopDirectiveModule,
-		TranslatePipe
-	]
+    NbCardModule,
+    NbIconModule,
+    NbButtonModule,
+    NbTooltipModule,
+    NbListModule,
+    NbSpinnerModule,
+    ReadMoreDirective,
+    TranslatePipe
+]
 })
 export class PendingInstallationDialogComponent implements OnInit, OnDestroy {
 	private readonly dialogRef = inject(NbDialogRef<PendingInstallationDialogComponent>);

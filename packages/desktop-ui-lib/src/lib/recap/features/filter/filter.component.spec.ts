@@ -5,8 +5,9 @@ describe('FilterComponent', () => {
 	let fixture: ComponentFixture<FilterComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [FilterComponent]
+			imports: [FilterComponent]
 		}).compileComponents();
+
 		fixture = TestBed.createComponent(FilterComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

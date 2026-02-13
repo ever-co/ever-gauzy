@@ -1,10 +1,7 @@
 import { Directive, Input, Renderer2, TemplateRef, ViewContainerRef, inject } from '@angular/core';
 import { NbSpinnerComponent } from '@nebular/theme';
 
-@Directive({
-	selector: '[gauzySpinnerButton]',
-	standalone: false
-})
+@Directive({ selector: '[gauzySpinnerButton]' })
 export class SpinnerButtonDirective {
 	private _isSpinning: boolean | null = null;
 	private _spinner: HTMLElement | null = null;

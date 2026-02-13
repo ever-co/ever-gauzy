@@ -5,8 +5,13 @@ import { AutoRefreshService } from '../../+state/auto-refresh/auto-refresh.servi
 import { RecapQuery } from '../../+state/recap.query';
 import { RecapService } from '../../+state/recap.service';
 import { RequestQuery } from '../../+state/request/request.query';
-import { IStatisticItem } from '../../shared/ui/statistic/statistic.component';
+import { IStatisticItem, StatisticComponent } from '../../shared/ui/statistic/statistic.component';
 import { ActivityStatisticsAdapter } from '../../shared/utils/adapters/activity.adapter';
+import { NbCardModule } from '@nebular/theme';
+
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
+import { NoDataMessageComponent } from '../../../time-tracker/no-data-message/no-data-message.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,7 +19,7 @@ import { ActivityStatisticsAdapter } from '../../shared/utils/adapters/activity.
     templateUrl: './activities.component.html',
     styleUrls: ['./activities.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbCardModule, StatisticComponent, NoDataMessageComponent, AsyncPipe, TranslatePipe]
 })
 export class ActivitiesComponent implements OnInit {
 	constructor(
