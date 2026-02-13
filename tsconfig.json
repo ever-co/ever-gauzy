@@ -62,7 +62,6 @@
 			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
 			"@gauzy/ui-core": ["./packages/ui-core/src/index.ts"],
 			"@gauzy/ui-core/*": ["./packages/ui-core/*/src/index.ts"],
-			"@gauzy/ui-core/theme-icons": ["./packages/ui-core/theme/src/lib/icons/tabler-icons.module.ts"],
 			"@gauzy/utils": ["./packages/utils/src/index.ts"],
 			"@nebular/*": ["./node_modules/@nebular/*"],
 			"ng2-completer": ["./node_modules/@akveo/ng2-completer"],
