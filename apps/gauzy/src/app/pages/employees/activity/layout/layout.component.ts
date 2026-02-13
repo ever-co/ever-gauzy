@@ -6,7 +6,7 @@ import { IDateRangePicker, PermissionsEnum } from '@gauzy/contracts';
 import {
 	DateRangePickerBuilderService,
 	PageTabRegistryService,
-	PageTabsetRegistryId,
+	PageTabsetPageId,
 	RouteUtil
 } from '@gauzy/ui-core/core';
 
@@ -20,7 +20,7 @@ import {
 })
 export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	public title: string;
-	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	public selectedDateRange$: Observable<IDateRangePicker> = this._dateRangePickerBuilderService.selectedDateRange$;
 
 	constructor(

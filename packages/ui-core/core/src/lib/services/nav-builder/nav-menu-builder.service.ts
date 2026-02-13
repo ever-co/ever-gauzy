@@ -166,26 +166,28 @@ export class NavMenuBuilderService {
 		const combinedConfig$ = combineLatest([this.initialNavMenuConfig$, sectionAdditions$]).pipe(
 			map(([sections, additions]) => {
 				const configMap = new Map<string, NavMenuSectionItem>();
+				const orderedIds: string[] = [];
 
-				// Add initial configurations to the map
-				sections.forEach((config: NavMenuSectionItem) => configMap.set(config.id, config));
+				sections.forEach((section) => {
+					configMap.set(section.id, section);
+					orderedIds.push(section.id);
+				});
 
-				// Update or add sections from additions
 				for (const { config, before } of additions) {
 					if (configMap.has(config.id)) {
-						configMap.set(config.id, config); // Update existing config
+						configMap.set(config.id, config); // Update existing
 					} else {
-						const beforeIndex = before ? sections.findIndex((c) => c.id === before) : -1;
+						configMap.set(config.id, config);
+						const beforeIndex = before ? orderedIds.indexOf(before) : -1;
 						if (beforeIndex !== -1) {
-							sections.splice(beforeIndex, 0, config); // Insert before specified section
+							orderedIds.splice(beforeIndex, 0, config.id);
 						} else {
-							sections.push(config); // Append if before section not found
+							orderedIds.push(config.id);
 						}
-						configMap.set(config.id, config); // Add to map
 					}
 				}
 
-				return [...configMap.values()];
+				return orderedIds.map((id) => configMap.get(id)!);
 			}),
 			shareReplay(1)
 		);

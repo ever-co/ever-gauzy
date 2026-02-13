@@ -33,7 +33,7 @@ const routes: Routes = [
 		canActivate: [PermissionsGuard],
 		data: {
 			// The data table identifier for the route
-			dataTableId: 'employee-manage',
+			dataTableId: 'employee-manage-page',
 			// The permission required to access the route
 			permissions: {
 				only: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
@@ -54,7 +54,7 @@ const routes: Routes = [
 		canActivate: [PermissionsGuard],
 		data: {
 			// The tabset identifier for the route
-			tabsetId: 'employee-edit',
+			tabsetId: 'employee-edit-page',
 			// The permission required to access the route
 			permissions: {
 				only: [PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT],

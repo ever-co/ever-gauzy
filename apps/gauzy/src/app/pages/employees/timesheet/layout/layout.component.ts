@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { IDateRangePicker, PermissionsEnum } from '@gauzy/contracts';
-import { DateRangePickerBuilderService, PageTabRegistryService, PageTabsetRegistryId } from '@gauzy/ui-core/core';
+import { DateRangePickerBuilderService, PageTabRegistryService, PageTabsetPageId } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
@@ -13,7 +13,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     standalone: false
 })
 export class TimesheetLayoutComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	public selectedDateRange$: Observable<IDateRangePicker> = this._dateRangePickerBuilderService.selectedDateRange$;
 
 	constructor(

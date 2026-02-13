@@ -55,6 +55,7 @@
 		"@fullcalendar/timegrid": "^6.1.20",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin-job-employee-ui": "^0.1.0",
+		"@gauzy/plugin-jobs-ui": "^0.1.0",
 		"@gauzy/plugin-job-proposal-ui": "^0.1.0",
 		"@gauzy/plugin-job-search-ui": "^0.1.0",
 		"@gauzy/plugin-legal-ui": "^0.1.0",

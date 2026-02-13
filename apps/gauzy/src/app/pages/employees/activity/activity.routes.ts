@@ -15,7 +15,7 @@ export const createActivityRoutes = (_pageRouteRegistryService: PageRouteRegistr
 		component: ActivityLayoutComponent,
 		resolve: { videoAvailability: VideoAvailabilityResolver },
 		data: {
-			tabsetId: 'time-activity'
+			tabsetId: 'time-activity-page'
 		},
 		children: [
 			{
@@ -23,7 +23,7 @@ export const createActivityRoutes = (_pageRouteRegistryService: PageRouteRegistr
 				redirectTo: 'time-activities',
 				pathMatch: 'full'
 			},
-			..._pageRouteRegistryService.getPageLocationRoutes('time-activity')
+			..._pageRouteRegistryService.getPageLocationRoutes('time-activity-sections')
 		]
 	}
 ];

@@ -1,15 +1,17 @@
 import { Type } from '@angular/core';
-import { PluginUiDefinition } from './plugin-ui.types';
+import { PluginUiDefinition, flattenPlugins } from './plugin-ui.types';
 import { PluginUiLifecycleMethods } from './plugin-ui.interface';
 
 /**
  * Extract Angular module classes from an array of UI plugin definitions.
+ * Returns modules in top-down order (parent before children) for initialization.
  *
- * @param plugins An array of `PluginUiDefinition` entries.
- * @returns An array of Angular module `Type` references.
+ * @param plugins An array of `PluginUiDefinition` entries (may contain parent plugins with nested plugins).
+ * @returns An array of Angular module `Type` references, parent-first order.
  */
 export function getUIPluginModules(plugins: PluginUiDefinition[]): Type<any>[] {
-	return plugins.map((plugin) => plugin.module);
+	const flat = flattenPlugins(plugins);
+	return flat.filter((p): p is PluginUiDefinition & { module: Type<any> } => !!p.module).map((p) => p.module);
 }
 
 /**

@@ -16,10 +16,9 @@ import { PluginUiRegistryService } from './plugin-ui-registry.service';
  * Angular module responsible for managing UI plugin lifecycles.
  *
  * Import `PluginUiModule.init()` in the root bootstrap module. During application
- * startup the module creates every plugin instance inside the root injection
- * context (via `provideAppInitializer`) so that `inject()` calls in plugin
- * classes resolve correctly, then invokes `ngOnPluginBootstrap` / `ngOnPluginDestroy`
- * lifecycle hooks.
+ * startup the module creates plugin instances in top-down order (parent before
+ * children), then invokes `ngOnPluginBootstrap` / `ngOnPluginDestroy` lifecycle
+ * hooks. Parent plugins (e.g. JobsPlugin) are initialized before their children.
  */
 @NgModule({})
 export class PluginUiModule implements OnDestroy {

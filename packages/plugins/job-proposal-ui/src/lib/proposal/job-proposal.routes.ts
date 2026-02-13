@@ -12,6 +12,6 @@ export const createProposalsRoutes = (_pageRouteRegistryService: PageRouteRegist
 	{
 		path: '',
 		component: ProposalLayoutComponent,
-		children: _pageRouteRegistryService.getPageLocationRoutes('proposals')
+		children: _pageRouteRegistryService.getPageLocationRoutes('proposals-sections')
 	}
 ];

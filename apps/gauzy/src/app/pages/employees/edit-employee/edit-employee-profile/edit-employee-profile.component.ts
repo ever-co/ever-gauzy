@@ -10,7 +10,7 @@ import {
 	ErrorHandlingService,
 	PageTabRegistryConfig,
 	PageTabRegistryService,
-	PageTabsetRegistryId,
+	PageTabsetPageId,
 	Store,
 	ToastrService,
 	UsersService
@@ -26,7 +26,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	standalone: false
 })
 export class EditEmployeeProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	public employeeId: ID;
 
 	selectedEmployee: IEmployee;
@@ -106,7 +106,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	}
 
 	/**
-	 * Registers custom tabs for the 'employee-edit' page.
+	 * Registers custom tabs for the 'employee-edit-page' page.
 	 * This method defines and registers the various tabs, their icons, routes, and titles.
 	 */
 	private _registerPageTabs(): void {
@@ -117,7 +117,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	}
 
 	/**
-	 * Creates the configuration for the tabs used in the 'employee-edit' page.
+	 * Creates the configuration for the tabs used in the 'employee-edit-page' page.
 	 * @returns An array of PageTabRegistryConfig objects.
 	 */
 	private _createTabsConfig(): PageTabRegistryConfig[] {

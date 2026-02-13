@@ -71,7 +71,7 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 
 		// Register Job Matching Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			location: 'jobs',
+			location: 'jobs-sections',
 			path: 'matching',
 			loadChildren: () => import('./job-matching.module').then((m) => m.JobMatchingModule),
 			data: {
@@ -103,7 +103,7 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 					permissionKeys: [PermissionsEnum.ORG_JOB_MATCHING_VIEW]
 				}
 			},
-			'jobs',
+			'jobs', // Nav section id (distinct from route registry location)
 			'jobs-proposal-template' // Insert before proposal-template
 		);
 	}
@@ -115,5 +115,5 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 export const JobMatchingPlugin: PluginUiDefinition = {
 	id: 'job-matching',
 	module: JobMatchingModule,
-	location: 'jobs'
+	location: 'jobs-sections'
 };

@@ -59,3 +59,17 @@ Run the unit tests with:
 ```bash
 yarn nx test plugin-ui
 ```
+
+### Publishing
+
+After building your library with `yarn nx build plugin-ui`, go to the dist folder `dist/packages/plugin-ui` and run `npm publish`.
+
+### Installation
+
+To install the Plugin UI, run:
+
+```bash
+npm install @gauzy/plugin-ui
+# or
+yarn add @gauzy/plugin-ui
+```

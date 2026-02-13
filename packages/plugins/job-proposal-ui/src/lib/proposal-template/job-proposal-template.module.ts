@@ -80,7 +80,7 @@ export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPlugi
 
 		// Register Job Proposal Template Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			location: 'jobs',
+			location: 'jobs-sections',
 			path: 'proposal-template',
 			loadChildren: () => import('./job-proposal-template.module').then((m) => m.JobProposalTemplateModule),
 			data: {
@@ -110,7 +110,7 @@ export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPlugi
 					permissionKeys: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW]
 				}
 			},
-			'jobs' // The parent section id
+			'jobs' // Nav section id (distinct from route registry location)
 		);
 	}
 }
@@ -121,5 +121,5 @@ export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPlugi
 export const JobProposalTemplatePlugin: PluginUiDefinition = {
 	id: 'job-proposal-template',
 	module: JobProposalTemplateModule,
-	location: 'jobs'
+	location: 'jobs-sections'
 };

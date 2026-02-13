@@ -1,6 +1,6 @@
 import { Type } from '@angular/core';
 import { Route, Routes } from '@angular/router';
-import { PageRouteRegistryId } from '../../common/component-registry.types';
+import { PageRouteSectionsId } from '../../common/component-registry.types';
 
 /**
  * Page route configuration with additional route options.
@@ -9,7 +9,7 @@ export interface PageRouteRegistryConfig extends Route {
 	/**
 	 * The location identifier for the page route.
 	 */
-	location: PageRouteRegistryId;
+	location: PageRouteSectionsId;
 
 	/**
 	 * The path to navigate to when the page is selected.

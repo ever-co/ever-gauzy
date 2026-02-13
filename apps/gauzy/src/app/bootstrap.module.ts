@@ -1,4 +1,4 @@
-import { NgModule, OnDestroy } from '@angular/core';
+import {  NgModule, OnDestroy } from '@angular/core';
 import { PLUGIN_UI_CONFIG, getPluginUiConfig, PluginUiModule, PluginUiRegistryService } from '@gauzy/plugin-ui';
 import { AppModule } from './app.module';
 import { AppComponent } from './app.component';
@@ -11,6 +11,7 @@ import { AppComponent } from './app.component';
  * - Provides `PLUGIN_UI_CONFIG` injection token (via `getPluginUiConfig()`)
  * - Registers `PluginUiModule` to bootstrap all UI plugins and
  *   invoke their lifecycle hooks (`ngOnPluginBootstrap` / `ngOnPluginDestroy`)
+ * - Registers plugin section routes into PageRouteRegistryService
  * - Calls `PluginUiRegistryService.destroyAll()` on application shutdown
  * - Wraps `AppModule` (core application logic, routes, providers)
  * - Declares the bootstrap component (`AppComponent`)
