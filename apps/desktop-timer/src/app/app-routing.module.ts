@@ -8,7 +8,6 @@ import {
 	DEFAULT_AUTH_CONNECTION_GUARD_CONFIG,
 	NoAuthGuard
 } from '@gauzy/desktop-ui-lib';
-import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [
 	// Public routes (no authentication required)
