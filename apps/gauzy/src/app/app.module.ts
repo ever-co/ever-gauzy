@@ -241,12 +241,12 @@ export class AppModule {
 	}
 
 	/**
-	 * Initialize UI languages and Update Locale using `ui-plugin.config.ts`.
+	 * Initialize UI languages and Update Locale using `plugin-ui.config.ts`.
 	 */
 	private initializeUiLanguagesAndLocale(): void {
 		const uiConfig = getPluginUiConfig();
 
-		// Set default locale; week start (dow) comes from ui-plugin.config.ts
+		// Set default locale; week start (dow) comes from plugin-ui.config.ts
 		moment.updateLocale(uiConfig.defaultLanguage, {
 			...(uiConfig.week && { week: uiConfig.week }),
 			fallbackLocale: uiConfig.defaultLanguage

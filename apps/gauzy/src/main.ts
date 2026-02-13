@@ -21,6 +21,6 @@ akitaConfig({
 });
 
 // Load plugin configuration first, then bootstrap Angular.
-loadPluginUiConfig(() => import('./ui-plugin.config'))
+loadPluginUiConfig(() => import('./plugin-ui.config'))
 	.then(() => platformBrowser().bootstrapModule(AppBootstrapModule))
 	.catch((err) => console.error(err));
