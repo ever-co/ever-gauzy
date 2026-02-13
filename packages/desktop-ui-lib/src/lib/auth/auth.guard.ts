@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
 
 	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
 		// Check if we have basic auth data
-		const hasStoredAuth = !!this.store.token && !!this.store.userId;
+		const hasStoredAuth = !!this.store.token || !!this.store.userId;
 
 		// In offline mode, allow access if we have stored auth
 		if (this.store.isOffline) {
