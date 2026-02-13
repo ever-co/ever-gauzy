@@ -5,60 +5,16 @@ import {
 	AUTH_CONNECTION_GUARD_CONFIG,
 	AuthConnectionGuard,
 	AuthGuard,
-	DEFAULT_AUTH_CONNECTION_GUARD_CONFIG
+	DEFAULT_AUTH_CONNECTION_GUARD_CONFIG,
+	NoAuthGuard
 } from '@gauzy/desktop-ui-lib';
 import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [
+	// Public routes (no authentication required)
 	{
 		path: 'setup',
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SetupComponent)
-	},
-	{
-		path: 'auth',
-		canActivate: [AppModuleGuard, AuthConnectionGuard],
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule)
-	},
-	{
-		path: 'time-tracker',
-		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
-		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
-		children: [
-			{
-				path: '',
-				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
-			}
-		]
-	},
-	{
-		path: 'screen-capture',
-		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ScreenCaptureComponent)
-	},
-	{
-		path: 'always-on',
-		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AlwaysOnComponent)
-	},
-	{
-		path: 'settings',
-		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SettingsComponent)
-	},
-	{
-		path: 'plugins',
-		canActivate: [AuthConnectionGuard],
-		children: [
-			{
-				path: '',
-				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
-			}
-		]
-	},
-	{
-		path: 'updater',
-		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.UpdaterComponent)
-	},
-	{
-		path: 'viewer',
-		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ImageViewerComponent)
 	},
 	{
 		path: 'splash-screen',
@@ -69,8 +25,25 @@ const routes: Routes = [
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ServerDownPage)
 	},
 	{
-		path: '',
-		canActivate: [AppModuleGuard, AuthGuard, AuthConnectionGuard],
+		path: 'about',
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AboutComponent)
+	},
+	{
+		path: 'settings',
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SettingsComponent)
+	},
+
+	// Auth routes (only for logged-out users)
+	{
+		path: 'auth',
+		canActivate: [NoAuthGuard],
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule)
+	},
+
+	// Protected routes (require authentication and connection)
+	{
+		path: 'time-tracker',
+		canActivate: [AuthConnectionGuard, AuthGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
 		children: [
 			{
@@ -80,9 +53,52 @@ const routes: Routes = [
 		]
 	},
 	{
-		path: 'about',
-		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AboutComponent)
+		path: 'plugins',
+		canActivate: [AuthConnectionGuard, AuthGuard],
+		children: [
+			{
+				path: '',
+				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
+			}
+		]
 	},
+
+	// Utility routes (require authentication but may work offline)
+	{
+		path: 'screen-capture',
+		canActivate: [AuthGuard],
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ScreenCaptureComponent)
+	},
+	{
+		path: 'always-on',
+		canActivate: [AuthGuard],
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AlwaysOnComponent)
+	},
+	{
+		path: 'updater',
+		canActivate: [AuthGuard],
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.UpdaterComponent)
+	},
+	{
+		path: 'viewer',
+		canActivate: [AuthGuard],
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ImageViewerComponent)
+	},
+
+	// Default route (protected)
+	{
+		path: '',
+		canActivate: [AuthConnectionGuard, AuthGuard],
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
+		children: [
+			{
+				path: '',
+				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
+			}
+		]
+	},
+
+	// Wildcard - redirect to default
 	{
 		path: '**',
 		redirectTo: ''
@@ -92,6 +108,13 @@ const routes: Routes = [
 /**
  * Configures the router for the application.
  * Uses NoPreloading strategy to minimize memory usage on app load.
+ *
+ * Guard execution order:
+ * 1. AuthConnectionGuard - Checks server connection and basic auth state
+ * 2. AuthGuard - Validates authentication tokens
+ * 3. NoAuthGuard - Prevents authenticated users from accessing auth pages
+ *
+ * Note: AppModuleGuard is deprecated and replaced by AuthConnectionGuard
  */
 const config: ExtraOptions = {
 	useHash: true,
@@ -110,4 +133,4 @@ const config: ExtraOptions = {
 		}
 	]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}
