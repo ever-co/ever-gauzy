@@ -124,7 +124,9 @@ const THEME_COLOR_CONFIG: ThemeConfig = {
 /**
  * Currently active theme colors (mutable, updated based on OS theme)
  */
-const currentThemeColors: ThemeColors = THEME_COLOR_CONFIG.dark;
+let currentThemeColors: ThemeColors = {
+	...THEME_COLOR_CONFIG.dark
+};
 
 /**
  * Main Canvas Setup - Used for final tray icon rendering
@@ -235,6 +237,9 @@ function renderTrayIconWithTime(currentTime?: string): string {
 		? currentThemeColors.active.txtColor
 		: currentThemeColors.stopped.txtColor;
 
+	mainContext.imageSmoothingEnabled = true;
+	mainContext.imageSmoothingQuality = 'high';
+
 	// Draw pre-rendered background onto main canvas
 	mainContext.drawImage(backgroundCanvas, CANVAS_START_X, CANVAS_START_Y);
 
@@ -260,9 +265,6 @@ function renderTrayIconWithTime(currentTime?: string): string {
 	mainContext.textAlign = 'center';
 	mainContext.textBaseline = 'middle';
 	mainContext.fillText(displayText, textPositionX, textPositionY);
-
-	mainContext.imageSmoothingEnabled = true;
-	mainContext.imageSmoothingQuality = 'high';
 
 	return mainCanvas.toDataURL(IMAGE_FORMAT);
 }
@@ -325,10 +327,10 @@ export async function initializeTrayIcon(): Promise<void> {
  * Updates the tray icon with new time display
  * @param timeText - Formatted time string to display (e.g., "01:23:45")
  */
-export function handleTimerUpdate(timeText: string): void {
+export async function handleTimerUpdate(timeText: string): Promise<void> {
 	LAST_TIME_DISPLAY = timeText;
 	if (!loadedIconImage) {
-		initializeTrayIcon();
+		await initializeTrayIcon();
 	}
 	const iconDataUrl = renderTrayIconWithTime(timeText);
 	ipcRenderer.send('update-tray-icon', iconDataUrl);

@@ -448,7 +448,7 @@ export class TrayIcon {
 				const image = nativeImage.createFromDataURL(dataUrl);
 				const imgResize = image.resize({
 					height: 18,
-					width: 86,
+					width: 88,
 					quality: 'best'
 				});
 				this.tray.setImage(imgResize);
