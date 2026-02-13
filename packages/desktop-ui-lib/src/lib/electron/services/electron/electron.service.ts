@@ -46,7 +46,7 @@ export class ElectronService {
 	 */
 	public fromEvent<T>(channel: string): Observable<T> {
 		return new Observable((subscriber) => {
-			if (!this.isElectron) {
+			if (!this.isElectron && !this.isContextBridge) {
 				subscriber.error(new Error('Electron API is not available'));
 				return;
 			}
@@ -72,7 +72,7 @@ export class ElectronService {
 	 * Invoke an Electron IPC handler with type-safe arguments and return value
 	 */
 	public invoke<T = unknown, U = unknown>(channel: string, data?: T): Promise<U> {
-		if (!this.isElectron) {
+		if (!this.isElectron && !this.isContextBridge) {
 			return Promise.reject(new Error('Electron API is not available'));
 		}
 
@@ -83,7 +83,7 @@ export class ElectronService {
 	 * Observable-based version of invoke
 	 */
 	public invoke$<T = unknown, U = unknown>(channel: string, data?: T): Observable<U> {
-		if (!this.isElectron) {
+		if (!this.isElectron && !this.isContextBridge) {
 			return throwError(() => new Error('Electron API is not available'));
 		}
 
@@ -94,7 +94,7 @@ export class ElectronService {
 	 * Remove all listeners for a channel
 	 */
 	public removeAllListeners(channel: string): void {
-		if (!this.isElectron) {
+		if (!this.isElectron && !this.isContextBridge) {
 			return;
 		}
 
