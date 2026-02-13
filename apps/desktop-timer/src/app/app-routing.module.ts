@@ -1,15 +1,19 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, NoPreloading, RouterModule, Routes } from '@angular/router';
-
 import {
 	AUTH_CONNECTION_GUARD_CONFIG,
-	AuthConnectionGuard,
-	AuthGuard,
+	authConnectionGuard,
+	authGuard,
 	DEFAULT_AUTH_CONNECTION_GUARD_CONFIG,
-	NoAuthGuard
+	noAuthGuard
 } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
+	{
+		path: '',
+		redirectTo: 'time-tracker',
+		pathMatch: 'full'
+	},
 	// Public routes (no authentication required)
 	{
 		path: 'setup',
@@ -35,66 +39,39 @@ const routes: Routes = [
 	// Auth routes (only for logged-out users)
 	{
 		path: 'auth',
-		canActivate: [NoAuthGuard],
+		canActivate: [noAuthGuard],
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule)
 	},
 
 	// Protected routes (require authentication and connection)
 	{
 		path: 'time-tracker',
-		canActivate: [AuthConnectionGuard, AuthGuard],
+		canActivate: [authGuard, authConnectionGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
-		children: [
-			{
-				path: '',
-				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
-			}
-		]
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
 	},
 	{
 		path: 'plugins',
-		canActivate: [AuthConnectionGuard, AuthGuard],
-		children: [
-			{
-				path: '',
-				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
-			}
-		]
+		canActivate: [authConnectionGuard],
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
 	},
 
 	// Utility routes (require authentication but may work offline)
 	{
 		path: 'screen-capture',
-		canActivate: [AuthGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ScreenCaptureComponent)
 	},
 	{
 		path: 'always-on',
-		canActivate: [AuthGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AlwaysOnComponent)
 	},
 	{
 		path: 'updater',
-		canActivate: [AuthGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.UpdaterComponent)
 	},
 	{
 		path: 'viewer',
-		canActivate: [AuthGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ImageViewerComponent)
-	},
-
-	// Default route (protected)
-	{
-		path: '',
-		canActivate: [AuthConnectionGuard, AuthGuard],
-		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
-		children: [
-			{
-				path: '',
-				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
-			}
-		]
 	},
 
 	// Wildcard - redirect to default

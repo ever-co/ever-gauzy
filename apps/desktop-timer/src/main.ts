@@ -1,12 +1,5 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import {
-	enableProdMode,
-	ErrorHandler,
-	importProvidersFrom,
-	inject,
-	Injector,
-	provideAppInitializer
-} from '@angular/core';
+import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -14,7 +7,6 @@ import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita'
 import {
 	ActivityWatchInterceptor,
 	APIInterceptor,
-	AuthGuard,
 	AuthService,
 	AuthStrategy,
 	DEFAULT_TIMEOUT,
@@ -26,10 +18,8 @@ import {
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
-	NoAuthGuard,
 	OrganizationInterceptor,
 	RefreshTokenInterceptor,
-	serverConnectionFactory,
 	ServerConnectionService,
 	ServerErrorInterceptor,
 	Store,
@@ -53,7 +43,6 @@ import {
 import * as Sentry from '@sentry/angular';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
-import { AppModuleGuard } from './app/app.module.guards';
 import { AppService } from './app/app.service';
 import { initializeSentry } from './app/sentry';
 import { environment } from './environments/environment';
@@ -90,9 +79,6 @@ bootstrapApplication(AppComponent, {
 		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
-		AuthGuard,
-		NoAuthGuard,
-		AppModuleGuard,
 		AuthStrategy,
 		AuthService,
 		ServerConnectionService,
@@ -159,15 +145,6 @@ bootstrapApplication(AppComponent, {
 			provide: ErrorHandler,
 			useClass: ErrorHandlerService
 		},
-		provideAppInitializer(() => {
-			const initializerFn = serverConnectionFactory(
-				inject(ServerConnectionService),
-				inject(Store),
-				inject(Router),
-				inject(Injector)
-			);
-			return initializerFn();
-		}),
 		{
 			provide: ErrorHandler,
 			useValue: Sentry.createErrorHandler({

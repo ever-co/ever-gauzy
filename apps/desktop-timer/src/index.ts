@@ -48,7 +48,7 @@ import {
 	setupAkitaStorageHandler,
 	TranslateLoader,
 	TranslateService,
-	TrayIcon,
+	TrayIconFactory,
 	UIError
 } from '@gauzy/desktop-lib';
 import {
@@ -285,37 +285,11 @@ async function startServer(value, restart = false) {
 	}
 	console.log('dir name:', __dirname);
 	console.log('app path', app.getAppPath());
-	tray = new TrayIcon(
-		setupWindow,
-		knex,
-		timeTrackerWindow,
-		auth,
-		settingsWindow,
-		{ ...environment },
-		pathWindow,
-		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-		gauzyWindow,
-		alwaysOn
-	);
-
+	// Create the tray icon and menu
+	TrayIconFactory.create(environment, pathWindow, path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
+	// Language change
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
-
-		if (tray) {
-			tray.destroy();
-		}
-		tray = new TrayIcon(
-			setupWindow,
-			knex,
-			timeTrackerWindow,
-			auth,
-			settingsWindow,
-			{ ...environment },
-			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-			gauzyWindow,
-			alwaysOn
-		);
 	});
 
 	/* ping server before launch the ui */
