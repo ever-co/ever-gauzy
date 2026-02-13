@@ -35,7 +35,7 @@ type ThemeType = 'dark' | 'light';
  * Get the device pixel ratio for high-DPI displays
  */
 function getDevicePixelRatio(): number {
-	return 2; // 2 for better resolution
+	return window.devicePixelRatio > 2 ? window.devicePixelRatio : 2; // 2 for better resolution
 }
 
 /**
