@@ -1,118 +1,109 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-  <nb-card-header class="header">
-    <h4>
-      <ngx-header-title [allowEmployee]="false">
-        {{ 'JOB_EMPLOYEE.EMPLOYEES' | translate }}
-      </ngx-header-title>
-    </h4>
-  </nb-card-header>
-  <nb-card-body class="p-0">
-    <div class="gauzy-button-container">
-      <ngx-gauzy-button-action
-        [hasLayoutSelector]="false"
-        [isDisable]="disableButton"
-        [buttonTemplateVisible]="visibleButton"
-        [buttonTemplate]="actionButtons"
-      ></ngx-gauzy-button-action>
-    </div>
+	<nb-card-header class="header">
+		<h4>
+			<ngx-header-title [allowEmployee]="false">
+				{{ 'JOB_EMPLOYEE.EMPLOYEES' | translate }}
+			</ngx-header-title>
+		</h4>
+	</nb-card-header>
+	<nb-card-body class="p-0">
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[hasLayoutSelector]="false"
+				[isDisable]="disableButton"
+				[buttonTemplateVisible]="visibleButton"
+				[buttonTemplate]="actionButtons"
+			></ngx-gauzy-button-action>
+		</div>
 
-    <!-- Dynamic Tabs -->
-    <gz-dynamic-tabs [tabsetId]="tabsetId"></gz-dynamic-tabs>
-  </nb-card-body>
+		<!-- Dynamic Tabs -->
+		<gz-dynamic-tabs [tabsetId]="tabsetId"></gz-dynamic-tabs>
+	</nb-card-body>
 </nb-card>
 
 <!-- Table Layout Template -->
 <ng-template #tableLayout>
-  <!-- Check if the user has the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
-  <ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW']">
-    <div class="table-scroll-container">
-      <!-- Smart Table Component -->
-      <angular2-smart-table
-        style="cursor: pointer"
-        [settings]="settingsSmartTable"
-        [source]="smartTableSource"
-        (editConfirm)="onEditConfirm($event)"
-        (editCancel)="onEditCancel($event)"
-        (userRowSelect)="onSelectEmployee($event)"
-      ></angular2-smart-table>
-    </div>
-    <div class="pagination-container">
-      @if (smartTableSource) {
-        <!-- Pagination Component -->
-        <ngx-pagination [source]="smartTableSource"></ngx-pagination>
-      }
-    </div>
-  </ng-template>
+	<!-- Check if the user has the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
+	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW']">
+		<div class="table-scroll-container">
+			<!-- Smart Table Component -->
+			<angular2-smart-table
+				class="cursor-pointer"
+				[settings]="settingsSmartTable"
+				[source]="smartTableSource"
+				(editConfirm)="onEditConfirm($event)"
+				(editCancel)="onEditCancel($event)"
+				(userRowSelect)="onSelectEmployee($event)"
+			></angular2-smart-table>
+		</div>
+		<div class="pagination-container">
+			@if (smartTableSource) {
+			<!-- Pagination Component -->
+			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+			}
+		</div>
+	</ng-template>
 
-  <!-- If the user does not have the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
-  <ng-template [ngxPermissionsExcept]="['ORG_JOB_EMPLOYEE_VIEW']">
-    <div>
-      <!-- Content to display if the user does not have the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
-      <!-- Placeholder: Add alternate content here -->
-    </div>
-  </ng-template>
+	<!-- If the user does not have the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
+	<ng-template [ngxPermissionsExcept]="['ORG_JOB_EMPLOYEE_VIEW']">
+		<div>
+			<!-- Content to display if the user does not have the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
+			<!-- Placeholder: Add alternate content here -->
+		</div>
+	</ng-template>
 </ng-template>
 
 <!-- Coming Soon Template -->
 <ng-template #comingSoon>
-  <div>
-    <div [style]="{ display: 'flex', 'flex-direction': 'column', 'align-items': 'center', margin: '100px 0px' }">
-      <nb-icon icon="flash-outline" [style]="{ 'font-size': '50px', color: '#cacaca' }"></nb-icon>
-      <div>{{ 'COMING_SOON' | translate }}</div>
-    </div>
-  </div>
+	<div class="coming-soon-container">
+		<nb-icon icon="flash-outline" class="coming-soon-icon"></nb-icon>
+		<div>{{ 'COMING_SOON' | translate }}</div>
+	</div>
 </ng-template>
 
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
-  <ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW', 'ORG_EMPLOYEES_EDIT']">
-    <div class="btn-group actions">
-      <ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
-        <button
-          size="small"
-          style="cursor: pointer"
-          status="basic"
-          class="action primary"
-          nbButton
-          underConstruction
-          >
-          <nb-icon icon="eye-outline" pack="eva"></nb-icon>
-          <span> {{ 'BUTTONS.VIEW' | translate }} </span>
-        </button>
-      </ng-template>
-      <ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
-        <button
-          (click)="edit(selectedItem)"
-          size="small"
-          style="cursor: pointer"
-          status="basic"
-          class="action primary"
-          nbButton
-          >
-          <nb-icon icon="edit-outline" pack="eva"></nb-icon>
-          <span>{{ 'BUTTONS.EDIT' | translate }}</span>
-        </button>
-      </ng-template>
-      <!-- <ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
-      <button
-        style="cursor: pointer"
-        status="basic"
-        class="action"
-        size="small"
-        [nbTooltip]="'BUTTONS.DELETE' | translate"
-        nbButton
-        >
-        <nb-icon status="danger" icon="trash-2-outline" pack="eva"></nb-icon>
-      </button>
-    </ng-template> -->
-  </div>
-</ng-template>
+	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW', 'ORG_EMPLOYEES_EDIT']">
+		<div class="btn-group actions">
+			<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
+				<button size="small" status="basic" class="action primary cursor-pointer" nbButton underConstruction>
+					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+					<span> {{ 'BUTTONS.VIEW' | translate }} </span>
+				</button>
+			</ng-template>
+			<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
+				<button
+					(click)="edit(selectedItem)"
+					size="small"
+					status="basic"
+					class="action primary cursor-pointer"
+					nbButton
+				>
+					<nb-icon icon="edit-outline" pack="eva"></nb-icon>
+					<span>{{ 'BUTTONS.EDIT' | translate }}</span>
+				</button>
+			</ng-template>
+
+			<!-- <ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
+				<button
+					style="cursor: pointer"
+					status="basic"
+					class="action"
+					size="small"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					nbButton
+				>
+					<nb-icon status="danger" icon="trash-2-outline" pack="eva"></nb-icon>
+				</button>
+			</ng-template> -->
+		</div>
+	</ng-template>
 </ng-template>
 
 <ng-template #visibleButton>
-  <ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
-    <button nbButton status="success" size="small" (click)="addNew($event)">
-      <nb-icon icon="plus-outline"> </nb-icon>
-      {{ 'BUTTONS.ADD' | translate }}
-    </button>
-  </ng-template>
+	<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
+		<button nbButton status="success" size="small" (click)="addNew($event)">
+			<nb-icon icon="plus-outline"> </nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
 </ng-template>

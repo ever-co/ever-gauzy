@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, merge, tap } from 'rxjs';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -10,11 +10,11 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-integration-ai-layout',
-    template: `<router-outlet></router-outlet>`,
-    standalone: false
+	selector: 'ngx-integration-ai-layout',
+	template: `<router-outlet></router-outlet>`,
+	standalone: false
 })
-export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
+export class IntegrationAILayoutComponent implements OnInit {
 	constructor(
 		private readonly _translateService: TranslateService,
 		private readonly _ngxPermissionsService: NgxPermissionsService,
@@ -25,7 +25,6 @@ export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.initializeUiPermissions(); // Initialize UI permissions
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
-		console.log(`Integration AI UI module plugin initialized`);
 	}
 
 	/**
@@ -46,7 +45,6 @@ export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
-				console.log(`Integration AI UI module plugin lang: %s`, lang);
 				this._translateService.use(lang); // Set the language
 			}),
 			untilDestroyed(this)
@@ -54,9 +52,5 @@ export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 
 		// Start the subscription
 		preferredLanguage$.subscribe();
-	}
-
-	ngOnDestroy(): void {
-		console.log(`Integration AI UI module plugin destroyed`);
 	}
 }

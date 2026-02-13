@@ -41,11 +41,13 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	ngOnInit(): void {
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
-		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
+		if (nebularLinkMedia) this._renderer?.setAttribute(nebularLinkMedia, 'media', 'all');
 
 		this.electronService.ipcRenderer.send('app_is_init');
 		// Start token refresh timer if we have a token and refresh token
-		this.tokenRefreshService.start();
+		if (this.store.token && this.store.refreshToken) {
+			this.tokenRefreshService.start();
+		}
 	}
 
 	ngAfterViewInit(): void {
@@ -102,6 +104,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('__logout__', (event, arg) =>
 			this._ngZone.run(async () => {
 				try {
+					// Stop proactive token refresh before logout
+					this.tokenRefreshService.stop();
 					await firstValueFrom(this.authStrategy.logout());
 					this.electronService.ipcRenderer.send('navigate_to_login');
 					if (arg) this.electronService.ipcRenderer.send('restart_and_update');

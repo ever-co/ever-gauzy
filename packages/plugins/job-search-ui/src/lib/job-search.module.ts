@@ -1,5 +1,4 @@
 import { Inject, NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
 import {
 	NbButtonModule,
@@ -15,21 +14,19 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileUploadModule } from 'ng2-file-upload';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	DialogsModule,
 	ProposalTemplateSelectModule,
 	SelectorsModule,
 	SharedModule,
-	StatusBadgeModule,
-	getBrowserLanguage
+	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
 import { createJobSearchRoutes } from './job-search.routes';
 import { JobSearchComponent } from './components/job-search/job-search.component';
@@ -61,14 +58,7 @@ const THIRD_PARTY_MODULES = [
 	FileUploadModule,
 	MomentModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
+	TranslateModule.forChild()
 ];
 
 @NgModule({

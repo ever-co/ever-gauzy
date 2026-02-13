@@ -1,35 +1,11 @@
+import { PartialType } from '@nestjs/swagger';
 import { IHelpCenterArticleUpdate } from '@gauzy/contracts';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { CreateHelpCenterArticleDTO } from './create-help-center-article.dto';
 
-export class UpdateHelpCenterArticleDTO implements IHelpCenterArticleUpdate {
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsString()
-	name: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsString()
-	description: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsString()
-	data: string;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	draft: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	privacy: boolean;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsString()
-	categoryId: string;
-}
+/**
+ * Update HelpCenterArticle data validation request DTO
+ * All fields are optional
+ */
+export class UpdateHelpCenterArticleDTO
+	extends PartialType(CreateHelpCenterArticleDTO)
+	implements IHelpCenterArticleUpdate {}
