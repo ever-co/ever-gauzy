@@ -327,6 +327,9 @@ export async function initializeTrayIcon(): Promise<void> {
  */
 export function handleTimerUpdate(timeText: string): void {
 	LAST_TIME_DISPLAY = timeText;
+	if (!loadedIconImage) {
+		initializeTrayIcon();
+	}
 	const iconDataUrl = renderTrayIconWithTime(timeText);
 	ipcRenderer.send('update-tray-icon', iconDataUrl);
 }

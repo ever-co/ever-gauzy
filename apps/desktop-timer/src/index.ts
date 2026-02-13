@@ -802,8 +802,8 @@ ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
 ipcMain.handle('set-tray-icon', () => {
 	return {
-		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon_gray.png')
+		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon@2x.png'),
+		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon@2x_gray.png')
 	}
 });
 
