@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { ElectronService } from '../../electron/services';
 import { AuthStrategy } from './auth-strategy.service';
+import { RefreshStateManager } from './refresh-state-manager.service';
 import { TokenRefreshService } from './token-refresh.service';
 
 /**
@@ -29,23 +30,34 @@ export class SessionExpiredHandler {
 	private readonly electronService = inject(ElectronService);
 	private readonly router = inject(Router);
 	private readonly tokenRefreshService = inject(TokenRefreshService);
+	private readonly refreshStateManager = inject(RefreshStateManager);
 
 	private isExecuting = false;
+	private executionLock = false;
 
 	/**
 	 * Executes the full session-expiry flow:
 	 * 1. Stops proactive refresh timer
-	 * 2. Clears auth state (token, user, etc.)
-	 * 3. Sends IPC `logout` event for cross-window sync (Electron only)
-	 * 4. Navigates to `/auth/login` with a `returnUrl`
+	 * 2. Resets refresh state manager
+	 * 3. Clears auth state (token, user, etc.)
+	 * 4. Sends IPC `logout` event for cross-window sync (Electron only)
+	 * 5. Navigates to `/auth/login` with a `returnUrl`
 	 *
 	 * This method is idempotent - multiple calls will only execute once.
+	 * Uses atomic flag to prevent race conditions from concurrent 401s.
 	 *
 	 * @returns Observable<void> that completes after logout finishes
 	 */
 	execute(): Observable<void> {
+		// Atomic check-and-set to prevent concurrent executions
+		if (this.executionLock) {
+			return of(void 0);
+		}
+		this.executionLock = true;
+
 		// Prevent concurrent executions
 		if (this.isExecuting) {
+			this.executionLock = false;
 			return of(void 0);
 		}
 
@@ -53,6 +65,9 @@ export class SessionExpiredHandler {
 
 		// Stop the proactive refresh timer immediately
 		this.tokenRefreshService.stop();
+
+		// Reset refresh state manager to clear any pending refresh operations
+		this.refreshStateManager.reset();
 
 		return this.authStrategy.logout().pipe(
 			tap(() => this.notifyElectronWindows()),
@@ -62,9 +77,10 @@ export class SessionExpiredHandler {
 				return of(void 0);
 			}),
 			finalize(() => {
-				// Always navigate and reset flag, even on error
+				// Always navigate and reset flags, even on error
 				this.navigateToLogin();
 				this.isExecuting = false;
+				this.executionLock = false;
 			}),
 			map(() => void 0)
 		);

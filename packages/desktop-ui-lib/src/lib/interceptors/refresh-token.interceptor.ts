@@ -40,6 +40,8 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
 				}
 
 				// Regular endpoint 401 → attempt token refresh
+				// Note: Token availability check moved to TokenRefreshExecutor
+				// to prevent race conditions with concurrent requests
 				return this.tokenRefreshHandler.handle(request, next, error);
 			})
 		);
