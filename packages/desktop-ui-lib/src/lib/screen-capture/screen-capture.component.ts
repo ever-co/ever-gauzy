@@ -1,20 +1,16 @@
-import { Component, OnInit, NgZone, Inject } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import {
-	DomSanitizer,
-	SafeResourceUrl,
-	SafeUrl,
-} from '@angular/platform-browser';
-import { ElectronService } from '../electron/services';
-import { GAUZY_ENV } from '../constants';
-import { NbLayoutModule, NbCardModule } from '@nebular/theme';
 import { AsyncPipe } from '@angular/common';
+import { Component, Inject, NgZone, OnInit } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
+import { NbCardModule, NbLayoutModule } from '@nebular/theme';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { GAUZY_ENV } from '../constants';
+import { ElectronService } from '../electron/services';
 
 @Component({
-    selector: 'ngx-screen-capture',
-    templateUrl: './screen-capture.component.html',
-    styleUrls: ['./screen-capture.component.scss'],
-    imports: [NbLayoutModule, NbCardModule, AsyncPipe]
+	selector: 'ngx-screen-capture',
+	templateUrl: './screen-capture.component.html',
+	styleUrls: ['./screen-capture.component.scss'],
+	imports: [NbLayoutModule, NbCardModule, AsyncPipe]
 })
 export class ScreenCaptureComponent implements OnInit {
 	private _screenCaptureUrl$: BehaviorSubject<SafeUrl>;
@@ -33,24 +29,20 @@ export class ScreenCaptureComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		this.electronService.ipcRenderer.on(
-			'show_popup_screen_capture',
-			(_, arg) => {
-				this._ngZone.run(() => {
-					this.note = arg.note;
-					this._screenCaptureUrl$.next(
-						this.domSanitizer.bypassSecurityTrustUrl(arg.imgUrl)
-					);
-				});
-			}
-		);
+		this.electronService.ipcRenderer.on('show_popup_screen_capture', (_, arg) => {
+			this._ngZone.run(() => {
+				this.note = arg.note;
+				this._screenCaptureUrl$.next(this.domSanitizer.bypassSecurityTrustUrl(arg.imgUrl));
+			});
+		});
 		this.sendRendererReady();
 	}
 
 	private async sendRendererReady() {
-		await this.electronService.ipcRenderer.invoke('capture_window_init').catch(() =>
-			console.error('Page initialize not implemented in main process')
-		);
+		if (!this._environment.IS_AGENT) return;
+		await this.electronService
+			.invoke('capture_window_init')
+			.catch(() => console.error('Page initialize not implemented in main process'));
 	}
 
 	public get screenCaptureUrl$(): Observable<SafeUrl> {
@@ -58,8 +50,6 @@ export class ScreenCaptureComponent implements OnInit {
 	}
 
 	public get logoUrl(): SafeResourceUrl {
-		return this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.GAUZY_DESKTOP_LOGO_512X512
-		);
+		return this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.GAUZY_DESKTOP_LOGO_512X512);
 	}
 }
