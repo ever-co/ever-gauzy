@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { IAuthResponse } from '@gauzy/contracts';
+import { IAuthResponse, IUser } from '@gauzy/contracts';
 import { NbAuthResult, NbAuthStrategy, NbAuthStrategyClass } from '@nebular/auth';
-import { Observable, from, of } from 'rxjs';
+import { Observable, asyncScheduler, from, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ElectronService } from '../../electron/services';
 import { Store, TimeTrackerDateManager } from '../../services';
@@ -202,20 +202,13 @@ export class AuthStrategy extends NbAuthStrategy {
 					return new NbAuthResult(false, res, false, AuthStrategy.config.login.roleErrors);
 				}
 
-				// Set stored values on login
-				const { id, employee, tenantId } = user;
-				TimeTrackerDateManager.organization = employee.organization;
-				this.store.organizationId = employee.organizationId;
-				this.store.tenantId = tenantId;
-				this.store.userId = id;
-				this.store.token = token;
-				this.store.user = user;
-				this.store.refreshToken = refreshToken;
+				// Store authentication data using centralized method
+				this.storeAuthenticationData(res);
 
-				// Set token expiry time
-				this.setTokenExpiry(token);
-
-				this.authService.electronAuthentication({ user, token, refresh_token: refreshToken });
+				//
+				asyncScheduler.schedule(() => {
+					this.authService.electronAuthentication(res);
+				}, 3000);
 
 				return new NbAuthResult(
 					true,
@@ -228,6 +221,18 @@ export class AuthStrategy extends NbAuthStrategy {
 			catchError((err) => {
 				const isLoginOffline = !!this.store?.user && !!this.store?.token;
 				if (isLoginOffline) {
+					try {
+						// Validate user has employee record even in offline mode
+						this.validateEmployeeUser(this.store.user);
+					} catch (error) {
+						console.error('[AuthStrategy] Offline login failed:', error.message);
+						return of(
+							new NbAuthResult(false, err, false, AuthStrategy.config.login.roleErrors, [
+								AuthStrategy.config.login.roleErrors
+							])
+						);
+					}
+
 					const res: IAuthResponse = {
 						user: this.store.user,
 						token: this.store.token,
@@ -255,9 +260,10 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	/**
 	 * Extracts expiry time from JWT token or sets default expiry (1 hour)
+	 * Public method to be reused across login components
 	 * @param token JWT token
 	 */
-	private setTokenExpiry(token: string): void {
+	public setTokenExpiry(token: string): void {
 		try {
 			// Decode JWT to get expiry claim
 			const payload = JSON.parse(atob(token.split('.')[1]));
@@ -281,6 +287,48 @@ export class AuthStrategy extends NbAuthStrategy {
 
 		// Default to 1 hour if parsing failed or expiry is invalid
 		this.store.tokenExpiresAt = Date.now() + 60 * 60 * 1000;
+	}
+
+	/**
+	 * Validates that a user has an employee record (required for desktop app)
+	 * Public method to be reused across login components
+	 * @param user User object to validate
+	 * @throws Error if user has no employee record
+	 */
+	public validateEmployeeUser(user: IUser): void {
+		if (!user.employee) {
+			throw new Error('User must be an employee to access this application');
+		}
+	}
+
+	/**
+	 * Stores authentication data in the store
+	 * Centralizes the token storage logic to ensure consistency
+	 * @param authResponse Authentication response containing user, token, and refresh_token
+	 */
+	public storeAuthenticationData(authResponse: IAuthResponse): void {
+		const { user, token, refresh_token } = authResponse;
+
+		// Validate user has employee record
+		this.validateEmployeeUser(user);
+
+		const { id, employee, tenantId } = user;
+
+		// Store organization data
+		TimeTrackerDateManager.organization = employee.organization;
+		this.store.organizationId = employee.organizationId;
+		this.store.tenantId = tenantId;
+
+		// Store user data
+		this.store.userId = id;
+		this.store.user = user;
+
+		// Store tokens
+		this.store.token = token;
+		this.store.refreshToken = refresh_token;
+
+		// Set token expiry
+		this.setTokenExpiry(token);
 	}
 
 	/**

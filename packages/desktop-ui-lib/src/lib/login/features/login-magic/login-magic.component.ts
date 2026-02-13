@@ -18,10 +18,26 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-login-magic',
-    templateUrl: './login-magic.component.html',
-    styleUrls: ['./login-magic.component.scss'],
-    imports: [LogoComponent, SwitchThemeComponent, NgClass, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, NbIconModule, DebounceClickDirective, NbButtonModule, SpinnerButtonDirective, NgStyle, RouterLink, SocialLinksComponent, TranslatePipe]
+	selector: 'ngx-login-magic',
+	templateUrl: './login-magic.component.html',
+	styleUrls: ['./login-magic.component.scss'],
+	imports: [
+		LogoComponent,
+		SwitchThemeComponent,
+		NgClass,
+		FormsModule,
+		ReactiveFormsModule,
+		NbFormFieldModule,
+		NbInputModule,
+		NbIconModule,
+		DebounceClickDirective,
+		NbButtonModule,
+		SpinnerButtonDirective,
+		NgStyle,
+		RouterLink,
+		SocialLinksComponent,
+		TranslatePipe
+	]
 })
 export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	public countdown: number;
@@ -186,6 +202,7 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 
 	/**
 	 * Confirms the sign-in code.
+	 * Uses navigation state instead of query params to avoid exposing code in URL.
 	 */
 	async confirmSignInCode(): Promise<void> {
 		this.isLoading = true;
@@ -203,9 +220,10 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 			return;
 		}
 
-		// Navigate to the 'auth/magic-sign-in' route with email and code as query parameters
+		// Navigate to the 'auth/magic-sign-in' route with email and code in state (not URL)
+		// This prevents the code from being visible in browser history or URL bar
 		await this.router.navigate(['auth/magic-sign-in'], {
-			queryParams: {
+			state: {
 				email,
 				code
 			}
