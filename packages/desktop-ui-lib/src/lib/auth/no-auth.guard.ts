@@ -1,26 +1,28 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '../services';
-import { AuthService } from './services';
 
 /**
- * Use for routes which only need to be displayed if user is NOT logged in
+ * NoAuthGuard - Protects routes that should only be accessible when NOT logged in.
+ *
+ * Use for routes like login, register, forgot-password, etc.
+ * Redirects authenticated users to the main app.
  */
 @Injectable()
 export class NoAuthGuard implements CanActivate {
-	constructor(private readonly router: Router, private authService: AuthService, private readonly store: Store) {}
+	constructor(private readonly router: Router, private readonly store: Store) {}
 
-	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-		let isAuthenticated = false;
-		try {
-			isAuthenticated = await this.authService.isAuthenticated();
-		} catch (error) {
-			console.error(error);
-			this.store.serverConnection = 0;
-		}
-		if (!this.store.token || !isAuthenticated) {
+	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
+		// Check if we have stored authentication
+		const hasStoredAuth = !!this.store.token && !!this.store.userId;
+
+		if (!hasStoredAuth) {
+			// No stored auth, allow access to auth pages
 			return true;
 		}
+
+		// User is authenticated, redirect to app
+		console.log('[NoAuthGuard] User already authenticated, redirecting to app');
 		await this.router.navigate(['/time-tracker']);
 		return false;
 	}

@@ -67,11 +67,11 @@ export class AuthConnectionGuard implements CanActivate {
 
 	/**
 	 * Determines if a route can be activated based on connection and authentication state *at the time of navigation*.
-	 * @param route The activated route snapshot.
+	 * @param _route The activated route snapshot (unused but required by interface).
 	 * @param state The router state snapshot.
 	 * @returns An Observable emitting true (allow) or a UrlTree (redirect).
 	 */
-	canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> {
+	canActivate(_route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> {
 		return this.getCurrentConnectionState().pipe(
 			map((connectionState) => {
 				const isAllowed = this.isConnectionSufficient(connectionState);
@@ -129,14 +129,17 @@ export class AuthConnectionGuard implements CanActivate {
 
 	/**
 	 * Determines if the current state is sufficient for activation.
-	 * Logic: Access is allowed if the server connection is NOT down (0) OR if a user ID exists.
+	 * Logic: Access is allowed if the server connection is OK OR user is authenticated.
+	 * This allows:
+	 * - Authenticated users to access routes even when offline (offline mode)
+	 * - Connected users to access public routes
 	 */
 	private isConnectionSufficient = (state: ConnectionState): boolean => {
-		// Allow access if connection status is not 0 (assuming 0 means down/bad)
-		// OR if a userId is present (user is authenticated)
 		const connectionOk = state.serverConnection !== 0;
 		const userAuthenticated = !!state.userId;
 
+		// Allow access if EITHER connected OR authenticated
+		// This enables offline mode for authenticated users
 		return connectionOk || userAuthenticated;
 	};
 

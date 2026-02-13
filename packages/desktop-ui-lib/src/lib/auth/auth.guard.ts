@@ -1,59 +1,55 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
-import { AuthService, AuthStrategy } from './services';
 import { Store } from '../services';
 import { ElectronService } from '../electron/services';
 
+/**
+ * AuthGuard - Protects routes that require authentication.
+ *
+ * Responsibilities:
+ * - Check if user has valid authentication tokens
+ * - Redirect to login if not authenticated
+ * - Delegate token refresh to interceptors (not guards)
+ *
+ * This guard is lightweight and fast - it only checks stored state.
+ * Token validation and refresh are handled by HTTP interceptors.
+ */
 @Injectable()
 export class AuthGuard implements CanActivate {
 	constructor(
 		private readonly router: Router,
-		private readonly authService: AuthService,
 		private readonly electronService: ElectronService,
-		private readonly authStrategy: AuthStrategy,
 		private readonly store: Store
 	) {}
 
-	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-		let isAuthenticated = false;
-		try {
-			isAuthenticated = await this.authService.isAuthenticated();
-		} catch (error) {
-			console.error(error);
-			this.store.serverConnection = 0;
-		}
-		console.log('Token Authenticated:', `${isAuthenticated ? 'true' : 'false'}`);
+	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
+		// Check if we have basic auth data
+		const hasStoredAuth = !!this.store.token && !!this.store.userId;
 
-		if (isAuthenticated) {
-			return true; // logged in so return true
-		} else {
-			if (!!this.store.userId) return true;
-			await this.logoutAndRedirect(state.url);
+		if (!hasStoredAuth) {
+			// No stored auth, redirect to login
+			console.log('[AuthGuard] No authentication found, redirecting to login');
+			await this.redirectToLogin(state.url);
 			return false;
 		}
-	}
 
-	private async logoutAndRedirect(returnUrl: string): Promise<void> {
-		if (this.store.userId) {
-			this.logoutDesktop();
-			this.logoutAndClearStore();
+		// In offline mode, allow access if we have stored auth
+		if (this.store.isOffline) {
+			console.log('[AuthGuard] Offline mode, allowing access with stored auth');
+			return true;
 		}
-		await this.redirectToLogin(returnUrl);
+
+		// User has tokens - allow access
+		// Token validation and refresh will be handled by interceptors
+		return true;
 	}
 
-	private logoutDesktop() {
-		if (this.electronService.isElectron) {
-			this.electronService.ipcRenderer.send('logout_desktop');
-		}
-	}
+	private async redirectToLogin(returnUrl: string): Promise<void> {
+		// Don't preserve auth routes as return URL
+		const shouldPreserveUrl = returnUrl && !returnUrl.startsWith('/auth') && returnUrl !== '/';
 
-	private logoutAndClearStore() {
-		this.authStrategy.logout();
-	}
-
-	private async redirectToLogin(returnUrl: string) {
 		await this.router.navigate(['/auth/login'], {
-			queryParams: { returnUrl }
+			queryParams: shouldPreserveUrl ? { returnUrl } : {}
 		});
 	}
 }
