@@ -23,7 +23,7 @@ import { firstValueFrom } from 'rxjs';
 })
 export class HelpCenterComponent extends TranslationBaseComponent implements OnDestroy, OnInit {
 	constructor(
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		readonly translateService: TranslateService,
 		private helpCenterArticleService: HelpCenterArticleService,
 		private readonly toastrService: ToastrService,

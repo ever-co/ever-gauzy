@@ -47,7 +47,7 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask> 
 	constructor(
 		private readonly store$: SprintStoreService,
 		translateService: TranslateService,
-		dialogService: NbDialogService,
+		readonly dialogService: NbDialogService,
 		private readonly taskStore: TasksStoreService,
 		private readonly storeService: Store
 	) {

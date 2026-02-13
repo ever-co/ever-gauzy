@@ -56,7 +56,7 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent impl
 		private route: ActivatedRoute,
 		private readonly store: Store,
 		private inventoryStore: InventoryStore,
-		private dialogService: NbDialogService
+		private readonly dialogService: NbDialogService
 	) {
 		super(translationService);
 	}

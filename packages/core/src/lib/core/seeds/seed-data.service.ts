@@ -3,7 +3,7 @@
 // Copyright (c) 2019 Alexi Taylor
 
 import * as rimraf from 'rimraf';
-import * as path from 'path';
+import * as path from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { DataSource, DataSourceOptions } from 'typeorm';

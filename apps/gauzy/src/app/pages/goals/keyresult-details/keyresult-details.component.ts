@@ -58,7 +58,7 @@ export class KeyResultDetailsComponent extends TranslationBaseComponent implemen
 	constructor(
 		private dialogRef: NbDialogRef<KeyResultDetailsComponent>,
 		private employeeService: EmployeesService,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private keyResultService: KeyResultService,
 		private goalSettingsService: GoalSettingsService,
 		private store: Store,

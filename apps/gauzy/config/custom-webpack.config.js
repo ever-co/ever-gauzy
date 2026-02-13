@@ -1,5 +1,5 @@
 const TerserPlugin = require('terser-webpack-plugin');
-const path = require('path');
+const path = require('node:path');
 
 console.log('Using custom Webpack config...');
 

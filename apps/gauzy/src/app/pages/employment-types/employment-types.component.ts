@@ -58,7 +58,7 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	constructor(
 		private fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private store: Store,
 		private organizationEmploymentTypesService: OrganizationEmploymentTypesService,
 		readonly translateService: TranslateService,

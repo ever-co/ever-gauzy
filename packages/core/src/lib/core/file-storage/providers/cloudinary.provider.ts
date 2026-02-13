@@ -1,8 +1,8 @@
 import { Request } from 'express';
 import * as multer from 'multer';
 import * as moment from 'moment';
-import { join } from 'path';
-import { URL } from 'url';
+import { join } from 'node:path';
+import { URL } from 'node:url';
 import * as streamifier from 'streamifier';
 import axios from 'axios';
 import { ConfigOptions, UploadApiErrorResponse, UploadApiResponse, v2 as cloudinaryV2 } from 'cloudinary';

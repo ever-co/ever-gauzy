@@ -72,7 +72,7 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	constructor(
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private inventoryStore: InventoryStore,
 		private fb: UntypedFormBuilder,
 		private store: Store,
