@@ -18,7 +18,7 @@ import { TaskBadgeViewComponent } from '../task-badge-view/task-badge-view.compo
 export class TaskRenderCellComponent extends TaskRenderComponent {
 	private _popover: NbPopoverDirective;
 
-	constructor(private _dialogService: NbDialogService) {
+	constructor(private readonly _dialogService: NbDialogService) {
 		super();
 	}
 

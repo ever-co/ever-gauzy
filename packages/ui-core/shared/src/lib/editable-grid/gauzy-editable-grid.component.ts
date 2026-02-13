@@ -31,7 +31,7 @@ export class GauzyEditableGridComponent<T extends { id?: string }>
 
 	constructor(
 		public readonly translateService: TranslateService,
-		private dialogService: NbDialogService
+		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
 	}

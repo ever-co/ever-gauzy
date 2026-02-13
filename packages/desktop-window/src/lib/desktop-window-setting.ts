@@ -1,7 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { BrowserWindow } from 'electron';
-import * as url from 'url';
+import * as url from 'node:url';
 import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
 

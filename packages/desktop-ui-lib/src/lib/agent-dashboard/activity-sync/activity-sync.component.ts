@@ -45,7 +45,7 @@ export class SyncPageComponent implements OnInit, OnDestroy {
 	constructor(
 		private svc: LogService,
 		private translateService: TranslateService,
-		private dialogService: NbDialogService
+		private readonly dialogService: NbDialogService
 	) {}
 
 	ngOnInit(): void {
