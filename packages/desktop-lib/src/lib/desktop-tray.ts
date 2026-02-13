@@ -446,7 +446,12 @@ export class TrayIcon {
 		ipcMain.on('update-tray-icon', (event, dataUrl) => {
 			if (!this.tray?.isDestroyed()) {
 				const image = nativeImage.createFromDataURL(dataUrl);
-				this.tray.setImage(image);
+				const imgResize = image.resize({
+					height: 18,
+					width: 86,
+					quality: 'best'
+				});
+				this.tray.setImage(imgResize);
 			}
 		});
 
