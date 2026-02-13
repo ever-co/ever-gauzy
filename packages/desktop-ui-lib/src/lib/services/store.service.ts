@@ -372,7 +372,7 @@ export class Store {
 			// Return false to avoid unnecessary refresh attempts
 			// The server will return 401 if token is actually expired
 			console.warn('[Store] Token expiry not set, assuming token is valid');
-			return false;
+			return !this.token;
 		}
 		const now = Date.now();
 		const bufferTime = 5 * 60 * 1000; // 5 minutes buffer

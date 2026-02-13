@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '../services';
-import { ElectronService } from '../electron/services';
 
 /**
  * AuthGuard - Protects routes that require authentication.
@@ -16,27 +15,23 @@ import { ElectronService } from '../electron/services';
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
-	constructor(
-		private readonly router: Router,
-		private readonly electronService: ElectronService,
-		private readonly store: Store
-	) {}
+	constructor(private readonly router: Router, private readonly store: Store) {}
 
 	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
 		// Check if we have basic auth data
 		const hasStoredAuth = !!this.store.token && !!this.store.userId;
+
+		// In offline mode, allow access if we have stored auth
+		if (this.store.isOffline) {
+			console.log('[AuthGuard] Offline mode, allowing access with stored auth');
+			return true;
+		}
 
 		if (!hasStoredAuth) {
 			// No stored auth, redirect to login
 			console.log('[AuthGuard] No authentication found, redirecting to login');
 			await this.redirectToLogin(state.url);
 			return false;
-		}
-
-		// In offline mode, allow access if we have stored auth
-		if (this.store.isOffline) {
-			console.log('[AuthGuard] Offline mode, allowing access with stored auth');
-			return true;
 		}
 
 		// User has tokens - allow access

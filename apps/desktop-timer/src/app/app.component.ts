@@ -10,9 +10,10 @@ import {
 	TokenRefreshService
 } from '@gauzy/desktop-ui-lib';
 import { NbToastrService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, tap } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { AppService } from './app.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -44,14 +45,19 @@ export class AppComponent implements OnInit, AfterViewInit {
 		if (nebularLinkMedia) this._renderer?.setAttribute(nebularLinkMedia, 'media', 'all');
 
 		this.electronService.ipcRenderer.send('app_is_init');
-		// Start token refresh timer if we have a token and refresh token
-		if (this.store.token && this.store.refreshToken) {
-			this.tokenRefreshService.start();
-		}
 	}
 
 	ngAfterViewInit(): void {
 		this.languageElectronService.initialize();
+
+		this.electronService
+			.fromEvent('auth_success_tray_init')
+			.pipe(
+				take(1),
+				tap(() => this.tokenRefreshService.start()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		this.electronService.ipcRenderer.on('server_ping', (event, arg) =>
 			this._ngZone.run(() => {
@@ -121,11 +127,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 					this.store.userId = arg.userId;
 					this.store.token = arg.token;
 					await this.authFromSocial(arg);
-
-					// Start token refresh timer on authentication
-					if (arg.token && this.store.refreshToken) {
-						this.tokenRefreshService.start();
-					}
 				} catch (error) {
 					console.log('ERROR', error);
 				}

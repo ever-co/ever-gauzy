@@ -2,7 +2,7 @@ import { Inject, Injectable, InjectionToken } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { Observable, of } from 'rxjs'; // Added 'of' for catchError
 import { catchError, map, take } from 'rxjs/operators'; // Removed distinctUntilChanged, filter from here as check is per-activation
-import { PersistQuery } from '../../services'; // Assuming these paths are correct
+import { PersistQuery, PersistState } from '../../services'; // Assuming these paths are correct
 
 /**
  * Represents the relevant server connection and authentication state for the guard.
@@ -112,18 +112,11 @@ export class AuthConnectionGuard implements CanActivate {
 
 	/**
 	 * Maps the relevant parts of the application state from PersistQuery.
-	 * Ensures 'serverConnection' is treated as a number.
-	 * Note: Ideally, the type should be consistent at the source (Store/PersistQuery).
 	 */
-	private mapToConnectionState = (state: any): ConnectionState => {
-		// Consider adding stronger typing to the input 'state' if possible from PersistQuery
-		// Defensive handling of potentially missing state properties
-		const serverConnectionRaw = state?.serverConnection;
-		const userIdRaw = state?.userId;
-
+	private mapToConnectionState = (state: PersistState): ConnectionState => {
 		return {
-			serverConnection: typeof serverConnectionRaw === 'number' ? serverConnectionRaw : 0, // Default to 0 if not a number
-			userId: typeof userIdRaw === 'string' && userIdRaw.length > 0 ? userIdRaw : null // Ensure it's a non-empty string or null
+			serverConnection: state.serverConnection,
+			userId: state.userId
 		};
 	};
 
