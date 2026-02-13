@@ -7,8 +7,6 @@
     "arrowParens": "always",
     "trailingComma": "none",
     "quoteProps": "as-needed",
-    "insertPragma": false,
-    "requirePragma": false,
     "endOfLine": "auto",
     "overrides": [
         {

@@ -6,7 +6,7 @@
 *.bat text eol=crlf
 
 LICENSE    text
-Jenkinfile text
+Jenkinsfile text
 
 *.conf     text
 *.js       text
