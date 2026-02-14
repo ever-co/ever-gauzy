@@ -32,7 +32,7 @@ export class AuthenticatedMenuStrategy implements IMenuStrategy {
 		menu.push(
 			new MenuItemBuilder()
 				.withId('0')
-				.withLabel(this.translationService.instant('TIMER_TRACKER.MENU.NOW_TRACKING', { timer: 'Oh 00m' }))
+				.withLabel(this.translationService.instant('TIMER_TRACKER.MENU.NOW_TRACKING', { timer: '0h 00m' }))
 				.withVisible(false)
 				.build()
 		);
