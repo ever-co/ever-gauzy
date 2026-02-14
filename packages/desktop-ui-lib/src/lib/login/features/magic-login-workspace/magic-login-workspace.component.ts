@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
 import { catchError, EMPTY, filter, firstValueFrom, switchMap, tap } from 'rxjs';
 import { AuthService, AuthStrategy } from '../../../auth';
-import { ErrorHandlerService, Store } from '../../../services';
+import { ErrorHandlerService } from '../../../services';
 import { LogoComponent } from '../../shared/ui/logo/logo.component';
 import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
 
@@ -27,13 +27,10 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
-		private readonly _store: Store,
 		private readonly _authService: AuthService,
 		private readonly _authStrategy: AuthStrategy,
 		private readonly _errorHandlingService: ErrorHandlerService
-	) {}
-
-	ngOnInit(): void {
+	) {
 		// Try to get email and code from navigation state first (secure method)
 		const navigation = this._router.getCurrentNavigation();
 		const state = navigation?.extras?.state;
@@ -41,9 +38,10 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 		if (state?.email && state?.code) {
 			// Code passed via state (secure)
 			this.confirmSignInCode(state.email, state.code);
-			return;
 		}
+	}
 
+	ngOnInit(): void {
 		// Fallback: Check query params for backward compatibility
 		// Note: This is less secure as code is visible in URL
 		this._activatedRoute.queryParams
