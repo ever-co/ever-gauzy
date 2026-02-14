@@ -1,9 +1,11 @@
-import { PluginUiDefinition } from '@gauzy/plugin-ui';
+import { FeatureEnum } from '@gauzy/contracts';
+import { PluginRouteInput, PluginUiDefinition } from '@gauzy/plugin-ui';
 import { JobEmployeePlugin } from '@gauzy/plugin-job-employee-ui';
 import { JobMatchingPlugin } from '@gauzy/plugin-job-matching-ui';
 import { JobSearchPlugin } from '@gauzy/plugin-job-search-ui';
 import { JobProposalTemplatePlugin } from '@gauzy/plugin-job-proposal-ui';
 import { JobsModule } from './jobs.module';
+import { JOBS_PAGE_ROUTE, JOBS_SECTIONS_LOCATION } from './job.routes';
 
 /**
  * Plugin definition for the Jobs plugin group with configurable child plugins.
@@ -11,7 +13,6 @@ import { JobsModule } from './jobs.module';
 export interface JobsPluginDefinition extends PluginUiDefinition {
 	init(opts: { plugins: PluginUiDefinition[] }): PluginUiDefinition;
 }
-
 
 /**
  * Default jobs plugins.
@@ -28,6 +29,8 @@ const DEFAULT_JOBS_PLUGINS: PluginUiDefinition[] = [
  * child plugins. Child plugins register their routes and nav items under
  * location 'jobs-sections'. The jobs route is defined in pages.routes.ts.
  *
+ * Uses imperative registration in JobsModule constructor.
+ *
  * @example In plugin-ui.config.ts:
  * ```ts
  * plugins: [JobsPlugin]
@@ -40,8 +43,26 @@ const DEFAULT_JOBS_PLUGINS: PluginUiDefinition[] = [
  */
 export const JobsPlugin: JobsPluginDefinition = {
 	id: 'jobs',
-	location: 'jobs-sections',
+	location: JOBS_SECTIONS_LOCATION,
 	module: JobsModule,
+	routes: [JOBS_PAGE_ROUTE as PluginRouteInput],
+	navMenu: [
+		{
+			config: {
+				id: 'jobs',
+				title: 'Jobs',
+				icon: 'fas fa-briefcase',
+				link: '/pages/jobs',
+				data: {
+					translationKey: 'MENU.JOBS',
+					featureKey: FeatureEnum.FEATURE_JOB
+				},
+				items: []
+			},
+			before: 'employees'
+		}
+	],
+	featureKey: FeatureEnum.FEATURE_JOB,
 	plugins: DEFAULT_JOBS_PLUGINS,
 
 	/**
@@ -51,9 +72,7 @@ export const JobsPlugin: JobsPluginDefinition = {
 	 */
 	init(opts: { plugins: PluginUiDefinition[] }): PluginUiDefinition {
 		return {
-			id: 'jobs',
-			location: 'jobs-sections',
-			module: JobsModule,
+			...JobsPlugin,
 			plugins: opts.plugins
 		};
 	}

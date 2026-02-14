@@ -8,4 +8,4 @@ export * from './lib/plugin-ui.loader';
 export * from './lib/plugin-ui.module';
 export * from './lib/plugin-ui-registry.service';
 export * from './lib/plugin-ui-config-loader';
-
+export * from './lib/plugin-extension';

@@ -1,11 +1,15 @@
 import { inject, NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
-import { FeatureEnum } from '@gauzy/contracts';
-import { IOnPluginUiBootstrap, IOnPluginUiDestroy } from '@gauzy/plugin-ui';
+import {
+	applyDeclarativeRegistrations,
+	IOnPluginUiBootstrap,
+	IOnPluginUiDestroy,
+	PLUGIN_DEFINITION
+} from '@gauzy/plugin-ui';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
-import { createJobsRoutes } from './job.routes';
+import { getJobsChildRoutes } from './job.routes';
 
 @NgModule({
 	declarations: [JobLayoutComponent],
@@ -14,39 +18,35 @@ import { createJobsRoutes } from './job.routes';
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createJobsRoutes(service),
+			useFactory: (_pageRouteRegistryService: PageRouteRegistryService) =>
+				getJobsChildRoutes(_pageRouteRegistryService),
 			deps: [PageRouteRegistryService],
 			multi: true
 		}
 	]
 })
 export class JobsModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
+	private static hasRegistered = false;
+
 	private readonly _log = inject(LoggerService).withContext('JobsModule');
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 
 	constructor() {
-		this.registerNavMenuSection();
+		if (JobsModule.hasRegistered) return;
+
+		const def = inject(PLUGIN_DEFINITION);
+
+		applyDeclarativeRegistrations(def, {
+			navBuilder: this._navMenuBuilderService,
+			pageRouteRegistry: this._pageRouteRegistryService
+		});
+
+		JobsModule.hasRegistered = true;
 	}
 
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
-	}
-
-	private registerNavMenuSection(): void {
-		this._navMenuBuilderService.addNavMenuSection(
-			{
-				id: 'jobs',
-				title: 'Jobs',
-				icon: 'fas fa-briefcase',
-				link: '/pages/jobs',
-				data: {
-					translationKey: 'MENU.JOBS',
-					featureKey: FeatureEnum.FEATURE_JOB
-				},
-				items: []
-			},
-			'employees' // Insert before sales section
-		);
 	}
 
 	ngOnPluginDestroy(): void {

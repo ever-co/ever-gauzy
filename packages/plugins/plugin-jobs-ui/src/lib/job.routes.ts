@@ -1,26 +1,38 @@
 import { Route } from '@angular/router';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { PageRouteRegistryConfig, PageRouteRegistryService, PageRouteSectionsId } from '@gauzy/ui-core/core';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
 
+/** Location where job child plugins (Employee, Search, Matching, etc.) register their routes. */
+export const JOBS_SECTIONS_LOCATION: PageRouteSectionsId = 'jobs-sections';
+
+/** Default tab when navigating to /pages/jobs (redirects empty path). */
+const DEFAULT_JOBS_TAB = 'employee';
+
 /**
- * Creates jobs routes for the application.
- * Child routes are registered by job plugins (JobEmployeePlugin, JobSearchPlugin, etc.)
- * via PageRouteRegistryService under location 'jobs'.
- *
- * @param _pageRouteRegistryService An instance of PageRouteRegistryService
- * @returns An array of Route objects
+ * Route config for registering the jobs section at page-sections.
+ * Used by JobsPlugin for declarative route registration.
  */
-export const createJobsRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Route[] => [
-	{
-		path: '',
-		component: JobLayoutComponent,
-		children: [
-			{
-				path: '',
-				redirectTo: 'employee',
-				pathMatch: 'full'
-			},
-			..._pageRouteRegistryService.getPageLocationRoutes('jobs-sections')
-		]
-	}
-];
+export const JOBS_PAGE_ROUTE: PageRouteRegistryConfig = {
+	location: 'page-sections',
+	path: 'jobs',
+	loadChildren: () => import('@gauzy/plugin-jobs-ui').then((m) => m.JobsModule)
+};
+
+/**
+ * Builds the child routes for the jobs section: layout + redirect + plugin-contributed tabs.
+ *
+ * @param registry Page route registry to fetch routes from JOBS_SECTIONS_LOCATION
+ * @returns Route array for the ROUTES provider in JobsModule
+ */
+export function getJobsChildRoutes(registry: PageRouteRegistryService): Route[] {
+	return [
+		{
+			path: '',
+			component: JobLayoutComponent,
+			children: [
+				{ path: '', redirectTo: DEFAULT_JOBS_TAB, pathMatch: 'full' },
+				...registry.getPageLocationRoutes(JOBS_SECTIONS_LOCATION)
+			]
+		}
+	];
+}

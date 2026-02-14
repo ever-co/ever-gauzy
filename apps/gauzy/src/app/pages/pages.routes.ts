@@ -10,9 +10,12 @@ import { PagesComponent } from './pages.component';
  * Route order follows the main navigation. Keep RESERVED_PAGE_SECTION_PATHS in
  * page-route-registry.service.ts in sync with core paths.
  *
- * @param _service PageRouteRegistryService (used by child modules for their sub-routes)
+ * Plugin section routes (e.g. jobs) are injected via `page-sections` location;
+ * plugins register at bootstrap via PageRouteRegistryService.registerPageRoute().
+ *
+ * @param _pageRouteRegistryService PageRouteRegistryService (child sub-routes + page-sections plugin routes)
  */
-export const createPagesRoutes = (_service: PageRouteRegistryService): Routes => {
+export const createPagesRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Routes => {
 	const children: Route[] = [
 		...getRedirectRoute(),
 		...getDashboardRoute(),
@@ -34,6 +37,7 @@ export const createPagesRoutes = (_service: PageRouteRegistryService): Routes =>
 		...getAuthRoute(),
 		...getSettingsRoute(),
 		...getLegalRoute(),
+		..._pageRouteRegistryService.getPageLocationRoutes('page-sections'),
 		...getNotFoundRoute() // Catch-all ** – must be last
 	];
 
@@ -70,14 +74,28 @@ function getAccountingRoutes(): Route[] {
 				{
 					path: 'income',
 					loadChildren: () => import('./income/income.module').then((m) => m.IncomeModule),
-					data: { selectors: { project: false, team: false }, datePicker: { unitOfTime: 'month' } },
+					data: {
+						selectors: {
+							project: false,
+							team: false
+						},
+						datePicker: {
+							unitOfTime: 'month'
+						}
+					},
 					resolve: { dates: DateRangePickerResolver }
 				},
 				{
 					path: 'expenses',
 					loadChildren: () => import('./expenses/expenses.module').then((m) => m.ExpensesModule),
-					data: { datePicker: { unitOfTime: 'month' } },
-					resolve: { dates: DateRangePickerResolver }
+					data: {
+						datePicker: {
+							unitOfTime: 'month'
+						}
+					},
+					resolve: {
+						dates: DateRangePickerResolver
+					}
 				},
 				{
 					path: 'expense-recurring',
@@ -434,7 +452,9 @@ function getGoalsRoutes(): Route[] {
 				{
 					path: 'reports',
 					loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule),
-					data: { selectors: { project: false, team: false, employee: false, date: false, organization: false } }
+					data: {
+						selectors: { project: false, team: false, employee: false, date: false, organization: false }
+					}
 				},
 				{
 					path: 'settings',
@@ -456,8 +476,7 @@ function getReportsRoutes(): Route[] {
 				{ path: '', redirectTo: 'all', pathMatch: 'full' },
 				{
 					path: 'all',
-					loadChildren: () =>
-						import('./reports/all-report/all-report.module').then((m) => m.AllReportModule),
+					loadChildren: () => import('./reports/all-report/all-report.module').then((m) => m.AllReportModule),
 					data: { selectors: { ...reportSelectors, organization: true } }
 				},
 				{
@@ -475,9 +494,7 @@ function getReportsRoutes(): Route[] {
 				{
 					path: 'apps-urls',
 					loadChildren: () =>
-						import('./reports/apps-urls-report/apps-urls-report.module').then(
-							(m) => m.AppsUrlsReportModule
-						)
+						import('./reports/apps-urls-report/apps-urls-report.module').then((m) => m.AppsUrlsReportModule)
 				},
 				{
 					path: 'manual-time-edits',
@@ -487,14 +504,14 @@ function getReportsRoutes(): Route[] {
 				{
 					path: 'accounting',
 					loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule),
-					data: { selectors: { project: false, team: false, employee: false, date: false, organization: false } }
+					data: {
+						selectors: { project: false, team: false, employee: false, date: false, organization: false }
+					}
 				},
 				{
 					path: 'expense',
 					loadChildren: () =>
-						import('./reports/expenses-report/expenses-report.module').then(
-							(m) => m.ExpensesReportModule
-						)
+						import('./reports/expenses-report/expenses-report.module').then((m) => m.ExpensesReportModule)
 				},
 				{
 					path: 'payments',

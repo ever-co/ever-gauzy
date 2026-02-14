@@ -8,14 +8,15 @@ used to bootstrap and manage UI plugins (such as job and integration UI plugins)
 
 -   **Plugin type & config model**
 
-    -   `PluginUiDefinition` definition (id, module, location).
+    -   `PluginUiDefinition` definition (id, module, location, options).
     -   `PluginUiConfig` with language/locale settings and active plugins list.
-    -   `PLUGIN_UI_CONFIG` injection token.
+    -   `PLUGIN_UI_CONFIG` and `PLUGIN_OPTIONS` injection tokens.
 
 -   **Lifecycle interfaces**
 
-    -   `IOnPluginUiBootstrap` / `IOnPluginUiDestroy`.
-    -   `IPluginUiLifecycleMethods` type for modules implementing both hooks.
+    -   `IOnPluginUiBootstrap` / `IOnPluginUiDestroy` (required).
+    -   `IOnPluginAfterBootstrap` / `IOnPluginBeforeDestroy` (optional, invoked automatically).
+    -   `IOnPluginBeforeRouteActivate` / `IOnPluginConfigChange` (optional, for guards and future config reload).
 
 -   **Config loader helpers**
 
@@ -30,8 +31,18 @@ used to bootstrap and manage UI plugins (such as job and integration UI plugins)
         -   Registers instances in the shared registry.
 
 -   **Registry service**
+
     -   `PluginUiRegistryService` tracks live plugin module instances and
         provides `destroyAll()` for graceful shutdown.
+
+-   **Plugin options**
+
+    -   Add `options?: Record<string, unknown>` to `PluginUiDefinition` for per-plugin metadata.
+    -   Access via `inject(PLUGIN_OPTIONS)` inside the plugin module constructor or lifecycle hooks.
+
+-   **definePlugin / definePluginGroup**
+    -   `definePlugin(id, module, options?)` — creates a simple plugin definition.
+    -   `definePluginGroup(id, module, { location, plugins, init? })` — creates a parent plugin with child plugins and optional init factory.
 
 ### Getting Started
 
