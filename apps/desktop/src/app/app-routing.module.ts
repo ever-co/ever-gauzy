@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
-import { AuthConnectionGuard } from '@gauzy/desktop-ui-lib';
+import { authConnectionGuard } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
 	{
@@ -13,6 +13,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'time-tracker',
+		canActivate: [authConnectionGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
 		children: [
 			{
@@ -27,7 +28,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'plugins',
-		canActivate: [AuthConnectionGuard],
+		canActivate: [authConnectionGuard],
 		children: [
 			{
 				path: '',
@@ -72,4 +73,4 @@ const config: ExtraOptions = {
 	imports: [RouterModule.forRoot(routes, config)],
 	exports: [RouterModule]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

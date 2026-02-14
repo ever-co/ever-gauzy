@@ -37,7 +37,7 @@ import {
 	ProviderFactory,
 	TranslateLoader,
 	TranslateService,
-	TrayIcon,
+	TrayIconFactory,
 	UIError,
 	ipcMainHandler,
 	ipcTimer,
@@ -380,7 +380,6 @@ async function startServer(value, restart = false) {
 
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
-		createTrayMenu();
 	});
 
 	/* ping server before launch the ui */
@@ -403,19 +402,8 @@ function createTrayMenu() {
 		if (tray) {
 			tray.destroy();
 		}
-
-		tray = new TrayIcon(
-			setupWindow,
-			knex,
-			timeTrackerWindow,
-			auth,
-			settingsWindow,
-			{ ...environment },
-			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-			gauzyWindow,
-			alwaysOn
-		);
+		// Create the tray icon and menu
+		TrayIconFactory.create(environment, pathWindow, path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
 	} catch (error) {
 		console.error('ERROR: Occurred while create tray menu:' + error);
 	}
