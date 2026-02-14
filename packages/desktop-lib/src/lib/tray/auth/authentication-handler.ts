@@ -12,7 +12,7 @@ export class AuthenticationHandler {
 	) {}
 
 	async handleAuthSuccess(arg: any): Promise<void> {
-		console.log('Auth Success:', arg);
+		console.log('Auth Success');
 		await this.updateGlobalConfig();
 		await this.saveUser(arg);
 		await this.updateAuthStore(arg);
@@ -63,6 +63,10 @@ export class AuthenticationHandler {
 
 	private async stopTimerIfRunning(): Promise<void> {
 		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
+
+		if (!timeTrackerWindow) {
+			return;
+		}
 
 		// Clear timer display
 		this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {

@@ -7,8 +7,11 @@ export class StopTimerCommand extends MenuCommand {
 		super();
 	}
 
-	execute(): void {
+	public execute(): void {
 		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
+		if (!timeTrackerWindow) {
+			return;
+		}
 		this.windowService.webContents(timeTrackerWindow).send('stop_from_tray');
 	}
 }

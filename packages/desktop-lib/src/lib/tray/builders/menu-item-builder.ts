@@ -23,7 +23,13 @@ export class MenuItemBuilder {
 	}
 
 	withCommand(command: MenuCommand): this {
-		this.item.click = () => command.execute();
+		this.item.click = async () => {
+			try {
+				return command.execute();
+			} catch (error) {
+				console.error(`[MenuItemBuilder] Command execution failed:`, error);
+			}
+		};
 		return this;
 	}
 
