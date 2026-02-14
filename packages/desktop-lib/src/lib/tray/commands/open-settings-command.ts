@@ -7,13 +7,17 @@ export class OpenSettingsCommand extends MenuCommand {
 		super();
 	}
 
-	async execute(): Promise<void> {
+	public async execute(): Promise<void> {
 		const appWindowManager = AppWindowManager.getInstance();
 		if (!appWindowManager.settingWindow) {
-			await appWindowManager.initSettingWindow(this.windowPath.timeTrackerUi);
-			ipcMain.once('setting_window_ready', () => {
-				appWindowManager.settingShow('goto_top_menu');
-			});
+			const onReady = () => appWindowManager.settingShow('goto_top_menu');
+			ipcMain.once('setting_window_ready', onReady);
+			try {
+				await appWindowManager.initSettingWindow(this.windowPath.timeTrackerUi);
+			} catch (err) {
+				ipcMain.removeListener('setting_window_ready', onReady);
+				throw err;
+			}
 			appWindowManager.settingWindow?.show?.();
 		} else {
 			appWindowManager.settingShow('goto_top_menu');
