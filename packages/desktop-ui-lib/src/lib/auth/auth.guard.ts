@@ -22,7 +22,7 @@ export const authGuard: CanActivateFn = (route, state): Observable<boolean | Url
 
 	return combineLatest([store.isAuthenticated$, selectPersistStateInit()]).pipe(
 		take(1),
-		map(([isAutenticated]) => (isAutenticated ? true : buildLoginRedirect(router, state.url)))
+		map(([isAuthenticated]) => (isAuthenticated ? true : buildLoginRedirect(router, state.url)))
 	);
 };
 
