@@ -16,12 +16,12 @@ export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
 
 /**
  * @description
- * Type representing the possible page section locations for dynamic routes.
+ * Type representing the possible page route locations for dynamic route registration.
  *
- * This type is used to identify different sections of the application where dynamic
- * routes and tabs can be registered. Each value corresponds to a specific page or
- * section in the application. This allows for flexible and dynamic routing based
- * on the context and requirements of the application.
+ * This type is used to identify different locations in the application where dynamic
+ * routes can be registered. Each value corresponds to a specific page or section
+ * location. This allows for flexible and dynamic routing based on the context
+ * and requirements of the application.
  *
  * Possible values:
  * - 'auth-sections': The authentication section of the application.
@@ -36,7 +36,7 @@ export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
  * - 'integrations-sections': The integrations section of the application.
  * - 'page-sections': Top-level plugin section routes under /pages.
  */
-export type PageRouteSectionsId =
+export type PageRouteLocationId =
 	| 'auth-sections'
 	| 'pages-sections'
 	| 'dashboard-sections'
@@ -62,11 +62,7 @@ export type PageRouteSectionsId =
  * - 'time-activity-page': The time and activity tab page.
  * - 'employee-edit-page': The employee edit tab page.
  */
-export type PageTabsetPageId =
-	| 'dashboard-page'
-	| 'timesheet-page'
-	| 'time-activity-page'
-	| 'employee-edit-page';
+export type PageTabsetPageId = 'dashboard-page' | 'timesheet-page' | 'time-activity-page' | 'employee-edit-page';
 
 /**
  * @description

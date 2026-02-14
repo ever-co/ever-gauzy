@@ -1,9 +1,9 @@
 import { Route } from '@angular/router';
-import { PageRouteRegistryConfig, PageRouteRegistryService, PageRouteSectionsId } from '@gauzy/ui-core/core';
+import { PageRouteRegistryConfig, PageRouteRegistryService, PageRouteLocationId } from '@gauzy/ui-core/core';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
 
 /** Location where job child plugins (Employee, Search, Matching, etc.) register their routes. */
-export const JOBS_SECTIONS_LOCATION: PageRouteSectionsId = 'jobs-sections';
+export const JOBS_SECTIONS_LOCATION: PageRouteLocationId = 'jobs-sections';
 
 /** Default tab when navigating to /pages/jobs (redirects empty path). */
 const DEFAULT_JOBS_TAB = 'employee';

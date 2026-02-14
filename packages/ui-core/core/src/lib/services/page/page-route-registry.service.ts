@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Route } from '@angular/router';
-import { PageRouteSectionsId } from '../../common/component-registry.types';
+import { PageRouteLocationId } from '../../common/component-registry.types';
 import { IPageRouteRegistry, PageRouteRegistryConfig } from './page-route-registry.types';
 
 /** Location used for top-level section routes (e.g. jobs) contributed by plugins under /pages. */
-export const PAGE_SECTIONS_LOCATION: PageRouteSectionsId = 'page-sections';
+export const PAGE_SECTIONS_LOCATION: PageRouteLocationId = 'page-sections';
 
 /**
  * Top-level page paths reserved by core pages routing.
@@ -17,7 +17,6 @@ export const PAGE_SECTIONS_LOCATION: PageRouteSectionsId = 'page-sections';
  * - getContactsRoute      → contacts
  * - getProjectsRoute      → projects
  * - getTasksRoute         → tasks
- * - getJobsRoute          → jobs
  * - getSalesRoutes        → sales
  * - getEmployeesRoutes    → employees
  * - getOrganizationRoutes → organization
@@ -64,9 +63,9 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 	/**
 	 * Registry for storing page route configurations.
 	 *
-	 * This Map stores arrays of PageRouteRegistryConfig objects, keyed by PageRouteSectionsId.
+	 * This Map stores arrays of PageRouteRegistryConfig objects, keyed by PageRouteLocationId.
 	 */
-	private readonly registry = new Map<PageRouteSectionsId, PageRouteRegistryConfig[]>();
+	private readonly registry = new Map<PageRouteLocationId, PageRouteRegistryConfig[]>();
 
 	/**
 	 * Retrieves a read-only snapshot of the page route registry.
@@ -79,7 +78,7 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 	 *          provides a snapshot of the registry's state and cannot be modified,
 	 *          ensuring that internal data integrity is maintained.
 	 */
-	public getRegistry(): ReadonlyMap<PageRouteSectionsId, PageRouteRegistryConfig[]> {
+	public getRegistry(): ReadonlyMap<PageRouteLocationId, PageRouteRegistryConfig[]> {
 		// Create and return a new Map to provide an immutable view of the current registry state
 		return new Map(this.registry);
 	}
@@ -184,7 +183,7 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 	 * @param location The page location identifier.
 	 * @returns The array of registered routes for the specified location.
 	 */
-	getPageLocationRoutes(location: PageRouteSectionsId): Route[] {
+	getPageLocationRoutes(location: PageRouteLocationId): Route[] {
 		// Get all registered routes for the specified location
 		let configs = this.registry.get(location) || [];
 
