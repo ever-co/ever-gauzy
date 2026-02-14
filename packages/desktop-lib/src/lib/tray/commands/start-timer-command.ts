@@ -8,14 +8,25 @@ export class StartTimerCommand extends MenuCommand {
 		super();
 	}
 
-	execute(): void {
+	public execute(): void {
 		const userLogin = this.configStore.get('auth');
-		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
+		let timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
+
+		// Ensure the timer window exists (create/show if needed)
+		if (!timeTrackerWindow) {
+			this.windowService.show(RegisteredWindow.TIMER);
+			// Re-fetch the window in case `show()` created it synchronously
+			timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
+		}
+
+		if (!timeTrackerWindow) {
+			// Nothing to do if the window couldn't be created or fetched
+			return;
+		}
 
 		if (userLogin && userLogin.employeeId) {
 			this.windowService.webContents(timeTrackerWindow).send('start_from_tray', LocalStore.beforeRequestParams());
 		} else {
-			this.windowService.show(RegisteredWindow.TIMER);
 			this.windowService.webContents(timeTrackerWindow).send('auth_success_tray_init');
 		}
 	}
