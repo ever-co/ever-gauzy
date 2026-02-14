@@ -15,7 +15,7 @@ const DEFAULT_JOBS_TAB = 'employee';
 export const JOBS_PAGE_ROUTE: PageRouteRegistryConfig = {
 	location: 'page-sections',
 	path: 'jobs',
-	loadChildren: () => import('@gauzy/plugin-jobs-ui').then((m) => m.JobsModule)
+	loadChildren: () => import('./jobs.module').then((m) => m.JobsModule)
 };
 
 /**
