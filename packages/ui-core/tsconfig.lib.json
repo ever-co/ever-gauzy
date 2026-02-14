@@ -22,6 +22,7 @@
 		"i18n/**/*.ts",
 		"shared/**/*.ts",
 		"theme/**/*.ts",
+		"icons/**/*.ts",
 		"typings.d.ts"
 	]
 }
