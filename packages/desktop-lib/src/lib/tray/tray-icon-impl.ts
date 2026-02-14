@@ -29,8 +29,6 @@ export class TrayIconImpl {
 			dependencies.configStore,
 			this.authHandler
 		);
-
-		this.authIPCHandler.setupHandlers();
 	}
 
 	initialize(): TrayIcon {
@@ -45,6 +43,8 @@ export class TrayIconImpl {
 				this.trayIcon.onAuthStateChanged(isAuthenticated, authData);
 			}
 		});
+
+		this.authIPCHandler.setupHandlers();
 
 		return this.trayIcon;
 	}

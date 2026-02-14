@@ -27,6 +27,10 @@ export class StartTimerCommand extends MenuCommand {
 		if (userLogin && userLogin.employeeId) {
 			this.windowService.webContents(timeTrackerWindow).send('start_from_tray', LocalStore.beforeRequestParams());
 		} else {
+			// Ensure the timer window is visible so unauthenticated users see the login UI
+			this.windowService.show(RegisteredWindow.TIMER);
+			// Re-fetch in case show() changed/created the window
+			timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
 			this.windowService.webContents(timeTrackerWindow).send('auth_success_tray_init');
 		}
 	}

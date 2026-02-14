@@ -25,7 +25,7 @@ export class MenuItemBuilder {
 	withCommand(command: MenuCommand): this {
 		this.item.click = async () => {
 			try {
-				return command.execute();
+				await command.execute();
 			} catch (error) {
 				console.error(`[MenuItemBuilder] Command execution failed:`, error);
 			}

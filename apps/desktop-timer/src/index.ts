@@ -277,7 +277,7 @@ async function startServer(value, restart = false) {
 		gauzyWindow.show();
 		splashScreen.close();
 	}
-	const auth = store.get('auth');
+
 	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
 
 	if (tray) {
