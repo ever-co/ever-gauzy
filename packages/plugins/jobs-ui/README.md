@@ -16,7 +16,7 @@ Run `yarn nx test plugin-jobs-ui` to execute the unit tests.
 
 ## Publishing
 
-After building your library with `yarn nx build plugin-jobs-ui`, go to the dist folder `dist/packages/plugins/plugin-jobs-ui` and run `npm publish`.
+After building your library with `yarn nx build plugin-jobs-ui`, go to the dist folder `dist/packages/plugins/jobs-ui` and run `npm publish`.
 
 ## Installation
 

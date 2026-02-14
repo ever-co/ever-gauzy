@@ -10,7 +10,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy",
-		"directory": "packages/plugins/plugin-jobs-ui"
+		"directory": "packages/plugins/jobs-ui"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
@@ -44,7 +44,13 @@
 		"@types/node": "^24.10.0",
 		"jest-preset-angular": "14.6.2"
 	},
-	"keywords": ["Angular", "UI", "plugin", "Ever Gauzy", "jobs"],
+	"keywords": [
+		"Angular",
+		"UI",
+		"plugin",
+		"Ever Gauzy",
+		"jobs"
+	],
 	"engines": {
 		"node": ">=22",
 		"yarn": ">=1.22"

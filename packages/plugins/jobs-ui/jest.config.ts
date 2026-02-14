@@ -2,7 +2,7 @@ export default {
 	displayName: 'plugin-jobs-ui',
 	preset: '../../../jest.preset.js',
 	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-	coverageDirectory: '../../../coverage/packages/plugins/plugin-jobs-ui',
+	coverageDirectory: '../../../coverage/packages/plugins/jobs-ui',
 	transform: {
 		'^.+\\.(ts|mjs|js|html)$': [
 			'jest-preset-angular',
