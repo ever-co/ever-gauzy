@@ -6,6 +6,7 @@ export class LanguageChangeSubject {
 	private observers: ILanguageObserver[] = [];
 
 	attach(observer: ILanguageObserver): void {
+		if (this.observers.includes(observer)) return;
 		this.observers.push(observer);
 	}
 
