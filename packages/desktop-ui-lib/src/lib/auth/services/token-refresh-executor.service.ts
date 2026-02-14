@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpRequest } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { NbAuthResult } from '@nebular/auth';
-import { Observable, throwError } from 'rxjs';
+import { Observable, take, throwError } from 'rxjs';
 import { catchError, concatMap, switchMap } from 'rxjs/operators';
 import { Store } from '../../services';
 import { AuthStrategy } from './auth-strategy.service';
@@ -29,18 +29,20 @@ export class TokenRefreshExecutor {
 		originalError: HttpErrorResponse
 	): Observable<HttpEvent<any>> {
 		// Check for refresh token before starting refresh state
-		// This check is synchronized with refresh state to prevent race conditions
-		if (!this.store.refreshToken) {
-			console.warn('[TokenRefreshExecutor] No refresh token available');
-			return this.handleSessionExpiry(originalError);
-		}
-
-		// Mark refresh as in-progress before making the call
-		this.refreshStateManager.startRefresh();
-
-		return this.authStrategy.refreshToken().pipe(
-			switchMap((result: NbAuthResult) => this.handleRefreshResult(result, request, next, originalError)),
-			catchError((error) => this.handleRefreshError(originalError, error))
+		// This check is synchronized with refresh state to prevent race condition
+		return this.store.isAuthenticated$.pipe(
+			take(1),
+			switchMap((isAuthenticated) => {
+				if (!isAuthenticated) {
+					return this.handleSessionExpiry(originalError);
+				}
+				// Mark refresh as in-progress before making the call
+				this.refreshStateManager.startRefresh();
+				return this.authStrategy.refreshToken().pipe(
+					switchMap((result: NbAuthResult) => this.handleRefreshResult(result, request, next, originalError)),
+					catchError((error) => this.handleRefreshError(originalError, error))
+				);
+			})
 		);
 	}
 

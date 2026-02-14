@@ -31,7 +31,6 @@ export class AuthenticationHandler {
 			const user = new User({ ...arg, ...arg.user });
 			user.remoteId = arg.userId;
 			user.organizationId = arg.organizationId;
-
 			if (user.employee) {
 				await this.userRepository.save(user.toObject());
 			}
@@ -42,7 +41,6 @@ export class AuthenticationHandler {
 
 	private async updateAuthStore(arg: any): Promise<void> {
 		const lastUser = this.configStore.get('auth');
-
 		if (lastUser && lastUser.userId !== arg.userId) {
 			this.configStore.updateConfigProject({
 				projectId: null,
@@ -52,29 +50,39 @@ export class AuthenticationHandler {
 				organizationTeamId: null
 			});
 		}
-
 		this.configStore.set({
 			auth: { ...arg, isLogout: false }
 		});
 	}
 
 	async handleLogout(): Promise<void> {
+		await this.stopTimerIfRunning();
+		this.closeWindows();
+		await this.clearUserData();
+	}
+
+	private async stopTimerIfRunning(): Promise<void> {
 		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
 
+		// Clear timer display
 		this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
 			event: 'updateTimer',
 			timeText: null
 		});
 
+		// Stop timer if running
 		const appSetting = this.configStore.get('appSetting');
-
-		if (appSetting && appSetting.timerStarted) {
+		if (appSetting?.timerStarted) {
 			this.windowService.webContents(timeTrackerWindow).send('stop_from_tray');
 		}
+	}
 
-		this.windowService.hide(RegisteredWindow.SETTINGS);
-		this.windowService.hide(RegisteredWindow.WIDGET);
+	private closeWindows(): void {
+		this.windowService.getOne(RegisteredWindow.SETTINGS)?.close?.();
+		this.windowService.getOne(RegisteredWindow.WIDGET)?.close?.();
+	}
 
+	private async clearUserData(): Promise<void> {
 		await this.userRepository.remove();
 		this.configStore.updateAuthSetting({ isLogout: true });
 	}

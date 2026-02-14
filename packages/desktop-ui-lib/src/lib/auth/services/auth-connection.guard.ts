@@ -1,6 +1,7 @@
 import { inject, InjectionToken } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
-import { from, Observable, of, switchMap } from 'rxjs';
+import { selectPersistStateInit } from '@datorama/akita';
+import { combineLatest, from, Observable, of, switchMap } from 'rxjs';
 import { catchError, map, take } from 'rxjs/operators';
 import { GAUZY_ENV } from '../../constants';
 import { PersistQuery, PersistState, ServerConnectionService } from '../../services';
@@ -75,7 +76,10 @@ export const authConnectionGuard: CanActivateFn = (route, state): Observable<boo
 };
 
 function getCurrentConnectionState(persistQuery: PersistQuery): Observable<ConnectionState> {
-	return persistQuery.select(mapToConnectionState).pipe(take(1));
+	return combineLatest([persistQuery.select(mapToConnectionState), selectPersistStateInit()]).pipe(
+		take(1),
+		map(([state]) => state)
+	);
 }
 
 function mapToConnectionState(state: PersistState): ConnectionState {

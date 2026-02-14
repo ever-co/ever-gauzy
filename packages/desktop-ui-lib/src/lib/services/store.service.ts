@@ -16,7 +16,7 @@ import {
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { merge, Observable } from 'rxjs';
+import { distinctUntilChanged, merge, Observable, shareReplay } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../constants/layout.constants';
 
@@ -168,6 +168,17 @@ export class Store {
 				)
 		);
 	}
+
+	readonly isAuthenticated$ = this.persistQuery
+		.select((state) => ({
+			token: state.token,
+			refreshToken: state.refreshToken
+		}))
+		.pipe(
+			map(({ token, refreshToken }) => !!token && !!refreshToken),
+			distinctUntilChanged(),
+			shareReplay({ bufferSize: 1, refCount: true })
+		);
 
 	// Getters and Setters
 	get selectedOrganization(): IOrganization | null {

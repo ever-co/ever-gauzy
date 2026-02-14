@@ -1,5 +1,7 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, Router, UrlTree } from '@angular/router';
+import { selectPersistStateInit } from '@datorama/akita';
+import { combineLatest, map, Observable, take, tap } from 'rxjs';
 import { Store } from '../services';
 
 /**
@@ -8,20 +10,19 @@ import { Store } from '../services';
  * Use for routes like login, register, forgot-password, etc.
  * Redirects authenticated users to the main app.
  */
-export const noAuthGuard: CanActivateFn = async (route, state): Promise<boolean> => {
+export const noAuthGuard: CanActivateFn = (route, state): Observable<boolean | UrlTree> => {
 	const router = inject(Router);
 	const store = inject(Store);
 
-	// Check if we have stored authentication
-	const hasStoredAuth = !!store.token && !!store.userId;
-
-	if (!hasStoredAuth) {
-		// No stored auth, allow access to auth pages
-		return true;
-	}
-
-	// User is authenticated, redirect to app
-	console.log('[NoAuthGuard] User already authenticated, redirecting to app');
-	await router.navigate(['/time-tracker']);
-	return false;
+	return combineLatest([store.isAuthenticated$, selectPersistStateInit()]).pipe(
+		take(1),
+		tap(([isAuthenticated]) => {
+			if (isAuthenticated) {
+				console.warn(
+					'[NoAuthGuard] Authenticated user attempted to access a no-auth route. Redirecting to main app.'
+				);
+			}
+		}),
+		map(([isAuthenticated]) => (isAuthenticated ? router.createUrlTree(['/time-tracker']) : true))
+	);
 };

@@ -1,6 +1,6 @@
 import { inject, Injectable, OnDestroy } from '@angular/core';
-import { EMPTY, interval, Subscription } from 'rxjs';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { combineLatest, EMPTY, interval, map, Observable, of, Subscription, take } from 'rxjs';
+import { catchError, concatMap, filter, switchMap, tap } from 'rxjs/operators';
 import { Store } from '../../services';
 import { AuthStrategy } from './auth-strategy.service';
 import { RefreshStateManager } from './refresh-state-manager.service';
@@ -52,7 +52,8 @@ export class TokenRefreshService implements OnDestroy {
 		// Check token expiry every minute
 		this.intervalSubscription = interval(this.CHECK_INTERVAL)
 			.pipe(
-				filter(() => this.shouldRefreshToken()),
+				concatMap(() => this.shouldRefreshToken()),
+				filter((shouldRefresh) => shouldRefresh),
 				tap(() => this.logRefreshAttempt()),
 				switchMap(() => this.performRefresh())
 			)
@@ -87,7 +88,7 @@ export class TokenRefreshService implements OnDestroy {
 	 * Determines if a proactive refresh should be attempted.
 	 * Includes circuit breaker logic with automatic recovery.
 	 */
-	private shouldRefreshToken(): boolean {
+	private shouldRefreshToken(): Observable<boolean> {
 		// Circuit breaker: check if we should attempt recovery
 		if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
 			const now = Date.now();
@@ -103,15 +104,19 @@ export class TokenRefreshService implements OnDestroy {
 					`[TokenRefreshService] Circuit breaker open: ${this.consecutiveFailures} consecutive failures. ` +
 						`Will retry in ${Math.round((this.CIRCUIT_BREAKER_RESET_TIME - timeSinceOpen) / 1000)}s`
 				);
-				return false;
+				return of(false);
 			}
 		}
 
-		return (
-			!!this.store.refreshToken &&
-			this.store.isTokenExpired() &&
-			!this.store.isOffline &&
-			!this.refreshStateManager.isRefreshInProgress()
+		return combineLatest([this.store.isAuthenticated$, this.store.isOffline$]).pipe(
+			take(1),
+			map(
+				([isAuthenticated, isOffline]) =>
+					isAuthenticated &&
+					!isOffline &&
+					this.store.isTokenExpired() &&
+					!this.refreshStateManager.isRefreshInProgress()
+			)
 		);
 	}
 

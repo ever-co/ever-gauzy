@@ -1,5 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
+import { selectPersistStateInit } from '@datorama/akita';
+import { combineLatest, map, Observable, take } from 'rxjs';
 import { Store } from './../services/store.service';
 
 /**
@@ -14,21 +16,15 @@ import { Store } from './../services/store.service';
  * - Token refresh
  * - Network calls
  */
-export const authGuard: CanActivateFn = (route, state): boolean | UrlTree => {
+export const authGuard: CanActivateFn = (route, state): Observable<boolean | UrlTree> => {
 	const router = inject(Router);
 	const store = inject(Store);
 
-	if (isAuthenticated(store)) {
-		return true;
-	}
-
-	return buildLoginRedirect(router, state.url);
+	return combineLatest([store.isAuthenticated$, selectPersistStateInit()]).pipe(
+		take(1),
+		map(([isAutenticated]) => (isAutenticated ? true : buildLoginRedirect(router, state.url)))
+	);
 };
-
-function isAuthenticated(store: Store): boolean {
-	const { token, refreshToken } = store;
-	return Boolean(token && refreshToken);
-}
 
 function buildLoginRedirect(router: Router, returnUrl: string): UrlTree {
 	return router.createUrlTree(['/auth/login'], {
