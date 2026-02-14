@@ -83,6 +83,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 					)
 				)
 			)
+			.pipe(untilDestroyed(this))
 			.subscribe();
 
 		this.electronService.ipcRenderer.on('server_ping_restart', (event, arg) =>
