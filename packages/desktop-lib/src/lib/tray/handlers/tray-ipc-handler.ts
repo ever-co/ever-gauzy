@@ -18,30 +18,34 @@ export class TrayIPCHandler {
 	}
 
 	private setupTimerHandlers(): void {
-		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
-
 		ipcMain.on('update_tray_start', () => {
-			this.menuManager.updateMenuItem(2, { enabled: false });
-			this.menuManager.updateMenuItem(0, { visible: true });
-			this.menuManager.updateMenuItem(3, { enabled: true });
-			this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
-				event: 'startTimer'
-			});
+			this.menuManager.updateMenuItem('1', { enabled: false });
+			this.menuManager.updateMenuItem('0', { visible: true });
+			this.menuManager.updateMenuItem('2', { enabled: true });
+			const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
+			if (timeTrackerWindow) {
+				this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
+					event: 'startTimer'
+				});
+			}
 		});
 
 		ipcMain.on('update_tray_stop', () => {
-			this.menuManager.updateMenuItem(2, { enabled: true });
-			this.menuManager.updateMenuItem(0, { visible: false });
-			this.menuManager.updateMenuItem(3, { enabled: false });
-			this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
-				event: 'stopTimer'
-			});
+			this.menuManager.updateMenuItem('1', { enabled: true });
+			this.menuManager.updateMenuItem('0', { visible: false });
+			this.menuManager.updateMenuItem('2', { enabled: false });
+			const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
+			if (timeTrackerWindow) {
+				this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
+					event: 'stopTimer'
+				});
+			}
 		});
 
 		ipcMain.on('update_tray_time_update', (event, arg) => {
 			const auth = this.configStore.get('auth');
 			if (auth && auth.employeeId && !auth.isLogout) {
-				this.menuManager.updateMenuItem(0, {
+				this.menuManager.updateMenuItem('0', {
 					label: TranslateService.instant('TIMER_TRACKER.MENU.NOW_TRACKING', { time: arg })
 				});
 			}
@@ -51,10 +55,12 @@ export class TrayIPCHandler {
 			const auth = this.configStore.get('auth');
 			if (auth && auth.employeeId && !auth.isLogout) {
 				const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
-				this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
-					event: 'updateTimer',
-					timeText: arg ? arg.timeRun : null
-				});
+				if (timeTrackerWindow) {
+					this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
+						event: 'updateTimer',
+						timeText: arg ? arg.timeRun : null
+					});
+				}
 			}
 		});
 	}
@@ -72,7 +78,7 @@ export class TrayIPCHandler {
 	private setupUserDetailHandler(): void {
 		ipcMain.on('user_detail', (event, arg) => {
 			if (arg.employee && arg.employee.organization && arg.employee.organization.name) {
-				this.menuManager.updateMenuItem(1, {
+				this.menuManager.updateMenuItem('6', {
 					label: arg.employee.organization.name,
 					visible: true
 				});

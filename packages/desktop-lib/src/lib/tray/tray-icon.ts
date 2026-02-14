@@ -91,10 +91,12 @@ export class TrayIcon implements ILanguageObserver {
 
 	private setupTrayInteractions(): void {
 		this.tray.on('double-click', () => {
-			if (process.env.IS_DESKTOP_TIMER) {
+			if (process.env.IS_DESKTOP_TIMER === 'true') {
 				this.dependencies.windowService.show(RegisteredWindow.TIMER);
 				const timeTrackerWindow = this.dependencies.windowService.getOne(RegisteredWindow.TIMER);
-				this.dependencies.windowService.webContents(timeTrackerWindow).send('auth_success_tray_init');
+				if (timeTrackerWindow) {
+					this.dependencies.windowService.webContents(timeTrackerWindow).send('auth_success_tray_init');
+				}
 			}
 		});
 	}

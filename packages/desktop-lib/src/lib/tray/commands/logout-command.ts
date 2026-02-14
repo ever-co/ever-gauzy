@@ -14,10 +14,15 @@ export class LogoutCommand extends MenuCommand {
 		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
 
 		if (appSetting?.timerStarted) {
-			isLogout = await handleLogoutDialog(timeTrackerWindow);
+			if (timeTrackerWindow) {
+				isLogout = await handleLogoutDialog(timeTrackerWindow);
+			} else {
+				// No time tracker window available — skip the dialog and proceed with logout
+				isLogout = true;
+			}
 		}
 
-		if (isLogout) {
+		if (isLogout && timeTrackerWindow) {
 			this.windowService.webContents(timeTrackerWindow).send('logout');
 		}
 	}

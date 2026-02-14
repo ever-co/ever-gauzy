@@ -42,15 +42,15 @@ export class AuthIPCHandler {
 	}
 
 	private setupLogoutHandlers(): void {
-		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
-
 		ipcMain.handle('FINAL_LOGOUT', async () => {
 			console.log('Final Logout');
 
+			const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
 			await this.performLogout(timeTrackerWindow);
 		});
 
 		ipcMain.on('logout', () => {
+			const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
 			if (timeTrackerWindow) {
 				this.windowService.webContents(timeTrackerWindow).send('logout');
 			}

@@ -54,12 +54,22 @@ export class TrayMenuManager {
 	}
 
 	/**
-	 * Update specific menu item (e.g., timer status)
+	 * Update specific menu item by index or id (e.g., timer status)
 	 */
-	updateMenuItem(index: number, updates: Partial<MenuItemConstructorOptions>): void {
-		if (this.currentMenu[index]) {
+	updateMenuItem(identifier: number | string, updates: Partial<MenuItemConstructorOptions>): void {
+		let index: number = -1;
+
+		if (typeof identifier === 'number') {
+			index = identifier;
+		} else {
+			index = this.currentMenu.findIndex((item) => String(item.id) === String(identifier));
+		}
+
+		if (index >= 0 && this.currentMenu[index]) {
 			this.currentMenu[index] = { ...this.currentMenu[index], ...updates };
 			this.applyMenu();
+		} else {
+			console.warn(`TrayMenuManager.updateMenuItem: menu item not found for identifier=${identifier}`);
 		}
 	}
 
