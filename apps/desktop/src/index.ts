@@ -397,13 +397,15 @@ async function startServer(value, restart = false) {
 
 function createTrayMenu() {
 	try {
-		const auth = store.get('auth');
-
 		if (tray) {
 			tray.destroy();
 		}
 		// Create the tray icon and menu
-		TrayIconFactory.create(environment, pathWindow, path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
+		tray = TrayIconFactory.create(
+			environment,
+			pathWindow,
+			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png')
+		);
 	} catch (error) {
 		console.error('ERROR: Occurred while create tray menu:' + error);
 	}

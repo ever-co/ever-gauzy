@@ -286,7 +286,7 @@ async function startServer(value, restart = false) {
 	console.log('dir name:', __dirname);
 	console.log('app path', app.getAppPath());
 	// Create the tray icon and menu
-	TrayIconFactory.create(environment, pathWindow, path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
+	tray = TrayIconFactory.create(environment, pathWindow, path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
 	// Language change
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);

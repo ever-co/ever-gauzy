@@ -141,7 +141,7 @@ export class AuthStrategy extends NbAuthStrategy {
 					return new NbAuthResult(false, res, false, ['Invalid access token received']);
 				}
 
-				if (!this.isValidToken(res.refresh_token)) {
+				if (!res.refresh_token) {
 					console.error('Received invalid refresh token from refresh');
 					return new NbAuthResult(false, res, false, ['Invalid refresh token received']);
 				}
@@ -187,12 +187,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	public login(loginInput): Observable<NbAuthResult> {
 		return this.authService.login(loginInput).pipe(
 			switchMap((res: IAuthResponse) => {
-				let user, token, refreshToken;
-				if (res) {
-					user = res.user;
-					token = res.token;
-					refreshToken = res.refresh_token;
-				}
+				const user = res.user;
 
 				if (!user) {
 					return of(new NbAuthResult(false, res, false, AuthStrategy.config.login.defaultErrors));
