@@ -1403,11 +1403,13 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 		const user = await userService.retrieve();
 		log.info('Current User', user);
 
-		if (!user || auth.userId !== user.remoteId) {
+		// Ensure we have a valid user and matching remoteId
+		if (!user || !user.remoteId || auth.userId !== user.remoteId) {
 			await handleLogout('Authentication failed');
 			return false;
 		}
 
+		// Ensure employee exists on the user record before accepting authentication
 		if (user.employee) {
 			LocalStore.updateAuthSetting({ isLogout: false });
 			return true;

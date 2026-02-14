@@ -51,7 +51,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.languageElectronService.initialize();
 
 		this.electronService
-			.fromEvent('auth_success_tray_init')
+			.fromEvent('timer_tracker_show')
 			.pipe(
 				take(1),
 				tap(() => this.tokenRefreshService.start()),

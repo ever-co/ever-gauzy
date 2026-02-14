@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IAuthResponse, IUser } from '@gauzy/contracts';
 import { NbAuthResult, NbAuthStrategy, NbAuthStrategyClass } from '@nebular/auth';
-import { Observable, asyncScheduler, from, of } from 'rxjs';
+import { Observable, from, of, switchMap } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ElectronService } from '../../electron/services';
 import { Store, TimeTrackerDateManager } from '../../services';
@@ -186,7 +186,7 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	public login(loginInput): Observable<NbAuthResult> {
 		return this.authService.login(loginInput).pipe(
-			map((res: IAuthResponse) => {
+			switchMap(async (res: IAuthResponse) => {
 				let user, token, refreshToken;
 				if (res) {
 					user = res.user;
@@ -205,18 +205,21 @@ export class AuthStrategy extends NbAuthStrategy {
 				// Store authentication data using centralized method
 				this.storeAuthenticationData(res);
 
-				//
-				asyncScheduler.schedule(() => {
-					this.authService.electronAuthentication(res);
-				}, 3000);
-
-				return new NbAuthResult(
-					true,
-					res,
-					AuthStrategy.config.login.redirect.success,
-					[],
-					AuthStrategy.config.login.defaultMessages
-				);
+				// Send authentication data to Electron main process if in Electron environment
+				return this.authService
+					.electronAuthentication(res)
+					.pipe(
+						map(
+							() =>
+								new NbAuthResult(
+									true,
+									res,
+									AuthStrategy.config.login.redirect.success,
+									[],
+									AuthStrategy.config.login.defaultMessages
+								)
+						)
+					);
 			}),
 			catchError((err) => {
 				const isLoginOffline = !!this.store?.user && !!this.store?.token;
@@ -238,16 +241,20 @@ export class AuthStrategy extends NbAuthStrategy {
 						token: this.store.token,
 						refresh_token: this.store.refreshToken
 					};
-					this.authService.electronAuthentication(res);
-					return of(
-						new NbAuthResult(
-							true,
-							res,
-							AuthStrategy.config.login.redirect.success,
-							[],
-							AuthStrategy.config.login.defaultMessages
-						)
-					);
+					return this.authService
+						.electronAuthentication(res)
+						.pipe(
+							map(
+								() =>
+									new NbAuthResult(
+										true,
+										res,
+										AuthStrategy.config.login.redirect.success,
+										[],
+										AuthStrategy.config.login.defaultMessages
+									)
+							)
+						);
 				}
 				return of(
 					new NbAuthResult(false, err, false, AuthStrategy.config.login.defaultErrors, [

@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
+import { IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { asyncScheduler, catchError, EMPTY, filter, firstValueFrom, tap } from 'rxjs';
-import { AuthService, AuthStrategy } from '../../../auth';
-import { ErrorHandlerService, Store, TimeTrackerDateManager } from '../../../services';
-import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
-import { LogoComponent } from '../../shared/ui/logo/logo.component';
 import { TranslatePipe } from '@ngx-translate/core';
+import { catchError, EMPTY, filter, firstValueFrom, switchMap, tap } from 'rxjs';
+import { AuthService, AuthStrategy } from '../../../auth';
+import { ErrorHandlerService, Store } from '../../../services';
+import { LogoComponent } from '../../shared/ui/logo/logo.component';
+import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -127,13 +127,10 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 			.signinWorkspaceByToken({ email, token })
 			.pipe(
 				filter(({ user, token }: IAuthResponse) => !!user && !!token),
-				tap((response: IAuthResponse) => {
+				switchMap((response: IAuthResponse) => {
 					// Store authentication data using centralized method
 					this._authStrategy.storeAuthenticationData(response);
-
-					asyncScheduler.schedule(() => {
-						this._authService.electronAuthentication(response);
-					}, 3000);
+					return this._authService.electronAuthentication(response);
 				}),
 				catchError((error) => {
 					// Handle and log errors using the error handling service
