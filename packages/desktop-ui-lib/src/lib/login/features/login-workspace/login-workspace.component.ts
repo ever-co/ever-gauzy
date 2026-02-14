@@ -1,17 +1,17 @@
+import { NgStyle, NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NavigationExtras, Router, RouterLink } from '@angular/router';
-import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
+import { HttpStatus, IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
+import { NbButtonModule, NbFormFieldModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { asyncScheduler, catchError, EMPTY, filter, tap } from 'rxjs';
-import { AuthService, AuthStrategy } from '../../../auth';
-import { ErrorHandlerService, Store, TimeTrackerDateManager } from '../../../services';
-import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
-import { LogoComponent } from '../../shared/ui/logo/logo.component';
-import { NgTemplateOutlet, NgStyle } from '@angular/common';
-import { NbInputModule, NbFormFieldModule, NbButtonModule, NbIconModule } from '@nebular/theme';
-import { SpinnerButtonDirective } from '../../../directives/spinner-button.directive';
 import { TranslatePipe } from '@ngx-translate/core';
+import { catchError, EMPTY, filter, switchMap, tap } from 'rxjs';
+import { AuthService, AuthStrategy } from '../../../auth';
+import { SpinnerButtonDirective } from '../../../directives/spinner-button.directive';
+import { ErrorHandlerService, Store } from '../../../services';
+import { LogoComponent } from '../../shared/ui/logo/logo.component';
+import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -149,14 +149,10 @@ export class NgxLoginWorkspaceComponent implements OnInit {
 					}
 				}),
 				filter(({ user, token }: IAuthResponse) => !!user && !!token),
-				tap((response: IAuthResponse) => {
+				switchMap((response: IAuthResponse) => {
 					// Store authentication data using centralized method
 					this._authStrategy.storeAuthenticationData(response);
-
-					asyncScheduler.schedule(() => {
-						this._authService.electronAuthentication(response);
-						this.loading = false;
-					}, 3000);
+					return this._authService.electronAuthentication(response);
 				}),
 				catchError((error) => {
 					// Handle and log errors using the error handling service

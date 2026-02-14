@@ -1,8 +1,9 @@
 import { inject, InjectionToken } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { from, Observable, of, switchMap } from 'rxjs';
 import { catchError, map, take } from 'rxjs/operators';
-import { PersistQuery, PersistState } from '../../services';
+import { GAUZY_ENV } from '../../constants';
+import { PersistQuery, PersistState, ServerConnectionService } from '../../services';
 
 /**
  * Represents the relevant server connection and authentication state for the guard.
@@ -58,10 +59,18 @@ export const authConnectionGuard: CanActivateFn = (route, state): Observable<boo
 	const router = inject(Router);
 	const persistQuery = inject(PersistQuery);
 	const config = inject(AUTH_CONNECTION_GUARD_CONFIG);
+	const env = inject(GAUZY_ENV);
+	const serverConnectionService = inject(ServerConnectionService);
 
-	return getCurrentConnectionState(persistQuery).pipe(
-		map((connectionState) => handleConnectionState(connectionState, state.url, router, config)),
-		catchError((error) => handleError(error, state.url, router, config))
+	return from(serverConnectionService.checkServerConnection(env.API_BASE_URL)).pipe(
+		switchMap((isConnected: boolean) =>
+			getCurrentConnectionState(persistQuery).pipe(
+				map((connectionState) =>
+					handleConnectionState(isConnected, connectionState, state.url, router, config)
+				),
+				catchError((error) => handleError(error, state.url, router, config))
+			)
+		)
 	);
 };
 
@@ -77,12 +86,13 @@ function mapToConnectionState(state: PersistState): ConnectionState {
 }
 
 function handleConnectionState(
+	isConnected: boolean,
 	connectionState: ConnectionState,
 	url: string,
 	router: Router,
 	config: AuthConnectionGuardConfig
 ): boolean | UrlTree {
-	if (isAccessAllowed(connectionState)) {
+	if (isConnected && isAccessAllowed(connectionState)) {
 		console.log(`AuthConnectionGuard: Access GRANTED to ${url}`);
 		return true;
 	}

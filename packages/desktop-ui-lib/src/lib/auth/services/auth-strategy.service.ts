@@ -186,7 +186,7 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	public login(loginInput): Observable<NbAuthResult> {
 		return this.authService.login(loginInput).pipe(
-			switchMap(async (res: IAuthResponse) => {
+			switchMap((res: IAuthResponse) => {
 				let user, token, refreshToken;
 				if (res) {
 					user = res.user;
@@ -195,11 +195,11 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 
 				if (!user) {
-					return new NbAuthResult(false, res, false, AuthStrategy.config.login.defaultErrors);
+					return of(new NbAuthResult(false, res, false, AuthStrategy.config.login.defaultErrors));
 				}
 
 				if (!user.employee) {
-					return new NbAuthResult(false, res, false, AuthStrategy.config.login.roleErrors);
+					return of(new NbAuthResult(false, res, false, AuthStrategy.config.login.roleErrors));
 				}
 
 				// Store authentication data using centralized method
@@ -209,8 +209,8 @@ export class AuthStrategy extends NbAuthStrategy {
 				return this.authService
 					.electronAuthentication(res)
 					.pipe(
-						map(
-							() =>
+						switchMap(() =>
+							of(
 								new NbAuthResult(
 									true,
 									res,
@@ -218,11 +218,13 @@ export class AuthStrategy extends NbAuthStrategy {
 									[],
 									AuthStrategy.config.login.defaultMessages
 								)
+							)
 						)
 					);
 			}),
 			catchError((err) => {
 				const isLoginOffline = !!this.store?.user && !!this.store?.token;
+
 				if (isLoginOffline) {
 					try {
 						// Validate user has employee record even in offline mode
@@ -241,11 +243,12 @@ export class AuthStrategy extends NbAuthStrategy {
 						token: this.store.token,
 						refresh_token: this.store.refreshToken
 					};
+
 					return this.authService
 						.electronAuthentication(res)
 						.pipe(
-							map(
-								() =>
+							switchMap(() =>
+								of(
 									new NbAuthResult(
 										true,
 										res,
@@ -253,9 +256,11 @@ export class AuthStrategy extends NbAuthStrategy {
 										[],
 										AuthStrategy.config.login.defaultMessages
 									)
+								)
 							)
 						);
 				}
+
 				return of(
 					new NbAuthResult(false, err, false, AuthStrategy.config.login.defaultErrors, [
 						AuthStrategy.config.login.defaultErrors
