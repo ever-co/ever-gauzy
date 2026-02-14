@@ -1,5 +1,5 @@
 import { NgStyle, NgTemplateOutlet } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NavigationExtras, Router, RouterLink } from '@angular/router';
 import { HttpStatus, IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
@@ -18,6 +18,7 @@ import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection
 	selector: 'ngx-login-workspace',
 	templateUrl: './login-workspace.component.html',
 	styleUrls: ['./login-workspace.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		WorkspaceSelectionComponent,
 		LogoComponent,

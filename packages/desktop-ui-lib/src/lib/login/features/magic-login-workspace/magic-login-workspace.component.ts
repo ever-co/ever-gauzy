@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -14,6 +14,7 @@ import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection
 	selector: 'ngx-magic-sign-in-workspace',
 	templateUrl: './magic-login-workspace.component.html',
 	styleUrls: ['./magic-login-workspace.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [WorkspaceSelectionComponent, LogoComponent, TranslatePipe]
 })
 export class NgxMagicSignInWorkspaceComponent implements OnInit {

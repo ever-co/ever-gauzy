@@ -1,26 +1,27 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgClass, NgStyle } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import { NB_AUTH_OPTIONS, NbAuthService, NbLoginComponent } from '@nebular/auth';
+import { NbButtonModule, NbFormFieldModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, Subscription, catchError, filter, finalize, firstValueFrom, interval, tap } from 'rxjs';
 import { AuthService } from '../../../auth';
 import { GAUZY_ENV, patterns } from '../../../constants';
-import { ErrorHandlerService } from '../../../services';
-import { LogoComponent } from '../../shared/ui/logo/logo.component';
-import { SwitchThemeComponent } from '../../../theme-selector/switch-theme/switch-theme.component';
-import { NgClass, NgStyle } from '@angular/common';
-import { NbFormFieldModule, NbInputModule, NbIconModule, NbButtonModule } from '@nebular/theme';
 import { DebounceClickDirective } from '../../../directives/debounce-click.directive';
 import { SpinnerButtonDirective } from '../../../directives/spinner-button.directive';
+import { ErrorHandlerService } from '../../../services';
+import { SwitchThemeComponent } from '../../../theme-selector/switch-theme/switch-theme.component';
+import { LogoComponent } from '../../shared/ui/logo/logo.component';
 import { SocialLinksComponent } from '../../shared/ui/social-links/social-links.component';
-import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-login-magic',
 	templateUrl: './login-magic.component.html',
 	styleUrls: ['./login-magic.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		LogoComponent,
 		SwitchThemeComponent,
