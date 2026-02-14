@@ -1,9 +1,9 @@
+import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
+import { LanguagesEnum } from '@gauzy/contracts';
+import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { Store } from './../services/store.service';
-import { TranslateService } from '@ngx-translate/core';
-import { LanguagesEnum } from '@gauzy/contracts';
 
 @Injectable()
 export class LanguageInterceptor implements HttpInterceptor {
@@ -19,7 +19,7 @@ export class LanguageInterceptor implements HttpInterceptor {
 		const language: LanguagesEnum =
 			this._store && this._store.preferredLanguage
 				? this._store.preferredLanguage
-				: this._translateService.getBrowserLang();
+				: this._translateService.getBrowserLang() as LanguagesEnum;
 		request = request.clone({
 			setHeaders: {
 				Language: language,

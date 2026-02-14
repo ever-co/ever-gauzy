@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme/src/lib/icons/tabler-icons.module';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -55,7 +55,7 @@ import { TimeTrackerService } from './time-tracker.service';
 		NbButtonModule,
 		NbSpinnerModule,
 		NbIconModule,
-		NbTablerIconsModule,
+		TablerIconsModule,
 		NbSidebarModule,
 		FormsModule,
 		NbCheckboxModule,
@@ -99,4 +99,4 @@ import { TimeTrackerService } from './time-tracker.service';
 		AlwaysOnService
 	]
 })
-export class TimeTrackerModule { }
+export class TimeTrackerModule {}

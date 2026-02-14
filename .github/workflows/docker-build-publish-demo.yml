@@ -11,7 +11,7 @@ concurrency:
 jobs:
   gauzy-api:
     runs-on: ubicloud-standard-8
-    timeout-minutes: 150
+    timeout-minutes: 300
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
 
   gauzy-webapp:
     runs-on: ubicloud-standard-8
-    timeout-minutes: 150
+    timeout-minutes: 300
     steps:
       - name: Checkout
         uses: actions/checkout@v4

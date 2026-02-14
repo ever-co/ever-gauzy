@@ -1,5 +1,5 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { EMPTY, from, interval, Subject } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
@@ -11,18 +11,20 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    styleUrls: ['./server-down.page.scss'],
-    templateUrl: 'server-down.page.html',
-    imports: [NbLayoutModule, TranslatePipe]
+	styleUrls: ['./server-down.page.scss'],
+	templateUrl: 'server-down.page.html',
+	imports: [NbLayoutModule, TranslatePipe]
 })
 export class ServerDownPage implements OnInit, OnDestroy {
 	public noInternetLogo: string;
 	private destroy$ = new Subject<void>();
+	private redirectUrl: string | null = null;
 
 	constructor(
 		private readonly store: Store,
 		private readonly serverConnectionService: ServerConnectionService,
 		private readonly router: Router,
+		private readonly route: ActivatedRoute,
 		@Inject(GAUZY_ENV)
 		private readonly environment: any,
 		private readonly languageElectronService: LanguageElectronService
@@ -46,7 +48,12 @@ export class ServerDownPage implements OnInit, OnDestroy {
 						distinctUntilChanged(),
 						tap(() => console.log('Server connection status:', this.store.serverConnection)),
 						filter(() => Number(this.store.serverConnection) === 200 || !!this.store.userId),
-						tap(() => this.router.navigate(['/'])),
+						tap(() => {
+							// Navigate to the original URL if available, otherwise go to root
+							const targetUrl = this.redirectUrl || '/';
+							console.log('Connection restored, navigating to:', targetUrl);
+							this.router.navigateByUrl(targetUrl);
+						}),
 						catchError(() => EMPTY) // Silently handle errors to keep the stream alive
 					)
 				),
@@ -58,6 +65,10 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
+		// Capture the original URL from query parameters
+		this.redirectUrl = this.route.snapshot.queryParamMap.get('redirectUrl');
+		console.log('Server down page initialized. Original URL:', this.redirectUrl);
+
 		this.languageElectronService.initialize();
 		this.setupConnectionMonitoring();
 	}

@@ -3,7 +3,7 @@ import { NbIconLibraries } from '@nebular/theme';
 import { evaToTablerIcons } from './eva-to-tabler-icons.map';
 
 @NgModule()
-export class NbTablerIconsModule {
+export class TablerIconsModule {
 	private readonly _iconLibraries = inject(NbIconLibraries);
 
 	constructor() {

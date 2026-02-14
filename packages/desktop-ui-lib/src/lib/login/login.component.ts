@@ -1,29 +1,52 @@
-import { ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { NgForm, FormsModule } from '@angular/forms';
+import { NgStyle } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
 import { NavigationExtras, Router, RouterLink } from '@angular/router';
 import { HttpStatus, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { NB_AUTH_OPTIONS, NbAuthService, NbLoginComponent } from '@nebular/auth';
+import {
+	NbAlertModule,
+	NbButtonModule,
+	NbCheckboxModule,
+	NbFormFieldModule,
+	NbIconModule,
+	NbInputModule
+} from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslatePipe } from '@ngx-translate/core';
 import { catchError, EMPTY, tap } from 'rxjs';
 import { AuthService } from '../auth';
 import { GAUZY_ENV } from '../constants';
+import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { ElectronService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { ErrorHandlerService } from '../services';
-import { LogoComponent } from './shared/ui/logo/logo.component';
 import { SwitchThemeComponent } from '../theme-selector/switch-theme/switch-theme.component';
-import { NbAlertModule, NbInputModule, NbFormFieldModule, NbButtonModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
-import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
-import { NgStyle } from '@angular/common';
+import { LogoComponent } from './shared/ui/logo/logo.component';
 import { SocialLinksComponent } from './shared/ui/social-links/social-links.component';
-import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-desktop-timer-login',
-    templateUrl: './login.component.html',
-    styleUrls: ['./login.component.scss'],
-    imports: [LogoComponent, SwitchThemeComponent, NbAlertModule, FormsModule, NbInputModule, NbFormFieldModule, NbButtonModule, NbIconModule, NbCheckboxModule, SpinnerButtonDirective, NgStyle, RouterLink, SocialLinksComponent, TranslatePipe]
+	selector: 'ngx-desktop-timer-login',
+	templateUrl: './login.component.html',
+	styleUrls: ['./login.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		LogoComponent,
+		SwitchThemeComponent,
+		NbAlertModule,
+		FormsModule,
+		NbInputModule,
+		NbFormFieldModule,
+		NbButtonModule,
+		NbIconModule,
+		NbCheckboxModule,
+		SpinnerButtonDirective,
+		NgStyle,
+		RouterLink,
+		SocialLinksComponent,
+		TranslatePipe
+	]
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	@ViewChild('form')
