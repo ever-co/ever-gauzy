@@ -96,7 +96,7 @@ function handleConnectionState(
 	router: Router,
 	config: AuthConnectionGuardConfig
 ): boolean | UrlTree {
-	if (isConnected && isAccessAllowed(connectionState)) {
+	if (isConnected || isAccessAllowed(connectionState)) {
 		console.log(`AuthConnectionGuard: Access GRANTED to ${url}`);
 		return true;
 	}
