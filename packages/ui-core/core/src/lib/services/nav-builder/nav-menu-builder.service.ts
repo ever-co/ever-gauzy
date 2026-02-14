@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, map, Observable, of, shareReplay } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, map, Observable, of, shareReplay } from 'rxjs';
 import { NavMenuSectionItem, NavMenuItemsConfig, NavMenuSectionConfig } from './nav-builder-types';
 
 @Injectable({
@@ -163,7 +163,9 @@ export class NavMenuBuilderService {
 		const itemAdditions$ = this.addedNavMenuItems$;
 
 		// Combine the initial configuration and section additions
+		// Don't emit until base menu is defined (prevents Jobs-only or empty flash on refresh)
 		const combinedConfig$ = combineLatest([this.initialNavMenuConfig$, sectionAdditions$]).pipe(
+			filter(([sections]) => !!sections?.length),
 			map(([sections, additions]) => {
 				const configMap = new Map<string, NavMenuSectionItem>();
 				const orderedIds: string[] = [];
