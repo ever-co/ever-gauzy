@@ -26,7 +26,7 @@ export class UnauthenticatedMenuStrategy implements IMenuStrategy {
 		const menu: MenuItemConstructorOptions[] = [];
 
 		// Main window (if gauzy)
-		if (appConfig.gauzyWindow) {
+		if (appConfig && appConfig.gauzyWindow) {
 			menu.push(
 				new MenuItemBuilder()
 					.withId('8')
@@ -37,7 +37,7 @@ export class UnauthenticatedMenuStrategy implements IMenuStrategy {
 		}
 
 		// Open timer
-		if (appConfig.timeTrackerWindow) {
+		if (appConfig && appConfig.timeTrackerWindow) {
 			menu.push(
 				new MenuItemBuilder()
 					.withId('3')
