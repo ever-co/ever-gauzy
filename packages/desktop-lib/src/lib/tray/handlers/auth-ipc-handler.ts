@@ -1,5 +1,5 @@
 import { RegisteredWindow } from '@gauzy/desktop-core';
-import { ipcMain, Menu } from 'electron';
+import { BrowserWindow, ipcMain, Menu } from 'electron';
 import { AppWindowManager } from '../../app-window-manager';
 import { AuthenticationHandler } from '../auth/authentication-handler';
 import { IConfigStore, IWindowService } from '../interfaces';
@@ -26,7 +26,7 @@ export class AuthIPCHandler {
 		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
 
 		ipcMain.on('auth_success', async (event, arg) => {
-			console.log('Auth Success:', arg);
+			console.log('Auth Success');
 			await this.authHandler.handleAuthSuccess(arg);
 
 			const appConfig = this.store.getStore('configs');
@@ -57,7 +57,7 @@ export class AuthIPCHandler {
 		});
 	}
 
-	private async performLogout(timeTrackerWindow: any): Promise<void> {
+	private async performLogout(timeTrackerWindow: BrowserWindow): Promise<void> {
 		// Clear timer display
 		this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
 			event: 'updateTimer',
@@ -73,17 +73,17 @@ export class AuthIPCHandler {
 		await this.authHandler.handleLogout();
 	}
 
-	private updateMenuItems(employeeId: boolean, timeTrackerEnabled: boolean): void {
+	private updateMenuItems(hasEmployeeId: boolean, timeTrackerEnabled: boolean): void {
 		const menuWindowTime = Menu.getApplicationMenu()?.getMenuItemById('window-time-track');
 		const menuWindowSetting = Menu.getApplicationMenu()?.getMenuItemById('window-setting');
 
 		if (menuWindowTime) {
 			menuWindowTime.visible = timeTrackerEnabled;
-			menuWindowTime.enabled = !!employeeId;
+			menuWindowTime.enabled = !!hasEmployeeId;
 		}
 
 		if (menuWindowSetting) {
-			menuWindowSetting.enabled = !!employeeId;
+			menuWindowSetting.enabled = !!hasEmployeeId;
 		}
 	}
 

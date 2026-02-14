@@ -7,9 +7,11 @@ export class OpenTimerCommand extends MenuCommand {
 		super();
 	}
 
-	execute(): void {
+	public execute(): void {
 		this.windowService.show(RegisteredWindow.TIMER);
 		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
-		this.windowService.webContents(timeTrackerWindow).send('auth_success_tray_init');
+		if (timeTrackerWindow) {
+			this.windowService.webContents(timeTrackerWindow).send('auth_success_tray_init');
+		}
 	}
 }
