@@ -1389,7 +1389,7 @@
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
 				"READY_MESSAGE": "Votre intégration Activepieces est prête. Cliquez sur le bouton ci-dessous pour autoriser.",
-				"INFOS": "Ensuite, vous serez redirigé vers Activepieces pour accorder l'autorisation à Gauzy.",
+				"INFOS": "Ensuite, vous serez redirigé vers la page du plugin Activepieces",
 				"START_BUTTON": "Autoriser Activepieces",
 				"NEXT": "Suivant",
 				"ERRORS": {
@@ -1407,12 +1407,8 @@
 			"SETTINGS": {
 				"TITLE": "Paramètres Activepieces",
 				"SUBTITLE": "Configurez vos paramètres d'intégration Activepieces",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "Entrez votre Client ID",
-				"CLIENT_ID_HINT": "Votre Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "Entrez votre Client Secret",
-				"CLIENT_SECRET_HINT": "Votre Activepieces OAuth Client Secret",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "Entrez votre State Secret (minimum 32 caractères)",
 				"STATE_SECRET_HINT": "Une chaîne aléatoire sécurisée utilisée pour la vérification de l'état OAuth",

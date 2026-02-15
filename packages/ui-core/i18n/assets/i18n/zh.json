@@ -1388,7 +1388,7 @@
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
 				"READY_MESSAGE": "您的 Activepieces 集成已就绪。点击下面的按钮进行授权。",
-				"INFOS": "接下来您将被带到 Activepieces 以授予 Gauzy 权限。",
+				"INFOS": "接下来您将被带到 Activepieces 插件页面",
 				"START_BUTTON": "授权 Activepieces",
 				"NEXT": "下一步",
 				"ERRORS": {
@@ -1406,12 +1406,8 @@
 			"SETTINGS": {
 				"TITLE": "Activepieces 设置",
 				"SUBTITLE": "配置您的 Activepieces 集成设置",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "输入您的 Client ID",
-				"CLIENT_ID_HINT": "您的 Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "输入您的 Client Secret",
-				"CLIENT_SECRET_HINT": "您的 Activepieces OAuth Client Secret",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "输入您的 State Secret（最少32个字符）",
 				"STATE_SECRET_HINT": "用于 OAuth 状态验证的安全随机字符串",

@@ -1273,7 +1273,7 @@
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
 				"READY_MESSAGE": "Activepieces integration ni tye kare. Dii button me authorize.",
-				"INFOS": "Ikare i nen teri i Activepieces me miyo permission bot Gauzy.",
+				"INFOS": "Ikare i nen teri i pot buk me Activepieces plugin",
 				"START_BUTTON": "Authorize Activepieces",
 				"NEXT": "Malubo",
 				"ERRORS": {
@@ -1291,12 +1291,8 @@
 			"SETTINGS": {
 				"TITLE": "Activepieces Settings",
 				"SUBTITLE": "Yub Activepieces integration settings ni",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "Ket Client ID ni",
-				"CLIENT_ID_HINT": "Activepieces OAuth Client ID ni",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "Ket Client Secret ni",
-				"CLIENT_SECRET_HINT": "Activepieces OAuth Client Secret ni",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "Ket State Secret ni (characters 32 minimum)",
 				"STATE_SECRET_HINT": "String me random ma ber pi OAuth state verification",

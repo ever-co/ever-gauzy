@@ -1429,7 +1429,7 @@
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
 				"READY_MESSAGE": "Ваша интеграция Activepieces готова. Нажмите кнопку ниже для авторизации.",
-				"INFOS": "Далее вы будете перенаправлены в Activepieces для предоставления разрешения Gauzy.",
+				"INFOS": "Далее вы будете перенаправлены на страницу плагина Activepieces",
 				"START_BUTTON": "Авторизовать Activepieces",
 				"NEXT": "Далее",
 				"ERRORS": {
@@ -1447,12 +1447,8 @@
 			"SETTINGS": {
 				"TITLE": "Настройки Activepieces",
 				"SUBTITLE": "Настройте параметры интеграции Activepieces",
-				"CLIENT_ID": "ID клиента",
-				"CLIENT_ID_PLACEHOLDER": "Введите ваш ID клиента",
-				"CLIENT_ID_HINT": "Ваш Activepieces OAuth ID клиента",
-				"CLIENT_SECRET": "Секрет клиента",
-				"CLIENT_SECRET_PLACEHOLDER": "Введите ваш секрет клиента",
-				"CLIENT_SECRET_HINT": "Ваш Activepieces OAuth секрет клиента",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
 				"STATE_SECRET": "Секрет состояния",
 				"STATE_SECRET_PLACEHOLDER": "Введите ваш секрет состояния (минимум 32 символа)",
 				"STATE_SECRET_HINT": "Безопасная случайная строка, используемая для проверки состояния OAuth",

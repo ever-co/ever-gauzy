@@ -1388,7 +1388,7 @@
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
 				"READY_MESSAGE": "Uw Activepieces-integratie is klaar. Klik op de knop hieronder om te autoriseren.",
-				"INFOS": "Vervolgens wordt u doorgestuurd naar Activepieces om toestemming te verlenen aan Gauzy.",
+				"INFOS": "Vervolgens wordt u doorgestuurd naar de Activepieces-pluginpagina",
 				"START_BUTTON": "Activepieces autoriseren",
 				"NEXT": "Volgende",
 				"ERRORS": {
@@ -1406,12 +1406,8 @@
 			"SETTINGS": {
 				"TITLE": "Activepieces-instellingen",
 				"SUBTITLE": "Configureer uw Activepieces-integratie-instellingen",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "Voer uw Client ID in",
-				"CLIENT_ID_HINT": "Uw Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "Voer uw Client Secret in",
-				"CLIENT_SECRET_HINT": "Uw Activepieces OAuth Client Secret",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "Voer uw State Secret in (minimaal 32 tekens)",
 				"STATE_SECRET_HINT": "Een veilige willekeurige string die wordt gebruikt voor OAuth-statusverificatie",

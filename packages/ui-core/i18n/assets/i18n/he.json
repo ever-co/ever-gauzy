@@ -1422,7 +1422,7 @@
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
 				"READY_MESSAGE": "האינטגרציה שלך עם Activepieces מוכנה. לחץ על הכפתור למטה כדי לאשר.",
-				"INFOS": "בשלב הבא תועבר ל-Activepieces כדי להעניק הרשאה ל-Gauzy.",
+				"INFOS": "בשלב הבא תועבר לדף התוסף של Activepieces",
 				"START_BUTTON": "אשר את Activepieces",
 				"NEXT": "הבא",
 				"ERRORS": {
@@ -1440,12 +1440,8 @@
 			"SETTINGS": {
 				"TITLE": "הגדרות Activepieces",
 				"SUBTITLE": "הגדר את הגדרות האינטגרציה שלך עם Activepieces",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "הזן את Client ID שלך",
-				"CLIENT_ID_HINT": "Activepieces OAuth Client ID שלך",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "הזן את Client Secret שלך",
-				"CLIENT_SECRET_HINT": "Activepieces OAuth Client Secret שלך",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "הזן את State Secret שלך (מינימום 32 תווים)",
 				"STATE_SECRET_HINT": "מחרוזת אקראית מאובטחת המשמשת לאימות מצב OAuth",

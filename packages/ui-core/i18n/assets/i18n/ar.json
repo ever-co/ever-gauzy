@@ -1387,7 +1387,7 @@
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
 				"READY_MESSAGE": "تكامل Activepieces جاهز. انقر على الزر أدناه للتفويض.",
-				"INFOS": "بعد ذلك سيتم نقلك إلى Activepieces لمنح الإذن لـ Gauzy.",
+				"INFOS": "بعد ذلك سيتم نقلك إلى صفحة إضافة Activepieces",
 				"START_BUTTON": "تفويض Activepieces",
 				"NEXT": "التالي",
 				"ERRORS": {
@@ -1405,12 +1405,8 @@
 			"SETTINGS": {
 				"TITLE": "إعدادات Activepieces",
 				"SUBTITLE": "قم بتكوين إعدادات تكامل Activepieces الخاصة بك",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "أدخل Client ID الخاص بك",
-				"CLIENT_ID_HINT": "Activepieces OAuth Client ID الخاص بك",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "أدخل Client Secret الخاص بك",
-				"CLIENT_SECRET_HINT": "Activepieces OAuth Client Secret الخاص بك",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "أدخل State Secret الخاص بك (32 حرفًا على الأقل)",
 				"STATE_SECRET_HINT": "سلسلة عشوائية آمنة تُستخدم للتحقق من حالة OAuth",

@@ -1456,7 +1456,7 @@
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
 				"READY_MESSAGE": "Вашата интеграция с Activepieces е готова. Щракнете на бутона по-долу, за да разрешите.",
-				"INFOS": "След това ще бъдете прехвърлени към Activepieces, за да предоставите разрешение на Gauzy.",
+				"INFOS": "След това ще бъдете прехвърлени към страницата на приставката Activepieces",
 				"START_BUTTON": "Разрешаване на Activepieces",
 				"NEXT": "Напред",
 				"ERRORS": {
@@ -1474,12 +1474,8 @@
 			"SETTINGS": {
 				"TITLE": "Настройки на Activepieces",
 				"SUBTITLE": "Конфигурирайте настройките си за интеграция с Activepieces",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "Въведете вашия Client ID",
-				"CLIENT_ID_HINT": "Вашият Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "Въведете вашия Client Secret",
-				"CLIENT_SECRET_HINT": "Вашият Activepieces OAuth Client Secret",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "Въведете вашия State Secret (минимум 32 символа)",
 				"STATE_SECRET_HINT": "Сигурен случаен низ, използван за проверка на състоянието на OAuth",
