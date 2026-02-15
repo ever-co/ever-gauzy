@@ -38,6 +38,72 @@ export class ActivepiecesService {
 	) {}
 
 	/**
+	 * Set up the ActivePieces integration by saving the API key.
+	 * Finds or creates the ACTIVE_PIECES integration record and creates an integration tenant
+	 * with API_KEY and IS_ENABLED settings.
+	 */
+	async setupIntegration(apiKey: string, organizationId?: string): Promise<{ integrationTenantId: string }> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
+			// Find or create the integration
+			let integration = await this.integrationService.findOneByOptions({
+				where: { provider: IntegrationEnum.ACTIVE_PIECES }
+			});
+
+			if (!integration) {
+				integration = await this.integrationService.create({
+					provider: IntegrationEnum.ACTIVE_PIECES,
+					name: IntegrationEnum.ACTIVE_PIECES
+				});
+			}
+
+			// Define the settings to save
+			const settings = [
+				{
+					settingsName: ActivepiecesSettingName.API_KEY,
+					settingsValue: apiKey,
+					tenantId,
+					organizationId
+				},
+				{
+					settingsName: ActivepiecesSettingName.IS_ENABLED,
+					settingsValue: JSON.stringify(true),
+					tenantId,
+					organizationId
+				}
+			];
+
+			// Create integration tenant
+			const integrationTenant = await this.integrationTenantService.create({
+				name: IntegrationEnum.ACTIVE_PIECES,
+				integration,
+				tenantId,
+				organizationId,
+				settings
+			});
+
+			const integrationTenantId = integrationTenant.id;
+			if (!integrationTenantId) {
+				throw new BadRequestException('Failed to create integration tenant: missing ID');
+			}
+
+			this.logger.log(
+				`Successfully set up ActivePieces integration for tenant ${tenantId}. ` +
+					`Integration tenant ID: ${integrationTenantId}`
+			);
+
+			return { integrationTenantId };
+		} catch (error: any) {
+			this.logger.error('Failed to set up ActivePieces integration:', error);
+			throw new BadRequestException(`Failed to set up ActivePieces integration: ${error.message}`);
+		}
+	}
+
+	/**
 	 * Create or update ActivePieces connection for the tenant (using upsert endpoint)
 	 */
 	async upsertConnection(input: ICreateActivepiecesIntegrationInput): Promise<IActivepiecesConnection> {
@@ -75,7 +141,13 @@ export class ActivepiecesService {
 			};
 
 			// Get API key for Activepieces API calls
-			const apiKey = await this.getApiKey();
+			const existingIntegrationTenant = await this.integrationTenantService.findOneByOptions({
+				where: {
+					tenantId,
+					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+				}
+			});
+			const apiKey = await this.getApiKey(existingIntegrationTenant?.id);
 
 			// Make the API call to create the connection
 			const response = await firstValueFrom(

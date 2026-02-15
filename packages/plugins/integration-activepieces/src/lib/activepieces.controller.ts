@@ -18,7 +18,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@ne
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { ActivepiecesService } from './activepieces.service';
-import { CreateActivepiecesIntegrationDto, ActivepiecesConnectionsListQueryDto } from './dto';
+import { CreateActivepiecesIntegrationDto, SetupActivepiecesIntegrationDto, ActivepiecesConnectionsListQueryDto } from './dto';
 import {
 	IActivepiecesConnection,
 	IActivepiecesConnectionsListResponse
@@ -33,6 +33,31 @@ export class ActivepiecesController {
 	constructor(
 		private readonly activepiecesService: ActivepiecesService
 	) {}
+
+	/**
+	 * Set up ActivePieces integration with API key
+	 */
+	@ApiOperation({ summary: 'Set up ActivePieces integration with API key' })
+	@ApiResponse({
+		status: 201,
+		description: 'Successfully set up ActivePieces integration'
+	})
+	@Post('/setup')
+	@Permissions(PermissionsEnum.INTEGRATION_ADD)
+	async setupIntegration(@Body() input: SetupActivepiecesIntegrationDto): Promise<{ integrationTenantId: string }> {
+		try {
+			return await this.activepiecesService.setupIntegration(
+				input.apiKey,
+				input.organizationId
+			);
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			this.logger.error('Failed to set up ActivePieces integration', { message: error?.message, stack: error?.stack });
+			throw new HttpException('Failed to set up ActivePieces integration', HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 	/**
 	 * Create or update ActivePieces connection (upsert)
