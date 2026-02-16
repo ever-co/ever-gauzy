@@ -18,17 +18,34 @@ export class GauzyCloudService {
 	constructor(private readonly _http: HttpService) {}
 
 	/**
-	 * Extract user from cloud server
-	 * Register user from local to cloud server
+	 * Register a bare user on the remote cloud server for migration.
 	 *
-	 * @param params
-	 * @returns
+	 * Only sends the minimal fields needed for public self-registration
+	 * (password, confirmPassword, and safe user fields). Fields
+	 * like role, roleId, tenant, organizationId, createdByUserId are
+	 * intentionally stripped — they don't apply to the remote cloud
+	 * (which has its own role/tenant UUIDs).
+	 *
+	 * After registration, use extractToken() to log in and then
+	 * migrateTenant/migrateRoles/etc. to set up the cloud workspace.
+	 *
+	 * @param params - The full registration input from the local server.
+	 * @returns Observable of the remote server's registration response.
 	 */
 	migrateUser(
 		params: IUserRegistrationInput
 	): Observable<AxiosResponse<any, any>> {
+		const { password, confirmPassword, user } = params;
+		const safeUser = user ? {
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			imageUrl: user.imageUrl,
+			preferredLanguage: user.preferredLanguage
+		} : undefined;
+
 		return this._http
-			.post('/api/auth/register', params)
+			.post('/api/auth/register', { password, confirmPassword, user: safeUser })
 			.pipe(map((resp: AxiosResponse<any, any>) => resp));
 	}
 

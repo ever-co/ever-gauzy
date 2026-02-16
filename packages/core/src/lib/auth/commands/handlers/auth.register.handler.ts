@@ -4,10 +4,15 @@ import { IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthRegisterCommand } from '../auth.register.command';
 import { AuthService } from '../../auth.service';
 import { UserService } from '../../../user/user.service';
+import { TypeOrmRoleRepository } from '../../../role/repository/type-orm-role.repository';
 
 @CommandHandler(AuthRegisterCommand)
 export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand> {
-	constructor(private readonly authService: AuthService, private readonly userService: UserService) {}
+	constructor(
+		private readonly authService: AuthService,
+		private readonly userService: UserService,
+		private readonly typeOrmRoleRepository: TypeOrmRoleRepository
+	) {}
 
 	/**
 	 * Executes the user registration command, handling specific checks for SUPER_ADMIN role.
@@ -19,9 +24,23 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 	 */
 	public async execute(command: AuthRegisterCommand): Promise<IUser> {
 		const { input, languageCode } = command;
+		let targetRoleName: string | null = null;
 
-		// Check if the user role is SUPER_ADMIN and require 'createdByUserId' for verification
-		if (input.user && input.user.role && input.user.role.name === RolesEnum.SUPER_ADMIN) {
+		if (input.user?.role?.name) {
+			// Role name provided directly via role object
+			targetRoleName = input.user.role.name;
+		} else if (input.user?.roleId) {
+			// Only roleId provided — resolve it to a role entity to get the name
+			try {
+				const resolvedRole = await this.typeOrmRoleRepository.findOneByOrFail({ id: input.user.roleId });
+				targetRoleName = resolvedRole.name;
+			} catch {
+				throw new BadRequestException('The specified roleId does not reference a valid role.');
+			}
+		}
+
+		// Check if the target role is SUPER_ADMIN and require 'createdByUserId' for verification
+		if (targetRoleName === RolesEnum.SUPER_ADMIN) {
 			if (!input.createdByUserId) {
 				throw new BadRequestException('Missing createdByUserId for SUPER_ADMIN registration.');
 			}

@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsNotEmpty, IsNotEmptyObject, IsObject, MinLength, ValidateNested } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsNotEmptyObject, IsObject, IsOptional, IsUUID, MinLength, ValidateNested } from "class-validator";
 import { IUserRegistrationInput } from "@gauzy/contracts";
 import { Match } from "./../../shared/validators";
 import { CreateUserDTO } from "./create-user.dto";
@@ -31,4 +31,19 @@ export class RegisterUserDTO implements IUserRegistrationInput {
     @ValidateNested()
     @Type(() => CreateUserDTO)
     readonly user: CreateUserDTO;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsUUID()
+    readonly organizationId?: string;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsUUID()
+    readonly createdByUserId?: string;
+
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    readonly featureAsEmployee?: boolean;
 }
