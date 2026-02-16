@@ -36,14 +36,20 @@ export class JobsModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 		this._applyDeclarativeRegistrations();
 	}
 
+	// ─── Plugin Lifecycle ─────────────────────────────────────────
+
+	/** Called by PluginUiModule after the plugin module is instantiated. */
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
 	}
 
+	/** Called by PluginUiModule when the application is shutting down. */
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
 		JobsModule._hasAppliedRegistrations = false;
 	}
+
+	// ─── Registration ─────────────────────────────────────────────
 
 	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
 	private _applyDeclarativeRegistrations(): void {

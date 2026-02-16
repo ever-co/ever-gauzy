@@ -2,8 +2,12 @@ import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { TranslateModule } from '@ngx-translate/core';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { PluginUiDefinition, IOnPluginUiBootstrap, IOnPluginUiDestroy } from '@gauzy/plugin-ui';
+import {
+	applyDeclarativeRegistrations,
+	IOnPluginUiBootstrap,
+	IOnPluginUiDestroy,
+	PLUGIN_DEFINITION
+} from '@gauzy/plugin-ui';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -13,12 +17,12 @@ import {
 	SharedModule,
 	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
-import { createJobProposalTemplateRoutes } from './job-proposal-template.routes';
-import { ProposalTemplateComponent } from './components/proposal-template/proposal-template.component';
-import { AddEditProposalTemplateComponent } from './components/add-edit-proposal-template/add-edit-proposal-template.component';
+import { getJobProposalTemplateRoutes } from './job-proposal-template.routes';
+import { ProposalTemplateListComponent } from './components/proposal-template-list/proposal-template-list.component';
+import { ProposalTemplateFormComponent } from './components/proposal-template-form/proposal-template-form.component';
 
 @NgModule({
-	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],
+	declarations: [ProposalTemplateListComponent, ProposalTemplateFormComponent],
 	imports: [
 		RouterModule.forChild([]),
 		NebularModule,
@@ -33,93 +37,47 @@ import { AddEditProposalTemplateComponent } from './components/add-edit-proposal
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createJobProposalTemplateRoutes(service),
-			deps: [PageRouteRegistryService],
+			useFactory: getJobProposalTemplateRoutes,
 			multi: true
 		}
 	]
 })
 export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
-	private static hasRegisteredPageRoutes = false;
+	private static _hasAppliedRegistrations = false;
 
 	private readonly _log = inject(LoggerService).withContext('JobProposalTemplateModule');
-	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 
 	constructor() {
-		this.registerPageRoutes();
-		this.registerNavMenuItems();
+		this._applyDeclarativeRegistrations();
 	}
 
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
-	/**
-	 * Called by `PluginUiModule` after the module is instantiated.
-	 */
+	/** Called by PluginUiModule after the plugin module is instantiated. */
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
 	}
 
-	/**
-	 * Called by `PluginUiModule` when the application is shutting down.
-	 */
+	/** Called by PluginUiModule when the application is shutting down. */
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
+		JobProposalTemplateModule._hasAppliedRegistrations = false;
 	}
 
-	// ─── Route & Menu Registration ────────────────────────────────
+	// ─── Registration ─────────────────────────────────────────────
 
-	/**
-	 * Registers routes for the Job Proposal Template module.
-	 * Ensures that routes are registered only once.
-	 */
-	registerPageRoutes(): void {
-		if (JobProposalTemplateModule.hasRegisteredPageRoutes) {
-			return;
-		}
+	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
+	private _applyDeclarativeRegistrations(): void {
+		if (JobProposalTemplateModule._hasAppliedRegistrations) return;
 
-		// Register Job Proposal Template Page Routes
-		this._pageRouteRegistryService.registerPageRoute({
-			location: 'jobs-sections',
-			path: 'proposal-template',
-			loadChildren: () => import('./job-proposal-template.module').then((m) => m.JobProposalTemplateModule),
-			data: {
-				selectors: {
-					project: false,
-					team: false
-				}
-			}
+		const def = inject(PLUGIN_DEFINITION);
+		applyDeclarativeRegistrations(def, {
+			navBuilder: this._navMenuBuilderService,
+			pageRouteRegistry: this._pageRouteRegistryService
 		});
 
-		// Set hasRegisteredRoutes to true
-		JobProposalTemplateModule.hasRegisteredPageRoutes = true;
-	}
-
-	/**
-	 * Register navigation menu items for the Job Proposal Template plugin.
-	 */
-	private registerNavMenuItems(): void {
-		this._navMenuBuilderService.addNavMenuItem(
-			{
-				id: 'jobs-proposal-template',
-				title: 'Proposal Template',
-				icon: 'far fa-file-alt',
-				link: '/pages/jobs/proposal-template',
-				data: {
-					translationKey: 'MENU.PROPOSAL_TEMPLATE',
-					permissionKeys: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW]
-				}
-			},
-			'jobs' // Nav section id (distinct from route registry location)
-		);
+		JobProposalTemplateModule._hasAppliedRegistrations = true;
 	}
 }
-
-/**
- * Plugin definition for the Job Proposal Template UI plugin.
- */
-export const JobProposalTemplatePlugin: PluginUiDefinition = {
-	id: 'job-proposal-template',
-	module: JobProposalTemplateModule,
-	location: 'jobs-sections'
-};

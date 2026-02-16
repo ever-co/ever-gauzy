@@ -10,24 +10,32 @@ import { PagesComponent } from './pages.component';
  * Route order follows the main navigation. Keep RESERVED_PAGE_SECTION_PATHS in
  * page-route-registry.service.ts in sync with core paths.
  *
- * Plugin section routes (e.g. jobs) are injected via `page-sections` location;
- * plugins register at bootstrap via PageRouteRegistryService.registerPageRoute().
+ * Plugin routes are merged dynamically from the page route registry:
+ * - `page-sections`: Top-level sections under /pages (e.g. jobs)
+ * - `sales-sections`: Children under /pages/sales (e.g. proposals)
+ * - `accounting-sections`: Children under /pages/accounting
+ * - `employees-sections`: Children under /pages/employees
+ * - `organization-sections`: Children under /pages/organization
+ * - `goals-sections`: Children under /pages/goals
+ * - `reports-sections`: Children under /pages/reports
  *
- * @param _pageRouteRegistryService PageRouteRegistryService (child sub-routes + page-sections plugin routes)
+ * Plugins register at bootstrap via PageRouteRegistryService.registerPageRoute().
+ *
+ * @param _pageRouteRegistryService PageRouteRegistryService for merging plugin routes
  */
-export const createPagesRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Routes => {
+export const getPagesRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Routes => {
 	const children: Route[] = [
 		...getRedirectRoute(),
 		...getDashboardRoute(),
-		...getAccountingRoutes(),
+		...getAccountingRoutes(_pageRouteRegistryService),
 		...getContactsRoute(),
 		...getProjectsRoute(),
 		...getTasksRoute(),
-		...getSalesRoutes(),
-		...getEmployeesRoutes(),
-		...getOrganizationRoutes(),
-		...getGoalsRoutes(),
-		...getReportsRoutes(),
+		...getSalesRoutes(_pageRouteRegistryService),
+		...getEmployeesRoutes(_pageRouteRegistryService),
+		...getOrganizationRoutes(_pageRouteRegistryService),
+		...getGoalsRoutes(_pageRouteRegistryService),
+		...getReportsRoutes(_pageRouteRegistryService),
 		...getHelpRoute(),
 		...getAboutRoute(),
 		...getIntegrationsRoute(),
@@ -65,7 +73,7 @@ function getDashboardRoute(): Route[] {
 	];
 }
 
-function getAccountingRoutes(): Route[] {
+function getAccountingRoutes(_pageRouteRegistryService: PageRouteRegistryService): Route[] {
 	return [
 		{
 			path: 'accounting',
@@ -113,7 +121,8 @@ function getAccountingRoutes(): Route[] {
 				{
 					path: 'payments',
 					loadChildren: () => import('./payments/payments.module').then((m) => m.PaymentsModule)
-				}
+				},
+				..._pageRouteRegistryService.getPageLocationRoutes('accounting-sections')
 			]
 		}
 	];
@@ -149,15 +158,17 @@ function getTasksRoute(): Route[] {
 	];
 }
 
-function getSalesRoutes(): Route[] {
+/**
+ * Gets the sales routes from the page route registry service.
+ *
+ * @param _pageRouteRegistryService PageRouteRegistryService
+ * @returns Route[]
+ */
+function getSalesRoutes(_pageRouteRegistryService: PageRouteRegistryService): Route[] {
 	return [
 		{
 			path: 'sales',
 			children: [
-				{
-					path: 'proposals',
-					loadChildren: () => import('@gauzy/plugin-job-proposal-ui').then((m) => m.JobProposalModule)
-				},
 				{
 					path: 'estimates',
 					loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule),
@@ -184,7 +195,8 @@ function getSalesRoutes(): Route[] {
 					path: 'pipelines',
 					loadChildren: () => import('./pipelines/pipelines.module').then((m) => m.PipelinesModule),
 					data: { selectors: { project: false, team: false, employee: false, date: false } }
-				}
+				},
+				..._pageRouteRegistryService.getPageLocationRoutes('sales-sections')
 			]
 		}
 	];
@@ -291,7 +303,7 @@ function getNotFoundRoute(): Route[] {
 	];
 }
 
-function getEmployeesRoutes(): Route[] {
+function getEmployeesRoutes(_pageRouteRegistryService: PageRouteRegistryService): Route[] {
 	return [
 		{
 			path: 'employees',
@@ -348,13 +360,14 @@ function getEmployeesRoutes(): Route[] {
 				{
 					path: 'candidates',
 					loadChildren: () => import('./candidates/candidates.module').then((m) => m.CandidatesModule)
-				}
+				},
+				..._pageRouteRegistryService.getPageLocationRoutes('employees-sections')
 			]
 		}
 	];
 }
 
-function getOrganizationRoutes(): Route[] {
+function getOrganizationRoutes(_pageRouteRegistryService: PageRouteRegistryService): Route[] {
 	const orgSelectors = { project: false, team: false, employee: false, date: false };
 	return [
 		{
@@ -433,13 +446,14 @@ function getOrganizationRoutes(): Route[] {
 					path: 'teams',
 					loadChildren: () => import('./teams/teams.module').then((m) => m.TeamsModule),
 					data: { selectors: { ...orgSelectors, employee: true, date: true } }
-				}
+				},
+				..._pageRouteRegistryService.getPageLocationRoutes('organization-sections')
 			]
 		}
 	];
 }
 
-function getGoalsRoutes(): Route[] {
+function getGoalsRoutes(_pageRouteRegistryService: PageRouteRegistryService): Route[] {
 	return [
 		{
 			path: 'goals',
@@ -461,13 +475,14 @@ function getGoalsRoutes(): Route[] {
 					loadChildren: () =>
 						import('./goal-settings/goal-settings.module').then((m) => m.GoalSettingsModule),
 					data: { selectors: { project: false, team: false, employee: false, date: false } }
-				}
+				},
+				..._pageRouteRegistryService.getPageLocationRoutes('goals-sections')
 			]
 		}
 	];
 }
 
-function getReportsRoutes(): Route[] {
+function getReportsRoutes(_pageRouteRegistryService: PageRouteRegistryService): Route[] {
 	const reportSelectors = { project: false, team: false, employee: false, date: false, organization: true };
 	return [
 		{
@@ -553,6 +568,7 @@ function getReportsRoutes(): Route[] {
 							(m) => m.ClientBudgetsReportModule
 						)
 				},
+				..._pageRouteRegistryService.getPageLocationRoutes('reports-sections'),
 				{ path: '*', component: NotFoundComponent }
 			]
 		}

@@ -1,11 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { IEmployeeProposalTemplate, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { IEmployeeProposalTemplate, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, ProposalTemplateService, Store, ToastrService } from '@gauzy/ui-core/core';
@@ -13,16 +13,16 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy()
 @Component({
-    selector: 'ga-add-edit-proposal-template',
-    templateUrl: './add-edit-proposal-template.component.html',
-    styleUrls: ['./add-edit-proposal-template.component.scss'],
-    standalone: false
+	selector: 'ga-proposal-template-form',
+	templateUrl: './proposal-template-form.component.html',
+	styleUrls: ['./proposal-template-form.component.scss'],
+	standalone: false
 })
-export class AddEditProposalTemplateComponent extends TranslationBaseComponent implements OnInit {
+export class ProposalTemplateFormComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
 
-	public form: UntypedFormGroup = AddEditProposalTemplateComponent.buildForm(this._fb);
+	public form: UntypedFormGroup = ProposalTemplateFormComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			employeeId: [null, Validators.required],
@@ -62,7 +62,7 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent i
 
 	constructor(
 		translateService: TranslateService,
-		private readonly _dialogRef: NbDialogRef<AddEditProposalTemplateComponent>,
+		private readonly _dialogRef: NbDialogRef<ProposalTemplateFormComponent>,
 		private readonly _fb: UntypedFormBuilder,
 		private readonly _proposalTemplateService: ProposalTemplateService,
 		private readonly _toastrService: ToastrService,

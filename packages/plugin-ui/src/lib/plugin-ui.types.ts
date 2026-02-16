@@ -40,6 +40,8 @@ export interface PluginNavItemInput {
 		featureKey?: unknown;
 		/** Function or plain boolean to control visibility. */
 		hide?: (() => boolean) | boolean;
+		/** Link for the add/action button (e.g. create new). */
+		add?: string;
 	};
 }
 

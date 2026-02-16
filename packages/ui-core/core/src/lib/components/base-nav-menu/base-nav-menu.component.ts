@@ -281,23 +281,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				},
 				items: [
 					{
-						id: 'sales-proposals',
-						title: 'Proposals',
-						icon: 'fas fa-paper-plane',
-						link: '/pages/sales/proposals',
-						data: {
-							translationKey: 'MENU.PROPOSALS',
-							permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW],
-							featureKey: FeatureEnum.FEATURE_PROPOSAL,
-							...(this._store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_PROPOSALS_EDIT
-							) && {
-								add: '/pages/sales/proposals/register'
-							})
-						}
-					},
-					{
 						id: 'sales-estimates',
 						title: 'Estimates',
 						icon: 'far fa-file',

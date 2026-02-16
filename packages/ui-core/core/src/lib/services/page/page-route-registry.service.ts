@@ -9,7 +9,7 @@ export const PAGE_SECTIONS_LOCATION: PageRouteLocationId = 'page-sections';
 /**
  * Top-level page paths reserved by core pages routing.
  * Plugins cannot register section routes for these paths; attempting to do so will throw.
- * Keep in sync with createPagesRoutes() in apps/gauzy/.../pages.routes.ts.
+ * Keep in sync with getPagesRoutes() in apps/gauzy/.../pages.routes.ts.
  *
  * Core route helpers → reserved paths:
  * - getDashboardRoute     → dashboard

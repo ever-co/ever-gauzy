@@ -1,11 +1,15 @@
 import { inject, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { PluginUiDefinition, IOnPluginUiBootstrap, IOnPluginUiDestroy } from '@gauzy/plugin-ui';
+import {
+	applyDeclarativeRegistrations,
+	IOnPluginUiBootstrap,
+	IOnPluginUiDestroy,
+	PLUGIN_DEFINITION
+} from '@gauzy/plugin-ui';
 import { DynamicTabsModule, NebularModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
-import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 
 @NgModule({
 	declarations: [JobEmployeeComponent],
@@ -20,94 +24,41 @@ import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, Permiss
 	exports: [JobEmployeeComponent]
 })
 export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
-	private static hasRegisteredPageRoutes = false;
+	private static _hasAppliedRegistrations = false;
 
 	private readonly _log = inject(LoggerService).withContext('JobEmployeeModule');
-	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 
 	constructor() {
-		this.registerPageRoutes();
-		this.registerNavMenuItems();
+		this._applyDeclarativeRegistrations();
 	}
 
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
-	/**
-	 * Called by `PluginUiModule` after the module is instantiated.
-	 */
+	/** Called by PluginUiModule after the plugin module is instantiated. */
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
 	}
 
-	/**
-	 * Called by `PluginUiModule` when the application is shutting down.
-	 */
+	/** Called by PluginUiModule when the application is shutting down. */
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
+		JobEmployeeModule._hasAppliedRegistrations = false;
 	}
 
-	// ─── Route & Menu Registration ────────────────────────────────
+	// ─── Registration ─────────────────────────────────────────────
 
-	/**
-	 * Register routes for the JobEmployeeModule.
-	 */
-	private registerPageRoutes(): void {
-		if (JobEmployeeModule.hasRegisteredPageRoutes) {
-			return;
-		}
+	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
+	private _applyDeclarativeRegistrations(): void {
+		if (JobEmployeeModule._hasAppliedRegistrations) return;
 
-		// Register Job Employee Page Routes
-		this._pageRouteRegistryService.registerPageRoute({
-			location: 'jobs-sections',
-			path: 'employee',
-			component: JobEmployeeComponent,
-			canActivate: [PermissionsGuard],
-			data: {
-				tabsetId: 'job-employee',
-				dataTableId: 'job-employee-page',
-				selectors: {
-					date: true,
-					employee: true,
-					project: false,
-					team: false
-				},
-				permissions: {
-					only: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW],
-					redirectTo: '/pages/jobs/search'
-				}
-			}
+		const def = inject(PLUGIN_DEFINITION);
+		applyDeclarativeRegistrations(def, {
+			navBuilder: this._navMenuBuilderService,
+			pageRouteRegistry: this._pageRouteRegistryService
 		});
 
-		// Set hasRegisteredRoutes to true
-		JobEmployeeModule.hasRegisteredPageRoutes = true;
-	}
-
-	/**
-	 * Register navigation menu items for the Job Employee plugin.
-	 */
-	private registerNavMenuItems(): void {
-		this._navMenuBuilderService.addNavMenuItem(
-			{
-				id: 'jobs-employee',
-				title: 'Employee',
-				icon: 'fas fa-user-friends',
-				link: '/pages/jobs/employee',
-				data: {
-					translationKey: 'MENU.EMPLOYEES',
-					permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW]
-				}
-			},
-			'jobs' // The parent nav section id (distinct from route registry location)
-		);
+		JobEmployeeModule._hasAppliedRegistrations = true;
 	}
 }
-
-/**
- * Plugin definition for the Job Employee UI plugin.
- */
-export const JobEmployeePlugin: PluginUiDefinition = {
-	id: 'job-employee',
-	module: JobEmployeeModule,
-	location: 'jobs-sections'
-};

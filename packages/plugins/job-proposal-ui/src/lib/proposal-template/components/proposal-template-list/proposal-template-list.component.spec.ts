@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ProposalTemplateComponent } from './proposal-template.component';
+import { ProposalTemplateListComponent } from './proposal-template-list.component';
 
-describe('ProposalTemplateComponent', () => {
-	let component: ProposalTemplateComponent;
-	let fixture: ComponentFixture<ProposalTemplateComponent>;
+describe('ProposalTemplateListComponent', () => {
+	let component: ProposalTemplateListComponent;
+	let fixture: ComponentFixture<ProposalTemplateListComponent>;
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [ProposalTemplateComponent],
+			declarations: [ProposalTemplateListComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(ProposalTemplateComponent);
+		fixture = TestBed.createComponent(ProposalTemplateListComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

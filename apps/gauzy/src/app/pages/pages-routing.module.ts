@@ -1,7 +1,7 @@
 import { ROUTES, RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { createPagesRoutes } from './pages.routes';
+import { getPagesRoutes } from './pages.routes';
 
 @NgModule({
 	imports: [RouterModule.forChild([])],
@@ -9,7 +9,8 @@ import { createPagesRoutes } from './pages.routes';
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createPagesRoutes(service),
+			useFactory: (pageRouteRegistryService: PageRouteRegistryService) =>
+				getPagesRoutes(pageRouteRegistryService),
 			deps: [PageRouteRegistryService],
 			multi: true
 		}
