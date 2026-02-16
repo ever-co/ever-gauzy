@@ -1,30 +1,6 @@
 import { PluginUiConfig } from './plugin-ui.types';
 
 /**
- * Recursively freezes an object and its nested objects/arrays so that
- * consumers cannot mutate getPluginUiConfig().plugins or nested properties.
- * Functions and primitives are left as-is.
- */
-function deepFreeze<T>(value: T): T {
-	if (value === null || typeof value !== 'object') {
-		return value;
-	}
-	if (Object.isFrozen(value)) {
-		return value;
-	}
-	if (Array.isArray(value)) {
-		for (let i = 0; i < value.length; i++) {
-			deepFreeze(value[i]);
-		}
-		return Object.freeze(value) as T;
-	}
-	for (const key of Object.keys(value) as (keyof T)[]) {
-		deepFreeze((value as Record<keyof T, unknown>)[key]);
-	}
-	return Object.freeze(value) as T;
-}
-
-/**
  * Module-scoped reference to the loaded UI configuration.
  * Populated by `setPluginUiConfig()` before Angular bootstrap.
  */
@@ -33,14 +9,13 @@ let _uiConfig: PluginUiConfig | undefined;
 /**
  * Stores the application UI configuration.
  *
- * Deep-freezes the configuration (including plugins, availableLanguages, and
- * nested plugin entries) so that consumers cannot mutate it after bootstrap.
+ * Freezes the configuration object to prevent accidental mutation after bootstrap.
  *
  * Must be called before Angular bootstraps so that `getPluginUiConfig()` can be used
  * safely from any module/service/component.
  */
 export function setPluginUiConfig(config: PluginUiConfig): void {
-	_uiConfig = deepFreeze(config) as PluginUiConfig;
+	_uiConfig = Object.freeze(config) as PluginUiConfig;
 }
 
 /**
