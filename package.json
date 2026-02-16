@@ -545,7 +545,7 @@
 		"@angular-devkit/architect": "^0.2002.0",
 		"@angular-devkit/core": "^20.2.4",
 		"@typescript-eslint/scope-manager": "^8.0.0",
-		"@typescript-eslint/utils": "^8.0.0",
+		"@typescript-eslint/utils": "^8.40.0",
 		"@typescript-eslint/visitor-keys": "^8.0.0",
 		"@sentry/core": "10.36.0",
 		"rxjs": "^7.8.2",

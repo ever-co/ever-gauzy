@@ -8,7 +8,7 @@
 	"implicitDependencies": ["contracts", "ui-config", "ui-core"],
 	"targets": {
 		"build": {
-			"executor": "@nx/angular:package",
+			"executor": "@nx/angular:ng-packagr-lite",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"dependsOn": ["^build"],
 			"options": {
