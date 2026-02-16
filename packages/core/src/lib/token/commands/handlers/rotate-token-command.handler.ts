@@ -51,18 +51,16 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 			const expiresAt = config.expiration ? new Date(Date.now() + config.expiration) : null;
 
 			// Metatdata for new token can be merged or replaced - here we choose to merge
-			const newMetadata = {
-				...oldToken.metadata,
-				...dto.metadata
-			};
+			const metadata = dto?.metadata || oldToken?.metadata;
+
 			// Create new token
 			const newTokenRecord = await repository.create({
 				userId: dto.userId,
 				tokenType: dto.tokenType,
-				tokenHash: '', // Temporary
+				tokenHash: '',
 				status: TokenStatus.ACTIVE,
 				expiresAt,
-				...newMetadata,
+				...(metadata && { metadata }),
 				rotatedFromTokenId: oldToken.id,
 				lastUsedAt: new Date()
 			});
@@ -85,12 +83,9 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 			await repository.save(newTokenRecord);
 
 			// Mark old token as rotated
-			const updated = await repository.updateStatus(
-				oldToken.id,
-				TokenStatus.ROTATED,
-				oldToken.version,
-				{ rotatedToTokenId: newTokenRecord.id }
-			);
+			const updated = await repository.updateStatus(oldToken.id, TokenStatus.ROTATED, oldToken.version, {
+				rotatedToTokenId: newTokenRecord.id
+			});
 
 			if (!updated) {
 				throw new ConflictException('Failed to rotate token - concurrent modification');

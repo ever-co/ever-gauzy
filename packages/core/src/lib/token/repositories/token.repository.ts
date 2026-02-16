@@ -207,31 +207,28 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 							order: { createdAt: 'DESC' }
 						}),
 					create: async (tokenData: Partial<IToken>) => {
-						const token = transactionalRepo.create(tokenData as any);
-						return transactionalRepo.save(token as any);
+						const token = transactionalRepo.create(tokenData);
+						return transactionalRepo.save(token);
 					},
-					save: async (token: IToken) => transactionalRepo.save(token as any),
+					save: async (token: IToken) => transactionalRepo.save(token),
 					updateStatus: async (
 						tokenId: string,
 						status: TokenStatus,
 						version: number,
 						additionalData?: Partial<IToken>
 					) => {
-						const updateData: any = { status, ...additionalData };
+						const updateData = { status, ...additionalData };
 						if (status === TokenStatus.REVOKED) updateData.revokedAt = new Date();
-						const result = await transactionalRepo.update(
-							{ id: tokenId, version } as any,
-							updateData as any
-						);
+						const result = await transactionalRepo.update({ id: tokenId, version }, updateData);
 						return result?.['id'] || result?.['affected'] === 1;
 					},
 					updateLastUsed: async (tokenId: string) => {
 						await transactionalRepo.update(
-							{ id: tokenId } as any,
+							{ id: tokenId },
 							{
 								lastUsedAt: new Date(),
 								usageCount: () => 'usageCount + 1'
-							} as any
+							}
 						);
 					},
 					revokeAllByUserAndType: async (
@@ -241,37 +238,37 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 						reason?: string
 					) => {
 						const result = await transactionalRepo.update(
-							{ userId, tokenType: tokenType, status: TokenStatus.ACTIVE } as any,
+							{ userId, tokenType: tokenType, status: TokenStatus.ACTIVE },
 							{
 								status: TokenStatus.REVOKED,
 								revokedAt: new Date(),
 								revokedById,
 								revokedReason: reason
-							} as any
+							}
 						);
 						return result?.['id'] || result?.['affected'] || 0;
 					},
-					revokeInactiveTokens: async (tokenType: string, inactivityThresholdMs: number) => {
-						const thresholdDate = new Date(Date.now() - inactivityThresholdMs);
+					revokeInactiveTokens: async (tokenType: string, threshold: number) => {
+						const thresholdDate = new Date(Date.now() - threshold);
 						const result = await transactionalRepo.update(
 							{
 								tokenType: tokenType,
 								status: TokenStatus.ACTIVE,
 								lastUsedAt: LessThan(thresholdDate)
-							} as any,
+							},
 							{
 								status: TokenStatus.REVOKED,
 								revokedAt: new Date(),
 								revokedReason: 'Inactivity timeout'
-							} as any
+							}
 						);
 						return result?.['id'] || result?.['affected'] || 0;
 					},
 					markExpiredTokens: async () => {
 						const now = new Date();
 						const result = await transactionalRepo.update(
-							{ status: TokenStatus.ACTIVE, expiresAt: LessThan(now) } as any,
-							{ status: TokenStatus.EXPIRED } as any
+							{ status: TokenStatus.ACTIVE, expiresAt: LessThan(now) },
+							{ status: TokenStatus.EXPIRED }
 						);
 						return result?.['id'] || result?.['affected'] || 0;
 					},
@@ -287,17 +284,17 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 							take: limit,
 							skip: offset,
 							order: { createdAt: 'DESC' }
-						} as any);
-						return { items, total } as any;
+						});
+						return { items, total };
 					},
 					deleteOlderThan: async (date: Date, status?: TokenStatus[]) => {
 						const where: any = { createdAt: LessThan(date) };
 						if (status && status.length > 0) where.status = In(status);
-						const result = await transactionalRepo.delete(where as any);
+						const result = await transactionalRepo.delete(where);
 						return result?.['id'] || result?.['affected'] || 0;
 					},
 					transaction: async <U>(w: (r: ITokenRepository) => Promise<U>) => {
-						return w(repo as any);
+						return w(repo);
 					}
 				} as ITokenRepository;
 
@@ -306,7 +303,7 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 		} else {
 			// MikroORM transaction
 			return this.mikroOrmTokenRepository.getEntityManager().transactional(async (em) => {
-				const transactionalRepo = em.getRepository(Token) as any;
+				const transactionalRepo = em.getRepository(Token);
 
 				const repo: ITokenRepository = {
 					findByHashWithLock: async (tokenHash: string) => {
@@ -319,7 +316,7 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 						transactionalRepo.find({ userId, tokenType, status: TokenStatus.ACTIVE }),
 					create: async (tokenData: Partial<IToken>) => {
 						const token = transactionalRepo.create(tokenData);
-						await transactionalRepo.persistAndFlush(token);
+						await transactionalRepo.insert(token);
 						return token;
 					},
 					save: async (token: IToken) => transactionalRepo.upsert(token),
@@ -331,7 +328,7 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 					) => {
 						const updateData: any = { status, ...additionalData };
 						if (status === TokenStatus.REVOKED) updateData.revokedAt = new Date();
-						const res = await transactionalRepo.nativeUpdate({ id: tokenId, version }, updateData as any);
+						const res = await transactionalRepo.nativeUpdate({ id: tokenId, version }, updateData);
 						return !!res;
 					},
 					updateLastUsed: async (tokenId: string) => {
@@ -353,27 +350,31 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 								revokedAt: new Date(),
 								revokedById,
 								revokedReason: reason
-							} as any
+							}
 						);
 						return result || 0;
 					},
 					revokeInactiveTokens: async (tokenType: string, inactivityThresholdMs: number) => {
 						const thresholdDate = new Date(Date.now() - inactivityThresholdMs);
 						const result = await transactionalRepo.nativeUpdate(
-							{ tokenType, status: TokenStatus.ACTIVE, lastUsedAt: LessThan(thresholdDate) } as any,
+							{
+								tokenType,
+								status: TokenStatus.ACTIVE,
+								lastUsedAt: { $lt: thresholdDate }
+							},
 							{
 								status: TokenStatus.REVOKED,
 								revokedAt: new Date(),
 								revokedReason: 'Inactivity timeout'
-							} as any
+							}
 						);
 						return result || 0;
 					},
 					markExpiredTokens: async () => {
 						const now = new Date();
 						const result = await transactionalRepo.nativeUpdate(
-							{ status: TokenStatus.ACTIVE, expiresAt: LessThan(now) } as any,
-							{ status: TokenStatus.EXPIRED } as any
+							{ status: TokenStatus.ACTIVE, expiresAt: { $lt: now } },
+							{ status: TokenStatus.EXPIRED }
 						);
 						return result || 0;
 					},
@@ -382,23 +383,27 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 						if (filters.userId) where.userId = filters.userId;
 						if (filters.tokenType) where.tokenType = filters.tokenType;
 						if (filters.status) where.status = filters.status;
-						if (filters.createdAfter) where.createdAt = MoreThan(filters.createdAfter);
-						if (filters.createdBefore) where.createdAt = LessThan(filters.createdBefore);
+						if (filters.createdAfter || filters.createdBefore) {
+							where.createdAt = {
+								...(filters.createdAfter ? { $gt: filters.createdAfter } : {}),
+								...(filters.createdBefore ? { $lt: filters.createdBefore } : {})
+							};
+						}
 						const [items, total] = await transactionalRepo.findAndCount(where, {
 							limit,
 							offset,
 							orderBy: { createdAt: 'DESC' }
-						} as any);
-						return { items, total } as any;
+						});
+						return { items, total };
 					},
 					deleteOlderThan: async (date: Date, status?: TokenStatus[]) => {
-						const where: any = { createdAt: LessThan(date) };
-						if (status && status.length > 0) where.status = In(status);
-						const result = await transactionalRepo.nativeDelete(where as any);
+						const where: any = { createdAt: { $lt: date } };
+						if (status && status.length > 0) where.status = { $in: status };
+						const result = await transactionalRepo.nativeDelete(where);
 						return result || 0;
 					},
 					transaction: async <U>(w: (r: ITokenRepository) => Promise<U>) => {
-						return w(repo as any);
+						return w(repo);
 					}
 				} as ITokenRepository;
 

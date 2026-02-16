@@ -1,6 +1,6 @@
-import { DynamicModule, Module, Provider } from '@nestjs/common';
+import { DynamicModule, FactoryProvider, Module, ModuleMetadata, Provider, Type } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
+import { CqrsModule } from '@nestjs/cqrs';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -50,7 +50,13 @@ import {
 	TokenWriteRepositoryToken
 } from './shared';
 
-const CommandHandlers = [
+type TokenProviderToken = string | symbol;
+type AsyncInjectTokens = NonNullable<FactoryProvider['inject']>;
+type ExportedProvider = TokenProviderToken | Type<unknown>;
+type TokenConfigFactory = (...args: unknown[]) => Promise<ITokenConfig> | ITokenConfig;
+type TokenSecretFactory = (...args: unknown[]) => Promise<string> | string;
+
+const CommandHandlers: Type<unknown>[] = [
 	CreateTokenHandler,
 	RotateTokenHandler,
 	RevokeTokenHandler,
@@ -59,12 +65,21 @@ const CommandHandlers = [
 	CleanupInactiveTokensHandler
 ];
 
-const QueryHandlers = [
+const QueryHandlers: Type<unknown>[] = [
 	ValidateTokenHandler,
 	GetTokenByIdHandler,
 	GetActiveTokensHandler,
 	GetTokensHandler,
 	GetTokenAuditTrailHandler
+];
+
+const BaseExports: ExportedProvider[] = [
+	TokenService,
+	TokenRepositoryToken,
+	TokenReadRepositoryToken,
+	TokenWriteRepositoryToken,
+	TokenMaintenanceRepositoryToken,
+	JwtServiceToken
 ];
 
 export interface TokenModuleOptions {
@@ -95,7 +110,7 @@ export interface TokenModuleFeatureOptions {
 	 * Example: 'REFRESH_TOKEN_CONFIG'
 	 * Default: {tokenType}_CONFIG
 	 */
-	configToken?: string;
+	configToken?: TokenProviderToken;
 
 	/**
 	 * Injection token for the scoped JWT service
@@ -106,13 +121,13 @@ export interface TokenModuleFeatureOptions {
 }
 
 export interface TokenModuleFeatureAsyncOptions {
-	imports?: any[];
-	inject?: any[];
-	useFactory: (...args: any[]) => Promise<ITokenConfig> | ITokenConfig;
-	jwtSecret?: string | ((...args: any[]) => Promise<string> | string);
-	serviceToken?: string | symbol;
-	configToken?: string;
-	jwtServiceToken?: string | symbol;
+	imports?: ModuleMetadata['imports'];
+	inject?: AsyncInjectTokens;
+	useFactory: TokenConfigFactory;
+	jwtSecret?: string | TokenSecretFactory;
+	serviceToken?: TokenProviderToken;
+	configToken?: TokenProviderToken;
+	jwtServiceToken?: TokenProviderToken;
 }
 
 @Module({})
@@ -143,43 +158,120 @@ export class TokenModule {
 			{
 				provide: JwtServiceToken,
 				useExisting: JwtService
-			},
+			}
 		];
 	}
 
-	private static buildScopedProviders(
-		configProviderToken: string,
-		serviceProviderToken: string | symbol,
-		jwtServiceProviderToken: string | symbol,
-		configFactoryProvider: Provider,
-		jwtServiceFactoryProvider?: Provider
-	): Provider[] {
-		const providers: Provider[] = [configFactoryProvider];
+	private static buildFeatureImports(
+		additionalImports: ModuleMetadata['imports'] = []
+	): NonNullable<ModuleMetadata['imports']> {
+		return [
+			CqrsModule,
+			TokenConfigModule,
+			TypeOrmModule.forFeature([Token]),
+			MikroOrmModule.forFeature([Token]),
+			...(additionalImports ?? [])
+		];
+	}
 
-		// Add JWT service provider if custom one is provided
-		if (jwtServiceFactoryProvider) {
-			providers.push(jwtServiceFactoryProvider);
-		} else {
-			// Use global JWT service
-			providers.push({
-				provide: jwtServiceProviderToken,
-				useExisting: JwtService
-			});
+	private static buildScopedConfigProvider(
+		configToken: TokenProviderToken,
+		configFactory: TokenConfigFactory,
+		inject: AsyncInjectTokens = []
+	): FactoryProvider<ScopedTokenConfig> {
+		return {
+			provide: configToken,
+			useFactory: async (registry: TokenConfigRegistry, ...args: unknown[]): Promise<ScopedTokenConfig> => {
+				const config = await configFactory(...args);
+				registry.register(config);
+				return new ScopedTokenConfig(config);
+			},
+			inject: [TokenConfigRegistry, ...inject]
+		};
+	}
+
+	private static buildScopedJwtProviders(
+		configToken: TokenProviderToken,
+		jwtServiceToken: TokenProviderToken,
+		jwtSecret?: string | TokenSecretFactory,
+		inject: AsyncInjectTokens = []
+	): Provider[] {
+		if (!jwtSecret) {
+			return [
+				{
+					provide: jwtServiceToken,
+					useExisting: JwtService
+				}
+			];
 		}
 
-		// Add scoped token service
-		providers.push({
-			provide: serviceProviderToken,
-			useFactory: (commandBus: CommandBus, queryBus: QueryBus, scopedConfig: ScopedTokenConfig) => {
-				return new ScopedTokenService(commandBus, queryBus, scopedConfig);
+		if (typeof jwtSecret === 'string') {
+			return [
+				{
+					provide: jwtServiceToken,
+					useFactory: (scopedConfig: ScopedTokenConfig) => {
+						return new ScopedJwtService(jwtSecret, scopedConfig.tokenType);
+					},
+					inject: [configToken]
+				}
+			];
+		}
+
+		const jwtSecretToken = Symbol('TOKEN_MODULE_JWT_SECRET');
+		return [
+			{
+				provide: jwtSecretToken,
+				useFactory: (...args: unknown[]) => jwtSecret(...args),
+				inject
 			},
-			inject: [CommandBus, QueryBus, configProviderToken]
-		});
+			{
+				provide: jwtServiceToken,
+				useFactory: async (scopedConfig: ScopedTokenConfig, secret: string) => {
+					return new ScopedJwtService(secret, scopedConfig.tokenType);
+				},
+				inject: [configToken, jwtSecretToken]
+			}
+		];
+	}
 
-		// Add command and query handlers for the scoped service
-		providers.push(...CommandHandlers, ...QueryHandlers);
+	private static buildJwtRegistrationProvider(
+		configToken: TokenProviderToken,
+		jwtServiceToken: TokenProviderToken
+	): FactoryProvider<boolean> {
+		return {
+			provide: Symbol('TOKEN_MODULE_JWT_REGISTRATION'),
+			useFactory: (
+				registry: TokenConfigRegistry,
+				scopedConfig: ScopedTokenConfig,
+				scopedJwtService: IJwtService
+			) => {
+				registry.registerJwtService(scopedConfig.tokenType, scopedJwtService);
+				return true;
+			},
+			inject: [TokenConfigRegistry, configToken, jwtServiceToken]
+		};
+	}
 
-		return providers;
+	private static buildScopedProviders(
+		configToken: TokenProviderToken,
+		serviceToken: TokenProviderToken,
+		jwtServiceToken: TokenProviderToken,
+		configProvider: Provider,
+		jwtProviders: Provider[]
+	): Provider[] {
+		return [
+			configProvider,
+			{
+				provide: ScopedTokenConfig,
+				useExisting: configToken
+			},
+			...jwtProviders,
+			{
+				provide: serviceToken,
+				useClass: ScopedTokenService
+			},
+			this.buildJwtRegistrationProvider(configToken, jwtServiceToken)
+		];
 	}
 
 	/**
@@ -189,6 +281,7 @@ export class TokenModule {
 		const { enableScheduler = true } = options;
 
 		const providers: Provider[] = [...this.buildBaseProviders()];
+		providers.push(...CommandHandlers, ...QueryHandlers);
 
 		// Conditionally add scheduler
 		if (enableScheduler) {
@@ -199,21 +292,11 @@ export class TokenModule {
 			module: TokenModule,
 			imports: [
 				ConfigModule,
-				CqrsModule,
-				TokenConfigModule,
-				TypeOrmModule.forFeature([Token]),
-				MikroOrmModule.forFeature([Token]),
+				...this.buildFeatureImports(),
 				...(enableScheduler ? [ScheduleModule.forRoot()] : [])
 			],
 			providers,
-			exports: [
-				TokenService,
-				TokenRepositoryToken,
-				TokenReadRepositoryToken,
-				TokenWriteRepositoryToken,
-				TokenMaintenanceRepositoryToken,
-				JwtServiceToken
-			]
+			exports: BaseExports
 		};
 	}
 
@@ -250,14 +333,7 @@ export class TokenModule {
 	 */
 	static forFeature(options?: TokenModuleFeatureOptions): DynamicModule {
 		const providers: Provider[] = [...this.buildBaseProviders()];
-		const exports: Array<string | symbol | Function> = [
-			TokenService,
-			TokenRepositoryToken,
-			TokenReadRepositoryToken,
-			TokenWriteRepositoryToken,
-			TokenMaintenanceRepositoryToken,
-			JwtServiceToken
-		];
+		const moduleExports: ExportedProvider[] = [...BaseExports];
 
 		// If options provided, create scoped service with factory
 		if (options?.config) {
@@ -269,61 +345,22 @@ export class TokenModule {
 				jwtServiceToken = `${config.tokenType}_JWT_SERVICE`
 			} = options;
 
-			// Create scoped JWT service if custom secret provided
-			let jwtServiceFactoryProvider: Provider | undefined;
-			if (jwtSecret) {
-				jwtServiceFactoryProvider = {
-					provide: jwtServiceToken,
-					useFactory: () => {
-						return new ScopedJwtService(jwtSecret, config.tokenType);
-					}
-				};
-			}
-
-			// Scoped Config - Factory with injection token
-			const configFactoryProvider: Provider = {
-				provide: configToken,
-				useFactory: (registry: TokenConfigRegistry) => {
-					registry.register(config);
-					return new ScopedTokenConfig(config);
-				},
-				inject: [TokenConfigRegistry]
-			};
-
-			const jwtRegistrationProvider: Provider = {
-				provide: `${configToken}_JWT_REGISTRATION`,
-				useFactory: (registry: TokenConfigRegistry, scopedConfig: ScopedTokenConfig, scopedJwtService: IJwtService) => {
-					registry.registerJwtService(scopedConfig.tokenType, scopedJwtService);
-					return true;
-				},
-				inject: [TokenConfigRegistry, configToken, jwtServiceToken]
-			};
+			const configProvider = this.buildScopedConfigProvider(configToken, () => config);
+			const jwtProviders = this.buildScopedJwtProviders(configToken, jwtServiceToken, jwtSecret);
 
 			providers.push(
-				...this.buildScopedProviders(
-					configToken,
-					serviceToken,
-					jwtServiceToken,
-					configFactoryProvider,
-					jwtServiceFactoryProvider
-				),
-				jwtRegistrationProvider
+				...this.buildScopedProviders(configToken, serviceToken, jwtServiceToken, configProvider, jwtProviders)
 			);
 
 			// Export scoped tokens
-			exports.push(serviceToken, configToken, jwtServiceToken);
+			moduleExports.push(serviceToken, configToken, jwtServiceToken);
 		}
 
 		return {
 			module: TokenModule,
-			imports: [
-				CqrsModule,
-				TokenConfigModule,
-				TypeOrmModule.forFeature([Token]),
-				MikroOrmModule.forFeature([Token])
-			],
+			imports: this.buildFeatureImports(),
 			providers,
-			exports
+			exports: moduleExports
 		};
 	}
 
@@ -354,77 +391,27 @@ export class TokenModule {
 	 */
 	static forFeatureAsync(options: TokenModuleFeatureAsyncOptions): DynamicModule {
 		const providers: Provider[] = [...this.buildBaseProviders()];
-		const exports: Array<string | symbol | Function> = [
-			TokenService,
-			TokenRepositoryToken,
-			TokenReadRepositoryToken,
-			TokenWriteRepositoryToken,
-			TokenMaintenanceRepositoryToken,
-			JwtServiceToken
-		];
+		const moduleExports: ExportedProvider[] = [...BaseExports];
+		const inject = options.inject ?? [];
 
 		const configToken = options.configToken ?? 'TOKEN_CONFIG';
 		const serviceToken = options.serviceToken ?? 'TOKEN_SERVICE';
 		const jwtServiceToken = options.jwtServiceToken ?? 'TOKEN_JWT_SERVICE';
 
-		// Create scoped JWT service if custom secret factory provided
-		let jwtServiceFactoryProvider: Provider | undefined;
-		if (options.jwtSecret) {
-			jwtServiceFactoryProvider = {
-				provide: jwtServiceToken,
-				useFactory: async (...args: any[]) => {
-					const config = await options.useFactory(...args);
-					const secret =
-						typeof options.jwtSecret === 'function' ? await options.jwtSecret(...args) : options.jwtSecret;
-					return new ScopedJwtService(secret, config.tokenType);
-				},
-				inject: options.inject ?? []
-			};
-		}
-
-		const configFactoryProvider: Provider = {
-			provide: configToken,
-			useFactory: async (registry: TokenConfigRegistry, ...args: any[]) => {
-				const config = await options.useFactory(...args);
-				registry.register(config);
-				return new ScopedTokenConfig(config);
-			},
-			inject: [TokenConfigRegistry, ...(options.inject ?? [])]
-		};
-
-		const jwtRegistrationProvider: Provider = {
-			provide: `${configToken}_JWT_REGISTRATION`,
-			useFactory: (registry: TokenConfigRegistry, scopedConfig: ScopedTokenConfig, scopedJwtService: IJwtService) => {
-				registry.registerJwtService(scopedConfig.tokenType, scopedJwtService);
-				return true;
-			},
-			inject: [TokenConfigRegistry, configToken, jwtServiceToken]
-		};
+		const configProvider = this.buildScopedConfigProvider(configToken, options.useFactory, inject);
+		const jwtProviders = this.buildScopedJwtProviders(configToken, jwtServiceToken, options.jwtSecret, inject);
 
 		providers.push(
-			...this.buildScopedProviders(
-				configToken,
-				serviceToken,
-				jwtServiceToken,
-				configFactoryProvider,
-				jwtServiceFactoryProvider
-			),
-			jwtRegistrationProvider
+			...this.buildScopedProviders(configToken, serviceToken, jwtServiceToken, configProvider, jwtProviders)
 		);
 
-		exports.push(serviceToken, configToken, jwtServiceToken);
+		moduleExports.push(serviceToken, configToken, jwtServiceToken);
 
 		return {
 			module: TokenModule,
-			imports: [
-				CqrsModule,
-				TokenConfigModule,
-				TypeOrmModule.forFeature([Token]),
-				MikroOrmModule.forFeature([Token]),
-				...(options.imports ?? [])
-			],
+			imports: this.buildFeatureImports(options.imports),
 			providers,
-			exports
+			exports: moduleExports
 		};
 	}
 }
