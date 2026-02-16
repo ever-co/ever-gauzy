@@ -144,8 +144,6 @@ export class TokenModule {
 				provide: JwtServiceToken,
 				useExisting: JwtService
 			},
-			...CommandHandlers,
-			...QueryHandlers
 		];
 	}
 
@@ -177,6 +175,9 @@ export class TokenModule {
 			},
 			inject: [CommandBus, QueryBus, configProviderToken]
 		});
+
+		// Add command and query handlers for the scoped service
+		providers.push(...CommandHandlers, ...QueryHandlers);
 
 		return providers;
 	}
