@@ -9,10 +9,15 @@ import {
 	runInInjectionContext
 } from '@angular/core';
 import { getPluginUiConfig } from './plugin-ui.loader';
-import { PLUGIN_ACTIVATION_PREDICATE, PLUGIN_DEFINITION, PLUGIN_OPTIONS } from './plugin-ui.types';
+import {
+	PLUGIN_ACTIVATION_PREDICATE,
+	PLUGIN_DEFINITION,
+	PLUGIN_OPTIONS,
+	orderPluginsByDependencies,
+	PluginUiDefinition
+} from './plugin-ui.types';
 import { PluginUiLifecycleMethods } from './plugin-ui.interface';
 import { getUIPluginModulesWithDefinitions, hasPluginUiLifecycleMethod } from './plugin-ui.helper';
-import { orderPluginsByDependencies, PluginUiDefinition } from './plugin-ui.types';
 import { PageExtensionRegistryService } from './plugin-extension/extension-registry.service';
 import { PluginUiRegistryService } from './plugin-ui-registry.service';
 

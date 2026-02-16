@@ -20,13 +20,13 @@ import { AppComponent } from './app.component';
  */
 @NgModule({
 	imports: [
-		PluginUiModule.init(), // Plugin lifecycle management (ngOnPluginBootstrap / ngOnPluginDestroy
+		PluginUiModule.init(), // Plugin lifecycle management (ngOnPluginBootstrap / ngOnPluginDestroy)
 		AppModule // Core application module (declares AppComponent + all app logic)
 	],
 	providers: [
 		{
 			provide: PLUGIN_UI_CONFIG,
-			useFactory: () => getPluginUiConfig()
+			useFactory: getPluginUiConfig
 		}
 	],
 	bootstrap: [AppComponent]
@@ -36,13 +36,25 @@ export class AppBootstrapModule implements OnDestroy {
 
 	constructor() {
 		const config = getPluginUiConfig();
-		const locations = [...new Set(config.plugins.map((p) => p.location).filter(Boolean))];
+
+		/** Validate the plugin UI config. */
+		if (config == null || typeof config !== 'object') {
+			console.error('[AppBootstrapModule] Invalid or missing plugin UI config from getPluginUiConfig().');
+			return;
+		}
+
+		/** Extract the plugin UI config. */
+		const plugins = Array.isArray(config.plugins) ? config.plugins : [];
+		const availableLanguages = Array.isArray(config.availableLanguages) ? config.availableLanguages : [];
+		const defaultLanguage = config.defaultLanguage ?? '';
+		const defaultLocale = config.defaultLocale ?? '';
+		const locations = [...new Set(plugins.map((p) => p?.location).filter(Boolean))];
 
 		console.log(
 			`[AppBootstrapModule] Initialized — ` +
-				`${config.plugins.length} plugin(s) [${locations.join(', ') || 'none'}], ` +
-				`${config.availableLanguages.length} language(s), ` +
-				`default: ${config.defaultLanguage} / ${config.defaultLocale}`
+				`${plugins.length} plugin(s) [${locations.join(', ') || 'none'}], ` +
+				`${availableLanguages.length} language(s), ` +
+				`default: ${defaultLanguage} / ${defaultLocale}`
 		);
 	}
 
