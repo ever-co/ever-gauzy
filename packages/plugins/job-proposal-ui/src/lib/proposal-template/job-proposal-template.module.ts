@@ -8,7 +8,8 @@ import {
 	IOnPluginUiDestroy,
 	PLUGIN_DEFINITION
 } from '@gauzy/plugin-ui';
-import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, Store } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
 	DialogsModule,
@@ -17,7 +18,7 @@ import {
 	SharedModule,
 	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
-import { getJobProposalTemplateRoutes } from './job-proposal-template.routes';
+import { getJobProposalTemplateRoutes, JOB_PROPOSAL_TEMPLATE_PAGE_LINK } from './job-proposal-template.routes';
 import { ProposalTemplateListComponent } from './components/proposal-template-list/proposal-template-list.component';
 import { ProposalTemplateFormComponent } from './components/proposal-template-form/proposal-template-form.component';
 
@@ -48,6 +49,7 @@ export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPlugi
 	private readonly _log = inject(LoggerService).withContext('JobProposalTemplateModule');
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _store = inject(Store);
 
 	constructor() {
 		this._applyDeclarativeRegistrations();
@@ -73,10 +75,30 @@ export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPlugi
 		if (JobProposalTemplateModule._hasAppliedRegistrations) return;
 
 		const def = inject(PLUGIN_DEFINITION);
+
 		applyDeclarativeRegistrations(def, {
-			navBuilder: this._navMenuBuilderService,
 			pageRouteRegistry: this._pageRouteRegistryService
 		});
+
+		this._navMenuBuilderService.addNavMenuItem(
+			{
+				id: 'jobs-proposal-template',
+				title: 'Proposal Template',
+				icon: 'far fa-file-alt',
+				link: JOB_PROPOSAL_TEMPLATE_PAGE_LINK,
+				data: {
+					translationKey: 'MENU.PROPOSAL_TEMPLATE',
+					permissionKeys: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
+					...(this._store.hasAnyPermission(
+						PermissionsEnum.ALL_ORG_EDIT,
+						PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT
+					) && {
+						add: '/pages/jobs/proposal-template?openAddDialog=true'
+					})
+				}
+			},
+			'jobs'
+		);
 
 		JobProposalTemplateModule._hasAppliedRegistrations = true;
 	}

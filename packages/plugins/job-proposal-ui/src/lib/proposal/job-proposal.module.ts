@@ -11,7 +11,13 @@ import {
 	PLUGIN_DEFINITION,
 	PluginUiDefinition
 } from '@gauzy/plugin-ui';
-import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
+import {
+	LoggerService,
+	NavMenuBuilderService,
+	PageRouteRegistryService,
+	Store
+} from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
 	SharedModule,
@@ -25,7 +31,12 @@ import {
 	TagsColorInputModule,
 	NebularModule
 } from '@gauzy/ui-core/shared';
-import { getProposalsRoutes, JOB_PROPOSAL_SALES_ROUTE, SALES_SECTIONS_LOCATION } from './job-proposal.routes';
+import {
+	getProposalsRoutes,
+	JOB_PROPOSAL_PAGE_LINK,
+	JOB_PROPOSAL_SALES_ROUTE,
+	SALES_SECTIONS_LOCATION
+} from './job-proposal.routes';
 import { COMPONENTS } from './components';
 
 @NgModule({
@@ -63,6 +74,7 @@ export class JobProposalModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private readonly _log = inject(LoggerService).withContext('JobProposalModule');
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _store = inject(Store);
 
 	constructor() {
 		this._applyDeclarativeRegistrations();
@@ -96,9 +108,30 @@ export class JobProposalModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 			} as PluginUiDefinition);
 
 		applyDeclarativeRegistrations(def, {
-			navBuilder: this._navMenuBuilderService,
 			pageRouteRegistry: this._pageRouteRegistryService
 		});
+
+		this._navMenuBuilderService.addNavMenuItem(
+			{
+				id: 'sales-proposals',
+				title: 'Proposals',
+				icon: 'fas fa-paper-plane',
+				link: JOB_PROPOSAL_PAGE_LINK,
+				data: {
+					translationKey: 'MENU.PROPOSALS',
+					permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW],
+					featureKey: FeatureEnum.FEATURE_PROPOSAL,
+					...(this._store.hasAnyPermission(
+						PermissionsEnum.ALL_ORG_EDIT,
+						PermissionsEnum.ORG_PROPOSALS_EDIT
+					) && {
+						add: '/pages/sales/proposals/register'
+					})
+				}
+			},
+			'sales',
+			'sales-estimates'
+		);
 
 		JobProposalModule._hasAppliedRegistrations = true;
 	}
