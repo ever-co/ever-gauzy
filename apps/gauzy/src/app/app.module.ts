@@ -34,6 +34,7 @@ import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
 import { UiCoreModule } from '@gauzy/ui-core';
 import { getPluginUiConfig } from '@gauzy/plugin-ui';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
+import { isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	APIInterceptor,
 	AppInitService,
@@ -250,7 +251,7 @@ export class AppModule {
 			fallbackLocale: uiConfig.fallbackLocale ?? uiConfig.defaultLanguage
 		};
 
-		if (uiConfig.startWeekOn) {
+		if (isNotEmpty(uiConfig.startWeekOn)) {
 			localeOptions.week = { dow: uiConfig.startWeekOn };
 		}
 

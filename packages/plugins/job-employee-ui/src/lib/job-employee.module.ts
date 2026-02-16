@@ -29,6 +29,7 @@ export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private readonly _log = inject(LoggerService).withContext('JobEmployeeModule');
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION);
 
 	constructor() {
 		this._applyDeclarativeRegistrations();
@@ -53,8 +54,7 @@ export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private _applyDeclarativeRegistrations(): void {
 		if (JobEmployeeModule._hasAppliedRegistrations) return;
 
-		const def = inject(PLUGIN_DEFINITION);
-		applyDeclarativeRegistrations(def, {
+		applyDeclarativeRegistrations(this._pluginDefinition, {
 			navBuilder: this._navMenuBuilderService,
 			pageRouteRegistry: this._pageRouteRegistryService
 		});

@@ -76,12 +76,15 @@ export class PluginUiModule implements OnDestroy {
 		}).catch((e: unknown) => {
 			console.error('[PluginUiModule] Error during plugin destroy', e);
 		});
-		// Plugins without ngOnPluginDestroy: deregister extensions immediately (no async hook to wait for).
+		// Plugins without ngOnPluginDestroy: deregister from registry and extensions immediately (no async hook to wait for).
 		for (let i = 0; i < this._pluginInstances.length; i++) {
 			const instance = this._pluginInstances[i];
 			const def = this._pluginDefinitions[i];
-			if (!hasPluginUiLifecycleMethod(instance, 'ngOnPluginDestroy') && def?.extensions?.length) {
-				this._extRegistry.deregisterByPlugin(def.id);
+			if (!hasPluginUiLifecycleMethod(instance, 'ngOnPluginDestroy')) {
+				this._registry.deregister(instance);
+				if (def?.extensions?.length) {
+					this._extRegistry.deregisterByPlugin(def.id);
+				}
 			}
 		}
 	}

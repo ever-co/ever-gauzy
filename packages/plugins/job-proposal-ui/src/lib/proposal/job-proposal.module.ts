@@ -12,12 +12,7 @@ import {
 	PluginUiDefinition
 } from '@gauzy/plugin-ui';
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
-import {
-	LoggerService,
-	NavMenuBuilderService,
-	PageRouteRegistryService,
-	Store
-} from '@gauzy/ui-core/core';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, Store } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
 	SharedModule,
@@ -75,6 +70,7 @@ export class JobProposalModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _store = inject(Store);
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true });
 
 	constructor() {
 		this._applyDeclarativeRegistrations();
@@ -100,7 +96,7 @@ export class JobProposalModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 		if (JobProposalModule._hasAppliedRegistrations) return;
 
 		const def: PluginUiDefinition =
-			inject(PLUGIN_DEFINITION, { optional: true }) ??
+			this._pluginDefinition ??
 			({
 				id: 'job-proposal',
 				location: SALES_SECTIONS_LOCATION,
