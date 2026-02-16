@@ -34,7 +34,7 @@ import {
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TablerIconsModule } from '@gauzy/ui-core/theme';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 
 import { InfiniteScrollDirective } from '../../directives/infinite-scroll.directive';
 

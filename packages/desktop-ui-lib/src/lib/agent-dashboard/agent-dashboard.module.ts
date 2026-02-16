@@ -31,7 +31,7 @@ import {
 	NbRouteTabsetModule,
 	NbDialogModule
 } from '@nebular/theme';
-import { TablerIconsModule } from '@gauzy/ui-core/theme';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import { AgentDashboardComponent } from './agent-dashboard.component';
 import { LogsPageComponent } from './logs/logs.component';
 import { SyncPageComponent } from './activity-sync/activity-sync.component';

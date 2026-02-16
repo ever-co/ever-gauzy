@@ -33,6 +33,7 @@ import * as remoteMain from '@electron/remote/main';
 import {
 	AppError,
 	AppMenu,
+	AppWindowManager,
 	DesktopDialog,
 	DesktopServer,
 	DesktopThemeListener,
@@ -50,16 +51,11 @@ import {
 	ReverseProxy,
 	ReverseUiProxy,
 	ServerConfig,
+	setupAkitaStorageHandler,
 	TranslateLoader,
-	TranslateService,
-	AppWindowManager
+	TranslateService
 } from '@gauzy/desktop-lib';
-import {
-	createAboutWindow,
-	createServerWindow,
-	PluginMarketplaceWindow,
-	SplashScreen
-} from '@gauzy/desktop-window';
+import { createAboutWindow, createServerWindow, PluginMarketplaceWindow, SplashScreen } from '@gauzy/desktop-window';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { autoUpdater } from 'electron-updater';
@@ -344,7 +340,7 @@ const getEnvApi = () => {
 
 const initializeAppWindowManager = () => {
 	appWindowManager = AppWindowManager.getInstance();
-}
+};
 
 const createTray = () => {
 	try {
@@ -375,10 +371,10 @@ const contextMenu = () => {
 					await appWindowManager.initSettingWindow(uiPath);
 					ipcMain.once('setting_window_ready', () => {
 						appWindowManager.settingShow('goto_update');
-					})
+					});
 				} else {
-                    appWindowManager.settingShow('goto_update');
-                }
+					appWindowManager.settingShow('goto_update');
+				}
 				appWindowManager.settingWindow.show();
 			}
 		},
@@ -451,6 +447,9 @@ ipcMain.on('stop_gauzy_server', (event, arg) => {
 
 app.on('ready', async () => {
 	console.log('App is ready');
+	// Setup storage handler for Akita state management
+	setupAkitaStorageHandler();
+	// Initialize the App Window Manager to manage all application windows
 	initializeAppWindowManager();
 	try {
 		splashScreen = new SplashScreen(pathWindow.ui);

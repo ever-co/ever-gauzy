@@ -1,3 +1,4 @@
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {
 	enableProdMode,
 	ErrorHandler,
@@ -7,26 +8,34 @@ import {
 	provideZoneChangeDetection
 } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
-import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import * as Sentry from '@sentry/angular';
+import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
+import {
+	NbDatepickerModule,
+	NbDialogModule,
+	NbDialogService,
+	NbIconLibraries,
+	NbMenuModule,
+	NbSidebarModule,
+	NbThemeModule,
+	NbToastrModule
+} from '@nebular/theme';
 import {
 	ActivityWatchInterceptor,
 	APIInterceptor,
-	AuthGuard,
 	AuthService,
 	AuthStrategy,
 	DEFAULT_TIMEOUT,
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
+	GauzyStorageService,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
-	NoAuthGuard,
 	OrganizationInterceptor,
 	RefreshTokenInterceptor,
 	ServerErrorInterceptor,
@@ -36,18 +45,8 @@ import {
 	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import {
-	NbDatepickerModule,
-	NbDialogModule,
-	NbDialogService,
-	NbThemeModule,
-	NbToastrModule,
-	NbSidebarModule,
-	NbMenuModule,
-	NbIconLibraries
-} from '@nebular/theme';
 import { provideI18n } from '@gauzy/ui-core/i18n';
-import { TablerIconsModule } from '@gauzy/ui-core/theme';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
@@ -74,14 +73,6 @@ if (environment.SENTRY_DSN) {
 	}
 }
 
-persistState({
-	key: '_gauzyStore'
-});
-
-akitaConfig({
-	resettable: true
-});
-
 bootstrapApplication(AppComponent, {
 	providers: [
 		provideZoneChangeDetection(),
@@ -103,11 +94,20 @@ bootstrapApplication(AppComponent, {
 		NbDialogService,
 		ElectronService,
 		LoggerService,
-		AuthGuard,
-		NoAuthGuard,
 		AuthStrategy,
 		AuthService,
 		Store,
+		provideAppInitializer(() => {
+			const storage = inject(GauzyStorageService);
+			persistState({
+				key: '_gauzyStore',
+				enableInNonBrowser: true,
+				storage
+			});
+			akitaConfig({
+				resettable: true
+			});
+		}),
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,

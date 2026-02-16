@@ -25,6 +25,7 @@ remoteMain.initialize();
 import {
 	AppError,
 	AppMenu,
+	AppWindowManager,
 	DesktopServer,
 	DesktopThemeListener,
 	DesktopUpdater,
@@ -36,13 +37,13 @@ import {
 	ProviderFactory,
 	TranslateLoader,
 	TranslateService,
-	TrayIcon,
+	TrayIconFactory,
 	UIError,
 	ipcMainHandler,
 	ipcTimer,
 	removeMainListener,
 	removeTimerListener,
-	AppWindowManager
+	setupAkitaStorageHandler
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -127,7 +128,6 @@ let appWindowManager: AppWindowManager = null;
 setupTitlebar();
 
 console.log('App UI Render Path:', path.join(__dirname, './index.html'));
-
 
 const pathWindow = {
 	gauzyWindow: path.join(__dirname, './index.html'),
@@ -339,7 +339,12 @@ async function startServer(value, restart = false) {
 
 		try {
 			console.log('Starting local server...', path.join(__dirname, 'api/main.js'));
-			await server.start({ api: path.join(__dirname, 'api/main.js') }, process.env, appWindowManager.setupWindow, signal);
+			await server.start(
+				{ api: path.join(__dirname, 'api/main.js') },
+				process.env,
+				appWindowManager.setupWindow,
+				signal
+			);
 		} catch (error) {
 			console.error('ERROR: Occurred while server start:' + error);
 			throw new AppError('MAINWININIT', error);
@@ -375,7 +380,6 @@ async function startServer(value, restart = false) {
 
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
-		createTrayMenu();
 	});
 
 	/* ping server before launch the ui */
@@ -393,23 +397,14 @@ async function startServer(value, restart = false) {
 
 function createTrayMenu() {
 	try {
-		const auth = store.get('auth');
-
 		if (tray) {
 			tray.destroy();
 		}
-
-		tray = new TrayIcon(
-			setupWindow,
-			knex,
-			timeTrackerWindow,
-			auth,
-			settingsWindow,
-			{ ...environment },
+		// Create the tray icon and menu
+		tray = TrayIconFactory.create(
+			environment,
 			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-			gauzyWindow,
-			alwaysOn
+			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png')
 		);
 	} catch (error) {
 		console.error('ERROR: Occurred while create tray menu:' + error);
@@ -480,6 +475,9 @@ const closeSplashScreen = () => {
 
 app.on('ready', async () => {
 	console.log('App is ready');
+	// Setup Akita storage handler for IPC communication
+	setupAkitaStorageHandler();
+
 	initAppWindowManager();
 
 	const configs: any = store.get('configs');

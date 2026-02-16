@@ -1,3 +1,4 @@
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {
 	enableProdMode,
 	ErrorHandler,
@@ -7,7 +8,6 @@ import {
 	provideZoneChangeDetection
 } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
 import {
@@ -19,17 +19,19 @@ import {
 	NbIconLibraries
 } from '@nebular/theme';
 import * as Sentry from '@sentry/angular';
+import { akitaConfig, persistState } from '@datorama/akita';
 import {
 	ElectronService,
 	GAUZY_ENV,
+	GauzyStorageService,
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
 	Store
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import { TablerIconsModule } from '@gauzy/ui-core/theme';
 import { provideI18n } from '@gauzy/ui-core/i18n';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
@@ -61,8 +63,8 @@ bootstrapApplication(AppComponent, {
 			NbMenuModule.forRoot(),
 			NbSidebarModule.forRoot(),
 			LanguageModule.forRoot(),
-			NgxDesktopThemeModule,
-			TablerIconsModule
+			TablerIconsModule,
+			NgxDesktopThemeModule
 		),
 		provideI18n({ extend: true }),
 		AppService,
@@ -70,6 +72,17 @@ bootstrapApplication(AppComponent, {
 		ElectronService,
 		LoggerService,
 		Store,
+		provideAppInitializer(() => {
+			const storage = inject(GauzyStorageService);
+			persistState({
+				key: '_gauzyStore',
+				enableInNonBrowser: true,
+				storage
+			});
+			akitaConfig({
+				resettable: true
+			});
+		}),
 		{
 			provide: ErrorHandler,
 			useValue: Sentry.createErrorHandler({

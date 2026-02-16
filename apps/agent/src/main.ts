@@ -2,9 +2,10 @@ import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@a
 import {
 	APP_INITIALIZER,
 	ErrorHandler,
-	Injector,
 	enableProdMode,
 	importProvidersFrom,
+	inject,
+	provideAppInitializer,
 	provideZoneChangeDetection
 } from '@angular/core';
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
@@ -15,7 +16,6 @@ import {
 	APIInterceptor,
 	AgentDashboardModule,
 	AlwaysOnModule,
-	AuthGuard,
 	AuthModule,
 	AuthService,
 	AuthStrategy,
@@ -23,12 +23,12 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
+	GauzyStorageService,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
 	NgxLoginModule,
-	NoAuthGuard,
 	OrganizationInterceptor,
 	RefreshTokenInterceptor,
 	ServerConnectionService,
@@ -38,10 +38,10 @@ import {
 	Store,
 	TenantInterceptor,
 	TimeoutInterceptor,
-	TokenInterceptor,
-	serverConnectionFactory
+	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { provideI18n } from '@gauzy/ui-core/i18n';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -56,10 +56,8 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import * as Sentry from '@sentry/angular';
-import { provideI18n } from '@gauzy/ui-core/i18n';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
-import { AppModuleGuard } from './app/app.module.guards';
 import { AppService } from './app/app.service';
 import { initializeSentry } from './app/sentry';
 import { environment } from './environments/environment';
@@ -83,14 +81,6 @@ if (environment.SENTRY_DSN) {
 		initializeSentry();
 	}
 }
-
-persistState({
-	key: '_gauzyStore'
-});
-
-akitaConfig({
-	resettable: true
-});
 
 bootstrapApplication(AppComponent, {
 	providers: [
@@ -120,15 +110,23 @@ bootstrapApplication(AppComponent, {
 		AppService,
 		NbDialogService,
 		NbSidebarService,
-		AuthGuard,
-		NoAuthGuard,
-		AppModuleGuard,
 		AuthStrategy,
 		AuthService,
 		ServerConnectionService,
 		ElectronService,
 		LoggerService,
 		Store,
+		provideAppInitializer(() => {
+			const storage = inject(GauzyStorageService);
+			persistState({
+				key: '_gauzyStore',
+				enableInNonBrowser: true,
+				storage
+			});
+			akitaConfig({
+				resettable: true
+			});
+		}),
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
@@ -172,12 +170,6 @@ bootstrapApplication(AppComponent, {
 		{
 			provide: ErrorHandler,
 			useClass: ErrorHandlerService
-		},
-		{
-			provide: APP_INITIALIZER,
-			useFactory: serverConnectionFactory,
-			deps: [ServerConnectionService, Store, Router, Injector],
-			multi: true
 		},
 		{
 			provide: ErrorHandler,

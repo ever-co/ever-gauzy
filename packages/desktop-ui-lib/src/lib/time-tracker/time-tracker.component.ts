@@ -10,8 +10,8 @@ import {
 	ITimeSlotTimeLogs,
 	PermissionsEnum,
 	TaskStatusEnum,
-	TimerSyncStateEnum,
-	TimerActionTypeEnum
+	TimerActionTypeEnum,
+	TimerSyncStateEnum
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -67,7 +67,7 @@ import {
 	ISequence,
 	SequenceQueue,
 	TimeSlotQueueService,
-	ViewQueueStateUpdater,
+	ViewQueueStateUpdater
 } from '../offline-sync';
 import {
 	ErrorHandlerService,
