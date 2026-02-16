@@ -15,12 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import {
-	CustomNbRouteTab,
-	PageTabRegistryConfig,
-	PageTabRegistryService,
-	PageTabsetRegistryId
-} from '@gauzy/ui-core/core';
+import { CustomNbRouteTab, PageTabRegistryConfig, PageTabRegistryService, PageTabsetPageId } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy()
@@ -36,7 +31,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	public reload$ = new Subject<boolean>(); // Subject to trigger reload of tabs
 
 	// Input to set the tabsetId
-	@Input() tabsetId!: PageTabsetRegistryId;
+	@Input() tabsetId!: PageTabsetPageId;
 
 	// ViewChildren to access the tab content containers
 	@ViewChildren('tabContent', { read: ViewContainerRef }) tabContents!: QueryList<ViewContainerRef>;
@@ -131,7 +126,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	 * @param tabsetId The identifier for the tabset.
 	 * @returns An array of PageTabRegistryConfig objects for the specified tabset, excluding tabs with hide set to true.
 	 */
-	private getRegisteredTabs(tabsetId: PageTabsetRegistryId): PageTabRegistryConfig[] {
+	private getRegisteredTabs(tabsetId: PageTabsetPageId): PageTabRegistryConfig[] {
 		return this._pageTabRegistryService.getPageTabset(tabsetId).filter((tab: PageTabRegistryConfig) => !tab.hide);
 	}
 
@@ -147,7 +142,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	 * @param tabsetId The identifier for the tabset.
 	 * @returns An array of NbRouteTab objects representing the registered tabs.
 	 */
-	getRegisteredNbTabs(tabsetId: PageTabsetRegistryId): CustomNbRouteTab[] {
+	getRegisteredNbTabs(tabsetId: PageTabsetPageId): CustomNbRouteTab[] {
 		// Map each tab configuration to an NbRouteTab object
 		return this.getRegisteredTabs(tabsetId).map((tab: PageTabRegistryConfig): NbRouteTab => {
 			// Create a new route tab object

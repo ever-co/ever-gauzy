@@ -2,7 +2,7 @@ import { TemplateRef, Type } from '@angular/core';
 import { NbRouteTab } from '@nebular/theme';
 import { I18nService } from '@gauzy/ui-core/i18n';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PageTabsetRegistryId } from '../../common/component-registry.types';
+import { PageTabsetPageId } from '../../common/component-registry.types';
 
 /**
  * Custom page tab configuration options.
@@ -42,7 +42,7 @@ export interface PageTabRegistryConfig extends CustomNbRouteTab {
 	 * @description
 	 * The tabset identifier for the page tabset.
 	 */
-	tabsetId: PageTabsetRegistryId;
+	tabsetId: PageTabsetPageId;
 
 	/**
 	 * @description

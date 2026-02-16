@@ -2,6 +2,7 @@ import { RegisteredWindow } from '@gauzy/desktop-core';
 import { getApiBaseUrl } from '@gauzy/desktop-window';
 import { User } from '../../offline';
 import { IConfigStore, IUserRepository, IWindowService } from '../interfaces';
+import { AppWindowManager } from '../../app-window-manager';
 
 export class AuthenticationHandler {
 	constructor(
@@ -82,8 +83,9 @@ export class AuthenticationHandler {
 	}
 
 	private closeWindows(): void {
-		this.windowService.getOne(RegisteredWindow.SETTINGS)?.close?.();
-		this.windowService.getOne(RegisteredWindow.WIDGET)?.close?.();
+		const appWindowManager = AppWindowManager.getInstance();
+		appWindowManager.settingWindow?.close?.();
+		appWindowManager.alwaysOnWindow?.browserWindow?.close?.();
 	}
 
 	private async clearUserData(): Promise<void> {

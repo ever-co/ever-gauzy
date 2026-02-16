@@ -9,8 +9,6 @@ export const BLOCK_DELAY = 10000; // milliseconds
 
 export const GAUZY_ENV = new InjectionToken<any>('gauzyEnvironment');
 
-console.log('Environment: ', JSON.stringify(environment));
-
 export const injector = Injector.create({
 	providers: [{ provide: GAUZY_ENV, useValue: environment }]
 });

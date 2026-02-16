@@ -16,9 +16,9 @@ import {
 	ServerDataSource,
 	Store,
 	ToastrService,
-	PageTabsetRegistryId,
+	PageTabsetPageId,
 	PageTabRegistryService,
-	PageDataTableRegistryId,
+	PageDataTablePageId,
 	JobSearchStoreService
 } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
@@ -81,8 +81,8 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	public selectedEmployee: IEmployee | null = null;
 	public disableButton = true;
 
-	public readonly tabsetId: PageTabsetRegistryId = this._route.snapshot.data['tabsetId'];
-	public readonly dataTableId: PageDataTableRegistryId = this._route.snapshot.data['dataTableId'];
+	public readonly tabsetId: PageTabsetPageId = this._route.snapshot.data['tabsetId'];
+	public readonly dataTableId: PageDataTablePageId = this._route.snapshot.data['dataTableId'];
 
 	@ViewChild('tableLayout', { static: true }) readonly tableLayout!: TemplateRef<unknown>;
 	@ViewChild('comingSoon', { static: true }) readonly comingSoon!: TemplateRef<unknown>;
