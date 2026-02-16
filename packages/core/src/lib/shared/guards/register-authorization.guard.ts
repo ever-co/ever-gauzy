@@ -102,7 +102,9 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		}
 
 		// Validate tenant isolation for roleId (top-level or nested in user)
-		const targetRoleId = body.user?.roleId || body.user?.role?.id;
+		// Use typeof check to safely handle cases where role might be a non-object value
+		const userRole = body.user?.role;
+		const targetRoleId = body.user?.roleId || (typeof userRole === 'object' && userRole !== null && userRole?.id);
 		if (targetRoleId) {
 			try {
 				const role = await this.typeOrmRoleRepository.findOneByOrFail({ id: targetRoleId });
@@ -124,7 +126,9 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		}
 
 		// Validate tenant isolation for tenantId (nested in user)
-		const targetTenantId = body.user?.tenantId || body.user?.tenant?.id;
+		// Use typeof check to safely handle cases where tenant might be a non-object value
+		const userTenant = body.user?.tenant;
+		const targetTenantId = body.user?.tenantId || (typeof userTenant === 'object' && userTenant !== null && userTenant?.id);
 		if (targetTenantId && targetTenantId !== callerTenantId) {
 			throw new ForbiddenException(
 				'Tenant isolation violation: you can only create users within your own tenant.'
