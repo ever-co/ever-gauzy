@@ -49,6 +49,9 @@ used to bootstrap and manage UI plugins (such as job and integration UI plugins)
 The `@gauzy/plugin-ui` library is generated with [Nx](https://nx.dev) and is intended to be used
 within the Gauzy monorepo. It is primarily consumed by:
 
+-   **Gauzy web app** — the root bootstrap module imports `PluginUiModule.init()` to load config, instantiate plugin modules, and run lifecycle hooks.
+-   **UI plugin packages** — e.g. `@gauzy/plugin-jobs-ui`, `@gauzy/plugin-job-proposal-ui`, `@gauzy/plugin-videos-ui`, and other plugins that implement `IOnPluginUiBootstrap` / `IOnPluginUiDestroy` and are registered in the plugin config.
+
 ### Building
 
 Run the following command to build the library:

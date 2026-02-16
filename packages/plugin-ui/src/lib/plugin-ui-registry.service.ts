@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { IPluginUiLifecycleMethods } from './plugin-ui.interface';
+import { IPluginUiExtendedLifecycleMethods } from './plugin-ui.interface';
 import { hasPluginUiLifecycleMethod } from './plugin-ui.helper';
 
 /**
- * A plugin module instance that may implement one or both lifecycle hooks.
+ * A plugin module instance that may implement lifecycle hooks (required and optional).
  * Used as the type constraint for the registry.
  */
-export type PluginUiInstance = Partial<IPluginUiLifecycleMethods>;
+export type PluginUiInstance = Partial<IPluginUiExtendedLifecycleMethods>;
 
 /**
  * Root-level registry that tracks all bootstrapped UI plugin module instances.
@@ -47,8 +47,7 @@ export class PluginUiRegistryService {
 		for (const instance of this._instances) {
 			if (hasPluginUiLifecycleMethod(instance, 'ngOnPluginBeforeDestroy')) {
 				try {
-					const result = (instance as { ngOnPluginBeforeDestroy: () => void | Promise<void> })
-						.ngOnPluginBeforeDestroy();
+					const result = instance.ngOnPluginBeforeDestroy!();
 					if (result && typeof result.then === 'function') {
 						await result;
 					}

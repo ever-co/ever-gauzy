@@ -49,9 +49,9 @@ export class PageExtensionRegistryService {
 			list[idx] = extension;
 		} else {
 			list.push(extension);
-			list.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-			this._extensions.set(slotId, list);
 		}
+		list.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+		this._extensions.set(slotId, list);
 		if (options?.pluginId) {
 			const entries = this._pluginToExtensions.get(options.pluginId) ?? [];
 			if (!entries.some((e) => e.slotId === slotId && e.extensionId === extension.id)) {
@@ -67,7 +67,9 @@ export class PageExtensionRegistryService {
 	 * @param options Optional pluginId for lifecycle cleanup.
 	 */
 	registerAll(extensions: ExtensionDefinition[], options?: ExtensionRegistrationOptions): void {
-		extensions.forEach((e) => this.register(e, options));
+		extensions.forEach((e) => {
+			this.register(e, options);
+		});
 	}
 
 	/**
