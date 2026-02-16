@@ -12,11 +12,11 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-time-activities-layout',
-    templateUrl: './layout.component.html',
-    styleUrls: ['./layout.component.scss'],
-    providers: [RouteUtil],
-    standalone: false
+	selector: 'ngx-time-activities-layout',
+	templateUrl: './layout.component.html',
+	styleUrls: ['./layout.component.scss'],
+	providers: [RouteUtil],
+	standalone: false
 })
 export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	public title: string;

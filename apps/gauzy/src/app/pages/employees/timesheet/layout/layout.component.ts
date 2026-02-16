@@ -7,10 +7,10 @@ import { DateRangePickerBuilderService, PageTabRegistryService, PageTabsetPageId
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-    selector: 'ngx-timesheet-layout',
-    templateUrl: './layout.component.html',
-    styleUrls: ['./layout.component.scss'],
-    standalone: false
+	selector: 'ngx-timesheet-layout',
+	templateUrl: './layout.component.html',
+	styleUrls: ['./layout.component.scss'],
+	standalone: false
 })
 export class TimesheetLayoutComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset

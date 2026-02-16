@@ -12,7 +12,7 @@ import { SentryService } from '@gauzy/plugin-sentry';
 import { PosthogService } from '@gauzy/plugin-posthog';
 import { PosthogAnalytics as PosthogPlugin } from './posthog';
 import { SentryTracing as SentryPlugin } from './sentry';
-import { version } from './../version';
+import { version } from '../version';
 import { plugins } from './plugins';
 
 const { sentry, posthog } = environment;
