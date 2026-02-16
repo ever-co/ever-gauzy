@@ -31,16 +31,16 @@ export class JobsModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 	private readonly _log = inject(LoggerService).withContext('JobsModule');
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true });
 
-	constructor() {
-		this._applyDeclarativeRegistrations();
-	}
+	constructor() {}
 
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
 	/** Called by PluginUiModule after the plugin module is instantiated. */
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
+		this._applyDeclarativeRegistrations();
 	}
 
 	/** Called by PluginUiModule when the application is shutting down. */
@@ -53,10 +53,9 @@ export class JobsModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 
 	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
 	private _applyDeclarativeRegistrations(): void {
-		if (JobsModule._hasAppliedRegistrations) return;
+		if (JobsModule._hasAppliedRegistrations || !this._pluginDefinition) return;
 
-		const def = inject(PLUGIN_DEFINITION);
-		applyDeclarativeRegistrations(def, {
+		applyDeclarativeRegistrations(this._pluginDefinition, {
 			navBuilder: this._navMenuBuilderService,
 			pageRouteRegistry: this._pageRouteRegistryService
 		});

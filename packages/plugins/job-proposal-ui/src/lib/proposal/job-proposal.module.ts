@@ -8,16 +8,10 @@ import {
 	applyDeclarativeRegistrations,
 	IOnPluginUiBootstrap,
 	IOnPluginUiDestroy,
-	PLUGIN_DEFINITION,
-	PluginUiDefinition
+	PLUGIN_DEFINITION
 } from '@gauzy/plugin-ui';
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
-import {
-	LoggerService,
-	NavMenuBuilderService,
-	PageRouteRegistryService,
-	Store
-} from '@gauzy/ui-core/core';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, Store } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
 	SharedModule,
@@ -31,12 +25,7 @@ import {
 	TagsColorInputModule,
 	NebularModule
 } from '@gauzy/ui-core/shared';
-import {
-	getProposalsRoutes,
-	JOB_PROPOSAL_PAGE_LINK,
-	JOB_PROPOSAL_SALES_ROUTE,
-	SALES_SECTIONS_LOCATION
-} from './job-proposal.routes';
+import { getProposalsRoutes, JOB_PROPOSAL_PAGE_LINK } from './job-proposal.routes';
 import { COMPONENTS } from './components';
 
 @NgModule({
@@ -75,16 +64,16 @@ export class JobProposalModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _store = inject(Store);
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true });
 
-	constructor() {
-		this._applyDeclarativeRegistrations();
-	}
+	constructor() {}
 
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
 	/** Called by PluginUiModule after the plugin module is instantiated. */
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
+		this._applyDeclarativeRegistrations();
 	}
 
 	/** Called by PluginUiModule when the application is shutting down. */
@@ -97,17 +86,9 @@ export class JobProposalModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 
 	/** Applies routes from the plugin definition. Guarded to run once per app lifecycle. */
 	private _applyDeclarativeRegistrations(): void {
-		if (JobProposalModule._hasAppliedRegistrations) return;
+		if (JobProposalModule._hasAppliedRegistrations || !this._pluginDefinition) return;
 
-		const def: PluginUiDefinition =
-			inject(PLUGIN_DEFINITION, { optional: true }) ??
-			({
-				id: 'job-proposal',
-				location: SALES_SECTIONS_LOCATION,
-				routes: [JOB_PROPOSAL_SALES_ROUTE]
-			} as PluginUiDefinition);
-
-		applyDeclarativeRegistrations(def, {
+		applyDeclarativeRegistrations(this._pluginDefinition, {
 			pageRouteRegistry: this._pageRouteRegistryService
 		});
 
