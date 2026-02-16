@@ -189,6 +189,11 @@ export interface PluginUiConfig {
 	/** Locale identifier used for number/date formatting (e.g. 'en-US'). */
 	defaultLocale: string;
 
+	/**
+	 * Fallback language when a translation is missing. Defaults to `defaultLanguage` if omitted.
+	 */
+	fallbackLocale?: string;
+
 	/** Language codes the UI supports (populates the language switcher). */
 	availableLanguages: string[];
 
@@ -196,9 +201,11 @@ export interface PluginUiConfig {
 	availableLocales: string[];
 
 	/**
-	 * Moment.js week option: `dow` is the day of week the week starts on (0 = Sunday, 1 = Monday, …).
+	 * Day of week the week starts on.
+	 * 0 = Sunday, 1 = Monday, 2 = Tuesday, … 6 = Saturday.
+	 * Used by Moment.js and calendar components.
 	 */
-	week?: { dow: number };
+	startWeekOn?: number;
 
 	/** Active UI plugins. */
 	plugins: PluginUiDefinition[];

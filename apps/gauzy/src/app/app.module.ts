@@ -246,11 +246,15 @@ export class AppModule {
 	private initializeUiLanguagesAndLocale(): void {
 		const uiConfig = getPluginUiConfig();
 
-		// Set default locale; week start (dow) comes from plugin-ui.config.ts
-		moment.updateLocale(uiConfig.defaultLanguage, {
-			...(uiConfig.week && { week: uiConfig.week }),
-			fallbackLocale: uiConfig.defaultLanguage
-		});
+		const localeOptions: moment.LocaleSpecification = {
+			fallbackLocale: uiConfig.fallbackLocale ?? uiConfig.defaultLanguage
+		};
+
+		if (uiConfig.startWeekOn) {
+			localeOptions.week = { dow: uiConfig.startWeekOn };
+		}
+
+		moment.updateLocale(uiConfig.defaultLanguage, localeOptions);
 
 		// Set available languages from the UI plugin configuration
 		this._i18nService.setAvailableLanguages(uiConfig.availableLanguages as LanguagesEnum[]);

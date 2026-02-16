@@ -23,6 +23,7 @@ export const uiPluginConfig: PluginUiConfig = {
 	// ── Internationalization ───────────────────────────────
 	defaultLanguage: LanguagesEnum.ENGLISH,
 	defaultLocale: 'en-US',
+	fallbackLocale: LanguagesEnum.ENGLISH,
 
 	availableLanguages: [
 		LanguagesEnum.ENGLISH,
@@ -56,8 +57,8 @@ export const uiPluginConfig: PluginUiConfig = {
 		'he-IL'
 	],
 
-	// Start of week for moment.js (0 = Sunday, 1 = Monday, …)
-	week: { dow: dayOfWeekAsString(WeekDaysEnum.MONDAY) },
+	// Day of week the week starts on (0 = Sunday, 1 = Monday, …)
+	startWeekOn: dayOfWeekAsString(WeekDaysEnum.MONDAY),
 
 	// ── Plugins ────────────────────────────────────────────
 	plugins: [

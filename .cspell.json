@@ -834,8 +834,10 @@
 		"pendings",
 		"SICO",
 		"deregister",
+		"deregistration",
 		"Deregisters",
-		"lifecycles"
+		"lifecycles",
+		"namespacing"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
