@@ -1406,8 +1406,8 @@
 			"SETTINGS": {
 				"TITLE": "Activepieces 设置",
 				"SUBTITLE": "配置您的 Activepieces 集成设置",
-				"API_KEY": "API Key",
-				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
+				"API_KEY": "API 密钥",
+				"API_KEY_PLACEHOLDER": "输入您的 Activepieces API 密钥",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "输入您的 State Secret（最少32个字符）",
 				"STATE_SECRET_HINT": "用于 OAuth 状态验证的安全随机字符串",

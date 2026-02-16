@@ -77,18 +77,50 @@ export class ActivepiecesService {
 				}
 			];
 
-			// Create integration tenant
-			const integrationTenant = await this.integrationTenantService.create({
-				name: IntegrationEnum.ACTIVE_PIECES,
-				integration,
-				tenantId,
-				organizationId,
-				settings
+			// Look up an existing integration tenant for this tenant/org
+			const existingTenant = await this.integrationTenantService.findOneByOptions({
+				where: {
+					tenantId,
+					...(organizationId ? { organizationId } : {}),
+					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+				},
+				relations: ['settings']
 			});
 
-			const integrationTenantId = integrationTenant.id;
-			if (!integrationTenantId) {
-				throw new BadRequestException('Failed to create integration tenant: missing ID');
+			let integrationTenantId: string;
+
+			if (existingTenant?.id) {
+				// Update existing tenant's settings by merging/replacing API_KEY and IS_ENABLED
+				const existingSettings = existingTenant.settings ?? [];
+				const updatedSettingNames = new Set(settings.map((s) => s.settingsName));
+
+				// Keep settings that are not being updated, then append the new ones
+				const mergedSettings = [
+					...existingSettings.filter((s: any) => !updatedSettingNames.has(s.settingsName)),
+					...settings
+				];
+
+				await this.integrationTenantService.save({
+					...existingTenant,
+					settings: mergedSettings
+				});
+
+				integrationTenantId = existingTenant.id;
+			} else {
+				// Create a new integration tenant
+				const integrationTenant = await this.integrationTenantService.create({
+					name: IntegrationEnum.ACTIVE_PIECES,
+					integration,
+					tenantId,
+					organizationId,
+					settings
+				});
+
+				if (!integrationTenant.id) {
+					throw new BadRequestException('Failed to create integration tenant: missing ID');
+				}
+
+				integrationTenantId = integrationTenant.id;
 			}
 
 			this.logger.log(
@@ -98,8 +130,11 @@ export class ActivepiecesService {
 
 			return { integrationTenantId };
 		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			this.logger.error('Failed to set up ActivePieces integration:', error);
-			throw new BadRequestException(`Failed to set up ActivePieces integration: ${error.message}`);
+			throw new InternalServerErrorException(`Failed to set up ActivePieces integration: ${error.message}`);
 		}
 	}
 
@@ -147,6 +182,14 @@ export class ActivepiecesService {
 					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
 				}
 			});
+
+			if (!existingIntegrationTenant) {
+				this.logger.warn(
+					`No integration tenant found for tenant ${tenantId}. ` +
+						'setupIntegration was likely not run; falling back to global GAUZY_ACTIVEPIECES_API_KEY env variable.'
+				);
+			}
+
 			const apiKey = await this.getApiKey(existingIntegrationTenant?.id);
 
 			// Make the API call to create the connection

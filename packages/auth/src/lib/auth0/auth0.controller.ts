@@ -79,6 +79,7 @@ export class Auth0Controller {
 				});
 				return res.redirect(`${oauthRequest.redirectUri}?${params.toString()}`);
 			} catch (error: any) {
+				console.error('OAuth app authorization code creation failed:', error?.message, error?.stack);
 				const errorParams = new URLSearchParams({
 					error: 'server_error',
 					...(oauthRequest.state ? { state: oauthRequest.state } : {})

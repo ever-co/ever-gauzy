@@ -30,11 +30,11 @@
         nbButton
         status="primary"
         type="submit"
-        [disabled]="form.invalid || loading"
+        [disabled]="form.invalid || loading()"
         size="small"
         outline
       >
-        @if (loading) {
+        @if (loading()) {
           <nb-icon icon="loader-outline"></nb-icon>
         }
         {{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.NEXT' | translate }}

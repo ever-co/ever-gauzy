@@ -1292,7 +1292,7 @@
 				"TITLE": "Activepieces Settings",
 				"SUBTITLE": "Yub Activepieces integration settings ni",
 				"API_KEY": "API Key",
-				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
+				"API_KEY_PLACEHOLDER": "Ket API Key ni me Activepieces",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "Ket State Secret ni (characters 32 minimum)",
 				"STATE_SECRET_HINT": "String me random ma ber pi OAuth state verification",

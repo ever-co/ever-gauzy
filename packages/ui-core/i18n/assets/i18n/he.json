@@ -1440,8 +1440,8 @@
 			"SETTINGS": {
 				"TITLE": "הגדרות Activepieces",
 				"SUBTITLE": "הגדר את הגדרות האינטגרציה שלך עם Activepieces",
-				"API_KEY": "API Key",
-				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
+				"API_KEY": "מפתח API",
+				"API_KEY_PLACEHOLDER": "הזן את מפתח ה-API של Activepieces",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "הזן את State Secret שלך (מינימום 32 תווים)",
 				"STATE_SECRET_HINT": "מחרוזת אקראית מאובטחת המשמשת לאימות מצב OAuth",

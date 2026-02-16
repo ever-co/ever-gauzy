@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
@@ -19,12 +19,13 @@ import { TranslateService } from '@ngx-translate/core';
 	selector: 'ngx-activepieces-authorize',
 	templateUrl: './activepieces-authorize.component.html',
 	styleUrls: ['./activepieces-authorize.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	public rememberState = false;
-	public organization!: IOrganization;
-	public loading = false;
+	public readonly rememberState = signal(false);
+	public readonly organization = signal<IOrganization | undefined>(undefined);
+	public readonly loading = signal(false);
 
 	readonly form: UntypedFormGroup = ActivepiecesAuthorizeComponent.buildForm(this._fb);
 
@@ -51,7 +52,7 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap((organization: IOrganization) => this.organization.set(organization)),
 				tap(() => this._checkRememberState()),
 				untilDestroyed(this)
 			)
@@ -61,7 +62,7 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 			.pipe(
 				map(({ state }) => !!state),
 				distinctUntilChanged(),
-				tap((state) => (this.rememberState = state)),
+				tap((state) => this.rememberState.set(state)),
 				tap(() => this._checkRememberState()),
 				untilDestroyed(this)
 			)
@@ -72,11 +73,12 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 	 * ActivePieces integration remember state API call
 	 */
 	private _checkRememberState() {
-		if (!this.organization || !this.rememberState) {
+		const organization = this.organization();
+		if (!organization || !this.rememberState()) {
 			return;
 		}
 
-		const { id: organizationId, tenantId } = this.organization;
+		const { id: organizationId, tenantId } = organization;
 		this._integrationsService
 			.getIntegrationByOptions({
 				name: IntegrationEnum.ACTIVE_PIECES,
@@ -104,13 +106,14 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 	 * Submit API key to set up ActivePieces integration
 	 */
 	setupApiKey() {
-		if (this.form.invalid || !this.organization) {
+		const organization = this.organization();
+		if (this.form.invalid || !organization) {
 			this._toastrService.error(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.INVALID_FORM'));
 			return;
 		}
 
-		this.loading = true;
-		const { id: organizationId } = this.organization;
+		this.loading.set(true);
+		const { id: organizationId } = organization;
 		const apiKey = (this.form.value?.api_key ?? '').trim();
 
 		this._activepiecesService
@@ -125,7 +128,7 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 					this._toastrService.error(
 						this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.ERRORS.SAVE_SETTINGS')
 					);
-					this.loading = false;
+					this.loading.set(false);
 					return EMPTY;
 				}),
 				untilDestroyed(this)

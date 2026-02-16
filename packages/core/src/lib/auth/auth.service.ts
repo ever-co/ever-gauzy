@@ -2,7 +2,8 @@ import {
 	SocialAuthService,
 	OAuthAppAuthorizationRequest,
 	OAuthAppTokenRequest,
-	OAuthAppTokenResponse
+	OAuthAppTokenResponse,
+	OAuthAppConfig
 } from '@gauzy/auth';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
@@ -80,6 +81,7 @@ import {
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createClient } from 'redis';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 
 @Injectable()
@@ -106,7 +108,7 @@ export class AuthService extends SocialAuthService {
 		private readonly eventBus: EventBus,
 		private readonly passwordHashService: PasswordHashService,
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-		@Optional() @Inject(EVER_REDIS_CLIENT) private readonly redisClient: any
+		@Optional() @Inject(EVER_REDIS_CLIENT) private readonly redisClient: ReturnType<typeof createClient> | null
 	) {
 		super();
 	}
@@ -188,14 +190,18 @@ export class AuthService extends SocialAuthService {
 		return null;
 	}
 
-	public async createOAuthAppAuthorizationCode(
-		request: OAuthAppAuthorizationRequest
-	): Promise<string> {
+	private ensureOAuthAppConfigured(): OAuthAppConfig {
 		const config = this.getOAuthAppConfig();
-
 		if (!config.clientId || !config.clientSecret || !config.redirectUris.length || !config.codeSecret) {
 			throw new InternalServerErrorException('OAuth app is not configured');
 		}
+		return config;
+	}
+
+	public async createOAuthAppAuthorizationCode(
+		request: OAuthAppAuthorizationRequest
+	): Promise<string> {
+		const config = this.ensureOAuthAppConfigured();
 
 		if (request.clientId !== config.clientId) {
 			throw new BadRequestException('Invalid client_id');
@@ -233,14 +239,11 @@ export class AuthService extends SocialAuthService {
 		return `v1.${payloadB64}.${signature}`;
 	}
 
+
 	public async exchangeOAuthAppAuthorizationCode(
 		request: OAuthAppTokenRequest
 	): Promise<OAuthAppTokenResponse> {
-		const config = this.getOAuthAppConfig();
-
-		if (!config.clientId || !config.clientSecret || !config.redirectUris.length || !config.codeSecret) {
-			throw new InternalServerErrorException('OAuth app is not configured');
-		}
+		const config = this.ensureOAuthAppConfigured();
 
 		if (request.clientId !== config.clientId) {
 			throw new UnauthorizedException('Invalid client credentials');
@@ -289,7 +292,11 @@ export class AuthService extends SocialAuthService {
 			tenantId: payload.tenantId
 		});
 
-		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 3600;
+		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
+
+		console.log(
+			`OAuth app token exchanged for userId=${payload.userId}, tenantId=${payload.tenantId}, expiresIn=${expiresIn}s`
+		);
 
 		return {
 			accessToken,

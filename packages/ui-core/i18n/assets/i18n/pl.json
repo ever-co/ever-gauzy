@@ -1405,8 +1405,8 @@
 			"SETTINGS": {
 				"TITLE": "Ustawienia Activepieces",
 				"SUBTITLE": "Skonfiguruj ustawienia integracji Activepieces",
-				"API_KEY": "API Key",
-				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
+				"API_KEY": "Klucz API",
+				"API_KEY_PLACEHOLDER": "Wprowadź swój klucz API Activepieces",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "Wprowadź swój State Secret (minimum 32 znaki)",
 				"STATE_SECRET_HINT": "Bezpieczny losowy ciąg znaków używany do weryfikacji stanu OAuth",

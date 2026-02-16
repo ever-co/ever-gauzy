@@ -44,6 +44,7 @@ export class ActivepiecesController {
 	})
 	@Post('/setup')
 	@Permissions(PermissionsEnum.INTEGRATION_ADD)
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async setupIntegration(@Body() input: SetupActivepiecesIntegrationDto): Promise<{ integrationTenantId: string }> {
 		try {
 			return await this.activepiecesService.setupIntegration(
@@ -69,6 +70,7 @@ export class ActivepiecesController {
 	})
 	@Post('/connection')
 	@Permissions(PermissionsEnum.INTEGRATION_ADD)
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async upsertConnection(@Body() input: CreateActivepiecesIntegrationDto): Promise<IActivepiecesConnection> {
 		try {
 			return await this.activepiecesService.upsertConnection(input);

@@ -1405,8 +1405,8 @@
 			"SETTINGS": {
 				"TITLE": "إعدادات Activepieces",
 				"SUBTITLE": "قم بتكوين إعدادات تكامل Activepieces الخاصة بك",
-				"API_KEY": "API Key",
-				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
+				"API_KEY": "مفتاح API",
+				"API_KEY_PLACEHOLDER": "أدخل مفتاح API الخاص بـ Activepieces",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "أدخل State Secret الخاص بك (32 حرفًا على الأقل)",
 				"STATE_SECRET_HINT": "سلسلة عشوائية آمنة تُستخدم للتحقق من حالة OAuth",

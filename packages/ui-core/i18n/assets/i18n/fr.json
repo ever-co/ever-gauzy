@@ -1407,8 +1407,8 @@
 			"SETTINGS": {
 				"TITLE": "Paramètres Activepieces",
 				"SUBTITLE": "Configurez vos paramètres d'intégration Activepieces",
-				"API_KEY": "API Key",
-				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
+				"API_KEY": "Clé API",
+				"API_KEY_PLACEHOLDER": "Entrez votre clé API Activepieces",
 				"STATE_SECRET": "State Secret",
 				"STATE_SECRET_PLACEHOLDER": "Entrez votre State Secret (minimum 32 caractères)",
 				"STATE_SECRET_HINT": "Une chaîne aléatoire sécurisée utilisée pour la vérification de l'état OAuth",
