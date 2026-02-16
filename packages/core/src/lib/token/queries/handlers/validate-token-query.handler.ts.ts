@@ -1,9 +1,8 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IJwtService } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { IValidatedToken, TokenStatus } from '../../interfaces/token.interface';
-import { JwtServiceToken, TokenReadRepositoryToken, TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
+import { TokenReadRepositoryToken, TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
 import { TokenConfigRegistry } from '../../token-config.registry';
 import { ValidateTokenQuery } from '../validate-token.query';
 
@@ -14,18 +13,17 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 		@Inject(TokenReadRepositoryToken)
 		private readonly tokenReadRepository: ITokenReadRepository,
 		@Inject(TokenWriteRepositoryToken)
-		private readonly tokenWriteRepository: ITokenWriteRepository,
-		@Inject(JwtServiceToken)
-		private readonly jwtService: IJwtService
+		private readonly tokenWriteRepository: ITokenWriteRepository
 	) {}
 
 	async execute(query: ValidateTokenQuery): Promise<IValidatedToken> {
 		const { dto } = query;
 		const rawToken = resolveRawToken(dto);
+		const jwtService = this.configRegistry.getJwtService(dto.tokenType);
 
 		try {
 			// Verify JWT signature and expiration
-			const payload = await this.jwtService.verify(rawToken);
+			const payload = await jwtService.verify(rawToken);
 
 			// Check token type matches
 			if (payload.tokenType !== dto.tokenType) {
@@ -36,7 +34,7 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 			}
 
 			// Hash the token for database lookup
-			const tokenHash = this.jwtService.hashToken(rawToken);
+			const tokenHash = jwtService.hashToken(rawToken);
 
 			// Find token in database
 			const tokenRecord = await this.tokenReadRepository.findByHash(tokenHash);

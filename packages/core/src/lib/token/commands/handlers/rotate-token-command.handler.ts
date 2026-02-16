@@ -1,10 +1,9 @@
 import { ConflictException, Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TokenStatus } from '../../interfaces';
-import { IJwtService } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { IGeneratedToken } from '../../interfaces/token.interface';
-import { JwtServiceToken, TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
+import { TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
 import { TokenConfigRegistry } from '../../token-config.registry';
 import { RotateTokenCommand } from '../rotate-token.command';
 
@@ -13,14 +12,13 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 	constructor(
 		@Inject(TokenWriteRepositoryToken)
 		private readonly tokenRepository: ITokenWriteRepository,
-		@Inject(JwtServiceToken)
-		private readonly jwtService: IJwtService,
 		private readonly configRegistry: TokenConfigRegistry
 	) {}
 
 	async execute(command: RotateTokenCommand): Promise<IGeneratedToken> {
 		const { dto } = command;
 		const config = this.configRegistry.getConfig(dto.tokenType);
+		const jwtService = this.configRegistry.getJwtService(dto.tokenType);
 
 		if (!config.allowRotation) {
 			throw new ConflictException(`Token type ${dto.tokenType} does not support rotation`);
@@ -28,7 +26,7 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 
 		// Use pessimistic locking for atomic rotation
 		const rawOldToken = resolveRawToken(dto);
-		const oldTokenDigest = this.jwtService.hashToken(rawOldToken);
+		const oldTokenDigest = jwtService.hashToken(rawOldToken);
 
 		return this.tokenRepository.transaction(async (repository: ITokenReadRepository & ITokenWriteRepository) => {
 			const oldToken = await repository.findByHashWithLock(oldTokenDigest);
@@ -79,8 +77,8 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 
 			const expiresInMs = expiresAt ? expiresAt.getTime() - Date.now() : undefined;
 			const expiresInSeconds = expiresInMs ? Math.max(1, Math.ceil(expiresInMs / 1000)) : undefined;
-			const jwt = this.jwtService.sign(payload, expiresInSeconds);
-			const tokenHash = this.jwtService.hashToken(jwt);
+			const jwt = jwtService.sign(payload, expiresInSeconds);
+			const tokenHash = jwtService.hashToken(jwt);
 
 			// Update new token with hash
 			newTokenRecord.tokenHash = tokenHash;

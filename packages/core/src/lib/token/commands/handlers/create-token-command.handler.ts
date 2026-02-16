@@ -1,10 +1,9 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TokenStatus } from '../../interfaces';
-import { IJwtService } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { IGeneratedToken } from '../../interfaces/token.interface';
-import { JwtServiceToken, TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
+import { TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
 import { TokenConfigRegistry } from '../../token-config.registry';
 import { CreateTokenCommand } from '../create-token.command';
 
@@ -15,14 +14,13 @@ export class CreateTokenHandler implements ICommandHandler<CreateTokenCommand, I
 		private readonly tokenReadRepository: ITokenReadRepository,
 		@Inject(TokenWriteRepositoryToken)
 		private readonly tokenWriteRepository: ITokenWriteRepository,
-		@Inject(JwtServiceToken)
-		private readonly jwtService: IJwtService,
 		private readonly configRegistry: TokenConfigRegistry
 	) {}
 
 	async execute(command: CreateTokenCommand): Promise<IGeneratedToken> {
 		const { dto } = command;
 		const config = this.configRegistry.getConfig(dto.tokenType);
+		const jwtService = this.configRegistry.getJwtService(dto.tokenType);
 
 		// Check if multiple sessions are allowed
 		if (!config.allowMultipleSessions) {
@@ -63,8 +61,8 @@ export class CreateTokenHandler implements ICommandHandler<CreateTokenCommand, I
 
 		const expiresInMs = expiresAt ? expiresAt.getTime() - Date.now() : undefined;
 		const expiresInSeconds = expiresInMs ? Math.max(1, Math.ceil(expiresInMs / 1000)) : undefined;
-		const jwt = this.jwtService.sign(payload, expiresInSeconds);
-		const tokenHash = this.jwtService.hashToken(jwt);
+		const jwt = jwtService.sign(payload, expiresInSeconds);
+		const tokenHash = jwtService.hashToken(jwt);
 
 		// Update token with hash
 		tokenRecord.tokenHash = tokenHash;

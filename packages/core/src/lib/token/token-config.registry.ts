@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { IJwtService } from './interfaces/jwt-service.interface';
 import { ITokenConfig } from './interfaces';
 
 @Injectable()
 export class TokenConfigRegistry {
 	private readonly configs: Map<string, ITokenConfig> = new Map();
+	private readonly jwtServices: Map<string, IJwtService> = new Map();
 
 	/**
 	 * Register a new token type configuration
@@ -17,6 +19,17 @@ export class TokenConfigRegistry {
 	}
 
 	/**
+	 * Register JWT service for a token type
+	 */
+	registerJwtService(tokenType: string, jwtService: IJwtService): void {
+		if (this.jwtServices.has(tokenType)) {
+			throw new Error(`JWT service for token type ${tokenType} is already registered`);
+		}
+
+		this.jwtServices.set(tokenType, jwtService);
+	}
+
+	/**
 	 * Get configuration for a token type
 	 */
 	getConfig(tokenType: string): ITokenConfig {
@@ -27,6 +40,19 @@ export class TokenConfigRegistry {
 		}
 
 		return config;
+	}
+
+	/**
+	 * Get JWT service for a token type
+	 */
+	getJwtService(tokenType: string): IJwtService {
+		const jwtService = this.jwtServices.get(tokenType);
+
+		if (!jwtService) {
+			throw new NotFoundException(`JWT service for token type ${tokenType} is not registered`);
+		}
+
+		return jwtService;
 	}
 
 	/**
@@ -48,5 +74,6 @@ export class TokenConfigRegistry {
 	 */
 	unregister(tokenType: string): void {
 		this.configs.delete(tokenType);
+		this.jwtServices.delete(tokenType);
 	}
 }

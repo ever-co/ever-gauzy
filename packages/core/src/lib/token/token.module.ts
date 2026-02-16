@@ -38,7 +38,7 @@ import {
 } from './queries';
 
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { ITokenConfig } from './interfaces';
+import { IJwtService, ITokenConfig } from './interfaces';
 import { MikroOrmTokenRepository, TypeOrmTokenRepository } from './repositories';
 import { ScopedTokenConfig } from './scoped-config.registry';
 import { ScopedTokenService } from './scoped-token.service';
@@ -289,6 +289,15 @@ export class TokenModule {
 				inject: [TokenConfigRegistry]
 			};
 
+			const jwtRegistrationProvider: Provider = {
+				provide: `${configToken}_JWT_REGISTRATION`,
+				useFactory: (registry: TokenConfigRegistry, scopedConfig: ScopedTokenConfig, scopedJwtService: IJwtService) => {
+					registry.registerJwtService(scopedConfig.tokenType, scopedJwtService);
+					return true;
+				},
+				inject: [TokenConfigRegistry, configToken, jwtServiceToken]
+			};
+
 			providers.push(
 				...this.buildScopedProviders(
 					configToken,
@@ -296,7 +305,8 @@ export class TokenModule {
 					jwtServiceToken,
 					configFactoryProvider,
 					jwtServiceFactoryProvider
-				)
+				),
+				jwtRegistrationProvider
 			);
 
 			// Export scoped tokens
@@ -381,6 +391,15 @@ export class TokenModule {
 			inject: [TokenConfigRegistry, ...(options.inject ?? [])]
 		};
 
+		const jwtRegistrationProvider: Provider = {
+			provide: `${configToken}_JWT_REGISTRATION`,
+			useFactory: (registry: TokenConfigRegistry, scopedConfig: ScopedTokenConfig, scopedJwtService: IJwtService) => {
+				registry.registerJwtService(scopedConfig.tokenType, scopedJwtService);
+				return true;
+			},
+			inject: [TokenConfigRegistry, configToken, jwtServiceToken]
+		};
+
 		providers.push(
 			...this.buildScopedProviders(
 				configToken,
@@ -388,7 +407,8 @@ export class TokenModule {
 				jwtServiceToken,
 				configFactoryProvider,
 				jwtServiceFactoryProvider
-			)
+			),
+			jwtRegistrationProvider
 		);
 
 		exports.push(serviceToken, configToken, jwtServiceToken);
