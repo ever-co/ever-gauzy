@@ -35,7 +35,7 @@ export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
  * - 'timesheet-details': A sub-page under the timesheet section.
  * - 'integrations': The integrations section of the application.
  */
-export type PageRouteRegistryId =
+export type PageRouteLocationId =
 	| 'auth'
 	| 'pages'
 	| 'dashboard'
@@ -62,7 +62,7 @@ export type PageRouteRegistryId =
  * - 'time-activity': A time and activity tab.
  * - 'employee-edit': An employee edit tab.
  */
-export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity' | 'employee-edit';
+export type PageTabsetPageId = 'dashboard' | 'timesheet' | 'time-activity' | 'employee-edit';
 
 /**
  * @description
@@ -77,4 +77,4 @@ export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity' |
  * - 'employee-manage': Employee management page
  * - 'job-employee': Sub-page under the jobs section (Job employee management page)
  */
-export type PageDataTableRegistryId = 'employee-manage' | 'job-employee';
+export type PageDataTablePageId = 'employee-manage' | 'job-employee';

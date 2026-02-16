@@ -21,7 +21,9 @@
 			"@gauzy/plugin": ["./packages/plugin/src/index.ts"],
 			"@gauzy/plugin-changelog": ["./packages/plugins/changelog/src/index.ts"],
 			"@gauzy/plugin-integration-activepieces": ["./packages/plugins/integration-activepieces/src/index.ts"],
-			"@gauzy/plugin-integration-activepieces-ui": ["./packages/plugins/integration-activepieces-ui/src/index.ts"],
+			"@gauzy/plugin-integration-activepieces-ui": [
+				"./packages/plugins/integration-activepieces-ui/src/index.ts"
+			],
 			"@gauzy/plugin-integration-ai": ["./packages/plugins/integration-ai/src/index.ts"],
 			"@gauzy/plugin-integration-ai-ui": ["./packages/plugins/integration-ai-ui/src/index.ts"],
 			"@gauzy/plugin-integration-github": ["./packages/plugins/integration-github/src/index.ts"],
@@ -62,7 +64,6 @@
 			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
 			"@gauzy/ui-core": ["./packages/ui-core/src/index.ts"],
 			"@gauzy/ui-core/*": ["./packages/ui-core/*/src/index.ts"],
-			"@gauzy/ui-core/theme-icons": ["./packages/ui-core/theme/src/lib/icons/tabler-icons.module.ts"],
 			"@gauzy/utils": ["./packages/utils/src/index.ts"],
 			"@nebular/*": ["./node_modules/@nebular/*"],
 			"ng2-completer": ["./node_modules/@akveo/ng2-completer"],

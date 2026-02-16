@@ -37,9 +37,12 @@ jobs:
       - uses: actions/cache@v4
         id: yarn-cache
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-${{ runner.arch }}-yarn-${{ hashFiles('yarn.lock') }}
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            .nx/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-yarn-nx-${{ hashFiles('yarn.lock') }}
           restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-yarn-nx-
             ${{ runner.os }}-${{ runner.arch }}-yarn-
 
       - name: Change permissions
@@ -101,6 +104,7 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
           NX_NO_CLOUD: false
+          NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
 
   release-linux-arm64:
@@ -128,9 +132,12 @@ jobs:
       - uses: actions/cache@v4
         id: yarn-cache
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-${{ runner.arch }}-yarn-${{ hashFiles('yarn.lock') }}
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            .nx/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-yarn-nx-${{ hashFiles('yarn.lock') }}
           restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-yarn-nx-
             ${{ runner.os }}-${{ runner.arch }}-yarn-
 
       - name: Change permissions
@@ -199,6 +206,7 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
           NX_NO_CLOUD: false
+          NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
           SNAPCRAFT_BUILD_ENVIRONMENT: host
 
@@ -227,9 +235,12 @@ jobs:
       - uses: actions/cache@v4
         id: yarn-cache
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-${{ runner.arch }}-yarn-${{ hashFiles('yarn.lock') }}
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            .nx/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-yarn-nx-${{ hashFiles('yarn.lock') }}
           restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-yarn-nx-
             ${{ runner.os }}-${{ runner.arch }}-yarn-
 
       - name: Fix node-gyp and Python
@@ -287,6 +298,7 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
           NX_NO_CLOUD: false
+          NX_DAEMON: false
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_APP_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -307,6 +319,18 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Selective cleanup (preserve .nx/cache)
+        shell: powershell
+        run: |
+          # Stop NX daemon first to release file locks before cleanup (guard for fresh runners without Node)
+          if (Get-Command npx -ErrorAction SilentlyContinue) { npx nx daemon --stop 2>&1 | Out-Null }$null
+          # Remove build artifacts but keep NX cache for faster rebuilds
+          if (Test-Path "dist") { Remove-Item -Recurse -Force "dist" }
+          if (Test-Path "node_modules") { Remove-Item -Recurse -Force "node_modules" }
+          exit 0
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
@@ -321,9 +345,12 @@ jobs:
       - uses: actions/cache@v4
         id: yarn-cache
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-${{ runner.arch }}-yarn-${{ hashFiles('yarn.lock') }}
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            .nx/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-yarn-nx-${{ hashFiles('yarn.lock') }}
           restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-yarn-nx-
             ${{ runner.os }}-${{ runner.arch }}-yarn-
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
@@ -424,6 +451,7 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
           NX_NO_CLOUD: false
+          NX_DAEMON: false
 
   release-windows-arm64:
     runs-on: ${{ matrix.os }}
@@ -451,9 +479,12 @@ jobs:
       - uses: actions/cache@v4
         id: yarn-cache
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-${{ runner.arch }}-yarn-${{ hashFiles('yarn.lock') }}
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            .nx/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-yarn-nx-${{ hashFiles('yarn.lock') }}
           restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-yarn-nx-
             ${{ runner.os }}-${{ runner.arch }}-yarn-
 
       - name: Install Visual Studio 2022 Build Tools (VCTools with ARM64)
@@ -562,3 +593,4 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
           NX_NO_CLOUD: false
+          NX_DAEMON: false

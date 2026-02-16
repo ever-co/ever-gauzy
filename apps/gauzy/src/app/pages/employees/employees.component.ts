@@ -11,7 +11,7 @@ import {
 	EmployeesService,
 	ErrorHandlingService,
 	PageDataTableRegistryConfig,
-	PageDataTableRegistryId,
+	PageDataTablePageId,
 	PageDataTableRegistryService,
 	ServerDataSource,
 	Store,
@@ -63,7 +63,7 @@ import {
 	standalone: false
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
+	public dataTableId: PageDataTablePageId = this._route.snapshot.data.dataTableId; // The identifier for the data table
 	public settingsSmartTable: Settings;
 	public smartTableSource: ServerDataSource;
 	public selectedEmployee: EmployeeViewModel;

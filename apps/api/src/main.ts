@@ -20,7 +20,7 @@ console.log('Bootstrap Loaded');
 
 console.log('Plugin Config Loading...');
 console.time('Plugin Config Time');
-import { pluginConfig } from './plugin-config';
+import { pluginConfig } from './plugin.config';
 console.timeEnd('Plugin Config Time');
 console.log('Plugin Config Loaded');
 

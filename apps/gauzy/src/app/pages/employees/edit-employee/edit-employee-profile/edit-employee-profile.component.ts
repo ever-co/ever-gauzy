@@ -10,7 +10,7 @@ import {
 	ErrorHandlingService,
 	PageTabRegistryConfig,
 	PageTabRegistryService,
-	PageTabsetRegistryId,
+	PageTabsetPageId,
 	Store,
 	ToastrService,
 	UsersService
@@ -26,7 +26,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	standalone: false
 })
 export class EditEmployeeProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	public employeeId: ID;
 
 	selectedEmployee: IEmployee;
