@@ -38,7 +38,8 @@ export interface PluginNavItemInput {
 		translationKey: string;
 		permissionKeys?: unknown[];
 		featureKey?: unknown;
-		hide?: () => boolean | boolean;
+		/** Function or plain boolean to control visibility. */
+		hide?: (() => boolean) | boolean;
 	};
 }
 
@@ -359,10 +360,27 @@ export function getPluginModulesByLocation(config: PluginUiConfig, location: str
 }
 
 /**
+ * Recursively finds a plugin by ID in the plugin tree (includes module-less group parents).
+ */
+function findPluginById(plugins: PluginUiDefinition[], pluginId: string): PluginUiDefinition | undefined {
+	for (const p of plugins) {
+		if (p.id === pluginId) return p;
+		const nested = getNestedPlugins(p);
+		if (nested?.length) {
+			const found = findPluginById(nested, pluginId);
+			if (found) return found;
+		}
+	}
+	return undefined;
+}
+
+/**
  * Returns the plugin definition for a given plugin ID.
+ * Includes module-less group parents (unlike flattenPlugins), so it is consistent
+ * with isPluginActive(config, pluginId).
  */
 export function getPluginDefinition(config: PluginUiConfig, pluginId: string): PluginUiDefinition | undefined {
-	return flattenPlugins(config.plugins).find((p) => p.id === pluginId);
+	return findPluginById(config.plugins, pluginId);
 }
 
 /**

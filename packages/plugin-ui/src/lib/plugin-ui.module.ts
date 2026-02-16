@@ -65,11 +65,22 @@ export class PluginUiModule implements OnDestroy {
 	 */
 	ngOnDestroy(): void {
 		this.invokeLifecycleMethodSync('ngOnPluginBeforeDestroy');
-		this.invokeLifecycleMethod('ngOnPluginDestroy', (instance: any) => {
+
+		// Extension deregistration moved into closure so it runs per-plugin *after* each
+		// ngOnPluginDestroy completes (avoids race where extensions were removed before hooks ran).
+		this.invokeLifecycleMethod('ngOnPluginDestroy', (instance: any, def?: PluginUiDefinition) => {
 			this._registry.deregister(instance);
+			if (def?.extensions?.length) {
+				this._extRegistry.deregisterByPlugin(def.id);
+			}
+		}).catch((e: unknown) => {
+			console.error('[PluginUiModule] Error during plugin destroy', e);
 		});
-		for (const def of this._pluginDefinitions) {
-			if (def.extensions?.length) {
+		// Plugins without ngOnPluginDestroy: deregister extensions immediately (no async hook to wait for).
+		for (let i = 0; i < this._pluginInstances.length; i++) {
+			const instance = this._pluginInstances[i];
+			const def = this._pluginDefinitions[i];
+			if (!hasPluginUiLifecycleMethod(instance, 'ngOnPluginDestroy') && def?.extensions?.length) {
 				this._extRegistry.deregisterByPlugin(def.id);
 			}
 		}
@@ -151,19 +162,21 @@ export class PluginUiModule implements OnDestroy {
 	 * optionally running a closure afterward.
 	 *
 	 * @param lifecycleMethod The lifecycle method name to invoke.
-	 * @param closure Optional callback executed after each invocation.
+	 * @param closure Optional callback executed after each invocation. Receives (instance, definition).
 	 */
 	private async invokeLifecycleMethod(
 		lifecycleMethod: keyof PluginUiLifecycleMethods,
-		closure?: (instance: any) => void
+		closure?: (instance: any, definition?: PluginUiDefinition) => void
 	): Promise<void> {
-		for (const instance of this._pluginInstances) {
+		for (let i = 0; i < this._pluginInstances.length; i++) {
+			const instance = this._pluginInstances[i];
+			const definition = this._pluginDefinitions[i];
 			if (hasPluginUiLifecycleMethod(instance, lifecycleMethod)) {
 				try {
 					await instance[lifecycleMethod]!();
 
 					if (typeof closure === 'function') {
-						closure(instance);
+						closure(instance, definition);
 					}
 				} catch (e: any) {
 					const name = instance.constructor?.name || '(anonymous plugin)';
