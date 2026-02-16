@@ -26,13 +26,13 @@
 				<label>
 					{{ 'PROPOSAL_TEMPLATE.EMPLOYEE' | translate }}
 				</label>
-				@if (!proposalTemplate) {
-				<ngx-avatar [name]="selectedEmployee?.fullName" [src]="selectedEmployee?.imageUrl"></ngx-avatar>
-				} @if (proposalTemplate) {
+				@if (proposalTemplate) {
 				<ngx-avatar
 					[name]="proposalTemplate?.employee?.user?.name"
 					[src]="proposalTemplate?.employee?.user?.imageUrl"
 				></ngx-avatar>
+				} @else {
+				<ngx-avatar [name]="selectedEmployee?.fullName" [src]="selectedEmployee?.imageUrl"></ngx-avatar>
 				}
 			</div>
 			}
