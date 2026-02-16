@@ -44,11 +44,13 @@ import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
+import { AccessTokenService } from '../access-token/access-token.service';
 import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { EventBus } from '../event-bus/event-bus';
 import { AccountRegistrationEvent } from '../event-bus/events';
 import { PasswordHashService } from '../password-hash/password-hash.service';
+import { RefreshTokenService } from '../refresh-token/refresh-token.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
@@ -91,7 +93,9 @@ export class AuthService extends SocialAuthService {
 		private readonly httpService: HttpService,
 		private readonly socialAccountService: SocialAccountService,
 		private readonly eventBus: EventBus,
-		private readonly passwordHashService: PasswordHashService
+		private readonly passwordHashService: PasswordHashService,
+		private readonly refreshTokenService: RefreshTokenService,
+		private readonly accessTokenService: AccessTokenService
 	) {
 		super();
 	}
@@ -967,9 +971,7 @@ export class AuthService extends SocialAuthService {
 			};
 
 			// Generate the JWT access token using the payload
-			return sign(payload, environment.JWT_SECRET, {
-				expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
-			});
+			return this.accessTokenService.generate(userId, payload);
 		} catch (error) {
 			// Log and rethrow any errors encountered during the process
 			console.log('Error while generating JWT access token:', error);
@@ -996,7 +998,7 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Construct the JWT payload with organization context
-			const payload: JwtPayload = {
+			const payload = {
 				id: user.id,
 				email: user.email,
 				tenantId: user.tenantId || null,
@@ -1004,12 +1006,10 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null
 			};
 
-			// Generate the JWT refresh token
-			return sign(payload, environment.JWT_REFRESH_TOKEN_SECRET, {
-				expiresIn: `${environment.JWT_REFRESH_TOKEN_EXPIRATION_TIME}s`
-			});
+			return this.refreshTokenService.generate(user.id, payload);
 		} catch (error) {
 			console.log('Error while generating JWT refresh token:', error);
+			throw new UnauthorizedException('Unable to generate refresh token');
 		}
 	}
 

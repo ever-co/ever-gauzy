@@ -171,6 +171,9 @@ import { SharedEntityModule } from '../shared-entity/shared-entity.module';
 import { BroadcastModule } from '../broadcast/broadcast.module';
 import { OrganizationStrategicInitiativeModule } from '../organization-strategic-initiative/organization-strategic-initiative.module';
 import { PasswordHashModule } from '../password-hash/password-hash.module';
+import { TokenModule } from '../token/token.module';
+import { AccessTokenModule } from '../access-token/access-token.module';
+import { RefreshTokenModule } from '../refresh-token/refresh-token.module';
 
 const { unleashConfig } = environment;
 
@@ -521,7 +524,10 @@ if (environment.THROTTLE_ENABLED) {
 		SharedEntityModule,
 		BroadcastModule,
 		OrganizationStrategicInitiativeModule,
-		PasswordHashModule
+		PasswordHashModule,
+		TokenModule.forRoot({ enableScheduler: true }),
+		AccessTokenModule,
+		RefreshTokenModule
 	],
 	controllers: [AppController],
 	providers: [

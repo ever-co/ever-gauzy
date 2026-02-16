@@ -1,0 +1,109 @@
+import { ConflictException, Inject, NotFoundException } from '@nestjs/common';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { TokenStatus } from '../../interfaces';
+import { IJwtService } from '../../interfaces/jwt-service.interface';
+import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
+import { IGeneratedToken } from '../../interfaces/token.interface';
+import { JwtServiceToken, TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
+import { TokenConfigRegistry } from '../../token-config.registry';
+import { RotateTokenCommand } from '../rotate-token.command';
+
+@CommandHandler(RotateTokenCommand)
+export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, IGeneratedToken> {
+	constructor(
+		@Inject(TokenWriteRepositoryToken)
+		private readonly tokenRepository: ITokenWriteRepository,
+		@Inject(JwtServiceToken)
+		private readonly jwtService: IJwtService,
+		private readonly configRegistry: TokenConfigRegistry
+	) {}
+
+	async execute(command: RotateTokenCommand): Promise<IGeneratedToken> {
+		const { dto } = command;
+		const config = this.configRegistry.getConfig(dto.tokenType);
+
+		if (!config.allowRotation) {
+			throw new ConflictException(`Token type ${dto.tokenType} does not support rotation`);
+		}
+
+		// Use pessimistic locking for atomic rotation
+		const rawOldToken = resolveRawToken(dto);
+		const oldTokenDigest = this.jwtService.hashToken(rawOldToken);
+
+		return this.tokenRepository.transaction(async (repository: ITokenReadRepository & ITokenWriteRepository) => {
+			const oldToken = await repository.findByHashWithLock(oldTokenDigest);
+
+			if (!oldToken) {
+				throw new NotFoundException('Token not found');
+			}
+
+			if (!oldToken.canRotate()) {
+				throw new ConflictException('Token is not active');
+			}
+
+			if (oldToken.userId !== dto.userId) {
+				throw new ConflictException('Token does not belong to user');
+			}
+
+			if (oldToken.tokenType !== dto.tokenType) {
+				throw new ConflictException('Token type mismatch');
+			}
+
+			// Calculate expiration for new token
+			const expiresAt = config.expiration ? new Date(Date.now() + config.expiration) : null;
+
+			// Metatdata for new token can be merged or replaced - here we choose to merge
+			const newMetadata = {
+				...oldToken.metadata,
+				...dto.metadata
+			};
+			// Create new token
+			const newTokenRecord = await repository.create({
+				userId: dto.userId,
+				tokenType: dto.tokenType,
+				tokenHash: '', // Temporary
+				status: TokenStatus.ACTIVE,
+				expiresAt,
+				...newMetadata,
+				rotatedFromTokenId: oldToken.id,
+				lastUsedAt: new Date()
+			});
+
+			// Generate new JWT
+			const payload = {
+				userId: dto.userId,
+				tokenType: dto.tokenType,
+				tokenId: newTokenRecord.id,
+				...newTokenRecord.metadata
+			};
+
+			const expiresInMs = expiresAt ? expiresAt.getTime() - Date.now() : undefined;
+			const expiresInSeconds = expiresInMs ? Math.max(1, Math.ceil(expiresInMs / 1000)) : undefined;
+			const jwt = this.jwtService.sign(payload, expiresInSeconds);
+			const tokenHash = this.jwtService.hashToken(jwt);
+
+			// Update new token with hash
+			newTokenRecord.tokenHash = tokenHash;
+			await repository.save(newTokenRecord);
+
+			// Mark old token as rotated
+			const updated = await repository.updateStatus(
+				oldToken.id,
+				TokenStatus.ROTATED,
+				oldToken.version,
+				{ rotatedToTokenId: newTokenRecord.id }
+			);
+
+			if (!updated) {
+				throw new ConflictException('Failed to rotate token - concurrent modification');
+			}
+
+			return {
+				token: jwt,
+				tokenId: newTokenRecord.id,
+				expiresAt: newTokenRecord.expiresAt,
+				createdAt: newTokenRecord.createdAt
+			};
+		});
+	}
+}

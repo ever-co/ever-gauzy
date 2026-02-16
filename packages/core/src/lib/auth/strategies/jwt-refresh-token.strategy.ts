@@ -1,14 +1,15 @@
+import { environment } from '@gauzy/config';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { JwtPayload } from 'jsonwebtoken';
 import { Request } from 'express';
-import { environment } from '@gauzy/config';
+import { JwtPayload } from 'jsonwebtoken';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { RefreshTokenService } from '../../refresh-token/refresh-token.service';
 import { UserService } from './../../user/user.service';
 
 @Injectable()
 export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh-token') {
-	constructor(private readonly userService: UserService) {
+	constructor(private readonly userService: UserService, private readonly refreshTokenService: RefreshTokenService) {
 		super({
 			jwtFromRequest: ExtractJwt.fromBodyField('refresh_token'),
 			secretOrKey: environment.JWT_REFRESH_TOKEN_SECRET,
@@ -28,8 +29,13 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 		try {
 			const { refresh_token } = request.body; // Extract the refresh token
 
-			// Validate the user using the refresh token and JWT payload
-			const user = await this.userService.getUserIfRefreshTokenMatches(refresh_token, payload);
+			const { isValid, token, reason } = await this.refreshTokenService.verify(refresh_token); // Validate the refresh token against the service
+
+			if (!isValid) {
+				return done(new UnauthorizedException(reason ?? 'Unauthorized'), false); // Return unauthorized if validation fails
+			}
+
+			const user = await this.userService.findOneByIdString(token.userId); // Fetch the user based on the payload ID
 
 			if (!user) {
 				return done(new UnauthorizedException('Unauthorized'), false); // Return unauthorized if validation fails
