@@ -1,9 +1,10 @@
+import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
+import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
+import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
-import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
-import { WindowManager, logger as log } from '@gauzy/desktop-core';
-import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
+import { AppWindowManager } from './app-window-manager';
 import { TrackingSleepInactivity } from './contexts';
 import {
 	DialogStopTimerLogoutConfirmation,
@@ -36,9 +37,9 @@ import {
 	UserService
 } from './offline';
 import { pluginListeners } from './plugin-system';
+import { AkitaStorageHandler } from './storage/akita-storage.handler';
 import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
-import { AppWindowManager } from './app-window-manager';
 
 const timerHandler = new TimerHandler();
 const offlineMode = DesktopOfflineModeHandler.instance;
@@ -48,6 +49,10 @@ const timerService = new TimerService();
 const windowManager = WindowManager.getInstance();
 const appWindowManager = AppWindowManager.getInstance();
 
+export function setupAkitaStorageHandler() {
+	return new AkitaStorageHandler(new AkitaStorageEngine());
+}
+
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	log.info('IPC Main Handler');
 
@@ -56,16 +61,14 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.removeAllListeners('set_project_task');
 	removeAllHandlers();
 
-	log.info('Removed All Listeners');
-
 	ipcMain.handle('START_SERVER', async (event, arg) => {
 		log.info('Handle Start Server');
 		try {
 			const baseUrl = arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-					? `http://localhost:${arg.port}`
-					: `http://localhost:${config.API_DEFAULT_PORT}`;
+				? `http://localhost:${arg.port}`
+				: `http://localhost:${config.API_DEFAULT_PORT}`;
 
 			global.variableGlobal = {
 				API_BASE_URL: baseUrl,
@@ -383,10 +386,22 @@ export function ipcTimer(
 	let osInactivityHandler: DesktopOsInactivityHandler | null = null;
 
 	function cleanupPowerManagers() {
-		if (osInactivityHandler) { osInactivityHandler.dispose(); osInactivityHandler = null; }
-		if (powerManagerDetectInactivity) { powerManagerDetectInactivity.dispose(); powerManagerDetectInactivity = null; }
-		if (powerManagerPreventSleep) { powerManagerPreventSleep.stop(); powerManagerPreventSleep = null; }
-		if (powerManager) { powerManager.dispose(); powerManager = null; }
+		if (osInactivityHandler) {
+			osInactivityHandler.dispose();
+			osInactivityHandler = null;
+		}
+		if (powerManagerDetectInactivity) {
+			powerManagerDetectInactivity.dispose();
+			powerManagerDetectInactivity = null;
+		}
+		if (powerManagerPreventSleep) {
+			powerManagerPreventSleep.stop();
+			powerManagerPreventSleep = null;
+		}
+		if (powerManager) {
+			powerManager.dispose();
+			powerManager = null;
+		}
 	}
 
 	app.whenReady().then(async () => {
@@ -852,7 +867,6 @@ export function ipcTimer(
 		}
 
 		appWindowManager.imageView?.show();
-
 	});
 
 	ipcMain.on('close_image_view', async () => {
@@ -925,21 +939,27 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.handle('UPDATE_SYNC_STATE', async (_, arg: {
-		actionType: TimerActionTypeEnum,
-		data: {
-			state: TimerSyncStateEnum,
-			duration: number,
-			timerId: number
+	ipcMain.handle(
+		'UPDATE_SYNC_STATE',
+		async (
+			_,
+			arg: {
+				actionType: TimerActionTypeEnum;
+				data: {
+					state: TimerSyncStateEnum;
+					duration: number;
+					timerId: number;
+				};
+			}
+		) => {
+			try {
+				await timerHandler.updateTimerSyncState(arg.actionType, arg.data);
+			} catch (error) {
+				console.error(`ERROR_UPDATE_SYNC_STATE: ${error}`);
+			}
+			return;
 		}
-	}) => {
-		try {
-			await timerHandler.updateTimerSyncState(arg.actionType, arg.data);
-		} catch (error) {
-			console.error(`ERROR_UPDATE_SYNC_STATE: ${error}`);
-		}
-		return;
-	});
+	);
 
 	function resizeWindow(window: BrowserWindow, isExpanded: boolean): void {
 		const display = screen.getPrimaryDisplay();
@@ -1383,11 +1403,13 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 		const user = await userService.retrieve();
 		log.info('Current User', user);
 
-		if (!user || auth.userId !== user.remoteId) {
+		// Ensure we have a valid user and matching remoteId
+		if (!user || !user.remoteId || auth.userId !== user.remoteId) {
 			await handleLogout('Authentication failed');
 			return false;
 		}
 
+		// Ensure employee exists on the user record before accepting authentication
 		if (user.employee) {
 			LocalStore.updateAuthSetting({ isLogout: false });
 			return true;

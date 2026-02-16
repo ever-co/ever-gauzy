@@ -1,27 +1,28 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router, UrlTree } from '@angular/router';
+import { selectPersistStateInit } from '@datorama/akita';
+import { combineLatest, map, Observable, take, tap } from 'rxjs';
 import { Store } from '../services';
-import { AuthService } from './services';
 
 /**
- * Use for routes which only need to be displayed if user is NOT logged in
+ * NoAuthGuard - Protects routes that should only be accessible when NOT logged in.
+ *
+ * Use for routes like login, register, forgot-password, etc.
+ * Redirects authenticated users to the main app.
  */
-@Injectable()
-export class NoAuthGuard implements CanActivate {
-	constructor(private readonly router: Router, private authService: AuthService, private readonly store: Store) {}
+export const noAuthGuard: CanActivateFn = (route, state): Observable<boolean | UrlTree> => {
+	const router = inject(Router);
+	const store = inject(Store);
 
-	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-		let isAuthenticated = false;
-		try {
-			isAuthenticated = await this.authService.isAuthenticated();
-		} catch (error) {
-			console.error(error);
-			this.store.serverConnection = 0;
-		}
-		if (!this.store.token || !isAuthenticated) {
-			return true;
-		}
-		await this.router.navigate(['/time-tracker']);
-		return false;
-	}
-}
+	return combineLatest([store.isAuthenticated$, selectPersistStateInit()]).pipe(
+		take(1),
+		tap(([isAuthenticated]) => {
+			if (isAuthenticated) {
+				console.warn(
+					'[NoAuthGuard] Authenticated user attempted to access a no-auth route. Redirecting to main app.'
+				);
+			}
+		}),
+		map(([isAuthenticated]) => (isAuthenticated ? router.createUrlTree(['/time-tracker']) : true))
+	);
+};

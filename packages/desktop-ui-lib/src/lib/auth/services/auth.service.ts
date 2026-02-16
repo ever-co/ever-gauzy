@@ -13,7 +13,7 @@ import {
 	RolesEnum
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-core/common';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, of } from 'rxjs';
 import { GAUZY_ENV } from '../../constants';
 import { API_PREFIX } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
@@ -134,10 +134,9 @@ export class AuthService {
 		});
 	}
 
-	public electronAuthentication({ user, token, refresh_token }: IAuthResponse) {
+	public electronAuthentication({ user, token, refresh_token }: IAuthResponse): Observable<void> {
 		try {
 			if (this.electronService.isElectron || this.electronService.isContextBridge) {
-				const channel = this.isAgent ? 'AUTH_SUCCESS' : 'auth_success';
 				const authArg = {
 					user: user,
 					token: token,
@@ -147,11 +146,13 @@ export class AuthService {
 					tenantId: user.tenantId ? user.tenantId : null,
 					refreshToken: refresh_token
 				};
+				console.log('Is Agent Environment:', Boolean(this.isAgent));
+
 				if (this.isAgent) {
-					this.electronService.ipcRenderer.invoke(channel, authArg);
-				} else {
-					this.electronService.ipcRenderer.send(channel, authArg);
+					return this.electronService.invoke$('AUTH_SUCCESS', authArg);
 				}
+
+				return of(this.electronService.ipcRenderer.send('auth_success', authArg));
 			}
 		} catch (error) {
 			console.log(error);

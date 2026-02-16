@@ -1,6 +1,6 @@
 import { inject, Injectable, OnDestroy } from '@angular/core';
-import { EMPTY, interval, Subscription } from 'rxjs';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { combineLatest, EMPTY, interval, map, Observable, of, Subscription, take } from 'rxjs';
+import { catchError, concatMap, filter, switchMap, tap } from 'rxjs/operators';
 import { Store } from '../../services';
 import { AuthStrategy } from './auth-strategy.service';
 import { RefreshStateManager } from './refresh-state-manager.service';
@@ -12,14 +12,16 @@ import { RefreshStateManager } from './refresh-state-manager.service';
  * - Periodically checks token expiration
  * - Triggers proactive refresh before token expires
  * - Coordinates with RefreshStateManager to prevent duplicate refreshes
+ * - Implements circuit breaker to prevent infinite retry loops
  * - Properly manages subscriptions and cleanup
  *
  * Best Practices:
  * 1. Checks token expiry every minute
  * 2. Refreshes token proactively before it expires
  * 3. Prevents duplicate refresh attempts via RefreshStateManager
- * 4. Properly cleans up subscriptions on destroy
- * 5. Errors are caught so the interval keeps running
+ * 4. Stops retrying after consecutive failures (circuit breaker)
+ * 5. Properly cleans up subscriptions on destroy
+ * 6. Errors are caught so the interval keeps running
  */
 @Injectable({
 	providedIn: 'root'
@@ -31,6 +33,10 @@ export class TokenRefreshService implements OnDestroy {
 
 	private intervalSubscription?: Subscription;
 	private readonly CHECK_INTERVAL = 60 * 1000; // Check every minute
+	private readonly MAX_CONSECUTIVE_FAILURES = 3;
+	private readonly CIRCUIT_BREAKER_RESET_TIME = 5 * 60 * 1000; // 5 minutes
+	private consecutiveFailures = 0;
+	private circuitBreakerOpenedAt?: number;
 
 	/**
 	 * Starts the automatic token refresh timer.
@@ -40,10 +46,14 @@ export class TokenRefreshService implements OnDestroy {
 		// Stop any existing timer
 		this.stop();
 
+		// Reset failure counter when starting
+		this.consecutiveFailures = 0;
+
 		// Check token expiry every minute
 		this.intervalSubscription = interval(this.CHECK_INTERVAL)
 			.pipe(
-				filter(() => this.shouldRefreshToken()),
+				concatMap(() => this.shouldRefreshToken()),
+				filter((shouldRefresh) => shouldRefresh),
 				tap(() => this.logRefreshAttempt()),
 				switchMap(() => this.performRefresh())
 			)
@@ -61,6 +71,9 @@ export class TokenRefreshService implements OnDestroy {
 			this.intervalSubscription.unsubscribe();
 			this.intervalSubscription = undefined;
 		}
+		// Reset failure counter and circuit breaker when stopping
+		this.consecutiveFailures = 0;
+		this.circuitBreakerOpenedAt = undefined;
 	}
 
 	ngOnDestroy(): void {
@@ -73,13 +86,37 @@ export class TokenRefreshService implements OnDestroy {
 
 	/**
 	 * Determines if a proactive refresh should be attempted.
+	 * Includes circuit breaker logic with automatic recovery.
 	 */
-	private shouldRefreshToken(): boolean {
-		return (
-			!!this.store.refreshToken &&
-			this.store.isTokenExpired() &&
-			!this.store.isOffline &&
-			!this.refreshStateManager.isRefreshInProgress()
+	private shouldRefreshToken(): Observable<boolean> {
+		// Circuit breaker: check if we should attempt recovery
+		if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
+			const now = Date.now();
+			const timeSinceOpen = this.circuitBreakerOpenedAt ? now - this.circuitBreakerOpenedAt : 0;
+
+			// Try to recover after reset time
+			if (timeSinceOpen >= this.CIRCUIT_BREAKER_RESET_TIME) {
+				console.log('[TokenRefreshService] Circuit breaker attempting recovery...');
+				this.consecutiveFailures = 0;
+				this.circuitBreakerOpenedAt = undefined;
+			} else {
+				console.warn(
+					`[TokenRefreshService] Circuit breaker open: ${this.consecutiveFailures} consecutive failures. ` +
+						`Will retry in ${Math.round((this.CIRCUIT_BREAKER_RESET_TIME - timeSinceOpen) / 1000)}s`
+				);
+				return of(false);
+			}
+		}
+
+		return combineLatest([this.store.isAuthenticated$, this.store.isOffline$]).pipe(
+			take(1),
+			map(
+				([isAuthenticated, isOffline]) =>
+					isAuthenticated &&
+					!isOffline &&
+					this.store.isTokenExpired() &&
+					!this.refreshStateManager.isRefreshInProgress()
+			)
 		);
 	}
 
@@ -91,6 +128,7 @@ export class TokenRefreshService implements OnDestroy {
 			catchError((error) => {
 				// Swallow the error so the interval keeps ticking
 				console.error('[TokenRefreshService] Error during proactive refresh:', error);
+				this.consecutiveFailures++;
 				return EMPTY;
 			})
 		);
@@ -101,9 +139,15 @@ export class TokenRefreshService implements OnDestroy {
 	 */
 	private handleRefreshResult(result: any): void {
 		if (result?.isSuccess?.()) {
-			// Success - token updated in store by AuthStrategy
+			// Success - reset failure counter and circuit breaker
+			this.consecutiveFailures = 0;
+			this.circuitBreakerOpenedAt = undefined;
 		} else {
 			console.warn('[TokenRefreshService] Proactive refresh failed:', result?.getErrors?.());
+			this.consecutiveFailures++;
+			if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES && !this.circuitBreakerOpenedAt) {
+				this.circuitBreakerOpenedAt = Date.now();
+			}
 		}
 	}
 
@@ -112,6 +156,10 @@ export class TokenRefreshService implements OnDestroy {
 	 */
 	private handleRefreshError(error: any): void {
 		console.error('[TokenRefreshService] Unexpected error in refresh stream:', error);
+		this.consecutiveFailures++;
+		if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES && !this.circuitBreakerOpenedAt) {
+			this.circuitBreakerOpenedAt = Date.now();
+		}
 	}
 
 	/**

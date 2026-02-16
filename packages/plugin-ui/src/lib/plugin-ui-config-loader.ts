@@ -1,4 +1,4 @@
-import { PluginUiConfig } from './plugin-ui.types';
+import { PluginUiConfig, collectPluginIds, flattenPlugins } from './plugin-ui.types';
 import { setPluginUiConfig } from './plugin-ui.loader';
 
 /**
@@ -37,7 +37,7 @@ export async function loadPluginUiConfig(configLoader: PluginUiConfigLoader): Pr
 		throw new Error('[PluginUiConfig] Invalid configuration: "plugins" must be an array.');
 	}
 
-	const ids = uiPluginConfig.plugins.map((p) => p.id);
+	const ids = collectPluginIds(uiPluginConfig.plugins);
 	const duplicates = ids.filter((id, i) => ids.indexOf(id) !== i);
 	if (duplicates.length > 0) {
 		throw new Error(`[PluginUiConfig] Duplicate plugin id(s) detected: ${duplicates.join(', ')}`);
@@ -62,7 +62,8 @@ export async function loadPluginUiConfig(configLoader: PluginUiConfigLoader): Pr
 	setPluginUiConfig(uiPluginConfig);
 
 	// ── Log summary ─────────────────────────────────────────
-	const locations = [...new Set(uiPluginConfig.plugins.map((p) => p.location).filter(Boolean))];
+	const flatPlugins = flattenPlugins(uiPluginConfig.plugins);
+	const locations = [...new Set(flatPlugins.map((p) => p.location).filter(Boolean))];
 
 	console.log(
 		`[PluginUiConfig] Loaded — ` +

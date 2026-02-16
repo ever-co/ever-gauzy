@@ -87,7 +87,7 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 
 		// Register Job Browser Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			location: 'jobs',
+			location: 'jobs-sections',
 			path: 'search',
 			loadChildren: () => import('./job-search.module').then((m) => m.JobSearchModule),
 			data: {
@@ -119,7 +119,7 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 					permissionKeys: [PermissionsEnum.ORG_JOB_SEARCH]
 				}
 			},
-			'jobs',
+			'jobs', // Nav section id (distinct from route registry location)
 			'jobs-proposal-template' // Insert before proposal-template
 		);
 	}
@@ -131,5 +131,5 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 export const JobSearchPlugin: PluginUiDefinition = {
 	id: 'job-search',
 	module: JobSearchModule,
-	location: 'jobs'
+	location: 'jobs-sections'
 };

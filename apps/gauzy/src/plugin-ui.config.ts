@@ -1,10 +1,11 @@
 import { LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import { PluginUiConfig } from '@gauzy/plugin-ui';
-import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
+import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
 import { JobEmployeePlugin } from '@gauzy/plugin-job-employee-ui';
 import { JobMatchingPlugin } from '@gauzy/plugin-job-matching-ui';
 import { JobSearchPlugin } from '@gauzy/plugin-job-search-ui';
 import { JobProposalTemplatePlugin } from '@gauzy/plugin-job-proposal-ui';
+import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
 
 /**
  * Application UI configuration.
@@ -13,9 +14,9 @@ import { JobProposalTemplatePlugin } from '@gauzy/plugin-job-proposal-ui';
  * and the list of active UI plugins.
  *
  * ┌──────────────────────────────────────────────────────────┐
- * │  To include / exclude a feature, add or remove its       │
- * │  plugin from the `plugins` array below. Each plugin      │
- * │  self-registers its own routes AND sidebar menu items.    │
+ * │  Plugins can be flat or hierarchical. A parent plugin    │
+ * │  (e.g. JobsPlugin) can have child plugins via `plugins`.  │
+ * │  Use JobsPlugin.init({ plugins: [...] }) to customize.    │
  * └──────────────────────────────────────────────────────────┘
  */
 export const uiPluginConfig: PluginUiConfig = {
@@ -61,9 +62,8 @@ export const uiPluginConfig: PluginUiConfig = {
 	// ── Plugins ────────────────────────────────────────────
 	plugins: [
 		// Job Plugins
-		JobEmployeePlugin,
-		JobMatchingPlugin,
-		JobSearchPlugin,
-		JobProposalTemplatePlugin
+		JobsPlugin.init({
+			plugins: [JobEmployeePlugin, JobMatchingPlugin, JobSearchPlugin, JobProposalTemplatePlugin]
+		})
 	]
 };

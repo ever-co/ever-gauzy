@@ -30,6 +30,7 @@ remoteMain.initialize();
 import {
 	AppError,
 	AppMenu,
+	AppWindowManager,
 	DesktopDialog,
 	DesktopThemeListener,
 	DesktopUpdater,
@@ -44,11 +45,11 @@ import {
 	ProviderFactory,
 	removeMainListener,
 	removeTimerListener,
+	setupAkitaStorageHandler,
 	TranslateLoader,
 	TranslateService,
-	TrayIcon,
-	UIError,
-	AppWindowManager
+	TrayIconFactory,
+	UIError
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -276,7 +277,7 @@ async function startServer(value, restart = false) {
 		gauzyWindow.show();
 		splashScreen.close();
 	}
-	const auth = store.get('auth');
+
 	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
 
 	if (tray) {
@@ -284,37 +285,11 @@ async function startServer(value, restart = false) {
 	}
 	console.log('dir name:', __dirname);
 	console.log('app path', app.getAppPath());
-	tray = new TrayIcon(
-		setupWindow,
-		knex,
-		timeTrackerWindow,
-		auth,
-		settingsWindow,
-		{ ...environment },
-		pathWindow,
-		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-		gauzyWindow,
-		alwaysOn
-	);
-
+	// Create the tray icon and menu
+	tray = TrayIconFactory.create(environment, pathWindow, path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
+	// Language change
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
-
-		if (tray) {
-			tray.destroy();
-		}
-		tray = new TrayIcon(
-			setupWindow,
-			knex,
-			timeTrackerWindow,
-			auth,
-			settingsWindow,
-			{ ...environment },
-			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-			gauzyWindow,
-			alwaysOn
-		);
 	});
 
 	/* ping server before launch the ui */
@@ -353,6 +328,8 @@ app.on('ready', async () => {
 		LocalStore.setAllDefaultConfig();
 	}
 
+	// Setup Akita storage handler for IPC communication
+	setupAkitaStorageHandler();
 	// Set up theme listener for desktop windows
 	new DesktopThemeListener();
 	// default global
@@ -428,7 +405,7 @@ app.on('ready', async () => {
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
-	initializeAppManager()
+	initializeAppManager();
 	updater.settingWindow = appWindowManager.settingWindow;
 	updater.gauzyWindow = gauzyWindow;
 	appWindowManager.updater = updater;
@@ -802,9 +779,9 @@ ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
 ipcMain.handle('set-tray-icon', () => {
 	return {
-		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon_gray.png')
-	}
+		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon@2x.png'),
+		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon@2x_gray.png')
+	};
 });
 
 ipcMain.on('get-arch', (event) => {

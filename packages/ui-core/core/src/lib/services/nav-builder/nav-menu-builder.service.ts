@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, map, Observable, of, shareReplay } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, map, Observable, of, shareReplay } from 'rxjs';
 import { NavMenuSectionItem, NavMenuItemsConfig, NavMenuSectionConfig } from './nav-builder-types';
 
 @Injectable({
@@ -163,29 +163,33 @@ export class NavMenuBuilderService {
 		const itemAdditions$ = this.addedNavMenuItems$;
 
 		// Combine the initial configuration and section additions
+		// Don't emit until base menu is defined (prevents Jobs-only or empty flash on refresh)
 		const combinedConfig$ = combineLatest([this.initialNavMenuConfig$, sectionAdditions$]).pipe(
+			filter(([sections]) => !!sections?.length),
 			map(([sections, additions]) => {
 				const configMap = new Map<string, NavMenuSectionItem>();
+				const orderedIds: string[] = [];
 
-				// Add initial configurations to the map
-				sections.forEach((config: NavMenuSectionItem) => configMap.set(config.id, config));
+				sections.forEach((section) => {
+					configMap.set(section.id, section);
+					orderedIds.push(section.id);
+				});
 
-				// Update or add sections from additions
 				for (const { config, before } of additions) {
 					if (configMap.has(config.id)) {
-						configMap.set(config.id, config); // Update existing config
+						configMap.set(config.id, config); // Update existing
 					} else {
-						const beforeIndex = before ? sections.findIndex((c) => c.id === before) : -1;
+						configMap.set(config.id, config);
+						const beforeIndex = before ? orderedIds.indexOf(before) : -1;
 						if (beforeIndex !== -1) {
-							sections.splice(beforeIndex, 0, config); // Insert before specified section
+							orderedIds.splice(beforeIndex, 0, config.id);
 						} else {
-							sections.push(config); // Append if before section not found
+							orderedIds.push(config.id);
 						}
-						configMap.set(config.id, config); // Add to map
 					}
 				}
 
-				return [...configMap.values()];
+				return orderedIds.map((id) => configMap.get(id)!);
 			}),
 			shareReplay(1)
 		);

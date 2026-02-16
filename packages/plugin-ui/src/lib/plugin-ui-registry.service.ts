@@ -38,17 +38,31 @@ export class PluginUiRegistryService {
 	}
 
 	/**
-	 * Invoke `ngOnPluginDestroy` on every registered plugin and clear the registry.
+	 * Invoke `ngOnPluginBeforeDestroy` (if implemented), then `ngOnPluginDestroy`
+	 * on every registered plugin, and clear the registry.
 	 *
 	 * Intended to be called by the root bootstrap module during app shutdown.
 	 */
 	async destroyAll(): Promise<void> {
 		for (const instance of this._instances) {
+			if (hasPluginUiLifecycleMethod(instance, 'ngOnPluginBeforeDestroy')) {
+				try {
+					const result = (instance as { ngOnPluginBeforeDestroy: () => void | Promise<void> })
+						.ngOnPluginBeforeDestroy();
+					if (result && typeof result.then === 'function') {
+						await result;
+					}
+				} catch (err) {
+					const name = instance.constructor?.name || '(anonymous plugin)';
+					console.error(`Error in ngOnPluginBeforeDestroy for [${name}]:`, err);
+				}
+			}
+		}
+		for (const instance of this._instances) {
 			if (hasPluginUiLifecycleMethod(instance, 'ngOnPluginDestroy')) {
 				try {
 					await instance.ngOnPluginDestroy();
 					const name = instance.constructor?.name || '(anonymous plugin)';
-					// Logging kept minimal and framework-agnostic.
 					console.log(`Destroyed UI Plugin [${name}]`);
 				} catch (err) {
 					const name = instance.constructor?.name || '(anonymous plugin)';

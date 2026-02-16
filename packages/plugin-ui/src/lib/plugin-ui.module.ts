@@ -1,6 +1,7 @@
 import {
 	EnvironmentInjector,
 	inject,
+	Injector,
 	ModuleWithProviders,
 	NgModule,
 	OnDestroy,
@@ -8,29 +9,35 @@ import {
 	runInInjectionContext
 } from '@angular/core';
 import { getPluginUiConfig } from './plugin-ui.loader';
+import { PLUGIN_ACTIVATION_PREDICATE, PLUGIN_DEFINITION, PLUGIN_OPTIONS } from './plugin-ui.types';
 import { PluginUiLifecycleMethods } from './plugin-ui.interface';
-import { getUIPluginModules, hasPluginUiLifecycleMethod } from './plugin-ui.helper';
+import { getUIPluginModulesWithDefinitions, hasPluginUiLifecycleMethod } from './plugin-ui.helper';
+import { orderPluginsByDependencies, PluginUiDefinition } from './plugin-ui.types';
+import { PageExtensionRegistryService } from './plugin-extension/extension-registry.service';
 import { PluginUiRegistryService } from './plugin-ui-registry.service';
 
 /**
  * Angular module responsible for managing UI plugin lifecycles.
  *
  * Import `PluginUiModule.init()` in the root bootstrap module. During application
- * startup the module creates every plugin instance inside the root injection
- * context (via `provideAppInitializer`) so that `inject()` calls in plugin
- * classes resolve correctly, then invokes `ngOnPluginBootstrap` / `ngOnPluginDestroy`
- * lifecycle hooks.
+ * startup the module creates plugin instances in top-down order (parent before
+ * children), then invokes `ngOnPluginBootstrap` / `ngOnPluginDestroy` lifecycle
+ * hooks. Parent plugins (e.g. JobsPlugin) are initialized before their children.
  */
 @NgModule({})
 export class PluginUiModule implements OnDestroy {
 	private readonly _envInjector = inject(EnvironmentInjector);
 	private readonly _registry = inject(PluginUiRegistryService);
+	private readonly _extRegistry = inject(PageExtensionRegistryService);
 
 	/**
 	 * Plugin instances created during app initializer.
 	 * Stored so lifecycle methods can be called on destroy.
 	 */
 	private readonly _pluginInstances: any[] = [];
+
+	/** Plugin definitions for instances; used to deregister extensions on destroy. */
+	private readonly _pluginDefinitions: PluginUiDefinition[] = [];
 
 	/**
 	 * Configure the PluginUiModule.
@@ -57,9 +64,26 @@ export class PluginUiModule implements OnDestroy {
 	 * `ngOnPluginDestroy` on each plugin.
 	 */
 	ngOnDestroy(): void {
-		this.invokeLifecycleMethod('ngOnPluginDestroy', (instance: any) => {
+		this.invokeLifecycleMethodSync('ngOnPluginBeforeDestroy');
+
+		// Extension deregistration moved into closure so it runs per-plugin *after* each
+		// ngOnPluginDestroy completes (avoids race where extensions were removed before hooks ran).
+		this.invokeLifecycleMethod('ngOnPluginDestroy', (instance: any, def?: PluginUiDefinition) => {
 			this._registry.deregister(instance);
+			if (def?.extensions?.length) {
+				this._extRegistry.deregisterByPlugin(def.id);
+			}
+		}).catch((e: unknown) => {
+			console.error('[PluginUiModule] Error during plugin destroy', e);
 		});
+		// Plugins without ngOnPluginDestroy: deregister extensions immediately (no async hook to wait for).
+		for (let i = 0; i < this._pluginInstances.length; i++) {
+			const instance = this._pluginInstances[i];
+			const def = this._pluginDefinitions[i];
+			if (!hasPluginUiLifecycleMethod(instance, 'ngOnPluginDestroy') && def?.extensions?.length) {
+				this._extRegistry.deregisterByPlugin(def.id);
+			}
+		}
 	}
 
 	// ─── Bootstrap ───────────────────────────────────────────────
@@ -72,11 +96,13 @@ export class PluginUiModule implements OnDestroy {
 	 * correctly.
 	 */
 	async bootstrapPlugins(): Promise<void> {
-		this._pluginInstances.push(...this.createPluginInstances());
+		this._pluginInstances.push(...(await this.createPluginInstances()));
 
 		await this.invokeLifecycleMethod('ngOnPluginBootstrap', (instance: any) => {
 			this._registry.register(instance);
 		});
+
+		await this.invokeLifecycleMethod('ngOnPluginAfterBootstrap');
 	}
 
 	// ─── Private helpers ─────────────────────────────────────────
@@ -85,24 +111,50 @@ export class PluginUiModule implements OnDestroy {
 	 * Reads the config and creates an instance of every plugin module
 	 * class inside the root `EnvironmentInjector` context, so that
 	 * `inject()` calls in class fields / constructors resolve correctly.
+	 * Plugins are filtered by PLUGIN_ACTIVATION_PREDICATE when provided.
 	 */
-	private createPluginInstances(): any[] {
+	private async createPluginInstances(): Promise<any[]> {
 		const config = getPluginUiConfig();
-		const pluginModules = getUIPluginModules(config.plugins);
+		let pluginsWithModules = getUIPluginModulesWithDefinitions(config.plugins);
+		pluginsWithModules = orderPluginsByDependencies(pluginsWithModules.map((p) => p.definition)).map(
+			(def) => pluginsWithModules.find((p) => p.definition === def)!
+		);
+		const predicate = this._envInjector.get(PLUGIN_ACTIVATION_PREDICATE, null);
 
-		return pluginModules
-			.map((mod) => {
-				try {
-					// `runInInjectionContext` ensures `inject()` calls inside the
-					// plugin module class resolve from the root EnvironmentInjector.
-					return runInInjectionContext(this._envInjector, () => new mod());
-				} catch (e: any) {
-					const trace = typeof e?.stack === 'string' ? e.stack : undefined;
-					console.error(`Error creating UI plugin [${mod.name}]`, trace, e);
-					return null;
-				}
-			})
-			.filter(Boolean);
+		const oks =
+			predicate == null
+				? pluginsWithModules.map(() => true)
+				: await Promise.all(
+						pluginsWithModules.map(async ({ definition }) => {
+							const result = predicate(definition);
+							return typeof result === 'boolean' ? result : await result;
+						})
+				  );
+		const filtered = pluginsWithModules.filter((_, i) => oks[i]);
+
+		const instances: any[] = [];
+		for (const { definition, module: mod, loadModule } of filtered) {
+			try {
+				const resolvedModule = mod ?? (loadModule ? await loadModule() : null);
+				if (!resolvedModule) continue;
+
+				const options = definition.options ?? {};
+				const childInjector = Injector.create({
+					providers: [
+						{ provide: PLUGIN_OPTIONS, useValue: options },
+						{ provide: PLUGIN_DEFINITION, useValue: definition }
+					],
+					parent: this._envInjector
+				});
+				const instance = runInInjectionContext(childInjector, () => new resolvedModule());
+				instances.push(instance);
+				this._pluginDefinitions.push(definition);
+			} catch (e: any) {
+				const trace = typeof e?.stack === 'string' ? e.stack : undefined;
+				console.error(`Error creating UI plugin [${definition.id}]`, trace, e);
+			}
+		}
+		return instances;
 	}
 
 	/**
@@ -110,19 +162,46 @@ export class PluginUiModule implements OnDestroy {
 	 * optionally running a closure afterward.
 	 *
 	 * @param lifecycleMethod The lifecycle method name to invoke.
-	 * @param closure Optional callback executed after each invocation.
+	 * @param closure Optional callback executed after each invocation. Receives (instance, definition).
 	 */
 	private async invokeLifecycleMethod(
 		lifecycleMethod: keyof PluginUiLifecycleMethods,
-		closure?: (instance: any) => void
+		closure?: (instance: any, definition?: PluginUiDefinition) => void
 	): Promise<void> {
+		for (let i = 0; i < this._pluginInstances.length; i++) {
+			const instance = this._pluginInstances[i];
+			const definition = this._pluginDefinitions[i];
+			if (hasPluginUiLifecycleMethod(instance, lifecycleMethod)) {
+				try {
+					await instance[lifecycleMethod]!();
+
+					if (typeof closure === 'function') {
+						closure(instance, definition);
+					}
+				} catch (e: any) {
+					const name = instance.constructor?.name || '(anonymous plugin)';
+					const trace = typeof e?.stack === 'string' ? e.stack : undefined;
+					console.error(`Error in ${String(lifecycleMethod)} for plugin [${name}]`, trace, e);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Invokes a synchronous lifecycle method on each plugin instance.
+	 * Used for ngOnPluginBeforeDestroy (Angular's ngOnDestroy is synchronous).
+	 */
+	private invokeLifecycleMethodSync(lifecycleMethod: keyof PluginUiLifecycleMethods): void {
 		for (const instance of this._pluginInstances) {
 			if (hasPluginUiLifecycleMethod(instance, lifecycleMethod)) {
 				try {
-					await instance[lifecycleMethod]();
-
-					if (typeof closure === 'function') {
-						closure(instance);
+					const result = instance[lifecycleMethod]!();
+					if (result instanceof Promise) {
+						// If it returned a Promise, we can't await in sync context - log and continue
+						result.catch((e: unknown) => {
+							const name = instance.constructor?.name || '(anonymous plugin)';
+							console.error(`Error in ${String(lifecycleMethod)} for plugin [${name}]`, e);
+						});
 					}
 				} catch (e: any) {
 					const name = instance.constructor?.name || '(anonymous plugin)';
@@ -133,5 +212,3 @@ export class PluginUiModule implements OnDestroy {
 		}
 	}
 }
-
-

@@ -124,7 +124,7 @@ export class JobProposalModule {
 		// Register Job Proposal Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
 			// Register the location 'jobs'
-			location: 'proposals',
+			location: 'proposals-sections',
 			// Register the path 'proposal-template'
 			path: '',
 			// Register the component
@@ -145,7 +145,7 @@ export class JobProposalModule {
 		// Register Job Proposal Register Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
 			// Register the location 'jobs'
-			location: 'proposals',
+			location: 'proposals-sections',
 			// Register the path 'proposal-template'
 			path: 'register',
 			// Register the component
@@ -171,7 +171,7 @@ export class JobProposalModule {
 		// Register Job Proposal Details Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
 			// Register the location 'jobs'
-			location: 'proposals',
+			location: 'proposals-sections',
 			// Register the path 'proposal-template'
 			path: 'details/:id',
 			// Register the component
@@ -192,7 +192,7 @@ export class JobProposalModule {
 		// Register Job Proposal Edit Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
 			// Register the location 'jobs'
-			location: 'proposals',
+			location: 'proposals-sections',
 			// Register the path 'proposal-template'
 			path: 'edit/:id',
 			// Register the component

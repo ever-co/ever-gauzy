@@ -19,7 +19,7 @@ import {
 	NbStepperModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { TablerIconsModule } from '@gauzy/ui-core/theme';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 
 import { LanguageModule } from '../language/language.module';
 import { SslModule } from '../settings/ssl';

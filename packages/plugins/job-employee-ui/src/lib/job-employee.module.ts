@@ -59,13 +59,13 @@ export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 
 		// Register Job Employee Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			location: 'jobs',
+			location: 'jobs-sections',
 			path: 'employee',
 			component: JobEmployeeComponent,
 			canActivate: [PermissionsGuard],
 			data: {
 				tabsetId: 'job-employee',
-				dataTableId: 'job-employee',
+				dataTableId: 'job-employee-page',
 				selectors: {
 					date: true,
 					employee: true,
@@ -98,7 +98,7 @@ export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 					permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW]
 				}
 			},
-			'jobs' // The parent section id
+			'jobs' // The parent nav section id (distinct from route registry location)
 		);
 	}
 }
@@ -109,5 +109,5 @@ export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 export const JobEmployeePlugin: PluginUiDefinition = {
 	id: 'job-employee',
 	module: JobEmployeeModule,
-	location: 'jobs'
+	location: 'jobs-sections'
 };

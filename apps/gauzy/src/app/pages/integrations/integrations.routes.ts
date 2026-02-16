@@ -43,5 +43,5 @@ export const createIntegrationsRoutes = (_pageRouteRegistryService: PageRouteReg
 			}
 		]
 	},
-	..._pageRouteRegistryService.getPageLocationRoutes('integrations')
+	..._pageRouteRegistryService.getPageLocationRoutes('integrations-sections')
 ];

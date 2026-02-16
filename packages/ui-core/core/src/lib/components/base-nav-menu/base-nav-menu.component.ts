@@ -424,19 +424,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				]
 			},
 			{
-				id: 'jobs',
-				title: 'Jobs',
-				icon: 'fas fa-briefcase',
-				link: '/pages/jobs',
-				data: {
-					translationKey: 'MENU.JOBS',
-					featureKey: FeatureEnum.FEATURE_JOB
-				},
-				// Child items are registered dynamically by each job plugin module.
-				// See PluginUiDefinition / plugin-ui.config.ts for the list of active plugins.
-				items: []
-			},
-			{
 				id: 'employees',
 				title: 'Employees',
 				icon: 'fas fa-user-friends',

@@ -75,7 +75,7 @@ export const createAuthRoutes = (_pageRouteRegistryService: PageRouteRegistrySer
 				path: 'logout',
 				component: NbLogoutComponent
 			},
-			..._pageRouteRegistryService.getPageLocationRoutes('auth')
+			..._pageRouteRegistryService.getPageLocationRoutes('auth-sections')
 		]
 	}
 ];

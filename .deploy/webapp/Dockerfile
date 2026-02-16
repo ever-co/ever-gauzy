@@ -130,6 +130,7 @@ COPY --chown=node:node packages/plugins/job-employee-ui/package.json ./packages/
 COPY --chown=node:node packages/plugins/job-matching-ui/package.json ./packages/plugins/job-matching-ui/
 COPY --chown=node:node packages/plugins/job-proposal-ui/package.json ./packages/plugins/job-proposal-ui/
 COPY --chown=node:node packages/plugins/job-search-ui/package.json ./packages/plugins/job-search-ui/
+COPY --chown=node:node packages/plugins/jobs-ui/package.json ./packages/plugins/jobs-ui/
 COPY --chown=node:node packages/plugins/legal-ui/package.json ./packages/plugins/legal-ui/
 COPY --chown=node:node packages/plugins/maintenance-ui/package.json ./packages/plugins/maintenance-ui/
 COPY --chown=node:node packages/plugins/onboarding-ui/package.json ./packages/plugins/onboarding-ui/
