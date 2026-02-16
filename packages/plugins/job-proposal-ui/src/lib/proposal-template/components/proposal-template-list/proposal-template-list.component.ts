@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
@@ -48,7 +48,7 @@ export enum ProposalTemplateTabsEnum {
 	styleUrls: ['./proposal-template-list.component.scss'],
 	standalone: false
 })
-export class ProposalTemplateListComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+export class ProposalTemplateListComponent extends PaginationFilterBaseComponent implements OnInit, AfterViewInit, OnDestroy {
 	public smartTableSettings: any;
 	public disableButton: boolean = true;
 	public loading: boolean = false;
