@@ -39,7 +39,6 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private readonly _log = inject(LoggerService).withContext('JobMatchingModule');
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
-	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION);
 
 	constructor() {
 		this._applyDeclarativeRegistrations();
@@ -64,7 +63,8 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private _applyDeclarativeRegistrations(): void {
 		if (JobMatchingModule._hasAppliedRegistrations) return;
 
-		applyDeclarativeRegistrations(this._pluginDefinition, {
+		const def = inject(PLUGIN_DEFINITION);
+		applyDeclarativeRegistrations(def, {
 			navBuilder: this._navMenuBuilderService,
 			pageRouteRegistry: this._pageRouteRegistryService
 		});

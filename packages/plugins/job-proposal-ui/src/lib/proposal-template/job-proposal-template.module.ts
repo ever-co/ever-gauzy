@@ -50,7 +50,6 @@ export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPlugi
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _store = inject(Store);
-	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION);
 
 	constructor() {
 		this._applyDeclarativeRegistrations();
@@ -75,7 +74,9 @@ export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPlugi
 	private _applyDeclarativeRegistrations(): void {
 		if (JobProposalTemplateModule._hasAppliedRegistrations) return;
 
-		applyDeclarativeRegistrations(this._pluginDefinition, {
+		const def = inject(PLUGIN_DEFINITION);
+
+		applyDeclarativeRegistrations(def, {
 			pageRouteRegistry: this._pageRouteRegistryService
 		});
 

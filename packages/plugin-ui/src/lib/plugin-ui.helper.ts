@@ -193,23 +193,19 @@ export const PLUGIN_LIFECYCLE_METHOD_NAMES = [
 
 /**
  * Applies declarative registrations from a plugin definition.
- * Call this in the plugin module constructor after injecting PLUGIN_DEFINITION
- * and the required services as field initializers (Angular requires inject()
- * in injection context only — constructors and field initializers).
+ * Call this in the plugin module constructor (or ngOnPluginBootstrap) after
+ * injecting PLUGIN_DEFINITION, NavMenuBuilderService, and PageRouteRegistryService.
  *
- * @param definition The plugin definition (from a field initializer: inject(PLUGIN_DEFINITION)).
+ * @param definition The plugin definition (from inject(PLUGIN_DEFINITION)).
  * @param services Nav builder and/or page route registry. Omit services you don't need.
  *
  * @example
  * ```ts
- * private readonly _pluginDefinition = inject(PLUGIN_DEFINITION);
- * private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
- * private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
- *
  * constructor() {
- *   applyDeclarativeRegistrations(this._pluginDefinition, {
- *     navBuilder: this._navMenuBuilderService,
- *     pageRouteRegistry: this._pageRouteRegistryService
+ *   const def = inject(PLUGIN_DEFINITION);
+ *   applyDeclarativeRegistrations(def, {
+ *     navBuilder: inject(NavMenuBuilderService),
+ *     pageRouteRegistry: inject(PageRouteRegistryService)
  *   });
  * }
  * ```
