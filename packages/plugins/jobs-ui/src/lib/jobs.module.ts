@@ -8,7 +8,7 @@ import {
 } from '@gauzy/plugin-ui';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
-import { JobLayoutComponent } from './job-layout/job-layout.component';
+import { JobLayoutComponent } from './components/job-layout/job-layout.component';
 import { getJobsChildRoutes } from './job.routes';
 
 @NgModule({
@@ -26,23 +26,14 @@ import { getJobsChildRoutes } from './job.routes';
 	]
 })
 export class JobsModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
-	private static hasRegistered = false;
+	private static _hasAppliedRegistrations = false;
 
 	private readonly _log = inject(LoggerService).withContext('JobsModule');
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 
 	constructor() {
-		if (JobsModule.hasRegistered) return;
-
-		const def = inject(PLUGIN_DEFINITION);
-
-		applyDeclarativeRegistrations(def, {
-			navBuilder: this._navMenuBuilderService,
-			pageRouteRegistry: this._pageRouteRegistryService
-		});
-
-		JobsModule.hasRegistered = true;
+		this._applyDeclarativeRegistrations();
 	}
 
 	ngOnPluginBootstrap(): void {
@@ -51,5 +42,19 @@ export class JobsModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
+		JobsModule._hasAppliedRegistrations = false;
+	}
+
+	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
+	private _applyDeclarativeRegistrations(): void {
+		if (JobsModule._hasAppliedRegistrations) return;
+
+		const def = inject(PLUGIN_DEFINITION);
+		applyDeclarativeRegistrations(def, {
+			navBuilder: this._navMenuBuilderService,
+			pageRouteRegistry: this._pageRouteRegistryService
+		});
+
+		JobsModule._hasAppliedRegistrations = true;
 	}
 }

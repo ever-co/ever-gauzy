@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
 import { PageRouteRegistryConfig, PageRouteRegistryService, PageRouteLocationId } from '@gauzy/ui-core/core';
-import { JobLayoutComponent } from './job-layout/job-layout.component';
+import { JobLayoutComponent } from './components/job-layout/job-layout.component';
 
 /** Location where job child plugins (Employee, Search, Matching, etc.) register their routes. */
 export const JOBS_SECTIONS_LOCATION: PageRouteLocationId = 'jobs-sections';

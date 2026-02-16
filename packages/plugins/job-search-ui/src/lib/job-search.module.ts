@@ -4,8 +4,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { FileUploadModule } from 'ng2-file-upload';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { PluginUiDefinition, IOnPluginUiBootstrap, IOnPluginUiDestroy } from '@gauzy/plugin-ui';
+import {
+	applyDeclarativeRegistrations,
+	IOnPluginUiBootstrap,
+	IOnPluginUiDestroy,
+	PLUGIN_DEFINITION
+} from '@gauzy/plugin-ui';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -16,7 +20,7 @@ import {
 	SharedModule,
 	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
-import { createJobSearchRoutes } from './job-search.routes';
+import { getJobSearchRoutes } from './job-search.routes';
 import { JobSearchComponent } from './components/job-search/job-search.component';
 import { COMPONENTS } from './components';
 
@@ -40,96 +44,41 @@ import { COMPONENTS } from './components';
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createJobSearchRoutes(service),
-			deps: [PageRouteRegistryService],
+			useFactory: getJobSearchRoutes,
 			multi: true
 		}
 	]
 })
 export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
-	private static hasRegisteredPageRoutes = false;
+	private static _hasAppliedRegistrations = false;
 
 	private readonly _log = inject(LoggerService).withContext('JobSearchModule');
-	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 
 	constructor() {
-		this.registerPageRoutes();
-		this.registerNavMenuItems();
+		this._applyDeclarativeRegistrations();
 	}
 
-	// ─── Plugin Lifecycle ─────────────────────────────────────────
-
-	/**
-	 * Called by `PluginUiModule` after the module is instantiated.
-	 */
 	ngOnPluginBootstrap(): void {
 		this._log.log('Plugin bootstrapped');
 	}
 
-	/**
-	 * Called by `PluginUiModule` when the application is shutting down.
-	 */
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
+		JobSearchModule._hasAppliedRegistrations = false;
 	}
 
-	// ─── Route & Menu Registration ────────────────────────────────
+	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
+	private _applyDeclarativeRegistrations(): void {
+		if (JobSearchModule._hasAppliedRegistrations) return;
 
-	/**
-	 * Registers routes for the Job Search (Browse) module.
-	 * Ensures that routes are registered only once.
-	 */
-	registerPageRoutes(): void {
-		if (JobSearchModule.hasRegisteredPageRoutes) {
-			return;
-		}
-
-		// Register Job Browser Page Routes
-		this._pageRouteRegistryService.registerPageRoute({
-			location: 'jobs-sections',
-			path: 'search',
-			loadChildren: () => import('./job-search.module').then((m) => m.JobSearchModule),
-			data: {
-				selectors: {
-					date: true,
-					employee: true,
-					project: false,
-					team: false
-				}
-			}
+		const def = inject(PLUGIN_DEFINITION);
+		applyDeclarativeRegistrations(def, {
+			navBuilder: this._navMenuBuilderService,
+			pageRouteRegistry: this._pageRouteRegistryService
 		});
 
-		// Set hasRegisteredRoutes to true
-		JobSearchModule.hasRegisteredPageRoutes = true;
-	}
-
-	/**
-	 * Register navigation menu items for the Job Search (Browse) plugin.
-	 */
-	private registerNavMenuItems(): void {
-		this._navMenuBuilderService.addNavMenuItem(
-			{
-				id: 'jobs-browse',
-				title: 'Browse',
-				icon: 'fas fa-list',
-				link: '/pages/jobs/search',
-				data: {
-					translationKey: 'MENU.JOBS_SEARCH',
-					permissionKeys: [PermissionsEnum.ORG_JOB_SEARCH]
-				}
-			},
-			'jobs', // Nav section id (distinct from route registry location)
-			'jobs-proposal-template' // Insert before proposal-template
-		);
+		JobSearchModule._hasAppliedRegistrations = true;
 	}
 }
-
-/**
- * Plugin definition for the Job Search UI plugin.
- */
-export const JobSearchPlugin: PluginUiDefinition = {
-	id: 'job-search',
-	module: JobSearchModule,
-	location: 'jobs-sections'
-};
