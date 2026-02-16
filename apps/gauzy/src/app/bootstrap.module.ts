@@ -1,4 +1,4 @@
-import {  NgModule, OnDestroy } from '@angular/core';
+import { inject, NgModule, OnDestroy } from '@angular/core';
 import { PLUGIN_UI_CONFIG, getPluginUiConfig, PluginUiModule, PluginUiRegistryService } from '@gauzy/plugin-ui';
 import { AppModule } from './app.module';
 import { AppComponent } from './app.component';
@@ -32,7 +32,9 @@ import { AppComponent } from './app.component';
 	bootstrap: [AppComponent]
 })
 export class AppBootstrapModule implements OnDestroy {
-	constructor(private readonly _registry: PluginUiRegistryService) {
+	private readonly _registry = inject(PluginUiRegistryService);
+
+	constructor() {
 		const config = getPluginUiConfig();
 		const locations = [...new Set(config.plugins.map((p) => p.location).filter(Boolean))];
 

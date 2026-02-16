@@ -71,7 +71,7 @@ export class ActivityModule {
 			loadChildren: () => import('./screenshot/screenshot.module').then((m) => m.ScreenshotModule)
 		});
 
-		// Register Screenshot Page Routes
+		// Register Videos Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
 			location: 'time-activity-sections',
 			path: 'videos',
