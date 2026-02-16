@@ -326,7 +326,7 @@ jobs:
         shell: powershell
         run: |
           # Stop NX daemon first to release file locks before cleanup (guard for fresh runners without Node)
-          if (Get-Command npx -ErrorAction SilentlyContinue) { npx nx daemon --stop 2> }$null
+          if (Get-Command npx -ErrorAction SilentlyContinue) { npx nx daemon --stop 2>&1 | Out-Null }$null
           # Remove build artifacts but keep NX cache for faster rebuilds
           if (Test-Path "dist") { Remove-Item -Recurse -Force "dist" }
           if (Test-Path "node_modules") { Remove-Item -Recurse -Force "node_modules" }
