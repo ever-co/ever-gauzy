@@ -19,8 +19,8 @@ export const JobEmployeePlugin: PluginUiDefinition = {
 	id: 'job-employee',
 	location: 'jobs-sections',
 	module: JobEmployeeModule,
-	permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW], // Permission keys for the plugin
-	routes: [JOB_EMPLOYEE_PAGE_ROUTE as PluginRouteInput], // PluginRouteInput is a type that defines the route for the plugin
+	permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW],
+	routes: [JOB_EMPLOYEE_PAGE_ROUTE as PluginRouteInput],
 	navMenu: [
 		{
 			type: 'section' as const,
@@ -38,5 +38,5 @@ export const JobEmployeePlugin: PluginUiDefinition = {
 				}
 			]
 		}
-	] // Nav menu for the plugin
+	]
 };

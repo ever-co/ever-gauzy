@@ -1,5 +1,5 @@
 import { LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
-import { PluginUiConfig } from '@gauzy/plugin-ui';
+import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
 import { JobEmployeePlugin } from '@gauzy/plugin-job-employee-ui';
 import { JobMatchingPlugin } from '@gauzy/plugin-job-matching-ui';
@@ -58,7 +58,7 @@ export const uiPluginConfig: PluginUiConfig = {
 	],
 
 	// Day of week the week starts on (0 = Sunday, 1 = Monday, …)
-	startWeekOn: dayOfWeekAsString(WeekDaysEnum.MONDAY),
+	startWeekOn: dayOfWeekAsString(WeekDaysEnum.MONDAY) as DayOfWeek,
 
 	// ── Plugins ────────────────────────────────────────────
 	plugins: [

@@ -300,8 +300,7 @@ export function orderPluginsByDependencies(plugins: PluginUiDefinition[]): Plugi
 		}
 		visiting.delete(id);
 		visited.add(id);
-		const p = byId.get(id);
-		if (p) sorted.push(p);
+		if (def) sorted.push(def);
 	}
 
 	for (const p of plugins) {
