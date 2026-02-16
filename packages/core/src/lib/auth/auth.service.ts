@@ -16,6 +16,7 @@ import {
 	ISocialAccountExistUser,
 	ISocialAccountLogin,
 	ITenant,
+	ITokenPair,
 	IUser,
 	IUserCodeInput,
 	IUserEmailInput,
@@ -45,12 +46,14 @@ import * as moment from 'moment';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
 import { AccessTokenService } from '../access-token/access-token.service';
+import { IAccessTokenMetadata } from '../access-token/type.token';
 import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { EventBus } from '../event-bus/event-bus';
 import { AccountRegistrationEvent } from '../event-bus/events';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import { RefreshTokenService } from '../refresh-token/refresh-token.service';
+import { IRefreshTokenMetadata } from '../refresh-token/type.token';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
@@ -900,7 +903,7 @@ export class AuthService extends SocialAuthService {
 	 * @returns A Promise that resolves to a JWT access token string.
 	 * @throws Throws an UnauthorizedException if the user is not found or if there is an issue in token generation.
 	 */
-	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID) {
+	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID, metadata?: IAccessTokenMetadata) {
 		const tenantId = request.tenantId || RequestContext.currentTenantId();
 		try {
 			// Validate that the request contains a user ID
@@ -967,7 +970,10 @@ export class AuthService extends SocialAuthService {
 				organizationId: organizationId ?? employee?.organizationId ?? null,
 				employeeId: employee ? employee.id : null,
 				role: user.role ? user.role.name : null,
-				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null
+				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null,
+				ip: RequestContext.currentIp(),
+				userAgent: RequestContext.currentUserAgent(),
+				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
 
 			// Generate the JWT access token using the payload
@@ -987,10 +993,15 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @param user A partial IUser object containing at least the user's ID, email, and role.
 	 * @param organizationId Optional organization ID to include in the token.
+	 * @param metadata Optional metadata to include in the token payload.
 	 * @returns A Promise that resolves to a JWT refresh token string.
 	 * @throws Logs an error and throws an exception if the token generation fails.
 	 */
-	public async getJwtRefreshToken(user: Partial<IUser>, organizationId?: ID) {
+	public async getJwtRefreshToken(
+		user: Partial<IUser>,
+		organizationId?: ID,
+		metadata?: IRefreshTokenMetadata
+	): Promise<string> {
 		try {
 			// Ensure the user object contains the necessary information
 			if (!user.id || !user.email) {
@@ -1003,13 +1014,60 @@ export class AuthService extends SocialAuthService {
 				email: user.email,
 				tenantId: user.tenantId || null,
 				organizationId: organizationId || user.lastOrganizationId || null,
-				role: user.role ? user.role.name : null
+				role: user.role ? user.role.name : null,
+				ip: RequestContext.currentIp(),
+				userAgent: RequestContext.currentUserAgent(),
+				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
 
 			return this.refreshTokenService.generate(user.id, payload);
 		} catch (error) {
 			console.log('Error while generating JWT refresh token:', error);
 			throw new UnauthorizedException('Unable to generate refresh token');
+		}
+	}
+
+	/**
+	 * Rotates the JWT refresh token for a given user.
+	 *
+	 * This function takes an existing refresh token, validates it, and generates a new refresh token with updated payload information.
+	 * It ensures that the user information is up-to-date and includes organization context if provided.
+	 *
+	 * @param token The existing JWT refresh token to be rotated.
+	 * @param user A partial IUser object containing at least the user's ID, email, and role.
+	 * @param organizationId Optional organization ID to include in the new token.
+	 * @param metadata Optional metadata to include in the token payload.
+	 * @returns A Promise that resolves to a new JWT refresh token string.
+	 * @throws Logs an error and throws an exception if the token rotation fails.
+	 */
+	public async rotateRefreshToken(
+		token: string,
+		user: Partial<IUser>,
+		organizationId?: ID,
+		metadata?: IRefreshTokenMetadata
+	): Promise<string> {
+		try {
+			// Ensure the user object contains the necessary information
+			if (!user.id || !user.email) {
+				throw new Error('User ID or email is missing.');
+			}
+
+			// Construct the JWT payload with organization context
+			const payload = {
+				id: user.id,
+				email: user.email,
+				tenantId: user.tenantId || null,
+				organizationId: organizationId || user.lastOrganizationId || null,
+				role: user.role ? user.role.name : null,
+				ip: RequestContext.currentIp(),
+				userAgent: RequestContext.currentUserAgent(),
+				...(metadata?.clientId && { clientId: metadata.clientId })
+			};
+
+			return this.refreshTokenService.rotate(token, payload);
+		} catch (error) {
+			console.log('Error while rotating JWT refresh token:', error);
+			throw new UnauthorizedException('Unable to rotate refresh token');
 		}
 	}
 
@@ -1041,6 +1099,43 @@ export class AuthService extends SocialAuthService {
 			const [access_token, refresh_token] = await Promise.all([
 				this.getJwtAccessToken(user, organizationId),
 				this.getJwtRefreshToken(user, organizationId)
+			]);
+
+			// Update the user's current refresh token in the database
+			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+
+			// Return both the new access token and refresh token
+			return { token: access_token, refresh_token };
+		} catch (error) {
+			// Use console.error for error logging with more descriptive context
+			console.error('Error while retrieving JWT access token from refresh token:', error);
+			return null;
+		}
+	}
+
+	/**
+	 * Rotates the JWT tokens for the current user.
+	 *
+	 * @param token - The current refresh token.
+	 * @param metadata - Optional metadata to include in the token payload.
+	 * @returns {Promise<ITokenPair | null>} - The new access and refresh tokens, or null if an error occurs.
+	 */
+	async rotateTokens(token: string, metadata?: IRefreshTokenMetadata): Promise<ITokenPair | null> {
+		try {
+			// Get the current user from the request context
+			const user = RequestContext.currentUser();
+
+			// If no user is found, return null
+			if (!user) return null;
+
+			// Extract organizationId from the current token (refresh token context)
+			// This ensures the new access token maintains the organization context
+			const organizationId = RequestContext.currentOrganizationId() || user.lastOrganizationId;
+
+			// Get and return the JWT access token for the user with organization context
+			const [access_token, refresh_token] = await Promise.all([
+				this.getJwtAccessToken(user, organizationId, metadata),
+				this.rotateRefreshToken(token, user, organizationId, metadata)
 			]);
 
 			// Update the user's current refresh token in the database

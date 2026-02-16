@@ -19,15 +19,12 @@ import {
 	HttpStatus,
 	Post,
 	Query,
-	Req,
 	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
-import { AccessTokenService } from '../access-token/access-token.service';
 import { RequestContext } from '../core/context';
-import { RefreshTokenService } from '../refresh-token/refresh-token.service';
 import { UseValidationPipe } from '../shared/pipes';
 import { User as IUser } from '../user/user.entity';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
@@ -59,9 +56,7 @@ export class AuthController {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
-		private readonly commandBus: CommandBus,
-		private readonly refreshTokenService: RefreshTokenService,
-		private readonly accessTokenService: AccessTokenService
+		private readonly commandBus: CommandBus
 	) {}
 
 	/**
@@ -310,30 +305,8 @@ export class AuthController {
 	@UseGuards(AuthRefreshGuard)
 	@Post('/refresh-token')
 	@UseValidationPipe()
-	async refreshToken(@Body() input: RefreshTokenDto, @Req() request): Promise<ITokenPair | null> {
-		// const metadata = {
-		// 	clientId: input.clientId,
-		// 	ip: request.ip,
-		// 	userAgent: request.headers['user-agent']
-		// };
-
-		const user = RequestContext.currentUser();
-		const organizationId = RequestContext.currentOrganizationId();
-
-		// const payload = {
-		// 	id: user.id,
-		// 	email: user.email,
-		// 	tenantId: user.tenantId || null,
-		// 	organizationId: organizationId || user.lastOrganizationId || null,
-		// 	role: user.role ? user.role.name : null
-		// };
-
-		const [token, refresh_token] = await Promise.all([
-			this.accessTokenService.generate(user.id),
-			this.refreshTokenService.rotate(input.refresh_token)
-		]);
-
-		return { token, refresh_token };
+	async refreshToken(@Body() input: RefreshTokenDto): Promise<ITokenPair | null> {
+		return this.authService.rotateTokens(input.refresh_token, input);
 	}
 
 	/**
