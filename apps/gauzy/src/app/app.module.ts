@@ -247,18 +247,25 @@ export class AppModule {
 	private initializeUiLanguagesAndLocale(): void {
 		const uiConfig = getPluginUiConfig();
 
-		const localeOptions: moment.LocaleSpecification = {
-			fallbackLocale: uiConfig.fallbackLocale ?? uiConfig.defaultLanguage
-		};
-
+		const localeOptions: moment.LocaleSpecification = {};
 		if (isNotEmpty(uiConfig.startWeekOn)) {
 			localeOptions.week = { dow: uiConfig.startWeekOn };
 		}
 
+		/** Update the locale with the default language. */
 		moment.updateLocale(uiConfig.defaultLanguage, localeOptions);
 
-		// Set available languages from the UI plugin configuration
-		this._i18nService.setAvailableLanguages(uiConfig.availableLanguages as LanguagesEnum[]);
+		// Set current locale with fallback chain (moment.locale accepts string[] for fallback)
+		const fallbackLocale = uiConfig.fallbackLocale ?? uiConfig.defaultLanguage;
+		moment.locale([uiConfig.defaultLanguage, fallbackLocale]);
+
+		// Set available languages from the UI plugin configuration (validate against LanguagesEnum)
+		const validLanguages = new Set<string>(Object.values(LanguagesEnum));
+		const validatedLanguages = (uiConfig.availableLanguages ?? []).filter((lang): lang is LanguagesEnum =>
+			validLanguages.has(lang)
+		);
+
+		this._i18nService.setAvailableLanguages(validatedLanguages);
 	}
 }
 
