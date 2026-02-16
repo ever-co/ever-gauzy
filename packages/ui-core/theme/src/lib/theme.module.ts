@@ -41,7 +41,7 @@ import {
 	TimeTrackerStatusModule,
 	WorkspacesModule
 } from '@gauzy/ui-core/shared';
-import { TablerIconsModule } from './icons/tabler-icons.module';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,

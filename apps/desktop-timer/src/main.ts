@@ -1,12 +1,5 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import {
-	enableProdMode,
-	ErrorHandler,
-	importProvidersFrom,
-	inject,
-	Injector,
-	provideAppInitializer
-} from '@angular/core';
+import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -14,21 +7,19 @@ import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita'
 import {
 	ActivityWatchInterceptor,
 	APIInterceptor,
-	AuthGuard,
 	AuthService,
 	AuthStrategy,
 	DEFAULT_TIMEOUT,
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
+	GauzyStorageService,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
-	NoAuthGuard,
 	OrganizationInterceptor,
 	RefreshTokenInterceptor,
-	serverConnectionFactory,
 	ServerConnectionService,
 	ServerErrorInterceptor,
 	Store,
@@ -36,23 +27,22 @@ import {
 	TimeoutInterceptor,
 	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { provideI18n } from '@gauzy/ui-core/i18n';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import {
 	NbDatepickerModule,
 	NbDialogModule,
 	NbDialogService,
+	NbIconLibraries,
 	NbMenuModule,
 	NbSidebarModule,
 	NbThemeModule,
-	NbToastrModule,
-	NbIconLibraries
+	NbToastrModule
 } from '@nebular/theme';
 import * as Sentry from '@sentry/angular';
-import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import { provideI18n } from '@gauzy/ui-core/i18n';
-import { TablerIconsModule } from '@gauzy/ui-core/theme';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
-import { AppModuleGuard } from './app/app.module.guards';
 import { AppService } from './app/app.service';
 import { initializeSentry } from './app/sentry';
 import { environment } from './environments/environment';
@@ -70,14 +60,6 @@ if (environment.SENTRY_DSN) {
 		initializeSentry();
 	}
 }
-
-persistState({
-	key: '_gauzyStore'
-});
-
-akitaConfig({
-	resettable: true
-});
 
 bootstrapApplication(AppComponent, {
 	providers: [
@@ -97,15 +79,23 @@ bootstrapApplication(AppComponent, {
 		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
-		AuthGuard,
-		NoAuthGuard,
-		AppModuleGuard,
 		AuthStrategy,
 		AuthService,
 		ServerConnectionService,
 		ElectronService,
 		LoggerService,
 		Store,
+		provideAppInitializer(() => {
+			const storage = inject(GauzyStorageService);
+			persistState({
+				key: '_gauzyStore',
+				enableInNonBrowser: true,
+				storage
+			});
+			akitaConfig({
+				resettable: true
+			});
+		}),
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
@@ -155,15 +145,6 @@ bootstrapApplication(AppComponent, {
 			provide: ErrorHandler,
 			useClass: ErrorHandlerService
 		},
-		provideAppInitializer(() => {
-			const initializerFn = serverConnectionFactory(
-				inject(ServerConnectionService),
-				inject(Store),
-				inject(Router),
-				inject(Injector)
-			);
-			return initializerFn();
-		}),
 		{
 			provide: ErrorHandler,
 			useValue: Sentry.createErrorHandler({
