@@ -169,6 +169,7 @@ function getSalesRoutes(_pageRouteRegistryService: PageRouteRegistryService): Ro
 		{
 			path: 'sales',
 			children: [
+				{ path: '', redirectTo: 'invoices', pathMatch: 'full' },
 				{
 					path: 'estimates',
 					loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule),

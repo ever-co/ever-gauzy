@@ -151,6 +151,7 @@
 		"build:package:plugin-ui": "yarn ng build plugin-ui --configuration=development",
 		"build:package:plugin-ui:prod": "yarn ng:prod build plugin-ui --configuration=production",
 		"build:package:plugin-ui:docker": "yarn ng:docker build plugin-ui --configuration=production",
+		"build:package:plugin-ui:dev:docker": "yarn ng:dev:docker build plugin-ui --configuration=development --verbose",
 		"build:package:auth": "yarn ng build auth --configuration=development",
 		"build:package:auth:prod": "yarn ng:prod build auth --configuration=production",
 		"build:package:auth:docker": "yarn ng:docker build auth --configuration=production",
