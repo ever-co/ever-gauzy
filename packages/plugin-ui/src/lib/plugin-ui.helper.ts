@@ -229,7 +229,7 @@ export function applyDeclarativeRegistrations(
 
 	if (navBuilder && definition.navMenu?.length) {
 		for (const entry of definition.navMenu as PluginNavContribution[]) {
-			if ('sectionId' in entry) {
+			if (entry.type === 'section') {
 				navBuilder.addNavMenuItems(entry.items, entry.sectionId, entry.before);
 			} else {
 				navBuilder.addNavMenuSection(entry.config, entry.before);

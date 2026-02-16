@@ -48,10 +48,11 @@ export interface PluginNavItemInput {
 /**
  * Declarative nav contribution: either a new section (parent) or items for an existing section (children).
  * Sections are parent menus; items are child/nested menus under a section.
+ * Use the `type` discriminant for type-narrowing and exhaustive checks.
  */
 export type PluginNavContribution =
-	| { config: PluginNavItemInput; before?: string }
-	| { sectionId: string; items: PluginNavItemInput[]; before?: string };
+	| { type: 'config'; config: PluginNavItemInput; before?: string }
+	| { type: 'section'; sectionId: string; items: PluginNavItemInput[]; before?: string };
 
 /**
  * Minimal shape for a plugin-contributed page tab.
@@ -179,6 +180,12 @@ export interface PluginUiDefinition {
 }
 
 /**
+ * Valid day-of-week value for week start (0 = Sunday … 6 = Saturday).
+ * Used by Moment.js and calendar components.
+ */
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/**
  * Application-level UI configuration.
  *
  * Single source of truth for i18n defaults and the list of active UI plugins.
@@ -203,11 +210,10 @@ export interface PluginUiConfig {
 	availableLocales: string[];
 
 	/**
-	 * Day of week the week starts on.
-	 * 0 = Sunday, 1 = Monday, 2 = Tuesday, … 6 = Saturday.
+	 * Day of week the week starts on (0 = Sunday, 1 = Monday, … 6 = Saturday).
 	 * Used by Moment.js and calendar components.
 	 */
-	startWeekOn?: number;
+	startWeekOn?: DayOfWeek;
 
 	/** Active UI plugins. */
 	plugins: PluginUiDefinition[];

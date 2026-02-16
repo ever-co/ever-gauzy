@@ -23,6 +23,7 @@ export const JobEmployeePlugin: PluginUiDefinition = {
 	routes: [JOB_EMPLOYEE_PAGE_ROUTE as PluginRouteInput], // PluginRouteInput is a type that defines the route for the plugin
 	navMenu: [
 		{
+			type: 'section' as const,
 			sectionId: 'jobs',
 			items: [
 				{

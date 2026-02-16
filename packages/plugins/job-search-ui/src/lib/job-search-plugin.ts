@@ -23,6 +23,7 @@ export const JobSearchPlugin: PluginUiDefinition = {
 	routes: [JOB_SEARCH_PAGE_ROUTE as PluginRouteInput],
 	navMenu: [
 		{
+			type: 'section' as const,
 			sectionId: 'jobs',
 			before: 'jobs-proposal-template',
 			items: [

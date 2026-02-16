@@ -48,6 +48,7 @@ export const JobsPlugin: JobsPluginDefinition = {
 	routes: [JOBS_PAGE_ROUTE as PluginRouteInput],
 	navMenu: [
 		{
+			type: 'config' as const,
 			config: {
 				id: 'jobs',
 				title: 'Jobs',
