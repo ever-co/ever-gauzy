@@ -325,11 +325,11 @@ jobs:
       - name: Selective cleanup (preserve .nx/cache)
         shell: powershell
         run: |
+          # Stop NX daemon first to release file locks before cleanup
+          npx nx daemon --stop 2>$null
           # Remove build artifacts but keep NX cache for faster rebuilds
           if (Test-Path "dist") { Remove-Item -Recurse -Force "dist" }
           if (Test-Path "node_modules") { Remove-Item -Recurse -Force "node_modules" }
-          # Stop NX daemon from previous runs to prevent deadlocks
-          npx nx daemon --stop 2>$null
           exit 0
 
       - name: Install Node.js, NPM and Yarn
