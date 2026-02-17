@@ -100,6 +100,12 @@ export interface IToken extends IBaseEntityModel {
 	 * @return true if token can be rotated, false otherwise
 	 */
 	canRotate(): boolean;
+
+	/**
+	 * Determines if the token can be revoked based on its status
+	 * @return true if token can be revoked, false otherwise
+	 */
+	canRevoke(): boolean;
 	/**
 	 * Determines if the token is expired based on current time and expiresAt
 	 * @return true if token is expired, false otherwise

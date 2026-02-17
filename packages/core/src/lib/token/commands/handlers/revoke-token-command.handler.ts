@@ -1,7 +1,7 @@
 import { ConflictException, Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IJwtService } from '../../interfaces/jwt-service.interface';
 import { TokenStatus } from '../../interfaces';
+import { IJwtService } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { JwtServiceToken, TokenReadRepositoryToken, TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
 import { RevokeTokenCommand } from '../revoke-token.command';
@@ -28,7 +28,7 @@ export class RevokeTokenHandler implements ICommandHandler<RevokeTokenCommand, v
 			throw new NotFoundException('Token not found');
 		}
 
-		if (!token.canRotate()) {
+		if (!token.canRevoke()) {
 			return; // Already revoked/expired
 		}
 

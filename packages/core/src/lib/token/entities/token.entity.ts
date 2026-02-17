@@ -240,13 +240,21 @@ export class Token extends BaseEntity implements IToken {
 	}
 
 	/**
+	 * Determines if this token can be revoked.
+	 * 	A token can be revoked only if it's active and not already revoked or expired.
+	 */
+	public canRevoke(): boolean {
+		return this.canRotate() && this.revokedAt === null;
+	}
+
+	/**
 	 * Determines if this token can be rotated to a new token.
 	 * A token can be rotated only if it's active and not expired.
 	 *
 	 * @returns {boolean} True if the token can be rotated, false otherwise
 	 */
 	public canRotate(): boolean {
-		return this.status === TokenStatus.ACTIVE && this.isExpired() === false;
+		return this.isActivated() && this.isExpired() === false;
 	}
 
 	/**
