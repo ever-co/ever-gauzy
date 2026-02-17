@@ -971,7 +971,7 @@ export class AuthService extends SocialAuthService {
 				employeeId: employee ? employee.id : null,
 				role: user.role ? user.role.name : null,
 				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null,
-				ip: RequestContext.currentIp(),
+				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
@@ -1015,7 +1015,7 @@ export class AuthService extends SocialAuthService {
 				tenantId: user.tenantId || null,
 				organizationId: organizationId || user.lastOrganizationId || null,
 				role: user.role ? user.role.name : null,
-				ip: RequestContext.currentIp(),
+				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
@@ -1059,7 +1059,7 @@ export class AuthService extends SocialAuthService {
 				tenantId: user.tenantId || null,
 				organizationId: organizationId || user.lastOrganizationId || null,
 				role: user.role ? user.role.name : null,
-				ip: RequestContext.currentIp(),
+				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
