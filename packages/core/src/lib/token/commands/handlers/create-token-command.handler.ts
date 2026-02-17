@@ -40,39 +40,42 @@ export class CreateTokenHandler implements ICommandHandler<CreateTokenCommand, I
 		// Calculate expiration
 		const expiresAt = dto.expiresAt || (config.expiration ? new Date(Date.now() + config.expiration) : null);
 
-		// Create token record first (without JWT)
-		const tokenRecord = await this.tokenWriteRepository.create({
-			userId: dto.userId,
-			tokenType: dto.tokenType,
-			tokenHash: '', // Temporary, will update
-			status: TokenStatus.ACTIVE,
-			expiresAt,
-			metadata: dto.metadata,
-			lastUsedAt: new Date()
+		// Wrap creation and update in a transaction
+		return await this.tokenWriteRepository.transaction(async (manager) => {
+			// Create token record first (without JWT)
+			const tokenRecord = await manager.create({
+				userId: dto.userId,
+				tokenType: dto.tokenType,
+				tokenHash: '', // Temporary, will update
+				status: TokenStatus.ACTIVE,
+				expiresAt,
+				metadata: dto.metadata,
+				lastUsedAt: new Date()
+			});
+
+			// Generate JWT with tokenId
+			const payload = {
+				...dto.metadata,
+				userId: dto.userId,
+				tokenType: dto.tokenType,
+				tokenId: tokenRecord.id
+			};
+
+			const expiresInMs = expiresAt ? expiresAt.getTime() - Date.now() : undefined;
+			const expiresInSeconds = expiresInMs ? Math.max(1, Math.ceil(expiresInMs / 1000)) : undefined;
+			const jwt = jwtService.sign(payload, expiresInSeconds);
+			const tokenHash = jwtService.hashToken(jwt);
+
+			// Update token with hash
+			tokenRecord.tokenHash = tokenHash;
+			await manager.save(tokenRecord);
+
+			return {
+				token: jwt,
+				tokenId: tokenRecord.id,
+				expiresAt: tokenRecord.expiresAt,
+				createdAt: tokenRecord.createdAt
+			};
 		});
-
-		// Generate JWT with tokenId
-		const payload = {
-			...dto.metadata,
-			userId: dto.userId,
-			tokenType: dto.tokenType,
-			tokenId: tokenRecord.id
-		};
-
-		const expiresInMs = expiresAt ? expiresAt.getTime() - Date.now() : undefined;
-		const expiresInSeconds = expiresInMs ? Math.max(1, Math.ceil(expiresInMs / 1000)) : undefined;
-		const jwt = jwtService.sign(payload, expiresInSeconds);
-		const tokenHash = jwtService.hashToken(jwt);
-
-		// Update token with hash
-		tokenRecord.tokenHash = tokenHash;
-		await this.tokenWriteRepository.save(tokenRecord);
-
-		return {
-			token: jwt,
-			tokenId: tokenRecord.id,
-			expiresAt: tokenRecord.expiresAt,
-			createdAt: tokenRecord.createdAt
-		};
 	}
 }
