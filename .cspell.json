@@ -832,7 +832,9 @@
 		"retryable",
 		"Retryable",
 		"pendings",
-		"SICO"
+		"SICO",
+		"Hasher",
+		"VARCHAR"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
