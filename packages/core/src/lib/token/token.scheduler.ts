@@ -1,3 +1,4 @@
+import { isNotEmpty } from '@gauzy/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -40,7 +41,7 @@ export class TokenCleanupScheduler {
 
 			for (const tokenType of registeredTypes) {
 				const config = this.configRegistry.getConfig(tokenType);
-				if (config.threshold) {
+				if (isNotEmpty(config.threshold)) {
 					const count = await this.commandBus.execute(
 						new CleanupInactiveTokensCommand(tokenType, config.threshold)
 					);
