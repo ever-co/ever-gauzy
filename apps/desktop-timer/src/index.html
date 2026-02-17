@@ -82,17 +82,38 @@
 			}
 		</style>
 		<style>
-			.woot-widget-bubble, .woot--close {
+			/* Dark theme overrides when body has nb-theme-gauzy-dark */
+			body.nb-theme-gauzy-dark {
+				background: #0b0b0b;
+				color: #e6e6e6;
+			}
+			body.nb-theme-gauzy-dark .spinner {
+				background: #0b0b0b;
+			}
+			body.nb-theme-gauzy-dark .spinner div:first-child {
+				box-shadow: 0 3px 3px 0 rgba(255, 255, 255, 0.04);
+			}
+			body.nb-theme-gauzy-dark .spinner div:first-child:before {
+				box-shadow: 0 3px 3px 0 rgba(120, 120, 120, 0.08);
+			}
+			body.nb-theme-gauzy-dark .spinner div:first-child:after {
+				box-shadow: 0 3px 3px 0 rgba(220, 80, 90, 0.6);
+			}
+		</style>
+		<style>
+			.woot-widget-bubble,
+			.woot--close {
 				width: 54px !important;
 				height: 54px !important;
-				background: #6E49E8 !important;
+				background: #6e49e8 !important;
 				border-radius: 16px !important;
 				display: flex;
 				justify-content: center;
 				align-items: center;
 				right: 35px !important;
 			}
-			.woot--close::after, .woot--close::before {
+			.woot--close::after,
+			.woot--close::before {
 				top: auto !important;
 				left: auto !important;
 			}
