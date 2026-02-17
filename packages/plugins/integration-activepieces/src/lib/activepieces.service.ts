@@ -106,14 +106,26 @@ export class ActivepiecesService {
 
 			if (existingTenant?.id) {
 				// Update existing tenant's settings by merging/replacing API_KEY and IS_ENABLED
-				const existingSettings = existingTenant.settings ?? [];
-				const updatedSettingNames = new Set(settings.map((s) => s.settingsName));
+				const existingSettings: any[] = existingTenant.settings ?? [];
+				const settingsByName = new Map(settings.map((s) => [s.settingsName, s]));
 
-				// Keep settings that are not being updated, then append the new ones
-				const mergedSettings = [
-					...existingSettings.filter((s: any) => !updatedSettingNames.has(s.settingsName)),
-					...settings
-				];
+				// Update existing rows in-place (preserve their database id) and track which were updated
+				const updatedNames = new Set<string>();
+				const mergedSettings = existingSettings.map((existing: any) => {
+					const update = settingsByName.get(existing.settingsName);
+					if (update) {
+						updatedNames.add(existing.settingsName);
+						return { ...existing, settingsValue: update.settingsValue };
+					}
+					return existing;
+				});
+
+				// Append truly new settings that had no pre-existing row
+				for (const [name, setting] of settingsByName) {
+					if (!updatedNames.has(name)) {
+						mergedSettings.push(setting);
+					}
+				}
 
 				await this.integrationTenantService.save({
 					...existingTenant,

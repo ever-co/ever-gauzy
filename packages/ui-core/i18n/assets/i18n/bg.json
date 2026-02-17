@@ -1455,16 +1455,13 @@
 			"SUBTITLE": "Настройка на интеграция с Activepieces",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "Вашата интеграция с Activepieces е готова. Щракнете на бутона по-долу, за да разрешите.",
-				"INFOS": "След това ще бъдете прехвърлени към страницата на приставката Activepieces",
-				"START_BUTTON": "Разрешаване на Activepieces",
+				"INFOS": "Въведете вашия API ключ за Activepieces, за да свържете акаунта си.",
 				"NEXT": "Напред",
 				"ERRORS": {
 					"INVALID_FORM": "Моля, попълнете правилно всички задължителни полета",
 					"SAVE_SETTINGS": "Неуспешно запазване на настройките",
 					"START_AUTHORIZATION": "Неуспешно стартиране на разрешаването",
 					"ORGANIZATION_NOT_FOUND": "Организацията не е намерена",
-					"CHECK_TENANT_SETTINGS": "Неуспешна проверка на настройките на клиента",
 					"CHECK_REMEMBER_STATE": "Неуспешна проверка на състоянието на запомняне"
 				},
 				"SUCCESS": {
@@ -1476,15 +1473,6 @@
 				"SUBTITLE": "Конфигурирайте настройките си за интеграция с Activepieces",
 				"API_KEY": "API ключ",
 				"API_KEY_PLACEHOLDER": "Въведете вашия Activepieces API ключ",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "Въведете вашия State Secret (минимум 32 символа)",
-				"STATE_SECRET_HINT": "Сигурен случаен низ, използван за проверка на състоянието на OAuth",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "Въведете вашия Callback URL",
-				"CALLBACK_URL_HINT": "URL адресът, към който Activepieces ще пренасочи след разрешаване",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "Въведете вашия Post Install URL",
-				"POST_INSTALL_URL_HINT": "URL адресът за пренасочване след завършване на инсталацията",
 				"SETTINGS_UPDATED": "Настройките на Activepieces са актуализирани успешно"
 			},
 			"CONNECTIONS": {

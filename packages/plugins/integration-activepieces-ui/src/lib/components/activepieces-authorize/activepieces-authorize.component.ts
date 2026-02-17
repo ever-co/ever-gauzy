@@ -121,6 +121,7 @@ export class ActivepiecesAuthorizeComponent extends TranslationBaseComponent imp
 			.pipe(
 				tap((response) => {
 					this._toastrService.success(this.getTranslation('INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.SUCCESS.SETTINGS_SAVED'));
+					this.loading.set(false);
 					this._redirectToActivepiecesIntegration(response.integrationTenantId);
 				}),
 				catchError((error) => {

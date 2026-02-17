@@ -1474,16 +1474,13 @@
 			"SUBTITLE": "Activepieces Integration Setup",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "Your Activepieces integration is ready. Click the button below to authorize.",
-				"INFOS": "Next you will be taken to Activepieces plugin page",
-				"START_BUTTON": "Authorize Activepieces",
+				"INFOS": "Enter your Activepieces API key to connect your account.",
 				"NEXT": "Next",
 				"ERRORS": {
 					"INVALID_FORM": "Please fill all required fields correctly",
 					"SAVE_SETTINGS": "Failed to save settings",
 					"START_AUTHORIZATION": "Failed to start authorization",
 					"ORGANIZATION_NOT_FOUND": "Organization not found",
-					"CHECK_TENANT_SETTINGS": "Failed to check tenant settings",
 					"CHECK_REMEMBER_STATE": "Failed to check remember state"
 				},
 				"SUCCESS": {
@@ -1495,15 +1492,6 @@
 				"SUBTITLE": "Configure your Activepieces integration settings",
 				"API_KEY": "API Key",
 				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "Enter your State Secret (minimum 32 characters)",
-				"STATE_SECRET_HINT": "A secure random string used for OAuth state verification",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "Enter your Callback URL",
-				"CALLBACK_URL_HINT": "The URL where Activepieces will redirect after authorization",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "Enter your Post Install URL",
-				"POST_INSTALL_URL_HINT": "The URL to redirect to after installation is complete",
 				"SETTINGS_UPDATED": "Activepieces settings updated successfully"
 			},
 			"CONNECTIONS": {

@@ -34,7 +34,7 @@ export class OAuthAppController {
 	) {
 		const config = this.service.getOAuthAppConfig();
 
-		if (!config.clientId || !config.clientSecret || !config.redirectUris.length || !config.codeSecret) {
+		if (!config.clientId || !config.clientSecret || !config.redirectUris?.length || !config.codeSecret) {
 			throw new HttpException('OAuth app is not configured', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 

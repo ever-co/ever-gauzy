@@ -1105,7 +1105,7 @@ export class AuthService extends SocialAuthService {
 				throw new Error('User ID is missing in the request.');
 			}
 
-			console.log('Request getJwtAccessToken with Id: ', request.id);
+			this.logger.debug(`Request getJwtAccessToken with Id: ${request.id}`);
 
 			// Extract the user ID from the request
 			const userId = request.id;

@@ -1388,16 +1388,13 @@
 			"SUBTITLE": "Configuration de l'intégration Activepieces",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "Votre intégration Activepieces est prête. Cliquez sur le bouton ci-dessous pour autoriser.",
-				"INFOS": "Ensuite, vous serez redirigé vers la page du plugin Activepieces",
-				"START_BUTTON": "Autoriser Activepieces",
+				"INFOS": "Saisissez votre clé API Activepieces pour connecter votre compte.",
 				"NEXT": "Suivant",
 				"ERRORS": {
 					"INVALID_FORM": "Veuillez remplir correctement tous les champs obligatoires",
 					"SAVE_SETTINGS": "Échec de l'enregistrement des paramètres",
 					"START_AUTHORIZATION": "Échec du démarrage de l'autorisation",
 					"ORGANIZATION_NOT_FOUND": "Organisation introuvable",
-					"CHECK_TENANT_SETTINGS": "Échec de la vérification des paramètres du locataire",
 					"CHECK_REMEMBER_STATE": "Échec de la vérification de l'état mémorisé"
 				},
 				"SUCCESS": {
@@ -1409,15 +1406,6 @@
 				"SUBTITLE": "Configurez vos paramètres d'intégration Activepieces",
 				"API_KEY": "Clé API",
 				"API_KEY_PLACEHOLDER": "Entrez votre clé API Activepieces",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "Entrez votre State Secret (minimum 32 caractères)",
-				"STATE_SECRET_HINT": "Une chaîne aléatoire sécurisée utilisée pour la vérification de l'état OAuth",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "Entrez votre Callback URL",
-				"CALLBACK_URL_HINT": "L'URL vers laquelle Activepieces redirigera après l'autorisation",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "Entrez votre Post Install URL",
-				"POST_INSTALL_URL_HINT": "L'URL vers laquelle rediriger une fois l'installation terminée",
 				"SETTINGS_UPDATED": "Paramètres Activepieces mis à jour avec succès"
 			},
 			"CONNECTIONS": {

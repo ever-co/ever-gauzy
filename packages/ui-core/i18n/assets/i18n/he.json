@@ -1421,16 +1421,13 @@
 			"SUBTITLE": "הגדרת אינטגרציה של Activepieces",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "האינטגרציה שלך עם Activepieces מוכנה. לחץ על הכפתור למטה כדי לאשר.",
-				"INFOS": "בשלב הבא תועבר לדף התוסף של Activepieces",
-				"START_BUTTON": "אשר את Activepieces",
+				"INFOS": "הזן את מפתח ה-API של Activepieces כדי לחבר את החשבון שלך.",
 				"NEXT": "הבא",
 				"ERRORS": {
 					"INVALID_FORM": "אנא מלא את כל השדות הנדרשים בצורה נכונה",
 					"SAVE_SETTINGS": "שמירת ההגדרות נכשלה",
 					"START_AUTHORIZATION": "התחלת האישור נכשלה",
 					"ORGANIZATION_NOT_FOUND": "הארגון לא נמצא",
-					"CHECK_TENANT_SETTINGS": "בדיקת הגדרות הדייר נכשלה",
 					"CHECK_REMEMBER_STATE": "בדיקת מצב הזכירה נכשלה"
 				},
 				"SUCCESS": {
@@ -1442,15 +1439,6 @@
 				"SUBTITLE": "הגדר את הגדרות האינטגרציה שלך עם Activepieces",
 				"API_KEY": "מפתח API",
 				"API_KEY_PLACEHOLDER": "הזן את מפתח ה-API של Activepieces",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "הזן את State Secret שלך (מינימום 32 תווים)",
-				"STATE_SECRET_HINT": "מחרוזת אקראית מאובטחת המשמשת לאימות מצב OAuth",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "הזן את Callback URL שלך",
-				"CALLBACK_URL_HINT": "כתובת ה-URL שאליה Activepieces יפנה לאחר האישור",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "הזן את Post Install URL שלך",
-				"POST_INSTALL_URL_HINT": "כתובת ה-URL להפניה לאחר השלמת ההתקנה",
 				"SETTINGS_UPDATED": "הגדרות Activepieces עודכנו בהצלחה"
 			},
 			"CONNECTIONS": {
