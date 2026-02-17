@@ -1107,7 +1107,14 @@ export class AuthService extends SocialAuthService {
 			// Return both the new access token and refresh token
 			return { token: access_token, refresh_token };
 		} catch (error) {
-			// Use console.error for error logging with more descriptive context
+			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401
+			if (
+				error instanceof UnauthorizedException ||
+				(error && typeof error.status === 'number' && error.status === 401)
+			) {
+				throw error;
+			}
+			// Otherwise, log and return null for non-auth/internal errors
 			console.error('Error while retrieving JWT access token from refresh token:', error);
 			return null;
 		}
@@ -1145,6 +1152,14 @@ export class AuthService extends SocialAuthService {
 			// Return both the new access token and refresh token
 			return { token: access_token, refresh_token };
 		} catch (error) {
+			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401
+			if (
+				error instanceof UnauthorizedException ||
+				(error && typeof error.status === 'number' && error.status === 401)
+			) {
+				throw error;
+			}
+			// Otherwise, log and return null for non-auth/internal errors
 			// Use console.error for error logging with more descriptive context
 			console.error('Error while retrieving JWT access token from refresh token:', error);
 			return null;
