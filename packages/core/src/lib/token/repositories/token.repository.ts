@@ -1,6 +1,6 @@
 import { IUser } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
-import { In, LessThan, MoreThan } from 'typeorm';
+import { Between, In, LessThan, MoreThan } from 'typeorm';
 import { MultiORMEnum } from '../../core';
 import { CrudService } from '../../core/crud/crud.service';
 import { Token } from '../entities/token.entity';
@@ -159,8 +159,13 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 		if (filters.userId) where.userId = filters.userId;
 		if (filters.tokenType) where.tokenType = filters.tokenType;
 		if (filters.status) where.status = filters.status;
-		if (filters.createdAfter) where.createdAt = MoreThan(filters.createdAfter);
-		if (filters.createdBefore) where.createdAt = LessThan(filters.createdBefore);
+		if (filters.createdAfter && filters.createdBefore) {
+			where.createdAt = Between(filters.createdAfter, filters.createdBefore);
+		} else if (filters.createdAfter) {
+			where.createdAt = MoreThan(filters.createdAfter);
+		} else if (filters.createdBefore) {
+			where.createdAt = LessThan(filters.createdBefore);
+		}
 
 		return this.paginate({
 			where,
@@ -277,8 +282,13 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 						if (filters.userId) where.userId = filters.userId;
 						if (filters.tokenType) where.tokenType = filters.tokenType;
 						if (filters.status) where.status = filters.status;
-						if (filters.createdAfter) where.createdAt = MoreThan(filters.createdAfter);
-						if (filters.createdBefore) where.createdAt = LessThan(filters.createdBefore);
+						if (filters.createdAfter && filters.createdBefore) {
+							where.createdAt = Between(filters.createdAfter, filters.createdBefore);
+						} else if (filters.createdAfter) {
+							where.createdAt = MoreThan(filters.createdAfter);
+						} else if (filters.createdBefore) {
+							where.createdAt = LessThan(filters.createdBefore);
+						}
 						const [items, total] = await transactionalRepo.findAndCount({
 							where,
 							take: limit,
