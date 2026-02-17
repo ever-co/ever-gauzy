@@ -20,25 +20,37 @@ export class GetTokenAuditTrailHandler implements IQueryHandler<GetTokenAuditTra
 		}
 
 		const trail: IToken[] = [token];
+		const visited = new Set<string>();
+		visited.add(token.id);
 
-		// Follow the rotation chain backwards
+		// Follow the rotation chain backwards with cycle detection
 		let currentToken = token;
 		while (currentToken.rotatedFromTokenId) {
+			if (visited.has(currentToken.rotatedFromTokenId)) {
+				// Cycle detected, break
+				break;
+			}
 			const previousToken = await this.tokenRepository.findById(currentToken.rotatedFromTokenId);
 			if (previousToken) {
 				trail.unshift(previousToken);
+				visited.add(previousToken.id);
 				currentToken = previousToken;
 			} else {
 				break;
 			}
 		}
 
-		// Follow the rotation chain forwards
+		// Follow the rotation chain forwards with cycle detection
 		currentToken = token;
 		while (currentToken.rotatedToTokenId) {
+			if (visited.has(currentToken.rotatedToTokenId)) {
+				// Cycle detected, break
+				break;
+			}
 			const nextToken = await this.tokenRepository.findById(currentToken.rotatedToTokenId);
 			if (nextToken) {
 				trail.push(nextToken);
+				visited.add(nextToken.id);
 				currentToken = nextToken;
 			} else {
 				break;
