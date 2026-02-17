@@ -1,4 +1,5 @@
 import { IUser } from '@gauzy/contracts';
+import { LockMode } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { Between, In, LessThan, MoreThan } from 'typeorm';
 import { MultiORMEnum } from '../../core';
@@ -18,6 +19,15 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 	}
 
 	async findByHashWithLock(tokenHash: string): Promise<IToken | null> {
+		if (this.ormType === MultiORMEnum.TypeORM) {
+			// MikroORM: use em.lock() for pessimistic locking
+			const token = await this.mikroOrmTokenRepository.findOne({ tokenHash });
+			if (token) {
+				const em = this.mikroOrmTokenRepository.getEntityManager();
+				await em.lock(token, LockMode.PESSIMISTIC_WRITE);
+			}
+			return token;
+		}
 		return this.typeOrmTokenRepository
 			.createQueryBuilder('token')
 			.where('token.tokenHash = :tokenHash', { tokenHash })
