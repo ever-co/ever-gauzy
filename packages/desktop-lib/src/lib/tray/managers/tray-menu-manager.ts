@@ -92,7 +92,7 @@ export class TrayMenuManager {
 
 		index = this.resolveMenuItemIndex(identifier);
 
-		if (index < 0 || this.currentMenu.length - 1 <= index) {
+		if (index < 0 || index >= this.currentMenu.length) {
 			return false;
 		}
 

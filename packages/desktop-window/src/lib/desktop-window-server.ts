@@ -53,7 +53,7 @@ export async function createServerWindow(
 		attachTitlebarToWindow(serverWindow);
 	}
 
-	manager.overrideSystemContextMenu(this.serverWindow);
+	manager.overrideSystemContextMenu(serverWindow);
 
 	// Register the server window with the WindowManager
 	manager.register(RegisteredWindow.SERVER, serverWindow);
