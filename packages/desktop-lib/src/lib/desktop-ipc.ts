@@ -1,6 +1,6 @@
 import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
-import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
+import { ScreenCaptureNotification } from '@gauzy/desktop-window';
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
@@ -912,10 +912,6 @@ export function ipcTimer(
 	ipcMain.on('navigate_to_login', async () => {
 		try {
 			log.info('Navigate To Login');
-
-			if (timeTrackerWindow && process.env.IS_DESKTOP_TIMER) {
-				await timeTrackerWindow.loadURL(loginPage(windowPath.timeTrackerUi));
-			}
 
 			LocalStore.updateAuthSetting({ isLogout: true });
 
