@@ -7,21 +7,30 @@ import {
 	IOnPluginUiDestroy,
 	PLUGIN_DEFINITION
 } from '@gauzy/plugin-ui';
-import { DynamicTabsModule, NebularModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
-import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
+import {
+	DynamicTabsModule,
+	NebularModule,
+	SharedModule,
+	SmartDataViewLayoutModule,
+	TableComponentsModule
+} from '@gauzy/ui-core/shared';
+import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
+import { JobSearchStatusEditorComponent } from './components/job-search-status-editor/job-search-status-editor.component';
+import { JobSearchStoreService } from './providers/job-search-store.service';
 
 @NgModule({
-	declarations: [JobEmployeeComponent],
+	declarations: [JobEmployeeComponent, JobSearchStatusEditorComponent],
+	providers: [JobSearchStoreService],
 	imports: [
 		RouterModule.forChild([]),
 		NebularModule,
 		TranslateModule.forChild(),
 		SharedModule,
 		SmartDataViewLayoutModule,
-		DynamicTabsModule
-	],
-	exports: [JobEmployeeComponent]
+		DynamicTabsModule,
+		TableComponentsModule
+	]
 })
 export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 	private static _hasAppliedRegistrations = false;

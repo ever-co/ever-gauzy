@@ -1,36 +1,34 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, inject, Input, OnInit, ViewChild } from '@angular/core';
 import { filter, tap } from 'rxjs';
 import { Cell, DefaultEditor } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { JobSearchStoreService, Store } from '@gauzy/ui-core/core';
-import { ToggleSwitcherComponent } from '../toggle-switcher/toggle-switcher.component';
+import { Store } from '@gauzy/ui-core/core';
+import { ToggleSwitcherComponent } from '@gauzy/ui-core/shared';
+import { JobSearchStoreService } from '../../providers/job-search-store.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    template: `
-		<ngx-toggle-switcher [label]="false" (onSwitched)="updateJobSearchAvailability($event)"></ngx-toggle-switcher>
+	template: `
+		<ngx-toggle-switcher
+			[label]="false"
+			(onSwitched)="updateJobSearchAvailability($event)"
+			[value]="employee?.isJobSearchActive || false"
+		></ngx-toggle-switcher>
 	`,
-    standalone: false
+	standalone: false
 })
-export class JobSearchAvailabilityEditorComponent extends DefaultEditor implements AfterViewInit, OnInit {
+export class JobSearchStatusEditorComponent extends DefaultEditor implements AfterViewInit, OnInit {
 	public organization: IOrganization;
 	public employee: IEmployee;
 
-	// Reference to the cell object
 	@Input() cell!: Cell;
-
-	// Reference to the ToggleSwitcherComponent instance
 	@ViewChild(ToggleSwitcherComponent) switcher!: ToggleSwitcherComponent;
 
-	constructor(
-		private readonly _cdr: ChangeDetectorRef,
-		private readonly _store: Store,
-		private readonly _jobSearchStoreService: JobSearchStoreService
-	) {
-		super();
-	}
+	private readonly _cdr = inject(ChangeDetectorRef);
+	private readonly _store = inject(Store);
+	private readonly _jobSearchStoreService = inject(JobSearchStoreService);
 
 	ngOnInit() {
 		this._store.selectedOrganization$
@@ -50,25 +48,26 @@ export class JobSearchAvailabilityEditorComponent extends DefaultEditor implemen
 		if (!this.switcher) {
 			return;
 		}
+
 		this.switcher.value = this.employee?.isJobSearchActive || false;
-		this._cdr.detectChanges(); // Force change detection to update the UI
+		this._cdr.detectChanges();
 	}
 
 	/**
 	 * Updates the job search availability status of an employee within the organization.
 	 *
+	 * @param organization - The current organization context.
+	 * @param employee - The employee object to update.
 	 * @param isJobSearchActive - A boolean flag indicating whether the job search is active.
 	 */
 	updateJobSearchAvailability(isJobSearchActive: boolean): void {
 		try {
-			// Call the service to update the job search availability status
 			this._jobSearchStoreService.updateJobSearchAvailability(
 				this.organization,
 				this.employee,
 				isJobSearchActive
 			);
 		} catch (error) {
-			// Log the error for debugging purposes
 			console.log('Error while updating job search availability:', error);
 		}
 	}
