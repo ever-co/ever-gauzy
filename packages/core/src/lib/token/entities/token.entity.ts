@@ -177,7 +177,7 @@ export class Token extends BaseEntity implements IToken {
 	})
 	@MultiORMManyToOne(() => User, {
 		nullable: true,
-		onDelete: 'CASCADE'
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	revokedBy: IUser | null;
@@ -225,7 +225,7 @@ export class Token extends BaseEntity implements IToken {
 	})
 	@MultiORMManyToOne(() => User, {
 		nullable: false,
-		onDelete: 'CASCADE'
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	user: IUser;
