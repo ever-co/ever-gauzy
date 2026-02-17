@@ -13,7 +13,7 @@ import { ACCESS_TOKEN, ACCESS_TOKEN_TYPE, JWT_ACCESS_TOKEN } from './type.token'
 			useFactory: (configService: ConfigService) => ({
 				tokenType: ACCESS_TOKEN_TYPE,
 				expiration:
-					Number(configService.get<string>('JWT_TOKEN_EXPIRATION_TIME')) * 1000 || 1 * 24 * 60 * 60 * 1000, // 30 days
+					Number(configService.get<string>('JWT_TOKEN_EXPIRATION_TIME')) * 1000 || 1 * 24 * 60 * 60 * 1000, // 1 day
 				threshold: 7 * 24 * 60 * 60 * 1000, // 7 days
 				allowRotation: false,
 				allowMultipleSessions: true
