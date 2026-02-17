@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
+import { NbButtonModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
 import { catchError, concatMap, EMPTY, filter, finalize, firstValueFrom, switchMap, tap } from 'rxjs';
@@ -8,7 +9,6 @@ import { AuthService, AuthStrategy } from '../../../auth';
 import { ErrorHandlerService } from '../../../services';
 import { LogoComponent } from '../../shared/ui/logo/logo.component';
 import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
-import { NbButtonModule } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -161,10 +161,10 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 			.subscribe();
 	}
 
-	public retry() {
+	public async retry(): Promise<void> {
 		this.error = false;
 		this.success = false;
 		this.showPopup = true;
-		this._cdr.markForCheck();
+		await this._router.navigate(['/auth/login-magic']);
 	}
 }
