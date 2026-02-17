@@ -160,4 +160,11 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 			)
 			.subscribe();
 	}
+
+	public retry() {
+		this.error = false;
+		this.success = false;
+		this.showPopup = true;
+		this._cdr.markForCheck();
+	}
 }

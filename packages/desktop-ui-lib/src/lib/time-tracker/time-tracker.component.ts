@@ -894,8 +894,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		// Logout handling with exhaustMap to prevent multiple logouts
 		this.logout$
+			.asObservable()
 			.pipe(
-				tap(() => this.processing$.next({ state: true, message: 'Logging out...' })),
+				tap(() =>
+					this.processing$.next({
+						state: true,
+						message: this._translateService.instant('TIMER_TRACKER.LOADING.LOGOUT_IN_PROGRESS')
+					})
+				),
 				exhaustMap(() =>
 					timer(3000).pipe(
 						switchMap(() => this._authStrategy.logout()),
