@@ -55,7 +55,7 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 			const expiresAt = config.expiration ? new Date(Date.now() + config.expiration) : null;
 
 			// Metadata can come from the DTO (for client-provided metadata) or be copied from the old token if not provided
-			const metadata = dto?.metadata || oldToken?.metadata;
+			const metadata = dto.metadata || oldToken.metadata;
 
 			// Create new token
 			const newTokenRecord = await repository.create({
@@ -71,10 +71,10 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 
 			// Generate new JWT
 			const payload = {
+				...newTokenRecord.metadata,
 				userId: dto.userId,
 				tokenType: dto.tokenType,
-				tokenId: newTokenRecord.id,
-				...newTokenRecord.metadata
+				tokenId: newTokenRecord.id
 			};
 
 			const expiresInMs = expiresAt ? expiresAt.getTime() - Date.now() : undefined;
