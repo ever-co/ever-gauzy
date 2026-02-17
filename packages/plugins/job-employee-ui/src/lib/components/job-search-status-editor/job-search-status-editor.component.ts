@@ -58,9 +58,9 @@ export class JobSearchStatusEditorComponent extends DefaultEditor implements Aft
 	 *
 	 * `@param` isJobSearchActive - A boolean flag indicating whether the job search is active.
 	 */
-	updateJobSearchAvailability(isJobSearchActive: boolean): void {
+	async updateJobSearchAvailability(isJobSearchActive: boolean): Promise<void> {
 		try {
-			this._jobSearchStoreService.updateJobSearchAvailability(
+			await this._jobSearchStoreService.updateJobSearchAvailability(
 				this.organization,
 				this.employee,
 				isJobSearchActive

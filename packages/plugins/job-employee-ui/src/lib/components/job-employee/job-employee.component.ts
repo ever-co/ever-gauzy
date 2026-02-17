@@ -298,7 +298,6 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 				/** Subscribe to the onSwitched event and update the job search availability. Use this (parent) for untilDestroyed so cleanup runs when this component is destroyed; the table cell instance may not have UntilDestroy applied in plugin context. */
 				instance.onSwitched.pipe(untilDestroyed(this)).subscribe((toggle: boolean) => {
-					console.log('Job Employee Component: onSwitched event triggered', toggle);
 					this._jobSearchStoreService.updateJobSearchAvailability(this.organization, employee, toggle);
 				});
 			},
