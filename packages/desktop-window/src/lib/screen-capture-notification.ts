@@ -64,6 +64,7 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 
 		// Prevent the window from being fullScreenable
 		this.browserWindow.setFullScreenable(false);
+		this.manager.overrideSystemContextMenu(this.browserWindow);
 
 		// Register the window with the window manager
 		this.manager.register(RegisteredWindow.CAPTURE, this);

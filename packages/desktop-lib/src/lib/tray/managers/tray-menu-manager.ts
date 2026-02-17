@@ -91,4 +91,19 @@ export class TrayMenuManager {
 	getMenu(): MenuItemConstructorOptions[] {
 		return this.currentMenu;
 	}
+
+	isLabelChange(identifier: number | string, updates: Partial<MenuItemConstructorOptions>) {
+		let index = -1;
+		if (typeof identifier === 'number') {
+			index = identifier;
+		} else {
+			index = this.currentMenu.findIndex((item) => String(item.id) === String(identifier));
+		}
+
+		if (index < 0) {
+			return false;
+		}
+
+		return this.currentMenu[index].label !== updates.label;
+	}
 }

@@ -45,9 +45,14 @@ export class TrayIPCHandler {
 		ipcMain.on('update_tray_time_update', (event, arg) => {
 			const auth = this.configStore.get('auth');
 			if (auth && auth.employeeId && !auth.isLogout) {
-				this.menuManager.updateMenuItem('0', {
+				const isLabelChange = this.menuManager.isLabelChange('0', {
 					label: TranslateService.instant('TIMER_TRACKER.MENU.NOW_TRACKING', { time: arg })
 				});
+				if (isLabelChange) {
+					this.menuManager.updateMenuItem('0', {
+						label: TranslateService.instant('TIMER_TRACKER.MENU.NOW_TRACKING', { time: arg })
+					});
+				}
 			}
 		});
 

@@ -48,6 +48,8 @@ export async function createTimeTrackerWindow(
 	const { width, height } = getScreenSize();
 	timeTrackerWindow.setMinimumSize(width, height);
 
+	manager.overrideSystemContextMenu(timeTrackerWindow);
+
 	// Remove the menu from the window
 	timeTrackerWindow.setMenu(null);
 

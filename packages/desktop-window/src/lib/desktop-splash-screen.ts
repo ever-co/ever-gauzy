@@ -42,6 +42,7 @@ export class SplashScreen extends BaseWindow implements IBaseWindow {
 
         // Register the splash screen with the WindowManager
         this.registerWindow();
+		this.manager.overrideSystemContextMenu(this.browserWindow);
     }
 
     /**

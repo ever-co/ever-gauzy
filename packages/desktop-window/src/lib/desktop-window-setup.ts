@@ -42,6 +42,7 @@ export async function createSetupWindow(
 
 	// Use the helper function to construct and load the URL
 	await setLaunchPathAndLoad(setupWindow, filePath, '/setup');
+	manager.overrideSystemContextMenu(setupWindow);
 
 	// Configure the menu for the Setup window
 	setupWindow.setMenu(

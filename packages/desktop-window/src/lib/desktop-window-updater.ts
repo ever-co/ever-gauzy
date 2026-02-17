@@ -39,6 +39,7 @@ export async function createUpdaterWindow(
 
 	// Remove the default menu from the window
 	updaterWindow.setMenu(null);
+	manager.overrideSystemContextMenu(updaterWindow);
 
 	// Optional: Uncomment to enable developer tools
 	// updaterWindow.webContents.toggleDevTools();

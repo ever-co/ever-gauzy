@@ -73,6 +73,8 @@ export async function createGauzyWindow(
 		gauzyWindow.webContents.send('adjust_view');
 	}
 
+	manager.overrideSystemContextMenu(gauzyWindow);
+
 	// Return the created window
 	return gauzyWindow;
 }
