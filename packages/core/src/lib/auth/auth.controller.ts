@@ -306,7 +306,7 @@ export class AuthController {
 	@Post('/refresh-token')
 	@UseValidationPipe()
 	async refreshToken(@Body() input: RefreshTokenDto): Promise<ITokenPair | null> {
-		return this.authService.rotateTokens(input.refresh_token, input);
+        return await this.authService.rotateTokens(input.refresh_token, input);
 	}
 
 	/**
