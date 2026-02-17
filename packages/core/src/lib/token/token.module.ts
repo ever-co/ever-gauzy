@@ -394,9 +394,20 @@ export class TokenModule {
 		const moduleExports: ExportedProvider[] = [...BaseExports];
 		const inject = options.inject ?? [];
 
-		const configToken = options.configToken ?? 'TOKEN_CONFIG';
-		const serviceToken = options.serviceToken ?? 'TOKEN_SERVICE';
-		const jwtServiceToken = options.jwtServiceToken ?? 'TOKEN_JWT_SERVICE';
+		const configToken = options.configToken;
+		const serviceToken = options.serviceToken;
+		const jwtServiceToken = options.jwtServiceToken;
+
+		// Require explicit provider tokens for async registration to avoid collisions.
+		// When configuration is produced asynchronously, `tokenType` is not available
+		// at registration time, so using generic defaults would cause different
+		// feature modules to overwrite each other's providers. Force consumers to
+		// provide unique tokens.
+		if (!configToken || !serviceToken || !jwtServiceToken) {
+			throw new Error(
+				'TokenModule.forFeatureAsync requires explicit `configToken`, `serviceToken` and `jwtServiceToken` options to avoid provider token collisions. Provide unique tokens per feature module.'
+			);
+		}
 
 		const configProvider = this.buildScopedConfigProvider(configToken, options.useFactory, inject);
 		const jwtProviders = this.buildScopedJwtProviders(configToken, jwtServiceToken, options.jwtSecret, inject);
