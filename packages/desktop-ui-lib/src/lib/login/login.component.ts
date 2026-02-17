@@ -58,7 +58,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly nbAuthService: NbAuthService,
 		public readonly languageElectronService: LanguageElectronService,
 		public readonly cdr: ChangeDetectorRef,
-		public readonly router: Router,
+		public readonly _router: Router,
 		private readonly authService: AuthService,
 		private readonly errorHandlingService: ErrorHandlerService,
 		@Inject(NB_AUTH_OPTIONS)
@@ -66,7 +66,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		@Inject(GAUZY_ENV)
 		private readonly environment: any
 	) {
-		super(nbAuthService, options, cdr, router);
+		super(nbAuthService, options, cdr, _router);
 	}
 
 	ngOnInit() {
@@ -114,7 +114,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 									show_popup
 								}
 							};
-							await this.router.navigate(['/', 'auth', 'login-workspace'], extra);
+							await this._router.navigate(['/', 'auth', 'login-workspace'], extra);
 						}
 					}
 				),

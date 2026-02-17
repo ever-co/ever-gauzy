@@ -8,6 +8,7 @@ import { AuthService, AuthStrategy } from '../../../auth';
 import { ErrorHandlerService } from '../../../services';
 import { LogoComponent } from '../../shared/ui/logo/logo.component';
 import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
+import { NbButtonModule } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -15,7 +16,7 @@ import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection
 	templateUrl: './magic-login-workspace.component.html',
 	styleUrls: ['./magic-login-workspace.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [WorkspaceSelectionComponent, LogoComponent, TranslatePipe]
+	imports: [WorkspaceSelectionComponent, LogoComponent, TranslatePipe, NbButtonModule]
 })
 export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	public error: boolean = false;
@@ -127,6 +128,7 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 		this.showPopup = false;
 		this.success = true;
 		this.loading = true;
+		this.error = false;
 
 		// Extract workspace, email, and token from the parameter and component state
 		const email = this.confirmedEmail;
@@ -147,6 +149,8 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 					this._cdr.markForCheck();
 				}),
 				catchError((error) => {
+					this.success = false;
+					this.error = true;
 					// Handle and log errors using the error handling service
 					this._errorHandlingService.handleError(error);
 					return EMPTY;
