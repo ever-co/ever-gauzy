@@ -27,8 +27,6 @@ export interface ICreateTokenDto {
 
 export interface IRotateTokenDto {
 	rawOldToken?: string;
-	/** @deprecated Use rawOldToken */
-	oldTokenHash?: string;
 	userId: IUser['id'];
 	tokenType: string;
 	metadata?: Record<string, any>;
@@ -36,16 +34,12 @@ export interface IRotateTokenDto {
 
 export interface IRevokeTokenDto {
 	rawToken?: string;
-	/** @deprecated Use rawToken */
-	tokenHash?: string;
 	revokedById?: string;
 	reason?: string;
 }
 
 export interface IValidateTokenDto {
 	rawToken?: string;
-	/** @deprecated Use rawToken */
-	tokenHash?: string;
 	tokenType: string;
 	checkInactivity?: boolean;
 }
