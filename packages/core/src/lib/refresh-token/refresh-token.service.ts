@@ -44,12 +44,10 @@ export class RefreshTokenService {
 			metadata
 		});
 
-		await this.revoke(rawOldToken, 'Token rotated');
-
 		return rotated.token;
 	}
 
-	private async revoke(rawToken: string, reason?: string): Promise<void> {
+	public async revoke(rawToken: string, reason?: string): Promise<void> {
 		const revokedById = this.getUserId();
 		await this.tokenService.revokeToken({
 			revokedById,
