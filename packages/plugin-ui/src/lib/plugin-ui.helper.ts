@@ -66,12 +66,21 @@ export interface DefinePluginOptions {
 
 /**
  * Options for defining a plugin group (parent with child plugins).
+ *
+ * The `init` option signature is `(opts, base)` where:
+ * - `opts` is `{ plugins: PluginUiDefinition[] }` (runtime plugin list to merge)
+ * - `base` is the base `PluginUiDefinition` built from the group options
+ *
+ * The value returned by `definePluginGroup` has an `init` property (`initBound`) that
+ * is the same function with `base` already bound, so it takes only
+ * `(opts: { plugins: PluginUiDefinition[] })` and returns `PluginUiDefinition`.
+ * See `definePluginGroup` for how `base` and `initBound` are constructed.
  */
 export interface DefinePluginGroupOptions extends DefinePluginOptions {
 	/** Default child plugins. */
 	plugins: PluginUiDefinition[];
 	/**
-	 * Optional init factory. Receives opts and base definition.
+	 * Optional init factory. Signature: `(opts, base)`.
 	 * When omitted, defaults to merging `opts.plugins` into base.
 	 */
 	init?: (opts: { plugins: PluginUiDefinition[] }, base: PluginUiDefinition) => PluginUiDefinition;
@@ -108,6 +117,14 @@ export function definePlugin(
 
 /**
  * Creates a plugin group definition (parent with child plugins).
+ *
+ * The options `init` (see {@link DefinePluginGroupOptions}) has signature
+ * `(opts, base)` where `opts` is `{ plugins: PluginUiDefinition[] }` and
+ * `base` is the base `PluginUiDefinition`. The returned object's `init`
+ * (`initBound`) is the same function with `base` already bound, so callers
+ * pass only `(opts: { plugins: PluginUiDefinition[] })` and receive
+ * `PluginUiDefinition`. This pre-binding avoids confusion between the raw
+ * init signature and the convenience init on the returned object.
  *
  * @param id Unique plugin identifier.
  * @param module Angular module class (the parent layout/shell).
@@ -158,19 +175,29 @@ export function getUIPluginModules(plugins: PluginUiDefinition[]): Type<any>[] {
 	return flat.filter((p): p is PluginUiDefinition & { module: Type<any> } => !!p.module).map((p) => p.module);
 }
 
+/** Plugin definition with at least one of module or loadModule present (from flattenPlugins output). */
+export type PluginUiDefinitionWithModuleOrLoader = PluginUiDefinition &
+	({ module: Type<any> } | { loadModule: () => Promise<Type<any>> });
+
 /**
  * Extract (definition, module) pairs from plugin definitions.
  * Includes plugins with either `module` or `loadModule`; for loadModule,
  * the module is resolved async in createPluginInstances.
+ *
+ * Uses flattenPlugins, then filters with !!p.module || !!p.loadModule so the returned
+ * definition is narrowed to PluginUiDefinitionWithModuleOrLoader (at least one present).
  */
 export function getUIPluginModulesWithDefinitions(
 	plugins: PluginUiDefinition[]
-): Array<{ definition: PluginUiDefinition; module?: Type<any>; loadModule?: () => Promise<Type<any>> }> {
+): Array<{
+	definition: PluginUiDefinitionWithModuleOrLoader;
+	module?: Type<any>;
+	loadModule?: () => Promise<Type<any>>;
+}> {
 	const flat = flattenPlugins(plugins);
 	return flat
 		.filter(
-			(p): p is PluginUiDefinition & { module?: Type<any>; loadModule?: () => Promise<Type<any>> } =>
-				!!p.module || !!p.loadModule
+			(p): p is PluginUiDefinitionWithModuleOrLoader => !!p.module || !!p.loadModule
 		)
 		.map((definition) => ({
 			definition,

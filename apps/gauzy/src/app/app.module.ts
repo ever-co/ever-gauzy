@@ -34,7 +34,6 @@ import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
 import { UiCoreModule } from '@gauzy/ui-core';
 import { getPluginUiConfig } from '@gauzy/plugin-ui';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
-import { isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	APIInterceptor,
 	AppInitService,
@@ -248,8 +247,11 @@ export class AppModule {
 		const uiConfig = getPluginUiConfig();
 
 		const localeOptions: moment.LocaleSpecification = {};
-		if (isNotEmpty(uiConfig.startWeekOn)) {
-			localeOptions.week = { dow: uiConfig.startWeekOn };
+		const dow = uiConfig.startWeekOn;
+
+		// Validate the day of the week number (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+		if (typeof dow === 'number' && dow >= 0 && dow <= 6) {
+			localeOptions.week = { dow };
 		}
 
 		/** Update the locale with the default language. */

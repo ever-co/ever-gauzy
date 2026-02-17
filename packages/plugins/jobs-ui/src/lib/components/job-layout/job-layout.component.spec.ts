@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterModule } from '@angular/router';
+import { provideRouter } from '@angular/router';
 
 import { JobLayoutComponent } from './job-layout.component';
 
@@ -9,7 +9,7 @@ describe('JobLayoutComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			imports: [RouterModule.forRoot([])],
+			providers: [provideRouter([])],
 			declarations: [JobLayoutComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();

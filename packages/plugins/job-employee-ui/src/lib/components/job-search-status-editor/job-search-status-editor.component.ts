@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
-import { ToggleSwitcherComponent } from '@gauzy/ui-core/shared';
+import { TableComponentsModule, ToggleSwitcherComponent } from '@gauzy/ui-core/shared';
 import { JobSearchStoreService } from '../../providers/job-search-store.service';
 
 @UntilDestroy()
@@ -14,17 +14,18 @@ import { JobSearchStoreService } from '../../providers/job-search-store.service'
 		<ngx-toggle-switcher
 			[label]="false"
 			(onSwitched)="updateJobSearchAvailability($event)"
-			[value]="employee?.isJobSearchActive || false"
+			[value]="employee?.isJobSearchActive ?? false"
 		></ngx-toggle-switcher>
 	`,
-	standalone: false
+	standalone: true,
+	imports: [TableComponentsModule]
 })
 export class JobSearchStatusEditorComponent extends DefaultEditor implements AfterViewInit, OnInit {
 	public organization!: IOrganization;
 	public employee!: IEmployee;
 
-	@Input() cell!: Cell;
-	@ViewChild(ToggleSwitcherComponent) switcher!: ToggleSwitcherComponent;
+	@Input() readonly cell!: Cell;
+	@ViewChild(ToggleSwitcherComponent) readonly switcher!: ToggleSwitcherComponent;
 
 	private readonly _cdr = inject(ChangeDetectorRef);
 	private readonly _store = inject(Store);

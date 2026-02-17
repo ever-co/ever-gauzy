@@ -35,14 +35,8 @@ export class PluginUiModule implements OnDestroy {
 	private readonly _registry = inject(PluginUiRegistryService);
 	private readonly _extRegistry = inject(PageExtensionRegistryService);
 
-	/**
-	 * Plugin instances created during app initializer.
-	 * Stored so lifecycle methods can be called on destroy.
-	 */
-	private readonly _pluginInstances: any[] = [];
-
-	/** Plugin definitions for instances; used to deregister extensions on destroy. */
-	private readonly _pluginDefinitions: PluginUiDefinition[] = [];
+	/** Plugin instances and definitions created during app initializer. Stored so lifecycle methods can be called on destroy. */
+	private readonly _plugins: Array<{ instance: any; definition: PluginUiDefinition }> = [];
 
 	/**
 	 * Configure the PluginUiModule.
@@ -71,10 +65,15 @@ export class PluginUiModule implements OnDestroy {
 	ngOnDestroy(): void {
 		this.invokeLifecycleMethodSync('ngOnPluginBeforeDestroy');
 
+		// Deregister all instances from the registry unconditionally so every plugin is removed
+		// regardless of whether it implements ngOnPluginDestroy.
+		for (const { instance } of this._plugins) {
+			this._registry.deregister(instance);
+		}
+
 		// Extension deregistration moved into closure so it runs per-plugin *after* each
 		// ngOnPluginDestroy completes (avoids race where extensions were removed before hooks ran).
 		this.invokeLifecycleMethod('ngOnPluginDestroy', (instance: any, def?: PluginUiDefinition) => {
-			this._registry.deregister(instance);
 			if (def?.extensions?.length) {
 				this._extRegistry.deregisterByPlugin(def.id);
 			}
@@ -82,11 +81,9 @@ export class PluginUiModule implements OnDestroy {
 			console.error('[PluginUiModule] Error during plugin destroy', e);
 		});
 		// Plugins without ngOnPluginDestroy: deregister extensions immediately (no async hook to wait for).
-		for (let i = 0; i < this._pluginInstances.length; i++) {
-			const instance = this._pluginInstances[i];
-			const def = this._pluginDefinitions[i];
-			if (!hasPluginUiLifecycleMethod(instance, 'ngOnPluginDestroy') && def?.extensions?.length) {
-				this._extRegistry.deregisterByPlugin(def.id);
+		for (const { instance, definition } of this._plugins) {
+			if (!hasPluginUiLifecycleMethod(instance, 'ngOnPluginDestroy') && definition?.extensions?.length) {
+				this._extRegistry.deregisterByPlugin(definition.id);
 			}
 		}
 	}
@@ -101,11 +98,14 @@ export class PluginUiModule implements OnDestroy {
 	 * correctly.
 	 */
 	async bootstrapPlugins(): Promise<void> {
-		this._pluginInstances.push(...(await this.createPluginInstances()));
+		const plugins = await this.createPluginInstances();
+		this._plugins.push(...plugins);
 
-		await this.invokeLifecycleMethod('ngOnPluginBootstrap', (instance: any) => {
+		for (const { instance } of plugins) {
 			this._registry.register(instance);
-		});
+		}
+
+		await this.invokeLifecycleMethod('ngOnPluginBootstrap');
 
 		await this.invokeLifecycleMethod('ngOnPluginAfterBootstrap');
 	}
@@ -118,26 +118,45 @@ export class PluginUiModule implements OnDestroy {
 	 * `inject()` calls in class fields / constructors resolve correctly.
 	 * Plugins are filtered by PLUGIN_ACTIVATION_PREDICATE when provided.
 	 */
-	private async createPluginInstances(): Promise<any[]> {
+	private async createPluginInstances(): Promise<Array<{ instance: any; definition: PluginUiDefinition }>> {
 		const config = getPluginUiConfig();
-		let pluginsWithModules = getUIPluginModulesWithDefinitions(config.plugins);
-		pluginsWithModules = orderPluginsByDependencies(pluginsWithModules.map((p) => p.definition)).map(
-			(def) => pluginsWithModules.find((p) => p.definition === def)!
+		const pluginsWithModules = getUIPluginModulesWithDefinitions(config.plugins);
+		const byDef = new Map<PluginUiDefinition, (typeof pluginsWithModules)[number]>(
+			pluginsWithModules.map((p) => [p.definition, p])
 		);
+		const orderedDefs = orderPluginsByDependencies(pluginsWithModules.map((p) => p.definition));
+
+		const orderedPlugins = orderedDefs
+			.map((def) => {
+				const entry = byDef.get(def);
+				if (!entry) {
+					console.warn(
+						`[PluginUiModule] Definition not found when reordering (skipping): ${def?.id ?? 'unknown'}`
+					);
+					return null;
+				}
+				return entry;
+			})
+			.filter((p): p is NonNullable<typeof p> => p != null);
+
 		const predicate = this._envInjector.get(PLUGIN_ACTIVATION_PREDICATE, null);
 
 		const oks =
 			predicate == null
-				? pluginsWithModules.map(() => true)
+				? orderedPlugins.map(() => true)
 				: await Promise.all(
-						pluginsWithModules.map(async ({ definition }) => {
-							const result = predicate(definition);
-							return typeof result === 'boolean' ? result : await result;
+						orderedPlugins.map(async ({ definition }) => {
+							try {
+								const result = predicate(definition);
+								return typeof result === 'boolean' ? result : await result;
+							} catch {
+								return false;
+							}
 						})
 				  );
-		const filtered = pluginsWithModules.filter((_, i) => oks[i]);
+		const filtered = orderedPlugins.filter((_, i) => oks[i]);
 
-		const instances: any[] = [];
+		const plugins: Array<{ instance: any; definition: PluginUiDefinition }> = [];
 		for (const { definition, module: mod, loadModule } of filtered) {
 			try {
 				const resolvedModule = mod ?? (loadModule ? await loadModule() : null);
@@ -152,14 +171,13 @@ export class PluginUiModule implements OnDestroy {
 					parent: this._envInjector
 				});
 				const instance = runInInjectionContext(childInjector, () => new resolvedModule());
-				instances.push(instance);
-				this._pluginDefinitions.push(definition);
+				plugins.push({ instance, definition });
 			} catch (e: any) {
 				const trace = typeof e?.stack === 'string' ? e.stack : undefined;
 				console.error(`Error creating UI plugin [${definition.id}]`, trace, e);
 			}
 		}
-		return instances;
+		return plugins;
 	}
 
 	/**
@@ -173,9 +191,7 @@ export class PluginUiModule implements OnDestroy {
 		lifecycleMethod: keyof PluginUiLifecycleMethods,
 		closure?: (instance: any, definition?: PluginUiDefinition) => void
 	): Promise<void> {
-		for (let i = 0; i < this._pluginInstances.length; i++) {
-			const instance = this._pluginInstances[i];
-			const definition = this._pluginDefinitions[i];
+		for (const { instance, definition } of this._plugins) {
 			if (hasPluginUiLifecycleMethod(instance, lifecycleMethod)) {
 				try {
 					await instance[lifecycleMethod]!();
@@ -197,7 +213,7 @@ export class PluginUiModule implements OnDestroy {
 	 * Used for ngOnPluginBeforeDestroy (Angular's ngOnDestroy is synchronous).
 	 */
 	private invokeLifecycleMethodSync(lifecycleMethod: keyof PluginUiLifecycleMethods): void {
-		for (const instance of this._pluginInstances) {
+		for (const { instance } of this._plugins) {
 			if (hasPluginUiLifecycleMethod(instance, lifecycleMethod)) {
 				try {
 					const result = instance[lifecycleMethod]!();

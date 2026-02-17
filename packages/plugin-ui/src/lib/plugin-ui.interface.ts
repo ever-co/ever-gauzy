@@ -66,19 +66,7 @@ export interface IOnPluginConfigChange {
  *
  * Use this when you want a single interface that expresses both lifecycle hooks.
  */
-export interface IPluginUiLifecycleMethods {
-	/**
-	 * Called when the plugin module is being initialized.
-	 * @returns A void or a Promise representing the completion of the operation.
-	 */
-	ngOnPluginBootstrap(): void | Promise<void>;
-
-	/**
-	 * Called when the plugin module is being destroyed.
-	 * @returns A void or a Promise representing the completion of the operation.
-	 */
-	ngOnPluginDestroy(): void | Promise<void>;
-}
+export interface IPluginUiLifecycleMethods extends IOnPluginUiBootstrap, IOnPluginUiDestroy {}
 
 /**
  * Extended lifecycle methods (optional hooks).

@@ -21,17 +21,17 @@ export const JOBS_PAGE_ROUTE: PageRouteRegistryConfig = {
 /**
  * Builds the child routes for the jobs section: layout + redirect + plugin-contributed tabs.
  *
- * @param registry Page route registry to fetch routes from JOBS_SECTIONS_LOCATION
+ * @param _pageRouteRegistryService Page route registry to fetch routes from JOBS_SECTIONS_LOCATION
  * @returns Route array for the ROUTES provider in JobsModule
  */
-export function getJobsChildRoutes(registry: PageRouteRegistryService): Route[] {
+export function getJobsRoutes(_pageRouteRegistryService: PageRouteRegistryService): Route[] {
 	return [
 		{
 			path: '',
 			component: JobLayoutComponent,
 			children: [
 				{ path: '', redirectTo: DEFAULT_JOBS_TAB, pathMatch: 'full' },
-				...registry.getPageLocationRoutes(JOBS_SECTIONS_LOCATION)
+				..._pageRouteRegistryService.getPageLocationRoutes(JOBS_SECTIONS_LOCATION)
 			]
 		}
 	];

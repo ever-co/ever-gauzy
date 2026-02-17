@@ -9,7 +9,7 @@ import {
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { JobLayoutComponent } from './components/job-layout/job-layout.component';
-import { getJobsChildRoutes } from './job.routes';
+import { getJobsRoutes } from './job.routes';
 
 @NgModule({
 	declarations: [JobLayoutComponent],
@@ -19,7 +19,7 @@ import { getJobsChildRoutes } from './job.routes';
 		{
 			provide: ROUTES,
 			useFactory: (_pageRouteRegistryService: PageRouteRegistryService) =>
-				getJobsChildRoutes(_pageRouteRegistryService),
+				getJobsRoutes(_pageRouteRegistryService),
 			deps: [PageRouteRegistryService],
 			multi: true
 		}

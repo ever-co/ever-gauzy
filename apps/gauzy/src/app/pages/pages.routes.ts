@@ -570,7 +570,7 @@ function getReportsRoutes(_pageRouteRegistryService: PageRouteRegistryService): 
 						)
 				},
 				..._pageRouteRegistryService.getPageLocationRoutes('reports-sections'),
-				{ path: '**', component: NotFoundComponent }
+				{ path: '**', component: NotFoundComponent, data: { selectors: false } }
 			]
 		}
 	];

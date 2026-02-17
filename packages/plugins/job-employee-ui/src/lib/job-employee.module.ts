@@ -20,7 +20,7 @@ import { JobSearchStatusEditorComponent } from './components/job-search-status-e
 import { JobSearchStoreService } from './providers/job-search-store.service';
 
 @NgModule({
-	declarations: [JobEmployeeComponent, JobSearchStatusEditorComponent],
+	declarations: [JobEmployeeComponent],
 	providers: [JobSearchStoreService],
 	imports: [
 		RouterModule.forChild([]),
@@ -29,7 +29,8 @@ import { JobSearchStoreService } from './providers/job-search-store.service';
 		SharedModule,
 		SmartDataViewLayoutModule,
 		DynamicTabsModule,
-		TableComponentsModule
+		TableComponentsModule,
+		JobSearchStatusEditorComponent
 	]
 })
 export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {

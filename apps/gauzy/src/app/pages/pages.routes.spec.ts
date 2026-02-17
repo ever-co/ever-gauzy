@@ -22,7 +22,17 @@ describe('pages.routes', () => {
 		const missing = [...reserved].filter((p) => !corePaths.has(p));
 		const extra = [...corePaths].filter((p) => !reserved.has(p));
 
-		expect(missing).toEqual([]);
-		expect(extra).toEqual([]);
+		if (missing.length > 0) {
+			throw new Error(
+				`Missing reserved paths (in RESERVED_PAGE_SECTION_PATHS but not in getPagesRoutes()): ${missing.join(', ')}. ` +
+					`Update getPagesRoutes() or remove from RESERVED_PAGE_SECTION_PATHS.`
+			);
+		}
+		if (extra.length > 0) {
+			throw new Error(
+				`Unexpected core paths (in getPagesRoutes() but not in RESERVED_PAGE_SECTION_PATHS): ${extra.join(', ')}. ` +
+					`Add these to RESERVED_PAGE_SECTION_PATHS to prevent plugin path conflicts.`
+			);
+		}
 	});
 });
