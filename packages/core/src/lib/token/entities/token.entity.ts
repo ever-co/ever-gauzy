@@ -186,11 +186,10 @@ export class Token extends BaseEntity implements IToken {
 		type: Object,
 		description: 'Additional metadata stored as JSON (e.g., device info, IP address, user agent, mac)',
 		example: {
+			clientId: 'abc123',
 			deviceType: 'mobile',
-			ipAddress: '192.168.1.1',
 			userAgent: 'Mozilla/5.0...',
 			location: 'New York, US',
-			mac: '00:1A:2B:3C:4D:5E'
 		},
 		nullable: true
 	})
