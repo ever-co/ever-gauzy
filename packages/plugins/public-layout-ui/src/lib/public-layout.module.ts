@@ -29,16 +29,21 @@ import { LanguagesService, PageRouteRegistryService, SkillsService } from '@gauz
 import {
 	AppointmentCalendarModule,
 	CurrencyModule,
+	CurrencyPositionPipe,
+	DateFormatPipe,
 	ImageUploaderModule,
 	InvoiceViewInnerModule,
 	LanguageSelectorModule,
 	ManageAppointmentModule,
 	MiscellaneousModule,
+	ReplacePipe,
+	SafeHtmlPipe,
 	SelectorsModule,
 	SharedModule,
 	SkillsInputModule,
 	TableComponentsModule,
 	TagsColorInputModule,
+	TruncatePipe,
 	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
@@ -100,7 +105,17 @@ const FEATURE_MODULES = [
 
 @NgModule({
 	declarations: [...COMPONENTS],
-	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, ...FEATURE_MODULES],
+	imports: [
+		RouterModule.forChild([]),
+		...NB_MODULES,
+		...THIRD_PARTY_MODULES,
+		...FEATURE_MODULES,
+		DateFormatPipe,
+		ReplacePipe,
+		CurrencyPositionPipe,
+		TruncatePipe,
+		SafeHtmlPipe
+	],
 	exports: [...COMPONENTS],
 	providers: [
 		LanguagesService,

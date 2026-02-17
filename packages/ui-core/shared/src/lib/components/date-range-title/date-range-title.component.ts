@@ -1,14 +1,14 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { DateRangePickerBuilderService } from '@gauzy/ui-core/core';
-import { DateFormatPipe } from '../../pipes';
+import { DateFormatPipe } from '../../pipes/date-format.pipe';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-date-range-title',
-    template: `<span>{{ title }}</span>`,
-    styles: [
-        `
+	selector: 'ngx-date-range-title',
+	template: `<span>{{ title }}</span>`,
+	styles: [
+		`
 			span {
 				font-size: 14px;
 				font-weight: 600;
@@ -17,10 +17,14 @@ import { DateFormatPipe } from '../../pipes';
 				color: var(--gauzy-text-color-2);
 			}
 		`
-    ],
-    standalone: false
+	],
+	standalone: true,
+	providers: [DateFormatPipe]
 })
 export class DateRangeTitleComponent {
+	private readonly _dateFormatPipe = inject(DateFormatPipe);
+	private readonly _dateRangePickerBuilderService = inject(DateRangePickerBuilderService);
+
 	/**
 	 * @Input start: Date
 	 * Represents the starting date for a given time range or period.
@@ -41,11 +45,6 @@ export class DateRangeTitleComponent {
 	 * This could define how the `start` and `end` dates are displayed (e.g., 'MM/DD/YYYY', 'YYYY-MM-DD').
 	 */
 	@Input() format: string;
-
-	constructor(
-		readonly _dateFormatPipe: DateFormatPipe,
-		readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
-	) {}
 
 	/**
 	 * GET date range title

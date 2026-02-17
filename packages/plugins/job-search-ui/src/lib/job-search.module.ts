@@ -12,6 +12,9 @@ import {
 } from '@gauzy/plugin-ui';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
+	DateTimeFormatPipe,
+	JobBudgetPipe,
+	Nl2BrPipe,
 	SmartDataViewLayoutModule,
 	DialogsModule,
 	NebularModule,
@@ -22,12 +25,17 @@ import {
 } from '@gauzy/ui-core/shared';
 import { getJobSearchRoutes } from './job-search.routes';
 import { JobSearchComponent } from './components/job-search/job-search.component';
-import { COMPONENTS } from './components';
+import { JobTitleDescriptionDetailsComponent } from './components/job-title-description-details/job-title-description-details.component';
+import { JobStatusComponent } from './components/job-status/job-status.component';
+import { ApplyJobManuallyComponent } from './components/apply-job-manually/apply-job-manually.component';
 
 @NgModule({
-	declarations: [JobSearchComponent, ...COMPONENTS],
+	declarations: [JobSearchComponent, ApplyJobManuallyComponent],
 	imports: [
 		RouterModule.forChild([]),
+		DateTimeFormatPipe,
+		JobBudgetPipe,
+		Nl2BrPipe,
 		NebularModule,
 		CKEditorModule,
 		FileUploadModule,
@@ -38,9 +46,11 @@ import { COMPONENTS } from './components';
 		ProposalTemplateSelectModule,
 		SelectorsModule,
 		SharedModule,
-		StatusBadgeModule
+		StatusBadgeModule,
+		JobTitleDescriptionDetailsComponent,
+		JobStatusComponent
 	],
-	exports: [RouterModule, ...COMPONENTS],
+	exports: [RouterModule, JobSearchComponent, ApplyJobManuallyComponent, JobTitleDescriptionDetailsComponent, JobStatusComponent],
 	providers: [
 		{
 			provide: ROUTES,

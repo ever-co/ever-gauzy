@@ -56,7 +56,6 @@ import {
 	MATERIAL_DARK_THEME,
 	MATERIAL_LIGHT_THEME
 } from './themes';
-import { Pipes } from './pipes';
 import { WindowModeBlockScrollService } from './services';
 import { FooterComponent, HeaderComponent } from './components';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
@@ -115,14 +114,12 @@ const COMPONENTS = [
 	WorkspaceMenuComponent
 ];
 
-const PIPES = [...Pipes];
-
 const EXPORT_IMPORT = [ThemeSidebarModule, MatRippleModule];
 
 @NgModule({
 	imports: [CommonModule, RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
-	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS, NbIconModule, TablerIconsModule],
-	declarations: [...COMPONENTS, ...PIPES],
+	exports: [...EXPORT_IMPORT, ...COMPONENTS, NbIconModule, TablerIconsModule],
+	declarations: [...COMPONENTS],
 	providers: [
 		SelectorService,
 		UsersOrganizationsService,

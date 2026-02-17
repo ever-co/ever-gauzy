@@ -1,7 +1,13 @@
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { GauzyFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
+import {
+	DurationFormatPipe,
+	FileSizePipe,
+	GauzyFiltersModule,
+	NoDataMessageModule,
+	SharedModule
+} from '@gauzy/ui-core/shared';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -76,6 +82,8 @@ import { SoundshotPlayerSkeletonComponent } from './shared/ui/soundshot/soundsho
 	],
 	imports: [
 		CommonModule,
+		DurationFormatPipe,
+		FileSizePipe,
 		NbCardModule,
 		NbIconModule,
 		NoDataMessageModule,

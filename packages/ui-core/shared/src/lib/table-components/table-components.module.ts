@@ -4,12 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule, NbButtonModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { ComponentsModule } from '../components/components.module';
-import { PipesModule } from '../pipes/pipes.module';
-import {
-	EmployeeLinkEditorComponent,
-	NonEditableNumberEditorComponent,
-	NumberEditorComponent
-} from './editors';
+import { EmployeeLinkEditorComponent, NonEditableNumberEditorComponent, NumberEditorComponent } from './editors';
 import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';
 import { AssignedToComponent } from './assigned-to/assigned-to.component';
 import { ClickableLinkComponent } from './clickable-link/clickable-link.component';
@@ -51,10 +46,18 @@ import { ValueWithUnitComponent } from './value-with-units/value-with-units.comp
 import { VisibilityComponent } from './visibility/visibility.component';
 import { DirectivesModule } from '../directives/directives.module';
 import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badge-view.module';
+import { DateFormatPipe } from '../pipes/date-format.pipe';
+import { DateTimeFormatPipe } from '../pipes/datetime-format.pipe';
+import { CurrencyPositionPipe } from '../pipes/currency-position.pipe';
+import { Nl2BrPipe } from '../pipes/nl2br.pipe';
 
 @NgModule({
 	imports: [
 		CommonModule,
+		DateFormatPipe,
+		DateTimeFormatPipe,
+		CurrencyPositionPipe,
+		Nl2BrPipe,
 		FormsModule,
 		NbBadgeModule,
 		NbButtonModule,
@@ -63,7 +66,6 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		NbTooltipModule,
 		TranslateModule.forChild(),
 		DirectivesModule,
-		PipesModule,
 		ComponentsModule,
 		TaskBadgeViewComponentModule
 	],

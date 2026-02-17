@@ -30,11 +30,12 @@ const defaultPrecisionMap: unitPrecisionMap = {
  */
 
 @Pipe({
-    name: 'fileSize',
-    standalone: false
+	name: 'fileSize',
+	standalone: true
 })
 export class FileSizePipe implements PipeTransform {
 	private readonly units: unit[] = ['bytes', 'KB', 'MB', 'GB', 'TB'];
+
 	/**
 	 * Converts a number of bytes to the largest possible unit.
 	 *

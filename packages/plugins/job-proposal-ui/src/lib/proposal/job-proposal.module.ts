@@ -13,6 +13,7 @@ import {
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, Store } from '@gauzy/ui-core/core';
 import {
+	DateFormatPipe,
 	SmartDataViewLayoutModule,
 	SharedModule,
 	SelectorsModule,
@@ -31,6 +32,7 @@ import { COMPONENTS } from './components';
 @NgModule({
 	imports: [
 		RouterModule.forChild([]),
+		DateFormatPipe,
 		CKEditorModule,
 		NgSelectModule,
 		TranslateModule.forChild(),

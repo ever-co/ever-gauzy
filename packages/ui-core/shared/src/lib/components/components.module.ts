@@ -13,20 +13,24 @@ import { HeaderTitleComponent } from './header-title/header-title.component';
 import { LayoutSelectorComponent } from './layout-selector/layout-selector.component';
 import { UnderConstructionPopupComponent } from './popup/popup.component';
 import { SearchInputComponent } from './search-input/search-input.component';
-import { PipesModule } from '../pipes/pipes.module';
 
-export const Components = [
+const STANDALONE_COMPONENTS = [
+	DateRangeTitleComponent
+];
+
+const DECLARED_COMPONENTS = [
 	AlertModalComponent,
 	AvatarComponent,
 	BackNavigationComponent,
 	BadgeLabelComponent,
 	DashboardSkeletonComponent,
-	DateRangeTitleComponent,
 	HeaderTitleComponent,
 	LayoutSelectorComponent,
 	SearchInputComponent,
 	UnderConstructionPopupComponent
 ];
+
+export const Components = [...STANDALONE_COMPONENTS, ...DECLARED_COMPONENTS];
 
 @NgModule({
 	imports: [
@@ -36,11 +40,11 @@ export const Components = [
 		NbButtonModule,
 		NbTooltipModule,
 		NbIconModule,
-		PipesModule,
 		TranslateModule.forChild(),
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		...STANDALONE_COMPONENTS
 	],
-	declarations: [...Components],
+	declarations: [...DECLARED_COMPONENTS],
 	exports: [...Components]
 })
 export class ComponentsModule {}

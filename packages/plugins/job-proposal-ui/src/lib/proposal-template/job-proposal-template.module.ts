@@ -11,12 +11,14 @@ import {
 import { PermissionsEnum } from '@gauzy/contracts';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, Store } from '@gauzy/ui-core/core';
 import {
+	Nl2BrPipe,
 	SmartDataViewLayoutModule,
 	DialogsModule,
 	EmployeeMultiSelectModule,
 	NebularModule,
 	SharedModule,
-	StatusBadgeModule
+	StatusBadgeModule,
+	TruncatePipe
 } from '@gauzy/ui-core/shared';
 import { getJobProposalTemplateRoutes, JOB_PROPOSAL_TEMPLATE_PAGE_LINK } from './job-proposal-template.routes';
 import { ProposalTemplateListComponent } from './components/proposal-template-list/proposal-template-list.component';
@@ -26,6 +28,8 @@ import { ProposalTemplateFormComponent } from './components/proposal-template-fo
 	declarations: [ProposalTemplateListComponent, ProposalTemplateFormComponent],
 	imports: [
 		RouterModule.forChild([]),
+		Nl2BrPipe,
+		TruncatePipe,
 		NebularModule,
 		CKEditorModule,
 		TranslateModule.forChild(),

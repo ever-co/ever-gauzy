@@ -5,7 +5,6 @@ import { RouterModule } from '@angular/router';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ComponentsModule } from './components/components.module';
 import { DirectivesModule } from './directives/directives.module';
-import { PipesModule } from './pipes/pipes.module';
 
 const IMPORTS_EXPORTS = [
 	CommonModule,
@@ -14,8 +13,7 @@ const IMPORTS_EXPORTS = [
 	RouterModule,
 	NgxPermissionsModule,
 	ComponentsModule,
-	DirectivesModule,
-	PipesModule
+	DirectivesModule
 ];
 
 @NgModule({

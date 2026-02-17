@@ -13,7 +13,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { CandidateStore, EmployeeStore } from '@gauzy/ui-core/core';
 import { EmployeeRatesComponent } from './employee-rates.component';
 import { CurrencyModule } from '../../modules/currency';
-import { PipesModule } from '../../pipes/pipes.module';
 
 @NgModule({
 	imports: [
@@ -27,7 +26,6 @@ import { PipesModule } from '../../pipes/pipes.module';
 		NbIconModule,
 		NbActionsModule,
 		TranslateModule.forChild(),
-		PipesModule,
 		CurrencyModule
 	],
 	exports: [EmployeeRatesComponent],

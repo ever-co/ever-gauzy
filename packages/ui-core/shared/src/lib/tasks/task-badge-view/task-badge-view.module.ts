@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PipesModule } from '../../pipes/pipes.module';
 import { TaskBadgeViewComponent } from './task-badge-view.component';
+import { ReplacePipe } from '../../pipes/replace.pipe';
 
 @NgModule({
-	imports: [CommonModule, PipesModule],
+	imports: [CommonModule, ReplacePipe],
 	declarations: [TaskBadgeViewComponent],
 	exports: [TaskBadgeViewComponent]
 })

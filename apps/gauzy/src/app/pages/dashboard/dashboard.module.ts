@@ -25,6 +25,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	ActivityItemModule,
 	CounterPointModule,
+	CurrencyPositionPipe,
 	DynamicTabsModule,
 	GalleryModule,
 	InfoBlockModule,
@@ -117,6 +118,7 @@ const COMPONENTS = [
 		...THIRD_PARTY_MODULES,
 		...STANDALONE_MODULES,
 		BaseChartDirective,
+		CurrencyPositionPipe,
 		// Feature Modules
 		RecordsHistoryModule,
 		ProfitHistoryModule,

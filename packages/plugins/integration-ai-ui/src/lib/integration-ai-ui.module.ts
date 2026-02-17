@@ -10,7 +10,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { SharedModule, WorkInProgressModule } from '@gauzy/ui-core/shared';
+import { DateFormatPipe, SharedModule, WorkInProgressModule } from '@gauzy/ui-core/shared';
 import { IntegrationAiRoutes } from './integration-ai.routes';
 import { IntegrationAILayoutComponent } from './integration-ai.layout.component';
 import { IntegrationAIAuthorizationComponent } from './components/authorization/authorization.component';
@@ -25,6 +25,7 @@ import { IntegrationSettingCardComponent } from './components/integration-settin
 		IntegrationSettingCardComponent
 	],
 	imports: [
+		DateFormatPipe,
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,

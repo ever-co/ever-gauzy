@@ -33,7 +33,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
-import { TruncatePipe } from '../../pipes';
+import { TruncatePipe } from '../../pipes/truncate.pipe';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 
 @UntilDestroy({ checkProperties: true })

@@ -3,7 +3,7 @@ import { CurrencyPosition } from '@gauzy/contracts';
 
 @Pipe({
     name: 'position',
-    standalone: false
+    standalone: true
 })
 export class CurrencyPositionPipe implements PipeTransform {
 	/**

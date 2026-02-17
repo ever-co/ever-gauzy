@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 @Pipe({
     name: 'durationFormat',
-    standalone: false
+    standalone: true
 })
 export class DurationFormatPipe implements PipeTransform {
 	/**

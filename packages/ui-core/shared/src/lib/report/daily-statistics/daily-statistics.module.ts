@@ -6,12 +6,14 @@ import { TranslateModule } from '@ngx-translate/core';
 import { DailyStatisticsComponent } from './daily-statistics/daily-statistics.component';
 import { CounterPointModule } from '../../counter-point/counter-point.module';
 import { SharedModule } from '../../shared.module';
+import { DurationFormatPipe } from '../../pipes/duration-format.pipe';
 
 @NgModule({
 	declarations: [DailyStatisticsComponent],
 	exports: [DailyStatisticsComponent],
 	imports: [
 		CommonModule,
+		DurationFormatPipe,
 		FormsModule,
 		NbCardModule,
 		NbIconModule,

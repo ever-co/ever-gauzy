@@ -4,7 +4,7 @@ import { replaceAll } from '@gauzy/ui-core/common';
 
 @Pipe({
     name: 'replace',
-    standalone: false
+    standalone: true
 })
 export class ReplacePipe implements PipeTransform {
 	/**

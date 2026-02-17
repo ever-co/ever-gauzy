@@ -53,6 +53,7 @@ import {
 	ContactSelectModule,
 	CurrencyModule,
 	CurrencyPositionPipe,
+	DateFormatPipe,
 	EmployeeMultiSelectModule,
 	ProjectSelectModule,
 	SharedModule,
@@ -127,7 +128,9 @@ import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 		ProjectSelectModule,
 		SharedModule,
 		NbAccordionModule,
-		InvoiceViewInnerModule
+		InvoiceViewInnerModule,
+		DateFormatPipe,
+		CurrencyPositionPipe
 	],
 	providers: [
 		InvoicesService,
@@ -142,8 +145,7 @@ import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 		TasksStoreService,
 		InvoiceEstimateHistoryService,
 		TranslatableService,
-		CurrencyPipe,
-		CurrencyPositionPipe
+		CurrencyPipe
 	],
 	declarations: [
 		InvoicesComponent,
