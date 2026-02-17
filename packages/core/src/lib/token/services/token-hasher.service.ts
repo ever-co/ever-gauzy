@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
 import { ITokenHasher } from '../interfaces/jwt-service.interface';
 
 @Injectable()

@@ -1,5 +1,3 @@
 import { ICommand } from '@nestjs/cqrs';
 
-export class CleanupExpiredTokensCommand implements ICommand {
-	constructor() {}
-}
+export class CleanupExpiredTokensCommand implements ICommand {}

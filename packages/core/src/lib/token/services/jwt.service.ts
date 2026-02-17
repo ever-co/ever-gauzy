@@ -47,6 +47,7 @@ export class JwtService implements IJwtService {
 			const decoded = jwt.decode(token) as ITokenPayload;
 			return decoded;
 		} catch (error) {
+			console.error('Failed to decode token:', error);
 			return null;
 		}
 	}
