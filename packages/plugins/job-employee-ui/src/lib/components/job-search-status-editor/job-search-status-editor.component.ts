@@ -34,8 +34,8 @@ export class JobSearchStatusEditorComponent extends DefaultEditor implements Aft
 		this._store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => {
+				filter((organization): organization is IOrganization => !!organization),
+				tap((organization) => {
 					this.organization = organization;
 					this.employee = this.cell.getRow()?.getData();
 				}),
