@@ -8,7 +8,7 @@ export const ACCESS_TOKEN = createToken('AccessTokenServiceToken');
 export const JWT_ACCESS_TOKEN = createToken('JwtAccessToken');
 
 export interface IAccessTokenMetadata extends JwtPayload {
-	/** Client identify */
+	/** Client identifier */
 	clientId?: string;
 	/** User agent */
 	userAgent?: string;
@@ -16,8 +16,6 @@ export interface IAccessTokenMetadata extends JwtPayload {
 	ipAddress?: string;
 	/** Id */
 	id?: string;
-	/** Email */
-	email?: string;
 	/** TenantId */
 	tenantId?: string;
 	/** Organization Id */
