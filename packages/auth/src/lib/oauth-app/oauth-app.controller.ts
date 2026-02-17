@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Logger, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, HttpException, HttpStatus, Logger, Post, Query, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Public } from '@gauzy/common';
 import { OAuthAppSessionData, SocialAuthService } from '../social-auth.service';
@@ -11,7 +11,7 @@ interface OAuthAppAuthorizeQuery {
 	state?: string;
 }
 
-interface OAuthAppTokenRequest {
+interface OAuthAppTokenRequestDto {
 	grant_type?: string;
 	code?: string;
 	client_id?: string;
@@ -77,7 +77,10 @@ export class OAuthAppController {
 	}
 
 	@Post('/token')
-	async token(@Body() body: OAuthAppTokenRequest) {
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@Header('Pragma', 'no-cache')
+	async token(@Body() body: OAuthAppTokenRequestDto) {
 		if (!body.code || !body.client_id || !body.client_secret || !body.redirect_uri) {
 			throw new HttpException('Missing token request parameters', HttpStatus.BAD_REQUEST);
 		}

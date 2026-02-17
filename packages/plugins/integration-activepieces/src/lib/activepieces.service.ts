@@ -134,7 +134,7 @@ export class ActivepiecesService {
 				throw error;
 			}
 			this.logger.error('Failed to set up ActivePieces integration:', error);
-			throw new InternalServerErrorException(`Failed to set up ActivePieces integration: ${error.message}`);
+			throw new InternalServerErrorException('Failed to set up ActivePieces integration');
 		}
 	}
 
@@ -351,8 +351,12 @@ export class ActivepiecesService {
 		try {
 			// Get integration tenant with settings
 			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
 			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId: tenantId || undefined },
+				where: { id: integrationTenantId, tenantId },
 				relations: ['settings']
 			});
 
@@ -410,8 +414,12 @@ export class ActivepiecesService {
 		try {
 			// Get integration tenant with settings
 			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
 			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId: tenantId || undefined },
+				where: { id: integrationTenantId, tenantId },
 				relations: ['settings']
 			});
 
@@ -472,8 +480,12 @@ export class ActivepiecesService {
 			// 1. Try tenant-specific API key from database
 			if (integrationTenantId) {
 				const tenantId = RequestContext.currentTenantId();
+				if (!tenantId) {
+					throw new BadRequestException('Tenant ID not found in request context');
+				}
+
 				const integrationTenant = await this.integrationTenantService.findOneByOptions({
-					where: { id: integrationTenantId, tenantId: tenantId || undefined },
+					where: { id: integrationTenantId, tenantId },
 					relations: ['settings']
 				});
 

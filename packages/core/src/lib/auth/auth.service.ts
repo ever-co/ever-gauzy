@@ -43,6 +43,7 @@ import {
 	Inject,
 	Injectable,
 	InternalServerErrorException,
+	Logger,
 	NotFoundException,
 	Optional,
 	UnauthorizedException
@@ -88,6 +89,7 @@ import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 export class AuthService extends SocialAuthService {
 	// Get the type of the Object-Relational Mapping (ORM) used in the application.
 	private readonly ormType: MultiORM = getORMType();
+	private readonly logger = new Logger(AuthService.name);
 	private static readonly OAUTH_CODE_CACHE_PREFIX = 'oauth_app_code:';
 	private static readonly OAUTH_CODE_TTL_MS = 10 * 60 * 1000;
 
@@ -294,7 +296,7 @@ export class AuthService extends SocialAuthService {
 
 		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
 
-		console.log(
+		this.logger.log(
 			`OAuth app token exchanged for userId=${payload.userId}, tenantId=${payload.tenantId}, expiresIn=${expiresIn}s`
 		);
 

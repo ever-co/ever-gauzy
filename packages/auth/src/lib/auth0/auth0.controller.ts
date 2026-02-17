@@ -1,4 +1,4 @@
-import { Controller, Get, HttpException, HttpStatus, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Logger, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response, Request } from 'express';
 import { Public } from '@gauzy/common';
@@ -9,6 +9,8 @@ import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 @Public()
 @Controller('/auth')
 export class Auth0Controller {
+	private readonly logger = new Logger(Auth0Controller.name);
+
 	constructor(public readonly service: SocialAuthService) {}
 
 	/**
@@ -46,11 +48,15 @@ export class Auth0Controller {
 					session.regenerate((err: any) => (err ? reject(err) : resolve()));
 				});
 			} catch {
+				// Throw instead of redirect: session is in an indeterminate state after
+				// a failed regeneration, so redirect_uri cannot be trusted.
 				throw new HttpException('Failed to initialize secure session', HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 			// Re-validate redirect_uri against the allowlist (defense-in-depth against session tampering)
 			if (!this.service.isOAuthAppRedirectUriAllowed(oauthRequest.redirectUri)) {
+				// Throw instead of redirect: the redirect_uri itself failed validation,
+				// so it is unsafe to redirect the user to it.
 				throw new HttpException('Invalid redirect_uri', HttpStatus.BAD_REQUEST);
 			}
 
@@ -79,7 +85,7 @@ export class Auth0Controller {
 				});
 				return res.redirect(`${oauthRequest.redirectUri}?${params.toString()}`);
 			} catch (error: any) {
-				console.error('OAuth app authorization code creation failed:', error?.message, error?.stack);
+				this.logger.error('OAuth app authorization code creation failed', error?.stack);
 				const errorParams = new URLSearchParams({
 					error: 'server_error',
 					...(oauthRequest.state ? { state: oauthRequest.state } : {})
