@@ -3,7 +3,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TokenStatus } from '../../interfaces';
 import { IJwtService, ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
-import { JwtServiceToken, TokenReadRepositoryToken, TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
+import { JwtServiceToken, TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
 import { RevokeTokenCommand } from '../revoke-token.command';
 
 @CommandHandler(RevokeTokenCommand)
@@ -21,7 +21,7 @@ export class RevokeTokenHandler implements ICommandHandler<RevokeTokenCommand, v
 
 	async execute(command: RevokeTokenCommand): Promise<void> {
 		const { dto } = command;
-		const rawToken = resolveRawToken(dto);
+		const rawToken = dto.rawToken;
 		const tokenDigest = this.tokenHasher.hashToken(rawToken);
 
 		const token = await this.tokenReadRepository.findByHash(tokenDigest);

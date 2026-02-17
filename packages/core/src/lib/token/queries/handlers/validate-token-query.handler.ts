@@ -3,7 +3,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { IValidatedToken, TokenStatus } from '../../interfaces/token.interface';
-import { TokenReadRepositoryToken, TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
+import { TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
 import { TokenHasher } from '../../shared/token-hasher';
 import { TokenConfigRegistry } from '../../token-config.registry';
 import { ValidateTokenQuery } from '../validate-token.query';
@@ -22,7 +22,7 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 
 	async execute(query: ValidateTokenQuery): Promise<IValidatedToken> {
 		const { dto } = query;
-		const rawToken = resolveRawToken(dto);
+		const rawToken = dto.rawToken;
 		const jwtService = this.configRegistry.getJwtService(dto.tokenType);
 
 		try {

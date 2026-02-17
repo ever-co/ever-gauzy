@@ -4,7 +4,7 @@ import { TokenStatus } from '../../interfaces';
 import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { IGeneratedToken } from '../../interfaces/token.interface';
-import { TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
+import { TokenWriteRepositoryToken } from '../../shared';
 import { TokenHasher } from '../../shared/token-hasher';
 import { TokenConfigRegistry } from '../../token-config.registry';
 import { RotateTokenCommand } from '../rotate-token.command';
@@ -29,7 +29,7 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 		}
 
 		// Use pessimistic locking for atomic rotation
-		const rawOldToken = resolveRawToken(dto);
+		const rawOldToken = dto.rawOldToken;
 		const oldTokenDigest = this.tokenHasher.hashToken(rawOldToken);
 
 		return this.tokenRepository.transaction(async (repository: ITokenReadRepository & ITokenWriteRepository) => {
