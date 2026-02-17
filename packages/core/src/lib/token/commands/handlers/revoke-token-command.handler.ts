@@ -5,6 +5,7 @@ import { IJwtService, ITokenHasher } from '../../interfaces/jwt-service.interfac
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { JwtServiceToken, TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
 import { RevokeTokenCommand } from '../revoke-token.command';
+import { TokenHasher } from '../../shared/token-hasher';
 
 @CommandHandler(RevokeTokenCommand)
 export class RevokeTokenHandler implements ICommandHandler<RevokeTokenCommand, void> {
@@ -15,7 +16,7 @@ export class RevokeTokenHandler implements ICommandHandler<RevokeTokenCommand, v
 		private readonly tokenWriteRepository: ITokenWriteRepository,
 		@Inject(JwtServiceToken)
 		private readonly jwtService: IJwtService,
-		@Inject('ITokenHasher')
+		@Inject(TokenHasher)
 		private readonly tokenHasher: ITokenHasher
 	) {}
 
