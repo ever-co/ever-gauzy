@@ -4,6 +4,7 @@ import {
 	Logger,
 	HttpException,
 	HttpStatus,
+	NotFoundException,
 	UnauthorizedException,
 	InternalServerErrorException
 } from '@nestjs/common';
@@ -50,9 +51,16 @@ export class ActivepiecesService {
 			}
 
 			// Find or create the integration
-			let integration = await this.integrationService.findOneByOptions({
-				where: { provider: IntegrationEnum.ACTIVE_PIECES }
-			});
+			let integration: any = null;
+			try {
+				integration = await this.integrationService.findOneByOptions({
+					where: { provider: IntegrationEnum.ACTIVE_PIECES }
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integration) {
 				integration = await this.integrationService.create({
@@ -78,14 +86,21 @@ export class ActivepiecesService {
 			];
 
 			// Look up an existing integration tenant for this tenant/org
-			const existingTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					tenantId,
-					...(organizationId ? { organizationId } : {}),
-					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-				},
-				relations: ['settings']
-			});
+			let existingTenant: any = null;
+			try {
+				existingTenant = await this.integrationTenantService.findOneByOptions({
+					where: {
+						tenantId,
+						...(organizationId ? { organizationId } : {}),
+						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+					},
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			let integrationTenantId: string;
 
@@ -176,12 +191,19 @@ export class ActivepiecesService {
 			};
 
 			// Get API key for Activepieces API calls
-			const existingIntegrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					tenantId,
-					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+			let existingIntegrationTenant: any = null;
+			try {
+				existingIntegrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: {
+						tenantId,
+						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+					}
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
 				}
-			});
+			}
 
 			if (!existingIntegrationTenant) {
 				this.logger.warn(
@@ -355,10 +377,17 @@ export class ActivepiecesService {
 				throw new BadRequestException('Tenant ID not found in request context');
 			}
 
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId },
-				relations: ['settings']
-			});
+			let integrationTenant: any = null;
+			try {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: { id: integrationTenantId, tenantId },
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integrationTenant) {
 				return null;
@@ -418,10 +447,17 @@ export class ActivepiecesService {
 				throw new BadRequestException('Tenant ID not found in request context');
 			}
 
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId },
-				relations: ['settings']
-			});
+			let integrationTenant: any = null;
+			try {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: { id: integrationTenantId, tenantId },
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integrationTenant) {
 				this.logger.warn(`Integration tenant not found: ${integrationTenantId}`);
@@ -484,10 +520,17 @@ export class ActivepiecesService {
 					throw new BadRequestException('Tenant ID not found in request context');
 				}
 
-				const integrationTenant = await this.integrationTenantService.findOneByOptions({
-					where: { id: integrationTenantId, tenantId },
-					relations: ['settings']
-				});
+				let integrationTenant: any = null;
+				try {
+					integrationTenant = await this.integrationTenantService.findOneByOptions({
+						where: { id: integrationTenantId, tenantId },
+						relations: ['settings']
+					});
+				} catch (error) {
+					if (!(error instanceof NotFoundException)) {
+						throw error;
+					}
+				}
 
 				const apiKeySetting = integrationTenant?.settings?.find(
 					(s: any) => s.settingsName === ActivepiecesSettingName.API_KEY
@@ -523,10 +566,21 @@ export class ActivepiecesService {
 		try {
 			// Get integration tenant with settings
 			const tenantId = RequestContext.currentTenantId();
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId: tenantId || undefined },
-				relations: ['settings']
-			});
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
+			let integrationTenant: any = null;
+			try {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: { id: integrationTenantId, tenantId },
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integrationTenant) {
 				return [];
@@ -560,10 +614,21 @@ export class ActivepiecesService {
 		try {
 			// Get integration tenant with settings
 			const tenantId = RequestContext.currentTenantId();
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId: tenantId || undefined },
-				relations: ['settings']
-			});
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
+			let integrationTenant: any = null;
+			try {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: { id: integrationTenantId, tenantId },
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integrationTenant) {
 				return false;
@@ -623,9 +688,16 @@ export class ActivepiecesService {
 	): Promise<any> {
 		try {
 			// Find or create the integration
-			let integration = await this.integrationService.findOneByOptions({
-				where: { provider: IntegrationEnum.ACTIVE_PIECES }
-			});
+			let integration: any = null;
+			try {
+				integration = await this.integrationService.findOneByOptions({
+					where: { provider: IntegrationEnum.ACTIVE_PIECES }
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integration) {
 				integration = await this.integrationService.create({

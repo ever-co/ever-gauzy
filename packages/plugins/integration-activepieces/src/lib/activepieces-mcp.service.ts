@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
 import { IntegrationEnum } from '@gauzy/contracts';
@@ -198,16 +198,23 @@ export class ActivepiecesMcpService {
 			}
 
 			// 1. Try tenant-specific API key from database
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					tenantId,
-					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-				},
-				relations: ['settings']
-			});
+			let integrationTenant: any = null;
+			try {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: {
+						tenantId,
+						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+					},
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			const apiKeySetting = integrationTenant?.settings?.find(
-				(setting) => setting.settingsName === ActivepiecesSettingName.API_KEY
+				(setting: any) => setting.settingsName === ActivepiecesSettingName.API_KEY
 			);
 
 			if (apiKeySetting?.settingsValue) {
