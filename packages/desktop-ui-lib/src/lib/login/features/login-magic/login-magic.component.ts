@@ -161,6 +161,7 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 				// Turn off loading indicator
 				finalize(() => {
 					this.isLoading = false;
+					this.cdr.markForCheck();
 				}),
 				tap(() => {
 					this.isCodeSent = true;
@@ -231,6 +232,7 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 		});
 
 		this.isLoading = false;
+		this.cdr.markForCheck();
 	}
 
 	/**

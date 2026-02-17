@@ -14,7 +14,7 @@ import {
 } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
-import { catchError, EMPTY, tap } from 'rxjs';
+import { catchError, EMPTY, finalize, tap } from 'rxjs';
 import { AuthService } from '../auth';
 import { GAUZY_ENV } from '../constants';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
@@ -115,10 +115,14 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 								}
 							};
 							await this.router.navigate(['/', 'auth', 'login-workspace'], extra);
-							this.submitted = false;
 						}
 					}
 				),
+				finalize(() => {
+					this.submitted = false;
+					this.cdr.markForCheck();
+				}),
+				// Handle and log errors using the error handling service
 				catchError((error) => {
 					this.submitted = false;
 					// Handle and log errors using the error handling service

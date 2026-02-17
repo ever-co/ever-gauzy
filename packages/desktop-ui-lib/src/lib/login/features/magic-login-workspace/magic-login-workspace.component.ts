@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
-import { catchError, EMPTY, filter, firstValueFrom, switchMap, tap } from 'rxjs';
+import { catchError, concatMap, EMPTY, filter, finalize, firstValueFrom, switchMap, tap } from 'rxjs';
 import { AuthService, AuthStrategy } from '../../../auth';
 import { ErrorHandlerService } from '../../../services';
 import { LogoComponent } from '../../shared/ui/logo/logo.component';
@@ -24,12 +24,14 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	public totalWorkspaces: number;
 	public showPopup: boolean = false;
 	public workspaces: IWorkspaceResponse[] = []; // Array of workspace users
+	public loading: boolean = false; // Flag to indicate if data loading is in progress
 
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
 		private readonly _authService: AuthService,
 		private readonly _authStrategy: AuthStrategy,
+		private readonly _cdr: ChangeDetectorRef,
 		private readonly _errorHandlingService: ErrorHandlerService
 	) {
 		// Try to get email and code from navigation state first (secure method)
@@ -54,6 +56,9 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 						'[MagicLogin] Code received via URL query params (insecure). Use navigation state instead.'
 					);
 					this.confirmSignInCode(email, code);
+				}),
+				finalize(() => {
+					this._cdr.markForCheck();
 				}),
 				untilDestroyed(this)
 			)
@@ -96,13 +101,17 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 							}
 						}
 					),
+					finalize(() => {
+						this._cdr.markForCheck();
+					}),
 					// Handle component lifecycle to avoid memory leaks
 					untilDestroyed(this)
 				)
 			); // Wait for the login request to complete
 		} catch (error) {
 			this.error = true;
-
+			this._cdr.markForCheck();
+			// Handle and log errors using the error handling service
 			await this._router.navigate(['/auth/login-magic']);
 		}
 	}
@@ -117,6 +126,7 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 
 		this.showPopup = false;
 		this.success = true;
+		this.loading = true;
 
 		// Extract workspace, email, and token from the parameter and component state
 		const email = this.confirmedEmail;
@@ -130,6 +140,11 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 					// Store authentication data using centralized method
 					this._authStrategy.storeAuthenticationData(response);
 					return this._authService.electronAuthentication(response);
+				}),
+				concatMap(() => this._router.navigate(['/time-tracker'])),
+				finalize(() => {
+					this.loading = false;
+					this._cdr.markForCheck();
 				}),
 				catchError((error) => {
 					// Handle and log errors using the error handling service

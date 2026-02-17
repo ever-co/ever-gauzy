@@ -2,6 +2,7 @@
   <ngx-workspace-selection
     [workspaces]="workspaces"
     [confirmedEmail]="confirmedEmail"
+	[loading]="loading"
     (selectedWorkspace)="signInWorkspace($event)"
   ></ngx-workspace-selection>
 } @else {
@@ -33,5 +34,3 @@
     </div>
   }
 }
-
-

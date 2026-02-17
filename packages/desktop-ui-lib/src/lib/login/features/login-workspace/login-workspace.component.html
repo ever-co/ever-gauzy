@@ -2,6 +2,7 @@
   @if (workspaces.length > 0) {
     <ngx-workspace-selection
       [workspaces]="workspaces"
+      [loading]="loading"
       [confirmedEmail]="confirmedEmail"
       (selectedWorkspace)="signInWorkspace($event)"
     ></ngx-workspace-selection>
@@ -104,4 +105,3 @@
         </div>
       </form>
     </ng-template>
-
