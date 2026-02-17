@@ -56,9 +56,7 @@ export class JobSearchStatusEditorComponent extends DefaultEditor implements Aft
 	/**
 	 * Updates the job search availability status of an employee within the organization.
 	 *
-	 * @param organization - The current organization context.
-	 * @param employee - The employee object to update.
-	 * @param isJobSearchActive - A boolean flag indicating whether the job search is active.
+	 * `@param` isJobSearchActive - A boolean flag indicating whether the job search is active.
 	 */
 	updateJobSearchAvailability(isJobSearchActive: boolean): void {
 		try {
