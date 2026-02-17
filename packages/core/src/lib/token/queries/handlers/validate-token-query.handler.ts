@@ -47,7 +47,7 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 			}
 
 			// Check if token is active (status only; expiration handled below)
-			if (tokenRecord.status !== TokenStatus.ACTIVE) {
+			if (!tokenRecord.isActivated()) {
 				return {
 					isValid: false,
 					reason: `Token is ${tokenRecord.status.toLowerCase()}`

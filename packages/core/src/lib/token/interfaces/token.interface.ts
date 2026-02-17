@@ -91,6 +91,11 @@ export interface IToken extends IBaseEntityModel {
 	version: number;
 
 	/**
+	 * Determines if the token is currently active based on its status
+	 * @return true if token is active, false otherwise
+	 */
+	isActivated(): boolean;
+	/**
 	 * Determines if the token can be rotated based on its status and configuration
 	 * @return true if token can be rotated, false otherwise
 	 */

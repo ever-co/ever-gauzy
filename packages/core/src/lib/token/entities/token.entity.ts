@@ -5,10 +5,7 @@ import { IsDate, IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-
 import { Index, JoinColumn, RelationId, VersionColumn } from 'typeorm';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
 import { BaseEntity, User } from '../../core/entities/internal';
-import {
-	IToken,
-	TokenStatus
-} from '../interfaces';
+import { IToken, TokenStatus } from '../interfaces';
 
 @Index(['tokenHash', 'status'])
 @Index(['userId', 'tokenType', 'status'])
@@ -233,6 +230,14 @@ export class Token extends BaseEntity implements IToken {
 	})
 	@JoinColumn()
 	user: IUser;
+
+	/**
+	 * Determines if the token is currently active based on its status
+	 * @return true if token is active, false otherwise
+	 */
+	public isActivated(): boolean {
+		return this.status === TokenStatus.ACTIVE;
+	}
 
 	/**
 	 * Determines if this token can be rotated to a new token.
