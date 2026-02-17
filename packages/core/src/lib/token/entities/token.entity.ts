@@ -20,7 +20,6 @@ export class Token extends BaseEntity implements IToken {
 	})
 	@IsString()
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: false })
-	@Index()
 	tokenHash: string;
 
 	@ApiProperty({
@@ -102,7 +101,7 @@ export class Token extends BaseEntity implements IToken {
 	})
 	@MultiORMManyToOne(() => Token, {
 		nullable: true,
-		onDelete: 'CASCADE'
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	rotatedFromToken: IToken | null;
@@ -128,7 +127,7 @@ export class Token extends BaseEntity implements IToken {
 	})
 	@MultiORMManyToOne(() => Token, {
 		nullable: true,
-		onDelete: 'CASCADE'
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	rotatedToToken: IToken | null;
