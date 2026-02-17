@@ -46,8 +46,8 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 				};
 			}
 
-			// Check if token is active
-			if (!tokenRecord.canRotate()) {
+			// Check if token is active (status only; expiration handled below)
+			if (tokenRecord.status !== TokenStatus.ACTIVE) {
 				return {
 					isValid: false,
 					reason: `Token is ${tokenRecord.status.toLowerCase()}`
@@ -70,9 +70,14 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 				const config = this.configRegistry.getConfig(dto.tokenType);
 				if (config.threshold && tokenRecord.isInactive(config.threshold)) {
 					// Revoke due to inactivity
-					await this.tokenWriteRepository.updateStatus(tokenRecord.id, TokenStatus.REVOKED, tokenRecord.version, {
-						revokedReason: 'Inactivity timeout'
-					});
+					await this.tokenWriteRepository.updateStatus(
+						tokenRecord.id,
+						TokenStatus.REVOKED,
+						tokenRecord.version,
+						{
+							revokedReason: 'Inactivity timeout'
+						}
+					);
 
 					return {
 						isValid: false,
