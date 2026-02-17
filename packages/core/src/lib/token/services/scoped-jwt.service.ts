@@ -22,15 +22,9 @@ export class ScopedJwtService implements IJwtService {
 	}
 
 	async verify(token: string): Promise<ITokenPayload> {
+		let decoded: ITokenPayload;
 		try {
-			const decoded = jwt.verify(token, this.secret) as ITokenPayload;
-
-			// Verify token type matches
-			if (decoded.tokenType !== this.tokenType) {
-				throw new Error('Token type mismatch');
-			}
-
-			return decoded;
+			decoded = jwt.verify(token, this.secret) as ITokenPayload;
 		} catch (error) {
 			if (error instanceof jwt.TokenExpiredError) {
 				throw new Error('Token has expired');
@@ -40,6 +34,13 @@ export class ScopedJwtService implements IJwtService {
 			}
 			throw new Error('Token verification failed');
 		}
+
+		// Verify token type matches (outside try/catch so application errors are not swallowed)
+		if (decoded.tokenType !== this.tokenType) {
+			throw new Error('Token type mismatch');
+		}
+
+		return decoded;
 	}
 
 	decode(token: string): ITokenPayload | null {
