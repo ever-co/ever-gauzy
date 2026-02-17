@@ -1,9 +1,11 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TokenStatus } from '../../interfaces';
+import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { IGeneratedToken } from '../../interfaces/token.interface';
 import { TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
+import { TokenHasher } from '../../shared/token-hasher';
 import { TokenConfigRegistry } from '../../token-config.registry';
 import { CreateTokenCommand } from '../create-token.command';
 
@@ -14,7 +16,9 @@ export class CreateTokenHandler implements ICommandHandler<CreateTokenCommand, I
 		private readonly tokenReadRepository: ITokenReadRepository,
 		@Inject(TokenWriteRepositoryToken)
 		private readonly tokenWriteRepository: ITokenWriteRepository,
-		private readonly configRegistry: TokenConfigRegistry
+		private readonly configRegistry: TokenConfigRegistry,
+		@Inject(TokenHasher)
+		private readonly tokenHasher: ITokenHasher
 	) {}
 
 	async execute(command: CreateTokenCommand): Promise<IGeneratedToken> {
@@ -64,7 +68,7 @@ export class CreateTokenHandler implements ICommandHandler<CreateTokenCommand, I
 			const expiresInMs = expiresAt ? expiresAt.getTime() - Date.now() : undefined;
 			const expiresInSeconds = expiresInMs ? Math.max(1, Math.ceil(expiresInMs / 1000)) : undefined;
 			const jwt = jwtService.sign(payload, expiresInSeconds);
-			const tokenHash = jwtService.hashToken(jwt);
+			const tokenHash = this.tokenHasher.hashToken(jwt);
 
 			// Update token with hash
 			tokenRecord.tokenHash = tokenHash;

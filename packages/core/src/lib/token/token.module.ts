@@ -13,6 +13,7 @@ import { TokenRepository } from './repositories/token.repository';
 // Services
 import { JwtService } from './services/jwt.service';
 import { ScopedJwtService } from './services/scoped-jwt.service';
+import { TokenHasherService } from './services/token-hasher.service';
 import { TokenService } from './services/token.service';
 import { TokenConfigModule } from './token-config.module';
 import { TokenConfigRegistry } from './token-config.registry';
@@ -49,6 +50,7 @@ import {
 	TokenRepositoryToken,
 	TokenWriteRepositoryToken
 } from './shared';
+import { TokenHasher } from './shared/token-hasher';
 
 type TokenProviderToken = string | symbol;
 type AsyncInjectTokens = NonNullable<FactoryProvider['inject']>;
@@ -79,7 +81,8 @@ const BaseExports: ExportedProvider[] = [
 	TokenReadRepositoryToken,
 	TokenWriteRepositoryToken,
 	TokenMaintenanceRepositoryToken,
-	JwtServiceToken
+	JwtServiceToken,
+	TokenHasherService
 ];
 
 export interface TokenModuleOptions {
@@ -158,6 +161,11 @@ export class TokenModule {
 			{
 				provide: JwtServiceToken,
 				useExisting: JwtService
+			},
+			TokenHasherService,
+			{
+				provide: TokenHasher,
+				useExisting: TokenHasherService
 			}
 		];
 	}

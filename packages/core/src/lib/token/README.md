@@ -304,7 +304,8 @@ describe('TokenService', () => {
 			providers: [
 				TokenService,
 				{ provide: 'ITokenRepository', useValue: mockRepository },
-				{ provide: 'IJwtService', useValue: mockJwtService }
+				{ provide: 'IJwtService', useValue: mockJwtService },
+				{ provide: 'ITokenHasher', useValue: mockTokenHasher }
 			]
 		}).compile();
 
@@ -373,6 +374,7 @@ Contributions are welcome! This module follows:
 -   Clean architecture
 -   TypeScript strict mode
 -
+
 ## Security Best Practices
 
 1. **Hash Tokens**: Never store raw JWT in database
@@ -386,11 +388,11 @@ Contributions are welcome! This module follows:
 
 Contributions are welcome! This module follows:
 
-- SOLID principles
-- CQRS pattern
-- Clean architecture
-- TypeScript strict mode
-- Comprehensive testing
+-   SOLID principles
+-   CQRS pattern
+-   Clean architecture
+-   TypeScript strict mode
+-   Comprehensive testing
 
 ## License
 

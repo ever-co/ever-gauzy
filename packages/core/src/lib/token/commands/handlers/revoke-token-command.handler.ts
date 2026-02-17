@@ -1,7 +1,7 @@
 import { ConflictException, Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TokenStatus } from '../../interfaces';
-import { IJwtService } from '../../interfaces/jwt-service.interface';
+import { IJwtService, ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { JwtServiceToken, TokenReadRepositoryToken, TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
 import { RevokeTokenCommand } from '../revoke-token.command';
@@ -14,13 +14,15 @@ export class RevokeTokenHandler implements ICommandHandler<RevokeTokenCommand, v
 		@Inject(TokenWriteRepositoryToken)
 		private readonly tokenWriteRepository: ITokenWriteRepository,
 		@Inject(JwtServiceToken)
-		private readonly jwtService: IJwtService
+		private readonly jwtService: IJwtService,
+		@Inject('ITokenHasher')
+		private readonly tokenHasher: ITokenHasher
 	) {}
 
 	async execute(command: RevokeTokenCommand): Promise<void> {
 		const { dto } = command;
 		const rawToken = resolveRawToken(dto);
-		const tokenDigest = this.jwtService.hashToken(rawToken);
+		const tokenDigest = this.tokenHasher.hashToken(rawToken);
 
 		const token = await this.tokenReadRepository.findByHash(tokenDigest);
 

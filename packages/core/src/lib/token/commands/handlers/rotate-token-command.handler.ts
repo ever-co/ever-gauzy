@@ -1,9 +1,11 @@
 import { ConflictException, Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TokenStatus } from '../../interfaces';
+import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { IGeneratedToken } from '../../interfaces/token.interface';
 import { TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
+import { TokenHasher } from '../../shared/token-hasher';
 import { TokenConfigRegistry } from '../../token-config.registry';
 import { RotateTokenCommand } from '../rotate-token.command';
 
@@ -12,7 +14,9 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 	constructor(
 		@Inject(TokenWriteRepositoryToken)
 		private readonly tokenRepository: ITokenWriteRepository,
-		private readonly configRegistry: TokenConfigRegistry
+		private readonly configRegistry: TokenConfigRegistry,
+		@Inject(TokenHasher)
+		private readonly tokenHasher: ITokenHasher
 	) {}
 
 	async execute(command: RotateTokenCommand): Promise<IGeneratedToken> {
@@ -26,7 +30,7 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 
 		// Use pessimistic locking for atomic rotation
 		const rawOldToken = resolveRawToken(dto);
-		const oldTokenDigest = jwtService.hashToken(rawOldToken);
+		const oldTokenDigest = this.tokenHasher.hashToken(rawOldToken);
 
 		return this.tokenRepository.transaction(async (repository: ITokenReadRepository & ITokenWriteRepository) => {
 			const oldToken = await repository.findByHashWithLock(oldTokenDigest);
@@ -76,7 +80,7 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 			const expiresInMs = expiresAt ? expiresAt.getTime() - Date.now() : undefined;
 			const expiresInSeconds = expiresInMs ? Math.max(1, Math.ceil(expiresInMs / 1000)) : undefined;
 			const jwt = jwtService.sign(payload, expiresInSeconds);
-			const tokenHash = jwtService.hashToken(jwt);
+			const tokenHash = this.tokenHasher.hashToken(jwt);
 
 			// Update new token with hash
 			newTokenRecord.tokenHash = tokenHash;

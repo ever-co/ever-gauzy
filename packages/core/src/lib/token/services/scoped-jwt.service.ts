@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import { IJwtService, ITokenPayload } from '../interfaces';
 
@@ -51,9 +50,5 @@ export class ScopedJwtService implements IJwtService {
 			console.error('Failed to decode token:', error);
 			return null;
 		}
-	}
-
-	hashToken(token: string): string {
-		return crypto.createHash('sha256').update(token).digest('hex');
 	}
 }

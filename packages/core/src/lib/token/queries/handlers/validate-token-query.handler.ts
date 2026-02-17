@@ -1,8 +1,10 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { IValidatedToken, TokenStatus } from '../../interfaces/token.interface';
 import { TokenReadRepositoryToken, TokenWriteRepositoryToken, resolveRawToken } from '../../shared';
+import { TokenHasher } from '../../shared/token-hasher';
 import { TokenConfigRegistry } from '../../token-config.registry';
 import { ValidateTokenQuery } from '../validate-token.query';
 
@@ -13,7 +15,9 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 		@Inject(TokenReadRepositoryToken)
 		private readonly tokenReadRepository: ITokenReadRepository,
 		@Inject(TokenWriteRepositoryToken)
-		private readonly tokenWriteRepository: ITokenWriteRepository
+		private readonly tokenWriteRepository: ITokenWriteRepository,
+		@Inject(TokenHasher)
+		private readonly tokenHasher: ITokenHasher
 	) {}
 
 	async execute(query: ValidateTokenQuery): Promise<IValidatedToken> {
@@ -34,7 +38,7 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 			}
 
 			// Hash the token for database lookup
-			const tokenHash = jwtService.hashToken(rawToken);
+			const tokenHash = this.tokenHasher.hashToken(rawToken);
 
 			// Find token in database
 			const tokenRecord = await this.tokenReadRepository.findByHash(tokenHash);

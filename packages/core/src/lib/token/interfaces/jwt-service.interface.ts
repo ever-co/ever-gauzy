@@ -15,9 +15,11 @@ export interface IJwtService {
 	 * Decode a JWT token without verification (for debugging)
 	 */
 	decode(token: string): ITokenPayload | null;
+}
 
-	/**
-	 * Hash a token for storage (one-way hash)
-	 */
+/**
+ * Interface for hashing tokens (one-way hash)
+ */
+export interface ITokenHasher {
 	hashToken(token: string): string;
 }

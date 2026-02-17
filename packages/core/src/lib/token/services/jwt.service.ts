@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import { IJwtService } from '../interfaces/jwt-service.interface';
 import { ITokenPayload } from '../interfaces/token.interface';
@@ -50,9 +49,5 @@ export class JwtService implements IJwtService {
 		} catch (error) {
 			return null;
 		}
-	}
-
-	public hashToken(token: string): string {
-		return crypto.createHash('sha256').update(token).digest('hex');
 	}
 }
