@@ -423,7 +423,7 @@ export class RequestContext {
 	 * Checks if ip address is available in the request context and returns it, otherwise returns 'unknown-ip'.
 	 * @returns {string} - The IP address from the request context or 'unknown-ip' if not available.
 	 */
-	static currentIp(): string | null {
+	static currentIp(): string {
 		const requestContext = RequestContext.currentRequestContext();
 		if (requestContext) {
 			const req = requestContext._req;
@@ -441,7 +441,7 @@ export class RequestContext {
 	 * Checks if user agent is available in the request context and returns it, otherwise returns 'unknown-user-agent'.
 	 * @returns {string} - The user agent from the request context or 'unknown-user-agent' if not available.
 	 */
-	static currentUserAgent(): string | null {
+	static currentUserAgent(): string {
 		const requestContext = RequestContext.currentRequestContext();
 		if (requestContext) {
 			return requestContext._req.headers['user-agent'] || 'unknown-user-agent';
