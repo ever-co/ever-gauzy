@@ -8,7 +8,7 @@ import { Store } from '@gauzy/ui-core/core';
 import { ToggleSwitcherComponent } from '@gauzy/ui-core/shared';
 import { JobSearchStoreService } from '../../providers/job-search-store.service';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
 	template: `
 		<ngx-toggle-switcher
@@ -20,8 +20,8 @@ import { JobSearchStoreService } from '../../providers/job-search-store.service'
 	standalone: false
 })
 export class JobSearchStatusEditorComponent extends DefaultEditor implements AfterViewInit, OnInit {
-	public organization: IOrganization;
-	public employee: IEmployee;
+	public organization!: IOrganization;
+	public employee!: IEmployee;
 
 	@Input() cell!: Cell;
 	@ViewChild(ToggleSwitcherComponent) switcher!: ToggleSwitcherComponent;
@@ -45,11 +45,10 @@ export class JobSearchStatusEditorComponent extends DefaultEditor implements Aft
 	}
 
 	ngAfterViewInit(): void {
-		if (!this.switcher) {
+		if (!this.switcher || !this.employee) {
 			return;
 		}
-
-		this.switcher.value = this.employee?.isJobSearchActive || false;
+		this.switcher.value = this.employee.isJobSearchActive ?? false;
 		this._cdr.detectChanges();
 	}
 
@@ -59,6 +58,9 @@ export class JobSearchStatusEditorComponent extends DefaultEditor implements Aft
 	 * `@param` isJobSearchActive - A boolean flag indicating whether the job search is active.
 	 */
 	async updateJobSearchAvailability(isJobSearchActive: boolean): Promise<void> {
+		if (!this.organization || !this.employee) {
+			return;
+		}
 		try {
 			await this._jobSearchStoreService.updateJobSearchAvailability(
 				this.organization,
@@ -66,7 +68,7 @@ export class JobSearchStatusEditorComponent extends DefaultEditor implements Aft
 				isJobSearchActive
 			);
 		} catch (error) {
-			console.log('Error while updating job search availability:', error);
+			console.error('Error while updating job search availability:', error);
 		}
 	}
 }
