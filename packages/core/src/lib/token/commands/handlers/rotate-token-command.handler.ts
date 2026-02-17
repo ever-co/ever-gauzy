@@ -50,7 +50,7 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 			// Calculate expiration for new token
 			const expiresAt = config.expiration ? new Date(Date.now() + config.expiration) : null;
 
-			// Metatdata for new token can be merged or replaced - here we choose to merge
+			// Metatdata can come from the DTO (for client-provided metadata) or be copied from the old token if not provided
 			const metadata = dto?.metadata || oldToken?.metadata;
 
 			// Create new token
