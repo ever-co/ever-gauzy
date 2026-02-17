@@ -53,6 +53,8 @@ export enum JobSearchTabsEnum {
 	selector: 'ga-job-employees',
 	templateUrl: './job-employee.component.html',
 	styleUrls: ['./job-employee.component.scss'],
+	// JobSearchStoreService provided here so dynamically created cell editors (e.g. JobSearchStatusEditorComponent)
+	// in the smart table can inject it; their injector may not see the module-level provider (NG0201 otherwise).
 	providers: [CurrencyPipe, JobSearchStoreService],
 	standalone: false
 })
