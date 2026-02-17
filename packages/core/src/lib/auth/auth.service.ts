@@ -1133,10 +1133,11 @@ export class AuthService extends SocialAuthService {
 			const organizationId = RequestContext.currentOrganizationId() || user.lastOrganizationId;
 
 			// Get and return the JWT access token for the user with organization context
-			const [access_token, refresh_token] = await Promise.all([
-				this.getJwtAccessToken(user, organizationId, metadata),
-				this.rotateRefreshToken(token, user, organizationId, metadata)
-			]);
+			// Generate the access token first (non-destructive). Only rotate the refresh token after
+			// successful access-token generation to avoid revoking the old refresh token if
+			// access-token generation fails.
+			const access_token = await this.getJwtAccessToken(user, organizationId, metadata);
+			const refresh_token = await this.rotateRefreshToken(token, user, organizationId, metadata);
 
 			// Update the user's current refresh token in the database
 			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
