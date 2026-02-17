@@ -53,10 +53,10 @@ export class CreateTokenHandler implements ICommandHandler<CreateTokenCommand, I
 
 		// Generate JWT with tokenId
 		const payload = {
+			...dto.metadata,
 			userId: dto.userId,
 			tokenType: dto.tokenType,
-			tokenId: tokenRecord.id,
-			...dto.metadata
+			tokenId: tokenRecord.id
 		};
 
 		const expiresInMs = expiresAt ? expiresAt.getTime() - Date.now() : undefined;

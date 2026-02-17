@@ -55,12 +55,12 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 
 			// Create new token
 			const newTokenRecord = await repository.create({
+				...(metadata && { metadata }),
 				userId: dto.userId,
 				tokenType: dto.tokenType,
 				tokenHash: '',
 				status: TokenStatus.ACTIVE,
 				expiresAt,
-				...(metadata && { metadata }),
 				rotatedFromTokenId: oldToken.id,
 				lastUsedAt: new Date()
 			});

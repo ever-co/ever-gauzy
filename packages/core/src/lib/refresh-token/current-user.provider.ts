@@ -3,7 +3,7 @@ import { RequestContext } from '../core';
 import { createToken } from '../token/shared/create-token';
 
 export interface ICurrentUserProvider {
-	getCurrentUserId(): string;
+	getCurrentUserId(): string | null;
 }
 
 export const CURRENT_USER_PROVIDER = createToken('CurrentUserProviderToken');
