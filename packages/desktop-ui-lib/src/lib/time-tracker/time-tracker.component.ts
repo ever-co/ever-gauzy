@@ -901,7 +901,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						switchMap(() => this._authStrategy.logout()),
 						tap(() => this.afterLogout())
 					)
-				)
+				),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -1143,7 +1144,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this.stopTimer();
 				}
 				if (!this._isSpecialLogout) {
-					await this.logout();
+					this.logout();
 				}
 			})
 		);
@@ -1771,7 +1772,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			if (this._isSpecialLogout) {
 				// wait 3 sec and logout
-				await this.logout();
+				this.logout();
 			}
 
 			if (this.quitApp) {
