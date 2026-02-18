@@ -77,11 +77,31 @@ window.addEventListener('DOMContentLoaded', async () => {
 	 */
 	const overStyle = document.createElement('style');
 	overStyle.innerHTML = `
+		/* Use system-ui for the titlebar and all its children */
+		.cet-titlebar, .cet-menubar, .cet-action-label {
+			font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
+			font-size: 12px !important;
+			-webkit-font-smoothing: antialiased;
+		}
+
+		.cet-menubar .cet-menubar-menu-button .cet-menubar-menu-title {
+			font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
+			font-size: 12px !important;
+			-webkit-font-smoothing: antialiased;
+		}
+
+		/* Make the title text slightly more prominent like native Windows 11 apps */
+		.cet-title {
+			font-weight: 400;
+		}
+
         .cet-container {
             top:0px !important;
 			overflow: unset !important;
         }
         .cet-menubar-menu-container {
+			font-family: system-ui, sans-serif;
+			backdrop-filter: blur(12px); /* Gives it a modern Windows 'Mica' or 'Acrylic' feel */
             position: absolute;
             display: block;
             left: 0px;
