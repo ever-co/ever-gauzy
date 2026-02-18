@@ -70,7 +70,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 	constructor(
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private electronService: ElectronService,
 		private _errorHandlerService: ErrorHandlerService,
 		private _loggerServer: LoggerService,

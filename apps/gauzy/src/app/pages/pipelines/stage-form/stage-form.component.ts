@@ -8,9 +8,9 @@ import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 import { Store } from '@gauzy/ui-core/core';
 
 @Component({
-    templateUrl: './stage-form.component.html',
-    selector: 'ga-stage-form',
-    standalone: false
+	templateUrl: './stage-form.component.html',
+	selector: 'ga-stage-form',
+	standalone: false
 })
 export class StageFormComponent implements OnInit {
 	@Input('values')
@@ -25,7 +25,7 @@ export class StageFormComponent implements OnInit {
 
 	constructor(
 		private readonly controlContainer: ControlContainer,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private fb: UntypedFormBuilder,
 		private store: Store
 	) {}

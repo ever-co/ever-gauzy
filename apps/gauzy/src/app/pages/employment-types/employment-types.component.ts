@@ -58,7 +58,7 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	constructor(
 		private fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private store: Store,
 		private organizationEmploymentTypesService: OrganizationEmploymentTypesService,
 		readonly translateService: TranslateService,
@@ -350,7 +350,6 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		this.selected.employmentType = orgEmpType;
 		this.selectedOrgEmpType = this.selected.employmentType;
 	}
-
 	titleKey(): string {
 		return this.selectedOrgEmpType?.id ? 'POP_UPS.EDIT' : 'POP_UPS.ADD';
 	}

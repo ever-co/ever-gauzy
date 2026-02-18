@@ -22,7 +22,7 @@ export class KeyresultTypeSelectComponent {
 
 	keyResultTypeEnum = KeyResultTypeEnum;
 
-	constructor(private dialogService: NbDialogService, private goalSettingsService: GoalSettingsService) {}
+	constructor(private readonly dialogService: NbDialogService, private goalSettingsService: GoalSettingsService) {}
 
 	taskTypeValidators() {
 		if (this.parentFormGroup.get('type').value === this.keyResultTypeEnum.TASK) {

@@ -56,7 +56,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 		readonly translateService: TranslateService,
 		private approvalRequestService: RequestApprovalService,
 		private store: Store,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private toastrService: ToastrService,
 		private router: Router,
 		private readonly route: ActivatedRoute
