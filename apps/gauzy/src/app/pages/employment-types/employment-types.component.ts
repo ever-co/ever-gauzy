@@ -243,12 +243,19 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		}
 	}
 
-	submitForm() {
+	async submitForm(): Promise<boolean> {
+		if (this.form.invalid) return false;
+		const name: string = this.form.get('name').value;
+		const existingNames = this.organizationEmploymentTypes
+			.filter((type) => !this.selectedOrgEmpType || type.id !== this.selectedOrgEmpType.id)
+			.map((type) => type.name);
+		if (validateUniqueString(existingNames, name)) return false;
 		if (this.selectedOrgEmpType) {
-			this.editOrgEmpType(this.selectedOrgEmpType.id, this.form.get('name').value);
+			await this.editOrgEmpType(this.selectedOrgEmpType.id, name);
 		} else {
-			this.addEmploymentType();
+			await this.addEmploymentType();
 		}
+		return true;
 	}
 
 	async deleteEmploymentType(id, name) {
@@ -359,9 +366,11 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		this.disabled = true;
 	}
 
-	onSaveClick(ref: any) {
-		this.submitForm();
-		this.disabled = true;
-		ref.close();
+	async onSaveClick(ref: any) {
+		const success = await this.submitForm();
+		if (success) {
+			this.disabled = true;
+			ref.close();
+		}
 	}
 }
