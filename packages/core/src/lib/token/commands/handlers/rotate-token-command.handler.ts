@@ -1,6 +1,7 @@
 import { isBetterSqlite3 } from '@gauzy/config';
 import { BadRequestException, ConflictException, Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { randomUUID } from 'crypto';
 import { TokenStatus } from '../../interfaces';
 import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
@@ -85,7 +86,7 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 				...(metadata && { metadata }),
 				userId: dto.userId,
 				tokenType: dto.tokenType,
-				tokenHash: '',
+				tokenHash: randomUUID(), // Temporary hash, will be replaced after JWT is generated
 				status: TokenStatus.ACTIVE,
 				expiresAt,
 				rotatedFromTokenId: oldToken.id,
