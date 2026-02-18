@@ -1,11 +1,11 @@
 import { ConflictException, Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TokenStatus } from '../../interfaces';
-import { IJwtService, ITokenHasher } from '../../interfaces/jwt-service.interface';
+import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
-import { JwtServiceToken, TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
-import { RevokeTokenCommand } from '../revoke-token.command';
+import { TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
 import { TokenHasher } from '../../shared/token-hasher';
+import { RevokeTokenCommand } from '../revoke-token.command';
 
 @CommandHandler(RevokeTokenCommand)
 export class RevokeTokenHandler implements ICommandHandler<RevokeTokenCommand, void> {
@@ -14,8 +14,6 @@ export class RevokeTokenHandler implements ICommandHandler<RevokeTokenCommand, v
 		private readonly tokenReadRepository: ITokenReadRepository,
 		@Inject(TokenWriteRepositoryToken)
 		private readonly tokenWriteRepository: ITokenWriteRepository,
-		@Inject(JwtServiceToken)
-		private readonly jwtService: IJwtService,
 		@Inject(TokenHasher)
 		private readonly tokenHasher: ITokenHasher
 	) {}
