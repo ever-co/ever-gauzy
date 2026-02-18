@@ -81,7 +81,7 @@ export interface IToken extends IBaseEntityModel {
 	revokedReason: string | null;
 	revokedBy: IUser | null;
 	revokedById: IUser['id'] | null;
-	metadata: Record<string, any> | null;
+	metadata: Record<string, any> | string | null;
 	version: number;
 
 	/**

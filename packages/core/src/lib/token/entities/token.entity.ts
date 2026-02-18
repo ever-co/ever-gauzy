@@ -197,7 +197,7 @@ export class Token extends BaseEntity implements IToken {
 	})
 	@IsOptional()
 	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
-	metadata: Record<string, any> | null;
+	metadata: Record<string, any> | string | null;
 
 	@ApiProperty({
 		type: Number,

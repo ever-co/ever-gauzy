@@ -1,3 +1,4 @@
+import { isBetterSqlite3 } from '@gauzy/config';
 import { BadRequestException, ConflictException, Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TokenStatus } from '../../interfaces';
@@ -89,9 +90,14 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 				lastUsedAt: new Date()
 			});
 
+			// Parse metadata for SQLite
+			const parsedMetadata = isBetterSqlite3()
+				? JSON.parse(newTokenRecord.metadata as string)
+				: newTokenRecord.metadata;
+
 			// Generate new JWT
 			const payload = {
-				...newTokenRecord.metadata,
+				...parsedMetadata,
 				userId: dto.userId,
 				tokenType: dto.tokenType,
 				tokenId: newTokenRecord.id

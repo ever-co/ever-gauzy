@@ -1,3 +1,4 @@
+import { isBetterSqlite3 } from '@gauzy/config';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TokenStatus } from '../../interfaces';
@@ -39,6 +40,9 @@ export class CreateTokenHandler implements ICommandHandler<CreateTokenCommand, I
 				);
 			}
 
+			// Handle metadata serialization for SQLite
+			const metadata = isBetterSqlite3() ? JSON.stringify(dto.metadata) : dto.metadata;
+
 			// Create token record first (without JWT)
 			const tokenRecord = await manager.create({
 				userId: dto.userId,
@@ -46,7 +50,7 @@ export class CreateTokenHandler implements ICommandHandler<CreateTokenCommand, I
 				tokenHash: '', // Temporary, will update
 				status: TokenStatus.ACTIVE,
 				expiresAt,
-				metadata: dto.metadata,
+				metadata,
 				lastUsedAt: new Date()
 			});
 
