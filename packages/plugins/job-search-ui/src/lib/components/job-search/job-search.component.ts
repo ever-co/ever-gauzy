@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Data, Router } from '@angular/router';
@@ -82,6 +82,18 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 	public organization: IOrganization;
 	public selectedEmployee: ISelectedEmployee;
 	public selectedDateRange: IDateRangePicker;
+
+	@ViewChild('actionButtonsTpl', { static: true }) private readonly _actionButtonsRef!: TemplateRef<any>;
+	@ViewChild('visibleButtonTpl', { static: true }) private readonly _visibleButtonRef!: TemplateRef<any>;
+
+	/** Exposed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	get actionButtons(): any {
+		return this._actionButtonsRef;
+	}
+	/** Exposed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	get visibleButton(): any {
+		return this._visibleButtonRef;
+	}
 
 	/*
 	 * Search Tab Form

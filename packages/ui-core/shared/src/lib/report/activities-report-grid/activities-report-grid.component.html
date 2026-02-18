@@ -118,6 +118,69 @@
   </div>
 </ng-template>
 
+<!-- Reusable template for the main (first) column with optional placeholder -->
+<ng-template #mainColumnEl let-show="show" let-headerKey="headerKey" let-contentTpl="contentTpl" let-contentCtx="contentCtx">
+  @if (show) {
+    <div class="responsive-table-row employee-column main-column-responsive">
+      <div class="responsive-table-header">{{ headerKey | translate }}</div>
+      <div class="responsive-table-content employee">
+        <ng-container *ngTemplateOutlet="contentTpl; context: contentCtx"></ng-container>
+      </div>
+    </div>
+  } @else {
+    <div class="responsive-table-row employee-column no-height"></div>
+  }
+</ng-template>
+
+<!-- Simple reusable date formatter template -->
+<ng-template #dateTextEl let-date>
+  {{ date | dateFormat }}
+</ng-template>
+
+<!-- Reusable body for cards that render: DATE -> (projects or employees) -> activities -->
+<ng-template
+  #dateGroupedActivitiesBodyEl
+  let-dateRows
+  let-innerRowsFn="innerRowsFn"
+  let-innerColumnTpl="innerColumnTpl"
+>
+  <ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
+  @for (dateRow of dateRows; track dateRow; let dateIndex = $index) {
+    <div class="cart-body project-row">
+      @for (innerRow of innerRowsFn(dateRow); track innerRow; let innerIndex = $index) {
+        <div class="table-row-custom">
+          @for (activityRow of innerRow.activity; track activityRow; let activityIndex = $index) {
+            <div class="activity-row">
+              <div class="table-inner-wrapper">
+                <ng-container
+                  *ngTemplateOutlet="
+                    mainColumnEl;
+                    context: {
+                      show: innerIndex == 0 && activityIndex == 0,
+                      headerKey: 'REPORT_PAGE.DATE',
+                      contentTpl: dateTextEl,
+                      contentCtx: { $implicit: dateRow?.date }
+                    }
+                  "
+                ></ng-container>
+                <ng-container
+                  *ngTemplateOutlet="
+                    innerColumnTpl;
+                    context: { $implicit: innerRow, activityIndex: activityIndex }
+                  "
+                ></ng-container>
+                <ng-container
+                  *ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
+                ></ng-container>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</ng-template>
+
 <ng-template let-day #groupByDateCardEl>
   <nb-card-header class="card-title">
     {{ day.date | dateFormat }}
@@ -131,21 +194,17 @@
             @for (activityRow of projectRow.activity; track activityRow; let activityIndex = $index) {
               <div class="activity-row">
                 <div class="table-inner-wrapper">
-                  @if (activityIndex == 0 && projectIndex == 0) {
-                    <div
-                      class="responsive-table-row employee-column main-column-responsive"
-                      >
-                      <div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
-                      <div class="responsive-table-content employee">
-                        <ng-container
-                          *ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"
-                          >
-                        </ng-container>
-                      </div>
-                    </div>
-                  } @else {
-                    <div class="responsive-table-row employee-column no-height"></div>
-                  }
+                  <ng-container
+                    *ngTemplateOutlet="
+                      mainColumnEl;
+                      context: {
+                        show: activityIndex == 0 && projectIndex == 0,
+                        headerKey: 'REPORT_PAGE.EMPLOYEE',
+                        contentTpl: employeeEl,
+                        contentCtx: { $implicit: employeeRow?.employee }
+                      }
+                    "
+                  ></ng-container>
                   <ng-container
 							*ngTemplateOutlet="
 								projectColumnEl;
@@ -170,42 +229,16 @@
     <ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: employee?.employee }"> </ng-container>
   </nb-card-header>
   <nb-card-body>
-    <ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-    @for (dateRow of employee.dates; track dateRow; let dateIndex = $index) {
-      <div class="cart-body project-row">
-        @for (projectRow of dateRow.projects; track projectRow; let projectIndex = $index) {
-          <div class="table-row-custom">
-            @for (activityRow of projectRow.activity; track activityRow; let activityIndex = $index) {
-              <div class="activity-row">
-                <div class="table-inner-wrapper">
-                  @if (projectIndex == 0 && activityIndex == 0) {
-                    <div
-                      class="responsive-table-row employee-column main-column-responsive"
-                      >
-                      <div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
-                      <div class="responsive-table-content employee">
-                        {{ dateRow.date | dateFormat }}
-                      </div>
-                    </div>
-                  } @else {
-                    <div class="responsive-table-row employee-column no-height"></div>
-                  }
-                  <ng-container
-							*ngTemplateOutlet="
-								projectColumnEl;
-								context: { $implicit: projectRow, activityIndex: activityIndex }
-							"
-                  ></ng-container>
-                  <ng-container
-                    *ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
-                  ></ng-container>
-                </div>
-              </div>
-            }
-          </div>
+    <ng-container
+      *ngTemplateOutlet="
+        dateGroupedActivitiesBodyEl;
+        context: {
+          $implicit: employee.dates,
+          innerRowsFn: getDateRowProjects.bind(this),
+          innerColumnTpl: projectColumnEl
         }
-      </div>
-    }
+      "
+    ></ng-container>
   </nb-card-body>
 </ng-template>
 
@@ -214,42 +247,16 @@
     <ng-container *ngTemplateOutlet="projectEl; context: { $implicit: project?.project }"> </ng-container>
   </nb-card-header>
   <nb-card-body>
-    <ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-    @for (dateRow of project.dates; track dateRow; let dateIndex = $index) {
-      <div class="cart-body project-row">
-        @for (employeeRow of dateRow.employees; track employeeRow; let employeeIndex = $index) {
-          <div class="table-row-custom">
-            @for (activityRow of employeeRow.activity; track activityRow; let activityIndex = $index) {
-              <div class="activity-row">
-                <div class="table-inner-wrapper">
-                  @if (employeeIndex == 0 && activityIndex == 0) {
-                    <div
-                      class="responsive-table-row employee-column main-column-responsive"
-                      >
-                      <div class="responsive-table-header">{{ 'REPORT_PAGE.DATE' | translate }}</div>
-                      <div class="responsive-table-content employee">
-                        {{ dateRow.date | dateFormat }}
-                      </div>
-                    </div>
-                  } @else {
-                    <div class="responsive-table-row employee-column no-height"></div>
-                  }
-                  <ng-container
-							*ngTemplateOutlet="
-								employeeColumnEl;
-								context: { $implicit: employeeRow, activityIndex: activityIndex }
-							"
-                  ></ng-container>
-                  <ng-container
-                    *ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
-                  ></ng-container>
-                </div>
-              </div>
-            }
-          </div>
+    <ng-container
+      *ngTemplateOutlet="
+        dateGroupedActivitiesBodyEl;
+        context: {
+          $implicit: project.dates,
+          innerRowsFn: getDateRowEmployees.bind(this),
+          innerColumnTpl: employeeColumnEl
         }
-      </div>
-    }
+      "
+    ></ng-container>
   </nb-card-body>
 </ng-template>
 

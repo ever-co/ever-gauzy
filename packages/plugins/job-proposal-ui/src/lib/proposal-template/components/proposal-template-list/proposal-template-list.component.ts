@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
@@ -59,6 +59,16 @@ export class ProposalTemplateListComponent extends PaginationFilterBaseComponent
 	public templates$: Subject<any> = new Subject();
 	public organization: IOrganization;
 	public nbTab$: Subject<string> = new BehaviorSubject(ProposalTemplateTabsEnum.ACTIONS);
+
+	@ViewChild('actionButtonsTpl', { static: true }) private readonly _actionButtonsRef!: TemplateRef<any>;
+	@ViewChild('visibleButtonTpl', { static: true }) private readonly _visibleButtonRef!: TemplateRef<any>;
+
+	get actionButtons(): any {
+		return this._actionButtonsRef;
+	}
+	get visibleButton(): any {
+		return this._visibleButtonRef;
+	}
 
 	constructor(
 		translateService: TranslateService,

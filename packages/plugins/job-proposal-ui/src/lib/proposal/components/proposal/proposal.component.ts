@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, TemplateRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { combineLatest, Subject } from 'rxjs';
@@ -73,6 +73,16 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 	public organization: IOrganization;
 	public proposals$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
+
+	@ViewChild('actionButtonsTpl', { static: true }) private readonly _actionButtonsRef!: TemplateRef<any>;
+	@ViewChild('visibleButtonTpl', { static: true }) private readonly _visibleButtonRef!: TemplateRef<any>;
+
+	get actionButtons(): any {
+		return this._actionButtonsRef;
+	}
+	get visibleButton(): any {
+		return this._visibleButtonRef;
+	}
 
 	constructor(
 		readonly translateService: TranslateService,
