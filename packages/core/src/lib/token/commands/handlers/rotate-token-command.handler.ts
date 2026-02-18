@@ -1,7 +1,7 @@
 import { isBetterSqlite3 } from '@gauzy/config';
-import { BadRequestException, ConflictException, Inject, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import { TokenStatus } from '../../interfaces';
 import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
@@ -32,7 +32,7 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 		const jwtService = this.configRegistry.getJwtService(dto.tokenType);
 
 		if (!config.allowRotation) {
-			throw new ConflictException(`Token type ${dto.tokenType} does not support rotation`);
+			throw new UnauthorizedException(`Token type ${dto.tokenType} does not support rotation`);
 		}
 
 		// Use pessimistic locking for atomic rotation
@@ -45,23 +45,23 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 				: repository.findByHashWithLock(oldTokenDigest));
 
 			if (!oldToken) {
-				throw new NotFoundException('Token not found');
+				throw new UnauthorizedException('Token not found');
 			}
 
 			if (!oldToken.isActivated()) {
-				throw new ConflictException('Token is not active');
+				throw new UnauthorizedException('Token is not active');
 			}
 
 			if (!oldToken.canRotate()) {
-				throw new ConflictException('Token cannot be rotated');
+				throw new UnauthorizedException('Token cannot be rotated');
 			}
 
 			if (oldToken.userId !== dto.userId) {
-				throw new ConflictException('Token does not belong to user');
+				throw new UnauthorizedException('Token does not belong to user');
 			}
 
 			if (oldToken.tokenType !== dto.tokenType) {
-				throw new ConflictException('Token type mismatch');
+				throw new UnauthorizedException('Token type mismatch');
 			}
 
 			if (!config.allowMultipleSessions) {
@@ -116,7 +116,7 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 			});
 
 			if (!updated) {
-				throw new ConflictException('Failed to rotate token - concurrent modification');
+				throw new UnauthorizedException('Failed to rotate token - concurrent modification');
 			}
 
 			return {
