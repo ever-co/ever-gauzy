@@ -1,15 +1,15 @@
-import { CustomTitlebar, TitlebarColor } from "custom-electron-titlebar";
+import { CustomTitlebar, TitlebarColor } from 'custom-electron-titlebar';
 import { nativeImage, ipcRenderer } from 'electron';
 import * as path from 'path';
-import { initializeIpcListener } from "./preload/custom-tray-icon";
+import { initializeIpcListener } from './preload/custom-tray-icon';
 
 const isTimerWindow = location.hash.startsWith('#/time-tracker');
 const isLoginPage = location.hash.startsWith('#/auth/login');
 
 const THEME_COLOR = {
 	dark: '#202023',
-	ligth: '#f7f9fc'
-}
+	light: '#f7f9fc'
+};
 
 /**
  * Listens for the DOMContentLoaded event to ensure the DOM is fully loaded
@@ -17,7 +17,7 @@ const THEME_COLOR = {
  */
 window.addEventListener('DOMContentLoaded', async () => {
 	if (process.platform === 'darwin' && (isTimerWindow || isLoginPage)) {
-		initializeIpcListener()
+		initializeIpcListener();
 	}
 	/**
 	 * Fetches the application's base path from the Electron main process using IPC.
@@ -37,10 +37,16 @@ window.addEventListener('DOMContentLoaded', async () => {
 	 *
 	 * @param {string} iconPath - The path to the icon file.
 	 */
-	const theme = await ipcRenderer.invoke('PREFERRED_THEME');
+	let theme: string;
+	try {
+		theme = await ipcRenderer.invoke('PREFERRED_THEME');
+	} catch (error) {
+		theme = 'dark';
+		console.error('Failed to retrieve preferred theme, defaulting to dark mode.');
+	}
 	const titleBar = new CustomTitlebar({
 		icon: nativeImage.createFromPath(path.join(appPath, 'assets', 'icons', 'tray', 'icon.png')),
-		backgroundColor: TitlebarColor.fromHex(theme === 'dark' ? THEME_COLOR.dark : THEME_COLOR.ligth),
+		backgroundColor: TitlebarColor.fromHex(theme === 'dark' ? THEME_COLOR.dark : THEME_COLOR.light),
 		enableMnemonics: false,
 		iconSize: 16,
 		maximizable: false,
@@ -57,7 +63,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 	});
 
 	ipcRenderer.on('THEME_CHANGE', (_, arg) => {
-		titleBar.updateBackground(TitlebarColor.fromHex(arg === 'dark' ? THEME_COLOR.dark : THEME_COLOR.ligth));
+		titleBar.updateBackground(TitlebarColor.fromHex(arg === 'dark' ? THEME_COLOR.dark : THEME_COLOR.light));
 		titleBar.refreshMenu();
 	});
 
@@ -78,13 +84,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 	const overStyle = document.createElement('style');
 	overStyle.innerHTML = `
 		/* Use system-ui for the titlebar and all its children */
-		.cet-titlebar, .cet-menubar, .cet-action-label {
-			font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
-			font-size: 12px !important;
-			-webkit-font-smoothing: antialiased;
-		}
-
-		.cet-menubar .cet-menubar-menu-button .cet-menubar-menu-title {
+		.cet-titlebar, .cet-menubar, .cet-action-label, .cet-menubar-menu-title {
 			font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
 			font-size: 12px !important;
 			-webkit-font-smoothing: antialiased;
@@ -101,7 +101,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
         .cet-menubar-menu-container {
 			font-family: system-ui, sans-serif;
-			backdrop-filter: blur(12px); /* Gives it a modern Windows 'Mica' or 'Acrylic' feel */
             position: absolute;
             display: block;
             left: 0px;
