@@ -39,7 +39,9 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 		const oldTokenDigest = this.tokenHasher.hashToken(rawOldToken);
 
 		return this.tokenRepository.transaction(async (repository: ITokenReadRepository & ITokenWriteRepository) => {
-			const oldToken = await repository.findByHashWithLock(oldTokenDigest);
+			const oldToken = await (isBetterSqlite3()
+				? repository.findByHash(oldTokenDigest)
+				: repository.findByHashWithLock(oldTokenDigest));
 
 			if (!oldToken) {
 				throw new NotFoundException('Token not found');
