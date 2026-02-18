@@ -1,3 +1,4 @@
+import { isMySQL, isPostgres } from '@gauzy/config';
 import { IUser } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -189,12 +190,12 @@ export class Token extends BaseEntity implements IToken {
 			clientId: 'abc123',
 			deviceType: 'mobile',
 			userAgent: 'Mozilla/5.0...',
-			location: 'New York, US',
+			location: 'New York, US'
 		},
 		nullable: true
 	})
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	metadata: Record<string, any> | null;
 
 	@ApiProperty({
