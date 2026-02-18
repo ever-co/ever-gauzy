@@ -8,6 +8,7 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '
 import { BaseEntity, User } from '../../core/entities/internal';
 import { IToken, TokenStatus } from '../interfaces';
 
+@Index(['tokenHash'], { unique: true })
 @Index(['tokenHash', 'status'])
 @Index(['userId', 'tokenType', 'status'])
 @Index(['expiresAt'])
@@ -54,7 +55,7 @@ export class Token extends BaseEntity implements IToken {
 	@IsOptional()
 	@IsDate()
 	@Type(() => Date)
-	@MultiORMColumn({ type: 'timestamp', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	expiresAt: Date | null;
 
 	@ApiPropertyOptional({
@@ -66,7 +67,7 @@ export class Token extends BaseEntity implements IToken {
 	@IsOptional()
 	@IsDate()
 	@Type(() => Date)
-	@MultiORMColumn({ type: 'timestamp', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	lastUsedAt: Date | null;
 
 	@ApiProperty({
@@ -91,7 +92,7 @@ export class Token extends BaseEntity implements IToken {
 	@IsOptional()
 	@IsUUID('4', { message: 'rotatedFromTokenId must be a valid UUID v4' })
 	@RelationId((token: Token) => token.rotatedFromToken)
-	@ColumnIndex()
+	@ColumnIndex({ unique: true })
 	@MultiORMColumn({ nullable: true, relationId: true })
 	rotatedFromTokenId: string | null;
 
@@ -142,7 +143,7 @@ export class Token extends BaseEntity implements IToken {
 	@IsOptional()
 	@IsDate()
 	@Type(() => Date)
-	@MultiORMColumn({ type: 'timestamp', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	revokedAt: Date | null;
 
 	@ApiPropertyOptional({
