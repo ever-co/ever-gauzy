@@ -30,6 +30,7 @@ remoteMain.initialize();
 import {
 	AppError,
 	AppMenu,
+	AppWindowManager,
 	DesktopDialog,
 	DesktopThemeListener,
 	DesktopUpdater,
@@ -44,19 +45,16 @@ import {
 	ProviderFactory,
 	removeMainListener,
 	removeTimerListener,
+	setupAkitaStorageHandler,
 	TranslateLoader,
 	TranslateService,
-	TrayIcon,
+	TrayIconFactory,
 	UIError
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
-	createImageViewerWindow,
 	createSettingsWindow,
-	createSetupWindow,
 	createTimeTrackerWindow,
-	createUpdaterWindow,
-	PluginMarketplaceWindow,
 	ScreenCaptureNotification,
 	SplashScreen,
 	timeTrackerPage
@@ -94,7 +92,7 @@ ipcMain.handle('PREFERRED_THEME', () => {
 	const setting = LocalStore.getStore('appSetting');
 	return !setting ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : setting.theme;
 });
-
+let appWindowManager: AppWindowManager;
 let notificationWindow = null;
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
@@ -225,6 +223,11 @@ eventErrorManager.onShowError(async (message) => {
 	}
 });
 
+function initializeAppManager() {
+	appWindowManager = AppWindowManager.getInstance();
+	appWindowManager.preloadPath = pathWindow.preloadPath;
+}
+
 async function startServer(value, restart = false) {
 	try {
 		const project = LocalStore.getStore('project') || {};
@@ -253,7 +256,7 @@ async function startServer(value, restart = false) {
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
-		setupWindow.hide();
+		setupWindow?.close();
 		try {
 			if (!timeTrackerWindow) {
 				timeTrackerWindow = await createTimeTrackerWindow(
@@ -273,9 +276,8 @@ async function startServer(value, restart = false) {
 		gauzyWindow.setVisibleOnAllWorkspaces(false);
 		gauzyWindow.show();
 		splashScreen.close();
-		// timeTrackerWindow.webContents.toggleDevTools();
 	}
-	const auth = store.get('auth');
+
 	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
 
 	if (tray) {
@@ -283,37 +285,11 @@ async function startServer(value, restart = false) {
 	}
 	console.log('dir name:', __dirname);
 	console.log('app path', app.getAppPath());
-	tray = new TrayIcon(
-		setupWindow,
-		knex,
-		timeTrackerWindow,
-		auth,
-		settingsWindow,
-		{ ...environment },
-		pathWindow,
-		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-		gauzyWindow,
-		alwaysOn
-	);
-
+	// Create the tray icon and menu
+	tray = TrayIconFactory.create(environment, pathWindow, path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
+	// Language change
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
-
-		if (tray) {
-			tray.destroy();
-		}
-		tray = new TrayIcon(
-			setupWindow,
-			knex,
-			timeTrackerWindow,
-			auth,
-			settingsWindow,
-			{ ...environment },
-			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-			gauzyWindow,
-			alwaysOn
-		);
 	});
 
 	/* ping server before launch the ui */
@@ -343,6 +319,7 @@ const getApiBaseUrl = (configs) => {
 // More details at https://github.com/electron/electron/issues/15947
 
 app.on('ready', async () => {
+	initializeAppManager();
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 
@@ -351,6 +328,8 @@ app.on('ready', async () => {
 		LocalStore.setAllDefaultConfig();
 	}
 
+	// Setup Akita storage handler for IPC communication
+	setupAkitaStorageHandler();
 	// Set up theme listener for desktop windows
 	new DesktopThemeListener();
 	// default global
@@ -404,32 +383,32 @@ app.on('ready', async () => {
 			pathWindow.timeTrackerUi,
 			pathWindow.preloadPath
 		);
-		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
-		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
-		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
-		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
-		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
-		await alwaysOn.loadURL();
-		await marketplace.loadURL();
+
+		await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
+		if (settings?.alwaysOn) {
+			appWindowManager.alwaysOnWindow.show();
+		} else {
+			appWindowManager.alwaysOnWindow.browserWindow.close();
+		}
 
 		if (configs && configs.isSetup) {
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(configs),
 				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
-			setupWindow = await createSetupWindow(setupWindow, true, pathWindow.timeTrackerUi);
 			await startServer(configs);
 		} else {
-			setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
+			setupWindow = await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
 			setupWindow.show();
 			splashScreen.close();
 		}
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
-
-	updater.settingWindow = settingsWindow;
+	initializeAppManager();
+	updater.settingWindow = appWindowManager.settingWindow;
 	updater.gauzyWindow = gauzyWindow;
+	appWindowManager.updater = updater;
 	try {
 		await updater.checkUpdate();
 	} catch (error) {
@@ -493,6 +472,7 @@ ipcMain.on('restore', () => {
 });
 
 ipcMain.on('restart_app', async (event, arg) => {
+	initializeAppManager();
 	LocalStore.updateConfigSetting(arg);
 	const configs = LocalStore.getStore('configs');
 	global.variableGlobal = {
@@ -504,10 +484,9 @@ ipcMain.on('restart_app', async (event, arg) => {
 	/* Creating a database if not exit. */
 	await ProviderFactory.instance.createDatabase();
 	/* Kill all windows */
-	if (alwaysOn) alwaysOn.close();
-	if (settingsWindow && !settingsWindow.isDestroyed()) {
-		settingsWindow.hide();
-		settingsWindow.destroy();
+	if (appWindowManager.alwaysOnWindow) appWindowManager.alwaysOnWindow.close();
+	if (appWindowManager.settingWindow && !appWindowManager.settingWindow?.isDestroyed()) {
+		appWindowManager.settingWindow?.close();
 	}
 	if (timeTrackerWindow && !timeTrackerWindow.isDestroyed()) {
 		timeTrackerWindow.destroy();
@@ -608,7 +587,7 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 	if (arg) {
 		if (!setting) LocalStore.setDefaultApplicationSetting();
 		TranslateService.preferredLanguage = arg;
-		settingsWindow?.webContents?.send('preferred_language_change', arg);
+		appWindowManager.settingWindow?.webContents?.send?.('preferred_language_change', arg);
 	}
 	return TranslateService.preferredLanguage;
 });
@@ -800,9 +779,9 @@ ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
 ipcMain.handle('set-tray-icon', () => {
 	return {
-		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon_gray.png')
-	}
+		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon@2x.png'),
+		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon@2x_gray.png')
+	};
 });
 
 ipcMain.on('get-arch', (event) => {

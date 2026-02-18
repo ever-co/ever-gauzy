@@ -1,4 +1,4 @@
-name: "Check Spelling and Typos with cspell"
+name: 'Check Spelling and Typos with cspell'
 on:
   push:
     branches: [develop]
@@ -13,7 +13,7 @@ jobs:
   spellcheck:
     name: Cspell
     runs-on: ubicloud-standard-4
-    timeout-minutes: 150
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
       - uses: streetsidesoftware/cspell-action@v2
@@ -21,4 +21,4 @@ jobs:
           # Github token used to fetch the list of changed files in the commit.
           github_token: ${{ secrets.GITHUB_TOKEN }}
           strict: true
-          config: ".cspell.json"
+          config: '.cspell.json'

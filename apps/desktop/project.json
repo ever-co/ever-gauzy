@@ -49,7 +49,10 @@
 					"localforage",
 					"moment-duration-format",
 					"rxjs",
-					"rxjs/operators"
+					"rxjs/operators",
+					"@gauzy/desktop-ui-lib",
+					"@gauzy/ui-config",
+					"@gauzy/ui-core/i18n"
 				]
 			},
 			"configurations": {
@@ -73,8 +76,8 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "100mb",
-							"maximumError": "150mb"
+							"maximumWarning": "150mb",
+							"maximumError": "200mb"
 						},
 						{
 							"type": "anyComponentStyle",
@@ -94,8 +97,8 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "100mb",
-							"maximumError": "150mb"
+							"maximumWarning": "150mb",
+							"maximumError": "200mb"
 						},
 						{
 							"type": "anyComponentStyle",

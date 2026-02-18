@@ -1,21 +1,22 @@
-import { RegisteredWindow, WindowManager, logger } from '@gauzy/desktop-core';
-import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
-import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
+import { logger } from '@gauzy/desktop-core';
+import { createAboutWindow } from '@gauzy/desktop-window';
+import { BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerService } from './offline';
 import { PluginManager } from './plugin-system/data-access/plugin-manager';
 import { PluginEventManager } from './plugin-system/events/plugin-event.manager';
 import { TranslateService } from './translation';
+import { AppWindowManager } from './app-window-manager';
 
 export class AppMenu {
 	public menu: MenuItemConstructorOptions[] = [];
 	public applicationMenu: MenuItemConstructorOptions;
 	public windowMenu: MenuItemConstructorOptions;
 	public editMenu: MenuItemConstructorOptions;
+	private readonly windowPath: any;
 
 	private readonly pluginManager = PluginManager.getInstance();
 	private readonly pluginEventManager = PluginEventManager.getInstance();
-	private readonly windowManager = WindowManager.getInstance();
 
 	/**
 	 * Constructs and initializes the application menu.
@@ -39,6 +40,7 @@ export class AppMenu {
 		isZoomVisible?: boolean,
 		isCustomMenu?: boolean
 	) {
+		this.windowPath = windowPath;
 		const isZoomEnabled = isZoomVisible ?? false;
 		this.applicationMenu = {
 			label: 'Gauzy',
@@ -58,12 +60,16 @@ export class AppMenu {
 				{
 					label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 					async click() {
-						if (!settingsWindow) {
-							settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+						const appWindowManager = AppWindowManager.getInstance();
+						if (!appWindowManager.settingWindow) {
+							await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+							ipcMain.once('setting_window_ready', () => {
+								appWindowManager.settingShow('goto_update');
+							});
+						} else {
+							appWindowManager.settingShow('goto_update');
 						}
-						settingsWindow.show();
-						settingsWindow.webContents.send('goto_update');
-						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+						appWindowManager.settingWindow?.show?.();
 					}
 				},
 				{
@@ -83,10 +89,15 @@ export class AppMenu {
 					label: TranslateService.instant('TIMER_TRACKER.MENU.SETTING_DEV_MODE'),
 					enabled: true,
 					async click() {
-						if (!settingsWindow) {
-							settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+						const appWindowManager = AppWindowManager.getInstance();
+						if (!appWindowManager.settingWindow) {
+							await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+							ipcMain.once('setting_window_ready', () => {
+								appWindowManager.settingShow('goto_top_menu');
+							});
 						}
-						settingsWindow.webContents.toggleDevTools();
+						appWindowManager.settingWindow?.show?.();
+						appWindowManager.settingWindow?.webContents?.toggleDevTools?.();
 					}
 				},
 				{
@@ -140,17 +151,16 @@ export class AppMenu {
 					label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 					enabled: true,
 					async click() {
-						if (!settingsWindow) {
-							settingsWindow = await createSettingsWindow(
-								settingsWindow,
-								windowPath.timeTrackerUi,
-								windowPath.preloadPath
-							);
+						const appWindowManager = AppWindowManager.getInstance();
+						if (!appWindowManager.settingWindow) {
+							await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+							ipcMain.once('setting_window_ready', () => {
+								appWindowManager.settingShow('goto_top_menu');
+							});
+						} else {
+							appWindowManager.settingShow('goto_top_menu');
 						}
-						settingsWindow.show();
-						settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-						settingsWindow.webContents.send(timeTrackerWindow ? 'goto_top_menu' : 'goto_update');
-						settingsWindow.webContents.send('refresh_menu');
+						appWindowManager.settingWindow?.show?.();
 					}
 				},
 				{
@@ -209,7 +219,7 @@ export class AppMenu {
 
 		// Updater Window Menu
 		if (updaterWindow) {
-			updaterWindow.webContents.send('refresh_menu');
+			updaterWindow?.webContents?.send?.('refresh_menu');
 		}
 
 		// Plugin Event Manager Listener
@@ -268,9 +278,11 @@ export class AppMenu {
 	/**
 	 * Opens the plugin window.
 	 */
-	private openPlugin(): void {
+	private async openPlugin(): Promise<void> {
 		// Show the plugins window
-		this.windowManager.show(RegisteredWindow.PLUGINS);
+		const appWindowManager = AppWindowManager.getInstance();
+		await appWindowManager.initPluginsWindow(this.windowPath?.timeTrackerUi);
+		appWindowManager.pluginsWindow?.show?.();
 	}
 
 	/**

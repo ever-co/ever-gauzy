@@ -1,15 +1,20 @@
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { APP_INITIALIZER, ErrorHandler, Injector, enableProdMode, importProvidersFrom } from '@angular/core';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import {
+	APP_INITIALIZER,
+	ErrorHandler,
+	enableProdMode,
+	importProvidersFrom,
+	inject,
+	provideAppInitializer
+} from '@angular/core';
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 import {
 	APIInterceptor,
-	AboutModule,
 	AgentDashboardModule,
 	AlwaysOnModule,
-	AuthGuard,
 	AuthModule,
 	AuthService,
 	AuthStrategy,
@@ -17,31 +22,25 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
-	ImageViewerModule,
+	GauzyStorageService,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
 	NgxLoginModule,
-	NoAuthGuard,
 	OrganizationInterceptor,
 	RefreshTokenInterceptor,
 	ServerConnectionService,
 	ServerDashboardModule,
 	ServerDownModule,
 	ServerErrorInterceptor,
-	SettingsModule,
-	SetupModule,
-	SplashScreenModule,
 	Store,
 	TenantInterceptor,
 	TimeoutInterceptor,
-	TokenInterceptor,
-	UnauthorizedInterceptor,
-	serverConnectionFactory
+	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { provideI18n } from '@gauzy/ui-core/i18n';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -55,11 +54,9 @@ import {
 	NbToastrModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
-import { AppModuleGuard } from './app/app.module.guards';
 import { AppService } from './app/app.service';
 import { initializeSentry } from './app/sentry';
 import { environment } from './environments/environment';
@@ -84,14 +81,6 @@ if (environment.SENTRY_DSN) {
 	}
 }
 
-persistState({
-	key: '_gauzyStore'
-});
-
-akitaConfig({
-	resettable: true
-});
-
 bootstrapApplication(AppComponent, {
 	providers: [
 		importProvidersFrom(
@@ -107,39 +96,35 @@ bootstrapApplication(AppComponent, {
 			NbSidebarModule.forRoot(),
 			NgxDesktopThemeModule,
 			NgxLoginModule,
-			SetupModule,
-			SettingsModule,
 			ServerDashboardModule,
-			ImageViewerModule,
 			NgSelectModule,
-			SplashScreenModule,
 			ServerDownModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: {
-					provide: TranslateLoader,
-					useFactory: HttpLoaderFactory,
-					deps: [HttpClient]
-				}
-			}),
 			LanguageModule.forRoot(),
 			NbDatepickerModule.forRoot(),
-			AboutModule,
 			AgentDashboardModule,
 			AlwaysOnModule
 		),
+		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
 		NbSidebarService,
-		AuthGuard,
-		NoAuthGuard,
-		AppModuleGuard,
 		AuthStrategy,
 		AuthService,
 		ServerConnectionService,
 		ElectronService,
 		LoggerService,
 		Store,
+		provideAppInitializer(() => {
+			const storage = inject(GauzyStorageService);
+			persistState({
+				key: '_gauzyStore',
+				enableInNonBrowser: true,
+				storage
+			});
+			akitaConfig({
+				resettable: true
+			});
+		}),
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
@@ -177,23 +162,12 @@ bootstrapApplication(AppComponent, {
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
-			useClass: UnauthorizedInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
 			useClass: ServerErrorInterceptor,
 			multi: true
 		},
 		{
 			provide: ErrorHandler,
 			useClass: ErrorHandlerService
-		},
-		{
-			provide: APP_INITIALIZER,
-			useFactory: serverConnectionFactory,
-			deps: [ServerConnectionService, Store, Router, Injector],
-			multi: true
 		},
 		{
 			provide: ErrorHandler,

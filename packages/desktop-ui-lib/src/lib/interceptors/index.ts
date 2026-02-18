@@ -7,4 +7,3 @@ export * from './server-error.interceptor';
 export * from './tenant.interceptor';
 export * from './timeout.interceptor';
 export * from './token.interceptor';
-export * from './unauthorized.interceptor';

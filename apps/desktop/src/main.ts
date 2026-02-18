@@ -1,54 +1,45 @@
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { enableProdMode, ErrorHandler, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { Router } from '@angular/router';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideAnimations } from '@angular/platform-browser/animations';
-import { Router, RouterModule } from '@angular/router';
 import {
-	AboutModule,
 	ActivityWatchInterceptor,
-	AlwaysOnModule,
 	APIInterceptor,
-	AuthGuard,
 	AuthService,
 	AuthStrategy,
 	DEFAULT_TIMEOUT,
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
-	HttpLoaderFactory,
-	ImageViewerModule,
+	GauzyStorageService,
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
-	NoAuthGuard,
 	OrganizationInterceptor,
-	PluginsModule,
-	RecapModule,
 	RefreshTokenInterceptor,
 	ServerErrorInterceptor,
-	SettingsModule,
-	SetupModule,
 	Store,
 	TenantInterceptor,
 	TimeoutInterceptor,
-	TimeTrackerModule,
 	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import { provideI18n } from '@gauzy/ui-core/i18n';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import {
-	NbButtonModule,
-	NbCardModule,
 	NbDatepickerModule,
 	NbDialogModule,
 	NbDialogService,
-	NbLayoutModule,
+	NbIconLibraries,
+	NbMenuModule,
+	NbSidebarModule,
 	NbThemeModule,
 	NbToastrModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
@@ -76,55 +67,40 @@ if (environment.SENTRY_DSN) {
 	}
 }
 
-persistState({
-	key: '_gauzyStore'
-});
-
-akitaConfig({
-	resettable: true
-});
-
 bootstrapApplication(AppComponent, {
 	providers: [
 		importProvidersFrom(
-			NbLayoutModule,
+			BrowserModule,
+			AppRoutingModule,
+			NgxDesktopThemeModule, // Required for custom Gauzy themes and theme initializer
 			NbDialogModule.forRoot(),
 			NbToastrModule.forRoot(),
-			NbCardModule,
-			NbButtonModule,
-			BrowserModule,
-			RouterModule,
-			AppRoutingModule,
 			NbThemeModule,
-			NgxDesktopThemeModule,
-			SetupModule,
-			TimeTrackerModule,
-			SettingsModule,
-			ImageViewerModule,
-			TranslateModule.forRoot({
-				extend: true,
-				loader: {
-					provide: TranslateLoader,
-					useFactory: HttpLoaderFactory,
-					deps: [HttpClient]
-				}
-			}),
-			NbDatepickerModule.forRoot(),
+			NbSidebarModule.forRoot(), // Provides NbSidebarService
+			NbMenuModule.forRoot(), // Provides NbMenuService
+			TablerIconsModule,
 			LanguageModule.forRoot(),
-			AboutModule,
-			AlwaysOnModule,
-			RecapModule,
-			PluginsModule
+			NbDatepickerModule.forRoot()
 		),
+		provideI18n({ extend: true }),
 		AppService,
 		NbDialogService,
 		ElectronService,
 		LoggerService,
-		AuthGuard,
-		NoAuthGuard,
 		AuthStrategy,
 		AuthService,
 		Store,
+		provideAppInitializer(() => {
+			const storage = inject(GauzyStorageService);
+			persistState({
+				key: '_gauzyStore',
+				enableInNonBrowser: true,
+				storage
+			});
+			akitaConfig({
+				resettable: true
+			});
+		}),
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
@@ -196,6 +172,16 @@ bootstrapApplication(AppComponent, {
 				...environment
 			}
 		},
+		provideAppInitializer(() => {
+			const iconLibraries = inject(NbIconLibraries);
+
+			iconLibraries.registerFontPack('font-awesome', {
+				packClass: 'fas',
+				iconClassPrefix: 'fa'
+			});
+
+			iconLibraries.setDefaultPack('eva');
+		}),
 		provideHttpClient(withInterceptorsFromDi()),
 		provideAnimations()
 	]

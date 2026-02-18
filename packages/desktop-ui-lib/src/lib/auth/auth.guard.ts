@@ -1,59 +1,38 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
-import { AuthService, AuthStrategy } from './services';
-import { Store } from '../services';
-import { ElectronService } from '../electron/services';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router, UrlTree } from '@angular/router';
+import { selectPersistStateInit } from '@datorama/akita';
+import { combineLatest, map, Observable, take } from 'rxjs';
+import { Store } from './../services/store.service';
 
-@Injectable()
-export class AuthGuard implements CanActivate {
-	constructor(
-		private readonly router: Router,
-		private readonly authService: AuthService,
-		private readonly electronService: ElectronService,
-		private readonly authStrategy: AuthStrategy,
-		private readonly store: Store
-	) {}
+/**
+ * AuthGuard
+ *
+ * Responsibilities:
+ * - Determine whether the user is authenticated
+ * - Redirect unauthenticated users to login
+ *
+ * Non-responsibilities:
+ * - Token validation
+ * - Token refresh
+ * - Network calls
+ */
+export const authGuard: CanActivateFn = (route, state): Observable<boolean | UrlTree> => {
+	const router = inject(Router);
+	const store = inject(Store);
 
-	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-		let isAuthenticated = false;
-		try {
-			isAuthenticated = await this.authService.isAuthenticated();
-		} catch (error) {
-			console.error(error);
-			this.store.serverConnection = 0;
-		}
-		console.log('Token Authenticated:', `${isAuthenticated ? 'true' : 'false'}`);
+	return combineLatest([store.isAuthenticated$, selectPersistStateInit()]).pipe(
+		take(1),
+		map(([isAuthenticated]) => (isAuthenticated ? true : buildLoginRedirect(router, state.url)))
+	);
+};
 
-		if (isAuthenticated) {
-			return true; // logged in so return true
-		} else {
-			if (!!this.store.userId) return true;
-			await this.logoutAndRedirect(state.url);
-			return false;
-		}
-	}
+function buildLoginRedirect(router: Router, returnUrl: string): UrlTree {
+	return router.createUrlTree(['/auth/login'], {
+		queryParams: shouldPreserveReturnUrl(returnUrl) ? { returnUrl } : undefined
+	});
+}
 
-	private async logoutAndRedirect(returnUrl: string): Promise<void> {
-		if (this.store.userId) {
-			this.logoutDesktop();
-			this.logoutAndClearStore();
-		}
-		await this.redirectToLogin(returnUrl);
-	}
-
-	private logoutDesktop() {
-		if (this.electronService.isElectron) {
-			this.electronService.ipcRenderer.send('logout_desktop');
-		}
-	}
-
-	private logoutAndClearStore() {
-		this.authStrategy.logout();
-	}
-
-	private async redirectToLogin(returnUrl: string) {
-		await this.router.navigate(['/auth/login'], {
-			queryParams: { returnUrl }
-		});
-	}
+function shouldPreserveReturnUrl(url: string): boolean {
+	// Only preserve returnUrl if it's a protected route (not auth or public routes)
+	return Boolean(url) && url !== '/' && !url.startsWith('/auth');
 }

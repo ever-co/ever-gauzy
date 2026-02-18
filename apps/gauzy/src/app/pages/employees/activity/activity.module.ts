@@ -58,7 +58,7 @@ export class ActivityModule {
 
 		// Register Time & Activity Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			location: 'time-activity',
+			location: 'time-activity-sections',
 			path: 'time-activities',
 			loadChildren: () =>
 				import('./time-activities/time-activities.module').then((m) => m.TimeAndActivitiesModule)
@@ -66,21 +66,21 @@ export class ActivityModule {
 
 		// Register Screenshot Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			location: 'time-activity',
+			location: 'time-activity-sections',
 			path: 'screenshots',
 			loadChildren: () => import('./screenshot/screenshot.module').then((m) => m.ScreenshotModule)
 		});
 
-		// Register Screenshot Page Routes
+		// Register Videos Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			location: 'time-activity',
+			location: 'time-activity-sections',
 			path: 'videos',
 			loadChildren: () => import('@gauzy/plugin-videos-ui').then((m) => m.VideoUiModule)
 		});
 
 		// Register App Activity Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			location: 'time-activity',
+			location: 'time-activity-sections',
 			path: 'apps',
 			component: AppUrlActivityComponent,
 			data: {
@@ -102,7 +102,7 @@ export class ActivityModule {
 
 		// Register URL Activity Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
-			location: 'time-activity',
+			location: 'time-activity-sections',
 			path: 'urls',
 			component: AppUrlActivityComponent,
 			data: {

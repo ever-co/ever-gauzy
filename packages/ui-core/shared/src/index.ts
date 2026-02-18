@@ -2,6 +2,7 @@
  * Public API Surface of @gauzy/ui-core/shared
  */
 export * from './lib/shared.module';
+export * from './lib/nebular';
 export * from './lib/appointments';
 export * from './lib/approval-policy';
 export * from './lib/approvals';
@@ -74,4 +75,3 @@ export * from './lib/workspaces';
 export * from './lib/work-in-progress';
 export * from './lib/goal';
 export * from './lib/miscellaneous';
-export * from './lib/utils';

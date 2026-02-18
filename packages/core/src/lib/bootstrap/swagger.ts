@@ -120,7 +120,8 @@ export const setupSwagger = async (
 	}
 	// Swagger document options (if needed, can add additional options here)
 	const options: SwaggerDocumentOptions = {
-		operationIdFactory: (_controllerKey: string, methodKey: string) => methodKey
+		operationIdFactory: (controllerKey: string, methodKey: string) =>
+			`${controllerKey.replace(/Controller$/i, '')}_${methodKey}`
 	};
 
 	// Generate the Swagger document from the app instance and configuration

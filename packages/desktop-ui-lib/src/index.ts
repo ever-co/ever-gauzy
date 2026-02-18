@@ -11,12 +11,10 @@ export * from './lib/auth';
 export * from './lib/constants';
 
 export * from './lib/dialogs/about/about.component';
-export * from './lib/dialogs/about/about.module';
 export * from './lib/dialogs/alert/alert.component';
 
 export * from './lib/electron/services';
 export * from './lib/image-viewer/image-viewer.component';
-export * from './lib/image-viewer/image-viewer.module';
 export * from './lib/integrations';
 export * from './lib/integrations/activity-watch/view/activity-watch.component';
 export * from './lib/interceptors';
@@ -26,7 +24,6 @@ export * from './lib/language/language.module';
 export * from './lib/login/features/login-magic/login-magic.component';
 export * from './lib/login/features/login-workspace/login-workspace.component';
 export * from './lib/login/features/magic-login-workspace/magic-login-workspace.component';
-export * from './lib/ngx-translate';
 export * from './lib/recap/features/recap/recap.component';
 export * from './lib/recap/monthly/features/monthly-recap/monthly-recap.component';
 export * from './lib/recap/recap-routing.module';
@@ -46,19 +43,13 @@ export * from './lib/settings/plugins/component/plugin-marketplace/plugin-market
 export * from './lib/settings/plugins/plugin-routing.module';
 export * from './lib/settings/plugins/plugins.module';
 export * from './lib/settings/settings.component';
-export * from './lib/settings/settings.module';
 export * from './lib/setup/setup.component';
-export * from './lib/setup/setup.module';
-export * from './lib/setup/setup.service';
 export * from './lib/splash-screen/splash-screen.component';
-export * from './lib/splash-screen/splash-screen.module';
 export * from './lib/theme';
 export * from './lib/time-tracker/organization-selector/user-organization.service';
 export * from './lib/time-tracker/task-table/table/task-table.component';
 export * from './lib/time-tracker/task-table/task-table.module';
 export * from './lib/time-tracker/time-tracker.component';
-export * from './lib/time-tracker/time-tracker.module';
-export * from './lib/time-tracker/time-tracker.service';
 export * from './lib/updater/updater.component';
 
 

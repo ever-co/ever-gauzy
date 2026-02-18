@@ -176,7 +176,6 @@
 		"dyld",
 		"EBADCSRFTOKEN",
 		"echart",
-		"echarts",
 		"editorplaceholder",
 		"electronmon",
 		"electronmon",
@@ -834,7 +833,12 @@
 		"retryable",
 		"Retryable",
 		"pendings",
-		"SICO"
+		"SICO",
+		"deregister",
+		"deregistration",
+		"Deregisters",
+		"lifecycles",
+		"namespacing"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

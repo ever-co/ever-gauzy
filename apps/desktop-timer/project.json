@@ -63,7 +63,10 @@
 					"localforage",
 					"moment-duration-format",
 					"rxjs",
-					"rxjs/operators"
+					"rxjs/operators",
+					"@gauzy/desktop-ui-lib",
+					"@gauzy/ui-config",
+					"@gauzy/ui-core/i18n"
 				]
 			},
 			"configurations": {
@@ -78,17 +81,24 @@
 							"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
 						}
 					],
-					"optimization": true,
-					"sourceMap": true,
+					"optimization": {
+						"scripts": true,
+						"styles": {
+							"minify": true,
+							"inlineCritical": true
+						},
+						"fonts": true
+					},
+					"sourceMap": false,
 					"namedChunks": false,
 					"extractLicenses": true,
-					"vendorChunk": false,
+					"vendorChunk": true,
 					"buildOptimizer": true,
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "100mb",
-							"maximumError": "150mb"
+							"maximumWarning": "150mb",
+							"maximumError": "200mb"
 						},
 						{
 							"type": "anyComponentStyle",
@@ -109,8 +119,8 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "100mb",
-							"maximumError": "150mb"
+							"maximumWarning": "150mb",
+							"maximumError": "200mb"
 						},
 						{
 							"type": "anyComponentStyle",

@@ -12,7 +12,7 @@ export const createTimesheetRoutes = (_pageRouteRegistryService: PageRouteRegist
 	{
 		path: '',
 		component: TimesheetLayoutComponent,
-		data: { tabsetId: 'timesheet' },
+		data: { tabsetId: 'timesheet-page' },
 		children: [
 			{
 				path: '',
@@ -35,7 +35,7 @@ export const createTimesheetRoutes = (_pageRouteRegistryService: PageRouteRegist
 				path: 'approvals',
 				loadChildren: () => import('./approvals/approvals.module').then((m) => m.ApprovalsModule)
 			},
-			..._pageRouteRegistryService.getPageLocationRoutes('timesheet')
+			..._pageRouteRegistryService.getPageLocationRoutes('timesheet-sections')
 		]
 	},
 	{

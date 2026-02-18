@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { IColumn, IColumns } from 'angular2-smart-table';
-import { PageDataTableRegistryId } from '../../common/component-registry.types';
+import { PageDataTablePageId } from '../../common/component-registry.types';
 import { IPageDataTableRegistry, PageDataTableRegistryConfig } from './page-data-table-registry.types';
 
 @Injectable({
@@ -10,9 +10,9 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	/**
 	 * Registry for storing page data table column configurations.
 	 *
-	 * This Map stores arrays of PageDataTableRegistryConfig objects, keyed by PageDataTableRegistryId.
+	 * This Map stores arrays of PageDataTableRegistryConfig objects, keyed by PageDataTablePageId.
 	 */
-	private readonly registry = new Map<PageDataTableRegistryId, PageDataTableRegistryConfig[]>();
+	private readonly registry = new Map<PageDataTablePageId, PageDataTableRegistryConfig[]>();
 
 	/**
 	 * Retrieves a read-only copy of the data table registry.
@@ -24,7 +24,7 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 * @returns A `ReadonlyMap` containing the current data table registry. This map
 	 *          cannot be modified, ensuring that the internal state remains unchanged.
 	 */
-	public getRegistry(): ReadonlyMap<PageDataTableRegistryId, PageDataTableRegistryConfig[]> {
+	public getRegistry(): ReadonlyMap<PageDataTablePageId, PageDataTableRegistryConfig[]> {
 		// Return a new Map to provide a snapshot of the current registry state
 		return new Map(this.registry);
 	}
@@ -85,14 +85,14 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 * Retrieves the data table column configurations associated with a specific registry ID.
 	 *
 	 * This method fetches an array of `PageDataTableRegistryConfig` objects that are associated with the provided
-	 * `PageDataTableRegistryId`. If any configurations are found, they are sorted based on their `order` property in
+	 * `PageDataTablePageId`. If any configurations are found, they are sorted based on their `order` property in
 	 * ascending order. If no configurations are found, an empty array is returned.
 	 *
 	 * @param dataTableId The identifier for the data table.
 	 * @returns An array of `PageDataTableRegistryConfig` objects associated with the specified `dataTableId`,
 	 *          sorted by the `order` property in ascending order.
 	 */
-	public getColumnsByDataTableId(dataTableId: PageDataTableRegistryId): PageDataTableRegistryConfig[] {
+	public getColumnsByDataTableId(dataTableId: PageDataTablePageId): PageDataTableRegistryConfig[] {
 		const columns = this.registry.get(dataTableId) || [];
 
 		// Sort the columns by the 'order' property in ascending order
@@ -133,7 +133,7 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	/**
 	 * Retrieves a list of unique columns for a specific page location, based on the provided location.
 	 *
-	 * This method fetches all registered data table columns for the specified `PageDataTableRegistryId`,
+	 * This method fetches all registered data table columns for the specified `PageDataTablePageId`,
 	 * removes any duplicate columns based on their location and ID, and maps the remaining configurations
 	 * to an array of `IColumn` objects.
 	 *
@@ -144,7 +144,7 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 * @param registryId - The identifier used to look up the data table column configurations for a specific page location.
 	 * @returns An array of `IColumn` objects representing the unique columns for the specified page location.
 	 */
-	public getPageDataTableColumns(dataTableId: PageDataTableRegistryId): IColumns {
+	public getPageDataTableColumns(dataTableId: PageDataTablePageId): IColumns {
 		// Get all registered columns for the specified location
 		let columns = this.getColumnsByDataTableId(dataTableId);
 
@@ -181,7 +181,7 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 * @param columnId The identifier for the column.
 	 * @returns The `IColumn` object for the specified column, or `null` if not found.
 	 */
-	public getColumnById(dataTableId: PageDataTableRegistryId, columnId: string): IColumns | null {
+	public getColumnById(dataTableId: PageDataTablePageId, columnId: string): IColumns | null {
 		const columns = this.registry.get(dataTableId) || [];
 		const config = columns.find((column) => column.columnId === columnId);
 
@@ -197,7 +197,7 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 * @param dataTableId The identifier of the data table to be removed.
 	 * @returns void
 	 */
-	public deleteDataTable(dataTableId: PageDataTableRegistryId): void {
+	public deleteDataTable(dataTableId: PageDataTablePageId): void {
 		// Check if the data table exists in the registry
 		if (!this.registry.has(dataTableId)) {
 			console.warn(`Data table with id "${dataTableId}" does not exist in the registry.`);

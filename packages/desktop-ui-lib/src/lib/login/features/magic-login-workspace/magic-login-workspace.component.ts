@@ -1,20 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
+import { IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
+import { NbButtonModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { asyncScheduler, catchError, EMPTY, filter, firstValueFrom, tap } from 'rxjs';
-import { AuthService } from '../../../auth';
-import { ErrorHandlerService, Store, TimeTrackerDateManager } from '../../../services';
-import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
-import { LogoComponent } from '../../shared/ui/logo/logo.component';
 import { TranslatePipe } from '@ngx-translate/core';
+import { catchError, concatMap, EMPTY, filter, finalize, firstValueFrom, switchMap, tap } from 'rxjs';
+import { AuthService, AuthStrategy } from '../../../auth';
+import { ErrorHandlerService } from '../../../services';
+import { LogoComponent } from '../../shared/ui/logo/logo.component';
+import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection/workspace-selection.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-magic-sign-in-workspace',
-    templateUrl: './magic-login-workspace.component.html',
-    styleUrls: ['./magic-login-workspace.component.scss'],
-    imports: [WorkspaceSelectionComponent, LogoComponent, TranslatePipe]
+	selector: 'ngx-magic-sign-in-workspace',
+	templateUrl: './magic-login-workspace.component.html',
+	styleUrls: ['./magic-login-workspace.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [WorkspaceSelectionComponent, LogoComponent, TranslatePipe, NbButtonModule]
 })
 export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	public error: boolean = false;
@@ -23,30 +25,42 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	public totalWorkspaces: number;
 	public showPopup: boolean = false;
 	public workspaces: IWorkspaceResponse[] = []; // Array of workspace users
+	public loading: boolean = false; // Flag to indicate if data loading is in progress
 
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
-		private readonly _store: Store,
 		private readonly _authService: AuthService,
+		private readonly _authStrategy: AuthStrategy,
+		private readonly _cdr: ChangeDetectorRef,
 		private readonly _errorHandlingService: ErrorHandlerService
-	) {}
+	) {
+		// Try to get email and code from navigation state first (secure method)
+		const navigation = this._router.getCurrentNavigation();
+		const state = navigation?.extras?.state;
+
+		if (state?.email && state?.code) {
+			// Code passed via state (secure)
+			this.confirmSignInCode(state.email, state.code);
+		}
+	}
 
 	ngOnInit(): void {
-		// Create an observable to listen to query parameter changes in the current route.
+		// Fallback: Check query params for backward compatibility
+		// Note: This is less secure as code is visible in URL
 		this._activatedRoute.queryParams
 			.pipe(
-				// Filter and ensure that query parameters are present.
 				filter((params: Params) => !!params),
-				// Filter and ensure that query parameters are present.
 				filter(({ email, code }: Params) => !!email && !!code),
-				// Tap into the observable to update the 'form.email' property with the 'email' query parameter.
 				tap(({ email, code }: Params) => {
-					if (email && code) {
-						this.confirmSignInCode();
-					}
+					console.warn(
+						'[MagicLogin] Code received via URL query params (insecure). Use navigation state instead.'
+					);
+					this.confirmSignInCode(email, code);
 				}),
-				// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
+				finalize(() => {
+					this._cdr.markForCheck();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -54,10 +68,10 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 
 	/**
 	 * Confirm the sign in code
+	 * @param email User email
+	 * @param code Magic code
 	 */
-	async confirmSignInCode() {
-		// Get the email & code value from the query params
-		const { email, code } = this._activatedRoute.snapshot.queryParams;
+	async confirmSignInCode(email: string, code: string) {
 		if (!email || !code) {
 			return;
 		}
@@ -88,13 +102,17 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 							}
 						}
 					),
+					finalize(() => {
+						this._cdr.markForCheck();
+					}),
 					// Handle component lifecycle to avoid memory leaks
 					untilDestroyed(this)
 				)
 			); // Wait for the login request to complete
 		} catch (error) {
 			this.error = true;
-
+			this._cdr.markForCheck();
+			// Handle and log errors using the error handling service
 			await this._router.navigate(['/auth/login-magic']);
 		}
 	}
@@ -109,6 +127,8 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 
 		this.showPopup = false;
 		this.success = true;
+		this.loading = true;
+		this.error = false;
 
 		// Extract workspace, email, and token from the parameter and component state
 		const email = this.confirmedEmail;
@@ -118,29 +138,19 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 			.signinWorkspaceByToken({ email, token })
 			.pipe(
 				filter(({ user, token }: IAuthResponse) => !!user && !!token),
-				tap((response: IAuthResponse) => {
-					const user: IUser = response.user;
-					const token: string = response.token;
-					const refreshToken: string = response.refresh_token;
-
-					const { id, employee, tenantId } = user;
-
-					if (employee) {
-						TimeTrackerDateManager.organization = employee.organization;
-						this._store.organizationId = employee.organizationId;
-					}
-
-					this._store.tenantId = tenantId;
-					this._store.userId = id;
-					this._store.token = token;
-					this._store.user = user;
-					this._store.refreshToken = refreshToken;
-
-					asyncScheduler.schedule(() => {
-						this._authService.electronAuthentication({ token, user, refresh_token: refreshToken });
-					}, 3000);
+				switchMap((response: IAuthResponse) => {
+					// Store authentication data using centralized method
+					this._authStrategy.storeAuthenticationData(response);
+					return this._authService.electronAuthentication(response);
+				}),
+				concatMap(() => this._router.navigate(['/time-tracker'])),
+				finalize(() => {
+					this.loading = false;
+					this._cdr.markForCheck();
 				}),
 				catchError((error) => {
+					this.success = false;
+					this.error = true;
 					// Handle and log errors using the error handling service
 					this._errorHandlingService.handleError(error);
 					return EMPTY;
@@ -149,5 +159,12 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	public async retry(): Promise<void> {
+		this.error = false;
+		this.success = false;
+		this.showPopup = true;
+		await this._router.navigate(['/auth/login-magic']);
 	}
 }

@@ -1,4 +1,4 @@
-import { BrowserWindow, WebContents } from 'electron';
+import { BrowserWindow, Menu, WebContents } from 'electron';
 import * as log from 'electron-log';
 import { IWindow, IWindowManager, RegisteredWindow } from '../interfaces/iwindow.manager';
 
@@ -166,5 +166,20 @@ export class WindowManager implements IWindowManager {
 		this.closeAll();
 		log.info(`Application is quitting.`);
 		process.exit(0);
+	}
+
+	public overrideSystemContextMenu(win: BrowserWindow) {
+		if (process.platform === 'linux') {
+			win?.on?.('system-context-menu', (e) => {
+				e.preventDefault();
+				const menu = Menu.buildFromTemplate([
+					{
+						label: 'Close',
+						role: 'close'
+					}
+				]);
+				menu.popup();
+			});
+		}
 	}
 }

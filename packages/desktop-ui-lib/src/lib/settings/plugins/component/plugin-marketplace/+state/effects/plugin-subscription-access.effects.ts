@@ -2,7 +2,7 @@
 // Handles side effects for subscription access operations
 
 import { Injectable } from '@angular/core';
-import { ToastrService } from '@gauzy/ui-core/core';
+import { ToastrService } from '@gauzy/ui-core/core/src/lib/services/notification/toastr.service';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';

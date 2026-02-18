@@ -33,18 +33,17 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 	selector: 'ga-app',
 	template: `
 		@if (loading) {
-		  <ga-dashboard-skeleton></ga-dashboard-skeleton>
+		<ga-dashboard-skeleton></ga-dashboard-skeleton>
 		}
 		<div [style.visibility]="loading ? 'hidden' : 'visible'">
-		  <router-outlet></router-outlet>
+			<router-outlet></router-outlet>
 		</div>
-		`,
+	`,
 	standalone: false
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	// Loading indicator
 	public loading: boolean = true;
-
 	private languageLoaded: boolean = false;
 	private routerReady: boolean = false;
 	private minimumLoadingTime: boolean = false;
@@ -108,7 +107,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			systemLanguages = union(systemLanguages, availableLanguages);
 
 			// Sets the default language to use as a fallback, e.g., "en"
-			this._i18nService.setDefaultFallbackLang(LanguagesEnum.ENGLISH);
+			this._i18nService.setFallbackLang(LanguagesEnum.ENGLISH);
 
 			// Get preferredLanguage if it exists
 			const preferredLanguage = this._store?.user?.preferredLanguage ?? this._store.preferredLanguage ?? null;

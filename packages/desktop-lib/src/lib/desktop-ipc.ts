@@ -1,9 +1,10 @@
+import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
+import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
+import { ScreenCaptureNotification } from '@gauzy/desktop-window';
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
-import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
-import { RegisteredWindow, WindowManager, logger as log } from '@gauzy/desktop-core';
-import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
+import { AppWindowManager } from './app-window-manager';
 import { TrackingSleepInactivity } from './contexts';
 import {
 	DialogStopTimerLogoutConfirmation,
@@ -36,6 +37,7 @@ import {
 	UserService
 } from './offline';
 import { pluginListeners } from './plugin-system';
+import { AkitaStorageHandler } from './storage/akita-storage.handler';
 import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
 
@@ -45,6 +47,11 @@ const userService = new UserService();
 const intervalService = new IntervalService();
 const timerService = new TimerService();
 const windowManager = WindowManager.getInstance();
+const appWindowManager = AppWindowManager.getInstance();
+
+export function setupAkitaStorageHandler() {
+	return new AkitaStorageHandler(new AkitaStorageEngine());
+}
 
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	log.info('IPC Main Handler');
@@ -54,16 +61,14 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.removeAllListeners('set_project_task');
 	removeAllHandlers();
 
-	log.info('Removed All Listeners');
-
 	ipcMain.handle('START_SERVER', async (event, arg) => {
 		log.info('Handle Start Server');
 		try {
 			const baseUrl = arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-					? `http://localhost:${arg.port}`
-					: `http://localhost:${config.API_DEFAULT_PORT}`;
+				? `http://localhost:${arg.port}`
+				: `http://localhost:${config.API_DEFAULT_PORT}`;
 
 			global.variableGlobal = {
 				API_BASE_URL: baseUrl,
@@ -381,10 +386,22 @@ export function ipcTimer(
 	let osInactivityHandler: DesktopOsInactivityHandler | null = null;
 
 	function cleanupPowerManagers() {
-		if (osInactivityHandler) { osInactivityHandler.dispose(); osInactivityHandler = null; }
-		if (powerManagerDetectInactivity) { powerManagerDetectInactivity.dispose(); powerManagerDetectInactivity = null; }
-		if (powerManagerPreventSleep) { powerManagerPreventSleep.stop(); powerManagerPreventSleep = null; }
-		if (powerManager) { powerManager.dispose(); powerManager = null; }
+		if (osInactivityHandler) {
+			osInactivityHandler.dispose();
+			osInactivityHandler = null;
+		}
+		if (powerManagerDetectInactivity) {
+			powerManagerDetectInactivity.dispose();
+			powerManagerDetectInactivity = null;
+		}
+		if (powerManagerPreventSleep) {
+			powerManagerPreventSleep.stop();
+			powerManagerPreventSleep = null;
+		}
+		if (powerManager) {
+			powerManager.dispose();
+			powerManager = null;
+		}
 	}
 
 	app.whenReady().then(async () => {
@@ -422,18 +439,24 @@ export function ipcTimer(
 
 	offlineMode.on('offline', async () => {
 		log.info('Offline mode triggered...');
-		const windows = [alwaysOn, timeTrackerWindow];
+		const windows = [timeTrackerWindow];
+		if (appWindowManager.alwaysOnWindow?.browserWindow) {
+			windows.unshift(appWindowManager.alwaysOnWindow.browserWindow);
+		}
 		for (const window of windows) {
-			windowManager.webContents(window).send('offline-handler', true);
+			windowManager.webContents(window)?.send?.('offline-handler', true);
 		}
 	});
 
 	offlineMode.on('connection-restored', async () => {
 		log.info('Api connected...');
 		try {
-			const windows = [alwaysOn, timeTrackerWindow];
+			const windows = [timeTrackerWindow];
+			if (appWindowManager.alwaysOnWindow?.browserWindow) {
+				windows.unshift(appWindowManager.alwaysOnWindow.browserWindow);
+			}
 			for (const window of windows) {
-				windowManager.webContents(window).send('offline-handler', false);
+				windowManager.webContents(window)?.send?.('offline-handler', false);
 			}
 			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
@@ -481,13 +504,14 @@ export function ipcTimer(
 
 			// Start Timer
 			const timerResponse = await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg?.timeLog);
-
-			settingWindow.webContents.send('setting_page_ipc', {
-				type: 'app_setting_update',
-				data: {
-					setting: LocalStore.getStore('appSetting')
-				}
-			});
+			if (appWindowManager?.settingWindow) {
+				appWindowManager.settingWindow.webContents?.send?.('setting_page_ipc', {
+					type: 'app_setting_update',
+					data: {
+						setting: LocalStore.getStore('appSetting')
+					}
+				});
+			}
 
 			if (setting && setting.preventDisplaySleep) {
 				log.info('Prevent Display Sleep');
@@ -739,7 +763,7 @@ export function ipcTimer(
 
 			console.log('Timer Stopped ...');
 
-			settingWindow.webContents.send('setting_page_ipc', {
+			appWindowManager.settingWindow?.webContents?.send?.('setting_page_ipc', {
 				type: 'app_setting_update',
 				data: {
 					setting: LocalStore.getStore('appSetting')
@@ -830,14 +854,24 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('show_image', (event, arg) => {
-		imageView.show();
-		imageView.webContents.send('show_image', arg);
-		imageView.webContents.send('refresh_menu');
+	ipcMain.on('show_image', async (event, arg) => {
+		if (!appWindowManager.imageView) {
+			await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
+			ipcMain.once('image_view_ready', () => {
+				appWindowManager.imageView?.webContents?.send?.('show_image', arg);
+				appWindowManager.imageView?.webContents?.send?.('refresh_menu');
+			});
+		} else {
+			appWindowManager.imageView?.webContents?.send?.('show_image', arg);
+			appWindowManager.imageView?.webContents?.send?.('refresh_menu');
+		}
+
+		appWindowManager.imageView?.show();
 	});
 
-	ipcMain.on('close_image_view', () => {
-		imageView.hide();
+	ipcMain.on('close_image_view', async () => {
+		await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
+		appWindowManager.imageView?.close?.();
 	});
 
 	ipcMain.on('save_temp_screenshot', async (event, arg) => {
@@ -852,29 +886,13 @@ export function ipcTimer(
 
 	ipcMain.on('open_setting_window', async (event, arg) => {
 		log.info(`Open Setting Window: ${moment().format()}`);
-
-		const appSetting = LocalStore.getStore('appSetting');
-		const config = LocalStore.getStore('configs');
-		const auth = LocalStore.getStore('auth');
-		const addSetting = LocalStore.getStore('additionalSetting');
-
-		if (!settingWindow) {
-			settingWindow = await createSettingsWindow(settingWindow, windowPath.timeTrackerUi, windowPath.preloadPath);
+		if (!appWindowManager.settingWindow) {
+			await appWindowManager.initSettingWindow(windowPath.timeTrackerUi, windowPath.preloadPath);
+			ipcMain.once('setting_window_ready', () => {
+				appWindowManager.settingShow('goto_top_menu');
+			});
 		}
-
-		settingWindow.show();
-
-		settingWindow.webContents.send('app_setting', {
-			...LocalStore.beforeRequestParams(),
-			setting: appSetting,
-			config: config,
-			auth,
-			additionalSetting: addSetting
-		});
-
-		settingWindow.webContents.send('setting_page_ipc', {
-			type: 'goto_top_menu'
-		});
+		appWindowManager.settingWindow?.show?.();
 	});
 
 	ipcMain.on('switch_aw_option', (event, arg) => {
@@ -895,14 +913,10 @@ export function ipcTimer(
 		try {
 			log.info('Navigate To Login');
 
-			if (timeTrackerWindow && process.env.IS_DESKTOP_TIMER) {
-				await timeTrackerWindow.loadURL(loginPage(windowPath.timeTrackerUi));
-			}
-
 			LocalStore.updateAuthSetting({ isLogout: true });
 
-			if (settingWindow) {
-				settingWindow.webContents.send('setting_page_ipc', {
+			if (appWindowManager?.settingWindow) {
+				appWindowManager.settingWindow.webContents?.send?.('setting_page_ipc', {
 					type: 'logout_success'
 				});
 			}
@@ -921,21 +935,27 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.handle('UPDATE_SYNC_STATE', async (_, arg: {
-		actionType: TimerActionTypeEnum,
-		data: {
-			state: TimerSyncStateEnum,
-			duration: number,
-			timerId: number
+	ipcMain.handle(
+		'UPDATE_SYNC_STATE',
+		async (
+			_,
+			arg: {
+				actionType: TimerActionTypeEnum;
+				data: {
+					state: TimerSyncStateEnum;
+					duration: number;
+					timerId: number;
+				};
+			}
+		) => {
+			try {
+				await timerHandler.updateTimerSyncState(arg.actionType, arg.data);
+			} catch (error) {
+				console.error(`ERROR_UPDATE_SYNC_STATE: ${error}`);
+			}
+			return;
 		}
-	}) => {
-		try {
-			await timerHandler.updateTimerSyncState(arg.actionType, arg.data);
-		} catch (error) {
-			console.error(`ERROR_UPDATE_SYNC_STATE: ${error}`);
-		}
-		return;
-	});
+	);
 
 	function resizeWindow(window: BrowserWindow, isExpanded: boolean): void {
 		const display = screen.getPrimaryDisplay();
@@ -1106,23 +1126,29 @@ export function ipcTimer(
 		const setting = LocalStore.getStore('appSetting');
 		const auth = LocalStore.getStore('auth');
 		if (setting?.alwaysOn && auth?.employeeId) {
-			windowManager.show(RegisteredWindow.WIDGET);
+			await appWindowManager.initAlwaysOnWindow(windowPath.timeTrackerUi);
+			appWindowManager.alwaysOnWindow.show?.();
 		}
 	});
 
 	ipcMain.on('hide_ao', (event, arg) => {
-		windowManager.hide(RegisteredWindow.WIDGET);
+		if (appWindowManager.alwaysOnWindow) {
+			appWindowManager.alwaysOnWindow.browserWindow?.close?.();
+		}
 	});
 
 	ipcMain.on('change_state_from_ao', async (event, arg) => {
-		const windows = [alwaysOn, timeTrackerWindow];
+		const windows = [timeTrackerWindow];
+		if (appWindowManager.alwaysOnWindow?.browserWindow) {
+			windows.unshift(appWindowManager.alwaysOnWindow.browserWindow);
+		}
 		for (const window of windows) {
-			windowManager.webContents(window).send('change_state_from_ao', arg);
+			windowManager.webContents(window)?.send?.('change_state_from_ao', arg);
 		}
 	});
 
 	ipcMain.on('ao_time_update', (event, arg) => {
-		windowManager.webContents(alwaysOn).send('ao_time_update', arg);
+		appWindowManager.alwaysOnWindow?.browserWindow?.webContents?.send?.('ao_time_update', arg);
 	});
 
 	ipcMain.handle('MARK_AS_STOPPED_OFFLINE', async () => {
@@ -1373,11 +1399,13 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 		const user = await userService.retrieve();
 		log.info('Current User', user);
 
-		if (!user || auth.userId !== user.remoteId) {
+		// Ensure we have a valid user and matching remoteId
+		if (!user || !user.remoteId || auth.userId !== user.remoteId) {
 			await handleLogout('Authentication failed');
 			return false;
 		}
 
+		// Ensure employee exists on the user record before accepting authentication
 		if (user.employee) {
 			LocalStore.updateAuthSetting({ isLogout: false });
 			return true;

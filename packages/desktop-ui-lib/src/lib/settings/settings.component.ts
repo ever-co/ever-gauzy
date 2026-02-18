@@ -812,6 +812,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.getAppSetting();
 		this.electronService.ipcRenderer.on('setting_page_ipc', this.handleIpcEvent);
 		this._languageElectronService.initialize<void>();
+		this.electronService.ipcRenderer.send('setting_window_ready');
 	}
 
 	mappingAdditionalSetting(values) {

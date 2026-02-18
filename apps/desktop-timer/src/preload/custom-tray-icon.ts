@@ -32,12 +32,25 @@ interface TrayIconsResponse {
 type ThemeType = 'dark' | 'light';
 
 /**
- * Canvas and Icon Dimensions
+ * Get the device pixel ratio for high-DPI displays
  */
-const TRAY_ICON_HEIGHT = 16;
-const TRAY_ICON_SIZE = 16;
-const ICON_AREA_WIDTH = TRAY_ICON_SIZE;
-const TEXT_AREA_WIDTH = 70;
+function getDevicePixelRatio(): number {
+	return window.devicePixelRatio > 2 ? window.devicePixelRatio : 2; // 2 for better resolution
+}
+
+/**
+ * Canvas and Icon Dimensions (scaled for high-DPI)
+ */
+const SCALE_FACTOR = getDevicePixelRatio();
+const BASE_TRAY_ICON_HEIGHT = 18;
+const BASE_TRAY_ICON_SIZE = 18;
+const BASE_ICON_AREA_WIDTH = BASE_TRAY_ICON_SIZE;
+const BASE_TEXT_AREA_WIDTH = 70;
+
+const TRAY_ICON_HEIGHT = BASE_TRAY_ICON_HEIGHT * SCALE_FACTOR;
+const TRAY_ICON_SIZE = BASE_TRAY_ICON_SIZE * SCALE_FACTOR;
+const ICON_AREA_WIDTH = BASE_ICON_AREA_WIDTH * SCALE_FACTOR;
+const TEXT_AREA_WIDTH = BASE_TEXT_AREA_WIDTH * SCALE_FACTOR;
 const TRAY_ICON_TOTAL_WIDTH = ICON_AREA_WIDTH + TEXT_AREA_WIDTH;
 
 /**
@@ -45,7 +58,7 @@ const TRAY_ICON_TOTAL_WIDTH = ICON_AREA_WIDTH + TEXT_AREA_WIDTH;
  */
 const CANVAS_START_X = 0;
 const CANVAS_START_Y = 0;
-const TEXT_VERTICAL_OFFSET = 1;
+const TEXT_VERTICAL_OFFSET = 0.8 * SCALE_FACTOR;
 
 /**
  * Visual Style Constants
@@ -53,7 +66,7 @@ const TEXT_VERTICAL_OFFSET = 1;
 const ICON_BACKGROUND_COLOR = '#808080'; // Gray color for icon area
 const BORDER_RADIUS = 0; // Square corners (no rounding)
 const DEFAULT_TIME_DISPLAY = '--:--:--'; // Shown when timer is stopped
-const TIMER_FONT = '12px monospace';
+const TIMER_FONT = `400 ${12 * SCALE_FACTOR}px -apple-system, SF Mono, monospace`;
 const IMAGE_FORMAT = 'image/png';
 let LAST_TIME_DISPLAY = DEFAULT_TIME_DISPLAY;
 
@@ -62,7 +75,7 @@ let LAST_TIME_DISPLAY = DEFAULT_TIME_DISPLAY;
  */
 const COLORS = {
 	dark: {
-		gray100: '#F2F4F7',
+		gray100: '#D3D3D3',
 		gray900: '#111827',
 		gray300: '#D1D5DB',
 		gray600: '#374151'
@@ -98,8 +111,8 @@ const THEME_COLOR_CONFIG: ThemeConfig = {
 	},
 	light: {
 		active: {
-			bgColor: COLORS.light.gray900,
-			txtColor: COLORS.light.gray50
+			bgColor: COLORS.light.gray700,
+			txtColor: COLORS.light.gray100
 		},
 		stopped: {
 			bgColor: COLORS.light.gray700,
@@ -111,15 +124,8 @@ const THEME_COLOR_CONFIG: ThemeConfig = {
 /**
  * Currently active theme colors (mutable, updated based on OS theme)
  */
-const currentThemeColors: ThemeColors = {
-	active: {
-		bgColor: COLORS.light.gray900,
-		txtColor: COLORS.light.gray50
-	},
-	stopped: {
-		bgColor: COLORS.light.gray700,
-		txtColor: COLORS.light.gray100
-	}
+let currentThemeColors: ThemeColors = {
+	...THEME_COLOR_CONFIG.dark
 };
 
 /**
@@ -231,6 +237,9 @@ function renderTrayIconWithTime(currentTime?: string): string {
 		? currentThemeColors.active.txtColor
 		: currentThemeColors.stopped.txtColor;
 
+	mainContext.imageSmoothingEnabled = true;
+	mainContext.imageSmoothingQuality = 'high';
+
 	// Draw pre-rendered background onto main canvas
 	mainContext.drawImage(backgroundCanvas, CANVAS_START_X, CANVAS_START_Y);
 
@@ -318,8 +327,11 @@ export async function initializeTrayIcon(): Promise<void> {
  * Updates the tray icon with new time display
  * @param timeText - Formatted time string to display (e.g., "01:23:45")
  */
-export function handleTimerUpdate(timeText: string): void {
+export async function handleTimerUpdate(timeText: string): Promise<void> {
 	LAST_TIME_DISPLAY = timeText;
+	if (!loadedIconImage) {
+		await initializeTrayIcon();
+	}
 	const iconDataUrl = renderTrayIconWithTime(timeText);
 	ipcRenderer.send('update-tray-icon', iconDataUrl);
 }
