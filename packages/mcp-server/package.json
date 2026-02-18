@@ -55,7 +55,7 @@
 		"zod-to-json-schema": "^3.25.0"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"@types/express": "^5.0.3",
 		"@types/cors": "^2.8.19",
