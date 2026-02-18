@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { JobPostStatusEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -8,9 +8,9 @@ import { StatusBadgeModule } from '@gauzy/ui-core/shared';
     selector: 'job-status',
     templateUrl: './job-status.component.html',
     styleUrls: ['./job-status.component.scss'],
-    providers: [],
     standalone: true,
-    imports: [StatusBadgeModule]
+    imports: [StatusBadgeModule],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JobStatusComponent extends TranslationBaseComponent {
 	constructor(translateService: TranslateService) {

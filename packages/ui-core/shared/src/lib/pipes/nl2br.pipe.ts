@@ -1,5 +1,5 @@
-import { inject, Pipe, PipeTransform, SecurityContext, VERSION } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { inject, Pipe, PipeTransform, SecurityContext } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Pipe({
 	name: 'nl2br',
@@ -13,19 +13,18 @@ export class Nl2BrPipe implements PipeTransform {
 	 *
 	 * @param {string} value - The string to be transformed.
 	 * @param {boolean} [sanitizeBeforehand=false] - Whether to sanitize the string beforehand. Defaults to false.
-	 * @return {string | SafeHtml | null} The transformed string.
+	 * @return {string | null} The transformed string.
 	 */
-	transform(value: string, sanitizeBeforehand?: boolean): string | SafeHtml | null {
+	transform(value: string, sanitizeBeforehand?: boolean): string | null {
 		if (typeof value !== 'string') {
 			return value;
 		}
 
-		let result: string | SafeHtml | null;
+		let result: string | null;
 		const textParsed = value.replace(/(?:\r\n|\r|\n)/g, '<br />');
 
-		if (!VERSION || VERSION.major === '2') {
-			result = this.sanitizer.bypassSecurityTrustHtml(textParsed);
-		} else if (sanitizeBeforehand) {
+
+		if (sanitizeBeforehand) {
 			result = this.sanitizer.sanitize(SecurityContext.HTML, textParsed);
 		} else {
 			result = textParsed;

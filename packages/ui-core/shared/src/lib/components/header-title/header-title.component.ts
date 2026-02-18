@@ -1,9 +1,13 @@
+import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbIconModule } from '@nebular/theme';
+import { TranslateModule } from '@ngx-translate/core';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { IOrganization, ISelectedEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
+import { TruncatePipe } from '../../pipes/truncate.pipe';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,7 +32,8 @@ import { Store } from '@gauzy/ui-core/core';
 			}
 		`
     ],
-    standalone: false
+    standalone: true,
+    imports: [CommonModule, TranslateModule, NbIconModule, TruncatePipe]
 })
 export class HeaderTitleComponent implements OnInit {
 	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum;

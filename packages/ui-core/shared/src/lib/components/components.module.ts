@@ -15,7 +15,8 @@ import { UnderConstructionPopupComponent } from './popup/popup.component';
 import { SearchInputComponent } from './search-input/search-input.component';
 
 const STANDALONE_COMPONENTS = [
-	DateRangeTitleComponent
+	DateRangeTitleComponent,
+	HeaderTitleComponent
 ];
 
 const DECLARED_COMPONENTS = [
@@ -24,7 +25,6 @@ const DECLARED_COMPONENTS = [
 	BackNavigationComponent,
 	BadgeLabelComponent,
 	DashboardSkeletonComponent,
-	HeaderTitleComponent,
 	LayoutSelectorComponent,
 	SearchInputComponent,
 	UnderConstructionPopupComponent

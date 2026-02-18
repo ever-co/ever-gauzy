@@ -1,17 +1,37 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NbActionsModule, NbButtonModule, NbCardModule, NbIconModule, NbInputModule, NbSelectModule } from '@nebular/theme';
+import { TranslateModule } from '@ngx-translate/core';
 import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import { CandidateStore, EmployeeStore } from '@gauzy/ui-core/core';
+import { CurrencyModule } from '../../modules/currency';
+import { ReplacePipe } from '../../pipes/replace.pipe';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ga-employee-rates',
     templateUrl: 'employee-rates.component.html',
     styleUrls: ['employee-rates.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        NbCardModule,
+        NbButtonModule,
+        NbInputModule,
+        NbSelectModule,
+        NbIconModule,
+        NbActionsModule,
+        TranslateModule,
+        CurrencyModule,
+        ReplacePipe
+    ],
+    providers: [CandidateStore, EmployeeStore]
 })
 export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	@Input() public isEmployee: boolean;
