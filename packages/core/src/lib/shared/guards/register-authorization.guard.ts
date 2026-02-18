@@ -6,6 +6,17 @@ import { RequestContext } from '../../core/context';
 import { TypeOrmRoleRepository } from '../../role/repository/type-orm-role.repository';
 
 /**
+ * Minimal user shape set on the request by this guard when the register route
+ * is called with privileged fields by an authenticated admin. Ensures
+ * RequestContext.currentTenantId() and related helpers are available for the rest of the request.
+ */
+export interface RegisterRequestUser {
+	id: string;
+	tenantId: string;
+	role: RolesEnum;
+}
+
+/**
  * List of fields in the register request body that require the caller
  * to be an authenticated ADMIN or SUPER_ADMIN.
  *
@@ -18,22 +29,24 @@ import { TypeOrmRoleRepository } from '../../role/repository/type-orm-role.repos
  *  3. If a roleId is provided, it belongs to the caller's tenant
  *  4. createdByUserId is overridden with the authenticated caller's ID
  */
-const PRIVILEGED_FIELDS: string[] = [
-	'roleId',
-	'organizationId',
-	'createdByUserId',
-	'featureAsEmployee'
-];
+const PRIVILEGED_FIELDS: string[] = ['roleId', 'organizationId', 'createdByUserId', 'featureAsEmployee'];
 
 /**
  * Privileged fields that may appear nested inside `body.user`.
  */
-const PRIVILEGED_USER_FIELDS: string[] = [
-	'role',
-	'roleId',
-	'tenant',
-	'tenantId'
-];
+const PRIVILEGED_USER_FIELDS: string[] = ['role', 'roleId', 'tenant', 'tenantId'];
+
+/**
+ * Extracts id from a relation field (object with id) or returns undefined.
+ *
+ * @param rel The relation field to extract the id from.
+ * @returns The id of the relation field or undefined if the relation field is not an object with an id property.
+ */
+function getIdFromRelation(rel: unknown): string | undefined {
+	if (rel == null || typeof rel !== 'object' || !('id' in rel)) return undefined;
+	const id = (rel as { id: unknown }).id;
+	return typeof id === 'string' ? id : undefined;
+}
 
 /**
  * Guard that protects the public registration endpoint
@@ -46,26 +59,32 @@ const PRIVILEGED_USER_FIELDS: string[] = [
  */
 @Injectable()
 export class RegisterAuthorizationGuard implements CanActivate {
-	constructor(
-		private readonly typeOrmRoleRepository: TypeOrmRoleRepository
-	) {}
+	constructor(private readonly typeOrmRoleRepository: TypeOrmRoleRepository) {}
 
+	/**
+	 * Checks if the request is authorized to proceed.
+	 *
+	 * @param context The execution context.
+	 * @returns A promise that resolves to a boolean indicating whether the request is authorized.
+	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest();
 		const body = request.body || {};
+		const userPayload = body.user || {};
 
 		// Check if any privileged fields are present in the request body
 		const hasPrivilegedTopLevel = PRIVILEGED_FIELDS.some(
 			(field) => body[field] !== undefined && body[field] !== null
 		);
 
-		const userPayload = body.user || {};
+		// Check if any privileged fields are present in the user payload
 		const hasPrivilegedUser = PRIVILEGED_USER_FIELDS.some(
 			(field) => userPayload[field] !== undefined && userPayload[field] !== null
 		);
 
 		// If no privileged fields → pure public self-registration → allow through
 		if (!hasPrivilegedTopLevel && !hasPrivilegedUser) {
+			console.log('No privileged fields detected: pure public self-registration → allow through');
 			return true;
 		}
 
@@ -76,7 +95,7 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		if (!token) {
 			throw new ForbiddenException(
 				'Authentication required: privileged registration fields (role, tenant, organization) ' +
-				'can only be used by authenticated administrators.'
+					'can only be used by authenticated administrators.'
 			);
 		}
 
@@ -85,9 +104,7 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		try {
 			jwtPayload = verify(token, env.JWT_SECRET) as any;
 		} catch {
-			throw new ForbiddenException(
-				'Invalid or expired authentication token.'
-			);
+			throw new ForbiddenException('Invalid or expired authentication token.');
 		}
 
 		const callerRole = jwtPayload.role;
@@ -102,9 +119,9 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		}
 
 		// Validate tenant isolation for roleId (top-level or nested in user)
-		// Use typeof check to safely handle cases where role might be a non-object value
-		const userRole = body.user?.role;
-		const targetRoleId = body.user?.roleId || (typeof userRole === 'object' && userRole !== null && userRole?.id);
+		const targetRoleId = body.user?.roleId ?? getIdFromRelation(body.user?.role);
+		console.log('Target role id', targetRoleId);
+
 		if (targetRoleId) {
 			try {
 				const role = await this.typeOrmRoleRepository.findOneByOrFail({ id: targetRoleId });
@@ -119,16 +136,12 @@ export class RegisterAuthorizationGuard implements CanActivate {
 				if (error instanceof ForbiddenException) {
 					throw error;
 				}
-				throw new ForbiddenException(
-					'The specified role does not exist.'
-				);
+				throw new ForbiddenException('The specified role does not exist.');
 			}
 		}
 
 		// Validate tenant isolation for tenantId (nested in user)
-		// Use typeof check to safely handle cases where tenant might be a non-object value
-		const userTenant = body.user?.tenant;
-		const targetTenantId = body.user?.tenantId || (typeof userTenant === 'object' && userTenant !== null && userTenant?.id);
+		const targetTenantId = body.user?.tenantId ?? getIdFromRelation(body.user?.tenant);
 		if (targetTenantId && targetTenantId !== callerTenantId) {
 			throw new ForbiddenException(
 				'Tenant isolation violation: you can only create users within your own tenant.'
@@ -138,6 +151,15 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		// Security: Always override createdByUserId with the authenticated caller's ID.
 		// Never trust client-provided values for this field.
 		body.createdByUserId = callerUserId;
+
+		// Set request.user so RequestContext.currentTenantId() is available for the rest of the request.
+		// The register route is @Public(), so the JWT strategy never runs and never sets req.user.
+		// Without this, RoleShouldExistConstraint (and anything else using RequestContext) sees no tenant.
+		(request as { user?: RegisterRequestUser }).user = {
+			id: callerUserId,
+			tenantId: callerTenantId,
+			role: callerRole
+		};
 
 		return true;
 	}

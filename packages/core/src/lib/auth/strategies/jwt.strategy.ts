@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from 'jsonwebtoken';
+import * as chalk from 'chalk';
 import { environment as env } from '@gauzy/config';
 import { IUser } from '@gauzy/contracts';
 import { AuthService } from '../auth.service';
@@ -33,7 +34,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 		try {
 			const { id, thirdPartyId, employeeId, organizationId, tenantId } = payload;
 
-			if (this.loggingEnabled) console.log('Validate JWT payload:', payload);
+			if (this.loggingEnabled) {
+				console.log(chalk.magenta('[JWT Strategy]'), 'Validate JWT payload:', payload);
+			}
 
 			// We use this to also attach the user object to the request context.
 			const user: IUser = await this._authService.getAuthenticatedUser(id, thirdPartyId);
@@ -82,9 +85,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 				user.lastOrganizationId = organizationId;
 			}
 
+			if (this.loggingEnabled) {
+				console.log(
+					chalk.cyan('[JWT Strategy]'),
+					chalk.bold('Getting user tenantId from JWT strategy'),
+					chalk.yellow(user.tenantId ?? 'undefined')
+				);
+			}
 			done(null, user);
 		} catch (error) {
-			console.error('Error occurred during JWT validation:', error);
+			console.error(chalk.red('[JWT Strategy]'), 'Error occurred during JWT validation:', error);
 			return done(new UnauthorizedException('unauthorized', error.message), false);
 		}
 	}
