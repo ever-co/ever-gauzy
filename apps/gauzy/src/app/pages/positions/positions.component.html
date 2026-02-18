@@ -116,18 +116,25 @@
 				</div>
 			</div>
 			<div class="row mb-3">
-				<div class="col-sm-12"></div>
-				<button class="delete mr-3 ml-3" (click)="ref.close(); disabled = true" nbButton status="basic" outline>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
-				<button
-					(click)="save(addInput.value); disabled = true; ref.close()"
-					nbButton
-					status="success"
-					[disabled]="addInput.invalid"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
+				<div class="col-sm-12 d-flex">
+					<button
+						class="delete mr-3 ml-3"
+						(click)="ref.close(); disabled = true"
+						nbButton
+						status="basic"
+						outline
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+					<button
+						(click)="save(addInput.value); disabled = true; ref.close()"
+						nbButton
+						status="success"
+						[disabled]="addInput.invalid"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>

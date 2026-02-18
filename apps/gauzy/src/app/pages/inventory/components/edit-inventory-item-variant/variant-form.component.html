@@ -150,7 +150,8 @@
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
-									} @if ( form.controls['quantity'].errors && form.controls['quantity'].errors.min ) {
+									} @else if ( form.controls['quantity'].errors &&
+									form.controls['quantity'].errors.min ) {
 									<div class="text-danger">
 										{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
 									</div>
@@ -180,7 +181,7 @@
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
-									} @if ( form.controls['taxes'].errors && form.controls['taxes'].errors.min ) {
+									} @else if ( form.controls['taxes'].errors && form.controls['taxes'].errors.min ) {
 									<div class="text-danger">
 										{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
 									</div>
@@ -213,8 +214,8 @@
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
-									} @if ( form.controls['retailPrice'] .errors && form.controls['retailPrice'].errors
-									.min ) {
+									} @else if ( form.controls['retailPrice'] .errors &&
+									form.controls['retailPrice'].errors .min ) {
 									<div class="text-danger">
 										{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
 									</div>
@@ -265,7 +266,8 @@
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
-									} @if ( form.controls['unitCost'].errors && form.controls['unitCost'].errors.min ) {
+									} @else if ( form.controls['unitCost'].errors &&
+									form.controls['unitCost'].errors.min ) {
 									<div class="text-danger">
 										{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
 									</div>
