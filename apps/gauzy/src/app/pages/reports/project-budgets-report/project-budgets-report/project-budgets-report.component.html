@@ -62,7 +62,7 @@
 								</div>
 							</div>
 						</div>
-						@for (project of projects; track project.project?.id) {
+						@for (project of projects; track project.project?.id || i; let i = $index) {
 						<div class="cart-body project-row">
 							<div class="table-row">
 								<div class="table-inner-wrapper">

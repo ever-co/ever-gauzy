@@ -234,17 +234,15 @@
 								</div>
 							</div>
 							<div *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE" class="view-all">
-								<ng-container>
-									<button
-										nbButton
-										status="primary"
-										size="small"
-										outline
-										(click)="redirectToScreenshots(employee)"
-									>
-										{{ 'BUTTONS.VIEW_ALL' | translate }}
-									</button>
-								</ng-container>
+								<button
+									nbButton
+									status="primary"
+									size="small"
+									outline
+									(click)="redirectToScreenshots(employee)"
+								>
+									{{ 'BUTTONS.VIEW_ALL' | translate }}
+								</button>
 							</div>
 						</div>
 					</div>
@@ -336,7 +334,7 @@
 								></ngx-avatar>
 							</div>
 							<div class="col project-name">
-								{{ manualTime.project.name }}
+								{{ manualTime?.project?.name }}
 							</div>
 							<div class="col">
 								{{ manualTime.duration | durationFormat }}

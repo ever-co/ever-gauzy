@@ -309,7 +309,7 @@
 												<input
 													nbInput
 													type="text"
-													placeholder="Title"
+													placeholder="{{ 'INVOICES_PAGE.TITLE' | translate }}"
 													fullWidth
 													formControlName="title"
 												/>
@@ -317,7 +317,7 @@
 											<div class="col px-0 mt-3">
 												<textarea
 													nbInput
-													placeholder="Comment"
+													placeholder="{{ 'INVOICES_PAGE.COMMENT' | translate }}"
 													fullWidth
 													formControlName="comment"
 												></textarea>
@@ -413,16 +413,16 @@
 	</nb-card-body>
 </nb-card>
 
-<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
+<ng-template #actionButtons>
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
 			@if (isEstimate) {
 			<button
 				nbButton
 				status="info"
-				(click)="convert(selectedItem)"
+				(click)="convert(selectedInvoice)"
 				class="action info mr-2"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedInvoice && disableButton"
 				size="small"
 			>
 				<nb-icon icon="swap"> </nb-icon>
@@ -479,9 +479,9 @@
 			<button
 				nbButton
 				status="basic"
-				(click)="edit(selectedItem)"
+				(click)="edit(selectedInvoice)"
 				class="action primary"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedInvoice && disableButton"
 				size="small"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
@@ -490,9 +490,9 @@
 			<button
 				nbButton
 				status="basic"
-				(click)="download(selectedItem)"
+				(click)="download(selectedInvoice)"
 				class="action primary"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedInvoice && disableButton"
 				size="small"
 			>
 				<nb-icon icon="download-outline"></nb-icon>
@@ -505,7 +505,7 @@
 			status="basic"
 			(click)="payments()"
 			class="action secondary mr-2"
-			[disabled]="!selectedItem && disableButton"
+			[disabled]="!selectedInvoice && disableButton"
 			size="small"
 		>
 			<nb-icon icon="clipboard-outline"></nb-icon>
@@ -542,7 +542,7 @@
 		<span class="d-flex justify-content-end w-100"
 			><i class="fas fa-times" (click)="toggleTableSettingsPopover()"></i
 		></span>
-		<span class="title">Settings</span>
+		<span class="title">{{ 'INVOICES_PAGE.SETTINGS' | translate }}</span>
 		@if (columns) {
 		<div class="show-columns">
 			<label class="show-columns-label label">

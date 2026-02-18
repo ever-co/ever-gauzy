@@ -44,14 +44,7 @@
 					<div class="col-lg-5">
 						<div class="form-group">
 							<label for="employee" class="label">{{ 'HELP_PAGE.SEARCH_BY_NAME' | translate }}</label>
-							<input
-								fullWidth
-								[formControl]="search"
-								placeholder="Search"
-								value="inputValue"
-								type="text"
-								nbInput
-							/>
+							<input fullWidth [formControl]="search" placeholder="Search" type="text" nbInput />
 						</div>
 					</div>
 					<div class="col-lg-5">
@@ -83,11 +76,11 @@
 							<p class="name">
 								{{ article.name }}
 							</p>
-							@if (article.draft === true) {
+							@if (article.draft) {
 							<p class="draft">
 								{{ 'HELP_PAGE.DRAFT' | translate }}
 							</p>
-							} @if (article.privacy === true) {
+							} @if (article.privacy) {
 							<p class="privacy">
 								{{ 'HELP_PAGE.EMPLOYEES' | translate }}
 							</p>

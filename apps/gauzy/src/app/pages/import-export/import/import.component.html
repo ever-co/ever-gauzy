@@ -24,7 +24,7 @@
 				{{ 'MENU.IMPORT_EXPORT.NO_DROP_FILE' | translate }}
 			</div>
 			}
-			<div class="ilmport_export_wrapper">
+			<div class="import_export_wrapper">
 				<nb-radio-group
 					class="radio-buttons-group"
 					[value]="importType"
@@ -78,12 +78,12 @@
 			</div>
 			<div class="queue-progress">
 				<h6>{{ 'MENU.IMPORT_EXPORT.QUEUE_PROGRESS' | translate }}</h6>
-				<span class="progress-percent">
+				<div class="progress-percent">
 					<div class="progress w-100">
 						<div class="progress-bar" role="progressbar" [style.width]="uploader?.progress + '%'"></div>
 					</div>
 					{{ uploader?.progress }}%
-				</span>
+				</div>
 			</div>
 			<div>
 				<div class="row custom-header m-0 align-items-center">
@@ -190,7 +190,7 @@
 					<span>
 						<nb-badge [text]="importStatus.SUCCESS" status="success"></nb-badge>
 					</span>
-					} @if (history.status === importStatus.FAILED) {
+					} @else if (history.status === importStatus.FAILED) {
 					<span>
 						<nb-badge [text]="importStatus.FAILED" status="danger"></nb-badge>
 					</span>

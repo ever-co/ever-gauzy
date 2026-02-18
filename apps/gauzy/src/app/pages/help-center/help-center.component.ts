@@ -12,13 +12,44 @@ import { FormControl } from '@angular/forms';
 import { Store } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { firstValueFrom } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { SharedModule, SidebarModule, EmployeeMultiSelectModule, UserFormsModule } from '@gauzy/ui-core/shared';
+import {
+	NbCardModule,
+	NbButtonModule,
+	NbInputModule,
+	NbIconModule,
+	NbTooltipModule,
+	NbSpinnerModule
+} from '@nebular/theme';
+import { TranslateModule } from '@ngx-translate/core';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-help-center',
 	templateUrl: './help-center.component.html',
 	styleUrls: ['./help-center.component.scss'],
-	standalone: false
+	standalone: true,
+	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
+		SharedModule,
+		NbCardModule,
+		NbButtonModule,
+		NbInputModule,
+		NbIconModule,
+		NbTooltipModule,
+		NbSpinnerModule,
+		TranslateModule,
+		SidebarModule,
+		EmployeeMultiSelectModule,
+		UserFormsModule,
+		NgxPermissionsModule
+	]
 })
 export class HelpCenterComponent extends TranslationBaseComponent implements OnDestroy, OnInit {
 	constructor(
@@ -28,13 +59,14 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		private readonly toastrService: ToastrService,
 		private helpCenterAuthorService: HelpCenterAuthorService,
 		private employeeService: EmployeesService,
-		private readonly store: Store
+		private readonly store: Store,
+		private sanitizer: DomSanitizer
 	) {
 		super(translateService);
 	}
 
 	public expandedArticles: Set<string> = new Set();
-	public articleContent: Map<string, string> = new Map();
+	public articleContent: Map<string, SafeHtml | string> = new Map();
 	public employees: IEmployee[] = [];
 	public articleList: IHelpCenterArticle[] = [];
 	public isResetSelect = false;
@@ -105,9 +137,9 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		const result = await this.helpCenterArticleService.findByCategoryId(id);
 		if (result) {
 			this.articleList = result;
-			for (let i = 0; i < this.articleList.length; i++) {
-				if (this.articleList[i].data) {
-					this.articleContent.set(this.articleList[i].id, this.articleList[i].data);
+			for (const article of this.articleList) {
+				if (article.data) {
+					this.articleContent.set(article.id, this.sanitizer.bypassSecurityTrustHtml(article.data));
 				}
 			}
 		}
