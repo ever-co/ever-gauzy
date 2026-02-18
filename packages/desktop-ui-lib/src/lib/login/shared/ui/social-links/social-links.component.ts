@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { Observable, of } from 'rxjs';
-import { socialLinks } from '../../../../constants';
 import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
+import { Observable, of } from 'rxjs';
+import { socialLinks } from '../../../../constants';
 
 /**
  * Interface representing a social link.
@@ -25,10 +25,11 @@ export interface ISocialLink {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-social-links',
-    templateUrl: './social-links.component.html',
-    styleUrls: ['./social-links.component.scss'],
-    imports: [RouterLink, NbIconModule, AsyncPipe, TranslatePipe]
+	selector: 'ngx-social-links',
+	templateUrl: './social-links.component.html',
+	styleUrls: ['./social-links.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [RouterLink, NbIconModule, AsyncPipe, TranslatePipe]
 })
 export class SocialLinksComponent implements OnInit {
 	/** */

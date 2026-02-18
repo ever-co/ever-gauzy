@@ -41,6 +41,7 @@ export async function createImageViewerWindow(
 
 	// Remove the menu from the window
 	imageViewWindow.setMenu(null);
+	manager.overrideSystemContextMenu(imageViewWindow);
 
 	// Optional: Uncomment to open Developer Tools
 	// imageViewWindow.webContents.toggleDevTools();

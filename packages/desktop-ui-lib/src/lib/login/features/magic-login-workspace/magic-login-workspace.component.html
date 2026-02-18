@@ -1,37 +1,38 @@
 @if (showPopup) {
-  <ngx-workspace-selection
-    [workspaces]="workspaces"
-    [confirmedEmail]="confirmedEmail"
-    (selectedWorkspace)="signInWorkspace($event)"
-  ></ngx-workspace-selection>
-} @else {
-  @if (success || error) {
-    <div class="message-container">
-      <gauzy-logo></gauzy-logo>
-      <!-- Error Message -->
-      @if (error) {
-        <div class="error">
-          <div class="text">
-            <p class="title">{{ 'WORKSPACES.FAIL_SIGNIN_TITLE' | translate }}</p>
-            <p class="sub-title">{{ 'WORKSPACES.FAIL_SIGNIN_SUB_TITLE' | translate }}</p>
-          </div>
-        </div>
-      }
-      <!-- Success Message -->
-      @if (success) {
-        <div class="success">
-          <div class="text">
-            <p class="title">{{ 'WORKSPACES.SUCCESS_SIGNIN_TITLE' | translate }}</p>
-            <p class="sub-title">{{ 'WORKSPACES.SUCCESS_SIGNIN_SUB_TITLE' | translate }}</p>
-          </div>
-        </div>
-      }
-      <!-- Thanking text -->
-      <div>
-        <p class="thanking-text">{{ 'WORKSPACES.THANKING_TEXT' | translate }}</p>
-      </div>
-    </div>
-  }
-}
+<ngx-workspace-selection
+	[workspaces]="workspaces"
+	[confirmedEmail]="confirmedEmail"
+	[loading]="loading"
+	(selectedWorkspace)="signInWorkspace($event)"
+></ngx-workspace-selection>
+} @else { @if (success || error) {
+<div class="message-container">
+	<gauzy-logo></gauzy-logo>
+	<!-- Error Message -->
+	@if (error) {
+	<div class="error message-container">
+		<div class="text">
+			<p class="title">{{ 'WORKSPACES.FAIL_SIGNIN_TITLE' | translate }}</p>
+			<p class="sub-title">{{ 'WORKSPACES.FAIL_SIGNIN_SUB_TITLE' | translate }}</p>
+		</div>
+		<button type="button" nbButton size="small" class="submit-btn" (click)="retry()">
+			{{ 'BUTTONS.RETRY' | translate }}
+		</button>
+	</div>
+	}
+	<!-- Success Message -->
+	@if (success) {
+	<div class="success">
+		<div class="text">
+			<p class="title">{{ 'WORKSPACES.SUCCESS_SIGNIN_TITLE' | translate }}</p>
+			<p class="sub-title">{{ 'WORKSPACES.SUCCESS_SIGNIN_SUB_TITLE' | translate }}</p>
+		</div>
+	</div>
 
-
+	<!-- Thanking text -->
+	<div>
+		<p class="thanking-text">{{ 'WORKSPACES.THANKING_TEXT' | translate }}</p>
+	</div>
+	}
+</div>
+} }

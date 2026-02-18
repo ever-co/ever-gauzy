@@ -29,7 +29,6 @@ export class TrayIPCHandler {
 				});
 			}
 		});
-
 		ipcMain.on('update_tray_stop', () => {
 			this.menuManager.updateMenuItem('1', { enabled: true });
 			this.menuManager.updateMenuItem('0', { visible: false });
@@ -45,9 +44,15 @@ export class TrayIPCHandler {
 		ipcMain.on('update_tray_time_update', (event, arg) => {
 			const auth = this.configStore.get('auth');
 			if (auth && auth.employeeId && !auth.isLogout) {
-				this.menuManager.updateMenuItem('0', {
-					label: TranslateService.instant('TIMER_TRACKER.MENU.NOW_TRACKING', { time: arg })
+				const label = TranslateService.instant('TIMER_TRACKER.MENU.NOW_TRACKING', { time: arg });
+				const isLabelChange = this.menuManager.isLabelChange('0', {
+					label
 				});
+				if (isLabelChange) {
+					this.menuManager.updateMenuItem('0', {
+						label
+					});
+				}
 			}
 		});
 

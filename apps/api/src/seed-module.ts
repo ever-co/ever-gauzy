@@ -1,5 +1,5 @@
 import { seedModule } from '@gauzy/core';
-import { pluginConfig } from './plugin-config';
+import { pluginConfig } from './plugin.config';
 
 seedModule(pluginConfig).catch((error: any) => {
 	console.log(error);

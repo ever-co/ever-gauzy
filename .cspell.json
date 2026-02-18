@@ -835,7 +835,12 @@
 		"retryable",
 		"Retryable",
 		"pendings",
-		"SICO"
+		"SICO",
+		"deregister",
+		"deregistration",
+		"Deregisters",
+		"lifecycles",
+		"namespacing"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -1,102 +1,73 @@
-import { Inject, NgModule } from '@angular/core';
-
+import { inject, NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbCheckboxModule,
-	NbIconModule,
-	NbInputModule,
-	NbPopoverModule,
-	NbRadioModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbTooltipModule
-} from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { DialogsModule, SharedModule } from '@gauzy/ui-core/shared';
-import { createJobMatchingRoutes } from './job-matching.routes';
+import {
+	applyDeclarativeRegistrations,
+	IOnPluginUiBootstrap,
+	IOnPluginUiDestroy,
+	PLUGIN_DEFINITION
+} from '@gauzy/plugin-ui';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { DialogsModule, NebularModule, SharedModule } from '@gauzy/ui-core/shared';
+import { getJobMatchingRoutes } from './job-matching.routes';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';
 import { COMPONENTS } from './components';
 
-/**
- * Nebular modules
- */
-const NB_MODULES = [
-	NbButtonModule,
-	NbCardModule,
-	NbCheckboxModule,
-	NbIconModule,
-	NbInputModule,
-	NbPopoverModule,
-	NbRadioModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbTooltipModule
-];
-
-/*
- * Third party modules
- */
-const THIRD_PARTY_MODULES = [NgxPermissionsModule.forRoot(), NgSelectModule, TranslateModule.forChild()];
-
 @NgModule({
 	declarations: [JobMatchingComponent, ...COMPONENTS],
-	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, SharedModule, DialogsModule],
+	imports: [
+		RouterModule.forChild([]),
+		NebularModule,
+		TranslateModule.forChild(),
+		NgSelectModule,
+		SharedModule,
+		DialogsModule
+	],
 	exports: [RouterModule, ...COMPONENTS],
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createJobMatchingRoutes(service),
-			deps: [PageRouteRegistryService],
+			useFactory: getJobMatchingRoutes,
 			multi: true
 		}
 	]
 })
-export class JobMatchingModule {
-	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
+	private static _hasAppliedRegistrations = false;
 
-	constructor(
-		@Inject(PageRouteRegistryService) private readonly _pageRouteRegistryService: PageRouteRegistryService
-	) {
-		// Register the routes
-		this.registerPageRoutes();
+	private readonly _log = inject(LoggerService).withContext('JobMatchingModule');
+	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true });
+
+	constructor() {}
+
+	// ─── Plugin Lifecycle ─────────────────────────────────────────
+
+	/** Called by PluginUiModule after the plugin module is instantiated. */
+	ngOnPluginBootstrap(): void {
+		this._log.log('Plugin bootstrapped');
+		this._applyDeclarativeRegistrations();
 	}
 
-	/**
-	 * Registers routes for the Jobs browser module.
-	 * Ensures that routes are registered only once.
-	 *
-	 * @returns {void}
-	 */
-	registerPageRoutes(): void {
-		if (JobMatchingModule.hasRegisteredPageRoutes) {
-			return;
-		}
+	/** Called by PluginUiModule when the application is shutting down. */
+	ngOnPluginDestroy(): void {
+		this._log.log('Plugin destroyed');
+		JobMatchingModule._hasAppliedRegistrations = false;
+	}
 
-		// Register Job Matching Page Routes
-		this._pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
-			location: 'jobs',
-			// Register the path 'matching'
-			path: 'matching',
-			// Register the loadChildren function to load the MatchingModule lazy module
-			loadChildren: () => import('./job-matching.module').then((m) => m.JobMatchingModule),
-			// Register the data object
-			data: {
-				selectors: {
-					date: true,
-					employee: true,
-					project: false,
-					team: false
-				}
-			}
+	// ─── Registration ─────────────────────────────────────────────
+
+	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
+	private _applyDeclarativeRegistrations(): void {
+		if (JobMatchingModule._hasAppliedRegistrations || !this._pluginDefinition) return;
+
+		applyDeclarativeRegistrations(this._pluginDefinition, {
+			navBuilder: this._navMenuBuilderService,
+			pageRouteRegistry: this._pageRouteRegistryService
 		});
 
-		// Set hasRegisteredRoutes to true
-		JobMatchingModule.hasRegisteredPageRoutes = true;
+		JobMatchingModule._hasAppliedRegistrations = true;
 	}
 }

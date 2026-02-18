@@ -1,0 +1,40 @@
+{
+	"name": "plugin-jobs-ui",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/jobs-ui/src",
+	"prefix": "lib",
+	"projectType": "library",
+	"tags": [],
+	"implicitDependencies": ["contracts", "ui-config", "ui-core", "plugin-ui"],
+	"targets": {
+		"build": {
+			"executor": "@nx/angular:ng-packagr-lite",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/plugins/jobs-ui/ng-package.json",
+				"tsConfig": "packages/plugins/jobs-ui/tsconfig.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/plugins/jobs-ui/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/plugins/jobs-ui/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "development",
+			"dependsOn": ["^build"]
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/jobs-ui/jest.config.ts",
+				"tsConfig": "packages/plugins/jobs-ui/tsconfig.spec.json"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}
