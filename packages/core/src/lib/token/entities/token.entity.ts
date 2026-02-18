@@ -226,7 +226,7 @@ export class Token extends BaseEntity implements IToken {
 	})
 	@MultiORMManyToOne(() => User, {
 		nullable: false,
-		onDelete: 'SET NULL'
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	user: IUser;
