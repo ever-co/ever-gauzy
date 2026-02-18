@@ -1,4 +1,4 @@
-import { ConflictException, Inject, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TokenStatus } from '../../interfaces';
 import { ITokenHasher } from '../../interfaces/jwt-service.interface';
@@ -21,6 +21,11 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 
 	async execute(command: RotateTokenCommand): Promise<IGeneratedToken> {
 		const { dto } = command;
+
+		if (!dto.rawOldToken) {
+			throw new BadRequestException('rawOldToken is required');
+		}
+
 		const config = this.configRegistry.getConfig(dto.tokenType);
 		const jwtService = this.configRegistry.getJwtService(dto.tokenType);
 
@@ -39,8 +44,12 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 				throw new NotFoundException('Token not found');
 			}
 
-			if (!oldToken.canRotate()) {
+			if (!oldToken.isActivated()) {
 				throw new ConflictException('Token is not active');
+			}
+
+			if (!oldToken.canRotate()) {
+				throw new ConflictException('Token cannot be rotated');
 			}
 
 			if (oldToken.userId !== dto.userId) {
@@ -49,6 +58,17 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 
 			if (oldToken.tokenType !== dto.tokenType) {
 				throw new ConflictException('Token type mismatch');
+			}
+
+			if (!config.allowMultipleSessions) {
+				const activeTokens = await repository.findActiveByUserAndType(dto.userId, dto.tokenType);
+				const activeTokensToRevoke = activeTokens.filter((token) => token.id !== oldToken.id);
+
+				for (const token of activeTokensToRevoke) {
+					await repository.updateStatus(token.id, TokenStatus.REVOKED, token.version, {
+						revokedReason: 'Token rotated - single session only'
+					});
+				}
 			}
 
 			// Calculate expiration for new token

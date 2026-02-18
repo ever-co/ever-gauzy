@@ -50,6 +50,8 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 				};
 			}
 
+			const config = this.configRegistry.getConfig(dto.tokenType);
+
 			// Check if token is active (status only; expiration handled below)
 			if (!tokenRecord.isActivated()) {
 				return {
@@ -71,7 +73,6 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 
 			// Check inactivity if configured
 			if (dto.checkInactivity) {
-				const config = this.configRegistry.getConfig(dto.tokenType);
 				if (config.threshold && tokenRecord.isInactive(config.threshold)) {
 					// Revoke due to inactivity
 					await this.tokenWriteRepository.updateStatus(
@@ -88,6 +89,22 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 						reason: 'Token revoked due to inactivity'
 					};
 				}
+			}
+
+			// Check max usage count if configured
+			if (
+				typeof config.maxUsageCount === 'number' &&
+				config.maxUsageCount >= 0 &&
+				tokenRecord.usageCount >= config.maxUsageCount
+			) {
+				await this.tokenWriteRepository.updateStatus(tokenRecord.id, TokenStatus.REVOKED, tokenRecord.version, {
+					revokedReason: 'Maximum usage count reached'
+				});
+
+				return {
+					isValid: false,
+					reason: 'Token maximum usage count reached'
+				};
 			}
 
 			// Update last used timestamp (fire and forget to not slow down validation)

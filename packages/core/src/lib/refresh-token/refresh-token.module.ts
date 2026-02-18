@@ -18,8 +18,7 @@ import { JWT_REFRESH_TOKEN, REFRESH_TOKEN, REFRESH_TOKEN_TYPE } from './type.tok
 					30 * 24 * 60 * 60 * 1000, // 30 days
 				threshold: 7 * 24 * 60 * 60 * 1000, // 7 days
 				allowRotation: true,
-				allowMultipleSessions: true,
-				maxUsageCount: 10
+				allowMultipleSessions: true
 			}),
 			jwtServiceToken: JWT_REFRESH_TOKEN,
 			serviceToken: REFRESH_TOKEN
