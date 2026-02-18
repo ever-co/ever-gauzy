@@ -1,5 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { randomUUID } from 'node:crypto';
 import { TokenStatus } from '../../interfaces';
 import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenWriteRepository } from '../../interfaces/token-repository.interface';
@@ -46,7 +47,7 @@ export class CreateTokenHandler implements ICommandHandler<CreateTokenCommand, I
 			const tokenRecord = await manager.create({
 				userId: dto.userId,
 				tokenType: dto.tokenType,
-				tokenHash: '', // Temporary, will update
+				tokenHash: randomUUID(), // Temporary, will update
 				status: TokenStatus.ACTIVE,
 				expiresAt,
 				metadata,
