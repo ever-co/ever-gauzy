@@ -8,7 +8,11 @@ import { IJwtService, ITokenPayload } from '../interfaces';
  */
 @Injectable()
 export class ScopedJwtService implements IJwtService {
-	constructor(private readonly secret: string, private readonly tokenType: string, private jwtService: JwtService) {}
+	constructor(
+		private readonly secret: string,
+		private readonly tokenType: string,
+		private readonly jwtService: JwtService
+	) {}
 
 	public async sign(payload: ITokenPayload, expiresIn?: number): Promise<string> {
 		const options: JwtSignOptions = {
