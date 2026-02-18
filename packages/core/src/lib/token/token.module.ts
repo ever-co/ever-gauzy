@@ -1,6 +1,7 @@
 import { DynamicModule, FactoryProvider, Module, ModuleMetadata, Provider, Type } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
+import { JwtService } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -11,7 +12,6 @@ import { Token } from './entities/token.entity';
 import { TokenRepository } from './repositories/token.repository';
 
 // Services
-import { JwtService } from './services/jwt.service';
 import { ScopedJwtService } from './services/scoped-jwt.service';
 import { TokenHasherService } from './services/token-hasher.service';
 import { TokenService } from './services/token.service';
@@ -217,10 +217,10 @@ export class TokenModule {
 			return [
 				{
 					provide: jwtServiceToken,
-					useFactory: (scopedConfig: ScopedTokenConfig) => {
-						return new ScopedJwtService(jwtSecret, scopedConfig.tokenType);
+					useFactory: (scopedConfig: ScopedTokenConfig, jwtService: JwtService) => {
+						return new ScopedJwtService(jwtSecret, scopedConfig.tokenType, jwtService);
 					},
-					inject: [configToken]
+					inject: [configToken, JwtService]
 				}
 			];
 		}
@@ -234,10 +234,10 @@ export class TokenModule {
 			},
 			{
 				provide: jwtServiceToken,
-				useFactory: async (scopedConfig: ScopedTokenConfig, secret: string) => {
-					return new ScopedJwtService(secret, scopedConfig.tokenType);
+				useFactory: async (scopedConfig: ScopedTokenConfig, secret: string, jwtService: JwtService) => {
+					return new ScopedJwtService(secret, scopedConfig.tokenType, jwtService);
 				},
-				inject: [configToken, jwtSecretToken]
+				inject: [configToken, jwtSecretToken, JwtService]
 			}
 		];
 	}

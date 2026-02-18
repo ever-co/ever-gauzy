@@ -60,7 +60,7 @@ export class CreateTokenHandler implements ICommandHandler<CreateTokenCommand, I
 
 			const expiresInMs = expiresAt ? expiresAt.getTime() - Date.now() : undefined;
 			const expiresInSeconds = expiresInMs ? Math.max(1, Math.ceil(expiresInMs / 1000)) : undefined;
-			const jwt = jwtService.sign(payload, expiresInSeconds);
+			const jwt = await jwtService.sign(payload, expiresInSeconds);
 			const tokenHash = this.tokenHasher.hashToken(jwt);
 
 			// Update token with hash

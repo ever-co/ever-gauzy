@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JsonWebTokenError, JwtService, JwtSignOptions, TokenExpiredError } from '@nestjs/jwt';
 import { IJwtService, ITokenPayload } from '../interfaces';
 
 /**
@@ -8,30 +8,32 @@ import { IJwtService, ITokenPayload } from '../interfaces';
  */
 @Injectable()
 export class ScopedJwtService implements IJwtService {
-	constructor(private readonly secret: string, private readonly tokenType: string) {}
+	constructor(private readonly secret: string, private readonly tokenType: string, private jwtService: JwtService) {}
 
-	sign(payload: ITokenPayload, expiresIn?: number): string {
-		const options: jwt.SignOptions = {};
+	public async sign(payload: ITokenPayload, expiresIn?: number): Promise<string> {
+		const options: JwtSignOptions = {
+			secret: this.secret
+		};
 
 		if (expiresIn) {
 			options.expiresIn = expiresIn;
 		}
 
-		return jwt.sign(payload, this.secret, options);
+		return this.jwtService.signAsync(payload, options);
 	}
 
 	async verify(token: string): Promise<ITokenPayload> {
 		let decoded: ITokenPayload;
 		try {
-			decoded = jwt.verify(token, this.secret) as ITokenPayload;
+			decoded = (await this.jwtService.verifyAsync(token, { secret: this.secret })) as ITokenPayload;
 		} catch (error) {
-			if (error instanceof jwt.TokenExpiredError) {
-				throw new Error('Token has expired');
+			if (error instanceof TokenExpiredError) {
+				throw new UnauthorizedException('Token has expired');
 			}
-			if (error instanceof jwt.JsonWebTokenError) {
-				throw new Error('Invalid token');
+			if (error instanceof JsonWebTokenError) {
+				throw new UnauthorizedException('Invalid token');
 			}
-			throw new Error('Token verification failed');
+			throw new UnauthorizedException('Token verification failed');
 		}
 
 		// Verify token type matches (outside try/catch so application errors are not swallowed)
@@ -44,7 +46,7 @@ export class ScopedJwtService implements IJwtService {
 
 	decode(token: string): ITokenPayload | null {
 		try {
-			const decoded = jwt.decode(token) as ITokenPayload;
+			const decoded = this.jwtService.decode(token) as ITokenPayload;
 			return decoded;
 		} catch (error) {
 			console.error('Failed to decode token:', error);

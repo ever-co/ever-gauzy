@@ -4,7 +4,7 @@ export interface IJwtService {
 	/**
 	 * Sign a JWT token with the given payload
 	 */
-	sign(payload: ITokenPayload, expiresIn?: string | number): string;
+	sign(payload: ITokenPayload, expiresIn?: string | number): Promise<string>;
 
 	/**
 	 * Verify and decode a JWT token
