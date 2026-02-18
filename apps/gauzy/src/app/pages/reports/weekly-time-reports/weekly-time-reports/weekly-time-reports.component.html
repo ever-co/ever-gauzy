@@ -20,7 +20,7 @@
 			<div class="col-auto ml-auto">
 				<ngx-gauzy-filters
 					[filters]="filters"
-					[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+					[saveFilters]="(datePickerConfig$ | async)?.isSaveDatePicker"
 					(filtersChange)="filtersChange($event)"
 				></ngx-gauzy-filters>
 			</div>
@@ -78,7 +78,7 @@
 									</div>
 								</div>
 							</div>
-							@for (log of weekLogs; track log) {
+							@for (log of weekLogs; track log.employee?.id) {
 							<div class="table-row">
 								<div class="table-inner-wrapper">
 									<div class="responsive-table-row employee-column">
@@ -94,11 +94,6 @@
 													[id]="log?.employee?.id"
 													[employee]="log?.employee"
 												></ngx-avatar>
-												<ng-template #noProjects>
-													<span>
-														{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}
-													</span>
-												</ng-template>
 											</div>
 										</div>
 									</div>

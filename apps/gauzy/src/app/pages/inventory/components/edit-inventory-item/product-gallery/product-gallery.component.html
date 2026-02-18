@@ -1,7 +1,7 @@
 <div [class.image-container-notSelected]="!gallery?.length" [class.image-container-selected]="gallery?.length">
 	@if (displayImageUrl) {
 	<img class="featured-image" [src]="displayImageUrl" alt="Feature image" />
-	} @if (!displayImageUrl) {
+	} @else {
 	<ga-no-image [fontSize]="14"> </ga-no-image>
 	}
 </div>
@@ -85,7 +85,7 @@
 <div class="gallery-preview-items mt-3">
 	@if (gallery?.length) {
 	<div class="row">
-		@for (galleryItem of gallery; track galleryItem) {
+		@for (galleryItem of gallery; track galleryItem.id) {
 		<div class="col-sm-3 col-md-4 gallery-sm-preview" (click)="onSmallImgPreviewClick(galleryItem)">
 			<img
 				class="gallery-sm-preview-item"

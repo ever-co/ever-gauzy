@@ -31,11 +31,11 @@
 											? email?.user?.name
 											: ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate)
 									"
-									[src]="getUrl(email)"
+									[src]="email.avatarUrl"
 								></ngx-avatar>
 							</div>
 							<div class="date" [title]="email?.email">
-								<b>{{ getEmailDate(email?.createdAt) | dateTimeFormat }}</b>
+								<b>{{ email.formattedDate | dateTimeFormat }}</b>
 							</div>
 							<div class="email-details-item">
 								{{ 'SETTINGS.EMAIL_HISTORY.FROM' | translate }}

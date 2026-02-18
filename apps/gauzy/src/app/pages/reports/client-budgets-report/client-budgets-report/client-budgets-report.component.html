@@ -24,7 +24,7 @@
 						[hasSourceFilter]="false"
 						[hasLogTypeFilter]="false"
 						[filters]="filters"
-						[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+						[saveFilters]="(datePickerConfig$ | async)?.isSaveDatePicker"
 						(filtersChange)="filtersChange($event)"
 					></ngx-gauzy-filters>
 				</div>
@@ -43,7 +43,6 @@
 				@if (clients?.length > 0) {
 				<nb-card class="card">
 					<nb-card-body class="budget-container">
-						@if (clients?.length > 0) {
 						<div class="columns-header">
 							<div class="table-inner-wrapper font-weight-bold align-items-center">
 								<div class="responsive-table-row contact-column">
@@ -63,7 +62,7 @@
 								</div>
 							</div>
 						</div>
-						} @for (client of clients; track client) {
+						@for (client of clients; track client.id) {
 						<div class="cart-body client-row">
 							<div class="table-row">
 								<div class="table-inner-wrapper">
@@ -92,11 +91,12 @@
 											{{ 'REPORT_PAGE.SPENT' | translate }}
 										</div>
 										<div class="responsive-table-content day-col">
-											@if ( client.budgetType === OrganizationContactBudgetTypeEnum.HOURS ) {
+											@switch (client.budgetType) { @case
+											(OrganizationContactBudgetTypeEnum.HOURS) {
 											<span>
 												{{ client?.spent * 3600 | durationFormat }}
 											</span>
-											} @if (client.budgetType === OrganizationContactBudgetTypeEnum.COST) {
+											} @case (OrganizationContactBudgetTypeEnum.COST) {
 											<span>
 												{{
 													client?.spent
@@ -104,7 +104,7 @@
 														| position : organization?.currencyPosition
 												}}
 											</span>
-											}
+											} }
 										</div>
 									</div>
 									<div class="responsive-table-row remaining-column">
@@ -112,11 +112,12 @@
 											{{ 'REPORT_PAGE.REMAINING' | translate }}
 										</div>
 										<div class="responsive-table-content day-col">
-											@if ( client.budgetType === OrganizationContactBudgetTypeEnum.HOURS ) {
+											@switch (client.budgetType) { @case
+											(OrganizationContactBudgetTypeEnum.HOURS) {
 											<span>
 												{{ client.remainingBudget * 3600 | durationFormat }}
 											</span>
-											} @if (client.budgetType === OrganizationContactBudgetTypeEnum.COST) {
+											} @case (OrganizationContactBudgetTypeEnum.COST) {
 											<span>
 												{{
 													client.remainingBudget
@@ -124,7 +125,7 @@
 														| position : organization?.currencyPosition
 												}}
 											</span>
-											}
+											} }
 										</div>
 									</div>
 									<div class="responsive-table-row budget-column">
@@ -132,11 +133,12 @@
 											{{ 'REPORT_PAGE.BUDGET' | translate }}
 										</div>
 										<div class="responsive-table-content day-col budget-row">
-											@if ( client.budgetType === OrganizationContactBudgetTypeEnum.HOURS ) {
+											@switch (client.budgetType) { @case
+											(OrganizationContactBudgetTypeEnum.HOURS) {
 											<span class="currency-span">
 												{{ client?.budget * 3600 | durationFormat }}
 											</span>
-											} @if (client.budgetType === OrganizationContactBudgetTypeEnum.COST) {
+											} @case (OrganizationContactBudgetTypeEnum.COST) {
 											<span class="currency-span">
 												{{
 													client.budget
@@ -144,7 +146,7 @@
 														| position : organization?.currencyPosition
 												}}
 											</span>
-											}
+											} }
 											<div class="progress-wrapper">
 												<ngx-progress-status
 													class="report-progress"

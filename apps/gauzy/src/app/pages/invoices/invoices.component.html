@@ -66,7 +66,7 @@
 				@if ((nbTab$ | async) === invoiceTabsEnum.SEARCH) {
 				<div class="custom-content-body">
 					<nb-accordion class="mb-3">
-						<nb-accordion-item collapsed="false">
+						<nb-accordion-item [collapsed]="false">
 							<nb-accordion-item-header>
 								{{
 									(isEstimate ? 'INVOICES_PAGE.ESTIMATES.HEADER' : 'INVOICES_PAGE.HEADER') | translate
@@ -279,7 +279,7 @@
 				@if ((nbTab$ | async) === invoiceTabsEnum.HISTORY) {
 				<div class="custom-content-body">
 					<nb-accordion class="mb-3">
-						<nb-accordion-item collapsed="true" [collapsed]="selectedInvoice ? 'false' : 'true'">
+						<nb-accordion-item [collapsed]="!selectedInvoice">
 							<nb-accordion-item-header class="nb-accordion-item-header">
 								{{
 									(!isEstimate ? 'INVOICES_PAGE.HEADER' : 'INVOICES_PAGE.ESTIMATES.HEADER')

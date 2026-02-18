@@ -9,11 +9,11 @@
 						<h6>
 							{{ 'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate }}
 						</h6>
-						} @if (categoryName) {
+						} @else {
 						<h6>{{ categoryName }}</h6>
 						}
 						<h6 class="articles">
-							{{ this.articleList.length }}
+							{{ articleList.length }}
 							{{ 'HELP_PAGE.ARTICLES' | translate }}
 						</h6>
 					</div>
@@ -68,9 +68,9 @@
 				} }
 			</nb-card-header>
 			<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="giant">
-				@if (this.articleList.length) {
+				@if (articleList.length) {
 				<div class="table-scroll" [class.filter]="showFilters">
-					@for (article of this.filteredArticles; track article.id) {
+					@for (article of filteredArticles; track article.id) {
 					<div class="custom-table" [class.selected]="isSelected(article)" (click)="selectItem(article)">
 						<div class="row-name">
 							<p class="name">
@@ -97,8 +97,7 @@
 							<div class="image-wrap">
 								@for (employee of article.employees; track employee) {
 								<span
-									nbTooltip=" {{ employee?.user?.firstName }}
-									{{ employee?.user?.lastName }}"
+									nbTooltip="{{ employee?.user?.firstName }} {{ employee?.user?.lastName }}"
 									nbTooltipPlacement="top"
 								>
 									<ngx-avatar

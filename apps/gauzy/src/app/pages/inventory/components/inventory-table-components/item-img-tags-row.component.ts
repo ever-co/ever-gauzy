@@ -9,7 +9,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			<div class="image-container">
 				<img [src]="imageUrl" />
 			</div>
-			} @if (!imageUrl) {
+			} @else {
 			<div class="image-container">
 				<ga-no-image class="no-image" (mouseenter)="hoverState = true" (mouseleave)="hoverState = false">
 				</ga-no-image>
@@ -21,7 +21,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				</div>
 				@if (isTags) {
 				<div class="col-12 mt-2" [class.tags-right]="layout === componentLayoutEnum.CARDS_GRID">
-					@for (tag of rowData?.tags; track tag) {
+					@for (tag of rowData?.tags; track tag.id) {
 					<nb-badge
 						class="color"
 						position="centered"
@@ -100,6 +100,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 	standalone: false
 })
 export class ItemImgTagsComponent {
+	hoverState = false;
 	@Input()
 	rowData: any;
 

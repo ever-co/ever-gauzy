@@ -9,7 +9,7 @@
 			(mouseenter)="showList = true"
 			fullWidth
 		/>
-		@if (list.length > 0 && showList) {
+		@if (list.length > 0) {
 		<nb-list [class.department-list-active]="showList">
 			@for (item of list; track $index) {
 			<nb-list-item>

@@ -35,7 +35,7 @@
 </div>
 <ng-template #contextMenu>
 	<div class="view">
-		@for (taskStatus of statuses$ | async; track taskStatus) {
+		@for (taskStatus of statuses$ | async; track taskStatus.id) {
 		<ngx-status-view
 			(click)="updateStatus(taskStatus)"
 			[rowData]="{taskStatus}"

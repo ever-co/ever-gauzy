@@ -15,21 +15,12 @@
 						<ngx-product-gallery></ngx-product-gallery>
 					</div>
 				</div>
-				<div class="d-flex align-self-end">
-					<nb-card-footer>
-						<button (click)="onCancel()" status="danger" outline nbButton>
-							{{ 'BUTTONS.CANCEL' | translate }}
-						</button>
-						<button status="success" [disabled]="form && form.invalid" nbButton (click)="onSaveRequest()">
-							{{ 'BUTTONS.SAVE' | translate }}
-						</button>
-					</nb-card-footer>
-				</div>
+				<div class="d-flex align-self-end"></div>
 			</div>
 			<div class="col-md-9">
 				<nb-tabset #inventoryTabset (changeTab)="onChangeTab($event)">
 					<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate" #mainTab [active]="isActive(mainTab)">
-						<div class="">
+						<div>
 							@if (form) {
 							<form [formGroup]="form" class="mb-4">
 								<div class="form-group">
@@ -65,9 +56,9 @@
 													form.controls['name'].invalid && form.controls['name'].touched
 												"
 											/>
-											@if ( form.controls['name'] .errors && form.controls['name'] .touched ) {
+											@if ( form.controls['name'].errors && form.controls['name'].touched ) {
 											<div>
-												@if ( form.controls['name'] .errors.required ) {
+												@if ( form.controls['name'].errors.required ) {
 												<div class="text-danger">
 													{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 												</div>
@@ -90,9 +81,9 @@
 													form.controls['code'].invalid && form.controls['code'].touched
 												"
 											/>
-											@if ( form.controls['code'] .errors && form.controls['code'] .touched ) {
+											@if ( form.controls['code'].errors && form.controls['code'].touched ) {
 											<div>
-												@if ( form.controls['code'] .errors.required ) {
+												@if ( form.controls['code'].errors.required ) {
 												<div class="text-danger">
 													{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 												</div>
@@ -182,4 +173,12 @@
 			</div>
 		</div>
 	</nb-card-body>
+	<nb-card-footer>
+		<button (click)="onCancel()" status="danger" outline nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button status="success" [disabled]="form && form.invalid" nbButton (click)="onSaveRequest()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
 </nb-card>

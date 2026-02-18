@@ -15,7 +15,7 @@
 	</div>
 
 	<form [formGroup]="form" #formGroupElement>
-		@for (optionGroup of optionGroups; track optionGroup; let idxGroup = $index) {
+		@for (optionGroup of optionGroups; track optionGroup.id; let idxGroup = $index) {
 		<ng-container
 			*ngTemplateOutlet="optionGroupTemplate; context: { optionGroup: optionGroup, idxGroup: idxGroup }"
 		></ng-container>
@@ -52,7 +52,7 @@
 		<!-- //template for optionGroup row -->
 		<ng-template #optionGroupTemplate let-optionGroupData="optionGroup" let-idxGroup="idxGroup">
 			@if (isActive(optionGroupData)) {
-			<div class="row mb-2 edit-option-group option-group-form" [class.active-group]="isActive(optionGroupData)">
+			<div class="row mb-2 edit-option-group option-group-form active-group">
 				<div class="col-md-3 col-sm-12">
 					<input
 						formControlName="activeOptionGroupName"
@@ -108,19 +108,19 @@
 							</div>
 						</div>
 					</div>
-					@for (option of optionGroupData.options; track option) {
+					@for (option of optionGroupData.options; track option.id) {
 					<ng-container *ngTemplateOutlet="optionRowTemplate; context: { option: option }"></ng-container>
 					}
 				</div>
 			</div>
-			} @if (!isActive(optionGroupData)) {
+			} @else {
 			<div class="row mb-2 view-option-group" (click)="setActiveOptionGroup($event, optionGroupData)">
 				<div class="col-md-3 col-sm-12">
 					<span class="option-name">{{ optionGroupData.name }}</span>
 				</div>
 				<div class="col-md-9 option col-sm-12">
 					<div class="row mb-2"></div>
-					@for (option of optionGroupData.options; track option) {
+					@for (option of optionGroupData.options; track option.id) {
 					<ng-container *ngTemplateOutlet="optionRowTemplate; context: { option: option }"></ng-container>
 					}
 				</div>

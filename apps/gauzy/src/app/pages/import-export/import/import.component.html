@@ -102,7 +102,7 @@
 				</div>
 
 				<div class="custom-body queue">
-					@for (item of uploader.queue; track item; let lastItem = $last) {
+					@for (item of uploader.queue; track item.file?.name; let lastItem = $last) {
 					<div
 						class="row border-bottom m-0 py-3 align-items-center"
 						[class.border-bottom-none]="lastItem"
@@ -115,7 +115,6 @@
 						<div class="col-1" style="white-space: nowrap">
 							{{ item?.file?.size | fileSize }}
 						</div>
-						} @if (uploader.options.isHTML5) {
 						<div class="col-5">
 							<div class="d-flex align-items-center">
 								<div class="progress w-100 mr-1" style="margin-bottom: 0; height: 10px">
@@ -134,15 +133,15 @@
 							<span>
 								<nb-badge status="success" [text]="importStatus.SUCCESS"></nb-badge>
 							</span>
-							} @if (item.isCancel) {
+							} @else if (item.isCancel) {
 							<span>
 								<nb-badge status="warning" [text]="importStatus.CANCELLED"></nb-badge>
 							</span>
-							} @if (item.isUploading) {
+							} @else if (item.isUploading) {
 							<span>
 								<nb-badge status="info" [text]="importStatus.IN_PROGRESS"></nb-badge>
 							</span>
-							} @if (item.isError) {
+							} @else if (item.isError) {
 							<span>
 								<nb-badge status="danger" [text]="importStatus.FAILED"></nb-badge>
 							</span>
@@ -178,7 +177,7 @@
 			</div>
 		</div>
 		<div class="custom-body history">
-			@for (history of history$ | async; track history; let lastHistory = $last) {
+			@for (history of history$ | async; track history.id; let lastHistory = $last) {
 			<div class="row border-bottom m-0 py-3 align-items-center" [class.border-bottom-none]="lastHistory">
 				<div class="col-3">{{ history.file }}</div>
 				<div class="col-2">{{ history.size | fileSize }}</div>

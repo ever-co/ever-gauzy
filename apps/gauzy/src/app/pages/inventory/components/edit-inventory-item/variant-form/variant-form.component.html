@@ -31,7 +31,7 @@
 </div>
 <div class="row mb-3">
 	<div class="col-sm-12 variants-container">
-		@for (productVariant of variantCreateInputs; track productVariant) {
+		@for (productVariant of variantCreateInputs; track i; let i = $index) {
 		<button class="mr-2 btn-variant" nbButton (click)="onVariantBtnClick(productVariant)">
 			<span class="btn-variant-icon" [class.variant-stored-btn]="productVariant.isStored">
 				<nb-icon icon="edit-outline"></nb-icon

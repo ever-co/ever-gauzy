@@ -41,7 +41,7 @@
 				</svg>
 				}
 				<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0.1'"></div>
-				@if (form.get('imageUrl').value) {
+				@if (form && form.get('imageUrl').value) {
 				<img
 					[src]="form.get('imageUrl').value"
 					alt="Team Photo"

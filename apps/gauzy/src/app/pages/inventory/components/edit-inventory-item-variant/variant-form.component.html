@@ -81,11 +81,11 @@
 										form.controls['internationalReference'].touched
 									"
 								/>
-								@if ( form.controls['internationalReference'] .invalid &&
-								form.controls['internationalReference'] .touched ) {
+								@if (form.controls['internationalReference'].invalid &&
+								form.controls['internationalReference'].touched) {
 								<div>
-									@if ( form.controls[ 'internationalReference' ].errors && form.controls[
-									'internationalReference' ].errors.required ) {
+									@if (form.controls['internationalReference'].errors && form.controls[
+									'internationalReference'].errors.required) {
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
@@ -113,11 +113,11 @@
 									</nb-option>
 									}
 								</nb-select>
-								@if ( form.controls['invoicingPolicy'] .invalid &&
-								form.controls['invoicingPolicy'].touched ) {
+								@if (form.controls['invoicingPolicy'].invalid &&
+								form.controls['invoicingPolicy'].touched) {
 								<div>
-									@if ( form.controls['invoicingPolicy'] .errors && form.controls['invoicingPolicy']
-									.errors.required ) {
+									@if (form.controls['invoicingPolicy'].errors && form.controls['invoicingPolicy']
+									.errors.required) {
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
@@ -143,15 +143,15 @@
 										form.controls['quantity'].invalid && form.controls['quantity'].touched
 									"
 								/>
-								@if ( form.controls['quantity'].invalid && form.controls['quantity'].touched ) {
+								@if (form.controls['quantity'].invalid && form.controls['quantity'].touched) {
 								<div>
-									@if ( form.controls['quantity'].errors && form.controls['quantity'].errors .required
-									) {
+									@if (form.controls['quantity'].errors && form.controls['quantity'].errors.required )
+									{
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
-									} @else if ( form.controls['quantity'].errors &&
-									form.controls['quantity'].errors.min ) {
+									} @else if (form.controls['quantity'].errors &&
+									form.controls['quantity'].errors.min) {
 									<div class="text-danger">
 										{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
 									</div>
@@ -175,13 +175,13 @@
 										form.controls['taxes'].invalid && form.controls['taxes'].touched
 									"
 								/>
-								@if ( form.controls['taxes'].invalid && form.controls['taxes'].touched ) {
+								@if (form.controls['taxes'].invalid && form.controls['taxes'].touched) {
 								<div>
-									@if ( form.controls['taxes'].errors && form.controls['taxes'].errors .required ) {
+									@if (form.controls['taxes'].errors && form.controls['taxes'].errors.required) {
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
-									} @else if ( form.controls['taxes'].errors && form.controls['taxes'].errors.min ) {
+									} @else if (form.controls['taxes'].errors && form.controls['taxes'].errors.min) {
 									<div class="text-danger">
 										{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
 									</div>
@@ -207,15 +207,15 @@
 										form.controls['retailPrice'].invalid && form.controls['retailPrice'].touched
 									"
 								/>
-								@if ( form.controls['retailPrice'].invalid && form.controls['retailPrice'].touched ) {
+								@if (form.controls['retailPrice'].invalid && form.controls['retailPrice'].touched) {
 								<div>
-									@if ( form.controls['retailPrice'] .errors && form.controls['retailPrice'].errors
-									.required ) {
+									@if (form.controls['retailPrice'].errors && form.controls['retailPrice'].errors
+									.required) {
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
-									} @else if ( form.controls['retailPrice'] .errors &&
-									form.controls['retailPrice'].errors .min ) {
+									} @else if (form.controls['retailPrice'].errors &&
+									form.controls['retailPrice'].errors.min) {
 									<div class="text-danger">
 										{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
 									</div>
@@ -229,11 +229,11 @@
 									formControlName="retailPriceCurrency"
 								>
 								</ga-currency>
-								@if ( form.controls['retailPriceCurrency'] .invalid &&
-								form.controls['retailPriceCurrency'] .touched ) {
+								@if (form.controls['retailPriceCurrency'].invalid &&
+								form.controls['retailPriceCurrency'].touched) {
 								<div>
-									@if ( form.controls['retailPriceCurrency'] .errors &&
-									form.controls['retailPriceCurrency'] .errors.required ) {
+									@if (form.controls['retailPriceCurrency'].errors &&
+									form.controls['retailPriceCurrency'].errors.required) {
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
@@ -259,15 +259,15 @@
 										form.controls['unitCost'].invalid && form.controls['unitCost'].touched
 									"
 								/>
-								@if ( form.controls['unitCost'].invalid && form.controls['unitCost'].touched ) {
+								@if (form.controls['unitCost'].invalid && form.controls['unitCost'].touched) {
 								<div>
-									@if ( form.controls['unitCost'].errors && form.controls['unitCost'].errors .required
-									) {
+									@if (form.controls['unitCost'].errors && form.controls['unitCost'].errors.required )
+									{
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
-									} @else if ( form.controls['unitCost'].errors &&
-									form.controls['unitCost'].errors.min ) {
+									} @else if (form.controls['unitCost'].errors &&
+									form.controls['unitCost'].errors.min) {
 									<div class="text-danger">
 										{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
 									</div>
@@ -281,11 +281,11 @@
 									formControlName="unitCostCurrency"
 								>
 								</ga-currency>
-								@if ( form.controls['unitCostCurrency'] .invalid && form.controls['unitCostCurrency']
-								.touched ) {
+								@if (form.controls['unitCostCurrency'].invalid && form.controls['unitCostCurrency']
+								.touched) {
 								<div>
-									@if ( form.controls['unitCostCurrency'] .errors && form.controls['unitCostCurrency']
-									.errors.required ) {
+									@if (form.controls['unitCostCurrency'].errors && form.controls['unitCostCurrency']
+									.errors.required) {
 									<div class="text-danger">
 										{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 									</div>
