@@ -6,21 +6,21 @@ import { IDateRangePicker, PermissionsEnum } from '@gauzy/contracts';
 import {
 	DateRangePickerBuilderService,
 	PageTabRegistryService,
-	PageTabsetRegistryId,
+	PageTabsetPageId,
 	RouteUtil
 } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-time-activities-layout',
-    templateUrl: './layout.component.html',
-    styleUrls: ['./layout.component.scss'],
-    providers: [RouteUtil],
-    standalone: false
+	selector: 'ngx-time-activities-layout',
+	templateUrl: './layout.component.html',
+	styleUrls: ['./layout.component.scss'],
+	providers: [RouteUtil],
+	standalone: false
 })
 export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	public title: string;
-	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	public selectedDateRange$: Observable<IDateRangePicker> = this._dateRangePickerBuilderService.selectedDateRange$;
 
 	constructor(

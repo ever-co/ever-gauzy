@@ -833,6 +833,11 @@
 		"Retryable",
 		"pendings",
 		"SICO",
+		"deregister",
+		"deregistration",
+		"Deregisters",
+		"lifecycles",
+		"namespacing",
 		"Hasher",
 		"VARCHAR"
 	],

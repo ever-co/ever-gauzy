@@ -43,6 +43,7 @@ export async function createSettingsWindow(
 
 	// Remove the menu from the window
 	settingsWindow.setMenu(null);
+	manager.overrideSystemContextMenu(settingsWindow);
 
 	// Attach the reusable close event handler
 	handleCloseEvent(settingsWindow);

@@ -5,12 +5,7 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
-	"implicitDependencies": [
-		"constants",
-		"contracts",
-		"ui-config",
-		"ui-core"
-	],
+	"implicitDependencies": ["constants", "contracts", "ui-config", "ui-core"],
 	"generators": {
 		"@nx/angular:component": {
 			"style": "scss",
@@ -20,10 +15,8 @@
 	},
 	"targets": {
 		"build": {
-			"executor": "@nx/angular:package",
-			"outputs": [
-				"{workspaceRoot}/dist/{projectRoot}"
-			],
+			"executor": "@nx/angular:ng-packagr-lite",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
 				"project": "packages/desktop-ui-lib/ng-package.json",
 				"tsConfig": "packages/desktop-ui-lib/tsconfig.json"
@@ -37,15 +30,11 @@
 				}
 			},
 			"defaultConfiguration": "development",
-			"dependsOn": [
-				"^build"
-			]
+			"dependsOn": ["^build"]
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": [
-				"{workspaceRoot}/coverage/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/desktop-ui-lib/jest.config.ts",
 				"tsConfig": "packages/desktop-ui-lib/tsconfig.spec.json"

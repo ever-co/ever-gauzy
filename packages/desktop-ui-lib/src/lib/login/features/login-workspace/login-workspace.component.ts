@@ -1,12 +1,12 @@
 import { NgStyle, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NavigationExtras, Router, RouterLink } from '@angular/router';
 import { HttpStatus, IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { NbButtonModule, NbFormFieldModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
-import { catchError, EMPTY, filter, switchMap, tap } from 'rxjs';
+import { catchError, concatMap, EMPTY, filter, finalize, switchMap, tap } from 'rxjs';
 import { AuthService, AuthStrategy } from '../../../auth';
 import { SpinnerButtonDirective } from '../../../directives/spinner-button.directive';
 import { ErrorHandlerService, Store } from '../../../services';
@@ -66,6 +66,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
 		private readonly _authService: AuthService,
 		private readonly _authStrategy: AuthStrategy,
 		private readonly _errorHandlingService: ErrorHandlerService,
+		private readonly cdr: ChangeDetectorRef,
 		private readonly _router: Router
 	) {
 		const navigation = this._router.getCurrentNavigation();
@@ -110,9 +111,11 @@ export class NgxLoginWorkspaceComponent implements OnInit {
 					if (total_workspaces == 1) {
 						const [workspace] = this.workspaces;
 						this.signInWorkspace(workspace);
-					} else {
-						this.loading = false;
 					}
+				}),
+				finalize(() => {
+					this.loading = false;
+					this.cdr.markForCheck();
 				}),
 				catchError((error) => {
 					// Handle and log errors using the error handling service
@@ -154,6 +157,11 @@ export class NgxLoginWorkspaceComponent implements OnInit {
 					// Store authentication data using centralized method
 					this._authStrategy.storeAuthenticationData(response);
 					return this._authService.electronAuthentication(response);
+				}),
+				concatMap(() => this._router.navigate(['/time-tracker'])),
+				finalize(() => {
+					this.loading = false;
+					this.cdr.markForCheck();
 				}),
 				catchError((error) => {
 					// Handle and log errors using the error handling service

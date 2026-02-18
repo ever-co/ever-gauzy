@@ -27,6 +27,23 @@
 
 body {
   -ms-overflow-style: none;
+  /* Dark theme overrides when body has nb-theme-gauzy-dark */
+  &.nb-theme-gauzy-dark {
+    background: var(--card-background-color) !important;
+    color: var(--card-text-color) !important;
+    .spinner {
+      background: var(--card-background-color) !important;
+      div:first-child {
+        box-shadow: 0 3px 3px 0 rgba(255, 255, 255, 0.04);
+      }
+      div:first-child:before {
+        box-shadow: 0 3px 3px 0 rgba(120, 120, 120, 0.08);
+      }
+      div:first-child:after {
+        box-shadow: 0 3px 3px 0 rgba(220, 80, 90, 0.6);
+      }
+    }
+  }
 }
 
 .cdk-global-scrollblock {
