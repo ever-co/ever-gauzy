@@ -1,6 +1,17 @@
 import { AsyncPipe } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	ElementRef,
+	Inject,
+	NgZone,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import {
 	IOrganization,
 	IOrganizationTeam,
@@ -43,7 +54,6 @@ import {
 	debounceTime,
 	exhaustMap,
 	filter,
-	firstValueFrom,
 	from,
 	lastValueFrom,
 	mergeMap,
@@ -51,6 +61,7 @@ import {
 	of,
 	Subject,
 	Subscription,
+	switchMap,
 	tap,
 	timer
 } from 'rxjs';
@@ -192,6 +203,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	sound: any = null;
 	private dialogRequest$ = new Subject<{ dialog: TemplateRef<any>; option: any }>();
+	private readonly logout$ = new Subject<void>();
 
 	constructor(
 		private electronService: ElectronService,
@@ -224,7 +236,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly noteService: NoteService,
 		private readonly timeTrackerQuery: TimeTrackerQuery,
 		private readonly timeTrackerStore: TimeTrackerStore,
-		private readonly timeTrackerFormService: TimeTrackerFormService
+		private readonly timeTrackerFormService: TimeTrackerFormService,
+		private readonly cdr: ChangeDetectorRef,
+		private readonly router: Router
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -875,6 +889,26 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// Logout handling with exhaustMap to prevent multiple logouts
+		this.logout$
+			.asObservable()
+			.pipe(
+				tap(() =>
+					this.processing$.next({
+						state: true,
+						message: this._translateService.instant('TIMER_TRACKER.LOADING.LOGOUT_IN_PROGRESS')
+					})
+				),
+				exhaustMap(() =>
+					timer(3000).pipe(
+						switchMap(() => this._authStrategy.logout()),
+						tap(() => this.afterLogout())
+					)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	public xor(a: boolean, b: boolean): boolean {
@@ -1114,7 +1148,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this.stopTimer();
 				}
 				if (!this._isSpecialLogout) {
-					await this.logout();
+					this.logout();
 				}
 			})
 		);
@@ -1742,7 +1776,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			if (this._isSpecialLogout) {
 				// wait 3 sec and logout
-				await this.logout();
+				this.logout();
 			}
 
 			if (this.quitApp) {
@@ -2340,16 +2374,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return value === Infinity;
 	}
 
-	public async logout() {
-		// we wait 3 sec and then logout
-		asyncScheduler.schedule(async () => {
-			await firstValueFrom(this._authStrategy.logout());
-			this._isSpecialLogout = false;
-			this.electronService.ipcRenderer.send(
-				this._isRestartAndUpdate ? 'restart_and_update' : 'navigate_to_login'
-			);
-			localStorage.clear();
-		}, 3000);
+	public logout(): void {
+		this.logout$.next();
+	}
+
+	private async afterLogout(): Promise<void> {
+		this._isSpecialLogout = false;
+
+		if (this._isRestartAndUpdate) {
+			this.electronService.ipcRenderer.send('restart_and_update');
+		} else {
+			this.electronService.ipcRenderer.send('navigate_to_login');
+			await this.router.navigate(['/auth/login']);
+		}
+
+		localStorage.clear();
+		this.cdr.markForCheck();
 	}
 
 	public async restart(callback?: Function): Promise<any> {

@@ -18,8 +18,7 @@ import {
 	ToastrService,
 	PageTabsetPageId,
 	PageTabRegistryService,
-	PageDataTablePageId,
-	JobSearchStoreService
+	PageDataTablePageId
 } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 import {
@@ -29,9 +28,10 @@ import {
 	EmployeeLinkEditorComponent,
 	PaginationFilterBaseComponent,
 	NonEditableNumberEditorComponent,
-	JobSearchAvailabilityEditorComponent,
 	ToggleSwitcherComponent
 } from '@gauzy/ui-core/shared';
+import { JobSearchStatusEditorComponent } from '../job-search-status-editor/job-search-status-editor.component';
+import { JobSearchStoreService } from '../../providers/job-search-store.service';
 
 /**
  * Tab identifiers for the job employee page (Browse, Search, History).
@@ -53,7 +53,9 @@ export enum JobSearchTabsEnum {
 	selector: 'ga-job-employees',
 	templateUrl: './job-employee.component.html',
 	styleUrls: ['./job-employee.component.scss'],
-	providers: [CurrencyPipe],
+	// JobSearchStoreService provided here so dynamically created cell editors (e.g. JobSearchStatusEditorComponent)
+	// in the smart table can inject it; their injector may not see the module-level provider (NG0201 otherwise).
+	providers: [CurrencyPipe, JobSearchStoreService],
 	standalone: false
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
@@ -296,14 +298,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				instance.label = false;
 				instance.value = employee.isJobSearchActive;
 
-				/** Subscribe to the onSwitched event and update the job search availability. */
-				instance.onSwitched.pipe(untilDestroyed(instance)).subscribe((toggle: boolean) => {
+				/** Subscribe to the onSwitched event and update the job search availability. Use this (parent) for untilDestroyed so cleanup runs when this component is destroyed; the table cell instance may not have UntilDestroy applied in plugin context. */
+				instance.onSwitched.pipe(untilDestroyed(this)).subscribe((toggle: boolean) => {
 					this._jobSearchStoreService.updateJobSearchAvailability(this.organization, employee, toggle);
 				});
 			},
 			editor: {
 				type: 'custom',
-				component: JobSearchAvailabilityEditorComponent
+				component: JobSearchStatusEditorComponent
 			}
 		});
 	}
@@ -427,7 +429,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				confirmSave: true
 			},
 			columns: {
-				...this._pageDataTableRegistryService.getPageDataTableColumns('job-employee')
+				...this._pageDataTableRegistryService.getPageDataTableColumns('job-employee-page')
 			}
 		};
 	}

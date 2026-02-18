@@ -14,7 +14,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: DashboardComponent,
-		data: { tabsetId: 'dashboard' },
+		data: { tabsetId: 'dashboard-page' },
 		children: [
 			{
 				path: '',

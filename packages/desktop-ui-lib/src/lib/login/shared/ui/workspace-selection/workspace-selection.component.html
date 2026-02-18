@@ -44,7 +44,7 @@
                 <nb-icon
                   status="primary"
                   icon="arrow-forward-outline"
-                  *gauzySpinnerButton="workspace.token === selected?.token"
+                  *gauzySpinnerButton="(workspace.token === selected?.token) && loading"
                   [options]="{ animation: { type: 'shake' } }"
                 ></nb-icon>
               </div>

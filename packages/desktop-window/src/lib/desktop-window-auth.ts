@@ -45,6 +45,7 @@ export class AuthWindow extends BaseWindow implements IBaseWindow {
 
         // Register the Authentication with the WindowManager
         this.registerWindow();
+		this.manager.overrideSystemContextMenu(this.browserWindow);
     }
 
     /**

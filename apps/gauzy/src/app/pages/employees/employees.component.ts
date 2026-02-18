@@ -673,7 +673,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/**
-	 * Registers custom columns for the 'employee-manage' data table.
+	 * Registers custom columns for the 'employee-manage-page' data table.
 	 * This method defines and registers the columns with various properties,
 	 * including a custom filter function and a rendering component.
 	 */
@@ -845,17 +845,17 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/**
-	 * Retrieves the registered columns for the 'employee-manage' data table.
+	 * Retrieves the registered columns for the 'employee-manage-page' data table.
 	 *
 	 * This method fetches all the column configurations registered under the
-	 * 'employee-manage' data table from the PageDataTableRegistryService.
+	 * 'employee-manage-page' data table from the PageDataTableRegistryService.
 	 * It returns the columns in the format of `IColumns`, which can be used for rendering or
 	 * further manipulation in the smart table.
 	 *
-	 * @returns {IColumns} The column configurations for the 'employee-manage' table.
+	 * @returns {IColumns} The column configurations for the 'employee-manage-page' table.
 	 */
 	getColumns(): IColumns {
-		// Fetch and return the columns for 'employee-manage' data table
+		// Fetch and return the columns for 'employee-manage-page' data table
 		return this._pageDataTableRegistryService.getPageDataTableColumns(this.dataTableId);
 	}
 

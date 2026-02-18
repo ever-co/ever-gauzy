@@ -106,7 +106,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	}
 
 	/**
-	 * Registers custom tabs for the 'employee-edit' page.
+	 * Registers custom tabs for the 'employee-edit-page' page.
 	 * This method defines and registers the various tabs, their icons, routes, and titles.
 	 */
 	private _registerPageTabs(): void {
@@ -117,7 +117,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	}
 
 	/**
-	 * Creates the configuration for the tabs used in the 'employee-edit' page.
+	 * Creates the configuration for the tabs used in the 'employee-edit-page' page.
 	 * @returns An array of PageTabRegistryConfig objects.
 	 */
 	private _createTabsConfig(): PageTabRegistryConfig[] {

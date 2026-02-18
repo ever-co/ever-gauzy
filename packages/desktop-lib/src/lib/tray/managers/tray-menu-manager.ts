@@ -58,12 +58,7 @@ export class TrayMenuManager {
 	 */
 	updateMenuItem(identifier: number | string, updates: Partial<MenuItemConstructorOptions>): void {
 		let index: number = -1;
-
-		if (typeof identifier === 'number') {
-			index = identifier;
-		} else {
-			index = this.currentMenu.findIndex((item) => String(item.id) === String(identifier));
-		}
+		index = this.resolveMenuItemIndex(identifier);
 
 		if (index >= 0 && this.currentMenu[index]) {
 			this.currentMenu[index] = { ...this.currentMenu[index], ...updates };
@@ -91,4 +86,23 @@ export class TrayMenuManager {
 	getMenu(): MenuItemConstructorOptions[] {
 		return this.currentMenu;
 	}
+
+	isLabelChange(identifier: number | string, updates: Partial<MenuItemConstructorOptions>) {
+		let index = -1;
+
+		index = this.resolveMenuItemIndex(identifier);
+
+		if (index < 0 || index >= this.currentMenu.length) {
+			return false;
+		}
+
+		return this.currentMenu[index].label !== updates.label;
+	}
+
+	private resolveMenuItemIndex(identifier: number | string): number {
+		if (typeof identifier === 'number') {
+			return identifier;
+		}
+		return this.currentMenu.findIndex((item) => String(item.id) === String(identifier));
+ 	}
 }

@@ -281,23 +281,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				},
 				items: [
 					{
-						id: 'sales-proposals',
-						title: 'Proposals',
-						icon: 'fas fa-paper-plane',
-						link: '/pages/sales/proposals',
-						data: {
-							translationKey: 'MENU.PROPOSALS',
-							permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW],
-							featureKey: FeatureEnum.FEATURE_PROPOSAL,
-							...(this._store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_PROPOSALS_EDIT
-							) && {
-								add: '/pages/sales/proposals/register'
-							})
-						}
-					},
-					{
 						id: 'sales-estimates',
 						title: 'Estimates',
 						icon: 'far fa-file',
@@ -418,44 +401,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 								PermissionsEnum.ORG_TASK_ADD
 							) && {
 								add: '/pages/tasks/team?openAddDialog=true'
-							})
-						}
-					}
-				]
-			},
-			{
-				id: 'jobs',
-				title: 'Jobs',
-				icon: 'fas fa-briefcase',
-				link: '/pages/jobs',
-				data: {
-					translationKey: 'MENU.JOBS',
-					featureKey: FeatureEnum.FEATURE_JOB
-				},
-				items: [
-					{
-						id: 'jobs-employee',
-						title: 'Employee',
-						icon: 'fas fa-user-friends',
-						link: '/pages/jobs/employee',
-						data: {
-							translationKey: 'MENU.EMPLOYEES',
-							permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW]
-						}
-					},
-					{
-						id: 'jobs-proposal-template',
-						title: 'Proposal Template',
-						icon: 'far fa-file-alt',
-						link: '/pages/jobs/proposal-template',
-						data: {
-							translationKey: 'MENU.PROPOSAL_TEMPLATE',
-							permissionKeys: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
-							...(this._store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT
-							) && {
-								add: '/pages/jobs/proposal-template?openAddDialog=true'
 							})
 						}
 					}

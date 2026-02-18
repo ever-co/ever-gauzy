@@ -102,8 +102,8 @@ export class DashboardComponent extends TranslationBaseComponent implements OnIn
 	 */
 	registerAccountingTabs(): void {
 		// Remove the specified page tabs for the current tenant
-		this._pageTabRegistryService.removePageTab('dashboard', 'accounting');
-		this._pageTabRegistryService.removePageTab('dashboard', 'hr');
+		this._pageTabRegistryService.removePageTab(this.tabsetId, 'accounting');
+		this._pageTabRegistryService.removePageTab(this.tabsetId, 'hr');
 
 		// Check if the user has permission to view accounting
 		if (!this.selectedEmployee || !this.selectedEmployee.id) {
