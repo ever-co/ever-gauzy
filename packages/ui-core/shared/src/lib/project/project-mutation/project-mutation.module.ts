@@ -27,12 +27,14 @@ import { ProjectModuleTableModule } from '../../project-module/project-module-ta
 import { ProjectMutationComponent } from './project-mutation.component';
 import { RepositorySelectorModule } from '../../integrations/github/repository-selector/repository-selector.module';
 import { SmartDataViewLayoutModule } from '../../smart-data-layout';
+import { ReplacePipe } from '../../pipes/replace.pipe';
 
 @NgModule({
 	declarations: [ProjectMutationComponent],
 	exports: [ProjectMutationComponent],
 	imports: [
 		CommonModule,
+		ReplacePipe,
 		FormsModule,
 		ReactiveFormsModule,
 		NbButtonModule,

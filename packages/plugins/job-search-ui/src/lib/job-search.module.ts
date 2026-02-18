@@ -1,3 +1,4 @@
+import { CurrencyPipe } from '@angular/common';
 import { inject, NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -56,7 +57,8 @@ import { ApplyJobManuallyComponent } from './components/apply-job-manually/apply
 			provide: ROUTES,
 			useFactory: getJobSearchRoutes,
 			multi: true
-		}
+		},
+		CurrencyPipe,
 	]
 })
 export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {

@@ -103,6 +103,17 @@ const FEATURE_MODULES = [
 	WorkInProgressModule
 ];
 
+/**
+ * Standalone Pipes
+ */
+const STANDALONE_PIPES = [
+	CurrencyPositionPipe,
+	DateFormatPipe,
+	ReplacePipe,
+	SafeHtmlPipe,
+	TruncatePipe
+];
+
 @NgModule({
 	declarations: [...COMPONENTS],
 	imports: [
@@ -110,11 +121,7 @@ const FEATURE_MODULES = [
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
 		...FEATURE_MODULES,
-		DateFormatPipe,
-		ReplacePipe,
-		CurrencyPositionPipe,
-		TruncatePipe,
-		SafeHtmlPipe
+		...STANDALONE_PIPES
 	],
 	exports: [...COMPONENTS],
 	providers: [

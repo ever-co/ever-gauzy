@@ -1,18 +1,21 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { filter, tap } from 'rxjs/operators';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { IOrganization } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
+import { CurrencyPositionPipe } from '../../pipes/currency-position.pipe';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-invoice-total-amount',
-    template: `
+	selector: 'ga-invoice-total-amount',
+	template: `
 		<span>
 			{{ value | currency : rowData?.currency | position : organization?.currencyPosition }}
 		</span>
 	`,
-    standalone: false
+	standalone: true,
+	imports: [CommonModule, CurrencyPositionPipe]
 })
 export class InvoiceTotalValueComponent implements OnInit {
 	@Input() value: string;

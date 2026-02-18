@@ -1,7 +1,6 @@
-import { CurrencyPipe, NgClass, TitleCasePipe } from '@angular/common';
+import { NgClass, TitleCasePipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { IVisibilityJobPostInput } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
@@ -17,7 +16,6 @@ import { JobStatusComponent } from '../job-status/job-status.component';
     selector: 'job-title-description-details',
     templateUrl: './job-title-description-details.component.html',
     styleUrls: ['./job-title-description-details.component.scss'],
-    providers: [CurrencyPipe],
     standalone: true,
     imports: [
         NgClass,

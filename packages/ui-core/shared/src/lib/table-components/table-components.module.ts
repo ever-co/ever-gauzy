@@ -46,18 +46,10 @@ import { ValueWithUnitComponent } from './value-with-units/value-with-units.comp
 import { VisibilityComponent } from './visibility/visibility.component';
 import { DirectivesModule } from '../directives/directives.module';
 import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badge-view.module';
-import { DateFormatPipe } from '../pipes/date-format.pipe';
-import { DateTimeFormatPipe } from '../pipes/datetime-format.pipe';
-import { CurrencyPositionPipe } from '../pipes/currency-position.pipe';
-import { Nl2BrPipe } from '../pipes/nl2br.pipe';
 
 @NgModule({
 	imports: [
 		CommonModule,
-		DateFormatPipe,
-		DateTimeFormatPipe,
-		CurrencyPositionPipe,
-		Nl2BrPipe,
 		FormsModule,
 		NbBadgeModule,
 		NbButtonModule,
@@ -67,7 +59,15 @@ import { Nl2BrPipe } from '../pipes/nl2br.pipe';
 		TranslateModule.forChild(),
 		DirectivesModule,
 		ComponentsModule,
-		TaskBadgeViewComponentModule
+		TaskBadgeViewComponentModule,
+		CreatedAtComponent,
+		DateViewComponent,
+		IncomeExpenseAmountComponent,
+		InvoiceTotalValueComponent,
+		ProjectOrganizationGridDetailsComponent,
+		TrustHtmlLinkComponent,
+		RoleComponent,
+		StatusViewComponent
 	],
 	declarations: [
 		AllowScreenshotCaptureComponent,
@@ -77,8 +77,6 @@ import { Nl2BrPipe } from '../pipes/nl2br.pipe';
 		ContactLinksComponent,
 		ContactWithTagsComponent,
 		CreatedByUserComponent,
-		CreatedAtComponent,
-		DateViewComponent,
 		DocumentDateTableComponent,
 		DocumentUrlTableComponent,
 		EmailComponent,
@@ -88,8 +86,6 @@ import { Nl2BrPipe } from '../pipes/nl2br.pipe';
 		ExternalLinkComponent,
 		GithubIssueTitleDescriptionComponent,
 		GithubRepositoryComponent,
-		IncomeExpenseAmountComponent,
-		InvoiceTotalValueComponent,
 		NotesWithTagsComponent,
 		NumberEditorComponent,
 		EmployeeLinkEditorComponent,
@@ -100,15 +96,11 @@ import { Nl2BrPipe } from '../pipes/nl2br.pipe';
 		ProjectOrganizationComponent,
 		ProjectOrganizationEmployeesComponent,
 		ProjectOrganizationGridComponent,
-		ProjectOrganizationGridDetailsComponent,
 		ResyncButtonComponent,
-		RoleComponent,
-		StatusViewComponent,
 		TagsOnlyComponent,
 		TaskEstimateComponent,
 		TaskTeamsComponent,
 		ToggleSwitcherComponent,
-		TrustHtmlLinkComponent,
 		ValueWithUnitComponent,
 		VisibilityComponent,
 		NonEditableNumberEditorComponent

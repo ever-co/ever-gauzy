@@ -1,12 +1,15 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { NbComponentStatus } from '@nebular/theme';
+import { CommonModule } from '@angular/common';
+import { NbBadgeModule } from '@nebular/theme';
 import { TaskStatusEnum } from '@gauzy/contracts';
+import { ReplacePipe } from '../../pipes/replace.pipe';
+import { TaskBadgeViewComponentModule } from '../../tasks/task-badge-view/task-badge-view.module';
 
 @Component({
-    selector: 'ngx-status-view',
-    templateUrl: './status-view.component.html',
-    styles: [
-        `
+	selector: 'ngx-status-view',
+	templateUrl: './status-view.component.html',
+	styles: [
+		`
 			:host {
 				display: flex;
 			}
@@ -26,13 +29,14 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 				text-align: left;
 			}
 		`
-    ],
-    standalone: false
+	],
+	standalone: true,
+	imports: [CommonModule, NbBadgeModule, ReplacePipe, TaskBadgeViewComponentModule]
 })
 export class StatusViewComponent implements OnInit {
 	@Input() value: string;
 	@Input() rowData: any;
-	status: NbComponentStatus;
+	status: any;
 
 	ngOnInit(): void {
 		switch (this.value) {

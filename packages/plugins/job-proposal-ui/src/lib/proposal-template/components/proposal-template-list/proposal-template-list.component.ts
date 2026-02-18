@@ -252,7 +252,7 @@ export class ProposalTemplateListComponent extends PaginationFilterBaseComponent
 					isFilterable: false,
 					isSortable: false,
 					valuePrepareFunction: (value: string) => {
-						return value ? this._truncatePipe.transform(this._nl2BrPipe.transform(value), 500) : '';
+						return value ? this._nl2BrPipe.transform(this._truncatePipe.transform(value, 500)) : '';
 					}
 				},
 				isDefault: {

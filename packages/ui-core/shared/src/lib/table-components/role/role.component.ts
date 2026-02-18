@@ -1,31 +1,33 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { NbComponentStatus } from '@nebular/theme';
+import { NbBadgeModule } from '@nebular/theme';
 import { IRole, RolesEnum } from '@gauzy/contracts';
+import { ReplacePipe } from '../../pipes/replace.pipe';
 
 @Component({
-    selector: 'gauzy-role',
-    templateUrl: './role.component.html',
-    styleUrls: ['./role.component.scss'],
-    standalone: false
+	selector: 'gauzy-role',
+	templateUrl: './role.component.html',
+	styleUrls: ['./role.component.scss'],
+	standalone: true,
+	imports: [NbBadgeModule, ReplacePipe]
 })
 export class RoleComponent implements OnInit {
 	@Input()
 	value: string | number | any;
 
 	/*
-	* Getter & Setter for status
-	*/
-	_status: NbComponentStatus;
-	get status(): NbComponentStatus {
+	 * Getter & Setter for status
+	 */
+	_status: any;
+	get status(): any {
 		return this._status;
 	}
-	@Input() set status(value: NbComponentStatus) {
+	@Input() set status(value: any) {
 		this._status = value;
 	}
 
 	/*
-	* Getter & Setter for role
-	*/
+	 * Getter & Setter for role
+	 */
 	_role: IRole;
 	get role(): IRole {
 		return this._role;

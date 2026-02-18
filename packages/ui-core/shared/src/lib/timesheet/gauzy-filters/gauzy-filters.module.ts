@@ -6,12 +6,14 @@ import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import { TranslateModule } from '@ngx-translate/core';
 import { GauzyFiltersComponent } from './gauzy-filters.component';
 import { TimezoneFilterModule } from './timezone-filter/timezone-filter.module';
+import { ReplacePipe } from '../../pipes/replace.pipe';
 
 @NgModule({
 	declarations: [GauzyFiltersComponent],
 	exports: [GauzyFiltersComponent],
 	imports: [
 		CommonModule,
+		ReplacePipe,
 		FormsModule,
 		NbButtonModule,
 		NbIconModule,

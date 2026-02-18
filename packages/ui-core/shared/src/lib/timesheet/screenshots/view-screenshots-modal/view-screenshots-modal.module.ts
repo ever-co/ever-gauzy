@@ -18,12 +18,14 @@ import { TableComponentsModule } from '../../../table-components';
 import { SharedModule } from '../../../shared.module';
 import { GalleryModule } from '../../../gallery/gallery.module';
 import { ViewScreenshotsModalComponent } from './view-screenshots-modal.component';
+import { ReplacePipe } from '../../../pipes/replace.pipe';
 
 @NgModule({
 	declarations: [ViewScreenshotsModalComponent],
 	exports: [ViewScreenshotsModalComponent],
 	imports: [
 		CommonModule,
+		ReplacePipe,
 		NbAlertModule,
 		NbButtonModule,
 		NbCardModule,

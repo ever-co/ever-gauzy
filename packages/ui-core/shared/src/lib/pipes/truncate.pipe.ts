@@ -15,13 +15,16 @@ export class TruncatePipe implements PipeTransform {
 	 * @param {string} [ellipsis='...'] - The string to append to the truncated string. Defaults to '...'.
 	 * @return {string} The transformed string. If the input string is falsy, an empty string is returned.
 	 */
-	transform(value: string, limit = 25, completeWords = false, ellipsis = '...') {
+	transform(value: string, limit = 25, completeWords = false, ellipsis = '...'): string {
 		if (!value) {
-			return;
+			return '';
 		}
+
 		if (completeWords) {
-			limit = value.substring(0, limit).lastIndexOf(' ');
+			const spaceIndex = value.substring(0, limit).lastIndexOf(' ');
+			limit = spaceIndex > 0 ? spaceIndex : limit;
 		}
+
 		return value.length > limit ? value.substring(0, limit) + ellipsis : value;
 	}
 }

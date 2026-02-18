@@ -7,12 +7,14 @@ import { DialogsModule } from '../../dialogs/dialogs.module';
 import { TableComponentsModule } from '../../table-components';
 import { ViewTimeLogModalComponent } from './view-time-log-modal.component';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
+import { ReplacePipe } from '../../pipes/replace.pipe';
 
 @NgModule({
 	declarations: [ViewTimeLogModalComponent],
 	exports: [ViewTimeLogModalComponent],
 	imports: [
 		CommonModule,
+		ReplacePipe,
 		TranslateModule.forChild(),
 		SharedModule,
 		NbCardModule,
