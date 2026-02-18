@@ -1,10 +1,15 @@
-import { isMySQL, isPostgres } from '@gauzy/config';
 import { IUser } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { Index, JoinColumn, RelationId, VersionColumn } from 'typeorm';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
+import {
+	ColumnIndex,
+	JsonColumn,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne
+} from '../../core/decorators/entity';
 import { BaseEntity, User } from '../../core/entities/internal';
 import { IToken, TokenStatus } from '../interfaces';
 
@@ -196,8 +201,8 @@ export class Token extends BaseEntity implements IToken {
 		nullable: true
 	})
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
-	metadata: Record<string, any> | string | null;
+	@JsonColumn({ nullable: true })
+	metadata: Record<string, any> | null;
 
 	@ApiProperty({
 		type: Number,

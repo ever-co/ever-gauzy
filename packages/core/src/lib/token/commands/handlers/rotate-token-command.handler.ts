@@ -92,14 +92,9 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 				lastUsedAt: new Date()
 			});
 
-			// Parse metadata for SQLite
-			const parsedMetadata = isBetterSqlite3()
-				? JSON.parse(newTokenRecord.metadata as string)
-				: newTokenRecord.metadata;
-
 			// Generate new JWT
 			const payload = {
-				...parsedMetadata,
+				...newTokenRecord.metadata,
 				userId: dto.userId,
 				tokenType: dto.tokenType,
 				tokenId: newTokenRecord.id
