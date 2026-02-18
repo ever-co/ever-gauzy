@@ -55,10 +55,11 @@
 						</nb-accordion-item-header>
 						@for (keyResult of goal.keyResults; track keyResult.id) {
 						<nb-accordion-item-body
-							[ngClass]="{
-								'selected item':
-									selectedKeyResult.isSelected && selectedKeyResult.data.id === keyResult.id
-							}"
+							[class]="
+								selectedKeyResult.isSelected && selectedKeyResult.data.id === keyResult.id
+									? 'selected item'
+									: ''
+							"
 						>
 							<div
 								(click)="onClickKeyResult(keyResult, index)"
