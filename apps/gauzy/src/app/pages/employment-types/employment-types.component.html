@@ -96,16 +96,12 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
+					<i class="fas fa-times" (click)="onCancelClick(ref)"></i>
 				</div>
 			</div>
 			<div class="row mb-3">
 				<h5 class="title mr-3 ml-3">
-					{{
-						selectedOrgEmpType && selectedOrgEmpType?.id
-							? ('POP_UPS.EDIT' | translate)
-							: ('POP_UPS.ADD' | translate)
-					}}
+					{{ titleKey() | translate }}
 				</h5>
 			</div>
 			@if (form) {
@@ -135,21 +131,10 @@
 				</div>
 				<div class="row mb-3">
 					<div class="col-sm-12"></div>
-					<button
-						class="delete mr-3 ml-3"
-						(click)="ref.close(); disabled = true"
-						nbButton
-						status="basic"
-						outline
-					>
+					<button class="delete mr-3 ml-3" (click)="onCancelClick(ref)" nbButton status="basic" outline>
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
-					<button
-						(click)="submitForm(); disabled = true; ref.close()"
-						nbButton
-						status="success"
-						[disabled]="form.invalid"
-					>
+					<button (click)="onSaveClick(ref)" nbButton status="success" [disabled]="form.invalid">
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 				</div>

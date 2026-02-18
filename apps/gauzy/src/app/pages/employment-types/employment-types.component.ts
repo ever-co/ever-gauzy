@@ -14,7 +14,7 @@ import {
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { OrganizationEmploymentTypesService, Store } from '@gauzy/ui-core/core';
-import { ComponentEnum, distinctUntilChange,validateUniqueString} from '@gauzy/ui-core/common';
+import { ComponentEnum, distinctUntilChange, validateUniqueString } from '@gauzy/ui-core/common';
 import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -27,10 +27,10 @@ import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-employment-types',
-    templateUrl: './employment-types.component.html',
-    styleUrls: ['./employment-types.component.scss'],
-    standalone: false
+	selector: 'ga-employment-types',
+	templateUrl: './employment-types.component.html',
+	styleUrls: ['./employment-types.component.scss'],
+	standalone: false
 })
 export class EmploymentTypesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('editableTemplate') public editableTemplateRef: TemplateRef<any>;
@@ -210,7 +210,10 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 			const existingNames = this.organizationEmploymentTypes.map((type) => type.name);
 
 			if (validateUniqueString(existingNames, name)) {
-				this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS', name);
+				this.toastrService.error(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS',
+					name
+				);
 				return;
 			}
 
@@ -287,15 +290,14 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	}
 
 	async editOrgEmpType(id: string, name: string) {
-
 		const existingNames = this.organizationEmploymentTypes
-        .filter((type) => type.id !== id)
-        .map((type) => type.name);
+			.filter((type) => type.id !== id)
+			.map((type) => type.name);
 
-    	if (validateUniqueString(existingNames, name)) {
-        	this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS',  name );
-        	return;
-    	}
+		if (validateUniqueString(existingNames, name)) {
+			this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS', name);
+			return;
+		}
 		const orgEmpTypeForEdit = {
 			name: name,
 			tags: this.tags
@@ -349,4 +351,18 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		this.selectedOrgEmpType = this.selected.employmentType;
 	}
 
+	titleKey(): string {
+		return this.selectedOrgEmpType?.id ? 'POP_UPS.EDIT' : 'POP_UPS.ADD';
+	}
+
+	onCancelClick(ref: any) {
+		ref.close();
+		this.disabled = true;
+	}
+
+	onSaveClick(ref: any) {
+		this.submitForm();
+		this.disabled = true;
+		ref.close();
+	}
 }
