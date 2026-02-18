@@ -559,7 +559,9 @@ export class ActivepiecesService {
 				return globalApiKey;
 			}
 
-			throw new BadRequestException('Activepieces API key not configured');
+			throw new InternalServerErrorException(
+				'Activepieces API key is not configured. Set GAUZY_ACTIVEPIECES_API_KEY or run setupIntegration first.'
+			);
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;

@@ -194,7 +194,7 @@ export class AuthService extends SocialAuthService {
 
 	private ensureOAuthAppConfigured(): OAuthAppConfig {
 		const config = this.getOAuthAppConfig();
-		if (!config.clientId || !config.clientSecret || !config.redirectUris.length || !config.codeSecret) {
+		if (!config.clientId || !config.clientSecret || !config.redirectUris?.length || !config.codeSecret) {
 			throw new InternalServerErrorException('OAuth app is not configured');
 		}
 		return config;
