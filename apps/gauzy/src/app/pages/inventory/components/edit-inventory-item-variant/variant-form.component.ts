@@ -28,10 +28,10 @@ export interface IVariantCreateInput {
 }
 
 @Component({
-    selector: 'ngx-inventory-variant-form',
-    templateUrl: './variant-form.component.html',
-    styleUrls: ['./variant-form.component.scss'],
-    standalone: false
+	selector: 'ngx-inventory-variant-form',
+	templateUrl: './variant-form.component.html',
+	styleUrls: ['./variant-form.component.scss'],
+	standalone: false
 })
 export class InventoryVariantFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	itemVariant: IProductVariant;
@@ -56,7 +56,7 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent impl
 		private route: ActivatedRoute,
 		private readonly store: Store,
 		private inventoryStore: InventoryStore,
-		private dialogService: NbDialogService
+		private readonly dialogService: NbDialogService
 	) {
 		super(translationService);
 	}

@@ -7,10 +7,10 @@ import { firstValueFrom } from 'rxjs';
 import { GoalSettingsService } from '@gauzy/ui-core/core';
 
 @Component({
-    selector: 'ga-keyresult-type-select',
-    templateUrl: './keyresult-type-select.component.html',
-    styleUrls: ['./keyresult-type-select.component.sass'],
-    standalone: false
+	selector: 'ga-keyresult-type-select',
+	templateUrl: './keyresult-type-select.component.html',
+	styleUrls: ['./keyresult-type-select.component.sass'],
+	standalone: false
 })
 export class KeyresultTypeSelectComponent {
 	@Input() parentFormGroup: UntypedFormGroup;
@@ -22,7 +22,7 @@ export class KeyresultTypeSelectComponent {
 
 	keyResultTypeEnum = KeyResultTypeEnum;
 
-	constructor(private dialogService: NbDialogService, private goalSettingsService: GoalSettingsService) {}
+	constructor(private readonly dialogService: NbDialogService, private goalSettingsService: GoalSettingsService) {}
 
 	taskTypeValidators() {
 		if (this.parentFormGroup.get('type').value === this.keyResultTypeEnum.TASK) {

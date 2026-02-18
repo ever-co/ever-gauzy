@@ -26,6 +26,9 @@
 		"lib:build:prod": "yarn nx build plugin-changelog",
 		"lib:watch": "yarn nx build plugin-changelog --watch"
 	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14"
+	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
@@ -33,7 +36,6 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@mikro-orm/nestjs": "^6.1.1",
-		"@nestjs/common": "^11.1.12",
 		"@nestjs/cqrs": "^11.0.3",
 		"@nestjs/swagger": "^11.2.5",
 		"@nestjs/typeorm": "^11.0.0",

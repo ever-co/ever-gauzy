@@ -26,6 +26,10 @@
 		"lib:build:prod": "yarn nx build plugin-integration-activepieces",
 		"lib:watch": "yarn nx build plugin-integration-activepieces --watch"
 	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
@@ -34,9 +38,8 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
-		"@nestjs/common": "^11.1.12",
 		"@nestjs/cqrs": "^11.0.3",
-		"@nestjs/swagger": "^11.2.5",
+		"@nestjs/swagger": "^11.2.6",
 		"axios": "^1.9.0",
 		"express": "^5.2.1",
 		"moment": "^2.30.1",

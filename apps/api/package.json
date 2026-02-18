@@ -62,13 +62,13 @@
 		"@gauzy/plugin-camshot": "^0.1.0",
 		"@gauzy/plugin-soundshot": "^0.1.0",
 		"@gauzy/plugin-registry": "^0.1.0",
-		"dotenv": "^17.2.3",
+		"dotenv": "^17.2.4",
 		"yargs": "^17.5.0"
 	},
 	"devDependencies": {
 		"@nestjs/cli": "^11.0.16",
 		"@nestjs/schematics": "^11.0.9",
-		"@nestjs/testing": "^11.1.12",
+		"@nestjs/testing": "^11.1.14",
 		"cross-env": "^10.1.0",
 		"nodemon": "^3.1.0",
 		"ts-node": "^10.9.2",
