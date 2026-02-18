@@ -26,13 +26,16 @@
 		"lib:build:prod": "yarn nx build plugin-posthog",
 		"lib:watch": "yarn nx build plugin-posthog --watch"
 	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@nestjs/common": "^11.1.12",
 		"chalk": "^4.1.0",
 		"express": "^5.2.1",
 		"posthog-node": "^4.13.0",

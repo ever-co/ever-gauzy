@@ -1,7 +1,7 @@
 const { composePlugins, withNx } = require('@nx/webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('node:path');
-const { getCopyPatterns } = require('./get-copy-patterns.js');
+const { getCopyPatterns } = require('./webpack-package-copy-patterns');
 
 console.log('Using custom Webpack Config -> __dirname: ' + __dirname);
 console.log('Using custom Webpack Config -> process.cwd: ' + process.cwd());

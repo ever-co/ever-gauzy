@@ -26,12 +26,15 @@
 		"lib:build:prod": "yarn nx build plugin-product-reviews",
 		"lib:watch": "yarn nx build plugin-product-reviews --watch"
 	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
 	"dependencies": {
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@nestjs/common": "^11.1.12",
-		"@nestjs/swagger": "^11.2.5",
+		"@nestjs/swagger": "^11.2.6",
 		"@nestjs/typeorm": "^11.0.0",
 		"chalk": "^4.1.0",
 		"class-validator": "^0.14.2",

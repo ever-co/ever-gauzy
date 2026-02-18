@@ -42,10 +42,10 @@ export interface IProductOptionUI extends IProductOptionTranslatable {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-options-form',
-    templateUrl: './options-form.component.html',
-    styleUrls: ['./options-form.component.scss'],
-    standalone: false
+	selector: 'ngx-options-form',
+	templateUrl: './options-form.component.html',
+	styleUrls: ['./options-form.component.scss'],
+	standalone: false
 })
 export class OptionsFormComponent implements OnInit {
 	editOption: IProductOption;
@@ -72,7 +72,7 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	constructor(
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private inventoryStore: InventoryStore,
 		private fb: UntypedFormBuilder,
 		private store: Store,
