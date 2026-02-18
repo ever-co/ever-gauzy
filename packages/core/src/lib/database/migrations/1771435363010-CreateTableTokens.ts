@@ -2,8 +2,8 @@ import { DatabaseTypeEnum } from '@gauzy/config';
 import * as chalk from 'chalk';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateTableTokens1771423567099 implements MigrationInterface {
-	name = 'CreateTableTokens1771423567099';
+export class CreateTableTokens1771435363010 implements MigrationInterface {
+	name = 'CreateTableTokens1771435363010';
 
 	/**
 	 * Up Migration
@@ -103,7 +103,7 @@ export class CreateTableTokens1771423567099 implements MigrationInterface {
 			`ALTER TABLE "tokens" ADD CONSTRAINT "FK_d82ec12d7a61f38cb34ea3a0543" FOREIGN KEY ("revokedById") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
-			`ALTER TABLE "tokens" ADD CONSTRAINT "FK_d417e5d35f2434afc4bd48cb4d2" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+			`ALTER TABLE "tokens" ADD CONSTRAINT "FK_d417e5d35f2434afc4bd48cb4d2" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
 			`ALTER TABLE "employee_job_preset" ADD CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
@@ -249,7 +249,7 @@ export class CreateTableTokens1771423567099 implements MigrationInterface {
 		await queryRunner.query(`DROP INDEX "IDX_b6e6fc3bc9aec94a7f55a5500f"`);
 		await queryRunner.query(`DROP INDEX "IDX_d089468ffba8d8ad3954f9d82d"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_tokens" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tokenHash" varchar(255) NOT NULL, "tokenType" varchar(50) NOT NULL, "status" varchar CHECK( "status" IN ('ACTIVE','REVOKED','EXPIRED','ROTATED') ) NOT NULL DEFAULT ('ACTIVE'), "expiresAt" datetime, "lastUsedAt" datetime, "usageCount" integer NOT NULL DEFAULT (0), "rotatedFromTokenId" varchar, "rotatedToTokenId" varchar, "revokedAt" datetime, "revokedReason" varchar(255), "revokedById" varchar, "metadata" text, "version" integer NOT NULL, "userId" varchar NOT NULL, CONSTRAINT "FK_d1a23e22ed7aaed288357bdfcda" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_1adbf8d74a9eb8ce9510f938a32" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_daa87dd8ed79915baebce5c9ce4" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_6777a5343aac1f6040b6bb872e2" FOREIGN KEY ("rotatedFromTokenId") REFERENCES "tokens" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_630f6f12a435e5ef50350b1ddb3" FOREIGN KEY ("rotatedToTokenId") REFERENCES "tokens" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_d82ec12d7a61f38cb34ea3a0543" FOREIGN KEY ("revokedById") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_d417e5d35f2434afc4bd48cb4d2" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_tokens" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "createdByUserId" varchar, "updatedByUserId" varchar, "deletedByUserId" varchar, "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tokenHash" varchar(255) NOT NULL, "tokenType" varchar(50) NOT NULL, "status" varchar CHECK( "status" IN ('ACTIVE','REVOKED','EXPIRED','ROTATED') ) NOT NULL DEFAULT ('ACTIVE'), "expiresAt" datetime, "lastUsedAt" datetime, "usageCount" integer NOT NULL DEFAULT (0), "rotatedFromTokenId" varchar, "rotatedToTokenId" varchar, "revokedAt" datetime, "revokedReason" varchar(255), "revokedById" varchar, "metadata" text, "version" integer NOT NULL, "userId" varchar NOT NULL, CONSTRAINT "FK_d1a23e22ed7aaed288357bdfcda" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_1adbf8d74a9eb8ce9510f938a32" FOREIGN KEY ("updatedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_daa87dd8ed79915baebce5c9ce4" FOREIGN KEY ("deletedByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_6777a5343aac1f6040b6bb872e2" FOREIGN KEY ("rotatedFromTokenId") REFERENCES "tokens" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_630f6f12a435e5ef50350b1ddb3" FOREIGN KEY ("rotatedToTokenId") REFERENCES "tokens" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_d82ec12d7a61f38cb34ea3a0543" FOREIGN KEY ("revokedById") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_d417e5d35f2434afc4bd48cb4d2" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_tokens"("deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tokenHash", "tokenType", "status", "expiresAt", "lastUsedAt", "usageCount", "rotatedFromTokenId", "rotatedToTokenId", "revokedAt", "revokedReason", "revokedById", "metadata", "version", "userId") SELECT "deletedAt", "createdAt", "updatedAt", "createdByUserId", "updatedByUserId", "deletedByUserId", "id", "isActive", "isArchived", "archivedAt", "tokenHash", "tokenType", "status", "expiresAt", "lastUsedAt", "usageCount", "rotatedFromTokenId", "rotatedToTokenId", "revokedAt", "revokedReason", "revokedById", "metadata", "version", "userId" FROM "tokens"`
@@ -462,7 +462,7 @@ export class CreateTableTokens1771423567099 implements MigrationInterface {
 			`ALTER TABLE \`tokens\` ADD CONSTRAINT \`FK_d82ec12d7a61f38cb34ea3a0543\` FOREIGN KEY (\`revokedById\`) REFERENCES \`user\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
-			`ALTER TABLE \`tokens\` ADD CONSTRAINT \`FK_d417e5d35f2434afc4bd48cb4d2\` FOREIGN KEY (\`userId\`) REFERENCES \`user\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
+			`ALTER TABLE \`tokens\` ADD CONSTRAINT \`FK_d417e5d35f2434afc4bd48cb4d2\` FOREIGN KEY (\`userId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
