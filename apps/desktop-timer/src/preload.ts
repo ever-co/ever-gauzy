@@ -6,6 +6,11 @@ import { initializeIpcListener } from "./preload/custom-tray-icon";
 const isTimerWindow = location.hash.startsWith('#/time-tracker');
 const isLoginPage = location.hash.startsWith('#/auth/login');
 
+const THEME_COLOR = {
+	dark: '#202023',
+	ligth: '#f7f9fc'
+}
+
 /**
  * Listens for the DOMContentLoaded event to ensure the DOM is fully loaded
  * before initializing the custom title bar and attaching styles or event listeners.
@@ -32,9 +37,10 @@ window.addEventListener('DOMContentLoaded', async () => {
 	 *
 	 * @param {string} iconPath - The path to the icon file.
 	 */
+	const theme = await ipcRenderer.invoke('PREFERRED_THEME');
 	const titleBar = new CustomTitlebar({
 		icon: nativeImage.createFromPath(path.join(appPath, 'assets', 'icons', 'tray', 'icon.png')),
-		backgroundColor: TitlebarColor.fromHex('#1f1f1f'),
+		backgroundColor: TitlebarColor.fromHex(theme === 'dark' ? THEME_COLOR.dark : THEME_COLOR.ligth),
 		enableMnemonics: false,
 		iconSize: 16,
 		maximizable: false,
@@ -47,6 +53,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 	 * menu in the custom title bar. This allows dynamic updates to the menu items.
 	 */
 	ipcRenderer.on('refresh_menu', () => {
+		titleBar.refreshMenu();
+	});
+
+	ipcRenderer.on('THEME_CHANGE', (_, arg) => {
+		titleBar.updateBackground(TitlebarColor.fromHex(arg === 'dark' ? THEME_COLOR.dark : THEME_COLOR.ligth));
 		titleBar.refreshMenu();
 	});
 
