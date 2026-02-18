@@ -47,7 +47,7 @@
 		"@datorama/akita": "^8.0.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
-		"@grpc/grpc-js": "^1.6.7",
+		"@grpc/grpc-js": "^1.7.3",
 		"@nebular/auth": "^17.0.0",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
 		"@nebular/security": "^17.0.0",

@@ -82,7 +82,7 @@
 		"date-fns": "^4.1.0",
 		"date-holidays": "^3.26.8",
 		"file-saver": "^2.0.5",
-		"fullcalendar": "^6.1.15",
+		"fullcalendar": "^6.1.17",
 		"hotkeys-js": "^4.0.0",
 		"leaflet": "^1.8.0",
 		"moment": "^2.30.1",
