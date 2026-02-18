@@ -32,7 +32,7 @@
     "@gauzy/contracts": "^0.1.0",
     "@gauzy/utils": "^0.1.0",
     "@nestjs/axios": "github:ever-co/nestjs-axios#master",
-    "@nestjs/common": "^11.1.13",
+    "@nestjs/common": "^11.1.14",
     "@nestjs/config": "^4.0.3",
     "@nestjs/passport": "^11.0.5",
     "axios": "^1.13.5",
