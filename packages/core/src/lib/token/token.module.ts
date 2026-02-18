@@ -15,9 +15,9 @@ import { TokenRepository } from './repositories/token.repository';
 import { ScopedJwtService } from './services/scoped-jwt.service';
 import { TokenHasherService } from './services/token-hasher.service';
 import { TokenService } from './services/token.service';
+import { TokenCleanupScheduler } from './token-cleanup.scheduler';
 import { TokenConfigModule } from './token-config.module';
 import { TokenConfigRegistry } from './token-config.registry';
-import { TokenCleanupScheduler } from './token.scheduler';
 
 // Command Handlers
 import {
