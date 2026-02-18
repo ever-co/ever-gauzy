@@ -42,7 +42,7 @@ export class ScopedJwtService implements IJwtService {
 
 		// Verify token type matches (outside try/catch so application errors are not swallowed)
 		if (decoded.tokenType !== this.tokenType) {
-			throw new Error('Token type mismatch');
+			throw new UnauthorizedException('Token type mismatch');
 		}
 
 		return decoded;
