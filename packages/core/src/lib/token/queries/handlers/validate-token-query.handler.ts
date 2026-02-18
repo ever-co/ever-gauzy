@@ -91,8 +91,9 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 			}
 
 			// Update last used timestamp (fire and forget to not slow down validation)
-			this.tokenWriteRepository.updateLastUsed(tokenRecord.id).catch(() => {
+			this.tokenWriteRepository.updateLastUsed(tokenRecord.id).catch((error) => {
 				// Log error but don't fail validation
+				console.error(`Failed to update last used for token ${tokenRecord.id}`, error);
 			});
 
 			return {
