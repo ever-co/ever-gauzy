@@ -49,13 +49,13 @@
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2",
 		"typeorm": "^0.3.28",
-		"zapier-platform-core": "18.1.1"
+		"zapier-platform-core": "18.2.0"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3",
-		"zapier-platform-cli": "18.1.1"
+		"zapier-platform-cli": "18.2.0"
 	},
 	"keywords": [
 		"zapier",
