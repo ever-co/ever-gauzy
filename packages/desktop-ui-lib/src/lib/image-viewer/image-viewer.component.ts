@@ -36,6 +36,7 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 	items = [];
 
 	item: any = {};
+	private readonly _showImageHandler = this.showImageEventHandler.bind(this);
 	constructor(
 		// private dialogRef: NbDialogRef<any>
 		private readonly _electronService: ElectronService,
@@ -76,13 +77,13 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
-		this._electronService.ipcRenderer.on('show_image', this.showImageEventHandler.bind(this));
+		this._electronService.ipcRenderer.on('show_image', this._showImageHandler);
 		this._electronService.ipcRenderer.send('image_view_ready');
 		this.active_index = 0;
 	}
 
 	ngOnDestroy(): void {
-		this._electronService.ipcRenderer.removeListener('show_image', this.showImageEventHandler.bind(this));
+		this._electronService.ipcRenderer.removeListener('show_image', this._showImageHandler);
 	}
 
 	close() {
@@ -144,9 +145,14 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 	}
 
 	private async getLastScreenshot(timeSlotId: string) {
-		const lastTimeSlot = await this._imageViewerService.getTimeSlot({
-			timeSlotId
-		});
-		return lastTimeSlot.screenshots;
+		try {
+			const lastTimeSlot = await this._imageViewerService.getTimeSlot({
+				timeSlotId
+			});
+			return lastTimeSlot?.screenshots || [];
+		} catch(err) {
+			console.error('[ImageViewer] showImageEventHandler error:', err);
+			return [];
+		}
 	}
 }

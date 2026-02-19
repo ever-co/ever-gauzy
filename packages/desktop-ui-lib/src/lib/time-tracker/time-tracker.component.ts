@@ -2010,7 +2010,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 
 		this.electronService.ipcRenderer.send('show_image', {
-			screenshot: this.screenshots,
+			screenshots: this.screenshots,
 			timeSlotId: !this._isOffline ? this.lastTimeSlot?.id : null
 		});
 	}

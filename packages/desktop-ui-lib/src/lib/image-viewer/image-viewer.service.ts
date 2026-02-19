@@ -74,7 +74,7 @@ export class ImageViewerService {
 		}
 	}
 
-	async getTimeSlot(values: { timeSlotId: string }): Promise<ITimeSlot> {
+	async getTimeSlot(values: { timeSlotId: string }): Promise<ITimeSlot | null> {
 		const { timeSlotId } = values;
 		if (!timeSlotId) {
 			return null;
