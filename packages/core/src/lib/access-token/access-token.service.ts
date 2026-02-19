@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ScopedTokenService } from '../token/scoped-token.service';
 import { ACCESS_TOKEN, IAccessTokenMetadata } from './type.token';
 
@@ -15,5 +15,18 @@ export class AccessTokenService {
 			userId
 		});
 		return created.token;
+	}
+
+	public async verify(rawToken: string): Promise<IAccessTokenMetadata> {
+		const { isValid, reason, token } = await this.tokenService.validateToken({
+			rawToken,
+			checkInactivity: true
+		});
+
+		if (!isValid) {
+			throw new UnauthorizedException(reason ?? 'Invalid token');
+		}
+
+		return token;
 	}
 }

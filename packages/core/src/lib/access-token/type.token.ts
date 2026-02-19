@@ -14,8 +14,10 @@ export interface IAccessTokenMetadata extends JwtPayload {
 	userAgent?: string;
 	/** IP address */
 	ipAddress?: string;
-	/** Id */
+	/** User Id */
 	id?: string;
+	/** Third-party Id (e.g. from social login) */
+	thirdPartyId?: string;
 	/** TenantId */
 	tenantId?: string;
 	/** Organization Id */

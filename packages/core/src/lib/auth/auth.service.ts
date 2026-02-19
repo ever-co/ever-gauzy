@@ -778,28 +778,13 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async isAuthenticated(token: string): Promise<boolean> {
-		try {
-			const { id, thirdPartyId } = verify(token, environment.JWT_SECRET) as {
-				id: string;
-				thirdPartyId: string;
-			};
+		const { id, thirdPartyId } = await this.accessTokenService.verify(token);
 
-			let result: Promise<boolean>;
-
-			if (thirdPartyId) {
-				result = this.userService.checkIfExistsThirdParty(thirdPartyId);
-			} else {
-				result = this.userService.checkIfExists(id);
-			}
-
-			return result;
-		} catch (err) {
-			if (err instanceof JsonWebTokenError) {
-				return false;
-			} else {
-				throw err;
-			}
+		if (thirdPartyId) {
+			return this.userService.checkIfExistsThirdParty(thirdPartyId);
 		}
+
+		return this.userService.checkIfExists(id);
 	}
 
 	/**
