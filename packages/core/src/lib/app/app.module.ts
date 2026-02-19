@@ -525,7 +525,7 @@ if (environment.THROTTLE_ENABLED) {
 		BroadcastModule,
 		OrganizationStrategicInitiativeModule,
 		PasswordHashModule,
-		// We will enable postpone the scheduler
+		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),
 		AccessTokenModule,
 		RefreshTokenModule
