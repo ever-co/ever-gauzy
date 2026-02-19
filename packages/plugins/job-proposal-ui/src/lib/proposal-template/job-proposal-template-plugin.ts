@@ -15,8 +15,8 @@ import { JOB_PROPOSAL_TEMPLATE_PAGE_ROUTE } from './job-proposal-template.routes
  *   JobsPlugin.init({
  *     plugins: [
  *       JobEmployeePlugin,
- *       JobMatchingPlugin,
  *       JobSearchPlugin,
+ *       JobMatchingPlugin,
  *       JobProposalTemplatePlugin
  *     ]
  *   })

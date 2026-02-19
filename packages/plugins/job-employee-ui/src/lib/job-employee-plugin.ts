@@ -14,8 +14,8 @@ import { JOB_EMPLOYEE_PAGE_LINK, JOB_EMPLOYEE_PAGE_ROUTE } from './job-employee.
  *   JobsPlugin.init({
  *     plugins: [
  *       JobEmployeePlugin,
- *       JobMatchingPlugin,
  *       JobSearchPlugin,
+ *       JobMatchingPlugin,
  *       JobProposalTemplatePlugin
  *     ]
  *   })

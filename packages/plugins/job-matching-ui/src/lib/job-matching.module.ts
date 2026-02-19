@@ -66,6 +66,8 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
 		JobMatchingModule._hasAppliedRegistrations = false;
+
+		// Unsubscribe from all subscriptions
 		this._destroy$.next();
 		this._destroy$.complete();
 	}

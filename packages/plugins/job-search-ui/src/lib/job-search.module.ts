@@ -83,6 +83,8 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
 		JobSearchModule._hasAppliedRegistrations = false;
+
+		// Unsubscribe from all subscriptions
 		this._destroy$.next();
 		this._destroy$.complete();
 	}
@@ -139,7 +141,7 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 				}
 			},
 			'jobs',
-			'jobs-matching'
+			'jobs-proposal-template'
 		);
 	}
 
