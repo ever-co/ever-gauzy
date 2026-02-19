@@ -43,6 +43,7 @@ export interface ContextLogger {
  */
 @Injectable({ providedIn: 'root' })
 export class LoggerService {
+	private enabled = false;
 	private readonly _defaultContext: string | undefined;
 
 	constructor(@Optional() @Inject(LOGGER_CONTEXT) defaultContext?: string) {
@@ -71,20 +72,24 @@ export class LoggerService {
 	}
 
 	log(message: string, context?: string, ...args: unknown[]): void {
+		if (!this.enabled) return;
 		console.log(this.formatMessage(message, context), ...args);
 	}
 
 	error(message: unknown, trace?: string, context?: string, ...args: unknown[]): void {
+		if (!this.enabled) return;
 		const prefix = context ?? this._defaultContext;
 		const label = prefix ? `[${prefix}]` : '';
 		console.error(label, message, ...(trace ? [trace] : []), ...args);
 	}
 
 	warn(message: string, context?: string, ...args: unknown[]): void {
+		if (!this.enabled) return;
 		console.warn(this.formatMessage(message, context), ...args);
 	}
 
 	debug(message: string, context?: string, ...args: unknown[]): void {
+		if (!this.enabled) return;
 		if (typeof console.debug === 'function') {
 			console.debug(this.formatMessage(message, context), ...args);
 		} else {
@@ -93,6 +98,7 @@ export class LoggerService {
 	}
 
 	verbose(message: string, context?: string, ...args: unknown[]): void {
+		if (!this.enabled) return;
 		// In browser we treat verbose as debug
 		this.debug(message, context, ...args);
 	}

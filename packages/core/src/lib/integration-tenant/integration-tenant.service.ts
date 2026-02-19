@@ -10,8 +10,8 @@ import {
 	IPagination,
 	IntegrationEntity
 } from '@gauzy/contracts';
-import { RequestContext } from '../core/context';
-import { TenantAwareCrudService } from '../core/crud';
+import { RequestContext } from '../core/context/request-context';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { MikroOrmIntegrationTenantRepository } from './repository/mikro-orm-integration-tenant.repository';
 import { TypeOrmIntegrationTenantRepository } from './repository/type-orm-integration-tenant.repository';
@@ -47,37 +47,33 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 
 	/**
 	 * Create a new integration tenant with the provided input.
+	 *
 	 * @param input The data for creating the integration tenant.
 	 * @returns A promise that resolves to the created integration tenant.
 	 */
 	async create(input: IIntegrationTenantCreateInput): Promise<IIntegrationTenant> {
-		try {
-			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-			let { organizationId, entitySettings = [], settings = [] } = input;
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		const { organizationId } = input;
 
-			settings = settings.map((item: IIntegrationSetting) => ({
-				...item,
-				tenantId,
-				organizationId
-			}));
+		const settings = (input.settings || []).map((item: IIntegrationSetting) => ({
+			...item,
+			tenantId,
+			organizationId
+		}));
 
-			entitySettings = entitySettings.map((item: IIntegrationEntitySetting) => ({
-				...item,
-				tenantId,
-				organizationId
-			}));
+		const entitySettings = (input.entitySettings || []).map((item: IIntegrationEntitySetting) => ({
+			...item,
+			tenantId,
+			organizationId
+		}));
 
-			return await super.create({
-				...input,
-				tenantId,
-				organizationId,
-				settings,
-				entitySettings
-			});
-		} catch (error) {
-			console.log('Error while creating integration tenant:', error);
-			throw new BadRequestException(error);
-		}
+		return await super.create({
+			...input,
+			settings,
+			entitySettings,
+			tenantId,
+			organizationId,
+		});
 	}
 
 	/**
@@ -90,11 +86,10 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const { organizationId, name } = input;
 
-			const integration = await this.findOneByOptions({
+			const integration = await super.findOneByOptions({
 				where: {
 					tenantId,
 					organizationId,
-					name,
 					isActive: true,
 					isArchived: false,
 					integration: {
@@ -104,11 +99,11 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					}
 				},
 				order: { updatedAt: 'DESC' },
-				...(input.relations ? { relations: input.relations } : {})
+				relations: typeof input.relations === 'string' ? [input.relations] : input.relations
 			});
 
 			return integration || false;
-		} catch {
+		} catch (error) {
 			return false;
 		}
 	}
@@ -123,7 +118,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const { organizationId, name } = input;
 
-			return await this.findOneByOptions({
+			return await super.findOneByOptions({
 				where: {
 					tenantId,
 					organizationId,
@@ -164,14 +159,18 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 		integrationId: ID;
 		entityType: IntegrationEntity;
 	}): Promise<IIntegrationTenant> {
-		return await this.findOneByIdString(integrationId, {
+		const tenantId = RequestContext.currentTenantId();
+
+		return await super.findOneByOptions({
 			where: {
-				organizationId, // It's included here as a safeguard to ensure the organization context is correct
+				tenantId,
+				organizationId,
+				integrationId,
 				isActive: true,
 				isArchived: false,
 				entitySettings: {
 					entity: entityType,
-					organizationId, // It's included here as a safeguard to ensure the organization context is correct
+					organizationId,
 					sync: true,
 					isActive: true,
 					isArchived: false
