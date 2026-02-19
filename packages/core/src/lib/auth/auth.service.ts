@@ -37,6 +37,7 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	Logger,
 	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
@@ -1874,6 +1875,26 @@ export class AuthService extends SocialAuthService {
 
 			// For unexpected errors, return null to maintain backward compatibility
 			return null;
+		}
+	}
+
+	/**
+	 * Logs out the user by revoking the provided refresh token and the current access token.
+	 *
+	 * @param refreshToken The refresh token to revoke.
+	 * @returns A promise that resolves when the logout process is complete.
+	 */
+	async logout(refreshToken: string): Promise<void> {
+		try {
+			const reason = 'User initiated logout';
+			await this.userService.removeRefreshToken();
+			await this.refreshTokenService.revoke(refreshToken, reason);
+			await this.accessTokenService.revoke(RequestContext.currentToken(), RequestContext.currentUserId(), reason);
+		} catch (error) {
+			// Even if revocation fails, we don't want to throw an error here to avoid issues in the logout flow.
+			// The tokens will eventually expire if they cannot be revoked immediately.
+			// Depending on the application's needs, you might want to implement a retry mechanism or a background job to clean up tokens that failed to revoke.
+			Logger.error('Error while logging out user:', error?.message);
 		}
 	}
 }

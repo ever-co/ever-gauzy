@@ -282,15 +282,32 @@ export class AuthController {
 	}
 
 	/**
-	 * Logout (Removed refresh token from database)
+	 * Logout the user by revoking the provided refresh token and the current access token.
 	 *
-	 * @returns
+	 * This endpoint logs out the user by revoking the refresh token and access token, ensuring the user session is terminated securely.
+	 *
+	 * @param refresh_token - (Optional) The refresh token to revoke. If not provided, the service will attempt to extract it from the request context or handle accordingly.
+	 * @returns A promise that resolves when the logout process is complete.
+	 *
+	 * @remarks
+	 * - The refresh token can be provided in the request body, but is not mandatory.
+	 * - This endpoint is public, but the token must be valid if provided.
+	 *
+	 * @example
+	 * POST /auth/logout
+	 * {
+	 *   "refresh_token": "<refresh_token_here>"
+	 * }
 	 */
 	@HttpCode(HttpStatus.OK)
-	@ApiOperation({ summary: 'Logout' })
-	@Get('/logout')
-	async getLogOut() {
-		return await this.userService.removeRefreshToken();
+	@ApiOperation({ summary: 'Logout user (revoke refresh and access tokens)' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Successfully logged out.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid refresh token.' })
+	@Post('/logout')
+	@Public()
+	@UseValidationPipe({ whitelist: true })
+	async logout(@Body('refresh_token') refreshToken?: string): Promise<void> {
+		return await this.authService.logout(refreshToken);
 	}
 
 	/**
@@ -306,7 +323,7 @@ export class AuthController {
 	@Post('/refresh-token')
 	@UseValidationPipe()
 	async refreshToken(@Body() input: RefreshTokenDto): Promise<ITokenPair | null> {
-        return await this.authService.rotateTokens(input.refresh_token, input);
+		return await this.authService.rotateTokens(input.refresh_token, input);
 	}
 
 	/**

@@ -29,4 +29,12 @@ export class AccessTokenService {
 
 		return token;
 	}
+
+	public async revoke(rawToken: string, revokedById: string, reason?: string): Promise<void> {
+		await this.tokenService.revokeToken({
+			revokedById,
+			rawToken,
+			reason
+		});
+	}
 }
