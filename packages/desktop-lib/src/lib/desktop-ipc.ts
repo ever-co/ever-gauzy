@@ -161,6 +161,12 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 		try {
 			const lastTime = await timerService.findLastOne();
+			if (lastTime && !lastTime.timeslotId) {
+				const lastCapture = await timerService.findLastCapture();
+				if (lastCapture?.timeslotId && lastCapture?.timelogId === lastTime.timelogId) {
+					lastTime.timeslotId = lastCapture.timeslotId;
+				}
+			}
 
 			log.info('Last Capture Time (Desktop IPC):', lastTime);
 
