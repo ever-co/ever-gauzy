@@ -138,7 +138,7 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 				}
 			},
 			'jobs',
-			'jobs-proposal-template'
+			'jobs-matching'
 		);
 	}
 
