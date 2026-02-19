@@ -2,9 +2,8 @@ import { inject, NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
+import { catchError, map, takeUntil, tap } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -23,7 +22,6 @@ import { DialogsModule, NebularModule, SharedModule } from '@gauzy/ui-core/share
 import { getJobMatchingRoutes, JOB_MATCHING_PAGE_LINK } from './job-matching.routes';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';
 
-@UntilDestroy()
 @NgModule({
 	declarations: [JobMatchingComponent],
 	imports: [
@@ -51,6 +49,7 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true });
+	private _destroy$ = new Subject<void>();
 
 	constructor() {}
 
@@ -67,6 +66,8 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
 		JobMatchingModule._hasAppliedRegistrations = false;
+		this._destroy$.next();
+		this._destroy$.complete();
 	}
 
 	// ─── Registration ─────────────────────────────────────────────
@@ -92,17 +93,17 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	 */
 	private _subscribeToJobMatchingEntity(): void {
 		this._integrationEntitySettingServiceStoreService.jobMatchingEntity$
-			.pipe(
-				catchError((error) => {
-					this._log.error('Error in job matching entity subscription', error);
-					return of({ currentValue: { sync: false, isActive: false } });
-				}),
-				map(({ currentValue }) => !!currentValue?.sync && !!currentValue?.isActive),
-				distinctUntilChange(),
-				tap((isActive: boolean) => (isActive ? this._addNavMenuItem() : this._removeNavMenuItem())),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				.pipe(
+					catchError((error) => {
+						this._log.error('Error in job matching entity subscription', error);
+						return of({ currentValue: { sync: false, isActive: false } });
+					}),
+					map(({ currentValue }) => !!currentValue?.sync && !!currentValue?.isActive),
+					distinctUntilChange(),
+					takeUntil(this._destroy$),
+					tap((isActive: boolean) => (isActive ? this._addNavMenuItem() : this._removeNavMenuItem()))
+				)
+				.subscribe()
 	}
 
 	/**

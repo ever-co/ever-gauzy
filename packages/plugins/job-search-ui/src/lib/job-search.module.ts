@@ -4,8 +4,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { FileUploadModule } from 'ng2-file-upload';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { map, tap } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
+import { catchError, map, takeUntil, tap } from 'rxjs/operators';
 import {
 	applyDeclarativeRegistrations,
 	IOnPluginUiBootstrap,
@@ -33,7 +33,6 @@ import { getJobSearchRoutes, JOB_SEARCH_PAGE_LINK } from './job-search.routes';
 import { JobSearchComponent } from './components/job-search/job-search.component';
 import { COMPONENTS } from './components';
 
-@UntilDestroy()
 @NgModule({
 	declarations: [JobSearchComponent, ...COMPONENTS],
 	imports: [
@@ -67,6 +66,7 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true });
+	private _destroy$ = new Subject<void>();
 
 	constructor() {}
 
@@ -83,6 +83,8 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
 		JobSearchModule._hasAppliedRegistrations = false;
+		this._destroy$.next();
+		this._destroy$.complete();
 	}
 
 	// ─── Registration ─────────────────────────────────────────────
@@ -103,18 +105,21 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 
 	/**
 	 * Subscribes to the job matching entity observable and dynamically
-	 * adds or removes the "Browse" nav menu item based on whether
+	 * adds or removes the "Matching" nav menu item based on whether
 	 * job matching sync is active.
 	 */
 	private _subscribeToJobMatchingEntity(): void {
 		this._integrationEntitySettingServiceStoreService.jobMatchingEntity$
-			.pipe(
-				map(({ currentValue }) => !!currentValue?.sync && !!currentValue?.isActive),
-				distinctUntilChange(),
-				tap((isActive: boolean) => (isActive ? this._addNavMenuItem() : this._removeNavMenuItem())),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				.pipe(
+					catchError((error) => {
+						this._log.error('Error in job matching entity subscription', error);
+						return of({ currentValue: { sync: false, isActive: false } });
+					}),
+					map(({ currentValue }) => !!currentValue?.sync && !!currentValue?.isActive),
+					distinctUntilChange(),
+					tap((isActive: boolean) => (isActive ? this._addNavMenuItem() : this._removeNavMenuItem()))
+				)
+				.subscribe()
 	}
 
 	/**
