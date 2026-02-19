@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Header, HttpCode, HttpException, HttpStatus, Logger, Post, Query, Req, Res } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Body, Controller, Get, Header, HttpCode, HttpException, HttpStatus, Logger, Param, Post, Query, Req, Res } from '@nestjs/common';
+import { Response } from 'express';
+import { randomBytes } from 'crypto';
 import { Public } from '@gauzy/common';
-import { OAuthAppSessionData, SocialAuthService } from '../social-auth.service';
+import { OAuthAppPendingRequest, SocialAuthService } from '../social-auth.service';
 
 interface OAuthAppAuthorizeQuery {
 	client_id?: string;
@@ -9,6 +10,10 @@ interface OAuthAppAuthorizeQuery {
 	response_type?: string;
 	scope?: string;
 	state?: string;
+}
+
+interface OAuthAppApproveDto {
+	request_id?: string;
 }
 
 interface OAuthAppTokenRequestDto {
@@ -19,17 +24,21 @@ interface OAuthAppTokenRequestDto {
 	redirect_uri?: string;
 }
 
-@Public()
 @Controller('/integration/ever-gauzy/oauth')
 export class OAuthAppController {
 	private readonly logger = new Logger(OAuthAppController.name);
 
 	constructor(private readonly service: SocialAuthService) {}
 
+	/**
+	 * GET /authorize - Public endpoint.
+	 * Validates OAuth params, stores pending request in cache,
+	 * and redirects to the frontend consent page.
+	 */
+	@Public()
 	@Get('/authorize')
 	async authorize(
 		@Query() query: OAuthAppAuthorizeQuery,
-		@Req() req: Request,
 		@Res() res: Response
 	) {
 		const config = this.service.getOAuthAppConfig();
@@ -54,28 +63,110 @@ export class OAuthAppController {
 			throw new HttpException('Invalid redirect_uri', HttpStatus.BAD_REQUEST);
 		}
 
-		const session = (req as any).session;
-		if (!session) {
-			throw new HttpException('OAuth session is not available', HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
-		const oauthAppSession: OAuthAppSessionData = {
+		// Generate a unique request ID and store in cache
+		const requestId = randomBytes(32).toString('base64url');
+		const pendingRequest: OAuthAppPendingRequest = {
+			requestId,
 			clientId: query.client_id,
 			redirectUri: query.redirect_uri,
 			scope: query.scope,
-			state: query.state
+			state: query.state,
+			createdAt: Date.now()
 		};
-		session.oauthApp = oauthAppSession;
 
-		// Explicitly persist the session before redirecting to ensure async stores
-		// (e.g. Redis) finish writing before the browser follows the redirect.
-		await new Promise<void>((resolve, reject) => {
-			session.save((err: any) => (err ? reject(err) : resolve()));
-		});
+		await this.service.storeOAuthAppPendingRequest(pendingRequest);
 
-		return res.redirect('/api/auth/auth0');
+		// Redirect to the frontend consent page
+		const clientBaseUrl = this.service.getClientBaseUrl();
+		const redirectUrl = `${clientBaseUrl}/#/auth/oauth-authorize?request_id=${requestId}`;
+		return res.redirect(redirectUrl);
 	}
 
+	/**
+	 * GET /authorize/request/:requestId - Authenticated endpoint (JWT required).
+	 * Returns pending request details for the frontend consent page.
+	 */
+	@Get('/authorize/request/:requestId')
+	async getAuthorizeRequest(@Param('requestId') requestId: string) {
+		const pending = await this.service.getOAuthAppPendingRequest(requestId);
+		if (!pending) {
+			throw new HttpException('Authorization request not found or expired', HttpStatus.NOT_FOUND);
+		}
+
+		// Return safe info for the consent page (never expose secrets)
+		return {
+			clientId: pending.clientId,
+			scope: pending.scope,
+			redirectUri: pending.redirectUri
+		};
+	}
+
+	/**
+	 * POST /authorize - Authenticated endpoint (JWT required).
+	 * User approves the authorization request. Generates an authorization code
+	 * and returns the redirect URL for the third-party app.
+	 */
+	@Post('/authorize')
+	@HttpCode(HttpStatus.OK)
+	async approveAuthorize(
+		@Body() body: OAuthAppApproveDto,
+		@Req() req: any
+	) {
+		if (!body.request_id) {
+			throw new HttpException('Missing request_id', HttpStatus.BAD_REQUEST);
+		}
+
+		const pending = await this.service.getOAuthAppPendingRequest(body.request_id);
+		if (!pending) {
+			throw new HttpException('Authorization request not found or expired', HttpStatus.NOT_FOUND);
+		}
+
+		// Delete the pending request (single-use)
+		await this.service.deleteOAuthAppPendingRequest(body.request_id);
+
+		// Extract user from JWT guard (populated by global AuthGuard)
+		const user = req.user;
+		if (!user?.id || !user?.tenantId) {
+			throw new HttpException('User identity not available', HttpStatus.UNAUTHORIZED);
+		}
+
+		try {
+			// Generate authorization code using existing method
+			const code = await this.service.createOAuthAppAuthorizationCode({
+				userId: user.id,
+				tenantId: user.tenantId,
+				clientId: pending.clientId,
+				redirectUri: pending.redirectUri,
+				scope: pending.scope,
+				state: pending.state
+			});
+
+			// Build the redirect URL with code and state
+			const redirectUrl = new URL(pending.redirectUri);
+			redirectUrl.searchParams.set('code', code);
+			if (pending.state) {
+				redirectUrl.searchParams.set('state', pending.state);
+			}
+
+			return {
+				redirect_url: redirectUrl.toString()
+			};
+		} catch (error: any) {
+			this.logger.error('Failed to generate authorization code', error?.stack);
+
+			if (error instanceof HttpException) {
+				throw error;
+			}
+
+			throw new HttpException('Failed to generate authorization code', HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	/**
+	 * POST /token - Public endpoint.
+	 * Exchanges an authorization code for an access token.
+	 */
+	@Public()
 	@Post('/token')
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')

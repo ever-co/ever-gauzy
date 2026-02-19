@@ -3,7 +3,8 @@ import {
 	OAuthAppAuthorizationRequest,
 	OAuthAppTokenRequest,
 	OAuthAppTokenResponse,
-	OAuthAppConfig
+	OAuthAppConfig,
+	OAuthAppPendingRequest
 } from '@gauzy/auth';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
@@ -92,6 +93,8 @@ export class AuthService extends SocialAuthService {
 	private readonly logger = new Logger(AuthService.name);
 	private static readonly OAUTH_CODE_CACHE_PREFIX = 'oauth_app_code:';
 	private static readonly OAUTH_CODE_TTL_MS = 10 * 60 * 1000;
+	private static readonly OAUTH_REQUEST_CACHE_PREFIX = 'oauth_app_request:';
+	private static readonly OAUTH_REQUEST_TTL_MS = 10 * 60 * 1000;
 
 	constructor(
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
@@ -177,19 +180,44 @@ export class AuthService extends SocialAuthService {
 		return payload;
 	}
 
-	public async getOAuthLoginUser(
-		emails: Array<{ value: string; verified: boolean }>
-	): Promise<IUser | null> {
-		for (const { value, verified } of emails) {
-			// Skip unverified emails to prevent account takeover via unverified OAuth addresses
-			if (!verified) continue;
-
-			const userExist = await this.userService.checkIfExistsEmail(value);
-			if (userExist) {
-				return await this.userService.getOAuthLoginEmail(value);
-			}
+	/**
+	 * Store a pending OAuth authorization request in cache.
+	 */
+	public async storeOAuthAppPendingRequest(request: OAuthAppPendingRequest): Promise<void> {
+		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${request.requestId}`;
+		const value = JSON.stringify(request);
+		if (this.redisClient) {
+			await this.redisClient.set(cacheKey, value, { PX: AuthService.OAUTH_REQUEST_TTL_MS });
+		} else {
+			await this.cacheManager.set(cacheKey, value, AuthService.OAUTH_REQUEST_TTL_MS);
 		}
-		return null;
+	}
+
+	/**
+	 * Retrieve a pending OAuth authorization request from cache.
+	 */
+	public async getOAuthAppPendingRequest(requestId: string): Promise<OAuthAppPendingRequest | null> {
+		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${requestId}`;
+		let value: string | null;
+		if (this.redisClient) {
+			value = await this.redisClient.get(cacheKey);
+		} else {
+			value = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+		}
+		if (!value) return null;
+		return JSON.parse(value) as OAuthAppPendingRequest;
+	}
+
+	/**
+	 * Delete a pending OAuth authorization request from cache.
+	 */
+	public async deleteOAuthAppPendingRequest(requestId: string): Promise<void> {
+		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${requestId}`;
+		if (this.redisClient) {
+			await this.redisClient.del(cacheKey);
+		} else {
+			await this.cacheManager.del(cacheKey);
+		}
 	}
 
 	private ensureOAuthAppConfigured(): OAuthAppConfig {
