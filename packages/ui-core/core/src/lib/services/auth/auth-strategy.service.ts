@@ -273,7 +273,13 @@ export class AuthStrategy extends NbAuthStrategy {
 	 */
 	private async _preLogout() {
 		if (this.store.refresh_token) {
-			this.authService.doLogout(this.store.refresh_token).pipe(take(1)).subscribe();
+			this.authService
+				.doLogout(this.store.refresh_token)
+				.pipe(
+					take(1),
+					catchError(() => EMPTY)
+				)
+				.subscribe();
 		}
 
 		//remove time tracking/timesheet filter just before logout
