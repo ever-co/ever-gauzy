@@ -37,7 +37,7 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 		try {
 			payload = await jwtService.verify(rawToken);
 		} catch (error: any) {
-			// Do NOT log the raw token; log only the sanitised reason.
+			// Do NOT log the raw token; it may contain sensitive info and should be redacted if needed.
 			this.logger.warn(`JWT verification failed [type=${tokenType}]: ${error?.message}`);
 			return { isValid: false, reason: error?.message ?? 'Invalid token signature' };
 		}
