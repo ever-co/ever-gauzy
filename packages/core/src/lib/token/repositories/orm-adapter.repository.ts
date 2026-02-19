@@ -1,3 +1,4 @@
+import { LockMode, raw } from '@mikro-orm/core';
 import { Between, In, LessThan, MoreThan, Repository } from 'typeorm';
 import { Token } from '../entities/token.entity';
 import { ITokenFilters, ITokenRepository, TokenStatus } from '../interfaces';
@@ -8,6 +9,11 @@ import { ITokenFilters, ITokenRepository, TokenStatus } from '../interfaces';
 // ---------------------------------------------------------------------------
 
 export function buildTypeOrmAdapter(repo: Repository<Token>): ITokenRepository {
+	const usageCountColumn = repo.metadata.findColumnWithPropertyName('usageCount');
+	const escapedUsageCountColumn = repo.manager.connection.driver.escape(
+		usageCountColumn?.databaseName ?? 'usageCount'
+	);
+
 	const buildWhere = (filters: ITokenFilters) => {
 		const where: any = {};
 		if (filters.userId) where.userId = filters.userId;
@@ -53,7 +59,12 @@ export function buildTypeOrmAdapter(repo: Repository<Token>): ITokenRepository {
 		},
 
 		updateLastUsed: async (tokenId) => {
-			await repo.update({ id: tokenId }, { lastUsedAt: new Date(), usageCount: () => 'usageCount + 1' });
+			await repo
+				.createQueryBuilder()
+				.update(Token)
+				.set({ lastUsedAt: new Date(), usageCount: () => `${escapedUsageCountColumn} + 1` })
+				.where('id = :tokenId', { tokenId })
+				.execute();
 		},
 
 		revokeAllByUserAndType: async (userId, tokenType, revokedById?, reason?) => {
@@ -107,9 +118,18 @@ export function buildTypeOrmAdapter(repo: Repository<Token>): ITokenRepository {
 
 export function buildMikroOrmAdapter(repo: any): ITokenRepository {
 	const adapter: ITokenRepository = {
-		// No pessimistic lock available outside a managed em.lock() call, so
-		// we fall back to a plain findOne — the caller owns the transaction boundary.
-		findByHashWithLock: (tokenHash) => repo.findOne({ tokenHash }),
+		findByHashWithLock: async (tokenHash) => {
+			const token = await repo.findOne({ tokenHash });
+			if (!token) {
+				return null;
+			}
+
+			const em = repo.getEntityManager();
+			await em.lock(token, LockMode.PESSIMISTIC_WRITE);
+			await em.refresh(token);
+
+			return token;
+		},
 
 		findByHash: (tokenHash) => repo.findOne({ tokenHash }),
 
@@ -133,11 +153,15 @@ export function buildMikroOrmAdapter(repo: any): ITokenRepository {
 		},
 
 		updateLastUsed: async (tokenId) => {
+			const em = repo.getEntityManager();
+			const tokenMeta = em.getMetadata(Token);
+			const usageCountColumn = tokenMeta.properties.usageCount?.fieldNames?.[0] ?? 'usageCount';
+
 			await repo.nativeUpdate(
 				{ id: tokenId },
 				{
 					lastUsedAt: new Date(),
-					usageCount: () => 'usageCount + 1'
+					usageCount: raw('?? + 1', [usageCountColumn])
 				}
 			);
 		},

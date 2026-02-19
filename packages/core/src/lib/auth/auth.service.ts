@@ -779,13 +779,20 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async isAuthenticated(token: string): Promise<boolean> {
-		const { id, thirdPartyId } = await this.accessTokenService.verify(token);
+		try {
+			const { id, thirdPartyId } = await this.accessTokenService.verify(token);
 
-		if (thirdPartyId) {
-			return this.userService.checkIfExistsThirdParty(thirdPartyId);
+			if (thirdPartyId) {
+				return this.userService.checkIfExistsThirdParty(thirdPartyId);
+			}
+
+			return this.userService.checkIfExists(id);
+		} catch (error) {
+			if (error instanceof JsonWebTokenError || error instanceof UnauthorizedException) {
+				return false;
+			}
+			return false;
 		}
-
-		return this.userService.checkIfExists(id);
 	}
 
 	/**
@@ -1887,28 +1894,36 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @param refreshToken The refresh token to be revoked. This is optional as the function will attempt to revoke the current access token regardless.
 	 */
-	public logout(refreshToken?: string): void {
+	public async logout(refreshToken?: string): Promise<void> {
 		const reason = 'User initiated logout';
 		const currentToken = RequestContext.currentToken();
 		const currentUserId = RequestContext.currentUserId();
 
-		this.userService.removeRefreshToken().catch((error) => {
-			// Log the error but do not throw it, as we want to proceed with logout even if this fails
-			Logger.error('Error while removing refresh token from user record:', error?.message);
-		});
+		const revocations: Promise<unknown>[] = [
+			this.userService.removeRefreshToken().catch((error) => {
+				// Log the error but do not throw it, as we want to proceed with logout even if this fails
+				Logger.error('Error while removing refresh token from user record:', error?.message);
+			})
+		];
 
 		if (refreshToken) {
-			this.refreshTokenService.revoke(refreshToken, reason, currentUserId).catch((error) => {
-				// Log the error but do not throw it, as we want to proceed with logout even if this fails
-				Logger.error('Error while revoking refresh token:', error?.message);
-			});
+			revocations.push(
+				this.refreshTokenService.revoke(refreshToken, reason, currentUserId).catch((error) => {
+					// Log the error but do not throw it, as we want to proceed with logout even if this fails
+					Logger.error('Error while revoking refresh token:', error?.message);
+				})
+			);
 		}
 
 		if (currentToken) {
-			this.accessTokenService.revoke(currentToken, reason, currentUserId).catch((error) => {
-				// Log the error but do not throw it, as we want to proceed with logout even if this fails
-				Logger.error('Error while revoking access token:', error?.message);
-			});
+			revocations.push(
+				this.accessTokenService.revoke(currentToken, reason, currentUserId).catch((error) => {
+					// Log the error but do not throw it, as we want to proceed with logout even if this fails
+					Logger.error('Error while revoking access token:', error?.message);
+				})
+			);
 		}
+
+		await Promise.allSettled(revocations);
 	}
 }

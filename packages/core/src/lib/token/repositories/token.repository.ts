@@ -1,5 +1,5 @@
 import { IUser } from '@gauzy/contracts';
-import { LockMode } from '@mikro-orm/core';
+import { LockMode, raw } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { Between, EntityManager, In, LessThan, MoreThan } from 'typeorm';
 import { MultiORMEnum } from '../../core';
@@ -38,6 +38,7 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 		if (token) {
 			const em = this.mikroOrmTokenRepository.getEntityManager();
 			await em.lock(token, LockMode.PESSIMISTIC_WRITE);
+			await em.refresh(token);
 		}
 		return token;
 	}
@@ -82,7 +83,32 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 	}
 
 	async updateLastUsed(tokenId: string): Promise<void> {
-		await this.update({ id: tokenId }, { lastUsedAt: new Date(), usageCount: () => 'usageCount + 1' });
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			const em = this.mikroOrmTokenRepository.getEntityManager();
+			const tokenMeta = em.getMetadata(Token);
+			const usageCountColumn = tokenMeta.properties.usageCount?.fieldNames?.[0] ?? 'usageCount';
+
+			await this.mikroOrmTokenRepository.nativeUpdate({ id: tokenId }, {
+				lastUsedAt: new Date(),
+				usageCount: raw('?? + 1', [usageCountColumn])
+			} as Partial<Token>);
+			return;
+		}
+
+		const usageCountColumn = this.typeOrmTokenRepository.metadata.findColumnWithPropertyName('usageCount');
+		const escapedUsageCountColumn = this.typeOrmTokenRepository.manager.connection.driver.escape(
+			usageCountColumn?.databaseName ?? 'usageCount'
+		);
+
+		await this.typeOrmTokenRepository
+			.createQueryBuilder()
+			.update(Token)
+			.set({
+				lastUsedAt: new Date(),
+				usageCount: () => `${escapedUsageCountColumn} + 1`
+			})
+			.where('id = :tokenId', { tokenId })
+			.execute();
 	}
 
 	async revokeAllByUserAndType(

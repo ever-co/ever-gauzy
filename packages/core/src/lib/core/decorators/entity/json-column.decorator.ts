@@ -87,7 +87,6 @@ function safeParse<T>(raw: unknown, fallback: T): T {
 		try {
 			return JSON.parse(raw) as T;
 		} catch {
-			console.warn(`[JsonColumn] Failed to parse JSON: ${String(raw).slice(0, 120)}`);
 			return fallback;
 		}
 	}
@@ -111,8 +110,17 @@ function buildTypeOrmDecorator<T>(opts: TypeOrmJsonColumnOptions<T>): PropertyDe
 		...columnOptions,
 		type: storageType as import('typeorm').ColumnType,
 		transformer: {
-			to(value: T | null | undefined): T | null {
-				return value ?? null;
+			to(value: T | null | undefined): T | string | null {
+				if (value === null || value === undefined) return null;
+				if (storageType === 'text') {
+					try {
+						return JSON.stringify(value);
+					} catch {
+						return null;
+					}
+				}
+
+				return value;
 			},
 			from(value: unknown): T {
 				return safeParse<T>(value, defaultValue);

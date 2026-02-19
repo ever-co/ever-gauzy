@@ -35,7 +35,20 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 				return done(new UnauthorizedException(reason ?? 'Unauthorized'), false); // Return unauthorized if validation fails
 			}
 
-			const user = await this.userService.findOneByIdString(token.userId); // Fetch the user based on the payload ID
+			const verifiedUserId = token?.userId;
+			const payloadUserId =
+				(typeof payload?.['userId'] === 'string' && payload['userId']) ||
+				(typeof payload?.['id'] === 'string' && payload['id']) ||
+				(typeof payload?.sub === 'string' && payload.sub) ||
+				null;
+
+			// Defense in depth: make sure the JWT identity resolved by passport matches
+			// the identity resolved by the token validation path.
+			if (!verifiedUserId || (payloadUserId && payloadUserId !== verifiedUserId)) {
+				return done(new UnauthorizedException('Unauthorized'), false);
+			}
+
+			const user = await this.userService.findOneByIdString(verifiedUserId); // Fetch the user based on the payload ID
 
 			if (!user) {
 				return done(new UnauthorizedException('Unauthorized'), false); // Return unauthorized if validation fails
@@ -44,7 +57,8 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 			done(null, user); // Return user if validation is successful
 		} catch (err) {
 			// Handle errors and provide a meaningful response
-			return done(new UnauthorizedException('Unauthorized', err.message), false);
+			const message = err instanceof Error ? err.message : String(err);
+			return done(new UnauthorizedException('Unauthorized', message), false);
 		}
 	}
 }

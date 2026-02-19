@@ -318,8 +318,8 @@ export class AuthController {
 	})
 	@Post('/logout')
 	@UseValidationPipe({ whitelist: true })
-	logout(@Body('refresh_token') refreshToken?: string): void {
-		return this.authService.logout(refreshToken);
+	async logout(@Body('refresh_token') refreshToken?: string): Promise<void> {
+		await this.authService.logout(refreshToken);
 	}
 
 	/**

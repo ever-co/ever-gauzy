@@ -62,6 +62,19 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 			return { isValid: false, reason: 'Token not found in database' };
 		}
 
+		const payloadUserId = this.getPayloadUserId(payload);
+		if (payloadUserId && payloadUserId !== tokenRecord.userId) {
+			this.logger.warn(
+				`Token user mismatch — payloadUserId=${payloadUserId} dbUserId=${tokenRecord.userId} tokenId=${tokenRecord.id}`
+			);
+			return { isValid: false, reason: 'Token user mismatch' };
+		}
+
+		if (payload.tokenId && payload.tokenId !== tokenRecord.id) {
+			this.logger.warn(`Token id mismatch — payload=${payload.tokenId} db=${tokenRecord.id}`);
+			return { isValid: false, reason: 'Token id mismatch' };
+		}
+
 		// -----------------------------------------------------------------------
 		// Step 3: Domain-method gate — delegates all business rules (status,
 		// expiry, inactivity, usage cap) to the entity so the handler stays thin.
@@ -79,16 +92,29 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 		}
 
 		// -----------------------------------------------------------------------
-		// Step 4: Record usage — fire-and-forget but with structured error capture
-		// so failures are visible in logs without blocking the caller.
+		// Step 4: Record usage.
+		// For usage-capped tokens we must await this write, otherwise persistent
+		// failures can bypass maxUsageCount enforcement.
 		// -----------------------------------------------------------------------
-		this.tokenWriteRepository.updateLastUsed(tokenRecord.id).catch((error: unknown) => {
-			// A failed write here is non-fatal but should alert on-call if persistent.
-			this.logger.error(
-				`updateLastUsed failed for tokenId=${tokenRecord.id}: ${(error as Error)?.message}`,
-				(error as Error)?.stack
-			);
-		});
+		if (config.maxUsageCount != null) {
+			try {
+				await this.tokenWriteRepository.updateLastUsed(tokenRecord.id);
+			} catch (error: unknown) {
+				this.logger.error(
+					`updateLastUsed failed for tokenId=${tokenRecord.id}: ${(error as Error)?.message}`,
+					(error as Error)?.stack
+				);
+				return { isValid: false, reason: 'Token usage update failed' };
+			}
+		} else {
+			this.tokenWriteRepository.updateLastUsed(tokenRecord.id).catch((error: unknown) => {
+				// A failed write here is non-fatal but should alert on-call if persistent.
+				this.logger.error(
+					`updateLastUsed failed for tokenId=${tokenRecord.id}: ${(error as Error)?.message}`,
+					(error as Error)?.stack
+				);
+			});
+		}
 
 		this.logger.debug(`Token validated — id=${tokenRecord.id} user=${tokenRecord.userId} type=${tokenType}`);
 
@@ -174,5 +200,23 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 		// misleading "valid" response or a cryptic 500.
 		this.logger.warn(`isUsable() returned false for unknown reason — id=${tokenRecord.id}`);
 		return { isValid: false, reason: 'Token is not usable' };
+	}
+
+	private getPayloadUserId(payload: ITokenPayload): string | undefined {
+		if (typeof payload.userId === 'string' && payload.userId.length > 0) {
+			return payload.userId;
+		}
+
+		const legacyId = (payload as ITokenPayload & Record<string, unknown>)['id'];
+		if (typeof legacyId === 'string' && legacyId.length > 0) {
+			return legacyId;
+		}
+
+		const legacySub = (payload as ITokenPayload & Record<string, unknown>)['sub'];
+		if (typeof legacySub === 'string' && legacySub.length > 0) {
+			return legacySub;
+		}
+
+		return undefined;
 	}
 }

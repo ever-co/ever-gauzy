@@ -13,8 +13,8 @@ export enum TokenStatus {
 
 export interface ITokenConfig {
 	tokenType: string;
-	expiration?: number; // null means no expiration (ms)
-	threshold?: number; // null means no inactivity check (ms)
+	expiration?: number; // undefined means no expiration (ms)
+	threshold?: number; // undefined means no inactivity check (ms)
 	allowRotation: boolean;
 	allowMultipleSessions: boolean;
 	maxUsageCount?: number;
