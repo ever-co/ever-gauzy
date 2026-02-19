@@ -67,7 +67,12 @@ export const uiPluginConfig: PluginUiConfig = {
 
 		// Job Plugins
 		JobsPlugin.init({
-			plugins: [JobEmployeePlugin, JobMatchingPlugin, JobSearchPlugin, JobProposalTemplatePlugin]
+			plugins: [
+				JobEmployeePlugin,
+				JobSearchPlugin,
+				JobMatchingPlugin,
+				JobProposalTemplatePlugin
+			]
 		})
 	]
 };

@@ -11,9 +11,16 @@ import { JOB_PROPOSAL_TEMPLATE_PAGE_ROUTE } from './job-proposal-template.routes
  *
  * @example In plugin-ui.config.ts (as child of JobsPlugin):
  * ```ts
- * plugins: [JobsPlugin.init({
- *   plugins: [JobEmployeePlugin, JobMatchingPlugin, JobSearchPlugin, JobProposalTemplatePlugin]
- * })]
+ * plugins: [
+ *   JobsPlugin.init({
+ *     plugins: [
+ *       JobEmployeePlugin,
+ *       JobSearchPlugin,
+ *       JobMatchingPlugin,
+ *       JobProposalTemplatePlugin
+ *     ]
+ *   })
+ * ]
  * ```
  */
 export const JobProposalTemplatePlugin: PluginUiDefinition = {
