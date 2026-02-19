@@ -11,7 +11,7 @@ import {
 	MultiORMManyToOne
 } from '../../core/decorators/entity';
 import { BaseEntity, User } from '../../core/entities/internal';
-import { IToken, TokenStatus } from '../interfaces';
+import { IToken, ITokenConfig, ITokenHealthReport, TokenStatus } from '../interfaces';
 
 @Index(['tokenHash'], { unique: true })
 @Index(['tokenHash', 'status'])
@@ -236,36 +236,50 @@ export class Token extends BaseEntity implements IToken {
 	@JoinColumn()
 	user: IUser;
 
+	// ---------------------------------------------------------------------------
+	// Status predicates
+	// ---------------------------------------------------------------------------
+
 	/**
-	 * Determines if the token is currently active based on its status
-	 * @return true if token is active, false otherwise
+	 * Determines if the token is currently active based on its status.
+	 * @returns true if status is ACTIVE, false otherwise.
 	 */
 	public isActivated(): boolean {
 		return this.status === TokenStatus.ACTIVE;
 	}
 
 	/**
-	 * Determines if this token can be revoked.
-	 * 	A token can be revoked only if it's active and not already revoked or expired.
+	 * Determines if the token is in a terminal state (REVOKED, EXPIRED, or ROTATED)
+	 * and therefore can never be used again.
+	 * @returns true if the token is in a terminal state.
 	 */
-	public canRevoke(): boolean {
-		return this.canRotate() && this.revokedAt === null;
+	public isTerminal(): boolean {
+		return (
+			this.status === TokenStatus.REVOKED ||
+			this.status === TokenStatus.EXPIRED ||
+			this.status === TokenStatus.ROTATED
+		);
 	}
 
 	/**
-	 * Determines if this token can be rotated to a new token.
-	 * A token can be rotated only if it's active and not expired.
-	 *
-	 * @returns {boolean} True if the token can be rotated, false otherwise
+	 * Determines whether this token has been superseded by a newer one via rotation.
+	 * @returns true if status is ROTATED.
 	 */
-	public canRotate(): boolean {
-		return this.isActivated() && this.isExpired() === false;
+	public isRotated(): boolean {
+		return this.status === TokenStatus.ROTATED;
+	}
+
+	/**
+	 * Determines whether the token has been explicitly revoked.
+	 * @returns true if status is REVOKED.
+	 */
+	public isRevoked(): boolean {
+		return this.status === TokenStatus.REVOKED;
 	}
 
 	/**
 	 * Checks if the token has expired based on the expiresAt timestamp.
-	 *
-	 * @returns {boolean} True if the token is expired, false if not expired or no expiration set
+	 * @returns true if the token is expired, false if not expired or no expiration set.
 	 */
 	public isExpired(): boolean {
 		if (!this.expiresAt) return false;
@@ -274,14 +288,215 @@ export class Token extends BaseEntity implements IToken {
 
 	/**
 	 * Determines if the token has been inactive for longer than the specified threshold.
-	 *
-	 * @param {number} threshold - Time in milliseconds to consider a token inactive
-	 * @returns {boolean} True if the token has been inactive longer than threshold, false otherwise
+	 * @param threshold Time in milliseconds to consider a token inactive.
+	 * @returns true if the token has been inactive longer than threshold, false otherwise.
 	 */
 	public isInactive(threshold: number): boolean {
 		if (!this.lastUsedAt) return false;
-		const now = Date.now();
-		const lastUsed = this.lastUsedAt.getTime();
-		return now - lastUsed > threshold;
+		return Date.now() - this.lastUsedAt.getTime() > threshold;
+	}
+
+	/**
+	 * Determines whether the token has reached or exceeded its maximum allowed usage count.
+	 * @param maxUsageCount Maximum number of times this token may be used.
+	 * @returns true if the usage limit has been reached.
+	 */
+	public isAtUsageLimit(maxUsageCount: number): boolean {
+		return this.usageCount >= maxUsageCount;
+	}
+
+	/**
+	 * Returns true only when the token is active, not expired, and within its usage limit.
+	 * Use this as a single gate before trusting a presented token.
+	 * @param config Partial token configuration used for limit checks.
+	 * @returns true if the token is fully valid for use right now.
+	 */
+	public isUsable(config: Pick<ITokenConfig, 'maxUsageCount' | 'threshold'>): boolean {
+		if (!this.isActivated()) return false;
+		if (this.isExpired()) return false;
+		if (config.maxUsageCount != null && this.isAtUsageLimit(config.maxUsageCount)) return false;
+		if (config.threshold != null && this.isInactive(config.threshold)) return false;
+		return true;
+	}
+
+	// ---------------------------------------------------------------------------
+	// Lifecycle transitions
+	// ---------------------------------------------------------------------------
+
+	/**
+	 * Determines if this token can be rotated to a new token.
+	 * A token can be rotated only if it's active and not expired.
+	 * @returns true if token can be rotated, false otherwise.
+	 */
+	public canRotate(): boolean {
+		return this.isActivated() && !this.isExpired();
+	}
+
+	/**
+	 * Determines if this token can be revoked.
+	 * A token can be revoked only if it's active, not expired, and not already revoked.
+	 * @returns true if token can be revoked, false otherwise.
+	 */
+	public canRevoke(): boolean {
+		return this.canRotate() && this.revokedAt === null;
+	}
+
+	/**
+	 * Determines whether the token's expiry date can be extended.
+	 * Only active, non-terminal tokens with an existing expiry date can be extended.
+	 * @returns true if the expiry may be pushed forward.
+	 */
+	public canExtend(): boolean {
+		return this.isActivated() && !this.isTerminal() && this.expiresAt !== null;
+	}
+
+	// ---------------------------------------------------------------------------
+	// Lineage & traceability
+	// ---------------------------------------------------------------------------
+
+	/**
+	 * Returns true when this token was produced by rotating another token.
+	 * @returns true if the token has a parent in the rotation chain.
+	 */
+	public hasParent(): boolean {
+		return this.rotatedFromTokenId !== null;
+	}
+
+	/**
+	 * Returns true when this token has already been rotated into a successor.
+	 * @returns true if the token has a child in the rotation chain.
+	 */
+	public hasSuccessor(): boolean {
+		return this.rotatedToTokenId !== null;
+	}
+
+	/**
+	 * Returns true when this token is the very first in its rotation lineage.
+	 * @returns true if this is a root token.
+	 */
+	public isRootToken(): boolean {
+		return this.rotatedFromTokenId === null;
+	}
+
+	// ---------------------------------------------------------------------------
+	// Temporal helpers
+	// ---------------------------------------------------------------------------
+
+	/**
+	 * Calculates the remaining lifetime of the token in milliseconds.
+	 * @returns Milliseconds until expiry, 0 if already expired, or null if the token never expires.
+	 */
+	public getRemainingTime(): number | null {
+		if (!this.expiresAt) return null;
+		return Math.max(0, this.expiresAt.getTime() - Date.now());
+	}
+
+	/**
+	 * Calculates how many milliseconds have elapsed since the token was last used.
+	 * @returns Elapsed milliseconds since last use, or null if the token has never been used.
+	 */
+	public getInactivityTime(): number | null {
+		if (!this.lastUsedAt) return null;
+		return Date.now() - this.lastUsedAt.getTime();
+	}
+
+	/**
+	 * Calculates how many milliseconds have elapsed since the token was created.
+	 * @returns Token age in milliseconds.
+	 */
+	public getAgeTime(): number {
+		return Date.now() - this.createdAt.getTime();
+	}
+
+	// ---------------------------------------------------------------------------
+	// Metadata helpers
+	// ---------------------------------------------------------------------------
+
+	/**
+	 * Retrieves a typed value from the token's metadata by key.
+	 * @param key The metadata field name.
+	 * @returns The value cast to T, or undefined if the key is absent.
+	 */
+	public getMetadataValue<T = unknown>(key: string): T | undefined {
+		if (!this.metadata) return undefined;
+		return (key in this.metadata ? this.metadata[key] : undefined) as T | undefined;
+	}
+
+	/**
+	 * Returns true when the token carries a non-null, non-empty metadata object.
+	 * @returns true if metadata is present.
+	 */
+	public hasMetadata(): boolean {
+		return this.metadata !== null && Object.keys(this.metadata).length > 0;
+	}
+
+	// ---------------------------------------------------------------------------
+	// Diagnostics
+	// ---------------------------------------------------------------------------
+
+	/**
+	 * Produces a human-readable summary of the token's current state suitable for
+	 * logging and debugging. Never includes the raw token hash.
+	 * @returns A plain-object snapshot of the token's observable state.
+	 */
+	public toDebugInfo(): Record<string, unknown> {
+		return {
+			tokenId: this.id,
+			tokenType: this.tokenType,
+			userId: this.userId,
+			status: this.status,
+			usageCount: this.usageCount,
+			expiresAt: this.expiresAt?.toISOString() ?? null,
+			lastUsedAt: this.lastUsedAt?.toISOString() ?? null,
+			revokedAt: this.revokedAt?.toISOString() ?? null,
+			revokedReason: this.revokedReason,
+			rotatedFromTokenId: this.rotatedFromTokenId,
+			rotatedToTokenId: this.rotatedToTokenId,
+			isRootToken: this.isRootToken(),
+			remainingMs: this.getRemainingTime(),
+			ageMs: this.getAgeTime(),
+			version: this.version,
+			createdAt: this.createdAt?.toISOString() ?? null,
+			updatedAt: this.updatedAt?.toISOString() ?? null
+		};
+	}
+
+	/**
+	 * Runs a full health check against the given configuration and returns a
+	 * structured report of the token's validity and any issues detected.
+	 * @param config Token configuration used for limit and threshold checks.
+	 * @returns A structured health report.
+	 */
+	public getHealthReport(config: Pick<ITokenConfig, 'maxUsageCount' | 'threshold'>): ITokenHealthReport {
+		const expired = this.isExpired();
+		const inactive = config.threshold != null ? this.isInactive(config.threshold) : false;
+		const atLimit = config.maxUsageCount != null ? this.isAtUsageLimit(config.maxUsageCount) : false;
+		const issues: string[] = [];
+
+		if (!this.isActivated()) {
+			issues.push(`Token is not active (status: ${this.status})`);
+		}
+		if (expired) {
+			issues.push(`Token expired at ${this.expiresAt!.toISOString()}`);
+		}
+		if (inactive) {
+			issues.push(
+				`Token has been inactive for ${this.getInactivityTime()} ms (threshold: ${config.threshold} ms)`
+			);
+		}
+		if (atLimit) {
+			issues.push(`Token has reached usage limit of ${config.maxUsageCount} (current: ${this.usageCount})`);
+		}
+
+		return {
+			tokenId: this.id,
+			isActive: this.isActivated(),
+			isExpired: expired,
+			isInactive: inactive,
+			canRotate: this.canRotate(),
+			canRevoke: this.canRevoke(),
+			isAtUsageLimit: atLimit,
+			issues
+		};
 	}
 }
