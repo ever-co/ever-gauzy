@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
@@ -48,7 +48,10 @@ export enum ProposalTemplateTabsEnum {
 	styleUrls: ['./proposal-template-list.component.scss'],
 	standalone: false
 })
-export class ProposalTemplateListComponent extends PaginationFilterBaseComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ProposalTemplateListComponent
+	extends PaginationFilterBaseComponent
+	implements OnInit, AfterViewInit, OnDestroy
+{
 	public smartTableSettings: any;
 	public disableButton: boolean = true;
 	public loading: boolean = false;
@@ -60,15 +63,10 @@ export class ProposalTemplateListComponent extends PaginationFilterBaseComponent
 	public organization: IOrganization;
 	public nbTab$: Subject<string> = new BehaviorSubject(ProposalTemplateTabsEnum.ACTIONS);
 
-	@ViewChild('actionButtonsTpl', { static: true }) private readonly _actionButtonsRef!: TemplateRef<any>;
-	@ViewChild('visibleButtonTpl', { static: true }) private readonly _visibleButtonRef!: TemplateRef<any>;
-
-	get actionButtons(): any {
-		return this._actionButtonsRef;
-	}
-	get visibleButton(): any {
-		return this._visibleButtonRef;
-	}
+	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	@ViewChild('actionButtons', { static: true }) readonly actionButtons!: any;
+	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	@ViewChild('visibleButton', { static: true }) readonly visibleButton!: any;
 
 	constructor(
 		translateService: TranslateService,
@@ -364,7 +362,10 @@ export class ProposalTemplateListComponent extends PaginationFilterBaseComponent
 
 	private _applyTranslationOnSmartTable(): void {
 		this.translateService.onLangChange
-			.pipe(tap(() => this._loadSmartTableSettings()), untilDestroyed(this))
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
 			.subscribe();
 	}
 

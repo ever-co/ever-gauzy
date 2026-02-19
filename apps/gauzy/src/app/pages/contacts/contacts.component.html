@@ -7,17 +7,19 @@
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div *ngIf="!showAddCard" class="align-self-end">
-			<ngx-gauzy-button-action
-				[componentName]="viewComponentName"
-				[isDisable]="disableButton"
-				[buttonTemplate]="actionButtons"
-				[buttonTemplateVisible]="visible"
-			></ngx-gauzy-button-action>
-		</div>
+		@if (!showAddCard) {
+			<div class="align-self-end">
+				<ngx-gauzy-button-action
+					[componentName]="viewComponentName"
+					[isDisable]="disableButton"
+					[buttonTemplate]="actionButtons"
+					[buttonTemplateVisible]="visible"
+				></ngx-gauzy-button-action>
+			</div>
+		}
 	</nb-card-header>
 	<nb-card-body [ngClass]="{ mutation: showAddCard }" class="custom-card">
-		<ng-container *ngIf="showAddCard; else layout">
+		@if (showAddCard) {
 			<ga-contact-mutation
 				class="w-100"
 				[contactType]="contactType"
@@ -26,9 +28,8 @@
 				(canceled)="cancel()"
 				(addOrEditOrganizationContact)="addOrEditOrganizationContact($event)"
 			></ga-contact-mutation>
-		</ng-container>
-		<ng-template #layout>
-			<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="contactsGridLayout">
+		} @else {
+			@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 				<div class="table-scroll-container">
 					<angular2-smart-table
 						style="cursor: pointer"
@@ -38,12 +39,11 @@
 					></angular2-smart-table>
 				</div>
 				<div class="pagination-container align-self-end">
-					<ng-container *ngIf="smartTableSource">
+					@if (smartTableSource) {
 						<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-					</ng-container>
+					}
 				</div>
-			</ng-template>
-			<ng-template #contactsGridLayout>
+			} @else {
 				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
 					(onSelectedItem)="selectContact($event)"
@@ -51,24 +51,25 @@
 					[source]="organizationContacts"
 					(scroll)="onScroll()"
 				></ga-card-grid>
-			</ng-template>
-		</ng-template>
+			}
+		}
 	</nb-card-body>
 </nb-card>
 
 <ng-template #actionButtons>
-	<ngx-favorite-toggle
-		*ngIf="selectedOrganizationContact"
-		[entityType]="'OrganizationContact'"
-		[entityId]="selectedOrganizationContact.id"
-		[entityName]="selectedOrganizationContact.name"
-		size="small"
-		status="basic"
-		spacing="list"
-		[disabled]="disableButton"
-		[showLabel]="false"
-		(favoriteToggled)="onContactFavoriteToggled($event)"
-	></ngx-favorite-toggle>
+	@if (selectedOrganizationContact) {
+		<ngx-favorite-toggle
+			[entityType]="'OrganizationContact'"
+			[entityId]="selectedOrganizationContact.id"
+			[entityName]="selectedOrganizationContact.name"
+			size="small"
+			status="basic"
+			spacing="list"
+			[disabled]="disableButton"
+			[showLabel]="false"
+			(favoriteToggled)="onContactFavoriteToggled($event)"
+		></ngx-favorite-toggle>
+	}
 	<ng-template ngxPermissionsOnly="ORG_CONTACT_EDIT">
 		<div class="btn-group actions">
 			<ngx-contact-action

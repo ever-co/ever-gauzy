@@ -4,10 +4,11 @@ import { NbButtonModule, NbIconModule, NbPopoverModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { WindowComponent } from '../window/window.component';
+import { WindowTemplateDirective } from './window-template.directive';
 
 @NgModule({
 	imports: [CommonModule, NbButtonModule, NbIconModule, NbPopoverModule, TranslateModule.forChild(), SharedModule],
-	declarations: [WindowComponent],
-	exports: [WindowComponent]
+	declarations: [WindowComponent, WindowTemplateDirective],
+	exports: [WindowComponent, WindowTemplateDirective]
 })
 export class WindowModule {}

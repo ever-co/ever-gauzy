@@ -60,7 +60,9 @@ import {
 	GalleryService,
 	TimeZoneService,
 	WidgetService,
+	WidgetTemplateDirective,
 	WindowService,
+	WindowTemplateDirective,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
 
@@ -140,8 +142,9 @@ export class TimeTrackingComponent
 	public filters: ITimeLogFilters = { timeFormat: TimeFormatEnum.FORMAT_12_HOURS };
 	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
-	@ViewChildren('widget') listOfWidgets: QueryList<TemplateRef<any>>;
-	@ViewChildren('window') listOfWindows: QueryList<TemplateRef<any>>;
+	@ViewChildren(WidgetTemplateDirective, { read: TemplateRef }) listOfWidgets: QueryList<TemplateRef<any>>;
+	@ViewChildren(WindowTemplateDirective, { read: TemplateRef }) listOfWindows: QueryList<TemplateRef<any>>;
+
 	public widgetsRef: TemplateRef<any>[] = [];
 	public windowsRef: TemplateRef<any>[] = [];
 	public widgets: GuiDrag[];

@@ -7,6 +7,6 @@ import { WindowLayoutComponent } from './window-layout.component';
 @NgModule({
 	declarations: [WindowLayoutComponent],
 	imports: [CommonModule, WindowModule, DragDropModule],
-	exports: [WindowLayoutComponent]
+	exports: [WindowLayoutComponent, WindowModule]
 })
 export class WindowLayoutModule {}

@@ -88,17 +88,10 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 	@ViewChild('tableLayout', { static: true }) readonly tableLayout!: TemplateRef<any>;
 	@ViewChild('comingSoon', { static: true }) readonly comingSoon!: TemplateRef<any>;
-	@ViewChild('actionButtonsTpl', { static: true }) private readonly _actionButtonsRef!: TemplateRef<any>;
-	@ViewChild('visibleButtonTpl', { static: true }) private readonly _visibleButtonRef!: TemplateRef<any>;
-
-	/** Exposed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
-	get actionButtons(): any {
-		return this._actionButtonsRef;
-	}
-	/** Exposed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
-	get visibleButton(): any {
-		return this._visibleButtonRef;
-	}
+	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	@ViewChild('actionButtons', { static: true }) readonly actionButtons!: any;
+	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	@ViewChild('visibleButton', { static: true }) readonly visibleButton!: any;
 
 	constructor() {
 		super(inject(TranslateService));

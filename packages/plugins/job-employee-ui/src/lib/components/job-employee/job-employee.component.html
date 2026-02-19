@@ -38,8 +38,8 @@
 		</div>
 		<div class="pagination-container">
 			@if (smartTableSource) {
-			<!-- Pagination Component -->
-			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+				<!-- Pagination Component -->
+				<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 			}
 		</div>
 	</ng-template>
@@ -61,7 +61,7 @@
 	</div>
 </ng-template>
 
-<ng-template #actionButtonsTpl let-buttonSize="buttonSize" let-selectedItem="selectedItem">
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW', 'ORG_EMPLOYEES_EDIT']">
 		<div class="btn-group actions">
 			<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
@@ -99,7 +99,7 @@
 	</ng-template>
 </ng-template>
 
-<ng-template #visibleButtonTpl>
+<ng-template #visibleButton>
 	<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
 		<button nbButton status="success" size="small" (click)="addNew($event)">
 			<nb-icon icon="plus-outline"> </nb-icon>
