@@ -117,6 +117,7 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 					}),
 					map(({ currentValue }) => !!currentValue?.sync && !!currentValue?.isActive),
 					distinctUntilChange(),
+					takeUntil(this._destroy$),
 					tap((isActive: boolean) => (isActive ? this._addNavMenuItem() : this._removeNavMenuItem()))
 				)
 				.subscribe()

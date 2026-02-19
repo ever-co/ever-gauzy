@@ -49,7 +49,7 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true });
-	private _destroy$ = new Subject<void>();
+	private readonly _destroy$ = new Subject<void>();
 
 	constructor() {}
 
