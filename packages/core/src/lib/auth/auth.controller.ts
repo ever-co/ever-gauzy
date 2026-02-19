@@ -317,7 +317,6 @@ export class AuthController {
 		description: 'Request body is malformed or contains unrecognized fields.'
 	})
 	@Post('/logout')
-	@Public()
 	@UseValidationPipe({ whitelist: true })
 	logout(@Body('refresh_token') refreshToken?: string): void {
 		return this.authService.logout(refreshToken);
