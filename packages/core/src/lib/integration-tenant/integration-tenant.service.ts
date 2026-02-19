@@ -72,8 +72,8 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			settings,
 			entitySettings,
 			tenantId,
-			organizationId,
 			organizationId
+		});
 	}
 
 	/**
@@ -104,6 +104,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 
 			return integration || false;
 		} catch (error) {
+			console.error('Error occurred while retrieving integration tenant settings:', error?.message);
 			return false;
 		}
 	}
