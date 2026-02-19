@@ -73,7 +73,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			entitySettings,
 			tenantId,
 			organizationId,
-		});
+			organizationId
 	}
 
 	/**
