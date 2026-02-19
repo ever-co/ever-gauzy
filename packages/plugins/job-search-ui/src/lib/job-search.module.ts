@@ -107,7 +107,7 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 
 	/**
 	 * Subscribes to the job matching entity observable and dynamically
-	 * adds or removes the "Matching" nav menu item based on whether
+	 * adds or removes the "Browse" nav menu item based on whether
 	 * job matching sync is active.
 	 */
 	private _subscribeToJobMatchingEntity(): void {
