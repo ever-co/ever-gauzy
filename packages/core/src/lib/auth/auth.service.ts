@@ -1896,13 +1896,19 @@ export class AuthService extends SocialAuthService {
 			// Log the error but do not throw it, as we want to proceed with logout even if this fails
 			Logger.error('Error while removing refresh token from user record:', error?.message);
 		});
-		this.refreshTokenService.revoke(refreshToken, reason, currentUserId).catch((error) => {
-			// Log the error but do not throw it, as we want to proceed with logout even if this fails
-			Logger.error('Error while revoking refresh token:', error?.message);
-		});
-		this.accessTokenService.revoke(currentToken, reason, currentUserId).catch((error) => {
-			// Log the error but do not throw it, as we want to proceed with logout even if this fails
-			Logger.error('Error while revoking access token:', error?.message);
-		});
+
+		if (refreshToken) {
+			this.refreshTokenService.revoke(refreshToken, reason, currentUserId).catch((error) => {
+				// Log the error but do not throw it, as we want to proceed with logout even if this fails
+				Logger.error('Error while revoking refresh token:', error?.message);
+			});
+		}
+
+		if (currentToken) {
+			this.accessTokenService.revoke(currentToken, reason, currentUserId).catch((error) => {
+				// Log the error but do not throw it, as we want to proceed with logout even if this fails
+				Logger.error('Error while revoking access token:', error?.message);
+			});
+		}
 	}
 }
