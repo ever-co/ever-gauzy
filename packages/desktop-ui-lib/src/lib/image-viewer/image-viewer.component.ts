@@ -49,9 +49,18 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	getImages(_, arg: any[]) {
+	async showImageEventHandler(_, arg) {
+		if (arg.timeSlotId) {
+			const screenshots: any[] = await this.getLastScreenshot(arg.timeSlotId);
+			this.getImages(screenshots);
+		} else {
+			this.getImages(arg.screenshots);
+		}
+	}
+
+	getImages(screenshots: any[]) {
 		this._ngZone.run(() => {
-			this.items = arg
+			this.items = screenshots
 				.sort((a, b) => {
 					const c: any = new Date(b.recordedAt);
 					const d: any = new Date(a.recordedAt);
@@ -67,13 +76,13 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
-		this._electronService.ipcRenderer.on('show_image', this.getImages.bind(this));
+		this._electronService.ipcRenderer.on('show_image', this.showImageEventHandler.bind(this));
 		this._electronService.ipcRenderer.send('image_view_ready');
 		this.active_index = 0;
 	}
 
 	ngOnDestroy(): void {
-		this._electronService.ipcRenderer.removeListener('show_image', this.getImages.bind(this));
+		this._electronService.ipcRenderer.removeListener('show_image', this.showImageEventHandler.bind(this));
 	}
 
 	close() {
@@ -132,5 +141,12 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 
 	public trackById(index: number, item: any): number {
 		return item.id;
+	}
+
+	private async getLastScreenshot(timeSlotId: string) {
+		const lastTimeSlot = await this._imageViewerService.getTimeSlot({
+			timeSlotId
+		});
+		return lastTimeSlot.screenshots;
 	}
 }

@@ -365,6 +365,13 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		return LocalStore.getStore('appSetting').theme;
 	});
 
+	ipcMain.handle('GET_LAST_CAPTURE', async () => {
+		const lastCapture = await timerService.findLastCapture();
+		return {
+			timeSlotId: lastCapture?.timeslotId
+		};
+	});
+
 	pluginListeners();
 }
 
