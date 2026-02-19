@@ -24,21 +24,23 @@
 	"scripts": {
 		"start": "nx serve mcp",
 		"lib:build": "cross-env NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server",
-		"lib:build:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn nx build mcp-server",
+		"lib:build:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server",
 		"lib:watch": "cross-env NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server --watch"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.13.1",
-		"@nestjs/common": "^11.1.12",
-		"@nestjs/core": "^11.1.12",
-		"@nestjs/platform-express": "^11.1.12",
+		"@nestjs/platform-express": "^11.1.14",
 		"express": "^5.2.1",
 		"express-rate-limit": "^8.0.1",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.5",
 		"csrf-csrf": "4.0.3",
 		"axios": "^1.9.0",
-		"zod": "^4.3.5",
+		"zod": "^4.3.6",
 		"ws": "^8.18.3",
 		"tslib": "^2.6.2",
 		"jose": "^6.0.13",

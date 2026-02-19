@@ -12,10 +12,10 @@ import { StatusMapper } from '../../shared/utils/queue-status-mapper.util';
 import { NgTemplateOutlet, AsyncPipe } from '@angular/common';
 
 @Component({
-    selector: 'app-sync-page',
-    templateUrl: './activity-sync.component.html',
-    styleUrls: ['./activity-sync.component.scss'],
-    imports: [NbCardModule, NbTabsetModule, NgTemplateOutlet, NbSpinnerModule, Angular2SmartTableModule, AsyncPipe]
+	selector: 'app-sync-page',
+	templateUrl: './activity-sync.component.html',
+	styleUrls: ['./activity-sync.component.scss'],
+	imports: [NbCardModule, NbTabsetModule, NgTemplateOutlet, NbSpinnerModule, Angular2SmartTableModule, AsyncPipe]
 })
 export class SyncPageComponent implements OnInit, OnDestroy {
 	items$: Observable<QueueItem[]> = this.svc.queueStream$;
@@ -45,7 +45,7 @@ export class SyncPageComponent implements OnInit, OnDestroy {
 	constructor(
 		private svc: LogService,
 		private translateService: TranslateService,
-		private dialogService: NbDialogService
+		private readonly dialogService: NbDialogService
 	) {}
 
 	ngOnInit(): void {

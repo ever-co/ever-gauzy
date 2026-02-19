@@ -26,6 +26,10 @@
 		"lib:build:prod": "yarn nx build plugin-integration-upwork",
 		"lib:watch": "yarn nx build plugin-integration-upwork --watch"
 	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
@@ -34,10 +38,9 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/plugin-job-proposal": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
-		"@nestjs/common": "^11.1.12",
 		"@nestjs/cqrs": "^11.0.3",
-		"@nestjs/platform-express": "^11.1.12",
-		"@nestjs/swagger": "^11.2.5",
+		"@nestjs/platform-express": "^11.1.14",
+		"@nestjs/swagger": "^11.2.6",
 		"class-validator": "^0.14.2",
 		"csv-parser": "^2.3.2",
 		"express": "^5.2.1",

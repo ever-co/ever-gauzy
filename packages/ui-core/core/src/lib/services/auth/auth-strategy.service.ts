@@ -1,18 +1,17 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, from, of, tap, Subject, EMPTY } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
-import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
-import { NbAuthStrategyClass } from '@nebular/auth';
-import { CookieService } from 'ngx-cookie-service';
-import { IUser, IAuthResponse, IUserLoginInput, LanguagesEnum } from '@gauzy/contracts';
+import { IAuthResponse, IUser, IUserLoginInput, LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
-import { ElectronService } from './electron.service';
-import { AuthService } from './auth.service';
-import { TimesheetFilterService } from '../timesheet/timesheet-filter.service';
-import { TimeTrackerService } from '../time-tracker/time-tracker.service';
-import { Store } from '../store/store.service';
+import { NbAuthResult, NbAuthStrategy, NbAuthStrategyClass } from '@nebular/auth';
+import { CookieService } from 'ngx-cookie-service';
+import { EMPTY, Observable, Subject, from, of, tap } from 'rxjs';
+import { catchError, map, switchMap, take } from 'rxjs/operators';
 import { deleteCookie } from '../../auth/cookie-helper';
+import { Store } from '../store/store.service';
+import { TimeTrackerService } from '../time-tracker/time-tracker.service';
+import { TimesheetFilterService } from '../timesheet/timesheet-filter.service';
+import { AuthService } from './auth.service';
+import { ElectronService } from './electron.service';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -273,8 +272,14 @@ export class AuthStrategy extends NbAuthStrategy {
 	 * Clears time tracking and timesheet filter, and logs out if the user is authenticated.
 	 */
 	private async _preLogout() {
-		if (this.store.token) {
-			this.authService.doLogout().subscribe();
+		if (this.store.refresh_token) {
+			this.authService
+				.doLogout(this.store.refresh_token)
+				.pipe(
+					take(1),
+					catchError(() => EMPTY)
+				)
+				.subscribe();
 		}
 
 		//remove time tracking/timesheet filter just before logout

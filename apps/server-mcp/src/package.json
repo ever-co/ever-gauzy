@@ -129,7 +129,7 @@
 		"@gauzy/constants": "file:../../../dist/packages/constants",
 		"@modelcontextprotocol/sdk": "^1.13.1",
 		"axios": "^1.9.0",
-		"dotenv": "^17.2.3",
+		"dotenv": "^17.2.4",
 		"zod": "^4.3.5",
 		"@sentry/electron": "7.7.1",
 		"@sentry/node": "10.36.0",

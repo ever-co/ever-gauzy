@@ -210,7 +210,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	constructor(
 		private electronService: ElectronService,
 		private timeTrackerService: TimeTrackerService,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private sanitize: DomSanitizer,
 		private _ngZone: NgZone,

@@ -16,14 +16,14 @@ import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-help-center',
-    templateUrl: './help-center.component.html',
-    styleUrls: ['./help-center.component.scss'],
-    standalone: false
+	selector: 'ga-help-center',
+	templateUrl: './help-center.component.html',
+	styleUrls: ['./help-center.component.scss'],
+	standalone: false
 })
 export class HelpCenterComponent extends TranslationBaseComponent implements OnDestroy, OnInit {
 	constructor(
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		readonly translateService: TranslateService,
 		private helpCenterArticleService: HelpCenterArticleService,
 		private readonly toastrService: ToastrService,

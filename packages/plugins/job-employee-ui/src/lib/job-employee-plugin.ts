@@ -10,9 +10,16 @@ import { JOB_EMPLOYEE_PAGE_LINK, JOB_EMPLOYEE_PAGE_ROUTE } from './job-employee.
  *
  * @example In plugin-ui.config.ts (as child of JobsPlugin):
  * ```ts
- * plugins: [JobsPlugin.init({
- *   plugins: [JobEmployeePlugin, JobMatchingPlugin, JobSearchPlugin, JobProposalTemplatePlugin]
- * })]
+ * plugins: [
+ *   JobsPlugin.init({
+ *     plugins: [
+ *       JobEmployeePlugin,
+ *       JobSearchPlugin,
+ *       JobMatchingPlugin,
+ *       JobProposalTemplatePlugin
+ *     ]
+ *   })
+ * ]
  * ```
  */
 export const JobEmployeePlugin: PluginUiDefinition = {
