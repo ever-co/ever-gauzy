@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IAuthResponse, IUser } from '@gauzy/contracts';
 import { NbAuthResult, NbAuthStrategy, NbAuthStrategyClass } from '@nebular/auth';
-import { Observable, from, of, switchMap } from 'rxjs';
+import { Observable, from, of, switchMap, take } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ElectronService } from '../../electron/services';
 import { Store, TimeTrackerDateManager } from '../../services';
@@ -158,6 +158,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	logout(): Observable<NbAuthResult> {
+		this.authService.doLogout(this.store.refreshToken).pipe(take(1)).subscribe();
 		return from(this._logout());
 	}
 
