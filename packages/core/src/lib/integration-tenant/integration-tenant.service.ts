@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FindManyOptions, IsNull, Not } from 'typeorm';
 import {
 	ID,

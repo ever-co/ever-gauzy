@@ -35,7 +35,6 @@ import { ReportService } from './reports/all-report/report.service';
 	standalone: false
 })
 export class PagesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-	public readonly translate = inject(TranslateService);
 	private readonly _router = inject(Router);
 	private readonly _route = inject(ActivatedRoute);
 	private readonly _store = inject(Store);
