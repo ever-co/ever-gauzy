@@ -22,7 +22,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
 import { RequestContext } from '../core/context';
 import { UseValidationPipe } from '../shared/pipes';
@@ -282,32 +282,45 @@ export class AuthController {
 	}
 
 	/**
-	 * Logout the user by revoking the provided refresh token and the current access token.
+	 * Logout the user by revoking the provided refresh token and the current access token. If no refresh token is provided, it will attempt to revoke the current access token only. Any errors during the revocation process are logged but do not prevent the logout from completing.
 	 *
-	 * This endpoint logs out the user by revoking the refresh token and access token, ensuring the user session is terminated securely.
-	 *
-	 * @param refresh_token - (Optional) The refresh token to revoke. If not provided, the service will attempt to extract it from the request context or handle accordingly.
-	 * @returns A promise that resolves when the logout process is complete.
-	 *
-	 * @remarks
-	 * - The refresh token can be provided in the request body, but is not mandatory.
-	 * - This endpoint is public, but the token must be valid if provided.
-	 *
-	 * @example
-	 * POST /auth/logout
-	 * {
-	 *   "refresh_token": "<refresh_token_here>"
-	 * }
+	 * @param refreshToken The refresh token to be revoked. This is optional as the function will attempt to revoke the current access token regardless.
+	 * @returns void
 	 */
 	@HttpCode(HttpStatus.OK)
-	@ApiOperation({ summary: 'Logout user (revoke refresh and access tokens)' })
-	@ApiResponse({ status: HttpStatus.OK, description: 'Successfully logged out.' })
-	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid refresh token.' })
+	@ApiOperation({
+		summary: 'Logout user',
+		description:
+			'Revokes the provided refresh token. If no token is supplied, ' +
+			'the token from the current request context is used. ' +
+			'Individual revocation failures are logged but do not cause the request to fail.'
+	})
+	@ApiBody({
+		description: 'Optional token pair to revoke.',
+		required: false,
+		schema: {
+			type: 'object',
+			properties: {
+				refresh_token: {
+					type: 'string',
+					description: 'Refresh token to revoke.'
+				}
+			}
+		}
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully logged out. The provided token has been revoked.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Request body is malformed or contains unrecognized fields.'
+	})
 	@Post('/logout')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
-	async logout(@Body('refresh_token') refreshToken?: string): Promise<void> {
-		return await this.authService.logout(refreshToken);
+	logout(@Body('refresh_token') refreshToken?: string): void {
+		return this.authService.logout(refreshToken);
 	}
 
 	/**

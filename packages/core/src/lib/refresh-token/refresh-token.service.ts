@@ -47,8 +47,7 @@ export class RefreshTokenService {
 		return rotated.token;
 	}
 
-	public async revoke(rawToken: string, reason?: string): Promise<void> {
-		const revokedById = this.getUserId();
+	public async revoke(rawToken: string, reason?: string, revokedById = this.getUserId()): Promise<void> {
 		await this.tokenService.revokeToken({
 			revokedById,
 			rawToken,
