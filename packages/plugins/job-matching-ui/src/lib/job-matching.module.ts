@@ -3,7 +3,8 @@ import { RouterModule, ROUTES } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { map, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -92,6 +93,10 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private _subscribeToJobMatchingEntity(): void {
 		this._integrationEntitySettingServiceStoreService.jobMatchingEntity$
 			.pipe(
+				catchError((error) => {
+					this._log.error('Error in job matching entity subscription', error);
+					return of({ currentValue: { sync: false, isActive: false } });
+				}),
 				map(({ currentValue }) => !!currentValue?.sync && !!currentValue?.isActive),
 				distinctUntilChange(),
 				tap((isActive: boolean) => (isActive ? this._addNavMenuItem() : this._removeNavMenuItem())),

@@ -51,6 +51,14 @@ export class LoggerService {
 	}
 
 	/**
+	 * Sets the enabled state of the logger.
+	 * @param value - Whether the logger should be enabled.
+	 */
+	setEnabled(value: boolean): void {
+		this.enabled = value;
+	}
+
+	/**
 	 * Returns a logger that always uses the given context (prefix).
 	 * Similar to NestJS prefixed loggers (`Logger${prefix}`).
 	 */

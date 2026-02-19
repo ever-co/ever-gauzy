@@ -18,7 +18,10 @@ export class RelationsQueryDTO implements IBaseRelationsEntityModel {
 			return value.split(',').map((v) => v.trim()).filter((v) => v.length > 0);
 		}
 		if (Array.isArray(value)) {
-			return value.filter((v) => typeof v === 'string').map((v) => v.trim());
+			return value
+				.filter((v) => typeof v === 'string')
+				.map((v) => v.trim())
+				.filter((v) => v.length > 0);
 		}
 		return [];
 	})
