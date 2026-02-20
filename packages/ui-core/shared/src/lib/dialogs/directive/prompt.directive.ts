@@ -11,8 +11,6 @@ import { PromptComponent, PromptDialogOptions } from '../prompt/prompt.component
 	standalone: true
 })
 export class PromptDirective extends TranslationBaseComponent implements OnDestroy {
-	private readonly dialogService = inject(NbDialogService);
-
 	/*
 	 * Getter & Setter for label
 	 */
@@ -81,8 +79,10 @@ export class PromptDirective extends TranslationBaseComponent implements OnDestr
 
 	@Output() callback = new EventEmitter<string | string[]>();
 
+	private readonly dialogService = inject(NbDialogService);
+
 	constructor() {
-		super();
+		super(inject(TranslateService));
 	}
 
 	/**
