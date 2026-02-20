@@ -19,6 +19,7 @@ export interface IHelpCenterArticle
 	// Rich content for collaborative articles
 	descriptionHtml?: string;
 	descriptionJson?: JsonData;
+	descriptionBinary?: Buffer;
 
 	// Parent-child hierarchy (self-referencing)
 	parentId?: ID;
@@ -29,9 +30,8 @@ export interface IHelpCenterArticle
 	ownedById?: ID;
 	ownedBy?: IEmployee;
 
-	// Project relation
-	projectId?: ID;
-	project?: IOrganizationProject;
+	// Projects relation (many-to-many)
+	projects?: IOrganizationProject[];
 
 	// Metadata
 	isLocked?: boolean;
@@ -67,6 +67,7 @@ export interface IHelpCenterArticleVersion
 	// Content snapshot
 	descriptionHtml?: string;
 	descriptionJson?: JsonData;
+	descriptionBinary?: Buffer;
 }
 
 export interface IHelpCenterAuthor
