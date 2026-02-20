@@ -69,7 +69,7 @@
 	</nb-card-body>
 </nb-card>
 <!-- widgets -->
-<ng-template #widget>
+<ng-template gaWidgetTemplate>
 	@if (!hideEmployeeBlock) {
 		<ng-container *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
 			<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
@@ -94,7 +94,7 @@
 		</ng-container>
 	}
 </ng-template>
-<ng-template #widget>
+<ng-template gaWidgetTemplate>
 	@if (!hideProjectBlock) {
 		<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 			<nb-card-body>
@@ -117,7 +117,7 @@
 		</nb-card>
 	}
 </ng-template>
-<ng-template #widget>
+<ng-template gaWidgetTemplate>
 	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<div class="header-widget">
@@ -132,7 +132,7 @@
 		</nb-card-body>
 	</nb-card>
 </ng-template>
-<ng-template #widget>
+<ng-template gaWidgetTemplate>
 	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<div class="header-widget">
@@ -153,7 +153,7 @@
 		</nb-card-body>
 	</nb-card>
 </ng-template>
-<ng-template #widget>
+<ng-template gaWidgetTemplate>
 	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<div class="header-widget">
@@ -187,7 +187,7 @@
 		</nb-card-body>
 	</nb-card>
 </ng-template>
-<ng-template #widget>
+<ng-template gaWidgetTemplate>
 	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<div class="header-widget">
@@ -213,7 +213,7 @@
 	</nb-card>
 </ng-template>
 <!-- Windows -->
-<ng-template #window>
+<ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="timeSlotLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header>{{ 'TIMESHEET.RECENT_ACTIVITIES' | translate }}</nb-card-header>
 		<nb-card-body class="custom-card-body-inner">
@@ -308,7 +308,7 @@
 		</nb-card-body>
 	</nb-card>
 </ng-template>
-<ng-template #window>
+<ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="manualTimeLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header class="nb-card-header">
 			{{ 'TIMESHEET.MANUAL_TIME' | translate }}
@@ -385,7 +385,7 @@
 		}
 	</nb-card>
 </ng-template>
-<ng-template #window>
+<ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="tasksLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header class="nb-card-header">
 			{{ 'TIMESHEET.TASKS' | translate }}
@@ -444,7 +444,7 @@
 		}
 	</nb-card>
 </ng-template>
-<ng-template #window>
+<ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="projectsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header>{{ 'TIMESHEET.PROJECTS' | translate }}</nb-card-header>
 		@if (projects?.length > 0) {
@@ -496,7 +496,7 @@
 		}
 	</nb-card>
 </ng-template>
-<ng-template #window>
+<ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="activitiesLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header class="nb-card-header">{{ 'TIMESHEET.APPS_URLS' | translate }} </nb-card-header>
 		@if (activities?.length > 0) {
@@ -537,7 +537,7 @@
 		}
 	</nb-card>
 </ng-template>
-<ng-template #window>
+<ng-template gaWindowTemplate>
 	<nb-card
 		class="member-list"
 		[nbSpinner]="memberLoading"
