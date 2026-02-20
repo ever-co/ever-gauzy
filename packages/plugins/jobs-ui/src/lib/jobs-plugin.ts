@@ -38,7 +38,16 @@ const DEFAULT_JOBS_PLUGINS: PluginUiDefinition[] = [
  *
  * @example Customize child plugins with init:
  * ```ts
- * plugins: [JobsPlugin.init({ plugins: [JobEmployeePlugin, JobSearchPlugin] })]
+ * plugins: [
+ *   JobsPlugin.init({
+ *     plugins: [
+ *       JobEmployeePlugin,
+ *       JobSearchPlugin,
+ *       JobMatchingPlugin,
+ *       JobProposalTemplatePlugin
+ *     ]
+ *   })
+ * ]
  * ```
  */
 export const JobsPlugin: JobsPluginDefinition = {
