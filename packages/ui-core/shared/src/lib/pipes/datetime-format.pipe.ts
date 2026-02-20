@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import moment from 'moment';
@@ -10,14 +10,16 @@ import { Store } from '@gauzy/ui-core/core';
 @Pipe({
 	name: 'dateTimeFormat',
 	pure: false,
-	standalone: false
+	standalone: true
 })
 export class DateTimeFormatPipe implements PipeTransform {
+	private readonly store = inject(Store);
+
 	timeFormat: number = TimeFormatEnum.FORMAT_12_HOURS;
 	dateFormat: string = 'd MMMM, y H:mm';
 	regionCode: string = RegionsEnum.EN;
 
-	constructor(private readonly store: Store) {
+	constructor() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),

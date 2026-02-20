@@ -4,7 +4,7 @@ import { toLocal } from '@gauzy/ui-core/common';
 
 @Pipe({
 	name: 'utcToLocal',
-	standalone: false
+	standalone: true
 })
 export class UtcToLocalPipe implements PipeTransform {
 	/**

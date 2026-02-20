@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform, OnDestroy } from '@angular/core';
+import { Pipe, PipeTransform, OnDestroy, inject } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -9,12 +9,13 @@ import { Store } from '@gauzy/ui-core/core';
 @Pipe({
 	name: 'timeFormat',
 	pure: false,
-	standalone: false
+	standalone: true
 })
 export class TimeFormatPipe implements PipeTransform, OnDestroy {
+	private readonly store = inject(Store);
 	private format: TimeFormatEnum;
 
-	constructor(private readonly store: Store) {
+	constructor() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),

@@ -1,5 +1,4 @@
-import { Pipe, PipeTransform, SecurityContext, VERSION } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
 	name: 'truncate',
@@ -24,36 +23,5 @@ export class TruncatePipe implements PipeTransform {
 			limit = value.substring(0, limit).lastIndexOf(' ');
 		}
 		return value.length > limit ? value.substring(0, limit) + ellipsis : value;
-	}
-}
-@Pipe({
-	name: 'nl2br',
-	standalone: true
-})
-export class Nl2BrPipe implements PipeTransform {
-	constructor(private readonly sanitizer: DomSanitizer) {}
-	/**
-	 * Transforms a string by replacing line breaks with HTML line breaks and sanitizes it if necessary.
-	 *
-	 * @param {string} value - The string to be transformed.
-	 * @param {boolean} [sanitizeBeforehand=false] - Whether to sanitize the string beforehand. Defaults to false.
-	 * @return {string} The transformed string.
-	 */
-	transform(value: string, sanitizeBeforehand?: boolean): string {
-		if (typeof value !== 'string') {
-			return value;
-		}
-		let result: any;
-		const textParsed = value.replace(/(?:\r\n|\r|\n)/g, '<br />');
-
-		if (!VERSION || VERSION.major === '2') {
-			result = this.sanitizer.bypassSecurityTrustHtml(textParsed);
-		} else if (sanitizeBeforehand) {
-			result = this.sanitizer.sanitize(SecurityContext.HTML, textParsed);
-		} else {
-			result = textParsed;
-		}
-
-		return result;
 	}
 }

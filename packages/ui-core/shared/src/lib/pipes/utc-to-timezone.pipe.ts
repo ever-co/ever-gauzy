@@ -4,7 +4,7 @@ import { toTimezone } from '@gauzy/ui-core/common';
 
 @Pipe({
 	name: 'utcToTimezone',
-	standalone: false
+	standalone: true
 })
 export class UtcToTimezone implements PipeTransform {
 	/**
