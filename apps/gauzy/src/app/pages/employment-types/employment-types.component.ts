@@ -207,15 +207,7 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	private async addEmploymentType() {
 		if (!this.form.invalid) {
 			const name: string = this.form.get('name').value;
-			const existingNames = this.organizationEmploymentTypes.map((type) => type.name);
 
-			if (validateUniqueString(existingNames, name)) {
-				this.toastrService.error(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS',
-					name
-				);
-				return;
-			}
 
 			const newEmploymentType = {
 				name,
@@ -249,7 +241,11 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		const existingNames = this.organizationEmploymentTypes
 			.filter((type) => !this.selectedOrgEmpType || type.id !== this.selectedOrgEmpType.id)
 			.map((type) => type.name);
-		if (validateUniqueString(existingNames, name)) return false;
+
+		if (validateUniqueString(existingNames, name)) {
+			this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS', name);
+			return false;
+		}
 		if (this.selectedOrgEmpType) {
 			await this.editOrgEmpType(this.selectedOrgEmpType.id, name);
 		} else {
@@ -297,14 +293,7 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	}
 
 	async editOrgEmpType(id: string, name: string) {
-		const existingNames = this.organizationEmploymentTypes
-			.filter((type) => type.id !== id)
-			.map((type) => type.name);
 
-		if (validateUniqueString(existingNames, name)) {
-			this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS', name);
-			return;
-		}
 		const orgEmpTypeForEdit = {
 			name: name,
 			tags: this.tags
