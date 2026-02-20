@@ -27,7 +27,7 @@
 		"@ali-hm/angular-tree-component": "^21.0.3",
 		"@angular-slider/ngx-slider": "^21.0.0",
 		"@angular/animations": "21.0.7",
-		"@angular/cdk": "21.0.1",
+		"@angular/cdk": "21.0.6",
 		"@angular/common": "21.0.7",
 		"@angular/core": "21.0.7",
 		"@angular/forms": "21.0.7",
