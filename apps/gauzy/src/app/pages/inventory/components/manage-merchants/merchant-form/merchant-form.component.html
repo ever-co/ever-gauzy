@@ -17,7 +17,7 @@
 					<div class="d-flex flex-column justify-content-between h-100">
 						<div class="row">
 							<div class="col-md-3 col-sm-12 image-container">
-								<ng-container *ngTemplateOutlet="storeImage"></ng-container>
+								<ng-container [ngTemplateOutlet]="storeImage"></ng-container>
 							</div>
 							<div class="col-md-9 col-sm-12">
 								<div class="row">
@@ -41,9 +41,9 @@
 												"
 											/>
 											@if (FormHelpers.isInvalidControl(form, 'name')) {
-											<div class="text-danger">
-												{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
-											</div>
+												<div class="text-danger">
+													{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
+												</div>
 											}
 										</div>
 									</div>
@@ -67,9 +67,9 @@
 												"
 											/>
 											@if (FormHelpers.isInvalidControl(form, 'code')) {
-											<div class="text-danger">
-												{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
-											</div>
+												<div class="text-danger">
+													{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
+												</div>
 											}
 										</div>
 									</div>
@@ -95,9 +95,9 @@
 												"
 											/>
 											@if (FormHelpers.isInvalidControl(form, 'email')) {
-											<div class="text-danger">
-												{{ 'INVENTORY_PAGE.EMAIL_WRONG_FORMAT' | translate }}
-											</div>
+												<div class="text-danger">
+													{{ 'INVENTORY_PAGE.EMAIL_WRONG_FORMAT' | translate }}
+												</div>
 											}
 										</div>
 									</div>
@@ -121,9 +121,9 @@
 												"
 											/>
 											@if (FormHelpers.isInvalidControl(form, 'phone')) {
-											<div class="text-danger">
-												{{ 'INVENTORY_PAGE.PHONE_WRONG_FORMAT' | translate }}
-											</div>
+												<div class="text-danger">
+													{{ 'INVENTORY_PAGE.PHONE_WRONG_FORMAT' | translate }}
+												</div>
 											}
 										</div>
 									</div>
@@ -288,15 +288,15 @@
 										[placeholder]="'INVENTORY_PAGE.WAREHOUSES' | translate"
 									>
 										@for (warehouse of warehouses; track warehouse.id) {
-										<nb-option [value]="warehouse.id">
-											<img
-												[src]="warehouse?.logo?.url"
-												alt="warehouse image"
-												height="40"
-												width="40"
-												style="margin-right: 10px"
-											/>{{ warehouse.name }}
-										</nb-option>
+											<nb-option [value]="warehouse.id">
+												<img
+													[src]="warehouse?.logo?.url"
+													alt="warehouse image"
+													height="40"
+													width="40"
+													style="margin-right: 10px"
+												/>{{ warehouse.name }}
+											</nb-option>
 										}
 									</nb-select>
 								</div>
@@ -327,32 +327,32 @@
 		(click)="onImageSelect()"
 	>
 		@if (image && image.url) {
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			xmlns:xlink="http://www.w3.org/1999/xlink"
-			width="68"
-			height="68"
-			viewBox="0 0 68 68"
-			[style.opacity]="hoverState ? '1' : '0.3'"
-		>
-			<defs>
-				<path
-					id="a"
-					d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
-				/>
-			</defs>
-			<g fill="none" fill-rule="evenodd">
-				<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
-				<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
-				<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
-			</g>
-		</svg>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				xmlns:xlink="http://www.w3.org/1999/xlink"
+				width="68"
+				height="68"
+				viewBox="0 0 68 68"
+				[style.opacity]="hoverState ? '1' : '0.3'"
+			>
+				<defs>
+					<path
+						id="a"
+						d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+					/>
+				</defs>
+				<g fill="none" fill-rule="evenodd">
+					<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+					<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
+					<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
+				</g>
+			</svg>
 		}
 		<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
 		@if (!image || !image.url) {
-		<ga-no-image [fontSize]="14" [placeholder]="'NO_IMAGE.ADD_DROP'" class="store-image"></ga-no-image>
+			<ga-no-image [fontSize]="14" [placeholder]="'NO_IMAGE.ADD_DROP'" class="store-image"></ga-no-image>
 		} @else {
-		<img class="store-image" [src]="image.url" alt="Product Item Photo" />
+			<img class="store-image" [src]="image.url" alt="Product Item Photo" />
 		}
 	</div>
 </ng-template>

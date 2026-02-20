@@ -13,13 +13,13 @@
 				[class.show-button]="!!isDisable"
 			>
 				<ng-content select="[buttonTemplateVisible]"></ng-content>
-				<ng-container *ngTemplateOutlet="buttonTemplateVisible"></ng-container>
+				<ng-container [ngTemplateOutlet]="buttonTemplateVisible"></ng-container>
 			</span>
-			<ng-container *ngTemplateOutlet="buttonTemplate"></ng-container>
+			<ng-container [ngTemplateOutlet]="buttonTemplate"></ng-container>
 			<ng-content select="[buttonTemplate]"></ng-content>
 		</div>
 	</div>
 	@if (hasLayoutSelector) {
-	<ga-layout-selector [componentName]="componentName"></ga-layout-selector>
+		<ga-layout-selector [componentName]="componentName"></ga-layout-selector>
 	}
 </div>

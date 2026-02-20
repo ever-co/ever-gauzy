@@ -1,21 +1,21 @@
 @if (!hide) {
-<div
-	[class.collapsed]="isCollapse"
-	[class.expanded]="isExpand"
-	[class.moved]="move"
-	[style.width]="width + 'px'"
-	id="widget"
-	#widget
->
-	<nb-icon
-		icon="more-vertical-outline"
-		nbPopoverPlacement="bottom"
-		[nbPopover]="setting"
-		nbPopoverTrigger="click"
-		nbButton
-	></nb-icon>
-	<ng-container *ngTemplateOutlet="templateRef"></ng-container>
-</div>
+	<div
+		[class.collapsed]="isCollapse"
+		[class.expanded]="isExpand"
+		[class.moved]="move"
+		[style.width]="width + 'px'"
+		id="widget"
+		#widget
+	>
+		<nb-icon
+			icon="more-vertical-outline"
+			nbPopoverPlacement="bottom"
+			[nbPopover]="setting"
+			nbPopoverTrigger="click"
+			nbButton
+		></nb-icon>
+		<ng-container [ngTemplateOutlet]="templateRef"></ng-container>
+	</div>
 }
 <!-- Settings -->
 <ng-template #setting>

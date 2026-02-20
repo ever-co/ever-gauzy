@@ -64,7 +64,7 @@
 					{{ 'BUTTONS.AUTO_REFRESH' | translate }}
 				</nb-toggle>
 				@if (autoRefresh) {
-					<ng-container *ngTemplateOutlet="sync"></ng-container>
+					<ng-container [ngTemplateOutlet]="sync"></ng-container>
 				}
 				@if (!autoRefresh) {
 					<button
@@ -76,7 +76,7 @@
 						size="small"
 						class="refresh-button"
 					>
-						<ng-container *ngTemplateOutlet="sync"></ng-container>
+						<ng-container [ngTemplateOutlet]="sync"></ng-container>
 						{{ 'BUTTONS.REFRESH' | translate }}
 					</button>
 				}

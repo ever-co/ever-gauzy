@@ -34,7 +34,8 @@
 							@case (ReportGroupFilterEnum.employee) {
 								<div class="responsive-table-row employee-column">
 									<ng-container
-										*ngTemplateOutlet="employeeEl; context: { $implicit: day?.employee }"
+										[ngTemplateOutlet]="employeeEl"
+										[ngTemplateOutletContext]="{ $implicit: day?.employee }"
 									></ng-container>
 								</div>
 								<div class="responsive-table-row project-column"></div>
@@ -53,7 +54,8 @@
 							@case (ReportGroupFilterEnum.project) {
 								<div class="responsive-table-row employee-column">
 									<ng-container
-										*ngTemplateOutlet="projectEl; context: { $implicit: day?.project }"
+										[ngTemplateOutlet]="projectEl"
+										[ngTemplateOutletContext]="{ $implicit: day?.project }"
 									></ng-container>
 								</div>
 								<div class="responsive-table-row project-column"></div>
@@ -72,7 +74,8 @@
 							@case (ReportGroupFilterEnum.client) {
 								<div class="responsive-table-row employee-column">
 									<ng-container
-										*ngTemplateOutlet="clientEl; context: { $implicit: day?.client }"
+										[ngTemplateOutlet]="clientEl"
+										[ngTemplateOutletContext]="{ $implicit: day?.client }"
 									></ng-container>
 								</div>
 								<div class="responsive-table-row project-column"></div>
@@ -91,12 +94,10 @@
 							@default {
 								<div class="responsive-table-row employee-column">
 									<ng-container
-										*ngTemplateOutlet="
-											dateEl;
-											context: {
-												$implicit: day?.date
-											}
-										"
+										[ngTemplateOutlet]="dateEl"
+										[ngTemplateOutletContext]="{
+											$implicit: day?.date
+										}"
 									></ng-container>
 								</div>
 								<div class="responsive-table-row project-column"></div>
@@ -115,26 +116,30 @@
 						}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
-						<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
+						<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
 						@switch (groupBy) {
 							@case (ReportGroupFilterEnum.employee) {
 								<ng-container
-									*ngTemplateOutlet="groupByEmployeeCardEl; context: { $implicit: day }"
+									[ngTemplateOutlet]="groupByEmployeeCardEl"
+									[ngTemplateOutletContext]="{ $implicit: day }"
 								></ng-container>
 							}
 							@case (ReportGroupFilterEnum.project) {
 								<ng-container
-									*ngTemplateOutlet="groupByProjectCardEl; context: { $implicit: day }"
+									[ngTemplateOutlet]="groupByProjectCardEl"
+									[ngTemplateOutletContext]="{ $implicit: day }"
 								></ng-container>
 							}
 							@case (ReportGroupFilterEnum.client) {
 								<ng-container
-									*ngTemplateOutlet="groupByClientCardEl; context: { $implicit: day }"
+									[ngTemplateOutlet]="groupByClientCardEl"
+									[ngTemplateOutletContext]="{ $implicit: day }"
 								></ng-container>
 							}
 							@default {
 								<ng-container
-									*ngTemplateOutlet="groupByDateCardEl; context: { $implicit: day }"
+									[ngTemplateOutlet]="groupByDateCardEl"
+									[ngTemplateOutletContext]="{ $implicit: day }"
 								></ng-container>
 							}
 						}
@@ -169,7 +174,8 @@
 								</div>
 								<div class="responsive-table-content employee-column">
 									<ng-container
-										*ngTemplateOutlet="employeeEl; context: { $implicit: employeeLog?.employee }"
+										[ngTemplateOutlet]="employeeEl"
+										[ngTemplateOutletContext]="{ $implicit: employeeLog?.employee }"
 									>
 									</ng-container>
 								</div>
@@ -179,7 +185,10 @@
 									{{ 'REPORT_PAGE.CLIENT' | translate }}
 								</div>
 								<div class="responsive-table-content project-name">
-									<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: task?.client }">
+									<ng-container
+										[ngTemplateOutlet]="clientEl"
+										[ngTemplateOutletContext]="{ $implicit: task?.client }"
+									>
 									</ng-container>
 								</div>
 							</div>
@@ -188,7 +197,10 @@
 									{{ 'REPORT_PAGE.PROJECT' | translate }}
 								</div>
 								<div class="responsive-table-content project-name">
-									<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: logs?.project }">
+									<ng-container
+										[ngTemplateOutlet]="projectEl"
+										[ngTemplateOutletContext]="{ $implicit: logs?.project }"
+									>
 									</ng-container>
 								</div>
 							</div>
@@ -197,7 +209,10 @@
 									{{ 'REPORT_PAGE.TO_DO' | translate }}
 								</div>
 								<div class="responsive-table-content day-col">
-									<ng-container *ngTemplateOutlet="taskEl; context: { $implicit: task?.task }">
+									<ng-container
+										[ngTemplateOutlet]="taskEl"
+										[ngTemplateOutletContext]="{ $implicit: task?.task }"
+									>
 									</ng-container>
 								</div>
 							</div>
@@ -249,7 +264,8 @@
 								</div>
 								<div class="responsive-table-content">
 									<ng-container
-										*ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"
+										[ngTemplateOutlet]="dateEl"
+										[ngTemplateOutletContext]="{ $implicit: day?.date }"
 									></ng-container>
 								</div>
 							</div>
@@ -259,7 +275,8 @@
 								</div>
 								<div class="responsive-table-content">
 									<ng-container
-										*ngTemplateOutlet="clientEl; context: { $implicit: task?.client }"
+										[ngTemplateOutlet]="clientEl"
+										[ngTemplateOutletContext]="{ $implicit: task?.client }"
 									></ng-container>
 								</div>
 							</div>
@@ -269,7 +286,8 @@
 								</div>
 								<div class="responsive-table-content">
 									<ng-container
-										*ngTemplateOutlet="projectEl; context: { $implicit: projectLog?.project }"
+										[ngTemplateOutlet]="projectEl"
+										[ngTemplateOutletContext]="{ $implicit: projectLog?.project }"
 									></ng-container>
 								</div>
 							</div>
@@ -279,7 +297,8 @@
 								</div>
 								<div class="responsive-table-content day-col">
 									<ng-container
-										*ngTemplateOutlet="taskEl; context: { $implicit: task?.task }"
+										[ngTemplateOutlet]="taskEl"
+										[ngTemplateOutletContext]="{ $implicit: task?.task }"
 									></ng-container>
 								</div>
 							</div>
@@ -331,7 +350,8 @@
 								</div>
 								<div class="responsive-table-content project-name">
 									<ng-container
-										*ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"
+										[ngTemplateOutlet]="dateEl"
+										[ngTemplateOutletContext]="{ $implicit: day?.date }"
 									></ng-container>
 								</div>
 							</div>
@@ -341,7 +361,8 @@
 								</div>
 								<div class="responsive-table-content project-name">
 									<ng-container
-										*ngTemplateOutlet="employeeEl; context: { $implicit: employeeLog?.employee }"
+										[ngTemplateOutlet]="employeeEl"
+										[ngTemplateOutletContext]="{ $implicit: employeeLog?.employee }"
 									>
 									</ng-container>
 								</div>
@@ -351,7 +372,10 @@
 									{{ 'REPORT_PAGE.CLIENT' | translate }}
 								</div>
 								<div class="responsive-table-content project-name">
-									<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: task?.client }">
+									<ng-container
+										[ngTemplateOutlet]="clientEl"
+										[ngTemplateOutletContext]="{ $implicit: task?.client }"
+									>
 									</ng-container>
 								</div>
 							</div>
@@ -361,7 +385,8 @@
 								</div>
 								<div class="responsive-table-content day-col">
 									<ng-container
-										*ngTemplateOutlet="taskEl; context: { $implicit: task?.task }"
+										[ngTemplateOutlet]="taskEl"
+										[ngTemplateOutletContext]="{ $implicit: task?.task }"
 									></ng-container>
 								</div>
 							</div>
@@ -414,7 +439,8 @@
 									</div>
 									<div class="responsive-table-content project-name">
 										<ng-container
-											*ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"
+											[ngTemplateOutlet]="dateEl"
+											[ngTemplateOutletContext]="{ $implicit: day?.date }"
 										></ng-container>
 									</div>
 								</div>
@@ -424,12 +450,10 @@
 									</div>
 									<div class="responsive-table-content project-name">
 										<ng-container
-											*ngTemplateOutlet="
-												employeeEl;
-												context: {
-													$implicit: projectLog?.employee
-												}
-											"
+											[ngTemplateOutlet]="employeeEl"
+											[ngTemplateOutletContext]="{
+												$implicit: projectLog?.employee
+											}"
 										>
 										</ng-container>
 									</div>
@@ -440,12 +464,10 @@
 									</div>
 									<div class="responsive-table-content project-name">
 										<ng-container
-											*ngTemplateOutlet="
-												projectEl;
-												context: {
-													$implicit: clientLogs?.project
-												}
-											"
+											[ngTemplateOutlet]="projectEl"
+											[ngTemplateOutletContext]="{
+												$implicit: clientLogs?.project
+											}"
 										>
 										</ng-container>
 									</div>
@@ -456,7 +478,8 @@
 									</div>
 									<div class="responsive-table-content day-col">
 										<ng-container
-											*ngTemplateOutlet="taskEl; context: { $implicit: task?.task }"
+											[ngTemplateOutlet]="taskEl"
+											[ngTemplateOutletContext]="{ $implicit: task?.task }"
 										></ng-container>
 									</div>
 								</div>

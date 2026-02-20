@@ -51,16 +51,21 @@
 				@switch (groupBy) {
 					@case ('employee') {
 						<ng-container
-							*ngTemplateOutlet="groupByEmployeeCardEl; context: { $implicit: day }"
+							[ngTemplateOutlet]="groupByEmployeeCardEl"
+							[ngTemplateOutletContext]="{ $implicit: day }"
 						></ng-container>
 					}
 					@case ('project') {
 						<ng-container
-							*ngTemplateOutlet="groupByProjectCardEl; context: { $implicit: day }"
+							[ngTemplateOutlet]="groupByProjectCardEl"
+							[ngTemplateOutletContext]="{ $implicit: day }"
 						></ng-container>
 					}
 					@default {
-						<ng-container *ngTemplateOutlet="groupByDateCardEl; context: { $implicit: day }"></ng-container>
+						<ng-container
+							[ngTemplateOutlet]="groupByDateCardEl"
+							[ngTemplateOutletContext]="{ $implicit: day }"
+						></ng-container>
 					}
 				}
 			</nb-card>
@@ -102,7 +107,10 @@
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
 		<div class="responsive-table-content project-name">
 			@if (activityIndex === 0) {
-				<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"></ng-container>
+				<ng-container
+					[ngTemplateOutlet]="projectEl"
+					[ngTemplateOutletContext]="{ $implicit: projectRow?.project }"
+				></ng-container>
 			}
 		</div>
 	</div>
@@ -115,7 +123,8 @@
 		<div class="responsive-table-content project-name">
 			@if (activityIndex === 0) {
 				<ng-container
-					*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"
+					[ngTemplateOutlet]="employeeEl"
+					[ngTemplateOutletContext]="{ $implicit: employeeRow?.employee }"
 				></ng-container>
 			}
 		</div>
@@ -127,7 +136,7 @@
 		{{ day.date | dateFormat }}
 	</nb-card-header>
 	<nb-card-body class="activities-container">
-		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
+		<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
 		@for (employeeRow of day.employees; track employeeRow; let employeeIndex = $index) {
 			<div class="cart-body project-row">
 				@for (projectRow of employeeRow.projects; track projectRow; let projectIndex = $index) {
@@ -142,10 +151,8 @@
 											</div>
 											<div class="responsive-table-content employee">
 												<ng-container
-													*ngTemplateOutlet="
-														employeeEl;
-														context: { $implicit: employeeRow?.employee }
-													"
+													[ngTemplateOutlet]="employeeEl"
+													[ngTemplateOutletContext]="{ $implicit: employeeRow?.employee }"
 												>
 												</ng-container>
 											</div>
@@ -154,13 +161,15 @@
 										<div class="responsive-table-row employee-column no-height"></div>
 									}
 									<ng-container
-										*ngTemplateOutlet="
-											projectColumnEl;
-											context: { $implicit: projectRow, activityIndex: activityIndex }
-										"
+										[ngTemplateOutlet]="projectColumnEl"
+										[ngTemplateOutletContext]="{
+											$implicit: projectRow,
+											activityIndex: activityIndex
+										}"
 									></ng-container>
 									<ng-container
-										*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
+										[ngTemplateOutlet]="activityRowDetailsEl"
+										[ngTemplateOutletContext]="{ $implicit: activityRow }"
 									></ng-container>
 								</div>
 							</div>
@@ -174,10 +183,11 @@
 
 <ng-template let-employee #groupByEmployeeCardEl>
 	<nb-card-header class="card-title">
-		<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: employee?.employee }"> </ng-container>
+		<ng-container [ngTemplateOutlet]="employeeEl" [ngTemplateOutletContext]="{ $implicit: employee?.employee }">
+		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
+		<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
 		@for (dateRow of employee.dates; track dateRow; let dateIndex = $index) {
 			<div class="cart-body project-row">
 				@for (projectRow of dateRow.projects; track projectRow; let projectIndex = $index) {
@@ -198,13 +208,15 @@
 										<div class="responsive-table-row employee-column no-height"></div>
 									}
 									<ng-container
-										*ngTemplateOutlet="
-											projectColumnEl;
-											context: { $implicit: projectRow, activityIndex: activityIndex }
-										"
+										[ngTemplateOutlet]="projectColumnEl"
+										[ngTemplateOutletContext]="{
+											$implicit: projectRow,
+											activityIndex: activityIndex
+										}"
 									></ng-container>
 									<ng-container
-										*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
+										[ngTemplateOutlet]="activityRowDetailsEl"
+										[ngTemplateOutletContext]="{ $implicit: activityRow }"
 									></ng-container>
 								</div>
 							</div>
@@ -218,10 +230,11 @@
 
 <ng-template let-project #groupByProjectCardEl>
 	<nb-card-header class="card-title">
-		<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: project?.project }"> </ng-container>
+		<ng-container [ngTemplateOutlet]="projectEl" [ngTemplateOutletContext]="{ $implicit: project?.project }">
+		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
+		<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
 		@for (dateRow of project.dates; track dateRow; let dateIndex = $index) {
 			<div class="cart-body project-row">
 				@for (employeeRow of dateRow.employees; track employeeRow; let employeeIndex = $index) {
@@ -242,13 +255,15 @@
 										<div class="responsive-table-row employee-column no-height"></div>
 									}
 									<ng-container
-										*ngTemplateOutlet="
-											employeeColumnEl;
-											context: { $implicit: employeeRow, activityIndex: activityIndex }
-										"
+										[ngTemplateOutlet]="employeeColumnEl"
+										[ngTemplateOutletContext]="{
+											$implicit: employeeRow,
+											activityIndex: activityIndex
+										}"
 									></ng-container>
 									<ng-container
-										*ngTemplateOutlet="activityRowDetailsEl; context: { $implicit: activityRow }"
+										[ngTemplateOutlet]="activityRowDetailsEl"
+										[ngTemplateOutletContext]="{ $implicit: activityRow }"
 									></ng-container>
 								</div>
 							</div>

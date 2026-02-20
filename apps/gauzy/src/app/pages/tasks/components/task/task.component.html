@@ -45,12 +45,10 @@
 							></angular2-smart-table>
 						</div>
 						<ng-container
-							*ngTemplateOutlet="
-								paginationTemplate;
-								context: {
-									pagination: pagination
-								}
-							"
+							[ngTemplateOutlet]="paginationTemplate"
+							[ngTemplateOutletContext]="{
+								pagination: pagination
+							}"
 						></ng-container>
 					} @else {
 						<ga-card-grid
@@ -75,12 +73,10 @@
 						></ga-tasks-sprint-view>
 					</div>
 					<ng-container
-						*ngTemplateOutlet="
-							paginationTemplate;
-							context: {
-								pagination: pagination
-							}
-						"
+						[ngTemplateOutlet]="paginationTemplate"
+						[ngTemplateOutletContext]="{
+							pagination: pagination
+						}"
 					></ng-container>
 				}
 			}
