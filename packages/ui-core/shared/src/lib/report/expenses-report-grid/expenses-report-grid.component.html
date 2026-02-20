@@ -24,51 +24,64 @@
 >
 	<ng-template #columnsHeader>
 		@if (dailyData?.length > 0) {
-		<div class="columns-header">
-			<div class="table-inner-wrapper font-weight-bold align-items-center">
-				@if (groupBy !== 'date') {
-				<div class="responsive-table-row employee-column">
-					{{ 'REPORT_PAGE.DATE' | translate }}
-				</div>
-				} @if (groupBy !== 'employee' && groupBy !== 'project') {
-				<div class="responsive-table-row employee-column">
-					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-				</div>
-				} @if (groupBy !== 'employee' && groupBy === 'project') {
-				<div class="responsive-table-row employee-column">
-					{{ 'REPORT_PAGE.PROJECT' | translate }}
-				</div>
-				} @if (groupBy !== 'project') {
-				<div class="responsive-table-row project-column">
-					{{ 'REPORT_PAGE.PROJECT' | translate }}
-				</div>
-				}
-				<div class="responsive-table-row category-column">
-					{{ 'REPORT_PAGE.CATEGORY' | translate }}
-				</div>
-				<div class="responsive-table-row description-column">
-					{{ 'REPORT_PAGE.DESCRIPTION' | translate }}
-				</div>
-				<div class="responsive-table-row amount-column">
-					{{ 'REPORT_PAGE.AMOUNT' | translate }}
+			<div class="columns-header">
+				<div class="table-inner-wrapper font-weight-bold align-items-center">
+					@if (groupBy !== 'date') {
+						<div class="responsive-table-row employee-column">
+							{{ 'REPORT_PAGE.DATE' | translate }}
+						</div>
+					}
+					@if (groupBy !== 'employee' && groupBy !== 'project') {
+						<div class="responsive-table-row employee-column">
+							{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+						</div>
+					}
+					@if (groupBy !== 'employee' && groupBy === 'project') {
+						<div class="responsive-table-row employee-column">
+							{{ 'REPORT_PAGE.PROJECT' | translate }}
+						</div>
+					}
+					@if (groupBy !== 'project') {
+						<div class="responsive-table-row project-column">
+							{{ 'REPORT_PAGE.PROJECT' | translate }}
+						</div>
+					}
+					<div class="responsive-table-row category-column">
+						{{ 'REPORT_PAGE.CATEGORY' | translate }}
+					</div>
+					<div class="responsive-table-row description-column">
+						{{ 'REPORT_PAGE.DESCRIPTION' | translate }}
+					</div>
+					<div class="responsive-table-row amount-column">
+						{{ 'REPORT_PAGE.AMOUNT' | translate }}
+					</div>
 				</div>
 			</div>
-		</div>
 		}
 	</ng-template>
 
-	@if (dailyData?.length > 0) { @for (day of dailyData; track day) {
-	<nb-card class="card">
-		@switch (groupBy) { @case ('employee') {
-		<ng-container *ngTemplateOutlet="groupByEmployeeCardEl; context: { $implicit: day }"></ng-container>
-		} @case ('project') {
-		<ng-container *ngTemplateOutlet="groupByProjectCardEl; context: { $implicit: day }"></ng-container>
-		} @default {
-		<ng-container *ngTemplateOutlet="groupByDateCardEl; context: { $implicit: day }"></ng-container>
-		} }
-	</nb-card>
-	} } @else {
-	<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.EXPENSE' | translate"></ngx-no-data-message>
+	@if (dailyData?.length > 0) {
+		@for (day of dailyData; track day) {
+			<nb-card class="card">
+				@switch (groupBy) {
+					@case ('employee') {
+						<ng-container
+							*ngTemplateOutlet="groupByEmployeeCardEl; context: { $implicit: day }"
+						></ng-container>
+					}
+					@case ('project') {
+						<ng-container
+							*ngTemplateOutlet="groupByProjectCardEl; context: { $implicit: day }"
+						></ng-container>
+					}
+					@default {
+						<ng-container *ngTemplateOutlet="groupByDateCardEl; context: { $implicit: day }"></ng-container>
+					}
+				}
+			</nb-card>
+		}
+	} @else {
+		<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.EXPENSE' | translate"></ngx-no-data-message>
 	}
 </div>
 
@@ -80,10 +93,12 @@
 		</div>
 		<div class="responsive-table-content project-name">
 			@if (expanseRow?.category) {
-			<span class="category-span">
-				{{ expanseRow?.category?.name }}
-			</span>
-			} @else { — }
+				<span class="category-span">
+					{{ expanseRow?.category?.name }}
+				</span>
+			} @else {
+				—
+			}
 		</div>
 	</div>
 	<div class="responsive-table-row description-column">
@@ -92,8 +107,10 @@
 		</div>
 		<div class="responsive-table-content project-name">
 			@if (expanseRow?.purpose) {
-			{{ expanseRow.purpose }}
-			} @else { — }
+				{{ expanseRow.purpose }}
+			} @else {
+				—
+			}
 		</div>
 	</div>
 	<div class="responsive-table-row amount-column">
@@ -101,7 +118,7 @@
 			{{ 'REPORT_PAGE.AMOUNT' | translate }}
 		</div>
 		<div class="responsive-table-content project-name">
-			{{ expanseRow?.amount | currency : expanseRow?.currency | position : organization?.currencyPosition }}
+			{{ expanseRow?.amount | currency: expanseRow?.currency | position: organization?.currencyPosition }}
 		</div>
 	</div>
 </ng-template>
@@ -114,7 +131,7 @@
 		</div>
 		<div class="responsive-table-content project-name">
 			@if (expanseIndex == 0) {
-			<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"></ng-container>
+				<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"></ng-container>
 			}
 		</div>
 	</div>
@@ -127,41 +144,46 @@
 	<nb-card-body class="expense-report-container">
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		@for (employeeRow of day.employees; track employeeRow; let employeeIndex = $index) {
-		<div class="cart-body project-row">
-			@for (projectRow of employeeRow.projects; track projectRow; let projectIndex = $index) {
-			<div class="table-row">
-				@for (expanseRow of projectRow.expanse; track expanseRow; let expanseIndex = $index) {
-				<div class="expanse-row">
-					<div class="table-inner-wrapper">
-						@if (expanseIndex == 0 && projectIndex == 0) {
-						<div class="responsive-table-row employee-column main-column-responsive responsive-heading-row">
-							<div class="responsive-table-header">
-								{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+			<div class="cart-body project-row">
+				@for (projectRow of employeeRow.projects; track projectRow; let projectIndex = $index) {
+					<div class="table-row">
+						@for (expanseRow of projectRow.expanse; track expanseRow; let expanseIndex = $index) {
+							<div class="expanse-row">
+								<div class="table-inner-wrapper">
+									@if (expanseIndex == 0 && projectIndex == 0) {
+										<div
+											class="responsive-table-row employee-column main-column-responsive responsive-heading-row"
+										>
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+											</div>
+											<div class="responsive-table-content employee">
+												<ng-container
+													*ngTemplateOutlet="
+														employeeEl;
+														context: { $implicit: employeeRow?.employee }
+													"
+												></ng-container>
+											</div>
+										</div>
+									} @else {
+										<div class="responsive-table-row employee-column no-height"></div>
+									}
+									<ng-container
+										*ngTemplateOutlet="
+											projectColumnEl;
+											context: { $implicit: projectRow, expanseIndex: expanseIndex }
+										"
+									></ng-container>
+									<ng-container
+										*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"
+									></ng-container>
+								</div>
 							</div>
-							<div class="responsive-table-content employee">
-								<ng-container
-									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"
-								></ng-container>
-							</div>
-						</div>
-						} @else {
-						<div class="responsive-table-row employee-column no-height"></div>
 						}
-						<ng-container
-							*ngTemplateOutlet="
-								projectColumnEl;
-								context: { $implicit: projectRow, expanseIndex: expanseIndex }
-							"
-						></ng-container>
-						<ng-container
-							*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"
-						></ng-container>
 					</div>
-				</div>
 				}
 			</div>
-			}
-		</div>
 		}
 	</nb-card-body>
 </ng-template>
@@ -173,35 +195,39 @@
 	<nb-card-body>
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		@for (dateRow of employee.dates; track dateRow; let dateIndex = $index) {
-		<div class="cart-body project-row">
-			@for (projectRow of dateRow.projects; track projectRow; let projectIndex = $index) {
-			<div class="table-row">
-				@for (expanseRow of projectRow.expanse; track expanseRow; let expanseIndex = $index) {
-				<div class="expanse-row date-expanse-row">
-					<div class="table-inner-wrapper">
-						<div class="responsive-table-row employee-column responsive-heading-row">
-							<div class="responsive-table-header">
-								{{ 'REPORT_PAGE.DATE' | translate }}
+			<div class="cart-body project-row">
+				@for (projectRow of dateRow.projects; track projectRow; let projectIndex = $index) {
+					<div class="table-row">
+						@for (expanseRow of projectRow.expanse; track expanseRow; let expanseIndex = $index) {
+							<div class="expanse-row date-expanse-row">
+								<div class="table-inner-wrapper">
+									<div class="responsive-table-row employee-column responsive-heading-row">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.DATE' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											{{
+												projectIndex == 0 && expanseIndex == 0
+													? (dateRow.date | dateFormat)
+													: ''
+											}}
+										</div>
+									</div>
+									<ng-container
+										*ngTemplateOutlet="
+											projectColumnEl;
+											context: { $implicit: projectRow, expanseIndex: expanseIndex }
+										"
+									></ng-container>
+									<ng-container
+										*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"
+									></ng-container>
+								</div>
 							</div>
-							<div class="responsive-table-content project-name">
-								{{ projectIndex == 0 && expanseIndex == 0 ? (dateRow.date | dateFormat) : '' }}
-							</div>
-						</div>
-						<ng-container
-							*ngTemplateOutlet="
-								projectColumnEl;
-								context: { $implicit: projectRow, expanseIndex: expanseIndex }
-							"
-						></ng-container>
-						<ng-container
-							*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"
-						></ng-container>
+						}
 					</div>
-				</div>
 				}
 			</div>
-			}
-		</div>
 		}
 	</nb-card-body>
 </ng-template>
@@ -213,81 +239,85 @@
 	<nb-card-body>
 		<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
 		@for (dateRow of project.dates; track dateRow; let dateIndex = $index) {
-		<div class="cart-body project-row">
-			@for (employeeRow of dateRow.employees; track employeeRow; let employeeIndex = $index) {
-			<div class="table-row">
-				@for (expanseRow of employeeRow.expanse; track expanseRow; let expanseIndex = $index) {
-				<div class="expanse-row">
-					<div class="table-inner-wrapper">
-						@if (employeeIndex == 0 && expanseIndex == 0) {
-						<div class="responsive-table-row project-column responsive-heading-row">
-							<div class="responsive-table-header">
-								{{ 'REPORT_PAGE.DATE' | translate }}
+			<div class="cart-body project-row">
+				@for (employeeRow of dateRow.employees; track employeeRow; let employeeIndex = $index) {
+					<div class="table-row">
+						@for (expanseRow of employeeRow.expanse; track expanseRow; let expanseIndex = $index) {
+							<div class="expanse-row">
+								<div class="table-inner-wrapper">
+									@if (employeeIndex == 0 && expanseIndex == 0) {
+										<div class="responsive-table-row project-column responsive-heading-row">
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.DATE' | translate }}
+											</div>
+											<div class="responsive-table-content project-name">
+												{{ dateRow.date | dateFormat }}
+											</div>
+										</div>
+									} @else {
+										<div class="responsive-table-row employee-column no-height"></div>
+									}
+									@if (expanseIndex == 0) {
+										<div class="responsive-table-row employee-column main-column-responsive">
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+											</div>
+											<div class="responsive-table-content employee">
+												<ng-container
+													*ngTemplateOutlet="
+														employeeEl;
+														context: { $implicit: employeeRow?.employee }
+													"
+												>
+												</ng-container>
+											</div>
+										</div>
+									} @else {
+										<div class="responsive-table-row employee-column no-height"></div>
+									}
+									<ng-container
+										*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"
+									></ng-container>
+								</div>
 							</div>
-							<div class="responsive-table-content project-name">
-								{{ dateRow.date | dateFormat }}
-							</div>
-						</div>
-						} @else {
-						<div class="responsive-table-row employee-column no-height"></div>
-						} @if (expanseIndex == 0) {
-						<div class="responsive-table-row employee-column main-column-responsive">
-							<div class="responsive-table-header">
-								{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-							</div>
-							<div class="responsive-table-content employee">
-								<ng-container
-									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"
-								>
-								</ng-container>
-							</div>
-						</div>
-						} @else {
-						<div class="responsive-table-row employee-column no-height"></div>
 						}
-						<ng-container
-							*ngTemplateOutlet="expenseRowDetailsEl; context: { $implicit: expanseRow }"
-						></ng-container>
 					</div>
-				</div>
 				}
 			</div>
-			}
-		</div>
 		}
 	</nb-card-body>
 </ng-template>
 
 <ng-template let-project #projectEl>
 	@if (project) {
-	<ga-project-column-view [project]="project"></ga-project-column-view>
+		<ga-project-column-view [project]="project"></ga-project-column-view>
 	} @else {
-	<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
 	}
 </ng-template>
 
 <ng-template let-client #clientEl>
 	@if (client) {
-	<span>
-		<ngx-contact-links [value]="client"></ngx-contact-links>
-	</span>
+		<span>
+			<ngx-contact-links [value]="client"></ngx-contact-links>
+		</span>
 	} @else {
-	<span>
-		{{ 'REPORT_PAGE.NO_CLIENT' | translate }}
-	</span>
+		<span>
+			{{ 'REPORT_PAGE.NO_CLIENT' | translate }}
+		</span>
 	}
 </ng-template>
 
 <ng-template let-employee #employeeEl>
 	<div class="avatar-wrapper-outer">
 		@if (employee) {
-		<ngx-avatar
-			class="report-table"
-			[src]="employee?.user?.imageUrl"
-			[name]="employee?.user?.name"
-			[id]="employee?.id"
-			[employee]="employee"
-		></ngx-avatar>
+			<ngx-avatar
+				class="report-table"
+				[src]="employee?.user?.imageUrl"
+				[name]="employee?.user?.name"
+				[id]="employee?.id"
+				[employee]="employee"
+			></ngx-avatar>
 		}
 	</div>
 	<ng-template #noEmployeeEl>

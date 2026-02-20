@@ -3,17 +3,17 @@
 		<div class="row">
 			<div class="col-auto">
 				@if (selectedDateRange?.startDate && selectedDateRange?.endDate) {
-				<h4>
-					<ngx-header-title>
-						{{ headerTitle }}
-						{{ 'TIMESHEET.TIME_TRACKING' | translate }}
-					</ngx-header-title>
-				</h4>
-				<ngx-date-range-title
-					[start]="selectedDateRange?.startDate"
-					[end]="selectedDateRange?.endDate"
-					[format]="'dddd, LL'"
-				></ngx-date-range-title>
+					<h4>
+						<ngx-header-title>
+							{{ headerTitle }}
+							{{ 'TIMESHEET.TIME_TRACKING' | translate }}
+						</ngx-header-title>
+					</h4>
+					<ngx-date-range-title
+						[start]="selectedDateRange?.startDate"
+						[end]="selectedDateRange?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
 				}
 			</div>
 			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
@@ -71,50 +71,50 @@
 <!-- widgets -->
 <ng-template #widget>
 	@if (!hideEmployeeBlock) {
-	<ng-container *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
-		<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
-			<nb-card-body>
-				<div class="header-widget">
-					<div class="title">
-						{{ 'TIMESHEET.MEMBERS_WORKED' | translate }}
+		<ng-container *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
+			<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
+				<nb-card-body>
+					<div class="header-widget">
+						<div class="title">
+							{{ 'TIMESHEET.MEMBERS_WORKED' | translate }}
+						</div>
 					</div>
-				</div>
-				<div class="h1">
-					{{ counts?.employeesCount || 0 }}
-				</div>
-				<div class="counter-container">
-					<gauzy-counter-point
-						[total]="employeesCount"
-						[value]="counts?.employeesCount || 0"
-						[color]="'#0088FE'"
-					></gauzy-counter-point>
-				</div>
-			</nb-card-body>
-		</nb-card>
-	</ng-container>
+					<div class="h1">
+						{{ counts?.employeesCount || 0 }}
+					</div>
+					<div class="counter-container">
+						<gauzy-counter-point
+							[total]="employeesCount"
+							[value]="counts?.employeesCount || 0"
+							[color]="'#0088FE'"
+						></gauzy-counter-point>
+					</div>
+				</nb-card-body>
+			</nb-card>
+		</ng-container>
 	}
 </ng-template>
 <ng-template #widget>
 	@if (!hideProjectBlock) {
-	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
-		<nb-card-body>
-			<div class="header-widget">
-				<div class="title">
-					{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}
+		<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
+			<nb-card-body>
+				<div class="header-widget">
+					<div class="title">
+						{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}
+					</div>
 				</div>
-			</div>
-			<div class="h1">
-				{{ counts?.projectsCount || 0 }}
-			</div>
-			<div class="counter-container">
-				<gauzy-counter-point
-					[total]="projectCount"
-					[value]="counts?.projectsCount || 0"
-					[color]="'#00D68F'"
-				></gauzy-counter-point>
-			</div>
-		</nb-card-body>
-	</nb-card>
+				<div class="h1">
+					{{ counts?.projectsCount || 0 }}
+				</div>
+				<div class="counter-container">
+					<gauzy-counter-point
+						[total]="projectCount"
+						[value]="counts?.projectsCount || 0"
+						[color]="'#00D68F'"
+					></gauzy-counter-point>
+				</div>
+			</nb-card-body>
+		</nb-card>
 	}
 </ng-template>
 <ng-template #widget>
@@ -158,13 +158,20 @@
 		<nb-card-body>
 			<div class="header-widget">
 				<div class="title">
-					@switch (selectedPeriod) { @case (RangePeriod.PERIOD) {
-					{{ 'TIMESHEET.WORKED_OVER_PERIOD' | translate }}
-					} @case (RangePeriod.DAY) {
-					{{ 'TIMESHEET.WORKED_FOR_DAY' | translate }}
-					} @default {
-					{{ (isCurrentWeek() ? 'TIMESHEET.WORKED_THIS_WEEK' : 'TIMESHEET.WORKED_FOR_WEEK') | translate }}
-					} }
+					@switch (selectedPeriod) {
+						@case (RangePeriod.PERIOD) {
+							{{ 'TIMESHEET.WORKED_OVER_PERIOD' | translate }}
+						}
+						@case (RangePeriod.DAY) {
+							{{ 'TIMESHEET.WORKED_FOR_DAY' | translate }}
+						}
+						@default {
+							{{
+								(isCurrentWeek() ? 'TIMESHEET.WORKED_THIS_WEEK' : 'TIMESHEET.WORKED_FOR_WEEK')
+									| translate
+							}}
+						}
+					}
 				</div>
 			</div>
 			<div class="h1">
@@ -185,13 +192,17 @@
 		<nb-card-body>
 			<div class="header-widget">
 				<div class="title">
-					@switch (selectedPeriod) { @case (RangePeriod.PERIOD) {
-					{{ 'TIMESHEET.ACTIVITY_OVER_PERIOD' | translate }}
-					} @case (RangePeriod.DAY) {
-					{{ 'TIMESHEET.ACTIVITY_FOR_DAY' | translate }}
-					} @default {
-					{{ 'TIMESHEET.ACTIVITY_FOR_WEEK' | translate }}
-					} }
+					@switch (selectedPeriod) {
+						@case (RangePeriod.PERIOD) {
+							{{ 'TIMESHEET.ACTIVITY_OVER_PERIOD' | translate }}
+						}
+						@case (RangePeriod.DAY) {
+							{{ 'TIMESHEET.ACTIVITY_FOR_DAY' | translate }}
+						}
+						@default {
+							{{ 'TIMESHEET.ACTIVITY_FOR_WEEK' | translate }}
+						}
+					}
 				</div>
 			</div>
 			<div class="h1">{{ counts?.weekActivities || 0 }}%</div>
@@ -206,84 +217,93 @@
 	<nb-card [nbSpinner]="timeSlotLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header>{{ 'TIMESHEET.RECENT_ACTIVITIES' | translate }}</nb-card-header>
 		<nb-card-body class="custom-card-body-inner">
-			@if (timeSlotEmployees?.length > 0) { @for (employee of timeSlotEmployees; track employee.id) {
-			<div class="row">
-				@if (employee?.timeSlots?.length > 0) {
-				<div class="col">
-					<div class="hour-label mb-3">
-						<ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
-							<ngx-avatar
-								class="avatar-dashboard activity"
-								[size]="'sm'"
-								[name]="employee?.user?.name"
-								[src]="employee?.user?.imageUrl"
-								[appendCaption]="'TIMESHEET.LAST_WORKED' | translate"
-								[caption]="(employee?.timeSlots)[0]?.startedAt | utcToLocal | dateFormat"
-								[id]="employee?.id"
-								[employee]="employee"
-							></ngx-avatar>
-						</ng-template>
-						<div></div>
-						<div class="button-container">
-							<div class="swiper-button-container">
-								<div class="swiper-button" (click)="slidePrev(swiperRef)">
-									<i class="fas fa-angle-left"></i>
+			@if (timeSlotEmployees?.length > 0) {
+				@for (employee of timeSlotEmployees; track employee.id) {
+					<div class="row">
+						@if (employee?.timeSlots?.length > 0) {
+							<div class="col">
+								<div class="hour-label mb-3">
+									<ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
+										<ngx-avatar
+											class="avatar-dashboard activity"
+											[size]="'sm'"
+											[name]="employee?.user?.name"
+											[src]="employee?.user?.imageUrl"
+											[appendCaption]="'TIMESHEET.LAST_WORKED' | translate"
+											[caption]="(employee?.timeSlots)[0]?.startedAt | utcToLocal | dateFormat"
+											[id]="employee?.id"
+											[employee]="employee"
+										></ngx-avatar>
+									</ng-template>
+									<div></div>
+									<div class="button-container">
+										<div class="swiper-button-container">
+											<div class="swiper-button" (click)="slidePrev(swiperRef)">
+												<i class="fas fa-angle-left"></i>
+											</div>
+											<div class="swiper-button" (click)="slideNext(swiperRef)">
+												<i class="fas fa-angle-right"></i>
+											</div>
+										</div>
+										<div
+											*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
+											class="view-all"
+										>
+											<button
+												nbButton
+												status="primary"
+												size="small"
+												outline
+												(click)="redirectToScreenshots(employee)"
+											>
+												{{ 'BUTTONS.VIEW_ALL' | translate }}
+											</button>
+										</div>
+									</div>
 								</div>
-								<div class="swiper-button" (click)="slideNext(swiperRef)">
-									<i class="fas fa-angle-right"></i>
+								<div>
+									<swiper-container
+										#swiperRef
+										slides-per-view="3"
+										space-between="16"
+										slides-per-group="3"
+										loop="false"
+										navigation="true"
+										[pagination]="{ clickable: true }"
+										class="m-swiper"
+									>
+										@for (timeSlot of employee.timeSlots; track timeSlot.id) {
+											<swiper-slide>
+												<ngx-screenshots-item
+													[timeFormat]="filters?.timeFormat"
+													[timezone]="filters?.timeZone"
+													[timeSlot]="timeSlot"
+													(delete)="onDelete()"
+													[multiple]="false"
+													[employeeId]="timeSlot?.employee?.id"
+												></ngx-screenshots-item>
+											</swiper-slide>
+										}
+									</swiper-container>
 								</div>
 							</div>
-							<div *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE" class="view-all">
-								<button
-									nbButton
-									status="primary"
-									size="small"
-									outline
-									(click)="redirectToScreenshots(employee)"
-								>
-									{{ 'BUTTONS.VIEW_ALL' | translate }}
-								</button>
-							</div>
-						</div>
+						}
 					</div>
-					<div>
-						<swiper-container
-							#swiperRef
-							slides-per-view="3"
-							space-between="16"
-							slides-per-group="3"
-							loop="false"
-							navigation="true"
-							[pagination]="{ clickable: true }"
-							class="m-swiper"
-						>
-							@for (timeSlot of employee.timeSlots; track timeSlot.id) {
-							<swiper-slide>
-								<ngx-screenshots-item
-									[timeFormat]="filters?.timeFormat"
-									[timezone]="filters?.timeZone"
-									[timeSlot]="timeSlot"
-									(delete)="onDelete()"
-									[multiple]="false"
-									[employeeId]="timeSlot?.employee?.id"
-								></ngx-screenshots-item>
-							</swiper-slide>
-							}
-						</swiper-container>
-					</div>
-				</div>
 				}
-			</div>
-			} } @else if (!timeSlotLoading) {
-			<div class="text-center">
-				@switch (selectedPeriod) { @case (RangePeriod.DAY) {
-				{{ 'TIMESHEET.NO_SCREENSHOT_DAY' | translate }}
-				} @case (RangePeriod.WEEK) {
-				{{ 'TIMESHEET.NO_SCREENSHOT_WEEK' | translate }}
-				} @case (RangePeriod.PERIOD) {
-				{{ 'TIMESHEET.NO_SCREENSHOT_PERIOD' | translate }}
-				} }
-			</div>
+			} @else if (!timeSlotLoading) {
+				<div class="text-center">
+					@switch (selectedPeriod) {
+						@case (RangePeriod.DAY) {
+							{{ 'TIMESHEET.NO_SCREENSHOT_DAY' | translate }}
+						}
+						@case (RangePeriod.WEEK) {
+							{{ 'TIMESHEET.NO_SCREENSHOT_WEEK' | translate }}
+						}
+						@case (RangePeriod.PERIOD) {
+							{{ 'TIMESHEET.NO_SCREENSHOT_PERIOD' | translate }}
+						}
+					}
+				</div>
 			}
 		</nb-card-body>
 	</nb-card>
@@ -294,70 +314,74 @@
 			{{ 'TIMESHEET.MANUAL_TIME' | translate }}
 		</nb-card-header>
 		@if (manualTimes?.length > 0) {
-		<nb-card-body class="custom-card-body-inner-list">
-			<div class="custom-card-button">
-				<button nbButton status="primary" outline size="small" (click)="redirectToManualTimeReport()">
-					{{ 'BUTTONS.VIEW_REPORT' | translate }}
-				</button>
-			</div>
-			<nb-list>
-				<nb-list-item>
-					<div class="w-100">
-						<div class="row py-2 font-weight-bold">
-							<div class="col-sm-3">
-								{{ 'TIMESHEET.MEMBER' | translate }}
-							</div>
-							<div class="col">
-								{{ 'TIMESHEET.PROJECT' | translate }}
-							</div>
-							<div class="col">
-								{{ 'TIMESHEET.DURATION' | translate }}
-							</div>
-							<div class="col">
-								{{ 'TIMESHEET.DATE' | translate }}
-							</div>
-						</div>
-					</div>
-				</nb-list-item>
-				@for (manualTime of manualTimes; track manualTime.id) {
-				<nb-list-item>
-					<div class="w-100">
-						<div class="row">
-							<div class="col-sm-3">
-								<ngx-avatar
-									[name]="manualTime?.user?.name"
-									[src]="manualTime?.user?.imageUrl"
-									[id]="manualTime?.employeeId"
-									[employee]="manualTime?.employee"
-									size="sm"
-									class="avatar-dashboard"
-								></ngx-avatar>
-							</div>
-							<div class="col project-name">
-								{{ manualTime?.project?.name }}
-							</div>
-							<div class="col">
-								{{ manualTime.duration | durationFormat }}
-							</div>
-							<div class="col">
-								{{ manualTime.startedAt | dateFormat }}
+			<nb-card-body class="custom-card-body-inner-list">
+				<div class="custom-card-button">
+					<button nbButton status="primary" outline size="small" (click)="redirectToManualTimeReport()">
+						{{ 'BUTTONS.VIEW_REPORT' | translate }}
+					</button>
+				</div>
+				<nb-list>
+					<nb-list-item>
+						<div class="w-100">
+							<div class="row py-2 font-weight-bold">
+								<div class="col-sm-3">
+									{{ 'TIMESHEET.MEMBER' | translate }}
+								</div>
+								<div class="col">
+									{{ 'TIMESHEET.PROJECT' | translate }}
+								</div>
+								<div class="col">
+									{{ 'TIMESHEET.DURATION' | translate }}
+								</div>
+								<div class="col">
+									{{ 'TIMESHEET.DATE' | translate }}
+								</div>
 							</div>
 						</div>
-					</div>
-				</nb-list-item>
-				}
-			</nb-list>
-		</nb-card-body>
+					</nb-list-item>
+					@for (manualTime of manualTimes; track manualTime.id) {
+						<nb-list-item>
+							<div class="w-100">
+								<div class="row">
+									<div class="col-sm-3">
+										<ngx-avatar
+											[name]="manualTime?.user?.name"
+											[src]="manualTime?.user?.imageUrl"
+											[id]="manualTime?.employeeId"
+											[employee]="manualTime?.employee"
+											size="sm"
+											class="avatar-dashboard"
+										></ngx-avatar>
+									</div>
+									<div class="col project-name">
+										{{ manualTime?.project?.name }}
+									</div>
+									<div class="col">
+										{{ manualTime.duration | durationFormat }}
+									</div>
+									<div class="col">
+										{{ manualTime.startedAt | dateFormat }}
+									</div>
+								</div>
+							</div>
+						</nb-list-item>
+					}
+				</nb-list>
+			</nb-card-body>
 		} @else if (!manualTimeLoading) {
-		<div class="text-center p-3">
-			@switch (selectedPeriod) { @case (RangePeriod.DAY) {
-			{{ 'TIMESHEET.NO_MANUAL_TIME_DAY' | translate }}
-			} @case (RangePeriod.WEEK) {
-			{{ 'TIMESHEET.NO_MANUAL_TIME_WEEK' | translate }}
-			} @case (RangePeriod.PERIOD) {
-			{{ 'TIMESHEET.NO_MANUAL_TIME_PERIOD' | translate }}
-			} }
-		</div>
+			<div class="text-center p-3">
+				@switch (selectedPeriod) {
+					@case (RangePeriod.DAY) {
+						{{ 'TIMESHEET.NO_MANUAL_TIME_DAY' | translate }}
+					}
+					@case (RangePeriod.WEEK) {
+						{{ 'TIMESHEET.NO_MANUAL_TIME_WEEK' | translate }}
+					}
+					@case (RangePeriod.PERIOD) {
+						{{ 'TIMESHEET.NO_MANUAL_TIME_PERIOD' | translate }}
+					}
+				}
+			</div>
 		}
 	</nb-card>
 </ng-template>
@@ -367,52 +391,56 @@
 			{{ 'TIMESHEET.TASKS' | translate }}
 		</nb-card-header>
 		@if (tasks?.length > 0) {
-		<nb-card-body class="custom-card-body-inner-list">
-			<div class="custom-card-button">
-				<button size="small" nbButton status="primary" outline (click)="redirectToTask()">
-					{{ 'BUTTONS.VIEW_ALL' | translate }}
-				</button>
-			</div>
-			<nb-list>
-				@for (task of tasks; track task.id) {
-				<nb-list-item>
-					<div class="w-100">
-						<div class="row align-items-center">
-							<div class="col-5 project-name text-left">
-								{{ task.title }}
-							</div>
-							<div class="col-4 text-center">
-								<div class="d-flex align-items-center">
-									{{ task.durationPercentage }}%
-									<nb-progress-bar
-										class="mb-1 ml-3 mr-3 w-100 custom-progress"
-										[value]="task.durationPercentage"
-										[status]="progressStatus(task.durationPercentage)"
-										[displayValue]="true"
-										size="tiny"
-									>
-									</nb-progress-bar>
+			<nb-card-body class="custom-card-body-inner-list">
+				<div class="custom-card-button">
+					<button size="small" nbButton status="primary" outline (click)="redirectToTask()">
+						{{ 'BUTTONS.VIEW_ALL' | translate }}
+					</button>
+				</div>
+				<nb-list>
+					@for (task of tasks; track task.id) {
+						<nb-list-item>
+							<div class="w-100">
+								<div class="row align-items-center">
+									<div class="col-5 project-name text-left">
+										{{ task.title }}
+									</div>
+									<div class="col-4 text-center">
+										<div class="d-flex align-items-center">
+											{{ task.durationPercentage }}%
+											<nb-progress-bar
+												class="mb-1 ml-3 mr-3 w-100 custom-progress"
+												[value]="task.durationPercentage"
+												[status]="progressStatus(task.durationPercentage)"
+												[displayValue]="true"
+												size="tiny"
+											>
+											</nb-progress-bar>
+										</div>
+									</div>
+									<div class="col text-right">
+										{{ task.duration | durationFormat }}
+									</div>
 								</div>
 							</div>
-							<div class="col text-right">
-								{{ task.duration | durationFormat }}
-							</div>
-						</div>
-					</div>
-				</nb-list-item>
-				}
-			</nb-list>
-		</nb-card-body>
+						</nb-list-item>
+					}
+				</nb-list>
+			</nb-card-body>
 		} @else if (!tasksLoading) {
-		<div class="text-center p-3">
-			@switch (selectedPeriod) { @case (RangePeriod.DAY) {
-			{{ 'TIMESHEET.NO_TASK_ACTIVITY_DAY' | translate }}
-			} @case (RangePeriod.WEEK) {
-			{{ 'TIMESHEET.NO_TASK_ACTIVITY_WEEK' | translate }}
-			} @case (RangePeriod.PERIOD) {
-			{{ 'TIMESHEET.NO_TASK_ACTIVITY_PERIOD' | translate }}
-			} }
-		</div>
+			<div class="text-center p-3">
+				@switch (selectedPeriod) {
+					@case (RangePeriod.DAY) {
+						{{ 'TIMESHEET.NO_TASK_ACTIVITY_DAY' | translate }}
+					}
+					@case (RangePeriod.WEEK) {
+						{{ 'TIMESHEET.NO_TASK_ACTIVITY_WEEK' | translate }}
+					}
+					@case (RangePeriod.PERIOD) {
+						{{ 'TIMESHEET.NO_TASK_ACTIVITY_PERIOD' | translate }}
+					}
+				}
+			</div>
 		}
 	</nb-card>
 </ng-template>
@@ -420,47 +448,51 @@
 	<nb-card [nbSpinner]="projectsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header>{{ 'TIMESHEET.PROJECTS' | translate }}</nb-card-header>
 		@if (projects?.length > 0) {
-		<nb-card-body class="custom-card-body-inner-list">
-			<nb-list>
-				@for (project of projects; track project.id) {
-				<nb-list-item>
-					<div class="w-100">
-						<div class="row align-items-center">
-							<div class="col-5 project-name text-left">
-								{{ project.name }}
-							</div>
-							<div class="col-4 text-center">
-								<div class="d-flex align-items-center">
-									{{ project.durationPercentage }}%
-									<nb-progress-bar
-										class="mb-1 ml-3 mr-3 w-100 custom-progress"
-										[value]="project.durationPercentage"
-										[status]="progressStatus(project.durationPercentage)"
-										[displayValue]="true"
-										size="tiny"
-									>
-									</nb-progress-bar>
+			<nb-card-body class="custom-card-body-inner-list">
+				<nb-list>
+					@for (project of projects; track project.id) {
+						<nb-list-item>
+							<div class="w-100">
+								<div class="row align-items-center">
+									<div class="col-5 project-name text-left">
+										{{ project.name }}
+									</div>
+									<div class="col-4 text-center">
+										<div class="d-flex align-items-center">
+											{{ project.durationPercentage }}%
+											<nb-progress-bar
+												class="mb-1 ml-3 mr-3 w-100 custom-progress"
+												[value]="project.durationPercentage"
+												[status]="progressStatus(project.durationPercentage)"
+												[displayValue]="true"
+												size="tiny"
+											>
+											</nb-progress-bar>
+										</div>
+									</div>
+									<div class="col text-right">
+										{{ project.duration | durationFormat }}
+									</div>
 								</div>
 							</div>
-							<div class="col text-right">
-								{{ project.duration | durationFormat }}
-							</div>
-						</div>
-					</div>
-				</nb-list-item>
-				}
-			</nb-list>
-		</nb-card-body>
+						</nb-list-item>
+					}
+				</nb-list>
+			</nb-card-body>
 		} @else if (!projectsLoading) {
-		<div class="text-center p-3">
-			@switch (selectedPeriod) { @case (RangePeriod.DAY) {
-			{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_DAY' | translate }}
-			} @case (RangePeriod.WEEK) {
-			{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_WEEK' | translate }}
-			} @case (RangePeriod.PERIOD) {
-			{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD' | translate }}
-			} }
-		</div>
+			<div class="text-center p-3">
+				@switch (selectedPeriod) {
+					@case (RangePeriod.DAY) {
+						{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_DAY' | translate }}
+					}
+					@case (RangePeriod.WEEK) {
+						{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_WEEK' | translate }}
+					}
+					@case (RangePeriod.PERIOD) {
+						{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD' | translate }}
+					}
+				}
+			</div>
 		}
 	</nb-card>
 </ng-template>
@@ -468,36 +500,40 @@
 	<nb-card [nbSpinner]="activitiesLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header class="nb-card-header">{{ 'TIMESHEET.APPS_URLS' | translate }} </nb-card-header>
 		@if (activities?.length > 0) {
-		<nb-card-body class="custom-card-body-inner-list">
-			<div class="custom-card-button">
-				<button nbButton status="primary" size="small" outline (click)="redirectToAppUrlReport()">
-					{{ 'BUTTONS.VIEW_REPORT' | translate }}
-				</button>
-			</div>
-			<nb-list>
-				@for (activity of activities; track activity.id) {
-				<nb-list-item>
-					<div class="w-100">
-						<ngx-activity-item
-							class="tracking-progress"
-							[item]="activity"
-							[isDashboard]="true"
-						></ngx-activity-item>
-					</div>
-				</nb-list-item>
-				}
-			</nb-list>
-		</nb-card-body>
+			<nb-card-body class="custom-card-body-inner-list">
+				<div class="custom-card-button">
+					<button nbButton status="primary" size="small" outline (click)="redirectToAppUrlReport()">
+						{{ 'BUTTONS.VIEW_REPORT' | translate }}
+					</button>
+				</div>
+				<nb-list>
+					@for (activity of activities; track activity.id) {
+						<nb-list-item>
+							<div class="w-100">
+								<ngx-activity-item
+									class="tracking-progress"
+									[item]="activity"
+									[isDashboard]="true"
+								></ngx-activity-item>
+							</div>
+						</nb-list-item>
+					}
+				</nb-list>
+			</nb-card-body>
 		} @else if (!activitiesLoading) {
-		<div class="text-center p-3">
-			@switch (selectedPeriod) { @case (RangePeriod.DAY) {
-			{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate }}
-			} @case (RangePeriod.WEEK) {
-			{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_WEEK' | translate }}
-			} @case (RangePeriod.PERIOD) {
-			{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD' | translate }}
-			} }
-		</div>
+			<div class="text-center p-3">
+				@switch (selectedPeriod) {
+					@case (RangePeriod.DAY) {
+						{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate }}
+					}
+					@case (RangePeriod.WEEK) {
+						{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_WEEK' | translate }}
+					}
+					@case (RangePeriod.PERIOD) {
+						{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD' | translate }}
+					}
+				}
+			</div>
 		}
 	</nb-card>
 </ng-template>
@@ -512,94 +548,101 @@
 		<nb-card-header>{{ 'TIMESHEET.MEMBERS' | translate }}</nb-card-header>
 		<nb-card-body class="custom-card-body-inner-list">
 			@if (members?.length > 0) {
-			<div class="list">
-				<nb-list>
-					<nb-list-item>
-						<div class="w-100">
-							<div class="row font-weight-bold">
-								<div class="col-3">
-									{{ 'TIMESHEET.MEMBER_INFO' | translate }}
-								</div>
-								<div class="col-3 text-center">
-									{{ 'TIMESHEET.TODAY' | translate }}
-								</div>
-								<div class="col text-left">
-									{{
-										(selectedPeriod === RangePeriod.PERIOD
-											? 'TIMESHEET.OVER_PERIOD'
-											: 'TIMESHEET.THIS_WEEK'
-										) | translate
-									}}
-								</div>
-							</div>
-						</div>
-					</nb-list-item>
-					@for (member of members; track member.id) {
-					<nb-list-item>
-						<div class="w-100">
-							<div class="row">
-								<div class="col-3">
-									<ngx-avatar
-										[name]="member?.user?.name"
-										[src]="member?.user?.imageUrl"
-										[id]="member?.id"
-										[employee]="member"
-										size="sm"
-										class="avatar-dashboard"
-									>
-									</ngx-avatar>
-								</div>
-								<div class="col-3 text-center">
-									<div class="activity">
-										<div class="duration">
-											{{ member?.todayTime?.duration || 0 | durationFormat }}
-										</div>
-										<div class="activity-percentage">
-											<nb-badge
-												[status]="progressStatus(member?.todayTime?.overall)"
-												[text]="(member?.todayTime?.overall || 0) + '%'"
-											></nb-badge>
-										</div>
+				<div class="list">
+					<nb-list>
+						<nb-list-item>
+							<div class="w-100">
+								<div class="row font-weight-bold">
+									<div class="col-3">
+										{{ 'TIMESHEET.MEMBER_INFO' | translate }}
 									</div>
-								</div>
-								<div class="col text-center">
-									<div [class.d-flex]="!isMoreThanWeek()">
-										<div class="activity text-center">
-											<div class="duration">
-												{{ member?.weekTime?.duration || 0 | durationFormat }}
-											</div>
-											<div class="activity-percentage">
-												<nb-badge
-													[status]="progressStatus(member?.weekTime?.overall)"
-													[text]="(member?.weekTime?.overall || 0) + '%'"
-												></nb-badge>
-											</div>
-										</div>
-										@if (!isMoreThanWeek()) {
-										<div class="member-weekly-activity-graph">
-											@for (weekHour of member.weekHours; track $index) {
-											<div class="bar-graph-entry" [style.height]="weekHour.duration + '%'"></div>
-											}
-										</div>
-										}
+									<div class="col-3 text-center">
+										{{ 'TIMESHEET.TODAY' | translate }}
+									</div>
+									<div class="col text-left">
+										{{
+											(selectedPeriod === RangePeriod.PERIOD
+												? 'TIMESHEET.OVER_PERIOD'
+												: 'TIMESHEET.THIS_WEEK'
+											) | translate
+										}}
 									</div>
 								</div>
 							</div>
-						</div>
-					</nb-list-item>
-					}
-				</nb-list>
-			</div>
+						</nb-list-item>
+						@for (member of members; track member.id) {
+							<nb-list-item>
+								<div class="w-100">
+									<div class="row">
+										<div class="col-3">
+											<ngx-avatar
+												[name]="member?.user?.name"
+												[src]="member?.user?.imageUrl"
+												[id]="member?.id"
+												[employee]="member"
+												size="sm"
+												class="avatar-dashboard"
+											>
+											</ngx-avatar>
+										</div>
+										<div class="col-3 text-center">
+											<div class="activity">
+												<div class="duration">
+													{{ member?.todayTime?.duration || 0 | durationFormat }}
+												</div>
+												<div class="activity-percentage">
+													<nb-badge
+														[status]="progressStatus(member?.todayTime?.overall)"
+														[text]="(member?.todayTime?.overall || 0) + '%'"
+													></nb-badge>
+												</div>
+											</div>
+										</div>
+										<div class="col text-center">
+											<div [class.d-flex]="!isMoreThanWeek()">
+												<div class="activity text-center">
+													<div class="duration">
+														{{ member?.weekTime?.duration || 0 | durationFormat }}
+													</div>
+													<div class="activity-percentage">
+														<nb-badge
+															[status]="progressStatus(member?.weekTime?.overall)"
+															[text]="(member?.weekTime?.overall || 0) + '%'"
+														></nb-badge>
+													</div>
+												</div>
+												@if (!isMoreThanWeek()) {
+													<div class="member-weekly-activity-graph">
+														@for (weekHour of member.weekHours; track $index) {
+															<div
+																class="bar-graph-entry"
+																[style.height]="weekHour.duration + '%'"
+															></div>
+														}
+													</div>
+												}
+											</div>
+										</div>
+									</div>
+								</div>
+							</nb-list-item>
+						}
+					</nb-list>
+				</div>
 			} @else if (!memberLoading) {
-			<div class="text-center">
-				@switch (selectedPeriod) { @case (RangePeriod.DAY) {
-				{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
-				} @case (RangePeriod.WEEK) {
-				{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK' | translate }}
-				} @case (RangePeriod.PERIOD) {
-				{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD' | translate }}
-				} }
-			</div>
+				<div class="text-center">
+					@switch (selectedPeriod) {
+						@case (RangePeriod.DAY) {
+							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
+						}
+						@case (RangePeriod.WEEK) {
+							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK' | translate }}
+						}
+						@case (RangePeriod.PERIOD) {
+							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD' | translate }}
+						}
+					}
+				</div>
 			}
 		</nb-card-body>
 	</nb-card>
@@ -613,12 +656,12 @@
 				<button class="manage-widget undo" (click)="undo()" nbButton><i class="fas fa-undo"></i>Undo</button>
 			</div>
 			@for (widget of widgets; track widget.position) {
-			<div (click)="updateWidgetVisibility(widget)" class="title">
-				<i [style.visibility]="widget.hide ? 'hidden' : 'visible'" class="fas fa-check"></i>
-				<div>
-					{{ titleMapper(widget.position) | translate }}
+				<div (click)="updateWidgetVisibility(widget)" class="title">
+					<i [style.visibility]="widget.hide ? 'hidden' : 'visible'" class="fas fa-check"></i>
+					<div>
+						{{ titleMapper(widget.position) | translate }}
+					</div>
 				</div>
-			</div>
 			}
 		</div>
 		<div class="line"></div>
@@ -630,12 +673,12 @@
 				</button>
 			</div>
 			@for (window of windows; track window.position) {
-			<div (click)="updateWindowVisibility(window)" class="title">
-				<i [style.visibility]="window.hide ? 'hidden' : 'visible'" class="fas fa-check"></i>
-				<div>
-					{{ titleMapper(window.position, false) | translate }}
+				<div (click)="updateWindowVisibility(window)" class="title">
+					<i [style.visibility]="window.hide ? 'hidden' : 'visible'" class="fas fa-check"></i>
+					<div>
+						{{ titleMapper(window.position, false) | translate }}
+					</div>
 				</div>
-			</div>
 			}
 		</div>
 	</div>

@@ -4,19 +4,19 @@
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
 					@if (isTasksPage()) {
-					{{ 'TASKS_PAGE.HEADER' | translate }}
+						{{ 'TASKS_PAGE.HEADER' | translate }}
 					} @else if (isMyTasksPage()) {
-					{{ 'TASKS_PAGE.MY_TASK_HEADER' | translate }}
+						{{ 'TASKS_PAGE.MY_TASK_HEADER' | translate }}
 					} @else if (isTeamTaskPage()) {
-					{{ 'TASKS_PAGE.TEAM_TASKS_HEADER' | translate }}
+						{{ 'TASKS_PAGE.TEAM_TASKS_HEADER' | translate }}
 					}
 				</ngx-header-title>
 			</h4>
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
 				@if (!isDefaultProject) {
-				<button size="small" nbButton (click)="openTasksSettings(selectedProject)">
-					<nb-icon icon="settings-2-outline"></nb-icon>
-				</button>
+					<button size="small" nbButton (click)="openTasksSettings(selectedProject)">
+						<nb-icon icon="settings-2-outline"></nb-icon>
+					</button>
 				}
 			</ng-template>
 		</div>
@@ -33,60 +33,64 @@
 	</nb-card-header>
 	<nb-card-body [class.project]="selectedProject">
 		<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
-			@switch (viewMode) { @case (taskListTypeEnum.GRID) { @if (dataLayoutStyle ===
-			componentLayoutStyleEnum.TABLE) {
-			<div class="table-scroll-container">
-				<angular2-smart-table
-					style="cursor: pointer"
-					[settings]="settingsSmartTable"
-					[source]="smartTableSource"
-					(userRowSelect)="selectTask($event)"
-				></angular2-smart-table>
-			</div>
-			<ng-container
-				*ngTemplateOutlet="
-					paginationTemplate;
-					context: {
-						pagination: pagination
+			@switch (viewMode) {
+				@case (taskListTypeEnum.GRID) {
+					@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+						<div class="table-scroll-container">
+							<angular2-smart-table
+								style="cursor: pointer"
+								[settings]="settingsSmartTable"
+								[source]="smartTableSource"
+								(userRowSelect)="selectTask($event)"
+							></angular2-smart-table>
+						</div>
+						<ng-container
+							*ngTemplateOutlet="
+								paginationTemplate;
+								context: {
+									pagination: pagination
+								}
+							"
+						></ng-container>
+					} @else {
+						<ga-card-grid
+							[totalItems]="pagination?.totalItems"
+							[settings]="settingsSmartTable"
+							[source]="availableTasks$ | async"
+							(onSelectedItem)="selectTask($event)"
+							(scroll)="onScroll()"
+						></ga-card-grid>
 					}
-				"
-			></ng-container>
-			} @else {
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				[settings]="settingsSmartTable"
-				[source]="availableTasks$ | async"
-				(onSelectedItem)="selectTask($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
-			} } @case (taskListTypeEnum.SPRINT) {
-			<div class="sprint-view">
-				<ga-tasks-sprint-view
-					(createTaskEvent)="createTaskDialog()"
-					(editTaskEvent)="editTaskDialog($event)"
-					(deleteTaskEvent)="deleteTask($event)"
-					(selectedTaskEvent)="selectTask($event)"
-					[sync]="!disableButton"
-					[project]="selectedProject"
-					[tasks]="availableTasks$ | async"
-				></ga-tasks-sprint-view>
-			</div>
-			<ng-container
-				*ngTemplateOutlet="
-					paginationTemplate;
-					context: {
-						pagination: pagination
-					}
-				"
-			></ng-container>
-			} }
+				}
+				@case (taskListTypeEnum.SPRINT) {
+					<div class="sprint-view">
+						<ga-tasks-sprint-view
+							(createTaskEvent)="createTaskDialog()"
+							(editTaskEvent)="editTaskDialog($event)"
+							(deleteTaskEvent)="deleteTask($event)"
+							(selectedTaskEvent)="selectTask($event)"
+							[sync]="!disableButton"
+							[project]="selectedProject"
+							[tasks]="availableTasks$ | async"
+						></ga-tasks-sprint-view>
+					</div>
+					<ng-container
+						*ngTemplateOutlet="
+							paginationTemplate;
+							context: {
+								pagination: pagination
+							}
+						"
+					></ng-container>
+				}
+			}
 		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template #paginationTemplate let-pagination="pagination">
 	<div class="pagination-container">
 		@if (smartTableSource) {
-		<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 		}
 	</div>
 </ng-template>
@@ -96,17 +100,17 @@
 	>
 		<div class="btn-group actions">
 			@if (selectedTask) {
-			<ngx-favorite-toggle
-				[entityType]="'Task'"
-				[entityId]="selectedTask.id"
-				[entityName]="selectedTask.title"
-				size="small"
-				status="basic"
-				spacing="list"
-				[disabled]="disableButton"
-				[showLabel]="false"
-				(favoriteToggled)="onTaskFavoriteToggled($event)"
-			></ngx-favorite-toggle>
+				<ngx-favorite-toggle
+					[entityType]="'Task'"
+					[entityId]="selectedTask.id"
+					[entityName]="selectedTask.title"
+					size="small"
+					status="basic"
+					spacing="list"
+					[disabled]="disableButton"
+					[showLabel]="false"
+					(favoriteToggled)="onTaskFavoriteToggled($event)"
+				></ngx-favorite-toggle>
 			}
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
 				<button
