@@ -36,7 +36,7 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 		private readonly _errorHandlingService: ErrorHandlerService
 	) {
 		// Try to get email and code from navigation state first (secure method)
-		const navigation = this._router.getCurrentNavigation();
+		const navigation = this._router.currentNavigation();
 		const state = navigation?.extras?.state;
 
 		if (state?.email && state?.code) {

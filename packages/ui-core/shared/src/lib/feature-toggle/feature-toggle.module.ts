@@ -11,6 +11,7 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { FeatureService, FeatureStoreService } from '@gauzy/ui-core/core';
+import { CountdownConfirmationModule } from '../user/forms/countdown-confirmation/countdown-confirmation.module';
 import { FeatureToggleComponent } from './feature-toggle.component';
 
 @NgModule({
@@ -23,7 +24,8 @@ import { FeatureToggleComponent } from './feature-toggle.component';
 		NbListModule,
 		NbSpinnerModule,
 		NbToggleModule,
-		TranslateModule.forChild()
+		TranslateModule.forChild(),
+		CountdownConfirmationModule
 	],
 	declarations: [FeatureToggleComponent],
 	exports: [FeatureToggleComponent],

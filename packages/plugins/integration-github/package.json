@@ -60,11 +60,11 @@
 		"smee-client": "^1.2.3",
 		"tslib": "^2.6.2",
 		"typeorm": "^0.3.28",
-		"underscore": "^1.13.3",
+		"underscore": "^1.13.8",
 		"uuid": "^13.0.0"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},
@@ -85,3 +85,5 @@
 	},
 	"sideEffects": false
 }
+
+

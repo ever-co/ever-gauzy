@@ -2,9 +2,10 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"target": "ES2022",
-		"module": "es2020",
+		"module": "preserve",
 		"downlevelIteration": true,
-		"useDefineForClassFields": false
+		"useDefineForClassFields": false,
+		"moduleResolution": "bundler"
 	},
 	"angularCompilerOptions": {
 		"fullTemplateTypeCheck": false,

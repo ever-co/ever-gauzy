@@ -1869,11 +1869,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async getLastTimeSlotImage(arg): Promise<void> {
-		if (this._isOffline || this.lastTimeSlot?.id === arg?.timeSlotId) {
-			return;
-		}
 		try {
-			const res = await this.timeTrackerService.getTimeSlot(arg);
+			const lastTimeSlot: { timeSlotId?: string } = await this.electronService.invoke('GET_LAST_CAPTURE');
+			if (this._isOffline || !lastTimeSlot?.timeSlotId) {
+				return;
+			}
+
+			const res = await this.timeTrackerService.getTimeSlot({ timeSlotId: lastTimeSlot.timeSlotId });
 			const { screenshots = [] } = res || {};
 			if (screenshots && screenshots.length > 0) {
 				const [lastCaptureScreen] = screenshots;
@@ -2004,7 +2006,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._loggerService.warn(`WARN: ${message}`);
 			return;
 		}
-		this.electronService.ipcRenderer.send('show_image', this.screenshots);
+
+		this.electronService.ipcRenderer.send('show_image', {
+			screenshots: this.screenshots,
+			timeSlotId: !this._isOffline ? this.lastTimeSlot?.id : null
+		});
 	}
 
 	public open(dialog: TemplateRef<any>, option): void {

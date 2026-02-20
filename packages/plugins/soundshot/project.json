@@ -8,35 +8,23 @@
 			"currentVersionResolver": "git-tag",
 			"fallbackCurrentVersionResolver": "disk",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": [
-				"dist/{projectRoot}"
-			]
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [
-		"contracts",
-		"core",
-		"plugin"
-	],
+	"implicitDependencies": ["contracts", "core", "plugin"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": [
-				"{options.outputPath}"
-			],
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/plugins/soundshot",
 				"tsConfig": "packages/plugins/soundshot/tsconfig.lib.json",
 				"packageJson": "packages/plugins/soundshot/package.json",
 				"main": "packages/plugins/soundshot/src/index.ts",
-				"assets": [
-					"packages/plugins/soundshot/*.md"
-				]
+				"assets": ["packages/plugins/soundshot/*.md"]
 			},
-			"dependsOn": [
-				"^build"
-			]
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {

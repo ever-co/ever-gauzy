@@ -1,12 +1,12 @@
-import { Directive, Input, Output, HostListener, EventEmitter, OnDestroy } from '@angular/core';
+import { Directive, Input, Output, HostListener, EventEmitter, OnDestroy, inject } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ConfirmComponent, ConfirmDialogOptions } from '../confirm/confirm.component';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-    selector: '[ngxConfirmDialog]',
-    standalone: false
+	selector: '[ngxConfirmDialog]',
+	standalone: true
 })
 export class ConfirmDirective implements OnDestroy {
 	data: ConfirmDialogOptions = {};
@@ -30,7 +30,7 @@ export class ConfirmDirective implements OnDestroy {
 	@Output() confirm = new EventEmitter();
 	@Output() decline = new EventEmitter();
 
-	constructor(private readonly dialogService: NbDialogService) {}
+	private readonly dialogService = inject(NbDialogService);
 
 	/**
 	 * Handles the click event and opens a confirmation dialog.

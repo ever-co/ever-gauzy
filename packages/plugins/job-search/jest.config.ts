@@ -1,5 +1,5 @@
 /* eslint-disable */
-export default {
+module.exports = {
 	displayName: 'plugin-job-search',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',

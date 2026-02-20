@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Input, OnDestroy, OnInit, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, Input, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { environment } from '@gauzy/ui-config';
 import { AVATAR_DEFAULT_SVG, DEFAULT_SVG } from '@gauzy/ui-core/common';
 
@@ -52,25 +52,21 @@ const ABSOLUTE_URL_REGEX = /^https?:\/\//i;
  */
 @Directive({
 	selector: 'img',
-	standalone: false
+	standalone: true
 })
 export class ImgDirective implements OnDestroy, OnInit {
+	private readonly el = inject(ElementRef).nativeElement as HTMLImageElement;
+	private readonly renderer = inject(Renderer2);
+
 	@Input() type: ImageType = 'default';
 	@Input() skipDefaultImage: boolean = false;
 	@Input() enableFadeIn: boolean = true; // Make fade-in optional
 
-	private readonly el: HTMLImageElement;
-	private readonly renderer: Renderer2;
 	private listeners: Array<() => void> = [];
 	private originalSrc: string | null = null;
 	private isImageLoaded = false;
 	private needsFadeIn = false;
 	private rafId?: number;
-
-	constructor(el: ElementRef<HTMLImageElement>, renderer: Renderer2) {
-		this.el = el.nativeElement;
-		this.renderer = renderer;
-	}
 
 	/**
 	 * Normalizes the image source URL based on the environment.
@@ -221,7 +217,7 @@ export class ImgDirective implements OnDestroy, OnInit {
 	 * Cleans up all event listeners at once.
 	 */
 	private cleanupListeners(): void {
-		this.listeners.forEach(cleanup => cleanup());
+		this.listeners.forEach((cleanup) => cleanup());
 		this.listeners = [];
 	}
 

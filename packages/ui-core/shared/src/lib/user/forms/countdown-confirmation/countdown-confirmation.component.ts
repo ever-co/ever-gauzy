@@ -1,10 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 
 @Component({
-    selector: 'ga-countdown-confirmation',
-    template: `
+	selector: 'ga-countdown-confirmation',
+	template: `
 		<nb-card class="center">
 			<nb-card-header>
 				<h6>{{ 'FORM.CONFIRM' | translate }}</h6>
@@ -33,8 +33,8 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 			</nb-card-footer>
 		</nb-card>
 	`,
-    styles: [
-        `
+	styles: [
+		`
 			nb-card-body {
 				text-align: center;
 			}
@@ -44,15 +44,15 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 				width: 350px;
 			}
 		`
-    ],
-    standalone: false
+	],
+	standalone: false
 })
 export class CountdownConfirmationComponent {
+	protected readonly dialogRef = inject(NbDialogRef<CountdownConfirmationComponent>);
+
 	recordType: string;
 	isEnabled: boolean;
 	countDownConfig: CountdownConfig = { leftTime: 5 };
-
-	constructor(protected readonly dialogRef: NbDialogRef<CountdownConfirmationComponent>) {}
 
 	/**
 	 * Handles an action event triggered by the countdown.

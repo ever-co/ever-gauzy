@@ -1,4 +1,4 @@
-export default {
+module.exports = {
 	displayName: 'plugin-job-proposal',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',

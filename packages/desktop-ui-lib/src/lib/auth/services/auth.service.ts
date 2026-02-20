@@ -106,8 +106,8 @@ export class AuthService {
 	 *
 	 * @returns
 	 */
-	doLogout(): Observable<boolean> {
-		return this.http.get<boolean>(`${API_PREFIX}/auth/logout`);
+	doLogout(refreshToken: string): Observable<boolean> {
+		return this.http.post<boolean>(`${API_PREFIX}/auth/logout`, { refresh_token: refreshToken });
 	}
 
 	/**

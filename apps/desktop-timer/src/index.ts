@@ -8,8 +8,8 @@ import { logger as log, store } from '@gauzy/desktop-core';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
-import * as path from 'path';
-import * as Url from 'url';
+import * as path from 'node:path';
+import * as Url from 'node:url';
 import { initSentry } from './sentry';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));

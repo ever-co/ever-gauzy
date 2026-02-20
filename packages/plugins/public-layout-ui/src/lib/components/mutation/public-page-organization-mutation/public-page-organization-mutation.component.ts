@@ -2,8 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import * as moment from 'moment';
+import { CKEditor4 } from 'ckeditor4-angular';
+import moment from 'moment';
 import {
 	IIncome,
 	IOrganization,
@@ -19,10 +19,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @Component({
-    selector: 'ngx-public-page-organization-mutation',
-    templateUrl: './public-page-organization-mutation.component.html',
-    styleUrls: ['./public-page-organization-mutation.component.scss'],
-    standalone: false
+	selector: 'ngx-public-page-organization-mutation',
+	templateUrl: './public-page-organization-mutation.component.html',
+	styleUrls: ['./public-page-organization-mutation.component.scss'],
+	standalone: false
 })
 export class PublicPageOrganizationMutationComponent extends TranslationBaseComponent implements OnInit {
 	income: IIncome;

@@ -68,7 +68,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
 		private readonly cdr: ChangeDetectorRef,
 		private readonly _router: Router
 	) {
-		const navigation = this._router.getCurrentNavigation();
+		const navigation = this._router.currentNavigation();
 		this.state = navigation?.extras?.state;
 	}
 

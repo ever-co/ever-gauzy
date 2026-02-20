@@ -3,6 +3,7 @@ import {
 	IAuthResponse,
 	ISocialAccount,
 	ISocialAccountExistUser,
+	ITokenPair,
 	IUserSigninWorkspaceResponse,
 	LanguagesEnum,
 	PermissionsEnum
@@ -21,7 +22,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
 import { RequestContext } from '../core/context';
 import { UseValidationPipe } from '../shared/pipes';
@@ -281,15 +282,44 @@ export class AuthController {
 	}
 
 	/**
-	 * Logout (Removed refresh token from database)
+	 * Logout the user by revoking the provided refresh token and the current access token. If no refresh token is provided, it will attempt to revoke the current access token only. Any errors during the revocation process are logged but do not prevent the logout from completing.
 	 *
-	 * @returns
+	 * @param refreshToken The refresh token to be revoked. This is optional as the function will attempt to revoke the current access token regardless.
+	 * @returns void
 	 */
 	@HttpCode(HttpStatus.OK)
-	@ApiOperation({ summary: 'Logout' })
-	@Get('/logout')
-	async getLogOut() {
-		return await this.userService.removeRefreshToken();
+	@ApiOperation({
+		summary: 'Logout user',
+		description:
+			'Revokes the provided refresh token. If no token is supplied, ' +
+			'the token from the current request context is used. ' +
+			'Individual revocation failures are logged but do not cause the request to fail.'
+	})
+	@ApiBody({
+		description: 'Optional token pair to revoke.',
+		required: false,
+		schema: {
+			type: 'object',
+			properties: {
+				refresh_token: {
+					type: 'string',
+					description: 'Refresh token to revoke.'
+				}
+			}
+		}
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully logged out. The provided token has been revoked.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Request body is malformed or contains unrecognized fields.'
+	})
+	@Post('/logout')
+	@UseValidationPipe({ whitelist: true })
+	async logout(@Body('refresh_token') refreshToken?: string): Promise<void> {
+		await this.authService.logout(refreshToken);
 	}
 
 	/**
@@ -304,8 +334,8 @@ export class AuthController {
 	@UseGuards(AuthRefreshGuard)
 	@Post('/refresh-token')
 	@UseValidationPipe()
-	async refreshToken(@Body() input: RefreshTokenDto): Promise<{ token: string; refresh_token: string } | null> {
-		return await this.authService.getAccessTokenFromRefreshToken();
+	async refreshToken(@Body() input: RefreshTokenDto): Promise<ITokenPair | null> {
+		return await this.authService.rotateTokens(input.refresh_token, input);
 	}
 
 	/**

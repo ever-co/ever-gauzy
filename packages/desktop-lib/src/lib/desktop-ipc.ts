@@ -359,6 +359,13 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		return LocalStore.getStore('appSetting').theme;
 	});
 
+	ipcMain.handle('GET_LAST_CAPTURE', async () => {
+		const lastCapture = await timerService.findLastCapture();
+		return {
+			timeSlotId: lastCapture?.timeslotId
+		};
+	});
+
 	pluginListeners();
 }
 
@@ -1242,7 +1249,8 @@ export function removeAllHandlers() {
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
 		'COLLECT_ACTIVITIES',
-		'START_SERVER'
+		'START_SERVER',
+		'GET_LAST_CAPTURE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

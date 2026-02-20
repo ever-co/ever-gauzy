@@ -1,19 +1,19 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Injectable } from '@angular/core';
 import {
-	IUser,
-	RolesEnum,
-	IUserRegistrationInput,
-	PermissionsEnum,
 	IAuthResponse,
+	IUser,
+	IUserCodeInput,
 	IUserEmailInput,
-	IUserTokenInput,
-	IUserSigninWorkspaceResponse,
 	IUserLoginInput,
-	IUserCodeInput
+	IUserRegistrationInput,
+	IUserSigninWorkspaceResponse,
+	IUserTokenInput,
+	PermissionsEnum,
+	RolesEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { Observable, firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AuthService {
@@ -98,8 +98,8 @@ export class AuthService {
 	 *
 	 * @returns
 	 */
-	doLogout(): Observable<boolean> {
-		return this.http.get<boolean>(`${API_PREFIX}/auth/logout`);
+	doLogout(refreshToken: string): Observable<boolean> {
+		return this.http.post<boolean>(`${API_PREFIX}/auth/logout`, { refresh_token: refreshToken });
 	}
 
 	register(input: IUserRegistrationInput): Observable<IUser> {
@@ -144,7 +144,7 @@ export class AuthService {
 	 * @param refresh_token
 	 * @returns
 	 */
-	refreshToken(refresh_token: string): Promise<{ token: string, refresh_token: string } | null> {
+	refreshToken(refresh_token: string): Promise<{ token: string; refresh_token: string } | null> {
 		return firstValueFrom(this.http.post<any>(`${API_PREFIX}/auth/refresh-token`, { refresh_token }));
 	}
 

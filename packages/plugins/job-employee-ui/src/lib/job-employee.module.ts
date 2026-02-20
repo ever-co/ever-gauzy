@@ -5,6 +5,7 @@ import {
 	applyDeclarativeRegistrations,
 	IOnPluginUiBootstrap,
 	IOnPluginUiDestroy,
+	PluginUiDefinition,
 	PLUGIN_DEFINITION
 } from '@gauzy/plugin-ui';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
@@ -39,7 +40,9 @@ export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private readonly _log = inject(LoggerService).withContext('JobEmployeeModule');
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
-	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true });
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION as unknown as any, { optional: true }) as
+		| PluginUiDefinition
+		| null;
 
 	constructor() {}
 

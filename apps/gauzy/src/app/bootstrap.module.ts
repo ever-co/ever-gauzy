@@ -1,4 +1,4 @@
-import { inject, NgModule, OnDestroy } from '@angular/core';
+import { inject, NgModule, OnDestroy, provideZoneChangeDetection } from '@angular/core';
 import { PLUGIN_UI_CONFIG, getPluginUiConfig, PluginUiModule, PluginUiRegistryService } from '@gauzy/plugin-ui';
 import { AppModule } from './app.module';
 import { AppComponent } from './app.component';
@@ -27,7 +27,8 @@ import { AppComponent } from './app.component';
 		{
 			provide: PLUGIN_UI_CONFIG,
 			useFactory: getPluginUiConfig
-		}
+		},
+		provideZoneChangeDetection({ eventCoalescing: true })
 	],
 	bootstrap: [AppComponent]
 })

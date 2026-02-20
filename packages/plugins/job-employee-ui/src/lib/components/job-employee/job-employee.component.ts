@@ -86,8 +86,12 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	public readonly tabsetId: PageTabsetPageId = this._route.snapshot.data['tabsetId'];
 	public readonly dataTableId: PageDataTablePageId = this._route.snapshot.data['dataTableId'];
 
-	@ViewChild('tableLayout', { static: true }) readonly tableLayout!: TemplateRef<unknown>;
-	@ViewChild('comingSoon', { static: true }) readonly comingSoon!: TemplateRef<unknown>;
+	@ViewChild('tableLayout', { static: true }) readonly tableLayout!: TemplateRef<any>;
+	@ViewChild('comingSoon', { static: true }) readonly comingSoon!: TemplateRef<any>;
+	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	@ViewChild('actionButtons', { static: true }) readonly actionButtons!: any;
+	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	@ViewChild('visibleButton', { static: true }) readonly visibleButton!: any;
 
 	constructor() {
 		super(inject(TranslateService));
@@ -160,7 +164,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.BROWSE'),
 			order: 1,
 			responsive: true,
-			template: this.tableLayout
+			template: this.tableLayout as any
 		});
 
 		_pageTabRegistryService.registerPageTab({
@@ -171,7 +175,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.SEARCH'),
 			order: 2,
 			responsive: true,
-			template: this.comingSoon
+			template: this.comingSoon as any
 		});
 
 		_pageTabRegistryService.registerPageTab({
@@ -182,7 +186,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.HISTORY'),
 			order: 3,
 			responsive: true,
-			template: this.comingSoon
+			template: this.comingSoon as any
 		});
 	}
 

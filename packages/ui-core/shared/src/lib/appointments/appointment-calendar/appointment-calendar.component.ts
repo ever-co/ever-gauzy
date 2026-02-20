@@ -13,8 +13,8 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import momentTimezonePlugin from '@fullcalendar/moment-timezone';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
+import moment from 'moment';
+import timezone from 'moment-timezone';
 import {
 	IEmployeeAppointment,
 	ITimeOff,
@@ -111,8 +111,8 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 				this.selectedEventType.durationUnit === 'Day(s)'
 					? this.selectedEventType.duration * 24 * 60
 					: this.selectedEventType.durationUnit === 'Hour(s)'
-					? this.selectedEventType.duration * 60
-					: this.selectedEventType.duration * 1;
+						? this.selectedEventType.duration * 60
+						: this.selectedEventType.duration * 1;
 		}
 		this._store.selectedOrganization$
 			.pipe(

@@ -24,8 +24,25 @@
 		"lib:watch": "yarn nx build plugin-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^20.2.4",
-		"@angular/core": "^20.2.4"
+		"@angular/common": "21.0.0",
+		"@angular/core": "21.0.0"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"jest-preset-angular": "16.0.0"
+	},
+	"keywords": [
+		"gauzy",
+		"plugin-ui",
+		"angular",
+		"ui",
+		"plugin",
+		"ever-gauzy"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
 	},
 	"sideEffects": false
 }

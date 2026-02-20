@@ -7,7 +7,9 @@
 		"noImplicitOverride": false,
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
-		"noFallthroughCasesInSwitch": false
+		"noFallthroughCasesInSwitch": false,
+		"module": "preserve",
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],

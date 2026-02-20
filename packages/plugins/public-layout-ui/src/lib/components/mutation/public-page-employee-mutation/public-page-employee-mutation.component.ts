@@ -5,7 +5,7 @@ import { switchMap, map, tap, filter, catchError } from 'rxjs/operators';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { CKEditor4 } from 'ckeditor4-angular';
 import {
 	IEmployee,
 	ISkill,
@@ -30,10 +30,10 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-public-page-employee-mutation',
-    templateUrl: './public-page-employee-mutation.component.html',
-    styleUrls: ['./public-page-employee-mutation.component.scss'],
-    standalone: false
+	selector: 'ngx-public-page-employee-mutation',
+	templateUrl: './public-page-employee-mutation.component.html',
+	styleUrls: ['./public-page-employee-mutation.component.scss'],
+	standalone: false
 })
 export class PublicPageEmployeeMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	employee: IEmployee;

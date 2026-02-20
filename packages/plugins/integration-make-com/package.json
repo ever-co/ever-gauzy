@@ -42,7 +42,7 @@
 		"@nestjs/cqrs": "^11.0.3",
 		"@nestjs/swagger": "^11.2.6",
 		"@nestjs/typeorm": "^11.0.0",
-		"axios": "^1.9.0",
+		"axios": "^1.13.5",
 		"chalk": "^4.1.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.2",
@@ -51,7 +51,7 @@
 		"typeorm": "^0.3.28"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},

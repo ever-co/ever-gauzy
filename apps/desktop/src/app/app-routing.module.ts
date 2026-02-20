@@ -5,7 +5,8 @@ import { authConnectionGuard } from '@gauzy/desktop-ui-lib';
 const routes: Routes = [
 	{
 		path: '',
-		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent)
+		redirectTo: 'time-tracker',
+		pathMatch: 'full'
 	},
 	{
 		path: 'setup',
@@ -15,12 +16,7 @@ const routes: Routes = [
 		path: 'time-tracker',
 		canActivate: [authConnectionGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
-		children: [
-			{
-				path: '',
-				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
-			}
-		]
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
 	},
 	{
 		path: 'screen-capture',
@@ -29,12 +25,7 @@ const routes: Routes = [
 	{
 		path: 'plugins',
 		canActivate: [authConnectionGuard],
-		children: [
-			{
-				path: '',
-				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
-			}
-		]
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
 	},
 	{
 		path: 'settings',
@@ -59,6 +50,10 @@ const routes: Routes = [
 	{
 		path: 'always-on',
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AlwaysOnComponent)
+	},
+	{
+		path: '**',
+		redirectTo: ''
 	}
 ];
 
@@ -73,4 +68,4 @@ const config: ExtraOptions = {
 	imports: [RouterModule.forRoot(routes, config)],
 	exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

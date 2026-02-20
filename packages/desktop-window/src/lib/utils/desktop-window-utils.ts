@@ -1,6 +1,6 @@
 // src/utils/desktop-window-utils.ts
 import { BrowserWindow } from 'electron';
-import * as url from 'url';
+import * as url from 'node:url';
 
 /**
  * Attaches a 'close' event handler to the specified BrowserWindow to prevent its destruction.

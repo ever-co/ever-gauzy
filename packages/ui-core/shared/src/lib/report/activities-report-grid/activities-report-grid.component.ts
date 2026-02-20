@@ -71,6 +71,14 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 		this.cdr.detectChanges();
 	}
 
+	getDateRowProjects(dateRow: any): any[] {
+		return dateRow?.projects || [];
+	}
+
+	getDateRowEmployees(dateRow: any): any[] {
+		return dateRow?.employees || [];
+	}
+
 	/**
 	 * Get header selectors request
 	 * Get gauzy timesheet filters request

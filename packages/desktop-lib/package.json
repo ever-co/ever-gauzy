@@ -48,7 +48,7 @@
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
 		"moment-timezone": "^0.6.0",
-		"mysql2": "^3.12.0",
+		"mysql2": "^3.17.3",
 		"pg": "^8.17.2",
 		"node-fetch": "^2.6.7",
 		"node-notifier": "^8.0.0",
@@ -56,7 +56,7 @@
 		"sound-play": "1.1.0",
 		"tar": "^7.4.3",
 		"tslib": "^2.6.2",
-		"underscore": "^1.13.3",
+		"underscore": "^1.13.8",
 		"undici": "^6.10.2",
 		"unzipper": "^0.12.1",
 		"uiohook-napi": "^1.5.4"
@@ -90,3 +90,6 @@
 	},
 	"sideEffects": false
 }
+
+
+

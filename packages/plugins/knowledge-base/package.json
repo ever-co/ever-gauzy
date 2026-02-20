@@ -22,7 +22,7 @@
 		"@nestjs/core": "^11.1.14"
 	},
 	"dependencies": {
-		"@faker-js/faker": "^10.2.0",
+		"@faker-js/faker": "^10.3.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
@@ -38,7 +38,7 @@
 		"typeorm": "^0.3.28"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},

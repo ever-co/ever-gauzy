@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as multer from 'multer';
-import * as fs from 'fs';
-import { basename, join, resolve } from 'path';
+import * as fs from 'node:fs';
+import { basename, join, resolve } from 'node:path';
 import * as moment from 'moment';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { environment, getConfig } from '@gauzy/config';

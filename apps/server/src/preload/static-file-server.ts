@@ -1,8 +1,8 @@
 import * as http from 'http';
 import { IncomingMessage, ServerResponse } from 'http';
 import { Server as NodeStaticServer } from 'node-static';
-import * as path from 'path';
-import { parse } from 'url';
+import * as path from 'node:path';
+import { parse } from 'node:url';
 
 export class StaticFileServer {
 	private static instance: StaticFileServer;

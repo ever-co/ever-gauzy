@@ -17,7 +17,7 @@ import {
 	shell,
 	Tray
 } from 'electron';
-import * as path from 'path';
+import * as path from 'node:path';
 
 import { environment } from './environments/environment';
 

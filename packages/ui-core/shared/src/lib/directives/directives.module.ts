@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DIRECTIVES } from './index';
 
 @NgModule({
-	imports: [CommonModule],
-	declarations: [...DIRECTIVES],
+	imports: [CommonModule, ...DIRECTIVES],
 	exports: [...DIRECTIVES]
 })
 export class DirectivesModule {}

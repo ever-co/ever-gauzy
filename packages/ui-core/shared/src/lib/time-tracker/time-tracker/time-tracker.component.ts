@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
 import { NbThemeService } from '@nebular/theme';
-import * as moment from 'moment';
+import moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -32,10 +32,10 @@ import { TimeTrackerStatusService } from '../components/time-tracker-status/time
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-web-time-tracker',
-    templateUrl: './time-tracker.component.html',
-    styleUrls: ['./time-tracker.component.scss'],
-    standalone: false
+	selector: 'ngx-web-time-tracker',
+	templateUrl: './time-tracker.component.html',
+	styleUrls: ['./time-tracker.component.scss'],
+	standalone: false
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
 	// This constant holds the URL for downloading content from the platform's website.

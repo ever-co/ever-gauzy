@@ -30,7 +30,7 @@
 		"moment": "^2.30.1",
 		"uiohook-napi": "^1.5.4",
 		"tslib": "^2.6.2",
-		"underscore": "^1.13.3",
+		"underscore": "^1.13.8",
 		"get-windows": "^9.2.3",
 		"better-queue": "^3.8.12",
 		"better-sqlite3": "12.6.2",
@@ -67,3 +67,5 @@
 	},
 	"sideEffects": false
 }
+
+

@@ -13,7 +13,7 @@ import { LocalStorageStrategy } from '../concretes/strategies/local-storage-stra
 	providedIn: 'root'
 })
 export class WindowService implements OnDestroy {
-	private _windowsRef: TemplateRef<HTMLElement>[] = [];
+	private _windowsRef: TemplateRef<any>[] = [];
 	private _windows: GuiDrag[] = [];
 	private _windowLayoutPersistance: LayoutPersistance;
 	private _windowsTakers: PersistanceTakers;
@@ -36,7 +36,7 @@ export class WindowService implements OnDestroy {
 						? this.save()
 						: this.retrieve().forEach((deserialized: GuiDrag) =>
 								this.windowsRef.push(deserialized.templateRef)
-						  );
+							);
 				}),
 				untilDestroyed(this)
 			)
@@ -52,9 +52,9 @@ export class WindowService implements OnDestroy {
 	}
 	protected sorting(): void {
 		const buffers: GuiDrag[] = [];
-		this.windowsRef.forEach((windowsRef: TemplateRef<HTMLElement>) => {
+		this.windowsRef.forEach((windowsRef: TemplateRef<any>) => {
 			this.windows.forEach((window: GuiDrag) => {
-				if (windowsRef === window.templateRef) {
+				if ((windowsRef as unknown) === (window.templateRef as unknown)) {
 					buffers.push(window);
 				}
 			});
@@ -91,10 +91,10 @@ export class WindowService implements OnDestroy {
 	}
 
 	protected sortingReverse(): void {
-		const buffers: TemplateRef<HTMLElement>[] = [];
+		const buffers: TemplateRef<any>[] = [];
 		this.windows.forEach((windows: GuiDrag) => {
-			this.windowsRef.forEach((windowsRef: TemplateRef<HTMLElement>) => {
-				if (windowsRef === windows.templateRef) {
+			this.windowsRef.forEach((windowsRef: TemplateRef<any>) => {
+				if ((windowsRef as unknown) === (windows.templateRef as unknown)) {
 					buffers.push(windowsRef);
 				}
 			});

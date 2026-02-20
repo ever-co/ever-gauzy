@@ -1,0 +1,21 @@
+# Ignore Git related files and directories
+.git
+.gitignore
+.gitmodules
+
+# Ignore README file
+README.md
+
+# Ignore Docker-related files and directories
+docker
+
+# Ignore source files
+src/
+
+# Ignore build files
+*.ts
+tsconfig*.json
+.eslintrc.json
+
+# Ignore configuration files
+*.json

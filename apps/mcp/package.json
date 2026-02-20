@@ -27,7 +27,7 @@
 	},
 	"dependencies": {
 		"@gauzy/mcp-server": "^0.1.0",
-		"@modelcontextprotocol/sdk": "^1.13.1",
+		"@modelcontextprotocol/sdk": "^1.25.3",
 		"electron-log": "^4.4.8"
 	},
 	"devDependencies": {

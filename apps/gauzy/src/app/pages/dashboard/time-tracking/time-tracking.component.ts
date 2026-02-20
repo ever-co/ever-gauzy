@@ -60,7 +60,9 @@ import {
 	GalleryService,
 	TimeZoneService,
 	WidgetService,
+	WidgetTemplateDirective,
 	WindowService,
+	WindowTemplateDirective,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
 
@@ -140,10 +142,11 @@ export class TimeTrackingComponent
 	public filters: ITimeLogFilters = { timeFormat: TimeFormatEnum.FORMAT_12_HOURS };
 	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
-	@ViewChildren('widget') listOfWidgets: QueryList<TemplateRef<HTMLElement>>;
-	@ViewChildren('window') listOfWindows: QueryList<TemplateRef<HTMLElement>>;
-	public widgetsRef: TemplateRef<HTMLElement>[] = [];
-	public windowsRef: TemplateRef<HTMLElement>[] = [];
+	@ViewChildren(WidgetTemplateDirective, { read: TemplateRef }) listOfWidgets: QueryList<TemplateRef<any>>;
+	@ViewChildren(WindowTemplateDirective, { read: TemplateRef }) listOfWindows: QueryList<TemplateRef<any>>;
+
+	public widgetsRef: TemplateRef<any>[] = [];
+	public windowsRef: TemplateRef<any>[] = [];
 	public widgets: GuiDrag[];
 	public windows: GuiDrag[];
 
@@ -632,7 +635,7 @@ export class TimeTrackingComponent
 						employeeLevel: people.employeeLevel,
 						fullName: people.user.name,
 						shortDescription: people.short_description
-				  } as ISelectedEmployee)
+					} as ISelectedEmployee)
 				: ALL_EMPLOYEES_SELECTED;
 			if (this._store.selectedEmployee) {
 				this._router.navigate([`/pages/employees/activity/screenshots`]);

@@ -4,8 +4,8 @@ import { IEmployee, ITimeOffPolicy, IOrganization, StatusTypesEnum, IUser } from
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
-import * as Holidays from 'date-holidays';
+import moment from 'moment';
+import Holidays from 'date-holidays';
 import { CompareDateValidator, EmployeesService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { environment as ENV } from '@gauzy/ui-config';
@@ -13,10 +13,10 @@ import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-time-off-holiday-mutation',
-    templateUrl: './time-off-holiday-mutation.component.html',
-    styleUrls: ['../time-off-mutation.components.scss'],
-    standalone: false
+	selector: 'ngx-time-off-holiday-mutation',
+	templateUrl: './time-off-holiday-mutation.component.html',
+	styleUrls: ['../time-off-mutation.components.scss'],
+	standalone: false
 })
 export class TimeOffHolidayMutationComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

@@ -7,39 +7,23 @@
 		"version": {
 			"currentVersionResolver": "git-tag",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": [
-				"dist/{projectRoot}"
-			]
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [
-		"common",
-		"config",
-		"contracts",
-		"core",
-		"plugin",
-		"plugin-job-proposal",
-		"utils"
-	],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "plugin-job-proposal", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": [
-				"{options.outputPath}"
-			],
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/plugins/integration-upwork",
 				"tsConfig": "packages/plugins/integration-upwork/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-upwork/package.json",
 				"main": "packages/plugins/integration-upwork/src/index.ts",
-				"assets": [
-					"packages/plugins/integration-upwork/*.md"
-				]
+				"assets": ["packages/plugins/integration-upwork/*.md"]
 			},
-			"dependsOn": [
-				"^build"
-			]
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {
@@ -51,9 +35,7 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": [
-				"{workspaceRoot}/coverage/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/plugins/integration-upwork/jest.config.ts"
 			}

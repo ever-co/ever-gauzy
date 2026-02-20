@@ -49,23 +49,23 @@
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn node tools/web/postinstall"
 	},
 	"dependencies": {
-		"@faker-js/faker": "^10.2.0",
+		"@faker-js/faker": "^10.3.0",
 		"dayjs": "^1.11.4",
 		"resolve": "^1.20.0"
 	},
 	"devDependencies": {
 		"@4tw/cypress-drag-drop": "^2.1.0",
 		"@cypress/browserify-preprocessor": "^3.0.2",
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"concurrently": "^9.2.1",
 		"cross-env": "^10.1.0",
-		"cypress": "^9.4.1",
+		"cypress": "^15.9.0",
 		"cypress-cucumber-preprocessor": "^4.3.1",
 		"cypress-file-upload": "^5.0.8",
 		"jasmine-core": "^3.6.0",
 		"jasmine-spec-reporter": "^6.0.0",
-		"jest": "^29.7.0",
-		"jest-preset-angular": "14.6.2",
+		"jest": "30.0.0",
+		"jest-preset-angular": "16.0.0",
 		"karma": "^6.4.4",
 		"karma-chrome-launcher": "^3.2.0",
 		"karma-cli": "^2.0.0",

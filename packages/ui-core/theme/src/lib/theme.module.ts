@@ -56,9 +56,9 @@ import {
 	MATERIAL_DARK_THEME,
 	MATERIAL_LIGHT_THEME
 } from './themes';
-import { Pipes } from './pipes';
-import { WindowModeBlockScrollService } from './services';
-import { FooterComponent, HeaderComponent } from './components';
+import { WindowModeBlockScrollService } from './services/window-mode-block-scroll.service';
+import { FooterComponent } from './components/footer/footer.component';
+import { HeaderComponent } from './components/header/header.component';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
 import { GauzyLogoComponent } from './components/gauzy-logo/gauzy-logo.component';
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
@@ -115,14 +115,12 @@ const COMPONENTS = [
 	WorkspaceMenuComponent
 ];
 
-const PIPES = [...Pipes];
-
 const EXPORT_IMPORT = [ThemeSidebarModule, MatRippleModule];
 
 @NgModule({
 	imports: [CommonModule, RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
-	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS, NbIconModule, TablerIconsModule],
-	declarations: [...COMPONENTS, ...PIPES],
+	exports: [...EXPORT_IMPORT, ...COMPONENTS, NbIconModule, TablerIconsModule],
+	declarations: [...COMPONENTS],
 	providers: [
 		SelectorService,
 		UsersOrganizationsService,

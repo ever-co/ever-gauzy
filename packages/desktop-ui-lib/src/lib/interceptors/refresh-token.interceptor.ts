@@ -71,10 +71,19 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
 	}
 
 	/**
-	 * Handles 401 from auth endpoints by triggering logout
+	 * Handles 401 from auth endpoints by triggering logout only when
+	 * there is an authenticated session to clear.
 	 * and re-throwing the original error.
 	 */
 	private handleAuthEndpointFailure(error: HttpErrorResponse): Observable<never> {
-		return this.sessionExpiredHandler.execute().pipe(concatMap(() => throwError(() => error)));
+		return this.store.isAuthenticated$.pipe(
+			take(1),
+			switchMap((isAuthenticated) => {
+				if (!isAuthenticated) {
+					return throwError(() => error);
+				}
+				return this.sessionExpiredHandler.execute().pipe(concatMap(() => throwError(() => error)));
+			})
+		);
 	}
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { DefaultValueDateTypeEnum } from '@gauzy/contracts';
 import { DateRangePickerBuilderService } from '../selector-builder';
 import { Store } from '../store/store.service';

@@ -7,13 +7,19 @@
 		"noImplicitOverride": false,
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
-		"noFallthroughCasesInSwitch": false
+		"noFallthroughCasesInSwitch": false,
+		"module": "preserve",
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],
 	"references": [
-		{ "path": "./tsconfig.lib.json" },
-		{ "path": "./tsconfig.spec.json" }
+		{
+			"path": "./tsconfig.lib.json"
+		},
+		{
+			"path": "./tsconfig.spec.json"
+		}
 	],
 	"extends": "../../../tsconfig.json",
 	"angularCompilerOptions": {
