@@ -3,7 +3,6 @@ import { NoteComponent } from './note.component';
 describe('NoteComponent', () => {
 	let component: NoteComponent;
 	let fixture: ComponentFixture<NoteComponent>;
-
 	beforeEach(() => {
 		TestBed.configureTestingModule({
 			imports: [NoteComponent]
@@ -12,7 +11,6 @@ describe('NoteComponent', () => {
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
-
 	it('should create', () => {
 		expect(component).toBeTruthy();
 	});

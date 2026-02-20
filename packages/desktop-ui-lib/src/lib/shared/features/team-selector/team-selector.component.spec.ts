@@ -3,7 +3,6 @@ import { TeamSelectorComponent } from './team-selector.component';
 describe('TeamSelectorComponent', () => {
 	let component: TeamSelectorComponent;
 	let fixture: ComponentFixture<TeamSelectorComponent>;
-
 	beforeEach(() => {
 		TestBed.configureTestingModule({
 			imports: [TeamSelectorComponent]
@@ -12,7 +11,6 @@ describe('TeamSelectorComponent', () => {
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
-
 	it('should create', () => {
 		expect(component).toBeTruthy();
 	});

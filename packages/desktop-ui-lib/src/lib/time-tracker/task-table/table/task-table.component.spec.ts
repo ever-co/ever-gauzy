@@ -7,7 +7,6 @@ describe('TaskTableComponent', () => {
 		await TestBed.configureTestingModule({
 			imports: [TaskTableComponent]
 		}).compileComponents();
-
 		fixture = TestBed.createComponent(TaskTableComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

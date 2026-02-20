@@ -34,8 +34,8 @@
 		"setup-env:dev": "yarn generate-env:dev && yarn replace-env:dev"
 	},
 	"peerDependencies": {
-		"@angular/common": "21.0.0",
-		"@angular/core": "21.0.0"
+		"@angular/common": "21.1.5",
+		"@angular/core": "21.1.5"
 	},
 	"dependencies": {
 		"tslib": "^2.6.2"

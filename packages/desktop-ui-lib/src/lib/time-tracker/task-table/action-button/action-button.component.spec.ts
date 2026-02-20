@@ -7,7 +7,6 @@ describe('ActionButtonComponent', () => {
 		await TestBed.configureTestingModule({
 			imports: [ActionButtonComponent]
 		}).compileComponents();
-
 		fixture = TestBed.createComponent(ActionButtonComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

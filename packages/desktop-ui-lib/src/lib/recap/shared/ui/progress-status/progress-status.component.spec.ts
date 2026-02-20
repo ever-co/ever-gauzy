@@ -5,9 +5,9 @@ describe('ProgressStatusComponent', () => {
 	let fixture: ComponentFixture<ProgressStatusComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-    imports: [ProgressStatusComponent],
-    teardown: { destroyAfterEach: false }
-}).compileComponents();
+			imports: [ProgressStatusComponent],
+			teardown: { destroyAfterEach: false }
+		}).compileComponents();
 	});
 	beforeEach(() => {
 		fixture = TestBed.createComponent(ProgressStatusComponent);

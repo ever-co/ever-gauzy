@@ -7,7 +7,6 @@ describe('AutoRefreshComponent', () => {
 		await TestBed.configureTestingModule({
 			imports: [AutoRefreshComponent]
 		}).compileComponents();
-
 		fixture = TestBed.createComponent(AutoRefreshComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

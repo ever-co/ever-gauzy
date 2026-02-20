@@ -7,7 +7,6 @@ describe('SearchComponent', () => {
 		await TestBed.configureTestingModule({
 			imports: [SearchComponent]
 		}).compileComponents();
-
 		fixture = TestBed.createComponent(SearchComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

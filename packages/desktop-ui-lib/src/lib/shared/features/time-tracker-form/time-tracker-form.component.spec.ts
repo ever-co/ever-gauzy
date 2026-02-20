@@ -3,7 +3,6 @@ import { TimeTrackerFormComponent } from './time-tracker-form.component';
 describe('TimeTrackerFormComponent', () => {
 	let component: TimeTrackerFormComponent;
 	let fixture: ComponentFixture<TimeTrackerFormComponent>;
-
 	beforeEach(() => {
 		TestBed.configureTestingModule({
 			imports: [TimeTrackerFormComponent]
@@ -12,7 +11,6 @@ describe('TimeTrackerFormComponent', () => {
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
-
 	it('should create', () => {
 		expect(component).toBeTruthy();
 	});

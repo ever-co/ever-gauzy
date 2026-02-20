@@ -5,8 +5,8 @@ describe('TimeTrackerComponent', () => {
 	let fixture: ComponentFixture<TimeTrackerComponent>;
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-    imports: [TimeTrackerComponent]
-}).compileComponents();
+			imports: [TimeTrackerComponent]
+		}).compileComponents();
 	}));
 	beforeEach(() => {
 		fixture = TestBed.createComponent(TimeTrackerComponent);

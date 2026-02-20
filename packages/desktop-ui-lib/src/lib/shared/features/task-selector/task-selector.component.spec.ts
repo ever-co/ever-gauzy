@@ -3,7 +3,6 @@ import { TaskSelectorComponent } from './task-selector.component';
 describe('TaskSelectorComponent', () => {
 	let component: TaskSelectorComponent;
 	let fixture: ComponentFixture<TaskSelectorComponent>;
-
 	beforeEach(() => {
 		TestBed.configureTestingModule({
 			imports: [TaskSelectorComponent]
@@ -12,7 +11,6 @@ describe('TaskSelectorComponent', () => {
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
-
 	it('should create', () => {
 		expect(component).toBeTruthy();
 	});

@@ -24,8 +24,8 @@
 		"lib:watch": "yarn nx build plugin-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "21.0.0",
-		"@angular/core": "21.0.0"
+		"@angular/common": "21.1.5",
+		"@angular/core": "21.1.5"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",

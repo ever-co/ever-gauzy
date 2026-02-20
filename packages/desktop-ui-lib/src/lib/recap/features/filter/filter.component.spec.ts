@@ -7,7 +7,6 @@ describe('FilterComponent', () => {
 		await TestBed.configureTestingModule({
 			imports: [FilterComponent]
 		}).compileComponents();
-
 		fixture = TestBed.createComponent(FilterComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

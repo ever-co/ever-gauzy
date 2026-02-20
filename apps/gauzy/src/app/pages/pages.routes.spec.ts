@@ -1,6 +1,5 @@
 import { RESERVED_PAGE_SECTION_PATHS } from '@gauzy/ui-core/core';
 import { getPagesRoutes } from './pages.routes';
-
 /**
  * Asserts that RESERVED_PAGE_SECTION_PATHS stays in sync with the core route
  * paths from getPagesRoutes(). Prevents adding new core routes without updating
@@ -18,10 +17,8 @@ describe('pages.routes', () => {
 			children.map((r) => r.path).filter((p): p is string => typeof p === 'string' && p !== '' && p !== '**')
 		);
 		const reserved = RESERVED_PAGE_SECTION_PATHS;
-
 		const missing = [...reserved].filter((p) => !corePaths.has(p));
 		const extra = [...corePaths].filter((p) => !reserved.has(p));
-
 		if (missing.length > 0) {
 			throw new Error(
 				`Missing reserved paths (in RESERVED_PAGE_SECTION_PATHS but not in getPagesRoutes()): ${missing.join(', ')}. ` +

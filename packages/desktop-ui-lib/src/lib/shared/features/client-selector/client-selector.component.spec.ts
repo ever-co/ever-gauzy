@@ -3,7 +3,6 @@ import { ClientSelectorComponent } from './client-selector.component';
 describe('ClientSelectorComponent', () => {
 	let component: ClientSelectorComponent;
 	let fixture: ComponentFixture<ClientSelectorComponent>;
-
 	beforeEach(() => {
 		TestBed.configureTestingModule({
 			imports: [ClientSelectorComponent]
@@ -12,7 +11,6 @@ describe('ClientSelectorComponent', () => {
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
-
 	it('should create', () => {
 		expect(component).toBeTruthy();
 	});

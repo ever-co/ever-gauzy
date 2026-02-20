@@ -7,7 +7,6 @@ describe('TextAreaComponent', () => {
 		await TestBed.configureTestingModule({
 			imports: [TextAreaComponent]
 		}).compileComponents();
-
 		fixture = TestBed.createComponent(TextAreaComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

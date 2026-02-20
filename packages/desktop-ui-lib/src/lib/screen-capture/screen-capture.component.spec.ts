@@ -5,8 +5,8 @@ describe('ScreenCaptureComponent', () => {
 	let fixture: ComponentFixture<ScreenCaptureComponent>;
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-    imports: [ScreenCaptureComponent]
-}).compileComponents();
+			imports: [ScreenCaptureComponent]
+		}).compileComponents();
 	}));
 	beforeEach(() => {
 		fixture = TestBed.createComponent(ScreenCaptureComponent);
