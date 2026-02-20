@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform, SecurityContext, VERSION, inject } from '@angular/core';
+import { Pipe, PipeTransform, SecurityContext, inject } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Pipe({
@@ -19,12 +19,11 @@ export class Nl2BrPipe implements PipeTransform {
 		if (typeof value !== 'string') {
 			return value;
 		}
+
 		let result: any;
 		const textParsed = value.replace(/(?:\r\n|\r|\n)/g, '<br />');
 
-		if (!VERSION || VERSION.major === '2') {
-			result = this.sanitizer.bypassSecurityTrustHtml(textParsed);
-		} else if (sanitizeBeforehand) {
+		if (sanitizeBeforehand) {
 			result = this.sanitizer.sanitize(SecurityContext.HTML, textParsed);
 		} else {
 			result = textParsed;
