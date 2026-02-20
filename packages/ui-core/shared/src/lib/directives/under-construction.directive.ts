@@ -6,7 +6,8 @@ import {
 	ElementRef,
 	EnvironmentInjector,
 	HostListener,
-	Injector
+	Injector,
+	inject
 } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { NbCardComponent, NbDialogRef, NbDialogService } from '@nebular/theme';
@@ -16,19 +17,19 @@ import { UnderConstructionPopupComponent } from '../components/popup/popup.compo
 @UntilDestroy({ checkProperties: true })
 @Directive({
 	selector: '[underConstruction]',
-	standalone: false
+	standalone: true
 })
 export class UnderConstructionDirective {
 	private _popupComponentRef: ComponentRef<UnderConstructionPopupComponent>;
 	private _dialogRef: NbDialogRef<NbCardComponent>;
 
-	constructor(
-		private readonly _elementRef: ElementRef,
-		private readonly _dialogService: NbDialogService,
-		private readonly _injector: Injector,
-		private readonly _environmentInjector: EnvironmentInjector,
-		private readonly _applicationRef: ApplicationRef
-	) {
+	private readonly _elementRef = inject(ElementRef);
+	private readonly _dialogService = inject(NbDialogService);
+	private readonly _injector = inject(Injector);
+	private readonly _environmentInjector = inject(EnvironmentInjector);
+	private readonly _applicationRef = inject(ApplicationRef);
+
+	constructor() {
 		// Create element
 		const popup = document.createElement('popup-component');
 

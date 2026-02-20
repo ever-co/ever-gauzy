@@ -14,9 +14,10 @@ import { SharedModule } from '../shared.module';
 		NbIconModule,
 		NbTooltipModule,
 		SharedModule,
-		TranslateModule.forChild()
+		TranslateModule.forChild(),
+		GalleryDirective
 	],
 	exports: [GalleryDirective, GalleryComponent],
-	declarations: [GalleryDirective, GalleryComponent]
+	declarations: [GalleryComponent]
 })
 export class GalleryModule {}

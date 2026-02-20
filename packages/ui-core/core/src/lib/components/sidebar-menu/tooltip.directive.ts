@@ -1,15 +1,15 @@
-import { Directive, ElementRef, HostListener, Input, OnDestroy } from '@angular/core';
+import { Directive, ElementRef, HostListener, Input, OnDestroy, inject } from '@angular/core';
 
 @Directive({
-    selector: '[gaTooltip]',
-    standalone: false
+	selector: '[gaTooltip]',
+	standalone: false
 })
 export class TooltipDirective implements OnDestroy {
+	private readonly el = inject(ElementRef);
+
 	@Input() gaTooltip: string;
 	@Input() icon: string;
 	private popup: any;
-
-	constructor(private readonly el: ElementRef) {}
 
 	ngOnDestroy(): void {
 		if (this.popup) this.popup.remove();

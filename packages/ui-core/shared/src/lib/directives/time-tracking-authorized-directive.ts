@@ -8,8 +8,8 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-    selector: '[ngxTimeTrackingAuthorized]',
-    standalone: false
+	selector: '[ngxTimeTrackingAuthorized]',
+	standalone: true
 })
 export class TimeTrackingAuthorizedDirective implements OnInit {
 	private _permission: string | string[] = []; // Default initialization
@@ -51,11 +51,11 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 							// Determine permission based on employee existence
 							const hasPermission = user.employee
 								? camelcase(this.permission) in organization &&
-								  organization[camelcase(this.permission)] &&
-								  camelcase(this.permission) in user.employee &&
-								  user.employee[camelcase(this.permission)]
+									organization[camelcase(this.permission)] &&
+									camelcase(this.permission) in user.employee &&
+									user.employee[camelcase(this.permission)]
 								: camelcase(this.permission) in organization &&
-								  organization[camelcase(this.permission)];
+									organization[camelcase(this.permission)];
 
 							return hasPermission;
 						}),

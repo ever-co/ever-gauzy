@@ -1,11 +1,11 @@
-import { Directive, ElementRef, HostListener } from '@angular/core';
+import { Directive, ElementRef, HostListener, inject } from '@angular/core';
 
 @Directive({
-    selector: '[noSpaceEdges]',
-    standalone: false
+	selector: '[noSpaceEdges]',
+	standalone: true
 })
 export class NoSpaceEdgesDirective {
-	constructor(private readonly el: ElementRef) {}
+	private readonly el = inject(ElementRef);
 
 	/**
 	 * Trims the input value and updates the element's value.
