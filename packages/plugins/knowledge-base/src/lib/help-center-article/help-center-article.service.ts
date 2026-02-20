@@ -20,28 +20,25 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	}
 
 	async getArticlesByCategoryId(categoryId: string): Promise<HelpCenterArticle[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('knowledge_base_article')
-			.where('knowledge_base_article.categoryId = :categoryId', {
-				categoryId
-			})
-			.getMany();
+		return await this.find({
+			where: { categoryId } as any
+		});
 	}
 
 	async deleteBulkByCategoryId(ids: string[]) {
 		if (isNotEmpty(ids)) {
-			return await this.typeOrmRepository.delete(ids);
+			return await Promise.all(ids.map((id) => this.delete(id)));
 		}
 	}
 
 	public async updateArticleById(id: string, input: IHelpCenterArticleUpdate): Promise<void> {
-		await this.typeOrmRepository.update(id, input);
+		await super.update(id, input);
 	}
 
 	/**
 	 * Update an article with automatic version snapshot.
 	 * Creates a version of the current state before applying the update.
-	 * 
+	 *
 	 * Note: This is not wrapped in a transaction. If the update fails after version creation,
 	 * an orphan version record may remain. Consider wrapping in a transaction if atomicity is critical.
 	 *

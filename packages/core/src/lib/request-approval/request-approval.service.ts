@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { Brackets, FindManyOptions, In } from 'typeorm';
 import {
 	IRequestApproval,
@@ -204,14 +204,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			});
 		}
 
-		return this.typeOrmRepository.save(requestApproval);
+		return this.save(requestApproval);
 	}
 
 	async updateRequestApproval(id: string, entity: IRequestApprovalCreateInput): Promise<RequestApproval> {
 		const tenantId = RequestContext.currentTenantId();
-		const requestApproval = await this.typeOrmRepository.findOneBy({
-			id
-		});
+		const requestApproval = await this.findOneByIdString(id);
 		requestApproval.name = entity.name;
 		requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 		requestApproval.approvalPolicyId = entity.approvalPolicyId;
@@ -272,21 +270,16 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			requestApproval.teamApprovals = requestApprovalTeams;
 		}
 
-		return this.typeOrmRepository.save(requestApproval);
+		return this.save(requestApproval);
 	}
 
 	async updateStatusRequestApprovalByAdmin(id: string, status: number): Promise<RequestApproval> {
-		const [requestApproval] = await this.typeOrmRepository.find({
-			where: {
-				id
-			},
+		const requestApproval = await this.findOneByIdString(id, {
 			relations: {
 				approvalPolicy: true
 			}
 		});
-		if (!requestApproval) {
-			throw new NotFoundException('Request Approval not found');
-		}
+
 		// if (
 		// 	requestApproval.status ===
 		// 		RequestApprovalStatusTypesEnum.APPROVED ||
@@ -298,25 +291,18 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 		requestApproval.status = status;
 
-		return this.typeOrmRepository.save(requestApproval);
+		return this.save(requestApproval);
 	}
 
 	async updateStatusRequestApprovalByEmployeeOrTeam(id: string, status: number): Promise<RequestApproval> {
 		let minCount = 0;
 		const employeeId = RequestContext.currentUser().employeeId;
-		const [requestApproval] = await this.typeOrmRepository.find({
-			where: {
-				id
-			},
+		const requestApproval = await this.findOneByIdString(id, {
 			relations: {
 				employeeApprovals: true,
 				teamApprovals: true
 			}
 		});
-
-		if (!requestApproval) {
-			throw new NotFoundException('Request Approval not found');
-		}
 
 		if (
 			requestApproval.status === RequestApprovalStatusTypesEnum.APPROVED ||
@@ -342,6 +328,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			requestApproval.status = RequestApprovalStatusTypesEnum.APPROVED;
 		}
 
-		return this.typeOrmRepository.save(requestApproval);
+		return this.save(requestApproval);
 	}
 }
