@@ -41,7 +41,7 @@
 		"ngx-permissions": "^19.0.0",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2",
-		"underscore": "^1.13.3"
+		"underscore": "^1.13.8"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
@@ -63,3 +63,4 @@
 	},
 	"sideEffects": false
 }
+

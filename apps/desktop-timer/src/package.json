@@ -166,7 +166,7 @@
     "tslib": "^2.6.2",
     "twing": "^5.0.2",
     "locutus": "^2.0.30",
-    "underscore": "^1.13.3",
+    "underscore": "^1.13.8",
     "undici": "^6.10.2",
     "custom-electron-titlebar": "^4.2.8",
     "call-bind-apply-helpers": "^1.0.2",
@@ -183,3 +183,4 @@
     "@gauzy/ui-config": "file:../../../dist/packages/ui-config"
   }
 }
+

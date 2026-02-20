@@ -60,7 +60,7 @@
 		"smee-client": "^1.2.3",
 		"tslib": "^2.6.2",
 		"typeorm": "^0.3.28",
-		"underscore": "^1.13.3",
+		"underscore": "^1.13.8",
 		"uuid": "^13.0.0"
 	},
 	"devDependencies": {
@@ -85,3 +85,5 @@
 	},
 	"sideEffects": false
 }
+
+

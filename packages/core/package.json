@@ -180,7 +180,7 @@
 		"streamifier": "^0.1.1",
 		"swagger-ui-express": "^5.0.0",
 		"typeorm": "^0.3.28",
-		"underscore": "^1.13.3",
+		"underscore": "^1.13.8",
 		"unleash-client": "^3.16.1",
 		"unzipper": "^0.12.1",
 		"uuid": "^13.0.0",
@@ -250,3 +250,5 @@
 	},
 	"sideEffects": false
 }
+
+

@@ -151,7 +151,7 @@
 		"tslib": "^2.6.2",
 		"twing": "^5.0.2",
 		"typeface-exo": "^0.0.61",
-		"underscore": "^1.13.3",
+		"underscore": "^1.13.8",
 		"underscore.string": "^3.3.6",
 		"uuid": "^13.0.0",
 		"web-animations-js": "^2.3.2",
@@ -192,3 +192,4 @@
 		"webpack-node-externals": "^3.0.0"
 	}
 }
+

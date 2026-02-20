@@ -103,7 +103,7 @@
 		"slugify": "^1.6.6",
 		"swiper": "^12.1.2",
 		"tslib": "^2.6.2",
-		"underscore": "^1.13.3",
+		"underscore": "^1.13.8",
 		"underscore.string": "^3.3.6",
 		"uuid": "^13.0.0"
 	},
