@@ -842,7 +842,9 @@
 		"deregistration",
 		"Deregisters",
 		"lifecycles",
-		"namespacing"
+		"namespacing",
+		"Hasher",
+		"VARCHAR"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

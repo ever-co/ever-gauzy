@@ -16,6 +16,7 @@ import {
 	ISocialAccountExistUser,
 	ISocialAccountLogin,
 	ITenant,
+	ITokenPair,
 	IUser,
 	IUserCodeInput,
 	IUserEmailInput,
@@ -36,6 +37,7 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	Logger,
 	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
@@ -44,11 +46,15 @@ import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
+import { AccessTokenService } from '../access-token/access-token.service';
+import { IAccessTokenMetadata } from '../access-token/type.token';
 import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { EventBus } from '../event-bus/event-bus';
 import { AccountRegistrationEvent } from '../event-bus/events';
 import { PasswordHashService } from '../password-hash/password-hash.service';
+import { RefreshTokenService } from '../refresh-token/refresh-token.service';
+import { IRefreshTokenMetadata } from '../refresh-token/type.token';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
@@ -91,7 +97,9 @@ export class AuthService extends SocialAuthService {
 		private readonly httpService: HttpService,
 		private readonly socialAccountService: SocialAccountService,
 		private readonly eventBus: EventBus,
-		private readonly passwordHashService: PasswordHashService
+		private readonly passwordHashService: PasswordHashService,
+		private readonly refreshTokenService: RefreshTokenService,
+		private readonly accessTokenService: AccessTokenService
 	) {
 		super();
 	}
@@ -772,26 +780,18 @@ export class AuthService extends SocialAuthService {
 	 */
 	async isAuthenticated(token: string): Promise<boolean> {
 		try {
-			const { id, thirdPartyId } = verify(token, environment.JWT_SECRET) as {
-				id: string;
-				thirdPartyId: string;
-			};
-
-			let result: Promise<boolean>;
+			const { id, thirdPartyId } = await this.accessTokenService.verify(token);
 
 			if (thirdPartyId) {
-				result = this.userService.checkIfExistsThirdParty(thirdPartyId);
-			} else {
-				result = this.userService.checkIfExists(id);
+				return this.userService.checkIfExistsThirdParty(thirdPartyId);
 			}
 
-			return result;
-		} catch (err) {
-			if (err instanceof JsonWebTokenError) {
+			return this.userService.checkIfExists(id);
+		} catch (error) {
+			if (error instanceof JsonWebTokenError || error instanceof UnauthorizedException) {
 				return false;
-			} else {
-				throw err;
 			}
+			return false;
 		}
 	}
 
@@ -896,7 +896,7 @@ export class AuthService extends SocialAuthService {
 	 * @returns A Promise that resolves to a JWT access token string.
 	 * @throws Throws an UnauthorizedException if the user is not found or if there is an issue in token generation.
 	 */
-	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID) {
+	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID, metadata?: IAccessTokenMetadata) {
 		const tenantId = request.tenantId || RequestContext.currentTenantId();
 		try {
 			// Validate that the request contains a user ID
@@ -963,13 +963,14 @@ export class AuthService extends SocialAuthService {
 				organizationId: organizationId ?? employee?.organizationId ?? null,
 				employeeId: employee ? employee.id : null,
 				role: user.role ? user.role.name : null,
-				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null
+				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null,
+				ipAddress: RequestContext.currentIp(),
+				userAgent: RequestContext.currentUserAgent(),
+				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
 
 			// Generate the JWT access token using the payload
-			return sign(payload, environment.JWT_SECRET, {
-				expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
-			});
+			return this.accessTokenService.generate(userId, payload);
 		} catch (error) {
 			// Log and rethrow any errors encountered during the process
 			console.log('Error while generating JWT access token:', error);
@@ -985,10 +986,15 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @param user A partial IUser object containing at least the user's ID, email, and role.
 	 * @param organizationId Optional organization ID to include in the token.
+	 * @param metadata Optional metadata to include in the token payload.
 	 * @returns A Promise that resolves to a JWT refresh token string.
 	 * @throws Logs an error and throws an exception if the token generation fails.
 	 */
-	public async getJwtRefreshToken(user: Partial<IUser>, organizationId?: ID) {
+	public async getJwtRefreshToken(
+		user: Partial<IUser>,
+		organizationId?: ID,
+		metadata?: IRefreshTokenMetadata
+	): Promise<string> {
 		try {
 			// Ensure the user object contains the necessary information
 			if (!user.id || !user.email) {
@@ -996,20 +1002,65 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Construct the JWT payload with organization context
-			const payload: JwtPayload = {
+			const payload = {
 				id: user.id,
 				email: user.email,
 				tenantId: user.tenantId || null,
 				organizationId: organizationId || user.lastOrganizationId || null,
-				role: user.role ? user.role.name : null
+				role: user.role ? user.role.name : null,
+				ipAddress: RequestContext.currentIp(),
+				userAgent: RequestContext.currentUserAgent(),
+				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
 
-			// Generate the JWT refresh token
-			return sign(payload, environment.JWT_REFRESH_TOKEN_SECRET, {
-				expiresIn: `${environment.JWT_REFRESH_TOKEN_EXPIRATION_TIME}s`
-			});
+			return this.refreshTokenService.generate(user.id, payload);
 		} catch (error) {
 			console.log('Error while generating JWT refresh token:', error);
+			throw new UnauthorizedException('Unable to generate refresh token');
+		}
+	}
+
+	/**
+	 * Rotates the JWT refresh token for a given user.
+	 *
+	 * This function takes an existing refresh token, validates it, and generates a new refresh token with updated payload information.
+	 * It ensures that the user information is up-to-date and includes organization context if provided.
+	 *
+	 * @param token The existing JWT refresh token to be rotated.
+	 * @param user A partial IUser object containing at least the user's ID, email, and role.
+	 * @param organizationId Optional organization ID to include in the new token.
+	 * @param metadata Optional metadata to include in the token payload.
+	 * @returns A Promise that resolves to a new JWT refresh token string.
+	 * @throws Logs an error and throws an exception if the token rotation fails.
+	 */
+	public async rotateRefreshToken(
+		token: string,
+		user: Partial<IUser>,
+		organizationId?: ID,
+		metadata?: IRefreshTokenMetadata
+	): Promise<string> {
+		try {
+			// Ensure the user object contains the necessary information
+			if (!user.id || !user.email) {
+				throw new Error('User ID or email is missing.');
+			}
+
+			// Construct the JWT payload with organization context
+			const payload = {
+				id: user.id,
+				email: user.email,
+				tenantId: user.tenantId || null,
+				organizationId: organizationId || user.lastOrganizationId || null,
+				role: user.role ? user.role.name : null,
+				ipAddress: RequestContext.currentIp(),
+				userAgent: RequestContext.currentUserAgent(),
+				...(metadata?.clientId && { clientId: metadata.clientId })
+			};
+
+			return this.refreshTokenService.rotate(token, payload);
+		} catch (error) {
+			console.log('Error while rotating JWT refresh token:', error);
+			throw new UnauthorizedException('Unable to rotate refresh token');
 		}
 	}
 
@@ -1049,6 +1100,59 @@ export class AuthService extends SocialAuthService {
 			// Return both the new access token and refresh token
 			return { token: access_token, refresh_token };
 		} catch (error) {
+			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401
+			if (
+				error instanceof UnauthorizedException ||
+				(error && typeof error.status === 'number' && error.status === 401)
+			) {
+				throw error;
+			}
+			// Otherwise, log and return null for non-auth/internal errors
+			console.error('Error while retrieving JWT access token from refresh token:', error);
+			return null;
+		}
+	}
+
+	/**
+	 * Rotates the JWT tokens for the current user.
+	 *
+	 * @param token - The current refresh token.
+	 * @param metadata - Optional metadata to include in the token payload.
+	 * @returns {Promise<ITokenPair | null>} - The new access and refresh tokens, or null if an error occurs.
+	 */
+	async rotateTokens(token: string, metadata?: IRefreshTokenMetadata): Promise<ITokenPair | null> {
+		try {
+			// Get the current user from the request context
+			const user = RequestContext.currentUser();
+
+			// If no user is found, return null
+			if (!user) return null;
+
+			// Extract organizationId from the current token (refresh token context)
+			// This ensures the new access token maintains the organization context
+			const organizationId = RequestContext.currentOrganizationId() || user.lastOrganizationId;
+
+			// Get and return the JWT access token for the user with organization context
+			// Generate the access token first (non-destructive). Only rotate the refresh token after
+			// successful access-token generation to avoid revoking the old refresh token if
+			// access-token generation fails.
+			const access_token = await this.getJwtAccessToken(user, organizationId, metadata);
+			const refresh_token = await this.rotateRefreshToken(token, user, organizationId, metadata);
+
+			// Update the user's current refresh token in the database
+			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+
+			// Return both the new access token and refresh token
+			return { token: access_token, refresh_token };
+		} catch (error) {
+			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401
+			if (
+				error instanceof UnauthorizedException ||
+				(error && typeof error.status === 'number' && error.status === 401)
+			) {
+				throw error;
+			}
+			// Otherwise, log and return null for non-auth/internal errors
 			// Use console.error for error logging with more descriptive context
 			console.error('Error while retrieving JWT access token from refresh token:', error);
 			return null;
@@ -1779,5 +1883,47 @@ export class AuthService extends SocialAuthService {
 			// For unexpected errors, return null to maintain backward compatibility
 			return null;
 		}
+	}
+
+	/**
+	 * Logs out the user by revoking the provided refresh token.
+	 *
+	 * This function attempts to revoke the refresh token associated with the user.
+	 * It also removes the refresh token from the user's record in the database. Any errors during these operations
+	 * are logged but do not prevent the logout process from completing.
+	 *
+	 * @param refreshToken The refresh token to be revoked. This is optional as the function will attempt to revoke the current access token regardless.
+	 */
+	public async logout(refreshToken?: string): Promise<void> {
+		const reason = 'User initiated logout';
+		const currentToken = RequestContext.currentToken();
+		const currentUserId = RequestContext.currentUserId();
+
+		const revocations: Promise<unknown>[] = [
+			this.userService.removeRefreshToken().catch((error) => {
+				// Log the error but do not throw it, as we want to proceed with logout even if this fails
+				Logger.error('Error while removing refresh token from user record:', error?.message);
+			})
+		];
+
+		if (refreshToken) {
+			revocations.push(
+				this.refreshTokenService.revoke(refreshToken, reason, currentUserId).catch((error) => {
+					// Log the error but do not throw it, as we want to proceed with logout even if this fails
+					Logger.error('Error while revoking refresh token:', error?.message);
+				})
+			);
+		}
+
+		if (currentToken) {
+			revocations.push(
+				this.accessTokenService.revoke(currentToken, reason, currentUserId).catch((error) => {
+					// Log the error but do not throw it, as we want to proceed with logout even if this fails
+					Logger.error('Error while revoking access token:', error?.message);
+				})
+			);
+		}
+
+		await Promise.allSettled(revocations);
 	}
 }
