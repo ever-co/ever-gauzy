@@ -7,8 +7,16 @@ import { WidgetTemplateDirective } from './widget-template.directive';
 import { SharedModule } from '../../shared.module';
 
 @NgModule({
-	imports: [CommonModule, NbButtonModule, NbIconModule, NbPopoverModule, TranslateModule.forChild(), SharedModule],
-	declarations: [WidgetComponent, WidgetTemplateDirective],
+	imports: [
+		CommonModule,
+		NbButtonModule,
+		NbIconModule,
+		NbPopoverModule,
+		TranslateModule.forChild(),
+		SharedModule,
+		WidgetTemplateDirective
+	],
+	declarations: [WidgetComponent],
 	exports: [WidgetComponent, WidgetTemplateDirective]
 })
 export class WidgetModule {}

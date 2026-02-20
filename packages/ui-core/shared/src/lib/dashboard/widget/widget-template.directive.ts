@@ -14,6 +14,6 @@ import { Directive } from '@angular/core';
  */
 @Directive({
 	selector: '[gaWidgetTemplate]',
-	standalone: false
+	standalone: true
 })
 export class WidgetTemplateDirective {}

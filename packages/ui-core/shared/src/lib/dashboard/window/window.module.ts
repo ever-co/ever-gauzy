@@ -7,8 +7,16 @@ import { WindowComponent } from '../window/window.component';
 import { WindowTemplateDirective } from './window-template.directive';
 
 @NgModule({
-	imports: [CommonModule, NbButtonModule, NbIconModule, NbPopoverModule, TranslateModule.forChild(), SharedModule],
-	declarations: [WindowComponent, WindowTemplateDirective],
+	imports: [
+		CommonModule,
+		NbButtonModule,
+		NbIconModule,
+		NbPopoverModule,
+		TranslateModule.forChild(),
+		SharedModule,
+		WindowTemplateDirective
+	],
+	declarations: [WindowComponent],
 	exports: [WindowComponent, WindowTemplateDirective]
 })
 export class WindowModule {}

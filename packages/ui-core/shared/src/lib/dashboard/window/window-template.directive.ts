@@ -14,6 +14,6 @@ import { Directive } from '@angular/core';
  */
 @Directive({
 	selector: '[gaWindowTemplate]',
-	standalone: false
+	standalone: true
 })
 export class WindowTemplateDirective {}
