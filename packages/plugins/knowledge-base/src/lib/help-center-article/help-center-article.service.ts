@@ -83,7 +83,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	}
 
 	/**
-	 * Get the raw binary description (Yjs state) of an article.
+	 * Get the raw binary description of an article.
 	 * Returns null if not yet set.
 	 */
 	public async getDescriptionBinary(id: ID): Promise<Buffer | null> {
