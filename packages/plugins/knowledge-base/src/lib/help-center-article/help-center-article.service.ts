@@ -78,7 +78,10 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 					.from(p('knowledge_base_article_project'), 'kbap')
 					.andWhere(p('"kbap"."organizationProjectId" = :projectId'), { projectId });
 
-				return p(`"knowledge_base_article_projects"."knowledgeBaseArticleId" IN `) + subQuery.distinct(true).getQuery();
+				return (
+					p(`"knowledge_base_article_projects"."knowledgeBaseArticleId" IN `) +
+					subQuery.distinct(true).getQuery()
+				);
 			});
 
 			// Add organization and tenant filters
@@ -124,7 +127,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	/**
 	 * Delete articles by category ID.
 	 */
-	async deleteBulkByCategoryId(ids: string[]) {
+	async deleteBulkByCategoryId(ids: ID[]) {
 		if (isNotEmpty(ids)) {
 			return await this.delete({ id: In(ids) } as any);
 		}
@@ -133,7 +136,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	/**
 	 * Update an article by ID.
 	 */
-	public async updateArticleById(id: string, input: IHelpCenterArticleUpdate): Promise<void> {
+	public async updateArticleById(id: ID, input: IHelpCenterArticleUpdate): Promise<void> {
 		await super.update(id, input);
 	}
 
