@@ -53,7 +53,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		try {
 			const { where, filters } = options;
 			const { organizationId } = where;
-			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? where.tenantId;
 
 			// Initialize the query
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
