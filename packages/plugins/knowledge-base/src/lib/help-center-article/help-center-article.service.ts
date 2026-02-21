@@ -126,7 +126,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	 */
 	async deleteBulkByCategoryId(ids: string[]) {
 		if (isNotEmpty(ids)) {
-			return await Promise.all(ids.map((id) => this.delete(id)));
+			return await this.delete({ id: In(ids) } as any);
 		}
 	}
 
