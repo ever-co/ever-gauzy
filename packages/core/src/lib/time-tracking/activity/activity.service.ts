@@ -110,9 +110,11 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 		let employeeById: any = {};
 		if (employeeIds.length > 0) {
+			const tenantId = RequestContext.currentTenantId();
 			const employees = await this.typeOrmEmployeeRepository.find({
 				where: {
-					id: In(employeeIds)
+					id: In(employeeIds),
+					tenantId
 				},
 				relations: ['user']
 			});
@@ -121,9 +123,11 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 		let projectById: any = {};
 		if (projectIds.length > 0) {
+			const tenantId = RequestContext.currentTenantId();
 			const projects = await this.typeOrmOrganizationProjectRepository.find({
 				where: {
-					id: In(projectIds)
+					id: In(projectIds),
+					tenantId
 				}
 			});
 			projectById = indexBy(projects, 'id');

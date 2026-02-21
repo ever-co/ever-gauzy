@@ -20,6 +20,6 @@ export class AvailabilitySlotsService extends TenantAwareCrudService<Availabilit
 	 * @returns
 	 */
 	public async createBulk(slots: IAvailabilitySlotsCreateInput[]): Promise<IAvailabilitySlot[]> {
-		return await this.typeOrmRepository.save(slots);
+		return await this.saveMany(slots);
 	}
 }

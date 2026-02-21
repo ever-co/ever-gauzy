@@ -497,6 +497,41 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
+	 * Creates multiple new entities in a single bulk operation.
+	 * More efficient than calling create() in a loop as it batches the database operations.
+	 *
+	 * @param entities The array of partial entity data for creation.
+	 * @returns The array of created entities.
+	 */
+	public async createMany(entities: IPartialEntity<T>[]): Promise<T[]> {
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const created = entities.map((entity) =>
+						this.mikroOrmRepository.create(entity as RequiredEntityData<T>, {
+							partial: true,
+							managed: true
+						})
+					);
+					await this.mikroOrmRepository.persistAndFlush(created);
+					return created.map((entity) => this.serialize(entity));
+				}
+				case MultiORMEnum.TypeORM: {
+					const newEntities = entities.map((entity) =>
+						this.typeOrmRepository.create(entity as DeepPartial<T>)
+					);
+					return await this.typeOrmRepository.save(newEntities);
+				}
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+		} catch (error) {
+			console.error('Error in crud service createMany method:', error);
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
 	 * Saves a given entity in the database.
 	 * If entity does not exist in the database then inserts, otherwise updates.
 	 *
@@ -515,6 +550,30 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			}
 		} catch (error) {
 			console.error('Error in crud service save method:', error);
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Saves multiple entities in a single bulk operation.
+	 * If entities do not exist in the database then inserts, otherwise updates.
+	 * More efficient than calling save() in a loop as it batches the database operations.
+	 *
+	 * @param entities The array of partial entity data.
+	 * @returns The array of saved entities.
+	 */
+	public async saveMany(entities: IPartialEntity<T>[]): Promise<T[]> {
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					return await Promise.all(entities.map((entity) => this.mikroOrmRepository.upsert(entity as T)));
+				case MultiORMEnum.TypeORM:
+					return await this.typeOrmRepository.save(entities as DeepPartial<T>[]);
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+		} catch (error) {
+			console.error('Error in crud service saveMany method:', error);
 			throw new BadRequestException(error);
 		}
 	}

@@ -81,7 +81,12 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 				entityId
 			};
 
-			let favorite = await this.typeOrmRepository.findOneBy(findOptions);
+			let favorite: Favorite;
+			try {
+				favorite = await this.findOneByWhereOptions(findOptions);
+			} catch {
+				favorite = null;
+			}
 			if (!favorite) {
 				favorite = new Favorite({ ...entity, employeeId });
 			}

@@ -89,7 +89,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	async findEquipmentSharingsByEmployeeId(id: ID): Promise<IPagination<IEquipmentSharing>> {
 		try {
-			const [items, total] = await this.typeOrmRepository.findAndCount({
+			return await this.findAll({
 				where: {
 					createdByUserId: id
 				},
@@ -99,7 +99,6 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					equipment: true
 				}
 			});
-			return { items, total };
 		} catch (error) {
 			console.error('Error finding equipment sharings by employee ID:', error);
 			throw new BadRequestException(error);
@@ -117,14 +116,13 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 *          and `total` (the total number of records).
 	 */
 	async findAllEquipmentSharings(): Promise<IPagination<IEquipmentSharing>> {
-		const [items, total] = await this.typeOrmRepository.findAndCount({
+		return await this.findAll({
 			relations: {
 				employees: true,
 				teams: true,
 				equipment: true
 			}
 		});
-		return { items, total };
 	}
 
 	/**
@@ -135,8 +133,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	async createEquipmentSharing(entity: IEquipmentSharingCreateInput): Promise<EquipmentSharing> {
 		try {
-			// Save the equipment sharing record in the database.
-			const equipmentSharing = await this.typeOrmRepository.save(entity);
+			// Save the equipment sharing record using tenant-aware save
+			const equipmentSharing = await this.save(entity);
 			return equipmentSharing;
 		} catch (error) {
 			console.error('Error creating equipment sharing:', error);

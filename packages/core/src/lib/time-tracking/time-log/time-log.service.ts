@@ -1158,7 +1158,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Check for conflicts with existing time logs
-			const timeLog = await this.typeOrmRepository.findOneBy({ id });
+			const timeLog = await this.findOneByIdString(id);
 
 			// Check for conflicts with existing time logs
 			const conflicts = await this.commandBus.execute(
@@ -1193,7 +1193,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog));
 
 			// Retrieve the updated time log entry
-			return await this.typeOrmRepository.findOneBy({ id: request.id });
+			return await this.findOneByIdString(request.id);
 		} catch (error) {
 			// Handle exceptions appropriately
 			throw new BadRequestException('Failed to update manual time log');

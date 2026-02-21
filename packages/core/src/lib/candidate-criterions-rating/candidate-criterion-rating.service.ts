@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { In } from 'typeorm';
 import { ICandidateCriterionsRating, ICandidateCriterionsRatingCreateInput, ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
@@ -24,10 +25,9 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 		technologyCreateInput: ICandidateCriterionsRatingCreateInput[],
 		qualityCreateInput: ICandidateCriterionsRatingCreateInput[]
 	) {
-		return [
-			await this.typeOrmRepository.save(technologyCreateInput),
-			await this.typeOrmRepository.save(qualityCreateInput)
-		];
+		const techResults = await this.saveMany(technologyCreateInput);
+		const qualResults = await this.saveMany(qualityCreateInput);
+		return [techResults, qualResults];
 	}
 
 	/***
@@ -48,7 +48,9 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 	 * @returns
 	 */
 	async deleteBulk(ids: ID[]) {
-		return await this.typeOrmRepository.delete(ids);
+		if (ids.length > 0) {
+			await this.delete({ id: In(ids) } as any);
+		}
 	}
 
 	/**
@@ -58,6 +60,8 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 	 * @returns
 	 */
 	async updateBulk(tech: ICandidateCriterionsRating[], qual: ICandidateCriterionsRating[]) {
-		return [await this.typeOrmRepository.save(tech), await this.typeOrmRepository.save(qual)];
+		const techResults = await this.saveMany(tech);
+		const qualResults = await this.saveMany(qual);
+		return [techResults, qualResults];
 	}
 }

@@ -132,7 +132,8 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 	 */
 	async updateWarehouseProductQuantity(warehouseProductId: ID, quantity: number): Promise<IWarehouseProduct> {
 		// Fetch warehouse product
-		const warehouseProduct = await this.typeOrmRepository.findOneBy({ id: warehouseProductId });
+		const tenantId = RequestContext.currentTenantId();
+		const warehouseProduct = await this.typeOrmRepository.findOneBy({ id: warehouseProductId, tenantId });
 
 		// Handle missing warehouse product
 		if (!warehouseProduct) {
@@ -163,8 +164,9 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		quantity: number
 	): Promise<IWarehouseProductVariant> {
 		// Fetch the warehouse product variant along with its associated warehouse product
+		const tenantId = RequestContext.currentTenantId();
 		const warehouseProductVariant = await this.typeOrmWarehouseProductVariantRepository.findOne({
-			where: { id: warehouseProductVariantId },
+			where: { id: warehouseProductVariantId, tenantId },
 			relations: { warehouseProduct: true }
 		});
 
@@ -178,7 +180,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 
 		// Fetch the associated warehouse product with all its variants
 		const warehouseProduct = await this.typeOrmRepository.findOne({
-			where: { id: warehouseProductVariant.warehouseProduct?.id },
+			where: { id: warehouseProductVariant.warehouseProduct?.id, tenantId },
 			relations: { variants: true }
 		});
 

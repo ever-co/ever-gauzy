@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import {
 	BaseEntityEnum,
 	EntitySubscriptionTypeEnum,
@@ -57,7 +57,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
 		// Fetch existing team members with their roles
-		const teamMembers = await this.typeOrmRepository.find({
+		const teamMembers = await this.find({
 			where: { tenantId, organizationId, organizationTeamId },
 			relations: { role: true }
 		});
@@ -101,7 +101,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 				// Only update if the role has changed
 				if (newRole?.id !== member.roleId) {
-					await this.typeOrmRepository.update(member.id, {
+					await super.update(member.id, {
 						role: newRole,
 						isManager
 					});
@@ -144,7 +144,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				console.error('Error subscribing new team members:', error);
 			}
 
-			await this.typeOrmRepository.save(newTeamMembers);
+			await this.saveMany(newTeamMembers);
 		}
 	}
 
@@ -155,11 +155,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	 * @returns A promise that resolves when all deletions are complete
 	 */
 	async deleteMemberByIds(memberIds: ID[]): Promise<void> {
-		// Map member IDs to deletion promises
-		const deletePromises = memberIds.map((memberId: string) => this.typeOrmRepository.delete(memberId));
-
-		// Wait for all deletions to complete
-		await Promise.all(deletePromises);
+		if (memberIds.length > 0) {
+			await this.delete({ id: In(memberIds) } as any);
+		}
 	}
 
 	/**
@@ -235,12 +233,13 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 			// Admins and Super Admins can update the activeTaskId of any employee
 			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-				const member = await this.typeOrmRepository.findOneOrFail({
-					where: { id: memberId, ...whereClause }
+				const member = await this.findOneByWhereOptions({
+					id: memberId,
+					...whereClause
 				});
 
 				// Update the active task ID
-				return await this.typeOrmRepository.update(member.id, { activeTaskId });
+				return await super.update(member.id, { activeTaskId });
 			}
 
 			// Non-admin: Employee must update their own task or manage their team as a manager
@@ -262,9 +261,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				}
 
 				// Find the organization team employee
-				const member = await this.typeOrmRepository.findOneByOrFail(whereClause);
+				const member = await this.findOneByWhereOptions(whereClause);
 				// Update the active task ID
-				return await this.typeOrmRepository.update(
+				return await super.update(
 					{ id: member.id, organizationId, organizationTeamId, tenantId },
 					{ activeTaskId }
 				);
@@ -300,18 +299,16 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		try {
 			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				// Get member
-				const member = await this.typeOrmRepository.findOneOrFail({
-					where: {
-						id: memberId,
-						...whereClause
-					}
+				const member = await this.findOneByWhereOptions({
+					id: memberId,
+					...whereClause
 				});
 
 				// Unassign employee all tasks before removing from team
 				await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
 				// Remove the team member
-				return await this.typeOrmRepository.remove(member);
+				return await this.delete(member.id);
 			} else {
 				const employeeId = RequestContext.currentEmployeeId();
 
@@ -335,13 +332,13 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				}
 
 				// Find the organization team employee
-				const member = await this.typeOrmRepository.findOneByOrFail(whereClause);
+				const member = await this.findOneByWhereOptions(whereClause);
 
 				// Unassign employee all tasks before removing from the team
 				await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
 				// Remove the team member
-				return await this.typeOrmRepository.remove(member);
+				return await this.delete(member.id);
 			}
 		} catch (error) {
 			throw new ForbiddenException('An error occurred while deleting the team member.');

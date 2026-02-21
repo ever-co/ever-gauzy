@@ -148,19 +148,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				}
 			};
 
-			// Execute the query based on the ORM type
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM: {
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options);
-					const employees = await this.mikroOrmRepository.find(where, mikroOptions);
-					return employees.map((entity: Employee) => this.serialize(entity)) as Employee[];
-				}
-				case MultiORMEnum.TypeORM: {
-					return await this.typeOrmRepository.find(options);
-				}
-				default:
-					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
-			}
+			// Use base class find which handles both ORMs and tenant scoping
+			return (await this.find(options)) as Employee[];
 		} catch (error) {
 			console.error(`Error finding employees by user IDs: ${error.message}`);
 			return []; // Return an empty array if an error occurs
@@ -188,18 +177,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				...(orgId && { organizationId: orgId })
 			};
 
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM: {
-					const employee = await this.mikroOrmRepository.findOne(whereClause);
-					return employee ? employee.id : null;
-				}
-				case MultiORMEnum.TypeORM: {
-					const employee = await this.typeOrmRepository.findOne({ where: whereClause });
-					return employee ? employee.id : null;
-				}
-				default:
-					throw new Error(`Not implemented for ${this.ormType}`);
-			}
+			// Use base class method which handles both ORMs and tenant scoping
+			const employee = await this.findOneByWhereOptions(whereClause);
+			return employee ? employee.id : null;
 		} catch (error) {
 			console.error(`Error finding employee by userId: ${error.message}`);
 			return null;
@@ -241,18 +221,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				}
 			};
 
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(
-						queryOptions as FindManyOptions
-					);
-					const item = await this.mikroOrmRepository.findOne(where, mikroOptions);
-					return this.serialize(item as Employee);
-				case MultiORMEnum.TypeORM:
-					return await this.typeOrmRepository.findOne(queryOptions);
-				default:
-					throw new Error(`Not implemented for ${this.ormType}`);
-			}
+			// Use base class method which handles both ORMs and tenant scoping
+			return await this.findOneByOptions(queryOptions);
 		} catch (error) {
 			console.error(`Error finding employee by userId: ${error.message}`);
 			return null;

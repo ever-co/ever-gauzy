@@ -31,9 +31,13 @@ export class TimeSlotBulkCreateOrUpdateHandler implements ICommandHandler<TimeSl
 			return slot;
 		});
 
+		const tenantId = RequestContext.currentTenantId();
 		const insertedSlots = await this.typeOrmTimeSlotRepository.find({
 			where: {
-				startedAt: In(_.pluck(slots, 'startedAt'))
+				startedAt: In(_.pluck(slots, 'startedAt')),
+				tenantId,
+				organizationId,
+				employeeId
 			},
 			relations: ['timeLogs']
 		});
@@ -57,7 +61,10 @@ export class TimeSlotBulkCreateOrUpdateHandler implements ICommandHandler<TimeSl
 
 		const timeLogs = await this.typeOrmTimeLogRepository.find({
 			where: {
-				id: In(timeLogIds)
+				id: In(timeLogIds),
+				tenantId,
+				organizationId,
+				employeeId
 			}
 		});
 

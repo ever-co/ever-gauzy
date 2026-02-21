@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { In } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud';
 import { ProductVariantSetting } from './product-setting.entity';
 import { TypeOrmProductVariantSettingRepository } from './repository/type-orm-product-setting.repository';
@@ -19,7 +20,7 @@ export class ProductVariantSettingService extends TenantAwareCrudService<Product
 	 */
 	async createDefaultVariantSettings(): Promise<ProductVariantSetting> {
 		const newProductVariantSettings = new ProductVariantSetting();
-		return this.typeOrmRepository.save(newProductVariantSettings);
+		return this.save(newProductVariantSettings);
 	}
 
 	/**
@@ -27,7 +28,10 @@ export class ProductVariantSettingService extends TenantAwareCrudService<Product
 	 * @param productVariantPrices
 	 * @returns
 	 */
-	async deleteMany(productVariantPrices: ProductVariantSetting[]): Promise<ProductVariantSetting[]> {
-		return this.typeOrmRepository.remove(productVariantPrices);
+	async deleteMany(productVariantPrices: ProductVariantSetting[]): Promise<void> {
+		const ids = productVariantPrices.filter((s) => s.id).map((s) => s.id);
+		if (ids.length > 0) {
+			await this.delete({ id: In(ids) } as any);
+		}
 	}
 }

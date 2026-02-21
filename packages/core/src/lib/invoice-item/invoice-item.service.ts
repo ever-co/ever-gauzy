@@ -31,10 +31,10 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	async createBulk(invoiceId: ID, input: IInvoiceItemCreateInput[]): Promise<IInvoiceItem[]> {
 		try {
 			// Remove existing invoice items for the given invoice
-			await this.typeOrmRepository.delete({ invoiceId });
+			await this.delete({ invoiceId } as any);
 
 			// Insert new invoice items
-			return await this.typeOrmRepository.save(input);
+			return await this.saveMany(input);
 		} catch (error) {
 			throw new HttpException(
 				`Failed to create bulk invoice items: ${error.message}`,

@@ -2,14 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import {
-	DeepPartial,
-	DeleteResult,
-	FindManyOptions,
-	FindOneOptions,
-	FindOptionsWhere,
-	UpdateResult
-} from 'typeorm';
+import { DeepPartial, DeleteResult, FindManyOptions, FindOneOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination } from '@gauzy/contracts';
 import { ITryRequest } from './try-request';
@@ -33,7 +26,9 @@ export interface ICrudService<T> {
 	findOneOrFailByOptions(options: IFindOneOptions<T>): Promise<ITryRequest<T>>;
 	findOneOrFailByWhereOptions(options: IFindWhereOptions<T>): Promise<ITryRequest<T>>;
 	create(entity: IPartialEntity<T>, ...options: any[]): Promise<T>;
+	createMany(entities: IPartialEntity<T>[], ...options: any[]): Promise<T[]>;
 	save(entity: IPartialEntity<T>): Promise<T>;
+	saveMany(entities: IPartialEntity<T>[]): Promise<T[]>;
 	update(id: IUpdateCriteria<T>, entity: QueryDeepPartialEntity<T>, ...options: any[]): Promise<UpdateResult | T>;
 	delete(id: IDeleteCriteria<T>, ...options: any[]): Promise<DeleteResult>;
 	softDelete(id: IDeleteCriteria<T>, ...options: any[]): Promise<UpdateResult | T>;
@@ -41,26 +36,34 @@ export interface ICrudService<T> {
 	softRecover(id: string, ...options: any[]): Promise<T>;
 }
 
-export type IMikroOptions<T> = { where?: MikroFilterQuery<T> } & MikroFindOptions<T>
+export type IMikroOptions<T> = { where?: MikroFilterQuery<T> } & MikroFindOptions<T>;
 
-export type ICountOptions<T> = FindManyOptions<T> | IMikroOptions<T>
+export type ICountOptions<T> = FindManyOptions<T> | IMikroOptions<T>;
 
-export type ICountByOptions<T> = FindOptionsWhere<T> | MikroFilterQuery<T>
+export type ICountByOptions<T> = FindOptionsWhere<T> | MikroFilterQuery<T>;
 
-export type IFindManyOptions<T> = FindManyOptions<T> | IMikroOptions<T>
+export type IFindManyOptions<T> = FindManyOptions<T> | IMikroOptions<T>;
 
-export type IFindOneOptions<T> = FindOneOptions<T> | IMikroOptions<T>
+export type IFindOneOptions<T> = FindOneOptions<T> | IMikroOptions<T>;
 
-export type IFindOrFailOptions<T> = FindOneOptions<T> | IMikroOptions<T>
+export type IFindOrFailOptions<T> = FindOneOptions<T> | IMikroOptions<T>;
 
-export type IFindWhereOptions<T> = FindOptionsWhere<T> | MikroFilterQuery<T>
+export type IFindWhereOptions<T> = FindOptionsWhere<T> | MikroFilterQuery<T>;
 
-export type IPartialEntity<T> = DeepPartial<T> | RequiredEntityData<T>
+export type IPartialEntity<T> = DeepPartial<T> | RequiredEntityData<T>;
 
-export type IUpdateCriteria<T> = string | number | FindOptionsWhere<T> | (UpdateOptions<T> & {
-	where?: MikroFilterQuery<T>
-})
+export type IUpdateCriteria<T> =
+	| string
+	| number
+	| FindOptionsWhere<T>
+	| (UpdateOptions<T> & {
+			where?: MikroFilterQuery<T>;
+	  });
 
-export type IDeleteCriteria<T> = string | number | FindOptionsWhere<T> | (DeleteOptions<T> & {
-	where?: MikroFilterQuery<T>
-})
+export type IDeleteCriteria<T> =
+	| string
+	| number
+	| FindOptionsWhere<T>
+	| (DeleteOptions<T> & {
+			where?: MikroFilterQuery<T>;
+	  });

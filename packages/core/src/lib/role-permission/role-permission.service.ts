@@ -336,14 +336,15 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		const { defaultEnabledPermissions } = DEFAULT_ROLE_PERMISSIONS.find(
 			(defaultRole) => role.name === defaultRole.role
 		);
-		for await (const permission of defaultEnabledPermissions) {
+		const rolePermissions = defaultEnabledPermissions.map((permission) => {
 			const rolePermission = new RolePermission();
 			rolePermission.roleId = role.id;
 			rolePermission.permission = permission;
 			rolePermission.enabled = true;
 			rolePermission.tenant = tenant;
-			await this.create(rolePermission);
-		}
+			return rolePermission;
+		});
+		await this.createMany(rolePermissions);
 	}
 
 	public async updateRolesAndPermissions(tenants: ITenant[]): Promise<IRolePermission[] & RolePermission[]> {

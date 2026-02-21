@@ -45,7 +45,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 
 		// Save the time off request first.
-		const timeOffRequest = await this.typeOrmRepository.save(request);
+		const timeOffRequest = await this.save(request);
 
 		// Prepare the request approval record using the new request's id.
 		const requestApproval = new RequestApproval();

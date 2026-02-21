@@ -62,7 +62,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 			});
 
 			// Prepare and save estimate email entry
-			return await this.typeOrmRepository.save(
+			return await this.save(
 				new EstimateEmail({
 					organizationId: invoice.organizationId,
 					tenantId: RequestContext.currentTenantId(),

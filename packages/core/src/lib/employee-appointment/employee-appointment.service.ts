@@ -34,7 +34,7 @@ export class EmployeeAppointmentService extends TenantAwareCrudService<EmployeeA
 	 * @returns A promise that resolves to the saved `EmployeeAppointment` entity.
 	 */
 	async saveAppointment(input: IEmployeeAppointmentCreateInput): Promise<EmployeeAppointment> {
-		return await this.typeOrmRepository.save(input);
+		return await this.save(input);
 	}
 
 	/**

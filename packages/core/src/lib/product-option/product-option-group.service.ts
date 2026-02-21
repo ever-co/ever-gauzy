@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { In } from 'typeorm';
 import { ProductOptionGroupTranslation } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { IProductOptionGroupTranslation, IProductOptionGroupTranslatable } from '@gauzy/contracts';
@@ -18,19 +19,22 @@ export class ProductOptionGroupService extends TenantAwareCrudService<ProductOpt
 	}
 
 	async create(productOptionsGroupInput: ProductOptionGroup): Promise<ProductOptionGroup> {
-		return this.typeOrmRepository.save(productOptionsGroupInput);
+		return super.create(productOptionsGroupInput);
 	}
 
 	async createBulk(productOptionsGroupInput: ProductOptionGroup[]): Promise<ProductOptionGroup[]> {
-		return this.typeOrmRepository.save(productOptionsGroupInput);
+		return await this.createMany(productOptionsGroupInput);
 	}
 
 	async saveBulk(productOptionsGroupInput: ProductOptionGroup[]): Promise<ProductOptionGroup[]> {
-		return this.typeOrmRepository.save(productOptionsGroupInput);
+		return await this.saveMany(productOptionsGroupInput);
 	}
 
 	async deleteBulk(productOptionGroupsInput: IProductOptionGroupTranslatable[]) {
-		return this.typeOrmRepository.remove(productOptionGroupsInput as any);
+		const ids = productOptionGroupsInput.filter((g) => (g as any).id).map((g) => (g as any).id);
+		if (ids.length > 0) {
+			await this.delete({ id: In(ids) } as any);
+		}
 	}
 
 	async createTranslations(
