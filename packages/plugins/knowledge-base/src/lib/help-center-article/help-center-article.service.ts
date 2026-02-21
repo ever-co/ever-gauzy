@@ -1,8 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { Brackets, FindOptionsWhere, In, SelectQueryBuilder, WhereExpressionBuilder, DeepPartial } from 'typeorm';
+import { RequestContext, TenantAwareCrudService, BaseQueryDTO, prepareSQLQuery as p, LIKE_OPERATOR } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
-import { ID, IHelpCenterArticle, IHelpCenterArticleUpdate, IHelpCenterArticleVersion } from '@gauzy/contracts';
+import {
+	ID,
+	IHelpCenterArticle,
+	IHelpCenterArticleUpdate,
+	IHelpCenterArticleVersion,
+	IHelpCenterArticleFiltering,
+	IHelpCenterArticleAdvancedFilter,
+	IPagination
+} from '@gauzy/contracts';
 import { HelpCenterArticle } from './help-center-article.entity';
 import { HelpCenterArticleVersion } from './help-center-article-version.entity';
 import { HelpCenterArticleVersionService } from './help-center-article-version.service';
@@ -22,13 +30,101 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	/**
 	 * Get articles by category ID.
 	 */
-	async getArticlesByCategoryId(categoryId: string): Promise<HelpCenterArticle[]> {
+	async getArticlesByCategoryId(categoryId: ID): Promise<HelpCenterArticle[]> {
 		return await this.typeOrmRepository
 			.createQueryBuilder('knowledge_base_article')
 			.where('knowledge_base_article.categoryId = :categoryId', {
 				categoryId
 			})
 			.getMany();
+	}
+
+	/**
+	 * Get articles by project ID with pagination and advanced filtering.
+	 *
+	 * @param projectId - The project ID to filter by.
+	 * @param options - The pagination and filtering options.
+	 * @returns A promise that resolves with the paginated articles and total count.
+	 */
+	async getArticlesByProjectId(
+		projectId: ID,
+		options: BaseQueryDTO<HelpCenterArticle> & IHelpCenterArticleFiltering
+	): Promise<IPagination<IHelpCenterArticle>> {
+		try {
+			const { where, filters } = options;
+			const { organizationId } = where;
+			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
+
+			// Initialize the query
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			query.leftJoin(`${query.alias}.projects`, 'projects');
+
+			// Apply find options if provided
+			if (isNotEmpty(options)) {
+				query.setFindOptions({
+					...(options.select && { select: options.select }),
+					...(options.relations && { relations: options.relations }),
+					...(options.order && { order: options.order }),
+					...(options.take && { take: options.take }),
+					...(options.skip && { skip: options.skip })
+				});
+			}
+
+			// Apply advanced filters
+			if (filters) {
+				const advancedWhere = this.buildAdvancedWhereCondition(filters, where);
+				query.setFindOptions({ where: advancedWhere });
+			}
+
+			// Filter by knowledge_base_article_project with a sub query
+			query.andWhere((qb: SelectQueryBuilder<HelpCenterArticle>) => {
+				const subQuery = qb
+					.subQuery()
+					.select(p('"kbap"."knowledgeBaseArticleId"'))
+					.from(p('knowledge_base_article_project'), 'kbap')
+					.andWhere(p('"kbap"."organizationProjectId" = :projectId'), { projectId });
+
+				return p(`"knowledge_base_article_projects"."knowledgeBaseArticleId" IN `) + subQuery.distinct(true).getQuery();
+			});
+
+			// Add organization and tenant filters
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				})
+			);
+
+			// Add additional filters (draft, privacy, names, etc.)
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					if (isNotEmpty(where)) {
+						const { name, draft, privacy, isLocked, categoryId } = where;
+
+						if (isNotEmpty(name)) {
+							qb.andWhere(p(`"${query.alias}"."name" ${LIKE_OPERATOR} :name`), { name: `%${name}%` });
+						}
+						if (draft !== undefined) {
+							qb.andWhere(p(`"${query.alias}"."draft" = :draft`), { draft });
+						}
+						if (privacy !== undefined) {
+							qb.andWhere(p(`"${query.alias}"."privacy" = :privacy`), { privacy });
+						}
+						if (isLocked !== undefined) {
+							qb.andWhere(p(`"${query.alias}"."isLocked" = :isLocked`), { isLocked });
+						}
+						if (isNotEmpty(categoryId)) {
+							qb.andWhere(p(`"${query.alias}"."categoryId" = :categoryId`), { categoryId });
+						}
+					}
+				})
+			);
+
+			const [items, total] = await query.getManyAndCount();
+			return { items, total };
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
@@ -126,5 +222,44 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		};
 
 		return await this.create(copy);
+	}
+
+	/**
+	 * Constructs advanced `where` conditions for filtering articles based on the provided filters and existing conditions.
+	 *
+	 * @private
+	 * @param {IHelpCenterArticleAdvancedFilter} [filters] - Advanced filtering criteria for articles.
+	 * @param {FindOptionsWhere<HelpCenterArticle>} [where] - Existing `where` conditions to be merged with the filters.
+	 * @returns {FindOptionsWhere<HelpCenterArticle>} A `where` condition object to be used in database queries.
+	 */
+	private buildAdvancedWhereCondition(
+		filters?: IHelpCenterArticleAdvancedFilter,
+		where: FindOptionsWhere<HelpCenterArticle> = {}
+	): FindOptionsWhere<HelpCenterArticle> {
+		const {
+			ids = [],
+			names = [],
+			tags = [],
+			projects = [],
+			categories = [],
+			authors = [],
+			ownedBy = [],
+			draft,
+			privacy,
+			isLocked
+		} = filters;
+
+		return {
+			...(ids.length && !where.id ? { id: In(ids) } : {}),
+			...(names.length && !where.name ? { name: In(names) } : {}),
+			...(tags.length && !where.tags ? { tags: { id: In(tags) } } : {}),
+			...(projects.length && !where.projects ? { projects: { id: In(projects) } } : {}),
+			...(categories.length && !where.categoryId ? { categoryId: In(categories) } : {}),
+			...(authors.length && !where.authors ? { authors: { employeeId: In(authors) } } : {}),
+			...(ownedBy.length && !where.ownedById ? { ownedById: In(ownedBy) } : {}),
+			...(draft !== undefined && where.draft === undefined ? { draft } : {}),
+			...(privacy !== undefined && where.privacy === undefined ? { privacy } : {}),
+			...(isLocked !== undefined && where.isLocked === undefined ? { isLocked } : {})
+		};
 	}
 }

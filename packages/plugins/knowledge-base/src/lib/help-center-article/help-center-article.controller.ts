@@ -1,13 +1,14 @@
-import { PermissionsEnum, IHelpCenterArticle } from '@gauzy/contracts';
+import { PermissionsEnum, IHelpCenterArticle, ID, IPagination, IHelpCenterArticleFiltering } from '@gauzy/contracts';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put, Res } from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put, Res, Query } from '@nestjs/common';
 import {
 	Permissions,
 	CrudController,
 	TenantPermissionGuard,
 	PermissionGuard,
 	UseValidationPipe,
-	UUIDValidationPipe
+	UUIDValidationPipe,
+	BaseQueryDTO
 } from '@gauzy/core';
 import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
@@ -70,8 +71,29 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 		description: 'Record not found'
 	})
 	@Get('category/:categoryId')
-	async findByCategoryId(@Param('categoryId', UUIDValidationPipe) categoryId: string): Promise<IHelpCenterArticle[]> {
+	async findByCategoryId(@Param('categoryId', UUIDValidationPipe) categoryId: ID): Promise<IHelpCenterArticle[]> {
 		return this.helpCenterArticleService.getArticlesByCategoryId(categoryId);
+	}
+
+	@ApiOperation({
+		summary: 'Find articles By Project Id.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found project articles',
+		type: HelpCenterArticle
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('project/:projectId')
+	@UseValidationPipe({ transform: true })
+	async findByProjectId(
+		@Param('projectId', UUIDValidationPipe) projectId: ID,
+		@Query() options: BaseQueryDTO<HelpCenterArticle> & IHelpCenterArticleFiltering
+	): Promise<IPagination<IHelpCenterArticle>> {
+		return this.helpCenterArticleService.getArticlesByProjectId(projectId, options);
 	}
 
 	/**
