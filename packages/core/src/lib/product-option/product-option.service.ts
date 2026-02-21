@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { In } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductOptionTranslation } from './../core/entities/internal';
 import { IProductOptionTranslatable, IProductOptionTranslation } from '@gauzy/contracts';
@@ -28,15 +29,18 @@ export class ProductOptionService extends TenantAwareCrudService<ProductOption> 
 	}
 
 	async save(productOptionInput: IProductOptionTranslatable): Promise<ProductOption> {
-		return this.typeOrmRepository.save(productOptionInput);
+		return super.save(productOptionInput as any);
 	}
 
 	async saveBulk(productOptionsInput: ProductOption[]): Promise<ProductOption[]> {
-		return this.typeOrmRepository.save(productOptionsInput);
+		return await this.saveMany(productOptionsInput);
 	}
 
 	async deleteBulk(productOptionsInput: IProductOptionTranslatable[]) {
-		return this.typeOrmRepository.remove(productOptionsInput as any);
+		const ids = productOptionsInput.filter((o) => (o as any).id).map((o) => (o as any).id);
+		if (ids.length > 0) {
+			await this.delete({ id: In(ids) } as any);
+		}
 	}
 
 	async deleteOptionTranslationsBulk(productOptionTranslationsInput: IProductOptionTranslation[]) {

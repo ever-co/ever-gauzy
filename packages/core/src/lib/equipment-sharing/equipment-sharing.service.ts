@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, HttpStatus, HttpException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { Brackets, DeleteResult, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
@@ -89,7 +89,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	async findEquipmentSharingsByEmployeeId(id: ID): Promise<IPagination<IEquipmentSharing>> {
 		try {
-			const [items, total] = await this.typeOrmRepository.findAndCount({
+			return await this.findAll({
 				where: {
 					createdByUserId: id
 				},
@@ -99,7 +99,6 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					equipment: true
 				}
 			});
-			return { items, total };
 		} catch (error) {
 			console.error('Error finding equipment sharings by employee ID:', error);
 			throw new BadRequestException(error);
@@ -117,14 +116,13 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 *          and `total` (the total number of records).
 	 */
 	async findAllEquipmentSharings(): Promise<IPagination<IEquipmentSharing>> {
-		const [items, total] = await this.typeOrmRepository.findAndCount({
+		return await this.findAll({
 			relations: {
 				employees: true,
 				teams: true,
 				equipment: true
 			}
 		});
-		return { items, total };
 	}
 
 	/**
@@ -135,8 +133,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	async createEquipmentSharing(entity: IEquipmentSharingCreateInput): Promise<EquipmentSharing> {
 		try {
-			// Save the equipment sharing record in the database.
-			const equipmentSharing = await this.typeOrmRepository.save(entity);
+			// Save the equipment sharing record using tenant-aware save
+			const equipmentSharing = await this.save(entity);
 			return equipmentSharing;
 		} catch (error) {
 			console.error('Error creating equipment sharing:', error);
@@ -153,11 +151,11 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	async update(id: ID, input: IEquipmentSharingUpdateInput): Promise<EquipmentSharing> {
 		try {
-			// Remove the existing record with the given id
-			await this.typeOrmRepository.delete(id);
+			// Use parent's tenant-scoped delete instead of direct repository access
+			await super.delete(id);
 
-			// Save the new equipment sharing data
-			const equipmentSharing = await this.typeOrmRepository.save(input);
+			// Save the new equipment sharing data with tenant scoping
+			const equipmentSharing = await this.save(input);
 
 			// Return the newly saved record
 			return equipmentSharing;
@@ -179,8 +177,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	async delete(id: ID): Promise<DeleteResult> {
 		try {
 			// Execute both deletion operations concurrently.
+			// Use parent's tenant-scoped delete instead of direct repository access
 			const [equipmentSharing] = await Promise.all([
-				this.typeOrmRepository.delete(id),
+				super.delete(id),
 				this.typeOrmRequestApprovalRepository.delete({ requestId: id })
 			]);
 
@@ -207,14 +206,12 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	async updateStatusEquipmentSharingByAdmin(id: ID, status: number): Promise<EquipmentSharing> {
 		try {
-			const equipmentSharing = await this.typeOrmRepository.findOneBy({ id });
+			// Use tenant-scoped lookup instead of direct repository access
+			const equipmentSharing = await this.findOneByIdString(id);
 
-			if (!equipmentSharing) {
-				throw new NotFoundException('Equipment Sharing not found');
-			}
 			equipmentSharing.status = status;
 
-			return await this.typeOrmRepository.save(equipmentSharing);
+			return await this.save(equipmentSharing);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

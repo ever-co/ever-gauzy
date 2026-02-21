@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IHelpCenter } from '@gauzy/contracts';
+import { IHelpCenter, ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import { HelpCenter } from './help-center.entity';
@@ -16,25 +16,22 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	}
 
 	async updateBulk(updateInput: IHelpCenter[]) {
-		return await this.typeOrmRepository.save(updateInput);
+		return await Promise.all(updateInput.map((item) => this.save(item)));
 	}
 
-	async deleteBulkByBaseId(ids: string[]) {
+	async deleteBulkByBaseId(ids: ID[]) {
 		if (isNotEmpty(ids)) {
-			return await this.typeOrmRepository.delete(ids);
+			return await Promise.all(ids.map((id) => this.delete(id)));
 		}
 	}
 
-	async getCategoriesByBaseId(baseId: string): Promise<HelpCenter[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('knowledge_base')
-			.where('knowledge_base.parentId = :baseId', {
-				baseId
-			})
-			.getMany();
+	async getCategoriesByBaseId(baseId: ID): Promise<HelpCenter[]> {
+		return await this.find({
+			where: { parentId: baseId } as any
+		});
 	}
 
 	async getAllNodes(): Promise<HelpCenter[]> {
-		return await this.typeOrmRepository.createQueryBuilder('knowledge_base').getMany();
+		return await this.find({});
 	}
 }

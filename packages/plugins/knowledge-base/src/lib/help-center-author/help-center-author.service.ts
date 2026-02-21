@@ -30,7 +30,11 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 	 * @returns
 	 */
 	async createBulk(createInput: IHelpCenterAuthor[]) {
-		return await this.typeOrmRepository.save(createInput);
+		const results = [];
+		for (const item of createInput) {
+			results.push(await this.save(item));
+		}
+		return results;
 	}
 
 	/**
@@ -40,7 +44,9 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 	 */
 	async deleteBulkByArticleId(ids: string[]) {
 		if (isNotEmpty(ids)) {
-			return await this.typeOrmRepository.delete(ids);
+			for (const id of ids) {
+				await this.delete(id);
+			}
 		}
 	}
 
@@ -49,6 +55,6 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 	 * @returns
 	 */
 	async getAll(): Promise<IHelpCenterAuthor[]> {
-		return await this.typeOrmRepository.createQueryBuilder('knowledge_base_author').getMany();
+		return await this.find({});
 	}
 }

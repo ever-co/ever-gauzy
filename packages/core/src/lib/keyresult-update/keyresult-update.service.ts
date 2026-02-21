@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { In } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { TypeOrmKeyResultUpdateRepository } from './repository/type-orm-keyresult-update.repository';
@@ -34,6 +35,8 @@ export class KeyResultUpdateService extends TenantAwareCrudService<KeyResultUpda
 	 * @returns
 	 */
 	async deleteBulkByKeyResultId(ids: string[]) {
-		return await this.typeOrmRepository.delete(ids);
+		if (ids.length > 0) {
+			await this.delete({ id: In(ids) } as any);
+		}
 	}
 }

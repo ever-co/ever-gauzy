@@ -24,6 +24,6 @@ export class KeyResultService extends TenantAwareCrudService<KeyResult> {
 	 * It utilizes TypeORM's `save()` method to persist the provided key results efficiently.
 	 */
 	async createBulk(input: KeyResult[]): Promise<KeyResult[]> {
-		return this.typeOrmRepository.save(input);
+		return await this.saveMany(input);
 	}
 }

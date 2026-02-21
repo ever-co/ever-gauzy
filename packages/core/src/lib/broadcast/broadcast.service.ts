@@ -12,7 +12,8 @@ import {
 	IBroadcastCreateInput,
 	IBroadcastUpdateInput,
 	ID,
-	IPagination, NotificationActionTypeEnum,
+	IPagination,
+	NotificationActionTypeEnum,
 	RolesEnum
 } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
@@ -115,7 +116,9 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 			});
 
 			if (!originalBroadcast) {
-				throw new BadRequestException(`Broadcast with id ${id} not found or you don't have permission to update it`);
+				throw new BadRequestException(
+					`Broadcast with id ${id} not found or you don't have permission to update it`
+				);
 			}
 
 			// Update the broadcast with the new input data
@@ -161,7 +164,7 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		// Extract filters from where clause
 		const whereClause = filters.where ?? {};
 		const { entity, entityId, category, visibilityMode, isArchived = false } = whereClause;
-		const relations = Array.isArray(filters.relations) ? filters.relations as string[] : [];
+		const relations = Array.isArray(filters.relations) ? (filters.relations as string[]) : [];
 
 		// Extract pagination options from filters
 		const { take, skip } = filters;
@@ -297,13 +300,15 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 	 */
 	private async isEntityMember(entity: BaseEntityEnum, entityId: ID, employeeId: ID): Promise<boolean> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
+
 			// Organization uses 'employees' relation, others use 'members'
 			const relationName = entity === BaseEntityEnum.Organization ? 'employees' : 'members';
 
 			// Load the entity with its members/employees relation
 			const repository = this.dataSource.getRepository(entity);
 			const entityWithMembers = await repository.findOne({
-				where: { id: entityId },
+				where: { id: entityId, tenantId },
 				relations: [relationName]
 			});
 
@@ -390,10 +395,12 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		// Check if employee is in allowed teams
 		if (rules.teamIds?.length && employeeId) {
 			try {
+				const tenantId = RequestContext.currentTenantId();
 				const teamMemberships = await this._typeOrmOrganizationTeamEmployeeRepository.find({
 					where: {
 						employeeId,
-						organizationTeamId: In(rules.teamIds)
+						organizationTeamId: In(rules.teamIds),
+						tenantId
 					}
 				});
 
@@ -476,13 +483,13 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 	 * @returns Array of employee IDs.
 	 */
 	private async getEntityMemberIds(broadcast: IBroadcast): Promise<ID[]> {
-		const { entity, entityId } = broadcast;
+		const { entity, entityId, tenantId } = broadcast;
 		const relationName = entity === BaseEntityEnum.Organization ? 'employees' : 'members';
 
 		try {
 			const repository = this.dataSource.getRepository(entity);
 			const entityWithMembers = await repository.findOne({
-				where: { id: entityId },
+				where: { id: entityId, tenantId },
 				relations: [relationName]
 			});
 
@@ -537,7 +544,7 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		// Get employees from specified teams
 		if (rules.teamIds?.length) {
 			const teamMembers = await this._typeOrmOrganizationTeamEmployeeRepository.find({
-				where: { organizationTeamId: In(rules.teamIds), isActive: true }
+				where: { organizationTeamId: In(rules.teamIds), isActive: true, tenantId }
 			});
 			employeeIds.push(...teamMembers.map((m) => m.employeeId));
 		}

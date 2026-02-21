@@ -65,11 +65,11 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			const organizationId = entity.organizationId;
 
 			// Delete the policy
-			await this.typeOrmRepository.delete({
+			await this.delete({
 				id,
 				tenantId,
 				organizationId
-			});
+			} as any);
 
 			const policy = new TimeOffPolicy();
 			policy.name = entity.name;
@@ -79,7 +79,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.paid = entity.paid;
 
 			const employees = await this.typeOrmEmployeeRepository.find({
-				where: { id: In(entity.employees) },
+				where: { id: In(entity.employees), tenantId, organizationId },
 				relations: { user: true }
 			});
 			policy.employees = employees;

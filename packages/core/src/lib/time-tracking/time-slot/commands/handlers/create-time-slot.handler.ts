@@ -62,7 +62,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		 * If organization not found in request then assign current logged user organization
 		 */
 		if (isEmpty(organizationId)) {
-			let employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId });
+			let employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId, tenantId });
 			organizationId = employee ? employee.organizationId : null;
 		}
 

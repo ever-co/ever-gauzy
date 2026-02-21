@@ -409,6 +409,34 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
+	 * Creates multiple new entities in a single bulk operation with tenant scoping.
+	 * Enriches all entities with tenantId and employeeId (same logic as create()).
+	 * More efficient than calling create() in a loop.
+	 *
+	 * @param entities The array of partial entity data for creation.
+	 * @returns The array of created entities.
+	 */
+	public async createMany(entities: IPartialEntity<T>[]): Promise<T[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const employeeId = RequestContext.currentEmployeeId();
+
+		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
+		const shouldSetEmployee =
+			isNotEmpty(employeeId) &&
+			!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+			hasEmployeeColumn;
+
+		const enriched = entities.map((entity) => ({
+			...entity,
+			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {}),
+			...(shouldSetEmployee ? { employee: { id: employeeId }, employeeId } : {})
+		}));
+
+		return await super.createMany(enriched);
+	}
+
+	/**
 	 * Saves a given entity in the database.
 	 * If entity does not exist in the database then inserts, otherwise updates.
 	 *
@@ -428,6 +456,26 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				  }
 				: {})
 		});
+	}
+
+	/**
+	 * Saves multiple entities in a single bulk operation with tenant scoping.
+	 * Enriches all entities with tenantId (same logic as save()).
+	 * More efficient than calling save() in a loop.
+	 *
+	 * @param entities The array of partial entity data.
+	 * @returns The array of saved entities.
+	 */
+	public async saveMany(entities: IPartialEntity<T>[]): Promise<T[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+
+		const enriched = entities.map((entity) => ({
+			...entity,
+			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {})
+		}));
+
+		return await super.saveMany(enriched);
 	}
 
 	/**
