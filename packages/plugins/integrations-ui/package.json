@@ -1,0 +1,55 @@
+{
+	"name": "@gauzy/plugin-integrations-ui",
+	"version": "0.1.0",
+	"description": "Integrations plugin UI - layout and routing for integrations.",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/integrations-ui"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"scripts": {
+		"lib:build": "yarn nx build plugin-integrations-ui --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-integrations-ui --configuration=production",
+		"lib:watch": "yarn nx build plugin-integrations-ui --watch --configuration=development"
+	},
+	"peerDependencies": {
+		"@angular/common": "21.0.7",
+		"@angular/core": "21.0.7"
+	},
+	"dependencies": {
+		"@angular/router": "21.0.7",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/plugin-ui": "^0.1.0",
+		"@gauzy/ui-core": "^0.1.0",
+		"rxjs": "^7.8.2",
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"jest-preset-angular": "16.0.0"
+	},
+	"keywords": [
+		"Angular",
+		"UI",
+		"plugin",
+		"Ever Gauzy",
+		"integrations"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}

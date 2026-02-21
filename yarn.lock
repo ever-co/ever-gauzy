@@ -16617,7 +16617,7 @@ analytics@0.8.9:
     "@analytics/core" "^0.12.7"
     "@analytics/storage-utils" "^0.4.2"
 
-angular-eslint@^21.0.0:
+angular-eslint@^21.0.1:
   version "21.2.0"
   resolved "https://registry.yarnpkg.com/angular-eslint/-/angular-eslint-21.2.0.tgz#5619fdd9acc662d2bdc1b11db04468d15f42d065"
   integrity sha512-pERqqHIMwD34UT0FoHSNTt4V332vHiAzgkY0rgdUaqSamS94IzbF02EfFxygr53UogQQOXhpLbSSDMOyovB3TA==
