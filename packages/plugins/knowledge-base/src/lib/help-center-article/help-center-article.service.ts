@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
-import { TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import { ID, IHelpCenterArticle, IHelpCenterArticleUpdate, IHelpCenterArticleVersion } from '@gauzy/contracts';
 import { HelpCenterArticle } from './help-center-article.entity';
@@ -19,6 +19,9 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		super(typeOrmHelpCenterArticleRepository, mikroOrmHelpCenterArticleRepository);
 	}
 
+	/**
+	 * Get articles by category ID.
+	 */
 	async getArticlesByCategoryId(categoryId: string): Promise<HelpCenterArticle[]> {
 		return await this.typeOrmRepository
 			.createQueryBuilder('knowledge_base_article')
@@ -28,27 +31,29 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 			.getMany();
 	}
 
+	/**
+	 * Delete articles by category ID.
+	 */
 	async deleteBulkByCategoryId(ids: string[]) {
 		if (isNotEmpty(ids)) {
 			return await this.typeOrmRepository.delete(ids);
 		}
 	}
 
+	/**
+	 * Update an article by ID.
+	 */
 	public async updateArticleById(id: string, input: IHelpCenterArticleUpdate): Promise<void> {
 		await this.typeOrmRepository.update(id, input);
 	}
 
 	/**
 	 * Update an article with automatic version snapshot.
-	 * Creates a version of the current state before applying the update.
-	 * 
-	 * Note: This is not wrapped in a transaction. If the update fails after version creation,
-	 * an orphan version record may remain. Consider wrapping in a transaction if atomicity is critical.
+	 * Creates a version snapshot of the current state before applying the update.
 	 *
 	 * @param id - Article ID
-	 * @param input - Update data
-	 * @param ownedById - Employee ID who is making this change (optional for admins without employee)
-	 * @returns The updated article and the created version
+	 * @param input - Partial update data (any field including isLocked, archivedAt, privacy, etc.)
+	 * @param ownedById - Employee ID making the change
 	 */
 	public async updateWithVersioning(
 		id: ID,
@@ -58,22 +63,62 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		// 1. Get current article state
 		const { record: currentArticle } = await this.findOneOrFailByIdString(id);
 
-		// 2. Create version snapshot of current state (before update)
+		// 2. Create version snapshot of current state (before update) — include binary
 		const versionInput: DeepPartial<HelpCenterArticleVersion> = {
 			articleId: id,
 			ownedById,
 			descriptionHtml: currentArticle.descriptionHtml,
 			descriptionJson: currentArticle.descriptionJson,
+			descriptionBinary: currentArticle.descriptionBinary,
 			lastSavedAt: new Date()
 		};
 		const version = await this.versionService.create(versionInput);
 
-		// 3. Update the article
+		// 3. Apply update
 		await super.update(id, input);
 
 		// 4. Return updated article and version
 		const { record: updatedArticle } = await this.findOneOrFailByIdString(id);
-
 		return { article: updatedArticle, version };
+	}
+
+	/**
+	 * Get the raw binary description (Yjs state) of an article.
+	 * Returns null if not yet set.
+	 */
+	public async getDescriptionBinary(id: ID): Promise<Buffer | null> {
+		const article = await this.typeOrmRepository.findOne({
+			where: { id } as any,
+			select: ['descriptionBinary'] as any
+		});
+		return (article?.descriptionBinary as Buffer) ?? null;
+	}
+
+	/**
+	 * Duplicate an article.
+	 */
+	public async duplicate(id: ID): Promise<HelpCenterArticle> {
+		const ownedById = RequestContext.currentEmployeeId();
+		const { record: source } = await this.findOneOrFailByIdString(id);
+
+		const copy: DeepPartial<HelpCenterArticle> = {
+			name: `${source.name} (Copy)`,
+			description: source.description,
+			data: source.data,
+			draft: source.draft,
+			privacy: source.privacy,
+			index: source.index,
+			descriptionHtml: source.descriptionHtml,
+			descriptionJson: source.descriptionJson,
+			descriptionBinary: null,
+			isLocked: false,
+			color: source.color,
+			categoryId: source.categoryId,
+			parentId: source.parentId,
+			ownedById: ownedById ?? source.ownedById,
+			externalId: null
+		};
+
+		return await this.create(copy);
 	}
 }

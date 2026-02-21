@@ -1,6 +1,6 @@
 import { PermissionsEnum, IHelpCenterArticle } from '@gauzy/contracts';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put } from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put, Res } from '@nestjs/common';
 import {
 	Permissions,
 	CrudController,
@@ -11,6 +11,7 @@ import {
 } from '@gauzy/core';
 import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
+import { Response } from 'express';
 import { HelpCenterArticle } from './help-center-article.entity';
 import { HelpCenterArticleService } from './help-center-article.service';
 import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands';
@@ -43,6 +44,19 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 		return this.helpCenterArticleService.create(entity);
 	}
 
+	/**
+	 * Create a copy of an article (without binary content).
+	 */
+	@ApiOperation({ summary: 'Duplicate an article' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'Article duplicated.', type: HelpCenterArticle })
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
+	@HttpCode(HttpStatus.CREATED)
+	@Post(':id/duplicate')
+	async duplicate(@Param('id', UUIDValidationPipe) id: string): Promise<HelpCenterArticle> {
+		return this.helpCenterArticleService.duplicate(id);
+	}
+
 	@ApiOperation({
 		summary: 'Find articles By Category Id.'
 	})
@@ -58,6 +72,22 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	@Get('category/:categoryId')
 	async findByCategoryId(@Param('categoryId', UUIDValidationPipe) categoryId: string): Promise<IHelpCenterArticle[]> {
 		return this.helpCenterArticleService.getArticlesByCategoryId(categoryId);
+	}
+
+	/**
+	 * Returns the binary state as octet-stream.
+	 * Returns an empty buffer if no binary is stored yet.
+	 */
+	@ApiOperation({ summary: 'Get article binary description' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Binary returned.' })
+	@Get(':id/description')
+	async getDescription(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Res() res: Response
+	): Promise<void> {
+		const binary = await this.helpCenterArticleService.getDescriptionBinary(id);
+		res.setHeader('Content-Type', 'application/octet-stream');
+		res.send(binary ?? Buffer.alloc(0));
 	}
 
 	@ApiOperation({
