@@ -4387,7 +4387,8 @@
 			"LARGE_FILE": "Plik jest zbyt duży.",
 			"SERVICE_UNAVAILABLE": "Usługa chwilowo niedostępna.",
 			"UNEXPECTED_ERROR": "Wystąpił nieoczekiwany błąd.",
-			"NETWORK_ERROR": "Błąd sieci: {{message}}"
+			"NETWORK_ERROR": "Błąd sieci: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "Uprawnienia do dostępu do ekranu są wymagane, aby włączyć automatyczne przechwytywanie ekranu. Proszę udzielić uprawnień w ustawieniach systemu."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Śledzenie zostało zatrzymane z powodu braku aktywności!",

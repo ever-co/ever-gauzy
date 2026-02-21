@@ -4400,7 +4400,8 @@
 			"LARGE_FILE": "הקובץ גדול מדי.",
 			"SERVICE_UNAVAILABLE": "השירות אינו זמין כעת.",
 			"UNEXPECTED_ERROR": "אירעה שגיאה בלתי צפויה.",
-			"NETWORK_ERROR": "שגיאת רשת: {{message}}"
+			"NETWORK_ERROR": "שגיאת רשת: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "נדרשת הרשאת גישה למסך כדי לאפשר לכידת מסך אוטומטית. אנא העניקו את ההרשאה בהגדרות המערכת."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "המעקב נעצר בשל ביטול הפעילות!",

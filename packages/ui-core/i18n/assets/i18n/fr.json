@@ -4379,7 +4379,8 @@
 			"LARGE_FILE": "Le fichier est trop volumineux.",
 			"SERVICE_UNAVAILABLE": "Service temporairement indisponible.",
 			"UNEXPECTED_ERROR": "Une erreur inattendue s’est produite.",
-			"NETWORK_ERROR": "Erreur réseau : {{message}}"
+			"NETWORK_ERROR": "Erreur réseau : {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorisation d'accès à l'écran est requise pour activer la capture d'écran automatique. Veuillez accorder l'autorisation dans les paramètres système."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Le tracker a été arrêté en raison d'inactivité !",

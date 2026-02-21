@@ -388,6 +388,7 @@ const contextMenu = () => {
 					ipcMain.once('setting_window_ready', () => {
 						appWindowManager.settingShow('goto_update');
 					});
+					await appWindowManager.loadSetting(uiPath);
 				} else {
 					appWindowManager.settingShow('goto_update');
 				}

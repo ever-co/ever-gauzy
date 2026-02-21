@@ -4384,7 +4384,8 @@
 			"LARGE_FILE": "Die Datei ist zu groß.",
 			"SERVICE_UNAVAILABLE": "Dienst vorübergehend nicht verfügbar.",
 			"UNEXPECTED_ERROR": "Ein unerwarteter Fehler ist aufgetreten.",
-			"NETWORK_ERROR": "Netzwerkfehler: {{message}}"
+			"NETWORK_ERROR": "Netzwerkfehler: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "Bildschirmzugriff ist erforderlich, um die automatische Bildschirmaufnahme zu aktivieren. Bitte erteilen Sie die Berechtigung in den Systemeinstellungen."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Der Tracker wurde aufgrund von Inaktivität gestoppt!",

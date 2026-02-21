@@ -4390,7 +4390,8 @@
 			"LARGE_FILE": "El archivo es demasiado grande.",
 			"SERVICE_UNAVAILABLE": "Servicio temporalmente no disponible.",
 			"UNEXPECTED_ERROR": "Ha ocurrido un error inesperado.",
-			"NETWORK_ERROR": "Error de red: {{message}}"
+			"NETWORK_ERROR": "Error de red: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "Se requiere permiso de acceso a la pantalla para habilitar la captura automática de pantalla. Por favor, conceda el permiso en la configuración del sistema."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "¡El seguimiento fue detenido debido a la inactividad!",

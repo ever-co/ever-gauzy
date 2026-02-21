@@ -4388,7 +4388,8 @@
 			"LARGE_FILE": "Il file è troppo grande.",
 			"SERVICE_UNAVAILABLE": "Servizio temporaneamente non disponibile.",
 			"UNEXPECTED_ERROR": "Si è verificato un errore imprevisto.",
-			"NETWORK_ERROR": "Errore di rete: {{message}}"
+			"NETWORK_ERROR": "Errore di rete: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorizzazione di accesso allo schermo è necessaria per abilitare la cattura automatica dello schermo. Si prega di concedere l'autorizzazione nelle impostazioni di sistema."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Il tracker è stato fermato a causa di inattività!",

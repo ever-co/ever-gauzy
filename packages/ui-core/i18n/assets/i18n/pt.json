@@ -4388,7 +4388,8 @@
 			"LARGE_FILE": "O arquivo é muito grande.",
 			"SERVICE_UNAVAILABLE": "Serviço temporariamente indisponível.",
 			"UNEXPECTED_ERROR": "Ocorreu um erro inesperado.",
-			"NETWORK_ERROR": "Erro de rede: {{message}}"
+			"NETWORK_ERROR": "Erro de rede: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "A permissão de acesso à tela é necessária para habilitar a captura automática de tela. Por favor, conceda a permissão nas configurações do sistema."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "O rastreador foi parado devido à inatividade!",

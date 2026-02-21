@@ -4388,7 +4388,8 @@
 			"LARGE_FILE": "Het bestand is te groot.",
 			"SERVICE_UNAVAILABLE": "Dienst tijdelijk niet beschikbaar.",
 			"UNEXPECTED_ERROR": "Er is een onverwachte fout opgetreden.",
-			"NETWORK_ERROR": "Netwerkfout: {{message}}"
+			"NETWORK_ERROR": "Netwerkfout: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "Schermtoegangsmachtiging is vereist om automatische schermopname in te schakelen. Gelieve de machtiging te verlenen in uw systeeminstellingen."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "De tracker is gestopt vanwege inactiviteit!",

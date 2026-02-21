@@ -4388,7 +4388,8 @@
 			"LARGE_FILE": "文件过大。",
 			"SERVICE_UNAVAILABLE": "服务暂不可用，请稍后重试。",
 			"UNEXPECTED_ERROR": "发生未知错误。",
-			"NETWORK_ERROR": "网络错误：{{message}}"
+			"NETWORK_ERROR": "网络错误：{{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "需要屏幕访问权限才能启用自动屏幕截图。请在系统设置中授予权限。"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "由于不活动，追踪器已停止！",
