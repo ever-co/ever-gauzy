@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, In } from 'typeorm';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import { ID, IHelpCenterArticle, IHelpCenterArticleUpdate, IHelpCenterArticleVersion } from '@gauzy/contracts';
@@ -27,7 +27,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 
 	async deleteBulkByCategoryId(ids: string[]) {
 		if (isNotEmpty(ids)) {
-			return await Promise.all(ids.map((id) => this.delete(id)));
+			return await this.delete({ id: In(ids) } as any);
 		}
 	}
 
