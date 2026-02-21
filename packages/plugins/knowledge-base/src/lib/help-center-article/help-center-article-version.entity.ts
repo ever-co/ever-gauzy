@@ -33,6 +33,11 @@ export class HelpCenterArticleVersion extends TenantOrganizationBaseEntity imple
 	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	descriptionJson?: JsonData;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@MultiORMColumn({ type: isPostgres() ? 'bytea' : isMySQL() ? 'longblob' : 'blob', nullable: true })
+	descriptionBinary?: Uint8Array;
+
 	/** 
 	 * When this version was saved 
 	*/
