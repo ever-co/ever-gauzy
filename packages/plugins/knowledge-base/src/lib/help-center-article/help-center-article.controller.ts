@@ -83,11 +83,11 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	@Get(':id/description')
 	async getDescription(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Res() res: Response
+		@Res({ passthrough: true }) res: Response
 	): Promise<void> {
 		const binary = await this.helpCenterArticleService.getDescriptionBinary(id);
 		res.setHeader('Content-Type', 'application/octet-stream');
-		res.send(binary ?? Buffer.alloc(0));
+		res.send(binary ?? new Uint8Array(0));
 	}
 
 	@ApiOperation({

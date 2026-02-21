@@ -75,10 +75,10 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	descriptionJson?: JsonData;
 
-	@ApiPropertyOptional({ type: () => Buffer })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@MultiORMColumn({ type: isPostgres() ? 'bytea' : isMySQL() ? 'longblob' : 'blob', nullable: true })
-	descriptionBinary?: Buffer;
+	descriptionBinary?: Uint8Array;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -210,7 +210,7 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 		/** Pivot table for many-to-many relationship. */
 		pivotTable: 'knowledge_base_article_project',
 		/** Column in pivot table referencing 'help_center_article' primary key. */
-		joinColumn: 'helpCenterArticleId',
+		joinColumn: 'knowledgeBaseArticleId',
 		/** Column in pivot table referencing 'project' primary key. */
 		inverseJoinColumn: 'organizationProjectId'
 	})
@@ -233,7 +233,7 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 		/** Pivot table for many-to-many relationship. */
 		pivotTable: 'tag_help_center_article',
 		/** Column in pivot table referencing 'help_center_article' primary key. */
-		joinColumn: 'helpCenterArticleId',
+		joinColumn: 'knowledgeBaseArticleId',
 		/** Column in pivot table referencing 'tag' primary key. */
 		inverseJoinColumn: 'tagId'
 	})

@@ -19,7 +19,7 @@ export interface IHelpCenterArticle
 	// Rich content for collaborative articles
 	descriptionHtml?: string;
 	descriptionJson?: JsonData;
-	descriptionBinary?: Buffer;
+	descriptionBinary?: Uint8Array;
 
 	// Parent-child hierarchy (self-referencing)
 	parentId?: ID;
@@ -67,7 +67,7 @@ export interface IHelpCenterArticleVersion
 	// Content snapshot
 	descriptionHtml?: string;
 	descriptionJson?: JsonData;
-	descriptionBinary?: Buffer;
+	descriptionBinary?: Uint8Array;
 }
 
 export interface IHelpCenterAuthor

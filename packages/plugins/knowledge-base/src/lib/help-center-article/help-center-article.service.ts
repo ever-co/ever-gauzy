@@ -86,20 +86,33 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	 * Get the raw binary description of an article.
 	 * Returns null if not yet set.
 	 */
-	public async getDescriptionBinary(id: ID): Promise<Buffer | null> {
-		const article = await this.typeOrmRepository.findOne({
-			where: { id } as any,
-			select: ['descriptionBinary'] as any
+	public async getDescriptionBinary(id: ID): Promise<Uint8Array | null> {
+		const { record: article } = await this.findOneOrFailByIdString(id, {
+			select: { descriptionBinary: true } as any
 		});
-		return (article?.descriptionBinary as Buffer) ?? null;
+		return article?.descriptionBinary ?? null;
 	}
 
 	/**
-	 * Duplicate an article.
+	 * Duplicate an article, creating a copy with the same content and associations.
+	 *
+	 * Copied: name, description, content (html, json), privacy, color, category,
+	 *         parent, owner, organization, projects, tags.
+	 *
+	 * NOT copied (by design):
+	 *   - `descriptionBinary`: will be regenerated from `descriptionHtml` on first open.
+	 *   - `isLocked`: the copy starts unlocked.
+	 *   - `externalId`: the copy is a new Gauzy-native article with no external reference.
+	 *   - `archivedAt`: the copy starts unarchived.
+	 *   - `versions`: version history is not duplicated.
 	 */
 	public async duplicate(id: ID): Promise<HelpCenterArticle> {
 		const ownedById = RequestContext.currentEmployeeId();
-		const { record: source } = await this.findOneOrFailByIdString(id);
+
+		// Load the source with its M2M relations so we can copy them
+		const { record: source } = await this.findOneOrFailByIdString(id, {
+			relations: { projects: true, tags: true } as any
+		});
 
 		const copy: DeepPartial<HelpCenterArticle> = {
 			name: `${source.name} (Copy)`,
@@ -110,13 +123,16 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 			index: source.index,
 			descriptionHtml: source.descriptionHtml,
 			descriptionJson: source.descriptionJson,
-			descriptionBinary: null,
+			descriptionBinary: null, // intentionally excluded — see JSDoc above
 			isLocked: false,
 			color: source.color,
 			categoryId: source.categoryId,
 			parentId: source.parentId,
 			ownedById: ownedById ?? source.ownedById,
-			externalId: null
+			organizationId: source.organizationId,
+			externalId: null,
+			projects: source.projects ?? [],
+			tags: source.tags ?? []
 		};
 
 		return await this.create(copy);
