@@ -94,17 +94,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	}
 
 	/**
-	 * Duplicate an article, creating a copy with the same content and associations.
-	 *
-	 * Copied: name, description, content (html, json), privacy, color, category,
-	 *         parent, owner, organization, projects, tags.
-	 *
-	 * NOT copied (by design):
-	 *   - `descriptionBinary`: will be regenerated from `descriptionHtml` on first open.
-	 *   - `isLocked`: the copy starts unlocked.
-	 *   - `externalId`: the copy is a new Gauzy-native article with no external reference.
-	 *   - `archivedAt`: the copy starts unarchived.
-	 *   - `versions`: version history is not duplicated.
+	 * Duplicate an article.
 	 */
 	public async duplicate(id: ID): Promise<HelpCenterArticle> {
 		const ownedById = RequestContext.currentEmployeeId();
@@ -123,7 +113,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 			index: source.index,
 			descriptionHtml: source.descriptionHtml,
 			descriptionJson: source.descriptionJson,
-			descriptionBinary: null, // intentionally excluded — see JSDoc above
+			descriptionBinary: null,
 			isLocked: false,
 			color: source.color,
 			categoryId: source.categoryId,
