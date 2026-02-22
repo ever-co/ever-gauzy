@@ -1,17 +1,20 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { IUser, RolesEnum } from '@gauzy/contracts';
+import { IRole, IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthRegisterCommand } from '../auth.register.command';
 import { AuthService } from '../../auth.service';
 import { UserService } from '../../../user/user.service';
 import { TypeOrmRoleRepository } from '../../../role/repository/type-orm-role.repository';
+import { MikroOrmRoleRepository } from '../../../role/repository/mikro-orm-role.repository';
+import { getORMType, MultiORMEnum } from '../../../core/utils';
 
 @CommandHandler(AuthRegisterCommand)
 export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand> {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
-		private readonly typeOrmRoleRepository: TypeOrmRoleRepository
+		private readonly typeOrmRoleRepository: TypeOrmRoleRepository,
+		private readonly mikroOrmRoleRepository: MikroOrmRoleRepository
 	) {}
 
 	/**
@@ -32,8 +35,23 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 		} else if (input.user?.roleId) {
 			// Only roleId provided — resolve it to a role entity to get the name
 			try {
-				const resolvedRole = await this.typeOrmRoleRepository.findOneByOrFail({ id: input.user.roleId });
-				targetRoleName = resolvedRole.name;
+				let role: IRole;
+				switch (getORMType()) {
+					case MultiORMEnum.MikroORM:
+						role = await this.mikroOrmRoleRepository.findOneOrFail({ id: input.user.roleId });
+						break;
+					case MultiORMEnum.TypeORM:
+						role = await this.typeOrmRoleRepository.findOneByOrFail({ id: input.user.roleId });
+						break;
+					default:
+						throw new Error(`Not implemented for ${getORMType()}`);
+				}
+
+				if (!role) {
+					throw new BadRequestException('The specified roleId does not reference a valid role.');
+				}
+
+				targetRoleName = role.name;
 			} catch {
 				throw new BadRequestException('The specified roleId does not reference a valid role.');
 			}
