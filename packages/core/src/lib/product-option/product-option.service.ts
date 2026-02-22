@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In, FindOptionsWhere } from 'typeorm';
+import { In } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductOptionTranslation } from './../core/entities/internal';
 import { IProductOptionTranslatable, IProductOptionTranslation } from '@gauzy/contracts';

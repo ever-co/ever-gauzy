@@ -71,6 +71,16 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 		// 1. Remove members who are no longer in the team
 		if (removedMembers.length > 0) {
+			/**
+			 * Unassign employee all tasks before removing from team
+			 */
+			await Promise.all(
+				removedMembers.map(
+					async (member) =>
+						await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId)
+				)
+			);
+
 			await this.deleteMemberByIds(removedMembers.map((member) => member.id));
 
 			// Unsubscribe members who were unassigned from team
@@ -81,7 +91,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 							await this._entitySubscriptionService.delete({
 								entity: BaseEntityEnum.OrganizationTeam,
 								entityId: organizationTeamId,
-								employeeId: member.employee.id,
+								employeeId: member.employeeId,
 								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
@@ -89,7 +99,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					)
 				);
 			} catch (error) {
-				console.error('Error subscribing new team members:', error);
+				console.error('Error unsubscribing team members:', error);
 			}
 		}
 

@@ -14,7 +14,7 @@ import {
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
-import { MultiORMEnum, getDateRangeFormat, parseTypeORMFindToMikroOrm } from './../core/utils';
+import { getDateRangeFormat } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';

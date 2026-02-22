@@ -1,9 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
 import { IEmployeeAvailability } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
-import { MultiORMEnum } from '../core/utils';
 import { TypeOrmEmployeeAvailabilityRepository } from './repository/type-orm-employee-availability.repository';
 import { MikroOrmEmployeeAvailabilityRepository } from './repository/mikro-orm-employee-availability.repository';
 import { EmployeeAvailability } from './employee-availability.entity';

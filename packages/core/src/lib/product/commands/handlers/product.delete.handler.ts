@@ -67,13 +67,10 @@ export class ProductDeleteHandler implements ICommandHandler<ProductDeleteComman
 			raw: deleteRes,
 			affected: deleteRes
 				.map((res) => {
-					if (res == null) {
-						return 0;
-					} else if (Array.isArray(res)) {
+					if (Array.isArray(res)) {
 						return res.length;
-					} else {
-						return (res as DeleteResult).affected ? (res as DeleteResult).affected : 0;
 					}
+					return (res as DeleteResult)?.affected ?? 0;
 				})
 				.reduce((acc, value) => acc + value)
 		};

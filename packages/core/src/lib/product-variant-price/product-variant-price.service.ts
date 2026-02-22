@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, DeleteResult, FindOptionsWhere } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductVariantPrice } from './product-variant-price.entity';
 import { TypeOrmProductVariantPriceRepository } from './repository/type-orm-product-variant-price.repository';
@@ -28,10 +28,11 @@ export class ProductVariantPriceService extends TenantAwareCrudService<ProductVa
 	 * @param productVariantPrices
 	 * @returns
 	 */
-	async deleteMany(productVariantPrices: ProductVariantPrice[]): Promise<void> {
+	async deleteMany(productVariantPrices: ProductVariantPrice[]): Promise<DeleteResult | any[]> {
 		const ids = productVariantPrices.filter((p) => p.id).map((p) => p.id);
 		if (ids.length > 0) {
-			await this.delete({ id: In(ids) } as any);
+			return await this.delete({ id: In(ids) } as FindOptionsWhere<ProductVariantPrice>);
 		}
+		return [];
 	}
 }

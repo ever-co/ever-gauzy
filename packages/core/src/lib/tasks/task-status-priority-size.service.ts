@@ -15,7 +15,6 @@ import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-
 import { FileStorage } from '../core/file-storage';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
-import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { TenantBaseEntity } from '../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
 

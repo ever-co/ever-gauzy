@@ -29,7 +29,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 
 	async getArticlesByCategoryId(categoryId: ID): Promise<HelpCenterArticle[]> {
 		return await this.find({
-			where: { categoryId } as any
+			where: { categoryId } as FindOptionsWhere<HelpCenterArticle>
 		});
 	}
 
@@ -125,12 +125,13 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	}
 
 	/**
-	 * Delete articles by category ID.
+	 * Delete articles by IDs.
 	 */
-	async deleteBulkByCategoryId(ids: ID[]) {
+	async deleteBulkByArticleIds(ids: ID[]): Promise<DeleteResult | any[]> {
 		if (isNotEmpty(ids)) {
-			return await this.delete({ id: In(ids) } as any);
+			return await this.delete({ id: In(ids) } as FindOptionsWhere<HelpCenterArticle>);
 		}
+		return [];
 	}
 
 	/**
@@ -144,8 +145,9 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	 * Update an article with automatic version snapshot.
 	 * Creates a version snapshot of the current state before applying the update.
 	 *
-	 * Note: This is not wrapped in a transaction. If the update fails after version creation,
-	 * an orphan version record may remain. Consider wrapping in a transaction if atomicity is critical.
+	 * Note: This operation is NON-ATOMIC. If the update fails after version creation,
+	 * an orphan version record may remain. This data-integrity risk is tracked
+	 * under issue ID: GAU-9421.
 	 *
 	 * @param id - Article ID
 	 * @param input - Partial update data (any field including isLocked, archivedAt, privacy, etc.)

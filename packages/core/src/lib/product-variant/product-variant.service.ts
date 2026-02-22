@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, DeleteResult, FindOptionsWhere } from 'typeorm';
 import { IPagination, IProductVariant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductVariant } from './product-variant.entity';
@@ -50,11 +50,20 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 		return this.save(productVariant);
 	}
 
-	async deleteMany(productVariants: ProductVariant[]): Promise<void> {
+	async deleteMany(productVariants: ProductVariant[]): Promise<ProductVariant[] | DeleteResult> {
 		const ids = productVariants.filter((v) => v.id).map((v) => v.id);
 		if (ids.length > 0) {
-			await this.delete({ id: In(ids) } as any);
+			const entities = await this.typeOrmRepository.find({
+				where: {
+					id: In(ids)
+				} as FindOptionsWhere<ProductVariant>,
+				relations: {
+					warehouseProductVariants: true
+				}
+			});
+			return await this.typeOrmRepository.remove(entities);
 		}
+		return [];
 	}
 
 	async deleteFeaturedImage(id: string): Promise<IProductVariant> {

@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ID, IPagination, IProductTypeTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
+import { MultiORMEnum } from './../core/utils';
 import { ProductType } from './product-type.entity';
 import { MikroOrmProductTypeRepository } from './repository/mikro-orm-product-type.repository';
 import { TypeOrmProductTypeRepository } from './repository/type-orm-product-type.repository';
@@ -37,8 +38,14 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	 */
 	async updateProductType(id: ID, entity: ProductType): Promise<ProductType> {
 		try {
+			if (this.ormType === MultiORMEnum.TypeORM) {
+				return await this.typeOrmRepository.manager.transaction(async (transactionalEntityManager) => {
+					await transactionalEntityManager.delete(ProductType, id);
+					return await transactionalEntityManager.save(entity);
+				});
+			}
 			await super.delete(id);
-			return this.save(entity);
+			return await this.save(entity);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

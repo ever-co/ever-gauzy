@@ -1,7 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/utils';
-import { TimeSlot } from './../../time-slot.entity';
 import { ScheduleTimeSlotEntriesCommand } from '../schedule-time-slot-entries.command';
 import { RequestContext } from './../../../../core/context';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
