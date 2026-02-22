@@ -275,8 +275,8 @@ async function startServer(value, restart = false) {
 					pathWindow.preloadPath
 				);
 			} else {
-				if (timeTrackerWindow.webContents.isLoading()) {
-					const currentUrl = timeTrackerWindow.webContents.getURL();
+				const currentUrl = timeTrackerWindow.webContents.getURL();
+				if (currentUrl) {
 					await timeTrackerWindow.loadURL(currentUrl);
 				} else {
 					await timeTrackerWindow.loadURL(timeTrackerPage(pathWindow.timeTrackerUi));
