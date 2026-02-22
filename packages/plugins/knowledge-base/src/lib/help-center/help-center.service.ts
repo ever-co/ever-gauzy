@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, FindOptionsWhere, DeleteResult } from 'typeorm';
 import { IHelpCenter, ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
@@ -20,15 +20,20 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 		return await this.saveMany(updateInput);
 	}
 
-	async deleteBulkByBaseId(ids: ID[]) {
+	async deleteBulkByBaseId(ids: ID[]): Promise<DeleteResult[]> {
 		if (isNotEmpty(ids)) {
-			return await this.delete({ id: In(ids) } as any);
+			/**
+			 * TypeORM typing limitations: cast via unknown to FindOptionsWhere.
+			 * TenantAwareCrudService.delete() enforces tenant scoping so tenant safety is preserved.
+			 */
+			return [await this.delete({ id: In(ids) } as unknown as FindOptionsWhere<HelpCenter>)];
 		}
+		return [];
 	}
 
 	async getCategoriesByBaseId(baseId: ID): Promise<HelpCenter[]> {
 		return await this.find({
-			where: { parentId: baseId } as any
+			where: { parentId: baseId } as FindOptionsWhere<HelpCenter>
 		});
 	}
 

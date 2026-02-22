@@ -566,7 +566,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					return await Promise.all(entities.map((entity) => this.mikroOrmRepository.upsert(entity as T)));
+					return await this.mikroOrmRepository.upsertMany(entities as T[]);
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.save(entities as DeepPartial<T>[]);
 				default:

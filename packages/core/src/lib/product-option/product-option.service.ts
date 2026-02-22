@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, FindOptionsWhere } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductOptionTranslation } from './../core/entities/internal';
 import { IProductOptionTranslatable, IProductOptionTranslation } from '@gauzy/contracts';
@@ -37,7 +37,7 @@ export class ProductOptionService extends TenantAwareCrudService<ProductOption> 
 	}
 
 	async deleteBulk(productOptionsInput: IProductOptionTranslatable[]) {
-		const ids = productOptionsInput.filter((o) => (o as any).id).map((o) => (o as any).id);
+		const ids = productOptionsInput.filter((o) => (o as ProductOption).id).map((o) => (o as ProductOption).id);
 		if (ids.length > 0) {
 			await this.delete({ id: In(ids) } as any);
 		}

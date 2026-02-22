@@ -112,8 +112,9 @@ export class TaskStatusPrioritySizeService<
 			let items: BaseEntity[]; // Array to store retrieved items
 			let total: number; // Variable to store total count of items
 
-			// Use base class findAll which handles both ORMs and tenant scoping
-			const result = await this.findAll(options as FindManyOptions<BaseEntity>);
+			// Use base class super.findAll which handles both ORMs but bypasses the automatic tenant scoping
+			// in cases where we explicitly want to search for IsNull() tenantId (system levels).
+			const result = await super.findAll(options as FindManyOptions<BaseEntity>);
 			items = result.items;
 			total = result.total;
 

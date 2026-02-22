@@ -1193,7 +1193,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog));
 
 			// Retrieve the updated time log entry
-			return await this.findOneByIdString(request.id);
+			return await this.findOneByIdString(id);
 		} catch (error) {
 			// Handle exceptions appropriately
 			throw new BadRequestException('Failed to update manual time log');

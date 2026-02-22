@@ -70,13 +70,13 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			(
 				isNotEmpty(employeeId)
 					? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-					  this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
+						this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
 						? {
 								employee: {
 									id: employeeId
 								},
 								employeeId: employeeId
-						  }
+							}
 						: {}
 					: {}
 			) as FindOptionsWhere<T>
@@ -122,7 +122,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 							id: user.tenantId
 						},
 						tenantId: user.tenantId
-				  }
+					}
 				: {}),
 			...this.findConditionsWithEmployeeByUser()
 		} as FindOptionsWhere<T>;
@@ -154,10 +154,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				? {
 						...where,
 						...this.findConditionsWithTenantByUser(user)
-				  }
+					}
 				: {
 						...this.findConditionsWithTenantByUser(user)
-				  }
+					}
 		) as FindOptionsWhere<T>;
 	}
 
@@ -389,20 +389,20 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 							id: tenantId
 						},
 						tenantId
-				  }
+					}
 				: {}),
 			/**
 			 * If employee has login & create data for self
 			 */
 			...(isNotEmpty(employeeId)
 				? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-				  this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
+					this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
 					? {
 							employee: {
 								id: employeeId
 							},
 							employeeId: employeeId
-					  }
+						}
 					: {}
 				: {})
 		});
@@ -453,7 +453,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 							id: tenantId
 						},
 						tenantId
-				  }
+					}
 				: {})
 		});
 	}
@@ -462,6 +462,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * Saves multiple entities in a single bulk operation with tenant scoping.
 	 * Enriches all entities with tenantId (same logic as save()).
 	 * More efficient than calling save() in a loop.
+	 *
+	 * NOTE: Any tenant or tenantId properties on provided entities will be OVERWRITTEN with
+	 * RequestContext.currentTenantId() (consistent with save() behavior). Callers passing
+	 * per-entity tenant values should be aware they will be replaced to prevent silent
+	 * data loss and ensure correct scoping. (Reference: related usage in
+	 * bulkCreateTenantsStatus/status.service where this caused issues).
 	 *
 	 * @param entities The array of partial entity data.
 	 * @returns The array of saved entities.
