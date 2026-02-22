@@ -125,7 +125,7 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		// Validate tenant isolation for roleId (top-level or nested in user)
 		const targetRoleId = body.user?.roleId ?? getIdFromRelation(body.user?.role);
 
-		if (targetRoleId) {
+		if (targetRoleId && typeof targetRoleId === 'string') {
 			try {
 				let role: IRole;
 				switch (getORMType()) {
@@ -137,11 +137,6 @@ export class RegisterAuthorizationGuard implements CanActivate {
 						break;
 					default:
 						throw new Error(`Not implemented for ${getORMType()}`);
-				}
-
-				// Validate if the role exists
-				if (!role) {
-					throw new ForbiddenException('The specified role does not exist.');
 				}
 
 				// Verify the target role belongs to the caller's tenant
