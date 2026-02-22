@@ -89,7 +89,6 @@ export class RegisterAuthorizationGuard implements CanActivate {
 
 		// If no privileged fields → pure public self-registration → allow through
 		if (!hasPrivilegedTopLevel && !hasPrivilegedUser) {
-			console.log('No privileged fields detected: pure public self-registration → allow through');
 			return true;
 		}
 
@@ -125,7 +124,6 @@ export class RegisterAuthorizationGuard implements CanActivate {
 
 		// Validate tenant isolation for roleId (top-level or nested in user)
 		const targetRoleId = body.user?.roleId ?? getIdFromRelation(body.user?.role);
-		console.log('Target role id', targetRoleId);
 
 		if (targetRoleId) {
 			try {
