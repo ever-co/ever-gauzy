@@ -9,6 +9,7 @@ import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-stati
 import { ThrottlerModule } from '@nestjs/throttler';
 import { Cacheable, CacheableMemory } from 'cacheable';
 import * as chalk from 'chalk';
+import { RedisModule } from '../redis/redis.module';
 import { Keyv } from 'keyv';
 import * as moment from 'moment';
 import { ClsModule, ClsService } from 'nestjs-cls';
@@ -339,6 +340,8 @@ if (environment.THROTTLE_ENABLED) {
 					})
 			  ]
 			: [NestCacheModule.register({ isGlobal: true })]),
+		// Redis client for atomic operations (e.g. GETDEL for single-use OAuth codes)
+		RedisModule,
 		// Serve Static Module Configuration
 		ServeStaticModule.forRootAsync({
 			useFactory: async (config: ConfigService): Promise<ServeStaticModuleOptions[]> => {

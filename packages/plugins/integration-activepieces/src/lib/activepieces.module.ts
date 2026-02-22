@@ -18,7 +18,6 @@ import {
 import { ACTIVEPIECES_API_URL } from './activepieces.config';
 import { ActivepiecesService } from './activepieces.service';
 import { ActivepiecesController } from './activepieces.controller';
-import { ActivepiecesAuthorizationController } from './activepieces-authorization.controller';
 import { ActivepiecesMcpService } from './activepieces-mcp.service';
 import { ActivepiecesMcpController } from './activepieces-mcp.controller';
 
@@ -40,7 +39,6 @@ import { ActivepiecesMcpController } from './activepieces-mcp.controller';
 		UserModule
 	],
 	controllers: [
-		ActivepiecesAuthorizationController,
 		ActivepiecesController,
 		ActivepiecesMcpController
 	],

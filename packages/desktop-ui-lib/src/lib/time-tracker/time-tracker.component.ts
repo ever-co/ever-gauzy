@@ -1176,9 +1176,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('show_error_message', (event, arg) =>
+		this.electronService.ipcRenderer.on('show_toast_message', (event, arg) =>
 			this._ngZone.run(() => {
-				this.showErrorMessage(arg);
+				this.showToastMessage({
+					type: arg.type,
+					message: arg.message
+				});
 			})
 		);
 
@@ -2356,8 +2359,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public showErrorMessage(msg: string): void {
-		this._toastrNotifier.error(`${msg}`);
+	public showToastMessage({ message, type }: { message: string; type: string }): void {
+		if (type === 'warning') {
+			this._toastrNotifier.warn(message);
+			return;
+		}
+		this._toastrNotifier.error(message);
 	}
 
 	public toggle(event: boolean) {

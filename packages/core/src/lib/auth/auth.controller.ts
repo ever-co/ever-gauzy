@@ -29,7 +29,7 @@ import { UseValidationPipe } from '../shared/pipes';
 import { User as IUser } from '../user/user.entity';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { Permissions } from './../shared/decorators';
-import { AuthRefreshGuard, PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { AuthRefreshGuard, PermissionGuard, RegisterAuthorizationGuard, TenantPermissionGuard } from './../shared/guards';
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
 import { AuthService } from './auth.service';
@@ -123,7 +123,8 @@ export class AuthController {
 	})
 	@Post('/register')
 	@Public()
-	@UseValidationPipe({ transform: true })
+	@UseGuards(RegisterAuthorizationGuard)
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async register(
 		@Body() input: RegisterUserDTO,
 		@I18nLang() languageCode: LanguagesEnum,

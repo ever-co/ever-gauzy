@@ -7,6 +7,7 @@ import { KeycloakStrategy, KeycloakAuthGuard } from './keycloak';
 import { LinkedinStrategy, LinkedinController } from './linkedin';
 import { MicrosoftStrategy, MicrosoftController, MicrosoftAuthGuard } from './microsoft';
 import { TwitterStrategy, TwitterController } from './twitter';
+import { OAuthAppController } from './oauth-app';
 
 export const Strategies = [
 	Auth0Strategy,
@@ -27,7 +28,8 @@ export const Controllers = [
 	GoogleController,
 	LinkedinController,
 	TwitterController,
-	MicrosoftController
+	MicrosoftController,
+	OAuthAppController
 ];
 
 export const AuthGuards = [MicrosoftAuthGuard, KeycloakAuthGuard];

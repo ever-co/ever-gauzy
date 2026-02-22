@@ -4,74 +4,41 @@
     <h5>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.TITLE' | translate }}</h5>
   </nb-card-header>
   <nb-card-body>
-    <!-- Show this form if no tenant settings exist -->
-    @if (!hasTenantSettings) {
-      <form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="setupAndAuthorize()">
-        <div class="form-group">
-          <label for="client_id" class="label">
-            {{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CLIENT_ID' | translate }}
-          </label>
-          <input
-            fullWidth
-            id="client_id"
-            formControlName="client_id"
-            type="text"
-            nbInput
-            [placeholder]="'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CLIENT_ID_PLACEHOLDER' | translate"
-            />
-          </div>
-          <div class="form-group">
-            <label for="client_secret" class="label">
-              {{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CLIENT_SECRET' | translate }}
-            </label>
-            <input
-              fullWidth
-              id="client_secret"
-              formControlName="client_secret"
-              type="password"
-              nbInput
-              autocomplete="new-password"
-              autocapitalize="off"
-              autocorrect="off"
-              spellcheck="false"
-              [placeholder]="'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.CLIENT_SECRET_PLACEHOLDER' | translate"
-              />
-            </div>
-            <div class="hint">
-              <nb-icon icon="info-outline"></nb-icon>
-              {{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.INFOS' | translate }}
-            </div>
-            <button
-              nbButton
-              status="primary"
-              type="submit"
-              [disabled]="form.invalid || loading"
-              size="small"
-              outline
-              >
-              {{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.NEXT' | translate }}
-            </button>
-          </form>
+    <form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="setupApiKey()">
+      <div class="form-group">
+        <label for="api_key" class="label">
+          {{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.API_KEY' | translate }}
+        </label>
+        <input
+          fullWidth
+          id="api_key"
+          formControlName="api_key"
+          type="password"
+          nbInput
+          autocomplete="new-password"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          [placeholder]="'INTEGRATIONS.ACTIVEPIECES_PAGE.SETTINGS.API_KEY_PLACEHOLDER' | translate"
+        />
+      </div>
+      <div class="hint">
+        <nb-icon icon="info-outline"></nb-icon>
+        {{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.INFOS' | translate }}
+      </div>
+      <button
+        nbButton
+        status="primary"
+        type="submit"
+        [disabled]="form.invalid || loading()"
+        size="small"
+        outline
+      >
+        @if (loading()) {
+          <nb-icon icon="loader-outline"></nb-icon>
         }
-
-        <!-- Show this if tenant settings already exist -->
-        @if (hasTenantSettings) {
-          <div class="col-xl-6 col-12">
-            <p>{{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.READY_MESSAGE' | translate }}</p>
-            <button
-              nbButton
-              status="primary"
-              size="small"
-              outline
-              [disabled]="loading"
-              (click)="startAuthorization()"
-              >
-              @if (loading) {
-                <nb-icon icon="loader-outline"></nb-icon>
-              }
-              {{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.START_BUTTON' | translate }}
-            </button>
-          </div>
-        }
-      </nb-card-body>
-    </nb-card>
+        {{ 'INTEGRATIONS.ACTIVEPIECES_PAGE.AUTHORIZE.NEXT' | translate }}
+      </button>
+    </form>
+  </nb-card-body>
+</nb-card>
