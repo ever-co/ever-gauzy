@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ICandidateInterviewersDeleteInput, ICandidateInterviewersCreateInput, ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { IPartialEntity } from './../core/crud/icrud.service';
 import { TypeOrmCandidateInterviewersRepository } from './repository/type-orm-candidate-interviewers.repository';
 import { MikroOrmCandidateInterviewersRepository } from './repository/mikro-orm-candidate-interviewers.repository';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
@@ -56,10 +57,27 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 
 	/**
 	 *
-	 * @param createInput
+	 * @param input
 	 * @returns
 	 */
-	async createBulk(createInput: ICandidateInterviewersCreateInput[]) {
-		return await this.saveMany(createInput);
+	async createBulk(input: ICandidateInterviewersCreateInput[]) {
+		const interviewers: IPartialEntity<CandidateInterviewers>[] = [];
+		for (const item of input) {
+			const { employeeId, employeeIds, ...rest } = item;
+			if (employeeIds && employeeIds.length > 0) {
+				for (const id of employeeIds) {
+					interviewers.push({
+						...rest,
+						employeeId: id
+					});
+				}
+			} else if (employeeId) {
+				interviewers.push({
+					...rest,
+					employeeId
+				});
+			}
+		}
+		return await this.saveMany(interviewers);
 	}
 }

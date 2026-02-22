@@ -62,6 +62,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		}
 
 		const employeeId = RequestContext.currentEmployeeId();
+
+		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
+		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 		return (
 			/**
 			 * If the employee has logged in, retrieve their own data unless
@@ -69,8 +73,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			 */
 			(
 				isNotEmpty(employeeId)
-					? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-						this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
+					? !hasPermission && hasEmployeeColumn
 						? {
 								employee: {
 									id: employeeId
@@ -381,29 +384,22 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 
+		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
+
+		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 		return await super.create({
 			...entity,
-			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
-				? {
-						tenant: {
-							id: tenantId
-						},
-						tenantId
-					}
-				: {}),
+			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {}),
 			/**
 			 * If employee has login & create data for self
 			 */
-			...(isNotEmpty(employeeId)
-				? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-					this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
-					? {
-							employee: {
-								id: employeeId
-							},
-							employeeId: employeeId
-						}
-					: {}
+			...(isNotEmpty(employeeId) && !hasPermission && hasEmployeeColumn
+				? {
+						employee: { id: employeeId },
+						employeeId: employeeId
+					}
 				: {})
 		});
 	}
@@ -422,10 +418,9 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
 		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
-		const shouldSetEmployee =
-			isNotEmpty(employeeId) &&
-			!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-			hasEmployeeColumn;
+		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
+		const shouldSetEmployee = isNotEmpty(employeeId) && !hasPermission && hasEmployeeColumn;
 
 		const enriched = entities.map((entity) => ({
 			...entity,
@@ -445,16 +440,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	public async save(entity: IPartialEntity<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
+		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+
 		return await super.save({
 			...entity,
-			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
-				? {
-						tenant: {
-							id: tenantId
-						},
-						tenantId
-					}
-				: {})
+			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {})
 		});
 	}
 
