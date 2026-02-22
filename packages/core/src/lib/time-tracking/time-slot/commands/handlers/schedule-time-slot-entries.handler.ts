@@ -18,6 +18,7 @@ export class ScheduleTimeSlotEntriesHandler implements ICommandHandler<ScheduleT
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
+
 		query.setFindOptions({
 			relations: {
 				timeLogs: true
@@ -30,10 +31,14 @@ export class ScheduleTimeSlotEntriesHandler implements ICommandHandler<ScheduleT
 		// Then find slots with invalid values
 		query.andWhere(
 			new Brackets((web: WhereExpressionBuilder) => {
-				web.orWhere(p(`"${query.alias}"."overall" < :overall`), { overall: 0 });
-				web.orWhere(p(`"${query.alias}"."keyboard" < :keyboard`), { keyboard: 0 });
-				web.orWhere(p(`"${query.alias}"."mouse" < :mouse`), { mouse: 0 });
-				web.orWhere(p(`"${query.alias}"."duration" > :duration`), { duration: 600 });
+				web.orWhere(p(`"${query.alias}"."overall" < :overallMin`), { overallMin: 0 });
+				web.orWhere(p(`"${query.alias}"."overall" > :overallMax`), { overallMax: 600 });
+				web.orWhere(p(`"${query.alias}"."keyboard" < :keyboardMin`), { keyboardMin: 0 });
+				web.orWhere(p(`"${query.alias}"."keyboard" > :keyboardMax`), { keyboardMax: 600 });
+				web.orWhere(p(`"${query.alias}"."mouse" < :mouseMin`), { mouseMin: 0 });
+				web.orWhere(p(`"${query.alias}"."mouse" > :mouseMax`), { mouseMax: 600 });
+				web.orWhere(p(`"${query.alias}"."duration" < :durationMin`), { durationMin: 0 });
+				web.orWhere(p(`"${query.alias}"."duration" > :durationMax`), { durationMax: 600 });
 			})
 		);
 

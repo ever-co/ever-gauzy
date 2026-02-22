@@ -187,7 +187,11 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 * @returns A promise that resolves when the command is executed, performing bulk creation or update.
 	 */
 	async bulkCreateOrUpdate(slots: ITimeSlot[], employeeId: ID, organizationId: ID) {
-		return await this._commandBus.execute(new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId));
+		const tenantId = RequestContext.currentTenantId();
+
+		return await this._commandBus.execute(
+			new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId, tenantId)
+		);
 	}
 
 	/**
@@ -199,7 +203,11 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 * @returns The result of the bulk creation command
 	 */
 	async bulkCreate(slots: ITimeSlot[], employeeId: ID, organizationId: ID): Promise<ITimeSlot[]> {
-		return await this._commandBus.execute(new TimeSlotBulkCreateCommand(slots, employeeId, organizationId));
+		const tenantId = RequestContext.currentTenantId();
+
+		return await this._commandBus.execute(
+			new TimeSlotBulkCreateCommand(slots, employeeId, organizationId, tenantId)
+		);
 	}
 
 	/**

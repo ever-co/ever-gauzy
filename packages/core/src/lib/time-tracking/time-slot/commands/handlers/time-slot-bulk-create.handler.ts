@@ -19,7 +19,7 @@ export class TimeSlotBulkCreateHandler implements ICommandHandler<TimeSlotBulkCr
 	) {}
 
 	public async execute(command: TimeSlotBulkCreateCommand): Promise<TimeSlot[]> {
-		let { slots, employeeId, organizationId } = command;
+		let { slots, employeeId, organizationId, tenantId } = command;
 		if (slots.length === 0) {
 			return [];
 		}
@@ -30,7 +30,8 @@ export class TimeSlotBulkCreateHandler implements ICommandHandler<TimeSlotBulkCr
 			return slot;
 		});
 
-		const tenantId = RequestContext.currentTenantId();
+		tenantId = tenantId || RequestContext.currentTenantId();
+
 		const insertedSlots = await this.typeOrmTimeSlotRepository.find({
 			where: {
 				startedAt: In(pluck(slots, 'startedAt')),
@@ -74,8 +75,6 @@ export class TimeSlotBulkCreateHandler implements ICommandHandler<TimeSlotBulkCr
 			slot.tenantId = tenantId;
 			return slot;
 		});
-
-		console.log('Time Slots Bulk Create Handler Request', { slots });
 
 		if (slots.length > 0) {
 			await this.typeOrmTimeSlotRepository.save(slots);

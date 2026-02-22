@@ -21,7 +21,7 @@ export class TimeSlotBulkCreateOrUpdateHandler implements ICommandHandler<TimeSl
 	) {}
 
 	public async execute(command: TimeSlotBulkCreateOrUpdateCommand): Promise<TimeSlot[]> {
-		let { slots, employeeId, organizationId } = command;
+		let { slots, employeeId, organizationId, tenantId } = command;
 		if (slots.length === 0) {
 			return [];
 		}
@@ -31,7 +31,19 @@ export class TimeSlotBulkCreateOrUpdateHandler implements ICommandHandler<TimeSl
 			return slot;
 		});
 
-		const tenantId = RequestContext.currentTenantId();
+		tenantId = tenantId || RequestContext.currentTenantId();
+
+		/**
+		 * If organizationId is not provided, fallback to employee's organizationId
+		 */
+		if (isEmpty(organizationId)) {
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({
+				id: employeeId,
+				tenantId
+			});
+			organizationId = employee.organizationId;
+		}
+
 		const insertedSlots = await this.typeOrmTimeSlotRepository.find({
 			where: {
 				startedAt: In(_.pluck(slots, 'startedAt')),
@@ -41,13 +53,6 @@ export class TimeSlotBulkCreateOrUpdateHandler implements ICommandHandler<TimeSl
 			},
 			relations: ['timeLogs']
 		});
-
-		if (isEmpty(organizationId)) {
-			const employee = await this.typeOrmEmployeeRepository.findOneBy({
-				id: employeeId
-			});
-			organizationId = employee.organizationId;
-		}
 
 		const newSlotsTimeLogIds: any = _.chain(slots)
 			.map((slot) => _.pluck(slot.timeLogs, 'id'))
