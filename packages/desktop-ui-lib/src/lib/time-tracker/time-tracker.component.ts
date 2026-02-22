@@ -2359,12 +2359,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public showToastMessage({ message, type }): void {
+	public showToastMessage({ message, type }: { message: string; type: string }): void {
 		if (type === 'warning') {
-			this._toastrNotifier.warn(`${message}`);
+			this._toastrNotifier.warn(message);
 			return;
 		}
-		this._toastrNotifier.error(`${message}`);
+		this._toastrNotifier.error(message);
 	}
 
 	public toggle(event: boolean) {
