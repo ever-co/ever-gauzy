@@ -3,10 +3,11 @@ import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { IRole, IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthRegisterCommand } from '../auth.register.command';
 import { AuthService } from '../../auth.service';
+import { getORMType, MultiORMEnum } from '../../../core/utils';
+import { RequestContext } from '../../../core/context';
 import { UserService } from '../../../user/user.service';
 import { TypeOrmRoleRepository } from '../../../role/repository/type-orm-role.repository';
 import { MikroOrmRoleRepository } from '../../../role/repository/mikro-orm-role.repository';
-import { getORMType, MultiORMEnum } from '../../../core/utils';
 
 @CommandHandler(AuthRegisterCommand)
 export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand> {
@@ -33,15 +34,24 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 			// Role name provided directly via role object
 			targetRoleName = input.user.role.name;
 		} else if (input.user?.roleId) {
+			// Get tenant id from request context
+			const tenantId = RequestContext.currentTenantId();
+
 			// Only roleId provided — resolve it to a role entity to get the name
 			try {
 				let role: IRole;
 				switch (getORMType()) {
 					case MultiORMEnum.MikroORM:
-						role = await this.mikroOrmRoleRepository.findOneOrFail({ id: input.user.roleId });
+						role = await this.mikroOrmRoleRepository.findOneOrFail({
+							id: input.user.roleId,
+							...(tenantId ? { tenantId } : {})
+						});
 						break;
 					case MultiORMEnum.TypeORM:
-						role = await this.typeOrmRoleRepository.findOneByOrFail({ id: input.user.roleId });
+						role = await this.typeOrmRoleRepository.findOneByOrFail({
+							id: input.user.roleId,
+							...(tenantId ? { tenantId } : {})
+						});
 						break;
 					default:
 						throw new Error(`Not implemented for ${getORMType()}`);
