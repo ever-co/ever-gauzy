@@ -115,6 +115,10 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		const callerTenantId = jwtPayload.tenantId;
 		const callerUserId = jwtPayload.id;
 
+		if (!callerUserId || !callerTenantId || !callerRole) {
+			throw new ForbiddenException('Authentication token is missing required claims (id, tenantId, role).');
+		}
+
 		// Only ADMIN and SUPER_ADMIN can use privileged registration fields
 		if (callerRole !== RolesEnum.SUPER_ADMIN && callerRole !== RolesEnum.ADMIN) {
 			throw new ForbiddenException(
