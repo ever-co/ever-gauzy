@@ -1,9 +1,11 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { environment as env } from '@gauzy/config';
-import { RolesEnum } from '@gauzy/contracts';
+import { IRole, RolesEnum } from '@gauzy/contracts';
 import { verify } from 'jsonwebtoken';
 import { RequestContext } from '../../core/context';
 import { TypeOrmRoleRepository } from '../../role/repository/type-orm-role.repository';
+import { MikroOrmRoleRepository } from '../../role/repository/mikro-orm-role.repository';
+import { getORMType, MultiORMEnum } from '../../core/utils';
 
 /**
  * Minimal user shape set on the request by this guard when the register route
@@ -59,7 +61,10 @@ function getIdFromRelation(rel: unknown): string | undefined {
  */
 @Injectable()
 export class RegisterAuthorizationGuard implements CanActivate {
-	constructor(private readonly typeOrmRoleRepository: TypeOrmRoleRepository) {}
+	constructor(
+		private readonly typeOrmRoleRepository: TypeOrmRoleRepository,
+		private readonly mikroOrmRoleRepository: MikroOrmRoleRepository
+	) {}
 
 	/**
 	 * Checks if the request is authorized to proceed.
@@ -124,7 +129,22 @@ export class RegisterAuthorizationGuard implements CanActivate {
 
 		if (targetRoleId) {
 			try {
-				const role = await this.typeOrmRoleRepository.findOneByOrFail({ id: targetRoleId });
+				let role: IRole;
+				switch (getORMType()) {
+					case MultiORMEnum.MikroORM:
+						role = await this.mikroOrmRoleRepository.findOneOrFail({ id: targetRoleId });
+						break;
+					case MultiORMEnum.TypeORM:
+						role = await this.typeOrmRoleRepository.findOneByOrFail({ id: targetRoleId });
+						break;
+					default:
+						throw new Error(`Not implemented for ${getORMType()}`);
+				}
+
+				// Validate if the role exists
+				if (!role) {
+					throw new ForbiddenException('The specified role does not exist.');
+				}
 
 				// Verify the target role belongs to the caller's tenant
 				if (role.tenantId !== callerTenantId) {
