@@ -72,7 +72,7 @@ export class ProductDeleteHandler implements ICommandHandler<ProductDeleteComman
 					}
 					return (res as DeleteResult)?.affected ?? 0;
 				})
-				.reduce((acc, value) => acc + value)
+				.reduce((acc, value) => acc + value, 0)
 		};
 	}
 }
