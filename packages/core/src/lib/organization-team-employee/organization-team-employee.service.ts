@@ -81,7 +81,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				)
 			);
 
-			await this.deleteMemberByIds(removedMembers.map((member) => member.id));
+			await this.deleteMany(removedMembers.map((member) => member.id));
 
 			// Unsubscribe members who were unassigned from team
 			try {
@@ -155,21 +155,6 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			}
 
 			await this.saveMany(newTeamMembers);
-		}
-	}
-
-	/**
-	 * Delete team members by IDs.
-	 *
-	 * @param memberIds - Array of member IDs to delete
-	 * @returns A promise that resolves when all deletions are complete
-	 */
-	async deleteMemberByIds(memberIds: ID[]): Promise<void> {
-		if (memberIds.length > 0) {
-			const where: FindOptionsWhere<OrganizationTeamEmployee> = {
-				id: In(memberIds)
-			};
-			await this.delete(where);
 		}
 	}
 

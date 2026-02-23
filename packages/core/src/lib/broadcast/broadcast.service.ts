@@ -195,7 +195,13 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		// Filter broadcasts based on visibility mode and audience rules
 		const filteredBroadcasts: IBroadcast[] = [];
 		for (const broadcast of items) {
-			const canView = await this.canViewBroadcast(broadcast, employeeId, currentUser?.id, currentRoleId);
+			const canView = await this.canViewBroadcast(
+				broadcast,
+				employeeId,
+				currentUser?.id,
+				currentRoleId,
+				organizationId as ID
+			);
 			if (canView) {
 				filteredBroadcasts.push(broadcast);
 			}
@@ -219,7 +225,7 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId() ?? params?.where?.organizationId;
 		const employeeId = RequestContext.currentEmployeeId();
-		const currentUser = RequestContext.currentUser();
+		const currentUserId = RequestContext.currentUserId();
 		const currentRoleId = RequestContext.currentRoleId();
 
 		// Build where condition with tenant and organization scoping
@@ -241,7 +247,13 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		}
 
 		// Check if the current user can view this broadcast
-		const canView = await this.canViewBroadcast(broadcast, employeeId, currentUser?.id, currentRoleId);
+		const canView = await this.canViewBroadcast(
+			broadcast,
+			employeeId,
+			currentUserId,
+			currentRoleId,
+			organizationId as ID
+		);
 
 		if (!canView) {
 			throw new NotFoundException(`Broadcast with id ${id} not found or you don't have permission to view it`);
@@ -259,7 +271,13 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 	 * @param roleId - The current role ID.
 	 * @returns True if the user can view the broadcast, false otherwise.
 	 */
-	private async canViewBroadcast(broadcast: IBroadcast, employeeId: ID, userId: ID, roleId: ID): Promise<boolean> {
+	private async canViewBroadcast(
+		broadcast: IBroadcast,
+		employeeId: ID,
+		userId: ID,
+		roleId: ID,
+		organizationId?: ID
+	): Promise<boolean> {
 		const { visibilityMode, audienceRules, employeeId: publisherId, entity, entityId } = broadcast;
 
 		// Publisher can always view their own broadcasts
@@ -274,7 +292,7 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 
 			case BroadcastVisibilityModeEnum.ENTITY_MEMBERS:
 				// Check if employee is a member of the entity
-				return await this.isEntityMember(entity, entityId, employeeId);
+				return await this.isEntityMember(entity, entityId, employeeId, organizationId);
 
 			case BroadcastVisibilityModeEnum.RESTRICTED:
 				// Check audience rules
@@ -298,7 +316,12 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 	 * @param employeeId - The employee ID to check.
 	 * @returns True if the employee is a member of the entity.
 	 */
-	private async isEntityMember(entity: BaseEntityEnum, entityId: ID, employeeId: ID): Promise<boolean> {
+	private async isEntityMember(
+		entity: BaseEntityEnum,
+		entityId: ID,
+		employeeId: ID,
+		organizationId?: ID
+	): Promise<boolean> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 
@@ -307,8 +330,13 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 
 			// Load the entity with its members/employees relation
 			const repository = this.dataSource.getRepository(entity);
+
 			const entityWithMembers = await repository.findOne({
-				where: { id: entityId, tenantId },
+				where: {
+					id: entityId,
+					tenantId,
+					organizationId: organizationId || RequestContext.currentOrganizationId()
+				},
 				relations: [relationName]
 			});
 
@@ -483,14 +511,14 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 	 * @returns Array of employee IDs.
 	 */
 	private async getEntityMemberIds(broadcast: IBroadcast): Promise<ID[]> {
-		const { entity, entityId, tenantId } = broadcast;
+		const { entity, entityId, tenantId, organizationId } = broadcast;
 		const relationName = entity === BaseEntityEnum.Organization ? 'employees' : 'members';
 
 		try {
 			const repository = this.dataSource.getRepository(entity);
 
 			const entityWithMembers = await repository.findOne({
-				where: { id: entityId, tenantId },
+				where: { id: entityId, tenantId, organizationId },
 				relations: [relationName]
 			});
 
