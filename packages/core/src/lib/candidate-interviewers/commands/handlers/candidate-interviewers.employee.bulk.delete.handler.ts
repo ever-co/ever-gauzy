@@ -6,13 +6,25 @@ import { CandidateInterviewersService } from '../../candidate-interviewers.servi
 export class CandidateInterviewersEmployeeBulkDeleteHandler implements ICommandHandler<CandidateInterviewersEmployeeBulkDeleteCommand> {
 	constructor(private readonly candidateInterviewersService: CandidateInterviewersService) {}
 
-	public async execute(command: CandidateInterviewersEmployeeBulkDeleteCommand): Promise<any> {
+	public async execute(command: CandidateInterviewersEmployeeBulkDeleteCommand): Promise<void> {
 		const { deleteInput } = command;
-		for (const id of deleteInput) {
-			const interviewers = await this.candidateInterviewersService.getInterviewersByEmployeeId(id);
-			await this.candidateInterviewersService.deleteMany(interviewers.map((item) => item.id));
+
+		if (!deleteInput?.length) {
+			return;
 		}
 
-		return;
+		// Fetch all interviewers in parallel
+		const interviewerGroups = await Promise.all(
+			deleteInput.map((employeeId) => this.candidateInterviewersService.getInterviewersByEmployeeId(employeeId))
+		);
+
+		// Flatten results
+		const interviewerIds = interviewerGroups.flat().map((interviewer) => interviewer.id);
+
+		if (!interviewerIds.length) {
+			return;
+		}
+
+		await this.candidateInterviewersService.deleteMany(interviewerIds);
 	}
 }

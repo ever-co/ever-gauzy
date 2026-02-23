@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, In, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
 	BaseEntityEnum,
 	EntitySubscriptionTypeEnum,
