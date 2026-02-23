@@ -35,7 +35,6 @@ import { TranslateService } from '@ngx-translate/core';
 				></nb-icon>
 				} @else {
 				<nb-icon
-					(click)="!isPastInterview(rowData) && addFeedback()"
 					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK' | translate }} "
 					nbTooltipPlacement="top"
 					icon="message-square-outline"
@@ -175,6 +174,10 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 	}
 
 	addFeedback() {
+		// Only allow feedback on past interviews
+		if (!this.isPastInterview(this.rowData)) {
+			return;
+		}
 		const params = {
 			type: 'feedback',
 			data: this.rowData
