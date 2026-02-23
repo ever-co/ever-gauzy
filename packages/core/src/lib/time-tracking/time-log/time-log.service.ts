@@ -1177,11 +1177,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
 
 				// Loop through each conflicting time log
-				for await (const timeLog of conflicts) {
-					const { timeSlots = [] } = timeLog;
+				for await (const conflict of conflicts) {
+					const { timeSlots = [] } = conflict;
 					// Delete conflicting time slots
 					for await (const timeSlot of timeSlots) {
-						await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
+						await this.commandBus.execute(new DeleteTimeSpanCommand(times, conflict, timeSlot));
 					}
 				}
 			}

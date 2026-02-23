@@ -31,7 +31,7 @@ export class ProductOptionService extends TenantAwareCrudService<ProductOption> 
 	/**
 	 * Delete multiple product options.
 	 */
-	async deleteBulk(productOptionsInput: IProductOptionTranslatable[]) {
+	async deleteBulk(productOptionsInput: IProductOptionTranslatable[]): Promise<void> {
 		const ids = productOptionsInput.filter((o) => (o as ProductOption).id).map((o) => (o as ProductOption).id);
 		if (ids.length > 0) {
 			await this.delete({ id: In(ids) } as any);

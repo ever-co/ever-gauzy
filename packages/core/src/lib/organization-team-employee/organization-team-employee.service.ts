@@ -166,7 +166,10 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	 */
 	async deleteMemberByIds(memberIds: ID[]): Promise<void> {
 		if (memberIds.length > 0) {
-			await this.delete({ id: In(memberIds) } as any);
+			const where: FindOptionsWhere<OrganizationTeamEmployee> = {
+				id: In(memberIds)
+			};
+			await this.delete(where);
 		}
 	}
 

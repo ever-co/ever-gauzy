@@ -1,4 +1,4 @@
-import { In, FindOptionsWhere } from 'typeorm';
+import { In, FindOptionsWhere, DeleteResult } from 'typeorm';
 import { IHelpCenterAuthor } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from '@gauzy/core';
@@ -44,10 +44,11 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 	 * @param ids
 	 * @returns
 	 */
-	async deleteBulk(ids: string[]): Promise<any> {
+	async deleteBulk(ids: string[]): Promise<DeleteResult | []> {
 		if (isNotEmpty(ids)) {
 			return await this.delete({ id: In(ids) } as FindOptionsWhere<HelpCenterAuthor>);
 		}
+
 		return [];
 	}
 

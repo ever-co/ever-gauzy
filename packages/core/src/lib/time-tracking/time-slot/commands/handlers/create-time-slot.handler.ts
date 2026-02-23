@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import * as moment from 'moment';
@@ -64,7 +65,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		if (isEmpty(organizationId)) {
 			const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId, tenantId });
 			if (!employee) {
-				throw new Error('Employee not found or not in tenant');
+				throw new NotFoundException('Employee not found or not in tenant');
 			}
 			organizationId = employee.organizationId || RequestContext.currentOrganizationId();
 		}

@@ -35,8 +35,8 @@ export class EmployeeAvailabilityService extends TenantAwareCrudService<Employee
 		);
 
 		try {
-			// Use base class saveMany which handles both ORMs and tenant scoping
-			return await this.saveMany(items);
+			// Use base class createMany which handles both ORMs and tenant scoping
+			return await this.createMany(items);
 		} catch (error) {
 			throw new HttpException(
 				`Error in bulkCreate method of employee availability: ${error.message}`,
