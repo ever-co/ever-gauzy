@@ -335,7 +335,10 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 				where: {
 					id: entityId,
 					tenantId,
-					organizationId: organizationId || RequestContext.currentOrganizationId()
+					// Only include organizationId for non-Organization entities
+					...(entity !== BaseEntityEnum.Organization && {
+						organizationId: organizationId || RequestContext.currentOrganizationId()
+					})
 				},
 				relations: [relationName]
 			});
