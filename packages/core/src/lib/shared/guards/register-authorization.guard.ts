@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { environment as env } from '@gauzy/config';
-import { IOrganization, IRole, RolesEnum } from '@gauzy/contracts';
+import { RolesEnum } from '@gauzy/contracts';
 import { verify } from 'jsonwebtoken';
 import { RequestContext } from '../../core/context';
 import { TypeOrmRoleRepository } from '../../role/repository/type-orm-role.repository';
@@ -131,22 +131,21 @@ export class RegisterAuthorizationGuard implements CanActivate {
 			);
 		}
 
+		// Get ORM type from request context
+		const ormType = getORMType();
+
 		// Validate tenant isolation for roleId (top-level or nested in user)
 		const targetRoleId = body.user?.roleId ?? getIdFromRelation(body.user?.role);
-
 		if (targetRoleId && typeof targetRoleId === 'string') {
 			try {
-				let role: IRole;
-				switch (getORMType()) {
-					case MultiORMEnum.MikroORM:
-						role = await this.mikroOrmRoleRepository.findOneOrFail({ id: targetRoleId });
-						break;
-					case MultiORMEnum.TypeORM:
-						role = await this.typeOrmRoleRepository.findOneByOrFail({ id: targetRoleId });
-						break;
-					default:
-						throw new Error(`Not implemented for ${getORMType()}`);
-				}
+				const whereCondition = {
+					id: targetRoleId,
+					tenantId: callerTenantId
+				};
+
+				const role = await (ormType === MultiORMEnum.MikroORM
+					? this.mikroOrmRoleRepository.findOneOrFail(whereCondition)
+					: this.typeOrmRoleRepository.findOneByOrFail(whereCondition));
 
 				// Verify the target role belongs to the caller's tenant
 				if (role.tenantId !== callerTenantId) {
@@ -158,26 +157,23 @@ export class RegisterAuthorizationGuard implements CanActivate {
 				if (error instanceof ForbiddenException) {
 					throw error;
 				}
+				// Do not leak whether role e	xists in another tenant
 				throw new ForbiddenException('The specified role does not exist.');
 			}
 		}
 
 		// Validate tenant isolation for organizationId (top-level)
 		const targetOrganizationId = body.organizationId;
-
 		if (targetOrganizationId && typeof targetOrganizationId === 'string') {
 			try {
-				let organization: IOrganization;
-				switch (getORMType()) {
-					case MultiORMEnum.MikroORM:
-						organization = await this.mikroOrmOrganizationRepository.findOneOrFail({ id: targetOrganizationId });
-						break;
-					case MultiORMEnum.TypeORM:
-						organization = await this.typeOrmOrganizationRepository.findOneByOrFail({ id: targetOrganizationId });
-						break;
-					default:
-						throw new Error(`Not implemented for ${getORMType()}`);
-				}
+				const whereCondition = {
+					id: targetOrganizationId,
+					tenantId: callerTenantId
+				};
+
+				const organization = await (ormType === MultiORMEnum.MikroORM
+					? this.mikroOrmOrganizationRepository.findOneOrFail(whereCondition)
+					: this.typeOrmOrganizationRepository.findOneByOrFail(whereCondition));
 
 				// Verify the target organization belongs to the caller's tenant
 				if (organization.tenantId !== callerTenantId) {
@@ -189,6 +185,7 @@ export class RegisterAuthorizationGuard implements CanActivate {
 				if (error instanceof ForbiddenException) {
 					throw error;
 				}
+				// Do not leak whether org exists in another tenant
 				throw new ForbiddenException('The specified organization does not exist.');
 			}
 		}
