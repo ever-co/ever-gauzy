@@ -19,17 +19,8 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 	 * Get interviewers by interview ID.
 	 */
 	async getInterviewersByInterviewId(interviewId: ID): Promise<CandidateInterviewers[]> {
-		return this.typeOrmRepository.find({
+		return await this.find({
 			where: { interviewId }
-		});
-	}
-
-	/**
-	 * Get interviewers by employee ID.
-	 */
-	async getInterviewersByEmployeeId(employeeId: ID): Promise<CandidateInterviewers[]> {
-		return this.typeOrmRepository.find({
-			where: { employeeId }
 		});
 	}
 

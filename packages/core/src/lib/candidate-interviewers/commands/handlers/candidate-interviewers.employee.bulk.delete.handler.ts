@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { In } from 'typeorm';
 import { CandidateInterviewersEmployeeBulkDeleteCommand } from '../candidate-interviewers.employee.bulk.delete.command';
 import { CandidateInterviewersService } from '../../candidate-interviewers.service';
 
@@ -6,20 +7,32 @@ import { CandidateInterviewersService } from '../../candidate-interviewers.servi
 export class CandidateInterviewersEmployeeBulkDeleteHandler implements ICommandHandler<CandidateInterviewersEmployeeBulkDeleteCommand> {
 	constructor(private readonly candidateInterviewersService: CandidateInterviewersService) {}
 
+	/**
+	 * Execute the command to delete interviewers by employee ID.
+	 */
 	public async execute(command: CandidateInterviewersEmployeeBulkDeleteCommand): Promise<void> {
-		const { deleteInput } = command;
+		const { input } = command;
 
-		if (!deleteInput?.length) {
+		if (!input?.length) {
 			return;
 		}
 
-		// Fetch all interviewers in parallel
-		const interviewerGroups = await Promise.all(
-			deleteInput.map((employeeId) => this.candidateInterviewersService.getInterviewersByEmployeeId(employeeId))
-		);
+		// Extract employee IDs from input
+		const employeeIds = input.map(({ employeeId }) => employeeId).filter((id) => !!id);
 
-		// Flatten results
-		const interviewerIds = interviewerGroups.flat().map((interviewer) => interviewer.id);
+		if (!employeeIds.length) {
+			return;
+		}
+
+		// Fetch all interviewers for the given employee IDs in a single query
+		const interviewers = await this.candidateInterviewersService.find({
+			where: {
+				employeeId: In(employeeIds)
+			}
+		});
+
+		// Extract interviewer IDs
+		const interviewerIds = interviewers.map((interviewer) => interviewer.id);
 
 		if (!interviewerIds.length) {
 			return;
