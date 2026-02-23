@@ -483,14 +483,14 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 	 * @returns Array of employee IDs.
 	 */
 	private async getEntityMemberIds(broadcast: IBroadcast): Promise<ID[]> {
-		const { entity, entityId, tenantId, organizationId } = broadcast;
+		const { entity, entityId, tenantId } = broadcast;
 		const relationName = entity === BaseEntityEnum.Organization ? 'employees' : 'members';
 
 		try {
 			const repository = this.dataSource.getRepository(entity);
 
 			const entityWithMembers = await repository.findOne({
-				where: { id: entityId, tenantId, organizationId },
+				where: { id: entityId, tenantId },
 				relations: [relationName]
 			});
 
