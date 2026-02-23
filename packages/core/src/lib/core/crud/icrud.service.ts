@@ -4,7 +4,7 @@
 
 import { DeepPartial, DeleteResult, FindManyOptions, FindOneOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IPagination } from '@gauzy/contracts';
+import { IPagination, ID } from '@gauzy/contracts';
 import { ITryRequest } from './try-request';
 import {
 	FindOptions as MikroFindOptions,
@@ -31,6 +31,7 @@ export interface ICrudService<T> {
 	saveMany(entities: IPartialEntity<T>[]): Promise<T[]>;
 	update(id: IUpdateCriteria<T>, entity: QueryDeepPartialEntity<T>, ...options: any[]): Promise<UpdateResult | T>;
 	delete(id: IDeleteCriteria<T>, ...options: any[]): Promise<DeleteResult>;
+	deleteMany(ids: ID[]): Promise<DeleteResult>;
 	softDelete(id: IDeleteCriteria<T>, ...options: any[]): Promise<UpdateResult | T>;
 	softRemove(id: string, ...options: any[]): Promise<T>;
 	softRecover(id: string, ...options: any[]): Promise<T>;

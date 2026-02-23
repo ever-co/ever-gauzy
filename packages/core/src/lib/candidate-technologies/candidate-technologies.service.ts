@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ICandidateTechnologies, ICandidateTechnologiesCreateInput, ID } from '@gauzy/contracts';
+import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateTechnologies } from './candidate-technologies.entity';
 import { TypeOrmCandidateTechnologiesRepository } from './repository/type-orm-candidate-technologies.repository';

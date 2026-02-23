@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { In, DeleteResult, FindOptionsWhere } from 'typeorm';
+import { In, FindOptionsWhere } from 'typeorm';
 import { IPagination, IProductVariant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductVariant } from './product-variant.entity';
