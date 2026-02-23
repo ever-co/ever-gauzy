@@ -31,7 +31,8 @@ export interface RegisterRequestUser {
  *  1. A valid JWT is attached to the request
  *  2. The caller is ADMIN or SUPER_ADMIN
  *  3. If a roleId is provided, it belongs to the caller's tenant
- *  4. createdByUserId is overridden with the authenticated caller's ID
+ *  4. If an organizationId is provided, it belongs to the caller's tenant
+ *  5. createdByUserId is overridden with the authenticated caller's ID
  */
 const PRIVILEGED_FIELDS: string[] = ['roleId', 'organizationId', 'createdByUserId', 'featureAsEmployee'];
 
@@ -59,7 +60,7 @@ function getIdFromRelation(rel: unknown): string | undefined {
  * This guard inspects the request body:
  *  - If no privileged fields are present → pure public registration → allow through.
  *  - If privileged fields are present → require a valid JWT from an ADMIN/SUPER_ADMIN
- *    and verify tenant isolation for any supplied roleId.
+ *    and verify tenant isolation for any supplied roleId or organizationId.
  */
 @Injectable()
 export class RegisterAuthorizationGuard implements CanActivate {

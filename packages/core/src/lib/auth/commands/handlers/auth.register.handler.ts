@@ -47,7 +47,7 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 						: await this.typeOrmRoleRepository.findOneByOrFail(whereCondition);
 
 				targetRoleName = role.name;
-			} catch (error) {
+			} catch {
 				throw new BadRequestException('The specified roleId does not reference a valid role.');
 			}
 		} else if (input.user?.role?.name) {
