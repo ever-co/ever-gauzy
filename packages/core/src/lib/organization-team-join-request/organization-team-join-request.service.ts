@@ -201,7 +201,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 		try {
 			/** find existing team join request */
-			const request = await this.findOneOrFailByOptions({
+			const request = await this.findOneByOptions({
 				where: {
 					organizationTeamId,
 					email,

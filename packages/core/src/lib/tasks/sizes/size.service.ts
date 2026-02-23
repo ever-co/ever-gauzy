@@ -88,7 +88,9 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 					sizes.push(create);
 				}
 			}
-			return await this.saveMany(sizes);
+			return this.ormType === MultiORMEnum.MikroORM
+				? await this.mikroOrmRepository.upsertMany(sizes as any)
+				: await this.typeOrmRepository.save(sizes);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
