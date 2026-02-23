@@ -1,5 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { Brackets, FindOptionsWhere, In, SelectQueryBuilder, WhereExpressionBuilder, DeepPartial } from 'typeorm';
+import {
+	Brackets,
+	FindOptionsWhere,
+	In,
+	SelectQueryBuilder,
+	WhereExpressionBuilder,
+	DeepPartial,
+	DeleteResult
+} from 'typeorm';
 import { RequestContext, TenantAwareCrudService, BaseQueryDTO, prepareSQLQuery as p, LIKE_OPERATOR } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import {
@@ -127,7 +135,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	/**
 	 * Delete articles by IDs.
 	 */
-	async deleteBulkByArticleIds(ids: ID[]): Promise<DeleteResult | any[]> {
+	async deleteBulkByArticleIds(ids: ID[]): Promise<DeleteResult | never[]> {
 		if (isNotEmpty(ids)) {
 			return await this.delete({ id: In(ids) } as FindOptionsWhere<HelpCenterArticle>);
 		}

@@ -28,14 +28,9 @@ export class ProductOptionService extends TenantAwareCrudService<ProductOption> 
 		return this.typeOrmProductOptionTranslationRepository.save(translationInput);
 	}
 
-	async save(productOptionInput: IProductOptionTranslatable): Promise<ProductOption> {
-		return super.save(productOptionInput as any);
-	}
-
-	async saveBulk(productOptionsInput: ProductOption[]): Promise<ProductOption[]> {
-		return await this.saveMany(productOptionsInput);
-	}
-
+	/**
+	 * Delete multiple product options.
+	 */
 	async deleteBulk(productOptionsInput: IProductOptionTranslatable[]) {
 		const ids = productOptionsInput.filter((o) => (o as ProductOption).id).map((o) => (o as ProductOption).id);
 		if (ids.length > 0) {

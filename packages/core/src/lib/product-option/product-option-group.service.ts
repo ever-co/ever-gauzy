@@ -18,19 +18,7 @@ export class ProductOptionGroupService extends TenantAwareCrudService<ProductOpt
 		super(typeOrmProductOptionGroupRepository, mikroOrmProductOptionGroupRepository);
 	}
 
-	async create(productOptionsGroupInput: ProductOptionGroup): Promise<ProductOptionGroup> {
-		return super.create(productOptionsGroupInput);
-	}
-
-	async createBulk(productOptionsGroupInput: ProductOptionGroup[]): Promise<ProductOptionGroup[]> {
-		return await this.createMany(productOptionsGroupInput);
-	}
-
-	async saveBulk(productOptionsGroupInput: ProductOptionGroup[]): Promise<ProductOptionGroup[]> {
-		return await this.saveMany(productOptionsGroupInput);
-	}
-
-	async deleteBulk(productOptionGroupsInput: IProductOptionGroupTranslatable[]) {
+	async deleteBulk(productOptionGroupsInput: IProductOptionGroupTranslatable[]): Promise<void> {
 		const ids = productOptionGroupsInput
 			.filter((g): g is IProductOptionGroupTranslatable & { id: string } => 'id' in g && !!g.id)
 			.map((g) => g.id);

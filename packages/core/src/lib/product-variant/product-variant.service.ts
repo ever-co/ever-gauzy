@@ -50,10 +50,10 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 		return this.save(productVariant);
 	}
 
-	async deleteMany(productVariants: ProductVariant[]): Promise<ProductVariant[] | DeleteResult> {
+	async deleteMany(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
 		const ids = productVariants.filter((v) => v.id).map((v) => v.id);
 		if (ids.length > 0) {
-			const entities = await this.typeOrmRepository.find({
+			const entities = await this.find({
 				where: {
 					id: In(ids)
 				} as FindOptionsWhere<ProductVariant>,
@@ -68,7 +68,7 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 
 	async deleteFeaturedImage(id: string): Promise<IProductVariant> {
 		try {
-			let variant = await this.findOneByIdString(id);
+			const variant = await this.findOneByIdString(id);
 			variant.image = null;
 			return await this.save(variant);
 		} catch (err) {

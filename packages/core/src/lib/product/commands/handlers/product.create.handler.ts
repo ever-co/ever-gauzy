@@ -80,7 +80,7 @@ export class ProductCreateHandler implements ICommandHandler<ProductCreateComman
 			})
 		);
 
-		savedProduct.optionGroups = await this.productOptionsGroupService.saveBulk(optionsGroupsCreate);
+		savedProduct.optionGroups = await this.productOptionsGroupService.saveMany(optionsGroupsCreate);
 		const updatedProduct = await this.productService.saveProduct(savedProduct as any);
 
 		return updatedProduct;

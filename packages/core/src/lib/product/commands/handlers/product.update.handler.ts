@@ -179,8 +179,8 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 			})
 		);
 
-		let newProductOptions = await this.productOptionsGroupService.saveBulk(optionsGroupsCreate as any);
-		await this.productOptionsGroupService.saveBulk(optionGroupsUpdate as any);
+		let newProductOptions = await this.productOptionsGroupService.saveMany(optionsGroupsCreate as any);
+		await this.productOptionsGroupService.saveMany(optionGroupsUpdate as any);
 
 		product.optionGroups = product.optionGroups?.concat(newProductOptions);
 		product.productCategory = <any>productUpdateRequest.category;
