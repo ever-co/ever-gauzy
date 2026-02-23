@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { In, DeleteResult, FindOptionsWhere } from 'typeorm';
+import { In, DeleteResult } from 'typeorm';
+import { MultiORMEnum } from './../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductVariantPrice } from './product-variant-price.entity';
 import { TypeOrmProductVariantPriceRepository } from './repository/type-orm-product-variant-price.repository';
@@ -15,6 +16,7 @@ export class ProductVariantPriceService extends TenantAwareCrudService<ProductVa
 	}
 
 	/**
+	 * Create default product variant price
 	 *
 	 * @returns
 	 */
@@ -24,14 +26,19 @@ export class ProductVariantPriceService extends TenantAwareCrudService<ProductVa
 	}
 
 	/**
+	 * Delete many product variant prices
 	 *
 	 * @param productVariantPrices
 	 * @returns
 	 */
-	async deleteMany(productVariantPrices: ProductVariantPrice[]): Promise<DeleteResult | any[]> {
-		const ids = productVariantPrices.filter((p) => p.id).map((p) => p.id);
+	async deleteMany(productVariantPrices: ProductVariantPrice[]): Promise<DeleteResult | []> {
+		const ids = productVariantPrices.map((p) => p.id).filter((id): id is string => !!id);
 		if (ids.length > 0) {
-			return await this.delete({ id: In(ids) } as FindOptionsWhere<ProductVariantPrice>);
+			if (this.ormType === MultiORMEnum.MikroORM) {
+				return await this.delete({ id: { $in: ids } } as any);
+			} else {
+				return await this.delete({ id: In(ids) });
+			}
 		}
 		return [];
 	}
