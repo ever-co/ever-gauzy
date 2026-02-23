@@ -12,7 +12,7 @@ export class KnowledgeBaseArticleBulkDeleteHandler implements ICommandHandler<Kn
 		const authors = await this.helpCenterAuthorService.findByArticleId(id);
 		const ids = authors.map((item) => item.id);
 		if (isNotEmpty(ids)) {
-			await this.helpCenterAuthorService.deleteBulkByArticleId(ids);
+			await this.helpCenterAuthorService.deleteBulk(ids);
 		}
 		return;
 	}

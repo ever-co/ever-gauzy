@@ -88,6 +88,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 	}
 
 	async getDailyActivitiesReport(request: IGetActivitiesInput): Promise<IActivity[]> {
+		const { organizationId } = request;
 		const query = this.filterQuery(request);
 
 		query.select(p(`COUNT("${query.alias}"."id")`), `sessions`);
@@ -110,9 +111,12 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 		let employeeById: any = {};
 		if (employeeIds.length > 0) {
+			const tenantId = RequestContext.currentTenantId();
 			const employees = await this.typeOrmEmployeeRepository.find({
 				where: {
-					id: In(employeeIds)
+					id: In(employeeIds),
+					tenantId,
+					organizationId
 				},
 				relations: ['user']
 			});
@@ -121,9 +125,12 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 		let projectById: any = {};
 		if (projectIds.length > 0) {
+			const tenantId = RequestContext.currentTenantId();
 			const projects = await this.typeOrmOrganizationProjectRepository.find({
 				where: {
-					id: In(projectIds)
+					id: In(projectIds),
+					tenantId,
+					organizationId
 				}
 			});
 			projectById = indexBy(projects, 'id');
@@ -209,12 +216,12 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 					isSqlite() || isBetterSqlite3()
 						? `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`
 						: isPostgres()
-						? `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`
-						: isMySQL()
-						? p(
-								`concat("${query.alias}"."date", ' ', "${query.alias}"."time") Between :startDate AND :endDate`
-						  )
-						: '',
+							? `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`
+							: isMySQL()
+								? p(
+										`concat("${query.alias}"."date", ' ', "${query.alias}"."time") Between :startDate AND :endDate`
+									)
+								: '',
 					{
 						startDate,
 						endDate

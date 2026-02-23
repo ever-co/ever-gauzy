@@ -65,9 +65,11 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 			const screenshot = await query.getOneOrFail();
 
 			// Handle force delete or soft delete based on the flag
-			return forceDelete
-				? await this.typeOrmRepository.remove(screenshot)
-				: await this.typeOrmRepository.softRemove(screenshot);
+			if (forceDelete) {
+				await this.delete(screenshot.id);
+				return screenshot;
+			}
+			return await this.softRemove(screenshot.id);
 		} catch (error) {
 			throw new ForbiddenException('You do not have permission to delete this screenshot.');
 		}

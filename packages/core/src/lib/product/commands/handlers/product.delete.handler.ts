@@ -19,61 +19,74 @@ export class ProductDeleteHandler implements ICommandHandler<ProductDeleteComman
 		private productVariantPricesService: ProductVariantPriceService
 	) {}
 
-	public async execute(command?: ProductDeleteCommand): Promise<DeleteResult> {
+	public async execute(command: ProductDeleteCommand): Promise<DeleteResult> {
 		const { productId } = command;
 
 		const product = await this.productService.findOneByOptions({
 			where: { id: productId },
-			relations: ['variants', 'optionGroups']
+			relations: {
+				variants: true,
+				optionGroups: {
+					options: {
+						translations: true
+					},
+					translations: true
+				}
+			}
 		});
 
-		const settingsToDelete = [];
-		const pricesToDelete = [];
-
-		product.variants.forEach((variant) => {
-			settingsToDelete.push(variant.setting);
-		});
-		product.variants.forEach((variant) => {
-			pricesToDelete.push(variant.price);
-		});
-
-		const optionGroups = product.optionGroups;
-
-		for (const optionGroup of optionGroups) {
-			// Delete option translations for all options in parallel
-			await Promise.all(
-				optionGroup.options.map(async (option) => {
-					await this.productOptionService.deleteOptionTranslationsBulk(option.translations);
-				})
-			);
-
-			await this.productOptionService.deleteBulk(optionGroup.options);
+		if (!product) {
+			return { raw: [], affected: 0 };
 		}
 
-		for await (const group of optionGroups) {
-			await this.productOptionsGroupService.deleteGroupTranslationsBulk(group.translations);
-		}
+		const variants = product.variants ?? [];
+		const optionGroups = product.optionGroups ?? [];
 
-		await this.productOptionsGroupService.deleteBulk(optionGroups);
+		// Collect related entities in single pass
+		const settingsToDelete = variants.map((v) => v.setting).filter(Boolean);
+		const pricesToDelete = variants.map((v) => v.price).filter(Boolean);
 
-		const deleteRes = [
-			await this.productVariantService.deleteMany(product.variants),
-			await this.productVariantSettingsService.deleteMany(settingsToDelete),
-			await this.productVariantPricesService.deleteMany(pricesToDelete),
-			await this.productService.delete(product.id)
-		];
+		// ---------- DELETE OPTION GROUPS ----------
+		await Promise.all(
+			optionGroups.map(async (group) => {
+				// Delete option translations in parallel
+				await Promise.all(
+					(group.options ?? []).map((option) =>
+						this.productOptionService.deleteOptionTranslationsBulk(option.translations ?? [])
+					)
+				);
+
+				// Delete options
+				await this.productOptionService.deleteMany((group.options ?? []).map((o) => o.id));
+
+				// Delete group translations
+				await this.productOptionsGroupService.deleteGroupTranslationsBulk(group.translations ?? []);
+			})
+		);
+
+		// Delete groups
+		await this.productOptionsGroupService.deleteMany(optionGroups.map((g) => g.id));
+
+		// ---------- DELETE VARIANTS + RELATED ----------
+		const deleteResults = await Promise.all([
+			this.productVariantService.deleteManyVariants(variants),
+			this.productVariantSettingsService.deleteManySettings(settingsToDelete),
+			this.productVariantPricesService.deleteManyPrices(pricesToDelete),
+			this.productService.delete(product.id)
+		]);
 
 		return {
-			raw: deleteRes,
-			affected: deleteRes
-				.map((res) => {
-					if (Array.isArray(res)) {
-						return res.length;
-					} else {
-						return res.affected ? res.affected : 0;
-					}
-				})
-				.reduce((acc, value) => acc + value)
+			raw: deleteResults,
+			affected: this.calculateAffected(deleteResults)
 		};
+	}
+
+	private calculateAffected(results: any[]): number {
+		return results.reduce((total, result) => {
+			if (Array.isArray(result)) {
+				return total + result.length;
+			}
+			return total + (result?.affected ?? 0);
+		}, 0);
 	}
 }

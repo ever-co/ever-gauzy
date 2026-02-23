@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { IHelpCenter } from '@gauzy/contracts';
+import { In, FindOptionsWhere, DeleteResult } from 'typeorm';
+import { IHelpCenter, ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import { HelpCenter } from './help-center.entity';
@@ -16,25 +17,27 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	}
 
 	async updateBulk(updateInput: IHelpCenter[]) {
-		return await this.typeOrmRepository.save(updateInput);
+		return await this.saveMany(updateInput);
 	}
 
-	async deleteBulkByBaseId(ids: string[]) {
+	async deleteBulkByBaseId(ids: ID[]): Promise<DeleteResult[]> {
 		if (isNotEmpty(ids)) {
-			return await this.typeOrmRepository.delete(ids);
+			/**
+			 * TypeORM typing limitations: cast via unknown to FindOptionsWhere.
+			 * TenantAwareCrudService.delete() enforces tenant scoping so tenant safety is preserved.
+			 */
+			return [await this.delete({ id: In(ids) } as unknown as FindOptionsWhere<HelpCenter>)];
 		}
+		return [];
 	}
 
-	async getCategoriesByBaseId(baseId: string): Promise<HelpCenter[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('knowledge_base')
-			.where('knowledge_base.parentId = :baseId', {
-				baseId
-			})
-			.getMany();
+	async getCategoriesByBaseId(baseId: ID): Promise<HelpCenter[]> {
+		return await this.find({
+			where: { parentId: baseId } as FindOptionsWhere<HelpCenter>
+		});
 	}
 
 	async getAllNodes(): Promise<HelpCenter[]> {
-		return await this.typeOrmRepository.createQueryBuilder('knowledge_base').getMany();
+		return await this.find({});
 	}
 }

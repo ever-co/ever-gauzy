@@ -128,7 +128,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			}
 
 			// Save the created task statuses using the repository.
-			return await this.typeOrmRepository.save(statuses);
+			return (await this.saveMany(statuses)) as ITaskStatus[] & TaskStatus[];
 		} catch (error) {
 			// If an error occurs during the creation process, log the error.
 			console.error('Error while creating task statuses', error.message);
@@ -182,7 +182,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			}
 
 			// Save the created task statuses using the repository.
-			return await this.typeOrmRepository.save(statuses);
+			return (await this.saveMany(statuses)) as ITaskStatus[] & TaskStatus[];
 		} catch (error) {
 			// If an error occurs during the creation process, log the error.
 			console.error('Error while creating task statuses for organization', error.message);
@@ -201,22 +201,13 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 		const tenantId = RequestContext.currentTenantId();
 
 		try {
-			// Initialize an array to store the created task statuses.
-			const statuses: ITaskStatus[] = [];
-
 			// Find entities by parameters, filtering by tenant ID and organization ID.
 			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			// Initialize an index variable.
-			let index = 0;
-
-			// Iterate over each found entity.
-			for await (const item of items) {
-				// Extract properties from the entity.
+			// Map items to entity objects, then bulk create.
+			const entitiesToCreate = items.map((item, index) => {
 				const { name, value, description, icon, color, order, isCollapsed } = item;
-
-				// Create a new TaskStatus instance with modified properties.
-				const status = await this.create({
+				return {
 					...entity,
 					name,
 					value,
@@ -226,17 +217,11 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 					isSystem: false,
 					order: order || index,
 					isCollapsed
-				});
+				};
+			});
 
-				// Increment the index.
-				index++;
-
-				// Add the new status to the array.
-				statuses.push(status);
-			}
-
-			// Return the array of created task statuses.
-			return statuses;
+			// Bulk create all statuses at once.
+			return await this.createMany(entitiesToCreate);
 		} catch (error) {
 			// If an error occurs during the creation process, log the error.
 			console.error('Error while creating task statuses', error);

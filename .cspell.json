@@ -354,6 +354,7 @@
 		"jwks_uri",
 		"JWKS_URI",
 		"kafkajs",
+		"kbap",
 		"KEYCLOAK",
 		"keyid",
 		"keyId",

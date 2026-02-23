@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import * as moment from 'moment';
@@ -62,8 +63,11 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		 * If organization not found in request then assign current logged user organization
 		 */
 		if (isEmpty(organizationId)) {
-			let employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId });
-			organizationId = employee ? employee.organizationId : null;
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId, tenantId });
+			if (!employee) {
+				throw new NotFoundException('Employee not found or not in tenant');
+			}
+			organizationId = employee.organizationId || RequestContext.currentOrganizationId();
 		}
 
 		// Input.startedAt is a string, so convert it to a Date object

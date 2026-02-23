@@ -503,7 +503,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			const { organizationId, projectId, integrationId } = options;
 
 			// Attempt to retrieve the organization projects by the provided parameters.
-			const projects = await this.typeOrmRepository.find({
+			const projects = await this.find({
 				where: {
 					...(projectId ? { id: projectId } : {}),
 					organizationId,
@@ -672,14 +672,15 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					});
 
 				// Save updated projects
-				await Promise.all(updatedProjectsToAdd.map((project) => this.save(project)));
+				await this.saveMany(updatedProjectsToAdd);
 			}
 
 			// Handle removing projects
 			if (removedProjectIds.length > 0) {
 				await this.typeOrmOrganizationProjectEmployeeRepository.delete({
 					organizationProjectId: In(removedProjectIds),
-					employeeId: member.id
+					employeeId: member.id,
+					tenantId
 				});
 			}
 

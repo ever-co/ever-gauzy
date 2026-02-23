@@ -297,7 +297,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			);
 		}
 
-		const items = await this.typeOrmRepository.save(invites);
+		const items: Invite[] = await this.saveMany(invites);
 
 		items.forEach((item: IInvite) => {
 			let inviteLink: string = this.createAcceptInvitationUrl(originUrl, item.email, item.token);
@@ -573,7 +573,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		invite.organizationContacts = [organizationContact];
 
 		// Save the invite to the repository.
-		const createdInvite = await this.typeOrmRepository.save(invite);
+		const createdInvite = await this.save(invite);
 
 		// Send the invitation email (fire-and-forget).
 		this.emailService.inviteOrganizationContact(

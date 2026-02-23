@@ -1,5 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { Brackets, FindOptionsWhere, In, SelectQueryBuilder, WhereExpressionBuilder, DeepPartial } from 'typeorm';
+import {
+	Brackets,
+	FindOptionsWhere,
+	In,
+	SelectQueryBuilder,
+	WhereExpressionBuilder,
+	DeepPartial,
+	DeleteResult
+} from 'typeorm';
 import { RequestContext, TenantAwareCrudService, BaseQueryDTO, prepareSQLQuery as p, LIKE_OPERATOR } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import {
@@ -27,16 +35,10 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		super(typeOrmHelpCenterArticleRepository, mikroOrmHelpCenterArticleRepository);
 	}
 
-	/**
-	 * Get articles by category ID.
-	 */
 	async getArticlesByCategoryId(categoryId: ID): Promise<HelpCenterArticle[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('knowledge_base_article')
-			.where('knowledge_base_article.categoryId = :categoryId', {
-				categoryId
-			})
-			.getMany();
+		return await this.find({
+			where: { categoryId } as FindOptionsWhere<HelpCenterArticle>
+		});
 	}
 
 	/**
@@ -84,7 +86,10 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 					.from(p('knowledge_base_article_project'), 'kbap')
 					.andWhere(p('"kbap"."organizationProjectId" = :projectId'), { projectId });
 
-				return p(`"knowledge_base_article_projects"."knowledgeBaseArticleId" IN `) + subQuery.distinct(true).getQuery();
+				return (
+					p(`"knowledge_base_article_projects"."knowledgeBaseArticleId" IN `) +
+					subQuery.distinct(true).getQuery()
+				);
 			});
 
 			// Add organization and tenant filters
@@ -128,24 +133,29 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	}
 
 	/**
-	 * Delete articles by category ID.
+	 * Delete articles by IDs.
 	 */
-	async deleteBulkByCategoryId(ids: string[]) {
+	async deleteBulkByArticleIds(ids: ID[]): Promise<DeleteResult | never[]> {
 		if (isNotEmpty(ids)) {
-			return await this.typeOrmRepository.delete(ids);
+			return await this.delete({ id: In(ids) } as FindOptionsWhere<HelpCenterArticle>);
 		}
+		return [];
 	}
 
 	/**
 	 * Update an article by ID.
 	 */
-	public async updateArticleById(id: string, input: IHelpCenterArticleUpdate): Promise<void> {
-		await this.typeOrmRepository.update(id, input);
+	public async updateArticleById(id: ID, input: IHelpCenterArticleUpdate): Promise<void> {
+		await super.update(id, input);
 	}
 
 	/**
 	 * Update an article with automatic version snapshot.
 	 * Creates a version snapshot of the current state before applying the update.
+	 *
+	 * Note: This operation is NON-ATOMIC. If the update fails after version creation,
+	 * an orphan version record may remain. This data-integrity risk is tracked
+	 * under issue ID: GAU-9421.
 	 *
 	 * @param id - Article ID
 	 * @param input - Partial update data (any field including isLocked, archivedAt, privacy, etc.)

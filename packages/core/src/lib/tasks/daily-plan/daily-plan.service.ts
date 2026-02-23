@@ -431,7 +431,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			});
 
 			// save and return the updatedDailyPlan
-			return await this.typeOrmDailyPlanRepository.save(updatedPlans);
+			return await this.saveMany(updatedPlans);
 		} catch (error) {
 			// Preserve HTTP exceptions (BadRequestException, etc.), only wrap non-HTTP errors
 			if (error instanceof HttpException) {

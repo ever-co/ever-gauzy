@@ -1,10 +1,12 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { environment as env } from '@gauzy/config';
-import { IRole, RolesEnum } from '@gauzy/contracts';
+import { RolesEnum } from '@gauzy/contracts';
 import { verify } from 'jsonwebtoken';
 import { RequestContext } from '../../core/context';
 import { TypeOrmRoleRepository } from '../../role/repository/type-orm-role.repository';
 import { MikroOrmRoleRepository } from '../../role/repository/mikro-orm-role.repository';
+import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
+import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
 import { getORMType, MultiORMEnum } from '../../core/utils';
 
 /**
@@ -29,7 +31,8 @@ export interface RegisterRequestUser {
  *  1. A valid JWT is attached to the request
  *  2. The caller is ADMIN or SUPER_ADMIN
  *  3. If a roleId is provided, it belongs to the caller's tenant
- *  4. createdByUserId is overridden with the authenticated caller's ID
+ *  4. If an organizationId is provided, it belongs to the caller's tenant
+ *  5. createdByUserId is overridden with the authenticated caller's ID
  */
 const PRIVILEGED_FIELDS: string[] = ['roleId', 'organizationId', 'createdByUserId', 'featureAsEmployee'];
 
@@ -57,13 +60,15 @@ function getIdFromRelation(rel: unknown): string | undefined {
  * This guard inspects the request body:
  *  - If no privileged fields are present → pure public registration → allow through.
  *  - If privileged fields are present → require a valid JWT from an ADMIN/SUPER_ADMIN
- *    and verify tenant isolation for any supplied roleId.
+ *    and verify tenant isolation for any supplied roleId or organizationId.
  */
 @Injectable()
 export class RegisterAuthorizationGuard implements CanActivate {
 	constructor(
 		private readonly typeOrmRoleRepository: TypeOrmRoleRepository,
-		private readonly mikroOrmRoleRepository: MikroOrmRoleRepository
+		private readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
+		private readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
+		private readonly mikroOrmOrganizationRepository: MikroOrmOrganizationRepository
 	) {}
 
 	/**
@@ -126,22 +131,21 @@ export class RegisterAuthorizationGuard implements CanActivate {
 			);
 		}
 
+		// Get ORM type from request context
+		const ormType = getORMType();
+
 		// Validate tenant isolation for roleId (top-level or nested in user)
 		const targetRoleId = body.user?.roleId ?? getIdFromRelation(body.user?.role);
-
 		if (targetRoleId && typeof targetRoleId === 'string') {
 			try {
-				let role: IRole;
-				switch (getORMType()) {
-					case MultiORMEnum.MikroORM:
-						role = await this.mikroOrmRoleRepository.findOneOrFail({ id: targetRoleId });
-						break;
-					case MultiORMEnum.TypeORM:
-						role = await this.typeOrmRoleRepository.findOneByOrFail({ id: targetRoleId });
-						break;
-					default:
-						throw new Error(`Not implemented for ${getORMType()}`);
-				}
+				const whereCondition = {
+					id: targetRoleId,
+					tenantId: callerTenantId
+				};
+
+				const role = await (ormType === MultiORMEnum.MikroORM
+					? this.mikroOrmRoleRepository.findOneOrFail(whereCondition)
+					: this.typeOrmRoleRepository.findOneByOrFail(whereCondition));
 
 				// Verify the target role belongs to the caller's tenant
 				if (role.tenantId !== callerTenantId) {
@@ -153,7 +157,36 @@ export class RegisterAuthorizationGuard implements CanActivate {
 				if (error instanceof ForbiddenException) {
 					throw error;
 				}
+				// Do not leak whether role exists in another tenant
 				throw new ForbiddenException('The specified role does not exist.');
+			}
+		}
+
+		// Validate tenant isolation for organizationId (top-level)
+		const targetOrganizationId = body.organizationId;
+		if (targetOrganizationId && typeof targetOrganizationId === 'string') {
+			try {
+				const whereCondition = {
+					id: targetOrganizationId,
+					tenantId: callerTenantId
+				};
+
+				const organization = await (ormType === MultiORMEnum.MikroORM
+					? this.mikroOrmOrganizationRepository.findOneOrFail(whereCondition)
+					: this.typeOrmOrganizationRepository.findOneByOrFail(whereCondition));
+
+				// Verify the target organization belongs to the caller's tenant
+				if (organization.tenantId !== callerTenantId) {
+					throw new ForbiddenException(
+						'Tenant isolation violation: the specified organization does not belong to your tenant.'
+					);
+				}
+			} catch (error) {
+				if (error instanceof ForbiddenException) {
+					throw error;
+				}
+				// Do not leak whether org exists in another tenant
+				throw new ForbiddenException('The specified organization does not exist.');
 			}
 		}
 

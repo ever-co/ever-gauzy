@@ -14,16 +14,17 @@ export class KeyResultService extends TenantAwareCrudService<KeyResult> {
 	}
 
 	/**
-	 * Creates multiple key results in bulk.
+	 * Creates or updates multiple key results in bulk (Upsert).
 	 *
-	 * @param {KeyResult[]} input - An array of `KeyResult` objects to be inserted into the database.
-	 * @returns {Promise<KeyResult[]>} - A promise resolving to the newly created key results.
+	 * @param {KeyResult[]} input - An array of `KeyResult` objects to be saved into the database.
+	 * @returns {Promise<KeyResult[]>} - A promise resolving to the saved key results.
 	 *
 	 * @description
-	 * This method performs a bulk insert operation, saving multiple key result entries at once.
-	 * It utilizes TypeORM's `save()` method to persist the provided key results efficiently.
+	 * This method performs a bulk save operation, which creates new entries or updates existing ones
+	 * based on the primary key (upsert semantics). It delegates to the `saveMany()` helper which
+	 * utilizes TypeORM's `save()` method for efficient persistence.
 	 */
 	async createBulk(input: KeyResult[]): Promise<KeyResult[]> {
-		return this.typeOrmRepository.save(input);
+		return await this.saveMany(input);
 	}
 }

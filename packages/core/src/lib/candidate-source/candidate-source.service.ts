@@ -20,12 +20,9 @@ export class CandidateSourceService extends TenantAwareCrudService<CandidateSour
 	 * @returns
 	 */
 	async createBulk(sources: ICandidateSource[]): Promise<ICandidateSource[]> {
-		const candidateSources: ICandidateSource[] = [];
-		if (sources) {
-			for await (const source of sources) {
-				candidateSources.push(await this.create(source));
-			}
+		if (!sources || sources.length === 0) {
+			return [];
 		}
-		return candidateSources;
+		return await this.createMany(sources);
 	}
 }

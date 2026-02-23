@@ -14,20 +14,26 @@ export class ProductVariantSettingService extends TenantAwareCrudService<Product
 	}
 
 	/**
+	 * Create default variant settings
 	 *
-	 * @returns
+	 * @returns - ProductVariantSetting
 	 */
 	async createDefaultVariantSettings(): Promise<ProductVariantSetting> {
 		const newProductVariantSettings = new ProductVariantSetting();
-		return this.typeOrmRepository.save(newProductVariantSettings);
+		return this.save(newProductVariantSettings);
 	}
 
 	/**
+	 * Delete many product variant settings
 	 *
-	 * @param productVariantPrices
+	 * @param productVariantSettings
 	 * @returns
 	 */
-	async deleteMany(productVariantPrices: ProductVariantSetting[]): Promise<ProductVariantSetting[]> {
-		return this.typeOrmRepository.remove(productVariantPrices);
+	async deleteManySettings(productVariantSettings: ProductVariantSetting[]): Promise<ProductVariantSetting[]> {
+		const ids = productVariantSettings.map((s) => s.id).filter((id): id is string => !!id);
+		if (ids.length > 0) {
+			await super.deleteMany(ids);
+		}
+		return productVariantSettings;
 	}
 }

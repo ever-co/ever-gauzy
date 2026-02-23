@@ -11,6 +11,7 @@ import { OrganizationController } from './organization.controller';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { TypeOrmOrganizationRepository } from './repository/type-orm-organization.repository';
+import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
 
 @Module({
 	imports: [
@@ -23,7 +24,7 @@ import { TypeOrmOrganizationRepository } from './repository/type-orm-organizatio
 		CqrsModule
 	],
 	controllers: [OrganizationController],
-	providers: [OrganizationService, TypeOrmOrganizationRepository, ...CommandHandlers],
-	exports: [OrganizationService, TypeOrmOrganizationRepository]
+	providers: [OrganizationService, TypeOrmOrganizationRepository, MikroOrmOrganizationRepository, ...CommandHandlers],
+	exports: [OrganizationService, TypeOrmOrganizationRepository, MikroOrmOrganizationRepository]
 })
 export class OrganizationModule {}
