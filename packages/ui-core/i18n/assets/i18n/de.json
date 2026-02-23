@@ -2568,6 +2568,7 @@
 		"TIME_OFF": "Zeit frei nehmen"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "Sie haben keine Berechtigung, diese Seite anzuzeigen",
 		"HEADER": "Freizeit",
 		"REQUEST": "Anfrage",
 		"REQUEST_TIME_OFF": "Antrag auf Freizeit",

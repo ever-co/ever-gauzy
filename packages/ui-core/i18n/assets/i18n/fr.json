@@ -2567,6 +2567,7 @@
 		"TIME_OFF": "Temps libre"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "Vous n'avez pas la permission de voir cette page",
 		"HEADER": "Congé",
 		"REQUEST": "Demande",
 		"REQUEST_TIME_OFF": "Demander du temps libre.",

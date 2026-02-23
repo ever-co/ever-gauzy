@@ -207,15 +207,7 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	private async addEmploymentType() {
 		if (!this.form.invalid) {
 			const name: string = this.form.get('name').value;
-			const existingNames = this.organizationEmploymentTypes.map((type) => type.name);
 
-			if (validateUniqueString(existingNames, name)) {
-				this.toastrService.error(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS',
-					name
-				);
-				return;
-			}
 
 			const newEmploymentType = {
 				name,
@@ -243,12 +235,23 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		}
 	}
 
-	submitForm() {
-		if (this.selectedOrgEmpType) {
-			this.editOrgEmpType(this.selectedOrgEmpType.id, this.form.get('name').value);
-		} else {
-			this.addEmploymentType();
+	async submitForm(): Promise<boolean> {
+		if (this.form.invalid) return false;
+		const name: string = this.form.get('name').value;
+		const existingNames = this.organizationEmploymentTypes
+			.filter((type) => !this.selectedOrgEmpType || type.id !== this.selectedOrgEmpType.id)
+			.map((type) => type.name);
+
+		if (validateUniqueString(existingNames, name)) {
+			this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS', name);
+			return false;
 		}
+		if (this.selectedOrgEmpType) {
+			await this.editOrgEmpType(this.selectedOrgEmpType.id, name);
+		} else {
+			await this.addEmploymentType();
+		}
+		return true;
 	}
 
 	async deleteEmploymentType(id, name) {
@@ -290,14 +293,7 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	}
 
 	async editOrgEmpType(id: string, name: string) {
-		const existingNames = this.organizationEmploymentTypes
-			.filter((type) => type.id !== id)
-			.map((type) => type.name);
 
-		if (validateUniqueString(existingNames, name)) {
-			this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS', name);
-			return;
-		}
 		const orgEmpTypeForEdit = {
 			name: name,
 			tags: this.tags
@@ -349,5 +345,21 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		this.selected.state = res.state;
 		this.selected.employmentType = orgEmpType;
 		this.selectedOrgEmpType = this.selected.employmentType;
+	}
+	titleKey(): string {
+		return this.selectedOrgEmpType?.id ? 'POP_UPS.EDIT' : 'POP_UPS.ADD';
+	}
+
+	onCancelClick(ref: any) {
+		ref.close();
+		this.disabled = true;
+	}
+
+	async onSaveClick(ref: any) {
+		const success = await this.submitForm();
+		if (success) {
+			this.disabled = true;
+			ref.close();
+		}
 	}
 }

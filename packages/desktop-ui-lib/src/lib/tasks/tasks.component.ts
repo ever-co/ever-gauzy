@@ -14,7 +14,15 @@ import {
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { NbDialogRef, NbCardModule, NbInputModule, NbBadgeModule, NbDatepickerModule, NbButtonModule, NbIconModule } from '@nebular/theme';
+import {
+	NbDialogRef,
+	NbCardModule,
+	NbInputModule,
+	NbBadgeModule,
+	NbDatepickerModule,
+	NbButtonModule,
+	NbIconModule
+} from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -32,14 +40,34 @@ import { NgSelectComponent, NgOptionTemplateDirective, NgLabelTemplateDirective 
 import { TaskBadgeViewComponent } from '../time-tracker/task-render/task-badge-view/task-badge-view.component';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
-import { NgStyle, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-tasks',
-    templateUrl: './tasks.component.html',
-    styleUrls: ['./tasks.component.scss'],
-    imports: [NbCardModule, FormsModule, ReactiveFormsModule, ClientSelectorComponent, ProjectSelectorComponent, TeamSelectorComponent, NgSelectComponent, NgOptionTemplateDirective, TaskBadgeViewComponent, NgLabelTemplateDirective, NbInputModule, NbBadgeModule, NbDatepickerModule, CKEditorModule, NbButtonModule, SpinnerButtonDirective, NbIconModule, NgStyle, AsyncPipe, TranslatePipe]
+	selector: 'ngx-tasks',
+	templateUrl: './tasks.component.html',
+	styleUrls: ['./tasks.component.scss'],
+	imports: [
+		NbCardModule,
+		FormsModule,
+		ReactiveFormsModule,
+		ClientSelectorComponent,
+		ProjectSelectorComponent,
+		TeamSelectorComponent,
+		NgSelectComponent,
+		NgOptionTemplateDirective,
+		TaskBadgeViewComponent,
+		NgLabelTemplateDirective,
+		NbInputModule,
+		NbBadgeModule,
+		NbDatepickerModule,
+		CKEditorModule,
+		NbButtonModule,
+		SpinnerButtonDirective,
+		NbIconModule,
+		AsyncPipe,
+		TranslatePipe
+	]
 })
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization = this.store.user as any;

@@ -2557,6 +2557,7 @@
 		"TIME_OFF": "إجازة"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "ليس لديك إذن لعرض هذه الصفحة",
 		"HEADER": "وقت الراحة",
 		"REQUEST": "طلب",
 		"REQUEST_TIME_OFF": "طلب إجازة",

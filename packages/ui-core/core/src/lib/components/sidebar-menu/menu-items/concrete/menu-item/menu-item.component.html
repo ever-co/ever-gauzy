@@ -1,59 +1,54 @@
-<nb-accordion
-  *ngxPermissionsOnly="item?.data?.permissionKeys"
-  [ngClass]="state ? item?.class : item?.class + ' closed'"
-  >
-  <nb-accordion-item [collapsed]="collapse" (collapsedChange)="onCollapse($event)" [ngClass]="{ opened: selected }">
-    @if (!state) {
-      <nb-accordion-item-header
-        [gaTooltip]="item?.title"
-        [icon]="item?.icon"
-        [ngClass]="onCollapse ? 'collapsed' : ''"
-        (click)="redirectTo()"
-        >
-        <i [class]="item?.icon"></i>
-        @if (state) {
-          <span>
-            <a [href]="getExternalUrl(item?.link)" onclick="return false;">
-              {{ item?.title }}
-            </a>
-          </span>
-        }
-      </nb-accordion-item-header>
-    }
-    @if (state) {
-      <nb-accordion-item-header
-        [nbTooltip]="item?.title"
-        nbTooltipPlacement="right"
-        [ngClass]="onCollapse ? 'collapsed' : ''"
-        (click)="redirectTo()"
-        >
-        <i [class]="item?.icon"></i>
-        @if (state) {
-          <span>
-            <a [href]="getExternalUrl(item?.link)" onclick="return false;">
-              {{ item?.title }}
-            </a>
-          </span>
-        }
-      </nb-accordion-item-header>
-    }
-    @if (item?.children?.length > 0) {
-      <nb-accordion-item-body [ngClass]="{ 'item-collapsed': !state }">
-        @for (subItem of item.children; track subItem?.title) {
-          <div>
-            @if (!item?.hidden) {
-              <ga-children-menu-item
-                [id]="subItem?.id"
-                [item]="subItem"
-                [parent]="item"
-                [collapse]="state"
-                [selected]="subItem === selectedChildren && selected"
-                (focusItemChange)="focusOn($event)"
-              ></ga-children-menu-item>
-            }
-          </div>
-        }
-      </nb-accordion-item-body>
-    }
-  </nb-accordion-item>
+<nb-accordion *ngxPermissionsOnly="item?.data?.permissionKeys" [class]="item?.class" [class.closed]="!state">
+	<nb-accordion-item [collapsed]="collapse" (collapsedChange)="onCollapse($event)" [class.opened]="selected">
+		@if (!state) {
+		<nb-accordion-item-header
+			[gaTooltip]="item?.title"
+			[icon]="item?.icon"
+			[class.collapsed]="onCollapse"
+			(click)="redirectTo()"
+		>
+			<i [class]="item?.icon"></i>
+			@if (state) {
+			<span>
+				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
+					{{ item?.title }}
+				</a>
+			</span>
+			}
+		</nb-accordion-item-header>
+		} @if (state) {
+		<nb-accordion-item-header
+			[nbTooltip]="item?.title"
+			nbTooltipPlacement="right"
+			[class.collapsed]="onCollapse"
+			(click)="redirectTo()"
+		>
+			<i [class]="item?.icon"></i>
+			@if (state) {
+			<span>
+				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
+					{{ item?.title }}
+				</a>
+			</span>
+			}
+		</nb-accordion-item-header>
+		} @if (item?.children?.length > 0) {
+		<nb-accordion-item-body [class.item-collapsed]="!state">
+			@for (subItem of item.children; track subItem?.title) {
+			<div>
+				@if (!item?.hidden) {
+				<ga-children-menu-item
+					[id]="subItem?.id"
+					[item]="subItem"
+					[parent]="item"
+					[collapse]="state"
+					[selected]="subItem === selectedChildren && selected"
+					(focusItemChange)="focusOn($event)"
+				></ga-children-menu-item>
+				}
+			</div>
+			}
+		</nb-accordion-item-body>
+		}
+	</nb-accordion-item>
 </nb-accordion>

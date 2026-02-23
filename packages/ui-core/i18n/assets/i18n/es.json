@@ -2574,6 +2574,7 @@
 		"TIME_OFF": "Tiempo Libre"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "No tiene permiso para ver esta página",
 		"HEADER": "Tiempo libre.",
 		"REQUEST": "Solicitud",
 		"REQUEST_TIME_OFF": "Solicitar tiempo libre",

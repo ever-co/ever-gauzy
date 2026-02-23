@@ -1,28 +1,26 @@
 @if (source && (source$ | async).length > 0) {
-	<div class="card-layout grid-scroll-container" infiniteScroll [scrollWindow]="false" (scrolled)="onScroll()" #grid>
+	<div class="card-layout grid-scroll-container" infinite-scroll [scrollWindow]="false" (scrolled)="onScroll()" #grid>
 		@for (item of source$ | async; track item) {
 			<nb-card class="card-item">
 				<nb-card-body
-					[ngClass]="selected.isSelected && selected.data.id === item.id ? 'card-body active' : 'card-body'"
+					[class.card-body]="selected.isSelected && selected.data.id === item.id"
+					[class.active]="selected.isSelected && selected.data.id === item.id"
+					[class.card-body]="!(selected.isSelected && selected.data.id === item.id)"
 					(click)="selectedItem(item)"
 				>
 					@for (key of getKeys(); track key) {
 						<div class="info-line">
 							<div
 								class="info-meta"
-								[ngClass]="{
-									'image-logo': settings.columns[key].title === 'Image',
-									active: selected.isSelected && selected.data.id === item.id
-								}"
+								[class.image-logo]="settings.columns[key].title === 'Image'"
+								[class.active]="selected.isSelected && selected.data.id === item.id"
 							>
 								{{ settings.columns[key].title }}
 							</div>
 							<div
 								class="info-value"
-								[ngClass]="{
-									'image-logo': settings.columns[key].title === 'Image',
-									active: selected.isSelected && selected.data.id === item.id
-								}"
+								[class.image-logo]="settings.columns[key].title === 'Image'"
+								[class.active]="selected.isSelected && selected.data.id === item.id"
 							>
 								@switch (settings.columns[key].type) {
 									@case ('html') {

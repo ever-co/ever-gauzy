@@ -93,7 +93,7 @@ selectedView = query.selectedView$ | async;
 			@for (plugin of plugins; track plugin.id; let isLast = $last) { @defer (on viewport) {
 			<lib-plugin-marketplace-detail
 				class="plugin"
-				[ngClass]="{ none: isLast }"
+				[class.none]="isLast"
 				[plugin]="plugin"
 				[viewMode]="selectedView || 'grid'"
 			>

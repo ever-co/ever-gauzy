@@ -2631,6 +2631,7 @@
 		"TIME_OFF": "Time Off"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "Нямате разрешение за преглед на тази страница",
 		"HEADER": "Time Off",
 		"REQUEST": "Request",
 		"REQUEST_TIME_OFF": "Request Time Off",

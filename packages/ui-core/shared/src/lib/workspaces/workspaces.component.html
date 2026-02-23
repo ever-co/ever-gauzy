@@ -1,49 +1,43 @@
 <!-- Loading skeleton -->
 @if (loading$ | async) {
-  <div
-    class="skeleton-container"
-    role="status"
-    aria-live="polite"
-    aria-label="Loading workspaces"
-    aria-busy="true"
-    >
-    @for (item of [1, 2, 3]; track item) {
-      <div class="workspace-skeleton-item">
-        <div class="skeleton-img-container">
-          <div class="skeleton-img"></div>
-        </div>
-        <div class="skeleton-text"></div>
-      </div>
-    }
-    <div class="skeleton-add-workspace">
-      <div class="skeleton-add-btn"></div>
-    </div>
-  </div>
+<div class="skeleton-container" role="status" aria-live="polite" aria-label="Loading workspaces" aria-busy="true">
+	@for (item of [1, 2, 3]; track item) {
+	<div class="workspace-skeleton-item">
+		<div class="skeleton-img-container">
+			<div class="skeleton-img"></div>
+		</div>
+		<div class="skeleton-text"></div>
+	</div>
+	}
+	<div class="skeleton-add-workspace">
+		<div class="skeleton-add-btn"></div>
+	</div>
+</div>
 }
 
 <!-- Workspaces list -->
 @for (workspace of workspaces$ | async; track workspace; let i = $index) {
-  <div>
-    <div [ngClass]="selected?.id === workspace.id ? 'selected' : ''" class="workspace-item">
-      <div class="img-container">
-        <img [src]="workspace.imgUrl" alt="" (click)="onChangeWorkspace(workspace)" />
-        @if (workspace.isOnline) {
-          <div class="online-indicator" aria-label="Online"></div>
-        }
-      </div>
-      <span class="workspace-name" (click)="onChangeWorkspace(workspace)">{{ workspace.name }}</span>
-    </div>
-  </div>
+<div>
+	<div [class.selected]="selected?.id === workspace.id" class="workspace-item">
+		<div class="img-container">
+			<img [src]="workspace.imgUrl" alt="" (click)="onChangeWorkspace(workspace)" />
+			@if (workspace.isOnline) {
+			<div class="online-indicator" aria-label="Online"></div>
+			}
+		</div>
+		<span class="workspace-name" (click)="onChangeWorkspace(workspace)">{{ workspace.name }}</span>
+	</div>
+</div>
 }
 <div class="add-workspace-container">
-  <button
-    class="add-workspace-btn"
-    [nbContextMenu]="contextMenus"
-    nbContextMenuTag="workspaces-menu"
-    nbContextMenuPlacement="right"
-    nbButton
-    ghost
-    >
-    <nb-icon icon="plus-outline"></nb-icon>
-  </button>
+	<button
+		class="add-workspace-btn"
+		[nbContextMenu]="contextMenus"
+		nbContextMenuTag="workspaces-menu"
+		nbContextMenuPlacement="right"
+		nbButton
+		ghost
+	>
+		<nb-icon icon="plus-outline"></nb-icon>
+	</button>
 </div>

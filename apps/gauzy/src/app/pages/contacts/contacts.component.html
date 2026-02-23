@@ -18,7 +18,7 @@
 			</div>
 		}
 	</nb-card-header>
-	<nb-card-body [ngClass]="{ mutation: showAddCard }" class="custom-card">
+	<nb-card-body [class.mutation]="showAddCard" class="custom-card">
 		@if (showAddCard) {
 			<ga-contact-mutation
 				class="w-100"
@@ -28,30 +28,28 @@
 				(canceled)="cancel()"
 				(addOrEditOrganizationContact)="addOrEditOrganizationContact($event)"
 			></ga-contact-mutation>
-		} @else {
-			@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
-				<div class="table-scroll-container">
-					<angular2-smart-table
-						style="cursor: pointer"
-						(userRowSelect)="selectContact($event)"
-						[settings]="settingsSmartTable"
-						[source]="smartTableSource"
-					></angular2-smart-table>
-				</div>
-				<div class="pagination-container align-self-end">
-					@if (smartTableSource) {
-						<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-					}
-				</div>
-			} @else {
-				<ga-card-grid
-					[totalItems]="pagination?.totalItems"
-					(onSelectedItem)="selectContact($event)"
+		} @else if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+			<div class="table-scroll-container">
+				<angular2-smart-table
+					style="cursor: pointer"
+					(userRowSelect)="selectContact($event)"
 					[settings]="settingsSmartTable"
-					[source]="organizationContacts"
-					(scroll)="onScroll()"
-				></ga-card-grid>
-			}
+					[source]="smartTableSource"
+				></angular2-smart-table>
+			</div>
+			<div class="pagination-container align-self-end">
+				@if (smartTableSource) {
+					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+				}
+			</div>
+		} @else {
+			<ga-card-grid
+				[totalItems]="pagination?.totalItems"
+				(onSelectedItem)="selectContact($event)"
+				[settings]="settingsSmartTable"
+				[source]="organizationContacts"
+				(scroll)="onScroll()"
+			></ga-card-grid>
 		}
 	</nb-card-body>
 </nb-card>

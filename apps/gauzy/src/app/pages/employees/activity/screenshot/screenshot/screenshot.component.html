@@ -1,87 +1,81 @@
 <div class="custom-card">
-  <div class="filters mt-1 mb-3">
-    <ngx-gauzy-filters
-      [isTimeFormat]="true"
-      [saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-      (filtersChange)="filtersChange($event)"
-    ></ngx-gauzy-filters>
-    <ga-daily-statistics class="mt-3" [filters]="filters"></ga-daily-statistics>
-  </div>
-  <div class="custom-card-body">
-    <div
-			[ngClass]="{
-				'px-3': timeSlots?.length > 0
-			}"
-      [nbSpinner]="loading"
-      nbSpinnerSize="giant"
-      nbSpinnerStatus="primary"
-      class="h-100"
-      >
-      @if (timeSlots?.length > 0) {
-        @for (hourSlot of timeSlots; track hourSlot; let i = $index) {
-          <div class="row hour-slot-group">
-            <div class="col p-0">
-              <div class="mb-4">
-                <h6 class="hour-label">
-                  {{ hourSlot.startTime | timeFormat : filters?.timeFormat }} -
-                  {{ hourSlot.endTime | timeFormat : filters?.timeFormat }}
-                </h6>
-              </div>
-              <div class="row grid-container">
-                @for (timeSlot of hourSlot.timeSlots; track timeSlot) {
-                  <div>
-                    <ngx-screenshots-item
-                      [timeFormat]="filters?.timeFormat"
-                      [timezone]="filters?.timeZone"
-                      [employees]="timeSlot?.employees"
-                      [timeSlot]="timeSlot"
-                      [selectionMode]="selectedIdsCount > 0"
-                      [isSelected]="selectedIds[timeSlot?.id]"
-                      (delete)="deleteSlot()"
-                      (toggle)="toggleSelect($event)"
-                    ></ngx-screenshots-item>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-        }
-      } @else {
-        @if (!request.employeeIds) {
-          <ngx-no-data-message [message]="'ACTIVITY.NO_RECORD_FOUND' | translate"></ngx-no-data-message>
-        } @else {
-          <ngx-no-data-message [message]="'ACTIVITY.NO_SCREENSHOTS' | translate"></ngx-no-data-message>
-        }
-      }
-    </div>
-    @if (selectedIdsCount > 0) {
-      <div class="selected-items-action">
-        <div class="card p-4 w-100">
-          <div class="row align-items-center">
-            <div class="col">{{ this.selectedIdsCount }} Screen selected</div>
-            <div class="col-auto">
-              <button
-                class="ml-auto mr-2 select-hidden"
-                status="info"
-                nbButton
-                size="small"
-                (click)="toggleAllSelect()"
-                >
-                {{ this.allSelected ? 'Unselect All' : 'Select All' }}
-              </button>
-              <button
-                class="ml-auto select-hidden"
-                status="danger"
-                nbButton
-                size="small"
-                (click)="deleteSlots()"
-                >
-                <nb-icon icon="trash-2-outline"></nb-icon>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
-  </div>
+	<div class="filters mt-1 mb-3">
+		<ngx-gauzy-filters
+			[isTimeFormat]="true"
+			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+			(filtersChange)="filtersChange($event)"
+		></ngx-gauzy-filters>
+		<ga-daily-statistics class="mt-3" [filters]="filters"></ga-daily-statistics>
+	</div>
+	<div class="custom-card-body">
+		<div
+			[class.px-3]="timeSlots?.length > 0"
+			[nbSpinner]="loading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+			class="h-100"
+		>
+			@if (timeSlots?.length > 0) { @for (hourSlot of timeSlots; track hourSlot.startTime; let i = $index) {
+			<div class="row hour-slot-group">
+				<div class="col p-0">
+					<div class="mb-4">
+						<h6 class="hour-label">
+							{{ hourSlot.startTime | timeFormat : filters?.timeFormat }} -
+							{{ hourSlot.endTime | timeFormat : filters?.timeFormat }}
+						</h6>
+					</div>
+					<div class="row grid-container">
+						@for (timeSlot of hourSlot.timeSlots; track timeSlot.id) {
+						<div>
+							<ngx-screenshots-item
+								[timeFormat]="filters?.timeFormat"
+								[timezone]="filters?.timeZone"
+								[employees]="timeSlot?.employees"
+								[timeSlot]="timeSlot"
+								[selectionMode]="selectedIdsCount > 0"
+								[isSelected]="selectedIds[timeSlot?.id]"
+								(delete)="deleteSlot()"
+								(toggle)="toggleSelect($event)"
+							></ngx-screenshots-item>
+						</div>
+						}
+					</div>
+				</div>
+			</div>
+			} } @else { @if (!request.employeeIds) {
+			<ngx-no-data-message [message]="'ACTIVITY.NO_RECORD_FOUND' | translate"></ngx-no-data-message>
+			} @else {
+			<ngx-no-data-message [message]="'ACTIVITY.NO_SCREENSHOTS' | translate"></ngx-no-data-message>
+			} }
+		</div>
+		@if (selectedIdsCount > 0) {
+		<div class="selected-items-action">
+			<div class="card p-4 w-100">
+				<div class="row align-items-center">
+					<div class="col">{{ selectedIdsCount }} {{ 'SCREEN_SELECTED' | translate }}</div>
+					<div class="col-auto">
+						<button
+							class="ml-auto mr-2 select-hidden"
+							status="info"
+							nbButton
+							size="small"
+							(click)="toggleAllSelect()"
+						>
+							{{ (allSelected ? 'UNSELECT_ALL' : 'SELECT_ALL') | translate }}
+						</button>
+						<button
+							class="ml-auto select-hidden"
+							status="danger"
+							nbButton
+							size="small"
+							(click)="deleteSlots()"
+						>
+							<nb-icon icon="trash-2-outline"></nb-icon>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		}
+	</div>
 </div>

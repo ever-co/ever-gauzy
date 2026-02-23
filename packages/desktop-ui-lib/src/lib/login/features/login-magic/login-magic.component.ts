@@ -1,4 +1,3 @@
-import { NgClass, NgStyle } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
@@ -25,7 +24,6 @@ import { SocialLinksComponent } from '../../shared/ui/social-links/social-links.
 	imports: [
 		LogoComponent,
 		SwitchThemeComponent,
-		NgClass,
 		FormsModule,
 		ReactiveFormsModule,
 		NbFormFieldModule,
@@ -34,7 +32,6 @@ import { SocialLinksComponent } from '../../shared/ui/social-links/social-links.
 		DebounceClickDirective,
 		NbButtonModule,
 		SpinnerButtonDirective,
-		NgStyle,
 		RouterLink,
 		SocialLinksComponent,
 		TranslatePipe

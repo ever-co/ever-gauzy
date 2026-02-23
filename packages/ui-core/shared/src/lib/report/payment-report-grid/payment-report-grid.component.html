@@ -1,340 +1,343 @@
 <div class="d-flex align-items-center mb-3">
-  <div class="label">
-    {{ 'REPORT_PAGE.GROUP_BY' | translate }}
-  </div>
-  <div class="ml-3">
-    <nb-select
-      [(ngModel)]="groupBy"
-      (selectedChange)="groupByChange()"
-      >
-      <nb-option value="date">
-        {{ 'REPORT_PAGE.DATE' | translate }}
-      </nb-option>
-      <nb-option value="client">
-        {{ 'REPORT_PAGE.CLIENT' | translate }}
-      </nb-option>
-      <nb-option value="project">
-        {{ 'REPORT_PAGE.PROJECT' | translate }}
-      </nb-option>
-    </nb-select>
-  </div>
+	<div class="label">
+		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+	</div>
+	<div class="ml-3">
+		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()">
+			<nb-option value="date">
+				{{ 'REPORT_PAGE.DATE' | translate }}
+			</nb-option>
+			<nb-option value="client">
+				{{ 'REPORT_PAGE.CLIENT' | translate }}
+			</nb-option>
+			<nb-option value="project">
+				{{ 'REPORT_PAGE.PROJECT' | translate }}
+			</nb-option>
+		</nb-select>
+	</div>
 </div>
 <div
-  class="weekly-logs row-table payment-report-grid"
-  [nbSpinner]="loading"
-  nbSpinnerSize="giant"
-  nbSpinnerStatus="primary"
-  >
-  @if (dailyData?.length > 0) {
-    @for (day of dailyData; track day) {
-      <nb-card
-        class="card"
-        >
-        @switch (groupBy) {
-          @case ('client') {
-            <ng-container
-					*ngTemplateOutlet="
-						groupByClientCardEl;
-						context: { $implicit: day }
-					"
-            ></ng-container>
-          }
-          @case ('project') {
-            <ng-container
-					*ngTemplateOutlet="
-						groupByProjectCardEl;
-						context: { $implicit: day }
-					"
-            ></ng-container>
-          }
-          @default {
-            <ng-container
-					*ngTemplateOutlet="
-						groupByDateCardEl;
-						context: { $implicit: day }
-					"
-            ></ng-container>
-          }
-        }
-      </nb-card>
-    }
-  } @else {
-    <ngx-no-data-message
-      [message]="'SM_TABLE.NO_DATA.PAYMENT' | translate"
-    ></ngx-no-data-message>
-  }
+	class="weekly-logs row-table payment-report-grid"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
+	@if (dailyData?.length > 0) {
+		@for (day of dailyData; track day) {
+			<nb-card class="card">
+				@switch (groupBy) {
+					@case ('client') {
+						<ng-container
+							[ngTemplateOutlet]="groupByClientCardEl"
+							[ngTemplateOutletContext]="{ $implicit: day }"
+						></ng-container>
+					}
+					@case ('project') {
+						<ng-container
+							[ngTemplateOutlet]="groupByProjectCardEl"
+							[ngTemplateOutletContext]="{ $implicit: day }"
+						></ng-container>
+					}
+					@default {
+						<ng-container
+							[ngTemplateOutlet]="groupByDateCardEl"
+							[ngTemplateOutletContext]="{ $implicit: day }"
+						></ng-container>
+					}
+				}
+			</nb-card>
+		}
+	} @else {
+		<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.PAYMENT' | translate"></ngx-no-data-message>
+	}
 </div>
 
 <ng-template let-day #groupByDateCardEl>
-  <nb-card-header class="card-title">
-    {{ day.date | dateFormat }}
-  </nb-card-header>
-  <nb-card-body class="budget-container">
-    <ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-    @for (clientRow of day.clients; track clientRow; let clientIndex = $index) {
-      <div class="cart-body project-row">
-        @for (projectRow of clientRow.projects; track projectRow; let projectIndex = $index) {
-          <div class="project-row">
-            @for (paymentRow of projectRow.payments; track paymentRow; let paymentIndex = $index) {
-              <div class="table-row">
-                <div class="table-inner-wrapper">
-                  <div class="responsive-table-row employee-column">
-                    <div class="responsive-table-header">
-                      {{ 'REPORT_PAGE.CONTACT' | translate }}
-                    </div>
-                    <div class="responsive-table-content project-name">
-                      <ng-container
-										*ngTemplateOutlet="
-											clientEl;
-											context: { $implicit: paymentRow?.organizationContact }">
-                      </ng-container>
-                    </div>
-                  </div>
-                  <div class="responsive-table-row project-column">
-                    <div class="responsive-table-header">
-                      {{ 'REPORT_PAGE.PROJECT' | translate }}
-                    </div>
-                    <div class="responsive-table-content project-name">
-                      @if (paymentIndex == 0) {
-                        <ng-container
-											*ngTemplateOutlet="
-												projectEl;
-												context: { $implicit: projectRow?.project }">
-                        </ng-container>
-                      }
-                    </div>
-                  </div>
-                  <div class="responsive-table-row currency-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.CURRENCY' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      {{ paymentRow?.currency }}
-                    </div>
-                  </div>
-                  <div class="responsive-table-row note-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.NOTE' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      {{ paymentRow?.note }}
-                    </div>
-                  </div>
-                  <div class="responsive-table-row amount-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.AMOUNT' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      {{ paymentRow?.amount
-                      | currency: paymentRow?.currency
-                      | position: organization?.currencyPosition
-                      }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-  </nb-card-body>
+	<nb-card-header class="card-title">
+		{{ day.date | dateFormat }}
+	</nb-card-header>
+	<nb-card-body class="budget-container">
+		<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
+		@for (clientRow of day.clients; track clientRow; let clientIndex = $index) {
+			<div class="cart-body project-row">
+				@for (projectRow of clientRow.projects; track projectRow; let projectIndex = $index) {
+					<div class="project-row">
+						@for (paymentRow of projectRow.payments; track paymentRow; let paymentIndex = $index) {
+							<div class="table-row">
+								<div class="table-inner-wrapper">
+									<div class="responsive-table-row employee-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.CONTACT' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											<ng-container
+												[ngTemplateOutlet]="clientEl"
+												[ngTemplateOutletContext]="{
+													$implicit: paymentRow?.organizationContact
+												}"
+											>
+											</ng-container>
+										</div>
+									</div>
+									<div class="responsive-table-row project-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.PROJECT' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											@if (paymentIndex == 0) {
+												<ng-container
+													[ngTemplateOutlet]="projectEl"
+													[ngTemplateOutletContext]="{ $implicit: projectRow?.project }"
+												>
+												</ng-container>
+											}
+										</div>
+									</div>
+									<div class="responsive-table-row currency-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.CURRENCY' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											{{ paymentRow?.currency }}
+										</div>
+									</div>
+									<div class="responsive-table-row note-column">
+										<div class="responsive-table-header">{{ 'REPORT_PAGE.NOTE' | translate }}</div>
+										<div class="responsive-table-content project-name">
+											{{ paymentRow?.note }}
+										</div>
+									</div>
+									<div class="responsive-table-row amount-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.AMOUNT' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											{{
+												paymentRow?.amount
+													| currency: paymentRow?.currency
+													| position: organization?.currencyPosition
+											}}
+										</div>
+									</div>
+								</div>
+							</div>
+						}
+					</div>
+				}
+			</div>
+		}
+	</nb-card-body>
 </ng-template>
 
 <ng-template let-client #groupByClientCardEl>
-  <nb-card-header class="card-title">
-    <ng-container *ngTemplateOutlet="clientEl; context: { $implicit: client?.client }">
-    </ng-container>
-  </nb-card-header>
-  <nb-card-body>
-    <ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-    @for (dateRow of client.dates; track dateRow; let dateIndex = $index) {
-      <div class="cart-body project-row">
-        @for (projectRow of dateRow.projects; track projectRow; let projectIndex = $index) {
-          <div class="project-row">
-            @for (paymentRow of projectRow.payments; track paymentRow; let paymentIndex = $index) {
-              <div class="table-row">
-                <div class="table-inner-wrapper">
-                  <div class="responsive-table-row employee-column">
-                    <div class="responsive-table-header">
-                      {{ 'REPORT_PAGE.DATE' | translate }}
-                    </div>
-                    <div class="responsive-table-content project-name">
-                      {{ projectIndex == 0 && paymentIndex == 0
-                      ? (dateRow.date | dateFormat)
-                      : ''
-                      }}
-                    </div>
-                  </div>
-                  <div class="responsive-table-row project-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      @if (paymentIndex == 0) {
-                        <ng-container
-                          class="project-span"
-											*ngTemplateOutlet="
-												projectEl;
-												context: { $implicit: projectRow?.project }">
-                        </ng-container>
-                      }
-                    </div>
-                  </div>
-                  <div class="responsive-table-row currency-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.CURRENCY' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      {{ paymentRow?.currency }}
-                    </div>
-                  </div>
-                  <div class="responsive-table-row note-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.NOTE' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      {{ paymentRow?.note }}
-                    </div>
-                  </div>
-                  <div class="responsive-table-row amount-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.AMOUNT' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      {{ paymentRow?.amount
-                      | currency: paymentRow?.currency
-                      | position: organization?.currencyPosition
-                      }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-  </nb-card-body>
+	<nb-card-header class="card-title">
+		<ng-container [ngTemplateOutlet]="clientEl" [ngTemplateOutletContext]="{ $implicit: client?.client }">
+		</ng-container>
+	</nb-card-header>
+	<nb-card-body>
+		<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
+		@for (dateRow of client.dates; track dateRow; let dateIndex = $index) {
+			<div class="cart-body project-row">
+				@for (projectRow of dateRow.projects; track projectRow; let projectIndex = $index) {
+					<div class="project-row">
+						@for (paymentRow of projectRow.payments; track paymentRow; let paymentIndex = $index) {
+							<div class="table-row">
+								<div class="table-inner-wrapper">
+									<div class="responsive-table-row employee-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.DATE' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											{{
+												projectIndex == 0 && paymentIndex == 0
+													? (dateRow.date | dateFormat)
+													: ''
+											}}
+										</div>
+									</div>
+									<div class="responsive-table-row project-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.PROJECT' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											@if (paymentIndex == 0) {
+												<ng-container
+													class="project-span"
+													[ngTemplateOutlet]="projectEl"
+													[ngTemplateOutletContext]="{ $implicit: projectRow?.project }"
+												>
+												</ng-container>
+											}
+										</div>
+									</div>
+									<div class="responsive-table-row currency-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.CURRENCY' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											{{ paymentRow?.currency }}
+										</div>
+									</div>
+									<div class="responsive-table-row note-column">
+										<div class="responsive-table-header">{{ 'REPORT_PAGE.NOTE' | translate }}</div>
+										<div class="responsive-table-content project-name">
+											{{ paymentRow?.note }}
+										</div>
+									</div>
+									<div class="responsive-table-row amount-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.AMOUNT' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											{{
+												paymentRow?.amount
+													| currency: paymentRow?.currency
+													| position: organization?.currencyPosition
+											}}
+										</div>
+									</div>
+								</div>
+							</div>
+						}
+					</div>
+				}
+			</div>
+		}
+	</nb-card-body>
 </ng-template>
 
 <ng-template let-project #groupByProjectCardEl>
-  <nb-card-header class="card-title">
-    <ng-container
-			*ngTemplateOutlet="
-				projectEl;
-				context: { $implicit: project?.project }
-			"
-      >
-    </ng-container>
-  </nb-card-header>
-  <nb-card-body>
-    <ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-    @for (dateRow of project.dates; track dateRow; let dateIndex = $index) {
-      <div class="cart-body project-row">
-        @for (clientRow of dateRow.clients; track clientRow; let clientIndex = $index) {
-          <div class="project-row">
-            @for (paymentRow of clientRow.payments; track paymentRow; let paymentIndex = $index) {
-              <div class="table-row">
-                <div class="table-inner-wrapper">
-                  <div class="responsive-table-row employee-column">
-                    <div class="responsive-table-header">
-                      {{ 'REPORT_PAGE.DATE' | translate }}
-                    </div>
-                    <div class="responsive-table-content project-name">
-                      {{ clientIndex == 0 && paymentIndex == 0
-                      ? (dateRow.date | dateFormat)
-                      : ''
-                      }}
-                    </div>
-                  </div>
-                  <div class="responsive-table-row employee-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      @if (paymentIndex == 0) {
-                        <ng-container
-											*ngTemplateOutlet="
-											clientEl;
-											context: { $implicit: paymentRow?.organizationContact }">
-                        </ng-container>
-                      }
-                    </div>
-                  </div>
-                  <div class="responsive-table-row currency-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.CURRENCY' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      {{ paymentRow?.currency }}
-                    </div>
-                  </div>
-                  <div class="responsive-table-row note-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.NOTE' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      {{ paymentRow?.note }}
-                    </div>
-                  </div>
-                  <div class="responsive-table-row amount-column">
-                    <div class="responsive-table-header">{{ 'REPORT_PAGE.AMOUNT' | translate }}</div>
-                    <div class="responsive-table-content project-name">
-                      {{ paymentRow?.amount
-                      | currency: paymentRow?.currency
-                      | position: organization?.currencyPosition
-                      }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-  </nb-card-body>
+	<nb-card-header class="card-title">
+		<ng-container [ngTemplateOutlet]="projectEl" [ngTemplateOutletContext]="{ $implicit: project?.project }">
+		</ng-container>
+	</nb-card-header>
+	<nb-card-body>
+		<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
+		@for (dateRow of project.dates; track dateRow; let dateIndex = $index) {
+			<div class="cart-body project-row">
+				@for (clientRow of dateRow.clients; track clientRow; let clientIndex = $index) {
+					<div class="project-row">
+						@for (paymentRow of clientRow.payments; track paymentRow; let paymentIndex = $index) {
+							<div class="table-row">
+								<div class="table-inner-wrapper">
+									<div class="responsive-table-row employee-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.DATE' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											{{
+												clientIndex == 0 && paymentIndex == 0 ? (dateRow.date | dateFormat) : ''
+											}}
+										</div>
+									</div>
+									<div class="responsive-table-row employee-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											@if (paymentIndex == 0) {
+												<ng-container
+													[ngTemplateOutlet]="clientEl"
+													[ngTemplateOutletContext]="{
+														$implicit: paymentRow?.organizationContact
+													}"
+												>
+												</ng-container>
+											}
+										</div>
+									</div>
+									<div class="responsive-table-row currency-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.CURRENCY' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											{{ paymentRow?.currency }}
+										</div>
+									</div>
+									<div class="responsive-table-row note-column">
+										<div class="responsive-table-header">{{ 'REPORT_PAGE.NOTE' | translate }}</div>
+										<div class="responsive-table-content project-name">
+											{{ paymentRow?.note }}
+										</div>
+									</div>
+									<div class="responsive-table-row amount-column">
+										<div class="responsive-table-header">
+											{{ 'REPORT_PAGE.AMOUNT' | translate }}
+										</div>
+										<div class="responsive-table-content project-name">
+											{{
+												paymentRow?.amount
+													| currency: paymentRow?.currency
+													| position: organization?.currencyPosition
+											}}
+										</div>
+									</div>
+								</div>
+							</div>
+						}
+					</div>
+				}
+			</div>
+		}
+	</nb-card-body>
 </ng-template>
 
 <ng-template let-project #projectEl>
-  @if (project) {
-    <ga-project-column-view
-      [project]="project"
-    ></ga-project-column-view>
-  } @else {
-    <span>
-      {{ 'REPORT_PAGE.NO_PROJECT' | translate }}
-    </span>
-  }
+	@if (project) {
+		<ga-project-column-view [project]="project"></ga-project-column-view>
+	} @else {
+		<span>
+			{{ 'REPORT_PAGE.NO_PROJECT' | translate }}
+		</span>
+	}
 </ng-template>
 
 <ng-template let-client #clientEl>
-  @if (client) {
-    <span>
-      {{ client?.name }}
-    </span>
-  } @else {
-    <span>
-      {{ 'REPORT_PAGE.NO_CLIENT' | translate }}
-    </span>
-  }
+	@if (client) {
+		<span>
+			{{ client?.name }}
+		</span>
+	} @else {
+		<span>
+			{{ 'REPORT_PAGE.NO_CLIENT' | translate }}
+		</span>
+	}
 </ng-template>
 
 <ng-template #columnsHeader>
-  @if (dailyData?.length > 0) {
-    <div class="columns-header">
-      <div class="table-inner-wrapper font-weight-bold align-items-center">
-        @if (groupBy != 'date') {
-          <div class="responsive-table-row employee-column">
-            {{ 'REPORT_PAGE.DATE' | translate }}
-          </div>
-        }
-        @if (groupBy !== 'client' && groupBy !== 'project') {
-          <div class="responsive-table-row employee-column">
-            {{ 'REPORT_PAGE.CONTACT' | translate }}
-          </div>
-        }
-        @if (groupBy !== 'client' && groupBy === 'project') {
-          <div class="responsive-table-row employee-column">
-            {{ 'REPORT_PAGE.PROJECT' | translate }}
-          </div>
-        }
-        @if (groupBy !== 'project') {
-          <div class="responsive-table-row project-column">
-            {{ 'REPORT_PAGE.PROJECT' | translate }}
-          </div>
-        }
-        <div class="responsive-table-row currency-column">
-          {{ 'REPORT_PAGE.CURRENCY' | translate }}
-        </div>
-        <div class="responsive-table-row note-column">
-          {{ 'REPORT_PAGE.NOTE' | translate }}
-        </div>
-        <div class="responsive-table-row amount-column">
-          {{ 'REPORT_PAGE.AMOUNT' | translate }}
-        </div>
-      </div>
-    </div>
-  }
+	@if (dailyData?.length > 0) {
+		<div class="columns-header">
+			<div class="table-inner-wrapper font-weight-bold align-items-center">
+				@if (groupBy != 'date') {
+					<div class="responsive-table-row employee-column">
+						{{ 'REPORT_PAGE.DATE' | translate }}
+					</div>
+				}
+				@if (groupBy !== 'client' && groupBy !== 'project') {
+					<div class="responsive-table-row employee-column">
+						{{ 'REPORT_PAGE.CONTACT' | translate }}
+					</div>
+				}
+				@if (groupBy !== 'client' && groupBy === 'project') {
+					<div class="responsive-table-row employee-column">
+						{{ 'REPORT_PAGE.PROJECT' | translate }}
+					</div>
+				}
+				@if (groupBy !== 'project') {
+					<div class="responsive-table-row project-column">
+						{{ 'REPORT_PAGE.PROJECT' | translate }}
+					</div>
+				}
+				<div class="responsive-table-row currency-column">
+					{{ 'REPORT_PAGE.CURRENCY' | translate }}
+				</div>
+				<div class="responsive-table-row note-column">
+					{{ 'REPORT_PAGE.NOTE' | translate }}
+				</div>
+				<div class="responsive-table-row amount-column">
+					{{ 'REPORT_PAGE.AMOUNT' | translate }}
+				</div>
+			</div>
+		</div>
+	}
 </ng-template>

@@ -1,34 +1,25 @@
 <div (mouseleave)="showList = false">
-  <div class="form-group">
-    <label class="label">{{ listType | titlecase }}</label>
-    <input
-      nbInput
-      type="text"
-      [placeholder]="'Add ' + listType | titlecase"
-      (change)="inputHandler($event)"
-      (mouseenter)="showList = true"
-      fullWidth
-      />
-      @if (list.length > 0 && showList) {
-        <nb-list
-        [ngClass]="{
-          'department-list-active': showList
-        }"
-          >
-          @for (item of list; track item; let i = $index) {
-            <nb-list-item
-              >
-              <div>
-                <span>{{ item }}</span>
-                <nb-icon
-                  class="ml-auto mt-1 close"
-                  (click)="deleteFromList(i)"
-                  icon="close-outline"
-                ></nb-icon>
-              </div>
-            </nb-list-item>
-          }
-        </nb-list>
-      }
-    </div>
-  </div>
+	<div class="form-group">
+		<label class="label">{{ listType | titlecase }}</label>
+		<input
+			nbInput
+			type="text"
+			[placeholder]="'Add ' + listType | titlecase"
+			(change)="inputHandler($event)"
+			(mouseenter)="showList = true"
+			fullWidth
+		/>
+		@if (list.length > 0) {
+		<nb-list [class.department-list-active]="showList">
+			@for (item of list; track $index) {
+			<nb-list-item>
+				<div>
+					<span>{{ item }}</span>
+					<nb-icon class="ml-auto mt-1 close" (click)="deleteFromList($index)" icon="close-outline"></nb-icon>
+				</div>
+			</nb-list-item>
+			}
+		</nb-list>
+		}
+	</div>
+</div>

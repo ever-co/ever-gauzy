@@ -1,132 +1,120 @@
-<div class="card" [ngClass]="{ 'danger-bordered': isShowBorder }">
-  @if (timeSlot) {
-    <div class="activity">
-      @if (employees && employees.length > 1) {
-        <div
-          class="image-container curser-pointer"
-          [nbPopover]="workedEmployeeTemplate"
-          [nbPopoverTrigger]="'hint'"
-          >
-          <img draggable="false" [src]="lastScreenshot?.thumbUrl" />
-          <span class="screenshot-count">
-            <i class="fas fa-users"></i>
-            {{ employees.length }}
-          </span>
-        </div>
-      } @else {
-        <div
-          class="image-container curser-pointer"
-          [ngClass]="{ 'select-mode': selectionMode }"
-          (click)="toggleSelect(timeSlot)"
-          >
-          <div class="hover">
-            <div class="actions d-flex align-items-center w-100">
-              @if (timeSlot?.isAllowDelete) {
-                @if (multiple) {
-                  <nb-checkbox
-                    size="tiny"
-                    [(ngModel)]="isSelected"
-                    (click)="$event.stopPropagation()"
-                    (ngModelChange)="toggleSelect(timeSlot)"
-                  ></nb-checkbox>
-                }
-                <button
-                  class="ml-auto select-hidden"
-                  status="danger"
-                  nbButton
-                  size="tiny"
-                  (click)="$event.stopPropagation()"
-                  ngxConfirmDialog
-                  [message]="'ACTIVITY.DELETE_CONFIRM' | translate"
-                  (confirm)="deleteSlot(timeSlot)"
-                  >
-                  <nb-icon icon="trash-2-outline"></nb-icon>
-                </button>
-              }
-              @if (lastScreenshot?.description) {
-                <button
-                  class="ml-2"
-                  status="info"
-                  nbButton
-                  size="tiny"
-                  [nbTooltip]="lastScreenshot?.description"
-                  >
-                  <nb-icon icon="info-outline" size="small"></nb-icon>
-                </button>
-              }
-            </div>
-            <div class="view-button select-hidden">
-              @if (timeSlot?.screenshots?.length > 0) {
-                <button
-                  class="mr-1"
-                  nbButton
-                  size="small"
-                  status="primary"
-                  (click)="$event.stopPropagation()"
-                  ngxGallery
-                  [employeeId]="employeeId"
-                  [items]="screenshots"
-                  [item]="lastScreenshot"
-                  >
-                  {{ 'ACTIVITY.VIEW_SCREEN' | translate }}
-                </button>
-              }
-              <button
-                nbButton
-                size="small"
-                status="secondary"
-                (click)="$event.stopPropagation(); viewInfo(timeSlot)"
-                >
-                {{ 'ACTIVITY.VIEW_INFO' | translate }}
-              </button>
-            </div>
-          </div>
-          @if (lastScreenshot) {
-            <img draggable="false" [src]="lastScreenshot?.thumbUrl" />
-          } @else {
-            <img draggable="false" [src]="fallbackSvg" class="default-image" />
-            <span class="no-image p-3">
-              {{ 'ACTIVITY.NO_SCREENSHOT' | translate }}
-            </span>
-          }
-        </div>
-      }
-      <div class="slot-info text-left p-3">
-        <div class="time-span mb-4 mt-1 hour-label">
-          <div class="inline-time-span">
-            {{ timeSlot.startedAt | utcToTimezone : timezone | timeFormat : this.timeFormat }} -
-            {{ timeSlot.stoppedAt | utcToTimezone : timezone | timeFormat : this.timeFormat }}
-          </div>
-          <div class="text-caption caption mt-2">
-            {{ timeSlot.startedAt | utcToTimezone : timezone | dateFormat }}
-          </div>
-        </div>
-        <nb-progress-bar
-          class="mb-1"
-          [value]="timeSlot.percentage"
-          [status]="progressStatus(timeSlot.percentage)"
-          [displayValue]="true"
-          size="tiny"
-        ></nb-progress-bar>
-        <div class="activity-count hour-label mt-2">
-          {{ timeSlot.percentage || 0 }}% of
-          {{ timeSlot.duration | amFromUnix | amFromUtc | amDateFormat : 'mm' }}
-          {{ 'ACTIVITY.MINUTES' | translate }}
-        </div>
-      </div>
-    </div>
-  } @else {
-    <div class="no-activity p-3 text-center">
-      {{ 'ACTIVITY.NO_ACTIVITY' | translate }}
-    </div>
-  }
+<div class="card" [class.danger-bordered]="isShowBorder">
+	@if (timeSlot) {
+	<div class="activity">
+		@if (employees && employees.length > 1) {
+		<div class="image-container curser-pointer" [nbPopover]="workedEmployeeTemplate" [nbPopoverTrigger]="'hint'">
+			<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
+			<span class="screenshot-count">
+				<i class="fas fa-users"></i>
+				{{ employees.length }}
+			</span>
+		</div>
+		} @else {
+		<div
+			class="image-container curser-pointer"
+			[class.select-mode]="selectionMode"
+			(click)="toggleSelect(timeSlot)"
+		>
+			<div class="hover">
+				<div class="actions d-flex align-items-center w-100">
+					@if (timeSlot?.isAllowDelete) { @if (multiple) {
+					<nb-checkbox
+						size="tiny"
+						[(ngModel)]="isSelected"
+						(click)="$event.stopPropagation()"
+						(ngModelChange)="toggleSelect(timeSlot)"
+					></nb-checkbox>
+					}
+					<button
+						class="ml-auto select-hidden"
+						status="danger"
+						nbButton
+						size="tiny"
+						(click)="$event.stopPropagation()"
+						ngxConfirmDialog
+						[message]="'ACTIVITY.DELETE_CONFIRM' | translate"
+						(confirm)="deleteSlot(timeSlot)"
+					>
+						<nb-icon icon="trash-2-outline"></nb-icon>
+					</button>
+					} @if (lastScreenshot?.description) {
+					<button class="ml-2" status="info" nbButton size="tiny" [nbTooltip]="lastScreenshot?.description">
+						<nb-icon icon="info-outline" size="small"></nb-icon>
+					</button>
+					}
+				</div>
+				<div class="view-button select-hidden">
+					@if (timeSlot?.screenshots?.length > 0) {
+					<button
+						class="mr-1"
+						nbButton
+						size="small"
+						status="primary"
+						(click)="$event.stopPropagation()"
+						ngxGallery
+						[employeeId]="employeeId"
+						[items]="screenshots"
+						[item]="lastScreenshot"
+					>
+						{{ 'ACTIVITY.VIEW_SCREEN' | translate }}
+					</button>
+					}
+					<button
+						nbButton
+						size="small"
+						status="secondary"
+						(click)="$event.stopPropagation(); viewInfo(timeSlot)"
+					>
+						{{ 'ACTIVITY.VIEW_INFO' | translate }}
+					</button>
+				</div>
+			</div>
+			@if (lastScreenshot) {
+			<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
+			} @else {
+			<img draggable="false" [src]="fallbackSvg" class="default-image" />
+			<span class="no-image p-3">
+				{{ 'ACTIVITY.NO_SCREENSHOT' | translate }}
+			</span>
+			}
+		</div>
+		}
+		<div class="slot-info text-left p-3">
+			<div class="time-span mb-4 mt-1 hour-label">
+				<div class="inline-time-span">
+					{{ timeSlot.startedAt | utcToTimezone : timezone | timeFormat : this.timeFormat }} -
+					{{ timeSlot.stoppedAt | utcToTimezone : timezone | timeFormat : this.timeFormat }}
+				</div>
+				<div class="text-caption caption mt-2">
+					{{ timeSlot.startedAt | utcToTimezone : timezone | dateFormat }}
+				</div>
+			</div>
+			<nb-progress-bar
+				class="mb-1"
+				[value]="timeSlot.percentage"
+				[status]="progressStatus(timeSlot.percentage)"
+				[displayValue]="true"
+				size="tiny"
+			></nb-progress-bar>
+			<div class="activity-count hour-label mt-2">
+				{{ timeSlot.percentage || 0 }}% of
+				{{ timeSlot.duration | amFromUnix | amFromUtc | amDateFormat : 'mm' }}
+				{{ 'ACTIVITY.MINUTES' | translate }}
+			</div>
+		</div>
+	</div>
+	} @else {
+	<div class="no-activity p-3 text-center">
+		{{ 'ACTIVITY.NO_ACTIVITY' | translate }}
+	</div>
+	}
 </div>
 <ng-template #workedEmployeeTemplate>
-  <nb-list>
-    @for (employee of employees; track employee) {
-      <nb-list-item class="row border-top align-items-center">
-        <ngx-employee-links [value]="employee?.user" [isNavigation]="false"></ngx-employee-links>
-      </nb-list-item>
-    }
-  </nb-list>
+	<nb-list>
+		@for (employee of employees; track employee) {
+		<nb-list-item class="row border-top align-items-center">
+			<ngx-employee-links [value]="employee?.user" [isNavigation]="false"></ngx-employee-links>
+		</nb-list-item>
+		}
+	</nb-list>
 </ng-template>

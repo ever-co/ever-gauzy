@@ -2703,6 +2703,7 @@
 		"TIME_OFF": "Time Off"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "You don't have permission to view this page",
 		"HEADER": "Time Off",
 		"REQUEST": "Request",
 		"REQUEST_TIME_OFF": "Request Time Off",

@@ -34,7 +34,7 @@ import { SetupService } from './setup.service';
 import { FormsModule } from '@angular/forms';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { SslComponent } from '../settings/ssl/ssl.component';
-import { NgClass, UpperCasePipe } from '@angular/common';
+import { UpperCasePipe } from '@angular/common';
 
 @Component({
 	selector: 'ngx-setup',
@@ -55,7 +55,6 @@ import { NgClass, UpperCasePipe } from '@angular/common';
 		NbInputModule,
 		SslComponent,
 		NbFormFieldModule,
-		NgClass,
 		NbProgressBarModule,
 		UpperCasePipe,
 		TranslatePipe

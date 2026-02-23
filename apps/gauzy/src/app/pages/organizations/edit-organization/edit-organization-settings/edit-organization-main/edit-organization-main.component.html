@@ -7,7 +7,7 @@
 				(uploadedImageAsset)="updateImageAsset($event)"
 				(uploadImageAssetError)="handleImageUploadError($event)"
 			></ngx-image-uploader>
-			<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
+			<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
 			<img
 				[src]="form.get('imageUrl').value"
 				alt="Organization Photo"
@@ -34,17 +34,13 @@
 							type="text"
 							nbInput
 							formControlName="name"
-							[placeholder]=" 'FORM.PLACEHOLDERS.NAME' | translate"
+							[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
 						/>
 					</div>
 				</div>
 				<div class="col">
 					<span>
-					<ga-currency
-						formControlName="currency"
-						[formControl]="form.get('currency')"
-						(optionChange)="currencyChanged($event)"
-					></ga-currency>
+						<ga-currency formControlName="currency" (optionChange)="currencyChanged($event)"></ga-currency>
 					</span>
 				</div>
 			</div>
@@ -140,12 +136,7 @@
 			</div>
 		</div>
 		<div class="actions">
-			<button
-				[disabled]="this.form.invalid"
-				(click)="updateOrganizationSettings()"
-				nbButton
-				status="success"
-			>
+			<button [disabled]="form.invalid" (click)="updateOrganizationSettings()" nbButton status="success">
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</div>

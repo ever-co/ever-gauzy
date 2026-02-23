@@ -1,42 +1,40 @@
 @if (!hide) {
-  <div
-	[ngClass]="{
-		collapsed: isCollapse,
-		expanded: isExpand,
-		moved: move
-	}"
-    [ngStyle]="{ width: width + 'px' }"
-    id="widget"
-    #widget
-    >
-    <nb-icon
-      icon="more-vertical-outline"
-      nbPopoverPlacement="bottom"
-      [nbPopover]="setting"
-      nbPopoverTrigger="click"
-      nbButton
-    ></nb-icon>
-    <ng-container *ngTemplateOutlet="templateRef"></ng-container>
-  </div>
+	<div
+		[class.collapsed]="isCollapse"
+		[class.expanded]="isExpand"
+		[class.moved]="move"
+		[style.width]="width + 'px'"
+		id="widget"
+		#widget
+	>
+		<nb-icon
+			icon="more-vertical-outline"
+			nbPopoverPlacement="bottom"
+			[nbPopover]="setting"
+			nbPopoverTrigger="click"
+			nbButton
+		></nb-icon>
+		<ng-container [ngTemplateOutlet]="templateRef"></ng-container>
+	</div>
 }
 <!-- Settings -->
 <ng-template #setting>
-  <div gauzyOutside (clickOutside)="onClickSetting($event)" class="setting">
-    <div class="action" (click)="isCollapse = true">
-      <i class="far fa-window-minimize"></i>
-      <span>{{ 'BUTTONS.COLLAPSE' | translate }}</span>
-    </div>
-    <div class="action" (click)="isExpand = true">
-      <i class="fas fa-expand"></i>
-      <span>{{ 'BUTTONS.EXPAND' | translate }}</span>
-    </div>
-    <div class="action" (click)="move = true">
-      <i class="fas fa-expand-arrows-alt"></i>
-      <span>{{ 'BUTTONS.MOVE' | translate }}</span>
-    </div>
-    <div class="action" (click)="hideWidget()">
-      <i class="fas fa-times"></i>
-      <span>{{ 'BUTTONS.DELETE' | translate }}</span>
-    </div>
-  </div>
+	<div gauzyOutside (clickOutside)="onClickSetting($event)" class="setting">
+		<div class="action" (click)="isCollapse = true">
+			<i class="far fa-window-minimize"></i>
+			<span>{{ 'BUTTONS.COLLAPSE' | translate }}</span>
+		</div>
+		<div class="action" (click)="isExpand = true">
+			<i class="fas fa-expand"></i>
+			<span>{{ 'BUTTONS.EXPAND' | translate }}</span>
+		</div>
+		<div class="action" (click)="move = true">
+			<i class="fas fa-expand-arrows-alt"></i>
+			<span>{{ 'BUTTONS.MOVE' | translate }}</span>
+		</div>
+		<div class="action" (click)="hideWidget()">
+			<i class="fas fa-times"></i>
+			<span>{{ 'BUTTONS.DELETE' | translate }}</span>
+		</div>
+	</div>
 </ng-template>

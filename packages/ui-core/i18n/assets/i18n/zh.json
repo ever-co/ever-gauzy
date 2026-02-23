@@ -2572,6 +2572,7 @@
 		"TIME_OFF": "休假"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "您没有权限查看此页面",
 		"HEADER": "休假",
 		"REQUEST": "请求",
 		"REQUEST_TIME_OFF": "请假申请",

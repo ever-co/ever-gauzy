@@ -2572,6 +2572,7 @@
 		"TIME_OFF": "Vrijaf"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "U heeft geen toestemming om deze pagina te bekijken",
 		"HEADER": "Verlof",
 		"REQUEST": "Verzoek",
 		"REQUEST_TIME_OFF": "Verlof aanvragen",

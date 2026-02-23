@@ -4,18 +4,11 @@
 			<i class="fas fa-times" (click)="close()"></i>
 		</div>
 		<h5 class="title">
-			{{
-				(income ? 'POP_UPS.EDIT_INCOME' : 'POP_UPS.ADD_INCOME')
-					| translate
-			}}
+			{{ (income ? 'POP_UPS.EDIT_INCOME' : 'POP_UPS.ADD_INCOME') | translate }}
 		</h5>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form
-			[formGroup]="form"
-			#formDirective="ngForm"
-			(ngSubmit)="addOrEditIncome()"
-		>
+		<form [formGroup]="form" #formDirective="ngForm" (ngSubmit)="addOrEditIncome()">
 			<div class="row employees">
 				<div [hidden]="income" class="col-sm-7">
 					<label class="label" for="employee" [hidden]="income">
@@ -32,7 +25,7 @@
 						id="employee"
 					></ga-employee-selector>
 				</div>
-				<div [ngClass]="income ? 'col-sm-12' : 'col-sm-5'">
+				<div [class.col-sm-12]="income" [class.col-sm-5]="!income">
 					<div class="form-group">
 						<label class="label">
 							{{ 'POP_UPS.CONTACT' | translate }}
@@ -57,11 +50,7 @@
 						nbInput
 						[placeholder]="'POP_UPS.PICK_DATE' | translate"
 						[nbDatepicker]="valueDatePicker"
-						[status]="
-							FormHelpers.isInvalidControl(form, 'valueDate')
-								? 'danger'
-								: 'basic'
-						"
+						[status]="FormHelpers.isInvalidControl(form, 'valueDate') ? 'danger' : 'basic'"
 					/>
 					<nb-datepicker #valueDatePicker></nb-datepicker>
 				</div>
@@ -87,11 +76,7 @@
 							fullWidth
 							[placeholder]="'POP_UPS.AMOUNT' | translate"
 							formControlName="amount"
-							[status]="
-								FormHelpers.isInvalidControl(form, 'amount')
-									? 'danger'
-									: 'basic'
-							"
+							[status]="FormHelpers.isInvalidControl(form, 'amount') ? 'danger' : 'basic'"
 							autocomplete="off"
 						/>
 					</div>
@@ -116,10 +101,7 @@
 								{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
 							</span>
 						</nb-checkbox>
-						<span
-							class="label info-font"
-							[nbTooltip]="'INCOME_PAGE.BONUS_HELP' | translate"
-						>
+						<span class="label info-font" [nbTooltip]="'INCOME_PAGE.BONUS_HELP' | translate">
 							&nbsp;<nb-icon icon="info-outline"></nb-icon>
 						</span>
 					</div>
@@ -144,21 +126,10 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button
-			(click)="close()"
-			status="basic"
-			outline
-			class="mr-3"
-			nbButton
-		>
+		<button (click)="close()" status="basic" outline class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button
-			[disabled]="form.invalid"
-			(click)="formDirective.ngSubmit.emit()"
-			status="success"
-			nbButton
-		>
+		<button [disabled]="form.invalid" (click)="formDirective.ngSubmit.emit()" status="success" nbButton>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

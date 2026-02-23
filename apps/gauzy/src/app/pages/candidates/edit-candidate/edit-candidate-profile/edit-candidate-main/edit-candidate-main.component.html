@@ -12,7 +12,7 @@
 				width="68"
 				height="68"
 				viewBox="0 0 68 68"
-				[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+				[style.opacity]="hoverState ? '1' : '0.3'"
 			>
 				<defs>
 					<path
@@ -26,7 +26,7 @@
 					<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 				</g>
 			</svg>
-			<div [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
+			<div [style.opacity]="hoverState ? '0.2' : '0'"></div>
 			<img
 				[src]="form.get('imageUrl').value"
 				alt="Profile Photo"

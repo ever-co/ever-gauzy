@@ -1,44 +1,44 @@
 <nb-card>
-  <nb-card-header class="d-flex justify-content-between align-items-center"></nb-card-header>
-  <nb-card-body>
-    <nb-tabset (changeTab)="onChangeTab($event.tabTitle)">
-      <nb-tab tabTitle="PENDING" [active]="tab === 'PENDING'">
-        <ng-container *ngTemplateOutlet="tableView"></ng-container>
-      </nb-tab>
-      <nb-tab tabTitle="PROCESS" [active]="tab === 'PROCESS'">
-        <ng-container *ngTemplateOutlet="tableView"></ng-container>
-      </nb-tab>
-      <nb-tab tabTitle="FAILED" [active]="tab === 'FAILED'">
-        <ng-container *ngTemplateOutlet="tableView"></ng-container>
-      </nb-tab>
-      <nb-tab tabTitle="SYNCED" [active]="tab === 'SYNCED'">
-        <ng-container *ngTemplateOutlet="tableView"></ng-container>
-      </nb-tab>
-    </nb-tabset>
-  </nb-card-body>
+	<nb-card-header class="d-flex justify-content-between align-items-center"></nb-card-header>
+	<nb-card-body>
+		<nb-tabset (changeTab)="onChangeTab($event.tabTitle)">
+			<nb-tab tabTitle="PENDING" [active]="tab === 'PENDING'">
+				<ng-container [ngTemplateOutlet]="tableView"></ng-container>
+			</nb-tab>
+			<nb-tab tabTitle="PROCESS" [active]="tab === 'PROCESS'">
+				<ng-container [ngTemplateOutlet]="tableView"></ng-container>
+			</nb-tab>
+			<nb-tab tabTitle="FAILED" [active]="tab === 'FAILED'">
+				<ng-container [ngTemplateOutlet]="tableView"></ng-container>
+			</nb-tab>
+			<nb-tab tabTitle="SYNCED" [active]="tab === 'SYNCED'">
+				<ng-container [ngTemplateOutlet]="tableView"></ng-container>
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>
 </nb-card>
 
 <ng-template #tableView>
-  <div class="row grow">
-    <div class="col-12 custom-table">
-      <div class="table-scroll-container grow" style="max-height: calc(100vh - 145px);">
-        @if (loading$ | async) {
-          <div class="smart-table" [nbSpinner]="true" nbSpinnerSize="small"></div>
-        }
-        <angular2-smart-table
-          #smartTable
-          [settings]="smartTableSettings"
-          [source]="smartTableSource"
-          style="cursor: pointer"
-          (userRowSelect)="onRowClick($event)"
-          >
-        </angular2-smart-table>
-      </div>
-    </div>
-    <ng-template #noTask>
-      <div class="no-data col-12">
-        <ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TASK' | translate"> </ngx-no-data-message>
-      </div>
-    </ng-template>
-  </div>
+	<div class="row grow">
+		<div class="col-12 custom-table">
+			<div class="table-scroll-container grow" style="max-height: calc(100vh - 145px)">
+				@if (loading$ | async) {
+					<div class="smart-table" [nbSpinner]="true" nbSpinnerSize="small"></div>
+				}
+				<angular2-smart-table
+					#smartTable
+					[settings]="smartTableSettings"
+					[source]="smartTableSource"
+					style="cursor: pointer"
+					(userRowSelect)="onRowClick($event)"
+				>
+				</angular2-smart-table>
+			</div>
+		</div>
+		<ng-template #noTask>
+			<div class="no-data col-12">
+				<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TASK' | translate"> </ngx-no-data-message>
+			</div>
+		</ng-template>
+	</div>
 </ng-template>

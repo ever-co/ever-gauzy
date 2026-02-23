@@ -2571,6 +2571,7 @@
 		"TIME_OFF": "Czas wolny"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "Nie masz uprawnień do przeglądania tej strony",
 		"HEADER": "Czas wolny",
 		"REQUEST": "Prośba",
 		"REQUEST_TIME_OFF": "Zgłosić urlop",
