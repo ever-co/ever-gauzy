@@ -1,6 +1,6 @@
 import { HttpParams } from '@angular/common/http';
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
+import moment from 'moment';
+import timezone from 'moment-timezone';
 import { Observable } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import slugify from 'slugify';
@@ -72,15 +72,18 @@ export function isNotEmpty(item: any): boolean {
  */
 export function isEmpty(item: any): boolean {
 	if (item instanceof Array) {
-		item = item.filter((val) => !isEmpty(val));
-		return item.length === 0;
+		return item.filter((val) => !isEmpty(val)).length === 0;
 	} else if (item && typeof item === 'object') {
-		for (var key in item) {
-			if (item[key] === null || item[key] === undefined || item[key] === '') {
-				delete item[key];
+		// Check if there is any key with a non-empty value
+		for (const key in item) {
+			if (Object.prototype.hasOwnProperty.call(item, key)) {
+				const value = item[key];
+				if (value !== null && value !== undefined && value !== '') {
+					return false;
+				}
 			}
 		}
-		return Object.keys(item).length === 0;
+		return true;
 	} else {
 		return !item || (item + '').toLocaleLowerCase() === 'null' || (item + '').toLocaleLowerCase() === 'undefined';
 	}

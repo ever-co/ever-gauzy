@@ -2,8 +2,8 @@ import { Pipe, PipeTransform, SecurityContext, VERSION } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Pipe({
-    name: 'truncate',
-    standalone: false
+	name: 'truncate',
+	standalone: true
 })
 export class TruncatePipe implements PipeTransform {
 	/**
@@ -27,8 +27,8 @@ export class TruncatePipe implements PipeTransform {
 	}
 }
 @Pipe({
-    name: 'nl2br',
-    standalone: false
+	name: 'nl2br',
+	standalone: true
 })
 export class Nl2BrPipe implements PipeTransform {
 	constructor(private readonly sanitizer: DomSanitizer) {}

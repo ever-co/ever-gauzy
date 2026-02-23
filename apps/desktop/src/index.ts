@@ -9,7 +9,7 @@ import * as remoteMain from '@electron/remote/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, nativeTheme, shell } from 'electron';
 import * as Store from 'electron-store';
-import * as path from 'path';
+import * as path from 'node:path';
 
 import { environment } from './environments/environment';
 

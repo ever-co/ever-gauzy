@@ -1,7 +1,7 @@
 @if (show_popup) {
-<ng-container *ngTemplateOutlet="workspacesTemplate"></ng-container>
+	<ng-container [ngTemplateOutlet]="workspacesTemplate"></ng-container>
 } @else {
-<ng-container *ngTemplateOutlet="singInTemplate"></ng-container>
+	<ng-container [ngTemplateOutlet]="singInTemplate"></ng-container>
 }
 
 <ng-template #singInTemplate>
@@ -84,10 +84,10 @@
 
 <ng-template #workspacesTemplate>
 	@if (workspaces.length > 0) {
-	<ngx-workspace-selection
-		[workspaces]="workspaces"
-		[confirmed_email]="confirmed_email"
-		(selectedWorkspace)="signInWorkspace($event)"
-	></ngx-workspace-selection>
+		<ngx-workspace-selection
+			[workspaces]="workspaces"
+			[confirmed_email]="confirmed_email"
+			(selectedWorkspace)="signInWorkspace($event)"
+		></ngx-workspace-selection>
 	}
 </ng-template>

@@ -14,7 +14,7 @@ import { formatDate, Location } from '@angular/common';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
-import * as moment from 'moment';
+import moment from 'moment';
 import { filter, tap } from 'rxjs/operators';
 import { DEFAULT_DATE_FORMATS } from '@gauzy/constants';
 import {
@@ -36,13 +36,13 @@ import { FormHelpers, LeafletMapComponent, LocationFormComponent } from '../../f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-organizations-step-form',
-    templateUrl: './organizations-step-form.component.html',
-    styleUrls: [
-        './organizations-step-form.component.scss',
-        './../../user/edit-profile-form/edit-profile-form.component.scss'
-    ],
-    standalone: false
+	selector: 'ga-organizations-step-form',
+	templateUrl: './organizations-step-form.component.html',
+	styleUrls: [
+		'./organizations-step-form.component.scss',
+		'./../../user/edit-profile-form/edit-profile-form.component.scss'
+	],
+	standalone: false
 })
 export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterViewInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

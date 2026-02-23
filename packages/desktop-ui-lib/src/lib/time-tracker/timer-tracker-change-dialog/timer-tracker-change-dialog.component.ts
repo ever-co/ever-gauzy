@@ -16,7 +16,7 @@ import {
 	TimeTrackerFormService
 } from '../../shared/features/time-tracker-form/time-tracker-form.service';
 import { DynamicSelectorValidation } from '../../shared/utils/validation/dynamic-selector-factory.validator';
-import { NgClass, NgStyle, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { ClientSelectorComponent } from '../../shared/features/client-selector/client-selector.component';
 import { ErrorMessageComponent } from '../../shared/components/ui/error-message/error-message.component';
 import { ProjectSelectorComponent } from '../../shared/features/project-selector/project-selector.component';
@@ -28,11 +28,26 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-timer-tracker-change-dialog',
-    templateUrl: './timer-tracker-change-dialog.component.html',
-    styleUrls: ['./timer-tracker-change-dialog.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ReactiveFormsModule, NbCardModule, NgClass, ClientSelectorComponent, ErrorMessageComponent, ProjectSelectorComponent, TeamSelectorComponent, TaskSelectorComponent, NoteComponent, NbButtonModule, SpinnerButtonDirective, NbIconModule, NgStyle, AsyncPipe, TranslatePipe]
+	selector: 'gauzy-timer-tracker-change-dialog',
+	templateUrl: './timer-tracker-change-dialog.component.html',
+	styleUrls: ['./timer-tracker-change-dialog.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		FormsModule,
+		ReactiveFormsModule,
+		NbCardModule,
+		ClientSelectorComponent,
+		ErrorMessageComponent,
+		ProjectSelectorComponent,
+		TeamSelectorComponent,
+		TaskSelectorComponent,
+		NoteComponent,
+		NbButtonModule,
+		SpinnerButtonDirective,
+		NbIconModule,
+		AsyncPipe,
+		TranslatePipe
+	]
 })
 export class TimerTrackerChangeDialogComponent implements OnInit {
 	private lastSelectorState: ITimeTrackerFormState;

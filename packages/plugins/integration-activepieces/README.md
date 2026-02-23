@@ -1,10 +1,15 @@
 # ActivePieces Integration Plugin
 
-This plugin provides integration between Ever Gauzy and ActivePieces automation platform using OAuth2.0 authentication and the ActivePieces connection API.
+This plugin provides integration between Ever Gauzy and ActivePieces automation platform. It uses the ActivePieces API (authenticated via API key) to manage connections and MCP servers.
 
 ## Overview
 
-The ActivePieces integration allows tenant-level access to ActivePieces from your NestJS application. It implements OAuth2.0 flow and uses ActivePieces' connection API to establish secure connections between your Gauzy application and ActivePieces projects.
+The ActivePieces integration allows tenant-level management of ActivePieces resources from your NestJS application. It provides:
+
+- **Connection Management** — Create, list, retrieve, and delete ActivePieces app connections for the Ever-gauzy piece
+- **MCP Server Management** — List, update, and rotate tokens for ActivePieces MCP servers
+
+All API calls are authenticated using an ActivePieces platform API key (available in Platform/Enterprise editions).
 
 ## Building
 
@@ -25,5 +30,5 @@ Install the Integration ActivePieces Plugin using your preferred package manager
 ```shell
 npm install @gauzy/plugin-integration-activepieces
 # or
-  yarn add @gauzy/plugin-integration-activepieces
+yarn add @gauzy/plugin-integration-activepieces
 ```

@@ -10,10 +10,13 @@ export class CheckUpdateCommand extends MenuCommand {
 	async execute(): Promise<void> {
 		const appWindowManager = AppWindowManager.getInstance();
 		if (!appWindowManager.settingWindow) {
-			await appWindowManager.initSettingWindow(this.windowPath.timeTrackerUi);
+			await appWindowManager.initSettingWindow(this.windowPath.timeTrackerUi, null,  false);
 			ipcMain.once('setting_window_ready', () => {
 				appWindowManager.settingShow('goto_update');
 			});
+			await appWindowManager.loadSetting(
+				this.windowPath.timeTrackerUi,
+			);
 		} else {
 			appWindowManager.settingShow('goto_update');
 		}

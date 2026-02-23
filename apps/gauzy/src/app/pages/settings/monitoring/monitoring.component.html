@@ -65,10 +65,8 @@
 										>
 											<form [formGroup]="globalPosthogForm">
 												<ng-container
-													*ngTemplateOutlet="
-														posthogFields;
-														context: { form: globalPosthogForm }
-													"
+													[ngTemplateOutlet]="posthogFields"
+													[ngTemplateOutletContext]="{ form: globalPosthogForm }"
 												></ng-container>
 												<div class="actions mt-3">
 													<button
@@ -87,10 +85,8 @@
 										<nb-tab [tabTitle]="'MENU.TENANT' | translate">
 											<form [formGroup]="tenantPosthogForm">
 												<ng-container
-													*ngTemplateOutlet="
-														posthogFields;
-														context: { form: tenantPosthogForm }
-													"
+													[ngTemplateOutlet]="posthogFields"
+													[ngTemplateOutletContext]="{ form: tenantPosthogForm }"
 												></ng-container>
 												<div class="actions mt-3">
 													<button
@@ -123,10 +119,8 @@
 										>
 											<form [formGroup]="globalSentryForm">
 												<ng-container
-													*ngTemplateOutlet="
-														sentryFields;
-														context: { form: globalSentryForm }
-													"
+													[ngTemplateOutlet]="sentryFields"
+													[ngTemplateOutletContext]="{ form: globalSentryForm }"
 												></ng-container>
 												<div class="actions mt-3">
 													<button
@@ -145,10 +139,8 @@
 										<nb-tab [tabTitle]="'MENU.TENANT' | translate">
 											<form [formGroup]="tenantSentryForm">
 												<ng-container
-													*ngTemplateOutlet="
-														sentryFields;
-														context: { form: tenantSentryForm }
-													"
+													[ngTemplateOutlet]="sentryFields"
+													[ngTemplateOutletContext]="{ form: tenantSentryForm }"
 												></ng-container>
 												<div class="actions mt-3">
 													<button
@@ -181,7 +173,8 @@
 										>
 											<form [formGroup]="globalJitsuForm">
 												<ng-container
-													*ngTemplateOutlet="jitsuFields; context: { form: globalJitsuForm }"
+													[ngTemplateOutlet]="jitsuFields"
+													[ngTemplateOutletContext]="{ form: globalJitsuForm }"
 												></ng-container>
 												<div class="actions mt-3">
 													<button
@@ -200,7 +193,8 @@
 										<nb-tab [tabTitle]="'MENU.TENANT' | translate">
 											<form [formGroup]="tenantJitsuForm">
 												<ng-container
-													*ngTemplateOutlet="jitsuFields; context: { form: tenantJitsuForm }"
+													[ngTemplateOutlet]="jitsuFields"
+													[ngTemplateOutletContext]="{ form: tenantJitsuForm }"
 												></ng-container>
 												<div class="actions mt-3">
 													<button

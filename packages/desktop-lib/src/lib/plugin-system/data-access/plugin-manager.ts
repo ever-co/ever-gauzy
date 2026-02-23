@@ -1,7 +1,7 @@
 import { ID } from '@gauzy/contracts';
 import { logger } from '@gauzy/desktop-core';
 import { app, MenuItemConstructorOptions } from 'electron';
-import { existsSync } from 'fs';
+import { existsSync } from 'node:fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { PluginMetadataService } from '../database/plugin-metadata.service';

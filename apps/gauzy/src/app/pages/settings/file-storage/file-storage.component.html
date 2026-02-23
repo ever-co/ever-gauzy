@@ -1,444 +1,448 @@
 <ng-template [ngxPermissionsOnly]="[PermissionsEnum.FILE_STORAGE_VIEW]">
-  <form
-    #ngForm="ngForm"
-    aria-labelledby="title"
-    [formGroup]="form"
-    (ngSubmit)="submit()"
-    [nbSpinner]="loading"
-    nbSpinnerStatus="primary"
-    >
-    <nb-card class="card-scroll">
-      <nb-card-header class="d-flex justify-content-between">
-        <h4>
-          <span class="menu-setting"> {{ 'MENU.SETTINGS' | translate }}/ </span>
-          {{ 'MENU.FILE_STORAGE' | translate }}
-        </h4>
-      </nb-card-header>
-      <nb-card-body>
-        <!-- File Storage Provider Selector -->
-        <file-provider-selector
-          formControlName="fileStorageProvider"
-          (onSelectionChanged)="setFileStorageProvider($event)"
-        ></file-provider-selector>
+	<form
+		#ngForm="ngForm"
+		aria-labelledby="title"
+		[formGroup]="form"
+		(ngSubmit)="submit()"
+		[nbSpinner]="loading"
+		nbSpinnerStatus="primary"
+	>
+		<nb-card class="card-scroll">
+			<nb-card-header class="d-flex justify-content-between">
+				<h4>
+					<span class="menu-setting"> {{ 'MENU.SETTINGS' | translate }}/ </span>
+					{{ 'MENU.FILE_STORAGE' | translate }}
+				</h4>
+			</nb-card-header>
+			<nb-card-body>
+				<!-- File Storage Provider Selector -->
+				<file-provider-selector
+					formControlName="fileStorageProvider"
+					(onSelectionChanged)="setFileStorageProvider($event)"
+				></file-provider-selector>
 
-        <!-- File Storage Provider Configuration -->
-        @switch (fileStorageProvider) {
-          @case (FileStorageProviderEnum.S3) {
-            <ng-container
-              *ngTemplateOutlet="s3StorageFormTemplate; context: { group: form }"
-            ></ng-container>
-          }
-          @case (FileStorageProviderEnum.WASABI) {
-            <ng-container
-              *ngTemplateOutlet="wasabiStorageFormTemplate; context: { group: form }"
-            ></ng-container>
-          }
-          @case (FileStorageProviderEnum.CLOUDINARY) {
-            <ng-container
-              *ngTemplateOutlet="cloudinaryStorageFormTemplate; context: { group: form }"
-            ></ng-container>
-          }
-          @case (FileStorageProviderEnum.DIGITALOCEAN) {
-            <ng-container
-              *ngTemplateOutlet="digitalOceanStorageFormTemplate; context: { group: form }"
-            ></ng-container>
-          }
-        }
-      </nb-card-body>
-      <nb-card-footer>
-        <button type="submit" class="mr-2" nbButton status="success">
-          {{ 'BUTTONS.SAVE' | translate }}
-        </button>
-      </nb-card-footer>
-    </nb-card>
-  </form>
+				<!-- File Storage Provider Configuration -->
+				@switch (fileStorageProvider) {
+					@case (FileStorageProviderEnum.S3) {
+						<ng-container
+							[ngTemplateOutlet]="s3StorageFormTemplate"
+							[ngTemplateOutletContext]="{ group: form }"
+						></ng-container>
+					}
+					@case (FileStorageProviderEnum.WASABI) {
+						<ng-container
+							[ngTemplateOutlet]="wasabiStorageFormTemplate"
+							[ngTemplateOutletContext]="{ group: form }"
+						></ng-container>
+					}
+					@case (FileStorageProviderEnum.CLOUDINARY) {
+						<ng-container
+							[ngTemplateOutlet]="cloudinaryStorageFormTemplate"
+							[ngTemplateOutletContext]="{ group: form }"
+						></ng-container>
+					}
+					@case (FileStorageProviderEnum.DIGITALOCEAN) {
+						<ng-container
+							[ngTemplateOutlet]="digitalOceanStorageFormTemplate"
+							[ngTemplateOutletContext]="{ group: form }"
+						></ng-container>
+					}
+				}
+			</nb-card-body>
+			<nb-card-footer>
+				<button type="submit" class="mr-2" nbButton status="success">
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</nb-card-footer>
+		</nb-card>
+	</form>
 </ng-template>
 
 <!-- S3 Storage Configuration Template -->
 <ng-template #s3StorageFormTemplate let-group="group">
-  <nb-card [formGroup]="group">
-    <nb-card-header>
-      <h6>
-        {{ 'SETTINGS_FILE_STORAGE.S3.HEADER' | translate }}
-      </h6>
-    </nb-card-header>
-    <nb-card-body [formGroupName]="FileStorageProviderEnum.S3">
-      <div class="form-group row">
-        <label class="label col-xl-2 col-3" for="aws_access_key_id">
-          {{ 'SETTINGS_FILE_STORAGE.S3.LABELS.ACCESS_KEY_ID' | translate }}
-        </label>
-        <div class="col-9 col-xl-4">
-          <input
-            id="aws_access_key_id"
-            name="aws_access_key_id"
-            formControlName="aws_access_key_id"
-            nbInput
-            fullWidth
-            class="w-100"
-            [placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
-            />
-          </div>
-        </div>
-        <div class="form-group row">
-          <label class="label col-xl-2 col-3" for="aws_secret_access_key">
-            {{ 'SETTINGS_FILE_STORAGE.S3.LABELS.SECRET_ACCESS_KEY' | translate }}
-          </label>
-          <div class="col-9 col-xl-4">
-            <input
-              id="aws_secret_access_key"
-              name="aws_secret_access_key"
-              formControlName="aws_secret_access_key"
-              nbInput
-              fullWidth
-              class="w-100"
-              [placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
-              />
-            </div>
-          </div>
-          <div class="form-group row">
-            <label class="label col-3 col-xl-2" for="aws_default_region">
-              {{ 'SETTINGS_FILE_STORAGE.S3.LABELS.REGION' | translate }}
-            </label>
-            <div class="col-9 col-xl-4">
-              <input
-                id="aws_default_region"
-                name="aws_default_region"
-                formControlName="aws_default_region"
-                nbInput
-                fullWidth
-                class="w-100"
-                [placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.REGION' | translate"
-                />
-              </div>
-            </div>
-            <div class="form-group row">
-              <label class="label col-3 col-xl-2" for="aws_bucket">
-                {{ 'SETTINGS_FILE_STORAGE.S3.LABELS.BUCKET' | translate }}
-              </label>
-              <div class="col-9 col-xl-4">
-                <input
-                  id="aws_bucket"
-                  name="aws_bucket"
-                  formControlName="aws_bucket"
-                  nbInput
-                  fullWidth
-                  class="w-100"
-                  [placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.BUCKET' | translate"
-                  />
-                </div>
-              </div>
-            </nb-card-body>
-          </nb-card>
-        </ng-template>
+	<nb-card [formGroup]="group">
+		<nb-card-header>
+			<h6>
+				{{ 'SETTINGS_FILE_STORAGE.S3.HEADER' | translate }}
+			</h6>
+		</nb-card-header>
+		<nb-card-body [formGroupName]="FileStorageProviderEnum.S3">
+			<div class="form-group row">
+				<label class="label col-xl-2 col-3" for="aws_access_key_id">
+					{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.ACCESS_KEY_ID' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="aws_access_key_id"
+						name="aws_access_key_id"
+						formControlName="aws_access_key_id"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-xl-2 col-3" for="aws_secret_access_key">
+					{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.SECRET_ACCESS_KEY' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="aws_secret_access_key"
+						name="aws_secret_access_key"
+						formControlName="aws_secret_access_key"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="aws_default_region">
+					{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.REGION' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="aws_default_region"
+						name="aws_default_region"
+						formControlName="aws_default_region"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.REGION' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="aws_bucket">
+					{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.BUCKET' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="aws_bucket"
+						name="aws_bucket"
+						formControlName="aws_bucket"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.BUCKET' | translate"
+					/>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</ng-template>
 
-        <!-- Wasabi Storage Configuration Template -->
-        <ng-template #wasabiStorageFormTemplate let-group="group">
-          <nb-card [formGroup]="group">
-            <nb-card-header>
-              <h6>
-                {{ 'SETTINGS_FILE_STORAGE.WASABI.HEADER' | translate }}
-              </h6>
-            </nb-card-header>
-            <nb-card-body [formGroupName]="FileStorageProviderEnum.WASABI">
-              <div class="form-group row">
-                <label class="label col-3 col-xl-2" for="wasabi_aws_access_key_id">
-                  {{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.ACCESS_KEY_ID' | translate }}
-                </label>
-                <div class="col-9 col-xl-4">
-                  <input
-                    name="wasabi_aws_access_key_id"
-                    formControlName="wasabi_aws_access_key_id"
-                    nbInput
-                    fullWidth
-                    class="w-100"
-                    [placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
-                    />
-                  </div>
-                </div>
-                <div class="form-group row">
-                  <label class="label col-3 col-xl-2" for="wasabi_aws_secret_access_key">
-                    {{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SECRET_ACCESS_KEY' | translate }}
-                  </label>
-                  <div class="col-9 col-xl-4">
-                    <input
-                      id="wasabi_aws_secret_access_key"
-                      name="wasabi_aws_secret_access_key"
-                      formControlName="wasabi_aws_secret_access_key"
-                      nbInput
-                      fullWidth
-                      class="w-100"
-                      [placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
-                      />
-                    </div>
-                  </div>
-                  <div class="form-group row">
-                    <label class="label col-sm-3 col-xl-2" for="wasabi_aws_default_region">
-                      {{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.REGION' | translate }}
-                    </label>
-                    <div class="col-sm-9 col-xl-4">
-                      <input
-                        id="wasabi_aws_default_region"
-                        name="wasabi_aws_default_region"
-                        formControlName="wasabi_aws_default_region"
-                        nbInput
-                        fullWidth
-                        class="w-100"
-                        [placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.REGION' | translate"
-                        />
-                      </div>
-                    </div>
-                    <div class="form-group row">
-                      <label class="label col-3 col-xl-2" for="wasabi_aws_service_url">
-                        {{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL' | translate }}
-                      </label>
-                      <div class="col-9 col-xl-4">
-                        <input
-                          id="wasabi_aws_service_url"
-                          name="wasabi_aws_service_url"
-                          formControlName="wasabi_aws_service_url"
-                          nbInput
-                          fullWidth
-                          class="w-100"
-                          [placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SERVICE_URL' | translate"
-                          />
-                        </div>
-                      </div>
-                      <div class="form-group row">
-                        <label class="label col-3 col-xl-2" for="wasabi_aws_bucket">
-                          {{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.BUCKET' | translate }}
-                        </label>
-                        <div class="col-9 col-xl-4">
-                          <input
-                            id="wasabi_aws_bucket"
-                            name="wasabi_aws_bucket"
-                            formControlName="wasabi_aws_bucket"
-                            nbInput
-                            fullWidth
-                            class="w-100"
-                            [placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.BUCKET' | translate"
-                            />
-                          </div>
-                        </div>
-                        <div class="form-group row">
-                          <label class="label col-3 col-xl-2" for="wasabi_aws_force_path_style">
-                            {{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.FORCE_PATH_STYLE' | translate }}
-                          </label>
-                          <div class="col-9 col-xl-4">
-                            <nb-toggle formControlName="wasabi_aws_force_path_style" status="primary"></nb-toggle>
-                          </div>
-                        </div>
-                      </nb-card-body>
-                    </nb-card>
-                  </ng-template>
+<!-- Wasabi Storage Configuration Template -->
+<ng-template #wasabiStorageFormTemplate let-group="group">
+	<nb-card [formGroup]="group">
+		<nb-card-header>
+			<h6>
+				{{ 'SETTINGS_FILE_STORAGE.WASABI.HEADER' | translate }}
+			</h6>
+		</nb-card-header>
+		<nb-card-body [formGroupName]="FileStorageProviderEnum.WASABI">
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="wasabi_aws_access_key_id">
+					{{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.ACCESS_KEY_ID' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						name="wasabi_aws_access_key_id"
+						formControlName="wasabi_aws_access_key_id"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="wasabi_aws_secret_access_key">
+					{{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SECRET_ACCESS_KEY' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="wasabi_aws_secret_access_key"
+						name="wasabi_aws_secret_access_key"
+						formControlName="wasabi_aws_secret_access_key"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-sm-3 col-xl-2" for="wasabi_aws_default_region">
+					{{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.REGION' | translate }}
+				</label>
+				<div class="col-sm-9 col-xl-4">
+					<input
+						id="wasabi_aws_default_region"
+						name="wasabi_aws_default_region"
+						formControlName="wasabi_aws_default_region"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.REGION' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="wasabi_aws_service_url">
+					{{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="wasabi_aws_service_url"
+						name="wasabi_aws_service_url"
+						formControlName="wasabi_aws_service_url"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SERVICE_URL' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="wasabi_aws_bucket">
+					{{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.BUCKET' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="wasabi_aws_bucket"
+						name="wasabi_aws_bucket"
+						formControlName="wasabi_aws_bucket"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.BUCKET' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="wasabi_aws_force_path_style">
+					{{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.FORCE_PATH_STYLE' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<nb-toggle formControlName="wasabi_aws_force_path_style" status="primary"></nb-toggle>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</ng-template>
 
-                  <!-- Cloudinary Storage Configuration Template -->
-                  <ng-template #cloudinaryStorageFormTemplate let-group="group">
-                    <nb-card [formGroup]="group">
-                      <nb-card-header>
-                        <h6>
-                          {{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.HEADER' | translate }}
-                        </h6>
-                      </nb-card-header>
-                      <nb-card-body [formGroupName]="FileStorageProviderEnum.CLOUDINARY">
-                        <div class="form-group row">
-                          <label class="label col-3 col-xl-2" for="cloudinary_cloud_name">
-                            {{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.CLOUD_NAME' | translate }}
-                          </label>
-                          <div class="col-9 col-xl-4">
-                            <input
-                              id="cloudinary_cloud_name"
-                              name="cloudinary_cloud_name"
-                              formControlName="cloudinary_cloud_name"
-                              nbInput
-                              fullWidth
-                              class="w-100"
-                              [placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.CLOUD_NAME' | translate"
-                              />
-                            </div>
-                          </div>
-                          <div class="form-group row">
-                            <label class="label col-3 col-xl-2" for="cloudinary_api_key">
-                              {{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_KEY' | translate }}
-                            </label>
-                            <div class="col-9 col-xl-4">
-                              <input
-                                id="cloudinary_api_key"
-                                name="cloudinary_api_key"
-                                formControlName="cloudinary_api_key"
-                                nbInput
-                                fullWidth
-                                class="w-100"
-                                [placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_KEY' | translate"
-                                />
-                              </div>
-                            </div>
-                            <div class="form-group row">
-                              <label class="label col-3 col-xl-2" for="cloudinary_api_secret">
-                                {{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_SECRET' | translate }}
-                              </label>
-                              <div class="col-9 col-xl-4">
-                                <input
-                                  id="cloudinary_api_secret"
-                                  name="cloudinary_api_secret"
-                                  formControlName="cloudinary_api_secret"
-                                  nbInput
-                                  fullWidth
-                                  class="w-100"
-                                  [placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_SECRET' | translate"
-                                  />
-                                </div>
-                              </div>
-                              <div class="form-group row">
-                                <label class="label col-3 col-xl-2" for="cloudinary_delivery_url">
-                                  {{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.DELIVERY_URL' | translate }}
-                                </label>
-                                <div class="col-9 col-xl-4">
-                                  <input
-                                    id="cloudinary_delivery_url"
-                                    name="cloudinary_delivery_url"
-                                    formControlName="cloudinary_delivery_url"
-                                    nbInput
-                                    fullWidth
-                                    class="w-100"
-                                    [placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.DELIVERY_URL' | translate"
-                                    />
-                                  </div>
-                                </div>
-                                <div class="form-group row">
-                                  <label class="label col-3 col-xl-2" for="cloudinary_api_secure">
-                                    {{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.SECURE' | translate }}
-                                  </label>
-                                  <div class="col-9 col-xl-4">
-                                    <nb-select
-                                      id="cloudinary_api_secure"
-                                      name="cloudinary_api_secure"
-                                      formControlName="cloudinary_api_secure"
-                                      fullWidth
-                                      class="w-100"
-                                      [placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.SECURE' | translate"
-                                      >
-                                      @for (secure of secureOptions; track secure) {
-                                        <nb-option [value]="secure.value">
-                                          {{ secure.label | titlecase }}
-                                        </nb-option>
-                                      }
-                                    </nb-select>
-                                  </div>
-                                </div>
-                              </nb-card-body>
-                            </nb-card>
-                          </ng-template>
+<!-- Cloudinary Storage Configuration Template -->
+<ng-template #cloudinaryStorageFormTemplate let-group="group">
+	<nb-card [formGroup]="group">
+		<nb-card-header>
+			<h6>
+				{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.HEADER' | translate }}
+			</h6>
+		</nb-card-header>
+		<nb-card-body [formGroupName]="FileStorageProviderEnum.CLOUDINARY">
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="cloudinary_cloud_name">
+					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.CLOUD_NAME' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="cloudinary_cloud_name"
+						name="cloudinary_cloud_name"
+						formControlName="cloudinary_cloud_name"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.CLOUD_NAME' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="cloudinary_api_key">
+					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_KEY' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="cloudinary_api_key"
+						name="cloudinary_api_key"
+						formControlName="cloudinary_api_key"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_KEY' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="cloudinary_api_secret">
+					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_SECRET' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="cloudinary_api_secret"
+						name="cloudinary_api_secret"
+						formControlName="cloudinary_api_secret"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_SECRET' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="cloudinary_delivery_url">
+					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.DELIVERY_URL' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="cloudinary_delivery_url"
+						name="cloudinary_delivery_url"
+						formControlName="cloudinary_delivery_url"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.DELIVERY_URL' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="cloudinary_api_secure">
+					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.SECURE' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<nb-select
+						id="cloudinary_api_secure"
+						name="cloudinary_api_secure"
+						formControlName="cloudinary_api_secure"
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.SECURE' | translate"
+					>
+						@for (secure of secureOptions; track secure) {
+							<nb-option [value]="secure.value">
+								{{ secure.label | titlecase }}
+							</nb-option>
+						}
+					</nb-select>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</ng-template>
 
-                          <!-- DigitalOcean Storage Configuration Template -->
-                          <ng-template #digitalOceanStorageFormTemplate let-group="group">
-                            <nb-card [formGroup]="group">
-                              <nb-card-header>
-                                <h6>{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HEADER' | translate }}</h6>
-                              </nb-card-header>
-                              <nb-card-body [formGroupName]="FileStorageProviderEnum.DIGITALOCEAN">
-                                <div class="form-group row">
-                                  <label class="label col-3 col-xl-2" for="digitalocean_access_key_id">
-                                    {{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.ACCESS_KEY_ID' | translate }}
-                                  </label>
-                                  <div class="col-9 col-xl-4">
-                                    <input
-                                      name="digitalocean_access_key_id"
-                                      formControlName="digitalocean_access_key_id"
-                                      nbInput
-                                      fullWidth
-                                      class="w-100"
-                                      [placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div class="form-group row">
-                                    <label class="label col-3 col-xl-2" for="digitalocean_secret_access_key">
-                                      {{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SECRET_ACCESS_KEY' | translate }}
-                                    </label>
-                                    <div class="col-9 col-xl-4">
-                                      <input
-                                        id="digitalocean_secret_access_key"
-                                        name="digitalocean_secret_access_key"
-                                        formControlName="digitalocean_secret_access_key"
-                                        nbInput
-                                        fullWidth
-                                        class="w-100"
-                                        [placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div class="form-group row">
-                                      <label class="label col-sm-3 col-xl-2" for="digitalocean_default_region">
-                                        {{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.REGION' | translate }}
-                                      </label>
-                                      <div class="col-sm-9 col-xl-4">
-                                        <input
-                                          id="digitalocean_default_region"
-                                          name="digitalocean_default_region"
-                                          formControlName="digitalocean_default_region"
-                                          nbInput
-                                          fullWidth
-                                          class="w-100"
-                                          [placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.REGION' | translate"
-                                          />
-                                        </div>
-                                      </div>
-                                      <div class="form-group row">
-                                        <label class="label col-3 col-xl-2" for="digitalocean_service_url">
-                                          {{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SERVICE_URL' | translate }}
-                                        </label>
-                                        <div class="col-9 col-xl-4">
-                                          <input
-                                            id="digitalocean_service_url"
-                                            name="digitalocean_service_url"
-                                            formControlName="digitalocean_service_url"
-                                            nbInput
-                                            fullWidth
-                                            class="w-100"
-                                            [placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.SERVICE_URL' | translate"
-                                            />
-                                          </div>
-                                        </div>
-                                        <div class="form-group row">
-                                          <label class="label col-3 col-xl-2" for="digitalocean_cdn_url">
-                                            {{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.CDN_URL' | translate }}
-                                          </label>
-                                          <div class="col-9 col-xl-4">
-                                            <input
-                                              id="digitalocean_cdn_url"
-                                              name="digitalocean_cdn_url"
-                                              formControlName="digitalocean_cdn_url"
-                                              nbInput
-                                              fullWidth
-                                              class="w-100"
-                                              [placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.CDN_URL' | translate"
-                                              />
-                                            </div>
-                                          </div>
-                                          <div class="form-group row">
-                                            <label class="label col-3 col-xl-2" for="digitalocean_s3_bucket">
-                                              {{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.BUCKET' | translate }}
-                                            </label>
-                                            <div class="col-9 col-xl-4">
-                                              <input
-                                                id="digitalocean_s3_bucket"
-                                                name="digitalocean_s3_bucket"
-                                                formControlName="digitalocean_s3_bucket"
-                                                nbInput
-                                                fullWidth
-                                                class="w-100"
-                                                [placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.BUCKET' | translate"
-                                                />
-                                              </div>
-                                            </div>
-                                            <div class="form-group row">
-                                              <label class="label col-3 col-xl-2" for="digitalocean_s3_force_path_style">
-                                                {{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.FORCE_PATH_STYLE' | translate }}
-                                              </label>
-                                              <div class="col-9 col-xl-4">
-                                                <nb-toggle formControlName="digitalocean_s3_force_path_style" status="primary"></nb-toggle>
-                                              </div>
-                                            </div>
-                                          </nb-card-body>
-                                        </nb-card>
-                                      </ng-template>
+<!-- DigitalOcean Storage Configuration Template -->
+<ng-template #digitalOceanStorageFormTemplate let-group="group">
+	<nb-card [formGroup]="group">
+		<nb-card-header>
+			<h6>{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HEADER' | translate }}</h6>
+		</nb-card-header>
+		<nb-card-body [formGroupName]="FileStorageProviderEnum.DIGITALOCEAN">
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_access_key_id">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.ACCESS_KEY_ID' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						name="digitalocean_access_key_id"
+						formControlName="digitalocean_access_key_id"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_secret_access_key">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SECRET_ACCESS_KEY' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="digitalocean_secret_access_key"
+						name="digitalocean_secret_access_key"
+						formControlName="digitalocean_secret_access_key"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-sm-3 col-xl-2" for="digitalocean_default_region">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.REGION' | translate }}
+				</label>
+				<div class="col-sm-9 col-xl-4">
+					<input
+						id="digitalocean_default_region"
+						name="digitalocean_default_region"
+						formControlName="digitalocean_default_region"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.REGION' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_service_url">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SERVICE_URL' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="digitalocean_service_url"
+						name="digitalocean_service_url"
+						formControlName="digitalocean_service_url"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.SERVICE_URL' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_cdn_url">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.CDN_URL' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="digitalocean_cdn_url"
+						name="digitalocean_cdn_url"
+						formControlName="digitalocean_cdn_url"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.CDN_URL' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_s3_bucket">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.BUCKET' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="digitalocean_s3_bucket"
+						name="digitalocean_s3_bucket"
+						formControlName="digitalocean_s3_bucket"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.BUCKET' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_s3_force_path_style">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.FORCE_PATH_STYLE' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<nb-toggle formControlName="digitalocean_s3_force_path_style" status="primary"></nb-toggle>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</ng-template>

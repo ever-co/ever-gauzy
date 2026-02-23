@@ -7,33 +7,23 @@
 		"version": {
 			"currentVersionResolver": "git-tag",
 			"preserveLocalDependencyProtocols": false,
-			"manifestRootsToUpdate": [
-				"dist/{projectRoot}"
-			]
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [
-		"constants"
-	],
+	"implicitDependencies": ["constants"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": [
-				"{options.outputPath}"
-			],
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/contracts",
 				"tsConfig": "packages/contracts/tsconfig.lib.json",
 				"packageJson": "packages/contracts/package.json",
 				"main": "packages/contracts/src/index.ts",
-				"assets": [
-					"packages/contracts/*.md"
-				]
+				"assets": ["packages/contracts/*.md"]
 			},
-			"dependsOn": [
-				"^build"
-			]
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {
@@ -45,9 +35,7 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": [
-				"{workspaceRoot}/coverage/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/contracts/jest.config.ts"
 			}

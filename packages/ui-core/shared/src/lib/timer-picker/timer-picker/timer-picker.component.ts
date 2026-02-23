@@ -1,26 +1,19 @@
-import {
-	Component,
-	OnInit,
-	Input,
-	forwardRef,
-	Output,
-	EventEmitter
-} from '@angular/core';
+import { Component, OnInit, Input, forwardRef, Output, EventEmitter } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IOrganization } from '@gauzy/contracts';
 
 @Component({
-    selector: 'ga-timer-picker',
-    templateUrl: './timer-picker.component.html',
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TimerPickerComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ga-timer-picker',
+	templateUrl: './timer-picker.component.html',
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TimerPickerComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class TimerPickerComponent implements OnInit {
 	private _max: string = '23:00';

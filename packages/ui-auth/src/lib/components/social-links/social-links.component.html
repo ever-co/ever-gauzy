@@ -1,35 +1,45 @@
-@if (socialLinks$ | async; as socialLinks) { @if (socialLinks.length > 0) {
-<div class="links" aria-label="Social SignIn">
-	{{ 'LOGIN_PAGE.OR_SIGN_IN_WITH' | translate }}
-	<div class="socials">
-		@for (socialLink of socialLinks; track socialLink) { @if (socialLink.link) {
-		<a
-			[routerLink]="socialLink.link"
-			[attr.target]="socialLink.target"
-			[attr.rel]="socialLink.target === '_blank' ? 'noopener noreferrer' : null"
-			class="social-link"
-		>
-			<ng-container *ngTemplateOutlet="linkContentEl; context: { $implicit: socialLink }"></ng-container>
-		</a>
-		} @else if (socialLink.url) {
-		<a
-			[attr.href]="socialLink.url"
-			[attr.target]="socialLink.target"
-			[attr.rel]="socialLink.target === '_blank' ? 'noopener noreferrer' : null"
-			class="social-link"
-		>
-			<ng-container *ngTemplateOutlet="linkContentEl; context: { $implicit: socialLink }"></ng-container>
-		</a>
-		} }
-	</div>
-</div>
-} }
+@if (socialLinks$ | async; as socialLinks) {
+	@if (socialLinks.length > 0) {
+		<div class="links" aria-label="Social SignIn">
+			{{ 'LOGIN_PAGE.OR_SIGN_IN_WITH' | translate }}
+			<div class="socials">
+				@for (socialLink of socialLinks; track socialLink) {
+					@if (socialLink.link) {
+						<a
+							[routerLink]="socialLink.link"
+							[attr.target]="socialLink.target"
+							[attr.rel]="socialLink.target === '_blank' ? 'noopener noreferrer' : null"
+							class="social-link"
+						>
+							<ng-container
+								[ngTemplateOutlet]="linkContentEl"
+								[ngTemplateOutletContext]="{ $implicit: socialLink }"
+							></ng-container>
+						</a>
+					} @else if (socialLink.url) {
+						<a
+							[attr.href]="socialLink.url"
+							[attr.target]="socialLink.target"
+							[attr.rel]="socialLink.target === '_blank' ? 'noopener noreferrer' : null"
+							class="social-link"
+						>
+							<ng-container
+								[ngTemplateOutlet]="linkContentEl"
+								[ngTemplateOutletContext]="{ $implicit: socialLink }"
+							></ng-container>
+						</a>
+					}
+				}
+			</div>
+		</div>
+	}
+}
 
 <!-- Reusable template for social link content (icon or title) -->
 <ng-template let-socialLink #linkContentEl>
 	@if (socialLink.icon) {
-	<nb-icon [icon]="socialLink.icon"></nb-icon>
+		<nb-icon [icon]="socialLink.icon"></nb-icon>
 	} @else {
-	{{ socialLink.title }}
+		{{ socialLink.title }}
 	}
 </ng-template>

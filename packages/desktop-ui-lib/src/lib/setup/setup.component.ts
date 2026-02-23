@@ -10,7 +10,19 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IProxyConfig } from '@gauzy/contracts';
-import { NbDialogService, NbLayoutModule, NbCardModule, NbStepperModule, NbButtonModule, NbCheckboxModule, NbIconModule, NbRadioModule, NbInputModule, NbFormFieldModule, NbProgressBarModule } from '@nebular/theme';
+import {
+	NbDialogService,
+	NbLayoutModule,
+	NbCardModule,
+	NbStepperModule,
+	NbButtonModule,
+	NbCheckboxModule,
+	NbIconModule,
+	NbRadioModule,
+	NbInputModule,
+	NbFormFieldModule,
+	NbProgressBarModule
+} from '@nebular/theme';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
 import { GAUZY_ENV } from '../constants';
@@ -22,14 +34,31 @@ import { SetupService } from './setup.service';
 import { FormsModule } from '@angular/forms';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { SslComponent } from '../settings/ssl/ssl.component';
-import { NgClass, UpperCasePipe } from '@angular/common';
+import { UpperCasePipe } from '@angular/common';
 
 @Component({
-    selector: 'ngx-setup',
-    templateUrl: './setup.component.html',
-    styleUrls: ['./setup.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbLayoutModule, NbCardModule, NbStepperModule, LanguageSelectorComponent, NbButtonModule, NbCheckboxModule, FormsModule, NbIconModule, NbRadioModule, SpinnerButtonDirective, NbInputModule, SslComponent, NbFormFieldModule, NgClass, NbProgressBarModule, UpperCasePipe, TranslatePipe]
+	selector: 'ngx-setup',
+	templateUrl: './setup.component.html',
+	styleUrls: ['./setup.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		NbLayoutModule,
+		NbCardModule,
+		NbStepperModule,
+		LanguageSelectorComponent,
+		NbButtonModule,
+		NbCheckboxModule,
+		FormsModule,
+		NbIconModule,
+		NbRadioModule,
+		SpinnerButtonDirective,
+		NbInputModule,
+		SslComponent,
+		NbFormFieldModule,
+		NbProgressBarModule,
+		UpperCasePipe,
+		TranslatePipe
+	]
 })
 export class SetupComponent implements OnInit, OnDestroy {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
@@ -41,7 +70,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 	constructor(
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private electronService: ElectronService,
 		private _errorHandlerService: ErrorHandlerService,
 		private _loggerServer: LoggerService,
@@ -451,7 +480,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 		try {
 			const resp = await this.setupService.pingServer({
 				host: url.origin
-			})
+			});
 			this.serverConfig.custom.apiHost = `${url.protocol}//${url.hostname}`;
 			this.serverConfig.custom.port = url.port;
 			return resp;
@@ -471,9 +500,11 @@ export class SetupComponent implements OnInit, OnDestroy {
 				if (this.runApp) {
 					await this.saveAndRun();
 				} else {
-					this._notifier.success(this._translateService.instant('TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS', {
-						url: serverHostOptions.serverUrl
-					}))
+					this._notifier.success(
+						this._translateService.instant('TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS', {
+							url: serverHostOptions.serverUrl
+						})
+					);
 					this.isCheckConnection = false;
 					this._cdr.detectChanges();
 				}
@@ -510,12 +541,12 @@ export class SetupComponent implements OnInit, OnDestroy {
 		this.open(hasBackdrop);
 	}
 
-	handleIpcEvent(_: any, arg: { type: string, data: any }) {
+	handleIpcEvent(_: any, arg: { type: string; data: any }) {
 		if (arg.type === 'database_status') {
 			if (arg.data.status) {
 				this._notifier.success(arg.data.message);
 			} else {
-				this._notifier.warn(arg.data.message)
+				this._notifier.warn(arg.data.message);
 			}
 
 			if (arg.data.status && this.runApp) {
@@ -538,7 +569,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-	    this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
+		this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
 	}
 
 	public get isDesktopTimer(): boolean {

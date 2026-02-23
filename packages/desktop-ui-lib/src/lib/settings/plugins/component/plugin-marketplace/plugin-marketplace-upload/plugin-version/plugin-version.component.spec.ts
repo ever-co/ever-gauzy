@@ -1,23 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { PluginVersionComponent } from './plugin-version.component';
-
 describe('PluginVersionComponent', () => {
-  let component: PluginVersionComponent;
-  let fixture: ComponentFixture<PluginVersionComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-    imports: [PluginVersionComponent]
-})
-    .compileComponents();
-
-    fixture = TestBed.createComponent(PluginVersionComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+	let component: PluginVersionComponent;
+	let fixture: ComponentFixture<PluginVersionComponent>;
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
+			imports: [PluginVersionComponent]
+		}).compileComponents();
+		fixture = TestBed.createComponent(PluginVersionComponent);
+		component = fixture.componentInstance;
+		fixture.detectChanges();
+	});
+	it('should create', () => {
+		expect(component).toBeTruthy();
+	});
 });

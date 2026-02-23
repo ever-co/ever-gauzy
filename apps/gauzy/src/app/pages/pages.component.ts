@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,7 +9,6 @@ import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
 import {
 	AuthStrategy,
-	IJobMatchingEntity,
 	IntegrationEntitySettingServiceStoreService,
 	IntegrationsService,
 	NavMenuBuilderService,
@@ -27,35 +26,34 @@ import { ReportService } from './reports/all-report/report.service';
 	styleUrls: ['pages.component.scss'],
 	template: `
 		@if (!!menu && user) {
-		  <ngx-one-column-layout>
-		    <ga-main-nav-menu></ga-main-nav-menu>
-		    <router-outlet></router-outlet>
-		  </ngx-one-column-layout>
+			<ngx-one-column-layout>
+				<ga-main-nav-menu></ga-main-nav-menu>
+				<router-outlet></router-outlet>
+			</ngx-one-column-layout>
 		}
-		`,
+	`,
 	standalone: false
 })
 export class PagesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+	private readonly _router = inject(Router);
+	private readonly _route = inject(ActivatedRoute);
+	private readonly _store = inject(Store);
+	private readonly _reportService = inject(ReportService);
+	private readonly _ngxPermissionsService = inject(NgxPermissionsService);
+	private readonly _usersService = inject(UsersService);
+	private readonly _authStrategy = inject(AuthStrategy);
+	private readonly _integrationsService = inject(IntegrationsService);
+	private readonly _integrationEntitySettingServiceStoreService = inject(IntegrationEntitySettingServiceStoreService);
+	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+	private readonly _permissionsService = inject(PermissionsService);
+
 	public organization: IOrganization;
 	public user: IUser;
 	public menu: NbMenuItem[] = [];
 	public reportMenuItems: NavMenuSectionItem[] = [];
 
-	constructor(
-		public readonly translate: TranslateService,
-		private readonly _router: Router,
-		private readonly _route: ActivatedRoute,
-		private readonly _store: Store,
-		private readonly _reportService: ReportService,
-		private readonly _ngxPermissionsService: NgxPermissionsService,
-		private readonly _usersService: UsersService,
-		private readonly _authStrategy: AuthStrategy,
-		private readonly _integrationsService: IntegrationsService,
-		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
-		private readonly _navMenuBuilderService: NavMenuBuilderService,
-		private readonly _permissionsService: PermissionsService
-	) {
-		super(translate);
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	async ngOnInit() {
@@ -137,19 +135,6 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 	ngAfterViewInit(): void {
 		// Merge observables to handle changes in job matching entity settings
 		const merge$ = merge(
-			this._integrationEntitySettingServiceStoreService.jobMatchingEntity$.pipe(
-				distinctUntilChange(), // Ensure that only distinct changes are considered
-				filter(({ currentValue }: IJobMatchingEntity) => !!currentValue), // Filter out falsy values
-				tap(({ currentValue }: IJobMatchingEntity) => {
-					// Update component properties based on the current job matching entity settings
-					const isEmployeeJobMatchingEntity = !!currentValue.sync && !!currentValue.isActive;
-
-					// Add or remove the jobs navigation menu items based on the current job matching entity
-					isEmployeeJobMatchingEntity
-						? this.addJobsNavigationMenuItems()
-						: this.removeJobsNavigationMenuItems();
-				})
-			),
 			this._store.user$.pipe(
 				take(1),
 				distinctUntilChange(),
@@ -291,46 +276,6 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			'tasks',
 			'tasks-team'
 		); // The id of the section where this item should be added
-	}
-
-	/**
-	 * Add navigation menu items for jobs browse and matching.
-	 */
-	private addJobsNavigationMenuItems(): void {
-		this._navMenuBuilderService.addNavMenuItems(
-			[
-				{
-					id: 'jobs-browse', // Unique identifier for the menu item
-					title: 'Browse', // The title of the menu item
-					icon: 'fas fa-list', // The icon class for the menu item, using FontAwesome in this case
-					link: '/pages/jobs/search', // The link where the menu item directs
-					data: {
-						translationKey: 'MENU.JOBS_SEARCH', // Key for translation (i18n)
-						permissionKeys: [PermissionsEnum.ORG_JOB_SEARCH] // Array of permission keys required for this item
-					}
-				},
-				{
-					id: 'jobs-matching', // Unique identifier for the menu item
-					title: 'Matching', // The title of the menu item
-					icon: 'fas fa-user', // The icon class for the menu item, using FontAwesome in this case
-					link: '/pages/jobs/matching', // The link where the menu item directs
-					data: {
-						translationKey: 'MENU.JOBS_MATCHING', // Key for translation (i18n)
-						permissionKeys: [PermissionsEnum.ORG_JOB_MATCHING_VIEW] // Array of permission keys required for this item
-					}
-				}
-			],
-			'jobs',
-			'jobs-proposal-template'
-		); // The id of the section where this item should be added
-	}
-
-	/**
-	 * Removes the navigation menu items related to jobs.
-	 */
-	private removeJobsNavigationMenuItems(): void {
-		// Remove the specified menu items related to jobs from the 'jobs' section
-		this._navMenuBuilderService.removeNavMenuItems(['jobs-browse', 'jobs-matching'], 'jobs');
 	}
 
 	/**

@@ -1,8 +1,8 @@
 import { TemplateRef } from '@angular/core';
 
 export interface Draggable {
-	set templateRef(value: TemplateRef<HTMLElement>);
-	get templateRef(): TemplateRef<HTMLElement>;
+	set templateRef(value: TemplateRef<any>);
+	get templateRef(): TemplateRef<any>;
 	set title(value: string);
 	get title(): string;
 	get position(): number;

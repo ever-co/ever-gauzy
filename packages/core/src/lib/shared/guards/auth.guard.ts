@@ -17,8 +17,6 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
 	 * @returns `true` if access is allowed, otherwise `false`.
 	 */
 	canActivate(context: ExecutionContext) {
-		console.log('AuthGuard canActivate called');
-
 		// Retrieve the request object from the context
 		const request = this.getRequest(context);
 

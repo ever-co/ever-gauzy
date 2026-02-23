@@ -1,7 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { BrowserWindow } from 'electron';
-import * as url from 'url';
+import * as url from 'node:url';
 import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
 
@@ -21,7 +21,8 @@ export async function createSettingsWindow(
 	settingsWindow: Electron.BrowserWindow | null,
 	filePath: string,
 	preloadPath?: string,
-	contextIsolation?: boolean
+	contextIsolation?: boolean,
+	launch = true
 ): Promise<Electron.BrowserWindow> {
 	// Retrieve the main window settings using the optional preload script
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath, contextIsolation);
@@ -39,10 +40,13 @@ export async function createSettingsWindow(
 	settingsWindow.hide();
 
 	// Use the helper function to construct and load the URL
-	await setLaunchPathAndLoad(settingsWindow, filePath, '/settings');
+	if (launch) {
+		await setLaunchPathAndLoad(settingsWindow, filePath, '/settings');
+	}
 
 	// Remove the menu from the window
 	settingsWindow.setMenu(null);
+	manager.overrideSystemContextMenu(settingsWindow);
 
 	// Attach the reusable close event handler
 	handleCloseEvent(settingsWindow);

@@ -47,6 +47,7 @@ import { AcceptInviteFormComponent } from './components/accept-invite/accept-inv
 import { AcceptClientInviteComponent } from './components/accept-client-invite/accept-client-invite.component';
 import { AcceptClientInviteFormComponent } from './components/accept-client-invite/accept-client-invite-form/accept-client-invite-form.component';
 import { EstimateEmailComponent } from './components/estimate-email/estimate-email.component';
+import { OAuthAuthorizeComponent } from './components/oauth-authorize/oauth-authorize.component';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -80,6 +81,7 @@ const COMPONENTS = [
 	NgxLoginComponent,
 	NgxLoginMagicComponent,
 	NgxLoginWorkspaceComponent,
+	OAuthAuthorizeComponent,
 	NgxMagicSignInWorkspaceComponent,
 	NgxRegisterComponent,
 	NgxRegisterSideFeaturesComponent,
@@ -139,7 +141,7 @@ export class NgxAuthModule {
 		this._pageRouteRegistryService.registerPageRoutes([
 			{
 				// Register the location 'auth'
-				location: 'auth',
+				location: 'auth-sections',
 				// Register the path 'login-workspace'
 				path: 'login-workspace',
 				// Register the component to load component: NgxLoginWorkspaceComponent,
@@ -149,7 +151,7 @@ export class NgxAuthModule {
 			},
 			{
 				// Register the location 'auth'
-				location: 'auth',
+				location: 'auth-sections',
 				// Register the path 'login-magic'
 				path: 'login-magic',
 				// Register the component to load component: NgxLoginMagicComponent,
@@ -159,7 +161,7 @@ export class NgxAuthModule {
 			},
 			{
 				// Register the location 'auth'
-				location: 'auth',
+				location: 'auth-sections',
 				// Register the path 'magic-sign-in'
 				path: 'magic-sign-in',
 				// Register the component to load component: NgxMagicSignInWorkspaceComponent,

@@ -1,6 +1,6 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
-import * as url from 'url';
+import * as url from 'node:url';
 import { IBaseWindow } from '../interfaces';
 import { IWindowConfig } from '../interfaces/iwindow-config';
 

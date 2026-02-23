@@ -2,7 +2,7 @@ import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
 import { logger } from '@gauzy/desktop-core';
 import { ipcMain, IpcMainEvent } from 'electron';
 import * as os from 'os';
-import * as path from 'path';
+import * as path from 'node:path';
 import { TranslateService } from '../../translation';
 import { PluginManager } from '../data-access/plugin-manager';
 import { IPluginManager, IPluginMetadataFindOne, PluginChannel, PluginHandlerChannel } from '../shared';

@@ -1,24 +1,18 @@
-import { Inject, NgModule } from '@angular/core';
-
+import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-import {
-	NbBadgeModule,
-	NbButtonModule,
-	NbCardModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbIconModule,
-	NbInputModule,
-	NbSpinnerModule,
-	NbTooltipModule
-} from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { BaseChartDirective } from 'ng2-charts';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
+import {
+	applyDeclarativeRegistrations,
+	IOnPluginUiBootstrap,
+	IOnPluginUiDestroy,
+	PluginUiDefinition,
+	PLUGIN_DEFINITION
+} from '@gauzy/plugin-ui';
+import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, Store } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
 	SharedModule,
@@ -30,52 +24,18 @@ import {
 	UserFormsModule,
 	TableComponentsModule,
 	TagsColorInputModule,
-	DateRangePickerResolver
+	NebularModule
 } from '@gauzy/ui-core/shared';
-import { createProposalsRoutes } from './job-proposal.routes';
-import { COMPONENTS, ProposalDetailsComponent, ProposalEditComponent, ProposalRegisterComponent } from './components';
-import { ProposalComponent } from './components/proposal/proposal.component';
-import { ProposalDetailsResolver } from './resolvers/proposal-details.resolver';
-
-/**
- * Redirects to the dashboard page
- *
- * @returns
- */
-function redirectTo() {
-	return '/pages/dashboard';
-}
-
-/**
- * NB Modules
- */
-const NB_MODULES = [
-	NbBadgeModule,
-	NbButtonModule,
-	NbCardModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbIconModule,
-	NbInputModule,
-	NbSpinnerModule,
-	NbTooltipModule
-];
-
-/**
- * Third Party Modules
- */
-const THIRD_PARTY_MODULES = [
-	CKEditorModule,
-	NgSelectModule,
-	NgxPermissionsModule.forRoot(),
-	TranslateModule.forChild()
-];
+import { getProposalsRoutes, JOB_PROPOSAL_PAGE_LINK } from './job-proposal.routes';
+import { COMPONENTS } from './components';
 
 @NgModule({
 	imports: [
 		RouterModule.forChild([]),
-		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
+		CKEditorModule,
+		NgSelectModule,
+		TranslateModule.forChild(),
+		NebularModule,
 		BaseChartDirective,
 		SharedModule,
 		TagsColorInputModule,
@@ -89,128 +49,74 @@ const THIRD_PARTY_MODULES = [
 		SelectorsModule
 	],
 	declarations: [...COMPONENTS],
-	exports: [RouterModule],
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createProposalsRoutes(service),
+			useFactory: (registry: PageRouteRegistryService) => getProposalsRoutes(registry),
 			deps: [PageRouteRegistryService],
 			multi: true
 		}
 	]
 })
-export class JobProposalModule {
-	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+export class JobProposalModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
+	private static _hasAppliedRegistrations = false;
 
-	constructor(
-		@Inject(PageRouteRegistryService)
-		readonly _pageRouteRegistryService: PageRouteRegistryService
-	) {
-		// Register the routes
-		this.registerPageRoutes();
+	private readonly _log = inject(LoggerService).withContext('JobProposalModule');
+	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _store = inject(Store);
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION as unknown as any, { optional: true }) as
+		| PluginUiDefinition
+		| null;
+
+	constructor() {}
+
+	// ─── Plugin Lifecycle ─────────────────────────────────────────
+
+	/** Called by PluginUiModule after the plugin module is instantiated. */
+	ngOnPluginBootstrap(): void {
+		this._log.log('Plugin bootstrapped');
+		this._applyDeclarativeRegistrations();
 	}
 
-	/**
-	 * Registers routes for the Jobs proposal template module.
-	 * Ensures that routes are registered only once.
-	 *
-	 * @returns {void}
-	 */
-	async registerPageRoutes(): Promise<void> {
-		if (JobProposalModule.hasRegisteredPageRoutes) {
-			return;
-		}
+	/** Called by PluginUiModule when the application is shutting down. */
+	ngOnPluginDestroy(): void {
+		this._log.log('Plugin destroyed');
+		JobProposalModule._hasAppliedRegistrations = false;
+	}
 
-		// Register Job Proposal Page Routes
-		this._pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
-			location: 'proposals',
-			// Register the path 'proposal-template'
-			path: '',
-			// Register the component
-			component: ProposalComponent,
-			// Register the canActivate guard
-			canActivate: [PermissionsGuard],
-			// Register the data object
-			data: {
-				selectors: {
-					project: false,
-					team: false
-				},
-				datePicker: { unitOfTime: 'month' }
-			},
-			resolve: { dates: DateRangePickerResolver }
+	// ─── Registration ─────────────────────────────────────────────
+
+	/** Applies routes from the plugin definition. Guarded to run once per app lifecycle. */
+	private _applyDeclarativeRegistrations(): void {
+		if (JobProposalModule._hasAppliedRegistrations || !this._pluginDefinition) return;
+
+		applyDeclarativeRegistrations(this._pluginDefinition, {
+			pageRouteRegistry: this._pageRouteRegistryService
 		});
 
-		// Register Job Proposal Register Page Routes
-		this._pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
-			location: 'proposals',
-			// Register the path 'proposal-template'
-			path: 'register',
-			// Register the component
-			component: ProposalRegisterComponent,
-			// Register the canActivate guard
-			canActivate: [PermissionsGuard],
-			// Register the data object
-			data: {
-				permissions: {
-					only: [PermissionsEnum.ORG_PROPOSALS_EDIT],
-					redirectTo
-				},
-				selectors: {
-					employee: false,
-					project: false,
-					team: false
-				},
-				datePicker: { unitOfTime: 'month' }
+		this._navMenuBuilderService.addNavMenuItem(
+			{
+				id: 'sales-proposals',
+				title: 'Proposals',
+				icon: 'fas fa-paper-plane',
+				link: JOB_PROPOSAL_PAGE_LINK,
+				data: {
+					translationKey: 'MENU.PROPOSALS',
+					permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW],
+					featureKey: FeatureEnum.FEATURE_PROPOSAL,
+					...(this._store.hasAnyPermission(
+						PermissionsEnum.ALL_ORG_EDIT,
+						PermissionsEnum.ORG_PROPOSALS_EDIT
+					) && {
+						add: '/pages/sales/proposals/register'
+					})
+				}
 			},
-			resolve: { dates: DateRangePickerResolver }
-		});
+			'sales',
+			'sales-estimates'
+		);
 
-		// Register Job Proposal Details Page Routes
-		this._pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
-			location: 'proposals',
-			// Register the path 'proposal-template'
-			path: 'details/:id',
-			// Register the component
-			component: ProposalDetailsComponent,
-			// Register the canActivate guard
-			canActivate: [PermissionsGuard],
-			// Register the data object
-			data: {
-				permissions: {
-					only: [PermissionsEnum.ORG_PROPOSALS_VIEW],
-					redirectTo
-				},
-				selectors: false
-			},
-			resolve: { proposal: ProposalDetailsResolver }
-		});
-
-		// Register Job Proposal Edit Page Routes
-		this._pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
-			location: 'proposals',
-			// Register the path 'proposal-template'
-			path: 'edit/:id',
-			// Register the component
-			component: ProposalEditComponent,
-			// Register the canActivate guard
-			canActivate: [PermissionsGuard],
-			// Register the data object
-			data: {
-				permissions: {
-					only: [PermissionsEnum.ORG_PROPOSALS_EDIT],
-					redirectTo
-				},
-				selectors: false
-			},
-			resolve: { proposal: ProposalDetailsResolver }
-		});
-
-		// Set hasRegisteredRoutes to true
-		JobProposalModule.hasRegisteredPageRoutes = true;
+		JobProposalModule._hasAppliedRegistrations = true;
 	}
 }

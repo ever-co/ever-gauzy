@@ -14,6 +14,9 @@ export class OpenSettingsCommand extends MenuCommand {
 			ipcMain.once('setting_window_ready', onReady);
 			try {
 				await appWindowManager.initSettingWindow(this.windowPath.timeTrackerUi);
+				await appWindowManager.loadSetting(
+					this.windowPath.timeTrackerUi,
+				);
 			} catch (err) {
 				ipcMain.removeListener('setting_window_ready', onReady);
 				throw err;

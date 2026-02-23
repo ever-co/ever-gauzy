@@ -1,23 +1,25 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IOrganization, LanguagesEnum, RegionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({
-    name: 'dateFormat',
-    pure: false,
-    standalone: false
+	name: 'dateFormat',
+	pure: false,
+	standalone: true
 })
 export class DateFormatPipe implements PipeTransform {
+	private readonly store = inject(Store);
+
 	dateFormat: string = 'd MMMM, y';
 	regionCode: string = RegionsEnum.EN;
 	locale: string;
 
-	constructor(private readonly store: Store) {
+	constructor() {
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),

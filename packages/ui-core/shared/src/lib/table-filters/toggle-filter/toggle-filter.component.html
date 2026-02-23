@@ -1,30 +1,32 @@
 <div class="container">
-  <div class="btn-grp">
-    <button
-      nbButton
-      class="check"
-      [ngClass]="choice === 'accept' ? ['on'] : ['off']"
-      type="button"
-      (click)="choice = 'accept'; onChange()"
-      >
-      <fa-icon [icon]="faCheck"></fa-icon>
-    </button>
-    <button
-      nbButton
-      class="na"
-      [ngClass]="choice?.length > 0 ? ['off'] : ['on']"
-      (click)="choice = '';onChange()"
-      >
-      <fa-icon [icon]="faBan"></fa-icon>
-
-    </button>
-    <button
-      nbButton
-      class="deny"
-      [ngClass]="choice === 'deny' ? ['on'] : ['off']"
-      (click)="choice = 'deny';onChange()"
-      >
-      <fa-icon [icon]="faTimes"></fa-icon>
-    </button>
-  </div>
+	<div class="btn-grp">
+		<button
+			nbButton
+			class="check"
+			[class.on]="choice === 'accept'"
+			[class.off]="choice !== 'accept'"
+			type="button"
+			(click)="choice = 'accept'; onChange()"
+		>
+			<fa-icon [icon]="faCheck"></fa-icon>
+		</button>
+		<button
+			nbButton
+			class="na"
+			[class.on]="!(choice?.length > 0)"
+			[class.off]="choice?.length > 0"
+			(click)="choice = ''; onChange()"
+		>
+			<fa-icon [icon]="faBan"></fa-icon>
+		</button>
+		<button
+			nbButton
+			class="deny"
+			[class.on]="choice === 'deny'"
+			[class.off]="choice !== 'deny'"
+			(click)="choice = 'deny'; onChange()"
+		>
+			<fa-icon [icon]="faTimes"></fa-icon>
+		</button>
+	</div>
 </div>

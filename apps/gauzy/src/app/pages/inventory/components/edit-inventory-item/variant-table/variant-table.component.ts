@@ -36,7 +36,7 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 	constructor(
 		readonly translateService: TranslateService,
 		private router: Router,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private productVariantService: ProductVariantService,
 		private toastrService: ToastrService,
 		private inventoryStore: InventoryStore

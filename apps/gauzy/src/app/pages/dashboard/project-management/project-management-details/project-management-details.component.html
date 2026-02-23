@@ -22,16 +22,11 @@
 				(scrolled)="onScrollTasks()"
 				[scrollWindow]="false"
 				class="card-body-content"
-				[ngStyle]="{ height: !tasks?.length ? '100%' : '' }"
+				[style.height]="!tasks?.length ? '100%' : null"
 			>
-				@for (task of tasks; track task) {
+				@for (task of tasks; track task.id) {
 				<div class="card todo">
-					<div
-						[ngClass]="{
-							checked: status.COMPLETED === task?.status
-						}"
-						class="dot"
-					></div>
+					<div [class.checked]="status.COMPLETED === task?.status" class="dot"></div>
 					<div>
 						<div class="status">{{ task?.status }}:</div>
 						<div class="title">{{ task?.title }}</div>
@@ -48,7 +43,7 @@
 		</nb-card-body>
 	</nb-card>
 	<div class="last-column">
-		<nb-card [ngStyle]="{ height: !selectedEmployeeId ? '100%' : '' }" class="projects">
+		<nb-card [style.height]="!selectedEmployeeId ? '100%' : null" class="projects">
 			<nb-card-header>
 				{{ 'DASHBOARD_PAGE.MOST_VIEW_PROJECTS' | translate }}
 			</nb-card-header>
@@ -64,7 +59,7 @@
 					{{ 'BUTTONS.VIEW_ALL' | translate }}
 				</button>
 				<div class="card-body-content">
-					@for (project of projects; track project) {
+					@for (project of projects; track project.id) {
 					<div class="card project">
 						<ngx-project [rowData]="{ project: project }"></ngx-project>
 					</div>
@@ -85,8 +80,8 @@
 					{{ 'BUTTONS.VIEW_ALL' | translate }}
 				</button>
 				}
-				<div [ngStyle]="{ 'max-height': !isMyTask ? 'calc(100% - 28px)' : '' }" class="card-body-content">
-					@for (task of assigned; track task) {
+				<div [style.max-height]="!isMyTask ? 'calc(100% - 28px)' : null" class="card-body-content">
+					@for (task of assigned; track task.id) {
 					<div class="card assigned">
 						<div class="">
 							<div class="title">

@@ -26,17 +26,19 @@
 		"lib:build:prod": "yarn nx build plugin-integration-jira",
 		"lib:watch": "yarn nx build plugin-integration-jira --watch"
 	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
-		"@nestjs/common": "^11.1.12",
-		"@nestjs/core": "^11.1.12",
 		"chalk": "^4.1.0"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},

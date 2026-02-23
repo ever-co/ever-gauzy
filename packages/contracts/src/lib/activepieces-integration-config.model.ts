@@ -43,6 +43,14 @@ export interface IActivepiecesOAuth2ConnectionValue {
 }
 
 /**
+ * ActivePieces connection value for SECRET_TEXT
+ */
+export interface IActivepiecesSecretTextConnectionValue {
+	type: ActivepiecesConnectionType.SECRET_TEXT;
+	secret_text: string;
+}
+
+/**
  * ActivePieces connection creation request
  */
 export interface IActivepiecesConnectionRequest {
@@ -52,7 +60,7 @@ export interface IActivepiecesConnectionRequest {
 	projectId: string;
 	metadata?: Record<string, string | number | boolean>;
 	type: ActivepiecesConnectionType;
-	value: IActivepiecesOAuth2ConnectionValue;
+	value: IActivepiecesOAuth2ConnectionValue | IActivepiecesSecretTextConnectionValue;
 }
 
 /**
@@ -103,6 +111,7 @@ export interface IActivepiecesConnection {
  * ActivePieces setting names for database storage
  */
 export enum ActivepiecesSettingName {
+	API_KEY = 'api_key',
 	ACCESS_TOKEN = 'access_token',
 	REFRESH_TOKEN = 'refresh_token',
 	TOKEN_TYPE = 'token_type',

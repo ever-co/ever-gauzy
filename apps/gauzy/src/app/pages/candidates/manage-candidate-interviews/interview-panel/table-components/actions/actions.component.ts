@@ -4,88 +4,80 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-    selector: 'ga-interview-actions',
-    template: `
+	selector: 'ga-interview-actions',
+	template: `
 		<div class="update">
-		  <div class="badges">
-		    @if (isPastInterview(rowData)) {
-		      <div class="badge badge-primary">
-		        {{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST' | translate }}
-		      </div>
-		    }
-		    @if (rowData.isArchived && rowData.showArchive) {
-		      <div class="badge badge-warning">
-		        {{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
-		      </div>
-		    }
-		  </div>
-		  <span class="title"> updated: </span>
-		  <span class="title">
-		    {{ rowData?.updatedAt | date : 'short' }}
-		  </span>
-		  @if (!rowData.hideActions) {
-		    <div class="btn">
-		      @if (isPastInterview(rowData)) {
-		        <nb-icon
-		          (click)="addFeedback()"
+			<div class="badges">
+				@if (isPastInterview(rowData)) {
+				<div class="badge badge-primary">
+					{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST' | translate }}
+				</div>
+				} @if (rowData.isArchived && rowData.showArchive) {
+				<div class="badge badge-warning">
+					{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
+				</div>
+				}
+			</div>
+			<span class="title"> updated: </span>
+			<span class="title">
+				{{ rowData?.updatedAt | date : 'short' }}
+			</span>
+			@if (!rowData.hideActions) {
+			<div class="btn">
+				@if (isPastInterview(rowData)) {
+				<nb-icon
+					(click)="addFeedback()"
 					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK' | translate }}
 					({{ rowData.feedbacks.length }}/{{ rowData.interviewers.length }})"
-		          nbTooltipPlacement="top"
-		          icon="message-square-outline"
-		          class="icons enabled"
-		        ></nb-icon>
-		      }
-		      @if (!isPastInterview(rowData)) {
-		        <nb-icon
-		          (click)="addFeedback()"
-		          nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK' | translate }} "
-		          nbTooltipPlacement="top"
-		          icon="message-square-outline"
-		          class="icons disabled"
-		        ></nb-icon>
-		      }
-		      <nb-icon
-		        (click)="editInterview()"
-		        icon="edit-outline"
-		        nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.EDIT' | translate }}"
-		        nbTooltipPlacement="top"
-		        class="icons ml-2"
-					[ngClass]="{
-						enabled: !isPastInterview(rowData),
-						disabled: isPastInterview(rowData)
-					}"
-		        >
-		      </nb-icon>
-		      @if (rowData.showArchive) {
-		        <nb-icon
-		          (click)="archive()"
-		          nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ARCHIVE' | translate }}"
-		          nbTooltipPlacement="top"
-		          icon="archive-outline"
-		          class="icons ml-2"
-					[ngClass]="{
-						enabled: !rowData.isArchived,
-						disabled: rowData.isArchived
-					}"
-		        ></nb-icon>
-		      }
-		      <nb-icon
-		        (click)="removeInterview()"
-		        icon="close"
-		        class="icons ml-2"
-		        nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DELETE' | translate }}"
-		        nbTooltipPlacement="top"
-					[ngClass]="{
-						enabled: !isPastInterview(rowData),
-						disabled: isPastInterview(rowData)
-					}"
-		      ></nb-icon>
-		    </div>
-		  }
+					nbTooltipPlacement="top"
+					icon="message-square-outline"
+					class="icons enabled"
+				></nb-icon>
+				} @else {
+				<nb-icon
+					(click)="!isPastInterview(rowData) && addFeedback()"
+					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK' | translate }} "
+					nbTooltipPlacement="top"
+					icon="message-square-outline"
+					class="icons disabled"
+				></nb-icon>
+				}
+				<nb-icon
+					(click)="editInterview()"
+					icon="edit-outline"
+					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.EDIT' | translate }}"
+					nbTooltipPlacement="top"
+					class="icons ml-2"
+					[class.enabled]="!isPastInterview(rowData)"
+					[class.disabled]="isPastInterview(rowData)"
+				>
+				</nb-icon>
+				@if (rowData.showArchive) {
+				<nb-icon
+					(click)="archive()"
+					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ARCHIVE' | translate }}"
+					nbTooltipPlacement="top"
+					icon="archive-outline"
+					class="icons ml-2"
+					[class.enabled]="!rowData.isArchived"
+					[class.disabled]="rowData.isArchived"
+				></nb-icon>
+				}
+				<nb-icon
+					(click)="removeInterview()"
+					icon="close"
+					class="icons ml-2"
+					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DELETE' | translate }}"
+					nbTooltipPlacement="top"
+					[class.enabled]="!isPastInterview(rowData)"
+					[class.disabled]="isPastInterview(rowData)"
+				></nb-icon>
+			</div>
+			}
 		</div>
-		`,
-    styles: [
-        `
+	`,
+	styles: [
+		`
 			.badge-warning {
 				background-color: #fa0;
 			}
@@ -136,8 +128,8 @@ import { TranslateService } from '@ngx-translate/core';
 				align-items: center;
 			}
 		`
-    ],
-    standalone: false
+	],
+	standalone: false
 })
 export class InterviewActionsTableComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() rowData: any;
@@ -160,6 +152,9 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 	}
 
 	removeInterview() {
+		if (this.isPastInterview(this.rowData)) {
+			return;
+		}
 		const params = {
 			type: 'remove',
 			data: this.rowData
@@ -168,6 +163,10 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 	}
 
 	archive() {
+		// Enabled if !rowData.isArchived
+		if (this.rowData.isArchived) {
+			return;
+		}
 		const params = {
 			type: 'archive',
 			data: this.rowData
@@ -184,6 +183,9 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 	}
 
 	editInterview() {
+		if (this.isPastInterview(this.rowData)) {
+			return;
+		}
 		const params = {
 			type: 'edit',
 			data: this.rowData

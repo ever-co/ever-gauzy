@@ -23,17 +23,22 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	 * @param event - The event object containing information about the custom event.
 	 */
 	@HostListener('window:onSuccess', ['$event'])
-	onSuccessEvent(event: CustomEvent) {
+	onSuccessEvent(event: Event) {
 		// Handle the custom event data here
 
 		// Set the isLoading property to false, indicating that the loading is complete
 		this.loading = false;
 
+		const integrationId = (event as CustomEvent<any>)?.detail?.id;
+		if (!integrationId) {
+			return;
+		}
+
 		// Delay the navigation to a specific URL by 100 milliseconds before redirecting
 		// This is often used to provide a smoother user experience
 		this.timer = setTimeout(() => {
 			// Redirect the user to a specific URL, typically related to a successful operation
-			this._router.navigate(['/pages/integrations/github/', event.detail.id]);
+			this._router.navigate(['/pages/integrations/github/', integrationId]);
 		}, 100); // 100 milliseconds
 	}
 

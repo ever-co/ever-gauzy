@@ -5,7 +5,7 @@ import { SafeUrl } from '@angular/platform-browser';
 import { ImageViewerService } from './image-viewer.service';
 import { from } from 'rxjs';
 import { NbIconLibraries, NbLayoutModule, NbButtonModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
-import { NgTemplateOutlet, NgClass, AsyncPipe } from '@angular/common';
+import { NgTemplateOutlet, AsyncPipe } from '@angular/common';
 import { DateTimePipe } from '../time-tracker/pipes/date-time.pipe';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
@@ -25,7 +25,7 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 	templateUrl: './image-viewer.component.html',
 	styleUrls: ['./image-viewer.component.scss'],
 	animations: [fadeInOutAnimation],
-	imports: [NbLayoutModule, NbButtonModule, NbIconModule, NbSpinnerModule, NgTemplateOutlet, NgClass, AsyncPipe, DateTimePipe]
+	imports: [NbLayoutModule, NbButtonModule, NbIconModule, NbSpinnerModule, NgTemplateOutlet, AsyncPipe, DateTimePipe]
 })
 export class ImageViewerComponent implements OnInit, OnDestroy {
 	active_index: number;
@@ -36,6 +36,7 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 	items = [];
 
 	item: any = {};
+	private readonly _showImageHandler = this.showImageEventHandler.bind(this);
 	constructor(
 		// private dialogRef: NbDialogRef<any>
 		private readonly _electronService: ElectronService,
@@ -49,9 +50,18 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	getImages(_, arg: any[]) {
+	async showImageEventHandler(_, arg) {
+		if (arg.timeSlotId) {
+			const screenshots: any[] = await this.getLastScreenshot(arg.timeSlotId);
+			this.getImages(screenshots);
+		} else {
+			this.getImages(arg.screenshots);
+		}
+	}
+
+	getImages(screenshots: any[]) {
 		this._ngZone.run(() => {
-			this.items = arg
+			this.items = screenshots
 				.sort((a, b) => {
 					const c: any = new Date(b.recordedAt);
 					const d: any = new Date(a.recordedAt);
@@ -67,13 +77,13 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
-		this._electronService.ipcRenderer.on('show_image', this.getImages.bind(this));
+		this._electronService.ipcRenderer.on('show_image', this._showImageHandler);
 		this._electronService.ipcRenderer.send('image_view_ready');
 		this.active_index = 0;
 	}
 
 	ngOnDestroy(): void {
-		this._electronService.ipcRenderer.removeListener('show_image', this.getImages.bind(this));
+		this._electronService.ipcRenderer.removeListener('show_image', this._showImageHandler);
 	}
 
 	close() {
@@ -132,5 +142,17 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
 
 	public trackById(index: number, item: any): number {
 		return item.id;
+	}
+
+	private async getLastScreenshot(timeSlotId: string) {
+		try {
+			const lastTimeSlot = await this._imageViewerService.getTimeSlot({
+				timeSlotId
+			});
+			return lastTimeSlot?.screenshots || [];
+		} catch(err) {
+			console.error('[ImageViewer] showImageEventHandler error:', err);
+			return [];
+		}
 	}
 }

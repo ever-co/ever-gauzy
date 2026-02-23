@@ -19,10 +19,10 @@ import { EmailService, EmployeesService, OrganizationContactService, Store, Toas
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-email-history',
-    templateUrl: './email-history.component.html',
-    styleUrls: ['./email-history.component.scss'],
-    standalone: false
+	selector: 'ngx-email-history',
+	templateUrl: './email-history.component.html',
+	styleUrls: ['./email-history.component.scss'],
+	standalone: false
 })
 export class EmailHistoryComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = false;
@@ -129,7 +129,11 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 					this.thresholdHitCount * this.pageSize
 				)
 				.then((data) => {
-					this.emails = data.items;
+					this.emails = data.items.map((email) => ({
+						...email,
+						avatarUrl: this.getUrl(email),
+						formattedDate: this.getEmailDate(email.createdAt)
+					}));
 					this.selectedEmail = this.emails ? this.emails[0] : null;
 					const totalNoPage = Math.ceil(data.total / this.pageSize);
 
@@ -216,9 +220,10 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 		}
 	}
 
-	getEmailDate(createdAt: string): string {
-		const date = createdAt.slice(0, 10);
-		const time = createdAt.slice(11, 19);
+	getEmailDate(createdAt: string | Date): string {
+		const dateStr = typeof createdAt === 'string' ? createdAt : createdAt.toISOString();
+		const date = dateStr.slice(0, 10);
+		const time = dateStr.slice(11, 19);
 		return `${date} ${time}`;
 	}
 

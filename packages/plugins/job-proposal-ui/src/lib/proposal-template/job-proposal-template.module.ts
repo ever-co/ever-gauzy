@@ -1,55 +1,35 @@
-import { Inject, NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbDialogModule,
-	NbIconModule,
-	NbInputModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbTabsetModule,
-	NbToggleModule,
-	NbTooltipModule
-} from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import {
+	applyDeclarativeRegistrations,
+	IOnPluginUiBootstrap,
+	IOnPluginUiDestroy,
+	PluginUiDefinition,
+	PLUGIN_DEFINITION
+} from '@gauzy/plugin-ui';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, Store } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
 	DialogsModule,
 	EmployeeMultiSelectModule,
+	NebularModule,
 	SharedModule,
 	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
-import { createJobProposalTemplateRoutes } from './job-proposal-template.routes';
-import { ProposalTemplateComponent } from './components/proposal-template/proposal-template.component';
-import { AddEditProposalTemplateComponent } from './components/add-edit-proposal-template/add-edit-proposal-template.component';
-
-// Nebular Modules
-const NB_MODULES = [
-	NbButtonModule,
-	NbCardModule,
-	NbDialogModule.forChild(),
-	NbIconModule,
-	NbInputModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbTabsetModule,
-	NbToggleModule,
-	NbTooltipModule
-];
-
-// Third Party Modules
-const THIRD_PARTY_MODULES = [CKEditorModule, NgxPermissionsModule.forRoot(), TranslateModule.forChild()];
+import { getJobProposalTemplateRoutes, JOB_PROPOSAL_TEMPLATE_PAGE_LINK } from './job-proposal-template.routes';
+import { ProposalTemplateListComponent } from './components/proposal-template-list/proposal-template-list.component';
+import { ProposalTemplateFormComponent } from './components/proposal-template-form/proposal-template-form.component';
 
 @NgModule({
-	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],
+	declarations: [ProposalTemplateListComponent, ProposalTemplateFormComponent],
 	imports: [
 		RouterModule.forChild([]),
-		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
+		NebularModule,
+		CKEditorModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		SmartDataViewLayoutModule,
 		StatusBadgeModule,
@@ -59,51 +39,68 @@ const THIRD_PARTY_MODULES = [CKEditorModule, NgxPermissionsModule.forRoot(), Tra
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createJobProposalTemplateRoutes(service),
-			deps: [PageRouteRegistryService],
+			useFactory: getJobProposalTemplateRoutes,
 			multi: true
 		}
 	]
 })
-export class JobProposalTemplateModule {
-	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
+	private static _hasAppliedRegistrations = false;
 
-	constructor(
-		@Inject(PageRouteRegistryService) private readonly _pageRouteRegistryService: PageRouteRegistryService
-	) {
-		// Register the routes
-		this.registerPageRoutes();
+	private readonly _log = inject(LoggerService).withContext('JobProposalTemplateModule');
+	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _store = inject(Store);
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION as unknown as any, { optional: true }) as
+		| PluginUiDefinition
+		| null;
+
+	constructor() {}
+
+	// ─── Plugin Lifecycle ─────────────────────────────────────────
+
+	/** Called by PluginUiModule after the plugin module is instantiated. */
+	ngOnPluginBootstrap(): void {
+		this._log.log('Plugin bootstrapped');
+		this._applyDeclarativeRegistrations();
 	}
 
-	/**
-	 * Registers routes for the Jobs proposal template module.
-	 * Ensures that routes are registered only once.
-	 *
-	 * @returns {void}
-	 */
-	async registerPageRoutes(): Promise<void> {
-		if (JobProposalTemplateModule.hasRegisteredPageRoutes) {
-			return;
-		}
+	/** Called by PluginUiModule when the application is shutting down. */
+	ngOnPluginDestroy(): void {
+		this._log.log('Plugin destroyed');
+		JobProposalTemplateModule._hasAppliedRegistrations = false;
+	}
 
-		// Register Job Proposal Template Page Routes
-		this._pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
-			location: 'jobs',
-			// Register the path 'proposal-template'
-			path: 'proposal-template',
-			// Register the loadChildren function to load the ProposalTemplateModule lazy module
-			loadChildren: () => import('./job-proposal-template.module').then((m) => m.JobProposalTemplateModule),
-			// Register the data object
-			data: {
-				selectors: {
-					project: false,
-					team: false
-				}
-			}
+	// ─── Registration ─────────────────────────────────────────────
+
+	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
+	private _applyDeclarativeRegistrations(): void {
+		if (JobProposalTemplateModule._hasAppliedRegistrations || !this._pluginDefinition) return;
+
+		applyDeclarativeRegistrations(this._pluginDefinition, {
+			pageRouteRegistry: this._pageRouteRegistryService
 		});
 
-		// Set hasRegisteredRoutes to true
-		JobProposalTemplateModule.hasRegisteredPageRoutes = true;
+		this._navMenuBuilderService.addNavMenuItem(
+			{
+				id: 'jobs-proposal-template',
+				title: 'Proposal Template',
+				icon: 'far fa-file-alt',
+				link: JOB_PROPOSAL_TEMPLATE_PAGE_LINK,
+				data: {
+					translationKey: 'MENU.PROPOSAL_TEMPLATE',
+					permissionKeys: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
+					...(this._store.hasAnyPermission(
+						PermissionsEnum.ALL_ORG_EDIT,
+						PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT
+					) && {
+						add: '/pages/jobs/proposal-template?openAddDialog=true'
+					})
+				}
+			},
+			'jobs'
+		);
+
+		JobProposalTemplateModule._hasAppliedRegistrations = true;
 	}
 }

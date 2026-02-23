@@ -1,6 +1,6 @@
 import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
-import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
+import { ScreenCaptureNotification } from '@gauzy/desktop-window';
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
@@ -67,8 +67,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			const baseUrl = arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-				? `http://localhost:${arg.port}`
-				: `http://localhost:${config.API_DEFAULT_PORT}`;
+					? `http://localhost:${arg.port}`
+					: `http://localhost:${config.API_DEFAULT_PORT}`;
 
 			global.variableGlobal = {
 				API_BASE_URL: baseUrl,
@@ -222,6 +222,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 						});
 					} catch (err) {
 						log.error('Error on request permission', err);
+						timeTrackerWindow?.webContents?.send('show_toast_message', {
+							message: TranslateService.instant('TIMER_TRACKER.TOASTR.SCREEN_ACCESS_REQUIRED_MSG'),
+							type: 'warning'
+						});
 						// soft fail
 					}
 				}
@@ -243,11 +247,19 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.on('auth_failed', (event, arg) => {
-		event.sender.send('show_error_message', arg.message);
+		event.sender.send('show_toast_message', {
+			type: 'error',
+			message: arg.message
+		});
 	});
 
 	ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', async (event, opts) => {
 		log.info('Desktop Capturer Get Sources');
+		const isDarwin = process.platform === 'darwin';
+		if (isDarwin && isScreenUnauthorized()) {
+			return [];
+		}
+
 		return await desktopCapturer.getSources(opts);
 	});
 
@@ -357,6 +369,13 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.handle('SAVED_THEME', () => {
 		return LocalStore.getStore('appSetting').theme;
+	});
+
+	ipcMain.handle('GET_LAST_CAPTURE', async () => {
+		const lastCapture = await timerService.findLastCapture();
+		return {
+			timeSlotId: lastCapture?.timeslotId
+		};
 	});
 
 	pluginListeners();
@@ -861,6 +880,7 @@ export function ipcTimer(
 				appWindowManager.imageView?.webContents?.send?.('show_image', arg);
 				appWindowManager.imageView?.webContents?.send?.('refresh_menu');
 			});
+			await appWindowManager.loadImageView(windowPath.timeTrackerUi);
 		} else {
 			appWindowManager.imageView?.webContents?.send?.('show_image', arg);
 			appWindowManager.imageView?.webContents?.send?.('refresh_menu');
@@ -887,10 +907,15 @@ export function ipcTimer(
 	ipcMain.on('open_setting_window', async (event, arg) => {
 		log.info(`Open Setting Window: ${moment().format()}`);
 		if (!appWindowManager.settingWindow) {
-			await appWindowManager.initSettingWindow(windowPath.timeTrackerUi, windowPath.preloadPath);
+			await appWindowManager.initSettingWindow(windowPath.timeTrackerUi, windowPath.preloadPath, false);
 			ipcMain.once('setting_window_ready', () => {
 				appWindowManager.settingShow('goto_top_menu');
 			});
+			await appWindowManager.loadSetting(
+				windowPath.timeTrackerUi
+			);
+		} else {
+			appWindowManager.settingShow('goto_top_menu');
 		}
 		appWindowManager.settingWindow?.show?.();
 	});
@@ -912,10 +937,6 @@ export function ipcTimer(
 	ipcMain.on('navigate_to_login', async () => {
 		try {
 			log.info('Navigate To Login');
-
-			if (timeTrackerWindow && process.env.IS_DESKTOP_TIMER) {
-				await timeTrackerWindow.loadURL(loginPage(windowPath.timeTrackerUi));
-			}
 
 			LocalStore.updateAuthSetting({ isLogout: true });
 
@@ -1246,7 +1267,8 @@ export function removeAllHandlers() {
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
 		'COLLECT_ACTIVITIES',
-		'START_SERVER'
+		'START_SERVER',
+		'GET_LAST_CAPTURE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

@@ -3,6 +3,59 @@ import { Route } from '@angular/router';
 import { PageRouteLocationId } from '../../common/component-registry.types';
 import { IPageRouteRegistry, PageRouteRegistryConfig } from './page-route-registry.types';
 
+/** Location used for top-level section routes (e.g. jobs) contributed by plugins under /pages. */
+export const PAGE_SECTIONS_LOCATION: PageRouteLocationId = 'page-sections';
+
+/**
+ * Top-level page paths reserved by core pages routing.
+ * Plugins cannot register section routes for these paths; attempting to do so will throw.
+ * Keep in sync with getPagesRoutes() in apps/gauzy/.../pages.routes.ts.
+ *
+ * Core route helpers → reserved paths:
+ * - getDashboardRoute     → dashboard
+ * - getAccountingRoutes   → accounting
+ * - getContactsRoute      → contacts
+ * - getProjectsRoute      → projects
+ * - getTasksRoute         → tasks
+ * - getSalesRoutes        → sales
+ * - getEmployeesRoutes    → employees
+ * - getOrganizationRoutes → organization
+ * - getGoalsRoutes        → goals
+ * - getReportsRoutes      → reports
+ * - getHelpRoute          → help
+ * - getAboutRoute         → about
+ * - getIntegrationsRoute  → integrations
+ * - getCandidatesRoute    → candidates
+ * - getUsersRoute         → users
+ * - getOrganizationsRoute → organizations
+ * - getAuthRoute          → auth
+ * - getSettingsRoute      → settings
+ * - getLegalRoute         → legal
+ *
+ * Plugin paths (NOT reserved, e.g. jobs) are registered via PAGE_SECTIONS_LOCATION.
+ */
+export const RESERVED_PAGE_SECTION_PATHS = new Set<string>([
+	'dashboard',
+	'accounting',
+	'contacts',
+	'projects',
+	'tasks',
+	'sales',
+	'employees',
+	'organization',
+	'goals',
+	'reports',
+	'help',
+	'about',
+	'integrations',
+	'candidates',
+	'users',
+	'organizations',
+	'auth',
+	'settings',
+	'legal'
+]);
+
 @Injectable({
 	providedIn: 'root'
 })
@@ -48,18 +101,28 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 			throw new Error('Page route configuration must have a location property');
 		}
 
+		// For section routes: reject reserved core paths and duplicate registrations
+		if (config.location === PAGE_SECTIONS_LOCATION) {
+			if (RESERVED_PAGE_SECTION_PATHS.has(config.path)) {
+				throw new Error(
+					`Cannot register section route for path "${config.path}": reserved by core pages routing. ` +
+						`Use a different path for your plugin.`
+				);
+			}
+		}
+
 		// Get all registered routes for the specified location
 		const routes = this.registry.get(config.location) || [];
 
-		// Check if a route with the same location and path already exists
+		// Check if a route with the same location and path already exists (prevents overriding)
 		const isMatchingRoute = routes.some(
 			(route: PageRouteRegistryConfig) => route.location === config.location && route.path === config.path
 		);
 
-		// Check if a route with the same location already exists
 		if (isMatchingRoute) {
 			throw new Error(
-				`A page with the location "${config.location}" and path "${config.path}" has already been registered`
+				`A page with the location "${config.location}" and path "${config.path}" has already been registered. ` +
+					`Cannot override an existing route.`
 			);
 		}
 

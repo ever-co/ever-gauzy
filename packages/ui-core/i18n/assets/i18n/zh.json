@@ -1387,16 +1387,13 @@
 			"SUBTITLE": "Activepieces 集成设置",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "您的 Activepieces 集成已就绪。点击下面的按钮进行授权。",
-				"INFOS": "接下来您将被带到 Activepieces 以授予 Gauzy 权限。",
-				"START_BUTTON": "授权 Activepieces",
+				"INFOS": "输入您的 Activepieces API 密钥以连接您的账户。",
 				"NEXT": "下一步",
 				"ERRORS": {
 					"INVALID_FORM": "请正确填写所有必填字段",
 					"SAVE_SETTINGS": "保存设置失败",
 					"START_AUTHORIZATION": "启动授权失败",
 					"ORGANIZATION_NOT_FOUND": "未找到组织",
-					"CHECK_TENANT_SETTINGS": "检查租户设置失败",
 					"CHECK_REMEMBER_STATE": "检查记忆状态失败"
 				},
 				"SUCCESS": {
@@ -1406,21 +1403,8 @@
 			"SETTINGS": {
 				"TITLE": "Activepieces 设置",
 				"SUBTITLE": "配置您的 Activepieces 集成设置",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "输入您的 Client ID",
-				"CLIENT_ID_HINT": "您的 Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "输入您的 Client Secret",
-				"CLIENT_SECRET_HINT": "您的 Activepieces OAuth Client Secret",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "输入您的 State Secret（最少32个字符）",
-				"STATE_SECRET_HINT": "用于 OAuth 状态验证的安全随机字符串",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "输入您的 Callback URL",
-				"CALLBACK_URL_HINT": "Activepieces 授权后将重定向到的 URL",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "输入您的 Post Install URL",
-				"POST_INSTALL_URL_HINT": "安装完成后重定向到的 URL",
+				"API_KEY": "API 密钥",
+				"API_KEY_PLACEHOLDER": "输入您的 Activepieces API 密钥",
 				"SETTINGS_UPDATED": "Activepieces 设置更新成功"
 			},
 			"CONNECTIONS": {
@@ -2588,6 +2572,7 @@
 		"TIME_OFF": "休假"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "您没有权限查看此页面",
 		"HEADER": "休假",
 		"REQUEST": "请求",
 		"REQUEST_TIME_OFF": "请假申请",
@@ -4388,7 +4373,8 @@
 			"LARGE_FILE": "文件过大。",
 			"SERVICE_UNAVAILABLE": "服务暂不可用，请稍后重试。",
 			"UNEXPECTED_ERROR": "发生未知错误。",
-			"NETWORK_ERROR": "网络错误：{{message}}"
+			"NETWORK_ERROR": "网络错误：{{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "需要屏幕访问权限才能启用自动屏幕截图。请在系统设置中授予权限。"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "由于不活动，追踪器已停止！",

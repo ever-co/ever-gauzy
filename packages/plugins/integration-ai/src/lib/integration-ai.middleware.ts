@@ -9,7 +9,7 @@ import { RequestConfigProvider } from './request-config.provider';
 
 @Injectable()
 export class IntegrationAIMiddleware implements NestMiddleware {
-	private logging = true;
+	private logging = false;
 
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,

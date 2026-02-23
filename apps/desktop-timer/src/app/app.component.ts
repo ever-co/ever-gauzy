@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, NgZone, OnInit, Renderer2 } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import {
 	ActivityWatchElectronService,
 	AuthStrategy,
@@ -12,8 +12,8 @@ import {
 import { NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, exhaustMap, filter, firstValueFrom, from, interval, map, of, tap } from 'rxjs';
-import { switchMap, take, takeWhile } from 'rxjs/operators';
+import { catchError, exhaustMap, filter, from, interval, map, Observable, of, tap } from 'rxjs';
+import { concatMap, switchMap, take, takeWhile } from 'rxjs/operators';
 import { AppService } from './app.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -35,7 +35,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private _renderer: Renderer2,
 		readonly activityWatchElectronService: ActivityWatchElectronService,
 		readonly languageElectronService: LanguageElectronService,
-		private readonly tokenRefreshService: TokenRefreshService
+		private readonly tokenRefreshService: TokenRefreshService,
+		private readonly router: Router
 	) {
 		activityWatchElectronService.setupActivitiesCollection();
 	}
@@ -113,19 +114,21 @@ export class AppComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('__logout__', (event, arg) =>
-			this._ngZone.run(async () => {
-				try {
-					// Stop proactive token refresh before logout
-					this.tokenRefreshService.stop();
-					await firstValueFrom(this.authStrategy.logout());
-					this.electronService.ipcRenderer.send('navigate_to_login');
-					if (arg) this.electronService.ipcRenderer.send('restart_and_update');
-				} catch (error) {
-					console.log('ERROR', error);
-				}
-			})
-		);
+		this.electronService
+			.fromEvent<boolean>('__logout__')
+			.pipe(
+				tap(() => this.tokenRefreshService.stop()),
+				// Ensure logout runs sequentially
+				concatMap((shouldRestart) =>
+					this.performLogout().pipe(
+						map(() => shouldRestart),
+						catchError(() => of(shouldRestart)) // Logout failure should not block UI flow
+					)
+				),
+				tap((shouldRestart) => this.handlePostLogout(shouldRestart)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		this.electronService.ipcRenderer.on('social_auth_success', (event, arg) =>
 			this._ngZone.run(async () => {
@@ -171,5 +174,22 @@ export class AppComponent implements OnInit, AfterViewInit {
 		} catch (e) {
 			return null;
 		}
+	}
+
+	private performLogout(): Observable<void> {
+		return this.authStrategy.logout().pipe(
+			take(1),
+			map(() => void 0)
+		);
+	}
+
+	private handlePostLogout(shouldRestart: boolean): void {
+		if (shouldRestart) {
+			this.electronService.ipcRenderer.send('restart_and_update');
+			return;
+		}
+
+		this.electronService.ipcRenderer.send('navigate_to_login');
+		this.router.navigate(['/auth/login']);
 	}
 }

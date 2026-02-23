@@ -1,4 +1,4 @@
-import { AsyncPipe, LowerCasePipe, NgClass, NgTemplateOutlet, TitleCasePipe } from '@angular/common';
+import { AsyncPipe, LowerCasePipe, NgTemplateOutlet, TitleCasePipe } from '@angular/common';
 import {
 	AfterViewInit,
 	Component,
@@ -70,7 +70,6 @@ import { SslComponent } from './ssl/ssl.component';
 		NbListModule,
 		LanguageSelectorComponent,
 		SwitchThemeComponent,
-		NgClass,
 		NbCardModule,
 		NbIconModule,
 		NbToggleModule,
@@ -510,7 +509,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		private _ngZone: NgZone,
 		private readonly timeTrackerService: TimeTrackerService,
 		private toastrService: NbToastrService,
-		private _dialogService: NbDialogService,
+		private readonly _dialogService: NbDialogService,
 		private _setupService: SetupService,
 		private _notifier: ToastrNotificationService,
 		private _translateService: TranslateService,

@@ -11,13 +11,17 @@ export class RelationsQueryDTO implements IBaseRelationsEntityModel {
 	@IsOptional()
 	@IsArray()
 	@Transform(({ value }: TransformFnParams) => {
+		if (value === undefined || value === null) {
+			return [];
+		}
 		if (typeof value === 'string') {
-			// If it's a comma-separated string, split into array
-			return value.split(',').map((item) => item.trim());
+			return value.split(',').map((v) => v.trim()).filter((v) => v.length > 0);
 		}
 		if (Array.isArray(value)) {
-			// If it's already an array, trim all elements
-			return value.map((item: string) => item.trim());
+			return value
+				.filter((v) => typeof v === 'string')
+				.map((v) => v.trim())
+				.filter((v) => v.length > 0);
 		}
 		return [];
 	})

@@ -5,7 +5,8 @@ import {
 	enableProdMode,
 	importProvidersFrom,
 	inject,
-	provideAppInitializer
+	provideAppInitializer,
+	provideZoneChangeDetection
 } from '@angular/core';
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -83,6 +84,7 @@ if (environment.SENTRY_DSN) {
 
 bootstrapApplication(AppComponent, {
 	providers: [
+		provideZoneChangeDetection(),
 		importProvidersFrom(
 			NbLayoutModule,
 			AuthModule,

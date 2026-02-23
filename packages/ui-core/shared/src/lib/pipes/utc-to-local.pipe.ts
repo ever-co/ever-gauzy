@@ -1,10 +1,10 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { toLocal } from '@gauzy/ui-core/common';
 
 @Pipe({
-    name: 'utcToLocal',
-    standalone: false
+	name: 'utcToLocal',
+	standalone: true
 })
 export class UtcToLocalPipe implements PipeTransform {
 	/**

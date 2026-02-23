@@ -1,6 +1,8 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
-import { filter, map, take } from 'rxjs/operators';
+import { Observable, ReplaySubject, throwError } from 'rxjs';
+import { map, take } from 'rxjs/operators';
+
+type RefreshResult = { token?: string; error?: Error };
 
 /**
  * Manages the state of token refresh operations.
@@ -10,7 +12,7 @@ import { filter, map, take } from 'rxjs/operators';
  * - Ensures only one refresh runs at a time
  * - Queues concurrent requests and unblocks them on success
  * - Propagates errors to all queued requests on failure
- * - Uses a single Subject to avoid race conditions
+ * - Uses a per-refresh ReplaySubject to avoid race conditions
  * - Properly cleans up on logout
  */
 @Injectable({
@@ -18,8 +20,7 @@ import { filter, map, take } from 'rxjs/operators';
 })
 export class RefreshStateManager implements OnDestroy {
 	private isRefreshing = false;
-	private refreshResult$ = new Subject<{ token?: string; error?: Error }>();
-	private currentRefreshId = 0;
+	private refreshResult$?: ReplaySubject<RefreshResult>;
 
 	isRefreshInProgress(): boolean {
 		return this.isRefreshing;
@@ -30,37 +31,46 @@ export class RefreshStateManager implements OnDestroy {
 			console.warn('[RefreshStateManager] Refresh already in progress, ignoring duplicate start');
 			return;
 		}
+
 		this.isRefreshing = true;
-		this.currentRefreshId++;
+		this.refreshResult$ = new ReplaySubject<RefreshResult>(1);
 	}
 
 	completeRefresh(token: string): void {
-		if (!this.isRefreshing) {
+		if (!this.isRefreshing || !this.refreshResult$) {
 			console.warn('[RefreshStateManager] No refresh in progress, ignoring complete');
 			return;
 		}
+
 		this.isRefreshing = false;
 		this.refreshResult$.next({ token });
+		this.refreshResult$.complete();
+		this.refreshResult$ = undefined;
 	}
 
 	failRefresh(error: Error): void {
-		if (!this.isRefreshing) {
+		if (!this.isRefreshing || !this.refreshResult$) {
 			console.warn('[RefreshStateManager] No refresh in progress, ignoring failure');
 			return;
 		}
+
 		this.isRefreshing = false;
 		this.refreshResult$.next({ error });
+		this.refreshResult$.complete();
+		this.refreshResult$ = undefined;
 	}
 
 	/**
 	 * Returns an observable that emits when a token becomes available
 	 * or errors if the refresh fails.
-	 * Captures the current refresh ID to ensure we only respond to the current refresh.
+	 * Returns an error immediately when no refresh is active.
 	 */
 	waitForToken(): Observable<string> {
-		const refreshId = this.currentRefreshId;
+		if (!this.refreshResult$) {
+			return throwError(() => new Error('[RefreshStateManager] No active refresh to wait for'));
+		}
+
 		return this.refreshResult$.pipe(
-			filter(() => this.currentRefreshId === refreshId),
 			take(1),
 			map((result) => {
 				if (result.error) {
@@ -78,11 +88,17 @@ export class RefreshStateManager implements OnDestroy {
 	 * Resets the refresh state. Should be called on logout.
 	 */
 	reset(): void {
+		if (this.refreshResult$) {
+			this.refreshResult$.next({ error: new Error('Token refresh cancelled') });
+			this.refreshResult$.complete();
+			this.refreshResult$ = undefined;
+		}
+
 		this.isRefreshing = false;
-		this.currentRefreshId++;
 	}
 
 	ngOnDestroy(): void {
-		this.refreshResult$.complete();
+		this.refreshResult$?.complete();
+		this.refreshResult$ = undefined;
 	}
 }

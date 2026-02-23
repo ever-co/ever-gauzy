@@ -1,4 +1,11 @@
-import { SocialAuthService } from '@gauzy/auth';
+import {
+	SocialAuthService,
+	OAuthAppAuthorizationRequest,
+	OAuthAppTokenRequest,
+	OAuthAppTokenResponse,
+	OAuthAppConfig,
+	OAuthAppPendingRequest
+} from '@gauzy/auth';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
 import { DEMO_PASSWORD_LESS_MAGIC_CODE } from '@gauzy/constants';
@@ -16,6 +23,7 @@ import {
 	ISocialAccountExistUser,
 	ISocialAccountLogin,
 	ITenant,
+	ITokenPair,
 	IUser,
 	IUserCodeInput,
 	IUserEmailInput,
@@ -34,21 +42,30 @@ import { wrap } from '@mikro-orm/core';
 import { HttpService } from '@nestjs/axios';
 import {
 	BadRequestException,
+	Inject,
 	Injectable,
 	InternalServerErrorException,
+	Logger,
 	NotFoundException,
+	Optional,
 	UnauthorizedException
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { CommandBus } from '@nestjs/cqrs';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
+import { AccessTokenService } from '../access-token/access-token.service';
+import { IAccessTokenMetadata } from '../access-token/type.token';
 import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { EventBus } from '../event-bus/event-bus';
 import { AccountRegistrationEvent } from '../event-bus/events';
 import { PasswordHashService } from '../password-hash/password-hash.service';
+import { RefreshTokenService } from '../refresh-token/refresh-token.service';
+import { IRefreshTokenMetadata } from '../refresh-token/type.token';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
@@ -70,11 +87,19 @@ import {
 	verifyGoogleToken,
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createClient } from 'redis';
+import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
 	// Get the type of the Object-Relational Mapping (ORM) used in the application.
 	private readonly ormType: MultiORM = getORMType();
+	private readonly logger = new Logger(AuthService.name);
+	private static readonly OAUTH_CODE_CACHE_PREFIX = 'oauth_app_code:';
+	private static readonly OAUTH_CODE_TTL_MS = 10 * 60 * 1000;
+	private static readonly OAUTH_REQUEST_CACHE_PREFIX = 'oauth_app_request:';
+	private static readonly OAUTH_REQUEST_TTL_MS = 10 * 60 * 1000;
 
 	constructor(
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
@@ -91,7 +116,11 @@ export class AuthService extends SocialAuthService {
 		private readonly httpService: HttpService,
 		private readonly socialAccountService: SocialAccountService,
 		private readonly eventBus: EventBus,
-		private readonly passwordHashService: PasswordHashService
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+		@Optional() @Inject(EVER_REDIS_CLIENT) private readonly redisClient: ReturnType<typeof createClient> | null,
+		private readonly passwordHashService: PasswordHashService,
+		private readonly refreshTokenService: RefreshTokenService,
+		private readonly accessTokenService: AccessTokenService
 	) {
 		super();
 	}
@@ -108,6 +137,210 @@ export class AuthService extends SocialAuthService {
 		}
 		// If using other ORM types, return the entity as is
 		return entity;
+	}
+
+	private signOAuthAppPayload(payload: string, secret: string): string {
+		return createHmac('sha256', secret).update(payload).digest('base64url');
+	}
+
+	private parseOAuthAppCode(code: string, secret: string): {
+		jti: string;
+		userId: string;
+		tenantId: string;
+		clientId: string;
+		redirectUri: string;
+		scope: string;
+		exp: number;
+	} {
+		const [version, payloadB64, sig] = code.split('.');
+		if (version !== 'v1' || !payloadB64 || !sig) {
+			throw new UnauthorizedException('Invalid authorization code');
+		}
+
+		const expectedSig = this.signOAuthAppPayload(payloadB64, secret);
+		const sigBuf = Buffer.from(sig, 'base64url');
+		const expectedBuf = Buffer.from(expectedSig, 'base64url');
+		if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) {
+			throw new UnauthorizedException('Invalid authorization code signature');
+		}
+
+		let payload: {
+			jti: string;
+			userId: string;
+			tenantId: string;
+			clientId: string;
+			redirectUri: string;
+			scope: string;
+			exp: number;
+		};
+		try {
+			const payloadJson = Buffer.from(payloadB64, 'base64url').toString();
+			payload = JSON.parse(payloadJson);
+		} catch {
+			throw new UnauthorizedException('Invalid authorization code payload');
+		}
+
+		if (!payload.jti || !payload.userId || !payload.tenantId || !payload.clientId || !payload.redirectUri) {
+			throw new UnauthorizedException('Invalid authorization code payload');
+		}
+
+		return payload;
+	}
+
+	/**
+	 * Store a pending OAuth authorization request in cache.
+	 */
+	public async storeOAuthAppPendingRequest(request: OAuthAppPendingRequest): Promise<void> {
+		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${request.requestId}`;
+		const value = JSON.stringify(request);
+		if (this.redisClient) {
+			await this.redisClient.set(cacheKey, value, { PX: AuthService.OAUTH_REQUEST_TTL_MS });
+		} else {
+			await this.cacheManager.set(cacheKey, value, AuthService.OAUTH_REQUEST_TTL_MS);
+		}
+	}
+
+	/**
+	 * Retrieve a pending OAuth authorization request from cache.
+	 */
+	public async getOAuthAppPendingRequest(requestId: string): Promise<OAuthAppPendingRequest | null> {
+		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${requestId}`;
+		let value: string | null;
+		if (this.redisClient) {
+			value = await this.redisClient.get(cacheKey);
+		} else {
+			value = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+		}
+		if (!value) return null;
+		return JSON.parse(value) as OAuthAppPendingRequest;
+	}
+
+	/**
+	 * Delete a pending OAuth authorization request from cache.
+	 */
+	public async deleteOAuthAppPendingRequest(requestId: string): Promise<void> {
+		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${requestId}`;
+		if (this.redisClient) {
+			await this.redisClient.del(cacheKey);
+		} else {
+			await this.cacheManager.del(cacheKey);
+		}
+	}
+
+	private ensureOAuthAppConfigured(): OAuthAppConfig {
+		const config = this.getOAuthAppConfig();
+		if (!config.clientId || !config.clientSecret || !config.redirectUris?.length || !config.codeSecret) {
+			throw new InternalServerErrorException('OAuth app is not configured');
+		}
+		return config;
+	}
+
+	public async createOAuthAppAuthorizationCode(
+		request: OAuthAppAuthorizationRequest
+	): Promise<string> {
+		const config = this.ensureOAuthAppConfigured();
+
+		if (request.clientId !== config.clientId) {
+			throw new BadRequestException('Invalid client_id');
+		}
+
+		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
+			throw new BadRequestException('Invalid redirect_uri');
+		}
+
+		const now = Math.floor(Date.now() / 1000);
+		const jti = randomBytes(32).toString('base64url');
+		const exp = now + AuthService.OAUTH_CODE_TTL_MS / 1000;
+		const scope = request.scope ?? '';
+
+		const payload = {
+			jti,
+			userId: request.userId,
+			tenantId: request.tenantId,
+			clientId: request.clientId,
+			redirectUri: request.redirectUri,
+			scope,
+			exp
+		};
+
+		const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+		const signature = this.signOAuthAppPayload(payloadB64, config.codeSecret);
+
+		const cacheKey = `${AuthService.OAUTH_CODE_CACHE_PREFIX}${jti}`;
+		if (this.redisClient) {
+			await this.redisClient.set(cacheKey, 'valid', { PX: AuthService.OAUTH_CODE_TTL_MS });
+		} else {
+			await this.cacheManager.set(cacheKey, 'valid', AuthService.OAUTH_CODE_TTL_MS);
+		}
+
+		return `v1.${payloadB64}.${signature}`;
+	}
+
+
+	public async exchangeOAuthAppAuthorizationCode(
+		request: OAuthAppTokenRequest
+	): Promise<OAuthAppTokenResponse> {
+		const config = this.ensureOAuthAppConfigured();
+
+		if (request.clientId !== config.clientId) {
+			throw new UnauthorizedException('Invalid client credentials');
+		}
+
+		const secretBuf = Buffer.from(request.clientSecret, 'utf8');
+		const expectedBuf = Buffer.from(config.clientSecret, 'utf8');
+		if (secretBuf.length !== expectedBuf.length || !timingSafeEqual(secretBuf, expectedBuf)) {
+			throw new UnauthorizedException('Invalid client credentials');
+		}
+
+		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
+			throw new BadRequestException('Invalid redirect_uri');
+		}
+
+		const payload = this.parseOAuthAppCode(request.code, config.codeSecret);
+		const now = Math.floor(Date.now() / 1000);
+
+		if (payload.exp <= now) {
+			throw new UnauthorizedException('Authorization code expired');
+		}
+
+		if (payload.clientId !== request.clientId || payload.redirectUri !== request.redirectUri) {
+			throw new UnauthorizedException('Authorization code mismatch');
+		}
+
+		// Single-use enforcement via atomic GETDEL (Redis) or get-then-del fallback
+		const cacheKey = `${AuthService.OAUTH_CODE_CACHE_PREFIX}${payload.jti}`;
+		let codeState: string | null;
+
+		if (this.redisClient) {
+			// Atomic get-and-delete: prevents race conditions in multi-instance deployments
+			codeState = await this.redisClient.getDel(cacheKey);
+		} else {
+			// Non-Redis fallback (single-instance safe)
+			codeState = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			await this.cacheManager.del(cacheKey);
+		}
+
+		if (!codeState) {
+			throw new UnauthorizedException('Authorization code already used');
+		}
+
+		const accessToken = await this.getJwtAccessToken({
+			id: payload.userId,
+			tenantId: payload.tenantId
+		});
+
+		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
+
+		this.logger.log(
+			`OAuth app token exchanged for userId=${payload.userId}, tenantId=${payload.tenantId}, expiresIn=${expiresIn}s`
+		);
+
+		return {
+			accessToken,
+			expiresIn,
+			tokenType: 'Bearer',
+			scope: payload.scope ?? ''
+		};
 	}
 
 	/**
@@ -772,26 +1005,18 @@ export class AuthService extends SocialAuthService {
 	 */
 	async isAuthenticated(token: string): Promise<boolean> {
 		try {
-			const { id, thirdPartyId } = verify(token, environment.JWT_SECRET) as {
-				id: string;
-				thirdPartyId: string;
-			};
-
-			let result: Promise<boolean>;
+			const { id, thirdPartyId } = await this.accessTokenService.verify(token);
 
 			if (thirdPartyId) {
-				result = this.userService.checkIfExistsThirdParty(thirdPartyId);
-			} else {
-				result = this.userService.checkIfExists(id);
+				return this.userService.checkIfExistsThirdParty(thirdPartyId);
 			}
 
-			return result;
-		} catch (err) {
-			if (err instanceof JsonWebTokenError) {
+			return this.userService.checkIfExists(id);
+		} catch (error) {
+			if (error instanceof JsonWebTokenError || error instanceof UnauthorizedException) {
 				return false;
-			} else {
-				throw err;
 			}
+			return false;
 		}
 	}
 
@@ -861,7 +1086,10 @@ export class AuthService extends SocialAuthService {
 			authData: { jwt: null, userId: null }
 		};
 		try {
-			for (const { value } of emails) {
+			for (const { value, verified } of emails) {
+				// Skip unverified emails to prevent account takeover via unverified OAuth addresses
+				if (!verified) continue;
+
 				const userExist = await this.userService.checkIfExistsEmail(value);
 				if (userExist) {
 					const user = await this.userService.getOAuthLoginEmail(value);
@@ -896,7 +1124,7 @@ export class AuthService extends SocialAuthService {
 	 * @returns A Promise that resolves to a JWT access token string.
 	 * @throws Throws an UnauthorizedException if the user is not found or if there is an issue in token generation.
 	 */
-	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID) {
+	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID, metadata?: IAccessTokenMetadata) {
 		const tenantId = request.tenantId || RequestContext.currentTenantId();
 		try {
 			// Validate that the request contains a user ID
@@ -904,7 +1132,7 @@ export class AuthService extends SocialAuthService {
 				throw new Error('User ID is missing in the request.');
 			}
 
-			console.log('Request getJwtAccessToken with Id: ', request.id);
+			this.logger.debug(`Request getJwtAccessToken with Id: ${request.id}`);
 
 			// Extract the user ID from the request
 			const userId = request.id;
@@ -963,13 +1191,14 @@ export class AuthService extends SocialAuthService {
 				organizationId: organizationId ?? employee?.organizationId ?? null,
 				employeeId: employee ? employee.id : null,
 				role: user.role ? user.role.name : null,
-				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null
+				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null,
+				ipAddress: RequestContext.currentIp(),
+				userAgent: RequestContext.currentUserAgent(),
+				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
 
 			// Generate the JWT access token using the payload
-			return sign(payload, environment.JWT_SECRET, {
-				expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
-			});
+			return this.accessTokenService.generate(userId, payload);
 		} catch (error) {
 			// Log and rethrow any errors encountered during the process
 			console.log('Error while generating JWT access token:', error);
@@ -985,10 +1214,15 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @param user A partial IUser object containing at least the user's ID, email, and role.
 	 * @param organizationId Optional organization ID to include in the token.
+	 * @param metadata Optional metadata to include in the token payload.
 	 * @returns A Promise that resolves to a JWT refresh token string.
 	 * @throws Logs an error and throws an exception if the token generation fails.
 	 */
-	public async getJwtRefreshToken(user: Partial<IUser>, organizationId?: ID) {
+	public async getJwtRefreshToken(
+		user: Partial<IUser>,
+		organizationId?: ID,
+		metadata?: IRefreshTokenMetadata
+	): Promise<string> {
 		try {
 			// Ensure the user object contains the necessary information
 			if (!user.id || !user.email) {
@@ -996,20 +1230,65 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Construct the JWT payload with organization context
-			const payload: JwtPayload = {
+			const payload = {
 				id: user.id,
 				email: user.email,
 				tenantId: user.tenantId || null,
 				organizationId: organizationId || user.lastOrganizationId || null,
-				role: user.role ? user.role.name : null
+				role: user.role ? user.role.name : null,
+				ipAddress: RequestContext.currentIp(),
+				userAgent: RequestContext.currentUserAgent(),
+				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
 
-			// Generate the JWT refresh token
-			return sign(payload, environment.JWT_REFRESH_TOKEN_SECRET, {
-				expiresIn: `${environment.JWT_REFRESH_TOKEN_EXPIRATION_TIME}s`
-			});
+			return this.refreshTokenService.generate(user.id, payload);
 		} catch (error) {
 			console.log('Error while generating JWT refresh token:', error);
+			throw new UnauthorizedException('Unable to generate refresh token');
+		}
+	}
+
+	/**
+	 * Rotates the JWT refresh token for a given user.
+	 *
+	 * This function takes an existing refresh token, validates it, and generates a new refresh token with updated payload information.
+	 * It ensures that the user information is up-to-date and includes organization context if provided.
+	 *
+	 * @param token The existing JWT refresh token to be rotated.
+	 * @param user A partial IUser object containing at least the user's ID, email, and role.
+	 * @param organizationId Optional organization ID to include in the new token.
+	 * @param metadata Optional metadata to include in the token payload.
+	 * @returns A Promise that resolves to a new JWT refresh token string.
+	 * @throws Logs an error and throws an exception if the token rotation fails.
+	 */
+	public async rotateRefreshToken(
+		token: string,
+		user: Partial<IUser>,
+		organizationId?: ID,
+		metadata?: IRefreshTokenMetadata
+	): Promise<string> {
+		try {
+			// Ensure the user object contains the necessary information
+			if (!user.id || !user.email) {
+				throw new Error('User ID or email is missing.');
+			}
+
+			// Construct the JWT payload with organization context
+			const payload = {
+				id: user.id,
+				email: user.email,
+				tenantId: user.tenantId || null,
+				organizationId: organizationId || user.lastOrganizationId || null,
+				role: user.role ? user.role.name : null,
+				ipAddress: RequestContext.currentIp(),
+				userAgent: RequestContext.currentUserAgent(),
+				...(metadata?.clientId && { clientId: metadata.clientId })
+			};
+
+			return this.refreshTokenService.rotate(token, payload);
+		} catch (error) {
+			console.log('Error while rotating JWT refresh token:', error);
+			throw new UnauthorizedException('Unable to rotate refresh token');
 		}
 	}
 
@@ -1049,6 +1328,59 @@ export class AuthService extends SocialAuthService {
 			// Return both the new access token and refresh token
 			return { token: access_token, refresh_token };
 		} catch (error) {
+			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401
+			if (
+				error instanceof UnauthorizedException ||
+				(error && typeof error.status === 'number' && error.status === 401)
+			) {
+				throw error;
+			}
+			// Otherwise, log and return null for non-auth/internal errors
+			console.error('Error while retrieving JWT access token from refresh token:', error);
+			return null;
+		}
+	}
+
+	/**
+	 * Rotates the JWT tokens for the current user.
+	 *
+	 * @param token - The current refresh token.
+	 * @param metadata - Optional metadata to include in the token payload.
+	 * @returns {Promise<ITokenPair | null>} - The new access and refresh tokens, or null if an error occurs.
+	 */
+	async rotateTokens(token: string, metadata?: IRefreshTokenMetadata): Promise<ITokenPair | null> {
+		try {
+			// Get the current user from the request context
+			const user = RequestContext.currentUser();
+
+			// If no user is found, return null
+			if (!user) return null;
+
+			// Extract organizationId from the current token (refresh token context)
+			// This ensures the new access token maintains the organization context
+			const organizationId = RequestContext.currentOrganizationId() || user.lastOrganizationId;
+
+			// Get and return the JWT access token for the user with organization context
+			// Generate the access token first (non-destructive). Only rotate the refresh token after
+			// successful access-token generation to avoid revoking the old refresh token if
+			// access-token generation fails.
+			const access_token = await this.getJwtAccessToken(user, organizationId, metadata);
+			const refresh_token = await this.rotateRefreshToken(token, user, organizationId, metadata);
+
+			// Update the user's current refresh token in the database
+			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+
+			// Return both the new access token and refresh token
+			return { token: access_token, refresh_token };
+		} catch (error) {
+			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401
+			if (
+				error instanceof UnauthorizedException ||
+				(error && typeof error.status === 'number' && error.status === 401)
+			) {
+				throw error;
+			}
+			// Otherwise, log and return null for non-auth/internal errors
 			// Use console.error for error logging with more descriptive context
 			console.error('Error while retrieving JWT access token from refresh token:', error);
 			return null;
@@ -1779,5 +2111,47 @@ export class AuthService extends SocialAuthService {
 			// For unexpected errors, return null to maintain backward compatibility
 			return null;
 		}
+	}
+
+	/**
+	 * Logs out the user by revoking the provided refresh token.
+	 *
+	 * This function attempts to revoke the refresh token associated with the user.
+	 * It also removes the refresh token from the user's record in the database. Any errors during these operations
+	 * are logged but do not prevent the logout process from completing.
+	 *
+	 * @param refreshToken The refresh token to be revoked. This is optional as the function will attempt to revoke the current access token regardless.
+	 */
+	public async logout(refreshToken?: string): Promise<void> {
+		const reason = 'User initiated logout';
+		const currentToken = RequestContext.currentToken();
+		const currentUserId = RequestContext.currentUserId();
+
+		const revocations: Promise<unknown>[] = [
+			this.userService.removeRefreshToken().catch((error) => {
+				// Log the error but do not throw it, as we want to proceed with logout even if this fails
+				Logger.error('Error while removing refresh token from user record:', error?.message);
+			})
+		];
+
+		if (refreshToken) {
+			revocations.push(
+				this.refreshTokenService.revoke(refreshToken, reason, currentUserId).catch((error) => {
+					// Log the error but do not throw it, as we want to proceed with logout even if this fails
+					Logger.error('Error while revoking refresh token:', error?.message);
+				})
+			);
+		}
+
+		if (currentToken) {
+			revocations.push(
+				this.accessTokenService.revoke(currentToken, reason, currentUserId).catch((error) => {
+					// Log the error but do not throw it, as we want to proceed with logout even if this fails
+					Logger.error('Error while revoking access token:', error?.message);
+				})
+			);
+		}
+
+		await Promise.allSettled(revocations);
 	}
 }

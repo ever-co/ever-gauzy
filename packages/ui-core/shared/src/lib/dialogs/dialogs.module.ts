@@ -44,9 +44,10 @@ const Components = [AlertComponent, ConfirmComponent, PromptComponent, QuickActi
 		NbRadioModule,
 		NbSelectModule,
 		NbTagModule,
-		TranslateModule.forChild()
+		TranslateModule.forChild(),
+		...Directives
 	],
-	declarations: [...Components, ...Directives],
+	declarations: [...Components],
 	exports: [...Directives],
 	providers: []
 })

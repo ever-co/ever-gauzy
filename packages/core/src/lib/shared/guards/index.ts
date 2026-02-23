@@ -7,3 +7,4 @@ export * from './tenant-base.guard';
 export * from './tenant-permission.guard';
 export * from './feature-flag.guard';
 export * from './manager-or-permission.guard';
+export * from './register-authorization.guard';

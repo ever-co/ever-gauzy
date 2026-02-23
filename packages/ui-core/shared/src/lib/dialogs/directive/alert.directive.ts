@@ -1,13 +1,13 @@
 // tslint:disable: variable-name
-import { Directive, Input, Output, HostListener, EventEmitter, OnDestroy } from '@angular/core';
+import { Directive, Input, Output, HostListener, EventEmitter, OnDestroy, inject } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AlertComponent, AlertDialogOptions } from '../alert/alert.component';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-    selector: '[ngxAlertDialog]',
-    standalone: false
+	selector: '[ngxAlertDialog]',
+	standalone: true
 })
 export class AlertDirective implements OnDestroy {
 	data: AlertDialogOptions = {};
@@ -24,7 +24,7 @@ export class AlertDirective implements OnDestroy {
 
 	@Output() close = new EventEmitter();
 
-	constructor(private readonly dialogService: NbDialogService) {}
+	private readonly dialogService = inject(NbDialogService);
 
 	/**
 	 * Handles the click event and opens an alert dialog.

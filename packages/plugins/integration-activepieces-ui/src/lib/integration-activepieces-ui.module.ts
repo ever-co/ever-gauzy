@@ -25,7 +25,6 @@ import { IntegrationActivepiecesRoutes } from './integration-activepieces.routes
 import { ActivepiecesAuthorizeComponent } from './components/activepieces-authorize/activepieces-authorize.component';
 import { IntegrationActivepiecesLayoutComponent } from './integration-activepieces.layout.component';
 import { ActivepiecesComponent } from './components/activepieces/activepieces.component';
-import { ActivepiecesCallbackComponent } from './components/activepieces-callback/activepieces-callback.component';
 import { ActivepiecesConnectionsComponent } from './components/activepieces-connections/activepieces-connections.component';
 import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-servers/activepieces-mcp-servers.component';
 
@@ -34,7 +33,6 @@ import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-s
 		IntegrationActivepiecesLayoutComponent,
 		ActivepiecesComponent,
 		ActivepiecesAuthorizeComponent,
-		ActivepiecesCallbackComponent,
 		ActivepiecesConnectionsComponent,
 		ActivepiecesMcpServersComponent
 	],

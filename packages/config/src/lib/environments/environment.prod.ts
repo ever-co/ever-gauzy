@@ -167,16 +167,18 @@ export const environment: IEnvironment = {
 		domain: process.env.AUTH0_DOMAIN
 	},
 
+	oauthApp: {
+		clientId: process.env.GAUZY_OAUTH_APP_CLIENT_ID,
+		clientSecret: process.env.GAUZY_OAUTH_APP_CLIENT_SECRET,
+		codeSecret: process.env.GAUZY_OAUTH_APP_CODE_SECRET,
+		redirectUris: (process.env.GAUZY_OAUTH_APP_REDIRECT_URIS ?? '')
+			.split(',')
+			.map((uri) => uri.trim())
+			.filter(Boolean)
+	},
+
 	activepieces: {
-		clientId: process.env.GAUZY_ACTIVEPIECES_CLIENT_ID,
-		clientSecret: process.env.GAUZY_ACTIVEPIECES_CLIENT_SECRET,
-		callbackUrl:
-			process.env.GAUZY_ACTIVEPIECES_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/integration/activepieces/callback`,
-		postInstallUrl:
-			process.env.GAUZY_ACTIVEPIECES_POST_INSTALL_URL ||
-			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/activepieces`,
-		stateSecret: process.env.ACTIVEPIECES_STATE_SECRET
+		apiKey: process.env.GAUZY_ACTIVEPIECES_API_KEY
 	},
 
 	sentry: {

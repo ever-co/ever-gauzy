@@ -17,7 +17,7 @@ import {
 	shell,
 	Tray
 } from 'electron';
-import * as path from 'path';
+import * as path from 'node:path';
 
 import { environment } from './environments/environment';
 
@@ -388,6 +388,7 @@ const contextMenu = () => {
 					ipcMain.once('setting_window_ready', () => {
 						appWindowManager.settingShow('goto_update');
 					});
+					await appWindowManager.loadSetting(uiPath);
 				} else {
 					appWindowManager.settingShow('goto_update');
 				}

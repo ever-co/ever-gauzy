@@ -26,6 +26,10 @@
 		"lib:build:prod": "yarn nx build plugin-integration-github",
 		"lib:watch": "yarn nx build plugin-integration-github --watch"
 	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
@@ -37,11 +41,9 @@
 		"@mikro-orm/nestjs": "^6.1.1",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
 		"@nestjs/cache-manager": "^3.1.0",
-		"@nestjs/common": "^11.1.12",
-		"@nestjs/core": "^11.1.12",
 		"@nestjs/cqrs": "^11.0.3",
 		"@nestjs/typeorm": "^11.0.0",
-		"@nestjs/swagger": "^11.2.5",
+		"@nestjs/swagger": "^11.2.6",
 		"cache-manager": "^6.4.2",
 		"chalk": "^4.1.0",
 		"class-transformer": "^0.5.1",
@@ -58,11 +60,11 @@
 		"smee-client": "^1.2.3",
 		"tslib": "^2.6.2",
 		"typeorm": "^0.3.28",
-		"underscore": "^1.13.3",
+		"underscore": "^1.13.8",
 		"uuid": "^13.0.0"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},
@@ -83,3 +85,5 @@
 	},
 	"sideEffects": false
 }
+
+

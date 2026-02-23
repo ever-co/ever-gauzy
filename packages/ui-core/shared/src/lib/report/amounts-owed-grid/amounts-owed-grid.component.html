@@ -1,124 +1,124 @@
 <div class="d-flex align-items-center">
-  <div
-    class="weekly-logs w-100 row-table amount-owed-grid"
-    [nbSpinner]="loading"
-    nbSpinnerSize="giant"
-    nbSpinnerStatus="primary"
-    >
-    @if (dailyData?.length > 0) {
-      @for (day of dailyData; track day) {
-        <nb-card class="card">
-          <nb-card-header class="card-title">
-            {{ day.date | dateFormat }}
-          </nb-card-header>
-          <nb-card-body class="amounts-owed-container">
-            @if (dailyData?.length > 0) {
-              <div class="columns-header">
-                <div class="table-inner-wrapper font-weight-bold align-items-center">
-                  <div class="responsive-table-row employee-column">
-                    {{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-                  </div>
-                  <div class="responsive-table-row rate-column">
-                    {{ 'REPORT_PAGE.CURRENT_RATE' | translate }}
-                  </div>
-                  <div class="responsive-table-row duration-column">
-                    {{ 'REPORT_PAGE.HOURS' | translate }}
-                  </div>
-                  <div class="responsive-table-row amount-column">
-                    {{ 'REPORT_PAGE.AMOUNT' | translate }}
-                  </div>
-                </div>
-              </div>
-            }
-            @for (employeeRow of day.employees; track employeeRow) {
-              <div class="cart-body employee-row">
-                <div class="table-row">
-                  <div class="table-inner-wrapper">
-                    <div class="responsive-table-row employee-column">
-                      <div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
-                      <div class="responsive-table-content project-name">
-                        <ng-container
-											*ngTemplateOutlet="
-												employeeEl;
-												context: { $implicit: employeeRow?.employee }
-											"
-                        ></ng-container>
-                      </div>
-                    </div>
-                    <div class="responsive-table-row rate-column">
-                      <div class="responsive-table-header">
-                        {{ 'REPORT_PAGE.CURRENT_RATE' | translate }}
-                      </div>
-                      <div class="responsive-table-content day-col">
-                        {{
-                        employeeRow?.employee?.billRateValue || 0
-                        | currency : employeeRow?.employee?.billRateCurrency
-                        | position : organization?.currencyPosition
-                        }}
-                      </div>
-                    </div>
-                    <div class="responsive-table-row duration-column">
-                      <div class="responsive-table-header">
-                        {{ 'REPORT_PAGE.HOURS' | translate }}
-                      </div>
-                      <div class="responsive-table-content day-col">
-                        {{ employeeRow?.duration | durationFormat }}
-                      </div>
-                    </div>
-                    <div class="responsive-table-row amount-column">
-                      <div class="responsive-table-header">
-                        {{ 'REPORT_PAGE.AMOUNT' | translate }}
-                      </div>
-                      <div class="responsive-table-content day-col">
-                        {{
-                        employeeRow?.amount || 0
-                        | currency : employeeRow?.employee?.billRateCurrency
-                        | position : organization?.currencyPosition
-                        }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
-          </nb-card-body>
-        </nb-card>
-      }
-    } @else {
-      <ngx-no-data-message [message]="'REPORT_PAGE.NO_DATA.AMOUNT_OWED' | translate"></ngx-no-data-message>
-    }
-  </div>
+	<div
+		class="weekly-logs w-100 row-table amount-owed-grid"
+		[nbSpinner]="loading"
+		nbSpinnerSize="giant"
+		nbSpinnerStatus="primary"
+	>
+		@if (dailyData?.length > 0) {
+			@for (day of dailyData; track day) {
+				<nb-card class="card">
+					<nb-card-header class="card-title">
+						{{ day.date | dateFormat }}
+					</nb-card-header>
+					<nb-card-body class="amounts-owed-container">
+						@if (dailyData?.length > 0) {
+							<div class="columns-header">
+								<div class="table-inner-wrapper font-weight-bold align-items-center">
+									<div class="responsive-table-row employee-column">
+										{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+									</div>
+									<div class="responsive-table-row rate-column">
+										{{ 'REPORT_PAGE.CURRENT_RATE' | translate }}
+									</div>
+									<div class="responsive-table-row duration-column">
+										{{ 'REPORT_PAGE.HOURS' | translate }}
+									</div>
+									<div class="responsive-table-row amount-column">
+										{{ 'REPORT_PAGE.AMOUNT' | translate }}
+									</div>
+								</div>
+							</div>
+						}
+						@for (employeeRow of day.employees; track employeeRow) {
+							<div class="cart-body employee-row">
+								<div class="table-row">
+									<div class="table-inner-wrapper">
+										<div class="responsive-table-row employee-column">
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+											</div>
+											<div class="responsive-table-content project-name">
+												<ng-container
+													[ngTemplateOutlet]="employeeEl"
+													[ngTemplateOutletContext]="{ $implicit: employeeRow?.employee }"
+												></ng-container>
+											</div>
+										</div>
+										<div class="responsive-table-row rate-column">
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.CURRENT_RATE' | translate }}
+											</div>
+											<div class="responsive-table-content day-col">
+												{{
+													employeeRow?.employee?.billRateValue || 0
+														| currency: employeeRow?.employee?.billRateCurrency
+														| position: organization?.currencyPosition
+												}}
+											</div>
+										</div>
+										<div class="responsive-table-row duration-column">
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.HOURS' | translate }}
+											</div>
+											<div class="responsive-table-content day-col">
+												{{ employeeRow?.duration | durationFormat }}
+											</div>
+										</div>
+										<div class="responsive-table-row amount-column">
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.AMOUNT' | translate }}
+											</div>
+											<div class="responsive-table-content day-col">
+												{{
+													employeeRow?.amount || 0
+														| currency: employeeRow?.employee?.billRateCurrency
+														| position: organization?.currencyPosition
+												}}
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						}
+					</nb-card-body>
+				</nb-card>
+			}
+		} @else {
+			<ngx-no-data-message [message]="'REPORT_PAGE.NO_DATA.AMOUNT_OWED' | translate"></ngx-no-data-message>
+		}
+	</div>
 
-  <ng-template let-project #projectEl>
-    @if (project) {
-      <span>{{ project?.name }} </span>
-    } @else {
-      <span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
-    }
-  </ng-template>
+	<ng-template let-project #projectEl>
+		@if (project) {
+			<span>{{ project?.name }} </span>
+		} @else {
+			<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+		}
+	</ng-template>
 
-  <ng-template let-client #clientEl>
-    @if (client) {
-      <span>{{ client?.name }} </span>
-    } @else {
-      <span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
-    }
-  </ng-template>
+	<ng-template let-client #clientEl>
+		@if (client) {
+			<span>{{ client?.name }} </span>
+		} @else {
+			<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
+		}
+	</ng-template>
 
-  <ng-template let-employee #employeeEl>
-    <div class="avatar-wrapper-outer">
-      @if (employee) {
-        <ngx-avatar
-          class="report-table"
-          [src]="employee?.user?.imageUrl"
-          [name]="employee?.user?.name"
-          [id]="employee?.id"
-          [employee]="employee"
-        ></ngx-avatar>
-      }
-      <ng-template #noEmployee>
-        <span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
-      </ng-template>
-    </div>
-  </ng-template>
+	<ng-template let-employee #employeeEl>
+		<div class="avatar-wrapper-outer">
+			@if (employee) {
+				<ngx-avatar
+					class="report-table"
+					[src]="employee?.user?.imageUrl"
+					[name]="employee?.user?.name"
+					[id]="employee?.id"
+					[employee]="employee"
+				></ngx-avatar>
+			}
+			<ng-template #noEmployee>
+				<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+			</ng-template>
+		</div>
+	</ng-template>
 </div>

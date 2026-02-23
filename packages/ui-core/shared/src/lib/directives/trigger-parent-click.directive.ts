@@ -1,11 +1,11 @@
-import { Directive, ElementRef, HostListener } from '@angular/core';
+import { Directive, ElementRef, HostListener, inject } from '@angular/core';
 
 @Directive({
-    selector: '[triggerParentClick]',
-    standalone: false
+	selector: '[triggerParentClick]',
+	standalone: true
 })
 export class TriggerParentClickDirective {
-	constructor(private readonly el: ElementRef) {}
+	private readonly el = inject(ElementRef);
 
 	@HostListener('click', ['$event'])
 	onClick(event: Event) {

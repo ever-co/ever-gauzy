@@ -1,6 +1,17 @@
-import { AsyncPipe, NgClass, NgStyle } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	ElementRef,
+	Inject,
+	NgZone,
+	OnInit,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import {
 	IOrganization,
 	IOrganizationTeam,
@@ -43,7 +54,6 @@ import {
 	debounceTime,
 	exhaustMap,
 	filter,
-	firstValueFrom,
 	from,
 	lastValueFrom,
 	mergeMap,
@@ -51,6 +61,7 @@ import {
 	of,
 	Subject,
 	Subscription,
+	switchMap,
 	tap,
 	timer
 } from 'rxjs';
@@ -114,10 +125,8 @@ enum TimerStartMode {
 		NbSpinnerModule,
 		NbButtonModule,
 		NbIconModule,
-		NgClass,
 		NbCardModule,
 		OrganizationSelectorComponent,
-		NgStyle,
 		NbTooltipModule,
 		TimeTrackerStatusComponent,
 		TimeTrackerFormComponent,
@@ -194,11 +203,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	sound: any = null;
 	private dialogRequest$ = new Subject<{ dialog: TemplateRef<any>; option: any }>();
+	private readonly logout$ = new Subject<void>();
 
 	constructor(
 		private electronService: ElectronService,
 		private timeTrackerService: TimeTrackerService,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private sanitize: DomSanitizer,
 		private _ngZone: NgZone,
@@ -226,7 +236,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly noteService: NoteService,
 		private readonly timeTrackerQuery: TimeTrackerQuery,
 		private readonly timeTrackerStore: TimeTrackerStore,
-		private readonly timeTrackerFormService: TimeTrackerFormService
+		private readonly timeTrackerFormService: TimeTrackerFormService,
+		private readonly cdr: ChangeDetectorRef,
+		private readonly router: Router
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -877,6 +889,26 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// Logout handling with exhaustMap to prevent multiple logouts
+		this.logout$
+			.asObservable()
+			.pipe(
+				tap(() =>
+					this.processing$.next({
+						state: true,
+						message: this._translateService.instant('TIMER_TRACKER.LOADING.LOGOUT_IN_PROGRESS')
+					})
+				),
+				exhaustMap(() =>
+					timer(3000).pipe(
+						switchMap(() => this._authStrategy.logout()),
+						tap(() => this.afterLogout())
+					)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	public xor(a: boolean, b: boolean): boolean {
@@ -1116,7 +1148,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this.stopTimer();
 				}
 				if (!this._isSpecialLogout) {
-					await this.logout();
+					this.logout();
 				}
 			})
 		);
@@ -1142,9 +1174,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('show_error_message', (event, arg) =>
+		this.electronService.ipcRenderer.on('show_toast_message', (event, arg) =>
 			this._ngZone.run(() => {
-				this.showErrorMessage(arg);
+				this.showToastMessage({
+					type: arg.type,
+					message: arg.message
+				});
 			})
 		);
 
@@ -1744,7 +1779,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			if (this._isSpecialLogout) {
 				// wait 3 sec and logout
-				await this.logout();
+				this.logout();
 			}
 
 			if (this.quitApp) {
@@ -1837,11 +1872,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async getLastTimeSlotImage(arg): Promise<void> {
-		if (this._isOffline || this.lastTimeSlot?.id === arg?.timeSlotId) {
-			return;
-		}
 		try {
-			const res = await this.timeTrackerService.getTimeSlot(arg);
+			const lastTimeSlot: { timeSlotId?: string } = await this.electronService.invoke('GET_LAST_CAPTURE');
+			if (this._isOffline || !lastTimeSlot?.timeSlotId) {
+				return;
+			}
+
+			const res = await this.timeTrackerService.getTimeSlot({ timeSlotId: lastTimeSlot.timeSlotId });
 			const { screenshots = [] } = res || {};
 			if (screenshots && screenshots.length > 0) {
 				const [lastCaptureScreen] = screenshots;
@@ -1972,7 +2009,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._loggerService.warn(`WARN: ${message}`);
 			return;
 		}
-		this.electronService.ipcRenderer.send('show_image', this.screenshots);
+
+		this.electronService.ipcRenderer.send('show_image', {
+			screenshots: this.screenshots,
+			timeSlotId: !this._isOffline ? this.lastTimeSlot?.id : null
+		});
 	}
 
 	public open(dialog: TemplateRef<any>, option): void {
@@ -2316,8 +2357,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public showErrorMessage(msg: string): void {
-		this._toastrNotifier.error(`${msg}`);
+	public showToastMessage({ message, type }: { message: string; type: string }): void {
+		if (type === 'warning') {
+			this._toastrNotifier.warn(message);
+			return;
+		}
+		this._toastrNotifier.error(message);
 	}
 
 	public toggle(event: boolean) {
@@ -2342,16 +2387,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return value === Infinity;
 	}
 
-	public async logout() {
-		// we wait 3 sec and then logout
-		asyncScheduler.schedule(async () => {
-			await firstValueFrom(this._authStrategy.logout());
-			this._isSpecialLogout = false;
-			this.electronService.ipcRenderer.send(
-				this._isRestartAndUpdate ? 'restart_and_update' : 'navigate_to_login'
-			);
-			localStorage.clear();
-		}, 3000);
+	public logout(): void {
+		this.logout$.next();
+	}
+
+	private async afterLogout(): Promise<void> {
+		this._isSpecialLogout = false;
+
+		if (this._isRestartAndUpdate) {
+			this.electronService.ipcRenderer.send('restart_and_update');
+		} else {
+			this.electronService.ipcRenderer.send('navigate_to_login');
+			await this.router.navigate(['/auth/login']);
+		}
+
+		localStorage.clear();
+		this.cdr.markForCheck();
 	}
 
 	public async restart(callback?: Function): Promise<any> {

@@ -1,19 +1,17 @@
-import { Directive, ElementRef, NgZone, OnInit, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, NgZone, OnInit, Renderer2, inject } from '@angular/core';
 import { asapScheduler } from 'rxjs';
 
 @Directive({
-    selector: '[autocomplete-off]',
-    standalone: false
+	selector: '[autocomplete-off]',
+	standalone: true
 })
 /**
  * Alterates autocomplete="off" attribute on chrome because it's ignoring it in case of credentials, address or credit card data type.
  */
 export class AutocompleteOffDirective implements OnInit {
-	constructor(
-		private readonly _renderer: Renderer2,
-		private readonly _el: ElementRef,
-		private readonly _zone: NgZone
-	) {}
+	private readonly _renderer = inject(Renderer2);
+	private readonly _el = inject(ElementRef);
+	private readonly _zone = inject(NgZone);
 
 	ngOnInit() {
 		this._zone.runOutsideAngular(() => {

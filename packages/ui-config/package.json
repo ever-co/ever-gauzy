@@ -2,6 +2,7 @@
 	"name": "@gauzy/ui-config",
 	"version": "0.1.0",
 	"description": "A configuration library for the Gauzy framework, providing environment settings and configurations to be shared across various Angular applications within the Gauzy ecosystem.",
+	"type": "module",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -25,7 +26,7 @@
 		"generate-env": "yarn cross-env ts-node ../../.scripts/configure.ts",
 		"generate-env:prod": "yarn cross-env NODE_ENV=production yarn generate-env --environment=prod",
 		"generate-env:dev": "yarn cross-env NODE_ENV=development yarn generate-env --environment=dev",
-		"replace-env": "yarn cross-env ts-node scripts/replace-env-files.ts",
+		"replace-env": "yarn cross-env node scripts/replace-env.js",
 		"replace-env:prod": "yarn cross-env NODE_ENV=production yarn replace-env",
 		"replace-env:dev": "yarn cross-env NODE_ENV=development yarn replace-env",
 		"setup-env": "yarn generate-env && yarn replace-env",
@@ -33,18 +34,18 @@
 		"setup-env:dev": "yarn generate-env:dev && yarn replace-env:dev"
 	},
 	"peerDependencies": {
-		"@angular/common": "^20.2.4",
-		"@angular/core": "^20.2.4"
+		"@angular/common": "21.0.7",
+		"@angular/core": "21.0.7"
 	},
 	"dependencies": {
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"cross-env": "^10.1.0",
 		"ts-node": "^10.9.2",
-		"jest-preset-angular": "14.6.2"
+		"jest-preset-angular": "16.0.0"
 	},
 	"keywords": [
 		"gauzy",

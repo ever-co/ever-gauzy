@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { combineLatest, Subject } from 'rxjs';
@@ -49,10 +49,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-proposal-list',
-    templateUrl: './proposal.component.html',
-    styleUrls: ['./proposal.component.scss'],
-    standalone: false
+	selector: 'ga-proposal-list',
+	templateUrl: './proposal.component.html',
+	styleUrls: ['./proposal.component.scss'],
+	standalone: false
 })
 export class ProposalComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public smartTableSettings: any;
@@ -73,6 +73,11 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 	public organization: IOrganization;
 	public proposals$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
+
+	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	@ViewChild('actionButtons', { static: true }) readonly actionButtons!: any;
+	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	@ViewChild('visibleButton', { static: true }) readonly visibleButton!: any;
 
 	constructor(
 		readonly translateService: TranslateService,

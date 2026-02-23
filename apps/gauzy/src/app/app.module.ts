@@ -30,8 +30,9 @@ import { ColorPickerService } from 'ngx-color-picker';
 // Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/
 import * as Sentry from '@sentry/angular';
 import * as moment from 'moment';
-import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
+import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
 import { UiCoreModule } from '@gauzy/ui-core';
+import { getPluginUiConfig } from '@gauzy/plugin-ui';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import {
 	APIInterceptor,
@@ -53,7 +54,7 @@ import {
 import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { CommonModule } from '@gauzy/ui-core/common';
 import { I18nModule, I18nService } from '@gauzy/ui-core/i18n';
-import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
+import { SharedModule, TimeTrackerModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
@@ -127,7 +128,7 @@ const FEATURE_MODULES = [
 
 @NgModule({
 	declarations: [AppComponent],
-	bootstrap: [AppComponent],
+	exports: [AppComponent],
 	imports: [
 		BrowserModule,
 		BrowserAnimationsModule,
@@ -240,20 +241,33 @@ export class AppModule {
 	}
 
 	/**
-	 * Initialize UI languages and Update Locale
+	 * Initialize UI languages and Update Locale using `plugin-ui.config.ts`.
 	 */
 	private initializeUiLanguagesAndLocale(): void {
-		// Set Monday as start of the week
-		moment.updateLocale(LanguagesEnum.ENGLISH, {
-			week: { dow: dayOfWeekAsString(WeekDaysEnum.MONDAY) },
-			fallbackLocale: LanguagesEnum.ENGLISH
-		});
+		const uiConfig = getPluginUiConfig();
 
-		// Get the list of available languages from the LanguagesEnum
-		const availableLanguages: LanguagesEnum[] = Object.values(LanguagesEnum);
+		const localeOptions: moment.LocaleSpecification = {};
+		const dow = uiConfig.startWeekOn;
 
-		// Set the available languages in the translation service
-		this._i18nService.setAvailableLanguages(availableLanguages);
+		// Validate the day of the week number (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+		if (typeof dow === 'number' && dow >= 0 && dow <= 6) {
+			localeOptions.week = { dow };
+		}
+
+		/** Update the locale with the default language. */
+		moment.updateLocale(uiConfig.defaultLanguage, localeOptions);
+
+		// Set current locale with fallback chain (moment.locale accepts string[] for fallback)
+		const fallbackLocale = uiConfig.fallbackLocale ?? uiConfig.defaultLanguage;
+		moment.locale([uiConfig.defaultLanguage, fallbackLocale]);
+
+		// Set available languages from the UI plugin configuration (validate against LanguagesEnum)
+		const validLanguages = new Set<string>(Object.values(LanguagesEnum));
+		const validatedLanguages = (uiConfig.availableLanguages ?? []).filter((lang): lang is LanguagesEnum =>
+			validLanguages.has(lang)
+		);
+
+		this._i18nService.setAvailableLanguages(validatedLanguages);
 	}
 }
 

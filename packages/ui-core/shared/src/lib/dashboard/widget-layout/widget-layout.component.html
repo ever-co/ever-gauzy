@@ -1,18 +1,18 @@
 <div class="grid-boundary" cdkDropListGroup>
-  @for (widget of widgets; track widget; let index = $index) {
-    <div
-      cdkDropList
-      cdkDropListOrientation="horizontal"
-      [cdkDropListData]="index"
-      (cdkDropListDropped)="drop($event)"
-      >
-      <ga-widget
-        cdkDrag
-        (cdkDragEnded)="onDragEnded($event)"
-        [widgetDragEnded]="event"
-        [templateRef]="widget"
-        [position]="index"
-      ></ga-widget>
-    </div>
-  }
+	@for (widget of widgets; track widget; let index = $index) {
+		<div
+			cdkDropList
+			cdkDropListOrientation="horizontal"
+			[cdkDropListData]="index"
+			(cdkDropListDropped)="drop($event)"
+		>
+			<ga-widget
+				cdkDrag
+				(cdkDragEnded)="onDragEnded($event)"
+				[widgetDragEnded]="event"
+				[templateRef]="widget"
+				[position]="index"
+			></ga-widget>
+		</div>
+	}
 </div>

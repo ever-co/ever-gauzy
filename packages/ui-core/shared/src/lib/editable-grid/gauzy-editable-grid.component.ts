@@ -9,10 +9,10 @@ export type ItemActionType = 'create' | 'edit' | 'delete';
 
 @UntilDestroy()
 @Component({
-    selector: 'ga-editable-grid',
-    templateUrl: './gauzy-editable-grid.component.html',
-    styleUrls: ['./gauzy-editable-grid.component.scss'],
-    standalone: false
+	selector: 'ga-editable-grid',
+	templateUrl: './gauzy-editable-grid.component.html',
+	styleUrls: ['./gauzy-editable-grid.component.scss'],
+	standalone: false
 })
 export class GauzyEditableGridComponent<T extends { id?: string }>
 	extends TranslationBaseComponent
@@ -29,7 +29,10 @@ export class GauzyEditableGridComponent<T extends { id?: string }>
 	selectedItem: T;
 	currentAction: ItemActionType = null;
 
-	constructor(public readonly translateService: TranslateService, private dialogService: NbDialogService) {
+	constructor(
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService
+	) {
 		super(translateService);
 	}
 
@@ -47,12 +50,8 @@ export class GauzyEditableGridComponent<T extends { id?: string }>
 		this.currentAction = itemAction;
 		this.dialogService
 			.open(
-				template
-				// {
-				//   context: {
-				//     action: itemAction
-				//   }
-				// }
+				// Type assertion needed due to multiple @angular/core versions in monorepo causing TemplateRef type mismatch
+				template as any
 			)
 			.onClose.pipe(
 				tap(() => {

@@ -1,9 +1,10 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
-	AfterViewChecked,
 	AfterViewInit,
+	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	Component,
+	inject,
 	Input,
 	OnDestroy,
 	OnInit,
@@ -19,52 +20,61 @@ import { WindowService } from '../window/window.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-window-layout',
-    templateUrl: './window-layout.component.html',
-    styleUrls: ['./window-layout.component.scss'],
-    standalone: false
+	selector: 'ga-window-layout',
+	templateUrl: './window-layout.component.html',
+	styleUrls: ['./window-layout.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	standalone: false
 })
-export class WindowLayoutComponent
-	extends LayoutWithDraggableObject
-	implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy
-{
-	@Input() set windows(value: TemplateRef<HTMLElement>[]) {
-		this.draggableObject = value;
-	}
+export class WindowLayoutComponent extends LayoutWithDraggableObject implements OnInit, AfterViewInit, OnDestroy {
+	private readonly windowService = inject(WindowService);
+	private readonly cdr = inject(ChangeDetectorRef);
 
 	@ViewChildren(WindowComponent) listWindows: QueryList<GuiDrag>;
 
-	constructor(private windowService: WindowService, private readonly cdr: ChangeDetectorRef) {
-		super();
+	@Input()
+	set windows(value: TemplateRef<any>[]) {
+		this.draggableObject = value as any;
 	}
 
-	ngAfterViewInit(): void {
-		this.listWindows.changes
-			.pipe(
-				tap((listWindows: QueryList<GuiDrag>) => (this.windowService.windows$ = listWindows.toArray())),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	ngAfterViewChecked(): void {
-		this.cdr.detectChanges();
+	get windows() {
+		if (
+			this.windowService.windowsRef.length > 0 &&
+			(this.draggableObject as any) !== this.windowService.windowsRef
+		) {
+			this.draggableObject = this.windowService.windowsRef as any;
+		}
+		return this.draggableObject as any;
 	}
 
 	ngOnInit(): void {
-		this.windowService.windowsRef = this.draggableObject;
+		this.windowService.windowsRef = this.draggableObject as any;
+	}
+
+	ngAfterViewInit(): void {
+		this.listWidgets();
 	}
 
 	protected drop(event: CdkDragDrop<number, number, any>): void {
 		moveItemInArray(this.draggableObject, event.previousContainer.data, event.container.data);
-		this.windowService.windowsRef = this.draggableObject;
+		this.windowService.windowsRef = this.draggableObject as any;
 		this.windowService.save();
+		this.cdr.markForCheck();
 	}
 
-	get windows() {
-		if (this.windowService.windowsRef.length > 0 && this.draggableObject !== this.windowService.windowsRef)
-			this.draggableObject = this.windowService.windowsRef;
-		return this.draggableObject;
+	/**
+	 * Subscribe to list windows changes
+	 */
+	private listWidgets(): void {
+		this.listWindows.changes
+			.pipe(
+				tap((listWindows: QueryList<GuiDrag>) => {
+					this.windowService.windows$ = listWindows.toArray();
+					this.cdr.markForCheck();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy(): void {}

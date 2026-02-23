@@ -1,83 +1,76 @@
 <div class="row align-items-center clickable">
-  <div [class]="isDashboard ? 'col-sm-5' : 'col-sm-2'" [nbTooltip]="item.title">
-    <div class="row w-100 align-items-center">
-      @if (allowChild) {
-        <div class="arrow">
-          @if (childOpen) {
-            <button
-              nbButton
-              ghost
-              (click)="toggleChild()"
-              >
-              <nb-icon icon="arrow-ios-downward-outline"></nb-icon>
-            </button>
-          }
-          @if (!childOpen) {
-            <button
-              nbButton
-              ghost
-              (click)="toggleChild()"
-              >
-              <nb-icon icon="arrow-ios-forward-outline"></nb-icon>
-            </button>
-          }
-        </div>
-      }
-      <div [ngClass]="allowChild ? 'col child' : 'col no-child'">
-        {{ item.title }}
-      </div>
-    </div>
-  </div>
-  @if (!isDashboard) {
-    <div class="col-sm-3 times">{{ visitedDate }}</div>
-  }
-  <div class="col-sm-5">
-    <div class="row align-items-center">
-      <div class="col-auto percentage-col">
-        {{ item.durationPercentage || 0 }}%
-      </div>
-      <div class="col">
-        <nb-progress-bar
-          class="mb-1"
-          [value]="item.durationPercentage"
-          [status]="progressStatus(item.durationPercentage)"
-          [displayValue]="true"
-          size="tiny"
-          >
-        </nb-progress-bar>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-2 text-right">
-    {{ item.duration | durationFormat }}
-  </div>
-
+	<div [class]="isDashboard ? 'col-sm-5' : 'col-sm-2'" [nbTooltip]="item.title">
+		<div class="row w-100 align-items-center">
+			@if (allowChild) {
+			<div class="arrow">
+				@if (childOpen) {
+				<button nbButton ghost (click)="toggleChild()">
+					<nb-icon icon="arrow-ios-downward-outline"></nb-icon>
+				</button>
+				} @if (!childOpen) {
+				<button nbButton ghost (click)="toggleChild()">
+					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+				</button>
+				}
+			</div>
+			}
+			<div
+				[class.col]="allowChild"
+				[class.child]="allowChild"
+				[class.col]="!allowChild"
+				[class.no-child]="!allowChild"
+			>
+				{{ item.title }}
+			</div>
+		</div>
+	</div>
+	@if (!isDashboard) {
+	<div class="col-sm-3 times">{{ visitedDate }}</div>
+	}
+	<div class="col-sm-5">
+		<div class="row align-items-center">
+			<div class="col-auto percentage-col">{{ item.durationPercentage || 0 }}%</div>
+			<div class="col">
+				<nb-progress-bar
+					class="mb-1"
+					[value]="item.durationPercentage"
+					[status]="progressStatus(item.durationPercentage)"
+					[displayValue]="true"
+					size="tiny"
+				>
+				</nb-progress-bar>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-2 text-right">
+		{{ item.duration | durationFormat }}
+	</div>
 </div>
 @if (item?.childItems?.length && childOpen) {
-  <div class="child-items pt-3">
-    <div class="row pt-2 title pb-2">
-      <div class="col-sm-3">{{ 'TIMESHEET.TITLE' | translate }}</div>
-      <div class="col-sm-6">{{ 'TIMESHEET.URL' | translate }}</div>
-      <div class="col-sm-3 text-right">
-        {{ 'TIMESHEET.TIME_SPENT' | translate }}
-      </div>
-    </div>
-    @for (childItem of item.childItems; track childItem) {
-      <div class="row pt-2">
-        <div class="col-sm-3">
-          {{ childItem.title }}
-        </div>
-        <div class="col-sm-6">
-          <a [title]="childItem.title" [href]="childItem.url" target="_blank">
-            <span class="menu-title">
-              {{ childItem.url }}
-            </span>
-          </a>
-        </div>
-        <div class="col-sm-3 text-right">
-          {{ childItem.duration | durationFormat }}
-        </div>
-      </div>
-    }
-  </div>
+<div class="child-items pt-3">
+	<div class="row pt-2 title pb-2">
+		<div class="col-sm-3">{{ 'TIMESHEET.TITLE' | translate }}</div>
+		<div class="col-sm-6">{{ 'TIMESHEET.URL' | translate }}</div>
+		<div class="col-sm-3 text-right">
+			{{ 'TIMESHEET.TIME_SPENT' | translate }}
+		</div>
+	</div>
+	@for (childItem of item.childItems; track childItem) {
+	<div class="row pt-2">
+		<div class="col-sm-3">
+			{{ childItem.title }}
+		</div>
+		<div class="col-sm-6">
+			<a [title]="childItem.title" [href]="childItem.url" target="_blank">
+				<span class="menu-title">
+					{{ childItem.url }}
+				</span>
+			</a>
+		</div>
+		<div class="col-sm-3 text-right">
+			{{ childItem.duration | durationFormat }}
+		</div>
+	</div>
+	}
+</div>
 }

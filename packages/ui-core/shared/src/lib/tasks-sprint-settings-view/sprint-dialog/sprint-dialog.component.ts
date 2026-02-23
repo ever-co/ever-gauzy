@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IOrganizationSprint } from '@gauzy/contracts';
 
 const DEFAULTS = {
@@ -9,10 +9,10 @@ const DEFAULTS = {
 };
 
 @Component({
-    selector: 'ngx-sprint-dialog',
-    templateUrl: './sprint-dialog.component.html',
-    styleUrls: ['./sprint-dialog.component.scss'],
-    standalone: false
+	selector: 'ngx-sprint-dialog',
+	templateUrl: './sprint-dialog.component.html',
+	styleUrls: ['./sprint-dialog.component.scss'],
+	standalone: false
 })
 export class SprintDialogComponent implements OnInit {
 	@Input() action: 'create' | 'edit';

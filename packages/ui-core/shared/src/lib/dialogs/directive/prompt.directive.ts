@@ -1,4 +1,4 @@
-import { Directive, Input, Output, HostListener, EventEmitter, OnDestroy } from '@angular/core';
+import { Directive, Input, Output, HostListener, EventEmitter, OnDestroy, inject } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,8 +7,8 @@ import { PromptComponent, PromptDialogOptions } from '../prompt/prompt.component
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-    selector: '[ngxPromptDialog]',
-    standalone: false
+	selector: '[ngxPromptDialog]',
+	standalone: true
 })
 export class PromptDirective extends TranslationBaseComponent implements OnDestroy {
 	/*
@@ -79,8 +79,10 @@ export class PromptDirective extends TranslationBaseComponent implements OnDestr
 
 	@Output() callback = new EventEmitter<string | string[]>();
 
-	constructor(private readonly dialogService: NbDialogService, readonly translateService: TranslateService) {
-		super(translateService);
+	private readonly dialogService = inject(NbDialogService);
+
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	/**

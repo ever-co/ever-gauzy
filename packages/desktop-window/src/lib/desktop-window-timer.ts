@@ -1,6 +1,6 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, screen } from 'electron';
-import * as url from 'url';
+import * as url from 'node:url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
@@ -47,6 +47,8 @@ export async function createTimeTrackerWindow(
 	// Set the minimum size for the window
 	const { width, height } = getScreenSize();
 	timeTrackerWindow.setMinimumSize(width, height);
+
+	manager.overrideSystemContextMenu(timeTrackerWindow);
 
 	// Remove the menu from the window
 	timeTrackerWindow.setMenu(null);

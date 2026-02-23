@@ -1,21 +1,21 @@
 import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import * as timezone from 'moment-timezone';
+import timezone from 'moment-timezone';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-timezone-selector',
-    templateUrl: './timezone-selector.component.html',
-    styleUrls: ['./timezone-selector.component.scss'],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TimeZoneSelectorComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ga-timezone-selector',
+	templateUrl: './timezone-selector.component.html',
+	styleUrls: ['./timezone-selector.component.scss'],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TimeZoneSelectorComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class TimeZoneSelectorComponent implements OnInit, OnDestroy {
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));

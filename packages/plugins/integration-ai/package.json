@@ -26,6 +26,10 @@
 		"lib:build:prod": "yarn nx build plugin-integration-ai",
 		"lib:watch": "yarn nx build plugin-integration-ai --watch"
 	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
 	"dependencies": {
 		"@apollo/client": "^3.13.8",
 		"@gauzy/constants": "^0.1.0",
@@ -35,11 +39,10 @@
 		"@gauzy/utils": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
 		"@nestjs/cache-manager": "^3.1.0",
-		"@nestjs/common": "^11.1.12",
-		"@nestjs/config": "^4.0.2",
+		"@nestjs/config": "^4.0.3",
 		"@nestjs/cqrs": "^11.0.3",
-		"@nestjs/swagger": "^11.2.5",
-		"axios": "^1.9.0",
+		"@nestjs/swagger": "^11.2.6",
+		"axios": "^1.13.5",
 		"cache-manager": "^6.4.2",
 		"chalk": "^4.1.0",
 		"express": "^5.2.1",
@@ -47,7 +50,7 @@
 		"rxjs": "^7.8.2"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"
 	},

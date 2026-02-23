@@ -1,4 +1,3 @@
-import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
 import { IHelpCenterArticle, IHelpCenter, IHelpCenterAuthor, IEmployee, IOrganization } from '@gauzy/contracts';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -13,30 +12,61 @@ import { FormControl } from '@angular/forms';
 import { Store } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { firstValueFrom } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { SharedModule, SidebarModule, EmployeeMultiSelectModule, UserFormsModule } from '@gauzy/ui-core/shared';
+import {
+	NbCardModule,
+	NbButtonModule,
+	NbInputModule,
+	NbIconModule,
+	NbTooltipModule,
+	NbSpinnerModule
+} from '@nebular/theme';
+import { TranslateModule } from '@ngx-translate/core';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-help-center',
-    templateUrl: './help-center.component.html',
-    styleUrls: ['./help-center.component.scss'],
-    standalone: false
+	selector: 'ga-help-center',
+	templateUrl: './help-center.component.html',
+	styleUrls: ['./help-center.component.scss'],
+	standalone: true,
+	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
+		SharedModule,
+		NbCardModule,
+		NbButtonModule,
+		NbInputModule,
+		NbIconModule,
+		NbTooltipModule,
+		NbSpinnerModule,
+		TranslateModule,
+		SidebarModule,
+		EmployeeMultiSelectModule,
+		UserFormsModule,
+		NgxPermissionsModule
+	]
 })
 export class HelpCenterComponent extends TranslationBaseComponent implements OnDestroy, OnInit {
 	constructor(
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		readonly translateService: TranslateService,
 		private helpCenterArticleService: HelpCenterArticleService,
 		private readonly toastrService: ToastrService,
 		private helpCenterAuthorService: HelpCenterAuthorService,
 		private employeeService: EmployeesService,
-		private sanitizer: DomSanitizer,
-		private readonly store: Store
+		private readonly store: Store,
+		private sanitizer: DomSanitizer
 	) {
 		super(translateService);
 	}
 
-	public showData: boolean[] = [];
-	public dataArray: SafeHtml[] = [];
+	public expandedArticles: Set<string> = new Set();
+	public articleContent: Map<string, SafeHtml | string> = new Map();
 	public employees: IEmployee[] = [];
 	public articleList: IHelpCenterArticle[] = [];
 	public isResetSelect = false;
@@ -49,7 +79,6 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 	loading: boolean;
 	organization: IOrganization;
 	selectedItem = {
-		index: null,
 		isSelected: false,
 		article: null
 	};
@@ -87,8 +116,12 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		this.loadArticles(this.categoryId);
 	}
 
-	openArticle(i) {
-		this.showData[i] = !this.showData[i];
+	openArticle(article: IHelpCenterArticle) {
+		if (this.expandedArticles.has(article.id)) {
+			this.expandedArticles.delete(article.id);
+		} else {
+			this.expandedArticles.add(article.id);
+		}
 	}
 
 	deletedNode() {
@@ -99,14 +132,15 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 
 	async loadArticles(id) {
 		this.loading = true;
-		this.showData = [];
-		this.dataArray = [];
+		this.expandedArticles.clear();
+		this.articleContent.clear();
 		const result = await this.helpCenterArticleService.findByCategoryId(id);
 		if (result) {
 			this.articleList = result;
-			for (let i = 0; i < this.articleList.length; i++) {
-				this.showData.push(false);
-				this.dataArray.push(this.sanitizer.bypassSecurityTrustHtml(this.articleList[i].data));
+			for (const article of this.articleList) {
+				if (article.data) {
+					this.articleContent.set(article.id, this.sanitizer.bypassSecurityTrustHtml(article.data));
+				}
 			}
 		}
 		this.filteredArticles = this.articleList;
@@ -196,10 +230,10 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		}
 	}
 
-	async deleteNode(i: number) {
+	async deleteNode(article: IHelpCenterArticle) {
 		const dialog = this.dialogService.open(DeleteArticleComponent, {
 			context: {
-				article: this.articleList[i]
+				article: article
 			}
 		});
 		const data = await firstValueFrom(dialog.onClose);
@@ -211,11 +245,11 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		}
 	}
 
-	async editNode(i: number) {
+	async editNode(article: IHelpCenterArticle) {
 		const chosenType = 'edit';
 		const dialog = this.dialogService.open(AddArticleComponent, {
 			context: {
-				article: this.articleList[i],
+				article: article,
 				editType: chosenType,
 				length: this.articleList.length,
 				id: this.categoryId
@@ -230,25 +264,23 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		}
 	}
 
-	selectItem(index: number, article: IHelpCenterArticle) {
-		this.selectedItem = this.isSelected(index, article)
+	selectItem(article: IHelpCenterArticle) {
+		this.selectedItem = this.isSelected(article)
 			? {
-					index: null,
-					isSelected: !this.selectedItem.isSelected,
+					isSelected: false,
 					article: null
 			  }
 			: {
-					index: index,
 					isSelected: true,
 					article: article
 			  };
 		this.isDisable = !this.selectedItem.isSelected;
 	}
 
-	isSelected(index: number, article: IHelpCenterArticle) {
-		return (
+	isSelected(article: IHelpCenterArticle): boolean {
+		return !!(
 			this.selectedItem.isSelected &&
-			this.selectedItem.index === index &&
+			this.selectedItem.article &&
 			article.id === this.selectedItem.article.id
 		);
 	}
