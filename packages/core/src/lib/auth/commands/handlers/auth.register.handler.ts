@@ -34,28 +34,20 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 			// Get tenant id from request context
 			const tenantId = RequestContext.currentTenantId();
 
-			// Resolve it to a role entity to get the name
+			// Resolve role entity to get the name
 			try {
-				let role: IRole;
-				switch (getORMType()) {
-					case MultiORMEnum.MikroORM:
-						role = await this.mikroOrmRoleRepository.findOneOrFail({
-							id: input.user.roleId,
-							...(tenantId ? { tenantId } : {})
-						});
-						break;
+				const whereCondition = {
+					id: input.user.roleId,
+					...(tenantId ? { tenantId } : {})
+				};
 
-					case MultiORMEnum.TypeORM:
-					default:
-						role = await this.typeOrmRoleRepository.findOneByOrFail({
-							id: input.user.roleId,
-							...(tenantId ? { tenantId } : {})
-						});
-						break;
-				}
+				const role: IRole =
+					getORMType() === MultiORMEnum.MikroORM
+						? await this.mikroOrmRoleRepository.findOneOrFail(whereCondition)
+						: await this.typeOrmRoleRepository.findOneByOrFail(whereCondition);
 
 				targetRoleName = role.name;
-			} catch {
+			} catch (error) {
 				throw new BadRequestException('The specified roleId does not reference a valid role.');
 			}
 		} else if (input.user?.role?.name) {
@@ -72,9 +64,7 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 			const createdByUserId = input.createdByUserId;
 
 			// Fetch role details of the creator
-			const { role } = await this.userService.findOneByIdString(createdByUserId, {
-				relations: { role: true }
-			});
+			const { role } = await this.userService.findOneByIdString(createdByUserId, { relations: { role: true } });
 
 			// Verify if the creator's role is SUPER_ADMIN
 			if (role.name !== RolesEnum.SUPER_ADMIN) {

@@ -1,10 +1,12 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { environment as env } from '@gauzy/config';
-import { IRole, RolesEnum } from '@gauzy/contracts';
+import { IOrganization, IRole, RolesEnum } from '@gauzy/contracts';
 import { verify } from 'jsonwebtoken';
 import { RequestContext } from '../../core/context';
 import { TypeOrmRoleRepository } from '../../role/repository/type-orm-role.repository';
 import { MikroOrmRoleRepository } from '../../role/repository/mikro-orm-role.repository';
+import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
+import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
 import { getORMType, MultiORMEnum } from '../../core/utils';
 
 /**
@@ -63,7 +65,9 @@ function getIdFromRelation(rel: unknown): string | undefined {
 export class RegisterAuthorizationGuard implements CanActivate {
 	constructor(
 		private readonly typeOrmRoleRepository: TypeOrmRoleRepository,
-		private readonly mikroOrmRoleRepository: MikroOrmRoleRepository
+		private readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
+		private readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
+		private readonly mikroOrmOrganizationRepository: MikroOrmOrganizationRepository
 	) {}
 
 	/**
@@ -154,6 +158,37 @@ export class RegisterAuthorizationGuard implements CanActivate {
 					throw error;
 				}
 				throw new ForbiddenException('The specified role does not exist.');
+			}
+		}
+
+		// Validate tenant isolation for organizationId (top-level)
+		const targetOrganizationId = body.organizationId;
+
+		if (targetOrganizationId && typeof targetOrganizationId === 'string') {
+			try {
+				let organization: IOrganization;
+				switch (getORMType()) {
+					case MultiORMEnum.MikroORM:
+						organization = await this.mikroOrmOrganizationRepository.findOneOrFail({ id: targetOrganizationId });
+						break;
+					case MultiORMEnum.TypeORM:
+						organization = await this.typeOrmOrganizationRepository.findOneByOrFail({ id: targetOrganizationId });
+						break;
+					default:
+						throw new Error(`Not implemented for ${getORMType()}`);
+				}
+
+				// Verify the target organization belongs to the caller's tenant
+				if (organization.tenantId !== callerTenantId) {
+					throw new ForbiddenException(
+						'Tenant isolation violation: the specified organization does not belong to your tenant.'
+					);
+				}
+			} catch (error) {
+				if (error instanceof ForbiddenException) {
+					throw error;
+				}
+				throw new ForbiddenException('The specified organization does not exist.');
 			}
 		}
 
