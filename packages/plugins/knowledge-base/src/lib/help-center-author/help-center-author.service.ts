@@ -44,12 +44,12 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 	 * @param ids
 	 * @returns
 	 */
-	async deleteBulk(ids: string[]): Promise<DeleteResult | []> {
+	async deleteBulk(ids: string[]): Promise<DeleteResult> {
 		if (isNotEmpty(ids)) {
 			return await this.delete({ id: In(ids) } as FindOptionsWhere<HelpCenterAuthor>);
 		}
 
-		return [];
+		return { affected: 0, raw: [] };
 	}
 
 	/**

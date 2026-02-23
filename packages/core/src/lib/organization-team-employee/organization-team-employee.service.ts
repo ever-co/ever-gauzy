@@ -57,10 +57,13 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
 		// Fetch existing team members with their roles
-		const teamMembers = await this.find({
-			where: { tenantId, organizationId, organizationTeamId },
-			relations: { role: true }
-		});
+		// Bypass employee filter since authorization is handled at a higher level
+		const teamMembers = await this.withoutEmployeeFilter(() =>
+			this.find({
+				where: { tenantId, organizationId, organizationTeamId },
+				relations: { role: true }
+			})
+		);
 
 		// Create a map for fast lookup of current team members
 		const existingMemberMap = new Map(teamMembers.map((member) => [member.employeeId, member]));
@@ -245,14 +248,20 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 			if (employeeId) {
 				// Check if employee is a manager of the team
+				let isManager = false;
 				try {
 					await this.findOneByWhereOptions({
 						...whereClause,
 						role: { name: RolesEnum.MANAGER }
 					});
+					isManager = true;
+				} catch {
+					// Employee is not a manager
+				}
 
-					// If employee is a manager, bypass the employee filter for the lookup
-					// since manager authorization is verified
+				if (isManager) {
+					// Manager can update any team member's active task
+					// Bypass the employee filter since manager authorization is verified
 					const member = await this.withoutEmployeeFilter(() =>
 						this.findOneByWhereOptions({ ...whereClause, id: memberId })
 					);
@@ -262,12 +271,10 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						{ id: member.id, organizationId, organizationTeamId, tenantId },
 						{ activeTaskId }
 					);
-				} catch (error) {
-					// If employee is not a manager, update the active task ID for themselves
-					whereClause.employeeId = employeeId;
 				}
 
-				// Find the organization team employee (for non-manager self-update case)
+				// Non-manager can only update their own active task
+				whereClause.employeeId = employeeId;
 				const member = await this.findOneByWhereOptions(whereClause);
 
 				// Update the active task ID
@@ -325,15 +332,21 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					throw new ForbiddenException('You do not have permission to delete this team member.');
 				}
 
+				// Check if employee is a manager of the team
+				let isManager = false;
 				try {
-					// If employee has manager of the team, he/she should be able to remove members from the team
 					await this.findOneByWhereOptions({
 						...whereClause,
 						role: { name: RolesEnum.MANAGER }
 					});
+					isManager = true;
+				} catch {
+					// Employee is not a manager
+				}
 
-					// If employee is a manager, bypass the employee filter for the lookup
-					// since manager authorization is verified
+				if (isManager) {
+					// Manager can delete any team member
+					// Bypass the employee filter since manager authorization is verified
 					const member = await this.withoutEmployeeFilter(() =>
 						this.findOneByWhereOptions({ ...whereClause, id: memberId })
 					);
@@ -343,12 +356,10 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 					// Remove the team member
 					return await this.delete(member.id);
-				} catch (error) {
-					// If employee is not a manager, he/she can only remove himself from the team
-					whereClause.employeeId = employeeId;
 				}
 
-				// Find the organization team employee (for non-manager self-removal case)
+				// Non-manager can only remove themselves from the team
+				whereClause.employeeId = employeeId;
 				const member = await this.findOneByWhereOptions(whereClause);
 
 				// Unassign employee all tasks before removing from the team
