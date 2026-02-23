@@ -4,7 +4,6 @@ import {
 	IsBoolean,
 	IsNotEmpty,
 	IsNotEmptyObject,
-	IsObject,
 	IsOptional,
 	IsUUID,
 	MinLength,
@@ -33,9 +32,7 @@ export class RegisterUserDTO implements IUserRegistrationInput {
 	readonly confirmPassword: string;
 
 	@ApiProperty({ type: () => CreateUserDTO })
-	@IsObject()
 	@IsNotEmptyObject()
-	@IsNotEmpty({ message: 'User should not be empty' })
 	@ValidateNested()
 	@Type(() => CreateUserDTO)
 	readonly user: CreateUserDTO;

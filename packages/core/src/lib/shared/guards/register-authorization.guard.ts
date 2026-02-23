@@ -157,7 +157,7 @@ export class RegisterAuthorizationGuard implements CanActivate {
 				if (error instanceof ForbiddenException) {
 					throw error;
 				}
-				// Do not leak whether role e	xists in another tenant
+				// Do not leak whether role exists in another tenant
 				throw new ForbiddenException('The specified role does not exist.');
 			}
 		}
