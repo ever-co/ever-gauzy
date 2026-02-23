@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
 import { ICandidateCriterionsRating, ICandidateCriterionsRatingCreateInput, ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
@@ -40,17 +39,6 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 				feedbackId
 			})
 			.getMany();
-	}
-
-	/**
-	 *
-	 * @param ids
-	 * @returns
-	 */
-	async deleteBulk(ids: ID[]) {
-		if (ids.length > 0) {
-			await this.delete({ id: In(ids) } as any);
-		}
 	}
 
 	/**

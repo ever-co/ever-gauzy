@@ -3,23 +3,13 @@ import { CandidateInterviewersService } from '../../candidate-interviewers.servi
 import { CandidateInterviewersInterviewBulkDeleteCommand } from '../candidate-interviewers.interview.bulk.delete.command';
 
 @CommandHandler(CandidateInterviewersInterviewBulkDeleteCommand)
-export class CandidateInterviewersInterviewBulkDeleteHandler
-	implements
-		ICommandHandler<CandidateInterviewersInterviewBulkDeleteCommand> {
-	constructor(
-		private readonly candidateInterviewersService: CandidateInterviewersService
-	) {}
+export class CandidateInterviewersInterviewBulkDeleteHandler implements ICommandHandler<CandidateInterviewersInterviewBulkDeleteCommand> {
+	constructor(private readonly candidateInterviewersService: CandidateInterviewersService) {}
 
-	public async execute(
-		command: CandidateInterviewersInterviewBulkDeleteCommand
-	): Promise<any> {
+	public async execute(command: CandidateInterviewersInterviewBulkDeleteCommand): Promise<any> {
 		const { id } = command;
-		const interviewers = await this.candidateInterviewersService.getInterviewersByInterviewId(
-			id
-		);
-		await this.candidateInterviewersService.deleteBulk(
-			interviewers.map((item) => item.id)
-		);
+		const interviewers = await this.candidateInterviewersService.getInterviewersByInterviewId(id);
+		await this.candidateInterviewersService.deleteMany(interviewers.map((item) => item.id));
 
 		return;
 	}

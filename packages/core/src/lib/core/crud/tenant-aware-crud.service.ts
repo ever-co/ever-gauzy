@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, FindManyOptions, FindOneOptions, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, FindManyOptions, FindOneOptions, In, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
@@ -513,6 +513,43 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		} catch (err) {
 			console.error('Error during delete operation:', err);
 			throw new NotFoundException(`The record was not found`, err);
+		}
+	}
+
+	/**
+	 * Deletes multiple records by their IDs with tenant scoping.
+	 * Verifies records exist within the current tenant before deletion.
+	 *
+	 * @param ids - An array of entity IDs to delete.
+	 * @returns {Promise<DeleteResult>} - Result indicating the number of affected records.
+	 */
+	public async deleteMany(ids: ID[]): Promise<DeleteResult> {
+		if (!ids.length) {
+			return { affected: 0, raw: [] } as DeleteResult;
+		}
+
+		try {
+			const tenantId = RequestContext.currentTenantId();
+
+			// Retrieve matching entities scoped to the current tenant
+			const entities = await this.find({
+				where: {
+					id: In(ids),
+					...(tenantId ? { tenantId } : {})
+				} as FindOptionsWhere<T>
+			});
+
+			// Extract IDs of entities that actually belong to this tenant
+			const tenantScopedIds = entities.map((entity) => entity.id);
+
+			if (!tenantScopedIds.length) {
+				return { affected: 0, raw: [] } as DeleteResult;
+			}
+
+			return await super.deleteMany(tenantScopedIds);
+		} catch (err) {
+			console.error('Error during deleteMany operation:', err);
+			throw err;
 		}
 	}
 

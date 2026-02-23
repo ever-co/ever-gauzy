@@ -9,6 +9,7 @@ import {
 	FindManyOptions,
 	FindOneOptions,
 	FindOptionsWhere,
+	In,
 	Repository,
 	SaveOptions,
 	UpdateResult
@@ -647,6 +648,36 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			}
 		} catch (error) {
 			throw new NotFoundException(`The record was not found`, error);
+		}
+	}
+
+	/**
+	 * Deletes multiple records by their IDs in a single bulk operation.
+	 * More efficient than calling delete() in a loop as it batches the database operations.
+	 * Uses native ORM operators (TypeORM `In`, MikroORM `$in`) for optimal performance.
+	 *
+	 * @param ids - An array of entity IDs to delete.
+	 * @returns {Promise<DeleteResult>} - Result indicating the number of affected records.
+	 */
+	public async deleteMany(ids: ID[]): Promise<DeleteResult> {
+		if (!ids.length) {
+			return { affected: 0, raw: [] } as DeleteResult;
+		}
+
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const filter = { id: { $in: ids } } as any;
+					const affected = await this.mikroOrmRepository.nativeDelete(filter);
+					return { affected } as DeleteResult;
+				}
+				case MultiORMEnum.TypeORM:
+					return await this.typeOrmRepository.delete({ id: In(ids) } as FindOptionsWhere<T>);
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+		} catch (error) {
+			throw new NotFoundException(`The records were not found`, error);
 		}
 	}
 

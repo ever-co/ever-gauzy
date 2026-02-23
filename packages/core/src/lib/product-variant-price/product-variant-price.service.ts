@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In, DeleteResult } from 'typeorm';
-import { MultiORMEnum } from './../core/utils';
+import { DeleteResult } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductVariantPrice } from './product-variant-price.entity';
 import { TypeOrmProductVariantPriceRepository } from './repository/type-orm-product-variant-price.repository';
@@ -31,14 +30,10 @@ export class ProductVariantPriceService extends TenantAwareCrudService<ProductVa
 	 * @param productVariantPrices
 	 * @returns
 	 */
-	async deleteMany(productVariantPrices: ProductVariantPrice[]): Promise<DeleteResult | []> {
+	async deleteManyPrices(productVariantPrices: ProductVariantPrice[]): Promise<DeleteResult | []> {
 		const ids = productVariantPrices.map((p) => p.id).filter((id): id is string => !!id);
 		if (ids.length > 0) {
-			if (this.ormType === MultiORMEnum.MikroORM) {
-				return await this.delete({ id: { $in: ids } } as any);
-			} else {
-				return await this.delete({ id: In(ids) });
-			}
+			return await super.deleteMany(ids);
 		}
 		return [];
 	}

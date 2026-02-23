@@ -3,23 +3,14 @@ import { CandidateCriterionsRatingBulkDeleteCommand } from '../candidate-criteri
 import { CandidateCriterionsRatingService } from '../../candidate-criterion-rating.service';
 
 @CommandHandler(CandidateCriterionsRatingBulkDeleteCommand)
-export class CandidateCriterionsRatingBulkDeleteHandler
-	implements ICommandHandler<CandidateCriterionsRatingBulkDeleteCommand> {
-	constructor(
-		private readonly candidateCriterionsRatingService: CandidateCriterionsRatingService
-	) {}
+export class CandidateCriterionsRatingBulkDeleteHandler implements ICommandHandler<CandidateCriterionsRatingBulkDeleteCommand> {
+	constructor(private readonly candidateCriterionsRatingService: CandidateCriterionsRatingService) {}
 
-	public async execute(
-		command: CandidateCriterionsRatingBulkDeleteCommand
-	): Promise<any> {
+	public async execute(command: CandidateCriterionsRatingBulkDeleteCommand): Promise<any> {
 		const { id } = command;
-		const criterions = await this.candidateCriterionsRatingService.getCriterionsByFeedbackId(
-			id
-		);
+		const criterions = await this.candidateCriterionsRatingService.getCriterionsByFeedbackId(id);
 		if (criterions.length > 0) {
-			await this.candidateCriterionsRatingService.deleteBulk(
-				criterions.map((item) => item.id)
-			);
+			await this.candidateCriterionsRatingService.deleteMany(criterions.map((item) => item.id));
 		}
 		return;
 	}

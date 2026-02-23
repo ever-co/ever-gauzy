@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
 import { ICandidatePersonalQualities, ICandidatePersonalQualitiesCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { TypeOrmCandidatePersonalQualitiesRepository } from './repository/type-orm-candidate-personal-qualities.repository';
@@ -36,16 +35,5 @@ export class CandidatePersonalQualitiesService extends TenantAwareCrudService<Ca
 				interviewId
 			})
 			.getMany();
-	}
-
-	/**
-	 *
-	 * @param ids
-	 * @returns
-	 */
-	async deleteBulk(ids: string[]) {
-		if (ids.length > 0) {
-			await this.delete({ id: In(ids) } as any);
-		}
 	}
 }

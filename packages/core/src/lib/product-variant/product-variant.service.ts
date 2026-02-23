@@ -50,8 +50,8 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 		return this.save(productVariant);
 	}
 
-	async deleteMany(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
-		const ids = productVariants.filter((v) => v.id).map((v) => v.id);
+	async deleteManyVariants(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
+		const ids = productVariants.map((v) => v.id).filter((id): id is string => !!id);
 		if (ids.length > 0) {
 			const entities = await this.find({
 				where: {
