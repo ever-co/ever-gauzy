@@ -125,7 +125,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				isArchived: false
 			});
 		} catch (error) {
-			console.error('Error while retrieving employees', error);
 			throw new Error(`Failed to retrieve employees: ${error}`);
 		}
 	}
@@ -149,7 +148,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			};
 
 			// Use base class find which handles both ORMs and tenant scoping
-			return (await this.find(options)) as Employee[];
+			return await this.find(options);
 		} catch (error) {
 			console.error(`Error finding employees by user IDs: ${error.message}`);
 			return []; // Return an empty array if an error occurs

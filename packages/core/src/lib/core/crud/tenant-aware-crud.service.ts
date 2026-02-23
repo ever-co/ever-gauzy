@@ -51,12 +51,14 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
-	 * Define find conditions when retrieving data with employee by user.
+	 * Builds TypeORM find conditions to restrict data
+	 * to the currently logged-in employee.
 	 *
-	 * @returns The find conditions based on the current user's relationship with employees.
+	 * If the user has permission to change the selected employee
+	 * or filtering is skipped, no automatic restriction is applied.
 	 */
 	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T> {
-		// If skipEmployeeFilter is enabled, don't apply automatic filtering
+		// Skip automatic filtering if explicitly disabled
 		if (this.getSkipEmployeeFilter()) {
 			return {} as FindOptionsWhere<T>;
 		}
@@ -64,26 +66,17 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const employeeId = RequestContext.currentEmployeeId();
 
 		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
-		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		const canChangeEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 
-		return (
-			/**
-			 * If the employee has logged in, retrieve their own data unless
-			 * they have the permission to change the selected employee.
-			 */
-			(
-				isNotEmpty(employeeId)
-					? !hasPermission && hasEmployeeColumn
-						? {
-								employee: {
-									id: employeeId
-								},
-								employeeId: employeeId
-							}
-						: {}
-					: {}
-			) as FindOptionsWhere<T>
-		);
+		// Restrict to current employee only
+		if (isNotEmpty(employeeId) && hasEmployeeColumn && !canChangeEmployee) {
+			return {
+				employee: { id: employeeId },
+				employeeId
+			} as unknown as FindOptionsWhere<T>;
+		}
+
+		return {} as FindOptionsWhere<T>;
 	}
 
 	/**
