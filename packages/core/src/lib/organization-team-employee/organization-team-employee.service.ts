@@ -251,15 +251,25 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						role: { name: RolesEnum.MANAGER }
 					});
 
-					// If employee is a manager, update the active task ID for the team
-					whereClause.id = memberId;
+					// If employee is a manager, bypass the employee filter for the lookup
+					// since manager authorization is verified
+					const member = await this.withoutEmployeeFilter(() =>
+						this.findOneByWhereOptions({ ...whereClause, id: memberId })
+					);
+
+					// Update the active task ID
+					return await super.update(
+						{ id: member.id, organizationId, organizationTeamId, tenantId },
+						{ activeTaskId }
+					);
 				} catch (error) {
 					// If employee is not a manager, update the active task ID for themselves
 					whereClause.employeeId = employeeId;
 				}
 
-				// Find the organization team employee
+				// Find the organization team employee (for non-manager self-update case)
 				const member = await this.findOneByWhereOptions(whereClause);
+
 				// Update the active task ID
 				return await super.update(
 					{ id: member.id, organizationId, organizationTeamId, tenantId },
@@ -322,14 +332,23 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						role: { name: RolesEnum.MANAGER }
 					});
 
-					// If employee is a manager, remove the member from the team
-					whereClause.id = memberId;
+					// If employee is a manager, bypass the employee filter for the lookup
+					// since manager authorization is verified
+					const member = await this.withoutEmployeeFilter(() =>
+						this.findOneByWhereOptions({ ...whereClause, id: memberId })
+					);
+
+					// Unassign employee all tasks before removing from the team
+					await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
+
+					// Remove the team member
+					return await this.delete(member.id);
 				} catch (error) {
 					// If employee is not a manager, he/she can only remove himself from the team
 					whereClause.employeeId = employeeId;
 				}
 
-				// Find the organization team employee
+				// Find the organization team employee (for non-manager self-removal case)
 				const member = await this.findOneByWhereOptions(whereClause);
 
 				// Unassign employee all tasks before removing from the team
