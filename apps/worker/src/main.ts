@@ -1,19 +1,29 @@
-/**
- * This is not a production server yet!
- * This is only a minimal backend to get started.
- */
-
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app/app.module';
+import { loadEnv } from './load-env';
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule);
-	const globalPrefix = 'api';
-	app.setGlobalPrefix(globalPrefix);
-	const port = process.env.PORT || 3000;
-	await app.listen(port);
-	Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
+	loadEnv();
+	const { AppModule } = await import('./app/app.module');
+
+	const app = await NestFactory.createApplicationContext(AppModule, {
+		logger: ['log', 'error', 'warn', 'debug', 'verbose']
+	});
+
+	Logger.log('Worker application started.', 'WorkerBootstrap');
+
+	const shutdown = async (signal: string): Promise<void> => {
+		Logger.log(`Received ${signal}, closing worker...`, 'WorkerBootstrap');
+		await app.close();
+		process.exit(0);
+	};
+
+	process.on('SIGINT', () => {
+		void shutdown('SIGINT');
+	});
+	process.on('SIGTERM', () => {
+		void shutdown('SIGTERM');
+	});
 }
 
-bootstrap();
+void bootstrap();

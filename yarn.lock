@@ -20588,7 +20588,7 @@ cron-parser@4.9.0, cron-parser@^4.2.0:
   dependencies:
     luxon "^3.2.1"
 
-cron@4.4.0:
+cron@4.4.0, cron@^4.3.3:
   version "4.4.0"
   resolved "https://registry.npmjs.org/cron/-/cron-4.4.0.tgz#1488444a23ea7134e2b7686c17711abdffcebba8"
   integrity sha512-fkdfq+b+AHI4cKdhZlppHveI/mgz2qpiYxcm+t5E5TsxX7QrLS1VE0+7GENEk9z0EeGPcpSciGv6ez24duWhwQ==
