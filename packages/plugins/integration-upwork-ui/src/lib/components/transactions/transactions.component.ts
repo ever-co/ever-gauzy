@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -6,14 +6,14 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { IOrganization } from '@gauzy/contracts';
 import { ErrorHandlingService, Store, ToastrService, UpworkService } from '@gauzy/ui-core/core';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
 	selector: 'ngx-transactions',
 	templateUrl: './transactions.component.html',
 	styleUrls: ['./transactions.component.scss'],
 	standalone: false
 })
-export class TransactionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class TransactionsComponent extends TranslationBaseComponent implements OnInit {
 	private readonly _upworkService = inject(UpworkService);
 	private readonly _store = inject(Store);
 	private readonly toastrService = inject(ToastrService);
@@ -36,8 +36,6 @@ export class TransactionsComponent extends TranslationBaseComponent implements O
 				this._selectedOrganizationId = organization.id;
 			});
 	}
-
-	ngOnDestroy(): void {}
 
 	imageUrlChanged(event) {
 		const [file] = event.target.files;

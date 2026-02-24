@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
@@ -9,13 +9,13 @@ import { ID, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { Store, UpworkStoreService } from '@gauzy/ui-core/core';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
 	selector: 'ngx-upwork',
 	templateUrl: './upwork.component.html',
 	standalone: false
 })
-export class UpworkComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class UpworkComponent extends TranslationBaseComponent implements OnInit {
 	private readonly _router = inject(Router);
 	private readonly _activatedRoute = inject(ActivatedRoute);
 	private readonly _upworkStore = inject(UpworkStoreService);
@@ -136,6 +136,4 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit,
 	navigateToIntegrations(): void {
 		this._router.navigate(['/pages/integrations']);
 	}
-
-	ngOnDestroy(): void {}
 }

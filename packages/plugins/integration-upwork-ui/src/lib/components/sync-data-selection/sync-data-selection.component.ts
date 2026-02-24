@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { IEngagement } from '@gauzy/contracts';
@@ -8,14 +8,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ErrorHandlingService, ToastrService, UpworkStoreService } from '@gauzy/ui-core/core';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
 	selector: 'ngx-sync-data-selection',
 	templateUrl: './sync-data-selection.component.html',
 	styleUrls: ['./sync-data-selection.component.scss'],
 	standalone: false
 })
-export class SyncDataSelectionComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class SyncDataSelectionComponent extends TranslationBaseComponent {
 	private readonly _us = inject(UpworkStoreService);
 	private readonly toastrService = inject(ToastrService);
 	public readonly dialogRef = inject(NbDialogRef<SyncDataSelectionComponent>);
@@ -27,8 +27,6 @@ export class SyncDataSelectionComponent extends TranslationBaseComponent impleme
 	constructor() {
 		super(inject(TranslateService));
 	}
-
-	ngOnInit(): void {}
 
 	syncData() {
 		this._us
@@ -52,6 +50,4 @@ export class SyncDataSelectionComponent extends TranslationBaseComponent impleme
 			this._us.setSelectedEmployeeId(employee.id);
 		}
 	}
-
-	ngOnDestroy(): void {}
 }

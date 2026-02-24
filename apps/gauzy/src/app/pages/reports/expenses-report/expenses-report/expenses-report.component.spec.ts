@@ -18,4 +18,3 @@ describe('ExpensesReportComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
-

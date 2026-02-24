@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterViewInit, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, AfterViewInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, catchError, debounceTime, filter, of, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -10,14 +10,14 @@ import { Store, UpworkStoreService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DateViewComponent, IncomeExpenseAmountComponent } from '@gauzy/ui-core/shared';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
 	selector: 'ngx-upwork-reports',
 	templateUrl: './reports.component.html',
 	styleUrls: ['./reports.component.scss'],
 	standalone: false
 })
-export class ReportsComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ReportsComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
 	private readonly cdr = inject(ChangeDetectorRef);
 	private readonly _upworkStoreService = inject(UpworkStoreService);
 	private readonly _storeService = inject(Store);
@@ -277,6 +277,4 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 		}
 		return moment(this.selectedDateRange.end).isSameOrAfter(this.today, 'day');
 	}
-
-	ngOnDestroy(): void {}
 }

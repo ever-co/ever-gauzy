@@ -13,7 +13,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DateViewComponent } from '@gauzy/ui-core/shared';
 import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-selection.component';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
 	selector: 'ngx-contracts',
 	templateUrl: './contracts.component.html',

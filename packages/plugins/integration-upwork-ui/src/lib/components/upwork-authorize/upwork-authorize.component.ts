@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, debounceTime } from 'rxjs';
@@ -13,14 +13,14 @@ import {
 } from '@gauzy/contracts';
 import { IntegrationsService, Store, UpworkService } from '@gauzy/ui-core/core';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
 	selector: 'ngx-upwork-authorize',
 	templateUrl: './upwork-authorize.component.html',
 	styleUrls: ['./upwork-authorize.component.scss'],
 	standalone: false
 })
-export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
+export class UpworkAuthorizeComponent implements OnInit {
 	private readonly _fb = inject(UntypedFormBuilder);
 	private readonly _upworkService = inject(UpworkService);
 	private readonly _activatedRoute = inject(ActivatedRoute);
@@ -138,6 +138,4 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	private _redirectToUpworkIntegration(integrationId: string) {
 		this._router.navigate(['pages/integrations/upwork', integrationId]);
 	}
-
-	ngOnDestroy(): void {}
 }
