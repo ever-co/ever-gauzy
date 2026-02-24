@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,13 +11,14 @@ import { ErrorHandlingService, Store, ToastrService, UpworkService } from '@gauz
 	selector: 'ngx-transactions',
 	templateUrl: './transactions.component.html',
 	styleUrls: ['./transactions.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionsComponent extends TranslationBaseComponent implements OnInit {
 	private readonly _upworkService = inject(UpworkService);
 	private readonly _store = inject(Store);
-	private readonly toastrService = inject(ToastrService);
-	private readonly errorHandler = inject(ErrorHandlingService);
+	private readonly _toastrService = inject(ToastrService);
+	private readonly _errorHandler = inject(ErrorHandlingService);
 
 	private _selectedOrganizationId: string;
 	file: File;
@@ -55,7 +56,7 @@ export class TransactionsComponent extends TranslationBaseComponent implements O
 			)
 			.subscribe(
 				({ totalExpenses, totalIncomes }) => {
-					this.toastrService.success(
+					this._toastrService.success(
 						this.getTranslation('INTEGRATIONS.TOTAL_UPWORK_TRANSACTIONS_SUCCEED', {
 							totalExpenses,
 							totalIncomes
@@ -64,7 +65,7 @@ export class TransactionsComponent extends TranslationBaseComponent implements O
 				},
 				(err) => {
 					// added infinite duration to error toastr, error message can be too long to read in 3 sec
-					this.errorHandler.handleError(err, 0);
+					this._errorHandler.handleError(err, 0);
 				}
 			);
 	}

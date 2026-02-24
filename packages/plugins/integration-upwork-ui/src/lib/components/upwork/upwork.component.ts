@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
@@ -13,13 +13,15 @@ import { Store, UpworkStoreService } from '@gauzy/ui-core/core';
 @Component({
 	selector: 'ngx-upwork',
 	templateUrl: './upwork.component.html',
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UpworkComponent extends TranslationBaseComponent implements OnInit {
 	private readonly _router = inject(Router);
 	private readonly _activatedRoute = inject(ActivatedRoute);
 	private readonly _upworkStore = inject(UpworkStoreService);
 	private readonly _store = inject(Store);
+	private readonly _cdr = inject(ChangeDetectorRef);
 
 	public tabs: NbRouteTab[] = [];
 	public menus: NbMenuItem[] = [];
@@ -36,14 +38,20 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 
 		this._activatedRoute.params
 			.pipe(
-				tap((params: Params) => (this.integrationId = params['id'])),
+				tap((params: Params) => {
+					this.integrationId = params['id'];
+					this._cdr.markForCheck();
+				}),
 				tap(() => this._loadMenus())
 			)
 			.subscribe();
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap((organization: IOrganization) => {
+					this.organization = organization;
+					this._cdr.markForCheck();
+				}),
 				tap(() => this._getConfig()),
 				untilDestroyed(this)
 			)

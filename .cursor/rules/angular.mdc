@@ -11773,8 +11773,13 @@ The `fakeAsync()` function enables a linear coding style by running the test bod
 The test body appears to be synchronous.
 There is no nested syntax \(like a `Promise.then()`\) to disrupt the flow of control.
 
-HELPFUL: Limitation: The `fakeAsync()` function won't work if the test body makes an `XMLHttpRequest` \(XHR\) call.
-XHR calls within a test are rare, but if you need to call XHR, use native `async/await` syntax instead.
+HELPFUL: Limitation: The `fakeAsync()` function won't work if the test body makes an `XMLHttpRequest` (XHR) call.
+XHR calls within a test are rare; when you need to interact with HTTP you should
+*avoid real XHR* by importing `HttpClientTestingModule` and driving requests via
+`HttpTestingController`.  When a test truly must run zone-managed XHR, the
+recommended helper is `waitForAsync()` (formerly `async()`), not native
+`async/await`; the helper ensures the test zone waits for XHR to complete.
+`waitForAsync()` remains part of the public API and **is not deprecated**.
 
 IMPORTANT: Be aware that asynchronous tasks that happen inside the `fakeAsync` zone need to be manually executed with `flush` or `tick`. If you attempt to
 wait for them to complete (i.e. using `fixture.whenStable`) without using the
@@ -12499,7 +12504,7 @@ Here's a summary of the stand-alone functions, in order of likely utility:
 
 | Function                     | Details |
 |:---                          |:---     |
-| `async/await`                | Use native `async/await` syntax with `beforeEach(async () => { await TestBed.configureTestingModule({...}).compileComponents(); });` pattern. This is the modern approach replacing the deprecated `waitForAsync`.                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `async/await`                | Use native `async/await` syntax with `beforeEach(async () => { await TestBed.configureTestingModule({...}).compileComponents(); });` pattern. The older `async()` helper was deprecated/renamed to `waitForAsync()` in Angular 10.1; `waitForAsync()` remains the official helper for zone‑managed XHR. The native `async/await` style is the modern, general-purpose alternative, especially when no HTTP is involved. (For XHR scenarios prefer `waitForAsync()` or mock requests with `HttpClientTestingModule`.)                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `fakeAsync`                  | Runs the body of a test \(`it`\) within a special *fakeAsync test zone*, enabling a linear control flow coding style. See [fakeAsync](mdc:guide/testing/components-scenarios#fake-async).                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `tick`                       | Simulates the passage of time and the completion of pending asynchronous activities by flushing both *timer* and *micro-task* queues within the *fakeAsync test zone*.  The curious, dedicated reader might enjoy this lengthy blog post, ["*Tasks, microtasks, queues and schedules*"](mdc:https:/jakearchibald.com/2015/tasks-microtasks-queues-and-schedules).  Accepts an optional argument that moves the virtual clock forward by the specified number of milliseconds, clearing asynchronous activities scheduled within that timeframe. See [tick](mdc:guide/testing/components-scenarios#tick). |
 | `inject`                     | Injects one or more services from the current `TestBed` injector into a test function. It cannot inject a service provided by the component itself. See discussion of the [debugElement.injector](mdc:guide/testing/components-scenarios#get-injected-services).                                                                                                                                                                                                                                                                                                                                                                          |

@@ -78,16 +78,14 @@ const NB_MODULES = [
 	]
 })
 export class IntegrationUpworkUiModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
-	private static _hasAppliedRegistrations = false;
+	private _hasAppliedRegistrations = false;
 
 	private readonly _log = inject(LoggerService).withContext('IntegrationUpworkUiModule');
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
-	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION as unknown as any, {
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, {
 		optional: true
 	}) as PluginUiDefinition | null;
-
-	constructor() {}
 
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
@@ -100,20 +98,20 @@ export class IntegrationUpworkUiModule implements IOnPluginUiBootstrap, IOnPlugi
 	/** Called by PluginUiModule when the application is shutting down. */
 	ngOnPluginDestroy(): void {
 		this._log.log('Plugin destroyed');
-		IntegrationUpworkUiModule._hasAppliedRegistrations = false;
+		this._hasAppliedRegistrations = false;
 	}
 
 	// ─── Registration ─────────────────────────────────────────────
 
 	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
 	private _applyDeclarativeRegistrations(): void {
-		if (IntegrationUpworkUiModule._hasAppliedRegistrations || !this._pluginDefinition) return;
+		if (this._hasAppliedRegistrations || !this._pluginDefinition) return;
 
 		applyDeclarativeRegistrations(this._pluginDefinition, {
 			navBuilder: this._navMenuBuilderService,
 			pageRouteRegistry: this._pageRouteRegistryService
 		});
 
-		IntegrationUpworkUiModule._hasAppliedRegistrations = true;
+		this._hasAppliedRegistrations = true;
 	}
 }

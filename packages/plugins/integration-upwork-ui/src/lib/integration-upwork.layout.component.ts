@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, merge, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,7 +11,8 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 @Component({
 	selector: 'ngx-integration-upwork-layout',
 	template: `<router-outlet></router-outlet>`,
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class IntegrationUpworkLayoutComponent implements OnInit {
 	private readonly _translateService = inject(TranslateService);

@@ -77,6 +77,11 @@ export function getUpworkRoutes(): Route[] {
 							data: { selectors: { project: false } }
 						},
 						{
+							// both 'activities' and 'transactions' map to the same component
+							// (TransactionsComponent) intentionally; this provides a
+							// terminology alias/backwards-compatibility for users and
+							// keeps link naming consistent in the UI even if the underlying
+							// view hasn't changed.
 							path: 'transactions',
 							component: TransactionsComponent
 						},

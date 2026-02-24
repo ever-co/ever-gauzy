@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, debounceTime } from 'rxjs';
@@ -18,7 +18,8 @@ import { IntegrationsService, Store, UpworkService } from '@gauzy/ui-core/core';
 	selector: 'ngx-upwork-authorize',
 	templateUrl: './upwork-authorize.component.html',
 	styleUrls: ['./upwork-authorize.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UpworkAuthorizeComponent implements OnInit {
 	private readonly _fb = inject(UntypedFormBuilder);

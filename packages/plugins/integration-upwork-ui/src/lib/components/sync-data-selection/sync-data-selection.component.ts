@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { IEngagement } from '@gauzy/contracts';
@@ -13,16 +13,17 @@ import { ErrorHandlingService, ToastrService, UpworkStoreService } from '@gauzy/
 	selector: 'ngx-sync-data-selection',
 	templateUrl: './sync-data-selection.component.html',
 	styleUrls: ['./sync-data-selection.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SyncDataSelectionComponent extends TranslationBaseComponent {
 	private readonly _us = inject(UpworkStoreService);
 	private readonly toastrService = inject(ToastrService);
-	public readonly dialogRef = inject(NbDialogRef<SyncDataSelectionComponent>);
+	protected readonly dialogRef = inject(NbDialogRef<SyncDataSelectionComponent>);
 	private readonly errorHandlingService = inject(ErrorHandlingService);
 
-	contractsSettings$: Observable<any> = this._us.contractsSettings$;
-	contracts: IEngagement[];
+	contractsSettings$: Observable<unknown> = this._us.contractsSettings$;
+	contracts: IEngagement[] = [];
 
 	constructor() {
 		super(inject(TranslateService));
