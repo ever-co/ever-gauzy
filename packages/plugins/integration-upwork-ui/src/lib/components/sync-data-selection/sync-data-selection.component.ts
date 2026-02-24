@@ -28,9 +28,9 @@ export class SyncDataSelectionComponent extends TranslationBaseComponent {
 	/** exposes the current contracts value and allows context injection */
 	@Input()
 	set contracts(value: IEngagement[] | null | undefined) {
-		if (value && value.length) {
-			this.contractsSignal.set(value);
-		}
+		// always update the signal so we don't keep stale data
+		// an empty array or null means nothing selected
+		this.contractsSignal.set(value ?? []);
 	}
 	get contracts(): IEngagement[] {
 		return this.contractsSignal();
