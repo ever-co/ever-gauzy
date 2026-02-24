@@ -56,7 +56,7 @@ export class TransactionsComponent extends TranslationBaseComponent implements O
 		this.loading.set(true);
 
 		const formData = new FormData();
-		formData.append('file', this.file as File);
+		formData.append('file', this.file);
 		formData.append('organizationId', this._selectedOrganizationId);
 
 		this._upworkService

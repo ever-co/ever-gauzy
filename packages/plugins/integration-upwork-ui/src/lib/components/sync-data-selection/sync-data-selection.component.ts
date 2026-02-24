@@ -23,7 +23,7 @@ export class SyncDataSelectionComponent extends TranslationBaseComponent {
 	private readonly errorHandlingService = inject(ErrorHandlingService);
 
 	contractsSettings$: Observable<any> = this._us.contractsSettings$;
-	private contractsSignal: WritableSignal<IEngagement[]> = signal<IEngagement[]>([]);
+	private readonly contractsSignal: WritableSignal<IEngagement[]> = signal<IEngagement[]>([]);
 
 	/** exposes the current contracts value and allows context injection */
 	@Input()
