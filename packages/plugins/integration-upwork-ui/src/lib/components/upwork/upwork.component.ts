@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
@@ -21,12 +21,11 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 	private readonly _activatedRoute = inject(ActivatedRoute);
 	private readonly _upworkStore = inject(UpworkStoreService);
 	private readonly _store = inject(Store);
-	private readonly _cdr = inject(ChangeDetectorRef);
 
-	protected tabs: NbRouteTab[] = [];
-	protected menus: NbMenuItem[] = [];
-	protected integrationId: ID;
-	protected organization: IOrganization;
+	protected tabs: WritableSignal<NbRouteTab[]> = signal<NbRouteTab[]>([]);
+	protected menus: WritableSignal<NbMenuItem[]> = signal<NbMenuItem[]>([]);
+	protected integrationId: WritableSignal<ID | undefined> = signal<ID | undefined>(undefined);
+	protected organization: WritableSignal<IOrganization | undefined> = signal<IOrganization | undefined>(undefined);
 
 	constructor() {
 		super(inject(TranslateService));
@@ -39,8 +38,7 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 		this._activatedRoute.params
 			.pipe(
 				tap((params: Params) => {
-					this.integrationId = params['id'];
-					this._cdr.markForCheck();
+					this.integrationId.set(params['id']);
 				}),
 				tap(() => this._loadMenus()),
 				untilDestroyed(this)
@@ -50,8 +48,7 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 			.pipe(
 				filter((organization) => !!organization),
 				tap((organization: IOrganization) => {
-					this.organization = organization;
-					this._cdr.markForCheck();
+					this.organization.set(organization);
 				}),
 				tap(() => this._getConfig()),
 				untilDestroyed(this)
@@ -63,8 +60,8 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 	 *
 	 */
 	private _getConfig() {
-		const { id: organizationId, tenantId } = this.organization;
-		const integrationId = this.integrationId;
+		const { id: organizationId, tenantId } = this.organization();
+		const integrationId = this.integrationId();
 		this._upworkStore.getConfig({ integrationId, organizationId, tenantId }).pipe(untilDestroyed(this)).subscribe();
 	}
 
@@ -81,7 +78,7 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 	 *
 	 */
 	private _loadTabs() {
-		this.tabs = [
+		this.tabs.set([
 			{
 				title: this.getTranslation('INTEGRATIONS.UPWORK_PAGE.ACTIVITIES'),
 				icon: 'trending-up-outline',
@@ -106,14 +103,14 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 				responsive: true,
 				route: this.getRoute('contracts')
 			}
-		];
+		]);
 	}
 
 	/**
 	 *
 	 */
 	private _loadMenus() {
-		this.menus = [
+		this.menus.set([
 			{
 				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
 				icon: 'text-outline',
@@ -122,9 +119,9 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 			{
 				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
 				icon: 'settings-2-outline',
-				link: `pages/integrations/upwork/${this.integrationId}/settings`
+				link: `pages/integrations/upwork/${this.integrationId()}/settings`
 			}
-		];
+		]);
 	}
 
 	private _applyTranslationOnTabsActions() {
@@ -133,7 +130,6 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 				tap(() => {
 					this._loadTabs();
 					this._loadMenus();
-					this._cdr.markForCheck();
 				}),
 				untilDestroyed(this)
 			)
