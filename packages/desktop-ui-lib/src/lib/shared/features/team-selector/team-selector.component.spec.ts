@@ -6,7 +6,7 @@ describe('TeamSelectorComponent', () => {
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
 			imports: [TeamSelectorComponent]
-		});
+		}).compileComponents();
 		fixture = TestBed.createComponent(TeamSelectorComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

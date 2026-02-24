@@ -23,10 +23,10 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 	private readonly _store = inject(Store);
 	private readonly _cdr = inject(ChangeDetectorRef);
 
-	public tabs: NbRouteTab[] = [];
-	public menus: NbMenuItem[] = [];
-	public integrationId: ID;
-	public organization: IOrganization;
+	protected tabs: NbRouteTab[] = [];
+	protected menus: NbMenuItem[] = [];
+	protected integrationId: ID;
+	protected organization: IOrganization;
 
 	constructor() {
 		super(inject(TranslateService));
@@ -42,7 +42,8 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 					this.integrationId = params['id'];
 					this._cdr.markForCheck();
 				}),
-				tap(() => this._loadMenus())
+				tap(() => this._loadMenus()),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this._store.selectedOrganization$

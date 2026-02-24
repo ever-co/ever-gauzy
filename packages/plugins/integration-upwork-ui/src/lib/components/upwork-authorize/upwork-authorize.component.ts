@@ -29,10 +29,10 @@ export class UpworkAuthorizeComponent implements OnInit {
 	private readonly _store = inject(Store);
 	private readonly _integrationsService = inject(IntegrationsService);
 
-	public rememberState: boolean;
-	public organization: IOrganization;
+	protected rememberState: boolean;
+	protected organization: IOrganization;
 
-	readonly form: UntypedFormGroup = UpworkAuthorizeComponent.buildForm(this._fb);
+	protected readonly form: UntypedFormGroup = UpworkAuthorizeComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			consumerKey: [null, Validators.required],

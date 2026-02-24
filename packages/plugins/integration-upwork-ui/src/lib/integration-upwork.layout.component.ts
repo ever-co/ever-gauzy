@@ -7,7 +7,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-integration-upwork-layout',
 	template: `<router-outlet></router-outlet>`,
@@ -18,8 +18,6 @@ export class IntegrationUpworkLayoutComponent implements OnInit {
 	private readonly _translateService = inject(TranslateService);
 	private readonly _store = inject(Store);
 	private readonly _i18nService = inject(I18nService);
-
-	constructor() {}
 
 	ngOnInit() {
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
