@@ -133,6 +133,7 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 				tap(() => {
 					this._loadTabs();
 					this._loadMenus();
+					this._cdr.markForCheck();
 				}),
 				untilDestroyed(this)
 			)

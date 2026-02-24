@@ -47,7 +47,6 @@ export class IntegrationHubstaffLayoutComponent implements OnInit {
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
-				console.log(`Integration Hubstaff UI module plugin lang: %s`, lang);
 				this._translateService.use(lang);
 			}),
 			untilDestroyed(this)

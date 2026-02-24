@@ -114,7 +114,7 @@ export class UpworkAuthorizeComponent implements OnInit {
 	 * @param config
 	 * @returns
 	 */
-	authorizeUpwork(config: IUpworkClientSecretPair) {
+	protected authorizeUpwork(config: IUpworkClientSecretPair) {
 		if (!this.organization || this.form.invalid) {
 			return;
 		}
