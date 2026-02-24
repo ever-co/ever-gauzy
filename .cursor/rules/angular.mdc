@@ -11392,9 +11392,9 @@ It also generates an initial test file for the component, `banner-external.compo
 
 <docs-code header="app/banner/banner-external.component.spec.ts (initial)" path="adev/src/content/examples/testing/src/app/banner/banner-initial.component.spec.ts" visibleRegion="v1"/>
 
-HELPFUL: Because `compileComponents` is asynchronous, it uses the [`waitForAsync`](mdc:api/core/testing/waitForAsync) utility function imported from `@angular/core/testing`.
+HELPFUL: Because `compileComponents` is asynchronous, use native `async/await` syntax with the `beforeEach` function.
 
-Refer to the [waitForAsync](mdc:guide/testing/components-scenarios#waitForAsync) section for more details.
+Use `beforeEach(async () => { await TestBed.configureTestingModule({...}).compileComponents(); });` pattern.
 
 ### Reduce the setup
 
@@ -11774,7 +11774,7 @@ The test body appears to be synchronous.
 There is no nested syntax \(like a `Promise.then()`\) to disrupt the flow of control.
 
 HELPFUL: Limitation: The `fakeAsync()` function won't work if the test body makes an `XMLHttpRequest` \(XHR\) call.
-XHR calls within a test are rare, but if you need to call XHR, see the [`waitForAsync()`](mdc:#waitForAsync) section.
+XHR calls within a test are rare, but if you need to call XHR, use native `async/await` syntax instead.
 
 IMPORTANT: Be aware that asynchronous tasks that happen inside the `fakeAsync` zone need to be manually executed with `flush` or `tick`. If you attempt to
 wait for them to complete (i.e. using `fixture.whenStable`) without using the
@@ -12271,7 +12271,7 @@ The preemptive error message tells you to compile explicitly with `compileCompon
 
 You must call `compileComponents()` within an asynchronous test function.
 
-CRITICAL: If you neglect to make the test function async (for example, forget to use `waitForAsync()` as described), you'll see this error message
+CRITICAL: If you neglect to make the test function async (for example, forget to use `async/await` as described), you'll see this error message
 
 <docs-code hideCopy language="shell">
 
@@ -12499,7 +12499,7 @@ Here's a summary of the stand-alone functions, in order of likely utility:
 
 | Function                     | Details |
 |:---                          |:---     |
-| `waitForAsync`               | Runs the body of a test \(`it`\) or setup \(`beforeEach`\) function within a special *async test zone*. See [waitForAsync](mdc:guide/testing/components-scenarios#waitForAsync).                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `async/await`                | Use native `async/await` syntax with `beforeEach(async () => { await TestBed.configureTestingModule({...}).compileComponents(); });` pattern. This is the modern approach replacing the deprecated `waitForAsync`.                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `fakeAsync`                  | Runs the body of a test \(`it`\) within a special *fakeAsync test zone*, enabling a linear control flow coding style. See [fakeAsync](mdc:guide/testing/components-scenarios#fake-async).                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `tick`                       | Simulates the passage of time and the completion of pending asynchronous activities by flushing both *timer* and *micro-task* queues within the *fakeAsync test zone*.  The curious, dedicated reader might enjoy this lengthy blog post, ["*Tasks, microtasks, queues and schedules*"](mdc:https:/jakearchibald.com/2015/tasks-microtasks-queues-and-schedules).  Accepts an optional argument that moves the virtual clock forward by the specified number of milliseconds, clearing asynchronous activities scheduled within that timeframe. See [tick](mdc:guide/testing/components-scenarios#tick). |
 | `inject`                     | Injects one or more services from the current `TestBed` injector into a test function. It cannot inject a service provided by the component itself. See discussion of the [debugElement.injector](mdc:guide/testing/components-scenarios#get-injected-services).                                                                                                                                                                                                                                                                                                                                                                          |

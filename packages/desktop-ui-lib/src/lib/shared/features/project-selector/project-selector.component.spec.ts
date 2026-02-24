@@ -3,8 +3,8 @@ import { ProjectSelectorComponent } from './project-selector.component';
 describe('ProjectSelectorComponent', () => {
 	let component: ProjectSelectorComponent;
 	let fixture: ComponentFixture<ProjectSelectorComponent>;
-	beforeEach(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			imports: [ProjectSelectorComponent]
 		});
 		fixture = TestBed.createComponent(ProjectSelectorComponent);

@@ -3,8 +3,8 @@ import { TaskSelectorComponent } from './task-selector.component';
 describe('TaskSelectorComponent', () => {
 	let component: TaskSelectorComponent;
 	let fixture: ComponentFixture<TaskSelectorComponent>;
-	beforeEach(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			imports: [TaskSelectorComponent]
 		});
 		fixture = TestBed.createComponent(TaskSelectorComponent);

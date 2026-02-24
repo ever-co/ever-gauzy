@@ -3,8 +3,8 @@ import { TeamSelectorComponent } from './team-selector.component';
 describe('TeamSelectorComponent', () => {
 	let component: TeamSelectorComponent;
 	let fixture: ComponentFixture<TeamSelectorComponent>;
-	beforeEach(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			imports: [TeamSelectorComponent]
 		});
 		fixture = TestBed.createComponent(TeamSelectorComponent);

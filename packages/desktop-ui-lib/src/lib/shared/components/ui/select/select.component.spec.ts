@@ -3,8 +3,8 @@ import { SelectComponent } from './select.component';
 describe('SelectComponent', () => {
 	let component: SelectComponent;
 	let fixture: ComponentFixture<SelectComponent>;
-	beforeEach(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			imports: [SelectComponent]
 		});
 		fixture = TestBed.createComponent(SelectComponent);
