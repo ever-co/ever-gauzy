@@ -325,6 +325,7 @@ jobs:
       - name: Selective cleanup (preserve .nx/cache)
         shell: powershell
         run: |
+          $ErrorActionPreference = 'SilentlyContinue'
           # Stop NX daemon first to release file locks before cleanup (guard for fresh runners without Node)
           if (Get-Command npx -ErrorAction SilentlyContinue) { npx nx daemon --stop 2>&1 | Out-Null }
           # Remove build artifacts but keep NX cache for faster rebuilds
@@ -408,7 +409,7 @@ jobs:
           AGENT_APP_ID: 'com.ever.gauzyagent'
 
       - name: Fix Node.js PATH for child processes
-        shell: pwsh
+        shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           $nodeExe = (Get-Command node -ErrorAction Stop).Source
@@ -487,6 +488,7 @@ jobs:
       - name: Selective cleanup (preserve .nx/cache)
         shell: powershell
         run: |
+          $ErrorActionPreference = 'SilentlyContinue'
           # Stop NX daemon first to release file locks before cleanup (guard for fresh runners without Node)
           if (Get-Command npx -ErrorAction SilentlyContinue) { npx nx daemon --stop 2>&1 | Out-Null }
           # Remove build artifacts but keep NX cache for faster rebuilds
@@ -571,7 +573,7 @@ jobs:
           AGENT_APP_ID: 'com.ever.gauzyagent'
 
       - name: Fix Node.js PATH for child processes
-        shell: pwsh
+        shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           $nodeExe = (Get-Command node -ErrorAction Stop).Source

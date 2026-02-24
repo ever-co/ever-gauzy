@@ -409,7 +409,7 @@ jobs:
           DESKTOP_API_SERVER_APP_ID: 'com.ever.gauzyapiserver'
 
       - name: Fix Node.js PATH for child processes
-        shell: pwsh
+        shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           $nodeExe = (Get-Command node -ErrorAction Stop).Source
@@ -573,7 +573,7 @@ jobs:
           DESKTOP_API_SERVER_APP_ID: 'com.ever.gauzyapiserver'
 
       - name: Fix Node.js PATH for child processes
-        shell: pwsh
+        shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           $nodeExe = (Get-Command node -ErrorAction Stop).Source
