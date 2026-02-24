@@ -17,7 +17,8 @@ export interface NgContextProviderProps {
 	injector: Injector;
 	/** Optional extra values merged with injector (e.g. config, feature flags) */
 	context?: Record<string, unknown>;
-	children: React.ReactNode;
+	/** Child components to render within the provider */
+	children?: React.ReactNode;
 }
 
 /**

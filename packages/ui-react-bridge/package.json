@@ -24,19 +24,24 @@
 		"lib:watch": "yarn nx build ui-react-bridge --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/core": "^20.2.4",
-		"react": "^18.0.0 || ^19.0.0",
-		"react-dom": "^18.0.0 || ^19.0.0"
+		"@angular/core": "21.0.7"
 	},
 	"dependencies": {
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
 		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0"
 	},
 	"keywords": [
 		"angular",
 		"react",
 		"bridge",
 		"ui",
-		"ever-gauzy"
+		"ever-gauzy",
+		"plugin"
 	],
 	"engines": {
 		"node": ">=22",

@@ -44,6 +44,151 @@ used to bootstrap and manage UI plugins (such as job and integration UI plugins)
     -   `definePlugin(id, module, options?)` — creates a simple plugin definition.
     -   `definePluginGroup(id, module, { location, plugins, init? })` — creates a parent plugin with child plugins and optional init factory.
 
+-   **UI Bridge System** (NEW)
+    -   Render React, Vue, Svelte, or any other UI framework components inside Angular.
+    -   Library-agnostic design with pluggable bridge implementations.
+    -   `FrameworkHostComponent` — generic Angular component for rendering framework components.
+    -   `defineFrameworkExtension()` — helper for defining non-Angular extensions in plugins.
+
+---
+
+## UI Bridge System
+
+The UI Bridge system allows plugins to render components from any UI framework (React, Vue, Svelte, etc.) inside Angular. Each framework has its own bridge implementation that can be optionally installed.
+
+### Architecture
+
+```
+@gauzy/plugin-ui (Core)
+├── UiBridge (abstract interface)
+├── UiBridgeRegistryService (manages all bridges)
+├── FrameworkHostComponent (generic host)
+└── defineFrameworkExtension() (helper)
+
+@gauzy/ui-react-bridge → implements UiBridge for React
+@gauzy/ui-vue-bridge   → implements UiBridge for Vue (future)
+@gauzy/ui-svelte-bridge → implements UiBridge for Svelte (future)
+```
+
+### Using the UI Bridge
+
+#### 1. Install a Framework Bridge
+
+```bash
+# For React support
+yarn add @gauzy/ui-react-bridge react react-dom
+```
+
+#### 2. Register the Bridge
+
+```typescript
+// In your app.config.ts or main providers
+import { provideReactBridge } from '@gauzy/ui-react-bridge';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideReactBridge(),
+    // ... other providers
+  ]
+};
+```
+
+#### 3. Use FrameworkHostComponent
+
+```typescript
+import { Component } from '@angular/core';
+import { FrameworkHostComponent } from '@gauzy/plugin-ui';
+import { MyReactWidget } from './react/MyReactWidget';
+
+@Component({
+  imports: [FrameworkHostComponent],
+  template: `
+    <gz-framework-host
+      frameworkId="react"
+      [component]="reactWidget"
+      [props]="widgetProps"
+    />
+  `
+})
+export class MyComponent {
+  reactWidget = MyReactWidget;
+  widgetProps = { title: 'Hello from React!' };
+}
+```
+
+#### 4. Define Framework Extensions in Plugins
+
+```typescript
+import { 
+  defineFrameworkExtension, 
+  UI_BRIDGE_FRAMEWORK, 
+  EXTENSION_SLOTS,
+  PluginUiDefinition 
+} from '@gauzy/plugin-ui';
+import { MyReactWidget } from './react-components/MyReactWidget';
+
+export const MyPlugin: PluginUiDefinition = {
+  id: 'my-plugin',
+  module: MyPluginModule,
+  extensions: [
+    defineFrameworkExtension({
+      id: 'my-react-widget',
+      slotId: EXTENSION_SLOTS.DASHBOARD_WIDGETS,
+      frameworkId: UI_BRIDGE_FRAMEWORK.REACT,
+      frameworkComponent: MyReactWidget,
+      frameworkProps: { title: 'Dashboard Widget' },
+      order: 10
+    })
+  ]
+};
+```
+
+### Creating a Custom Bridge
+
+To add support for a new framework, implement the `UiBridge` abstract class:
+
+```typescript
+import { 
+  UiBridge, 
+  UiBridgeConfig, 
+  UiBridgeMountOptions, 
+  UiBridgeMountResult 
+} from '@gauzy/plugin-ui';
+
+export class MyFrameworkBridge extends UiBridge {
+  readonly config: UiBridgeConfig = {
+    frameworkId: 'my-framework',
+    name: 'My Framework Bridge',
+    version: '1.0.0'
+  };
+
+  mount(options: UiBridgeMountOptions): UiBridgeMountResult {
+    // Mount your framework component into options.hostElement
+    // Use options.injector to provide Angular services
+    return {
+      unmount: () => { /* cleanup */ },
+      updateProps: (props) => { /* update props */ }
+    };
+  }
+
+  isCompatible(component: unknown): boolean {
+    // Return true if this bridge can handle the component
+    return false;
+  }
+}
+```
+
+### Available Bridges
+
+| Framework | Package | Status |
+|-----------|---------|--------|
+| React | `@gauzy/ui-react-bridge` | ✅ Available |
+| Vue | `@gauzy/ui-vue-bridge` | 🔜 Planned |
+| Svelte | `@gauzy/ui-svelte-bridge` | 🔜 Planned |
+| Preact | `@gauzy/ui-preact-bridge` | 🔜 Planned |
+
+---
+
 ### Getting Started
 
 The `@gauzy/plugin-ui` library is generated with [Nx](https://nx.dev) and is intended to be used
