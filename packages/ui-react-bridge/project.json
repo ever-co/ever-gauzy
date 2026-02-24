@@ -1,0 +1,26 @@
+{
+	"name": "ui-react-bridge",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/ui-react-bridge/src",
+	"prefix": "lib",
+	"projectType": "library",
+	"tags": [],
+	"implicitDependencies": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/angular:ng-packagr-lite",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/ui-react-bridge/ng-package.json",
+				"tsConfig": "packages/ui-react-bridge/tsconfig.lib.json"
+			},
+			"configurations": {
+				"production": { "tsConfig": "packages/ui-react-bridge/tsconfig.lib.prod.json" },
+				"development": { "tsConfig": "packages/ui-react-bridge/tsconfig.lib.json" }
+			},
+			"defaultConfiguration": "development",
+			"dependsOn": ["^build"]
+		},
+		"lint": { "executor": "@nx/eslint:lint" }
+	}
+}
