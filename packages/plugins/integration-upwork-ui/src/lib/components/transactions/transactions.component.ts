@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -8,23 +8,22 @@ import { ErrorHandlingService, Store, ToastrService, UpworkService } from '@gauz
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-transactions',
-    templateUrl: './transactions.component.html',
-    styleUrls: ['./transactions.component.scss'],
-    standalone: false
+	selector: 'ngx-transactions',
+	templateUrl: './transactions.component.html',
+	styleUrls: ['./transactions.component.scss'],
+	standalone: false
 })
 export class TransactionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	private readonly _upworkService = inject(UpworkService);
+	private readonly _store = inject(Store);
+	private readonly toastrService = inject(ToastrService);
+	private readonly errorHandler = inject(ErrorHandlingService);
+
 	private _selectedOrganizationId: string;
 	file: File;
 
-	constructor(
-		private _upworkService: UpworkService,
-		private _store: Store,
-		readonly translateService: TranslateService,
-		private toastrService: ToastrService,
-		private errorHandler: ErrorHandlingService
-	) {
-		super(translateService);
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit() {

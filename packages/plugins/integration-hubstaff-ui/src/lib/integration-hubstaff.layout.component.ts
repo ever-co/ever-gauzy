@@ -10,9 +10,9 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-integration-hubstaff-layout',
-    template: `<router-outlet></router-outlet>`,
-    standalone: false
+	selector: 'ngx-integration-hubstaff-layout',
+	template: `<router-outlet></router-outlet>`,
+	standalone: false
 })
 export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 	constructor(
@@ -25,7 +25,6 @@ export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.initializeUiPermissions(); // Initialize UI permissions
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
-		console.log(`Integration Hubstaff UI module plugin initialized`);
 	}
 
 	/**
@@ -57,7 +56,5 @@ export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 		preferredLanguage$.subscribe();
 	}
 
-	ngOnDestroy(): void {
-		console.log(`Integration Hubstaff UI module plugin destroyed`);
-	}
+	ngOnDestroy(): void {}
 }

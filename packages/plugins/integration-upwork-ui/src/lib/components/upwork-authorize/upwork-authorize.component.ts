@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EMPTY } from 'rxjs';
-import { tap, switchMap, filter, debounceTime } from 'rxjs/operators';
+import { EMPTY, debounceTime } from 'rxjs';
+import { tap, switchMap, filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IAccessTokenSecretPair,
@@ -15,12 +15,19 @@ import { IntegrationsService, Store, UpworkService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-upwork-authorize',
-    templateUrl: './upwork-authorize.component.html',
-    styleUrls: ['./upwork-authorize.component.scss'],
-    standalone: false
+	selector: 'ngx-upwork-authorize',
+	templateUrl: './upwork-authorize.component.html',
+	styleUrls: ['./upwork-authorize.component.scss'],
+	standalone: false
 })
 export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
+	private readonly _fb = inject(UntypedFormBuilder);
+	private readonly _upworkService = inject(UpworkService);
+	private readonly _activatedRoute = inject(ActivatedRoute);
+	private readonly _router = inject(Router);
+	private readonly _store = inject(Store);
+	private readonly _integrationsService = inject(IntegrationsService);
+
 	public rememberState: boolean;
 	public organization: IOrganization;
 
@@ -31,15 +38,6 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 			consumerSecret: [null, Validators.required]
 		});
 	}
-
-	constructor(
-		private readonly _fb: UntypedFormBuilder,
-		private readonly _upworkService: UpworkService,
-		private readonly _activatedRoute: ActivatedRoute,
-		private readonly _router: Router,
-		private readonly _store: Store,
-		private readonly _integrationsService: IntegrationsService
-	) {}
 
 	ngOnInit() {
 		this._store.selectedOrganization$

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterViewInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, catchError, debounceTime, filter, of, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,12 +12,16 @@ import { DateViewComponent, IncomeExpenseAmountComponent } from '@gauzy/ui-core/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-upwork-reports',
-    templateUrl: './reports.component.html',
-    styleUrls: ['./reports.component.scss'],
-    standalone: false
+	selector: 'ngx-upwork-reports',
+	templateUrl: './reports.component.html',
+	styleUrls: ['./reports.component.scss'],
+	standalone: false
 })
 export class ReportsComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
+	private readonly cdr = inject(ChangeDetectorRef);
+	private readonly _upworkStoreService = inject(UpworkStoreService);
+	private readonly _storeService = inject(Store);
+
 	public reports$: Observable<any> = this._upworkStoreService.reports$;
 	public settingsSmartTable: any;
 	public today: Date = new Date();
@@ -34,13 +38,8 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 		this._selectedDateRange = range;
 	}
 
-	constructor(
-		private readonly cdr: ChangeDetectorRef,
-		public readonly translateService: TranslateService,
-		private readonly _upworkStoreService: UpworkStoreService,
-		private readonly _storeService: Store
-	) {
-		super(translateService);
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit(): void {

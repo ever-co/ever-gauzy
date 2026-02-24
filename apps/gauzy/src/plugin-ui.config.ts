@@ -4,6 +4,7 @@ import { JobMatchingPlugin } from '@gauzy/plugin-job-matching-ui';
 import { JobProposalPlugin, JobProposalTemplatePlugin } from '@gauzy/plugin-job-proposal-ui';
 import { JobSearchPlugin } from '@gauzy/plugin-job-search-ui';
 import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
+import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
 
@@ -20,54 +21,57 @@ import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
  * └──────────────────────────────────────────────────────────┘
  */
 export const uiPluginConfig: PluginUiConfig = {
-    // ── Internationalization ───────────────────────────────
-    defaultLanguage: LanguagesEnum.ENGLISH,
-    defaultLocale: 'en-US',
-    fallbackLocale: LanguagesEnum.ENGLISH,
+	// ── Internationalization ───────────────────────────────
+	defaultLanguage: LanguagesEnum.ENGLISH,
+	defaultLocale: 'en-US',
+	fallbackLocale: LanguagesEnum.ENGLISH,
 
-    availableLanguages: [
-        LanguagesEnum.ENGLISH,
-        LanguagesEnum.FRENCH,
-        LanguagesEnum.SPANISH,
-        LanguagesEnum.GERMAN,
-        LanguagesEnum.PORTUGUESE,
-        LanguagesEnum.ITALIAN,
-        LanguagesEnum.DUTCH,
-        LanguagesEnum.POLISH,
-        LanguagesEnum.RUSSIAN,
-        LanguagesEnum.CHINESE,
-        LanguagesEnum.ARABIC,
-        LanguagesEnum.BULGARIAN,
-        LanguagesEnum.HEBREW
-    ],
+	availableLanguages: [
+		LanguagesEnum.ENGLISH,
+		LanguagesEnum.FRENCH,
+		LanguagesEnum.SPANISH,
+		LanguagesEnum.GERMAN,
+		LanguagesEnum.PORTUGUESE,
+		LanguagesEnum.ITALIAN,
+		LanguagesEnum.DUTCH,
+		LanguagesEnum.POLISH,
+		LanguagesEnum.RUSSIAN,
+		LanguagesEnum.CHINESE,
+		LanguagesEnum.ARABIC,
+		LanguagesEnum.BULGARIAN,
+		LanguagesEnum.HEBREW
+	],
 
-    availableLocales: [
-        'en-US',
-        'fr-FR',
-        'es-ES',
-        'de-DE',
-        'pt-PT',
-        'it-IT',
-        'nl-NL',
-        'pl-PL',
-        'ru-RU',
-        'zh-CN',
-        'ar-SA',
-        'bg-BG',
-        'he-IL'
-    ],
+	availableLocales: [
+		'en-US',
+		'fr-FR',
+		'es-ES',
+		'de-DE',
+		'pt-PT',
+		'it-IT',
+		'nl-NL',
+		'pl-PL',
+		'ru-RU',
+		'zh-CN',
+		'ar-SA',
+		'bg-BG',
+		'he-IL'
+	],
 
-    // Day of week the week starts on (0 = Sunday, 1 = Monday, …)
-    startWeekOn: dayOfWeekAsString(WeekDaysEnum.MONDAY) as DayOfWeek,
+	// Day of week the week starts on (0 = Sunday, 1 = Monday, …)
+	startWeekOn: dayOfWeekAsString(WeekDaysEnum.MONDAY) as DayOfWeek,
 
-    // ── Plugins ────────────────────────────────────────────
-    plugins: [
-        // Sales Plugins (Proposals under Sales)
-        JobProposalPlugin,
+	// ── Plugins ────────────────────────────────────────────
+	plugins: [
+		// Sales Plugins (Proposals under Sales)
+		JobProposalPlugin,
 
-        // Job Plugins
-        JobsPlugin.init({
-            plugins: [JobEmployeePlugin, JobSearchPlugin, JobMatchingPlugin, JobProposalTemplatePlugin]
-        })
-    ]
+		// Integration Plugins
+		IntegrationUpworkPlugin,
+
+		// Job Plugins
+		JobsPlugin.init({
+			plugins: [JobEmployeePlugin, JobSearchPlugin, JobMatchingPlugin, JobProposalTemplatePlugin]
+		})
+	]
 };

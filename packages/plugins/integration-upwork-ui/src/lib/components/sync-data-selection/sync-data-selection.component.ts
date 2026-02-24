@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { IEngagement } from '@gauzy/contracts';
@@ -10,23 +10,22 @@ import { ErrorHandlingService, ToastrService, UpworkStoreService } from '@gauzy/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-sync-data-selection',
-    templateUrl: './sync-data-selection.component.html',
-    styleUrls: ['./sync-data-selection.component.scss'],
-    standalone: false
+	selector: 'ngx-sync-data-selection',
+	templateUrl: './sync-data-selection.component.html',
+	styleUrls: ['./sync-data-selection.component.scss'],
+	standalone: false
 })
 export class SyncDataSelectionComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	private readonly _us = inject(UpworkStoreService);
+	private readonly toastrService = inject(ToastrService);
+	public readonly dialogRef = inject(NbDialogRef<SyncDataSelectionComponent>);
+	private readonly errorHandlingService = inject(ErrorHandlingService);
+
 	contractsSettings$: Observable<any> = this._us.contractsSettings$;
 	contracts: IEngagement[];
 
-	constructor(
-		private _us: UpworkStoreService,
-		public translateService: TranslateService,
-		private toastrService: ToastrService,
-		public dialogRef: NbDialogRef<SyncDataSelectionComponent>,
-		private errorHandlingService: ErrorHandlingService
-	) {
-		super(translateService);
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit(): void {}

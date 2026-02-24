@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
@@ -11,24 +11,23 @@ import { Store, UpworkStoreService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-upwork',
-    templateUrl: './upwork.component.html',
-    standalone: false
+	selector: 'ngx-upwork',
+	templateUrl: './upwork.component.html',
+	standalone: false
 })
 export class UpworkComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	private readonly _router = inject(Router);
+	private readonly _activatedRoute = inject(ActivatedRoute);
+	private readonly _upworkStore = inject(UpworkStoreService);
+	private readonly _store = inject(Store);
+
 	public tabs: NbRouteTab[] = [];
 	public menus: NbMenuItem[] = [];
 	public integrationId: ID;
 	public organization: IOrganization;
 
-	constructor(
-		private readonly _router: Router,
-		public readonly translateService: TranslateService,
-		private readonly _activatedRoute: ActivatedRoute,
-		private readonly _upworkStore: UpworkStoreService,
-		private readonly _store: Store
-	) {
-		super(translateService);
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit() {
@@ -119,9 +118,6 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit,
 		];
 	}
 
-	/**
-	 *
-	 */
 	private _applyTranslationOnTabsActions() {
 		this.translateService.onLangChange
 			.pipe(
