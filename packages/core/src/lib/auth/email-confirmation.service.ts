@@ -161,7 +161,7 @@ export class EmailConfirmationService {
 					throw new BadRequestException('Your email is already verified.');
 				}
 
-				// Atomically invalidate the verification code (prevent reuse / TOCTOU race)
+				// Atomically invalidate the verification code (prevent reuse / TOCTOU race) // cspell:ignore TOCTOU
 				// The update scopes by id + code + codeExpireAt so a concurrent request
 				// that already nullified the code will update zero rows
 				await this.userService.update(user['id'], {
