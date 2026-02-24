@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DeepPartial, FindManyOptions } from 'typeorm';
+import { DeepPartial } from 'typeorm';
 import { ISocialAccount, ISocialAccountBase, IUser } from '@gauzy/contracts';
 import { UserService } from '../../user/user.service';
 import { TenantAwareCrudService } from '../../core/crud';
-import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../../core/utils';
+import { MultiORMEnum } from '../../core/utils';
 import { SocialAccount } from './social-account.entity';
 import { TypeOrmSocialAccountRepository } from './repository/type-orm-social-account.repository';
 import { MikroOrmSocialAccountRepository } from './repository/mikro-orm-social-account.repository';
@@ -37,18 +37,18 @@ export class SocialAccountService extends TenantAwareCrudService<SocialAccount> 
 	async findAccountByProvider(input: ISocialAccountBase): Promise<SocialAccount | null> {
 		const { provider, providerAccountId } = input;
 
-		const options = {
-			where: { provider, providerAccountId, isActive: true, isArchived: false },
-			relations: { user: true }
-		};
-
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<SocialAccount>(options as FindManyOptions);
-				return (await this.mikroOrmRepository.findOne(where, mikroOptions)) as SocialAccount;
+				return (await this.mikroOrmRepository.findOne(
+					{ provider, providerAccountId, isActive: true, isArchived: false },
+					{ populate: ['user'] }
+				)) as SocialAccount;
 			}
 			case MultiORMEnum.TypeORM:
-				return await this.typeOrmRepository.findOne(options);
+				return await this.typeOrmRepository.findOne({
+					where: { provider, providerAccountId, isActive: true, isArchived: false },
+					relations: { user: true }
+				});
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}

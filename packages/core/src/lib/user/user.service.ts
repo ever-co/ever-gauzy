@@ -507,9 +507,10 @@ export class UserService extends TenantAwareCrudService<User> {
 
 			// Scope update by both userId and tenantId for multi-tenant safety
 			const tenantId = RequestContext.currentTenantId();
+			const criteria = tenantId ? { id: userId, tenantId } : { id: userId };
 
 			// Update the user's refresh token using ORM-agnostic base class update
-			return (await this.update({ id: userId, tenantId } as any, { refreshToken } as any)) as UpdateResult;
+			return (await this.update(criteria as any, { refreshToken } as any)) as UpdateResult;
 		} catch (error) {
 			// Log error if any
 			console.error('Error while setting current refresh token:', error);
@@ -527,9 +528,10 @@ export class UserService extends TenantAwareCrudService<User> {
 		try {
 			const userId = RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId();
+			const criteria = tenantId ? { id: userId, tenantId } : { id: userId };
 
 			try {
-				await this.update({ id: userId, tenantId } as any, { refreshToken: null } as any);
+				await this.update(criteria as any, { refreshToken: null } as any);
 			} catch (error) {
 				console.log('Error while remove refresh token', error);
 			}

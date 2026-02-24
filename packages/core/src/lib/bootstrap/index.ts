@@ -120,8 +120,10 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Treat an empty array the same as undefined (no valid origins specified)
 	const validOrigins = allowedOrigins?.length ? allowedOrigins : undefined;
 
+	// Compute once — used for CORS warnings and Helmet CSP
+	const isProduction = process.env.NODE_ENV === 'production';
+
 	if (!validOrigins) {
-		const isProduction = process.env.NODE_ENV === 'production';
 		const level = isProduction ? 'WARN' : 'INFO';
 		console[isProduction ? 'warn' : 'log'](
 			`[${level}] ALLOWED_ORIGINS is not set. CORS will allow all origins ("*"). ` +
@@ -164,10 +166,9 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	await configureRedisSession(app);
 
 	// Use helmet for security headers — relax CSP in non-production to avoid blocking Swagger/Scalar UI
-	const isProductionEnv = process.env.NODE_ENV === 'production';
 	app.use(
 		helmet({
-			contentSecurityPolicy: isProductionEnv
+			contentSecurityPolicy: isProduction
 				? undefined // use Helmet's strict default CSP in production
 				: false // disable CSP in dev/stage so Swagger/Scalar inline scripts work
 		})

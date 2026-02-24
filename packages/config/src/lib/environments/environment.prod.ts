@@ -16,13 +16,14 @@ import { isFeatureEnabled } from './environment.helper';
  * If any of these are detected at startup, the server will refuse to start.
  */
 const INSECURE_DEFAULT_SECRETS = new Set([
-	'secretKey',
-	'refreshSecretKey',
-	'verificationSecretKey',
+	'secretkey',
+	'refreshsecretkey',
+	'verificationsecretkey',
 	'changeme', // cspell:ignore changeme
 	'secret',
 	'password',
-	'default'
+	'default',
+	'gauzy'
 ]);
 
 /**
@@ -35,7 +36,8 @@ function validateProductionSecrets(): void {
 	const secretChecks: Array<{ name: string; value: string | undefined }> = [
 		{ name: 'JWT_SECRET', value: process.env.JWT_SECRET },
 		{ name: 'JWT_REFRESH_TOKEN_SECRET', value: process.env.JWT_REFRESH_TOKEN_SECRET },
-		{ name: 'JWT_VERIFICATION_TOKEN_SECRET', value: process.env.JWT_VERIFICATION_TOKEN_SECRET }
+		{ name: 'JWT_VERIFICATION_TOKEN_SECRET', value: process.env.JWT_VERIFICATION_TOKEN_SECRET },
+		{ name: 'EXPRESS_SESSION_SECRET', value: process.env.EXPRESS_SESSION_SECRET }
 	];
 
 	for (const { name, value } of secretChecks) {
@@ -112,9 +114,7 @@ export const environment: IEnvironment = {
 	 */
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60 * 1000,
 	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 60000,
-	THROTTLE_ENABLED: !['false', '0', 'no', 'off', ''].includes(
-		(process.env.THROTTLE_ENABLED ?? '').trim().toLowerCase()
-	), // Enabled by default in production
+	THROTTLE_ENABLED: !['false', '0', 'no', 'off'].includes((process.env.THROTTLE_ENABLED ?? '').trim().toLowerCase()), // Enabled by default in production (unset → enabled)
 
 	/**
 	 * Jitsu Server Configuration
