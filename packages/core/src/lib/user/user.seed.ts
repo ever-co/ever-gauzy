@@ -347,11 +347,13 @@ const generateDefaultUser = async (
 	if (!existingUser || !existingUser.hash) {
 		user.hash = await hashPassword(defaultUser.password);
 	} else if (forcePasswordOverwrite) {
-		const masked = email.replace(/^(.{2})(.*)(@.*)$/, '$1***$3');
+		const atIdx = email.indexOf('@');
+		const masked = atIdx > 2 ? email.slice(0, 2) + '***' + email.slice(atIdx) : '***';
 		console.warn(`⚠️  [Seed] FORCE_SEED_PASSWORD is enabled — overwriting password for existing user "${masked}".`);
 		user.hash = await hashPassword(defaultUser.password);
 	} else {
-		const masked = email.replace(/^(.{2})(.*)(@.*)$/, '$1***$3');
+		const atIdx = email.indexOf('@');
+		const masked = atIdx > 2 ? email.slice(0, 2) + '***' + email.slice(atIdx) : '***';
 		console.log(
 			`ℹ️  [Seed] User "${masked}" already exists with a password — skipping password overwrite. ` +
 				`Set FORCE_SEED_PASSWORD=true to override.`
