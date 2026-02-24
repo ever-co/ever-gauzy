@@ -19,7 +19,7 @@ const INSECURE_DEFAULT_SECRETS = new Set([
 	'secretKey',
 	'refreshSecretKey',
 	'verificationSecretKey',
-	'changeme',
+	'changeme', // cspell:ignore changeme
 	'secret',
 	'password',
 	'default'
