@@ -1,14 +1,14 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TimerRangePickerComponent } from './timer-range-picker.component';
 describe('TimerRangePickerComponent', () => {
 	let component: TimerRangePickerComponent;
 	let fixture: ComponentFixture<TimerRangePickerComponent>;
-	beforeEach(async(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			declarations: [TimerRangePickerComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
-	}));
+	});
 	beforeEach(() => {
 		fixture = TestBed.createComponent(TimerRangePickerComponent);
 		component = fixture.componentInstance;
