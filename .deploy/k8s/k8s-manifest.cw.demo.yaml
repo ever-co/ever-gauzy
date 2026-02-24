@@ -90,6 +90,8 @@ spec:
                         value: 'refreshSecretKey'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '86400'
+                      - name: ALLOWED_ORIGINS
+                        value: '$ALLOWED_ORIGINS'
                       - name: OTEL_ENABLED
                         value: '$OTEL_ENABLED'
                       - name: OTEL_PROVIDER

@@ -147,6 +147,8 @@ spec:
                         value: '$JWT_REFRESH_TOKEN_SECRET'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '$JWT_REFRESH_TOKEN_EXPIRATION_TIME'
+                      - name: ALLOWED_ORIGINS
+                        value: '$ALLOWED_ORIGINS'
                       - name: CLOUDINARY_API_KEY
                         value: '$CLOUDINARY_API_KEY'
                       - name: CLOUDINARY_API_SECRET
