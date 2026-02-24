@@ -593,6 +593,7 @@
 		"angular2-smart-table": "^4.1.1",
 		"autoprefixer": "^10.4.20",
 		"bcrypt": "^5.1.1",
+		"bullmq": "^5.70.1",
 		"dotenv": "^17.2.4",
 		"jsdom": "^23.0.1",
 		"lodash-es": "^4.17.21",
