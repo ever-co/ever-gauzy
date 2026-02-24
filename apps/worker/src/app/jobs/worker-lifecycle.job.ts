@@ -1,6 +1,6 @@
+import { ScheduledJob } from '@gauzy/scheduler';
 import { Injectable, Logger } from '@nestjs/common';
 import { CronExpression } from '@nestjs/schedule';
-import { ScheduledJob } from '@gauzy/scheduler';
 import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED } from '../worker.constants';
 
 @Injectable()
@@ -23,12 +23,12 @@ export class WorkerLifecycleJob {
 	@ScheduledJob({
 		name: 'worker.heartbeat.scheduler',
 		enabled: WORKER_QUEUE_ENABLED && process.env.WORKER_HEARTBEAT_ENABLED !== 'false',
-		cron: CronExpression.EVERY_10_MINUTES,
+		cron: CronExpression.EVERY_30_SECONDS,
 		queueName: WORKER_DEFAULT_QUEUE,
 		queueJobName: 'worker.heartbeat'
 	})
 	async heartbeat(): Promise<{ timestamp: string }> {
-		this.logger.log('Queueing worker heartbeat job.');
+		this.logger.log('Queueing worker heartbeat job...');
 		return { timestamp: new Date().toISOString() };
 	}
 }

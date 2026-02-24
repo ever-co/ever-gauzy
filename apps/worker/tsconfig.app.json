@@ -8,9 +8,6 @@
 		"emitDecoratorMetadata": true,
 		"target": "es2021",
 		"moduleResolution": "node",
-		"paths": {
-			"@gauzy/core/redis": ["packages/core/src/lib/redis/index.ts"]
-		}
 	},
 	"include": ["src/**/*.ts"]
 }

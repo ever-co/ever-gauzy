@@ -1,3 +1,4 @@
+import { RedisModule } from './lib/redis/redis.module';
 /**
  * Public API Surface of @gauzy/core
  */
@@ -17,7 +18,7 @@ export { LazyFileInterceptor } from './lib/core/interceptors';
 export { FileStorage, FileStorageFactory, UploadedFileStorage } from './lib/core/file-storage';
 export * from './lib/shared';
 export * from './lib/event-bus';
-export * from './lib/redis';
+export { RedisModule, EVER_REDIS_CLIENT } from './lib/redis';
 
 export * from './lib/tenant';
 export { RoleModule, RoleService } from './lib/role';
