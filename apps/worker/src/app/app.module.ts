@@ -1,4 +1,3 @@
-//import { RedisModule } from '@gauzy/core';
 import { SchedulerModule } from '@gauzy/scheduler';
 import { Module } from '@nestjs/common';
 import { WorkerJobsModule } from './worker-jobs.module';
@@ -6,7 +5,6 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED } from './worker.constants';
 
 @Module({
 	imports: [
-		//RedisModule,
 		SchedulerModule.forRoot({
 			enabled: process.env.WORKER_SCHEDULER_ENABLED !== 'false',
 			enableQueueing: WORKER_QUEUE_ENABLED,
@@ -20,7 +18,5 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED } from './worker.constants';
 		}),
 		WorkerJobsModule
 	],
-	controllers: []
-	//providers: [WorkerRedisIntegrationService]
 })
 export class AppModule {}
