@@ -1386,16 +1386,13 @@
 			"SUBTITLE": "إعداد تكامل Activepieces",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "تكامل Activepieces جاهز. انقر على الزر أدناه للتفويض.",
-				"INFOS": "بعد ذلك سيتم نقلك إلى Activepieces لمنح الإذن لـ Gauzy.",
-				"START_BUTTON": "تفويض Activepieces",
+				"INFOS": "أدخل مفتاح API الخاص بـ Activepieces لربط حسابك.",
 				"NEXT": "التالي",
 				"ERRORS": {
 					"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة بشكل صحيح",
 					"SAVE_SETTINGS": "فشل حفظ الإعدادات",
 					"START_AUTHORIZATION": "فشل بدء التفويض",
 					"ORGANIZATION_NOT_FOUND": "المنظمة غير موجودة",
-					"CHECK_TENANT_SETTINGS": "فشل التحقق من إعدادات المستأجر",
 					"CHECK_REMEMBER_STATE": "فشل التحقق من حالة التذكر"
 				},
 				"SUCCESS": {
@@ -1405,21 +1402,8 @@
 			"SETTINGS": {
 				"TITLE": "إعدادات Activepieces",
 				"SUBTITLE": "قم بتكوين إعدادات تكامل Activepieces الخاصة بك",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "أدخل Client ID الخاص بك",
-				"CLIENT_ID_HINT": "Activepieces OAuth Client ID الخاص بك",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "أدخل Client Secret الخاص بك",
-				"CLIENT_SECRET_HINT": "Activepieces OAuth Client Secret الخاص بك",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "أدخل State Secret الخاص بك (32 حرفًا على الأقل)",
-				"STATE_SECRET_HINT": "سلسلة عشوائية آمنة تُستخدم للتحقق من حالة OAuth",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "أدخل Callback URL الخاص بك",
-				"CALLBACK_URL_HINT": "عنوان URL الذي سيتم إعادة التوجيه إليه بعد التفويض من Activepieces",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "أدخل Post Install URL الخاص بك",
-				"POST_INSTALL_URL_HINT": "عنوان URL لإعادة التوجيه إليه بعد اكتمال التثبيت",
+				"API_KEY": "مفتاح API",
+				"API_KEY_PLACEHOLDER": "أدخل مفتاح API الخاص بـ Activepieces",
 				"SETTINGS_UPDATED": "تم تحديث إعدادات Activepieces بنجاح"
 			},
 			"CONNECTIONS": {
@@ -2573,6 +2557,7 @@
 		"TIME_OFF": "إجازة"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "ليس لديك إذن لعرض هذه الصفحة",
 		"HEADER": "وقت الراحة",
 		"REQUEST": "طلب",
 		"REQUEST_TIME_OFF": "طلب إجازة",
@@ -4373,7 +4358,8 @@
 			"LARGE_FILE": "الملف كبير جدًا.",
 			"SERVICE_UNAVAILABLE": "الخدمة غير متاحة مؤقتًا.",
 			"UNEXPECTED_ERROR": "حدث خطأ غير متوقع.",
-			"NETWORK_ERROR": "خطأ في الشبكة: {{message}}"
+			"NETWORK_ERROR": "خطأ في الشبكة: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "مطلوب إذن الوصول إلى الشاشة لتمكين لقطة الشاشة التلقائية. يرجى منح الإذن في إعدادات النظام."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "تم إيقاف التتبع بسبب الخمول!",

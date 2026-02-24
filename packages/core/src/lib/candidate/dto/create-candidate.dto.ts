@@ -30,8 +30,8 @@ export class CreateCandidateDTO
 
 	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty({ message: 'Password should not be empty' })
-	@MinLength(4, {
-		message: 'Password should be at least 4 characters long.'
+	@MinLength(8, {
+		message: 'Password should be at least 8 characters long.'
 	})
 	readonly password: string;
 

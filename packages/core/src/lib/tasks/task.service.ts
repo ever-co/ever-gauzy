@@ -827,7 +827,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// TODO : Unsubscribe employee from task
 
 			// Save updated entities to DB
-			await this.typeOrmRepository.save(tasks);
+			await this.saveMany(tasks);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

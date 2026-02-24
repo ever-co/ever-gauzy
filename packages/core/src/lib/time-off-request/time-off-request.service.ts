@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
 import { Between, Brackets, Like, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
@@ -45,7 +45,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 
 		// Save the time off request first.
-		const timeOffRequest = await this.typeOrmRepository.save(request);
+		const timeOffRequest = await this.save(request);
 
 		// Prepare the request approval record using the new request's id.
 		const requestApproval = new RequestApproval();
@@ -107,28 +107,28 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 	async updateTimeOffByAdmin(id: string, timeOffRequest: ITimeOffCreateInput) {
 		try {
-			return await this.typeOrmRepository.save({
+			// Verify the record belongs to the current tenant before updating
+			await this.findOneByIdString(id);
+			return await this.save({
 				id,
 				...timeOffRequest
 			});
-		} catch (error) {}
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	async updateStatusTimeOffByAdmin(id: string, status: string): Promise<TimeOffRequest> {
 		try {
-			const timeOffRequest = await this.typeOrmRepository.findOneBy({
-				id
-			});
+			// Use tenant-scoped lookup instead of direct repository access
+			const timeOffRequest = await this.findOneByIdString(id);
 
-			if (!timeOffRequest) {
-				throw new NotFoundException('Request time off not found');
-			}
 			if (timeOffRequest.status === StatusTypesEnum.REQUESTED) {
 				timeOffRequest.status = status;
 			} else {
 				throw new ConflictException('Request time off is Conflict');
 			}
-			return await this.typeOrmRepository.save(timeOffRequest);
+			return await this.save(timeOffRequest);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

@@ -10,19 +10,14 @@
 				<p class="sub-title">{{ 'LOGIN_PAGE.LOGIN_MAGIC.TITLE' | translate }}</p>
 			</div>
 			@if (isCodeSent) {
-			<div class="sent-code-container">
-				<p
-					[ngClass]="{
-						'normal-text': email?.value.length < 30,
-						'minimum-text': email?.value.length >= 30
-					}"
-				>
-					{{ 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_TITLE' | translate }}
-					<b class="title">{{ email?.value }}</b>
-					<br />
-					<span>{{ 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_SUB_TITLE' | translate }}</span>
-				</p>
-			</div>
+				<div class="sent-code-container">
+					<p [class.normal-text]="email?.value.length < 30" [class.minimum-text]="email?.value.length >= 30">
+						{{ 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_TITLE' | translate }}
+						<b class="title">{{ email?.value }}</b>
+						<br />
+						<span>{{ 'LOGIN_PAGE.LOGIN_MAGIC.SUCCESS_SENT_CODE_SUB_TITLE' | translate }}</span>
+					</p>
+				</div>
 			}
 		</div>
 		<div class="hr-div-strong"></div>
@@ -45,89 +40,94 @@
 						autofocus
 						autocomplete-off
 						required
-						[ngClass]="isCodeSent ? 'not-allowed' : ''"
+						[class.not-allowed]="isCodeSent"
 					/>
 					@if (isCodeSent) {
-					<nb-icon
-						class="edit-email"
-						nbSuffix
-						nbButton
-						size="small"
-						ghost
-						icon="edit-outline"
-						nbTooltip="edit email"
-						nbTooltipPosition="top"
-					></nb-icon>
+						<nb-icon
+							class="edit-email"
+							nbSuffix
+							nbButton
+							size="small"
+							ghost
+							icon="edit-outline"
+							nbTooltip="edit email"
+							nbTooltipPosition="top"
+						></nb-icon>
 					}
 				</nb-form-field>
 				@if (email.invalid && email.touched && !email.pristine) {
-				<ng-container>
-					@if (email?.errors?.required) {
-					<p class="caption status-danger">
-						{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
-					</p>
-					} @if (email?.errors?.pattern) {
-					<p class="caption status-danger">
-						{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REAL_REQUIRED' | translate }}
-					</p>
-					}
-				</ng-container>
+					<ng-container>
+						@if (email?.errors?.required) {
+							<p class="caption status-danger">
+								{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
+							</p>
+						}
+						@if (email?.errors?.pattern) {
+							<p class="caption status-danger">
+								{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REAL_REQUIRED' | translate }}
+							</p>
+						}
+					</ng-container>
 				}
 			</div>
 			<!-- Code input -->
 			@if (isCodeSent) {
-			<div class="form-control-group">
-				<label class="label" for="input-code">{{ 'LOGIN_PAGE.LABELS.CODE' | translate }}</label>
-				<input
-					name="input-code"
-					id="input-code"
-					nbInput
-					fullWidth
-					formControlName="code"
-					noSpaceEdges
-					[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.CODE' | translate"
-					[status]="code.dirty ? (code.invalid ? 'danger' : 'success') : 'basic'"
-					[attr.aria-invalid]="code.invalid && code.touched ? true : null"
-					maxlength="6"
-					autofocus
-					autocomplete-off
-					required
-				/>
-				@if (code.invalid && code.touched) {
-				<ng-container>
-					@if (code.errors?.required) {
-					<p class="caption status-danger">
-						{{ 'LOGIN_PAGE.VALIDATION.CODE_REQUIRED' | translate }}
-					</p>
-					} @if (code.errors?.minlength) {
-					<p class="caption status-danger">
-						{{
-							'LOGIN_PAGE.VALIDATION.CODE_REQUIRED_LENGTH'
-								| translate : { requiredLength: code.errors?.minlength?.requiredLength }
-						}}
-					</p>
+				<div class="form-control-group">
+					<label class="label" for="input-code">{{ 'LOGIN_PAGE.LABELS.CODE' | translate }}</label>
+					<input
+						name="input-code"
+						id="input-code"
+						nbInput
+						fullWidth
+						formControlName="code"
+						noSpaceEdges
+						[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.CODE' | translate"
+						[status]="code.dirty ? (code.invalid ? 'danger' : 'success') : 'basic'"
+						[attr.aria-invalid]="code.invalid && code.touched ? true : null"
+						maxlength="6"
+						autofocus
+						autocomplete-off
+						required
+					/>
+					@if (code.invalid && code.touched) {
+						<ng-container>
+							@if (code.errors?.required) {
+								<p class="caption status-danger">
+									{{ 'LOGIN_PAGE.VALIDATION.CODE_REQUIRED' | translate }}
+								</p>
+							}
+							@if (code.errors?.minlength) {
+								<p class="caption status-danger">
+									{{
+										'LOGIN_PAGE.VALIDATION.CODE_REQUIRED_LENGTH'
+											| translate: { requiredLength: code.errors?.minlength?.requiredLength }
+									}}
+								</p>
+							}
+						</ng-container>
 					}
-				</ng-container>
-				}
-				<!-- Resend Code Button & Text -->
-				@if (isCodeSent) {
-				<p class="new-code-wrapper">
-					@if (isCodeResent) {
-					<span class="request-new-code">
-						{{ 'LOGIN_PAGE.LOGIN_MAGIC.REQUEST_NEW_CODE_TITLE' | translate : { countdown: countdown } }}
-					</span>
-					} @else {
-					<ng-container *ngTemplateOutlet="resendButton"></ng-container>
-					}
+					<!-- Resend Code Button & Text -->
+					@if (isCodeSent) {
+						<p class="new-code-wrapper">
+							@if (isCodeResent) {
+								<span class="request-new-code">
+									{{
+										'LOGIN_PAGE.LOGIN_MAGIC.REQUEST_NEW_CODE_TITLE'
+											| translate: { countdown: countdown }
+									}}
+								</span>
+							} @else {
+								<ng-container [ngTemplateOutlet]="resendButton"></ng-container>
+							}
 
-					<ng-template #resendButton>
-						<a class="resend-code" debounceClick (throttledClick)="onResendCode()">
-							{{ 'LOGIN_PAGE.LOGIN_MAGIC.RESEND_CODE_TITLE' | translate }}
-						</a>
-					</ng-template>
-				</p>
-				}
-			</div>
+							<ng-template #resendButton>
+								<a class="resend-code" debounceClick (throttledClick)="onResendCode()">
+									{{ 'LOGIN_PAGE.LOGIN_MAGIC.RESEND_CODE_TITLE' | translate }}
+								</a>
+							</ng-template>
+						</p>
+					}
+				</div>
 			}
 			<!-- Submit Button -->
 			<div class="submit-btn-wrapper">
@@ -136,13 +136,13 @@
 				</a>
 				<div class="submit-inner-wrapper">
 					@if (isCodeSent) {
-					<button type="submit" nbButton size="tiny" class="submit-btn" [disabled]="form.invalid">
-						<span class="btn-text">
-							{{ 'BUTTONS.LOGIN' | translate }}
-						</span>
-					</button>
+						<button type="submit" nbButton size="tiny" class="submit-btn" [disabled]="form.invalid">
+							<span class="btn-text">
+								{{ 'BUTTONS.LOGIN' | translate }}
+							</span>
+						</button>
 					} @else {
-					<ng-container *ngTemplateOutlet="sendCodeButtonTemplate"></ng-container>
+						<ng-container [ngTemplateOutlet]="sendCodeButtonTemplate"></ng-container>
 					}
 					<ng-template #sendCodeButtonTemplate>
 						<button
@@ -157,11 +157,7 @@
 								{{ 'BUTTONS.SEND_CODE' | translate }}
 							</span>
 							@if (isLoading) {
-							<nb-icon
-								class="btn-icon"
-								[ngClass]="isLoading ? 'spinner' : ''"
-								icon="loader-outline"
-							></nb-icon>
+								<nb-icon class="btn-icon" [class.spinner]="isLoading" icon="loader-outline"></nb-icon>
 							}
 						</button>
 					</ng-template>

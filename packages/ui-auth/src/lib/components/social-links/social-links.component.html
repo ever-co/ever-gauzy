@@ -12,7 +12,8 @@
 							class="social-link"
 						>
 							<ng-container
-								*ngTemplateOutlet="linkContentEl; context: { $implicit: socialLink }"
+								[ngTemplateOutlet]="linkContentEl"
+								[ngTemplateOutletContext]="{ $implicit: socialLink }"
 							></ng-container>
 						</a>
 					} @else if (socialLink.url) {
@@ -23,7 +24,8 @@
 							class="social-link"
 						>
 							<ng-container
-								*ngTemplateOutlet="linkContentEl; context: { $implicit: socialLink }"
+								[ngTemplateOutlet]="linkContentEl"
+								[ngTemplateOutletContext]="{ $implicit: socialLink }"
 							></ng-container>
 						</a>
 					}

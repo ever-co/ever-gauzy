@@ -63,9 +63,13 @@ export class AppMenu {
 						const appWindowManager = AppWindowManager.getInstance();
 						if (!appWindowManager.settingWindow) {
 							await appWindowManager.initSettingWindow(windowPath.timeTrackerUi);
+
 							ipcMain.once('setting_window_ready', () => {
 								appWindowManager.settingShow('goto_update');
 							});
+							await appWindowManager.loadSetting(
+								windowPath.timeTrackerUi
+							);
 						} else {
 							appWindowManager.settingShow('goto_update');
 						}
@@ -157,6 +161,9 @@ export class AppMenu {
 							ipcMain.once('setting_window_ready', () => {
 								appWindowManager.settingShow('goto_top_menu');
 							});
+							await appWindowManager.loadSetting(
+								windowPath.timeTrackerUi
+							)
 						} else {
 							appWindowManager.settingShow('goto_top_menu');
 						}

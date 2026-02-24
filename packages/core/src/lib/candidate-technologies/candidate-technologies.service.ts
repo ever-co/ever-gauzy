@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ICandidateTechnologies, ICandidateTechnologiesCreateInput, ID } from '@gauzy/contracts';
+import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateTechnologies } from './candidate-technologies.entity';
 import { TypeOrmCandidateTechnologiesRepository } from './repository/type-orm-candidate-technologies.repository';
@@ -20,7 +20,7 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async createBulk(createInput: ICandidateTechnologiesCreateInput[]) {
-		return await this.typeOrmRepository.save(createInput);
+		return await this.saveMany(createInput);
 	}
 
 	/**
@@ -35,14 +35,5 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 				interviewId
 			})
 			.getMany();
-	}
-
-	/**
-	 *
-	 * @param ids
-	 * @returns
-	 */
-	async deleteBulk(ids: ID[]) {
-		return await this.typeOrmRepository.delete(ids);
 	}
 }

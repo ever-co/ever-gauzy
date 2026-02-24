@@ -218,7 +218,7 @@
 		<nb-card-header>{{ 'TIMESHEET.RECENT_ACTIVITIES' | translate }}</nb-card-header>
 		<nb-card-body class="custom-card-body-inner">
 			@if (timeSlotEmployees?.length > 0) {
-				@for (employee of timeSlotEmployees; track employee) {
+				@for (employee of timeSlotEmployees; track employee.id) {
 					<div class="row">
 						@if (employee?.timeSlots?.length > 0) {
 							<div class="col">
@@ -249,17 +249,15 @@
 											*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
 											class="view-all"
 										>
-											<ng-container>
-												<button
-													nbButton
-													status="primary"
-													size="small"
-													outline
-													(click)="redirectToScreenshots(employee)"
-												>
-													{{ 'BUTTONS.VIEW_ALL' | translate }}
-												</button>
-											</ng-container>
+											<button
+												nbButton
+												status="primary"
+												size="small"
+												outline
+												(click)="redirectToScreenshots(employee)"
+											>
+												{{ 'BUTTONS.VIEW_ALL' | translate }}
+											</button>
 										</div>
 									</div>
 								</div>
@@ -274,7 +272,7 @@
 										[pagination]="{ clickable: true }"
 										class="m-swiper"
 									>
-										@for (timeSlot of employee.timeSlots; track timeSlot) {
+										@for (timeSlot of employee.timeSlots; track timeSlot.id) {
 											<swiper-slide>
 												<ngx-screenshots-item
 													[timeFormat]="filters?.timeFormat"
@@ -292,22 +290,20 @@
 						}
 					</div>
 				}
-			} @else {
-				@if (!timeSlotLoading) {
-					<div class="text-center">
-						@switch (selectedPeriod) {
-							@case (RangePeriod.DAY) {
-								{{ 'TIMESHEET.NO_SCREENSHOT_DAY' | translate }}
-							}
-							@case (RangePeriod.WEEK) {
-								{{ 'TIMESHEET.NO_SCREENSHOT_WEEK' | translate }}
-							}
-							@case (RangePeriod.PERIOD) {
-								{{ 'TIMESHEET.NO_SCREENSHOT_PERIOD' | translate }}
-							}
+			} @else if (!timeSlotLoading) {
+				<div class="text-center">
+					@switch (selectedPeriod) {
+						@case (RangePeriod.DAY) {
+							{{ 'TIMESHEET.NO_SCREENSHOT_DAY' | translate }}
 						}
-					</div>
-				}
+						@case (RangePeriod.WEEK) {
+							{{ 'TIMESHEET.NO_SCREENSHOT_WEEK' | translate }}
+						}
+						@case (RangePeriod.PERIOD) {
+							{{ 'TIMESHEET.NO_SCREENSHOT_PERIOD' | translate }}
+						}
+					}
+				</div>
 			}
 		</nb-card-body>
 	</nb-card>
@@ -343,7 +339,7 @@
 							</div>
 						</div>
 					</nb-list-item>
-					@for (manualTime of manualTimes; track manualTime) {
+					@for (manualTime of manualTimes; track manualTime.id) {
 						<nb-list-item>
 							<div class="w-100">
 								<div class="row">
@@ -358,7 +354,7 @@
 										></ngx-avatar>
 									</div>
 									<div class="col project-name">
-										{{ manualTime.project.name }}
+										{{ manualTime?.project?.name }}
 									</div>
 									<div class="col">
 										{{ manualTime.duration | durationFormat }}
@@ -372,22 +368,20 @@
 					}
 				</nb-list>
 			</nb-card-body>
-		} @else {
-			@if (!manualTimeLoading) {
-				<div class="text-center p-3">
-					@switch (selectedPeriod) {
-						@case (RangePeriod.DAY) {
-							{{ 'TIMESHEET.NO_MANUAL_TIME_DAY' | translate }}
-						}
-						@case (RangePeriod.WEEK) {
-							{{ 'TIMESHEET.NO_MANUAL_TIME_WEEK' | translate }}
-						}
-						@case (RangePeriod.PERIOD) {
-							{{ 'TIMESHEET.NO_MANUAL_TIME_PERIOD' | translate }}
-						}
+		} @else if (!manualTimeLoading) {
+			<div class="text-center p-3">
+				@switch (selectedPeriod) {
+					@case (RangePeriod.DAY) {
+						{{ 'TIMESHEET.NO_MANUAL_TIME_DAY' | translate }}
 					}
-				</div>
-			}
+					@case (RangePeriod.WEEK) {
+						{{ 'TIMESHEET.NO_MANUAL_TIME_WEEK' | translate }}
+					}
+					@case (RangePeriod.PERIOD) {
+						{{ 'TIMESHEET.NO_MANUAL_TIME_PERIOD' | translate }}
+					}
+				}
+			</div>
 		}
 	</nb-card>
 </ng-template>
@@ -404,7 +398,7 @@
 					</button>
 				</div>
 				<nb-list>
-					@for (task of tasks; track task) {
+					@for (task of tasks; track task.id) {
 						<nb-list-item>
 							<div class="w-100">
 								<div class="row align-items-center">
@@ -433,22 +427,20 @@
 					}
 				</nb-list>
 			</nb-card-body>
-		} @else {
-			@if (!tasksLoading) {
-				<div class="text-center p-3">
-					@switch (selectedPeriod) {
-						@case (RangePeriod.DAY) {
-							{{ 'TIMESHEET.NO_TASK_ACTIVITY_DAY' | translate }}
-						}
-						@case (RangePeriod.WEEK) {
-							{{ 'TIMESHEET.NO_TASK_ACTIVITY_WEEK' | translate }}
-						}
-						@case (RangePeriod.PERIOD) {
-							{{ 'TIMESHEET.NO_TASK_ACTIVITY_PERIOD' | translate }}
-						}
+		} @else if (!tasksLoading) {
+			<div class="text-center p-3">
+				@switch (selectedPeriod) {
+					@case (RangePeriod.DAY) {
+						{{ 'TIMESHEET.NO_TASK_ACTIVITY_DAY' | translate }}
 					}
-				</div>
-			}
+					@case (RangePeriod.WEEK) {
+						{{ 'TIMESHEET.NO_TASK_ACTIVITY_WEEK' | translate }}
+					}
+					@case (RangePeriod.PERIOD) {
+						{{ 'TIMESHEET.NO_TASK_ACTIVITY_PERIOD' | translate }}
+					}
+				}
+			</div>
 		}
 	</nb-card>
 </ng-template>
@@ -458,7 +450,7 @@
 		@if (projects?.length > 0) {
 			<nb-card-body class="custom-card-body-inner-list">
 				<nb-list>
-					@for (project of projects; track project) {
+					@for (project of projects; track project.id) {
 						<nb-list-item>
 							<div class="w-100">
 								<div class="row align-items-center">
@@ -487,22 +479,20 @@
 					}
 				</nb-list>
 			</nb-card-body>
-		} @else {
-			@if (!projectsLoading) {
-				<div class="text-center p-3">
-					@switch (selectedPeriod) {
-						@case (RangePeriod.DAY) {
-							{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_DAY' | translate }}
-						}
-						@case (RangePeriod.WEEK) {
-							{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_WEEK' | translate }}
-						}
-						@case (RangePeriod.PERIOD) {
-							{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD' | translate }}
-						}
+		} @else if (!projectsLoading) {
+			<div class="text-center p-3">
+				@switch (selectedPeriod) {
+					@case (RangePeriod.DAY) {
+						{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_DAY' | translate }}
 					}
-				</div>
-			}
+					@case (RangePeriod.WEEK) {
+						{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_WEEK' | translate }}
+					}
+					@case (RangePeriod.PERIOD) {
+						{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD' | translate }}
+					}
+				}
+			</div>
 		}
 	</nb-card>
 </ng-template>
@@ -530,22 +520,20 @@
 					}
 				</nb-list>
 			</nb-card-body>
-		} @else {
-			@if (!activitiesLoading) {
-				<div class="text-center p-3">
-					@switch (selectedPeriod) {
-						@case (RangePeriod.DAY) {
-							{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate }}
-						}
-						@case (RangePeriod.WEEK) {
-							{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_WEEK' | translate }}
-						}
-						@case (RangePeriod.PERIOD) {
-							{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD' | translate }}
-						}
+		} @else if (!activitiesLoading) {
+			<div class="text-center p-3">
+				@switch (selectedPeriod) {
+					@case (RangePeriod.DAY) {
+						{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate }}
 					}
-				</div>
-			}
+					@case (RangePeriod.WEEK) {
+						{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_WEEK' | translate }}
+					}
+					@case (RangePeriod.PERIOD) {
+						{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD' | translate }}
+					}
+				}
+			</div>
 		}
 	</nb-card>
 </ng-template>
@@ -582,7 +570,7 @@
 								</div>
 							</div>
 						</nb-list-item>
-						@for (member of members; track member) {
+						@for (member of members; track member.id) {
 							<nb-list-item>
 								<div class="w-100">
 									<div class="row">
@@ -611,7 +599,7 @@
 											</div>
 										</div>
 										<div class="col text-center">
-											<div [ngClass]="!isMoreThanWeek() ? 'd-flex' : ''">
+											<div [class.d-flex]="!isMoreThanWeek()">
 												<div class="activity text-center">
 													<div class="duration">
 														{{ member?.weekTime?.duration || 0 | durationFormat }}
@@ -625,7 +613,7 @@
 												</div>
 												@if (!isMoreThanWeek()) {
 													<div class="member-weekly-activity-graph">
-														@for (weekHour of member.weekHours; track weekHour) {
+														@for (weekHour of member.weekHours; track $index) {
 															<div
 																class="bar-graph-entry"
 																[style.height]="weekHour.duration + '%'"
@@ -641,22 +629,20 @@
 						}
 					</nb-list>
 				</div>
-			} @else {
-				@if (!memberLoading) {
-					<div class="text-center">
-						@switch (selectedPeriod) {
-							@case (RangePeriod.DAY) {
-								{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
-							}
-							@case (RangePeriod.WEEK) {
-								{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK' | translate }}
-							}
-							@case (RangePeriod.PERIOD) {
-								{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD' | translate }}
-							}
+			} @else if (!memberLoading) {
+				<div class="text-center">
+					@switch (selectedPeriod) {
+						@case (RangePeriod.DAY) {
+							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
 						}
-					</div>
-				}
+						@case (RangePeriod.WEEK) {
+							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK' | translate }}
+						}
+						@case (RangePeriod.PERIOD) {
+							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD' | translate }}
+						}
+					}
+				</div>
 			}
 		</nb-card-body>
 	</nb-card>
@@ -669,20 +655,13 @@
 				{{ 'TIMESHEET.VIEW_WIDGETS' | translate }}
 				<button class="manage-widget undo" (click)="undo()" nbButton><i class="fas fa-undo"></i>Undo</button>
 			</div>
-			@if (widgets.length > 0) {
-				@for (widget of widgets; track widget) {
-					<div (click)="updateWidgetVisibility(widget)" class="title">
-						<i
-							[ngStyle]="{
-								visibility: widget.hide ? 'hidden' : 'visible'
-							}"
-							class="fas fa-check"
-						></i>
-						<div>
-							{{ titleMapper(widget.position) | translate }}
-						</div>
+			@for (widget of widgets; track widget.position) {
+				<div (click)="updateWidgetVisibility(widget)" class="title">
+					<i [style.visibility]="widget.hide ? 'hidden' : 'visible'" class="fas fa-check"></i>
+					<div>
+						{{ titleMapper(widget.position) | translate }}
 					</div>
-				}
+				</div>
 			}
 		</div>
 		<div class="line"></div>
@@ -693,20 +672,13 @@
 					<i class="fas fa-undo"></i>Undo
 				</button>
 			</div>
-			@if (windows.length > 0) {
-				@for (window of windows; track window) {
-					<div (click)="updateWindowVisibility(window)" class="title">
-						<i
-							[ngStyle]="{
-								visibility: window.hide ? 'hidden' : 'visible'
-							}"
-							class="fas fa-check"
-						></i>
-						<div>
-							{{ titleMapper(window.position, false) | translate }}
-						</div>
+			@for (window of windows; track window.position) {
+				<div (click)="updateWindowVisibility(window)" class="title">
+					<i [style.visibility]="window.hide ? 'hidden' : 'visible'" class="fas fa-check"></i>
+					<div>
+						{{ titleMapper(window.position, false) | translate }}
 					</div>
-				}
+				</div>
 			}
 		</div>
 	</div>

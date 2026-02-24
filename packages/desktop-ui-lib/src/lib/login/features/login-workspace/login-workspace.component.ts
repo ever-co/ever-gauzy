@@ -1,4 +1,4 @@
-import { NgStyle, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NavigationExtras, Router, RouterLink } from '@angular/router';
@@ -31,7 +31,6 @@ import { WorkspaceSelectionComponent } from '../../shared/ui/workspace-selection
 		NbButtonModule,
 		NbIconModule,
 		SpinnerButtonDirective,
-		NgStyle,
 		TranslatePipe
 	]
 })

@@ -36,6 +36,12 @@ export class RoleShouldExistConstraint implements ValidatorConstraintInterface {
 		if (!roleId) return false;
 
 		const tenantId = RequestContext.currentTenantId();
+
+		// Reject validation when there is no tenant context.
+		if (!tenantId) {
+			return false;
+		}
+
 		try {
 			switch (ormType) {
 				case MultiORMEnum.MikroORM:

@@ -112,7 +112,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 				total > 0 ? generateIssueTypes(items) : generateIssueTypes(defaultIssueTypes);
 
 			// Save the created or fetched issue types to the repository and return the result.
-			return await this.typeOrmRepository.save(issueTypes);
+			return await this.saveMany(issueTypes);
 		} catch (error) {
 			throw new BadRequestException(
 				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',
@@ -147,7 +147,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 						isSystem: false
 					})
 			);
-			return await this.typeOrmRepository.save(issueTypes);
+			return await this.saveMany(issueTypes);
 		} catch (error) {
 			throw new BadRequestException(
 				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',
@@ -171,26 +171,21 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			// Fetch items based on tenant and organizationId
 			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			// Use Promise.all to concurrently create issue types for each item
-			// Wait for all issue types to be created and resolve the promises
-			const issueTypes = await Promise.all(
-				items.map(async (item: IIssueType) => {
-					const { name, value, description, icon, color, imageId, isDefault } = item;
-					// Create and return the issue type
-					return await this.create({
-						...entity,
-						name,
-						value,
-						description,
-						icon,
-						color,
-						imageId,
-						isDefault,
-						isSystem: false
-					});
-				})
-			);
-			return issueTypes;
+			const entitiesToCreate = items.map((item: IIssueType) => {
+				const { name, value, description, icon, color, imageId, isDefault } = item;
+				return {
+					...entity,
+					name,
+					value,
+					description,
+					icon,
+					color,
+					imageId,
+					isDefault,
+					isSystem: false
+				};
+			});
+			return await this.createMany(entitiesToCreate);
 		} catch (error) {
 			// If an error occurs, throw an HttpException with a more specific message.
 			throw new HttpException(

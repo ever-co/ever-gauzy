@@ -88,7 +88,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 					priorities.push(create);
 				}
 			}
-			return await this.typeOrmRepository.save(priorities);
+			return await this.saveMany(priorities);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -121,7 +121,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 				});
 				priorities.push(create);
 			}
-			return await this.typeOrmRepository.save(priorities);
+			return await this.saveMany(priorities);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -138,13 +138,11 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 			const { organizationId } = entity;
 			const tenantId = RequestContext.currentTenantId();
 
-			const priorities: ITaskPriority[] = [];
 			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			for (const item of items) {
+			const entitiesToCreate = items.map((item) => {
 				const { name, value, description, icon, color } = item;
-
-				const priority = await this.create({
+				return {
 					...entity,
 					name,
 					value,
@@ -152,11 +150,9 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 					icon,
 					color,
 					isSystem: false
-				});
-				priorities.push(priority);
-			}
-
-			return priorities;
+				};
+			});
+			return await this.createMany(entitiesToCreate);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

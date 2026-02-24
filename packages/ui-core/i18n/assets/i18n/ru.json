@@ -1428,16 +1428,13 @@
 			"SUBTITLE": "Настройка интеграции Activepieces",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "Ваша интеграция Activepieces готова. Нажмите кнопку ниже для авторизации.",
-				"INFOS": "Далее вы будете перенаправлены в Activepieces для предоставления разрешения Gauzy.",
-				"START_BUTTON": "Авторизовать Activepieces",
+				"INFOS": "Введите ваш API-ключ Activepieces для подключения аккаунта.",
 				"NEXT": "Далее",
 				"ERRORS": {
 					"INVALID_FORM": "Пожалуйста, правильно заполните все обязательные поля",
 					"SAVE_SETTINGS": "Не удалось сохранить настройки",
 					"START_AUTHORIZATION": "Не удалось начать авторизацию",
 					"ORGANIZATION_NOT_FOUND": "Организация не найдена",
-					"CHECK_TENANT_SETTINGS": "Не удалось проверить настройки арендатора",
 					"CHECK_REMEMBER_STATE": "Не удалось проверить состояние запоминания"
 				},
 				"SUCCESS": {
@@ -1447,21 +1444,8 @@
 			"SETTINGS": {
 				"TITLE": "Настройки Activepieces",
 				"SUBTITLE": "Настройте параметры интеграции Activepieces",
-				"CLIENT_ID": "ID клиента",
-				"CLIENT_ID_PLACEHOLDER": "Введите ваш ID клиента",
-				"CLIENT_ID_HINT": "Ваш Activepieces OAuth ID клиента",
-				"CLIENT_SECRET": "Секрет клиента",
-				"CLIENT_SECRET_PLACEHOLDER": "Введите ваш секрет клиента",
-				"CLIENT_SECRET_HINT": "Ваш Activepieces OAuth секрет клиента",
-				"STATE_SECRET": "Секрет состояния",
-				"STATE_SECRET_PLACEHOLDER": "Введите ваш секрет состояния (минимум 32 символа)",
-				"STATE_SECRET_HINT": "Безопасная случайная строка, используемая для проверки состояния OAuth",
-				"CALLBACK_URL": "URL обратного вызова",
-				"CALLBACK_URL_PLACEHOLDER": "Введите ваш URL обратного вызова",
-				"CALLBACK_URL_HINT": "URL, на который Activepieces перенаправит после авторизации",
-				"POST_INSTALL_URL": "URL после установки",
-				"POST_INSTALL_URL_PLACEHOLDER": "Введите ваш URL после установки",
-				"POST_INSTALL_URL_HINT": "URL для перенаправления после завершения установки",
+				"API_KEY": "API-ключ",
+				"API_KEY_PLACEHOLDER": "Введите ваш API-ключ Activepieces",
 				"SETTINGS_UPDATED": "Настройки Activepieces успешно обновлены"
 			},
 			"CONNECTIONS": {
@@ -2619,6 +2603,7 @@
 		"TIME_OFF": "Время выключено"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "У вас нет разрешения на просмотр этой страницы",
 		"HEADER": "Время выключено",
 		"REQUEST": "Запросить",
 		"REQUEST_TIME_OFF": "Время запроса выключено",
@@ -4406,7 +4391,8 @@
 			"LARGE_FILE": "Файл слишком большой.",
 			"SERVICE_UNAVAILABLE": "Сервис временно недоступен.",
 			"UNEXPECTED_ERROR": "Произошла непредвиденная ошибка.",
-			"NETWORK_ERROR": "Ошибка сети: {{message}}"
+			"NETWORK_ERROR": "Ошибка сети: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "Требуется разрешение на доступ к экрану для включения автоматического захвата экрана. Пожалуйста, предоставьте разрешение в настройках системы."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Отслеживание остановлено из-за бездействия!",

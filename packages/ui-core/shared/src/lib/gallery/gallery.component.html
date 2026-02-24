@@ -1,79 +1,75 @@
 <div class="gallery-inner" [@fadeInOut]>
-  <div class="gallery-header d-flex p-2">
-    <span class="spacer"></span>
-    <div class="ml-auto">
-      @if (item?.description) {
-        <button status="info" nbButton [nbTooltip]="item?.description">
-          <nb-icon icon="info-outline"></nb-icon>
-        </button>
-      }
-      <button
-        class="ml-2"
-        status="success"
-        nbButton
-        (click)="downloadFile(item?.fullUrl)"
-        [nbTooltip]="'BUTTONS.DOWNLOAD' | translate"
-        >
-        <nb-icon icon="download-outline"></nb-icon>
-      </button>
-      <button class="ml-2" status="danger" nbButton (click)="close()" [nbTooltip]="'BUTTONS.CLOSE' | translate">
-        <nb-icon icon="close-outline"></nb-icon>
-      </button>
-    </div>
-  </div>
-  <div class="gallery-content" (click)="close()">
-    <div class="left-button">
-      <button
-        class="nav-button"
-        nbButton
-        status="primary"
-        [disabled]="active_index == 0"
-        (click)="previous($event)"
-        >
-        <nb-icon icon="arrow-left"></nb-icon>
-      </button>
-    </div>
-    <div
-      class="media-viewer"
-      (click)="$event.stopPropagation()"
-      [ngClass]="{ 'danger-bordered': item?.isWorkRelated === false }"
-      >
-      <img #imageMedia [src]="item?.fullUrl" />
-    </div>
-    <div class="right-button">
-      <button
-        class="nav-button"
-        nbButton
-        [disabled]="active_index == items.length - 1"
-        status="primary"
-        (click)="next($event)"
-        >
-        <nb-icon icon="arrow-right"></nb-icon>
-      </button>
-    </div>
-  </div>
-  <div class="gallery-footer">
-    <div class="thumb-items custom-scroll" #customScroll>
-      @for (thumb of items; track trackByThumbId(index, thumb); let index = $index) {
-        <div
-          class="thumb-item text-center"
-					[ngClass]="{
-						'thumb-item-active': item?.id === thumb?.id,
-						'danger-bordered': thumb?.isWorkRelated === false
-					}"
-          (click)="setFocus(thumb)"
-          >
-          @if (thumb) {
-            <img [src]="thumb?.thumbUrl" alt="Thumbnail Image" />
-          }
-          <span>
-            {{ thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
-            {{
-            thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async)
-            }}
-          </span>
-        </div>
-      }
-    </div>
-  </div>
+	<div class="gallery-header d-flex p-2">
+		<span class="spacer"></span>
+		<div class="ml-auto">
+			@if (item?.description) {
+			<button status="info" nbButton [nbTooltip]="item?.description">
+				<nb-icon icon="info-outline"></nb-icon>
+			</button>
+			}
+			<button
+				class="ml-2"
+				status="success"
+				nbButton
+				(click)="downloadFile(item?.fullUrl)"
+				[nbTooltip]="'BUTTONS.DOWNLOAD' | translate"
+			>
+				<nb-icon icon="download-outline"></nb-icon>
+			</button>
+			<button class="ml-2" status="danger" nbButton (click)="close()" [nbTooltip]="'BUTTONS.CLOSE' | translate">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+	</div>
+	<div class="gallery-content" (click)="close()">
+		<div class="left-button">
+			<button
+				class="nav-button"
+				nbButton
+				status="primary"
+				[disabled]="active_index == 0"
+				(click)="previous($event)"
+			>
+				<nb-icon icon="arrow-left"></nb-icon>
+			</button>
+		</div>
+		<div
+			class="media-viewer"
+			(click)="$event.stopPropagation()"
+			[class.danger-bordered]="item?.isWorkRelated === false"
+		>
+			<img #imageMedia [src]="item?.fullUrl" />
+		</div>
+		<div class="right-button">
+			<button
+				class="nav-button"
+				nbButton
+				[disabled]="active_index == items.length - 1"
+				status="primary"
+				(click)="next($event)"
+			>
+				<nb-icon icon="arrow-right"></nb-icon>
+			</button>
+		</div>
+	</div>
+	<div class="gallery-footer">
+		<div class="thumb-items custom-scroll" #customScroll>
+			@for (thumb of items; track trackByThumbId(index, thumb); let index = $index) {
+			<div
+				class="thumb-item text-center"
+				[class.thumb-item-active]="item?.id === thumb?.id"
+				[class.danger-bordered]="thumb?.isWorkRelated === false"
+				(click)="setFocus(thumb)"
+			>
+				@if (thumb) {
+				<img [src]="thumb?.thumbUrl" alt="Thumbnail Image" />
+				}
+				<span>
+					{{ thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
+					{{ thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }}
+				</span>
+			</div>
+			}
+		</div>
+	</div>
 </div>

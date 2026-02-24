@@ -56,4 +56,12 @@ export class KeyresultTypeSelectComponent {
 			await this.getKPI();
 		}
 	}
+
+	isTypeHidden(typeValue: string): boolean {
+		return typeValue === this.keyResultTypeEnum.KPI
+			? !this.settings?.krTypeKPI
+			: typeValue === this.keyResultTypeEnum.TASK
+			? !this.settings?.krTypeTask
+			: false;
+	}
 }

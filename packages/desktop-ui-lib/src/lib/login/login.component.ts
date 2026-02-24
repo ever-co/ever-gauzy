@@ -1,4 +1,3 @@
-import { NgStyle } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NavigationExtras, Router, RouterLink } from '@angular/router';
@@ -42,7 +41,6 @@ import { SocialLinksComponent } from './shared/ui/social-links/social-links.comp
 		NbIconModule,
 		NbCheckboxModule,
 		SpinnerButtonDirective,
-		NgStyle,
 		RouterLink,
 		SocialLinksComponent,
 		TranslatePipe

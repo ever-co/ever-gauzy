@@ -1,91 +1,82 @@
 <div class="job-detail">
-  <div class="job-header">
-    @if (rowData?.providerCode) {
-      <span class="job-provider mr-2" [ngClass]="rowData?.providerCode">
-        {{ rowData?.providerCode | titlecase }}
-      </span>
-    }
-    @if (rowData?.jobPost?.jobDateCreated) {
-      <span class="job-date-created mr-2">{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}</span>
-    }
-    @if (rowData?.jobPost?.jobType) {
-      <span class="badge mr-2">{{ rowData?.jobPost?.jobType | titlecase }}</span>
-    }
-    @if (rowData?.jobPost?.budget) {
-      <span class="badge mr-2">{{ rowData?.jobPost?.budget | budget }}</span>
-    }
-    @if (rowData?.jobPost?.country) {
-      <span class="badge mr-2">{{ rowData?.jobPost?.country }}</span>
-    }
-    @if (rowData?.jobPost?.jobStatus) {
-      <job-status [rowData]="rowData"></job-status>
-    }
-    @if (hideJobIcon) {
-      <button
-        style="cursor: pointer"
-        status="basic"
-        class="action warning ml-1"
-        size="small"
-        (throttledClick)="hideJob($event)"
-        [nbTooltip]="'JOBS.HIDE' | translate"
-        debounceClick
-        nbButton
-        >
-        <nb-icon icon="eye-off-outline" pack="eva"></nb-icon>
-      </button>
-    }
-    <div class="job-title">
-      <a href="javascript:void(0)" (click)="openJob()">
-        <nb-icon icon="eye-outline" pack="eva" [nbTooltip]="rowData?.jobPost?.title"></nb-icon>
-        {{ rowData?.jobPost?.title }}
-      </a>
-    </div>
-  </div>
+	<div class="job-header">
+		@if (rowData?.providerCode) {
+		<span class="job-provider mr-2" [class]="rowData?.providerCode">
+			{{ rowData?.providerCode | titlecase }}
+		</span>
+		} @if (rowData?.jobPost?.jobDateCreated) {
+		<span class="job-date-created mr-2">{{ rowData?.jobPost?.jobDateCreated | dateTimeFormat }}</span>
+		} @if (rowData?.jobPost?.jobType) {
+		<span class="badge mr-2">{{ rowData?.jobPost?.jobType | titlecase }}</span>
+		} @if (rowData?.jobPost?.budget) {
+		<span class="badge mr-2">{{ rowData?.jobPost?.budget | budget }}</span>
+		} @if (rowData?.jobPost?.country) {
+		<span class="badge mr-2">{{ rowData?.jobPost?.country }}</span>
+		} @if (rowData?.jobPost?.jobStatus) {
+		<job-status [rowData]="rowData"></job-status>
+		} @if (hideJobIcon) {
+		<button
+			style="cursor: pointer"
+			status="basic"
+			class="action warning ml-1"
+			size="small"
+			(throttledClick)="hideJob($event)"
+			[nbTooltip]="'JOBS.HIDE' | translate"
+			debounceClick
+			nbButton
+		>
+			<nb-icon icon="eye-off-outline" pack="eva"></nb-icon>
+		</button>
+		}
+		<div class="job-title">
+			<a href="javascript:void(0)" (click)="openJob()">
+				<nb-icon icon="eye-outline" pack="eva" [nbTooltip]="rowData?.jobPost?.title"></nb-icon>
+				{{ rowData?.jobPost?.title }}
+			</a>
+		</div>
+	</div>
 
-  <div class="job-body">
-    <div class="job-description">
-      <p [innerHTML]="rowData?.jobPost?.description | nl2br"></p>
-    </div>
-  </div>
+	<div class="job-body">
+		<div class="job-description">
+			<p [innerHTML]="rowData?.jobPost?.description | nl2br"></p>
+		</div>
+	</div>
 
-  <div class="job-footer mb-3">
-    <div class="job-search-container">
-      @if (rowData?.jobPost?.searchCategory) {
-        <div class="search-category">
-          <span class="label">Search Category:</span>
-          <span class="badge">{{ rowData?.jobPost?.searchCategory }}</span>
-        </div>
-      }
-      @if (rowData?.jobPost?.searchOccupation) {
-        <div class="search-occupation">
-          <span class="label">Search Occupation:</span>
-          <span class="badge">{{ rowData?.jobPost?.searchOccupation }}</span>
-        </div>
-      }
-      @if (rowData?.jobPost?.searchKeyword) {
-        <div class="search-keyword">
-          <span class="label">Search Keyword:</span>
-          <span class="badge">{{ rowData?.jobPost?.searchKeyword }}</span>
-        </div>
-      }
-    </div>
-    <div class="job-category-container">
-      @if (rowData?.jobPost?.category) {
-        <div class="job-category">
-          <span class="label">Category:</span>
-          <span class="badge">{{ rowData?.jobPost?.category }}</span>
-        </div>
-      }
-      @if (rowData?.jobPost?.skills) {
-        <div class="job-skills">
-          <span class="label">Skills:</span>
-          @for (skill of rowData?.jobPost?.skills?.split(','); track skill) {
-            <span class="badge">
-              {{ skill }}
-            </span>
-          }
-        </div>
-      }
-    </div>
-  </div>
+	<div class="job-footer mb-3">
+		<div class="job-search-container">
+			@if (rowData?.jobPost?.searchCategory) {
+			<div class="search-category">
+				<span class="label">Search Category:</span>
+				<span class="badge">{{ rowData?.jobPost?.searchCategory }}</span>
+			</div>
+			} @if (rowData?.jobPost?.searchOccupation) {
+			<div class="search-occupation">
+				<span class="label">Search Occupation:</span>
+				<span class="badge">{{ rowData?.jobPost?.searchOccupation }}</span>
+			</div>
+			} @if (rowData?.jobPost?.searchKeyword) {
+			<div class="search-keyword">
+				<span class="label">Search Keyword:</span>
+				<span class="badge">{{ rowData?.jobPost?.searchKeyword }}</span>
+			</div>
+			}
+		</div>
+		<div class="job-category-container">
+			@if (rowData?.jobPost?.category) {
+			<div class="job-category">
+				<span class="label">Category:</span>
+				<span class="badge">{{ rowData?.jobPost?.category }}</span>
+			</div>
+			} @if (rowData?.jobPost?.skills) {
+			<div class="job-skills">
+				<span class="label">Skills:</span>
+				@for (skill of rowData?.jobPost?.skills?.split(','); track skill) {
+				<span class="badge">
+					{{ skill }}
+				</span>
+				}
+			</div>
+			}
+		</div>
+	</div>
 </div>

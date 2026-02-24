@@ -19,7 +19,8 @@ import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-u
 export async function createImageViewerWindow(
 	imageViewWindow: Electron.BrowserWindow | null,
 	filePath: string,
-	preloadPath?: string
+	preloadPath?: string,
+	launch = true
 ): Promise<Electron.BrowserWindow> {
 	// Get the WindowManager instance for managing windows
 	const manager = WindowManager.getInstance();
@@ -37,7 +38,9 @@ export async function createImageViewerWindow(
 	imageViewWindow.hide();
 
 	// Use the helper function to construct and load the URL
-	await setLaunchPathAndLoad(imageViewWindow, filePath, '/viewer');
+	if (launch) {
+		await setLaunchPathAndLoad(imageViewWindow, filePath, '/viewer');
+	}
 
 	// Remove the menu from the window
 	imageViewWindow.setMenu(null);

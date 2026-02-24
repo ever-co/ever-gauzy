@@ -1,4 +1,11 @@
-import { SocialAuthService } from '@gauzy/auth';
+import {
+	SocialAuthService,
+	OAuthAppAuthorizationRequest,
+	OAuthAppTokenRequest,
+	OAuthAppTokenResponse,
+	OAuthAppConfig,
+	OAuthAppPendingRequest
+} from '@gauzy/auth';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
 import { DEMO_PASSWORD_LESS_MAGIC_CODE } from '@gauzy/constants';
@@ -35,12 +42,16 @@ import { wrap } from '@mikro-orm/core';
 import { HttpService } from '@nestjs/axios';
 import {
 	BadRequestException,
+	Inject,
 	Injectable,
 	InternalServerErrorException,
 	Logger,
 	NotFoundException,
+	Optional,
 	UnauthorizedException
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { CommandBus } from '@nestjs/cqrs';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as moment from 'moment';
@@ -76,11 +87,19 @@ import {
 	verifyGoogleToken,
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createClient } from 'redis';
+import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
 	// Get the type of the Object-Relational Mapping (ORM) used in the application.
 	private readonly ormType: MultiORM = getORMType();
+	private readonly logger = new Logger(AuthService.name);
+	private static readonly OAUTH_CODE_CACHE_PREFIX = 'oauth_app_code:';
+	private static readonly OAUTH_CODE_TTL_MS = 10 * 60 * 1000;
+	private static readonly OAUTH_REQUEST_CACHE_PREFIX = 'oauth_app_request:';
+	private static readonly OAUTH_REQUEST_TTL_MS = 10 * 60 * 1000;
 
 	constructor(
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
@@ -97,6 +116,8 @@ export class AuthService extends SocialAuthService {
 		private readonly httpService: HttpService,
 		private readonly socialAccountService: SocialAccountService,
 		private readonly eventBus: EventBus,
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+		@Optional() @Inject(EVER_REDIS_CLIENT) private readonly redisClient: ReturnType<typeof createClient> | null,
 		private readonly passwordHashService: PasswordHashService,
 		private readonly refreshTokenService: RefreshTokenService,
 		private readonly accessTokenService: AccessTokenService
@@ -116,6 +137,210 @@ export class AuthService extends SocialAuthService {
 		}
 		// If using other ORM types, return the entity as is
 		return entity;
+	}
+
+	private signOAuthAppPayload(payload: string, secret: string): string {
+		return createHmac('sha256', secret).update(payload).digest('base64url');
+	}
+
+	private parseOAuthAppCode(code: string, secret: string): {
+		jti: string;
+		userId: string;
+		tenantId: string;
+		clientId: string;
+		redirectUri: string;
+		scope: string;
+		exp: number;
+	} {
+		const [version, payloadB64, sig] = code.split('.');
+		if (version !== 'v1' || !payloadB64 || !sig) {
+			throw new UnauthorizedException('Invalid authorization code');
+		}
+
+		const expectedSig = this.signOAuthAppPayload(payloadB64, secret);
+		const sigBuf = Buffer.from(sig, 'base64url');
+		const expectedBuf = Buffer.from(expectedSig, 'base64url');
+		if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) {
+			throw new UnauthorizedException('Invalid authorization code signature');
+		}
+
+		let payload: {
+			jti: string;
+			userId: string;
+			tenantId: string;
+			clientId: string;
+			redirectUri: string;
+			scope: string;
+			exp: number;
+		};
+		try {
+			const payloadJson = Buffer.from(payloadB64, 'base64url').toString();
+			payload = JSON.parse(payloadJson);
+		} catch {
+			throw new UnauthorizedException('Invalid authorization code payload');
+		}
+
+		if (!payload.jti || !payload.userId || !payload.tenantId || !payload.clientId || !payload.redirectUri) {
+			throw new UnauthorizedException('Invalid authorization code payload');
+		}
+
+		return payload;
+	}
+
+	/**
+	 * Store a pending OAuth authorization request in cache.
+	 */
+	public async storeOAuthAppPendingRequest(request: OAuthAppPendingRequest): Promise<void> {
+		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${request.requestId}`;
+		const value = JSON.stringify(request);
+		if (this.redisClient) {
+			await this.redisClient.set(cacheKey, value, { PX: AuthService.OAUTH_REQUEST_TTL_MS });
+		} else {
+			await this.cacheManager.set(cacheKey, value, AuthService.OAUTH_REQUEST_TTL_MS);
+		}
+	}
+
+	/**
+	 * Retrieve a pending OAuth authorization request from cache.
+	 */
+	public async getOAuthAppPendingRequest(requestId: string): Promise<OAuthAppPendingRequest | null> {
+		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${requestId}`;
+		let value: string | null;
+		if (this.redisClient) {
+			value = await this.redisClient.get(cacheKey);
+		} else {
+			value = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+		}
+		if (!value) return null;
+		return JSON.parse(value) as OAuthAppPendingRequest;
+	}
+
+	/**
+	 * Delete a pending OAuth authorization request from cache.
+	 */
+	public async deleteOAuthAppPendingRequest(requestId: string): Promise<void> {
+		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${requestId}`;
+		if (this.redisClient) {
+			await this.redisClient.del(cacheKey);
+		} else {
+			await this.cacheManager.del(cacheKey);
+		}
+	}
+
+	private ensureOAuthAppConfigured(): OAuthAppConfig {
+		const config = this.getOAuthAppConfig();
+		if (!config.clientId || !config.clientSecret || !config.redirectUris?.length || !config.codeSecret) {
+			throw new InternalServerErrorException('OAuth app is not configured');
+		}
+		return config;
+	}
+
+	public async createOAuthAppAuthorizationCode(
+		request: OAuthAppAuthorizationRequest
+	): Promise<string> {
+		const config = this.ensureOAuthAppConfigured();
+
+		if (request.clientId !== config.clientId) {
+			throw new BadRequestException('Invalid client_id');
+		}
+
+		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
+			throw new BadRequestException('Invalid redirect_uri');
+		}
+
+		const now = Math.floor(Date.now() / 1000);
+		const jti = randomBytes(32).toString('base64url');
+		const exp = now + AuthService.OAUTH_CODE_TTL_MS / 1000;
+		const scope = request.scope ?? '';
+
+		const payload = {
+			jti,
+			userId: request.userId,
+			tenantId: request.tenantId,
+			clientId: request.clientId,
+			redirectUri: request.redirectUri,
+			scope,
+			exp
+		};
+
+		const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+		const signature = this.signOAuthAppPayload(payloadB64, config.codeSecret);
+
+		const cacheKey = `${AuthService.OAUTH_CODE_CACHE_PREFIX}${jti}`;
+		if (this.redisClient) {
+			await this.redisClient.set(cacheKey, 'valid', { PX: AuthService.OAUTH_CODE_TTL_MS });
+		} else {
+			await this.cacheManager.set(cacheKey, 'valid', AuthService.OAUTH_CODE_TTL_MS);
+		}
+
+		return `v1.${payloadB64}.${signature}`;
+	}
+
+
+	public async exchangeOAuthAppAuthorizationCode(
+		request: OAuthAppTokenRequest
+	): Promise<OAuthAppTokenResponse> {
+		const config = this.ensureOAuthAppConfigured();
+
+		if (request.clientId !== config.clientId) {
+			throw new UnauthorizedException('Invalid client credentials');
+		}
+
+		const secretBuf = Buffer.from(request.clientSecret, 'utf8');
+		const expectedBuf = Buffer.from(config.clientSecret, 'utf8');
+		if (secretBuf.length !== expectedBuf.length || !timingSafeEqual(secretBuf, expectedBuf)) {
+			throw new UnauthorizedException('Invalid client credentials');
+		}
+
+		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
+			throw new BadRequestException('Invalid redirect_uri');
+		}
+
+		const payload = this.parseOAuthAppCode(request.code, config.codeSecret);
+		const now = Math.floor(Date.now() / 1000);
+
+		if (payload.exp <= now) {
+			throw new UnauthorizedException('Authorization code expired');
+		}
+
+		if (payload.clientId !== request.clientId || payload.redirectUri !== request.redirectUri) {
+			throw new UnauthorizedException('Authorization code mismatch');
+		}
+
+		// Single-use enforcement via atomic GETDEL (Redis) or get-then-del fallback
+		const cacheKey = `${AuthService.OAUTH_CODE_CACHE_PREFIX}${payload.jti}`;
+		let codeState: string | null;
+
+		if (this.redisClient) {
+			// Atomic get-and-delete: prevents race conditions in multi-instance deployments
+			codeState = await this.redisClient.getDel(cacheKey);
+		} else {
+			// Non-Redis fallback (single-instance safe)
+			codeState = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			await this.cacheManager.del(cacheKey);
+		}
+
+		if (!codeState) {
+			throw new UnauthorizedException('Authorization code already used');
+		}
+
+		const accessToken = await this.getJwtAccessToken({
+			id: payload.userId,
+			tenantId: payload.tenantId
+		});
+
+		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
+
+		this.logger.log(
+			`OAuth app token exchanged for userId=${payload.userId}, tenantId=${payload.tenantId}, expiresIn=${expiresIn}s`
+		);
+
+		return {
+			accessToken,
+			expiresIn,
+			tokenType: 'Bearer',
+			scope: payload.scope ?? ''
+		};
 	}
 
 	/**
@@ -861,7 +1086,10 @@ export class AuthService extends SocialAuthService {
 			authData: { jwt: null, userId: null }
 		};
 		try {
-			for (const { value } of emails) {
+			for (const { value, verified } of emails) {
+				// Skip unverified emails to prevent account takeover via unverified OAuth addresses
+				if (!verified) continue;
+
 				const userExist = await this.userService.checkIfExistsEmail(value);
 				if (userExist) {
 					const user = await this.userService.getOAuthLoginEmail(value);
@@ -904,7 +1132,7 @@ export class AuthService extends SocialAuthService {
 				throw new Error('User ID is missing in the request.');
 			}
 
-			console.log('Request getJwtAccessToken with Id: ', request.id);
+			this.logger.debug(`Request getJwtAccessToken with Id: ${request.id}`);
 
 			// Extract the user ID from the request
 			const userId = request.id;

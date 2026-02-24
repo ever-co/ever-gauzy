@@ -258,6 +258,16 @@ async function startServer(value, restart = false) {
 	if (value.serverConfigConnected || !value.isLocalServer) {
 		setupWindow?.close();
 		try {
+			/* ping server before launch the ui */
+			ipcMain.removeAllListeners('app_is_init');
+			ipcMain.on('app_is_init', () => {
+				if (!isAlreadyRun && value && !restart) {
+					onWaitingServer = true;
+					timeTrackerWindow.webContents.send('server_ping', {
+						host: getApiBaseUrl(value)
+					});
+				}
+			});
 			if (!timeTrackerWindow) {
 				timeTrackerWindow = await createTimeTrackerWindow(
 					timeTrackerWindow,
@@ -265,7 +275,12 @@ async function startServer(value, restart = false) {
 					pathWindow.preloadPath
 				);
 			} else {
-				await timeTrackerWindow.loadURL(timeTrackerPage(pathWindow.timeTrackerUi));
+				const currentUrl = timeTrackerWindow.webContents.getURL();
+				if (currentUrl) {
+					await timeTrackerWindow.loadURL(currentUrl);
+				} else {
+					await timeTrackerWindow.loadURL(timeTrackerPage(pathWindow.timeTrackerUi));
+				}
 			}
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);
 			await notificationWindow.loadURL();
@@ -292,15 +307,7 @@ async function startServer(value, restart = false) {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
 	});
 
-	/* ping server before launch the ui */
-	ipcMain.on('app_is_init', () => {
-		if (!isAlreadyRun && value && !restart) {
-			onWaitingServer = true;
-			timeTrackerWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value)
-			});
-		}
-	});
+
 
 	return true;
 }
@@ -384,11 +391,9 @@ app.on('ready', async () => {
 			pathWindow.preloadPath
 		);
 
-		await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
 		if (settings?.alwaysOn) {
+			await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
 			appWindowManager.alwaysOnWindow.show();
-		} else {
-			appWindowManager.alwaysOnWindow.browserWindow.close();
 		}
 
 		if (configs && configs.isSetup) {

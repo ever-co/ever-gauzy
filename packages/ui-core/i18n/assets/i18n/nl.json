@@ -1387,16 +1387,13 @@
 			"SUBTITLE": "Activepieces integratie instellen",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "Uw Activepieces-integratie is klaar. Klik op de knop hieronder om te autoriseren.",
-				"INFOS": "Vervolgens wordt u doorgestuurd naar Activepieces om toestemming te verlenen aan Gauzy.",
-				"START_BUTTON": "Activepieces autoriseren",
+				"INFOS": "Voer uw Activepieces API-sleutel in om uw account te verbinden.",
 				"NEXT": "Volgende",
 				"ERRORS": {
 					"INVALID_FORM": "Vul alle verplichte velden correct in",
 					"SAVE_SETTINGS": "Kan instellingen niet opslaan",
 					"START_AUTHORIZATION": "Kan autorisatie niet starten",
 					"ORGANIZATION_NOT_FOUND": "Organisatie niet gevonden",
-					"CHECK_TENANT_SETTINGS": "Kan tenant-instellingen niet controleren",
 					"CHECK_REMEMBER_STATE": "Kan onthouden status niet controleren"
 				},
 				"SUCCESS": {
@@ -1406,21 +1403,8 @@
 			"SETTINGS": {
 				"TITLE": "Activepieces-instellingen",
 				"SUBTITLE": "Configureer uw Activepieces-integratie-instellingen",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "Voer uw Client ID in",
-				"CLIENT_ID_HINT": "Uw Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "Voer uw Client Secret in",
-				"CLIENT_SECRET_HINT": "Uw Activepieces OAuth Client Secret",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "Voer uw State Secret in (minimaal 32 tekens)",
-				"STATE_SECRET_HINT": "Een veilige willekeurige string die wordt gebruikt voor OAuth-statusverificatie",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "Voer uw Callback URL in",
-				"CALLBACK_URL_HINT": "De URL waarnaar Activepieces zal doorverwijzen na autorisatie",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "Voer uw Post Install URL in",
-				"POST_INSTALL_URL_HINT": "De URL om naar door te verwijzen nadat de installatie is voltooid",
+				"API_KEY": "API-sleutel",
+				"API_KEY_PLACEHOLDER": "Voer uw Activepieces API-sleutel in",
 				"SETTINGS_UPDATED": "Activepieces-instellingen succesvol bijgewerkt"
 			},
 			"CONNECTIONS": {
@@ -2588,6 +2572,7 @@
 		"TIME_OFF": "Vrijaf"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "U heeft geen toestemming om deze pagina te bekijken",
 		"HEADER": "Verlof",
 		"REQUEST": "Verzoek",
 		"REQUEST_TIME_OFF": "Verlof aanvragen",
@@ -4388,7 +4373,8 @@
 			"LARGE_FILE": "Het bestand is te groot.",
 			"SERVICE_UNAVAILABLE": "Dienst tijdelijk niet beschikbaar.",
 			"UNEXPECTED_ERROR": "Er is een onverwachte fout opgetreden.",
-			"NETWORK_ERROR": "Netwerkfout: {{message}}"
+			"NETWORK_ERROR": "Netwerkfout: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "Schermtoegangsmachtiging is vereist om automatische schermopname in te schakelen. Gelieve de machtiging te verlenen in uw systeeminstellingen."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "De tracker is gestopt vanwege inactiviteit!",

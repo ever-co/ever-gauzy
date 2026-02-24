@@ -6,7 +6,8 @@ import {
 	createImageViewerWindow,
 	createSettingsWindow,
 	PluginMarketplaceWindow,
-	AlwaysOn
+	AlwaysOn,
+	setLaunchPathAndLoad
 } from '@gauzy/desktop-window';
 import { DesktopUpdater } from './desktop-updater';
 
@@ -15,6 +16,11 @@ enum WindowName {
 	SETUP = 'setup',
 	IMAGE_VIEW = 'imageView',
 	SETTING = 'setting'
+}
+
+export enum WindowHash {
+	IMAGE_VIEW = '/viewer',
+	SETTING = '/settings'
 }
 
 export class AppWindowManager {
@@ -86,20 +92,20 @@ export class AppWindowManager {
 		return this._setupWindow;
 	}
 
-	async initImageViewWindow(filePath: string): Promise<BrowserWindow> {
+	async initImageViewWindow(filePath: string, launch = false): Promise<BrowserWindow> {
 		if (this._imageView) {
 			return this._imageView;
 		}
-		this._imageView = await createImageViewerWindow(this._imageView, filePath, this._preloadPath);
+		this._imageView = await createImageViewerWindow(this._imageView, filePath, this._preloadPath, launch);
 		this.eventCloseWindow(this._imageView, WindowName.IMAGE_VIEW);
 		return this._imageView;
 	}
 
-	async initSettingWindow(filePath: string, preloadPath?: string): Promise<BrowserWindow> {
+	async initSettingWindow(filePath: string, preloadPath?: string, launch = false): Promise<BrowserWindow> {
 		if (this._settingWindow) {
 			return this._settingWindow;
 		}
-		this._settingWindow = await createSettingsWindow(this._settingWindow, filePath, this._preloadPath || preloadPath);
+		this._settingWindow = await createSettingsWindow(this._settingWindow, filePath, this._preloadPath || preloadPath, false, launch);
 		this.eventCloseWindow(this._settingWindow, WindowName.SETTING);
 		return this._settingWindow;
 	}
@@ -194,4 +200,11 @@ export class AppWindowManager {
 		}
 	}
 
+	async loadSetting(filePath: string) {
+		await setLaunchPathAndLoad(this.settingWindow, filePath, WindowHash.SETTING);
+	}
+
+	async loadImageView(filePath: string) {
+		await setLaunchPathAndLoad(this.imageView, filePath, WindowHash.IMAGE_VIEW);
+	}
 }

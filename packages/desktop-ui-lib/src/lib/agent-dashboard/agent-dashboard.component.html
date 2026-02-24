@@ -1,15 +1,14 @@
 <nb-layout windowMode>
-  <nb-sidebar tag="menu" state="expanded" [responsive]="true" (stateChange)="onSidebarStateChange($event)">
-    <div class="brand">
-      <div class="brand-content">
-        <img [src]="gauzyIcon" [ngClass]="styles.icon" />
-      </div>
-    </div>
-    <nb-menu [items]="menu"></nb-menu>
-  </nb-sidebar>
+	<nb-sidebar tag="menu" state="expanded" [responsive]="true" (stateChange)="onSidebarStateChange($event)">
+		<div class="brand">
+			<div class="brand-content">
+				<img [src]="gauzyIcon" [class]="styles.icon" />
+			</div>
+		</div>
+		<nb-menu [items]="menu"></nb-menu>
+	</nb-sidebar>
 
-  <nb-layout-column>
-    <router-outlet></router-outlet>
-
-  </nb-layout-column>
+	<nb-layout-column>
+		<router-outlet></router-outlet>
+	</nb-layout-column>
 </nb-layout>

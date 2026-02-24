@@ -12,6 +12,7 @@ import { AcceptInviteComponent } from './components/accept-invite/accept-invite.
 import { EstimateEmailComponent } from './components/estimate-email/estimate-email.component';
 import { EstimateEmailResolver } from './components/estimate-email/estimate-email.resolver';
 import { AcceptClientInviteComponent } from './components/accept-client-invite/accept-client-invite.component';
+import { OAuthAuthorizeComponent } from './components/oauth-authorize/oauth-authorize.component';
 
 /**
  * Creates routes for the auth module.
@@ -70,6 +71,10 @@ export const createAuthRoutes = (_pageRouteRegistryService: PageRouteRegistrySer
 				component: EstimateEmailComponent,
 				canActivate: [NoAuthGuard],
 				resolve: { estimate: EstimateEmailResolver }
+			},
+			{
+				path: 'oauth-authorize',
+				component: OAuthAuthorizeComponent
 			},
 			{
 				path: 'logout',

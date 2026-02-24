@@ -16,7 +16,10 @@ export class HelpCenterArticleUpdateHandler implements ICommandHandler<HelpCente
 		const { id, input } = command;
 
 		// Check if content fields are being updated with actual values (versioning needed)
-		const isContentUpdate = input.descriptionHtml !== undefined || input.descriptionJson !== undefined;
+		const isContentUpdate =
+			input.descriptionHtml !== undefined ||
+			input.descriptionJson !== undefined ||
+			input.descriptionBinary !== undefined;
 
 		if (isContentUpdate) {
 			// Get current user's employee ID for version ownership

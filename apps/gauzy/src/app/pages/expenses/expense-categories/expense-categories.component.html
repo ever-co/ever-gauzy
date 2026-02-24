@@ -24,9 +24,7 @@
 			<nb-card class="p-0">
 				<nb-card-body
 					class="custom-table"
-					[ngClass]="
-						selected?.state && item === selected?.expenseCategory ? 'custom-table selected' : 'custom-table'
-					"
+					[class.selected]="selected?.state && item === selected?.expenseCategory"
 					(click)="selectExpenseCategory(item)"
 				>
 					<ga-notes-with-tags [rowData]="item"> </ga-notes-with-tags>

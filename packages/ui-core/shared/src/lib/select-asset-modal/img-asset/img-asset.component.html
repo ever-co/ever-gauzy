@@ -1,20 +1,8 @@
-<div
-  class="image-asset-list-item"
-  (click)="onImageClick($event)"
-  [ngClass]="{ selected: selected }"
-  >
-  @if (deleteImageEnabled) {
-    <div
-      class="delete-asset-btn"
-      (click)="onDeleteAsset($event)"
-      >
-      <nb-icon icon="trash-outline"></nb-icon>
-    </div>
-  }
-  <div
-    class="image-item"
-		[ngStyle]="{
-			backgroundImage: 'url(' + imageAsset.fullUrl + ')'
-		}"
-  ></div>
+<div class="image-asset-list-item" (click)="onImageClick($event)" [class.selected]="selected">
+	@if (deleteImageEnabled) {
+	<div class="delete-asset-btn" (click)="onDeleteAsset($event)">
+		<nb-icon icon="trash-outline"></nb-icon>
+	</div>
+	}
+	<div class="image-item" [style.backgroundImage]="'url(' + imageAsset.fullUrl + ')'"></div>
 </div>

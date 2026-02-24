@@ -95,7 +95,7 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 				});
 				statuses.push(status);
 			}
-			return await this.typeOrmRepository.save(statuses);
+			return (await this.saveMany(statuses)) as ITaskRelatedIssueType[] & TaskRelatedIssueType[];
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -114,16 +114,11 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 			const { organizationId } = entity;
 			const tenantId = RequestContext.currentTenantId();
 
-			const statuses: ITaskRelatedIssueType[] = [];
-			const { items = [] } = await super.fetchAll({
-				tenantId,
-				organizationId
-			});
+			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			for (const item of items) {
+			const entitiesToCreate = items.map((item) => {
 				const { name, value, description, icon, color } = item;
-
-				const status = await this.create({
+				return {
 					...entity,
 					name,
 					value,
@@ -131,11 +126,9 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 					icon,
 					color,
 					isSystem: false
-				});
-				statuses.push(status);
-			}
-
-			return statuses;
+				};
+			});
+			return await this.createMany(entitiesToCreate);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

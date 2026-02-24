@@ -1,6 +1,9 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ID, IPagination, IProductTypeTranslatable, LanguagesEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
+import { MultiORMEnum } from './../core/utils';
+import { RequestContext } from './../core/context';
 import { ProductType } from './product-type.entity';
 import { MikroOrmProductTypeRepository } from './repository/mikro-orm-product-type.repository';
 import { TypeOrmProductTypeRepository } from './repository/type-orm-product-type.repository';
@@ -37,8 +40,26 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	 */
 	async updateProductType(id: ID, entity: ProductType): Promise<ProductType> {
 		try {
-			await this.typeOrmRepository.delete(id);
-			return this.typeOrmRepository.save(entity);
+			const tenantId = RequestContext.currentTenantId();
+
+			if (this.ormType === MultiORMEnum.TypeORM) {
+				return await this.typeOrmRepository.manager.transaction(async (transactionalEntityManager) => {
+					// 1. Ensure delete is scoped to the current tenant
+					await transactionalEntityManager.delete(ProductType, {
+						id,
+						...(isNotEmpty(tenantId) ? { tenantId } : {})
+					});
+
+					// 2. Ensure the entity injected has the correct tenantId before reproduction
+					if (isNotEmpty(tenantId)) {
+						entity.tenantId = tenantId;
+					}
+
+					return await transactionalEntityManager.save(entity);
+				});
+			}
+			await super.delete(id);
+			return await this.save(entity);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

@@ -46,14 +46,16 @@ export class HelpCenterArticleVersionService extends TenantAwareCrudService<Help
 			ownedById: employeeId,
 			descriptionHtml: currentArticle.descriptionHtml,
 			descriptionJson: currentArticle.descriptionJson,
+			descriptionBinary: currentArticle.descriptionBinary,
 			lastSavedAt: new Date()
 		};
 		await this.create(snapshotInput);
 
-		// 5. Update the article with the version's content
+		// 5. Update the article with the version's content (including binary)
 		return await this.articleService.update(version.articleId, {
 			descriptionHtml: version.descriptionHtml,
-			descriptionJson: version.descriptionJson
+			descriptionJson: version.descriptionJson,
+			descriptionBinary: version.descriptionBinary
 		});
 	}
 }

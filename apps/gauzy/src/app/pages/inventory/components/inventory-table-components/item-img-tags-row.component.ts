@@ -3,47 +3,41 @@ import { getContrastColor } from '@gauzy/ui-core/common';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
-    template: `
+	template: `
 		<div class="img-tags-container">
-		  @if (imageUrl) {
-		    <div class="image-container">
-		      <img [src]="imageUrl" />
-		    </div>
-		  }
-		  @if (!imageUrl) {
-		    <div class="image-container">
-		      <ga-no-image class="no-image" (mouseenter)="hoverState = true" (mouseleave)="hoverState = false">
-		      </ga-no-image>
-		    </div>
-		  }
-		  <div class="row">
-		    <div class="col-12 text-truncate name">
-		      {{ value || '-' }}
-		    </div>
-		    @if (isTags) {
-		      <div
-		        class="col-12 mt-2"
-					[ngClass]="{
-						'tags-right': layout === componentLayoutEnum.CARDS_GRID
-					}"
-		        >
-		        @for (tag of rowData?.tags; track tag) {
-		          <nb-badge
-		            class="color"
-		            position="centered"
-		            [style.background]="tag?.color"
-		            [style.color]="backgroundContrast(tag?.color)"
-		            text="{{ tag?.name }}"
-		            >
-		          </nb-badge>
-		        }
-		      </div>
-		    }
-		  </div>
+			@if (imageUrl) {
+			<div class="image-container">
+				<img [src]="imageUrl" />
+			</div>
+			} @else {
+			<div class="image-container">
+				<ga-no-image class="no-image" (mouseenter)="hoverState = true" (mouseleave)="hoverState = false">
+				</ga-no-image>
+			</div>
+			}
+			<div class="row">
+				<div class="col-12 text-truncate name">
+					{{ value || '-' }}
+				</div>
+				@if (isTags) {
+				<div class="col-12 mt-2" [class.tags-right]="layout === componentLayoutEnum.CARDS_GRID">
+					@for (tag of rowData?.tags; track tag.id) {
+					<nb-badge
+						class="color"
+						position="centered"
+						[style.background]="tag?.color"
+						[style.color]="backgroundContrast(tag?.color)"
+						text="{{ tag?.name }}"
+					>
+					</nb-badge>
+					}
+				</div>
+				}
+			</div>
 		</div>
-		`,
-    styles: [
-        `
+	`,
+	styles: [
+		`
 			.img-tags-container {
 				display: flex;
 				gap: 10px;
@@ -102,10 +96,11 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				margin-bottom: 4px;
 			}
 		`
-    ],
-    standalone: false
+	],
+	standalone: false
 })
 export class ItemImgTagsComponent {
+	hoverState = false;
 	@Input()
 	rowData: any;
 

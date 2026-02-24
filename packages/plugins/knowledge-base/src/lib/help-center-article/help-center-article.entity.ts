@@ -75,6 +75,11 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	descriptionJson?: JsonData;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@MultiORMColumn({ type: isPostgres() ? 'bytea' : isMySQL() ? 'longblob' : 'blob', nullable: true })
+	descriptionBinary?: Uint8Array;
+
 	/*
 	|--------------------------------------------------------------------------
 	| Metadata
@@ -159,23 +164,6 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	@MultiORMColumn({ nullable: true, relationId: true })
 	ownedById?: ID;
 
-	/**
-	 * Project relation
-	*/
-	@MultiORMManyToOne(() => OrganizationProject, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
-	project?: IOrganizationProject;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@RelationId((it: HelpCenterArticle) => it.project)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	projectId?: ID;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
@@ -210,6 +198,29 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 	*/
 
 	/**
+	 * Projects
+	*/
+	@MultiORMManyToMany(() => OrganizationProject, {
+		/**  Database cascade action on update. */
+		onUpdate: 'CASCADE',
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE',
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
+		owner: true,
+		/** Pivot table for many-to-many relationship. */
+		pivotTable: 'knowledge_base_article_project',
+		/** Column in pivot table referencing 'help_center_article' primary key. */
+		joinColumn: 'knowledgeBaseArticleId',
+		/** Column in pivot table referencing 'project' primary key. */
+		inverseJoinColumn: 'organizationProjectId'
+	})
+	@JoinTable({ name: 'knowledge_base_article_project' })
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
+	projects?: IOrganizationProject[];
+
+	/**
 	 * Tags
 	*/
 	@MultiORMManyToMany(() => Tag, {
@@ -222,7 +233,7 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity implements I
 		/** Pivot table for many-to-many relationship. */
 		pivotTable: 'tag_help_center_article',
 		/** Column in pivot table referencing 'help_center_article' primary key. */
-		joinColumn: 'helpCenterArticleId',
+		joinColumn: 'knowledgeBaseArticleId',
 		/** Column in pivot table referencing 'tag' primary key. */
 		inverseJoinColumn: 'tagId'
 	})

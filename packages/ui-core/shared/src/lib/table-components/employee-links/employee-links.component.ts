@@ -2,30 +2,21 @@ import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
-    selector: 'ngx-employee-links',
-    template: `
-		@if (value) {
-		  @if (value?.name) {
-		    <a
-		      (click)="navigateToEmployee()"
-		      [ngClass]="{ 'link-text': isNavigation }"
-		      >
-		      @if (value.imageUrl) {
-		        <img
-		          width="18px"
-		          height="18px"
-		          [src]="value.imageUrl"
-		          />
-		      }
-		      <div class="names-wrapper">
-		        {{ value.name }}
-		      </div>
-		    </a>
-		  }
-		}
-		`,
-    styles: [
-        `
+	selector: 'ngx-employee-links',
+	template: `
+		@if (value) { @if (value?.name) {
+		<a (click)="navigateToEmployee()" [class.link-text]="isNavigation">
+			@if (value.imageUrl) {
+			<img width="18px" height="18px" [src]="value.imageUrl" />
+			}
+			<div class="names-wrapper">
+				{{ value.name }}
+			</div>
+		</a>
+		} }
+	`,
+	styles: [
+		`
 			.link-text {
 				cursor: pointer;
 				text-decoration: none;
@@ -34,19 +25,16 @@ import { Router } from '@angular/router';
 				text-decoration: underline;
 			}
 		`
-    ],
-    styleUrls: ['./employee-links.component.scss'],
-    standalone: false
+	],
+	styleUrls: ['./employee-links.component.scss'],
+	standalone: false
 })
 export class EmployeeLinksComponent {
-
 	@Input() rowData: any;
 	@Input() value: any;
 	@Input() isNavigation: boolean = true;
 
-	constructor(
-		private readonly _router: Router
-	) { }
+	constructor(private readonly _router: Router) {}
 
 	/**
 	 * Navigates to the employee edit page if the necessary conditions are met.

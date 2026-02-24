@@ -24,10 +24,8 @@
 						formControlName="name"
 						fullWidth
 						[placeholder]="'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_NAME' | translate"
-						[ngClass]="{
-							'status-danger': form.controls['name'].invalid && form.controls['name'].dirty,
-							'status-success': form.controls['name'].valid && form.controls['name'].dirty
-						}"
+						[class.status-danger]="form.controls['name'].invalid && form.controls['name'].dirty"
+						[class.status-success]="form.controls['name'].valid && form.controls['name'].dirty"
 					/>
 				</div>
 				<div class="col-sm-12 mb-3">

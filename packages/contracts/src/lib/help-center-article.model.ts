@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, ID, JsonData } from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { ITag } from './tag.model';
@@ -19,6 +19,7 @@ export interface IHelpCenterArticle
 	// Rich content for collaborative articles
 	descriptionHtml?: string;
 	descriptionJson?: JsonData;
+	descriptionBinary?: Uint8Array;
 
 	// Parent-child hierarchy (self-referencing)
 	parentId?: ID;
@@ -29,9 +30,8 @@ export interface IHelpCenterArticle
 	ownedById?: ID;
 	ownedBy?: IEmployee;
 
-	// Project relation
-	projectId?: ID;
-	project?: IOrganizationProject;
+	// Projects relation (many-to-many)
+	projects?: IOrganizationProject[];
 
 	// Metadata
 	isLocked?: boolean;
@@ -67,6 +67,7 @@ export interface IHelpCenterArticleVersion
 	// Content snapshot
 	descriptionHtml?: string;
 	descriptionJson?: JsonData;
+	descriptionBinary?: Uint8Array;
 }
 
 export interface IHelpCenterAuthor
@@ -89,4 +90,21 @@ export interface IHelpCenterAuthorFind
 	id?: string;
 }
 
-export interface IHelpCenterArticleUpdate extends Partial<IHelpCenterArticle> { }
+export interface IHelpCenterArticleUpdate extends Partial<IHelpCenterArticle> {}
+
+export interface IHelpCenterArticleAdvancedFilter extends IBaseRelationsEntityModel {
+	ids?: ID[];
+	names?: string[];
+	tags?: ID[];
+	projects?: ID[];
+	categories?: ID[];
+	authors?: ID[];
+	ownedBy?: ID[];
+	draft?: boolean;
+	privacy?: boolean;
+	isLocked?: boolean;
+}
+
+export interface IHelpCenterArticleFiltering {
+	filters?: IHelpCenterArticleAdvancedFilter;
+}

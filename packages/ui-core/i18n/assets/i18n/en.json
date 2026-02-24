@@ -1474,16 +1474,13 @@
 			"SUBTITLE": "Activepieces Integration Setup",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "Your Activepieces integration is ready. Click the button below to authorize.",
-				"INFOS": "Next you will be taken to Activepieces to grant permission to Gauzy.",
-				"START_BUTTON": "Authorize Activepieces",
+				"INFOS": "Enter your Activepieces API key to connect your account.",
 				"NEXT": "Next",
 				"ERRORS": {
 					"INVALID_FORM": "Please fill all required fields correctly",
 					"SAVE_SETTINGS": "Failed to save settings",
 					"START_AUTHORIZATION": "Failed to start authorization",
 					"ORGANIZATION_NOT_FOUND": "Organization not found",
-					"CHECK_TENANT_SETTINGS": "Failed to check tenant settings",
 					"CHECK_REMEMBER_STATE": "Failed to check remember state"
 				},
 				"SUCCESS": {
@@ -1493,21 +1490,8 @@
 			"SETTINGS": {
 				"TITLE": "Activepieces Settings",
 				"SUBTITLE": "Configure your Activepieces integration settings",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "Enter your Client ID",
-				"CLIENT_ID_HINT": "Your Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "Enter your Client Secret",
-				"CLIENT_SECRET_HINT": "Your Activepieces OAuth Client Secret",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "Enter your State Secret (minimum 32 characters)",
-				"STATE_SECRET_HINT": "A secure random string used for OAuth state verification",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "Enter your Callback URL",
-				"CALLBACK_URL_HINT": "The URL where Activepieces will redirect after authorization",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "Enter your Post Install URL",
-				"POST_INSTALL_URL_HINT": "The URL to redirect to after installation is complete",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your Activepieces API Key",
 				"SETTINGS_UPDATED": "Activepieces settings updated successfully"
 			},
 			"CONNECTIONS": {
@@ -2719,6 +2703,7 @@
 		"TIME_OFF": "Time Off"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "You don't have permission to view this page",
 		"HEADER": "Time Off",
 		"REQUEST": "Request",
 		"REQUEST_TIME_OFF": "Request Time Off",
@@ -4534,7 +4519,8 @@
 			"LARGE_FILE": "The file or data is too large.",
 			"SERVICE_UNAVAILABLE": "Service unavailable. Try again later.",
 			"UNEXPECTED_ERROR": "Unexpected error occurred.",
-			"NETWORK_ERROR": "Network error: {{message}}"
+			"NETWORK_ERROR": "Network error: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "Screen access permission is required to enable automatic screen capture. Please grant the permission in your system settings."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Tracker was stopped due to inactivity!",

@@ -88,7 +88,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 				);
 			}
 		}
-		return await this.typeOrmRepository.save(versions);
+		return (await this.saveMany(versions)) as ITaskVersion[] & TaskVersion[];
 	}
 
 	/**
@@ -116,7 +116,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 				});
 				versions.push(version);
 			}
-			return await this.typeOrmRepository.save(versions);
+			return (await this.saveMany(versions)) as ITaskVersion[] & TaskVersion[];
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -138,11 +138,9 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 				organizationId
 			});
 
-			const versions: ITaskVersion[] = [];
-			for (const item of items) {
+			const entitiesToCreate = items.map((item) => {
 				const { name, value, description, icon, color } = item;
-
-				const version = await this.create({
+				return {
 					...entity,
 					name,
 					value,
@@ -150,10 +148,9 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 					icon,
 					color,
 					isSystem: false
-				});
-				versions.push(version);
-			}
-			return versions;
+				};
+			});
+			return await this.createMany(entitiesToCreate);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

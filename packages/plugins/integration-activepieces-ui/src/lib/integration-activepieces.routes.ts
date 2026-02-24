@@ -3,7 +3,6 @@ import { RouterModule } from '@angular/router';
 import { ActivepiecesAuthorizeComponent } from './components/activepieces-authorize/activepieces-authorize.component';
 import { IntegrationActivepiecesLayoutComponent } from './integration-activepieces.layout.component';
 import { ActivepiecesComponent } from './components/activepieces/activepieces.component';
-import { ActivepiecesCallbackComponent } from './components/activepieces-callback/activepieces-callback.component';
 import { ActivepiecesConnectionsComponent } from './components/activepieces-connections/activepieces-connections.component';
 import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-servers/activepieces-mcp-servers.component';
 
@@ -23,10 +22,6 @@ import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-s
 						path: 'regenerate',
 						component: ActivepiecesAuthorizeComponent,
 						data: { state: false }
-					},
-					{
-						path: 'callback',
-						component: ActivepiecesCallbackComponent
 					},
 					{
 						path: ':id',
