@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, merge, tap } from 'rxjs';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -15,7 +15,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
+export class IntegrationHubstaffLayoutComponent implements OnInit {
 	constructor(
 		private readonly _translateService: TranslateService,
 		private readonly _ngxPermissionsService: NgxPermissionsService,
@@ -56,6 +56,4 @@ export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 		// Subscribe to initiate the stream
 		preferredLanguage$.subscribe();
 	}
-
-	ngOnDestroy(): void {}
 }
