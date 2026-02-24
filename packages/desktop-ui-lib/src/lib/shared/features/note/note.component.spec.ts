@@ -3,10 +3,10 @@ import { NoteComponent } from './note.component';
 describe('NoteComponent', () => {
 	let component: NoteComponent;
 	let fixture: ComponentFixture<NoteComponent>;
-	beforeEach(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			imports: [NoteComponent]
-		});
+		}).compileComponents();
 		fixture = TestBed.createComponent(NoteComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

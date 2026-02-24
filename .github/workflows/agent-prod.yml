@@ -408,18 +408,35 @@ jobs:
           AGENT_APP_DESCRIPTION: 'Gauzy Agent'
           AGENT_APP_ID: 'com.ever.gauzyagent'
 
-      - name: Add Yarn/Node/npm-global/node_modules to GITHUB_PATH
-        shell: powershell
+      - name: Fix Node.js PATH for child processes
+        shell: pwsh
         run: |
-          $yarnPath = (Get-Command yarn).Source | Split-Path -Parent
-          $nodePath = (Get-Command node).Source | Split-Path -Parent
-          $npmGlobalBin = npm config get prefix
+          $ErrorActionPreference = "Stop"
+          $nodeExe = (Get-Command node -ErrorAction Stop).Source
+          $nodePath = Split-Path $nodeExe -Parent
+          $npmGlobalBin = & npm config get prefix
           $localBin = Join-Path $PWD "node_modules\.bin"
-          echo $localBin >> $env:GITHUB_PATH
-          echo $npmGlobalBin >> $env:GITHUB_PATH
-          echo $yarnPath >> $env:GITHUB_PATH
-          if ($nodePath -ne $yarnPath) { echo $nodePath >> $env:GITHUB_PATH }
-          Write-Host "Added to GITHUB_PATH: $localBin, $npmGlobalBin, $yarnPath, $nodePath"
+          $yarnCmd = Get-Command yarn -ErrorAction SilentlyContinue
+          $yarnPath = if ($yarnCmd) { Split-Path $yarnCmd.Source -Parent } else { "" }
+
+          $npmNodeExe = Join-Path $npmGlobalBin "node.exe"
+          if (-not (Test-Path $npmNodeExe)) { Copy-Item $nodeExe $npmNodeExe -Force }
+
+          $localNodeExe = Join-Path $localBin "node.exe"
+          if (-not (Test-Path $localNodeExe)) { Copy-Item $nodeExe $localNodeExe -Force }
+
+          $newPath = "$nodePath;$npmGlobalBin;$localBin;$yarnPath;$($env:PATH)"
+          "PATH=$newPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          @($nodePath, $npmGlobalBin, $localBin, $yarnPath) | Where-Object { $_ } | ForEach-Object {
+            $_ | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          }
+
+          "NODE=$nodeExe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "NODE_PATH=$nodePath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          $env:PATH = $newPath
+          [System.Environment]::SetEnvironmentVariable("PATH", $newPath, "Process")
 
       - name: Ensure dist directory exists
         shell: bash

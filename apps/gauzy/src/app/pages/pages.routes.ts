@@ -232,7 +232,13 @@ function getIntegrationsRoute(): Route[] {
 					only: [PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT],
 					redirectTo: '/pages/dashboard'
 				},
-				selectors: { project: false, team: false, employee: false, date: false, organization: true }
+				selectors: {
+					project: false,
+					team: false,
+					employee: false,
+					date: false,
+					organization: true
+				}
 			}
 		}
 	];

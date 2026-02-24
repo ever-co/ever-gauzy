@@ -850,7 +850,9 @@
 		"lifecycles",
 		"namespacing",
 		"Hasher",
-		"VARCHAR"
+		"VARCHAR",
+		"TOCTOU",
+		"Gmqh"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

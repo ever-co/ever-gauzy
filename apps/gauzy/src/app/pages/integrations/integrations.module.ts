@@ -70,16 +70,6 @@ export class IntegrationsModule {
 			return;
 		}
 
-		// Register the routes for upwork integration
-		this._pageRouteRegistryService.registerPageRoute({
-			// Register the location 'integrations'
-			location: 'integrations-sections',
-			// Register the path 'upwork'
-			path: 'upwork',
-			// Register the loadChildren function to load the UpworkModule lazy module
-			loadChildren: () => import('@gauzy/plugin-integration-upwork-ui').then((m) => m.IntegrationUpworkUiModule)
-		});
-
 		// Register the routes for hubstaff integration
 		this._pageRouteRegistryService.registerPageRoute({
 			// Data to be passed to the component

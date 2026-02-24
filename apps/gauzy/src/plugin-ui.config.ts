@@ -1,10 +1,11 @@
 import { LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
-import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
-import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
 import { JobEmployeePlugin } from '@gauzy/plugin-job-employee-ui';
 import { JobMatchingPlugin } from '@gauzy/plugin-job-matching-ui';
-import { JobSearchPlugin } from '@gauzy/plugin-job-search-ui';
 import { JobProposalPlugin, JobProposalTemplatePlugin } from '@gauzy/plugin-job-proposal-ui';
+import { JobSearchPlugin } from '@gauzy/plugin-job-search-ui';
+import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
+import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
+import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
 
 /**
@@ -65,14 +66,12 @@ export const uiPluginConfig: PluginUiConfig = {
 		// Sales Plugins (Proposals under Sales)
 		JobProposalPlugin,
 
+		// Integration Plugins
+		IntegrationUpworkPlugin,
+
 		// Job Plugins
 		JobsPlugin.init({
-			plugins: [
-				JobEmployeePlugin,
-				JobSearchPlugin,
-				JobMatchingPlugin,
-				JobProposalTemplatePlugin
-			]
+			plugins: [JobEmployeePlugin, JobSearchPlugin, JobMatchingPlugin, JobProposalTemplatePlugin]
 		})
 	]
 };

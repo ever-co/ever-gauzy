@@ -18,3 +18,4 @@ describe('TimeActivitiesComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
+

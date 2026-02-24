@@ -3,8 +3,8 @@ import { ClientSelectorComponent } from './client-selector.component';
 describe('ClientSelectorComponent', () => {
 	let component: ClientSelectorComponent;
 	let fixture: ComponentFixture<ClientSelectorComponent>;
-	beforeEach(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			imports: [ClientSelectorComponent]
 		});
 		fixture = TestBed.createComponent(ClientSelectorComponent);

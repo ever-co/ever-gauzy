@@ -109,9 +109,32 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	app.use(urlencoded({ extended: true, limit: '50mb' }));
 
 	// Enable CORS with specific settings
+	// In production, ALLOWED_ORIGINS should be set to a comma-separated list of trusted origins.
+	// Using origin: '*' with credentials: true violates the CORS spec and is insecure.
+	const allowedOrigins = process.env.ALLOWED_ORIGINS
+		? process.env.ALLOWED_ORIGINS.split(',')
+				.map((o) => o.trim())
+				.filter(Boolean)
+		: undefined;
+
+	// Treat an empty array the same as undefined (no valid origins specified)
+	const validOrigins = allowedOrigins?.length ? allowedOrigins : undefined;
+
+	// Compute once — used for CORS warnings and Helmet CSP
+	const isProduction = process.env.NODE_ENV === 'production';
+
+	if (!validOrigins) {
+		const level = isProduction ? 'WARN' : 'INFO';
+		console[isProduction ? 'warn' : 'log'](
+			`[${level}] ALLOWED_ORIGINS is not set. CORS will allow all origins ("*"). ` +
+				`In production, set ALLOWED_ORIGINS to a comma-separated list of trusted origins ` +
+				`(e.g. "https://app.example.com,https://admin.example.com") for secure CORS handling.`
+		);
+	}
+
 	app.enableCors({
-		origin: '*',
-		credentials: true,
+		origin: validOrigins || '*',
+		credentials: !!validOrigins, // Only enable credentials when origins are explicitly specified
 		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
 		allowedHeaders: [
 			'Authorization',
@@ -142,10 +165,14 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Configure Redis or in-memory sessions
 	await configureRedisSession(app);
 
-	// let's use helmet for security in production
-	if (environment.envName === 'prod') {
-		app.use(helmet());
-	}
+	// Use helmet for security headers — relax CSP in non-production to avoid blocking Swagger/Scalar UI
+	app.use(
+		helmet({
+			contentSecurityPolicy: isProduction
+				? undefined // use Helmet's strict default CSP in production
+				: false // disable CSP in dev/stage so Swagger/Scalar inline scripts work
+		})
+	);
 
 	// Set the global prefix for routes
 	const globalPrefix = 'api';

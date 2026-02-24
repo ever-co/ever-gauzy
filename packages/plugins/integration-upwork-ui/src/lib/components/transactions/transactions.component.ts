@@ -1,30 +1,31 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { filter, tap } from 'rxjs/operators';
+import { Component, OnInit, inject, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
+import { filter, tap, finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { IOrganization } from '@gauzy/contracts';
 import { ErrorHandlingService, Store, ToastrService, UpworkService } from '@gauzy/ui-core/core';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
-    selector: 'ngx-transactions',
-    templateUrl: './transactions.component.html',
-    styleUrls: ['./transactions.component.scss'],
-    standalone: false
+	selector: 'ngx-transactions',
+	templateUrl: './transactions.component.html',
+	styleUrls: ['./transactions.component.scss'],
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TransactionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	private _selectedOrganizationId: string;
-	file: File;
+export class TransactionsComponent extends TranslationBaseComponent implements OnInit {
+	private readonly _upworkService = inject(UpworkService);
+	private readonly _store = inject(Store);
+	private readonly _toastrService = inject(ToastrService);
+	private readonly _errorHandler = inject(ErrorHandlingService);
 
-	constructor(
-		private _upworkService: UpworkService,
-		private _store: Store,
-		readonly translateService: TranslateService,
-		private toastrService: ToastrService,
-		private errorHandler: ErrorHandlingService
-	) {
-		super(translateService);
+	protected loading: WritableSignal<boolean> = signal(false); // controls UI state while upload in progress
+	private _selectedOrganizationId: string;
+	file: File | null = null;
+
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit() {
@@ -38,37 +39,48 @@ export class TransactionsComponent extends TranslationBaseComponent implements O
 			});
 	}
 
-	ngOnDestroy(): void {}
-
 	imageUrlChanged(event) {
-		const [file] = event.target.files;
+		// files[0] may be undefined if the user cancels the dialog
+		const file = event.target.files[0] ?? null;
 		this.file = file;
 		event.target.value = null;
 	}
 
 	importCsv() {
+		// nothing to upload or no organization selected
+		// guard against null or undefined
+		if (this.file == null || !this._selectedOrganizationId) {
+			return;
+		}
+
+		this.loading.set(true);
+
 		const formData = new FormData();
 		formData.append('file', this.file);
 		formData.append('organizationId', this._selectedOrganizationId);
+
 		this._upworkService
 			.uploadTransaction(formData)
 			.pipe(
 				untilDestroyed(this),
-				tap(() => (this.file = null))
+				tap(() => (this.file = null)),
+				finalize(() => {
+					this.loading.set(false);
+				})
 			)
-			.subscribe(
-				({ totalExpenses, totalIncomes }) => {
-					this.toastrService.success(
+			.subscribe({
+				next: ({ totalExpenses, totalIncomes }) => {
+					this._toastrService.success(
 						this.getTranslation('INTEGRATIONS.TOTAL_UPWORK_TRANSACTIONS_SUCCEED', {
 							totalExpenses,
 							totalIncomes
 						})
 					);
 				},
-				(err) => {
+				error: (err: unknown) => {
 					// added infinite duration to error toastr, error message can be too long to read in 3 sec
-					this.errorHandler.handleError(err, 0);
+					this._errorHandler.handleError(err as any, 0);
 				}
-			);
+			});
 	}
 }
