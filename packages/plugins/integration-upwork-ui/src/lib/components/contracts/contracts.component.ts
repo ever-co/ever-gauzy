@@ -144,7 +144,11 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 		try {
 			if (this.selectedContracts.length > 0) {
 				// Open the dialog for syncing data selection
-				const dialog = this._nbDialogService.open(SyncDataSelectionComponent);
+				const dialog = this._nbDialogService.open(SyncDataSelectionComponent, {
+					context: {
+						contracts: this.selectedContracts
+					}
+				});
 
 				// Wait for the dialog to close using firstValueFrom
 				await firstValueFrom(dialog.onClose);

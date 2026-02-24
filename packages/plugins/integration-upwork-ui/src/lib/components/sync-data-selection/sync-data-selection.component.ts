@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, WritableSignal, Input } from '@angular/core';
 import { of, Observable } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { tap, catchError } from 'rxjs/operators';
@@ -23,7 +23,18 @@ export class SyncDataSelectionComponent extends TranslationBaseComponent {
 	private readonly errorHandlingService = inject(ErrorHandlingService);
 
 	contractsSettings$: Observable<any> = this._us.contractsSettings$;
-	contracts: WritableSignal<IEngagement[]> = signal<IEngagement[]>([]);
+	private contractsSignal: WritableSignal<IEngagement[]> = signal<IEngagement[]>([]);
+
+	/** exposes the current contracts value and allows context injection */
+	@Input()
+	set contracts(value: IEngagement[] | null | undefined) {
+		if (value && value.length) {
+			this.contractsSignal.set(value);
+		}
+	}
+	get contracts(): IEngagement[] {
+		return this.contractsSignal();
+	}
 
 	constructor() {
 		super(inject(TranslateService));
@@ -31,7 +42,7 @@ export class SyncDataSelectionComponent extends TranslationBaseComponent {
 
 	syncData() {
 		this._us
-			.syncDataWithContractRelated(this.contracts())
+			.syncDataWithContractRelated(this.contracts)
 			.pipe(
 				tap(() => {
 					this.toastrService.success(this.getTranslation('INTEGRATIONS.UPWORK_PAGE.CONTRACTS_RELATED_DATA'));
