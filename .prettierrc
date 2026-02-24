@@ -5,7 +5,7 @@
     "useTabs": true,
     "tabWidth": 4,
     "arrowParens": "always",
-    "trailingComma": "all",
+    "trailingComma": "none",
     "quoteProps": "as-needed",
     "endOfLine": "auto",
     "overrides": [
