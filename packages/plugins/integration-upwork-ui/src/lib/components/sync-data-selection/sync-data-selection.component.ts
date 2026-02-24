@@ -1,5 +1,5 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Component, inject, ChangeDetectionStrategy, signal, WritableSignal, Signal } from '@angular/core';
+import { of, Observable } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { tap, catchError } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,7 +13,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ngx-sync-data-selection',
 	templateUrl: './sync-data-selection.component.html',
 	styleUrls: ['./sync-data-selection.component.scss'],
-	standalone: false,
+	standalone: true,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SyncDataSelectionComponent extends TranslationBaseComponent {
@@ -22,8 +22,8 @@ export class SyncDataSelectionComponent extends TranslationBaseComponent {
 	protected readonly dialogRef = inject(NbDialogRef<SyncDataSelectionComponent>);
 	private readonly errorHandlingService = inject(ErrorHandlingService);
 
-	contractsSettings$: Observable<unknown> = this._us.contractsSettings$;
-	contracts: IEngagement[] = [];
+	contractsSettings$: Observable<any> = this._us.contractsSettings$;
+	contracts: WritableSignal<IEngagement[]> = signal<IEngagement[]>([]);
 
 	constructor() {
 		super(inject(TranslateService));
@@ -31,7 +31,7 @@ export class SyncDataSelectionComponent extends TranslationBaseComponent {
 
 	syncData() {
 		this._us
-			.syncDataWithContractRelated(this.contracts)
+			.syncDataWithContractRelated(this.contracts())
 			.pipe(
 				tap(() => {
 					this.toastrService.success(this.getTranslation('INTEGRATIONS.UPWORK_PAGE.CONTRACTS_RELATED_DATA'));
