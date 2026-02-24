@@ -77,6 +77,8 @@ export class UserController extends CrudController<User> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('/email/:email')
 	async findByEmail(@Param('email') email: string): Promise<IUser | null> {
 		return await this._userService.getUserByEmail(email);
@@ -179,7 +181,16 @@ export class UserController extends CrudController<User> {
 	})
 	@Get('/:id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query('data', ParseJsonPipe) data?: any): Promise<IUser> {
-		const { relations } = data;
+		// Allowlist of safe relations to prevent arbitrary data exfiltration
+		const ALLOWED_RELATIONS = ['role', 'tenant', 'employee', 'candidate', 'tags'];
+		const rawRelations = data?.relations || {};
+
+		// Filter to only allowed top-level relation keys
+		const relations =
+			typeof rawRelations === 'object' && !Array.isArray(rawRelations)
+				? Object.fromEntries(Object.entries(rawRelations).filter(([key]) => ALLOWED_RELATIONS.includes(key)))
+				: {};
+
 		return await this._userService.findOneByIdString(id, { relations });
 	}
 

@@ -1,7 +1,8 @@
 /**
  * Represents the default length of generated alphanumeric codes.
+ * Set to 8 characters for security (36^8 ≈ 2.8 trillion combinations).
  */
-export const ALPHA_NUMERIC_CODE_LENGTH = 6;
+export const ALPHA_NUMERIC_CODE_LENGTH = 8;
 
 /**
  * Represents a demo or magic code that allows authentication without a password.

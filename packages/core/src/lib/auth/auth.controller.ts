@@ -23,13 +23,19 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { I18nLang } from 'nestjs-i18n';
 import { RequestContext } from '../core/context';
 import { UseValidationPipe } from '../shared/pipes';
 import { User as IUser } from '../user/user.entity';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { Permissions } from './../shared/decorators';
-import { AuthRefreshGuard, PermissionGuard, RegisterAuthorizationGuard, TenantPermissionGuard } from './../shared/guards';
+import {
+	AuthRefreshGuard,
+	PermissionGuard,
+	RegisterAuthorizationGuard,
+	TenantPermissionGuard
+} from './../shared/guards';
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
 import { AuthService } from './auth.service';
@@ -125,6 +131,7 @@ export class AuthController {
 	@Public()
 	@UseGuards(RegisterAuthorizationGuard)
 	@UseValidationPipe({ whitelist: true, transform: true })
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async register(
 		@Body() input: RegisterUserDTO,
 		@I18nLang() languageCode: LanguagesEnum,
@@ -151,6 +158,7 @@ export class AuthController {
 	@Post('/login')
 	@Public()
 	@UseValidationPipe({ transform: true })
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async login(@Body() input: UserLoginDTO): Promise<IAuthResponse | null> {
 		return await this.commandBus.execute(new AuthLoginCommand(input));
 	}
@@ -164,6 +172,7 @@ export class AuthController {
 	@Post('/signin.email.password')
 	@Public()
 	@UseValidationPipe()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async signinWorkspacesByPassword(@Body() input: UserSigninWorkspaceDTO): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspacesByEmailPassword(input, parseToBoolean(input.includeTeams));
 	}
@@ -179,6 +188,7 @@ export class AuthController {
 	@Post('/signup.provider.social')
 	@Public()
 	@UseValidationPipe()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async socialSignupCheckIfUserExistsBySocial(
 		@Body() input: FindUserBySocialLoginDTO
 	): Promise<ISocialAccountExistUser> {
@@ -195,6 +205,7 @@ export class AuthController {
 	@Post('/signin.email.social')
 	@Public()
 	@UseValidationPipe()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async signinWorkspacesBySocial(@Body() input: SocialLoginBodyRequestDTO): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspacesByEmailSocial(input, parseToBoolean(input.includeTeams));
 	}
@@ -203,6 +214,7 @@ export class AuthController {
 	@Post('/signup.link.account')
 	@Public()
 	@UseValidationPipe()
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async linkUserToSocialAccount(@Body() input: SocialLoginBodyRequestDTO): Promise<ISocialAccount> {
 		return await this.authService.linkUserToSocialAccount(input);
 	}
@@ -218,6 +230,7 @@ export class AuthController {
 	@Post('/signin.email')
 	@Public()
 	@UseValidationPipe({ transform: true })
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async sendWorkspaceSigninCode(@Body() entity: UserEmailDTO, @I18nLang() locale: LanguagesEnum): Promise<any> {
 		return await this.commandBus.execute(new WorkspaceSigninSendCodeCommand(entity, locale));
 	}
@@ -231,6 +244,7 @@ export class AuthController {
 	@Post('/signin.email/confirm')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async confirmWorkspaceSigninByCode(
 		@Body() input: WorkspaceSigninEmailVerifyDTO
 	): Promise<IUserSigninWorkspaceResponse> {
@@ -246,6 +260,7 @@ export class AuthController {
 	@Post('/signin.workspace')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async signinWorkspaceByToken(@Body() input: WorkspaceSigninDTO): Promise<IAuthResponse | null> {
 		return await this.commandBus.execute(new WorkspaceSigninVerifyTokenCommand(input));
 	}
@@ -259,6 +274,7 @@ export class AuthController {
 	@Post('/reset-password')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async resetPassword(@Body() request: ChangePasswordRequestDTO) {
 		return await this.authService.resetPassword(request);
 	}
@@ -274,6 +290,7 @@ export class AuthController {
 	@Post('/request-password')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async requestPassword(
 		@Body() body: ResetPasswordRequestDTO,
 		@Headers('origin') origin: string,
