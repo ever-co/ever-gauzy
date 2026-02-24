@@ -43,7 +43,7 @@ function validateProductionSecrets(): void {
 			errors.push(`${name} is not set. This is required in production.`);
 		} else if (INSECURE_DEFAULT_SECRETS.has(value.trim().toLowerCase())) {
 			errors.push(
-				`${name} is set to an insecure default value ("${value}"). ` +
+				`${name} is set to a known insecure default value [REDACTED]. ` +
 					`Generate a strong, unique secret for production use (e.g., openssl rand -base64 64).`
 			);
 		}
@@ -82,16 +82,16 @@ export const environment: IEnvironment = {
 	EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET || 'gauzy',
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
-	JWT_SECRET: process.env.JWT_SECRET, // Validated at startup — must be set in production
+	JWT_SECRET: process.env.JWT_SECRET!, // Validated at startup — must be set in production
 	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
-	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET, // Validated at startup — must be set in production
+	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET!, // Validated at startup — must be set in production
 	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options
 	 */
-	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET, // Validated at startup — must be set in production
+	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET!, // Validated at startup — must be set in production
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
 
 	/**
@@ -112,7 +112,9 @@ export const environment: IEnvironment = {
 	 */
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60 * 1000,
 	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 60000,
-	THROTTLE_ENABLED: process.env.THROTTLE_ENABLED !== 'false', // Enabled by default in production
+	THROTTLE_ENABLED: !['false', '0', 'no', 'off', ''].includes(
+		(process.env.THROTTLE_ENABLED ?? '').trim().toLowerCase()
+	), // Enabled by default in production
 
 	/**
 	 * Jitsu Server Configuration

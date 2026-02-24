@@ -117,7 +117,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 				}
 			});
 		} catch (error) {
-			this.logger.error('Error while creating multer disk storage');
+			this.logger.error('Error while creating multer disk storage', error?.stack ?? String(error));
 			return null;
 		}
 	}
@@ -132,7 +132,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 		try {
 			return await fs.promises.readFile(this.path(file));
 		} catch (error) {
-			this.logger.error(`Error while reading file "${file}"`);
+			this.logger.error(`Error while reading file "${file}"`, error?.stack ?? String(error));
 		}
 	}
 
@@ -160,7 +160,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 
 			return await this.mapUploadedFile(file);
 		} catch (error) {
-			this.logger.error(`Error while putting file at path "${path}"`);
+			this.logger.error(`Error while putting file at path "${path}"`, error?.stack ?? String(error));
 			throw new HttpException(error, HttpStatus.BAD_REQUEST, {
 				description: `Error while putting file at path "${path}":`
 			});
@@ -182,7 +182,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 				return fs.unlinkSync(filePath);
 			}
 		} catch (error) {
-			this.logger.error(`Error while deleting file "${file}"`);
+			this.logger.error(`Error while deleting file "${file}"`, error?.stack ?? String(error));
 			throw error; // Rethrow the error to let the calling code handle it
 		}
 	}

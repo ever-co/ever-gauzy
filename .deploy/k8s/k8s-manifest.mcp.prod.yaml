@@ -32,8 +32,17 @@ spec:
       labels:
         app: gauzy-mcp-prod
     spec:
+            securityContext:
+                seccompProfile:
+                    type: RuntimeDefault
       containers:
         - name: gauzy-prod-mcp
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      runAsNonRoot: true
+                      capabilities:
+                          drop: ["ALL"]
           image: registry.digitalocean.com/ever/gauzy-mcp:latest
           env:
             - name: NODE_ENV

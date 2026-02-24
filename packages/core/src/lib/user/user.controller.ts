@@ -34,6 +34,9 @@ import {
 	FindMeQueryDTO
 } from './dto';
 
+/** Allowlist of safe relations to prevent unauthorized data access */
+const ALLOWED_RELATIONS: string[] = ['role', 'tenant', 'employee', 'candidate', 'tags'];
+
 @ApiTags('User')
 @ApiBearerAuth()
 @Controller('/user')
@@ -179,17 +182,26 @@ export class UserController extends CrudController<User> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('/:id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query('data', ParseJsonPipe) data?: any): Promise<IUser> {
-		// Allowlist of safe relations to prevent arbitrary data exfiltration
-		const ALLOWED_RELATIONS = ['role', 'tenant', 'employee', 'candidate', 'tags'];
-		const rawRelations = data?.relations || {};
+		const rawRelations = data?.relations;
 
-		// Filter to only allowed top-level relation keys
-		const relations =
-			typeof rawRelations === 'object' && !Array.isArray(rawRelations)
-				? Object.fromEntries(Object.entries(rawRelations).filter(([key]) => ALLOWED_RELATIONS.includes(key)))
-				: {};
+		let relations: any;
+		if (Array.isArray(rawRelations)) {
+			// Filter array entries to only allowed relation names
+			relations = rawRelations.filter((r: unknown) => typeof r === 'string' && ALLOWED_RELATIONS.includes(r));
+		} else if (typeof rawRelations === 'object' && rawRelations !== null) {
+			// Keep only allowed top-level keys and coerce values to true (strip nested objects)
+			relations = Object.fromEntries(
+				Object.entries(rawRelations)
+					.filter(([key, val]) => ALLOWED_RELATIONS.includes(key) && typeof val !== 'object')
+					.map(([key]) => [key, true])
+			);
+		} else {
+			relations = {};
+		}
 
 		return await this._userService.findOneByIdString(id, { relations });
 	}

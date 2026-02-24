@@ -19,7 +19,7 @@ export class SocialAccountService extends TenantAwareCrudService<SocialAccount> 
 	}
 
 	/**
-	 * Registers a new social account by saving/upserting the given entity.
+	 * Registers a new social account by saving or updating the given entity.
 	 * Uses the ORM-agnostic base class save() method.
 	 */
 	async registerSocialAccount(partialEntity: DeepPartial<ISocialAccount>): Promise<ISocialAccount> {
@@ -34,7 +34,7 @@ export class SocialAccountService extends TenantAwareCrudService<SocialAccount> 
 	 * Finds a social account by provider and providerAccountId.
 	 * Uses ORM switch to support both TypeORM and MikroORM, returning null when not found.
 	 */
-	async findAccountByProvider(input: ISocialAccountBase): Promise<SocialAccount> {
+	async findAccountByProvider(input: ISocialAccountBase): Promise<SocialAccount | null> {
 		const { provider, providerAccountId } = input;
 
 		const options = {

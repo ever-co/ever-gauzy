@@ -90,7 +90,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			}
 			done(null, user);
 		} catch (error) {
-			this.logger.error(`Error occurred during JWT validation: ${error?.message}`);
+			this.logger.error(`Error occurred during JWT validation: ${error?.message}`, error?.stack, 'JwtStrategy');
 			return done(new UnauthorizedException('unauthorized', error.message), false);
 		}
 	}

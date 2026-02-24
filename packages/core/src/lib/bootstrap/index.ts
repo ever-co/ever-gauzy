@@ -112,10 +112,15 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// In production, ALLOWED_ORIGINS should be set to a comma-separated list of trusted origins.
 	// Using origin: '*' with credentials: true violates the CORS spec and is insecure.
 	const allowedOrigins = process.env.ALLOWED_ORIGINS
-		? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+		? process.env.ALLOWED_ORIGINS.split(',')
+				.map((o) => o.trim())
+				.filter(Boolean)
 		: undefined;
 
-	if (!allowedOrigins) {
+	// Treat an empty array the same as undefined (no valid origins specified)
+	const validOrigins = allowedOrigins?.length ? allowedOrigins : undefined;
+
+	if (!validOrigins) {
 		const isProduction = process.env.NODE_ENV === 'production';
 		const level = isProduction ? 'WARN' : 'INFO';
 		console[isProduction ? 'warn' : 'log'](
@@ -126,8 +131,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	}
 
 	app.enableCors({
-		origin: allowedOrigins || '*',
-		credentials: !!allowedOrigins, // Only enable credentials when origins are explicitly specified
+		origin: validOrigins || '*',
+		credentials: !!validOrigins, // Only enable credentials when origins are explicitly specified
 		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
 		allowedHeaders: [
 			'Authorization',
@@ -158,8 +163,15 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Configure Redis or in-memory sessions
 	await configureRedisSession(app);
 
-	// Use helmet for security headers in all environments
-	app.use(helmet());
+	// Use helmet for security headers — relax CSP in non-production to avoid blocking Swagger/Scalar UI
+	const isProductionEnv = process.env.NODE_ENV === 'production';
+	app.use(
+		helmet({
+			contentSecurityPolicy: isProductionEnv
+				? undefined // use Helmet's strict default CSP in production
+				: false // disable CSP in dev/stage so Swagger/Scalar inline scripts work
+		})
+	);
 
 	// Set the global prefix for routes
 	const globalPrefix = 'api';

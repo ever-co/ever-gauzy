@@ -28,8 +28,17 @@ spec:
       labels:
         app: gauzy-mcp-auth-demo
     spec:
+            securityContext:
+                seccompProfile:
+                    type: RuntimeDefault
       containers:
         - name: gauzy-demo-mcp
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      runAsNonRoot: true
+                      capabilities:
+                          drop: ["ALL"]
           image: registry.digitalocean.com/ever/gauzy-mcp-auth-demo:latest
           env:
             - name: DB_URI

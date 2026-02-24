@@ -4,7 +4,7 @@ import { ALPHA_NUMERIC_CODE_LENGTH } from '@gauzy/constants';
 /**
  * Generates a cryptographically secure random alphanumeric code.
  *
- * Uses `crypto.randomInt()` (CSPRNG) instead of `Math.random()` to prevent
+ * Uses `crypto.randomInt()` (a cryptographically secure PRNG) instead of `Math.random()` to prevent
  * predictability attacks on security-sensitive codes (e.g., magic login codes,
  * invite codes, verification codes).
  *

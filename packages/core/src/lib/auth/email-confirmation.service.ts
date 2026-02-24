@@ -58,8 +58,8 @@ export class EmailConfirmationService {
 			const verificationCode = generateAlphaNumericCode();
 
 			// Update user's email token field and verification code
-			// Always set codeExpireAt — default to 24 hours if JWT_VERIFICATION_TOKEN_EXPIRATION_TIME is not configured
-			const verificationExpiry = environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400;
+			// Always set codeExpireAt — default to 7 days to match the environment module default
+			const verificationExpiry = environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400 * 7;
 			await this.userService.update(id, {
 				emailToken: await this.passwordHashService.hash(token),
 				code: verificationCode,
@@ -148,7 +148,7 @@ export class EmailConfirmationService {
 
 		try {
 			const { email, code, tenantId } = payload;
-			if (email && code) {
+			if (email && code && tenantId) {
 				const user = await this.userService.findOneByOptions({
 					where: {
 						email,
@@ -161,7 +161,9 @@ export class EmailConfirmationService {
 					throw new BadRequestException('Your email is already verified.');
 				}
 
-				// Invalidate the verification code after successful use (prevent reuse)
+				// Atomically invalidate the verification code (prevent reuse / TOCTOU race)
+				// The update scopes by id + code + codeExpireAt so a concurrent request
+				// that already nullified the code will update zero rows
 				await this.userService.update(user['id'], {
 					code: null,
 					codeExpireAt: null

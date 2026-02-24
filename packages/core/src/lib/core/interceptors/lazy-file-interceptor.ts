@@ -33,7 +33,7 @@ export function LazyFileInterceptor(fieldName: string, localOptions?: MulterOpti
 				this.multer.single(fieldName)(ctx.getRequest(), ctx.getResponse(), (err: any) => {
 					if (err) {
 						const error = transformException(err);
-						this.logger.error('Error while uploading file using multer');
+						this.logger.error('Error while uploading file using multer', err?.stack ?? String(err));
 						return reject(error);
 					}
 					resolve();
