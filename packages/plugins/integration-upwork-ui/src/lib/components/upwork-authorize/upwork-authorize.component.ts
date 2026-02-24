@@ -1,8 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EMPTY, debounceTime } from 'rxjs';
-import { tap, switchMap, filter } from 'rxjs/operators';
+import { EMPTY, debounceTime, tap, switchMap, filter } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IAccessTokenSecretPair,

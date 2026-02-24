@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
 import { filter, tap, finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -15,15 +15,14 @@ import { ErrorHandlingService, Store, ToastrService, UpworkService } from '@gauz
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionsComponent extends TranslationBaseComponent implements OnInit {
-	protected loading = false; // controls UI state while upload in progress
 	private readonly _upworkService = inject(UpworkService);
 	private readonly _store = inject(Store);
 	private readonly _toastrService = inject(ToastrService);
 	private readonly _errorHandler = inject(ErrorHandlingService);
-	private readonly _cdr = inject(ChangeDetectorRef);
 
+	protected loading: WritableSignal<boolean> = signal(false); // controls UI state while upload in progress
 	private _selectedOrganizationId: string;
-	file: File;
+	file: File | null = null;
 
 	constructor() {
 		super(inject(TranslateService));
@@ -48,14 +47,14 @@ export class TransactionsComponent extends TranslationBaseComponent implements O
 
 	importCsv() {
 		// nothing to upload or no organization selected
-		if (!this.file || !this._selectedOrganizationId) {
+		if (this.file === null || !this._selectedOrganizationId) {
 			return;
 		}
 
-		this.loading = true;
+		this.loading.set(true);
 
 		const formData = new FormData();
-		formData.append('file', this.file);
+		formData.append('file', this.file as File);
 		formData.append('organizationId', this._selectedOrganizationId);
 
 		this._upworkService
@@ -64,8 +63,7 @@ export class TransactionsComponent extends TranslationBaseComponent implements O
 				untilDestroyed(this),
 				tap(() => (this.file = null)),
 				finalize(() => {
-					this.loading = false;
-					this._cdr.markForCheck();
+					this.loading.set(false);
 				})
 			)
 			.subscribe({
@@ -77,9 +75,9 @@ export class TransactionsComponent extends TranslationBaseComponent implements O
 						})
 					);
 				},
-				error: (err) => {
+				error: (err: unknown) => {
 					// added infinite duration to error toastr, error message can be too long to read in 3 sec
-					this._errorHandler.handleError(err, 0);
+					this._errorHandler.handleError(err as any, 0);
 				}
 			});
 	}
