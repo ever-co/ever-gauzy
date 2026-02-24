@@ -69,7 +69,7 @@ export class EmailConfirmationService {
 			// Send email verification link
 			return await this.emailService.emailVerification(user, verificationLink, verificationCode, appIntegration);
 		} catch (error) {
-			this.logger.error(`Error while sending verification email: ${error?.message}`);
+			this.logger.error('Error while sending verification email', error?.stack);
 		}
 	}
 
