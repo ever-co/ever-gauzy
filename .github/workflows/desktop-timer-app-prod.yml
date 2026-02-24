@@ -338,22 +338,6 @@ jobs:
         with:
           node-version: 24.13.0
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        shell: bash
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v4
-        id: yarn-cache
-        with:
-          path: |
-            ${{ steps.yarn-cache-dir-path.outputs.dir }}
-            .nx/cache
-          key: ${{ runner.os }}-${{ runner.arch }}-yarn-nx-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-yarn-nx-
-            ${{ runner.os }}-${{ runner.arch }}-yarn-
-
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
         run: |
@@ -442,6 +426,14 @@ jobs:
         shell: bash
         run: mkdir -p dist/packages
 
+      - name: Increase file handle limits
+        shell: powershell
+        run: |
+          # Increase Node.js UV threadpool for parallel I/O (default is 4)
+          "UV_THREADPOOL_SIZE=32" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Patch graceful-fs to retry EMFILE errors with backoff
+          node -e "try { var gfs = require('graceful-fs'); gfs.gracefulify(require('fs')); console.log('graceful-fs patched'); } catch(e) { console.log('graceful-fs not available, skipping'); }"
+
       - name: Build Desktop Timer App
         shell: powershell
         run: |
@@ -468,7 +460,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
 
   release-windows-arm64:
@@ -606,6 +598,14 @@ jobs:
         shell: bash
         run: mkdir -p dist/packages
 
+      - name: Increase file handle limits
+        shell: powershell
+        run: |
+          # Increase Node.js UV threadpool for parallel I/O (default is 4)
+          "UV_THREADPOOL_SIZE=32" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Patch graceful-fs to retry EMFILE errors with backoff
+          node -e "try { var gfs = require('graceful-fs'); gfs.gracefulify(require('fs')); console.log('graceful-fs patched'); } catch(e) { console.log('graceful-fs not available, skipping'); }"
+
       - name: Build Desktop Timer App
         shell: cmd
         run: yarn build:desktop-timer:windows:release:gh:arm64
@@ -623,5 +623,5 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
