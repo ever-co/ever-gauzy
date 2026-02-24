@@ -580,6 +580,7 @@
 		"@nebular/bootstrap": "^9.1.0-rc.6",
 		"@nebular/security": "^17.0.0",
 		"@nebular/theme": "^17.0.0",
+		"@nestjs/bullmq": "^11.0.4",
 		"@nestjs/common": "^11.1.14",
 		"@nestjs/core": "^11.1.14",
 		"@nestjs/mapped-types": "^2.1.0",
