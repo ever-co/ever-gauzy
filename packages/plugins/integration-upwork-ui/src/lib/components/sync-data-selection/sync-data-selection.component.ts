@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, signal, WritableSignal, Signal } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
 import { of, Observable } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { tap, catchError } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ngx-sync-data-selection',
 	templateUrl: './sync-data-selection.component.html',
 	styleUrls: ['./sync-data-selection.component.scss'],
-	standalone: true,
+	standalone: false,
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SyncDataSelectionComponent extends TranslationBaseComponent {

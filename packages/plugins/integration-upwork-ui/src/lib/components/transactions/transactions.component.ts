@@ -40,14 +40,16 @@ export class TransactionsComponent extends TranslationBaseComponent implements O
 	}
 
 	imageUrlChanged(event) {
-		const [file] = event.target.files;
+		// files[0] may be undefined if the user cancels the dialog
+		const file = event.target.files[0] ?? null;
 		this.file = file;
 		event.target.value = null;
 	}
 
 	importCsv() {
 		// nothing to upload or no organization selected
-		if (this.file === null || !this._selectedOrganizationId) {
+		// guard against null or undefined
+		if (this.file == null || !this._selectedOrganizationId) {
 			return;
 		}
 

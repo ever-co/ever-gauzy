@@ -29,9 +29,9 @@ import { UpworkComponent } from './components/upwork/upwork.component';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
 import { TransactionsComponent } from './components/transactions/transactions.component';
 import { ContractsComponent } from './components/contracts/contracts.component';
-import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
 import { ReportsComponent } from './components/reports/reports.component';
 import { IntegrationUpworkLayoutComponent } from './integration-upwork.layout.component';
+import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
 import { getUpworkRoutes } from './integration-upwork.routes';
 
 const NB_MODULES = [
