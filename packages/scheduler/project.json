@@ -1,0 +1,32 @@
+{
+	"name": "scheduler",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/scheduler/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"manifestRootsToUpdate": ["dist/{projectRoot}"],
+			"currentVersionResolver": "git-tag",
+			"fallbackCurrentVersionResolver": "disk"
+		}
+	},
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/scheduler",
+				"tsConfig": "packages/scheduler/tsconfig.lib.json",
+				"packageJson": "packages/scheduler/package.json",
+				"main": "packages/scheduler/src/index.ts",
+				"assets": ["packages/scheduler/*.md"]
+			}
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		}
+	}
+}
