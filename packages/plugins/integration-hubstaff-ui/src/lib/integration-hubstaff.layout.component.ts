@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, merge, tap } from 'rxjs';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -10,11 +10,12 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-integration-hubstaff-layout',
-    template: `<router-outlet></router-outlet>`,
-    standalone: false
+	selector: 'ngx-integration-hubstaff-layout',
+	template: `<router-outlet></router-outlet>`,
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
+export class IntegrationHubstaffLayoutComponent implements OnInit {
 	constructor(
 		private readonly _translateService: TranslateService,
 		private readonly _ngxPermissionsService: NgxPermissionsService,
@@ -25,7 +26,6 @@ export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.initializeUiPermissions(); // Initialize UI permissions
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
-		console.log(`Integration Hubstaff UI module plugin initialized`);
 	}
 
 	/**
@@ -47,7 +47,6 @@ export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
-				console.log(`Integration Hubstaff UI module plugin lang: %s`, lang);
 				this._translateService.use(lang);
 			}),
 			untilDestroyed(this)
@@ -55,9 +54,5 @@ export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 
 		// Subscribe to initiate the stream
 		preferredLanguage$.subscribe();
-	}
-
-	ngOnDestroy(): void {
-		console.log(`Integration Hubstaff UI module plugin destroyed`);
 	}
 }

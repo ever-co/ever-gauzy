@@ -851,6 +851,8 @@
 		"namespacing",
 		"Hasher",
 		"VARCHAR",
+		"TOCTOU",
+		"Gmqh",
 		"bullmq"
 	],
 	"useGitignore": true,

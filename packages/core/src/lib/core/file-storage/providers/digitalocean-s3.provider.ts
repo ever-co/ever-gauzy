@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'node:path';
 import * as moment from 'moment';
@@ -40,6 +40,7 @@ export interface IDigitalOceanProviderConfig {
 
 export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 	public readonly name = FileStorageProviderEnum.DIGITALOCEAN;
+	private readonly logger = new Logger(DigitalOceanS3Provider.name);
 	private readonly detailedLoggingEnabled = false;
 	public instance: DigitalOceanS3Provider;
 	public config: IDigitalOceanProviderConfig;
@@ -95,7 +96,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 		};
 
 		if (this.detailedLoggingEnabled) {
-			console.log(`setDigitalOceanConfiguration this config value: ${JSON.stringify(this.config)}`);
+			this.logger.debug('setDigitalOceanConfiguration: initializing with default config');
 		}
 
 		try {
@@ -105,16 +106,14 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 
 				if (settings) {
 					if (this.detailedLoggingEnabled) {
-						console.log(`setDigitalOceanConfiguration Tenant Settings Value: ${JSON.stringify(settings)}`);
+						this.logger.debug('setDigitalOceanConfiguration: applying tenant settings overrides');
 					}
 
 					if (trimIfNotEmpty(settings.digitalocean_access_key_id)) {
 						this.config.digitalocean_access_key_id = trimIfNotEmpty(settings.digitalocean_access_key_id);
 
 						if (this.detailedLoggingEnabled) {
-							console.log(
-								`setDigitalOceanConfiguration this.config.digitalocean_access_key_id value: ${this.config.digitalocean_access_key_id}`
-							);
+							this.logger.debug('setDigitalOceanConfiguration: digitalocean_access_key_id overridden');
 						}
 					}
 
@@ -124,8 +123,8 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						);
 
 						if (this.detailedLoggingEnabled) {
-							console.log(
-								`setDigitalOceanConfiguration this.config.digitalocean_secret_access_key value: ${this.config.digitalocean_secret_access_key}`
+							this.logger.debug(
+								'setDigitalOceanConfiguration: digitalocean_secret_access_key overridden'
 							);
 						}
 					}
@@ -136,10 +135,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						);
 
 						if (this.detailedLoggingEnabled) {
-							console.log(
-								'setDigitalOceanConfiguration this.config.digitalocean_service_url value: ',
-								this.config.digitalocean_service_url
-							);
+							this.logger.debug('setDigitalOceanConfiguration: digitalocean_service_url overridden');
 						}
 					}
 
@@ -147,10 +143,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						this.config.digitalocean_default_region = trimIfNotEmpty(settings.digitalocean_default_region);
 
 						if (this.detailedLoggingEnabled) {
-							console.log(
-								'setDigitalOceanConfiguration this.config.digitalocean_default_region value: ',
-								this.config.digitalocean_default_region
-							);
+							this.logger.debug('setDigitalOceanConfiguration: digitalocean_default_region overridden');
 						}
 					}
 
@@ -158,10 +151,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						this.config.digitalocean_s3_bucket = trimIfNotEmpty(settings.digitalocean_s3_bucket);
 
 						if (this.detailedLoggingEnabled) {
-							console.log(
-								'setDigitalOceanConfiguration this.config.digitalocean_s3_bucket value: ',
-								this.config.digitalocean_s3_bucket
-							);
+							this.logger.debug('setDigitalOceanConfiguration: digitalocean_s3_bucket overridden');
 						}
 					}
 
@@ -170,15 +160,12 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					this.config.digitalocean_s3_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
 					if (this.detailedLoggingEnabled) {
-						console.log(
-							'setDigitalOceanConfiguration this.config.digitalocean_s3_force_path_style value: ',
-							this.config.digitalocean_s3_force_path_style
-						);
+						this.logger.debug('setDigitalOceanConfiguration: digitalocean_s3_force_path_style overridden');
 					}
 				}
 			}
 		} catch (error) {
-			console.error('Error while setting DigitalOcean configuration. Default configuration will be used', error);
+			this.logger.error('Error while setting DigitalOcean configuration. Default configuration will be used');
 		}
 	}
 
@@ -210,11 +197,11 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 
 				return signedUrl;
 			} else {
-				console.error('Error while retrieving signed URL: s3Client is null');
+				this.logger.error('Error while retrieving signed URL: s3Client is null');
 				return null;
 			}
 		} catch (error) {
-			console.error('Error while retrieving signed URL:', error);
+			this.logger.error('Error while retrieving signed URL');
 			return null;
 		}
 	}
@@ -276,11 +263,11 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					}
 				});
 			} else {
-				console.error('Error while retrieving Multer for DigitalOcean: s3Client is null');
+				this.logger.error('Error while retrieving Multer for DigitalOcean: s3Client is null');
 				return null;
 			}
 		} catch (error) {
-			console.error('Error while retrieving Multer for DigitalOcean:', error);
+			this.logger.error('Error while retrieving Multer for DigitalOcean');
 			return null;
 		}
 	}
@@ -308,10 +295,10 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 				const data: GetObjectCommandOutput = await s3Client.send(command);
 				return data.Body;
 			} else {
-				console.error('Error while retrieving signed URL: s3Client is null');
+				this.logger.error('Error while retrieving file: s3Client is null');
 			}
 		} catch (error) {
-			console.error(`Error while fetching file with key '${key}':`, error);
+			this.logger.error(`Error while fetching file with key '${key}'`);
 		}
 	}
 
@@ -365,10 +352,10 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 
 				return await this.mapUploadedFile(file);
 			} else {
-				console.warn('Error while retrieving signed URL: s3Client is null');
+				this.logger.warn('Error while putting file: s3Client is null');
 			}
 		} catch (error) {
-			console.error('Error while put file for DigitalOcean provider', error);
+			this.logger.error('Error while put file for DigitalOcean provider');
 		}
 	}
 
@@ -399,10 +386,10 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					data
 				});
 			} else {
-				console.warn('Error while retrieving signed URL: s3Client is null');
+				this.logger.warn('Error while deleting file: s3Client is null');
 			}
 		} catch (error) {
-			console.error(`Error while deleting file with key '${key}':`, error);
+			this.logger.error(`Error while deleting file with key '${key}'`);
 			throw new HttpException(error, HttpStatus.BAD_REQUEST, {
 				description: `Error while deleting file with key: '${key}'`
 			});
@@ -437,13 +424,13 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 
 				return s3Client;
 			} else {
-				console.warn(
-					`Can't retrieve ${FileStorageProviderEnum.DIGITALOCEAN} instance for tenant: this.config.digitalocean_service_url, digitalocean_access_key_id or digitalocean_secret_access_key undefined in that tenant settings`
+				this.logger.warn(
+					`Can't retrieve ${FileStorageProviderEnum.DIGITALOCEAN} instance: service URL or credentials are missing in tenant settings`
 				);
 				return null;
 			}
 		} catch (error) {
-			console.error(`Error while retrieving ${FileStorageProviderEnum.DIGITALOCEAN} instance:`, error);
+			this.logger.error(`Error while retrieving ${FileStorageProviderEnum.DIGITALOCEAN} instance`);
 			return null;
 		}
 	}

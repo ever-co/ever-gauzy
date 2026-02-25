@@ -1,8 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EMPTY } from 'rxjs';
-import { tap, switchMap, filter, debounceTime } from 'rxjs/operators';
+import { EMPTY, debounceTime, tap, switchMap, filter } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IAccessTokenSecretPair,
@@ -13,33 +12,32 @@ import {
 } from '@gauzy/contracts';
 import { IntegrationsService, Store, UpworkService } from '@gauzy/ui-core/core';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
-    selector: 'ngx-upwork-authorize',
-    templateUrl: './upwork-authorize.component.html',
-    styleUrls: ['./upwork-authorize.component.scss'],
-    standalone: false
+	selector: 'ngx-upwork-authorize',
+	templateUrl: './upwork-authorize.component.html',
+	styleUrls: ['./upwork-authorize.component.scss'],
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
-	public rememberState: boolean;
-	public organization: IOrganization;
+export class UpworkAuthorizeComponent implements OnInit {
+	private readonly _fb = inject(UntypedFormBuilder);
+	private readonly _upworkService = inject(UpworkService);
+	private readonly _activatedRoute = inject(ActivatedRoute);
+	private readonly _router = inject(Router);
+	private readonly _store = inject(Store);
+	private readonly _integrationsService = inject(IntegrationsService);
 
-	readonly form: UntypedFormGroup = UpworkAuthorizeComponent.buildForm(this._fb);
+	protected rememberState: boolean;
+	protected organization: IOrganization;
+
+	protected readonly form: UntypedFormGroup = UpworkAuthorizeComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			consumerKey: [null, Validators.required],
 			consumerSecret: [null, Validators.required]
 		});
 	}
-
-	constructor(
-		private readonly _fb: UntypedFormBuilder,
-		private readonly _upworkService: UpworkService,
-		private readonly _activatedRoute: ActivatedRoute,
-		private readonly _router: Router,
-		private readonly _store: Store,
-		private readonly _integrationsService: IntegrationsService
-	) {}
 
 	ngOnInit() {
 		this._store.selectedOrganization$
@@ -115,7 +113,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	 * @param config
 	 * @returns
 	 */
-	authorizeUpwork(config: IUpworkClientSecretPair) {
+	protected authorizeUpwork(config: IUpworkClientSecretPair) {
 		if (!this.organization || this.form.invalid) {
 			return;
 		}
@@ -140,6 +138,4 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	private _redirectToUpworkIntegration(integrationId: string) {
 		this._router.navigate(['pages/integrations/upwork', integrationId]);
 	}
-
-	ngOnDestroy(): void {}
 }

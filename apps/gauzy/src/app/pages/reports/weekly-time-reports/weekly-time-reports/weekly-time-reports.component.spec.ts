@@ -18,3 +18,4 @@ describe('WeeklyTimeReportsComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
+

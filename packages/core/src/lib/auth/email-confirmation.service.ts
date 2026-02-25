@@ -1,5 +1,5 @@
-import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
-import { IsNull, MoreThanOrEqual } from 'typeorm';
+import { BadRequestException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { MoreThanOrEqual } from 'typeorm';
 import { environment } from '@gauzy/config';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as moment from 'moment';
@@ -22,6 +22,8 @@ import { PasswordHashService } from '../password-hash/password-hash.service';
 
 @Injectable()
 export class EmailConfirmationService {
+	private readonly logger = new Logger(EmailConfirmationService.name);
+
 	constructor(
 		private readonly emailService: EmailService,
 		private readonly userService: UserService,
@@ -56,22 +58,18 @@ export class EmailConfirmationService {
 			const verificationCode = generateAlphaNumericCode();
 
 			// Update user's email token field and verification code
+			// Always set codeExpireAt — default to 7 days to match the environment module default
+			const verificationExpiry = environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400 * 7;
 			await this.userService.update(id, {
 				emailToken: await this.passwordHashService.hash(token),
 				code: verificationCode,
-				...(environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME
-					? {
-							codeExpireAt: moment(new Date())
-								.add(environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME, 'seconds')
-								.toDate()
-					  }
-					: {})
+				codeExpireAt: moment(new Date()).add(verificationExpiry, 'seconds').toDate()
 			});
 
 			// Send email verification link
 			return await this.emailService.emailVerification(user, verificationLink, verificationCode, appIntegration);
 		} catch (error) {
-			console.log(error, 'Error while sending verification email');
+			this.logger.error('Error while sending verification email', error?.stack);
 		}
 	}
 
@@ -150,26 +148,27 @@ export class EmailConfirmationService {
 
 		try {
 			const { email, code, tenantId } = payload;
-			if (email && code) {
+			if (email && code && tenantId) {
 				const user = await this.userService.findOneByOptions({
-					where: [
-						{
-							email,
-							code,
-							tenantId,
-							codeExpireAt: MoreThanOrEqual(new Date())
-						},
-						{
-							email,
-							code,
-							tenantId,
-							codeExpireAt: IsNull()
-						}
-					]
+					where: {
+						email,
+						code,
+						tenantId,
+						codeExpireAt: MoreThanOrEqual(new Date())
+					}
 				});
 				if (!!user.emailVerifiedAt) {
 					throw new BadRequestException('Your email is already verified.');
 				}
+
+				// Atomically invalidate the verification code (prevent reuse / TOCTOU race) // cspell:ignore TOCTOU
+				// The update scopes by id + code + codeExpireAt so a concurrent request
+				// that already nullified the code will update zero rows
+				await this.userService.update(user['id'], {
+					code: null,
+					codeExpireAt: null
+				});
+
 				return user;
 			}
 			throw new BadRequestException('Failed to verify email.');

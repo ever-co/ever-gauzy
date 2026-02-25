@@ -18,3 +18,4 @@ describe('ProjectBudgetsReportComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
+

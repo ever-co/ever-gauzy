@@ -3,8 +3,8 @@ import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog
 describe('TimerTrackerChangeDialogComponent', () => {
 	let component: TimerTrackerChangeDialogComponent;
 	let fixture: ComponentFixture<TimerTrackerChangeDialogComponent>;
-	beforeEach(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			imports: [TimerTrackerChangeDialogComponent]
 		});
 		fixture = TestBed.createComponent(TimerTrackerChangeDialogComponent);

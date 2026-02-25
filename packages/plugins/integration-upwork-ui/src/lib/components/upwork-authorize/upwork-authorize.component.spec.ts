@@ -1,14 +1,14 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UpworkAuthorizeComponent } from './upwork-authorize.component';
 describe('UpworkAuthorizeComponent', () => {
 	let component: UpworkAuthorizeComponent;
 	let fixture: ComponentFixture<UpworkAuthorizeComponent>;
-	beforeEach(async(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			declarations: [UpworkAuthorizeComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
-	}));
+	});
 	beforeEach(() => {
 		fixture = TestBed.createComponent(UpworkAuthorizeComponent);
 		component = fixture.componentInstance;
