@@ -420,7 +420,7 @@ app.on('ready', async () => {
 	// Set up theme listener for desktop windows
 	new DesktopThemeListener();
 	// default global
-	setGlobalVariable(configs);
+	setGlobalVariable(configs || {});
 	await launchSplashScreen();
 	await setupDatabase();
 	initialAppMenu();
