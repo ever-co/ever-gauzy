@@ -19,7 +19,8 @@ import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-u
 export async function createTimeTrackerWindow(
 	timeTrackerWindow: Electron.BrowserWindow,
 	filePath: string,
-	preloadPath?: string
+	preloadPath?: string,
+	launch = true
 ): Promise<Electron.BrowserWindow> {
 	// Get window settings based on the optional preload path
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
@@ -37,7 +38,9 @@ export async function createTimeTrackerWindow(
 	timeTrackerWindow.hide();
 
 	// Load the Time Tracker page using the helper function
-	await setLaunchPathAndLoad(timeTrackerWindow, filePath, '/time-tracker');
+	if (launch) {
+		await setLaunchPathAndLoad(timeTrackerWindow, filePath, '/time-tracker');
+	}
 
 	// Attach the custom title bar if a preload script is provided
 	if (preloadPath) {

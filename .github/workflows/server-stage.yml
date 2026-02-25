@@ -61,7 +61,7 @@ jobs:
         run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -162,7 +162,7 @@ jobs:
         run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -250,7 +250,7 @@ jobs:
         run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -361,7 +361,7 @@ jobs:
         run: 'npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
 
       - name: Configure npm python for node-gyp
         shell: powershell
@@ -533,7 +533,7 @@ jobs:
         run: 'npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
 
       - name: Configure npm python for node-gyp
         shell: powershell

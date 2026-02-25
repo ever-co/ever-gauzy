@@ -852,7 +852,9 @@
 		"Hasher",
 		"VARCHAR",
 		"TOCTOU",
-		"Gmqh"
+		"Gmqh",
+		"bullmq",
+		"MAINLOADSPLASH"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -37,7 +37,7 @@ import {
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from './commands';
-import { getDateRangeFormat, getDaysBetweenDates } from './../../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum } from './../../core/utils';
 import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
@@ -70,54 +70,75 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A Promise that resolves to an array of time logs.
 	 */
 	async getTimeLogs(request: IGetTimeLogReportInput): Promise<ITimeLog[]> {
-		// Create a query builder for the TimeLog entity
-		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-
-		// Inner join with related entities (employee, timeSlots)
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-
-		// Set up the find options for the query
-		query.setFindOptions({
-			select: {
-				project: {
-					id: true,
-					name: true,
-					imageUrl: true,
-					membersCount: true
-				},
-				task: TimeLogService.TASK_SELECT_FIELDS,
-				organizationContact: {
-					id: true,
-					name: true,
-					imageUrl: true
-				},
-				employee: {
-					id: true,
-					isAway: true,
-					isOnline: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						imageUrl: true
-					}
-				}
-			},
-			relations: [...(request.relations ? request.relations : [])],
-			order: {
-				// Order results by the 'startedAt' field in ascending order
-				startedAt: 'ASC'
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: [
+						'employee',
+						'employee.user',
+						'timeSlots',
+						'project',
+						'task',
+						'organizationContact',
+						...(request.relations || [])
+					] as any[],
+					orderBy: { startedAt: 'ASC' as any }
+				});
+				return items.map((e) => this.serialize(e)) as ITimeLog[];
 			}
-		});
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the TimeLog entity
+				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-		// Apply filters to the query
-		await this.getFilterTimeLogQuery(query, request);
+				// Inner join with related entities (employee, timeSlots)
+				query.innerJoin(`${query.alias}.employee`, 'employee');
+				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
-		const timeLogs = await query.getMany();
+				// Set up the find options for the query
+				query.setFindOptions({
+					select: {
+						project: {
+							id: true,
+							name: true,
+							imageUrl: true,
+							membersCount: true
+						},
+						task: TimeLogService.TASK_SELECT_FIELDS,
+						organizationContact: {
+							id: true,
+							name: true,
+							imageUrl: true
+						},
+						employee: {
+							id: true,
+							isAway: true,
+							isOnline: true,
+							user: {
+								id: true,
+								firstName: true,
+								lastName: true,
+								imageUrl: true
+							}
+						}
+					},
+					relations: [...(request.relations ? request.relations : [])],
+					order: {
+						// Order results by the 'startedAt' field in ascending order
+						startedAt: 'ASC'
+					}
+				});
 
-		// Set up the where clause using the provided filter function
-		return timeLogs;
+				// Apply filters to the query
+				await this.getFilterTimeLogQuery(query, request);
+
+				const timeLogs = await query.getMany();
+
+				// Set up the where clause using the provided filter function
+				return timeLogs;
+			}
+		}
 	}
 
 	/**
@@ -126,56 +147,73 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A Promise that resolves to an array of weekly report data.
 	 */
 	async getWeeklyReport(request: IGetTimeLogReportInput) {
-		// Create a query builder for the TimeLog entity
-		const query = this.typeOrmRepository.createQueryBuilder('time_log');
+		let logs: ITimeLog[];
 
-		// Inner join with related entities (employee, timeSlots)
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-
-		// Set find options for the query
-		query.setFindOptions({
-			select: {
-				// Selected fields for the result
-				id: true,
-				employeeId: true,
-				startedAt: true,
-				stoppedAt: true,
-				employee: {
-					id: true,
-					userId: true,
-					isAway: true,
-					isOnline: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						imageUrl: true
-					}
-				},
-				timeSlots: {
-					id: true,
-					overall: true,
-					duration: true
-				}
-			},
-			relations: {
-				// Related entities to be included in the result
-				timeSlots: true,
-				employee: {
-					user: true
-				}
-			},
-			order: {
-				// Order results by the 'startedAt' field in ascending order
-				startedAt: 'ASC'
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: ['employee', 'employee.user', 'timeSlots'] as any[],
+					orderBy: { startedAt: 'ASC' as any }
+				});
+				logs = items.map((e) => this.serialize(e)) as ITimeLog[];
+				break;
 			}
-		});
-		// Apply additional conditions to the query based on request filters
-		await this.getFilterTimeLogQuery(query, request);
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the TimeLog entity
+				const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-		// Execute the query and retrieve time logs
-		const logs = await query.getMany();
+				// Inner join with related entities (employee, timeSlots)
+				query.innerJoin(`${query.alias}.employee`, 'employee');
+				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+
+				// Set find options for the query
+				query.setFindOptions({
+					select: {
+						// Selected fields for the result
+						id: true,
+						employeeId: true,
+						startedAt: true,
+						stoppedAt: true,
+						employee: {
+							id: true,
+							userId: true,
+							isAway: true,
+							isOnline: true,
+							user: {
+								id: true,
+								firstName: true,
+								lastName: true,
+								imageUrl: true
+							}
+						},
+						timeSlots: {
+							id: true,
+							overall: true,
+							duration: true
+						}
+					},
+					relations: {
+						// Related entities to be included in the result
+						timeSlots: true,
+						employee: {
+							user: true
+						}
+					},
+					order: {
+						// Order results by the 'startedAt' field in ascending order
+						startedAt: 'ASC'
+					}
+				});
+				// Apply additional conditions to the query based on request filters
+				await this.getFilterTimeLogQuery(query, request);
+
+				// Execute the query and retrieve time logs
+				logs = await query.getMany();
+				break;
+			}
+		}
 
 		// Gets an array of days between the given start date, end date and timezone.
 		const { startDate, endDate, timeZone } = request;
@@ -227,27 +265,44 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns An array of daily time log chart reports.
 	 */
 	async getDailyReportCharts(request: IGetTimeLogReportInput) {
-		// Create a query builder for the TimeLog entity
-		const query = this.typeOrmRepository.createQueryBuilder('time_log');
+		let logs: ITimeLog[];
 
-		// Inner join with related entities (employee, timeSlots)
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-
-		// Set find options for the query
-		query.setFindOptions({
-			order: {
-				// Order results by the 'startedAt' field in ascending order
-				startedAt: 'ASC'
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: ['employee', 'timeSlots'] as any[],
+					orderBy: { startedAt: 'ASC' as any }
+				});
+				logs = items.map((e) => this.serialize(e)) as ITimeLog[];
+				break;
 			}
-		});
-		// Apply additional conditions to the query based on request filters
-		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request);
-		});
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the TimeLog entity
+				const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-		// Execute the query and retrieve time logs
-		const logs = await query.getMany();
+				// Inner join with related entities (employee, timeSlots)
+				query.innerJoin(`${query.alias}.employee`, 'employee');
+				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+
+				// Set find options for the query
+				query.setFindOptions({
+					order: {
+						// Order results by the 'startedAt' field in ascending order
+						startedAt: 'ASC'
+					}
+				});
+				// Apply additional conditions to the query based on request filters
+				query.where((qb: SelectQueryBuilder<TimeLog>) => {
+					this.getFilterTimeLogQuery(qb, request);
+				});
+
+				// Execute the query and retrieve time logs
+				logs = await query.getMany();
+				break;
+			}
+		}
 
 		// Gets an array of days between the given start date, end date and timezone.
 		const { startDate, endDate, timeZone } = request;
@@ -302,80 +357,106 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Extract timezone from the request
 		const { timeZone } = request;
 
-		// Create a query builder for the TimeLog entity
-		const query = this.typeOrmRepository.createQueryBuilder('time_log');
+		let logs: ITimeLog[];
 
-		// Inner join with related entities (employee, timeSlots)
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-
-		// Set find options for the query
-		query.setFindOptions({
-			select: {
-				// Selected fields for the result
-				id: true,
-				employeeId: true,
-				startedAt: true,
-				stoppedAt: true,
-				description: true,
-				projectId: true,
-				taskId: true,
-				organizationContactId: true,
-				project: {
-					id: true,
-					name: true,
-					imageUrl: true,
-					membersCount: true,
-					organizationContact: {
-						id: true,
-						name: true,
-						imageUrl: true
-					}
-				},
-				task: TimeLogService.TASK_SELECT_FIELDS,
-				timeSlots: {
-					id: true,
-					overall: true,
-					duration: true
-				},
-				organizationContact: {
-					id: true,
-					name: true,
-					imageUrl: true
-				},
-				employee: {
-					id: true,
-					userId: true,
-					isAway: true,
-					isOnline: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						imageUrl: true
-					}
-				}
-			},
-			relations: {
-				// Related entities to be included in the result
-				project: { organizationContact: true },
-				task: { taskStatus: true },
-				timeSlots: true,
-				organizationContact: true,
-				employee: { user: true }
-			},
-			order: {
-				// Order results by the 'startedAt' field in ascending order
-				startedAt: 'ASC'
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: [
+						'employee',
+						'employee.user',
+						'timeSlots',
+						'project',
+						'project.organizationContact',
+						'task',
+						'task.taskStatus',
+						'organizationContact'
+					] as any[],
+					orderBy: { startedAt: 'ASC' as any }
+				});
+				logs = items.map((e) => this.serialize(e)) as ITimeLog[];
+				break;
 			}
-		});
-		// Apply additional conditions to the query based on request filters
-		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request);
-		});
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the TimeLog entity
+				const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-		// Execute the query and retrieve time logs
-		const logs = await query.getMany();
+				// Inner join with related entities (employee, timeSlots)
+				query.innerJoin(`${query.alias}.employee`, 'employee');
+				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+
+				// Set find options for the query
+				query.setFindOptions({
+					select: {
+						// Selected fields for the result
+						id: true,
+						employeeId: true,
+						startedAt: true,
+						stoppedAt: true,
+						description: true,
+						projectId: true,
+						taskId: true,
+						organizationContactId: true,
+						project: {
+							id: true,
+							name: true,
+							imageUrl: true,
+							membersCount: true,
+							organizationContact: {
+								id: true,
+								name: true,
+								imageUrl: true
+							}
+						},
+						task: TimeLogService.TASK_SELECT_FIELDS,
+						timeSlots: {
+							id: true,
+							overall: true,
+							duration: true
+						},
+						organizationContact: {
+							id: true,
+							name: true,
+							imageUrl: true
+						},
+						employee: {
+							id: true,
+							userId: true,
+							isAway: true,
+							isOnline: true,
+							user: {
+								id: true,
+								firstName: true,
+								lastName: true,
+								imageUrl: true
+							}
+						}
+					},
+					relations: {
+						// Related entities to be included in the result
+						project: { organizationContact: true },
+						task: { taskStatus: true },
+						timeSlots: true,
+						organizationContact: true,
+						employee: { user: true }
+					},
+					order: {
+						// Order results by the 'startedAt' field in ascending order
+						startedAt: 'ASC'
+					}
+				});
+				// Apply additional conditions to the query based on request filters
+				query.where((qb: SelectQueryBuilder<TimeLog>) => {
+					this.getFilterTimeLogQuery(qb, request);
+				});
+
+				// Execute the query and retrieve time logs
+				logs = await query.getMany();
+				break;
+			}
+		}
 
 		// Group time logs based on the specified 'groupBy' filter
 		let dailyLogs: any;
@@ -407,49 +488,66 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Extract timezone from the request
 		const { timeZone } = request;
 
-		// Create a query builder for the TimeLog entity
-		const query = this.typeOrmRepository.createQueryBuilder('time_log');
+		let timeLogs: ITimeLog[];
 
-		// Inner join with related entities (employee, timeSlots)
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-
-		// Set up the find options for the query
-		query.setFindOptions({
-			select: {
-				employee: {
-					id: true,
-					userId: true,
-					isAway: true,
-					isOnline: true,
-					billRateValue: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						imageUrl: true
-					}
-				}
-			},
-			relations: {
-				// Related entities to be included in the result
-				employee: {
-					user: true
-				}
-			},
-			order: {
-				// Order results by the 'startedAt' field in ascending order
-				startedAt: 'ASC'
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: ['employee', 'employee.user'] as any[],
+					orderBy: { startedAt: 'ASC' as any }
+				});
+				timeLogs = items.map((e) => this.serialize(e)) as ITimeLog[];
+				break;
 			}
-		});
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the TimeLog entity
+				const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-		// Apply additional conditions to the query based on request filters
-		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request);
-		});
+				// Inner join with related entities (employee, timeSlots)
+				query.innerJoin(`${query.alias}.employee`, 'employee');
+				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
-		// Execute the query and retrieve time logs
-		const timeLogs = await query.getMany();
+				// Set up the find options for the query
+				query.setFindOptions({
+					select: {
+						employee: {
+							id: true,
+							userId: true,
+							isAway: true,
+							isOnline: true,
+							billRateValue: true,
+							user: {
+								id: true,
+								firstName: true,
+								lastName: true,
+								imageUrl: true
+							}
+						}
+					},
+					relations: {
+						// Related entities to be included in the result
+						employee: {
+							user: true
+						}
+					},
+					order: {
+						// Order results by the 'startedAt' field in ascending order
+						startedAt: 'ASC'
+					}
+				});
+
+				// Apply additional conditions to the query based on request filters
+				query.where((qb: SelectQueryBuilder<TimeLog>) => {
+					this.getFilterTimeLogQuery(qb, request);
+				});
+
+				// Execute the query and retrieve time logs
+				timeLogs = await query.getMany();
+				break;
+			}
+		}
 
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -488,48 +586,65 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns An array of owed amount report chart data.
 	 */
 	async getOwedAmountReportCharts(request: IGetTimeLogReportInput) {
-		// Step 1: Create a query builder for the TimeLog entity
-		const query = this.typeOrmRepository.createQueryBuilder('time_log');
+		let timeLogs: ITimeLog[];
 
-		// Inner join with related entities (employee, timeSlots)
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-
-		// Set find options for the query
-		query.setFindOptions({
-			select: {
-				// Selected fields for the result
-				employee: {
-					id: true,
-					billRateValue: true,
-					userId: true,
-					isAway: true,
-					isOnline: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						imageUrl: true
-					}
-				}
-			},
-			relations: {
-				employee: {
-					user: true
-				}
-			},
-			order: {
-				// Order results by the 'startedAt' field in ascending order
-				startedAt: 'ASC'
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: ['employee', 'employee.user'] as any[],
+					orderBy: { startedAt: 'ASC' as any }
+				});
+				timeLogs = items.map((e) => this.serialize(e)) as ITimeLog[];
+				break;
 			}
-		});
-		// Apply additional conditions to the query based on request filters
-		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request);
-		});
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Step 1: Create a query builder for the TimeLog entity
+				const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-		// Execute the query and retrieve time logs
-		const timeLogs = await query.getMany();
+				// Inner join with related entities (employee, timeSlots)
+				query.innerJoin(`${query.alias}.employee`, 'employee');
+				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+
+				// Set find options for the query
+				query.setFindOptions({
+					select: {
+						// Selected fields for the result
+						employee: {
+							id: true,
+							billRateValue: true,
+							userId: true,
+							isAway: true,
+							isOnline: true,
+							user: {
+								id: true,
+								firstName: true,
+								lastName: true,
+								imageUrl: true
+							}
+						}
+					},
+					relations: {
+						employee: {
+							user: true
+						}
+					},
+					order: {
+						// Order results by the 'startedAt' field in ascending order
+						startedAt: 'ASC'
+					}
+				});
+				// Apply additional conditions to the query based on request filters
+				query.where((qb: SelectQueryBuilder<TimeLog>) => {
+					this.getFilterTimeLogQuery(qb, request);
+				});
+
+				// Execute the query and retrieve time logs
+				timeLogs = await query.getMany();
+				break;
+			}
+		}
 
 		// Gets an array of days between the given start date, end date and timezone.
 		const { startDate, endDate, timeZone } = request;
@@ -588,48 +703,65 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			request.duration = 'day';
 		}
 
-		// Create a query builder for the TimeLog entity
-		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+		let timeLogs: ITimeLog[];
 
-		// Inner join with related entities (employee, timeSlots)
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-
-		// Set find options for the query
-		query.setFindOptions({
-			select: {
-				// Specify the fields to be selected in the query result.
-				employee: {
-					id: true,
-					reWeeklyLimit: true,
-					userId: true,
-					isOnline: true,
-					isAway: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						imageUrl: true
-					}
-				}
-			},
-			relations: {
-				employee: {
-					user: true
-				}
-			},
-			order: {
-				// Order results by the 'startedAt' field in ascending order
-				startedAt: 'ASC'
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: ['employee', 'employee.user'] as any[],
+					orderBy: { startedAt: 'ASC' as any }
+				});
+				timeLogs = items.map((e) => this.serialize(e)) as ITimeLog[];
+				break;
 			}
-		});
-		// Apply additional conditions to the query based on request filters
-		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request);
-		});
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the TimeLog entity
+				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-		// Execute the query and retrieve time logs
-		const timeLogs = await query.getMany();
+				// Inner join with related entities (employee, timeSlots)
+				query.innerJoin(`${query.alias}.employee`, 'employee');
+				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+
+				// Set find options for the query
+				query.setFindOptions({
+					select: {
+						// Specify the fields to be selected in the query result.
+						employee: {
+							id: true,
+							reWeeklyLimit: true,
+							userId: true,
+							isOnline: true,
+							isAway: true,
+							user: {
+								id: true,
+								firstName: true,
+								lastName: true,
+								imageUrl: true
+							}
+						}
+					},
+					relations: {
+						employee: {
+							user: true
+						}
+					},
+					order: {
+						// Order results by the 'startedAt' field in ascending order
+						startedAt: 'ASC'
+					}
+				});
+				// Apply additional conditions to the query based on request filters
+				query.where((qb: SelectQueryBuilder<TimeLog>) => {
+					this.getFilterTimeLogQuery(qb, request);
+				});
+
+				// Execute the query and retrieve time logs
+				timeLogs = await query.getMany();
+				break;
+			}
+		}
 
 		// Gets an array of days between the given start date, end date and timezone.
 		const { startDate, endDate, timeZone } = request;
@@ -696,83 +828,171 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { organizationId, employeeIds = [], projectIds = [], startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		// Step 1: Create a query builder for the OrganizationProject entity
-		const query = this.typeOrmOrganizationProjectRepository.createQueryBuilder('organization_project');
+		let organizationProjects: IOrganizationProject[];
 
-		// Inner join with related entities (employee, timeLogs)
-		query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
-		query.innerJoin(`timeLogs.employee`, 'employee');
-
-		// Set find options for the query
-		query.setFindOptions({
-			select: {
-				id: true,
-				name: true,
-				budget: true,
-				budgetType: true,
-				imageUrl: true,
-				membersCount: true
-			},
-			relations: {
-				timeLogs: {
-					employee: true
-				}
-			}
-		});
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), {
-					organizationId
-				});
-				qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), {
-					tenantId
-				});
-			})
-		);
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(p(`"employee"."organizationId" =:organizationId`), {
-					organizationId
-				});
-				qb.andWhere(p(`"employee"."tenantId" =:tenantId`), {
-					tenantId
-				});
-				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), {
-						employeeIds
-					});
-				}
-			})
-		);
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(p(`"timeLogs"."organizationId" =:organizationId`), {
-					organizationId
-				});
-				qb.andWhere(p(`"timeLogs"."tenantId" =:tenantId`), { tenantId });
-
-				// Date range condition
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
 				const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
-				qb.andWhere(p(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`), {
-					startDate: start,
-					endDate: end
-				});
+
+				// Step 1: Get distinct project IDs that match the filters
+				let projectQuery = knex('organization_project')
+					.innerJoin('time_log', 'organization_project.id', 'time_log.projectId')
+					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
+					.select('organization_project.id as id')
+					.where('organization_project.tenantId', tenantId)
+					.andWhere('organization_project.organizationId', organizationId)
+					.andWhere('employee.tenantId', tenantId)
+					.andWhere('employee.organizationId', organizationId)
+					.andWhere('time_log.tenantId', tenantId)
+					.andWhere('time_log.organizationId', organizationId)
+					.andWhere('time_log.startedAt', '>=', start)
+					.andWhere('time_log.startedAt', '<', end)
+					.groupBy('organization_project.id');
 
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
-						employeeIds
-					});
+					projectQuery = projectQuery.whereIn('employee.id', employeeIds);
+					projectQuery = projectQuery.whereIn('time_log.employeeId', employeeIds);
 				}
 				if (isNotEmpty(projectIds)) {
-					qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), {
-						projectIds
+					projectQuery = projectQuery.whereIn('time_log.projectId', projectIds);
+				}
+
+				const matchedProjects = await projectQuery;
+				const matchedProjectIds = matchedProjects.map((r: any) => r.id);
+
+				if (matchedProjectIds.length === 0) {
+					organizationProjects = [];
+					break;
+				}
+
+				// Step 2: Get project details
+				const projectRows = await knex('organization_project')
+					.select('id', 'name', 'budget', 'budgetType', 'imageUrl', 'membersCount')
+					.whereIn('id', matchedProjectIds);
+
+				// Step 3: Get timeLogs with employee data for these projects
+				let timeLogQuery = knex('time_log')
+					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
+					.select(
+						'time_log.id as id',
+						'time_log.duration as duration',
+						'time_log.projectId as projectId',
+						'time_log.employeeId as employeeId',
+						'employee.billRateValue as employee_billRateValue'
+					)
+					.where('time_log.tenantId', tenantId)
+					.andWhere('time_log.organizationId', organizationId)
+					.andWhere('time_log.startedAt', '>=', start)
+					.andWhere('time_log.startedAt', '<', end)
+					.whereIn('time_log.projectId', matchedProjectIds);
+
+				if (isNotEmpty(employeeIds)) {
+					timeLogQuery = timeLogQuery.whereIn('time_log.employeeId', employeeIds);
+				}
+
+				const timeLogRows = await timeLogQuery;
+
+				// Step 4: Group timeLogs by projectId and attach to projects
+				const timeLogsByProject: Record<string, any[]> = {};
+				for (const row of timeLogRows) {
+					const pid = row.projectId;
+					if (!timeLogsByProject[pid]) timeLogsByProject[pid] = [];
+					timeLogsByProject[pid].push({
+						id: row.id,
+						duration: row.duration,
+						employee: { billRateValue: row.employee_billRateValue }
 					});
 				}
-			})
-		);
 
-		// Execute the query and retrieve organization projects
-		const organizationProjects = await query.getMany();
+				organizationProjects = projectRows.map((proj: any) => ({
+					...proj,
+					timeLogs: timeLogsByProject[proj.id] || []
+				}));
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Step 1: Create a query builder for the OrganizationProject entity
+				const query = this.typeOrmOrganizationProjectRepository.createQueryBuilder('organization_project');
+
+				// Inner join with related entities (employee, timeLogs)
+				query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
+				query.innerJoin(`timeLogs.employee`, 'employee');
+
+				// Set find options for the query
+				query.setFindOptions({
+					select: {
+						id: true,
+						name: true,
+						budget: true,
+						budgetType: true,
+						imageUrl: true,
+						membersCount: true
+					},
+					relations: {
+						timeLogs: {
+							employee: true
+						}
+					}
+				});
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), {
+							organizationId
+						});
+						qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), {
+							tenantId
+						});
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(p(`"employee"."organizationId" =:organizationId`), {
+							organizationId
+						});
+						qb.andWhere(p(`"employee"."tenantId" =:tenantId`), {
+							tenantId
+						});
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), {
+								employeeIds
+							});
+						}
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(p(`"timeLogs"."organizationId" =:organizationId`), {
+							organizationId
+						});
+						qb.andWhere(p(`"timeLogs"."tenantId" =:tenantId`), { tenantId });
+
+						// Date range condition
+						const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
+						qb.andWhere(p(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`), {
+							startDate: start,
+							endDate: end
+						});
+
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
+								employeeIds
+							});
+						}
+						if (isNotEmpty(projectIds)) {
+							qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), {
+								projectIds
+							});
+						}
+					})
+				);
+
+				// Execute the query and retrieve organization projects
+				organizationProjects = await query.getMany();
+				break;
+			}
+		}
 
 		const projects = organizationProjects.map(
 			(organizationProject: IOrganizationProject): IProjectBudgetLimitReport => {
@@ -824,70 +1044,161 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { organizationId, employeeIds = [], projectIds = [], startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
-		// Step 1: Create a query builder for the OrganizationClient entity
-		const query = this.typeOrmOrganizationContactRepository.createQueryBuilder('organization_contact');
+		let organizationContacts: IOrganizationContact[];
 
-		// Inner join with related entities (employee, timeLogs)
-		query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
-		query.innerJoin(`timeLogs.employee`, 'employee');
-
-		// Set find options for the query
-		query.setFindOptions({
-			select: {
-				id: true,
-				name: true,
-				budget: true,
-				budgetType: true
-			},
-			relations: {
-				timeLogs: {
-					employee: true
-				}
-			}
-		});
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), { organizationId });
-				qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), { tenantId });
-			})
-		);
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(p(`"employee"."organizationId" =:organizationId`), { organizationId });
-				qb.andWhere(p(`"employee"."tenantId" =:tenantId`), { tenantId });
-
-				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), { employeeIds });
-				}
-			})
-		);
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(p(`"timeLogs"."organizationId" =:organizationId`), { organizationId });
-				qb.andWhere(p(`"timeLogs"."tenantId" =:tenantId`), { tenantId });
-
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
 				const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
-				qb.andWhere(p(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`), {
-					startDate: start,
-					endDate: end
-				});
+
+				// Step 1: Get distinct contact IDs that match the filters
+				let contactQuery = knex('organization_contact')
+					.innerJoin('time_log', 'organization_contact.id', 'time_log.organizationContactId')
+					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
+					.select('organization_contact.id as id')
+					.where('organization_contact.tenantId', tenantId)
+					.andWhere('organization_contact.organizationId', organizationId)
+					.andWhere('employee.tenantId', tenantId)
+					.andWhere('employee.organizationId', organizationId)
+					.andWhere('time_log.tenantId', tenantId)
+					.andWhere('time_log.organizationId', organizationId)
+					.andWhere('time_log.startedAt', '>=', start)
+					.andWhere('time_log.startedAt', '<', end)
+					.groupBy('organization_contact.id');
 
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
-						employeeIds
-					});
+					contactQuery = contactQuery.whereIn('employee.id', employeeIds);
+					contactQuery = contactQuery.whereIn('time_log.employeeId', employeeIds);
 				}
-
 				if (isNotEmpty(projectIds)) {
-					qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), {
-						projectIds
+					contactQuery = contactQuery.whereIn('time_log.projectId', projectIds);
+				}
+
+				const matchedContacts = await contactQuery;
+				const matchedContactIds = matchedContacts.map((r: any) => r.id);
+
+				if (matchedContactIds.length === 0) {
+					organizationContacts = [];
+					break;
+				}
+
+				// Step 2: Get contact details
+				const contactRows = await knex('organization_contact')
+					.select('id', 'name', 'budget', 'budgetType')
+					.whereIn('id', matchedContactIds);
+
+				// Step 3: Get timeLogs with employee data for these contacts
+				let timeLogQuery = knex('time_log')
+					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
+					.select(
+						'time_log.id as id',
+						'time_log.duration as duration',
+						'time_log.organizationContactId as organizationContactId',
+						'time_log.employeeId as employeeId',
+						'employee.billRateValue as employee_billRateValue'
+					)
+					.where('time_log.tenantId', tenantId)
+					.andWhere('time_log.organizationId', organizationId)
+					.andWhere('time_log.startedAt', '>=', start)
+					.andWhere('time_log.startedAt', '<', end)
+					.whereIn('time_log.organizationContactId', matchedContactIds);
+
+				if (isNotEmpty(employeeIds)) {
+					timeLogQuery = timeLogQuery.whereIn('time_log.employeeId', employeeIds);
+				}
+				if (isNotEmpty(projectIds)) {
+					timeLogQuery = timeLogQuery.whereIn('time_log.projectId', projectIds);
+				}
+
+				const timeLogRows = await timeLogQuery;
+
+				// Step 4: Group timeLogs by contactId and attach to contacts
+				const timeLogsByContact: Record<string, any[]> = {};
+				for (const row of timeLogRows) {
+					const cid = row.organizationContactId;
+					if (!timeLogsByContact[cid]) timeLogsByContact[cid] = [];
+					timeLogsByContact[cid].push({
+						id: row.id,
+						duration: row.duration,
+						employee: { billRateValue: row.employee_billRateValue }
 					});
 				}
-			})
-		);
 
-		// Execute the query and retrieve organization contacts
-		const organizationContacts = await query.getMany();
+				organizationContacts = contactRows.map((contact: any) => ({
+					...contact,
+					timeLogs: timeLogsByContact[contact.id] || []
+				}));
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Step 1: Create a query builder for the OrganizationClient entity
+				const query = this.typeOrmOrganizationContactRepository.createQueryBuilder('organization_contact');
+
+				// Inner join with related entities (employee, timeLogs)
+				query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
+				query.innerJoin(`timeLogs.employee`, 'employee');
+
+				// Set find options for the query
+				query.setFindOptions({
+					select: {
+						id: true,
+						name: true,
+						budget: true,
+						budgetType: true
+					},
+					relations: {
+						timeLogs: {
+							employee: true
+						}
+					}
+				});
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), { organizationId });
+						qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), { tenantId });
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(p(`"employee"."organizationId" =:organizationId`), { organizationId });
+						qb.andWhere(p(`"employee"."tenantId" =:tenantId`), { tenantId });
+
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), { employeeIds });
+						}
+					})
+				);
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(p(`"timeLogs"."organizationId" =:organizationId`), { organizationId });
+						qb.andWhere(p(`"timeLogs"."tenantId" =:tenantId`), { tenantId });
+
+						const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
+						qb.andWhere(p(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`), {
+							startDate: start,
+							endDate: end
+						});
+
+						if (isNotEmpty(employeeIds)) {
+							qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
+								employeeIds
+							});
+						}
+
+						if (isNotEmpty(projectIds)) {
+							qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), {
+								projectIds
+							});
+						}
+					})
+				);
+
+				// Execute the query and retrieve organization contacts
+				organizationContacts = await query.getMany();
+				break;
+			}
+		}
 
 		const clients = organizationContacts.map(
 			(organizationContact: IOrganizationContact): IClientBudgetLimitReport => {
@@ -1059,6 +1370,71 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Builds a MikroORM-compatible where object for filtering TimeLogs.
+	 * This mirrors the getFilterTimeLogQuery logic for MikroORM.
+	 *
+	 * @param request - The criteria for filtering TimeLogs.
+	 * @returns A MikroORM-compatible where object.
+	 */
+	private async buildMikroOrmTimeLogWhere(request: IGetTimeLogReportInput): Promise<any> {
+		const { organizationId, projectIds = [], teamIds = [], taskIds = [] } = request;
+		let { employeeIds = [] } = request;
+
+		const tenantId = RequestContext.currentTenantId();
+		const user = RequestContext.currentUser();
+
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		if (user.employeeId && isOnlyMeSelected) {
+			employeeIds = [user.employeeId];
+		} else if (!hasChangeSelectedEmployeePermission && user.employeeId) {
+			if (isNotEmpty(employeeIds)) {
+				const canManageAll = await this._managedEmployeeService.canManageEmployees(employeeIds, teamIds);
+				if (!canManageAll) {
+					employeeIds = [user.employeeId];
+				}
+			} else {
+				employeeIds = [user.employeeId];
+			}
+		}
+
+		const where: any = { tenantId, organizationId };
+
+		if (isNotEmpty(request.timesheetId)) {
+			where.timesheetId = request.timesheetId;
+		}
+
+		if (isNotEmpty(request.startDate) && isNotEmpty(request.endDate)) {
+			const { start, end } = getDateRangeFormat(
+				moment.utc(request.startDate || moment().startOf('day')),
+				moment.utc(request.endDate || moment().endOf('day'))
+			);
+			where.startedAt = { $gte: start, $lt: end };
+		}
+
+		if (isNotEmpty(employeeIds)) where.employeeId = { $in: employeeIds };
+		if (isNotEmpty(taskIds)) where.taskId = { $in: taskIds };
+		if (isNotEmpty(projectIds)) where.projectId = { $in: projectIds };
+		if (isNotEmpty(teamIds)) where.organizationTeamId = { $in: teamIds };
+
+		if (isNotEmpty(request.source)) {
+			where.source = request.source instanceof Array ? { $in: request.source } : request.source;
+		}
+		if (isNotEmpty(request.logType)) {
+			where.logType = request.logType instanceof Array ? { $in: request.logType } : request.logType;
+		}
+
+		if ('isEdited' in request) {
+			where.editedAt = request.isEdited ? { $ne: null } : null;
+		}
+
+		return where;
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
@@ -1221,20 +1597,36 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { organizationId, forceDelete } = params;
 
 		// Create a query builder for the TimeLog entity
-		const query = this.typeOrmRepository.createQueryBuilder();
+		let timeLogs: TimeLog[];
 
-		// Set find options for the query
-		query.setFindOptions({
-			relations: { timeSlots: true }
-		});
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const items = await this.mikroOrmRepository.find(
+					{ id: { $in: logIds }, tenantId, organizationId } as any,
+					{ populate: ['timeSlots'] as any[] }
+				);
+				timeLogs = items.map((e) => this.serialize(e)) as TimeLog[];
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmRepository.createQueryBuilder();
 
-		// Add where clauses to the query
-		query.where(p(`"${query.alias}"."id" IN (:...logIds)`), { logIds });
-		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				// Set find options for the query
+				query.setFindOptions({
+					relations: { timeSlots: true }
+				});
 
-		// Get the time logs from the database
-		const timeLogs = await query.getMany();
+				// Add where clauses to the query
+				query.where(p(`"${query.alias}"."id" IN (:...logIds)`), { logIds });
+				query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+
+				// Get the time logs from the database
+				timeLogs = await query.getMany();
+				break;
+			}
+		}
 
 		if (isEmpty(timeLogs)) {
 			throw new NotAcceptableException('No time logs found with the provided IDs');

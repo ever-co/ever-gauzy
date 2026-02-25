@@ -14,7 +14,7 @@ import {
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
-import { getDateRangeFormat } from './../core/utils';
+import { getDateRangeFormat, MultiORMEnum } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
@@ -41,59 +41,89 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		const { organizationId, organizationTeamId, organizationProjectId } = options;
 		const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
-		// Create a query builder for the Employee entity
-		const query = this.typeOrmEmployeeRepository.createQueryBuilder('employee');
-		query.leftJoin('employee.user', 'user');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const mWhere: any = {
+					tenantId,
+					organizationId,
+					isActive: true,
+					isArchived: false,
+					user: { isActive: true, isArchived: false }
+				};
 
-		// Set pagination options and selected table properties/fields
-		query.setFindOptions({
-			select: {
-				id: true,
-				isActive: true,
-				isArchived: true,
-				userId: true,
-				isOnline: true,
-				isAway: true,
-				user: {
-					id: true,
-					firstName: true,
-					lastName: true,
-					email: true,
-					imageUrl: true
+				if (organizationProjectId) {
+					mWhere.projects = { organizationProjectId };
 				}
-			},
-			relations: { user: true }
-		});
+				if (organizationTeamId) {
+					mWhere.teams = { organizationTeamId };
+				}
 
-		// Organization Project ID
-		if (organizationProjectId) {
-			query.leftJoin('employee.projects', 'projects');
-			query.andWhere('projects.organizationProjectId = :organizationProjectId', { organizationProjectId });
+				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere, {
+					populate: ['user'] as any[],
+					fields: ['id', 'isActive', 'isArchived', 'userId', 'isOnline', 'isAway'] as any[]
+				});
+				return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
+
+			case MultiORMEnum.TypeORM:
+				// Create a query builder for the Employee entity
+				const query = this.typeOrmEmployeeRepository.createQueryBuilder('employee');
+				query.leftJoin('employee.user', 'user');
+
+				// Set pagination options and selected table properties/fields
+				query.setFindOptions({
+					select: {
+						id: true,
+						isActive: true,
+						isArchived: true,
+						userId: true,
+						isOnline: true,
+						isAway: true,
+						user: {
+							id: true,
+							firstName: true,
+							lastName: true,
+							email: true,
+							imageUrl: true
+						}
+					},
+					relations: { user: true }
+				});
+
+				// Organization Project ID
+				if (organizationProjectId) {
+					query.leftJoin('employee.projects', 'projects');
+					query.andWhere('projects.organizationProjectId = :organizationProjectId', {
+						organizationProjectId
+					});
+				}
+
+				// Organization Team ID
+				if (organizationTeamId) {
+					query.leftJoin('employee.teams', 'teams');
+					query.andWhere('teams.organizationTeamId = :organizationTeamId', { organizationTeamId });
+				}
+
+				// Apply filter conditions using TypeORM SelectQueryBuilder
+				query.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						// Filter by tenant ID, organization ID, isActive, and isArchived
+						web.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						web.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+						web.andWhere(p(`"${query.alias}"."isActive" = :isActive`), { isActive: true });
+						web.andWhere(p(`"${query.alias}"."isArchived" = :isArchived`), { isArchived: false });
+
+						// Additional conditions for user isActive and isArchived
+						web.andWhere(p(`"user"."isActive" = :isActive`), { isActive: true });
+						web.andWhere(p(`"user"."isArchived" = :isArchived`), { isArchived: false });
+					})
+				);
+
+				const [items, total] = await query.getManyAndCount();
+				return { items, total };
+
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
-
-		// Organization Team ID
-		if (organizationTeamId) {
-			query.leftJoin('employee.teams', 'teams');
-			query.andWhere('teams.organizationTeamId = :organizationTeamId', { organizationTeamId });
-		}
-
-		// Apply filter conditions using TypeORM SelectQueryBuilder
-		query.andWhere(
-			new Brackets((web: WhereExpressionBuilder) => {
-				// Filter by tenant ID, organization ID, isActive, and isArchived
-				web.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				web.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-				web.andWhere(p(`"${query.alias}"."isActive" = :isActive`), { isActive: true });
-				web.andWhere(p(`"${query.alias}"."isArchived" = :isArchived`), { isArchived: false });
-
-				// Additional conditions for user isActive and isArchived
-				web.andWhere(p(`"user"."isActive" = :isActive`), { isActive: true });
-				web.andWhere(p(`"user"."isArchived" = :isArchived`), { isArchived: false });
-			})
-		);
-
-		const [items, total] = await query.getManyAndCount();
-		return { items, total };
 	}
 
 	/**
@@ -117,12 +147,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const filteredIds = employeeIds.filter(Boolean);
 
 			// Fetch employees using filtered IDs, organizationId, and tenantId
-			return await this.typeOrmEmployeeRepository.findBy({
-				id: In(filteredIds),
-				organizationId,
-				tenantId,
-				isActive: true,
-				isArchived: false
+			return await this.find({
+				where: {
+					id: In(filteredIds),
+					organizationId,
+					tenantId,
+					isActive: true,
+					isArchived: false
+				}
 			});
 		} catch (error) {
 			throw new Error(`Failed to retrieve employees: ${error}`);
@@ -261,49 +293,85 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		withUser: boolean = false
 	): Promise<IPagination<IEmployee>> {
 		try {
-			const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
-			query.innerJoin(`${query.alias}.user`, 'user');
-			query.innerJoin(`user.organizations`, 'organizations');
-			query.setFindOptions({
-				/**
-				 * Load selected table properties/fields for self & relational select.
-				 */
-				select: {
-					id: true,
-					isActive: true,
-					short_description: true,
-					description: true,
-					averageIncome: true,
-					averageExpenses: true,
-					averageBonus: true,
-					startedWorkOn: true,
-					isTrackingEnabled: true,
-					billRateCurrency: true,
-					billRateValue: true,
-					minimumBillingRate: true,
-					userId: true,
-					isAway: true,
-					isOnline: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						email: true,
-						imageUrl: true,
-						timeZone: true,
-						timeFormat: true
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const tenantId = RequestContext.currentTenantId();
+					const mWhere: any = {
+						tenantId,
+						organizationId,
+						isActive: true,
+						isArchived: false,
+						user: { isActive: true, isArchived: false }
+					};
+
+					// Date range filters
+					if (isNotEmpty(forRange) && forRange.startDate && forRange.endDate) {
+						const { start: startDate, end: endDate } = getDateRangeFormat(
+							moment.utc(forRange.startDate),
+							moment.utc(forRange.endDate)
+						);
+						mWhere.startedWorkOn = { $lte: endDate };
+						mWhere.$or = [{ endWork: null }, { endWork: { $gte: startDate } }];
 					}
-				},
-				relations: {
-					...(withUser ? { user: true } : {})
-				}
-			});
-			// Set up the where clause using the provided filter function
-			query.where((qb: SelectQueryBuilder<Employee>) => {
-				this.getFilterQuery(qb, organizationId, forRange);
-			});
-			const [items, total] = await query.getManyAndCount();
-			return { items, total };
+
+					// Permission check
+					if (
+						!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+						!RequestContext.hasPermission(PermissionsEnum.SELECT_EMPLOYEE)
+					) {
+						mWhere.id = RequestContext.currentEmployeeId();
+					}
+
+					const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere, {
+						populate: withUser ? (['user'] as any[]) : ([] as any[])
+					});
+					return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
+
+				case MultiORMEnum.TypeORM:
+					const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
+					query.innerJoin(`${query.alias}.user`, 'user');
+					query.innerJoin(`user.organizations`, 'organizations');
+					query.setFindOptions({
+						select: {
+							id: true,
+							isActive: true,
+							short_description: true,
+							description: true,
+							averageIncome: true,
+							averageExpenses: true,
+							averageBonus: true,
+							startedWorkOn: true,
+							isTrackingEnabled: true,
+							billRateCurrency: true,
+							billRateValue: true,
+							minimumBillingRate: true,
+							userId: true,
+							isAway: true,
+							isOnline: true,
+							user: {
+								id: true,
+								firstName: true,
+								lastName: true,
+								email: true,
+								imageUrl: true,
+								timeZone: true,
+								timeFormat: true
+							}
+						},
+						relations: {
+							...(withUser ? { user: true } : {})
+						}
+					});
+					// Set up the where clause using the provided filter function
+					query.where((qb: SelectQueryBuilder<Employee>) => {
+						this.getFilterQuery(qb, organizationId, forRange);
+					});
+					const [items, total] = await query.getManyAndCount();
+					return { items, total };
+
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
 		} catch (error) {
 			console.log('Error while getting working employees: %s', error);
 		}
@@ -323,17 +391,52 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		forRange: IDateRangePicker | any
 	): Promise<{ total: number }> {
 		try {
-			const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
-			query.innerJoin(`${query.alias}.user`, 'user');
-			query.innerJoin(`user.organizations`, 'organizations');
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const mTenantId = RequestContext.currentTenantId();
+					const mWhere: any = {
+						tenantId: mTenantId,
+						organizationId,
+						isActive: true,
+						isArchived: false,
+						user: { isActive: true, isArchived: false }
+					};
 
-			// Set up the where clause using the provided filter function
-			query.where((qb: SelectQueryBuilder<Employee>) => {
-				this.getFilterQuery(qb, organizationId, forRange);
-			});
+					if (isNotEmpty(forRange) && forRange.startDate && forRange.endDate) {
+						const { start: startDate, end: endDate } = getDateRangeFormat(
+							moment.utc(forRange.startDate),
+							moment.utc(forRange.endDate)
+						);
+						mWhere.startedWorkOn = { $lte: endDate };
+						mWhere.$or = [{ endWork: null }, { endWork: { $gte: startDate } }];
+					}
 
-			const total = await query.getCount();
-			return { total };
+					if (
+						!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+						!RequestContext.hasPermission(PermissionsEnum.SELECT_EMPLOYEE)
+					) {
+						mWhere.id = RequestContext.currentEmployeeId();
+					}
+
+					const mTotal = await this.mikroOrmRepository.count(mWhere);
+					return { total: mTotal };
+
+				case MultiORMEnum.TypeORM:
+					const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
+					query.innerJoin(`${query.alias}.user`, 'user');
+					query.innerJoin(`user.organizations`, 'organizations');
+
+					// Set up the where clause using the provided filter function
+					query.where((qb: SelectQueryBuilder<Employee>) => {
+						this.getFilterQuery(qb, organizationId, forRange);
+					});
+
+					const total = await query.getCount();
+					return { total };
+
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
 		} catch (error) {
 			console.log('Error while getting working employee counts: %s', error);
 		}
@@ -416,116 +519,185 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Retrieve the current tenant ID from the RequestContext
 			const tenantId = RequestContext.currentTenantId();
 
-			// Create a query builder for the Employee entity
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const { where: mWhere } = options;
+					const mFilter: any = {
+						tenantId,
+						...(isNotEmpty(mWhere?.organizationId) ? { organizationId: mWhere.organizationId } : {})
+					};
 
-			// Tables joins with relations
-			query.leftJoin(`${query.alias}.user`, 'user');
-			query.leftJoin(`${query.alias}.tags`, 'tags');
+					// Apply boolean field filters
+					const fields = ['isActive', 'isArchived', 'isTrackingEnabled', 'allowScreenshotCapture'];
+					if (isNotEmpty(mWhere)) {
+						fields.forEach((key: string) => {
+							if (key in mWhere) {
+								mFilter[key] = mWhere[key];
+							}
+						});
 
-			// Set pagination options and selected table properties/fields
-			query.setFindOptions({
-				skip: options && options.skip ? options.take * (options.skip - 1) : 0,
-				take: options && options.take ? options.take : 10,
-				select: {
-					// Selected fields for the Employee entity
-					id: true,
-					short_description: true,
-					description: true,
-					averageIncome: true,
-					averageExpenses: true,
-					averageBonus: true,
-					startedWorkOn: true,
-					endWork: true,
-					isTrackingEnabled: true,
-					deletedAt: true,
-					allowScreenshotCapture: true,
-					allowManualTime: true,
-					allowModifyTime: true,
-					allowDeleteTime: true,
-					trackKeyboardMouseActivity: true,
-					trackAllDisplays: true,
-					allowAgentAppExit: true,
-					allowLogoutFromAgentApp: true,
-					isActive: true,
-					isArchived: true,
-					isAway: true,
-					isOnline: true
-				},
-				...(options && options.relations ? { relations: options.relations } : {}),
-				...(options && 'withDeleted' in options ? { withDeleted: options.withDeleted } : {}) // Include soft-deleted parent entities
-			});
-
-			// Build WHERE clause using QueryBuilder
-			query.where((qb: SelectQueryBuilder<Employee>) => {
-				const { where } = options;
-				// Apply conditions related to the current tenant and organization ID
-				qb.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
-
-						if (isNotEmpty(where?.organizationId)) {
-							const organizationId = where.organizationId;
-							web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+						// Apply tag filter
+						if (isNotEmpty(mWhere.tags)) {
+							mFilter.tags = { id: { $in: mWhere.tags } };
 						}
-					})
-				);
-				// Additional conditions based on the provided 'where' object
-				if (isNotEmpty(where)) {
-					// Apply conditions for specific fields in the Employee entity
-					qb.andWhere(
-						new Brackets((web: WhereExpressionBuilder) => {
-							const fields = ['isActive', 'isArchived', 'isTrackingEnabled', 'allowScreenshotCapture'];
-							fields.forEach((key: string) => {
-								if (key in where) {
-									web.andWhere(p(`${qb.alias}.${key} = :${key}`), { [key]: where[key] });
-								}
-							});
-						})
-					);
 
-					// Apply conditions related to tags
-					qb.andWhere(
-						new Brackets((web: WhereExpressionBuilder) => {
-							if (isNotEmpty(where.tags)) {
-								web.andWhere(p('tags.id IN (:...tags)'), { tags: where.tags });
+						// Apply user name/email search
+						if (isNotEmpty(mWhere.user)) {
+							const userOr: any[] = [];
+							if (isNotEmpty(mWhere.user.name)) {
+								const keywords: string[] = mWhere.user.name.split(' ');
+								keywords.forEach((keyword: string) => {
+									userOr.push({ user: { firstName: { $like: `%${keyword}%` } } });
+									userOr.push({ user: { lastName: { $like: `%${keyword}%` } } });
+								});
 							}
-						})
-					);
+							if (isNotEmpty(mWhere.user.email)) {
+								const keywords: string[] = mWhere.user.email.split(' ');
+								keywords.forEach((keyword: string) => {
+									userOr.push({ user: { email: { $like: `%${keyword}%` } } });
+								});
+							}
+							if (userOr.length > 0) {
+								mFilter.$or = userOr;
+							}
+						}
+					}
 
-					// Apply conditions related to the user property in the 'where' object
-					qb.andWhere(
-						new Brackets((web: WhereExpressionBuilder) => {
-							const { user } = where;
-							if (isNotEmpty(user)) {
-								if (isNotEmpty(user.name)) {
-									const keywords: string[] = user.name.split(' ');
-									keywords.forEach((keyword: string, index: number) => {
-										web.orWhere(p(`LOWER("user"."firstName") like LOWER(:first_name_${index})`), {
-											[`first_name_${index}`]: `%${keyword}%`
-										});
-										web.orWhere(p(`LOWER("user"."lastName") like LOWER(:last_name_${index})`), {
-											[`last_name_${index}`]: `%${keyword}%`
-										});
+					const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mFilter, {
+						...(options?.relations ? { populate: Object.keys(options.relations) as any[] } : {}),
+						offset: options?.skip ? options.take * (options.skip - 1) : 0,
+						limit: options?.take || 10
+					});
+					return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
+
+				case MultiORMEnum.TypeORM:
+					// Create a query builder for the Employee entity
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+					// Tables joins with relations
+					query.leftJoin(`${query.alias}.user`, 'user');
+					query.leftJoin(`${query.alias}.tags`, 'tags');
+
+					// Set pagination options and selected table properties/fields
+					query.setFindOptions({
+						skip: options && options.skip ? options.take * (options.skip - 1) : 0,
+						take: options && options.take ? options.take : 10,
+						select: {
+							// Selected fields for the Employee entity
+							id: true,
+							short_description: true,
+							description: true,
+							averageIncome: true,
+							averageExpenses: true,
+							averageBonus: true,
+							startedWorkOn: true,
+							endWork: true,
+							isTrackingEnabled: true,
+							deletedAt: true,
+							allowScreenshotCapture: true,
+							allowManualTime: true,
+							allowModifyTime: true,
+							allowDeleteTime: true,
+							trackKeyboardMouseActivity: true,
+							trackAllDisplays: true,
+							allowAgentAppExit: true,
+							allowLogoutFromAgentApp: true,
+							isActive: true,
+							isArchived: true,
+							isAway: true,
+							isOnline: true
+						},
+						...(options && options.relations ? { relations: options.relations } : {}),
+						...(options && 'withDeleted' in options ? { withDeleted: options.withDeleted } : {}) // Include soft-deleted parent entities
+					});
+
+					// Build WHERE clause using QueryBuilder
+					query.where((qb: SelectQueryBuilder<Employee>) => {
+						const { where } = options;
+						// Apply conditions related to the current tenant and organization ID
+						qb.andWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+								web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+
+								if (isNotEmpty(where?.organizationId)) {
+									const organizationId = where.organizationId;
+									web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
+										organizationId
 									});
 								}
-								if (isNotEmpty(user.email)) {
-									const keywords: string[] = user.email.split(' ');
-									keywords.forEach((keyword: string, index: number) => {
-										web.orWhere(p(`LOWER("user"."email") like LOWER(:email_${index})`), {
-											[`email_${index}`]: `%${keyword}%`
-										});
+							})
+						);
+						// Additional conditions based on the provided 'where' object
+						if (isNotEmpty(where)) {
+							// Apply conditions for specific fields in the Employee entity
+							qb.andWhere(
+								new Brackets((web: WhereExpressionBuilder) => {
+									const fields = [
+										'isActive',
+										'isArchived',
+										'isTrackingEnabled',
+										'allowScreenshotCapture'
+									];
+									fields.forEach((key: string) => {
+										if (key in where) {
+											web.andWhere(p(`${qb.alias}.${key} = :${key}`), { [key]: where[key] });
+										}
 									});
-								}
-							}
-						})
-					);
-				}
-			});
+								})
+							);
 
-			// Execute the query and retrieve paginated items and total count
-			const [items, total] = await query.getManyAndCount();
-			return { items, total };
+							// Apply conditions related to tags
+							qb.andWhere(
+								new Brackets((web: WhereExpressionBuilder) => {
+									if (isNotEmpty(where.tags)) {
+										web.andWhere(p('tags.id IN (:...tags)'), { tags: where.tags });
+									}
+								})
+							);
+
+							// Apply conditions related to the user property in the 'where' object
+							qb.andWhere(
+								new Brackets((web: WhereExpressionBuilder) => {
+									const { user } = where;
+									if (isNotEmpty(user)) {
+										if (isNotEmpty(user.name)) {
+											const keywords: string[] = user.name.split(' ');
+											keywords.forEach((keyword: string, index: number) => {
+												web.orWhere(
+													p(`LOWER("user"."firstName") like LOWER(:first_name_${index})`),
+													{
+														[`first_name_${index}`]: `%${keyword}%`
+													}
+												);
+												web.orWhere(
+													p(`LOWER("user"."lastName") like LOWER(:last_name_${index})`),
+													{
+														[`last_name_${index}`]: `%${keyword}%`
+													}
+												);
+											});
+										}
+										if (isNotEmpty(user.email)) {
+											const keywords: string[] = user.email.split(' ');
+											keywords.forEach((keyword: string, index: number) => {
+												web.orWhere(p(`LOWER("user"."email") like LOWER(:email_${index})`), {
+													[`email_${index}`]: `%${keyword}%`
+												});
+											});
+										}
+									}
+								})
+							);
+						}
+					});
+
+					// Execute the query and retrieve paginated items and total count
+					const [items, total] = await query.getManyAndCount();
+					return { items, total };
+
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

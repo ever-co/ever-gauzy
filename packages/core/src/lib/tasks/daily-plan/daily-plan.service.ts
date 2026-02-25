@@ -14,6 +14,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
+import { MultiORMEnum } from '../../core/utils';
 import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
@@ -54,14 +55,39 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			}
 
 			// Check for existing DailyPlan
-			const query = this.typeOrmDailyPlanRepository.createQueryBuilder('dailyPlan');
-			query.setFindOptions({ relations: { tasks: true } });
-			query.where('"dailyPlan"."tenantId" = :tenantId', { tenantId });
-			query.andWhere('"dailyPlan"."organizationId" = :organizationId', { organizationId });
-			query.andWhere('"dailyPlan"."organizationTeamId" = :organizationTeamId', { organizationTeamId });
-			query.andWhere(p(`DATE("dailyPlan"."date") = :dailyPlanDate`), { dailyPlanDate: `${dailyPlanDate}` });
-			query.andWhere('"dailyPlan"."employeeId" = :employeeId', { employeeId });
-			let dailyPlan = await query.getOne();
+			let dailyPlan: DailyPlan;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const item = await this.mikroOrmDailyPlanRepository.findOne(
+						{
+							tenantId,
+							organizationId,
+							organizationTeamId,
+							employeeId
+						} as any,
+						{
+							populate: ['tasks'] as any[]
+						}
+					);
+					dailyPlan = item ? (this.serialize(item) as DailyPlan) : null;
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					const query = this.typeOrmDailyPlanRepository.createQueryBuilder('dailyPlan');
+					query.setFindOptions({ relations: { tasks: true } });
+					query.where('"dailyPlan"."tenantId" = :tenantId', { tenantId });
+					query.andWhere('"dailyPlan"."organizationId" = :organizationId', { organizationId });
+					query.andWhere('"dailyPlan"."organizationTeamId" = :organizationTeamId', { organizationTeamId });
+					query.andWhere(p(`DATE("dailyPlan"."date") = :dailyPlanDate`), {
+						dailyPlanDate: `${dailyPlanDate}`
+					});
+					query.andWhere('"dailyPlan"."employeeId" = :employeeId', { employeeId });
+					dailyPlan = await query.getOne();
+					break;
+				}
+			}
 
 			// Create or update DailyPlan
 			if (!dailyPlan) {
@@ -102,38 +128,55 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const { where } = options;
 			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
 
-			// Create the initial query
-			const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const mikroWhere: any = {
+						tenantId,
+						organizationId: where?.organizationId
+					};
+					if (employeeId) mikroWhere.employeeId = employeeId;
 
-			// Join related entities
-			query.leftJoin(`${query.alias}.employee`, 'employee');
-			query.leftJoin(`${query.alias}.tasks`, 'tasks');
+					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
+						...(options?.relations ? { populate: options.relations as any[] } : {})
+					});
+					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Create the initial query
+					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
-			// Apply optional find options if provided
-			query.setFindOptions({
-				...(isNotEmpty(options) &&
-					isNotEmpty(options.where) && {
-						where: options.where
-					}),
-				...(isNotEmpty(options) &&
-					isNotEmpty(options.relations) && {
-						relations: options.relations
-					})
-			});
+					// Join related entities
+					query.leftJoin(`${query.alias}.employee`, 'employee');
+					query.leftJoin(`${query.alias}.tasks`, 'tasks');
 
-			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
-				organizationId: where?.organizationId
-			});
+					// Apply optional find options if provided
+					query.setFindOptions({
+						...(isNotEmpty(options) &&
+							isNotEmpty(options.where) && {
+								where: options.where
+							}),
+						...(isNotEmpty(options) &&
+							isNotEmpty(options.relations) && {
+								relations: options.relations
+							})
+					});
 
-			if (employeeId) {
-				query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+					query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
+						organizationId: where?.organizationId
+					});
+
+					if (employeeId) {
+						query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+					}
+
+					// Retrieve results and total count
+					const [items, total] = await query.getManyAndCount();
+					// Return the pagination result
+					return { items, total };
+				}
 			}
-
-			// Retrieve results and total count
-			const [items, total] = await query.getManyAndCount();
-			// Return the pagination result
-			return { items, total };
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -167,33 +210,50 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const { organizationId, organizationTeamId } = where;
 			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
 
-			// Create the initial query
-			const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const mikroWhere: any = {
+						tenantId,
+						organizationId
+					};
+					if (organizationTeamId) mikroWhere.organizationTeamId = organizationTeamId;
 
-			// Join related entities
-			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
-			query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
+						populate: ['employee', 'tasks', ...(relations as any[])]
+					});
+					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Create the initial query
+					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
-			query.setFindOptions({
-				where: isNotEmpty(where) && where,
-				relations: isNotEmpty(relations) && relations
-			});
+					// Join related entities
+					query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
+					query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
 
-			// Filter conditions
-			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					query.setFindOptions({
+						where: isNotEmpty(where) && where,
+						relations: isNotEmpty(relations) && relations
+					});
 
-			if (organizationTeamId) {
-				query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
-					organizationTeamId
-				});
+					// Filter conditions
+					query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+
+					if (organizationTeamId) {
+						query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+							organizationTeamId
+						});
+					}
+
+					// Retrieve results and total count
+					const [items, total] = await query.getManyAndCount();
+
+					// Return the pagination result
+					return { items, total };
+				}
 			}
-
-			// Retrieve results and total count
-			const [items, total] = await query.getManyAndCount();
-
-			// Return the pagination result
-			return { items, total };
 		} catch (error) {
 			console.log('Error while fetching daily plans for team');
 			throw new HttpException(`Failed to fetch daily plans for team: ${error.message}`, HttpStatus.BAD_REQUEST);
@@ -248,14 +308,13 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		} else {
 			// User is potentially a manager → Check access first
 			// Step 1: Fetch minimal data to get organizationTeamId
-			const planTeamInfo = await this.typeOrmRepository.findOne({
+			const planTeamInfo = await this.findOneByOptions({
 				where: {
 					id: planId,
 					employeeId,
 					tenantId,
 					organizationId
-				},
-				select: ['id', 'organizationTeamId']
+				}
 			});
 
 			// Step 2: Check if current user can manage this employee in this team
@@ -376,40 +435,70 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const { employeeId, plansIds, organizationId, organizationTeamId } = input;
 			const currentDate = new Date().toISOString().split('T')[0];
 
-			// Initial query
-			const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
+			// Initial query for finding daily plans
+			let dailyPlansToUpdate: DailyPlan[];
 
-			// Joins
-			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
-			query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-			query.leftJoinAndSelect('employee.user', 'user');
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const mikroWhere: any = {
+						tenantId,
+						organizationId,
+						organizationTeamId,
+						employeeId,
+						date: { $gte: new Date(currentDate) }
+					};
 
-			// Conditions
-			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-			query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), { organizationTeamId });
-			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+					if (plansIds.length > 0) {
+						mikroWhere.id = { $in: plansIds };
+					} else {
+						mikroWhere.tasks = { id: taskId };
+					}
 
-			// Find condition must include only today and future plans. We cannot delete tasks from past plans
-			query.andWhere(p(`DATE("${query.alias}"."date") >= :currentDate`), { currentDate });
+					const items = await this.mikroOrmDailyPlanRepository.find(mikroWhere as any, {
+						populate: ['employee', 'tasks', 'employee.user'] as any[]
+					});
+					dailyPlansToUpdate = items.map((e) => this.serialize(e)) as DailyPlan[];
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Initial query
+					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
-			// If the user send specific plan ids, then delete the task from those plans.
-			// Otherwise, delete the task from all future and today plans to those it belongs
-			if (plansIds.length > 0) {
-				query.andWhere(p(`${query.alias}.id IN (:...plansIds)`), { plansIds });
-			} else {
-				query.andWhere((qb: SelectQueryBuilder<any>) => {
-					const subQuery = qb.subQuery();
-					subQuery
-						.select(p('"daily_plan_task"."dailyPlanId"'))
-						.from(p('daily_plan_task'), p('daily_plan_task'));
-					subQuery.andWhere(p('"daily_plan_task"."taskId" = :taskId'), { taskId });
+					// Joins
+					query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
+					query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+					query.leftJoinAndSelect('employee.user', 'user');
 
-					return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
-				});
+					// Conditions
+					query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+						organizationTeamId
+					});
+					query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+
+					// Find condition must include only today and future plans
+					query.andWhere(p(`DATE("${query.alias}"."date") >= :currentDate`), { currentDate });
+
+					if (plansIds.length > 0) {
+						query.andWhere(p(`${query.alias}.id IN (:...plansIds)`), { plansIds });
+					} else {
+						query.andWhere((qb: SelectQueryBuilder<any>) => {
+							const subQuery = qb.subQuery();
+							subQuery
+								.select(p('"daily_plan_task"."dailyPlanId"'))
+								.from(p('daily_plan_task'), p('daily_plan_task'));
+							subQuery.andWhere(p('"daily_plan_task"."taskId" = :taskId'), { taskId });
+
+							return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
+						});
+					}
+
+					dailyPlansToUpdate = await query.getMany();
+					break;
+				}
 			}
-
-			const dailyPlansToUpdate = await query.getMany();
 
 			if (dailyPlansToUpdate.length < 1) {
 				throw new BadRequestException('Daily plans not found');
@@ -460,8 +549,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const dailyPlan = await this.getManagedDailyPlanOrThrow(id, employeeId, currentTenantId, organizationId);
 
 			// Return the updated daily plan
-			const updatedDailyPlan = await this.typeOrmDailyPlanRepository.preload({
-				id,
+			const updatedDailyPlan = Object.assign(dailyPlan, {
 				...partialEntity,
 				tasks: dailyPlan.tasks
 			});
@@ -487,30 +575,49 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const { organizationId } = where;
 			const tenantId = RequestContext.currentTenantId();
 
-			// Initial query
-			const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const mikroWhere: any = {
+						tenantId,
+						organizationId,
+						tasks: { id: taskId }
+					};
 
-			// Joins
-			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
-			query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-			query.leftJoinAndSelect('employee.user', 'user');
+					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
+						populate: ['employee', 'tasks', 'employee.user'] as any[]
+					});
+					return { items: items.map((e) => this.serialize(e)) as DailyPlan[], total };
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Initial query
+					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
-			// Conditions
-			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					// Joins
+					query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
+					query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+					query.leftJoinAndSelect('employee.user', 'user');
 
-			query.andWhere((qb: SelectQueryBuilder<any>) => {
-				const subQuery = qb.subQuery();
-				subQuery.select(p('"daily_plan_task"."dailyPlanId"')).from(p('daily_plan_task'), p('daily_plan_task'));
-				subQuery.andWhere(p('"daily_plan_task"."taskId" = :taskId'), { taskId });
+					// Conditions
+					query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
-				return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
-			});
+					query.andWhere((qb: SelectQueryBuilder<any>) => {
+						const subQuery = qb.subQuery();
+						subQuery
+							.select(p('"daily_plan_task"."dailyPlanId"'))
+							.from(p('daily_plan_task'), p('daily_plan_task'));
+						subQuery.andWhere(p('"daily_plan_task"."taskId" = :taskId'), { taskId });
 
-			// Retrieves results and total count
-			const [items, total] = await query.getManyAndCount();
+						return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
+					});
 
-			return { items, total };
+					// Retrieves results and total count
+					const [items, total] = await query.getManyAndCount();
+
+					return { items, total };
+				}
+			}
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

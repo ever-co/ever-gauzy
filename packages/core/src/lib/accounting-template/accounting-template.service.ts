@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { FilterQuery as MikroFilterQuery } from '@mikro-orm/core';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
 import {
@@ -13,6 +14,7 @@ import {
 import { isNotEmpty } from '@gauzy/utils';
 import { AccountingTemplate } from './accounting-template.entity';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
+import { MultiORMEnum } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accounting-template.repository';
@@ -192,39 +194,24 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			organizationId,
 			languageCode = themeLanguage
 		} = options;
-		try {
-			return await this.typeOrmRepository.findOneBy({
-				languageCode,
-				templateType,
-				organizationId,
-				tenantId
-			});
-		} catch (error) {
+		// Try each fallback in order: org+tenant -> null org+null tenant -> english org+tenant -> english null
+		const fallbacks = [
+			{ languageCode, templateType, organizationId, tenantId },
+			{ languageCode, templateType, organizationId: null as any, tenantId: null as any },
+			{ languageCode: LanguagesEnum.ENGLISH, templateType, organizationId, tenantId },
+			{ languageCode: LanguagesEnum.ENGLISH, templateType, organizationId: null as any, tenantId: null as any }
+		];
+
+		for (const where of fallbacks) {
 			try {
-				return await this.typeOrmRepository.findOneBy({
-					languageCode,
-					templateType,
-					organizationId: IsNull(),
-					tenantId: IsNull()
-				});
+				const record = await this.findOneByWhereOptions(where);
+				if (record) return record;
 			} catch (error) {
-				try {
-					return await this.typeOrmRepository.findOneBy({
-						languageCode: LanguagesEnum.ENGLISH,
-						templateType,
-						organizationId,
-						tenantId
-					});
-				} catch (error) {
-					return await this.typeOrmRepository.findOneBy({
-						languageCode: LanguagesEnum.ENGLISH,
-						templateType,
-						organizationId: IsNull(),
-						tenantId: IsNull()
-					});
-				}
+				// continue to next fallback
 			}
 		}
+
+		return null;
 	}
 
 	/**
@@ -234,58 +221,90 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	 * @returns
 	 */
 	async findAll(params: BaseQueryDTO<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
-		const query = this.typeOrmRepository.createQueryBuilder('accounting_template');
-		query.setFindOptions({
-			select: {
-				organization: {
-					id: true,
-					name: true,
-					brandColor: true
-				}
-			},
-			...(params && params.relations
-				? {
-						relations: params.relations
-				  }
-				: {}),
-			...(params && params.order
-				? {
-						order: params.order
-				  }
-				: {})
-		});
-		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
-			qb.andWhere(
-				new Brackets((bck: WhereExpressionBuilder) => {
-					const { organizationId, languageCode } = params.where;
-					if (isNotEmpty(organizationId)) {
-						bck.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
-							organizationId
-						});
-					}
-					if (isNotEmpty(languageCode)) {
-						bck.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), {
-							languageCode
-						});
-					}
-					bck.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
-						tenantId: RequestContext.currentTenantId()
-					});
-				})
-			);
-			qb.orWhere(
-				new Brackets((bck: WhereExpressionBuilder) => {
-					const { languageCode } = params.where;
-					if (isNotEmpty(languageCode)) {
-						bck.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), { languageCode });
-					}
-					bck.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
-					bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
-				})
-			);
-		});
-		const [items, total] = await query.getManyAndCount();
-		return { items, total };
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const { organizationId: mOrgId, languageCode: mLangCode } = params.where;
+				const mTenantId = RequestContext.currentTenantId();
+
+				// Build OR conditions for MikroORM
+				const mWhere: MikroFilterQuery<AccountingTemplate> = {
+					$or: [
+						{
+							...(isNotEmpty(mOrgId) ? { organizationId: mOrgId } : {}),
+							...(isNotEmpty(mLangCode) ? { languageCode: mLangCode } : {}),
+							tenantId: mTenantId
+						},
+						{
+							...(isNotEmpty(mLangCode) ? { languageCode: mLangCode } : {}),
+							organizationId: null,
+							tenantId: null
+						}
+					]
+				} as any;
+
+				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere, {
+					...(params?.relations ? { populate: Object.keys(params.relations) as any[] } : {}),
+					...(params?.order ? { orderBy: params.order as any } : {})
+				});
+				return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
+
+			case MultiORMEnum.TypeORM:
+				const query = this.typeOrmRepository.createQueryBuilder('accounting_template');
+				query.setFindOptions({
+					select: {
+						organization: {
+							id: true,
+							name: true,
+							brandColor: true
+						}
+					},
+					...(params && params.relations
+						? {
+								relations: params.relations
+						  }
+						: {}),
+					...(params && params.order
+						? {
+								order: params.order
+						  }
+						: {})
+				});
+				query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
+					qb.andWhere(
+						new Brackets((bck: WhereExpressionBuilder) => {
+							const { organizationId, languageCode } = params.where;
+							if (isNotEmpty(organizationId)) {
+								bck.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
+									organizationId
+								});
+							}
+							if (isNotEmpty(languageCode)) {
+								bck.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), {
+									languageCode
+								});
+							}
+							bck.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
+								tenantId: RequestContext.currentTenantId()
+							});
+						})
+					);
+					qb.orWhere(
+						new Brackets((bck: WhereExpressionBuilder) => {
+							const { languageCode } = params.where;
+							if (isNotEmpty(languageCode)) {
+								bck.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), { languageCode });
+							}
+							bck.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
+							bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
+						})
+					);
+				});
+				const [items, total] = await query.getManyAndCount();
+				return { items, total };
+
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
@@ -299,24 +318,42 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	async findOneByIdString(id: string): Promise<AccountingTemplate> {
 		const tenantId = RequestContext.currentTenantId();
 
-		const query = this.typeOrmRepository.createQueryBuilder('template');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const mRecord = await this.mikroOrmRepository.findOne({
+					$or: [
+						{ id, tenantId },
+						{ id, tenantId: null }
+					]
+				} as any);
+				if (!mRecord) {
+					throw new NotFoundException(`The requested record was not found`);
+				}
+				return this.serialize(mRecord);
 
-		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
-			qb.andWhere(
-				new Brackets((bck: WhereExpressionBuilder) => {
-					bck.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
-					bck.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
+			case MultiORMEnum.TypeORM:
+				const query = this.typeOrmRepository.createQueryBuilder('template');
 
-			qb.orWhere(
-				new Brackets((bck: WhereExpressionBuilder) => {
-					bck.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
-					bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
-				})
-			);
-		});
+				query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
+					qb.andWhere(
+						new Brackets((bck: WhereExpressionBuilder) => {
+							bck.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
+							bck.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+						})
+					);
 
-		return await query.getOne();
+					qb.orWhere(
+						new Brackets((bck: WhereExpressionBuilder) => {
+							bck.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
+							bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
+						})
+					);
+				});
+
+				return await query.getOne();
+
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 }

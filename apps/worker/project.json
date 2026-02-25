@@ -1,0 +1,70 @@
+{
+	"name": "worker",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "apps/worker/src",
+	"projectType": "application",
+	"targets": {
+		"build": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/worker",
+				"main": "apps/worker/src/main.ts",
+				"tsConfig": "apps/worker/tsconfig.app.json",
+				"assets": ["apps/worker/src/assets"],
+				"webpackConfig": "apps/worker/webpack.config.js",
+				"generatePackageJson": true
+			},
+			"configurations": {
+				"development": {
+					"outputHashing": "none"
+				},
+				"production": {}
+			}
+		},
+		"prune-lockfile": {
+			"dependsOn": ["build"],
+			"cache": true,
+			"executor": "@nx/js:prune-lockfile",
+			"outputs": ["{workspaceRoot}/dist/apps/worker/package.json", "{workspaceRoot}/dist/apps/worker/yarn.lock"],
+			"options": {
+				"buildTarget": "build"
+			}
+		},
+		"copy-workspace-modules": {
+			"dependsOn": ["build"],
+			"cache": true,
+			"outputs": ["{workspaceRoot}/dist/apps/worker/workspace_modules"],
+			"executor": "@nx/js:copy-workspace-modules",
+			"options": {
+				"buildTarget": "build"
+			}
+		},
+		"prune": {
+			"dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+			"executor": "nx:noop"
+		},
+		"serve": {
+			"continuous": true,
+			"executor": "@nx/js:node",
+			"defaultConfiguration": "development",
+			"dependsOn": ["build"],
+			"options": {
+				"buildTarget": "worker:build",
+				"runBuildTargetDependencies": false
+			},
+			"configurations": {
+				"development": {
+					"buildTarget": "worker:build:development"
+				},
+				"production": {
+					"buildTarget": "worker:build:production"
+				}
+			}
+		}
+	},
+	"tags": []
+}

@@ -8,7 +8,14 @@ import {
 	DeepPartial,
 	DeleteResult
 } from 'typeorm';
-import { RequestContext, TenantAwareCrudService, BaseQueryDTO, prepareSQLQuery as p, LIKE_OPERATOR } from '@gauzy/core';
+import {
+	MultiORMEnum,
+	RequestContext,
+	TenantAwareCrudService,
+	BaseQueryDTO,
+	prepareSQLQuery as p,
+	LIKE_OPERATOR
+} from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import {
 	ID,
@@ -57,76 +64,148 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 			const { organizationId } = where;
 			const tenantId = RequestContext.currentTenantId() ?? where.tenantId;
 
-			// Initialize the query
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			query.leftJoin(`${query.alias}.projects`, 'projects');
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					// MikroORM: Use Knex for junction-table subquery filtering
+					const knex = (this.mikroOrmRepository as any).getKnex();
 
-			// Apply find options if provided
-			if (isNotEmpty(options)) {
-				query.setFindOptions({
-					...(options.select && { select: options.select }),
-					...(options.relations && { relations: options.relations }),
-					...(options.order && { order: options.order }),
-					...(options.take && { take: options.take }),
-					...(options.skip && { skip: options.skip })
-				});
-			}
+					// Build base query on the knowledge_base_article table
+					let qb = knex('knowledge_base_article as kba')
+						.whereIn('kba.id', function () {
+							this.select('knowledgeBaseArticleId')
+								.from('knowledge_base_article_project')
+								.where('organizationProjectId', projectId);
+						})
+						.andWhere('kba.organizationId', organizationId)
+						.andWhere('kba.tenantId', tenantId);
 
-			// Apply advanced filters
-			if (filters) {
-				const advancedWhere = this.buildAdvancedWhereCondition(filters, where);
-				query.setFindOptions({ where: advancedWhere });
-			}
-
-			// Filter by knowledge_base_article_project with a sub query
-			query.andWhere((qb: SelectQueryBuilder<HelpCenterArticle>) => {
-				const subQuery = qb
-					.subQuery()
-					.select(p('"kbap"."knowledgeBaseArticleId"'))
-					.from(p('knowledge_base_article_project'), 'kbap')
-					.andWhere(p('"kbap"."organizationProjectId" = :projectId'), { projectId });
-
-				return (
-					p(`"knowledge_base_article_projects"."knowledgeBaseArticleId" IN `) +
-					subQuery.distinct(true).getQuery()
-				);
-			});
-
-			// Add organization and tenant filters
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
-
-			// Add additional filters (draft, privacy, names, etc.)
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
+					// Apply additional where filters
 					if (isNotEmpty(where)) {
 						const { name, draft, privacy, isLocked, categoryId } = where;
+						if (isNotEmpty(name)) qb = qb.andWhere('kba.name', 'ILIKE', `%${name}%`);
+						if (draft !== undefined) qb = qb.andWhere('kba.draft', draft);
+						if (privacy !== undefined) qb = qb.andWhere('kba.privacy', privacy);
+						if (isLocked !== undefined) qb = qb.andWhere('kba.isLocked', isLocked);
+						if (isNotEmpty(categoryId)) qb = qb.andWhere('kba.categoryId', categoryId);
+					}
 
-						if (isNotEmpty(name)) {
-							qb.andWhere(p(`"${query.alias}"."name" ${LIKE_OPERATOR} :name`), { name: `%${name}%` });
-						}
-						if (draft !== undefined) {
-							qb.andWhere(p(`"${query.alias}"."draft" = :draft`), { draft });
-						}
-						if (privacy !== undefined) {
-							qb.andWhere(p(`"${query.alias}"."privacy" = :privacy`), { privacy });
-						}
-						if (isLocked !== undefined) {
-							qb.andWhere(p(`"${query.alias}"."isLocked" = :isLocked`), { isLocked });
-						}
-						if (isNotEmpty(categoryId)) {
-							qb.andWhere(p(`"${query.alias}"."categoryId" = :categoryId`), { categoryId });
+					// Apply advanced filters
+					if (filters) {
+						const {
+							ids = [],
+							names = [],
+							categories = [],
+							ownedBy = [],
+							draft: advDraft,
+							privacy: advPrivacy,
+							isLocked: advIsLocked
+						} = filters;
+						if (ids.length) qb = qb.whereIn('kba.id', ids);
+						if (names.length) qb = qb.whereIn('kba.name', names);
+						if (categories.length) qb = qb.whereIn('kba.categoryId', categories);
+						if (ownedBy.length) qb = qb.whereIn('kba.ownedById', ownedBy);
+						if (advDraft !== undefined) qb = qb.andWhere('kba.draft', advDraft);
+						if (advPrivacy !== undefined) qb = qb.andWhere('kba.privacy', advPrivacy);
+						if (advIsLocked !== undefined) qb = qb.andWhere('kba.isLocked', advIsLocked);
+					}
+
+					// Apply ordering
+					if (options.order) {
+						for (const [key, direction] of Object.entries(options.order)) {
+							qb = qb.orderBy(`kba.${key}`, direction as string);
 						}
 					}
-				})
-			);
 
-			const [items, total] = await query.getManyAndCount();
-			return { items, total };
+					// Count total before applying pagination
+					const countResult = await qb.clone().clearSelect().clearOrder().count('* as count').first();
+					const total = parseInt(countResult?.count ?? '0', 10);
+
+					// Apply pagination
+					if (options.take) qb = qb.limit(options.take);
+					if (options.skip) qb = qb.offset(options.skip);
+
+					const rawItems = await qb.select('kba.*');
+
+					// Map raw results to entities
+					const items = rawItems.map((row: any) => this.mikroOrmRepository.map(row));
+					return { items, total };
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// TypeORM: Original createQueryBuilder implementation
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					query.leftJoin(`${query.alias}.projects`, 'projects');
+
+					// Apply find options if provided
+					if (isNotEmpty(options)) {
+						query.setFindOptions({
+							...(options.select && { select: options.select }),
+							...(options.relations && { relations: options.relations }),
+							...(options.order && { order: options.order }),
+							...(options.take && { take: options.take }),
+							...(options.skip && { skip: options.skip })
+						});
+					}
+
+					// Apply advanced filters
+					if (filters) {
+						const advancedWhere = this.buildAdvancedWhereCondition(filters, where);
+						query.setFindOptions({ where: advancedWhere });
+					}
+
+					// Filter by knowledge_base_article_project with a sub query
+					query.andWhere((qb: SelectQueryBuilder<HelpCenterArticle>) => {
+						const subQuery = qb
+							.subQuery()
+							.select(p('"kbap"."knowledgeBaseArticleId"'))
+							.from(p('knowledge_base_article_project'), 'kbap')
+							.andWhere(p('"kbap"."organizationProjectId" = :projectId'), { projectId });
+
+						return (
+							p(`"knowledge_base_article_projects"."knowledgeBaseArticleId" IN `) +
+							subQuery.distinct(true).getQuery()
+						);
+					});
+
+					// Add organization and tenant filters
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						})
+					);
+
+					// Add additional filters (draft, privacy, names, etc.)
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							if (isNotEmpty(where)) {
+								const { name, draft, privacy, isLocked, categoryId } = where;
+
+								if (isNotEmpty(name)) {
+									qb.andWhere(p(`"${query.alias}"."name" ${LIKE_OPERATOR} :name`), {
+										name: `%${name}%`
+									});
+								}
+								if (draft !== undefined) {
+									qb.andWhere(p(`"${query.alias}"."draft" = :draft`), { draft });
+								}
+								if (privacy !== undefined) {
+									qb.andWhere(p(`"${query.alias}"."privacy" = :privacy`), { privacy });
+								}
+								if (isLocked !== undefined) {
+									qb.andWhere(p(`"${query.alias}"."isLocked" = :isLocked`), { isLocked });
+								}
+								if (isNotEmpty(categoryId)) {
+									qb.andWhere(p(`"${query.alias}"."categoryId" = :categoryId`), { categoryId });
+								}
+							}
+						})
+					);
+
+					const [items, total] = await query.getManyAndCount();
+					return { items, total };
+				}
+			}
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

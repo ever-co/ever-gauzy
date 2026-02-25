@@ -602,41 +602,56 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 			if (typeof payload === 'object' && 'email' in payload) {
 				if (payload.email === email) {
-					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-					query.setFindOptions({
-						select: {
-							id: true,
-							email: true,
-							fullName: true,
-							organization: {
-								name: true
-							}
-						},
-						relations: {
-							organization: true
+					switch (this.ormType) {
+						case MultiORMEnum.MikroORM: {
+							const item = await this.mikroOrmRepository.findOneOrFail({
+								email,
+								token,
+								status: InviteStatusEnum.INVITED,
+								...(payload['code'] ? { code: payload['code'] } : {}),
+								$or: [{ expireDate: { $gte: new Date() } }, { expireDate: null }]
+							} as any);
+							return this.serialize(item) as Invite;
 						}
-					});
-					query.where((qb: SelectQueryBuilder<Invite>) => {
-						qb.andWhere({
-							email,
-							token,
-							status: InviteStatusEnum.INVITED,
-							...(payload['code']
-								? {
-										code: payload['code']
-								  }
-								: {})
-						});
-						qb.andWhere([
-							{
-								expireDate: MoreThanOrEqual(new Date())
-							},
-							{
-								expireDate: IsNull()
-							}
-						]);
-					});
-					return await query.getOneOrFail();
+						case MultiORMEnum.TypeORM:
+						default: {
+							const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+							query.setFindOptions({
+								select: {
+									id: true,
+									email: true,
+									fullName: true,
+									organization: {
+										name: true
+									}
+								},
+								relations: {
+									organization: true
+								}
+							});
+							query.where((qb: SelectQueryBuilder<Invite>) => {
+								qb.andWhere({
+									email,
+									token,
+									status: InviteStatusEnum.INVITED,
+									...(payload['code']
+										? {
+												code: payload['code']
+										  }
+										: {})
+								});
+								qb.andWhere([
+									{
+										expireDate: MoreThanOrEqual(new Date())
+									},
+									{
+										expireDate: IsNull()
+									}
+								]);
+							});
+							return await query.getOneOrFail();
+						}
+					}
 				}
 			}
 			throw new BadRequestException();
@@ -655,36 +670,50 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const { email, code } = where;
 
 		try {
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			query.setFindOptions({
-				select: {
-					id: true,
-					email: true,
-					fullName: true,
-					organization: {
-						name: true
-					}
-				},
-				relations: {
-					organization: true
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const item = await this.mikroOrmRepository.findOneOrFail({
+						email,
+						code,
+						status: InviteStatusEnum.INVITED,
+						$or: [{ expireDate: { $gte: new Date() } }, { expireDate: null }]
+					} as any);
+					return this.serialize(item) as Invite;
 				}
-			});
-			query.where((qb: SelectQueryBuilder<Invite>) => {
-				qb.andWhere({
-					email,
-					code,
-					status: InviteStatusEnum.INVITED
-				});
-				qb.andWhere([
-					{
-						expireDate: MoreThanOrEqual(new Date())
-					},
-					{
-						expireDate: IsNull()
-					}
-				]);
-			});
-			return await query.getOneOrFail();
+				case MultiORMEnum.TypeORM:
+				default: {
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					query.setFindOptions({
+						select: {
+							id: true,
+							email: true,
+							fullName: true,
+							organization: {
+								name: true
+							}
+						},
+						relations: {
+							organization: true
+						}
+					});
+					query.where((qb: SelectQueryBuilder<Invite>) => {
+						qb.andWhere({
+							email,
+							code,
+							status: InviteStatusEnum.INVITED
+						});
+						qb.andWhere([
+							{
+								expireDate: MoreThanOrEqual(new Date())
+							},
+							{
+								expireDate: IsNull()
+							}
+						]);
+					});
+					return await query.getOneOrFail();
+				}
+			}
 		} catch (error) {
 			console.error(`Can't validate code '${code}' for email '${email}'`, error);
 			throw new BadRequestException();
@@ -915,43 +944,67 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			const currentTenantId = RequestContext.currentTenantId();
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			query.setFindOptions({
-				select: {
-					id: true,
-					code: true,
-					token: true,
-					email: true,
-					fullName: true,
-					organizationId: true,
-					invitedByUserId: true,
-					tenantId: true,
-					teams: {
-						id: true,
-						name: true
-					}
-				},
-				relations: {
-					teams: true,
-					tenant: true,
-					role: true
+
+			let invitation: IInvite;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const item = await this.mikroOrmRepository.findOne(
+						{
+							id,
+							email: user.email,
+							status: InviteStatusEnum.INVITED,
+							$or: [{ expireDate: { $gte: new Date() } }, { expireDate: null }]
+						} as any,
+						{
+							populate: ['teams', 'tenant', 'role'] as any[]
+						}
+					);
+					invitation = item ? (this.serialize(item) as Invite) : null;
+					break;
 				}
-			});
-			query.where((qb: SelectQueryBuilder<Invite>) => {
-				qb.andWhere({
-					id,
-					email: user.email,
-					status: InviteStatusEnum.INVITED
-				});
-				qb.andWhere([
-					{
-						expireDate: MoreThanOrEqual(new Date())
-					},
-					{
-						expireDate: IsNull()
-					}
-				]);
-			});
-			const invitation = await query.getOne();
+				case MultiORMEnum.TypeORM:
+				default: {
+					query.setFindOptions({
+						select: {
+							id: true,
+							code: true,
+							token: true,
+							email: true,
+							fullName: true,
+							organizationId: true,
+							invitedByUserId: true,
+							tenantId: true,
+							teams: {
+								id: true,
+								name: true
+							}
+						},
+						relations: {
+							teams: true,
+							tenant: true,
+							role: true
+						}
+					});
+					query.where((qb: SelectQueryBuilder<Invite>) => {
+						qb.andWhere({
+							id,
+							email: user.email,
+							status: InviteStatusEnum.INVITED
+						});
+						qb.andWhere([
+							{
+								expireDate: MoreThanOrEqual(new Date())
+							},
+							{
+								expireDate: IsNull()
+							}
+						]);
+					});
+					invitation = await query.getOne();
+					break;
+				}
+			}
 			if (!invitation) {
 				throw new NotFoundException('You do not have any invitation.');
 			}

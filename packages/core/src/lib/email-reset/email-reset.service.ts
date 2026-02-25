@@ -6,6 +6,7 @@ import { generateAlphaNumericCode } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { UserService } from '../user/user.service';
 import { TenantAwareCrudService } from '../core/crud';
+import { MultiORMEnum } from '../core/utils';
 import { EmailReset } from './email-reset.entity';
 import { UserEmailDTO } from '../user/dto';
 import { EmailResetCreateCommand } from './commands';
@@ -136,22 +137,39 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 
 	async getEmailResetIfCodeMatches(input: IEmailResetFindInput) {
 		try {
-			const query = this.typeOrmRepository.createQueryBuilder('email_reset');
-			query.where((qb: SelectQueryBuilder<EmailReset>) => {
-				qb.andWhere(input);
-				qb.andWhere([
-					{
-						expiredAt: MoreThanOrEqual(new Date())
-					},
-					{
-						expiredAt: IsNull()
-					}
-				]);
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const item = await this.mikroOrmRepository.findOneOrFail(
+						{
+							...input,
+							$or: [{ expiredAt: { $gte: new Date() } }, { expiredAt: null }]
+						} as any,
+						{
+							orderBy: { createdAt: 'DESC' as any }
+						}
+					);
+					return this.serialize(item);
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					const query = this.typeOrmRepository.createQueryBuilder('email_reset');
+					query.where((qb: SelectQueryBuilder<EmailReset>) => {
+						qb.andWhere(input);
+						qb.andWhere([
+							{
+								expiredAt: MoreThanOrEqual(new Date())
+							},
+							{
+								expiredAt: IsNull()
+							}
+						]);
 
-				qb.orderBy(p(`"${qb.alias}"."createdAt"`), 'DESC');
-			});
+						qb.orderBy(p(`"${qb.alias}"."createdAt"`), 'DESC');
+					});
 
-			return await query.getOneOrFail();
+					return await query.getOneOrFail();
+				}
+			}
 		} catch (error) {
 			throw new NotFoundException(error);
 		}

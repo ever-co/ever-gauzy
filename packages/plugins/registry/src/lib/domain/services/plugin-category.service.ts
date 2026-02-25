@@ -1,4 +1,4 @@
-import { TenantAwareCrudService } from '@gauzy/core';
+import { MultiORMEnum, TenantAwareCrudService } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
 import { Not } from 'typeorm';
 import { IPluginCategoryFindInput, IPluginCategoryTree } from '../../shared/models';
@@ -19,80 +19,164 @@ export class PluginCategoryService extends TenantAwareCrudService<PluginCategory
 	 * Get hierarchical tree of plugin categories
 	 */
 	async getTree(options?: IPluginCategoryFindInput): Promise<IPluginCategoryTree[]> {
-		const queryBuilder = this.typeOrmPluginCategoryRepository.createQueryBuilder('category');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// MikroORM: Use Knex for the tree query with filtering
+				const knex = (this.mikroOrmRepository as any).getKnex();
+				let qb = knex('plugin_category as category').leftJoin(
+					'plugin_category as parent',
+					'category.parentId',
+					'parent.id'
+				);
 
-		// Add conditions based on options
-		if (options?.isActive !== undefined) {
-			queryBuilder.andWhere('category.isActive = :isActive', { isActive: options.isActive });
+				if (options?.isActive !== undefined) {
+					qb = qb.where('category.isActive', options.isActive);
+				}
+				if (options?.name) {
+					qb = qb.andWhere('category.name', 'ILIKE', `%${options.name}%`);
+				}
+
+				qb = qb.select('category.*').orderBy('category.order', 'asc').orderBy('category.name', 'asc');
+
+				const rawCategories = await qb;
+				const categories = rawCategories.map((row: any) => this.mikroOrmRepository.map(row));
+
+				// Build tree structure
+				return this.buildTree(categories);
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const queryBuilder = this.typeOrmPluginCategoryRepository.createQueryBuilder('category');
+
+				// Add conditions based on options
+				if (options?.isActive !== undefined) {
+					queryBuilder.andWhere('category.isActive = :isActive', { isActive: options.isActive });
+				}
+
+				if (options?.name) {
+					queryBuilder.andWhere('category.name ILIKE :name', { name: `%${options.name}%` });
+				}
+
+				// Get all categories with their relationships
+				const categories = await queryBuilder
+					.leftJoinAndSelect('category.parent', 'parent')
+					.leftJoinAndSelect('category.children', 'children')
+					.leftJoinAndSelect('category.plugins', 'plugins')
+					.orderBy('category.order', 'ASC')
+					.addOrderBy('category.name', 'ASC')
+					.getMany();
+
+				// Build tree structure
+				return this.buildTree(categories);
+			}
 		}
-
-		if (options?.name) {
-			queryBuilder.andWhere('category.name ILIKE :name', { name: `%${options.name}%` });
-		}
-
-		// Get all categories with their relationships
-		const categories = await queryBuilder
-			.leftJoinAndSelect('category.parent', 'parent')
-			.leftJoinAndSelect('category.children', 'children')
-			.leftJoinAndSelect('category.plugins', 'plugins')
-			.orderBy('category.order', 'ASC')
-			.addOrderBy('category.name', 'ASC')
-			.getMany();
-
-		// Build tree structure
-		return this.buildTree(categories);
 	}
 
 	/**
 	 * Check if a category is a descendant of another category
 	 */
 	async isDescendantOf(ancestorId: string, descendantId: string): Promise<boolean> {
-		const treeRepo = this.typeOrmPluginCategoryRepository.manager.getTreeRepository(PluginCategory);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// MikroORM: Walk the parent chain from descendantId to check for ancestorId
+				const descendants = await this.getDescendants(ancestorId);
+				return descendants.some((desc) => desc.id === descendantId);
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const treeRepo = this.typeOrmPluginCategoryRepository.manager.getTreeRepository(PluginCategory);
 
-		const ancestor = await treeRepo.findOne({
-			where: { id: ancestorId }
-		});
+				const ancestor = await treeRepo.findOne({
+					where: { id: ancestorId }
+				});
 
-		if (!ancestor) {
-			return false;
+				if (!ancestor) {
+					return false;
+				}
+
+				const descendants = await treeRepo.findDescendants(ancestor);
+				return descendants.some((desc) => desc.id === descendantId);
+			}
 		}
-
-		const descendants = await treeRepo.findDescendants(ancestor);
-		return descendants.some((desc) => desc.id === descendantId);
 	}
 
 	/**
 	 * Get all ancestors of a category
 	 */
 	async getAncestors(categoryId: string): Promise<PluginCategory[]> {
-		const treeRepo = this.typeOrmPluginCategoryRepository.manager.getTreeRepository(PluginCategory);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// MikroORM: Walk the parent chain iteratively
+				const ancestors: PluginCategory[] = [];
+				let currentId = categoryId;
 
-		const category = await treeRepo.findOne({
-			where: { id: categoryId }
-		});
+				while (currentId) {
+					const category = await this.mikroOrmRepository.findOne({ id: currentId } as any, {
+						populate: ['parent'] as any[]
+					});
+					if (!category || !category.parentId) break;
 
-		if (!category) {
-			return [];
+					const parent = await this.mikroOrmRepository.findOne({ id: category.parentId } as any);
+					if (parent) {
+						ancestors.push(parent);
+						currentId = parent.parentId;
+					} else {
+						break;
+					}
+				}
+
+				return ancestors;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const treeRepo = this.typeOrmPluginCategoryRepository.manager.getTreeRepository(PluginCategory);
+
+				const category = await treeRepo.findOne({
+					where: { id: categoryId }
+				});
+
+				if (!category) {
+					return [];
+				}
+
+				return await treeRepo.findAncestors(category);
+			}
 		}
-
-		return await treeRepo.findAncestors(category);
 	}
 
 	/**
 	 * Get all descendants of a category
 	 */
 	async getDescendants(categoryId: string): Promise<PluginCategory[]> {
-		const treeRepo = this.typeOrmPluginCategoryRepository.manager.getTreeRepository(PluginCategory);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// MikroORM: Find all children recursively
+				const descendants: PluginCategory[] = [];
+				const children = await this.mikroOrmRepository.find({ parentId: categoryId } as any);
 
-		const category = await treeRepo.findOne({
-			where: { id: categoryId }
-		});
+				for (const child of children) {
+					descendants.push(child);
+					const grandChildren = await this.getDescendants(child.id);
+					descendants.push(...grandChildren);
+				}
 
-		if (!category) {
-			return [];
+				return descendants;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const treeRepo = this.typeOrmPluginCategoryRepository.manager.getTreeRepository(PluginCategory);
+
+				const category = await treeRepo.findOne({
+					where: { id: categoryId }
+				});
+
+				if (!category) {
+					return [];
+				}
+
+				return await treeRepo.findDescendants(category);
+			}
 		}
-
-		return await treeRepo.findDescendants(category);
 	}
 
 	/**

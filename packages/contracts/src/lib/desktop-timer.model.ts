@@ -9,3 +9,34 @@ export enum TimerSyncStateEnum {
 	SYNCED = 'synced',
 	FAILED = 'failed'
 }
+
+export interface DesktopSetupConfig {
+	port?: string;
+	portUi?: string;
+	host?: string;
+	serverUrl?: string;
+	isLocalServer?: boolean;
+	postgres?: {
+		dbHost: string;
+		dbPort: string;
+		dbName: string;
+		dbUsername: string;
+		dbPassword: string;
+	};
+	db?: string;
+	aw?: boolean;
+	awHost?: string;
+	wakatime?: boolean;
+	gauzyWindow?: boolean;
+	timeTrackerWindow?: boolean;
+	serverConfigConnected?: boolean;
+	secureProxy?: {
+		secure: boolean;
+		enable: boolean;
+		ssl: {
+			key: string;
+			cert: string;
+		};
+	};
+	autoStart?: boolean;
+}

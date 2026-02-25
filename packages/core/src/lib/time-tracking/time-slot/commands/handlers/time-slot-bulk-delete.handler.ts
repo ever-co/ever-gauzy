@@ -4,12 +4,19 @@ import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
 import { RequestContext } from '../../../../core/context';
+import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from '../../repository/mikro-orm-time-slot.repository';
 
 @CommandHandler(TimeSlotBulkDeleteCommand)
 export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDeleteCommand> {
-	constructor(private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository) {}
+	protected ormType: MultiORM = getORMType();
+
+	constructor(
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository
+	) {}
 
 	/**
 	 * Execute bulk deletion of time slots
@@ -58,26 +65,41 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 		tenantId: ID;
 		timeSlotsIds: ID[];
 	}): Promise<ITimeSlot[]> {
-		// Create a query builder for the TimeSlot entity
-		const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
-		query
-			.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
-			.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
-			.leftJoinAndSelect(`${query.alias}.activities`, 'activities')
-			.leftJoinAndSelect(`${query.alias}.timeSlotMinutes`, 'timeSlotMinutes');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+				const where: any = { employeeId, organizationId, tenantId };
+				if (isNotEmpty(timeSlotsIds)) {
+					where.id = { $in: timeSlotsIds };
+				}
+				return await em.find('TimeSlot', where, {
+					populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
+				}) as any[];
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the TimeSlot entity
+				const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
+				query
+					.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
+					.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
+					.leftJoinAndSelect(`${query.alias}.activities`, 'activities')
+					.leftJoinAndSelect(`${query.alias}.timeSlotMinutes`, 'timeSlotMinutes');
 
-		query
-			.where(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId })
-			.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
-			.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				query
+					.where(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId })
+					.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
+					.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 
-		// If timeSlotsIds is not empty, add a WHERE clause to the query
-		if (isNotEmpty(timeSlotsIds)) {
-			query.andWhere(p(`"${query.alias}"."id" IN (:...timeSlotsIds)`), { timeSlotsIds });
+				// If timeSlotsIds is not empty, add a WHERE clause to the query
+				if (isNotEmpty(timeSlotsIds)) {
+					query.andWhere(p(`"${query.alias}"."id" IN (:...timeSlotsIds)`), { timeSlotsIds });
+				}
+
+				console.log('fetched time slots by parameters:', query.getParameters());
+				return await query.getMany();
+			}
 		}
-
-		console.log('fetched time slots by parameters:', query.getParameters());
-		return await query.getMany();
 	}
 
 	/**
@@ -90,9 +112,24 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	private bulkDeleteTimeSlots(timeSlots: ITimeSlot[], forceDelete: boolean): Promise<ITimeSlot[]> {
 		console.log(`bulk ${forceDelete ? 'hard' : 'soft'} deleting time slots:`, timeSlots);
 
-		return forceDelete
-			? this.typeOrmTimeSlotRepository.remove(timeSlots)
-			: this.typeOrmTimeSlotRepository.softRemove(timeSlots);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+				if (forceDelete) {
+					return em.removeAndFlush(timeSlots).then(() => timeSlots) as any;
+				}
+				// For soft delete with MikroORM, set deletedAt field
+				for (const slot of timeSlots) {
+					(slot as any).deletedAt = new Date();
+				}
+				return em.persistAndFlush(timeSlots).then(() => timeSlots) as any;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return forceDelete
+					? this.typeOrmTimeSlotRepository.remove(timeSlots)
+					: this.typeOrmTimeSlotRepository.softRemove(timeSlots);
+		}
 	}
 
 	/**
@@ -124,18 +161,41 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 				const [firstTimeLog] = timeLogs;
 				if (firstTimeLog.id === timeLog.id) {
 					// If the time slot has only one time log and it matches the provided time log, delete the time slot
-					if (forceDelete) {
-						console.log(
-							chalk.red('--------------------hard removing time slot--------------------'),
-							timeSlot.id
-						);
-						return await this.typeOrmTimeSlotRepository.remove(timeSlot);
-					} else {
-						console.log(
-							chalk.yellow('--------------------soft removing time slot--------------------'),
-							timeSlot.id
-						);
-						return await this.typeOrmTimeSlotRepository.softRemove(timeSlot);
+					switch (this.ormType) {
+						case MultiORMEnum.MikroORM: {
+							const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+							if (forceDelete) {
+								console.log(
+									chalk.red('--------------------hard removing time slot--------------------'),
+									timeSlot.id
+								);
+								await em.removeAndFlush(timeSlot);
+								return timeSlot;
+							} else {
+								console.log(
+									chalk.yellow('--------------------soft removing time slot--------------------'),
+									timeSlot.id
+								);
+								(timeSlot as any).deletedAt = new Date();
+								await em.persistAndFlush(timeSlot);
+								return timeSlot;
+							}
+						}
+						case MultiORMEnum.TypeORM:
+						default:
+							if (forceDelete) {
+								console.log(
+									chalk.red('--------------------hard removing time slot--------------------'),
+									timeSlot.id
+								);
+								return await this.typeOrmTimeSlotRepository.remove(timeSlot);
+							} else {
+								console.log(
+									chalk.yellow('--------------------soft removing time slot--------------------'),
+									timeSlot.id
+								);
+								return await this.typeOrmTimeSlotRepository.softRemove(timeSlot);
+							}
 					}
 				}
 			}

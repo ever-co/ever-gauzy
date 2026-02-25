@@ -90,7 +90,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 			const decoded = verify(params.token as string, environment.JWT_SECRET) as IEstimateEmailFindInput;
 			const { organizationId, tenantId, email, token } = decoded;
 
-			return await this.typeOrmRepository.findOneOrFail({
+			const result = await this.findOneOrFailByOptions({
 				select: {
 					tenant: {
 						name: true,
@@ -115,6 +115,10 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 					  }
 					: {})
 			});
+			if (!result.success) {
+				throw result.error;
+			}
+			return result.record;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
