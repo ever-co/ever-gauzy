@@ -434,7 +434,7 @@ app.on('ready', async () => {
 
 		await launchWidget(settings);
 		if (configs && configs.isSetup) {
-			setGlobalVariable(configs);
+			await startServer(configs);
 			await startServer(configs);
 		} else {
 			setupWindow = await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
