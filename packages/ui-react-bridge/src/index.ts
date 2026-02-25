@@ -4,7 +4,15 @@
 
 // Core context and hooks (for use inside React components)
 export { NgContextProvider, NgReactBridgeContext, useBridgeContext } from './lib/ng-react-context';
-export { useInjector } from './lib/react-hooks';
+export {
+	useInjector,
+	usePluginEvents,
+	usePluginEvent,
+	type PluginEvent,
+	type EmitOptions,
+	type SubscribeOptions,
+	type UsePluginEventsReturn
+} from './lib/react-hooks';
 
 // Directives (for use in Angular templates)
 export { LazyReactHostDirective, ReactHostDirective } from './lib/directives';
@@ -22,6 +30,9 @@ export { REACT_BRIDGE, provideReactBridge, createReactBridge } from './lib/react
 export {
 	defineReactExtension,
 	isReactExtension,
-	ReactExtensionConfig,
-	ReactExtensionDefinition
+	type ReactExtensionConfig,
+	type ReactExtensionDefinition,
+	type ReactExtensionLifecycleContext,
+	type ReactExtensionVisibilityContext,
+	type ReactExtensionWrapper
 } from './lib/react-extension.helper';

@@ -14,7 +14,12 @@ export {
 } from './ui-bridge.interface';
 
 // Registry service
-export { UiBridgeRegistryService } from './ui-bridge-registry.service';
+export {
+	UiBridgeRegistryService,
+	type BridgeFactory,
+	type LazyBridgeRegistration,
+	type BridgeRegistrationOptions
+} from './ui-bridge-registry.service';
 
 // Host component
 export { FrameworkHostComponent } from './framework-host.component';

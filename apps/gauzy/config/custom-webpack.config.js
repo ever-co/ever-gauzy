@@ -35,12 +35,34 @@ if (isDev) {
 module.exports = {
 	resolve: {
 		mainFields: ['es2016', 'browser', 'module', 'main'],
+		// Add .tsx and .jsx to resolvable extensions for React component support
+		extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.json'],
 		// Force all rxjs imports to resolve to the root node_modules version
 		// This fixes the DedupeModuleResolvePlugin error in Docker/CI builds
 		// where @angular/core brings its own nested rxjs due to nohoist config
 		alias: {
 			rxjs: path.resolve(__dirname, '../../../node_modules/rxjs')
 		}
+	},
+	// Add rules for TSX/JSX files (React components in plugins)
+	module: {
+		rules: [
+			{
+				test: /\.tsx?$/,
+				exclude: /node_modules/,
+				use: [
+					{
+						loader: 'ts-loader',
+						options: {
+							transpileOnly: true,
+							compilerOptions: {
+								jsx: 'react-jsx'
+							}
+						}
+					}
+				]
+			}
+		]
 	},
 	// Enable persistent caching for faster rebuilds in development
 	// Note: Angular's build system may handle caching differently, so this may not have full effect

@@ -5,7 +5,7 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["plugin-ui"],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:ng-packagr-lite",
@@ -15,12 +15,18 @@
 				"tsConfig": "packages/ui-react-bridge/tsconfig.lib.json"
 			},
 			"configurations": {
-				"production": { "tsConfig": "packages/ui-react-bridge/tsconfig.lib.prod.json" },
-				"development": { "tsConfig": "packages/ui-react-bridge/tsconfig.lib.json" }
+				"production": {
+					"tsConfig": "packages/ui-react-bridge/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/ui-react-bridge/tsconfig.lib.json"
+				}
 			},
 			"defaultConfiguration": "development",
 			"dependsOn": ["^build"]
 		},
-		"lint": { "executor": "@nx/eslint:lint" }
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
 	}
 }
