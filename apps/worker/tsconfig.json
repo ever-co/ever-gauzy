@@ -1,5 +1,5 @@
 {
-	"extends": "../../tsconfig.base.json",
+	"extends": "../../tsconfig.json",
 	"files": [],
 	"include": [],
 	"references": [
@@ -8,6 +8,7 @@
 		}
 	],
 	"compilerOptions": {
-		"esModuleInterop": true
+		"incremental": true,
+		"types": ["node", "jest"]
 	}
 }
