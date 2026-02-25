@@ -230,8 +230,8 @@ function initializeAppManager() {
 }
 
 function setGlobalVariable(configs: {
-	isLocalServer: boolean;
-	serverUrl: string;
+	isLocalServer?: boolean;
+	serverUrl?: string;
 	port?: string;
 }) {
 	global.variableGlobal = {
