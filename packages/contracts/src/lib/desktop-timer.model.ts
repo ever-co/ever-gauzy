@@ -38,5 +38,5 @@ export interface DesktopSetupConfig {
 			cert: string;
 		};
 	};
-	autoStart?: boolean
+	autoStart?: boolean;
 }
