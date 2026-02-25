@@ -1,4 +1,3 @@
-import { RedisModule } from './lib/redis/redis.module';
 /**
  * Public API Surface of @gauzy/core
  */
