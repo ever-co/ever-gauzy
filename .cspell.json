@@ -853,6 +853,7 @@
 		"VARCHAR",
 		"TOCTOU",
 		"Gmqh",
+		"bullmq",
 		"MAINLOADSPLASH"
 	],
 	"useGitignore": true,
