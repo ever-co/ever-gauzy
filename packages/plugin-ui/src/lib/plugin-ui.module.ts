@@ -18,7 +18,7 @@ import {
 } from './plugin-ui.types';
 import { PluginUiLifecycleMethods } from './plugin-ui.interface';
 import { getUIPluginModulesWithDefinitions, hasPluginUiLifecycleMethod } from './plugin-ui.helper';
-import { PageExtensionRegistryService } from './plugin-extension/extension-registry.service';
+import { PageExtensionRegistryService } from './plugin-extension/page-extension-registry.service';
 import { PluginUiRegistryService } from './plugin-ui-registry.service';
 
 /**
@@ -80,6 +80,7 @@ export class PluginUiModule implements OnDestroy {
 		}).catch((e: unknown) => {
 			console.error('[PluginUiModule] Error during plugin destroy', e);
 		});
+
 		// Plugins without ngOnPluginDestroy: deregister extensions immediately (no async hook to wait for).
 		for (const { instance, definition } of this._plugins) {
 			if (!hasPluginUiLifecycleMethod(instance, 'ngOnPluginDestroy') && definition?.extensions?.length) {
@@ -105,8 +106,10 @@ export class PluginUiModule implements OnDestroy {
 			this._registry.register(instance);
 		}
 
+		// Invoke ngOnPluginBootstrap for all plugins
 		await this.invokeLifecycleMethod('ngOnPluginBootstrap');
 
+		// Invoke ngOnPluginAfterBootstrap for all plugins
 		await this.invokeLifecycleMethod('ngOnPluginAfterBootstrap');
 	}
 
@@ -153,7 +156,7 @@ export class PluginUiModule implements OnDestroy {
 								return false;
 							}
 						})
-				  );
+					);
 		const filtered = orderedPlugins.filter((_, i) => oks[i]);
 
 		const plugins: Array<{ instance: any; definition: PluginUiDefinition }> = [];

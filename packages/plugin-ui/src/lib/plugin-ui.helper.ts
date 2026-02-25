@@ -1,5 +1,5 @@
 import { Type } from '@angular/core';
-import type { ExtensionDefinition } from './plugin-extension/extension-slot.types';
+import type { PageExtensionDefinition } from './plugin-extension/page-extension-slot.types';
 import {
 	PluginUiDefinition,
 	PluginNavContribution,
@@ -39,8 +39,8 @@ export interface IDeclarativeExtensionRegistryOptions {
  * Implemented by PageExtensionRegistryService from @gauzy/plugin-ui.
  */
 export interface IDeclarativeExtensionRegistry {
-	register(extension: ExtensionDefinition, options?: IDeclarativeExtensionRegistryOptions): void;
-	registerAll(extensions: ExtensionDefinition[], options?: IDeclarativeExtensionRegistryOptions): void;
+	register(extension: PageExtensionDefinition, options?: IDeclarativeExtensionRegistryOptions): void;
+	registerAll(extensions: PageExtensionDefinition[], options?: IDeclarativeExtensionRegistryOptions): void;
 }
 
 /**
@@ -187,18 +187,14 @@ export type PluginUiDefinitionWithModuleOrLoader = PluginUiDefinition &
  * Uses flattenPlugins, then filters with !!p.module || !!p.loadModule so the returned
  * definition is narrowed to PluginUiDefinitionWithModuleOrLoader (at least one present).
  */
-export function getUIPluginModulesWithDefinitions(
-	plugins: PluginUiDefinition[]
-): Array<{
+export function getUIPluginModulesWithDefinitions(plugins: PluginUiDefinition[]): Array<{
 	definition: PluginUiDefinitionWithModuleOrLoader;
 	module?: Type<any>;
 	loadModule?: () => Promise<Type<any>>;
 }> {
 	const flat = flattenPlugins(plugins);
 	return flat
-		.filter(
-			(p): p is PluginUiDefinitionWithModuleOrLoader => !!p.module || !!p.loadModule
-		)
+		.filter((p): p is PluginUiDefinitionWithModuleOrLoader => !!p.module || !!p.loadModule)
 		.map((definition) => ({
 			definition,
 			module: definition.module,

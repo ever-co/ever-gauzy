@@ -50,7 +50,7 @@ export class MyComponent {
 #### 3. Define React Extensions in Plugins
 
 ```typescript
-import { defineFrameworkExtension, UI_BRIDGE_FRAMEWORK, EXTENSION_SLOTS } from '@gauzy/plugin-ui';
+import { defineFrameworkExtension, UI_BRIDGE_FRAMEWORK, PAGE_EXTENSION_SLOTS } from '@gauzy/plugin-ui';
 import { MyReactWidget } from './react/MyReactWidget';
 
 export const MyPlugin: PluginUiDefinition = {
@@ -59,7 +59,7 @@ export const MyPlugin: PluginUiDefinition = {
 	extensions: [
 		defineFrameworkExtension({
 			id: 'my-react-widget',
-			slotId: EXTENSION_SLOTS.DASHBOARD_WIDGETS,
+			slotId: PAGE_EXTENSION_SLOTS.DASHBOARD_WIDGETS,
 			frameworkId: UI_BRIDGE_FRAMEWORK.REACT,
 			frameworkComponent: MyReactWidget,
 			frameworkProps: { title: 'Dashboard Widget' }

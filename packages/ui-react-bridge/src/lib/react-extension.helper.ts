@@ -1,4 +1,16 @@
-import { Component, Input, Type, inject, Injector, ElementRef, OnInit, OnDestroy, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import {
+	Component,
+	Input,
+	Type,
+	inject,
+	Injector,
+	ElementRef,
+	OnInit,
+	OnDestroy,
+	OnChanges,
+	SimpleChanges,
+	ViewChild
+} from '@angular/core';
 import { createRoot, type Root } from 'react-dom/client';
 import React from 'react';
 import { NgContextProvider } from './ng-react-context';
@@ -23,7 +35,7 @@ export interface ReactExtensionConfig<TProps = Record<string, unknown>> {
 
 /**
  * React extension definition that can be used in plugin definitions.
- * Extends the base ExtensionDefinition interface from @gauzy/plugin-ui.
+ * Extends the base PageExtensionDefinition interface from @gauzy/plugin-ui.
  */
 export interface ReactExtensionDefinition<TProps = Record<string, unknown>> {
 	id: string;
@@ -111,7 +123,7 @@ function createReactWrapperComponent<TProps>(
  * @example
  * ```typescript
  * import { defineReactExtension } from '@gauzy/ui-react-bridge';
- * import { EXTENSION_SLOTS, PluginUiDefinition } from '@gauzy/plugin-ui';
+ * import { PAGE_EXTENSION_SLOTS, PluginUiDefinition } from '@gauzy/plugin-ui';
  * import { MyReactWidget } from './react/MyReactWidget';
  *
  * export const MyPlugin: PluginUiDefinition = {
@@ -120,7 +132,7 @@ function createReactWrapperComponent<TProps>(
  *   extensions: [
  *     defineReactExtension({
  *       id: 'my-react-widget',
- *       slotId: EXTENSION_SLOTS.DASHBOARD_WIDGETS,
+ *       slotId: PAGE_EXTENSION_SLOTS.DASHBOARD_WIDGETS,
  *       component: MyReactWidget,
  *       props: { title: 'Hello from React!' },
  *       order: 10
@@ -134,7 +146,7 @@ function createReactWrapperComponent<TProps>(
  * // With dynamic props using a factory function
  * defineReactExtension({
  *   id: 'dynamic-widget',
- *   slotId: EXTENSION_SLOTS.DASHBOARD_WIDGETS,
+ *   slotId: PAGE_EXTENSION_SLOTS.DASHBOARD_WIDGETS,
  *   component: DynamicWidget,
  *   props: () => ({
  *     timestamp: Date.now(),

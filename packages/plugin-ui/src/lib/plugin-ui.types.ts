@@ -1,5 +1,5 @@
 import { InjectionToken, Type } from '@angular/core';
-import type { ExtensionDefinition } from './plugin-extension/extension-slot.types';
+import type { PageExtensionDefinition } from './plugin-extension/page-extension-slot.types';
 
 /**
  * Minimal shape for a plugin-contributed page route.
@@ -170,7 +170,7 @@ export interface PluginUiDefinition {
 	 * Extensions to register with PageExtensionRegistryService at bootstrap.
 	 * Use applyDeclarativeRegistrations() with pageExtensionRegistry to apply.
 	 */
-	extensions?: ExtensionDefinition[];
+	extensions?: PageExtensionDefinition[];
 
 	/**
 	 * Page tabs to register with PageTabRegistryService (e.g. dashboard-page, timesheet-page).

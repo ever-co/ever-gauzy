@@ -1,4 +1,4 @@
-import { ExtensionDefinition, ExtensionSlotId } from '../plugin-extension';
+import { PageExtensionDefinition, PageExtensionSlotId } from '../plugin-extension';
 import { UiBridgeFramework } from './ui-bridge.interface';
 
 /**
@@ -8,7 +8,7 @@ export interface FrameworkExtensionConfig<TProps = unknown, TContext = unknown> 
 	/** Unique id for this extension */
 	id: string;
 	/** Slot this extension contributes to */
-	slotId: ExtensionSlotId;
+	slotId: PageExtensionSlotId;
 	/** Framework identifier (e.g., 'react', 'vue', 'svelte') */
 	frameworkId: UiBridgeFramework;
 	/** The framework component to render */
@@ -24,13 +24,12 @@ export interface FrameworkExtensionConfig<TProps = unknown, TContext = unknown> 
 /**
  * Extended extension definition for framework components.
  */
-export interface FrameworkExtensionDefinition<TProps = unknown, TContext = unknown>
-	extends ExtensionDefinition<{
-		frameworkId: UiBridgeFramework;
-		component: unknown;
-		props?: TProps;
-		context?: TContext;
-	}> {
+export interface FrameworkExtensionDefinition<TProps = unknown, TContext = unknown> extends PageExtensionDefinition<{
+	frameworkId: UiBridgeFramework;
+	component: unknown;
+	props?: TProps;
+	context?: TContext;
+}> {
 	/** Framework identifier */
 	frameworkId: UiBridgeFramework;
 	/** The framework component */
@@ -46,7 +45,7 @@ export interface FrameworkExtensionDefinition<TProps = unknown, TContext = unkno
  *
  * @example
  * ```typescript
- * import { defineFrameworkExtension, UI_BRIDGE_FRAMEWORK, EXTENSION_SLOTS } from '@gauzy/plugin-ui';
+ * import { defineFrameworkExtension, UI_BRIDGE_FRAMEWORK, PAGE_EXTENSION_SLOTS } from '@gauzy/plugin-ui';
  * import { MyReactWidget } from './react-components/MyReactWidget';
  *
  * export const MyPlugin: PluginUiDefinition = {
@@ -54,7 +53,7 @@ export interface FrameworkExtensionDefinition<TProps = unknown, TContext = unkno
  *   extensions: [
  *     defineFrameworkExtension({
  *       id: 'my-react-widget',
- *       slotId: EXTENSION_SLOTS.DASHBOARD_WIDGETS,
+ *       slotId: PAGE_EXTENSION_SLOTS.DASHBOARD_WIDGETS,
  *       frameworkId: UI_BRIDGE_FRAMEWORK.REACT,
  *       frameworkComponent: MyReactWidget,
  *       frameworkProps: { title: 'Hello from React!' },
@@ -90,13 +89,13 @@ export function defineFrameworkExtension<TProps = unknown, TContext = unknown>(
 /**
  * Type guard to check if an extension is a framework extension.
  */
-export function isFrameworkExtension(ext: ExtensionDefinition): ext is FrameworkExtensionDefinition {
+export function isFrameworkExtension(ext: PageExtensionDefinition): ext is FrameworkExtensionDefinition {
 	return 'frameworkId' in ext && 'frameworkComponent' in ext;
 }
 
 /**
  * Get the framework ID from an extension if it's a framework extension.
  */
-export function getExtensionFrameworkId(ext: ExtensionDefinition): UiBridgeFramework | undefined {
+export function getExtensionFrameworkId(ext: PageExtensionDefinition): UiBridgeFramework | undefined {
 	return isFrameworkExtension(ext) ? ext.frameworkId : undefined;
 }
