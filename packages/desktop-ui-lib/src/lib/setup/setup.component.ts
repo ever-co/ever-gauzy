@@ -9,7 +9,7 @@ import {
 	OnDestroy
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { IProxyConfig } from '@gauzy/contracts';
+import { DesktopSetupConfig, IProxyConfig } from '@gauzy/contracts';
 import {
 	NbDialogService,
 	NbLayoutModule,
@@ -375,7 +375,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 		if (this.connectivity.integrated) {
 			this.onProgress = true;
 		}
-		const gauzyConfig = {
+		const gauzyConfig: DesktopSetupConfig  = {
 			...this.getServerConfig(),
 			...this.getDataBaseConfig(),
 			...this.getThirdPartyConfig(),
