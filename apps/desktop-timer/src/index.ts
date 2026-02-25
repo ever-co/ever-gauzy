@@ -338,6 +338,7 @@ async function launchSplashScreen() {
 		splashScreen.show();
 	} catch (error) {
 		console.error(error);
+		throw new AppError('MAINLOADSPLASH', error);
 	}
 }
 
@@ -434,7 +435,6 @@ app.on('ready', async () => {
 
 		await launchWidget(settings);
 		if (configs && configs.isSetup) {
-			await startServer(configs);
 			await startServer(configs);
 		} else {
 			setupWindow = await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
