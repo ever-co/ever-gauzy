@@ -87,7 +87,7 @@ export class SchedulerDiscoveryService implements OnModuleInit, OnApplicationBoo
 					methodName,
 					metadata,
 					handler: async () => {
-						await Promise.resolve(methodCandidate.call(instance));
+						return await Promise.resolve(methodCandidate.call(instance));
 					}
 				});
 
