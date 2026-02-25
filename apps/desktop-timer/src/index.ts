@@ -56,6 +56,7 @@ import {
 	createSettingsWindow,
 	createTimeTrackerWindow,
 	ScreenCaptureNotification,
+	setLaunchPathAndLoad,
 	SplashScreen,
 	timeTrackerPage
 } from '@gauzy/desktop-window';
@@ -275,12 +276,7 @@ async function startServer(value, restart = false) {
 					pathWindow.preloadPath
 				);
 			} else {
-				const currentUrl = timeTrackerWindow.webContents.getURL();
-				if (currentUrl) {
-					await timeTrackerWindow.loadURL(currentUrl);
-				} else {
-					await timeTrackerWindow.loadURL(timeTrackerPage(pathWindow.timeTrackerUi));
-				}
+				await setLaunchPathAndLoad(timeTrackerWindow, pathWindow.timeTrackerUi, '/time-tracker');
 			}
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);
 			await notificationWindow.loadURL();
@@ -388,10 +384,13 @@ app.on('ready', async () => {
 		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi,
-			pathWindow.preloadPath
+			pathWindow.preloadPath,
+			false
 		);
 
-		if (settings?.alwaysOn) {
+		const auth = store.get('auth');
+
+		if (settings?.alwaysOn && auth?.token && !auth?.isLogout) {
 			await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
 			appWindowManager.alwaysOnWindow.show();
 		}
