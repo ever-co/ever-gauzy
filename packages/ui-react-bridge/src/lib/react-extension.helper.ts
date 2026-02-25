@@ -1,4 +1,4 @@
-import { Component, Input, inject, Injector, ElementRef, OnInit, OnDestroy, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, Type, inject, Injector, ElementRef, OnInit, OnDestroy, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { createRoot, type Root } from 'react-dom/client';
 import React from 'react';
 import { NgContextProvider } from './ng-react-context';
@@ -23,11 +23,12 @@ export interface ReactExtensionConfig<TProps = Record<string, unknown>> {
 
 /**
  * React extension definition that can be used in plugin definitions.
+ * Extends the base ExtensionDefinition interface from @gauzy/plugin-ui.
  */
 export interface ReactExtensionDefinition<TProps = Record<string, unknown>> {
 	id: string;
 	slotId: string;
-	component: unknown; // Angular component class
+	component: Type<unknown>; // Angular component class
 	order?: number;
 	/** Original React component (for reference) */
 	reactComponent: React.ComponentType<TProps>;
@@ -45,7 +46,7 @@ function createReactWrapperComponent<TProps>(
 	reactComponent: React.ComponentType<TProps>,
 	defaultProps?: TProps | (() => TProps),
 	defaultContext?: Record<string, unknown>
-): unknown {
+): Type<unknown> {
 	@Component({
 		selector: 'gz-react-extension-wrapper',
 		standalone: true,
@@ -98,7 +99,7 @@ function createReactWrapperComponent<TProps>(
 		}
 	}
 
-	return ReactExtensionWrapperComponent;
+	return ReactExtensionWrapperComponent as Type<unknown>;
 }
 
 /**

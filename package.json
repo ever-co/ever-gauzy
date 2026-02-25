@@ -607,6 +607,8 @@
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2",
 		"yargs": "^17.5.0",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
 		"zone.js": "0.16.0"
 	},
 	"devDependencies": {
@@ -665,6 +667,8 @@
 		"@types/node": "^24.10.0",
 		"@types/webpack": "^5.28.5",
 		"@types/yargs": "^15.0.9",
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
 		"@typescript-eslint/utils": "^8.40.0",
 		"ajv-formats": "^2.1.1",
 		"angular-eslint": "^21.0.0",

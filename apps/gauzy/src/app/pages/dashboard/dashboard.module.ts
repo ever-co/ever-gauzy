@@ -22,6 +22,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { ExtensionSlotComponent } from '@gauzy/plugin-ui';
 import {
 	ActivityItemModule,
 	CounterPointModule,
@@ -79,7 +80,8 @@ const NB_MODULES = [
 
 // Standalone Modules
 const STANDALONE_MODULES = [
-	InfiniteScrollDirective // Standalone directive must be imported, not declared
+	InfiniteScrollDirective, // Standalone directive must be imported, not declared
+	ExtensionSlotComponent // Plugin extension slot for rendering React/Vue/etc widgets
 ];
 
 // Third Party Modules

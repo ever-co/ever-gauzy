@@ -24,16 +24,13 @@
 		"lib:watch": "yarn nx build ui-react-bridge --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/core": "21.0.7"
+		"@angular/common": "21.0.7",
+		"@angular/core": "21.0.7",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0"
 	},
 	"dependencies": {
-		"react": "^19.0.0",
-		"react-dom": "^19.0.0",
 		"tslib": "^2.6.2"
-	},
-	"devDependencies": {
-		"@types/react": "^19.0.0",
-		"@types/react-dom": "^19.0.0"
 	},
 	"keywords": [
 		"angular",

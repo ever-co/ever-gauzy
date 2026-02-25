@@ -64,7 +64,11 @@
 	<nb-card-body class="card-body">
 		<div class="container">
 			<ga-widget-layout [widgets]="widgetsRef"></ga-widget-layout>
+			<!-- Plugin Extension Slot: Dashboard Widgets (React, Vue, etc.) -->
+			<ga-extension-slot slotId="dashboard-widgets"></ga-extension-slot>
 			<ga-window-layout [windows]="windowsRef"></ga-window-layout>
+			<!-- Plugin Extension Slot: Dashboard Windows (React, Vue, etc.) -->
+			<ga-extension-slot slotId="dashboard-windows"></ga-extension-slot>
 		</div>
 	</nb-card-body>
 </nb-card>

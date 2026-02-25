@@ -1,2 +1,2 @@
-export { LazyReactHostDirective } from './react-lazy-component.directive';
-export { ReactHostDirective } from './react-component.directive';
+export { LazyReactHostDirective } from './react-lazy-host.directive';
+export { ReactHostDirective } from './react-host.directive';

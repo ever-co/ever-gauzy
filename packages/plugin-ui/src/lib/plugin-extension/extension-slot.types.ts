@@ -8,8 +8,11 @@ import { Type } from '@angular/core';
  */
 export const EXTENSION_SLOTS = {
 	// ─── Page-level widgets ─────────────────────────────────────
-	/** Dashboard page widgets/cards. */
+	/** Dashboard page widgets/cards (small stat cards at top). */
 	DASHBOARD_WIDGETS: 'dashboard-widgets',
+
+	/** Dashboard page windows/panels (larger content areas). */
+	DASHBOARD_WINDOWS: 'dashboard-windows',
 
 	/** Settings page tabs (use with PageTabRegistryService tabsetIds). */
 	SETTINGS_TABS: 'settings-tabs',
