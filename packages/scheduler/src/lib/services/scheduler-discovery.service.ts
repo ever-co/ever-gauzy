@@ -1,8 +1,16 @@
-import { Inject, Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown, OnModuleInit } from '@nestjs/common';
+import {
+	Inject,
+	Injectable,
+	Logger,
+	OnApplicationBootstrap,
+	OnApplicationShutdown,
+	OnModuleInit
+} from '@nestjs/common';
 import { DiscoveryService, MetadataScanner } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
+import * as crypto from 'node:crypto';
 import { SCHEDULER_MODULE_OPTIONS } from '../constants/scheduler.constants';
 import { DiscoveredScheduledJob } from '../interfaces/discovered-scheduled-job.interface';
 import { ResolvedSchedulerModuleOptions } from '../interfaces/scheduler-module-options.interface';
@@ -34,9 +42,7 @@ export class SchedulerDiscoveryService implements OnModuleInit, OnApplicationBoo
 	}
 
 	async onApplicationBootstrap(): Promise<void> {
-		const startupJobs = this.jobRegistry
-			.getAll()
-			.filter((job) => job.options.enabled && job.options.runOnStart);
+		const startupJobs = this.jobRegistry.getAll().filter((job) => job.options.enabled && job.options.runOnStart);
 
 		for (const job of startupJobs) {
 			await this.executeJob(job);
@@ -159,7 +165,7 @@ export class SchedulerDiscoveryService implements OnModuleInit, OnApplicationBoo
 		try {
 			await this.jobRunner.execute(job);
 		} catch (error) {
-			const message = error instanceof Error ? error.stack ?? error.message : String(error);
+			const message = error instanceof Error ? (error.stack ?? error.message) : String(error);
 			this.logger.error(`Job "${job.id}" execution failed.`, message);
 		}
 	}
@@ -206,5 +212,5 @@ function randomDelay(maxMs: number): number {
 	if (maxMs <= 0) {
 		return 0;
 	}
-	return Math.floor(Math.random() * (maxMs + 1));
+	return Math.floor(crypto.randomInt(0, maxMs + 1));
 }
