@@ -65,10 +65,11 @@
 		<div class="container">
 			<ga-widget-layout [widgets]="widgetsRef"></ga-widget-layout>
 			<!-- Plugin Extension Slot: Dashboard Widgets (React, Vue, etc.) -->
-			<ga-extension-slot slotId="dashboard-widgets"></ga-extension-slot>
+			<ga-page-extension-slot slotId="dashboard-widgets"></ga-page-extension-slot>
+
 			<ga-window-layout [windows]="windowsRef"></ga-window-layout>
 			<!-- Plugin Extension Slot: Dashboard Windows (React, Vue, etc.) -->
-			<ga-extension-slot slotId="dashboard-windows"></ga-extension-slot>
+			<ga-page-extension-slot slotId="dashboard-windows"></ga-page-extension-slot>
 		</div>
 	</nb-card-body>
 </nb-card>

@@ -6,49 +6,43 @@ used to bootstrap and manage UI plugins (such as job and integration UI plugins)
 
 ### Features
 
--   **Plugin type & config model**
+- **Plugin type & config model**
+    - `PluginUiDefinition` definition (id, module, location, options).
+    - `PluginUiConfig` with language/locale settings and active plugins list.
+    - `PLUGIN_UI_CONFIG` and `PLUGIN_OPTIONS` injection tokens.
 
-    -   `PluginUiDefinition` definition (id, module, location, options).
-    -   `PluginUiConfig` with language/locale settings and active plugins list.
-    -   `PLUGIN_UI_CONFIG` and `PLUGIN_OPTIONS` injection tokens.
+- **Lifecycle interfaces**
+    - `IOnPluginUiBootstrap` / `IOnPluginUiDestroy` (required).
+    - `IOnPluginAfterBootstrap` / `IOnPluginBeforeDestroy` (optional, invoked automatically).
+    - `IOnPluginBeforeRouteActivate` / `IOnPluginConfigChange` (optional, for guards and future config reload).
 
--   **Lifecycle interfaces**
+- **Config loader helpers**
+    - `setPluginUiConfig`, `getPluginUiConfig`, `resetPluginUiConfig` for storing and reading
+      the frozen UI configuration before Angular bootstrap.
 
-    -   `IOnPluginUiBootstrap` / `IOnPluginUiDestroy` (required).
-    -   `IOnPluginAfterBootstrap` / `IOnPluginBeforeDestroy` (optional, invoked automatically).
-    -   `IOnPluginBeforeRouteActivate` / `IOnPluginConfigChange` (optional, for guards and future config reload).
+- **Plugin lifecycle module**
+    - `PluginUiModule.init()` registers an `APP_INITIALIZER` that:
+        - Instantiates all configured plugin modules.
+        - Invokes plugin lifecycle hooks (`ngOnPluginBootstrap` / `ngOnPluginDestroy`).
+        - Registers instances in the shared registry.
 
--   **Config loader helpers**
+- **Registry service**
+    - `PluginUiRegistryService` tracks live plugin module instances and
+      provides `destroyAll()` for graceful shutdown.
 
-    -   `setPluginUiConfig`, `getPluginUiConfig`, `resetPluginUiConfig` for storing and reading
-        the frozen UI configuration before Angular bootstrap.
+- **Plugin options**
+    - Add `options?: Record<string, unknown>` to `PluginUiDefinition` for per-plugin metadata.
+    - Access via `inject(PLUGIN_OPTIONS)` inside the plugin module constructor or lifecycle hooks.
 
--   **Plugin lifecycle module**
+- **definePlugin / definePluginGroup**
+    - `definePlugin(id, module, options?)` — creates a simple plugin definition.
+    - `definePluginGroup(id, module, { location, plugins, init? })` — creates a parent plugin with child plugins and optional init factory.
 
-    -   `PluginUiModule.init()` registers an `APP_INITIALIZER` that:
-        -   Instantiates all configured plugin modules.
-        -   Invokes plugin lifecycle hooks (`ngOnPluginBootstrap` / `ngOnPluginDestroy`).
-        -   Registers instances in the shared registry.
-
--   **Registry service**
-
-    -   `PluginUiRegistryService` tracks live plugin module instances and
-        provides `destroyAll()` for graceful shutdown.
-
--   **Plugin options**
-
-    -   Add `options?: Record<string, unknown>` to `PluginUiDefinition` for per-plugin metadata.
-    -   Access via `inject(PLUGIN_OPTIONS)` inside the plugin module constructor or lifecycle hooks.
-
--   **definePlugin / definePluginGroup**
-    -   `definePlugin(id, module, options?)` — creates a simple plugin definition.
-    -   `definePluginGroup(id, module, { location, plugins, init? })` — creates a parent plugin with child plugins and optional init factory.
-
--   **UI Bridge System** (NEW)
-    -   Render React, Vue, Svelte, or any other UI framework components inside Angular.
-    -   Library-agnostic design with pluggable bridge implementations.
-    -   `FrameworkHostComponent` — generic Angular component for rendering framework components.
-    -   `defineFrameworkExtension()` — helper for defining non-Angular extensions in plugins.
+- **UI Bridge System** (NEW)
+    - Render React, Vue, Svelte, or any other UI framework components inside Angular.
+    - Library-agnostic design with pluggable bridge implementations.
+    - `FrameworkHostComponent` — generic Angular component for rendering framework components.
+    - `defineFrameworkExtension()` — helper for defining non-Angular extensions in plugins.
 
 ---
 
@@ -86,10 +80,10 @@ yarn add @gauzy/ui-react-bridge react react-dom
 import { provideReactBridge } from '@gauzy/ui-react-bridge';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideReactBridge(),
-    // ... other providers
-  ]
+	providers: [
+		provideReactBridge()
+		// ... other providers
+	]
 };
 ```
 
@@ -101,45 +95,39 @@ import { FrameworkHostComponent } from '@gauzy/plugin-ui';
 import { MyReactWidget } from './react/MyReactWidget';
 
 @Component({
-  imports: [FrameworkHostComponent],
-  template: `
-    <gz-framework-host
-      frameworkId="react"
-      [component]="reactWidget"
-      [props]="widgetProps"
-    />
-  `
+	imports: [FrameworkHostComponent],
+	template: ` <gz-framework-host frameworkId="react" [component]="reactWidget" [props]="widgetProps" /> `
 })
 export class MyComponent {
-  reactWidget = MyReactWidget;
-  widgetProps = { title: 'Hello from React!' };
+	reactWidget = MyReactWidget;
+	widgetProps = { title: 'Hello from React!' };
 }
 ```
 
 #### 4. Define Framework Extensions in Plugins
 
 ```typescript
-import { 
-  defineFrameworkExtension, 
-  UI_BRIDGE_FRAMEWORK, 
-  EXTENSION_SLOTS,
-  PluginUiDefinition 
+import {
+	defineFrameworkExtension,
+	UI_BRIDGE_FRAMEWORK,
+	PAGE_EXTENSION_SLOTS,
+	PluginUiDefinition
 } from '@gauzy/plugin-ui';
 import { MyReactWidget } from './react-components/MyReactWidget';
 
 export const MyPlugin: PluginUiDefinition = {
-  id: 'my-plugin',
-  module: MyPluginModule,
-  extensions: [
-    defineFrameworkExtension({
-      id: 'my-react-widget',
-      slotId: EXTENSION_SLOTS.DASHBOARD_WIDGETS,
-      frameworkId: UI_BRIDGE_FRAMEWORK.REACT,
-      frameworkComponent: MyReactWidget,
-      frameworkProps: { title: 'Dashboard Widget' },
-      order: 10
-    })
-  ]
+	id: 'my-plugin',
+	module: MyPluginModule,
+	extensions: [
+		defineFrameworkExtension({
+			id: 'my-react-widget',
+			slotId: PAGE_EXTENSION_SLOTS.DASHBOARD_WIDGETS,
+			frameworkId: UI_BRIDGE_FRAMEWORK.REACT,
+			frameworkComponent: MyReactWidget,
+			frameworkProps: { title: 'Dashboard Widget' },
+			order: 10
+		})
+	]
 };
 ```
 
@@ -148,44 +136,43 @@ export const MyPlugin: PluginUiDefinition = {
 To add support for a new framework, implement the `UiBridge` abstract class:
 
 ```typescript
-import { 
-  UiBridge, 
-  UiBridgeConfig, 
-  UiBridgeMountOptions, 
-  UiBridgeMountResult 
-} from '@gauzy/plugin-ui';
+import { UiBridge, UiBridgeConfig, UiBridgeMountOptions, UiBridgeMountResult } from '@gauzy/plugin-ui';
 
 export class MyFrameworkBridge extends UiBridge {
-  readonly config: UiBridgeConfig = {
-    frameworkId: 'my-framework',
-    name: 'My Framework Bridge',
-    version: '1.0.0'
-  };
+	readonly config: UiBridgeConfig = {
+		frameworkId: 'my-framework',
+		name: 'My Framework Bridge',
+		version: '1.0.0'
+	};
 
-  mount(options: UiBridgeMountOptions): UiBridgeMountResult {
-    // Mount your framework component into options.hostElement
-    // Use options.injector to provide Angular services
-    return {
-      unmount: () => { /* cleanup */ },
-      updateProps: (props) => { /* update props */ }
-    };
-  }
+	mount(options: UiBridgeMountOptions): UiBridgeMountResult {
+		// Mount your framework component into options.hostElement
+		// Use options.injector to provide Angular services
+		return {
+			unmount: () => {
+				/* cleanup */
+			},
+			updateProps: (props) => {
+				/* update props */
+			}
+		};
+	}
 
-  isCompatible(component: unknown): boolean {
-    // Return true if this bridge can handle the component
-    return false;
-  }
+	isCompatible(component: unknown): boolean {
+		// Return true if this bridge can handle the component
+		return false;
+	}
 }
 ```
 
 ### Available Bridges
 
-| Framework | Package | Status |
-|-----------|---------|--------|
-| React | `@gauzy/ui-react-bridge` | ✅ Available |
-| Vue | `@gauzy/ui-vue-bridge` | 🔜 Planned |
-| Svelte | `@gauzy/ui-svelte-bridge` | 🔜 Planned |
-| Preact | `@gauzy/ui-preact-bridge` | 🔜 Planned |
+| Framework | Package                   | Status       |
+| --------- | ------------------------- | ------------ |
+| React     | `@gauzy/ui-react-bridge`  | ✅ Available |
+| Vue       | `@gauzy/ui-vue-bridge`    | 🔜 Planned   |
+| Svelte    | `@gauzy/ui-svelte-bridge` | 🔜 Planned   |
+| Preact    | `@gauzy/ui-preact-bridge` | 🔜 Planned   |
 
 ---
 
@@ -194,8 +181,8 @@ export class MyFrameworkBridge extends UiBridge {
 The `@gauzy/plugin-ui` library is generated with [Nx](https://nx.dev) and is intended to be used
 within the Gauzy monorepo. It is primarily consumed by:
 
--   **Gauzy web app** — the root bootstrap module imports `PluginUiModule.init()` to load config, instantiate plugin modules, and run lifecycle hooks.
--   **UI plugin packages** — e.g. `@gauzy/plugin-jobs-ui`, `@gauzy/plugin-job-proposal-ui`, `@gauzy/plugin-videos-ui`, and other plugins that implement `IOnPluginUiBootstrap` / `IOnPluginUiDestroy` and are registered in the plugin config.
+- **Gauzy web app** — the root bootstrap module imports `PluginUiModule.init()` to load config, instantiate plugin modules, and run lifecycle hooks.
+- **UI plugin packages** — e.g. `@gauzy/plugin-jobs-ui`, `@gauzy/plugin-job-proposal-ui`, `@gauzy/plugin-videos-ui`, and other plugins that implement `IOnPluginUiBootstrap` / `IOnPluginUiDestroy` and are registered in the plugin config.
 
 ### Building
 
