@@ -850,7 +850,8 @@
 		"lifecycles",
 		"namespacing",
 		"Hasher",
-		"VARCHAR"
+		"VARCHAR",
+		"bullmq"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
