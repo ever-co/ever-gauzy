@@ -262,7 +262,8 @@ export function applyDeclarativeRegistrations(
 
 	if (pageTabRegistry && definition.tabs?.length) {
 		for (const tab of definition.tabs as PluginTabInput[]) {
-			pageTabRegistry.registerPageTab(tab);
+			// Map PluginTabInput.path → PageTabRegistryConfig.route (used by NbRouteTabset)
+			pageTabRegistry.registerPageTab({ ...tab, route: tab.path });
 		}
 	}
 

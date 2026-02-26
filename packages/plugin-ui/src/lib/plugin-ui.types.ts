@@ -75,6 +75,10 @@ export interface PluginTabInput {
 	path?: string;
 	/** Component to render. */
 	component?: Type<unknown>;
+	/** Whether the tab is responsive (hidden on small screens when overflowed). */
+	responsive?: boolean;
+	/** Options for the active link matching (e.g. { exact: false }). */
+	activeLinkOptions?: { exact: boolean };
 	/** Permissions to show tab. */
 	permissions?: unknown | unknown[];
 	/** Hide flag. */

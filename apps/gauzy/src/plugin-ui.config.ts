@@ -64,15 +64,18 @@ export const uiPluginConfig: PluginUiConfig = {
 
 	// ── Plugins ────────────────────────────────────────────
 	plugins: [
-		// Sales Plugins (Proposals under Sales)
-		JobProposalPlugin,
-
 		// Integration Plugins
 		IntegrationUpworkPlugin,
 
 		// Job Plugins
 		JobsPlugin.init({
-			plugins: [JobEmployeePlugin, JobSearchPlugin, JobMatchingPlugin, JobProposalTemplatePlugin]
+			plugins: [
+				JobProposalPlugin,
+				JobEmployeePlugin,
+				JobSearchPlugin,
+				JobMatchingPlugin,
+				JobProposalTemplatePlugin
+			]
 		}),
 
 		// React UI Plugin

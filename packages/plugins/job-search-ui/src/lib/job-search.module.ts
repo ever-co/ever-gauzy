@@ -69,8 +69,6 @@ export class JobSearchModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy
 	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true }) as PluginUiDefinition | null;
 	private readonly _destroy$ = new Subject<void>();
 
-	constructor() {}
-
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
 	/** Called by PluginUiModule after the plugin module is instantiated. */

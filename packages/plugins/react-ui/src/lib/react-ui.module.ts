@@ -22,9 +22,7 @@ export class ReactUiModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _pageTabRegistryService = inject(PageTabRegistryService);
 	private readonly _pageExtensionRegistryService = inject(PageExtensionRegistryService);
-	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, {
-		optional: true
-	}) as PluginUiDefinition | null;
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true }) as PluginUiDefinition | null;
 
 	/**
 	 * Called when the plugin bootstraps.

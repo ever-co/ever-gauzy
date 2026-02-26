@@ -67,8 +67,6 @@ export class JobProposalModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private readonly _store = inject(Store);
 	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true }) as PluginUiDefinition | null;
 
-	constructor() {}
-
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
 	/** Called by PluginUiModule after the plugin module is instantiated. */

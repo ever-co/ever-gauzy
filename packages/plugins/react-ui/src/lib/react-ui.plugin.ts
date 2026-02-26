@@ -1,6 +1,7 @@
+import { PermissionsEnum } from '@gauzy/contracts';
 import { PluginRouteInput, PluginUiDefinition } from '@gauzy/plugin-ui';
 import { ReactUiModule } from './react-ui.module';
-import { REACT_TIME_TRACKING_DASHBOARD_ROUTE } from './react-ui.routes';
+import { REACT_TIME_TRACKING_DASHBOARD_ROUTE, REACT_TIME_TRACKING_PATH } from './react-ui.routes';
 
 /**
  * React UI Plugin Definition.
@@ -25,14 +26,22 @@ export const ReactUiPlugin: PluginUiDefinition = {
 	id: 'react-ui',
 	location: 'page-sections',
 	module: ReactUiModule,
-
-	// ─────────────────────────────────────────────────────────────
-	// Routes
-	// ─────────────────────────────────────────────────────────────
 	routes: [REACT_TIME_TRACKING_DASHBOARD_ROUTE as PluginRouteInput],
-
 	// ─────────────────────────────────────────────────────────────
-	// Extensions: Time Tracking Dashboard Widgets
+	// Register the React Time Tracking dashboard tab via page extension
 	// ─────────────────────────────────────────────────────────────
-	extensions: []
+	tabs: [
+		{
+			tabsetId: 'dashboard-page',
+			tabId: 'react-time-tracking',
+			tabsetType: 'route',
+			path: `/pages/dashboard/${REACT_TIME_TRACKING_PATH}`,
+			tabTitle: (_i18n: any) => _i18n.getTranslation('TIMESHEET.TIME_TRACKING'),
+			tabIcon: 'code-outline',
+			responsive: true,
+			activeLinkOptions: { exact: false },
+			order: 4,
+			permissions: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD]
+		}
+	]
 };

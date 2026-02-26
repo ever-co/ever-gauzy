@@ -8,8 +8,6 @@ export {
 	useInjector,
 	usePluginEvents,
 	usePluginEvent,
-	usePluginHost,
-	usePluginState,
 	type PluginEvent,
 	type EmitOptions,
 	type SubscribeOptions,
