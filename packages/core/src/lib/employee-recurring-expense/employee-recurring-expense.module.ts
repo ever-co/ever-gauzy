@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -10,6 +10,7 @@ import { EmployeeRecurringExpenseController } from './employee-recurring-expense
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
 import { TypeOrmEmployeeRecurringExpenseRepository } from './repository/type-orm-employee-recurring-expense.repository';
+import { MikroOrmEmployeeRecurringExpenseRepository } from './repository/mikro-orm-employee-recurring-expense.repository';
 
 @Module({
 	imports: [
@@ -22,7 +23,7 @@ import { TypeOrmEmployeeRecurringExpenseRepository } from './repository/type-orm
 	controllers: [EmployeeRecurringExpenseController],
 	providers: [
 		EmployeeRecurringExpenseService,
-		TypeOrmEmployeeRecurringExpenseRepository,
+		TypeOrmEmployeeRecurringExpenseRepository, MikroOrmEmployeeRecurringExpenseRepository,
 		...QueryHandlers,
 		...CommandHandlers
 	],

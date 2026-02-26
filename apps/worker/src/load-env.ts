@@ -15,6 +15,6 @@ export function loadEnv(): void {
 	const envPath = path.resolve(cwd, '.env');
 	const envLocalPath = path.resolve(cwd, '.env.local');
 
-	loadEnvFile(envPath, { override: true });
-	loadEnvFile(envLocalPath);
+	loadEnvFile(envPath);
+	loadEnvFile(envLocalPath, { override: true });
 }

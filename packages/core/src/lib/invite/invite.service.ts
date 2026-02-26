@@ -59,8 +59,11 @@ import { OrganizationProjectService } from './../organization-project/organizati
 import { AuthService } from './../auth/auth.service';
 import { UserOrganizationService } from './../user-organization/user-organization.services';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository';
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { Invite } from './invite.entity';
@@ -72,8 +75,11 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		readonly typeOrmInviteRepository: TypeOrmInviteRepository,
 		readonly mikroOrmInviteRepository: MikroOrmInviteRepository,
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
+		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
+		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 		private readonly configService: ConfigService,
 		private readonly emailService: EmailService,
 		private readonly organizationContactService: OrganizationContactService,
@@ -610,7 +616,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 								status: InviteStatusEnum.INVITED,
 								...(payload['code'] ? { code: payload['code'] } : {}),
 								$or: [{ expireDate: { $gte: new Date() } }, { expireDate: null }]
-							} as any);
+							} as any, { populate: ['organization'] as any });
 							return this.serialize(item) as Invite;
 						}
 						case MultiORMEnum.TypeORM:
@@ -677,7 +683,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						code,
 						status: InviteStatusEnum.INVITED,
 						$or: [{ expireDate: { $gte: new Date() } }, { expireDate: null }]
-					} as any);
+					} as any, { populate: ['organization'] as any });
 					return this.serialize(item) as Invite;
 				}
 				case MultiORMEnum.TypeORM:
@@ -1060,28 +1066,49 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				 * Current user is already part of invited tenant as separate user
 				 */
 				if (invitedTenantUser) {
-					const employee = await this.typeOrmEmployeeRepository.findOneOrFail({
-						where: {
-							userId: invitedTenantUser.id
-						}
-					});
+					let employee: IEmployee | null;
+					switch (this.ormType) {
+						case MultiORMEnum.MikroORM:
+							employee = await this.mikroOrmEmployeeRepository.findOneOrFail({ userId: invitedTenantUser.id } as any);
+							break;
+						case MultiORMEnum.TypeORM:
+						default:
+							employee = await this.typeOrmEmployeeRepository.findOneOrFail({
+								where: { userId: invitedTenantUser.id }
+							});
+							break;
+					}
 					if (employee) {
 						const [team] = teams;
 						/**
 						 * Add employee to invited team
 						 */
-						await this.typeOrmOrganizationTeamEmployeeRepository.save({
-							employeeId: employee.id,
-							organizationTeamId: team.id,
-							roleId: invitedTenantUser.roleId,
-							tenantId,
-							organizationId
-						});
+						switch (this.ormType) {
+							case MultiORMEnum.MikroORM: {
+								const em = this.mikroOrmOrganizationTeamEmployeeRepository.getEntityManager();
+								const teamEmployee = em.create('OrganizationTeamEmployee', {
+									employeeId: employee.id,
+									organizationTeamId: team.id,
+									roleId: invitedTenantUser.roleId,
+									tenantId,
+									organizationId
+								} as any);
+								await em.persistAndFlush(teamEmployee);
+								break;
+							}
+							case MultiORMEnum.TypeORM:
+							default:
+								await this.typeOrmOrganizationTeamEmployeeRepository.save({
+									employeeId: employee.id,
+									organizationTeamId: team.id,
+									roleId: invitedTenantUser.roleId,
+									tenantId,
+									organizationId
+								});
+								break;
+						}
 
-						await this.typeOrmRepository.update(inviteId, {
-							status: InviteStatusEnum.ACCEPTED,
-							userId: invitedTenantUser.id
-						});
+						await this.updateInviteStatus(inviteId, InviteStatusEnum.ACCEPTED, invitedTenantUser.id);
 					}
 				}
 
@@ -1108,10 +1135,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						team.id,
 						languageCode
 					);
-					await this.typeOrmRepository.update(inviteId, {
-						status: InviteStatusEnum.ACCEPTED,
-						userId: newTenantUser.id
-					});
+					await this.updateInviteStatus(inviteId, InviteStatusEnum.ACCEPTED, newTenantUser.id);
 				}
 			}
 
@@ -1119,15 +1143,19 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			 * REJECTED
 			 */
 			if (action === InviteActionEnum.REJECTED) {
-				await this.typeOrmRepository.update(id, {
-					status: InviteStatusEnum.REJECTED
-				});
+				await this.updateInviteStatus(id, InviteStatusEnum.REJECTED);
 			}
 
-			return await this.typeOrmRepository.findOne({
-				where: { id },
-				select: { status: true }
-			});
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					return await this.mikroOrmRepository.findOne({ id } as any);
+				case MultiORMEnum.TypeORM:
+				default:
+					return await this.typeOrmRepository.findOne({
+						where: { id },
+						select: { status: true }
+					});
+			}
 		} catch (error) {
 			// Handle the error here, e.g., logging, returning an error response, etc.
 			console.error('An error occurred when accept invitation by ID:', error);
@@ -1151,37 +1179,91 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		let tenant = input.user.tenant;
 
 		if (input.createdByUserId) {
-			const creatingUser = await this.typeOrmUserRepository.findOneOrFail({
-				where: { id: input.createdByUserId },
-				relations: { tenant: true }
-			});
-			tenant = creatingUser.tenant;
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const creatingUser = await this.mikroOrmUserRepository.findOneOrFail(
+						{ id: input.createdByUserId } as any,
+						{ populate: ['tenant'] }
+					);
+					tenant = creatingUser.tenant;
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					const creatingUser = await this.typeOrmUserRepository.findOneOrFail({
+						where: { id: input.createdByUserId },
+						relations: { tenant: true }
+					});
+					tenant = creatingUser.tenant;
+					break;
+				}
+			}
 		}
 
 		/**
 		 * Register new user
 		 */
-		const create = this.typeOrmUserRepository.create({
-			...input.user,
-			tenant,
-			...(input.password ? { hash: await this.authService.getPasswordHash(input.password) } : {})
-		});
-		const entity = await this.typeOrmUserRepository.save(create);
+		let entity: IUser;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmUserRepository.getEntityManager();
+				entity = em.create('User', {
+					...input.user,
+					tenant,
+					...(input.password ? { hash: await this.authService.getPasswordHash(input.password) } : {})
+				} as any) as any;
+				await em.persistAndFlush(entity);
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const create = this.typeOrmUserRepository.create({
+					...input.user,
+					tenant,
+					...(input.password ? { hash: await this.authService.getPasswordHash(input.password) } : {})
+				});
+				entity = await this.typeOrmUserRepository.save(create);
+				break;
+			}
+		}
 
 		/**
 		 * Email automatically verified after accept invitation
 		 */
-		await this.typeOrmUserRepository.update(entity.id, {
-			...(input.inviteId ? { emailVerifiedAt: freshTimestamp() } : {})
-		});
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmUserRepository.nativeUpdate(
+					{ id: entity.id } as any,
+					{ ...(input.inviteId ? { emailVerifiedAt: freshTimestamp() } : {}) }
+				);
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmUserRepository.update(entity.id, {
+					...(input.inviteId ? { emailVerifiedAt: freshTimestamp() } : {})
+				});
+				break;
+		}
 
 		/**
 		 * Find latest register user with role
 		 */
-		const user = await this.typeOrmUserRepository.findOne({
-			where: { id: entity.id },
-			relations: { role: true }
-		});
+		let user: IUser;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				user = await this.mikroOrmUserRepository.findOne(
+					{ id: entity.id } as any,
+					{ populate: ['role'] }
+				);
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				user = await this.typeOrmUserRepository.findOne({
+					where: { id: entity.id },
+					relations: { role: true }
+				});
+				break;
+		}
 
 		if (input.organizationId) {
 			/**
@@ -1192,23 +1274,57 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			/**
 			 * Create employee associated to invited organization and tenant
 			 */
-			const employee = await this.typeOrmEmployeeRepository.save({
-				organizationId: input.organizationId,
-				tenantId: tenant.id,
-				userId: user.id,
-				startedWorkOn: freshTimestamp()
-			});
+			let employee: IEmployee;
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const em = this.mikroOrmEmployeeRepository.getEntityManager();
+					employee = em.create('Employee', {
+						organizationId: input.organizationId,
+						tenantId: tenant.id,
+						userId: user.id,
+						startedWorkOn: freshTimestamp()
+					} as any) as any;
+					await em.persistAndFlush(employee);
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default:
+					employee = await this.typeOrmEmployeeRepository.save({
+						organizationId: input.organizationId,
+						tenantId: tenant.id,
+						userId: user.id,
+						startedWorkOn: freshTimestamp()
+					});
+					break;
+			}
 
 			/**
 			 * Add employee to invited team
 			 */
-			await this.typeOrmOrganizationTeamEmployeeRepository.save({
-				employeeId: employee.id,
-				organizationTeamId,
-				tenantId: user.tenantId,
-				organizationId: input.organizationId,
-				roleId: user.roleId
-			});
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const em = this.mikroOrmOrganizationTeamEmployeeRepository.getEntityManager();
+					const teamEmployee = em.create('OrganizationTeamEmployee', {
+						employeeId: employee.id,
+						organizationTeamId,
+						tenantId: user.tenantId,
+						organizationId: input.organizationId,
+						roleId: user.roleId
+					} as any);
+					await em.persistAndFlush(teamEmployee);
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default:
+					await this.typeOrmOrganizationTeamEmployeeRepository.save({
+						employeeId: employee.id,
+						organizationTeamId,
+						tenantId: user.tenantId,
+						organizationId: input.organizationId,
+						roleId: user.roleId
+					});
+					break;
+			}
 		}
 
 		// Extract integration information
@@ -1216,5 +1332,27 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, integration);
 		return user;
+	}
+
+	/**
+	 * Update invite status using the active ORM.
+	 *
+	 * @param inviteId - The invite ID to update
+	 * @param status - The new invite status
+	 * @param userId - Optional user ID to associate with the invite
+	 */
+	private async updateInviteStatus(inviteId: ID, status: InviteStatusEnum, userId?: ID): Promise<void> {
+		const updateData: any = { status };
+		if (userId) updateData.userId = userId;
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository.nativeUpdate({ id: inviteId } as any, updateData);
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmRepository.update(inviteId, updateData);
+				break;
+		}
 	}
 }

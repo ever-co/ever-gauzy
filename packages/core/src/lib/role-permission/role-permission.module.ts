@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+﻿import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -8,6 +8,7 @@ import { RolePermission } from './role-permission.entity';
 import { RolePermissionService } from './role-permission.service';
 import { RoleModule } from './../role/role.module';
 import { TypeOrmRolePermissionRepository } from './repository/type-orm-role-permission.repository';
+import { MikroOrmRolePermissionRepository } from './repository/mikro-orm-role-permission.repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { TypeOrmRolePermissionRepository } from './repository/type-orm-role-perm
 		forwardRef(() => RoleModule)
 	],
 	controllers: [RolePermissionController],
-	providers: [RolePermissionService, TypeOrmRolePermissionRepository],
-	exports: [CacheModule, RolePermissionService, TypeOrmRolePermissionRepository]
+	providers: [RolePermissionService, TypeOrmRolePermissionRepository, MikroOrmRolePermissionRepository],
+	exports: [CacheModule, RolePermissionService, TypeOrmRolePermissionRepository, MikroOrmRolePermissionRepository]
 })
 export class RolePermissionModule {}

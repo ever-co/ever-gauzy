@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+﻿import { Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -9,6 +9,7 @@ import { MentionController } from './mention.controller';
 import { Mention } from './mention.entity';
 import { EventHandlers } from './events/handlers';
 import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
+import { MikroOrmMentionRepository } from './repository/mikro-orm-mention.repository';
 import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 
 @Global()
@@ -22,7 +23,7 @@ import { EmployeeNotificationModule } from '../employee-notification/employee-no
 		EmployeeNotificationModule
 	],
 	controllers: [MentionController],
-	providers: [MentionService, TypeOrmMentionRepository, ...EventHandlers],
+	providers: [MentionService, TypeOrmMentionRepository, MikroOrmMentionRepository, ...EventHandlers],
 	exports: [MentionService]
 })
 export class MentionModule {}

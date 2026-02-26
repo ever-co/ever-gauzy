@@ -1,4 +1,4 @@
-import { TypeOrmModule } from '@nestjs/typeorm';
+﻿import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -11,6 +11,7 @@ import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmEmployeeAppointmentRepository } from './repository/type-orm-employee-appointment.repository';
+import { MikroOrmEmployeeAppointmentRepository } from './repository/mikro-orm-employee-appointment.repository';
 
 @Module({
 	imports: [
@@ -23,7 +24,7 @@ import { TypeOrmEmployeeAppointmentRepository } from './repository/type-orm-empl
 		CqrsModule
 	],
 	controllers: [EmployeeAppointmentController],
-	providers: [EmployeeAppointmentService, TypeOrmEmployeeAppointmentRepository, ...CommandHandlers],
-	exports: [EmployeeAppointmentService, TypeOrmEmployeeAppointmentRepository]
+	providers: [EmployeeAppointmentService, TypeOrmEmployeeAppointmentRepository, MikroOrmEmployeeAppointmentRepository, ...CommandHandlers],
+	exports: [EmployeeAppointmentService, TypeOrmEmployeeAppointmentRepository, MikroOrmEmployeeAppointmentRepository]
 })
 export class EmployeeAppointmentModule {}

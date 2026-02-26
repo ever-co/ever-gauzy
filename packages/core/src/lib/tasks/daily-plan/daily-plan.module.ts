@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DailyPlanService } from './daily-plan.service';
@@ -8,6 +8,7 @@ import { DailyPlan } from './daily-plan.entity';
 import { EmployeeModule } from '../../employee/employee.module';
 import { TaskModule } from '../task.module';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
+import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.rep
 		TaskModule
 	],
 	controllers: [DailyPlanController],
-	providers: [DailyPlanService, TypeOrmDailyPlanRepository],
+	providers: [DailyPlanService, TypeOrmDailyPlanRepository, MikroOrmDailyPlanRepository],
 	exports: [DailyPlanService]
 })
 export class DailyPlanModule {}

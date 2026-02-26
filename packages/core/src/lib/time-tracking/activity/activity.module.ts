@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+﻿import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -12,6 +12,7 @@ import { Activity } from './activity.entity';
 import { ActivityMapService } from './activity.map.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { TypeOrmActivityRepository } from './repository/type-orm-activity.repository';
+import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
 
 @Module({
 	controllers: [ActivityController],
@@ -24,7 +25,7 @@ import { TypeOrmActivityRepository } from './repository/type-orm-activity.reposi
 		forwardRef(() => TimeSlotModule),
 		CqrsModule
 	],
-	providers: [ActivityService, ActivityMapService, TypeOrmActivityRepository, ...CommandHandlers],
-	exports: [ActivityService, ActivityMapService, TypeOrmActivityRepository]
+	providers: [ActivityService, ActivityMapService, TypeOrmActivityRepository, MikroOrmActivityRepository, ...CommandHandlers],
+	exports: [ActivityService, ActivityMapService, TypeOrmActivityRepository, MikroOrmActivityRepository]
 })
 export class ActivityModule {}

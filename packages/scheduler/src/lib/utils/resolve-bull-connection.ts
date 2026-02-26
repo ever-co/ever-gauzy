@@ -22,11 +22,16 @@ function parseRedisUrl(redisUrl: string): ConnectionOptions {
 	const parsed = new URL(redisUrl);
 	const isTls = parsed.protocol === 'rediss:' || process.env['REDIS_TLS'] === 'true';
 
+	// Extract database index from URL path (e.g., redis://host:6379/5 → db: 5)
+	const dbPath = parsed.pathname?.replace('/', '');
+	const db = dbPath ? Number.parseInt(dbPath, 10) : undefined;
+
 	return {
 		host: parsed.hostname,
 		port: parsePort(parsed.port, 6379),
 		username: parsed.username || undefined,
 		password: parsed.password || undefined,
+		...(db !== undefined && Number.isFinite(db) && db >= 0 ? { db } : {}),
 		...(isTls ? { tls: {} } : {})
 	};
 }

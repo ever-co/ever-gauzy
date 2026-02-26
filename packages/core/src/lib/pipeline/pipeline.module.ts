@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PipelineController } from './pipeline.controller';
 import { PipelineService } from './pipeline.service';
@@ -9,6 +9,7 @@ import { DealModule } from '../deal/deal.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { TypeOrmPipelineRepository } from './repository/type-orm-pipeline.repository';
+import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
 
 @Module({
 	imports: [
@@ -20,6 +21,6 @@ import { TypeOrmPipelineRepository } from './repository/type-orm-pipeline.reposi
 		UserModule
 	],
 	controllers: [PipelineController],
-	providers: [PipelineService, TypeOrmPipelineRepository]
+	providers: [PipelineService, TypeOrmPipelineRepository, MikroOrmPipelineRepository]
 })
 export class PipelineModule {}

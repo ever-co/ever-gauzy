@@ -187,6 +187,28 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							ed = moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss');
 						}
 						where.$or = [{ start: { $gte: sd, $lte: ed } }, { end: { $gte: sd, $lte: ed } }];
+
+						// Text search filters matching TypeORM branch
+						if (isNotEmpty(where.user) && isNotEmpty(where.user.name)) {
+							const keywords: string[] = where.user.name.split(' ');
+							const userFilters: any[] = [];
+							keywords.forEach((keyword: string) => {
+								userFilters.push({ employees: { user: { firstName: { $ilike: `%${keyword}%` } } } });
+								userFilters.push({ employees: { user: { lastName: { $ilike: `%${keyword}%` } } } });
+							});
+							if (where.$or) {
+								where.$and = [{ $or: where.$or }, { $or: userFilters }];
+								delete where.$or;
+							} else {
+								where.$or = userFilters;
+							}
+						}
+						if (isNotEmpty(where.description)) {
+							where.description = { $ilike: `%${where.description}%` };
+						}
+						if (isNotEmpty(where.policy) && isNotEmpty(where.policy.name)) {
+							where.policy = { name: { $ilike: `%${where.policy.name}%` } };
+						}
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(where, {

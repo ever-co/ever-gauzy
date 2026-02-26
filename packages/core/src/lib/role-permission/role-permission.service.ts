@@ -383,7 +383,18 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				}
 			}
 		}
-		await this.saveMany(rolesPermissions);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmRepository.getEntityManager();
+				rolesPermissions.forEach((rp) => em.persist(rp));
+				await em.flush();
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmRepository.save(rolesPermissions);
+				break;
+		}
 		return rolesPermissions;
 	}
 

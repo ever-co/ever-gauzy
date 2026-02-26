@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -13,6 +13,7 @@ import { CandidateController } from './candidate.controller';
 import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
 import { TypeOrmCandidateRepository } from './repository/type-orm-candidate.repository';
+import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
 import { CommandHandlers } from './commands/handlers';
 
 @Module({
@@ -29,7 +30,7 @@ import { CommandHandlers } from './commands/handlers';
 		AuthModule
 	],
 	controllers: [CandidateController],
-	providers: [CandidateService, TypeOrmCandidateRepository, ...CommandHandlers],
-	exports: [CandidateService, TypeOrmCandidateRepository]
+	providers: [CandidateService, TypeOrmCandidateRepository, MikroOrmCandidateRepository, ...CommandHandlers],
+	exports: [CandidateService, TypeOrmCandidateRepository, MikroOrmCandidateRepository]
 })
 export class CandidateModule {}

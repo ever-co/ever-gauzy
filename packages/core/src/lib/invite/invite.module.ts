@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -23,6 +23,7 @@ import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { EmailSendModule } from './../email-send/email-send.module';
 import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository';
+import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 
 @Module({
 	imports: [
@@ -46,7 +47,7 @@ import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository
 		AuthModule
 	],
 	controllers: [InviteController],
-	providers: [InviteService, TypeOrmInviteRepository, ...CommandHandlers, ...QueryHandlers],
-	exports: [InviteService, TypeOrmInviteRepository]
+	providers: [InviteService, TypeOrmInviteRepository, MikroOrmInviteRepository, ...CommandHandlers, ...QueryHandlers],
+	exports: [InviteService, TypeOrmInviteRepository, MikroOrmInviteRepository]
 })
 export class InviteModule {}

@@ -1,4 +1,4 @@
-import { TypeOrmModule } from '@nestjs/typeorm';
+﻿import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -9,6 +9,7 @@ import { ProductTypeTranslation } from './product-type-translation.entity';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmProductTypeRepository } from './repository/type-orm-product-type.repository';
+import { MikroOrmProductTypeRepository } from './repository/mikro-orm-product-type.repository';
 
 @Module({
 	imports: [
@@ -18,6 +19,6 @@ import { TypeOrmProductTypeRepository } from './repository/type-orm-product-type
 		CqrsModule
 	],
 	controllers: [ProductTypeController],
-	providers: [ProductTypeService, TypeOrmProductTypeRepository, ...CommandHandlers]
+	providers: [ProductTypeService, TypeOrmProductTypeRepository, MikroOrmProductTypeRepository, ...CommandHandlers]
 })
 export class ProductTypeModule {}

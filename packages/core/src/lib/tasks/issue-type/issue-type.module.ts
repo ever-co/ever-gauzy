@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -8,6 +8,7 @@ import { IssueType } from './issue-type.entity';
 import { IssueTypeService } from './issue-type.service';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.repository';
+import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.rep
 		CqrsModule
 	],
 	controllers: [IssueTypeController],
-	providers: [IssueTypeService, TypeOrmIssueTypeRepository, ...CommandHandlers]
+	providers: [IssueTypeService, TypeOrmIssueTypeRepository, MikroOrmIssueTypeRepository, ...CommandHandlers]
 })
 export class IssueTypeModule {}

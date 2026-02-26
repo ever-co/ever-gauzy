@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -9,6 +9,7 @@ import { ResourceLink } from './resource-link.entity';
 import { ResourceLinkService } from './resource-link.service';
 import { ResourceLinkController } from './resource-link.controller';
 import { TypeOrmResourceLinkRepository } from './repository/type-orm-resource-link.repository';
+import { MikroOrmResourceLinkRepository } from './repository/mikro-orm-resource-link.repository';
 
 @Module({
 	imports: [
@@ -19,7 +20,7 @@ import { TypeOrmResourceLinkRepository } from './repository/type-orm-resource-li
 		CqrsModule
 	],
 	controllers: [ResourceLinkController],
-	providers: [ResourceLinkService, TypeOrmResourceLinkRepository, ...CommandHandlers],
+	providers: [ResourceLinkService, TypeOrmResourceLinkRepository, MikroOrmResourceLinkRepository, ...CommandHandlers],
 	exports: []
 })
 export class ResourceLinkModule {}

@@ -1,10 +1,5 @@
 {
 	"nxCloudId": "64f8c5bcd09b086be3baeccf",
-	"tasksRunnerOptions": {
-		"default": {
-			"runner": "nx/tasks-runners/default"
-		}
-	},
 	"namedInputs": {
 		"default": [
 			"{projectRoot}/**/*",

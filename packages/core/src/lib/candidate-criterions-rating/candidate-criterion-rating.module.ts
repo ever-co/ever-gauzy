@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -8,6 +8,7 @@ import { CandidateCriterionsRatingService } from './candidate-criterion-rating.s
 import { CandidateCriterionsRatingController } from './candidate-criterion-rating.controller';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmCandidateCriterionsRatingRepository } from './repository/type-orm-candidate-criterions-rating.repository';
+import { MikroOrmCandidateCriterionsRatingRepository } from './repository/mikro-orm-candidate-criterions-rating.repository';
 
 @Module({
 	imports: [
@@ -16,7 +17,7 @@ import { TypeOrmCandidateCriterionsRatingRepository } from './repository/type-or
 		RolePermissionModule,
 		CqrsModule
 	],
-	providers: [CandidateCriterionsRatingService, TypeOrmCandidateCriterionsRatingRepository, ...CommandHandlers],
+	providers: [CandidateCriterionsRatingService, TypeOrmCandidateCriterionsRatingRepository, MikroOrmCandidateCriterionsRatingRepository, ...CommandHandlers],
 	controllers: [CandidateCriterionsRatingController]
 })
 export class CandidateCriterionsRatingModule {}

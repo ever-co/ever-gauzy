@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -10,6 +10,7 @@ import { IntegrationMapController } from './integration-map.controller';
 import { IntegrationMapService } from './integration-map.service';
 import { IntegrationMap } from './integration-map.entity';
 import { TypeOrmIntegrationMapRepository } from './repository/type-orm-integration-map.repository';
+import { MikroOrmIntegrationMapRepository } from './repository/mikro-orm-integration-map.repository';
 
 @Module({
 	imports: [
@@ -21,7 +22,7 @@ import { TypeOrmIntegrationMapRepository } from './repository/type-orm-integrati
 		CqrsModule
 	],
 	controllers: [IntegrationMapController],
-	providers: [IntegrationMapService, TypeOrmIntegrationMapRepository, ...CommandHandlers],
+	providers: [IntegrationMapService, TypeOrmIntegrationMapRepository, MikroOrmIntegrationMapRepository, ...CommandHandlers],
 	exports: [IntegrationMapService]
 })
 export class IntegrationMapModule {}

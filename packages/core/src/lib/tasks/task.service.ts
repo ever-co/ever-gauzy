@@ -391,8 +391,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = { $like: `%${title}%` };
-					if (isNotEmpty(prefix)) mikroWhere.prefix = { $like: `%${prefix}%` };
+					if (isNotEmpty(title)) mikroWhere.title = { $ilike: `%${title}%` };
+					if (isNotEmpty(prefix)) mikroWhere.prefix = { $ilike: `%${prefix}%` };
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
 					}
@@ -661,8 +661,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = { $like: `%${title}%` };
-					if (isNotEmpty(prefix)) mikroWhere.prefix = { $like: `%${prefix}%` };
+					if (isNotEmpty(title)) mikroWhere.title = { $ilike: `%${title}%` };
+					if (isNotEmpty(prefix)) mikroWhere.prefix = { $ilike: `%${prefix}%` };
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
 					}
@@ -1092,8 +1092,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId) && isEmpty(modules)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = { $like: `%${title}%` };
-					if (isNotEmpty(prefix)) mikroWhere.prefix = { $like: `%${prefix}%` };
+					if (isNotEmpty(title)) mikroWhere.title = { $ilike: `%${title}%` };
+					if (isNotEmpty(prefix)) mikroWhere.prefix = { $ilike: `%${prefix}%` };
 					if (isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = organizationSprintId;
 					}

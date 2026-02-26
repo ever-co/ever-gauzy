@@ -38,9 +38,9 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					isSystem: false
 				};
 				if (isNotEmpty(organizationTeamId)) where.organizationTeamId = organizationTeamId;
-				if (isNotEmpty(name)) where.name = { $like: `%${name}%` };
-				if (isNotEmpty(color)) where.color = { $like: `%${color}%` };
-				if (isNotEmpty(description)) where.description = { $like: `%${description}%` };
+				if (isNotEmpty(name)) where.name = { $ilike: `%${name}%` };
+				if (isNotEmpty(color)) where.color = { $ilike: `%${color}%` };
+				if (isNotEmpty(description)) where.description = { $ilike: `%${description}%` };
 
 				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
 					populate: relations as any[]
@@ -91,9 +91,9 @@ export class TagService extends TenantAwareCrudService<Tag> {
 						isSystem: false
 					};
 					if (isNotEmpty(organizationTeamId)) where.organizationTeamId = organizationTeamId;
-					if (isNotEmpty(name)) where.name = { $like: `%${name}%` };
-					if (isNotEmpty(color)) where.color = { $like: `%${color}%` };
-					if (isNotEmpty(description)) where.description = { $like: `%${description}%` };
+					if (isNotEmpty(name)) where.name = { $ilike: `%${name}%` };
+					if (isNotEmpty(color)) where.color = { $ilike: `%${color}%` };
+					if (isNotEmpty(description)) where.description = { $ilike: `%${description}%` };
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
 						populate: (Array.isArray(relations) ? relations : Object.keys(relations)) as any[]

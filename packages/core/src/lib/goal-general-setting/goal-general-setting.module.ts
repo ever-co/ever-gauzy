@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { GoalGeneralSettingController } from './goal-general-setting.controller';
@@ -6,6 +6,7 @@ import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmGoalGeneralSettingRepository } from './repository/type-orm-goal-general-setting.repository';
+import { MikroOrmGoalGeneralSettingRepository } from './repository/mikro-orm-goal-general-setting.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmGoalGeneralSettingRepository } from './repository/type-orm-goal-
 		RolePermissionModule
 	],
 	controllers: [GoalGeneralSettingController],
-	providers: [GoalGeneralSettingService, TypeOrmGoalGeneralSettingRepository]
+	providers: [GoalGeneralSettingService, TypeOrmGoalGeneralSettingRepository, MikroOrmGoalGeneralSettingRepository]
 })
 export class GoalGeneralSettingModule {}

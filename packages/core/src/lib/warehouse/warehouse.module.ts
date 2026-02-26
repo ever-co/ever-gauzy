@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
@@ -10,8 +10,11 @@ import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { WarehouseProductService } from './warehouse-product-service';
 import { TypeOrmWarehouseRepository } from './repository/type-orm-warehouse.repository';
-import { TypeOrmWarehouseProductRepository } from './repository/type-orm-warehouse-product.repository ';
+import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
+import { TypeOrmWarehouseProductRepository } from './repository/type-orm-warehouse-product.repository';
+import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository';
 import { TypeOrmWarehouseProductVariantRepository } from './repository/type-orm-warehouse-product-variant.repository';
+import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
 
 @Module({
 	imports: [
@@ -24,9 +27,9 @@ import { TypeOrmWarehouseProductVariantRepository } from './repository/type-orm-
 	providers: [
 		WarehouseService,
 		WarehouseProductService,
-		TypeOrmWarehouseRepository,
-		TypeOrmWarehouseProductRepository,
-		TypeOrmWarehouseProductVariantRepository
+		TypeOrmWarehouseRepository, MikroOrmWarehouseRepository,
+		TypeOrmWarehouseProductRepository, MikroOrmWarehouseProductRepository,
+		TypeOrmWarehouseProductVariantRepository, MikroOrmWarehouseProductVariantRepository
 	]
 })
 export class WarehouseModule {}

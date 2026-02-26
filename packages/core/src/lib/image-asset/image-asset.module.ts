@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -8,6 +8,7 @@ import { ImageAssetController } from './image-asset.controller';
 import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
 import { TypeOrmImageAssetRepository } from './repository/type-orm-image-asset.repository';
+import { MikroOrmImageAssetRepository } from './repository/mikro-orm-image-asset.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmImageAssetRepository } from './repository/type-orm-image-asset.r
 		CqrsModule
 	],
 	controllers: [ImageAssetController],
-	providers: [ImageAssetService, TypeOrmImageAssetRepository, ...CommandHandlers]
+	providers: [ImageAssetService, TypeOrmImageAssetRepository, MikroOrmImageAssetRepository, ...CommandHandlers]
 })
 export class ImageAssetModule {}

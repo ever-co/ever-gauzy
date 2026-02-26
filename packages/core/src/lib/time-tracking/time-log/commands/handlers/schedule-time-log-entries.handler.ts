@@ -73,12 +73,20 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 					qb.andWhere({ employeeId, organizationId, tenantId });
 				}
 
-				const results = await qb.select('*');
+				const results = await qb.select('time_log.id');
 				console.log(
 					`Schedule Time Log Query For ${employeeId ? 'Tenant Organization' : 'All'} Entries`,
 					results.length
 				);
-				return results;
+
+				if (results.length === 0) return [];
+
+				// Re-fetch as entities with timeSlots populated (matching TypeORM's relations: { timeSlots: true })
+				const ids = results.map((r: any) => r.id);
+				return await this.mikroOrmTimeLogRepository.find(
+					{ id: { $in: ids } } as any,
+					{ populate: ['timeSlots'] as any }
+				);
 			}
 			case MultiORMEnum.TypeORM:
 			default: {

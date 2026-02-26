@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from '../../user/user.module';
@@ -6,6 +6,7 @@ import { RolePermissionModule } from '../../role-permission/role-permission.modu
 import { SocialAccountService } from './social-account.service';
 import { SocialAccount } from './social-account.entity';
 import { TypeOrmSocialAccountRepository } from './repository/type-orm-social-account.repository';
+import { MikroOrmSocialAccountRepository } from './repository/mikro-orm-social-account.repository';
 
 @Module({
 	imports: [
@@ -14,7 +15,7 @@ import { TypeOrmSocialAccountRepository } from './repository/type-orm-social-acc
 		UserModule,
 		RolePermissionModule
 	],
-	providers: [SocialAccountService, TypeOrmSocialAccountRepository],
+	providers: [SocialAccountService, TypeOrmSocialAccountRepository, MikroOrmSocialAccountRepository],
 	exports: [SocialAccountService]
 })
 export class SocialAccountModule {}

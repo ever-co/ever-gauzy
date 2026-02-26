@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -9,6 +9,7 @@ import { TaskRelatedIssueTypeService } from './related-issue-type.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 import { TypeOrmTaskRelatedIssueTypeRepository } from './repository/type-orm-related-issue-type.repository';
+import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-related-issue-type.repository';
 
 @Module({
 	imports: [
@@ -20,7 +21,7 @@ import { TypeOrmTaskRelatedIssueTypeRepository } from './repository/type-orm-rel
 	controllers: [TaskRelatedIssueTypeController],
 	providers: [
 		TaskRelatedIssueTypeService,
-		TypeOrmTaskRelatedIssueTypeRepository,
+		TypeOrmTaskRelatedIssueTypeRepository, MikroOrmTaskRelatedIssueTypeRepository,
 		...QueryHandlers,
 		...CommandHandlers
 	]

@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -9,6 +9,7 @@ import { EmployeeNotificationService } from './employee-notification.service';
 import { EmployeeNotificationController } from './employee-notification.controller';
 import { EventHandlers } from './events/handlers';
 import { TypeOrmEmployeeNotificationRepository } from './repository/type-orm-employee-notification.repository';
+import { MikroOrmEmployeeNotificationRepository } from './repository/mikro-orm-employee-notification.repository';
 
 @Module({
 	imports: [
@@ -19,7 +20,7 @@ import { TypeOrmEmployeeNotificationRepository } from './repository/type-orm-emp
 		RolePermissionModule
 	],
 	controllers: [EmployeeNotificationController],
-	providers: [EmployeeNotificationService, TypeOrmEmployeeNotificationRepository, ...EventHandlers],
+	providers: [EmployeeNotificationService, TypeOrmEmployeeNotificationRepository, MikroOrmEmployeeNotificationRepository, ...EventHandlers],
 	exports: [EmployeeNotificationService]
 })
 export class EmployeeNotificationModule {}

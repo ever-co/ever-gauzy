@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -8,6 +8,7 @@ import { ImportHistory } from './import-history.entity';
 import { ImportHistoryService } from './import-history.service';
 import { ImportHistoryController } from './import-history.controller';
 import { TypeOrmImportHistoryRepository } from './repository/type-orm-import-history.repository';
+import { MikroOrmImportHistoryRepository } from './repository/mikro-orm-import-history.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmImportHistoryRepository } from './repository/type-orm-import-his
 		CqrsModule
 	],
 	controllers: [ImportHistoryController],
-	providers: [ImportHistoryService, TypeOrmImportHistoryRepository, ...CommandHandlers]
+	providers: [ImportHistoryService, TypeOrmImportHistoryRepository, MikroOrmImportHistoryRepository, ...CommandHandlers]
 })
 export class ImportHistoryModule {}

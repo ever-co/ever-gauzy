@@ -26,19 +26,24 @@ export class IntegrationGetHandler implements ICommandHandler<IntegrationGetComm
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const knex = this.mikroOrmIntegrationRepository.getKnex();
-				const qb = knex('integration')
-					.withSchema(knex.userParams.schema)
-					.join('integration_integration_type', 'integration_integration_type.integrationId', 'integration.id')
-					.where('integration_integration_type.integrationTypeId', integrationTypeId)
-					.andWhereRaw('LOWER("integration"."name") LIKE ?', [`${searchQuery.toLowerCase()}%`])
-					.orderBy('integration.order', 'asc');
+				const where: any = {
+					integrationTypes: { id: integrationTypeId }
+				};
 
-				if (filter === 'true' || filter === 'false') {
-					qb.andWhere('integration.isPaid', filter === 'true');
+				if (searchQuery) {
+					where.name = { $ilike: `${searchQuery.toLowerCase()}%` };
 				}
 
-				return await qb.select('integration.*');
+				if (filter === 'true' || filter === 'false') {
+					where.isPaid = filter === 'true';
+				}
+
+				const items = await this.mikroOrmIntegrationRepository.find(where, {
+					populate: ['integrationTypes'] as any,
+					orderBy: { order: 'ASC' } as any
+				});
+
+				return items as IIntegration[];
 			}
 			case MultiORMEnum.TypeORM:
 			default: {

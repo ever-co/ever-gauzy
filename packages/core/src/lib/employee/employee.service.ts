@@ -547,14 +547,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							if (isNotEmpty(mWhere.user.name)) {
 								const keywords: string[] = mWhere.user.name.split(' ');
 								keywords.forEach((keyword: string) => {
-									userOr.push({ user: { firstName: { $like: `%${keyword}%` } } });
-									userOr.push({ user: { lastName: { $like: `%${keyword}%` } } });
+									userOr.push({ user: { firstName: { $ilike: `%${keyword}%` } } });
+									userOr.push({ user: { lastName: { $ilike: `%${keyword}%` } } });
 								});
 							}
 							if (isNotEmpty(mWhere.user.email)) {
 								const keywords: string[] = mWhere.user.email.split(' ');
 								keywords.forEach((keyword: string) => {
-									userOr.push({ user: { email: { $like: `%${keyword}%` } } });
+									userOr.push({ user: { email: { $ilike: `%${keyword}%` } } });
 								});
 							}
 							if (userOr.length > 0) {

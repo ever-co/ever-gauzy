@@ -1431,6 +1431,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			where.editedAt = request.isEdited ? { $ne: null } : null;
 		}
 
+		if (isNotEmpty(request.activityLevel)) {
+			const { activityLevel } = request;
+			where.timeSlots = {
+				...(where.timeSlots || {}),
+				overall: { $gte: activityLevel.start * 6, $lte: activityLevel.end * 6 }
+			};
+		}
+
 		return where;
 	}
 

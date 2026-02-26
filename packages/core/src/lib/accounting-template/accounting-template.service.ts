@@ -204,7 +204,22 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 
 		for (const where of fallbacks) {
 			try {
-				const record = await this.findOneByWhereOptions(where);
+				let record: any;
+				// For null-tenant fallbacks, bypass TenantAwareCrudService scoping
+				if (where.tenantId === null) {
+					switch (this.ormType) {
+						case MultiORMEnum.MikroORM:
+							record = await this.mikroOrmRepository.findOne(where as any);
+							if (record) record = this.serialize(record);
+							break;
+						case MultiORMEnum.TypeORM:
+						default:
+							record = await this.typeOrmRepository.findOneBy(where as any);
+							break;
+					}
+				} else {
+					record = await this.findOneByWhereOptions(where);
+				}
 				if (record) return record;
 			} catch (error) {
 				// continue to next fallback

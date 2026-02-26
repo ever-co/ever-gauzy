@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -7,6 +7,7 @@ import { KeyResultService } from './keyresult.service';
 import { KeyResultController } from './keyresult.controller';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmKeyResultRepository } from './repository/type-orm-keyresult.repository';
+import { MikroOrmKeyResultRepository } from './repository/mikro-orm-keyresult.repository';
 
 @Module({
 	imports: [
@@ -16,6 +17,6 @@ import { TypeOrmKeyResultRepository } from './repository/type-orm-keyresult.repo
 		RolePermissionModule
 	],
 	controllers: [KeyResultController],
-	providers: [KeyResultService, TypeOrmKeyResultRepository]
+	providers: [KeyResultService, TypeOrmKeyResultRepository, MikroOrmKeyResultRepository]
 })
 export class KeyResultModule {}

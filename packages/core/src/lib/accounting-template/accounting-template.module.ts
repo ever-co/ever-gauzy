@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -8,6 +8,7 @@ import { AccountingTemplateController } from './accounting-template.controller';
 import { AccountingTemplateService } from './accounting-template.service';
 import { QueryHandlers } from './queries/handlers';
 import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accounting-template.repository';
+import { MikroOrmAccountingTemplateRepository } from './repository/mikro-orm-accounting-template.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accou
 		RolePermissionModule
 	],
 	controllers: [AccountingTemplateController],
-	providers: [AccountingTemplateService, TypeOrmAccountingTemplateRepository, ...QueryHandlers]
+	providers: [AccountingTemplateService, TypeOrmAccountingTemplateRepository, MikroOrmAccountingTemplateRepository, ...QueryHandlers]
 })
 export class AccountingTemplateModule {}

@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+﻿import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -16,6 +16,7 @@ import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
+import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 
 @Module({
@@ -34,7 +35,7 @@ import { EmployeeNotificationModule } from '../employee-notification/employee-no
 		EventBusModule
 	],
 	controllers: [TaskController],
-	providers: [TaskService, TypeOrmTaskRepository, ...CommandHandlers],
-	exports: [TaskService, TypeOrmTaskRepository]
+	providers: [TaskService, TypeOrmTaskRepository, MikroOrmTaskRepository, ...CommandHandlers],
+	exports: [TaskService, TypeOrmTaskRepository, MikroOrmTaskRepository]
 })
 export class TaskModule {}

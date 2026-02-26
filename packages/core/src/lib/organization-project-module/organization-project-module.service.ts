@@ -241,7 +241,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
-					if (isNotEmpty(name)) mikroWhere.name = { $like: `%${name}%` };
+					if (isNotEmpty(name)) mikroWhere.name = { $ilike: `%${name}%` };
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						limit: options?.take || 10,
@@ -359,7 +359,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					}
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
-					if (isNotEmpty(name)) mikroWhere.name = { $like: `%${name}%` };
+					if (isNotEmpty(name)) mikroWhere.name = { $ilike: `%${name}%` };
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						limit: options?.take || 10,
@@ -483,7 +483,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					if (isNotEmpty(options?.projectId)) mikroWhere.projectId = options.projectId;
 					if (isNotEmpty(options?.status)) mikroWhere.status = options.status;
-					if (isNotEmpty(options?.name)) mikroWhere.name = { $like: `%${options.name}%` };
+					if (isNotEmpty(options?.name)) mikroWhere.name = { $ilike: `%${options.name}%` };
 					if (isNotEmpty(options?.organizationSprintId))
 						mikroWhere.organizationSprints = { id: options.organizationSprintId };
 					if (isNotEmpty(options?.organizationTeamId)) mikroWhere.teams = { id: options.organizationTeamId };

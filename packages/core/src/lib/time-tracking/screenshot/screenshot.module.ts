@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -11,6 +11,7 @@ import { ScreenshotService } from './screenshot.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { IntegrationTenantModule } from './../../integration-tenant/integration-tenant.module';
 import { TypeOrmScreenshotRepository } from './repository/type-orm-screenshot.repository';
+import { MikroOrmScreenshotRepository } from './repository/mikro-orm-screenshot.repository';
 
 @Module({
 	controllers: [ScreenshotController],
@@ -23,7 +24,7 @@ import { TypeOrmScreenshotRepository } from './repository/type-orm-screenshot.re
 		CqrsModule,
 		EventBusModule
 	],
-	providers: [ScreenshotService, TypeOrmScreenshotRepository, ...CommandHandlers],
-	exports: [ScreenshotService, TypeOrmScreenshotRepository]
+	providers: [ScreenshotService, TypeOrmScreenshotRepository, MikroOrmScreenshotRepository, ...CommandHandlers],
+	exports: [ScreenshotService, TypeOrmScreenshotRepository, MikroOrmScreenshotRepository]
 })
 export class ScreenshotModule {}

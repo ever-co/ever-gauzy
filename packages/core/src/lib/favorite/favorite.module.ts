@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { Favorite } from './favorite.entity';
 import { TypeOrmFavoriteRepository } from './repository/type-orm-favorite.repository';
+import { MikroOrmFavoriteRepository } from './repository/mikro-orm-favorite.repository';
 import { FavoriteService } from './favorite.service';
 import { FavoriteController } from './favorite.controller';
 import { GlobalFavoriteModule } from './global-favorite-service.module';
@@ -18,7 +19,7 @@ import { GlobalFavoriteModule } from './global-favorite-service.module';
 		GlobalFavoriteModule
 	],
 	controllers: [FavoriteController],
-	providers: [FavoriteService, TypeOrmFavoriteRepository],
-	exports: [FavoriteService, TypeOrmFavoriteRepository]
+	providers: [FavoriteService, TypeOrmFavoriteRepository, MikroOrmFavoriteRepository],
+	exports: [FavoriteService, TypeOrmFavoriteRepository, MikroOrmFavoriteRepository]
 })
 export class FavoriteModule {}

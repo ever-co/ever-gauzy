@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -9,6 +9,7 @@ import { TaskVersionService } from './version.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 import { TypeOrmTaskVersionRepository } from './repository/type-orm-task-version.repository';
+import { MikroOrmTaskVersionRepository } from './repository/mikro-orm-task-version.repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { TypeOrmTaskVersionRepository } from './repository/type-orm-task-version
 		CqrsModule
 	],
 	controllers: [TaskVersionController],
-	providers: [TaskVersionService, TypeOrmTaskVersionRepository, ...QueryHandlers, ...CommandHandlers],
+	providers: [TaskVersionService, TypeOrmTaskVersionRepository, MikroOrmTaskVersionRepository, ...QueryHandlers, ...CommandHandlers],
 	exports: [TaskVersionService]
 })
 export class TaskVersionModule {}

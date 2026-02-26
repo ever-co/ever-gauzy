@@ -87,11 +87,11 @@ export class WakatimeService {
 	async bulkSave(wakatime: Wakatime[]) {
 		switch (ormType) {
 			case MultiORMEnum.MikroORM: {
-				const em = this.mikroOrmWakatimeRepository.getEntityManager();
-				for (const w of wakatime) {
-					em.persist(em.create(Wakatime, w as any));
-				}
-				await em.flush();
+				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
+				await knex('wakatime')
+					.insert(wakatime.map((w) => ({ ...w })))
+					.onConflict(['time', 'entities'])
+					.ignore();
 				return;
 			}
 			case MultiORMEnum.TypeORM:
@@ -113,9 +113,11 @@ export class WakatimeService {
 	async save(wakatime: Wakatime) {
 		switch (ormType) {
 			case MultiORMEnum.MikroORM: {
-				const em = this.mikroOrmWakatimeRepository.getEntityManager();
-				em.persist(em.create(Wakatime, wakatime as any));
-				await em.flush();
+				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
+				await knex('wakatime')
+					.insert({ ...wakatime })
+					.onConflict(['time', 'entities'])
+					.ignore();
 				return;
 			}
 			case MultiORMEnum.TypeORM:

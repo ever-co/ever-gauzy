@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -8,6 +8,7 @@ import { TaskPriority } from './priority.entity';
 import { TaskPriorityService } from './priority.service';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmTaskPriorityRepository } from './repository/type-orm-task-priority.repository';
+import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-priority.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmTaskPriorityRepository } from './repository/type-orm-task-priori
 		CqrsModule
 	],
 	controllers: [TaskPriorityController],
-	providers: [TaskPriorityService, TypeOrmTaskPriorityRepository, ...CommandHandlers]
+	providers: [TaskPriorityService, TypeOrmTaskPriorityRepository, MikroOrmTaskPriorityRepository, ...CommandHandlers]
 })
 export class TaskPriorityModule {}

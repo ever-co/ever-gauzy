@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+﻿import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -18,7 +18,9 @@ import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repo
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { OrganizationProjectEmployee } from '../organization-project/organization-project-employee.entity';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-project/repository/type-orm-organization-project-employee.repository';
+import { MikroOrmOrganizationProjectEmployeeRepository } from '../organization-project/repository/mikro-orm-organization-project-employee.repository';
 
 @Module({
 	imports: [
@@ -38,8 +40,8 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-pr
 		ManagedEmployeeService,
 		TypeOrmEmployeeRepository,
 		MikroOrmEmployeeRepository,
-		TypeOrmOrganizationTeamEmployeeRepository,
-		TypeOrmOrganizationProjectEmployeeRepository,
+		TypeOrmOrganizationTeamEmployeeRepository, MikroOrmOrganizationTeamEmployeeRepository,
+		TypeOrmOrganizationProjectEmployeeRepository, MikroOrmOrganizationProjectEmployeeRepository,
 		...CommandHandlers
 	],
 	exports: [
@@ -47,8 +49,8 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-pr
 		ManagedEmployeeService,
 		TypeOrmEmployeeRepository,
 		MikroOrmEmployeeRepository,
-		TypeOrmOrganizationTeamEmployeeRepository,
-		TypeOrmOrganizationProjectEmployeeRepository
+		TypeOrmOrganizationTeamEmployeeRepository, MikroOrmOrganizationTeamEmployeeRepository,
+		TypeOrmOrganizationProjectEmployeeRepository, MikroOrmOrganizationProjectEmployeeRepository
 	]
 })
 export class EmployeeModule {}

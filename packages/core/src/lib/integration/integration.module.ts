@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -11,7 +11,9 @@ import { IntegrationService } from './integration.service';
 import { IntegrationTypeService } from './integration-type.service';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmIntegrationRepository } from './repository/type-orm-integration.repository';
+import { MikroOrmIntegrationRepository } from './repository/mikro-orm-integration.repository';
 import { TypeOrmIntegrationTypeRepository } from './repository/type-orm-integration-type.repository';
+import { MikroOrmIntegrationTypeRepository } from './repository/mikro-orm-integration-type.repository';
 
 @Module({
 	imports: [
@@ -25,8 +27,8 @@ import { TypeOrmIntegrationTypeRepository } from './repository/type-orm-integrat
 	providers: [
 		IntegrationService,
 		IntegrationTypeService,
-		TypeOrmIntegrationRepository,
-		TypeOrmIntegrationTypeRepository,
+		TypeOrmIntegrationRepository, MikroOrmIntegrationRepository,
+		TypeOrmIntegrationTypeRepository, MikroOrmIntegrationTypeRepository,
 		...CommandHandlers
 	],
 	exports: [IntegrationService]

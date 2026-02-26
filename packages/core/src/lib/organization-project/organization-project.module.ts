@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -12,7 +12,9 @@ import { RoleModule } from './../role/role.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { EmployeeRecentVisitModule } from '../employee-recent-visit/employee-recent-visit.module';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
+import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
+import { MikroOrmOrganizationProjectEmployeeRepository } from './repository/mikro-orm-organization-project-employee.repository';
 
 @Module({
 	imports: [
@@ -27,14 +29,14 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-
 	controllers: [OrganizationProjectController],
 	providers: [
 		OrganizationProjectService,
-		TypeOrmOrganizationProjectRepository,
-		TypeOrmOrganizationProjectEmployeeRepository,
+		TypeOrmOrganizationProjectRepository, MikroOrmOrganizationProjectRepository,
+		TypeOrmOrganizationProjectEmployeeRepository, MikroOrmOrganizationProjectEmployeeRepository,
 		...CommandHandlers
 	],
 	exports: [
 		OrganizationProjectService,
-		TypeOrmOrganizationProjectRepository,
-		TypeOrmOrganizationProjectEmployeeRepository
+		TypeOrmOrganizationProjectRepository, MikroOrmOrganizationProjectRepository,
+		TypeOrmOrganizationProjectEmployeeRepository, MikroOrmOrganizationProjectEmployeeRepository
 	]
 })
 export class OrganizationProjectModule {}

@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -8,6 +8,7 @@ import { EmployeeSettingService } from './employee-setting.service';
 import { EmployeeSettingController } from './employee-setting.controller';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmEmployeeSettingRepository } from './repository/type-orm-employee-setting.repository';
+import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employee-setting.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmEmployeeSettingRepository } from './repository/type-orm-employee
 		RolePermissionModule
 	],
 	controllers: [EmployeeSettingController],
-	providers: [EmployeeSettingService, TypeOrmEmployeeSettingRepository, ...CommandHandlers]
+	providers: [EmployeeSettingService, TypeOrmEmployeeSettingRepository, MikroOrmEmployeeSettingRepository, ...CommandHandlers]
 })
 export class EmployeeSettingModule {}

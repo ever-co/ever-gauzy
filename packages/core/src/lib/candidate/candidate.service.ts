@@ -66,12 +66,12 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 							if (isNotEmpty(where.user.name)) {
 								const keywords: string[] = where.user.name.split(' ');
 								for (const keyword of keywords) {
-									userFilter.push({ user: { firstName: { $like: `%${keyword}%` } } });
-									userFilter.push({ user: { lastName: { $like: `%${keyword}%` } } });
+									userFilter.push({ user: { firstName: { $ilike: `%${keyword}%` } } });
+									userFilter.push({ user: { lastName: { $ilike: `%${keyword}%` } } });
 								}
 							}
 							if (isNotEmpty(where.user.email)) {
-								userFilter.push({ user: { email: { $like: `%${where.user.email}%` } } });
+								userFilter.push({ user: { email: { $ilike: `%${where.user.email}%` } } });
 							}
 							if (userFilter.length > 0) {
 								mikroWhere.$or = userFilter;
@@ -81,7 +81,7 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						...(options?.relations ? { populate: Object.keys(options.relations) as any[] } : {}),
-						offset: options?.skip ? options.take * (options.skip - 1) : 0,
+						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0,
 						limit: options?.take || 10
 					});
 					return { items: items.map((e) => this.serialize(e)), total };

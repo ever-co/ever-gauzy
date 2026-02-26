@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+﻿import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -15,6 +15,7 @@ import { ExpenseMapService } from './expense.map.service';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationRecurringExpenseModule } from './../organization-recurring-expense/organization-recurring-expense.module';
 import { TypeOrmExpenseRepository } from './repository/type-orm-expense.repository';
+import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
 
 @Module({
 	imports: [
@@ -29,7 +30,7 @@ import { TypeOrmExpenseRepository } from './repository/type-orm-expense.reposito
 		CqrsModule
 	],
 	controllers: [ExpenseController],
-	providers: [ExpenseService, ExpenseMapService, TypeOrmExpenseRepository, ...CommandHandlers, ...QueryHandlers],
+	providers: [ExpenseService, ExpenseMapService, TypeOrmExpenseRepository, MikroOrmExpenseRepository, ...CommandHandlers, ...QueryHandlers],
 	exports: [ExpenseService, ExpenseMapService]
 })
 export class ExpenseModule {}

@@ -163,9 +163,8 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 								expiredAt: IsNull()
 							}
 						]);
-
-						qb.orderBy(p(`"${qb.alias}"."createdAt"`), 'DESC');
 					});
+					query.orderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
 
 					return await query.getOneOrFail();
 				}

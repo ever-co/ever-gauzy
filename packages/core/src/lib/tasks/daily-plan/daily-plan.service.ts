@@ -64,7 +64,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 							tenantId,
 							organizationId,
 							organizationTeamId,
-							employeeId
+							employeeId,
+							date: new Date(dailyPlanDate)
 						} as any,
 						{
 							populate: ['tasks'] as any[]

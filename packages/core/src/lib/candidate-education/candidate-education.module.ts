@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CandidateEducationService } from './candidate-education.service';
@@ -6,6 +6,7 @@ import { CandidateEducation } from './candidate-education.entity';
 import { CandidateEducationController } from './candidate-education.controller';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmCandidateEducationRepository } from './repository/type-orm-candidate-education.repository';
+import { MikroOrmCandidateEducationRepository } from './repository/mikro-orm-candidate-education.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmCandidateEducationRepository } from './repository/type-orm-candi
 		RolePermissionModule
 	],
 	controllers: [CandidateEducationController],
-	providers: [CandidateEducationService, TypeOrmCandidateEducationRepository]
+	providers: [CandidateEducationService, TypeOrmCandidateEducationRepository, MikroOrmCandidateEducationRepository]
 })
 export class CandidateEducationModule {}

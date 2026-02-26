@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -8,6 +8,7 @@ import { IntegrationSettingController } from './integration-setting.controller';
 import { IntegrationSettingService } from './integration-setting.service';
 import { IntegrationSetting } from './integration-setting.entity';
 import { TypeOrmIntegrationSettingRepository } from './repository/type-orm-integration-setting.repository';
+import { MikroOrmIntegrationSettingRepository } from './repository/mikro-orm-integration-setting.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { TypeOrmIntegrationSettingRepository } from './repository/type-orm-integ
 		CqrsModule
 	],
 	controllers: [IntegrationSettingController],
-	providers: [IntegrationSettingService, TypeOrmIntegrationSettingRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, IntegrationSettingService, TypeOrmIntegrationSettingRepository]
+	providers: [IntegrationSettingService, TypeOrmIntegrationSettingRepository, MikroOrmIntegrationSettingRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, IntegrationSettingService, TypeOrmIntegrationSettingRepository, MikroOrmIntegrationSettingRepository]
 })
 export class IntegrationSettingModule {}

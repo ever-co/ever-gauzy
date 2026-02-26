@@ -76,7 +76,7 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 				const items = await this.mikroOrmTimeLogRepository.find(
 					{ id: { $in: ids } },
 					{
-						populate: (input.relations || ['timeSlots']) as any
+						populate: [...new Set([...(input.relations || []), 'timeSlots'])] as any
 					}
 				);
 				return items.map((item) => wrapSerialize(item)) as TimeLog[];

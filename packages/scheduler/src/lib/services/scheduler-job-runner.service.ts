@@ -78,7 +78,12 @@ export class SchedulerJobRunnerService {
 			return;
 		}
 
-		await Promise.race([execution, timeout(job.options.timeoutMs, job.id)]);
+		const ac = new AbortController();
+		try {
+			await Promise.race([execution, timeout(job.options.timeoutMs, job.id, ac.signal)]);
+		} finally {
+			ac.abort(); // Cancel the timeout timer if the job finished first
+		}
 	}
 
 	private async executeJobHandler(job: DiscoveredScheduledJob): Promise<void> {
@@ -103,10 +108,21 @@ function sleep(ms: number): Promise<void> {
 	});
 }
 
-function timeout(ms: number, jobId: string): Promise<never> {
+function timeout(ms: number, jobId: string, signal?: AbortSignal): Promise<never> {
 	return new Promise((_, reject) => {
-		setTimeout(() => {
+		const timer = setTimeout(() => {
 			reject(new Error(`Scheduled job "${jobId}" timed out after ${ms}ms.`));
 		}, ms);
+
+		// If the signal is already aborted, clear immediately
+		if (signal?.aborted) {
+			clearTimeout(timer);
+			return;
+		}
+
+		// Listen for abort to clear the timer
+		signal?.addEventListener('abort', () => {
+			clearTimeout(timer);
+		}, { once: true });
 	});
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -11,6 +11,7 @@ import { Broadcast } from './broadcast.entity';
 import { BroadcastService } from './broadcast.service';
 import { BroadcastController } from './broadcast.controller';
 import { TypeOrmBroadcastRepository } from './repository/type-orm-broadcast.repository';
+import { MikroOrmBroadcastRepository } from './repository/mikro-orm-broadcast.repository';
 import { CommandHandlers } from './commands/handlers';
 
 @Module({
@@ -25,7 +26,7 @@ import { CommandHandlers } from './commands/handlers';
 		EmployeeNotificationModule,
 	],
 	controllers: [BroadcastController],
-	providers: [BroadcastService, TypeOrmBroadcastRepository, ...CommandHandlers],
-	exports: [BroadcastService, TypeOrmBroadcastRepository]
+	providers: [BroadcastService, TypeOrmBroadcastRepository, MikroOrmBroadcastRepository, ...CommandHandlers],
+	exports: [BroadcastService, TypeOrmBroadcastRepository, MikroOrmBroadcastRepository]
 })
 export class BroadcastModule {}

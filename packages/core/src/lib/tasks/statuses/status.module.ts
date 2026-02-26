@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -9,6 +9,7 @@ import { TaskStatusService } from './status.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 import { TypeOrmTaskStatusRepository } from './repository/type-orm-task-status.repository';
+import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
 
 @Module({
 	imports: [
@@ -18,6 +19,6 @@ import { TypeOrmTaskStatusRepository } from './repository/type-orm-task-status.r
 		CqrsModule
 	],
 	controllers: [TaskStatusController],
-	providers: [TaskStatusService, TypeOrmTaskStatusRepository, ...QueryHandlers, ...CommandHandlers]
+	providers: [TaskStatusService, TypeOrmTaskStatusRepository, MikroOrmTaskStatusRepository, ...QueryHandlers, ...CommandHandlers]
 })
 export class TaskStatusModule {}

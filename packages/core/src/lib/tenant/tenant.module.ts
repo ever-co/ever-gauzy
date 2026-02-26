@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+﻿import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -12,6 +12,7 @@ import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
+import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 
 @Module({
 	imports: [
@@ -25,7 +26,7 @@ import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository
 		forwardRef(() => FeatureModule)
 	],
 	controllers: [TenantController],
-	providers: [TenantService, TypeOrmTenantRepository, ...CommandHandlers],
-	exports: [TenantService, TypeOrmTenantRepository]
+	providers: [TenantService, TypeOrmTenantRepository, MikroOrmTenantRepository, ...CommandHandlers],
+	exports: [TenantService, TypeOrmTenantRepository, MikroOrmTenantRepository]
 })
 export class TenantModule {}

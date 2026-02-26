@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ReportCategory } from './report-category.entity';
@@ -11,8 +11,11 @@ import { ReportOrganization } from './report-organization.entity';
 import { CommandHandlers } from './commands/handlers';
 import { ReportOrganizationService } from './report-organization.service';
 import { TypeOrmReportOrganizationRepository } from './repository/type-orm-report-organization.repository';
+import { MikroOrmReportOrganizationRepository } from './repository/mikro-orm-report-organization.repository';
 import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
+import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
 import { TypeOrmReportCategoryRepository } from './repository/type-orm-report-category.repository';
+import { MikroOrmReportCategoryRepository } from './repository/mikro-orm-report-category.repository';
 
 @Module({
 	imports: [
@@ -24,9 +27,9 @@ import { TypeOrmReportCategoryRepository } from './repository/type-orm-report-ca
 		ReportService,
 		ReportCategoryService,
 		ReportOrganizationService,
-		TypeOrmReportRepository,
-		TypeOrmReportCategoryRepository,
-		TypeOrmReportOrganizationRepository,
+		TypeOrmReportRepository, MikroOrmReportRepository,
+		TypeOrmReportCategoryRepository, MikroOrmReportCategoryRepository,
+		TypeOrmReportOrganizationRepository, MikroOrmReportOrganizationRepository,
 		...CommandHandlers
 	]
 })

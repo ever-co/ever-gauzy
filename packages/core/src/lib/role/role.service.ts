@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, In, Not } from 'typeorm';
+import { MultiORMEnum } from './../core/utils';
 import { IRole, ITenant, RolesEnum, IRoleMigrateInput, IImportRecord, SYSTEM_DEFAULT_ROLES } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { Role } from './role.entity';
@@ -37,7 +38,17 @@ export class RoleService extends TenantAwareCrudService<Role> {
 				roles.push(role);
 			}
 		}
-		return await this.saveMany(roles);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmRoleRepository.getEntityManager();
+				roles.forEach((r) => em.persist(r));
+				await em.flush();
+				return roles as IRole[] & Role[];
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRoleRepository.save(roles);
+		}
 	}
 
 	async migrateRoles(): Promise<IRoleMigrateInput[]> {

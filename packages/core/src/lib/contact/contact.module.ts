@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -8,6 +8,7 @@ import { ContactController } from './contact.controller';
 import { ContactService } from './contact.service';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmContactRepository } from './repository/type-orm-contact.repository';
+import { MikroOrmContactRepository } from './repository/mikro-orm-contact.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { TypeOrmContactRepository } from './repository/type-orm-contact.reposito
 		CqrsModule
 	],
 	controllers: [ContactController],
-	providers: [ContactService, TypeOrmContactRepository, ...CommandHandlers],
+	providers: [ContactService, TypeOrmContactRepository, MikroOrmContactRepository, ...CommandHandlers],
 	exports: [ContactService]
 })
 export class ContactModule {}

@@ -1,4 +1,4 @@
-import { CqrsModule } from '@nestjs/cqrs';
+﻿import { CqrsModule } from '@nestjs/cqrs';
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -9,6 +9,7 @@ import { EntitySubscriptionService } from './entity-subscription.service';
 import { EntitySubscriptionController } from './entity-subscription.controller';
 import { EntitySubscription } from './entity-subscription.entity';
 import { TypeOrmEntitySubscriptionRepository } from './repository/type-orm-entity-subscription.repository';
+import { MikroOrmEntitySubscriptionRepository } from './repository/mikro-orm-entity-subscription.repository';
 
 @Global()
 @Module({
@@ -19,7 +20,7 @@ import { TypeOrmEntitySubscriptionRepository } from './repository/type-orm-entit
 		CqrsModule
 	],
 	controllers: [EntitySubscriptionController],
-	providers: [EntitySubscriptionService, TypeOrmEntitySubscriptionRepository, ...CommandHandlers, ...EventHandlers],
-	exports: [EntitySubscriptionService, TypeOrmEntitySubscriptionRepository]
+	providers: [EntitySubscriptionService, TypeOrmEntitySubscriptionRepository, MikroOrmEntitySubscriptionRepository, ...CommandHandlers, ...EventHandlers],
+	exports: [EntitySubscriptionService, TypeOrmEntitySubscriptionRepository, MikroOrmEntitySubscriptionRepository]
 })
 export class EntitySubscriptionModule {}

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { MultiORMEnum } from './../core/utils';
 import { CandidateTechnologies } from './candidate-technologies.entity';
 import { TypeOrmCandidateTechnologiesRepository } from './repository/type-orm-candidate-technologies.repository';
 import { MikroOrmCandidateTechnologiesRepository } from './repository/mikro-orm-candidate-technologies.repository';
@@ -29,11 +30,17 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async getTechnologiesByInterviewId(interviewId: string): Promise<ICandidateTechnologies[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('candidate_technology')
-			.where('candidate_technology.interviewId = :interviewId', {
-				interviewId
-			})
-			.getMany();
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.find({ interviewId } as any);
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRepository
+					.createQueryBuilder('candidate_technology')
+					.where('candidate_technology.interviewId = :interviewId', {
+						interviewId
+					})
+					.getMany();
+		}
 	}
 }

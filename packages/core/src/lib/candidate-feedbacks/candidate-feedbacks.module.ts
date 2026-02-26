@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -9,6 +9,7 @@ import { CandidateFeedbacksService } from './candidate-feedbacks.service';
 import { CandidateFeedbacksController } from './candidate-feedbacks.controller';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmCandidateFeedbackRepository } from './repository/type-orm-candidate-feedback.repository';
+import { MikroOrmCandidateFeedbackRepository } from './repository/mikro-orm-candidate-feedback.repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { TypeOrmCandidateFeedbackRepository } from './repository/type-orm-candid
 		CandidateInterviewModule,
 		CqrsModule
 	],
-	providers: [CandidateFeedbacksService, TypeOrmCandidateFeedbackRepository, ...CommandHandlers],
+	providers: [CandidateFeedbacksService, TypeOrmCandidateFeedbackRepository, MikroOrmCandidateFeedbackRepository, ...CommandHandlers],
 	controllers: [CandidateFeedbacksController]
 })
 export class CandidateFeedbacksModule {}

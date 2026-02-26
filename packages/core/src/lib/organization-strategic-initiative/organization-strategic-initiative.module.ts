@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -11,6 +11,7 @@ import { OrganizationStrategicInitiative } from './organization-strategic-initia
 import { OrganizationStrategicInitiativeService } from './organization-strategic-initiative.service';
 import { OrganizationStrategicInitiativeController } from './organization-strategic-initiative.controller';
 import { TypeOrmOrganizationStrategicInitiativeRepository } from './repository/type-orm-organization-strategic-initiative.repository';
+import { MikroOrmOrganizationStrategicInitiativeRepository } from './repository/mikro-orm-organization-strategic-initiative.repository';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 
@@ -28,10 +29,10 @@ import { QueryHandlers } from './queries/handlers';
 	controllers: [OrganizationStrategicInitiativeController],
 	providers: [
 		OrganizationStrategicInitiativeService,
-		TypeOrmOrganizationStrategicInitiativeRepository,
+		TypeOrmOrganizationStrategicInitiativeRepository, MikroOrmOrganizationStrategicInitiativeRepository,
 		...CommandHandlers,
 		...QueryHandlers
 	],
-	exports: [OrganizationStrategicInitiativeService, TypeOrmOrganizationStrategicInitiativeRepository]
+	exports: [OrganizationStrategicInitiativeService, TypeOrmOrganizationStrategicInitiativeRepository, MikroOrmOrganizationStrategicInitiativeRepository]
 })
 export class OrganizationStrategicInitiativeModule {}

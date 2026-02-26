@@ -640,6 +640,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					}
 				}
 
+				// Match TypeORM's repositoryId IS NOT NULL filter
+				where.repositoryId = { $ne: null };
+
 				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
 					limit: options?.take || 10,
 					offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0

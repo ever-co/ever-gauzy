@@ -1,23 +1,29 @@
 import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere } from 'typeorm';
+import { MultiORM, MultiORMEnum, getORMType } from '@gauzy/core';
 import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
 import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
+import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
+import { MikroOrmOrganizationContactRepository } from '../../organization-contact/repository/mikro-orm-organization-contact.repository';
 import { TypeOrmOrganizationProjectRepository } from '../../organization-project/repository/type-orm-organization-project.repository';
+import { MikroOrmOrganizationProjectRepository } from '../../organization-project/repository/mikro-orm-organization-project.repository';
+
+// Get the type of the Object-Relational Mapping (ORM) used in the application.
+const ormType: MultiORM = getORMType();
 
 @Injectable()
 export class PublicOrganizationService {
 	constructor(
-		@InjectRepository(Organization)
-		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
+		private readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
+		private readonly mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
 
-		@InjectRepository(OrganizationContact)
-		private typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
+		private readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
+		private readonly mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository,
 
-		@InjectRepository(OrganizationProject)
-		private typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository
+		private readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
+		private readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository
 	) {}
 
 	/**
@@ -29,10 +35,19 @@ export class PublicOrganizationService {
 	 */
 	async findOneByProfileLink(where: FindOptionsWhere<Organization>, relations: string[]): Promise<IOrganization> {
 		try {
-			return await this.typeOrmOrganizationRepository.findOneOrFail({
-				where,
-				relations
-			});
+			switch (ormType) {
+				case MultiORMEnum.MikroORM:
+					return await this.mikroOrmOrganizationRepository.findOneOrFail(
+						where as any,
+						{ populate: relations as any }
+					);
+				case MultiORMEnum.TypeORM:
+				default:
+					return await this.typeOrmOrganizationRepository.findOneOrFail({
+						where,
+						relations
+					});
+			}
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -48,8 +63,17 @@ export class PublicOrganizationService {
 		options: FindOptionsWhere<OrganizationContact>
 	): Promise<IPagination<IOrganizationContact>> {
 		try {
-			const [items = [], total = 0] = await this.typeOrmOrganizationContactRepository.findAndCountBy(options);
-			return { items, total };
+			switch (ormType) {
+				case MultiORMEnum.MikroORM: {
+					const [items, total] = await this.mikroOrmOrganizationContactRepository.findAndCount(options as any);
+					return { items: items ?? [], total: total ?? 0 };
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					const [items = [], total = 0] = await this.typeOrmOrganizationContactRepository.findAndCountBy(options);
+					return { items, total };
+				}
+			}
 		} catch (error) {
 			throw new NotFoundException(`The requested public clients was not found`);
 		}
@@ -63,7 +87,13 @@ export class PublicOrganizationService {
 	 */
 	async findPublicClientCountsByOrganization(options: FindOptionsWhere<OrganizationContact>): Promise<Number> {
 		try {
-			return await this.typeOrmOrganizationContactRepository.countBy(options);
+			switch (ormType) {
+				case MultiORMEnum.MikroORM:
+					return await this.mikroOrmOrganizationContactRepository.count(options as any);
+				case MultiORMEnum.TypeORM:
+				default:
+					return await this.typeOrmOrganizationContactRepository.countBy(options);
+			}
 		} catch (error) {
 			throw new NotFoundException(`The requested client counts was not found`);
 		}
@@ -77,7 +107,13 @@ export class PublicOrganizationService {
 	 */
 	async findPublicProjectCountsByOrganization(options: FindOptionsWhere<OrganizationProject>): Promise<Number> {
 		try {
-			return await this.typeOrmOrganizationProjectRepository.countBy(options);
+			switch (ormType) {
+				case MultiORMEnum.MikroORM:
+					return await this.mikroOrmOrganizationProjectRepository.count(options as any);
+				case MultiORMEnum.TypeORM:
+				default:
+					return await this.typeOrmOrganizationProjectRepository.countBy(options);
+			}
 		} catch (error) {
 			throw new NotFoundException(`The requested project counts was not found`);
 		}

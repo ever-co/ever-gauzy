@@ -435,16 +435,9 @@ jobs:
           node -e "try { var gfs = require('graceful-fs'); gfs.gracefulify(require('fs')); console.log('graceful-fs patched'); } catch(e) { console.log('graceful-fs not available, skipping'); }"
 
       - name: Build Desktop Timer App
-        shell: powershell
+        shell: cmd
         run: |
-          Write-Host "=== Command locations ==="
-          Write-Host "Node: $((Get-Command node -ErrorAction SilentlyContinue).Source)"
-          Write-Host "Yarn: $((Get-Command yarn -ErrorAction SilentlyContinue).Source)"
-          Write-Host "ts-node: $((Get-Command ts-node -ErrorAction SilentlyContinue).Source)"
-          Write-Host "cross-env: $((Get-Command cross-env -ErrorAction SilentlyContinue).Source)"
-          Write-Host "nx: $((Get-Command nx -ErrorAction SilentlyContinue).Source)"
-          Write-Host ""
-          Write-Host "=== Starting build ==="
+          npx nx reset
           yarn build:desktop-timer:windows:release:gh:x64
         env:
           USE_HARD_LINKS: false
