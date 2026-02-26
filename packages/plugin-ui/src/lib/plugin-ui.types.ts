@@ -1,4 +1,4 @@
-import { InjectionToken, Type } from '@angular/core';
+import { Injector, InjectionToken, Type } from '@angular/core';
 import type { PageExtensionDefinition } from './plugin-extension/page-extension-slot.types';
 
 /**
@@ -120,6 +120,32 @@ export interface PluginUiDefinition {
 	 * loadModule: () => import('@gauzy/plugin-jobs-ui').then(m => m.JobsModule)
 	 */
 	loadModule?: () => Promise<Type<any>>;
+
+	/**
+	 * Lightweight bootstrap callback for plugins that don't need a full Angular NgModule.
+	 * Called by PluginUiModule at app startup with the environment injector.
+	 *
+	 * Use when your plugin only needs declarative registrations (routes, tabs, nav menu, etc.)
+	 * and doesn't require Angular DI-managed class instances or lifecycle hooks.
+	 * When `bootstrap` is provided and neither `module` nor `loadModule` is set,
+	 * `PluginUiModule` will call this instead of instantiating a module class.
+	 *
+	 * @example
+	 * ```ts
+	 * export const MyPlugin: PluginUiDefinition = {
+	 *   id: 'my-plugin',
+	 *   routes: [...],
+	 *   tabs: [...],
+	 *   bootstrap: (injector) => applyDeclarativeRegistrations(MyPlugin, {
+	 *     navBuilder: injector.get(NavMenuBuilderService),
+	 *     pageRouteRegistry: injector.get(PageRouteRegistryService),
+	 *     pageTabRegistry: injector.get(PageTabRegistryService),
+	 *     pageExtensionRegistry: injector.get(PageExtensionRegistryService)
+	 *   })
+	 * };
+	 * ```
+	 */
+	bootstrap?: (injector: Injector) => void | Promise<void>;
 
 	/**
 	 * The page-route registry location this plugin contributes to.
@@ -315,9 +341,10 @@ export function orderPluginsByDependencies(plugins: PluginUiDefinition[]): Plugi
 
 /**
  * Flattens a plugin tree into a list of all plugins (including nested plugins).
- * Order is top-down: parent before children. Parent group plugins that have no
- * module are not included; only leaf plugins and parent plugins with a module
- * are returned. Plugins are initialized in this order (parent first, then children).
+ * Order is top-down: parent before children. For parent plugins with nested children,
+ * only those with at least one of `module`, `loadModule`, or `bootstrap` are included
+ * alongside their children (pure group parents with none of these are skipped).
+ * Leaf plugins (no nested children) are always included.
  * Use orderPluginsByDependencies() afterward if plugins use dependsOn.
  *
  * @param plugins Top-level plugins array (may contain parents with nested plugins).
@@ -328,7 +355,7 @@ export function flattenPlugins(plugins: PluginUiDefinition[]): PluginUiDefinitio
 	for (const p of plugins) {
 		const nested = getNestedPlugins(p);
 		if (nested?.length) {
-			if (p.module) {
+			if (p.module || p.loadModule || p.bootstrap) {
 				result.push(p);
 			}
 			result.push(...flattenPlugins(nested));

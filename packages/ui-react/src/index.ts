@@ -1,6 +1,8 @@
 /*
- * React Bridge - Renders React components inside Angular with access
- * to Angular services via the Angular injector.
+ * Public API Surface of @gauzy/plugin-ui-react
+ *
+ * React-to-Angular bridge: renders React components inside Angular with
+ * access to Angular services via the Angular injector.
  */
 
 // Context (for use inside React components)
@@ -10,13 +12,13 @@ export {
 	useBridgeContext,
 	type NgReactBridgeContext,
 	type NgContextProviderProps
-} from './ng-react-context';
+} from './lib/ng-react-context';
 
 // Hooks (for use inside React components)
-export { useInjector, usePluginEvents, usePluginEvent, type UsePluginEventsReturn } from './react-hooks';
+export { useInjector, usePluginEvents, usePluginEvent, type UsePluginEventsReturn } from './lib/react-hooks';
 
 // Directives (for use in Angular templates)
-export { ReactHostDirective, LazyReactHostDirective } from './directives';
+export { ReactHostDirective, LazyReactHostDirective } from './lib/directives';
 
 // Bridge class and provider
 export {
@@ -24,8 +26,8 @@ export {
 	type ReactBridgeConfig,
 	type ReactBridgeMountOptions,
 	type ReactBridgeMountResult
-} from './react-bridge';
-export { REACT_BRIDGE, provideReactBridge, createReactBridge } from './react-bridge.provider';
+} from './lib/react-bridge';
+export { REACT_BRIDGE, provideReactBridge, createReactBridge } from './lib/react-bridge.provider';
 
 // React extension helper (for defining React extensions in plugins)
 export {
@@ -36,4 +38,4 @@ export {
 	type ReactExtensionLifecycleContext,
 	type ReactExtensionVisibilityContext,
 	type ReactExtensionWrapper
-} from './react-extension.helper';
+} from './lib/react-extension.helper';

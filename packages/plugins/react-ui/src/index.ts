@@ -7,7 +7,3 @@
 
 // Plugin definitions
 export { ReactUiPlugin } from './lib/react-ui.plugin';
-
-// Angular module & page components
-export { ReactUiModule } from './lib/react-ui.module';
-export { ReactTimeTrackingPageComponent } from './lib/react-time-tracking-page.component';

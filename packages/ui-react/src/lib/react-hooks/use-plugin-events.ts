@@ -7,7 +7,7 @@ import {
 	EmitOptions,
 	SubscribeOptions,
 	PluginEventBusService
-} from '../../plugin-extension/plugin-event-bus.service';
+} from '@gauzy/plugin-ui';
 
 /**
  * Hook return type for usePluginEvents.

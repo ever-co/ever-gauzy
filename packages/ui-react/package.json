@@ -1,7 +1,7 @@
 {
-	"name": "@gauzy/plugin-ui",
+	"name": "@gauzy/plugin-ui-react",
 	"version": "0.1.0",
-	"description": "Core UI plugin infrastructure for Gauzy (types, loader, lifecycle module, registry).",
+	"description": "React-to-Angular bridge for Gauzy UI plugins. Renders React components inside Angular with access to Angular services.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -10,7 +10,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy",
-		"directory": "packages/plugin-ui"
+		"directory": "packages/ui-react"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
@@ -19,24 +19,30 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
-		"lib:build": "yarn nx build plugin-ui --configuration=development",
-		"lib:build:prod": "yarn nx build plugin-ui --configuration=production",
-		"lib:watch": "yarn nx build plugin-ui --watch --configuration=development"
+		"lib:build": "yarn nx build plugin-ui-react --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-ui-react --configuration=production",
+		"lib:watch": "yarn nx build plugin-ui-react --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "21.0.7",
-		"@angular/core": "21.0.7"
+		"@angular/core": "21.0.7",
+		"@gauzy/plugin-ui": "*",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"rxjs": "^7.0.0"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
 		"jest-preset-angular": "16.0.0"
 	},
 	"keywords": [
 		"gauzy",
-		"plugin-ui",
+		"plugin-ui-react",
 		"angular",
-		"ui",
+		"react",
 		"plugin",
 		"ever-gauzy"
 	],

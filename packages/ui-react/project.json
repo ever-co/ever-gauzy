@@ -1,0 +1,40 @@
+{
+	"name": "plugin-ui-react",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/ui-react/src",
+	"prefix": "lib",
+	"projectType": "library",
+	"tags": ["scope:shared", "type:ui"],
+	"implicitDependencies": ["plugin-ui"],
+	"targets": {
+		"build": {
+			"executor": "@nx/angular:ng-packagr-lite",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/ui-react/ng-package.json",
+				"tsConfig": "packages/ui-react/tsconfig.lib.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/ui-react/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/ui-react/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "development",
+			"dependsOn": ["^build"]
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/ui-react/jest.config.ts",
+				"tsConfig": "packages/ui-react/tsconfig.spec.json"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

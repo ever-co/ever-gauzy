@@ -11,4 +11,3 @@ export * from './lib/plugin-ui-config-loader';
 export * from './lib/plugin-extension';
 export * from './lib/plugin-host';
 export * from './lib/ui-bridge';
-export * from './lib/react-bridge';

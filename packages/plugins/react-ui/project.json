@@ -5,7 +5,7 @@
 	"prefix": "gz",
 	"projectType": "library",
 	"tags": ["scope:plugin", "type:ui"],
-	"implicitDependencies": ["plugin-ui", "ui-core"],
+	"implicitDependencies": ["plugin-ui", "plugin-ui-react", "ui-core"],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:ng-packagr-lite",

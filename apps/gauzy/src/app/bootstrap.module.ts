@@ -1,5 +1,6 @@
 import { inject, NgModule, OnDestroy, provideZoneChangeDetection } from '@angular/core';
 import { PLUGIN_UI_CONFIG, getPluginUiConfig, PluginUiModule, PluginUiRegistryService } from '@gauzy/plugin-ui';
+import { NavMenuBuilderService, PageRouteRegistryService, PageTabRegistryService } from '@gauzy/ui-core/core';
 import { AppModule } from './app.module';
 import { AppComponent } from './app.component';
 
@@ -20,7 +21,11 @@ import { AppComponent } from './app.component';
  */
 @NgModule({
 	imports: [
-		PluginUiModule.init(), // Plugin lifecycle management (ngOnPluginBootstrap / ngOnPluginDestroy)
+		PluginUiModule.init({
+			navBuilder: NavMenuBuilderService,
+			routeRegistry: PageRouteRegistryService,
+			tabRegistry: PageTabRegistryService
+		}), // Plugin lifecycle management (ngOnPluginBootstrap / ngOnPluginDestroy)
 		AppModule // Core application module (declares AppComponent + all app logic)
 	],
 	providers: [

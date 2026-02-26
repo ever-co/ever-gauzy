@@ -1,6 +1,5 @@
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PluginRouteInput, PluginUiDefinition } from '@gauzy/plugin-ui';
-import { ReactUiModule } from './react-ui.module';
+import { defineDeclarativePlugin, PluginRouteInput } from '@gauzy/plugin-ui';
 import { REACT_TIME_TRACKING_DASHBOARD_ROUTE, REACT_TIME_TRACKING_PATH } from './react-ui.routes';
 
 /**
@@ -10,6 +9,10 @@ import { REACT_TIME_TRACKING_DASHBOARD_ROUTE, REACT_TIME_TRACKING_PATH } from '.
  * Today's Activity, Worked today, Worked this week, Weekly Activity) as a
  * single React extension on the Time Tracking dashboard. Data is fetched live
  * from TimesheetStatisticsService via the Angular injector bridge.
+ *
+ * Uses `defineDeclarativePlugin` — no Angular NgModule or manual service
+ * injection required. Routes and tabs are registered automatically at
+ * bootstrap via the services provided to `PluginUiModule.init()`.
  *
  * ## Usage
  *
@@ -22,10 +25,8 @@ import { REACT_TIME_TRACKING_DASHBOARD_ROUTE, REACT_TIME_TRACKING_PATH } from '.
  * };
  * ```
  */
-export const ReactUiPlugin: PluginUiDefinition = {
-	id: 'react-ui',
+export const ReactUiPlugin = defineDeclarativePlugin('react-ui', {
 	location: 'page-sections',
-	module: ReactUiModule,
 	routes: [REACT_TIME_TRACKING_DASHBOARD_ROUTE as PluginRouteInput],
 	// ─────────────────────────────────────────────────────────────
 	// Register the React Time Tracking dashboard tab via page extension
@@ -44,4 +45,4 @@ export const ReactUiPlugin: PluginUiDefinition = {
 			permissions: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD]
 		}
 	]
-};
+});

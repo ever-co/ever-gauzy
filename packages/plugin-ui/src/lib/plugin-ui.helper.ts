@@ -1,4 +1,4 @@
-import { Type } from '@angular/core';
+import { InjectionToken, Injector, Type } from '@angular/core';
 import type { PageExtensionDefinition } from './plugin-extension/page-extension-slot.types';
 import {
 	PluginUiDefinition,
@@ -8,6 +8,30 @@ import {
 	flattenPlugins
 } from './plugin-ui.types';
 import { PluginUiLifecycleMethods } from './plugin-ui.interface';
+import { PageExtensionRegistryService } from './plugin-extension/page-extension-registry.service';
+
+// ─── Declarative service tokens ──────────────────────────────────────────────
+
+/**
+ * Optional InjectionToken for the nav-menu builder service.
+ * Provide via `PluginUiModule.init({ navBuilder: NavMenuBuilderService })`.
+ * Used internally by `defineDeclarativePlugin` to wire up nav contributions.
+ */
+export const PLUGIN_NAV_BUILDER = new InjectionToken<IDeclarativeNavBuilder>('PLUGIN_NAV_BUILDER');
+
+/**
+ * Optional InjectionToken for the page-route registry service.
+ * Provide via `PluginUiModule.init({ routeRegistry: PageRouteRegistryService })`.
+ * Used internally by `defineDeclarativePlugin` to register plugin routes.
+ */
+export const PLUGIN_ROUTE_REGISTRY = new InjectionToken<IDeclarativePageRouteRegistry>('PLUGIN_ROUTE_REGISTRY');
+
+/**
+ * Optional InjectionToken for the page-tab registry service.
+ * Provide via `PluginUiModule.init({ tabRegistry: PageTabRegistryService })`.
+ * Used internally by `defineDeclarativePlugin` to register plugin tabs.
+ */
+export const PLUGIN_TAB_REGISTRY = new InjectionToken<IDeclarativePageTabRegistry>('PLUGIN_TAB_REGISTRY');
 
 /**
  * Minimal interface for applying nav sections/items.
@@ -286,4 +310,50 @@ export function hasPluginUiLifecycleMethod<M extends keyof PluginUiLifecycleMeth
 	lifecycleMethod: M
 ): plugin is { [key in M]: PluginUiLifecycleMethods[M] } {
 	return typeof plugin?.[lifecycleMethod] === 'function';
+}
+
+/**
+ * Creates a declarative plugin definition with a zero-boilerplate `bootstrap` callback.
+ *
+ * Use this instead of hand-writing a `bootstrap` function that manually calls
+ * `injector.get(NavMenuBuilderService)` etc. The helper auto-generates the callback
+ * using the optional InjectionTokens registered by `PluginUiModule.init(services)`.
+ *
+ * Services are looked up at bootstrap time (not at definition time), so they are
+ * always fully initialized when the callback runs.
+ *
+ * @example
+ * ```ts
+ * // plugin.ts
+ * export const MyPlugin = defineDeclarativePlugin('my-plugin', {
+ *   location: 'my-sections',
+ *   routes: [MY_ROUTE],
+ *   tabs: [MY_TAB],
+ * });
+ *
+ * // bootstrap.module.ts
+ * PluginUiModule.init({
+ *   navBuilder: NavMenuBuilderService,
+ *   routeRegistry: PageRouteRegistryService,
+ *   tabRegistry: PageTabRegistryService,
+ * })
+ * ```
+ *
+ * @param id Unique plugin identifier.
+ * @param definition All other plugin fields except `id` and `bootstrap`.
+ */
+export function defineDeclarativePlugin(
+	id: string,
+	definition: Omit<PluginUiDefinition, 'id' | 'bootstrap'>
+): PluginUiDefinition {
+	const plugin: PluginUiDefinition = { ...definition, id };
+	plugin.bootstrap = (injector: Injector): void => {
+		applyDeclarativeRegistrations(plugin, {
+			navBuilder: injector.get(PLUGIN_NAV_BUILDER, null) ?? undefined,
+			pageRouteRegistry: injector.get(PLUGIN_ROUTE_REGISTRY, null) ?? undefined,
+			pageTabRegistry: injector.get(PLUGIN_TAB_REGISTRY, null) ?? undefined,
+			pageExtensionRegistry: injector.get(PageExtensionRegistryService, null) ?? undefined
+		});
+	};
+	return plugin;
 }

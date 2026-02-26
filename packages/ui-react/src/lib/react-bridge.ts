@@ -1,7 +1,7 @@
 import { createRoot, type Root } from 'react-dom/client';
 import React from 'react';
 import { NgContextProvider } from './ng-react-context';
-import { UiBridge, UiBridgeConfig, UiBridgeMountOptions, UiBridgeMountResult, UI_BRIDGE_FRAMEWORK } from '../ui-bridge/ui-bridge.interface';
+import { UiBridge, UiBridgeConfig, UiBridgeMountOptions, UiBridgeMountResult, UI_BRIDGE_FRAMEWORK } from '@gauzy/plugin-ui';
 
 // Convenience type aliases
 export type ReactBridgeConfig = UiBridgeConfig;
