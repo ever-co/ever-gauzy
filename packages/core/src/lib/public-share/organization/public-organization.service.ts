@@ -1,7 +1,7 @@
 import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
-import { MultiORM, MultiORMEnum, getORMType } from '@gauzy/core';
+import { MultiORM, MultiORMEnum, getORMType } from '../../core/utils';
 import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
 import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
 import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
