@@ -1,25 +1,25 @@
 {
-	"name": "plugin-example-react-ui",
+	"name": "plugin-react-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/plugins/example-react-ui/src",
+	"sourceRoot": "packages/plugins/react-ui/src",
 	"prefix": "gz",
 	"projectType": "library",
-	"tags": [],
+	"tags": ["scope:plugin", "type:ui"],
 	"implicitDependencies": ["plugin-ui", "ui-core", "ui-react-bridge"],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:ng-packagr-lite",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
-				"project": "packages/plugins/example-react-ui/ng-package.json",
-				"tsConfig": "packages/plugins/example-react-ui/tsconfig.lib.json"
+				"project": "packages/plugins/react-ui/ng-package.json",
+				"tsConfig": "packages/plugins/react-ui/tsconfig.lib.json"
 			},
 			"configurations": {
 				"production": {
-					"tsConfig": "packages/plugins/example-react-ui/tsconfig.lib.json"
+					"tsConfig": "packages/plugins/react-ui/tsconfig.lib.json"
 				},
 				"development": {
-					"tsConfig": "packages/plugins/example-react-ui/tsconfig.lib.json"
+					"tsConfig": "packages/plugins/react-ui/tsconfig.lib.json"
 				}
 			},
 			"defaultConfiguration": "development",

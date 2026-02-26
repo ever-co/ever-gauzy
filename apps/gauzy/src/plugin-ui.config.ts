@@ -5,7 +5,7 @@ import { JobProposalPlugin, JobProposalTemplatePlugin } from '@gauzy/plugin-job-
 import { JobSearchPlugin } from '@gauzy/plugin-job-search-ui';
 import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
-import { ExampleReactPlugin } from '@gauzy/plugin-example-react-ui';
+import { ReactUiPlugin } from '@gauzy/plugin-react-ui';
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
 
@@ -75,7 +75,7 @@ export const uiPluginConfig: PluginUiConfig = {
 			plugins: [JobEmployeePlugin, JobSearchPlugin, JobMatchingPlugin, JobProposalTemplatePlugin]
 		}),
 
-		// Example React Plugin (demonstrates React components in Angular)
-		ExampleReactPlugin
+		// React UI Plugin
+		ReactUiPlugin
 	]
 };

@@ -1,4 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { RouterModule, ROUTES } from '@angular/router';
 import {
 	NbAlertModule,
 	NbBadgeModule,
@@ -39,12 +40,11 @@ import {
 	TableComponentsModule,
 	TimezoneFilterModule,
 	WidgetLayoutModule,
-	WindowLayoutModule,
-	WorkInProgressModule
+	WindowLayoutModule
 } from '@gauzy/ui-core/shared';
-import { DashboardRoutingModule } from './dashboard-routing.module';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { createDashboardRoutes } from './dashboard.routes';
 import { DashboardComponent } from './dashboard.component';
-import { DataEntryShortcutsComponent } from './data-entry-shortcuts/data-entry-shortcuts.component';
 import { HumanResourcesComponent } from './human-resources/human-resources.component';
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
@@ -95,7 +95,6 @@ const THIRD_PARTY_MODULES = [
 // Components
 const COMPONENTS = [
 	DashboardComponent,
-	DataEntryShortcutsComponent,
 	AccountingComponent,
 	HumanResourcesComponent,
 	ProjectManagementComponent,
@@ -114,7 +113,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		DashboardRoutingModule,
+		RouterModule.forChild([]),
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
 		...STANDALONE_MODULES,
@@ -127,7 +126,6 @@ const COMPONENTS = [
 		SharedModule,
 		TableComponentsModule,
 		NoDataMessageModule,
-		WorkInProgressModule,
 		ActivityItemModule,
 		CounterPointModule,
 		DynamicTabsModule,
@@ -138,6 +136,16 @@ const COMPONENTS = [
 		WindowLayoutModule
 	],
 	declarations: [...COMPONENTS],
-	schemas: [CUSTOM_ELEMENTS_SCHEMA]
+	exports: [RouterModule],
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	providers: [
+		{
+			provide: ROUTES,
+			useFactory: (_pageRouteRegistryService: PageRouteRegistryService) =>
+				createDashboardRoutes(_pageRouteRegistryService),
+			deps: [PageRouteRegistryService],
+			multi: true
+		}
+	]
 })
 export class DashboardModule {}
