@@ -1,31 +1,36 @@
 {
-	"cSpell.userWords": [],
-	"cSpell.enabled": true,
-	"typescript.tsdk": "node_modules/typescript/lib",
-	"typescript.enablePromptUseWorkspaceTsdk": true,
-	"npm.packageManager": "yarn",
-	"prettier.trailingComma": "none",
-	"prettier.singleQuote": true,
-	"editor.formatOnSave": true,
-	"eslint.format.enable": true,
-	"editor.tabSize": 4,
-	"files.insertFinalNewline": true,
-	"files.trimFinalNewlines": true,
-	"files.trimTrailingWhitespace": true,
-	"editor.codeActionsOnSave": {
-		"source.fixAll": "explicit"
-	},
-	"vsicons.presets.angular": true,
-	"deepscan.enable": true,
-	"files.exclude": {
-		"**/.git": true,
-		"**/.DS_Store": true,
-		"**/node_modules": true,
-		"**/public/**/*.png": true,
-		"**/public/**/*.jpg": true,
-		"**/public/**/*.pdf": true
-	},
-	"angular.enable-strict-mode-prompt": false,
-	"nxConsole.generateAiAgentRules": true,
-	"git.ignoreLimitWarning": true
+    "cSpell.enabled": true,
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "npm.packageManager": "yarn",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit"
+    },
+    "prettier.requireConfig": true,
+    "prettier.configPath": ".prettierrc",
+    "prettier.useEditorConfig": true,
+    "prettier.trailingComma": "none",
+    "prettier.singleQuote": true,
+    "eslint.format.enable": true,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false,
+    "editor.detectIndentation": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "vsicons.presets.angular": true,
+    "deepscan.enable": true,
+    "files.exclude": {
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/node_modules": true,
+        "**/public/**/*.png": true,
+        "**/public/**/*.jpg": true,
+        "**/public/**/*.pdf": true
+    },
+    "angular.enable-strict-mode-prompt": false,
+    "nxConsole.generateAiAgentRules": true,
+    "git.ignoreLimitWarning": true
 }
