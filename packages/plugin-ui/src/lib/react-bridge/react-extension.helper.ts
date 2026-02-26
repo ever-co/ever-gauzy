@@ -101,7 +101,6 @@ export interface ReactExtensionConfig<TProps = Record<string, unknown>> {
 
 /**
  * React extension definition that can be used in plugin definitions.
- * Extends the base PageExtensionDefinition interface from @gauzy/plugin-ui.
  */
 export interface ReactExtensionDefinition<TProps = Record<string, unknown>> {
 	id: string;
@@ -226,34 +225,8 @@ function createReactWrapperComponent<TProps>(
  * })
  * ```
  *
- * @example
- * ```typescript
- * // With visibility control
- * defineReactExtension({
- *   id: 'admin-widget',
- *   slotId: PAGE_EXTENSION_SLOTS.DASHBOARD_WIDGETS,
- *   component: AdminWidget,
- *   permissions: ['ADMIN'],
- *   featureKey: 'FEATURE_ADMIN_DASHBOARD'
- * })
- * ```
- *
- * @example
- * ```typescript
- * // With wrapper and lifecycle hooks
- * defineReactExtension({
- *   id: 'stats-card',
- *   slotId: PAGE_EXTENSION_SLOTS.DASHBOARD_WIDGETS,
- *   component: StatsCard,
- *   wrapper: 'card',
- *   metadata: { title: 'Statistics' },
- *   onMount: (ctx) => console.log('Mounted!'),
- *   onUnmount: (ctx) => console.log('Unmounted!')
- * })
- * ```
- *
  * @param config Configuration for the React extension
- * @returns An ExtensionDefinition that can be used in plugin definitions
+ * @returns A ReactExtensionDefinition that can be used in plugin definitions
  */
 export function defineReactExtension<TProps = Record<string, unknown>>(
 	config: ReactExtensionConfig<TProps>

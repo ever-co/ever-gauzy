@@ -1,33 +1,13 @@
 import { useEffect, useMemo, useCallback } from 'react';
-import { Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { useInjector } from './use-injector';
 
-/**
- * Plugin event interface (mirrors the Angular service type).
- */
-export interface PluginEvent<T = unknown> {
-	type: string;
-	payload: T;
-	source?: string;
-	timestamp: number;
-	metadata?: Record<string, unknown>;
-}
-
-/**
- * Options for emitting events.
- */
-export interface EmitOptions {
-	source?: string;
-	metadata?: Record<string, unknown>;
-}
-
-/**
- * Options for subscribing to events.
- */
-export interface SubscribeOptions {
-	source?: string;
-	afterTimestamp?: number;
-}
+import {
+	PluginEvent,
+	EmitOptions,
+	SubscribeOptions,
+	PluginEventBusService
+} from '../../plugin-extension/plugin-event-bus.service';
 
 /**
  * Hook return type for usePluginEvents.
@@ -90,19 +70,11 @@ export function usePluginEvents(pluginId?: string): UsePluginEventsReturn {
 	const injector = useInjector();
 
 	// Get the event bus service from Angular DI
-	const eventBus = useMemo(() => {
+	const eventBus = useMemo<PluginEventBusService | null>(() => {
 		if (!injector) return null;
 		try {
-			// Dynamic import to avoid circular dependency
-			// The service is injected via Angular's DI
-			const PluginEventBusService = injector.get(
-				// Use string token to avoid import issues
-				'PluginEventBusService' as any,
-				null
-			);
-			return PluginEventBusService;
+			return injector.get(PluginEventBusService, null);
 		} catch {
-			// Service not available, try alternative approach
 			return null;
 		}
 	}, [injector]);

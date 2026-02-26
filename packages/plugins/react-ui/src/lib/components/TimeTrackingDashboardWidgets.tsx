@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useInjector } from '@gauzy/ui-react-bridge';
+import { useInjector } from '@gauzy/plugin-ui';
 import { TimesheetStatisticsService, Store } from '@gauzy/ui-core/core';
 import { theme } from './theme';
 import { formatDuration, currentWeekRange, todayRange } from './helpers';

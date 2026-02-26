@@ -1,41 +1,18 @@
-import { Injector } from '@angular/core';
 import { createRoot, type Root } from 'react-dom/client';
 import React from 'react';
 import { NgContextProvider } from './ng-react-context';
+import { UiBridge, UiBridgeConfig, UiBridgeMountOptions, UiBridgeMountResult, UI_BRIDGE_FRAMEWORK } from '../ui-bridge/ui-bridge.interface';
 
-/**
- * Configuration for a React bridge.
- */
-export interface ReactBridgeConfig {
-	frameworkId: string;
-	name: string;
-	version: string;
-}
-
-/**
- * Options for mounting a React component.
- */
-export interface ReactBridgeMountOptions<TProps = unknown, TContext = unknown> {
-	component: unknown;
-	props?: TProps;
-	context?: TContext;
-	hostElement: HTMLElement;
-	injector: Injector;
-}
-
-/**
- * Result from mounting a React component.
- */
-export interface ReactBridgeMountResult {
-	unmount: () => void;
-	updateProps?: (props: unknown) => void;
-}
+// Convenience type aliases
+export type ReactBridgeConfig = UiBridgeConfig;
+export type ReactBridgeMountOptions<TProps = unknown, TContext = unknown> = UiBridgeMountOptions<TProps, TContext>;
+export type ReactBridgeMountResult = UiBridgeMountResult;
 
 /**
  * React bridge for rendering React components inside Angular.
  *
- * This bridge uses React 18+ createRoot API to mount React components
- * and provides access to Angular services via NgContextProvider.
+ * Implements UiBridge using the React 18+ createRoot API to mount React
+ * components and provides access to Angular services via NgContextProvider.
  *
  * @example
  * ```typescript
@@ -51,9 +28,9 @@ export interface ReactBridgeMountResult {
  * result.unmount();
  * ```
  */
-export class ReactBridge {
-	readonly config: ReactBridgeConfig = {
-		frameworkId: 'react',
+export class ReactBridge extends UiBridge {
+	readonly config: UiBridgeConfig = {
+		frameworkId: UI_BRIDGE_FRAMEWORK.REACT,
 		name: 'React Bridge',
 		version: '1.0.0'
 	};
@@ -61,7 +38,7 @@ export class ReactBridge {
 	/**
 	 * Mount a React component into an Angular host element.
 	 */
-	mount(options: ReactBridgeMountOptions): ReactBridgeMountResult {
+	mount(options: UiBridgeMountOptions): UiBridgeMountResult {
 		const { component, props, context, hostElement, injector } = options;
 
 		const root: Root = createRoot(hostElement);

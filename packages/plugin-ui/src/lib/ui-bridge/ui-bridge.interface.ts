@@ -2,21 +2,11 @@ import { Injector } from '@angular/core';
 
 /**
  * Well-known UI framework identifiers.
- * Use these constants for consistency, or define custom framework IDs.
+ * Use these constants for consistency, or define custom framework IDs as strings.
  */
 export const UI_BRIDGE_FRAMEWORK = {
 	/** React framework (react, react-dom) */
-	REACT: 'react',
-	/** Vue.js framework */
-	VUE: 'vue',
-	/** Svelte framework */
-	SVELTE: 'svelte',
-	/** Preact framework (lightweight React alternative) */
-	PREACT: 'preact',
-	/** Solid.js framework */
-	SOLID: 'solid',
-	/** Qwik framework */
-	QWIK: 'qwik'
+	REACT: 'react'
 } as const;
 
 /**

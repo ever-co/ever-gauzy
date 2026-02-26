@@ -23,7 +23,7 @@ export interface NgContextProviderProps {
 
 /**
  * React Context provider that exposes Angular's Injector to child React components.
- * Used internally by ReactComponentDirective and LazyReactDirective.
+ * Used internally by ReactHostDirective and LazyReactHostDirective.
  */
 export function NgContextProvider({ injector, context = {}, children }: NgContextProviderProps) {
 	const value: NgReactBridgeContext = { injector, ...context };

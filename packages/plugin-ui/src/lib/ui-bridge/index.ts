@@ -33,5 +33,5 @@ export {
 	getExtensionFrameworkId
 } from './framework-extension.helper';
 
-// Bridge adapter (for integrating external bridges like @gauzy/ui-react-bridge)
+// Bridge adapter (for integrating external bridges)
 export { UiBridgeLike, adaptBridge, isUiBridgeLike, provideBridge } from './ui-bridge.adapter';

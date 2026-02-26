@@ -25,11 +25,15 @@
 	},
 	"peerDependencies": {
 		"@angular/common": "21.0.7",
-		"@angular/core": "21.0.7"
+		"@angular/core": "21.0.7",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
 		"jest-preset-angular": "16.0.0"
 	},
 	"keywords": [

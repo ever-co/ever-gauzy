@@ -19,10 +19,6 @@ import { TeamComponent } from './team/team.component';
  * @returns Angular Route array for the dashboard feature.
  */
 export function createDashboardRoutes(_pageRouteRegistryService: PageRouteRegistryService): Route[] {
-	console.log(
-		'Registering dashboard routes from createDashboardRoutes function',
-		_pageRouteRegistryService.getPageLocationRoutes('dashboard-sections')
-	);
 	return [
 		{
 			path: '',

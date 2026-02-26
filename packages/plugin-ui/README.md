@@ -38,9 +38,9 @@ used to bootstrap and manage UI plugins (such as job and integration UI plugins)
     - `definePlugin(id, module, options?)` — creates a simple plugin definition.
     - `definePluginGroup(id, module, { location, plugins, init? })` — creates a parent plugin with child plugins and optional init factory.
 
-- **UI Bridge System** (NEW)
-    - Render React, Vue, Svelte, or any other UI framework components inside Angular.
-    - Library-agnostic design with pluggable bridge implementations.
+- **UI Bridge System**
+    - Render React (or any other UI framework) components inside Angular.
+    - Pluggable bridge design — implement `UiBridge` to support additional frameworks.
     - `FrameworkHostComponent` — generic Angular component for rendering framework components.
     - `defineFrameworkExtension()` — helper for defining non-Angular extensions in plugins.
 
@@ -48,7 +48,7 @@ used to bootstrap and manage UI plugins (such as job and integration UI plugins)
 
 ## UI Bridge System
 
-The UI Bridge system allows plugins to render components from any UI framework (React, Vue, Svelte, etc.) inside Angular. Each framework has its own bridge implementation that can be optionally installed.
+The UI Bridge system allows plugins to render React (or other framework) components inside Angular. Each framework has its own bridge implementation that can be optionally installed.
 
 ### Architecture
 
@@ -58,10 +58,6 @@ The UI Bridge system allows plugins to render components from any UI framework (
 ├── UiBridgeRegistryService (manages all bridges)
 ├── FrameworkHostComponent (generic host)
 └── defineFrameworkExtension() (helper)
-
-@gauzy/ui-react-bridge → implements UiBridge for React
-@gauzy/ui-vue-bridge   → implements UiBridge for Vue (future)
-@gauzy/ui-svelte-bridge → implements UiBridge for Svelte (future)
 ```
 
 ### Using the UI Bridge
@@ -70,14 +66,14 @@ The UI Bridge system allows plugins to render components from any UI framework (
 
 ```bash
 # For React support
-yarn add @gauzy/ui-react-bridge react react-dom
+yarn add react react-dom
 ```
 
 #### 2. Register the Bridge
 
 ```typescript
 // In your app.config.ts or main providers
-import { provideReactBridge } from '@gauzy/ui-react-bridge';
+import { provideReactBridge } from '@gauzy/plugin-ui';
 
 export const appConfig: ApplicationConfig = {
 	providers: [
@@ -167,12 +163,9 @@ export class MyFrameworkBridge extends UiBridge {
 
 ### Available Bridges
 
-| Framework | Package                   | Status       |
-| --------- | ------------------------- | ------------ |
-| React     | `@gauzy/ui-react-bridge`  | ✅ Available |
-| Vue       | `@gauzy/ui-vue-bridge`    | 🔜 Planned   |
-| Svelte    | `@gauzy/ui-svelte-bridge` | 🔜 Planned   |
-| Preact    | `@gauzy/ui-preact-bridge` | 🔜 Planned   |
+| Framework | Package            | Status       |
+| --------- | ------------------ | ------------ |
+| React     | `@gauzy/plugin-ui` | ✅ Available |
 
 ---
 

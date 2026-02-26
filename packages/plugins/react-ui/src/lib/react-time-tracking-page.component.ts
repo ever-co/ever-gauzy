@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactHostDirective } from '@gauzy/ui-react-bridge';
+import { ReactHostDirective } from '@gauzy/plugin-ui';
 import { ReactTimeTrackingPage } from './components/ReactTimeTrackingPage';
 
 /**

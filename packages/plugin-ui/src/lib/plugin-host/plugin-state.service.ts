@@ -6,7 +6,7 @@ import { BehaviorSubject, Observable, distinctUntilChanged, map } from 'rxjs';
  *
  * Provides a simple key/value store backed by BehaviorSubjects so both
  * Angular components (via Observables) and React components (via the
- * usePluginState() hook in @gauzy/ui-react-bridge) can reactively
+ * usePluginState() hook in @gauzy/plugin-ui) can reactively
  * consume and update shared state.
  *
  * Keys are arbitrary strings. Convention: prefix with your plugin id
@@ -78,9 +78,7 @@ export class PluginStateService {
 	 * Emits the current value immediately on subscribe.
 	 */
 	select<T>(key: string): Observable<T | undefined> {
-		return this._getOrCreate<T | undefined>(key, undefined).pipe(
-			distinctUntilChanged()
-		);
+		return this._getOrCreate<T | undefined>(key, undefined).pipe(distinctUntilChanged());
 	}
 
 	/**

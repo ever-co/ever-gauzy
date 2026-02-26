@@ -75,9 +75,9 @@ export interface PluginTabInput {
 	path?: string;
 	/** Component to render. */
 	component?: Type<unknown>;
-	/** Whether the tab is responsive (hidden on small screens when overflowed). */
+	/** Whether the tab is responsive (collapses on small screens). Maps to NbRouteTab.responsive. */
 	responsive?: boolean;
-	/** Options for the active link matching (e.g. { exact: false }). */
+	/** Active link options for router-link-active matching. Maps to NbRouteTab.activeLinkOptions. */
 	activeLinkOptions?: { exact: boolean };
 	/** Permissions to show tab. */
 	permissions?: unknown | unknown[];

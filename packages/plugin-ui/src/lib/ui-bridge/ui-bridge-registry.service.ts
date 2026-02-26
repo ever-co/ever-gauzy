@@ -49,7 +49,7 @@ export interface BridgeRegistrationOptions {
  * registry.register(new ReactBridge());
  *
  * // Lazy registration (loaded on first use)
- * registry.registerLazy('react', () => import('@gauzy/ui-react-bridge').then(m => new m.ReactBridge()));
+ * registry.registerLazy('react', () => import('@gauzy/plugin-ui').then(m => new m.ReactBridge()));
  *
  * // Get a bridge (loads lazily if needed)
  * const bridge = await registry.getAsync('react');
@@ -67,9 +67,7 @@ export class UiBridgeRegistryService {
 	/**
 	 * Observable of all registered bridges (excluding lazy unloaded).
 	 */
-	readonly bridges$: Observable<UiBridge[]> = this._bridges$.pipe(
-		map((bridges) => Array.from(bridges.values()))
-	);
+	readonly bridges$: Observable<UiBridge[]> = this._bridges$.pipe(map((bridges) => Array.from(bridges.values())));
 
 	/**
 	 * Register a UI framework bridge (immediate).
