@@ -520,10 +520,41 @@ export class SimService {
 			const workflowId = eventMappingSetting.settingsValue;
 			const client = await this.simClientFactory.getClient(integrationTenant.id);
 
-			// Execute asynchronously
-			await client.executeWorkflow(workflowId, params.data, {
-				async: true
+			// Create execution log entry
+			const execution = this.executionRepository.create({
+				workflowId,
+				status: 'queued',
+				input: params.data,
+				triggeredBy: 'event',
+				integrationId: integrationTenant.id,
+				tenantId: params.tenantId,
+				organizationId: params.organizationId
 			});
+			await this.executionRepository.save(execution);
+
+			try {
+				// Execute asynchronously
+				const result = await client.executeWorkflow(workflowId, params.data, {
+					async: true
+				});
+
+				// Update execution log with result
+				const syncResult = result as WorkflowExecutionResult;
+				const asyncResult = result as AsyncExecutionResult;
+
+				execution.status = asyncResult.taskId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
+				execution.output = syncResult.output ?? result;
+				execution.executionId = syncResult.metadata?.executionId || asyncResult.taskId;
+				execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
+				execution.error = syncResult.error ? { message: syncResult.error } : undefined;
+				await this.executionRepository.save(execution);
+			} catch (execError: any) {
+				// Update execution log with failure
+				execution.status = 'failed';
+				execution.error = { message: execError.message, ...(execError.code ? { code: execError.code } : {}) };
+				await this.executionRepository.save(execution);
+				throw execError;
+			}
 
 			this.logger.log(`Event workflow triggered: ${params.event} -> ${workflowId}`);
 		} catch (error: any) {
