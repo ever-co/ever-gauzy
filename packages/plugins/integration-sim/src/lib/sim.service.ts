@@ -79,10 +79,8 @@ export class SimService {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			throw new HttpException(
-				`Failed to get SIM API key: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
+			this.logger.error(`Failed to get SIM API key: ${error.message}`);
+			throw new InternalServerErrorException('Failed to get SIM API key');
 		}
 	}
 
@@ -227,7 +225,8 @@ export class SimService {
 		let integrationTenant: IIntegrationTenant | null = null;
 		try {
 			integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { name: IntegrationEnum.SIM, tenantId }
+				where: { name: IntegrationEnum.SIM, tenantId },
+				relations: ['settings']
 			});
 		} catch (error) {
 			if (!(error instanceof NotFoundException)) {
@@ -237,6 +236,12 @@ export class SimService {
 
 		if (!integrationTenant?.id) {
 			throw new NotFoundException('SIM integration not found for current tenant');
+		}
+
+		// Verify integration is enabled before executing
+		const isEnabled = await this.isIntegrationEnabled(integrationTenant.id);
+		if (!isEnabled) {
+			throw new BadRequestException('SIM integration is disabled for current tenant');
 		}
 
 		// Get tenant-scoped SIM client
@@ -306,10 +311,10 @@ export class SimService {
 				error: error.message
 			});
 
-			throw new HttpException(
-				`Workflow execution failed: ${error.message}`,
-				error.status || HttpStatus.INTERNAL_SERVER_ERROR
-			);
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new InternalServerErrorException('Workflow execution failed');
 		}
 	}
 
@@ -427,11 +432,14 @@ export class SimService {
 		if (options?.workflowId) where.workflowId = options.workflowId;
 		if (options?.status) where.status = options.status;
 
+		const limit = Math.min(Math.max(options?.limit || 20, 1), 100);
+		const offset = Math.max(options?.offset || 0, 0);
+
 		const [data, total] = await this.executionRepository.findAndCount({
 			where,
 			order: { createdAt: 'DESC' },
-			take: options?.limit || 20,
-			skip: options?.offset || 0
+			take: limit,
+			skip: offset
 		});
 
 		return { data, total };
