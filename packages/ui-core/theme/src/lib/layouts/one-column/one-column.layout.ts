@@ -56,11 +56,6 @@ export class OneColumnLayoutComponent {
 	}
 
 	/**
-	 * Toggles the expansion state of the component and updates the sidebar accordingly.
-	 * If the component is expanded, it expands the 'menu-sidebar'.
-	 * If the component is collapsed, it triggers a sidebar toggle and changes the layout size.
-	 */
-	/**
 	 * Toggles the expansion state of the sidebar.
 	 */
 	toggle(): void {
