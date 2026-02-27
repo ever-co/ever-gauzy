@@ -4,7 +4,6 @@ import {
 	NotFoundException,
 	Logger,
 	HttpException,
-	HttpStatus,
 	InternalServerErrorException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
