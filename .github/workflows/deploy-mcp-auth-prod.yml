@@ -3,7 +3,8 @@ name: Deploy MCP Auth to DigitalOcean Prod
 on:
   workflow_run:
     workflows: ['Build and Publish Gauzy MCP Auth Image Prod']
-    branches: [master]
+    branches:
+      - master
     types:
       - completed
 

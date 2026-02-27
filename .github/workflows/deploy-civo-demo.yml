@@ -3,7 +3,8 @@ name: Deploy to Civo Demo
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Demo']
-    branches: [civo]
+    branches:
+      - civo
     types:
       - completed
 

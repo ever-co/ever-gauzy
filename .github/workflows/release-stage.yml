@@ -2,7 +2,8 @@ name: Release Stage
 
 on:
   push:
-    branches: [stage]
+    branches:
+      - stage
 
 jobs:
   release:

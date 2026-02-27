@@ -88,7 +88,7 @@ export class WakatimeService {
 		switch (ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
-				await knex('wakatime')
+				await knex('heartbeats')
 					.insert(wakatime.map((w) => ({ ...w })))
 					.onConflict(['time', 'entities'])
 					.ignore();
@@ -114,7 +114,7 @@ export class WakatimeService {
 		switch (ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
-				await knex('wakatime')
+				await knex('heartbeats')
 					.insert({ ...wakatime })
 					.onConflict(['time', 'entities'])
 					.ignore();

@@ -37,10 +37,9 @@ export class PublicOrganizationService {
 		try {
 			switch (ormType) {
 				case MultiORMEnum.MikroORM:
-					return await this.mikroOrmOrganizationRepository.findOneOrFail(
-						where as any,
-						{ populate: relations as any }
-					);
+					return await this.mikroOrmOrganizationRepository.findOneOrFail(where as any, {
+						populate: relations as any
+					});
 				case MultiORMEnum.TypeORM:
 				default:
 					return await this.typeOrmOrganizationRepository.findOneOrFail({
@@ -65,12 +64,15 @@ export class PublicOrganizationService {
 		try {
 			switch (ormType) {
 				case MultiORMEnum.MikroORM: {
-					const [items, total] = await this.mikroOrmOrganizationContactRepository.findAndCount(options as any);
-					return { items: items ?? [], total: total ?? 0 };
+					const [items = [], total = 0] = await this.mikroOrmOrganizationContactRepository.findAndCount(
+						options as any
+					);
+					return { items, total };
 				}
 				case MultiORMEnum.TypeORM:
 				default: {
-					const [items = [], total = 0] = await this.typeOrmOrganizationContactRepository.findAndCountBy(options);
+					const [items = [], total = 0] =
+						await this.typeOrmOrganizationContactRepository.findAndCountBy(options);
 					return { items, total };
 				}
 			}

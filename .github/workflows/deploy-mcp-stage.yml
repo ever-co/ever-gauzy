@@ -3,7 +3,8 @@ name: Deploy MCP to DigitalOcean Stage
 on:
   workflow_run:
     workflows: ['Build and Publish Gauzy MCP Image Stage']
-    branches: [stage]
+    branches:
+      - stage
     types:
       - completed
 

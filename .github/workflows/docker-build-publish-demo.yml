@@ -2,7 +2,9 @@ name: Build and Publish Docker Images Demo
 
 on:
   push:
-    branches: [develop, temp]
+    branches:
+      - develop
+      - temp
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}

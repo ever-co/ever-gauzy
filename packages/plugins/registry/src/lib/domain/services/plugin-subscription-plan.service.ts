@@ -203,12 +203,12 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 			}
 
 			// Check if new name already exists for this plugin
-			const existingPlan = await this.findOneByWhereOptions({
+			const { success: nameExists } = await this.findOneOrFailByWhereOptions({
 				pluginId: sourcePlan.pluginId,
 				name: newName
 			});
 
-			if (existingPlan) {
+			if (nameExists) {
 				throw new BadRequestException(`A plan with name "${newName}" already exists for this plugin`);
 			}
 
@@ -350,8 +350,8 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 				relations
 			};
 
-			const plan = await this.findOneByWhereOptions({ id } as any);
-			if (!plan) {
+			const { success, record: plan } = await this.findOneOrFailByOptions(queryOptions);
+			if (!success) {
 				throw new NotFoundException(`Subscription plan with ID ${id} not found`);
 			}
 

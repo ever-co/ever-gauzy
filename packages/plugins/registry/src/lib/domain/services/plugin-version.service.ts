@@ -22,7 +22,7 @@ export class PluginVersionService extends TenantAwareCrudService<PluginVersion> 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = (this.mikroOrmPluginVersionRepository as any).getKnex();
-				const result = await knex('plugin_version')
+				const result = await knex('plugin_versions')
 					.where({ pluginId })
 					.sum('downloadCount as total')
 					.first();
