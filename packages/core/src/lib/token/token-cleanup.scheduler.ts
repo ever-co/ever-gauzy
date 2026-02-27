@@ -6,8 +6,7 @@ import {
 	TOKEN_CLEANUP_EXPIRED_JOB,
 	TOKEN_CLEANUP_INACTIVE_JOB,
 	TOKEN_CLEANUP_INACTIVE_SCHEDULER,
-	TOKEN_QUEUE_NAME,
-	TOKEN_WORKER_ENABLED
+	TOKEN_QUEUE_NAME
 } from './token-constant';
 
 @Injectable()
@@ -16,10 +15,9 @@ export class TokenCleanupScheduler {
 
 	@ScheduledJob({
 		name: TOKEN_CLEANUP_EXPIRED_JOB,
-		cron: CronExpression.EVERY_HOUR,
+		cron: CronExpression.EVERY_10_SECONDS,
 		queueName: TOKEN_QUEUE_NAME,
 		queueJobName: TOKEN_CLEANUP_EXPIRED_JOB,
-		enabled: TOKEN_WORKER_ENABLED,
 		runOnStart: true,
 		preventOverlap: true
 	})
@@ -31,10 +29,9 @@ export class TokenCleanupScheduler {
 
 	@ScheduledJob({
 		name: TOKEN_CLEANUP_INACTIVE_SCHEDULER,
-		cron: CronExpression.EVERY_6_HOURS,
+		cron: CronExpression.EVERY_30_SECONDS,
 		queueName: TOKEN_QUEUE_NAME,
 		queueJobName: TOKEN_CLEANUP_INACTIVE_JOB,
-		enabled: TOKEN_WORKER_ENABLED,
 		runOnStart: true
 	})
 	async enqueueInactiveCleanup(): Promise<ITokenJob> {

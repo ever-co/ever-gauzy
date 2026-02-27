@@ -52,7 +52,7 @@ import {
 import { TokenHasher } from './shared/token-hasher';
 import { TokenCleanupScheduler } from './token-cleanup.scheduler';
 import { TokenCleanupWorker } from './token-cleanup.worker';
-import { TOKEN_QUEUE_NAME, TOKEN_WORKER_ENABLED } from './token-constant';
+import { TOKEN_QUEUE_NAME } from './token-constant';
 
 type TokenProviderToken = string | symbol;
 type AsyncInjectTokens = NonNullable<FactoryProvider['inject']>;
@@ -288,7 +288,7 @@ export class TokenModule {
 		return [
 			SchedulerModule.forFeature({
 				queues: [TOKEN_QUEUE_NAME],
-				jobProviders: TOKEN_WORKER_ENABLED ? [TokenCleanupScheduler, TokenCleanupWorker] : []
+				jobProviders: [TokenCleanupScheduler, TokenCleanupWorker]
 			})
 		];
 	}

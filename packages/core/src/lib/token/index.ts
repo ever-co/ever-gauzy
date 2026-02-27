@@ -1,1 +1,1 @@
-export * from './token-worker.module';
+export * from './token.module';
