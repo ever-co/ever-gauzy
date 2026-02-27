@@ -6,6 +6,7 @@ export * from './lib/i18n.module';
 
 // Services
 export * from './lib/i18n.service';
+export * from './lib/translate-adapter.service';
 
 // Standalone Providers (Angular 17+)
 export * from './lib/i18n.providers';

@@ -15,7 +15,15 @@ export {
 } from './lib/ng-react-context';
 
 // Hooks (for use inside React components)
-export { useInjector, usePluginEvents, usePluginEvent, type UsePluginEventsReturn } from './lib/react-hooks';
+export {
+	useInjector,
+	useObservable,
+	usePluginState,
+	useTranslation,
+	usePluginEvents,
+	usePluginEvent,
+	type UsePluginEventsReturn
+} from './lib/react-hooks';
 
 // Directives (for use in Angular templates)
 export { ReactHostDirective, LazyReactHostDirective } from './lib/directives';

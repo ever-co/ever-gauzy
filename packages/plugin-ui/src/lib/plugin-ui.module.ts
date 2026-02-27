@@ -1,6 +1,7 @@
 import {
 	EnvironmentInjector,
 	inject,
+	InjectionToken,
 	Injector,
 	ModuleWithProviders,
 	NgModule,
@@ -25,12 +26,53 @@ import {
 	IDeclarativeNavBuilder,
 	IDeclarativePageRouteRegistry,
 	IDeclarativePageTabRegistry,
+	IPluginTranslateService,
 	PLUGIN_NAV_BUILDER,
 	PLUGIN_ROUTE_REGISTRY,
-	PLUGIN_TAB_REGISTRY
+	PLUGIN_TAB_REGISTRY,
+	PLUGIN_TRANSLATE_SERVICE
 } from './plugin-ui.helper';
 import { PageExtensionRegistryService } from './plugin-extension/page-extension-registry.service';
 import { PluginUiRegistryService } from './plugin-ui-registry.service';
+
+/**
+ * Service bindings for `PluginUiModule.init()`.
+ *
+ * Each key maps to an Angular service class that will be bound to the
+ * corresponding internal InjectionToken via `useExisting`. All fields
+ * are optional — omit any service you don't need.
+ */
+export interface PluginUiServices {
+	/** Nav-menu builder (bound to PLUGIN_NAV_BUILDER). */
+	navBuilder?: Type<IDeclarativeNavBuilder>;
+	/** Page-route registry (bound to PLUGIN_ROUTE_REGISTRY). */
+	routeRegistry?: Type<IDeclarativePageRouteRegistry>;
+	/** Page-tab registry (bound to PLUGIN_TAB_REGISTRY). */
+	tabRegistry?: Type<IDeclarativePageTabRegistry>;
+	/** Translate service for plugin translations (bound to PLUGIN_TRANSLATE_SERVICE). */
+	translateService?: Type<IPluginTranslateService>;
+}
+
+/** Maps PluginUiServices keys to their InjectionTokens. */
+const SERVICE_TOKEN_MAP: Record<keyof PluginUiServices, InjectionToken<any>> = {
+	navBuilder: PLUGIN_NAV_BUILDER,
+	routeRegistry: PLUGIN_ROUTE_REGISTRY,
+	tabRegistry: PLUGIN_TAB_REGISTRY,
+	translateService: PLUGIN_TRANSLATE_SERVICE
+};
+
+/**
+ * Converts a `PluginUiServices` object into an array of `useExisting` providers.
+ * Only services that are defined (non-nullish) produce a provider.
+ */
+function buildServiceProviders(
+	services?: PluginUiServices
+): Array<{ provide: InjectionToken<any>; useExisting: Type<any> }> {
+	if (!services) return [];
+	return (Object.keys(services) as Array<keyof PluginUiServices>)
+		.filter((key) => services[key] != null)
+		.map((key) => ({ provide: SERVICE_TOKEN_MAP[key], useExisting: services[key]! }));
+}
 
 /**
  * Angular module responsible for managing UI plugin lifecycles.
@@ -69,22 +111,15 @@ export class PluginUiModule implements OnDestroy {
 	 *   navBuilder: NavMenuBuilderService,
 	 *   routeRegistry: PageRouteRegistryService,
 	 *   tabRegistry: PageTabRegistryService,
+	 *   translateService: TranslateService,
 	 * })
 	 * ```
 	 */
-	static init(services?: {
-		navBuilder?: Type<IDeclarativeNavBuilder>;
-		routeRegistry?: Type<IDeclarativePageRouteRegistry>;
-		tabRegistry?: Type<IDeclarativePageTabRegistry>;
-	}): ModuleWithProviders<PluginUiModule> {
+	static init(services?: PluginUiServices): ModuleWithProviders<PluginUiModule> {
 		return {
 			ngModule: PluginUiModule,
 			providers: [
-				...(services?.navBuilder ? [{ provide: PLUGIN_NAV_BUILDER, useExisting: services.navBuilder }] : []),
-				...(services?.routeRegistry
-					? [{ provide: PLUGIN_ROUTE_REGISTRY, useExisting: services.routeRegistry }]
-					: []),
-				...(services?.tabRegistry ? [{ provide: PLUGIN_TAB_REGISTRY, useExisting: services.tabRegistry }] : []),
+				...buildServiceProviders(services),
 				provideAppInitializer(() => {
 					const pluginModule = inject(PluginUiModule);
 					return pluginModule.bootstrapPlugins();
@@ -265,9 +300,7 @@ export class PluginUiModule implements OnDestroy {
 					if (!active) continue;
 				}
 
-				const result = runInInjectionContext(this._envInjector, () =>
-					definition.bootstrap!(this._envInjector)
-				);
+				const result = runInInjectionContext(this._envInjector, () => definition.bootstrap!(this._envInjector));
 				if (result instanceof Promise) await result;
 				this._declarativePluginDefs.push(definition);
 			} catch (e: any) {

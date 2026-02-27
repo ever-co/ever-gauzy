@@ -1,6 +1,7 @@
 import { PermissionsEnum } from '@gauzy/contracts';
-import { defineDeclarativePlugin, PluginRouteInput } from '@gauzy/plugin-ui';
+import { defineDeclarativePlugin, IPluginI18nService, PluginRouteInput } from '@gauzy/plugin-ui';
 import { REACT_TIME_TRACKING_DASHBOARD_ROUTE, REACT_TIME_TRACKING_PATH } from './react-ui.routes';
+import en from '../i18n/en.json';
 
 /**
  * React UI Plugin Definition.
@@ -29,6 +30,12 @@ export const ReactUiPlugin = defineDeclarativePlugin('react-ui', {
 	location: 'page-sections',
 	routes: [REACT_TIME_TRACKING_DASHBOARD_ROUTE as PluginRouteInput],
 	// ─────────────────────────────────────────────────────────────
+	// Plugin-specific translations (deep-merged into @ngx-translate at bootstrap).
+	// Core keys like TIMESHEET.TIME_TRACKING remain untouched.
+	// Add more languages: import fr from '../i18n/fr.json'; → { en, fr }
+	// ─────────────────────────────────────────────────────────────
+	translations: { en },
+	// ─────────────────────────────────────────────────────────────
 	// Register the React Time Tracking dashboard tab via page extension
 	// ─────────────────────────────────────────────────────────────
 	tabs: [
@@ -37,7 +44,7 @@ export const ReactUiPlugin = defineDeclarativePlugin('react-ui', {
 			tabId: 'react-time-tracking',
 			tabsetType: 'route',
 			path: `/pages/dashboard/${REACT_TIME_TRACKING_PATH}`,
-			tabTitle: (_i18n: any) => _i18n.getTranslation('TIMESHEET.TIME_TRACKING'),
+			tabTitle: (_i18n: IPluginI18nService) => _i18n.getTranslation('DASHBOARD_PAGE.TABS.REACT_TIME_TRACKING'),
 			tabIcon: 'code-outline',
 			responsive: true,
 			activeLinkOptions: { exact: false },

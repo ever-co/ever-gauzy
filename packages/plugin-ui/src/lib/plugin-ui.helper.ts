@@ -1,4 +1,5 @@
 import { InjectionToken, Injector, Type } from '@angular/core';
+import { Observable } from 'rxjs';
 import type { PageExtensionDefinition } from './plugin-extension/page-extension-slot.types';
 import {
 	PluginUiDefinition,
@@ -74,6 +75,77 @@ export interface IDeclarativeExtensionRegistry {
 export interface IDeclarativePageTabRegistry {
 	registerPageTab(config: unknown): void;
 	registerPageTabs(configs: unknown[]): void;
+}
+
+/**
+ * Minimal interface for plugin translation management (read + write).
+ * Structurally compatible with @ngx-translate/core TranslateService (duck typing).
+ */
+export interface IPluginTranslateService {
+	// ─── Write (merge) ───────────────────────────────────────────
+	setTranslation(lang: string, translations: Record<string, any>, shouldMerge?: boolean): void;
+	getTranslations(lang: string): Readonly<Record<string, any>> | undefined;
+
+	// ─── Read ────────────────────────────────────────────────────
+	getCurrentLang(): string;
+	getFallbackLang(): string | null;
+	/** Synchronous translation lookup. Returns the key itself if not found. */
+	instant(key: string, params?: Record<string, unknown>): string;
+	/** Reactive translation. Re-emits when language or translations change. */
+	stream(key: string, params?: Record<string, unknown>): Observable<string>;
+
+	// ─── Events ──────────────────────────────────────────────────
+	/** Emits whenever the active language changes (after translations are loaded). */
+	onLangChange: Observable<{ lang: string }>;
+}
+
+/**
+ * Optional InjectionToken for the translate service.
+ * Provide via `PluginUiModule.init({ translateService: TranslateService })`.
+ * Used internally by `defineDeclarativePlugin` to merge plugin translations.
+ */
+export const PLUGIN_TRANSLATE_SERVICE = new InjectionToken<IPluginTranslateService>('PLUGIN_TRANSLATE_SERVICE');
+
+/**
+ * Filters incoming translation data to only include keys that don't already
+ * exist in the target. Recursively walks nested objects so that new nested
+ * keys can be added without overriding existing leaf values.
+ *
+ * This ensures plugins can only ADD translations — never override core keys.
+ *
+ * @returns A filtered object containing only new keys, or `null` if nothing is new.
+ */
+export function filterNewTranslationKeys(
+	existing: Record<string, any>,
+	incoming: Record<string, any>
+): Record<string, any> | null {
+	const result: Record<string, any> = {};
+	let hasNewKeys = false;
+
+	for (const [key, value] of Object.entries(incoming)) {
+		if (!(key in existing)) {
+			// Key doesn't exist in core — include it entirely
+			result[key] = value;
+			hasNewKeys = true;
+		} else if (
+			typeof value === 'object' &&
+			value !== null &&
+			!Array.isArray(value) &&
+			typeof existing[key] === 'object' &&
+			existing[key] !== null &&
+			!Array.isArray(existing[key])
+		) {
+			// Both are objects — recurse to find new nested keys
+			const nested = filterNewTranslationKeys(existing[key], value);
+			if (nested) {
+				result[key] = nested;
+				hasNewKeys = true;
+			}
+		}
+		// Leaf key already exists in core → skip (never override)
+	}
+
+	return hasNewKeys ? result : null;
 }
 
 /**
@@ -348,12 +420,59 @@ export function defineDeclarativePlugin(
 ): PluginUiDefinition {
 	const plugin: PluginUiDefinition = { ...definition, id };
 	plugin.bootstrap = (injector: Injector): void => {
+		// Apply all declarative registrations (nav, routes, tabs, extensions) using the injected services.
 		applyDeclarativeRegistrations(plugin, {
 			navBuilder: injector.get(PLUGIN_NAV_BUILDER, null) ?? undefined,
 			pageRouteRegistry: injector.get(PLUGIN_ROUTE_REGISTRY, null) ?? undefined,
 			pageTabRegistry: injector.get(PLUGIN_TAB_REGISTRY, null) ?? undefined,
 			pageExtensionRegistry: injector.get(PageExtensionRegistryService, null) ?? undefined
 		});
+
+		// Merge plugin translations into the global @ngx-translate namespace.
+		// Safe merge: only adds new keys, never overrides core translations.
+		//
+		// IMPORTANT: Plugin translations must be merged AFTER core translations
+		// are loaded. Calling setTranslation() before the core HTTP loader
+		// completes would mark the language as "available" in TranslateStore,
+		// causing ngx-translate to skip the HTTP load entirely — breaking
+		// all core translations.
+		//
+		// Strategy: subscribe to onLangChange (fires after core translations
+		// are loaded) and merge plugin translations on each language switch.
+		// Also handle the case where the language was already loaded before
+		// plugin bootstrap (merge immediately for the current language).
+		if (plugin.translations) {
+			const translateService = injector.get(PLUGIN_TRANSLATE_SERVICE, null);
+			if (translateService) {
+				const mergeForLang = (lang: string): void => {
+					const fallbackLang = translateService.getFallbackLang() || 'en';
+					const data = plugin.translations![lang] ?? plugin.translations![fallbackLang];
+					if (!data) return;
+
+					const existing = translateService.getTranslations(lang);
+					if (existing && Object.keys(existing).length > 0) {
+						const newKeys = filterNewTranslationKeys(existing as Record<string, any>, data);
+						if (newKeys) {
+							translateService.setTranslation(lang, newKeys, true);
+						}
+					}
+				};
+
+				// If a language is already active (core translations loaded),
+				// merge plugin translations immediately.
+				const currentLang = translateService.getCurrentLang();
+				if (currentLang) {
+					mergeForLang(currentLang);
+				}
+
+				// Subscribe to future language changes — merge whenever core
+				// translations are loaded for a new language.
+				translateService.onLangChange.subscribe(({ lang }) => {
+					mergeForLang(lang);
+				});
+			}
+		}
 	};
+
 	return plugin;
 }

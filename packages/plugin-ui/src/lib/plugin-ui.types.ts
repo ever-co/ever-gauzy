@@ -55,6 +55,17 @@ export type PluginNavContribution =
 	| { type: 'section'; sectionId: string; items: PluginNavItemInput[]; before?: string };
 
 /**
+ * Minimal interface for reading translations in plugin callbacks (e.g. tabTitle).
+ * Structurally compatible with I18nService from @gauzy/ui-core/i18n (duck typing).
+ *
+ * Use this in plugin definitions instead of importing I18nService directly,
+ * so plugins remain decoupled from @gauzy/ui-core.
+ */
+export interface IPluginI18nService {
+	getTranslation(key: string, params?: Object): string;
+}
+
+/**
  * Minimal shape for a plugin-contributed page tab.
  * Compatible with PageTabRegistryConfig from @gauzy/ui-core.
  */
@@ -64,7 +75,7 @@ export interface PluginTabInput {
 	/** Unique tab id. */
 	tabId: string;
 	/** Tab title (translation key or resolved string). */
-	tabTitle: string | ((i18n: unknown) => string);
+	tabTitle: string | ((i18n: IPluginI18nService) => string);
 	/** Tab icon. */
 	tabIcon?: string;
 	/** Display order. */
@@ -207,6 +218,21 @@ export interface PluginUiDefinition {
 	 * Use applyDeclarativeRegistrations() with pageTabRegistry to apply.
 	 */
 	tabs?: PluginTabInput[];
+
+	/**
+	 * Plugin-specific translations keyed by language code.
+	 * Deep-merged into the global @ngx-translate namespace at bootstrap
+	 * via TranslateService.setTranslation(lang, data, shouldMerge: true).
+	 *
+	 * Core translations remain untouched — only additive merging happens.
+	 *
+	 * @example
+	 * translations: {
+	 *   en: { MY_PLUGIN: { TITLE: 'My Plugin' } },
+	 *   fr: { MY_PLUGIN: { TITLE: 'Mon Plugin' } }
+	 * }
+	 */
+	translations?: Record<string, Record<string, any>>;
 }
 
 /**
