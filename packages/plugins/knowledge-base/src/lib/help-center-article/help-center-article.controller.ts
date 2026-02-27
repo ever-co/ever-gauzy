@@ -126,13 +126,13 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	): Promise<void> {
 		const chunks: Buffer[] = [];
 		await new Promise<void>((resolve, reject) => {
-			(req as any).on('data', (chunk: Buffer) => chunks.push(chunk));
-			(req as any).on('end', resolve);
-			(req as any).on('error', reject);
+			(req).on('data', (chunk: Buffer) => chunks.push(chunk));
+			(req).on('end', resolve);
+			(req).on('error', reject);
 		});
 		const binary = Buffer.concat(chunks);
 		await this.commandBus.execute(
-			new HelpCenterUpdateArticleCommand(id, { descriptionBinary: new Uint8Array(binary) as any })
+			new HelpCenterUpdateArticleCommand(id, { descriptionBinary: new Uint8Array(binary) })
 		);
 	}
 
