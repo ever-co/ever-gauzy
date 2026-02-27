@@ -489,7 +489,9 @@
 		"build:apps:windows": "yarn build:desktop:windows && yarn build:desktop-timer:windows && yarn build:agent:windows && yarn build:gauzy-mcp-server:windows && yarn build:gauzy-api-server:windows && yarn build:gauzy-server:windows",
 		"build:apps:linux": "yarn build:desktop:linux && yarn build:desktop-timer:linux && yarn build:agent:linux && yarn build:gauzy-mcp-server:linux && yarn build:gauzy-api-server:linux && yarn build:gauzy-server:linux",
 		"build:apps:mac": "yarn build:desktop:mac && yarn build:desktop-timer:mac && yarn build:agent:mac && yarn build:gauzy-mcp-server:mac && yarn build:gauzy-api-server:mac && yarn build:gauzy-server:mac",
-		"test:mcp:all": "yarn nx run-many -t test -p mcp-server,mcp,server-mcp"
+		"test:mcp:all": "yarn nx run-many -t test -p mcp-server,mcp,server-mcp",
+		"build:worker:prod": "yarn nx build worker --configuration=production",
+		"serve:worker": "yarn nx serve worker"
 	},
 	"config": {
 		"commitizen": {
