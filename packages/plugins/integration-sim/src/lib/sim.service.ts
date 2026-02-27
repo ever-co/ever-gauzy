@@ -139,7 +139,6 @@ export class SimService {
 				existingTenant = await this.integrationTenantService.findOneByOptions({
 					where: {
 						tenantId,
-						...(organizationId ? { organizationId } : {}),
 						integration: { provider: IntegrationEnum.SIM }
 					},
 					relations: ['settings']
@@ -190,7 +189,6 @@ export class SimService {
 					name: IntegrationEnum.SIM,
 					integration,
 					tenantId,
-					organizationId,
 					settings
 				});
 
@@ -533,7 +531,13 @@ export class SimService {
 	 */
 	private parseEnabledSetting(value: unknown): boolean {
 		if (typeof value === 'boolean') return value;
-		if (typeof value === 'string') return !!JSON.parse(value);
+		if (typeof value === 'string') {
+			try {
+				return !!JSON.parse(value);
+			} catch {
+				return false;
+			}
+		}
 		return !!value;
 	}
 
