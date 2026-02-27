@@ -40,7 +40,7 @@
 
 				<div class="toggle-layout" [class.row]="isExpanded()" [class.column]="!isExpanded()">
 					<div class="custom-row user">
-						<gauzy-user [user$]="user$" (click)="isOpen.update(v => !v)"></gauzy-user>
+						<gauzy-user [user$]="user$" (click)="toggleUserMenu()"></gauzy-user>
 					</div>
 
 					<div class="custom-row button">

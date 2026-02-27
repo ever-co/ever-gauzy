@@ -93,6 +93,13 @@ export class OneColumnLayoutComponent {
 	}
 
 	/**
+	 * Toggles the user menu overlay.
+	 */
+	toggleUserMenu(): void {
+		this.isOpen.update((v) => !v);
+	}
+
+	/**
 	 * Closes the user menu overlay.
 	 */
 	closeUserMenu(): void {
