@@ -10,8 +10,4 @@ export class Point {
 	set color(color: string) {
 		this._color = color;
 	}
-
-	get className(): string {
-		return this._color;
-	}
 }

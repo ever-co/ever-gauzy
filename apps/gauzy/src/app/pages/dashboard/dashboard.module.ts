@@ -24,7 +24,7 @@ import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	ActivityItemModule,
-	CounterPointModule,
+	CounterPointComponent,
 	DynamicTabsModule,
 	GalleryModule,
 	InfoBlockModule,
@@ -127,7 +127,7 @@ const COMPONENTS = [
 		NoDataMessageModule,
 		WorkInProgressModule,
 		ActivityItemModule,
-		CounterPointModule,
+		CounterPointComponent,
 		DynamicTabsModule,
 		GalleryModule,
 		ScreenshotsItemModule,
