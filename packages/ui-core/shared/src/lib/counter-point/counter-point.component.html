@@ -1,11 +1,11 @@
-@if (!progress) {
+@if (!progress()) {
 	<div class="counter">
-		@for (point of points; track $index) {
+		@for (point of points(); track $index) {
 			<div [style.background]="'var(--color-' + point.color + '-default)'" [class]="'point ' + point.color"></div>
 		}
 	</div>
 } @else {
 	<div>
-		<nb-progress-bar [value]="value" [status]="progressStatus(value)"></nb-progress-bar>
+		<nb-progress-bar [value]="value()" [status]="getProgressStatus(value())"></nb-progress-bar>
 	</div>
 }
