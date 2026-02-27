@@ -181,7 +181,8 @@ export enum IntegrationTypeEnum {
 	TOOLS = 'Tools',
 	PROJECT_MANAGEMENT = 'Project Management',
 	COMMUNICATION = 'Communication',
-	AUTOMATION_TOOLS = 'Automation Tools'
+	AUTOMATION_TOOLS = 'Automation Tools',
+	AI_AGENTS = 'AI Agents'
 }
 
 export enum IntegrationFilterEnum {
