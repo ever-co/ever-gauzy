@@ -13,11 +13,13 @@ import { SIM_DEFAULT_BASE_URL } from './sim.config';
  * TypeScript with `module: "commonjs"` transforms `await import(...)` into
  * `require(...)`, which fails for ESM-only packages at runtime. Using
  * `new Function` creates a real ESM dynamic import that Node.js can resolve.
+ *
+ * The module specifier is hardcoded to ensure only the trusted package is loaded.
  */
-const dynamicImport = new Function('specifier', 'return import(specifier)');
+const dynamicImport = new Function('return import("simstudio-ts-sdk")');
 
 async function loadSimStudioClient(): Promise<new (config: { apiKey: string; baseUrl?: string }) => SimStudioClientType> {
-	const mod = await dynamicImport('simstudio-ts-sdk');
+	const mod = await dynamicImport();
 	return mod.SimStudioClient || mod.default;
 }
 

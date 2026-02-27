@@ -269,7 +269,7 @@ export class SimService {
 
 			this.logger.debug(
 				`Executing workflow: POST ${SIM_DEFAULT_BASE_URL}/api/workflows/${input.workflowId}/execute | ` +
-					`input: ${JSON.stringify(input.input)} | async: ${input.runAsync || false}`
+					`async: ${input.runAsync || false}`
 			);
 
 			const result = await client.executeWithRetry(
@@ -282,13 +282,13 @@ export class SimService {
 				{ maxRetries: 3, initialDelay: 1000, maxDelay: 30000, backoffMultiplier: 2 }
 			);
 
-			this.logger.debug(`Workflow execution result: ${JSON.stringify(result)}`);
+			this.logger.debug(`Workflow execution completed for workflow: ${input.workflowId}`);
 
 			// Update execution log — handle both sync and async response shapes
 			const syncResult = result as WorkflowExecutionResult;
 			const asyncResult = result as AsyncExecutionResult;
 
-			execution.status = asyncResult.taskId ? 'queued' : (syncResult.success ? 'completed' : 'failed');
+			execution.status = asyncResult.taskId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
 			execution.output = syncResult.output ?? result;
 			execution.executionId = syncResult.metadata?.executionId || asyncResult.taskId;
 			execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
@@ -299,7 +299,7 @@ export class SimService {
 		} catch (error: any) {
 			// Update execution log with failure
 			execution.status = 'failed';
-			execution.error = { message: error.message, code: error.code };
+			execution.error = { message: error.message, ...(error.code ? { code: error.code } : {}) };
 			await this.executionRepository.save(execution);
 
 			this.logger.error(`Workflow execution failed: ${error.message}`, {
@@ -403,9 +403,7 @@ export class SimService {
 			(s: IIntegrationSetting) => s.settingsName === SimSettingName.API_KEY
 		);
 
-		const isEnabled = !!(typeof enabledSetting?.settingsValue === 'string'
-			? JSON.parse(enabledSetting.settingsValue)
-			: enabledSetting?.settingsValue);
+		const isEnabled = this.parseEnabledSetting(enabledSetting?.settingsValue);
 
 		return {
 			isEnabled,
@@ -471,12 +469,7 @@ export class SimService {
 			(s: IIntegrationSetting) => s.settingsName === SimSettingName.IS_ENABLED
 		);
 
-		if (typeof enabledSetting?.settingsValue === 'boolean') {
-			return enabledSetting.settingsValue;
-		}
-		return !!(typeof enabledSetting?.settingsValue === 'string'
-			? JSON.parse(enabledSetting.settingsValue)
-			: enabledSetting?.settingsValue);
+		return this.parseEnabledSetting(enabledSetting?.settingsValue);
 	}
 
 	/**
@@ -508,7 +501,7 @@ export class SimService {
 				(s: IIntegrationSetting) => s.settingsName === SimSettingName.IS_ENABLED
 			)?.settingsValue;
 
-			const enabled = !!(typeof isEnabled === 'string' ? JSON.parse(isEnabled) : isEnabled);
+			const enabled = this.parseEnabledSetting(isEnabled);
 			if (!enabled) return;
 
 			// Find the workflow ID mapped to this event
@@ -533,6 +526,15 @@ export class SimService {
 				tenantId: params.tenantId
 			});
 		}
+	}
+
+	/**
+	 * Parse a setting value that may be stored as a boolean or a JSON-encoded string into a boolean.
+	 */
+	private parseEnabledSetting(value: unknown): boolean {
+		if (typeof value === 'boolean') return value;
+		if (typeof value === 'string') return !!JSON.parse(value);
+		return !!value;
 	}
 
 	/**

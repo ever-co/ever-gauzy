@@ -134,9 +134,9 @@ export class SimController {
 	@ApiResponse({ status: 200, description: 'Job status retrieved' })
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Get('/jobs/:jobId/status')
-	async getJobStatus(@Param('jobId') taskId: string) {
+	async getJobStatus(@Param('jobId') jobId: string) {
 		try {
-			return await this.simService.getJobStatus(taskId);
+			return await this.simService.getJobStatus(jobId);
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;
