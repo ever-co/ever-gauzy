@@ -4,6 +4,13 @@
  * The SDK ships ESM-only exports which are not resolved by TypeScript's
  * `moduleResolution: "node"` (Node10). This ambient module declaration
  * re-exports the types from the SDK's dist folder.
+ *
+ * MAINTAINER NOTE: These declarations must be kept in sync with the installed
+ * version of simstudio-ts-sdk. When upgrading the SDK, verify these types
+ * against `node_modules/simstudio-ts-sdk/dist/index.d.ts`. This file can be
+ * removed once the project migrates to `moduleResolution: "node16"` or higher.
+ *
+ * Current SDK version: ^0.1.2
  */
 declare module 'simstudio-ts-sdk' {
 	export interface SimStudioConfig {

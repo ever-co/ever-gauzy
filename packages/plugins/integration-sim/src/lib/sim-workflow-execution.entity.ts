@@ -25,6 +25,7 @@ export class SimWorkflowExecution extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	executionId?: string;
 
@@ -82,6 +83,7 @@ export class SimWorkflowExecution extends TenantOrganizationBaseEntity {
 	 * Integration Tenant ID
 	 */
 	@ApiProperty({ type: () => String })
+	@IsOptional()
 	@IsUUID()
 	@RelationId((it: SimWorkflowExecution) => it.integration)
 	@ColumnIndex()

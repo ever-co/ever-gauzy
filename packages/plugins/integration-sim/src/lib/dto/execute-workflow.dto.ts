@@ -24,5 +24,5 @@ export class ExecuteWorkflowDto {
 	@ApiPropertyOptional({ description: 'Run asynchronously', default: false })
 	@IsOptional()
 	@IsBoolean()
-	async?: boolean;
+	runAsync?: boolean;
 }

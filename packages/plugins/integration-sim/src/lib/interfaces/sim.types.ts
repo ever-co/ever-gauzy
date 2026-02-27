@@ -22,7 +22,7 @@ export interface IExecuteWorkflowInput {
 	input?: any;
 	timeout?: number;
 	stream?: boolean;
-	async?: boolean;
+	runAsync?: boolean;
 	triggeredBy?: 'manual' | 'event' | 'api' | 'schedule';
 }
 

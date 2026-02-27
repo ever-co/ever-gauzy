@@ -1,6 +1,7 @@
 /// <reference path="./typings.d.ts" />
 import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import type { SimStudioClient as SimStudioClientType } from 'simstudio-ts-sdk';
+import { IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
 import { IntegrationTenantService } from '@gauzy/core';
 import { SimSettingName } from './interfaces/sim.types';
@@ -25,6 +26,9 @@ export class SimClientFactory {
 	private readonly logger = new Logger(SimClientFactory.name);
 	private readonly clients = new Map<string, SimStudioClientType>();
 
+	/** Cache key for the default (global API key) client */
+	private static readonly DEFAULT_CLIENT_KEY = '__default__';
+
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly integrationTenantService: IntegrationTenantService
@@ -43,7 +47,7 @@ export class SimClientFactory {
 		}
 
 		// Load integration tenant with settings
-		let integrationTenant: any = null;
+		let integrationTenant: IIntegrationTenant | null = null;
 		try {
 			integrationTenant = await this.integrationTenantService.findOneByOptions({
 				where: { id: integrationId },
@@ -61,7 +65,7 @@ export class SimClientFactory {
 
 		// 1. Try tenant-specific API key
 		let apiKey = integrationTenant.settings?.find(
-			(s: any) => s.settingsName === SimSettingName.API_KEY
+			(s: IIntegrationSetting) => s.settingsName === SimSettingName.API_KEY
 		)?.settingsValue;
 
 		// 2. Fallback to global config (GAUZY_SIM_API_KEY)
@@ -100,16 +104,16 @@ export class SimClientFactory {
 	 * Useful for testing or default tenant operations.
 	 */
 	async getDefaultClient(): Promise<SimStudioClientType> {
+		// Check cache first before validating the API key
+		if (this.clients.has(SimClientFactory.DEFAULT_CLIENT_KEY)) {
+			return this.clients.get(SimClientFactory.DEFAULT_CLIENT_KEY)!;
+		}
+
 		const globalApiKey = this.configService.get('sim')?.apiKey;
 		if (!globalApiKey) {
 			throw new BadRequestException(
 				'Global SIM API key not configured. Set GAUZY_SIM_API_KEY environment variable.'
 			);
-		}
-
-		const cacheKey = '__default__';
-		if (this.clients.has(cacheKey)) {
-			return this.clients.get(cacheKey)!;
 		}
 
 		const SimStudioClient = await loadSimStudioClient();
@@ -118,7 +122,7 @@ export class SimClientFactory {
 			baseUrl: SIM_DEFAULT_BASE_URL
 		});
 
-		this.clients.set(cacheKey, client);
+		this.clients.set(SimClientFactory.DEFAULT_CLIENT_KEY, client);
 		this.logger.log('Default SIM client created using global GAUZY_SIM_API_KEY');
 
 		return client;
@@ -130,5 +134,13 @@ export class SimClientFactory {
 	invalidateClient(integrationId: string): void {
 		this.clients.delete(integrationId);
 		this.logger.log(`SIM client cache invalidated for integration ${integrationId}`);
+	}
+
+	/**
+	 * Invalidate the cached default client (e.g. when GAUZY_SIM_API_KEY changes).
+	 */
+	invalidateDefaultClient(): void {
+		this.clients.delete(SimClientFactory.DEFAULT_CLIENT_KEY);
+		this.logger.log('Default SIM client cache invalidated');
 	}
 }

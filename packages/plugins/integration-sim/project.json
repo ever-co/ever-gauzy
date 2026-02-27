@@ -17,10 +17,10 @@
 			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/plugins/integration-sim/",
-				"tsConfig": "packages/plugins/integration-sim//tsconfig.lib.json",
-				"packageJson": "packages/plugins/integration-sim//package.json",
-				"main": "packages/plugins/integration-sim//src/index.ts",
-				"assets": ["packages/plugins/integration-sim//*.md"]
+				"tsConfig": "packages/plugins/integration-sim/tsconfig.lib.json",
+				"packageJson": "packages/plugins/integration-sim/package.json",
+				"main": "packages/plugins/integration-sim/src/index.ts",
+				"assets": ["packages/plugins/integration-sim/*.md"]
 			}
 		},
 		"nx-release-publish": {

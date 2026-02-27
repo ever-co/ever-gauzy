@@ -13,7 +13,7 @@ import {
 	ValidationPipe,
 	Logger
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { SimService } from './sim.service';
@@ -34,12 +34,19 @@ export class SimController {
 	@ApiOperation({ summary: 'Configure SIM integration with API key' })
 	@ApiResponse({ status: 201, description: 'SIM integration configured successfully' })
 	@ApiResponse({ status: 400, description: 'Bad Request' })
+	@ApiQuery({ name: 'organizationId', required: false, description: 'Optional organization ID to scope the integration' })
 	@Post('/setup')
 	@Permissions(PermissionsEnum.INTEGRATION_ADD)
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async setupIntegration(@Body() body: ConfigureSimIntegrationDto): Promise<{ integrationTenantId: string }> {
+	async setupIntegration(
+		@Body() body: ConfigureSimIntegrationDto,
+		@Query('organizationId') organizationId?: string
+	): Promise<{ integrationTenantId: string }> {
 		try {
-			return await this.simService.configureIntegration(body);
+			return await this.simService.configureIntegration({
+				apiKey: body.apiKey,
+				organizationId
+			});
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;
@@ -88,7 +95,7 @@ export class SimController {
 				input: body.input,
 				timeout: body.timeout,
 				stream: body.stream,
-				async: body.async,
+				runAsync: body.runAsync,
 				triggeredBy: 'manual'
 			});
 		} catch (error: any) {
@@ -126,8 +133,8 @@ export class SimController {
 	@ApiOperation({ summary: 'Get async job status' })
 	@ApiResponse({ status: 200, description: 'Job status retrieved' })
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
-	@Get('/jobs/:taskId/status')
-	async getJobStatus(@Param('taskId') taskId: string) {
+	@Get('/jobs/:jobId/status')
+	async getJobStatus(@Param('jobId') taskId: string) {
 		try {
 			return await this.simService.getJobStatus(taskId);
 		} catch (error: any) {
@@ -164,39 +171,37 @@ export class SimController {
 	 */
 	@ApiOperation({ summary: 'Check if SIM integration is enabled' })
 	@ApiResponse({ status: 200, description: 'Returns integration status' })
-	@Get('/status/:integrationId')
-	@ApiParam({ name: 'integrationId', description: 'Integration UUID' })
+	@Get('/status/:integrationTenantId')
+	@ApiParam({ name: 'integrationTenantId', description: 'Integration Tenant UUID' })
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	async getIntegrationStatus(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string
+		@Param('integrationTenantId', UUIDValidationPipe) integrationTenantId: string
 	): Promise<{ enabled: boolean }> {
 		try {
-			const enabled = await this.simService.isIntegrationEnabled(integrationId);
+			const enabled = await this.simService.isIntegrationEnabled(integrationTenantId);
 			return { enabled };
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			throw new HttpException(
-				`Failed to get SIM integration status: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
+			this.logger.error('Failed to get SIM integration status', { message: error?.message, stack: error?.stack });
+			throw new HttpException('Failed to get SIM integration status', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
 	/**
-	 * Get integration tenant information.
+	 * Get integration tenant information (with sensitive settings redacted).
 	 */
 	@ApiOperation({ summary: 'Get SIM integration tenant information' })
 	@ApiResponse({ status: 200, description: 'Returns integration tenant information' })
-	@Get('/integration-tenant/:integrationId')
-	@ApiParam({ name: 'integrationId', description: 'Integration UUID' })
+	@Get('/integration-tenant/:integrationTenantId')
+	@ApiParam({ name: 'integrationTenantId', description: 'Integration Tenant UUID' })
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	async getIntegrationTenant(
-		@Param('integrationId', UUIDValidationPipe) integrationId: string
-	): Promise<any> {
+		@Param('integrationTenantId', UUIDValidationPipe) integrationTenantId: string
+	) {
 		try {
-			return await this.simService.getIntegrationTenant(integrationId);
+			return await this.simService.getIntegrationTenant(integrationTenantId);
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;

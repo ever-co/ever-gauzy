@@ -9,11 +9,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IntegrationEnum, IIntegrationSetting } from '@gauzy/contracts';
+import { IntegrationEnum, IIntegration, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
+import type { WorkflowExecutionResult, AsyncExecutionResult } from 'simstudio-ts-sdk';
 import { ConfigService } from '@gauzy/config';
 import { IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
 import { SimClientFactory } from './sim-client.factory';
 import { SimWorkflowExecution } from './sim-workflow-execution.entity';
+import { SIM_DEFAULT_BASE_URL } from './sim.config';
 import { IConfigureSimInput, IExecuteWorkflowInput, ISimIntegrationSettings, SimSettingName } from './interfaces';
 
 @Injectable()
@@ -43,7 +45,7 @@ export class SimService {
 					throw new BadRequestException('Tenant ID not found in request context');
 				}
 
-				let integrationTenant: any = null;
+				let integrationTenant: IIntegrationTenant | null = null;
 				try {
 					integrationTenant = await this.integrationTenantService.findOneByOptions({
 						where: { id: integrationTenantId, tenantId },
@@ -56,7 +58,7 @@ export class SimService {
 				}
 
 				const apiKeySetting = integrationTenant?.settings?.find(
-					(s: any) => s.settingsName === SimSettingName.API_KEY
+					(s: IIntegrationSetting) => s.settingsName === SimSettingName.API_KEY
 				);
 
 				if (apiKeySetting?.settingsValue) {
@@ -97,7 +99,7 @@ export class SimService {
 			const { apiKey, organizationId } = input;
 
 			// Find or create the base integration
-			let integration: any = null;
+			let integration: IIntegration | null = null;
 			try {
 				integration = await this.integrationService.findOneByOptions({
 					where: { provider: IntegrationEnum.SIM }
@@ -132,7 +134,7 @@ export class SimService {
 			];
 
 			// Look up an existing integration tenant for this tenant/org
-			let existingTenant: any = null;
+			let existingTenant: IIntegrationTenant | null = null;
 			try {
 				existingTenant = await this.integrationTenantService.findOneByOptions({
 					where: {
@@ -152,12 +154,12 @@ export class SimService {
 
 			if (existingTenant?.id) {
 				// Update existing tenant's settings by merging/replacing
-				const existingSettings: any[] = existingTenant.settings ?? [];
-				const settingsByName = new Map(settings.map((s) => [s.settingsName, s]));
+				const existingSettings: IIntegrationSetting[] = existingTenant.settings ?? [];
+				const settingsByName = new Map<string, (typeof settings)[number]>(settings.map((s) => [s.settingsName, s]));
 
 				// Update existing rows in-place and track which were updated
 				const updatedNames = new Set<string>();
-				const mergedSettings = existingSettings.map((existing: any) => {
+				const mergedSettings = existingSettings.map((existing: IIntegrationSetting) => {
 					const update = settingsByName.get(existing.settingsName);
 					if (update) {
 						updatedNames.add(existing.settingsName);
@@ -217,14 +219,14 @@ export class SimService {
 	/**
 	 * Execute a SIM workflow for the current tenant.
 	 */
-	async executeWorkflow(input: IExecuteWorkflowInput): Promise<any> {
+	async executeWorkflow(input: IExecuteWorkflowInput): Promise<WorkflowExecutionResult | AsyncExecutionResult> {
 		const tenantId = RequestContext.currentTenantId();
 		if (!tenantId) {
 			throw new BadRequestException('Tenant ID is required');
 		}
 
 		// Find integration for current tenant
-		let integrationTenant: any = null;
+		let integrationTenant: IIntegrationTenant | null = null;
 		try {
 			integrationTenant = await this.integrationTenantService.findOneByOptions({
 				where: { name: IntegrationEnum.SIM, tenantId }
@@ -255,23 +257,42 @@ export class SimService {
 		await this.executionRepository.save(execution);
 
 		try {
+			// The simstudio-ts-sdk does not handle SSE streaming responses —
+			// it always parses the response as JSON via response.json(), which fails
+			// on the SSE "data: ..." text format. Reject streaming requests early.
+			if (input.stream) {
+				throw new BadRequestException(
+					'Streaming mode is not supported. The SIM SDK does not handle SSE responses. ' +
+						'Use runAsync: true for long-running workflows instead.'
+				);
+			}
+
+			this.logger.debug(
+				`Executing workflow: POST ${SIM_DEFAULT_BASE_URL}/api/workflows/${input.workflowId}/execute | ` +
+					`input: ${JSON.stringify(input.input)} | async: ${input.runAsync || false}`
+			);
+
 			const result = await client.executeWithRetry(
 				input.workflowId,
 				input.input,
 				{
 					timeout: input.timeout || 30000,
-					stream: input.stream || false,
-					async: input.async || false
+					async: input.runAsync || false
 				},
 				{ maxRetries: 3, initialDelay: 1000, maxDelay: 30000, backoffMultiplier: 2 }
 			);
 
-			// Update execution log
-			execution.status = (result as any).success ? 'completed' : 'failed';
-			execution.output = (result as any).output;
-			execution.executionId = (result as any).metadata?.executionId || (result as any).taskId;
-			execution.duration = (result as any).metadata?.duration || (result as any).totalDuration;
-			execution.error = (result as any).error ? { message: (result as any).error } : undefined;
+			this.logger.debug(`Workflow execution result: ${JSON.stringify(result)}`);
+
+			// Update execution log — handle both sync and async response shapes
+			const syncResult = result as WorkflowExecutionResult;
+			const asyncResult = result as AsyncExecutionResult;
+
+			execution.status = asyncResult.taskId ? 'queued' : (syncResult.success ? 'completed' : 'failed');
+			execution.output = syncResult.output ?? result;
+			execution.executionId = syncResult.metadata?.executionId || asyncResult.taskId;
+			execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
+			execution.error = syncResult.error ? { message: syncResult.error } : undefined;
 			await this.executionRepository.save(execution);
 
 			return result;
@@ -297,13 +318,13 @@ export class SimService {
 	/**
 	 * Get async job status.
 	 */
-	async getJobStatus(taskId: string): Promise<any> {
+	async getJobStatus(jobId: string): Promise<any> {
 		const tenantId = RequestContext.currentTenantId();
 		if (!tenantId) {
 			throw new BadRequestException('Tenant ID is required');
 		}
 
-		let integrationTenant: any = null;
+		let integrationTenant: IIntegrationTenant | null = null;
 		try {
 			integrationTenant = await this.integrationTenantService.findOneByOptions({
 				where: { name: IntegrationEnum.SIM, tenantId }
@@ -319,7 +340,7 @@ export class SimService {
 		}
 
 		const client = await this.simClientFactory.getClient(integrationTenant.id);
-		return client.getJobStatus(taskId);
+		return client.getJobStatus(jobId);
 	}
 
 	/**
@@ -331,7 +352,7 @@ export class SimService {
 			throw new BadRequestException('Tenant ID is required');
 		}
 
-		let integrationTenant: any = null;
+		let integrationTenant: IIntegrationTenant | null = null;
 		try {
 			integrationTenant = await this.integrationTenantService.findOneByOptions({
 				where: { name: IntegrationEnum.SIM, tenantId }
@@ -359,7 +380,7 @@ export class SimService {
 			throw new BadRequestException('Tenant ID not found in request context');
 		}
 
-		let integrationTenant: any = null;
+		let integrationTenant: IIntegrationTenant | null = null;
 		try {
 			integrationTenant = await this.integrationTenantService.findOneByOptions({
 				where: { name: IntegrationEnum.SIM, tenantId },
@@ -424,42 +445,38 @@ export class SimService {
 	 * Check if SIM integration is enabled for a given integration tenant.
 	 */
 	async isIntegrationEnabled(integrationTenantId: string): Promise<boolean> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new BadRequestException('Tenant ID not found in request context');
+		}
+
+		let integrationTenant: IIntegrationTenant | null = null;
 		try {
-			const tenantId = RequestContext.currentTenantId();
-			if (!tenantId) {
-				throw new BadRequestException('Tenant ID not found in request context');
-			}
-
-			let integrationTenant: any = null;
-			try {
-				integrationTenant = await this.integrationTenantService.findOneByOptions({
-					where: { id: integrationTenantId, tenantId },
-					relations: ['settings']
-				});
-			} catch (error) {
-				if (!(error instanceof NotFoundException)) {
-					throw error;
-				}
-			}
-
-			if (!integrationTenant) {
+			integrationTenant = await this.integrationTenantService.findOneByOptions({
+				where: { id: integrationTenantId, tenantId },
+				relations: ['settings']
+			});
+		} catch (error) {
+			if (error instanceof NotFoundException) {
 				return false;
 			}
+			throw error;
+		}
 
-			const enabledSetting = integrationTenant.settings?.find(
-				(s: any) => s.settingsName === SimSettingName.IS_ENABLED
-			);
-
-			if (typeof enabledSetting?.settingsValue === 'boolean') {
-				return enabledSetting.settingsValue;
-			}
-			return !!(typeof enabledSetting?.settingsValue === 'string'
-				? JSON.parse(enabledSetting.settingsValue)
-				: enabledSetting?.settingsValue);
-		} catch (error) {
-			this.logger.error('Error checking if SIM integration is enabled:', error);
+		if (!integrationTenant) {
 			return false;
 		}
+
+		const enabledSetting = integrationTenant.settings?.find(
+			(s: IIntegrationSetting) => s.settingsName === SimSettingName.IS_ENABLED
+		);
+
+		if (typeof enabledSetting?.settingsValue === 'boolean') {
+			return enabledSetting.settingsValue;
+		}
+		return !!(typeof enabledSetting?.settingsValue === 'string'
+			? JSON.parse(enabledSetting.settingsValue)
+			: enabledSetting?.settingsValue);
 	}
 
 	/**
@@ -472,7 +489,7 @@ export class SimService {
 		organizationId: string;
 	}): Promise<void> {
 		try {
-			let integrationTenant: any = null;
+			let integrationTenant: IIntegrationTenant | null = null;
 			try {
 				integrationTenant = await this.integrationTenantService.findOneByOptions({
 					where: { name: IntegrationEnum.SIM, tenantId: params.tenantId },
@@ -519,28 +536,40 @@ export class SimService {
 	}
 
 	/**
-	 * Get integration tenant information.
+	 * Get integration tenant information (with sensitive settings redacted).
 	 */
-	async getIntegrationTenant(integrationId: string): Promise<any> {
+	async getIntegrationTenant(integrationTenantId: string): Promise<IIntegrationTenant> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
 				throw new BadRequestException('Tenant ID not found in request context');
 			}
 
-			return await this.integrationTenantService.findOneByOptions({
+			const integrationTenant = await this.integrationTenantService.findOneByOptions({
 				where: {
-					tenantId,
-					integration: { id: integrationId }
+					id: integrationTenantId,
+					tenantId
 				},
 				relations: ['integration', 'settings']
 			});
+
+			// Redact sensitive settings before returning
+			if (integrationTenant.settings) {
+				integrationTenant.settings = integrationTenant.settings.map((setting: IIntegrationSetting) => {
+					if (setting.settingsName === SimSettingName.API_KEY) {
+						return { ...setting, settingsValue: '••••••••' };
+					}
+					return setting;
+				});
+			}
+
+			return integrationTenant;
 		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			this.logger.error('Failed to get SIM integration tenant:', error);
-			throw new HttpException(
-				`Failed to get SIM integration tenant: ${error.message}`,
-				error.status || HttpStatus.INTERNAL_SERVER_ERROR
-			);
+			throw new InternalServerErrorException('Failed to get SIM integration tenant');
 		}
 	}
 }

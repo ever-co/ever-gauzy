@@ -24,7 +24,7 @@ import { SimWorkflowExecution } from './sim-workflow-execution.entity';
 	}
 })
 export class IntegrationSimPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
-	// We disable by default additional logging for each event to avoid cluttering the logs
+	// Enable additional logging for plugin lifecycle events
 	private logEnabled = true;
 
 	/**
