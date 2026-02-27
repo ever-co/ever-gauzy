@@ -91,4 +91,18 @@ export class OneColumnLayoutComponent {
 	onWorkspaceToggle(isOpen: boolean): void {
 		this.isWorkspaceOpen.set(isOpen);
 	}
+
+	/**
+	 * Closes the user menu overlay.
+	 */
+	closeUserMenu(): void {
+		this.isOpen.set(false);
+	}
+
+	/**
+	 * Closes the workspace menu overlay.
+	 */
+	closeWorkspaceMenu(): void {
+		this.isWorkspaceOpen.set(false);
+	}
 }

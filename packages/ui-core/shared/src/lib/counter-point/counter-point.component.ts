@@ -33,7 +33,7 @@ export class CounterPointComponent {
 
 		for (let i = 0; i < total; i++) {
 			if (i < value) {
-				points.push({ color: progressStatus((value / total) * 100) });
+				points.push({ color: this.color() || progressStatus((value / total) * 100) });
 			} else {
 				points.push({ color: 'basic' });
 			}

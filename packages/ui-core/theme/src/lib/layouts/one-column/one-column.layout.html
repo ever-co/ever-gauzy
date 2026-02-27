@@ -40,7 +40,7 @@
 
 				<div class="toggle-layout" [class.row]="isExpanded()" [class.column]="!isExpanded()">
 					<div class="custom-row user">
-						<gauzy-user [user$]="user$" (click)="isOpen.set(!isOpen())"></gauzy-user>
+						<gauzy-user [user$]="user$" (click)="isOpen.update(v => !v)"></gauzy-user>
 					</div>
 
 					<div class="custom-row button">
@@ -78,9 +78,9 @@
 </nb-layout>
 
 @if (isOpen()) {
-	<gauzy-user-menu [user$]="user$" (close)="isOpen.set(false)"></gauzy-user-menu>
+	<gauzy-user-menu [user$]="user$" (close)="closeUserMenu()"></gauzy-user-menu>
 }
 
 @if (isWorkspaceOpen()) {
-	<gauzy-workspace-menu (close)="isWorkspaceOpen.set(false)"></gauzy-workspace-menu>
+	<gauzy-workspace-menu (close)="closeWorkspaceMenu()"></gauzy-workspace-menu>
 }
