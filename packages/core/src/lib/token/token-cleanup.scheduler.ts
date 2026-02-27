@@ -15,7 +15,7 @@ export class TokenCleanupScheduler {
 
 	@ScheduledJob({
 		name: TOKEN_CLEANUP_EXPIRED_JOB,
-		cron: CronExpression.EVERY_10_SECONDS,
+		cron: CronExpression.EVERY_HOUR,
 		queueName: TOKEN_QUEUE_NAME,
 		queueJobName: TOKEN_CLEANUP_EXPIRED_JOB,
 		runOnStart: true,
@@ -29,7 +29,7 @@ export class TokenCleanupScheduler {
 
 	@ScheduledJob({
 		name: TOKEN_CLEANUP_INACTIVE_SCHEDULER,
-		cron: CronExpression.EVERY_30_SECONDS,
+		cron: CronExpression.EVERY_6_HOURS,
 		queueName: TOKEN_QUEUE_NAME,
 		queueJobName: TOKEN_CLEANUP_INACTIVE_JOB,
 		runOnStart: true
