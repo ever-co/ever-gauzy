@@ -288,7 +288,8 @@ export class TokenModule {
 		return [
 			SchedulerModule.forFeature({
 				queues: [TOKEN_QUEUE_NAME],
-				jobProviders: [TokenCleanupScheduler, TokenCleanupWorker]
+				jobProviders: [TokenCleanupScheduler, TokenCleanupWorker],
+				imports: [CqrsModule]
 			})
 		];
 	}

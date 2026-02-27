@@ -2,7 +2,6 @@ import { QueueJobHandler, QueueWorker, QueueWorkerHost } from '@gauzy/scheduler'
 import { isNotEmpty } from '@gauzy/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ModuleRef } from '@nestjs/core';
 import { Job } from 'bullmq';
 import { CleanupExpiredTokensCommand, CleanupInactiveTokensCommand } from './commands';
 import { ITokenJob } from './interfaces';
@@ -15,18 +14,8 @@ export class TokenCleanupWorker extends QueueWorkerHost {
 	private readonly logger = new Logger(TokenCleanupWorker.name);
 
 	constructor(
-		private readonly moduleRef: ModuleRef,
-		private readonly configRegistry: TokenConfigRegistry
-	) {
+	private readonly commandBus: CommandBus, private readonly configRegistry: TokenConfigRegistry){
 		super();
-	}
-
-	private get commandBus(): CommandBus {
-		const commandBus = this.moduleRef.get(CommandBus, { strict: false });
-		if (!commandBus) {
-			throw new Error('CommandBus is not available in the current application context');
-		}
-		return commandBus;
 	}
 
 	@QueueJobHandler(TOKEN_CLEANUP_EXPIRED_JOB)
