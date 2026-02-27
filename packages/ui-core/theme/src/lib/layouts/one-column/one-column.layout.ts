@@ -60,7 +60,10 @@ export class OneColumnLayoutComponent {
 	 * If the component is expanded, it expands the 'menu-sidebar'.
 	 * If the component is collapsed, it triggers a sidebar toggle and changes the layout size.
 	 */
-	toggle() {
+	/**
+	 * Toggles the expansion state of the sidebar.
+	 */
+	toggle(): void {
 		this.isExpanded.update((v) => !v);
 		if (this.isExpanded()) {
 			this.sidebarService.expand('menu-sidebar');
@@ -71,16 +74,25 @@ export class OneColumnLayoutComponent {
 		}
 	}
 
-	onCollapse(event: boolean) {
+	/**
+	 * Handles the sidebar collapse event. Auto-expands if both collapsed and compacted.
+	 */
+	onCollapse(event: boolean): void {
 		this.isCollapse.set(event);
 		if (!this.isCollapse() && !this.isExpanded()) this.toggle();
 	}
 
+	/**
+	 * Syncs expansion and trigger signals with the sidebar state change.
+	 */
 	onStateChange(event: string): void {
 		this.isExpanded.set(event === 'expanded');
 		this.trigger.set(event === 'compacted');
 	}
 
+	/**
+	 * Toggles the workspace menu visibility.
+	 */
 	onWorkspaceToggle(isOpen: boolean): void {
 		this.isWorkspaceOpen.set(isOpen);
 	}
