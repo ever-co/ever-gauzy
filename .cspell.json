@@ -856,7 +856,11 @@
 		"TOCTOU",
 		"Gmqh",
 		"bullmq",
-		"MAINLOADSPLASH"
+		"MAINLOADSPLASH",
+		"threadpool",
+		"THREADPOOL",
+		"EMFILE",
+		"gracefulify"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

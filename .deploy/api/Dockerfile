@@ -107,7 +107,7 @@ ARG REDIS_URL
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
 
-FROM node:24.12.0-alpine3.23 AS dependencies
+FROM node:24.14.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -177,7 +177,7 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
 
-FROM node:24.12.0-alpine3.23 AS prodDependencies
+FROM node:24.14.0-alpine3.23 AS prodDependencies
 
 ENV CI=true
 
@@ -247,7 +247,7 @@ RUN rm -r node_modules/@angular
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r node_modules/@gauzy
 
-FROM node:24.12.0-alpine3.23 AS development
+FROM node:24.14.0-alpine3.23 AS development
 
 USER node:node
 
@@ -257,7 +257,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:24.12.0-alpine3.23 AS build
+FROM node:24.14.0-alpine3.23 AS build
 
 WORKDIR /srv/gauzy
 
@@ -299,7 +299,7 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r dist/apps/api/node_modules/@gauzy
 
-FROM node:24.12.0-alpine3.23 AS production
+FROM node:24.14.0-alpine3.23 AS production
 
 WORKDIR /srv/gauzy
 

@@ -3,7 +3,9 @@ name: API Server Build Stage
 on:
   workflow_run:
     workflows: ['Release Apps Stage']
-    branches: [stage-apps, temp]
+    branches:
+      - stage-apps
+      - temp
     types:
       - completed
 
@@ -27,7 +29,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -122,7 +124,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -225,7 +227,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -336,7 +338,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
@@ -434,11 +436,13 @@ jobs:
           # Patch graceful-fs to retry EMFILE errors with backoff
           node -e "try { var gfs = require('graceful-fs'); gfs.gracefulify(require('fs')); console.log('graceful-fs patched'); } catch(e) { console.log('graceful-fs not available, skipping'); }"
 
+      - name: Reset NX
+        shell: powershell
+        run: npx nx reset
+
       - name: Build Server
         shell: cmd
-        run: |
-          npx nx reset
-          yarn build:gauzy-api-server:windows:release:gh:x64
+        run: 'yarn build:gauzy-api-server:windows:release:gh:x64'
         env:
           USE_HARD_LINKS: false
           ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
@@ -452,8 +456,8 @@ jobs:
           SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
-          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
           NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
           NX_DAEMON: false
 
   release-windows-arm64:
@@ -484,7 +488,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
           architecture: arm64
 
       - name: Get yarn cache directory path
@@ -615,6 +619,6 @@ jobs:
           SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
-          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
           NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
           NX_DAEMON: false

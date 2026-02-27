@@ -3,7 +3,8 @@ name: Deploy to DigitalOcean Demo
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Demo']
-    branches: [develop]
+    branches:
+      - develop
     types:
       - completed
 

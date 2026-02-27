@@ -2,7 +2,8 @@ name: Release Prod
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
 
 jobs:
   release:

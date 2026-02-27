@@ -65,55 +65,55 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 			case MultiORMEnum.MikroORM: {
 				// MikroORM: Use Knex for the complex search query
 				const knex = (this.pluginService.mikroOrmPluginRepository as any).getKnex();
-				let qb = knex('plugin');
+				let qb = knex('plugins');
 
 				// Relations (left joins)
 				if (isArray && relations.length > 0) {
 					if (relations.includes('category')) {
-						qb = qb.leftJoin('plugin_category as category', 'plugin.categoryId', 'category.id');
+						qb = qb.leftJoin('plugin_categories as category', 'plugins.categoryId', 'category.id');
 					}
 					if (relations.includes('versions')) {
-						qb = qb.leftJoin('plugin_version as versions', 'plugin.id', 'versions.pluginId');
+						qb = qb.leftJoin('plugin_versions as versions', 'plugins.id', 'versions.pluginId');
 					}
 					if (relations.includes('versions.sources')) {
-						qb = qb.leftJoin('plugin_source as sources', 'versions.id', 'sources.versionId');
+						qb = qb.leftJoin('plugin_sources as sources', 'versions.id', 'sources.versionId');
 					}
 					if (relations.includes('uploadedBy')) {
-						qb = qb.leftJoin('employee as uploadedBy', 'plugin.uploadedById', 'uploadedBy.id');
+						qb = qb.leftJoin('employee as uploadedBy', 'plugins.uploadedById', 'uploadedBy.id');
 					}
 					if (relations.includes('settings')) {
-						qb = qb.leftJoin('plugin_setting as settings', 'plugin.id', 'settings.pluginId');
+						qb = qb.leftJoin('plugin_settings as settings', 'plugins.id', 'settings.pluginId');
 					}
 				}
 
 				// Global search
 				if (search) {
 					qb = qb.where(function () {
-						this.where('plugin.name', 'ILIKE', `%${search}%`)
-							.orWhere('plugin.description', 'ILIKE', `%${search}%`)
-							.orWhere('plugin.author', 'ILIKE', `%${search}%`);
+						this.where('plugins.name', 'ILIKE', `%${search}%`)
+							.orWhere('plugins.description', 'ILIKE', `%${search}%`)
+							.orWhere('plugins.author', 'ILIKE', `%${search}%`);
 					});
 				}
 
 				// Field-specific filters
-				if (name) qb = qb.andWhere('plugin.name', name);
-				if (description) qb = qb.andWhere('plugin.description', 'ILIKE', `%${description}%`);
-				if (type) qb = qb.andWhere('plugin.type', type);
-				if (status) qb = qb.andWhere('plugin.status', status);
-				if (isActive !== undefined) qb = qb.andWhere('plugin.isActive', isActive);
-				if (categoryId) qb = qb.andWhere('plugin.categoryId', categoryId);
-				if (author) qb = qb.andWhere('plugin.author', 'ILIKE', `%${author}%`);
-				if (license) qb = qb.andWhere('plugin.license', 'ILIKE', `%${license}%`);
-				if (uploadedById) qb = qb.andWhere('plugin.uploadedById', uploadedById);
-				if (uploadedAfter) qb = qb.andWhere('plugin.uploadedAt', '>=', uploadedAfter);
-				if (uploadedBefore) qb = qb.andWhere('plugin.uploadedAt', '<=', uploadedBefore);
-				if (downloadedAfter) qb = qb.andWhere('plugin.lastDownloadedAt', '>=', downloadedAfter);
-				if (downloadedBefore) qb = qb.andWhere('plugin.lastDownloadedAt', '<=', downloadedBefore);
+				if (name) qb = qb.andWhere('plugins.name', name);
+				if (description) qb = qb.andWhere('plugins.description', 'ILIKE', `%${description}%`);
+				if (type) qb = qb.andWhere('plugins.type', type);
+				if (status) qb = qb.andWhere('plugins.status', status);
+				if (isActive !== undefined) qb = qb.andWhere('plugins.isActive', isActive);
+				if (categoryId) qb = qb.andWhere('plugins.categoryId', categoryId);
+				if (author) qb = qb.andWhere('plugins.author', 'ILIKE', `%${author}%`);
+				if (license) qb = qb.andWhere('plugins.license', 'ILIKE', `%${license}%`);
+				if (uploadedById) qb = qb.andWhere('plugins.uploadedById', uploadedById);
+				if (uploadedAfter) qb = qb.andWhere('plugins.uploadedAt', '>=', uploadedAfter);
+				if (uploadedBefore) qb = qb.andWhere('plugins.uploadedAt', '<=', uploadedBefore);
+				if (downloadedAfter) qb = qb.andWhere('plugins.lastDownloadedAt', '>=', downloadedAfter);
+				if (downloadedBefore) qb = qb.andWhere('plugins.lastDownloadedAt', '<=', downloadedBefore);
 
 				// Version filter
 				if (version) {
 					if (!isArray || !relations.includes('versions')) {
-						qb = qb.leftJoin('plugin_version as versionFilter', 'plugin.id', 'versionFilter.pluginId');
+						qb = qb.leftJoin('plugin_versions as versionFilter', 'plugins.id', 'versionFilter.pluginId');
 					}
 					qb = qb.andWhere(function () {
 						this.where('versions.number', version).orWhere('versionFilter.number', version);
@@ -122,7 +122,7 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 
 				// Has installations filter
 				if (hasInstallations !== undefined) {
-					qb = qb.leftJoin('plugin_installation as installation', 'plugin.id', 'installation.pluginId');
+					qb = qb.leftJoin('plugin_installations as installation', 'plugins.id', 'installation.pluginId');
 					if (hasInstallations) {
 						qb = qb.whereNotNull('installation.id');
 					} else {
@@ -133,12 +133,12 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 				// Download count range filter using subquery
 				let hasDownloadStatsJoin = false;
 				if (minDownloads !== undefined || maxDownloads !== undefined) {
-					const downloadSubquery = knex('plugin_version as pv')
+					const downloadSubquery = knex('plugin_versions as pv')
 						.select('pv.pluginId')
 						.sum('pv.downloadCount as totalDownloads')
 						.groupBy('pv.pluginId');
 
-					qb = qb.leftJoin(downloadSubquery.as('downloadStats'), 'plugin.id', 'downloadStats.pluginId');
+					qb = qb.leftJoin(downloadSubquery.as('downloadStats'), 'plugins.id', 'downloadStats.pluginId');
 					hasDownloadStatsJoin = true;
 
 					if (minDownloads !== undefined) {
@@ -152,27 +152,27 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 				// Tags filter
 				if (tags && tags.length > 0) {
 					qb = qb
-						.leftJoin('plugin_tags as pluginTags', 'plugin.id', 'pluginTags.pluginId')
+						.leftJoin('plugin_tags as pluginTags', 'plugins.id', 'pluginTags.pluginId')
 						.whereIn('pluginTags.name', tags);
 				}
 
 				// Is verified filter
 				if (isVerified !== undefined) {
 					qb = qb
-						.leftJoin('plugin_verification as verification', 'plugin.id', 'verification.pluginId')
+						.leftJoin('plugin_verifications as verification', 'plugins.id', 'verification.pluginId')
 						.andWhere('verification.isVerified', isVerified);
 				}
 
 				// Sorting
 				if (sortBy === 'downloadCount') {
 					if (!hasDownloadStatsJoin) {
-						const downloadSubquery = knex('plugin_version as pv')
+						const downloadSubquery = knex('plugin_versions as pv')
 							.select('pv.pluginId')
 							.sum('pv.downloadCount as totalDownloads')
 							.groupBy('pv.pluginId');
 						qb = qb.leftJoin(
 							downloadSubquery.as('downloadStats'),
-							'plugin.id',
+							'plugins.id',
 							'downloadStats.pluginId'
 						);
 					}
@@ -180,7 +180,7 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 						'COALESCE("downloadStats"."totalDownloads", 0) ' + sortDirection.toUpperCase()
 					);
 				} else {
-					qb = qb.orderBy(`plugin.${sortBy}`, sortDirection.toLowerCase() as 'asc' | 'desc');
+					qb = qb.orderBy(`plugins.${sortBy}`, sortDirection.toLowerCase() as 'asc' | 'desc');
 				}
 
 				// Get total count (clone before pagination)
@@ -189,7 +189,7 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 				const total = parseInt(countResult?.total ?? '0', 10);
 
 				// Pagination
-				qb = qb.select('plugin.*').offset((skip - 1) * take).limit(take);
+				qb = qb.select('plugins.*').offset((skip - 1) * take).limit(take);
 
 				const items = await qb;
 
@@ -314,7 +314,7 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 						.subQuery()
 						.select('pv.pluginId')
 						.addSelect('COALESCE(SUM(pv.downloadCount), 0)', 'totalDownloads')
-						.from('plugin_version', 'pv')
+						.from('plugin_versions', 'pv')
 						.groupBy('pv.pluginId')
 						.getQuery();
 
@@ -365,7 +365,7 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 							.subQuery()
 							.select('pv.pluginId')
 							.addSelect('COALESCE(SUM(pv.downloadCount), 0)', 'totalDownloads')
-							.from('plugin_version', 'pv')
+							.from('plugin_versions', 'pv')
 							.groupBy('pv.pluginId')
 							.getQuery();
 

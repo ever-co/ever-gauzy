@@ -3,7 +3,8 @@ name: Deploy to CoreWeave Demo
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Demo']
-    branches: [cw]
+    branches:
+      - cw
     types:
       - completed
 

@@ -3,7 +3,8 @@ name: Deploy to DigitalOcean App Platform Demo
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Demo']
-    branches: [appplatform]
+    branches:
+      - appplatform
     types:
       - completed
 

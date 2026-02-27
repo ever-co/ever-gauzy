@@ -3,7 +3,8 @@ name: Deploy to Civo Prod
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Prod']
-    branches: [civo]
+    branches:
+      - civo
     types:
       - completed
 

@@ -2,7 +2,8 @@ name: Build and Publish Docker Images Stage
 
 on:
   push:
-    branches: stage
+    branches:
+      - stage
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
