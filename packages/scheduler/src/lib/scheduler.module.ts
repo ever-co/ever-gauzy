@@ -61,7 +61,7 @@ export class SchedulerModule {
 
 		return {
 			module: SchedulerModule,
-			imports,
+			imports: [...imports, ...(options.imports ?? [])],
 			providers: [...jobProviders],
 			exports: [...jobProviders]
 		};
