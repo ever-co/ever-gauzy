@@ -547,7 +547,7 @@ export class SimService {
 				const syncResult = result as WorkflowExecutionResult;
 				const asyncResult = result as AsyncExecutionResult;
 
-				execution.status = ((result as any).jobId || asyncResult.jobId) ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
+				execution.status = (result as any).jobId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
 				execution.output = syncResult.output ?? result;
 				execution.executionId = syncResult.metadata?.executionId || asyncResult.jobId;
 				execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
