@@ -250,7 +250,7 @@
 		"build:package:plugin:integration-ai-ui:docker": "yarn ng:docker build plugin-integration-ai-ui --configuration=production",
 		"build:package:plugin:integration-ai-ui:dev:docker": "yarn ng:dev:docker build plugin-integration-ai-ui --configuration=development --verbose",
 		"build:package:plugin:integration-hubstaff-ui": "yarn ng build plugin-integration-hubstaff-ui --configuration=development",
-		"build:package:plugin:integration-hubstaff-ui:prod": "yarn ng:prod build plugin-integration-hubstaff-ui --configur ation=production",
+		"build:package:plugin:integration-hubstaff-ui:prod": "yarn ng:prod build plugin-integration-hubstaff-ui --configuration=production",
 		"build:package:plugin:integration-hubstaff-ui:docker": "yarn ng:docker build plugin-integration-hubstaff-ui --configuration=production",
 		"build:package:plugin:integration-hubstaff-ui:dev:docker": "yarn ng:dev:docker build plugin-integration-hubstaff-ui --configuration=development --verbose",
 		"build:package:plugin:integration-github-ui": "yarn ng build plugin-integration-github-ui --configuration=development",

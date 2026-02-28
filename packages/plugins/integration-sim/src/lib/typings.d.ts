@@ -47,7 +47,7 @@ declare module 'simstudio-ts-sdk' {
 
 	export interface AsyncExecutionResult {
 		success: boolean;
-		taskId: string;
+		jobId: string;
 		status: 'queued';
 		createdAt: string;
 		links: { status: string };

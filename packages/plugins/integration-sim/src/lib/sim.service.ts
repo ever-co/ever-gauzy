@@ -235,9 +235,11 @@ export class SimService {
 			throw new NotFoundException('SIM integration not found for current tenant');
 		}
 
-		// Verify integration is enabled before executing
-		const isEnabled = await this.isIntegrationEnabled(integrationTenant.id);
-		if (!isEnabled) {
+		// Verify integration is enabled using the already-loaded settings
+		const enabledSetting = integrationTenant.settings?.find(
+			(s: IIntegrationSetting) => s.settingsName === SimSettingName.IS_ENABLED
+		);
+		if (!this.parseEnabledSetting(enabledSetting?.settingsValue)) {
 			throw new BadRequestException('SIM integration is disabled for current tenant');
 		}
 
@@ -290,7 +292,7 @@ export class SimService {
 			// Map result fields — the SIM API returns different shapes for sync vs async:
 			// Async: { success, async, jobId, executionId, message, statusUrl }
 			// Sync:  { success, output, metadata: { executionId, duration }, totalDuration }
-			const jobId = (result as any).jobId || asyncResult.taskId;
+			const jobId = (result as any).jobId || asyncResult.jobId;
 
 			execution.status = jobId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
 			execution.output = syncResult.output ?? result;
@@ -534,17 +536,20 @@ export class SimService {
 
 			try {
 				// Execute asynchronously
-				const result = await client.executeWorkflow(workflowId, params.data, {
-					async: true
-				});
+				const result = await client.executeWithRetry(
+					workflowId,
+					params.data,
+					{ async: true },
+					{ maxRetries: 3, initialDelay: 1000, maxDelay: 30000, backoffMultiplier: 2 }
+				);
 
 				// Update execution log with result
 				const syncResult = result as WorkflowExecutionResult;
 				const asyncResult = result as AsyncExecutionResult;
 
-				execution.status = asyncResult.taskId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
+				execution.status = ((result as any).jobId || asyncResult.jobId) ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
 				execution.output = syncResult.output ?? result;
-				execution.executionId = syncResult.metadata?.executionId || asyncResult.taskId;
+				execution.executionId = syncResult.metadata?.executionId || asyncResult.jobId;
 				execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
 				execution.error = syncResult.error ? { message: syncResult.error } : undefined;
 				await this.simRepositoryService.save(execution);

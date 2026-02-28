@@ -16,11 +16,6 @@ export class ExecuteWorkflowDto {
 	@Max(300000)
 	timeout?: number;
 
-	@ApiPropertyOptional({ description: 'Enable streaming responses', default: false })
-	@IsOptional()
-	@IsBoolean()
-	stream?: boolean;
-
 	@ApiPropertyOptional({ description: 'Run asynchronously', default: false })
 	@IsOptional()
 	@IsBoolean()

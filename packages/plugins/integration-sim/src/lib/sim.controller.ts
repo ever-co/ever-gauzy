@@ -94,7 +94,6 @@ export class SimController {
 				workflowId,
 				input: body.input,
 				timeout: body.timeout,
-				stream: body.stream,
 				runAsync: body.runAsync,
 				triggeredBy: 'manual'
 			});

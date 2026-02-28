@@ -28,6 +28,9 @@ export class SimClientFactory {
 	private readonly logger = new Logger(SimClientFactory.name);
 	private readonly clients = new Map<string, SimStudioClientType>();
 
+	/** Tracks in-flight client creation promises to prevent duplicate work under concurrency. */
+	private readonly pending = new Map<string, Promise<SimStudioClientType>>();
+
 	/** Cache key for the default (global API key) client */
 	private static readonly DEFAULT_CLIENT_KEY = '__default__';
 
@@ -48,6 +51,28 @@ export class SimClientFactory {
 			return this.clients.get(integrationId)!;
 		}
 
+		// If another request is already creating this client, await its result
+		if (this.pending.has(integrationId)) {
+			return this.pending.get(integrationId)!;
+		}
+
+		// Create the client and register the in-flight promise so concurrent
+		// callers share the same work instead of duplicating DB queries.
+		const promise = this.createClient(integrationId);
+		this.pending.set(integrationId, promise);
+
+		try {
+			const client = await promise;
+			return client;
+		} finally {
+			this.pending.delete(integrationId);
+		}
+	}
+
+	/**
+	 * Internal: create and cache a new SIM client for the given integration tenant.
+	 */
+	private async createClient(integrationId: string): Promise<SimStudioClientType> {
 		// Load integration tenant with settings
 		let integrationTenant: IIntegrationTenant | null = null;
 		try {
@@ -106,28 +131,45 @@ export class SimClientFactory {
 	 * Useful for testing or default tenant operations.
 	 */
 	async getDefaultClient(): Promise<SimStudioClientType> {
-		// Check cache first before validating the API key
-		if (this.clients.has(SimClientFactory.DEFAULT_CLIENT_KEY)) {
-			return this.clients.get(SimClientFactory.DEFAULT_CLIENT_KEY)!;
+		const key = SimClientFactory.DEFAULT_CLIENT_KEY;
+
+		// Check cache first
+		if (this.clients.has(key)) {
+			return this.clients.get(key)!;
 		}
 
-		const globalApiKey = this.configService.get('sim')?.apiKey;
-		if (!globalApiKey) {
-			throw new BadRequestException(
-				'Global SIM API key not configured. Set GAUZY_SIM_API_KEY environment variable.'
-			);
+		// If another request is already creating the default client, await its result
+		if (this.pending.has(key)) {
+			return this.pending.get(key)!;
 		}
 
-		const SimStudioClient = await loadSimStudioClient();
-		const client = new SimStudioClient({
-			apiKey: globalApiKey,
-			baseUrl: SIM_DEFAULT_BASE_URL
-		});
+		const promise = (async (): Promise<SimStudioClientType> => {
+			const globalApiKey = this.configService.get('sim')?.apiKey;
+			if (!globalApiKey) {
+				throw new BadRequestException(
+					'Global SIM API key not configured. Set GAUZY_SIM_API_KEY environment variable.'
+				);
+			}
 
-		this.clients.set(SimClientFactory.DEFAULT_CLIENT_KEY, client);
-		this.logger.log('Default SIM client created using global GAUZY_SIM_API_KEY');
+			const SimStudioClient = await loadSimStudioClient();
+			const client = new SimStudioClient({
+				apiKey: globalApiKey,
+				baseUrl: SIM_DEFAULT_BASE_URL
+			});
 
-		return client;
+			this.clients.set(key, client);
+			this.logger.log('Default SIM client created using global GAUZY_SIM_API_KEY');
+
+			return client;
+		})();
+
+		this.pending.set(key, promise);
+
+		try {
+			return await promise;
+		} finally {
+			this.pending.delete(key);
+		}
 	}
 
 	/**
@@ -135,6 +177,7 @@ export class SimClientFactory {
 	 */
 	invalidateClient(integrationId: string): void {
 		this.clients.delete(integrationId);
+		this.pending.delete(integrationId);
 		this.logger.log(`SIM client cache invalidated for integration ${integrationId}`);
 	}
 
@@ -143,6 +186,7 @@ export class SimClientFactory {
 	 */
 	invalidateDefaultClient(): void {
 		this.clients.delete(SimClientFactory.DEFAULT_CLIENT_KEY);
+		this.pending.delete(SimClientFactory.DEFAULT_CLIENT_KEY);
 		this.logger.log('Default SIM client cache invalidated');
 	}
 }
