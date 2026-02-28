@@ -10,6 +10,7 @@ import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmEmailTemplateRepository } from './repository/type-orm-email-template.repository';
+import { MikroOrmEmailTemplateRepository } from './repository/mikro-orm-email-template.repository';
 
 @Module({
 	imports: [
@@ -22,10 +23,10 @@ import { TypeOrmEmailTemplateRepository } from './repository/type-orm-email-temp
 	providers: [
 		EmailTemplateService,
 		EmailTemplateReaderService,
-		TypeOrmEmailTemplateRepository,
+		TypeOrmEmailTemplateRepository, MikroOrmEmailTemplateRepository,
 		...QueryHandlers,
 		...CommandHandlers
 	],
-	exports: [EmailTemplateService, TypeOrmEmailTemplateRepository]
+	exports: [EmailTemplateService, TypeOrmEmailTemplateRepository, MikroOrmEmailTemplateRepository]
 })
 export class EmailTemplateModule {}

@@ -6,6 +6,7 @@ import { CandidateSource } from './candidate-source.entity';
 import { CandidateSourceController } from './candidate-source.controller';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmCandidateSourceRepository } from './repository/type-orm-candidate-source.repository';
+import { MikroOrmCandidateSourceRepository } from './repository/mikro-orm-candidate-source.repository';
 
 @Module({
 	imports: [
@@ -13,7 +14,7 @@ import { TypeOrmCandidateSourceRepository } from './repository/type-orm-candidat
 		MikroOrmModule.forFeature([CandidateSource]),
 		RolePermissionModule
 	],
-	providers: [CandidateSourceService, TypeOrmCandidateSourceRepository],
+	providers: [CandidateSourceService, TypeOrmCandidateSourceRepository, MikroOrmCandidateSourceRepository],
 	controllers: [CandidateSourceController]
 })
 export class CandidateSourceModule {}

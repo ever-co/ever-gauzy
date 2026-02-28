@@ -3,7 +3,8 @@ name: Deploy to DigitalOcean Demo
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Demo']
-    branches: [develop]
+    branches:
+      - develop
     types:
       - completed
 
@@ -57,6 +58,7 @@ jobs:
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: '${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}'
           OTEL_EXPORTER_OTLP_HEADERS: '${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}'
           FEATURE_OPEN_STATS: '${{ vars.FEATURE_OPEN_STATS }}'
+          ALLOWED_ORIGINS: '${{ secrets.ALLOWED_ORIGINS }}'
 
       # we need this step because for now we just use :latest tag
       # note: for production we will use different strategy later

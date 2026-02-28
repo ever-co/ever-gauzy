@@ -1,5 +1,5 @@
 import { PluginBillingStatus } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
+import { MultiORMEnum, TenantAwareCrudService } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
 import { Between, LessThan, UpdateResult } from 'typeorm';
 import {
@@ -44,46 +44,81 @@ export class PluginBillingService extends TenantAwareCrudService<PluginBilling> 
 	 * Find billing records with advanced filtering
 	 */
 	async findBillings(options: IPluginBillingFindInput): Promise<IPluginBilling[]> {
-		const queryBuilder = this.typeOrmPluginBillingRepository
-			.createQueryBuilder('billing')
-			.leftJoinAndSelect('billing.subscription', 'subscription');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// MikroORM: Use Knex for advanced filtering with joins
+				const knex = (this.mikroOrmRepository as any).getKnex();
+				let qb = knex('plugin_billing as billing').leftJoin(
+					'plugin_subscription as subscription',
+					'billing.subscriptionId',
+					'subscription.id'
+				);
 
-		// Apply filters
-		if (options.subscriptionId) {
-			queryBuilder.andWhere('billing.subscriptionId = :subscriptionId', {
-				subscriptionId: options.subscriptionId
-			});
+				if (options.subscriptionId) {
+					qb = qb.where('billing.subscriptionId', options.subscriptionId);
+				}
+				if (options.status) {
+					qb = qb.andWhere('billing.status', options.status);
+				}
+				if (options.billingPeriod) {
+					qb = qb.andWhere('billing.billingPeriod', options.billingPeriod);
+				}
+				if (options.currency) {
+					qb = qb.andWhere('billing.currency', options.currency);
+				}
+				if (options.dateRange) {
+					qb = qb.whereBetween('billing.billingDate', [options.dateRange.start, options.dateRange.end]);
+				}
+				if (options.amountRange) {
+					qb = qb.whereBetween('billing.totalAmount', [options.amountRange.min, options.amountRange.max]);
+				}
+
+				return await qb.select('billing.*').orderBy('billing.billingDate', 'desc');
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const queryBuilder = this.typeOrmPluginBillingRepository
+					.createQueryBuilder('billing')
+					.leftJoinAndSelect('billing.subscription', 'subscription');
+
+				// Apply filters
+				if (options.subscriptionId) {
+					queryBuilder.andWhere('billing.subscriptionId = :subscriptionId', {
+						subscriptionId: options.subscriptionId
+					});
+				}
+
+				if (options.status) {
+					queryBuilder.andWhere('billing.status = :status', { status: options.status });
+				}
+
+				if (options.billingPeriod) {
+					queryBuilder.andWhere('billing.billingPeriod = :billingPeriod', {
+						billingPeriod: options.billingPeriod
+					});
+				}
+
+				if (options.currency) {
+					queryBuilder.andWhere('billing.currency = :currency', { currency: options.currency });
+				}
+
+				if (options.dateRange) {
+					queryBuilder.andWhere('billing.billingDate BETWEEN :startDate AND :endDate', {
+						startDate: options.dateRange.start,
+						endDate: options.dateRange.end
+					});
+				}
+
+				if (options.amountRange) {
+					queryBuilder.andWhere('billing.totalAmount BETWEEN :minAmount AND :maxAmount', {
+						minAmount: options.amountRange.min,
+						maxAmount: options.amountRange.max
+					});
+				}
+
+				return await queryBuilder.orderBy('billing.billingDate', 'DESC').getMany();
+			}
 		}
-
-		if (options.status) {
-			queryBuilder.andWhere('billing.status = :status', { status: options.status });
-		}
-
-		if (options.billingPeriod) {
-			queryBuilder.andWhere('billing.billingPeriod = :billingPeriod', {
-				billingPeriod: options.billingPeriod
-			});
-		}
-
-		if (options.currency) {
-			queryBuilder.andWhere('billing.currency = :currency', { currency: options.currency });
-		}
-
-		if (options.dateRange) {
-			queryBuilder.andWhere('billing.billingDate BETWEEN :startDate AND :endDate', {
-				startDate: options.dateRange.start,
-				endDate: options.dateRange.end
-			});
-		}
-
-		if (options.amountRange) {
-			queryBuilder.andWhere('billing.totalAmount BETWEEN :minAmount AND :maxAmount', {
-				minAmount: options.amountRange.min,
-				maxAmount: options.amountRange.max
-			});
-		}
-
-		return await queryBuilder.orderBy('billing.billingDate', 'DESC').getMany();
 	}
 
 	/**

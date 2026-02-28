@@ -29,6 +29,7 @@ import {
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { MultiORMEnum } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -222,62 +223,98 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			const { name, status, organizationId, projectId, members } = where;
 			const tenantId = RequestContext.currentTenantId() ?? options.where.tenantId;
 
-			// Create query builder
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			// Join employees
-			query.innerJoin(`${query.alias}.members`, 'members');
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const mikroWhere: any = { tenantId, organizationId };
 
-			// Apply pagination and query options
-			this.applyPaginationAndOptions(query, options);
-
-			query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
-				const subQuery = qb.subQuery();
-				subQuery
-					.select(p('"project_module_employee"."organizationProjectModuleId"'))
-					.from(p('project_module_employee'), p('project_module_employee'));
-
-				// If user have permission to change employee
-				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-						const employeeId = members['id'];
-						subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), { employeeId });
+					// Filter by employee
+					if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+						if (isNotEmpty(members) && isNotEmpty(members['id'])) {
+							mikroWhere.members = { employeeId: members['id'] };
+						}
+					} else {
+						const employeeId = RequestContext.currentEmployeeId();
+						if (isNotEmpty(employeeId)) {
+							mikroWhere.members = { employeeId };
+						}
 					}
-				} else {
-					// If employee has login and don't have permission to change employee
-					const employeeId = RequestContext.currentEmployeeId();
-					if (isNotEmpty(employeeId)) {
-						subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), { employeeId });
-					}
+
+					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
+					if (isNotEmpty(status)) mikroWhere.status = status;
+					if (isNotEmpty(name)) mikroWhere.name = { $ilike: `%${name}%` };
+
+					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
+						limit: options?.take || 10,
+						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0,
+						...(options?.relations ? { populate: options.relations as any[] } : {}),
+						...(options?.order ? { orderBy: options.order as any } : {})
+					});
+					return { items: items.map((e) => this.serialize(e)) as OrganizationProjectModule[], total };
 				}
-				return (
-					p('"organization_project_module_members"."organizationProjectModuleId" IN ') +
-					subQuery.distinct(true).getQuery()
-				);
-			});
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					// Apply optional filters
-					const filters: IOrganizationProjectModuleFindInput = {
-						status: status as ProjectModuleStatusEnum,
-						projectId: projectId as ID,
-						name: name as string
-					};
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Create query builder
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					// Join employees
+					query.innerJoin(`${query.alias}.members`, 'members');
 
-					// Apply optional filters
-					this.applyOptionalFilters(query, qb, filters);
-				})
-			);
+					// Apply pagination and query options
+					this.applyPaginationAndOptions(query, options);
 
-			console.log('Get Employees modules', query.getSql()); // Query logs for debugging
+					query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
+						const subQuery = qb.subQuery();
+						subQuery
+							.select(p('"project_module_employee"."organizationProjectModuleId"'))
+							.from(p('project_module_employee'), p('project_module_employee'));
 
-			// Execute the query with pagination
-			return await this.executePaginationQuery<OrganizationProjectModule>(query);
+						// If user have permission to change employee
+						if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+							if (isNotEmpty(members) && isNotEmpty(members['id'])) {
+								const employeeId = members['id'];
+								subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), {
+									employeeId
+								});
+							}
+						} else {
+							// If employee has login and don't have permission to change employee
+							const employeeId = RequestContext.currentEmployeeId();
+							if (isNotEmpty(employeeId)) {
+								subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), {
+									employeeId
+								});
+							}
+						}
+						return (
+							p('"organization_project_module_members"."organizationProjectModuleId" IN ') +
+							subQuery.distinct(true).getQuery()
+						);
+					});
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						})
+					);
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							// Apply optional filters
+							const filters: IOrganizationProjectModuleFindInput = {
+								status: status as ProjectModuleStatusEnum,
+								projectId: projectId as ID,
+								name: name as string
+							};
+
+							// Apply optional filters
+							this.applyOptionalFilters(query, qb, filters);
+						})
+					);
+
+					console.log('Get Employees modules', query.getSql()); // Query logs for debugging
+
+					// Execute the query with pagination
+					return await this.executePaginationQuery<OrganizationProjectModule>(query);
+				}
+			}
 		} catch (error) {
 			// Error logging for debugging
 			throw new HttpException(
@@ -301,76 +338,117 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			const { name, status, teams = [], organizationId, projectId, members } = where;
 			const tenantId = RequestContext.currentTenantId() || where.tenantId;
 
-			// Create query builder
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const mikroWhere: any = { tenantId, organizationId };
 
-			// Join teams
-			query.leftJoin(`${query.alias}.teams`, 'teams');
-
-			// Apply pagination and query options
-			this.applyPaginationAndOptions(query, options);
-
-			query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
-				const subQuery = qb.subQuery();
-				subQuery
-					.select(p('"project_module_team"."organizationProjectModuleId"'))
-					.from(p('project_module_team'), p('project_module_team'));
-				subQuery.leftJoin(
-					'organization_team_employee',
-					'organization_team_employee',
-					p('"organization_team_employee"."organizationTeamId" = "project_module_team"."organizationTeamId"')
-				);
-				// If user have permission to change employee
-				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-						const employeeId = members['id'];
-						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
+					// Filter by team members
+					if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+						if (isNotEmpty(members) && isNotEmpty(members['id'])) {
+							mikroWhere.teams = { members: { employeeId: members['id'] } };
+						}
+					} else {
+						const employeeId = RequestContext.currentEmployeeId();
+						if (isNotEmpty(employeeId)) {
+							mikroWhere.teams = { members: { employeeId } };
+						}
 					}
-				} else {
-					// If employee has login and don't have permission to change employee
-					const employeeId = RequestContext.currentEmployeeId();
-					if (isNotEmpty(employeeId)) {
-						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
+
+					if (isNotEmpty(teams)) {
+						mikroWhere.teams = { ...mikroWhere.teams, id: { $in: teams } };
 					}
+					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
+					if (isNotEmpty(status)) mikroWhere.status = status;
+					if (isNotEmpty(name)) mikroWhere.name = { $ilike: `%${name}%` };
+
+					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
+						limit: options?.take || 10,
+						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0,
+						...(options?.relations ? { populate: options.relations as any[] } : {}),
+						...(options?.order ? { orderBy: options.order as any } : {})
+					});
+					return { items: items.map((e) => this.serialize(e)) as OrganizationProjectModule[], total };
 				}
-				if (isNotEmpty(teams)) {
-					subQuery.andWhere(p(`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`), { teams });
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Create query builder
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+					// Join teams
+					query.leftJoin(`${query.alias}.teams`, 'teams');
+
+					// Apply pagination and query options
+					this.applyPaginationAndOptions(query, options);
+
+					query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
+						const subQuery = qb.subQuery();
+						subQuery
+							.select(p('"project_module_team"."organizationProjectModuleId"'))
+							.from(p('project_module_team'), p('project_module_team'));
+						subQuery.leftJoin(
+							'organization_team_employee',
+							'organization_team_employee',
+							p(
+								'"organization_team_employee"."organizationTeamId" = "project_module_team"."organizationTeamId"'
+							)
+						);
+						// If user have permission to change employee
+						if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+							if (isNotEmpty(members) && isNotEmpty(members['id'])) {
+								const employeeId = members['id'];
+								subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), {
+									employeeId
+								});
+							}
+						} else {
+							// If employee has login and don't have permission to change employee
+							const employeeId = RequestContext.currentEmployeeId();
+							if (isNotEmpty(employeeId)) {
+								subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), {
+									employeeId
+								});
+							}
+						}
+						if (isNotEmpty(teams)) {
+							subQuery.andWhere(p(`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`), { teams });
+						}
+						return (
+							p(`"organization_project_module_members"."organizationProjectModuleId" IN `) +
+							subQuery.distinct(true).getQuery()
+						);
+					});
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						})
+					);
+					if (isNotEmpty(projectId) && isNotEmpty(teams)) {
+						query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+					}
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							if (isNotEmpty(projectId) && isEmpty(teams)) {
+								qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+							}
+
+							// Apply optional filters
+							const filters: IOrganizationProjectModuleFindInput = {
+								status: status as ProjectModuleStatusEnum,
+								name: name as string
+							};
+
+							// Apply optional filters
+							this.applyOptionalFilters(query, qb, filters);
+						})
+					);
+
+					console.log('Get Team modules', query.getSql()); // Query logs for debugging
+
+					// Execute the query with pagination
+					return await this.executePaginationQuery<OrganizationProjectModule>(query);
 				}
-				return (
-					p(`"organization_project_module_members"."organizationProjectModuleId" IN `) +
-					subQuery.distinct(true).getQuery()
-				);
-			});
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
-			if (isNotEmpty(projectId) && isNotEmpty(teams)) {
-				query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 			}
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(projectId) && isEmpty(teams)) {
-						qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
-
-					// Apply optional filters
-					const filters: IOrganizationProjectModuleFindInput = {
-						status: status as ProjectModuleStatusEnum,
-						name: name as string
-					};
-
-					// Apply optional filters
-					this.applyOptionalFilters(query, qb, filters);
-				})
-			);
-
-			console.log('Get Team modules', query.getSql()); // Query logs for debugging
-
-			// Execute the query with pagination
-			return await this.executePaginationQuery<OrganizationProjectModule>(query);
 		} catch (error) {
 			// Error logging for debugging
 			throw new HttpException(
@@ -395,27 +473,49 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			const tenantId = RequestContext.currentTenantId() || options?.tenantId;
 			const organizationId = options?.organizationId;
 
-			// Create query builder
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const mikroWhere: any = {
+						tenantId,
+						organizationId,
+						members: { employeeId }
+					};
 
-			// Joins and where clauses
-			query.innerJoin(`${query.alias}.members`, 'member');
-			query.leftJoin(`${query.alias}.teams`, 'project_team');
-			query.leftJoin(`${query.alias}."organizationSprints"`, 'sprint');
+					if (isNotEmpty(options?.projectId)) mikroWhere.projectId = options.projectId;
+					if (isNotEmpty(options?.status)) mikroWhere.status = options.status;
+					if (isNotEmpty(options?.name)) mikroWhere.name = { $ilike: `%${options.name}%` };
+					if (isNotEmpty(options?.organizationSprintId))
+						mikroWhere.organizationSprints = { id: options.organizationSprintId };
+					if (isNotEmpty(options?.organizationTeamId)) mikroWhere.teams = { id: options.organizationTeamId };
 
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p('member.id = :employeeId'), { employeeId })
-						.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
-						.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere);
+					return { items: items.map((e) => this.serialize(e)) as OrganizationProjectModule[], total };
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Create query builder
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-					// Apply optional filters
-					this.applyOptionalFilters(query, qb, options);
-				})
-			);
+					// Joins and where clauses
+					query.innerJoin(`${query.alias}.members`, 'member');
+					query.leftJoin(`${query.alias}.teams`, 'project_team');
+					query.leftJoin(`${query.alias}."organizationSprints"`, 'sprint');
 
-			// Execute the query with pagination
-			return await this.executePaginationQuery<OrganizationProjectModule>(query);
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(p('member.id = :employeeId'), { employeeId })
+								.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
+								.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+
+							// Apply optional filters
+							this.applyOptionalFilters(query, qb, options);
+						})
+					);
+
+					// Execute the query with pagination
+					return await this.executePaginationQuery<OrganizationProjectModule>(query);
+				}
+			}
 		} catch (error) {
 			// Error logging for debugging
 			throw new HttpException(

@@ -13,8 +13,11 @@ import { Task } from '../tasks/task.entity';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmOrganizationSprintRepository } from './repository/type-orm-organization-sprint.repository';
+import { MikroOrmOrganizationSprintRepository } from './repository/mikro-orm-organization-sprint.repository';
 import { TypeOrmOrganizationSprintEmployeeRepository } from './repository/type-orm-organization-sprint-employee.repository';
+import { MikroOrmOrganizationSprintEmployeeRepository } from './repository/mikro-orm-organization-sprint-employee.repository';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './repository/type-orm-organization-sprint-task-history.repository';
+import { MikroOrmOrganizationSprintTaskHistoryRepository } from './repository/mikro-orm-organization-sprint-task-history.repository';
 
 @Module({
 	imports: [
@@ -33,16 +36,16 @@ import { TypeOrmOrganizationSprintTaskHistoryRepository } from './repository/typ
 	controllers: [OrganizationSprintController],
 	providers: [
 		OrganizationSprintService,
-		TypeOrmOrganizationSprintRepository,
-		TypeOrmOrganizationSprintEmployeeRepository,
-		TypeOrmOrganizationSprintTaskHistoryRepository,
+		TypeOrmOrganizationSprintRepository, MikroOrmOrganizationSprintRepository,
+		TypeOrmOrganizationSprintEmployeeRepository, MikroOrmOrganizationSprintEmployeeRepository,
+		TypeOrmOrganizationSprintTaskHistoryRepository, MikroOrmOrganizationSprintTaskHistoryRepository,
 		...CommandHandlers
 	],
 	exports: [
 		OrganizationSprintService,
-		TypeOrmOrganizationSprintRepository,
-		TypeOrmOrganizationSprintEmployeeRepository,
-		TypeOrmOrganizationSprintTaskHistoryRepository
+		TypeOrmOrganizationSprintRepository, MikroOrmOrganizationSprintRepository,
+		TypeOrmOrganizationSprintEmployeeRepository, MikroOrmOrganizationSprintEmployeeRepository,
+		TypeOrmOrganizationSprintTaskHistoryRepository, MikroOrmOrganizationSprintTaskHistoryRepository
 	]
 })
 export class OrganizationSprintModule {}

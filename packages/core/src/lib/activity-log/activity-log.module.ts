@@ -8,6 +8,7 @@ import { ActivityLog } from './activity-log.entity';
 import { ActivityLogService } from './activity-log.service';
 import { EventHandlers } from './events/handlers';
 import { TypeOrmActivityLogRepository } from './repository/type-orm-activity-log.repository';
+import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-log.repository';
 
 @Global()
 @Module({
@@ -18,7 +19,7 @@ import { TypeOrmActivityLogRepository } from './repository/type-orm-activity-log
 		RolePermissionModule
 	],
 	controllers: [ActivityLogController],
-	providers: [ActivityLogService, TypeOrmActivityLogRepository, ...EventHandlers],
-	exports: [ActivityLogService, TypeOrmActivityLogRepository]
+	providers: [ActivityLogService, TypeOrmActivityLogRepository, MikroOrmActivityLogRepository, ...EventHandlers],
+	exports: [ActivityLogService, TypeOrmActivityLogRepository, MikroOrmActivityLogRepository]
 })
 export class ActivityLogModule {}

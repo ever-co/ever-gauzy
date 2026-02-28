@@ -64,6 +64,7 @@
 			"@gauzy/plugin-react-ui": ["./packages/plugins/react-ui/src/index.ts"],
 			"@gauzy/plugin-ui-react": ["./packages/ui-react/src/index.ts"],
 			"@gauzy/mcp-server": ["./packages/mcp-server/src/index.ts"],
+			"@gauzy/scheduler": ["./packages/scheduler/src/index.ts"],
 			"@gauzy/ui-auth": ["./packages/ui-auth/src/index.ts"],
 			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
 			"@gauzy/ui-core": ["./packages/ui-core/src/index.ts"],

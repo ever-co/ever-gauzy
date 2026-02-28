@@ -12,7 +12,13 @@ import {
 	IMatchingCriterions,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { LIKE_OPERATOR, RequestContext, TenantAwareCrudService, TypeOrmEmployeeRepository } from '@gauzy/core';
+import {
+	LIKE_OPERATOR,
+	MultiORMEnum,
+	RequestContext,
+	TenantAwareCrudService,
+	TypeOrmEmployeeRepository
+} from '@gauzy/core';
 import { prepareSQLQuery as p } from '@gauzy/core';
 import { JobPreset } from './job-preset.entity';
 import {
@@ -56,44 +62,71 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 			employeeId = RequestContext.currentEmployeeId();
 		}
 
-		// Create a query builder for the JobPreset entity
-		const query = this.typeOrmRepository.createQueryBuilder('job_preset');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// MikroORM: Use Knex for left join on employees relation
+				const knex = (this.mikroOrmRepository as any).getKnex();
+				let qb = knex('job_preset')
+					.leftJoin('job_preset_employee', 'job_preset.id', 'job_preset_employee.jobPresetId')
+					.where('job_preset.tenantId', tenantId);
 
-		// Set the find options for the query
-		query.setFindOptions({
-			join: {
-				alias: 'job_preset', // Alias for the job preset table
-				leftJoin: { employees: 'job_preset.employees' } // Left join employees relation
-			},
-			// Include job preset criterions in the query result
-			relations: { jobPresetCriterions: true },
-			// Order the results by job preset name in ascending order
-			order: { name: 'ASC' }
-		});
+				if (isNotEmpty(organizationId)) {
+					qb = qb.andWhere('job_preset.organizationId', organizationId);
+				}
+				if (isNotEmpty(search)) {
+					qb = qb.andWhere('job_preset.name', 'ILIKE', `%${search}%`);
+				}
+				if (isNotEmpty(employeeId)) {
+					qb = qb.andWhere('job_preset_employee.employeeId', employeeId);
+				}
 
-		// Add conditions to the query using the query builder
-		query.where((qb: SelectQueryBuilder<JobPreset>) => {
-			// Filter by tenant ID
-			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+				qb = qb.select('job_preset.*').orderBy('job_preset.name', 'asc').distinct();
 
-			// Filter by organization ID if provided
-			if (isNotEmpty(organizationId)) {
-				qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+				const rawItems = await qb;
+				return rawItems.map((row: any) => this.mikroOrmRepository.map(row));
 			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the JobPreset entity
+				const query = this.typeOrmRepository.createQueryBuilder('job_preset');
 
-			// Filter by search string if provided
-			if (isNotEmpty(search)) {
-				qb.andWhere(p(`"${query.alias}"."name" ${LIKE_OPERATOR} :search`), { search: `%${search}%` });
+				// Set the find options for the query
+				query.setFindOptions({
+					join: {
+						alias: 'job_preset', // Alias for the job preset table
+						leftJoin: { employees: 'job_preset.employees' } // Left join employees relation
+					},
+					// Include job preset criterions in the query result
+					relations: { jobPresetCriterions: true },
+					// Order the results by job preset name in ascending order
+					order: { name: 'ASC' }
+				});
+
+				// Add conditions to the query using the query builder
+				query.where((qb: SelectQueryBuilder<JobPreset>) => {
+					// Filter by tenant ID
+					qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+
+					// Filter by organization ID if provided
+					if (isNotEmpty(organizationId)) {
+						qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+					}
+
+					// Filter by search string if provided
+					if (isNotEmpty(search)) {
+						qb.andWhere(p(`"${query.alias}"."name" ${LIKE_OPERATOR} :search`), { search: `%${search}%` });
+					}
+
+					// Filter by employee ID if provided
+					if (isNotEmpty(employeeId)) {
+						qb.andWhere(p(`"employees"."id" = :employeeId`), { employeeId });
+					}
+				});
+
+				// Execute the query and return the result
+				return await query.getMany();
 			}
-
-			// Filter by employee ID if provided
-			if (isNotEmpty(employeeId)) {
-				qb.andWhere(p(`"employees"."id" = :employeeId`), { employeeId });
-			}
-		});
-
-		// Execute the query and return the result
-		return await query.getMany();
+		}
 	}
 
 	/**
@@ -104,27 +137,50 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @returns A Promise that resolves to the retrieved job preset.
 	 */
 	public async get(id: ID, request?: IGetJobPresetCriterionInput) {
-		const query = this.typeOrmRepository.createQueryBuilder();
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// MikroORM: Use repository find with populate
+				const populate = ['jobPresetCriterions'] as any[];
+				if (request?.employeeId) {
+					populate.push('employeeCriterions');
+				}
 
-		// Left join job preset criterions
-		query.leftJoinAndSelect(`${query.alias}.jobPresetCriterions`, 'jobPresetCriterions');
+				const result = await this.mikroOrmRepository.findOne({ id } as any, { populate });
 
-		// Left join employee criterions if employeeId is provided in the request
-		if (request?.employeeId) {
-			const { employeeId } = request;
-			query.leftJoinAndSelect(
-				`${query.alias}.employeeCriterions`,
-				'employeeCriterions',
-				'employeeCriterions.employeeId = :employeeId',
-				{ employeeId }
-			);
+				// Filter employeeCriterions by employeeId if needed
+				if (request?.employeeId && result?.employeeCriterions) {
+					result.employeeCriterions = (result.employeeCriterions as any).filter(
+						(ec: any) => ec.employeeId === request.employeeId
+					);
+				}
+
+				return result;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmRepository.createQueryBuilder();
+
+				// Left join job preset criterions
+				query.leftJoinAndSelect(`${query.alias}.jobPresetCriterions`, 'jobPresetCriterions');
+
+				// Left join employee criterions if employeeId is provided in the request
+				if (request?.employeeId) {
+					const { employeeId } = request;
+					query.leftJoinAndSelect(
+						`${query.alias}.employeeCriterions`,
+						'employeeCriterions',
+						'employeeCriterions.employeeId = :employeeId',
+						{ employeeId }
+					);
+				}
+
+				// Filter by job preset ID
+				query.andWhere(`${query.alias}.id = :id`, { id });
+
+				// Execute the query and return the result
+				return await query.getOne();
+			}
 		}
-
-		// Filter by job preset ID
-		query.andWhere(`${query.alias}.id = :id`, { id });
-
-		// Execute the query and return the result
-		return await query.getOne();
 	}
 
 	/**

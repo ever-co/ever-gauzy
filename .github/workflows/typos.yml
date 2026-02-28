@@ -1,9 +1,11 @@
 name: 'Check Spelling and Typos with cspell'
 on:
   push:
-    branches: [develop]
+    branches:
+      - develop
   pull_request:
-    branches: [develop]
+    branches:
+      - develop
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}

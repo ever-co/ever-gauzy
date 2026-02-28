@@ -12,9 +12,9 @@ import { RequestContext } from './../core/context/request-context';
 import { WarehouseProduct, WarehouseProductVariant } from './../core/entities/internal';
 import { ProductService } from '../product/product.service';
 import { TypeOrmWarehouseProductVariantRepository } from './repository/type-orm-warehouse-product-variant.repository';
-import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository ';
+import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository';
 import { TypeOrmWarehouseRepository } from './repository/type-orm-warehouse.repository';
-import { TypeOrmWarehouseProductRepository } from './repository/type-orm-warehouse-product.repository ';
+import { TypeOrmWarehouseProductRepository } from './repository/type-orm-warehouse-product.repository';
 
 @Injectable()
 export class WarehouseProductService extends TenantAwareCrudService<WarehouseProduct> {

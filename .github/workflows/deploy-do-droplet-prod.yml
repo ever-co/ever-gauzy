@@ -3,7 +3,8 @@ name: Deploy to DigitalOcean Droplet Prod
 on:
   workflow_run:
     workflows: ['Deploy to DigitalOcean Droplet Prod Pre']
-    branches: [droplets]
+    branches:
+      - droplets
     types:
       - completed
 
@@ -97,6 +98,7 @@ jobs:
           JWT_SECRET: '${{ secrets.JWT_SECRET }}'
           JWT_REFRESH_TOKEN_SECRET: '${{ secrets.JWT_REFRESH_TOKEN_SECRET }}'
           JWT_REFRESH_TOKEN_EXPIRATION_TIME: '${{ secrets.JWT_REFRESH_TOKEN_EXPIRATION_TIME }}'
+          ALLOWED_ORIGINS: '${{ secrets.ALLOWED_ORIGINS }}'
           CLOUDINARY_API_KEY: '${{ secrets.CLOUDINARY_API_KEY }}'
           CLOUDINARY_API_SECRET: '${{ secrets.CLOUDINARY_API_SECRET }}'
           CLOUDINARY_CLOUD_NAME: '${{ secrets.CLOUDINARY_CLOUD_NAME }}'

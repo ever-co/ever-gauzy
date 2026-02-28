@@ -26,7 +26,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { PageExtensionSlotComponent } from '@gauzy/plugin-ui';
 import {
 	ActivityItemModule,
-	CounterPointModule,
+	CounterPointComponent,
 	DynamicTabsModule,
 	GalleryModule,
 	InfoBlockModule,
@@ -127,7 +127,7 @@ const COMPONENTS = [
 		TableComponentsModule,
 		NoDataMessageModule,
 		ActivityItemModule,
-		CounterPointModule,
+		CounterPointComponent,
 		DynamicTabsModule,
 		GalleryModule,
 		ScreenshotsItemModule,

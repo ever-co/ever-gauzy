@@ -6,6 +6,7 @@ import { EquipmentSharingPolicyController } from './equipment-sharing-policy.con
 import { EquipmentSharingPolicyService } from './equipment-sharing-policy.service';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 import { TypeOrmEquipmentSharingPolicyRepository } from './repository/type-orm-equipment-sharing-policy.repository';
+import { MikroOrmEquipmentSharingPolicyRepository } from './repository/mikro-orm-equipment-sharing-policy.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmEquipmentSharingPolicyRepository } from './repository/type-orm-e
 		RolePermissionModule
 	],
 	controllers: [EquipmentSharingPolicyController],
-	providers: [EquipmentSharingPolicyService, TypeOrmEquipmentSharingPolicyRepository]
+	providers: [EquipmentSharingPolicyService, TypeOrmEquipmentSharingPolicyRepository, MikroOrmEquipmentSharingPolicyRepository]
 })
 export class EquipmentSharingPolicyModule {}

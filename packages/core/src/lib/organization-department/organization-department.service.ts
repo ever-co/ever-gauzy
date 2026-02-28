@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { In, Like } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { MultiORMEnum } from './../core/utils';
 import { TypeOrmOrganizationDepartmentRepository } from './repository/type-orm-organization-department.repository';
 import { MikroOrmOrganizationDepartmentRepository } from './repository/mikro-orm-organization-department.repository';
 
@@ -20,11 +21,19 @@ export class OrganizationDepartmentService extends TenantAwareCrudService<Organi
 	 * @returns
 	 */
 	async findByEmployee(id: string): Promise<any> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('organization_department')
-			.leftJoin('organization_department.members', 'member')
-			.where('member.id = :id', { id })
-			.getMany();
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const items = await this.mikroOrmRepository.find({ members: { id } } as any);
+				return items.map((e) => this.serialize(e));
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRepository
+					.createQueryBuilder('organization_department')
+					.leftJoin('organization_department.members', 'member')
+					.where('member.id = :id', { id })
+					.getMany();
+		}
 	}
 
 	/**

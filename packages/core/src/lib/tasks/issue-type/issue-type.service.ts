@@ -15,6 +15,7 @@ import { IssueType } from './issue-type.entity';
 import { TaskStatusPrioritySizeService } from './../task-status-priority-size.service';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './default-global-issue-types';
 import { RequestContext } from './../../core/context';
+import { MultiORMEnum } from './../../core/utils';
 import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
 import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.repository';
 
@@ -49,28 +50,56 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 */
 	public async fetchAll(params: IIssueTypeFindInput): Promise<IPagination<IIssueType>> {
 		try {
-			/**
-			 * Find at least one record or get global records
-			 */
-			const cqb = this.typeOrmIssueTypeRepository.createQueryBuilder(this.tableName);
-			cqb.where((qb: SelectQueryBuilder<IssueType>) => {
-				this.getFilterQuery(qb, params);
-			});
-			await cqb.getOneOrFail();
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					// Check at least one record exists with given params
+					const checkWhere = this.buildIssueTypeFilter(params);
+					const exists = await this.mikroOrmRepository.findOne(checkWhere as any);
+					if (!exists) {
+						return await this.getDefaultEntities();
+					}
 
-			/**
-			 * Find task issue types for given params
-			 */
-			const query = this.typeOrmIssueTypeRepository.createQueryBuilder(this.tableName);
-			query.where((qb: SelectQueryBuilder<IssueType>) => {
-				this.getFilterQuery(qb, params);
-			});
-			const [items, total] = await query.getManyAndCount();
-			return { items, total };
+					const [items, total] = await this.mikroOrmRepository.findAndCount(checkWhere as any);
+					return { items: items.map((e) => this.serialize(e)) as IIssueType[], total };
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					/**
+					 * Find at least one record or get global records
+					 */
+					const cqb = this.typeOrmIssueTypeRepository.createQueryBuilder(this.tableName);
+					cqb.where((qb: SelectQueryBuilder<IssueType>) => {
+						this.getFilterQuery(qb, params);
+					});
+					await cqb.getOneOrFail();
+
+					/**
+					 * Find task issue types for given params
+					 */
+					const query = this.typeOrmIssueTypeRepository.createQueryBuilder(this.tableName);
+					query.where((qb: SelectQueryBuilder<IssueType>) => {
+						this.getFilterQuery(qb, params);
+					});
+					const [items, total] = await query.getManyAndCount();
+					return { items, total };
+				}
+			}
 		} catch (error) {
 			console.log('Invalid request parameter: Some required parameters are missing or incorrect', error);
 			return await this.getDefaultEntities();
 		}
+	}
+
+	/**
+	 * Build a MikroORM-compatible filter object from IIssueTypeFindInput params.
+	 */
+	private buildIssueTypeFilter(params: IIssueTypeFindInput): Record<string, any> {
+		const where: Record<string, any> = {};
+		if ((params as any).tenantId) where.tenantId = (params as any).tenantId;
+		if ((params as any).organizationId) where.organizationId = (params as any).organizationId;
+		if ((params as any).organizationTeamId) where.organizationTeamId = (params as any).organizationTeamId;
+		if ((params as any).projectId) where.projectId = (params as any).projectId;
+		return where;
 	}
 
 	/**

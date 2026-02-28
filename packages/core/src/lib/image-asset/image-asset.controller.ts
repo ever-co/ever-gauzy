@@ -1,6 +1,7 @@
 import {
 	Controller,
 	Get,
+	Logger,
 	Param,
 	Post,
 	Body,
@@ -39,6 +40,8 @@ import { UploadImageAsset } from './dto';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
 @Controller('/image-assets')
 export class ImageAssetController extends CrudController<ImageAsset> {
+	private readonly logger = new Logger(ImageAssetController.name);
+
 	constructor(private readonly _commandBus: CommandBus, private readonly _imageAssetService: ImageAssetService) {
 		super(_imageAssetService);
 	}
@@ -54,7 +57,9 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		LazyFileInterceptor('file', {
 			storage: (ctx: ExecutionContext) => {
 				const request: any = ctx.switchToHttp().getRequest();
-				const folder: string = request?.params?.folder || 'image_assets';
+				// Sanitize folder name: strip path traversal characters, allow only alphanumeric/dash/underscore
+				const rawFolder: string = request?.params?.folder || 'image_assets';
+				const folder = rawFolder.replace(/[^a-zA-Z0-9_-]/g, '') || 'image_assets';
 
 				// Define the base directory for storing media
 				const baseDirectory = path.join('uploads', folder);
@@ -97,7 +102,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 				await fs.promises.unlink(inputFile);
 				await fs.promises.unlink(outputFile);
 			} catch (error) {
-				console.error('Error while unlinking temp files:', error);
+				this.logger.error('Error while unlinking temp files');
 			}
 
 			const thumbName = `thumb-${file.filename}`;
@@ -108,7 +113,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 
 			thumbnail = await provider.putFile(data, fullPath);
 		} catch (error) {
-			console.error('Error while uploading media asset into file storage provider:', error);
+			this.logger.error('Error while uploading media asset into file storage provider');
 		}
 
 		// Extract tenant and organization IDs from request headers and body

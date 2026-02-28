@@ -36,6 +36,8 @@ services:
             value: refreshSecretKey
           - key: JWT_REFRESH_TOKEN_EXPIRATION_TIME
             value: 86400
+          - key: ALLOWED_ORIGINS
+            value: https://ever-gauzy-webapp.onrender.com
       healthCheckPath: /api/health
 
     - type: web

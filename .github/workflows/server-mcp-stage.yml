@@ -3,7 +3,9 @@ name: MCP Server Build Stage
 on:
   workflow_run:
     workflows: ['Release Apps Stage']
-    branches: [stage-apps, temp]
+    branches:
+      - stage-apps
+      - temp
     types:
       - completed
 
@@ -27,7 +29,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -61,7 +63,7 @@ jobs:
         run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -122,7 +124,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -162,7 +164,7 @@ jobs:
         run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -225,7 +227,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -250,7 +252,7 @@ jobs:
         run: 'sudo npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -336,23 +338,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
-
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        shell: bash
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v4
-        id: yarn-cache
-        with:
-          path: |
-            ${{ steps.yarn-cache-dir-path.outputs.dir }}
-            .nx/cache
-          key: ${{ runner.os }}-${{ runner.arch }}-yarn-nx-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-yarn-nx-
-            ${{ runner.os }}-${{ runner.arch }}-yarn-
+          node-version: 24.14.0
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
@@ -377,7 +363,7 @@ jobs:
         run: 'npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
 
       - name: Configure npm python for node-gyp
         shell: powershell
@@ -409,7 +395,7 @@ jobs:
           DESKTOP_MCP_SERVER_APP_ID: 'com.ever.gauzymcpserver'
 
       - name: Fix Node.js PATH for child processes
-        shell: pwsh
+        shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           $nodeExe = (Get-Command node -ErrorAction Stop).Source
@@ -442,18 +428,21 @@ jobs:
         shell: bash
         run: mkdir -p dist/packages
 
-      - name: Build Server
+      - name: Increase file handle limits
         shell: powershell
         run: |
-          Write-Host "=== Command locations ==="
-          Write-Host "Node: $((Get-Command node -ErrorAction SilentlyContinue).Source)"
-          Write-Host "Yarn: $((Get-Command yarn -ErrorAction SilentlyContinue).Source)"
-          Write-Host "ts-node: $((Get-Command ts-node -ErrorAction SilentlyContinue).Source)"
-          Write-Host "cross-env: $((Get-Command cross-env -ErrorAction SilentlyContinue).Source)"
-          Write-Host "nx: $((Get-Command nx -ErrorAction SilentlyContinue).Source)"
-          Write-Host ""
-          Write-Host "=== Starting build ==="
-          yarn build:gauzy-mcp-server:windows:release:gh:x64
+          # Increase Node.js UV threadpool for parallel I/O (default is 4)
+          "UV_THREADPOOL_SIZE=32" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Patch graceful-fs to retry EMFILE errors with backoff
+          node -e "try { var gfs = require('graceful-fs'); gfs.gracefulify(require('fs')); console.log('graceful-fs patched'); } catch(e) { console.log('graceful-fs not available, skipping'); }"
+
+      - name: Reset NX
+        shell: powershell
+        run: npx nx reset
+
+      - name: Build Server
+        shell: cmd
+        run: 'yarn build:gauzy-mcp-server:windows:release:gh:x64'
         env:
           USE_HARD_LINKS: false
           ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
@@ -467,8 +456,8 @@ jobs:
           SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
-          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
           NX_DAEMON: false
 
   release-windows-arm64:
@@ -499,7 +488,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
           architecture: arm64
 
       - name: Get yarn cache directory path
@@ -541,7 +530,7 @@ jobs:
         run: 'npm install -g npm@11.6.2'
 
       - name: Install globally node-gyp, ts-node and nx packages
-        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@20.8.0'
+        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
 
       - name: Configure npm python for node-gyp
         shell: powershell
@@ -573,7 +562,7 @@ jobs:
           DESKTOP_MCP_SERVER_APP_ID: 'com.ever.gauzymcpserver'
 
       - name: Fix Node.js PATH for child processes
-        shell: pwsh
+        shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           $nodeExe = (Get-Command node -ErrorAction Stop).Source
@@ -606,6 +595,14 @@ jobs:
         shell: bash
         run: mkdir -p dist/packages
 
+      - name: Increase file handle limits
+        shell: powershell
+        run: |
+          # Increase Node.js UV threadpool for parallel I/O (default is 4)
+          "UV_THREADPOOL_SIZE=32" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Patch graceful-fs to retry EMFILE errors with backoff
+          node -e "try { var gfs = require('graceful-fs'); gfs.gracefulify(require('fs')); console.log('graceful-fs patched'); } catch(e) { console.log('graceful-fs not available, skipping'); }"
+
       - name: Build Server MCP
         shell: cmd
         run: yarn build:gauzy-mcp-server:windows:release:gh:arm64
@@ -622,6 +619,6 @@ jobs:
           SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
-          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
           NX_DAEMON: false

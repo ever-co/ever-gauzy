@@ -1,4 +1,15 @@
-import { Controller, UseGuards, HttpStatus, Post, Body, UseInterceptors, Delete, Param, Query } from '@nestjs/common';
+import {
+	Controller,
+	Logger,
+	UseGuards,
+	HttpStatus,
+	Post,
+	Body,
+	UseInterceptors,
+	Delete,
+	Param,
+	Query
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
 import * as path from 'path';
@@ -24,6 +35,7 @@ import { ScreenshotService } from './screenshot.service';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller('/timesheet/screenshot')
 export class ScreenshotController {
+	private readonly logger = new Logger(ScreenshotController.name);
 	private logging: boolean = true;
 
 	constructor(private readonly _screenshotService: ScreenshotService, private readonly _eventBus: EventBus) {}
@@ -59,11 +71,11 @@ export class ScreenshotController {
 	)
 	async create(@Body() input: Screenshot, @UploadedFileStorage() file: UploadedFile) {
 		if (!file.key) {
-			console.warn('Screenshot file key is empty');
+			this.logger.warn('Screenshot file key is empty');
 			return;
 		}
 
-		if (this.logging) console.log('Screenshot request input:', input);
+		if (this.logging) this.logger.log('Screenshot request received');
 
 		// Extract user information from the request context
 		const user = RequestContext.currentUser();
@@ -103,7 +115,7 @@ export class ScreenshotController {
 				await fs.promises.unlink(inputFile);
 				await fs.promises.unlink(outputFile);
 			} catch (error) {
-				console.error('Error while unlinking temp files:', error);
+				this.logger.error('Error while unlinking temp files');
 			}
 
 			// Define thumbnail file name and directory
@@ -115,7 +127,7 @@ export class ScreenshotController {
 
 			// Upload the thumbnail data to the file storage provider
 			const thumb = await provider.putFile(data, fullPath);
-			if (this.logging) console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
+			if (this.logging) this.logger.log('Screenshot thumb created');
 
 			// Populate entity properties for the screenshot
 			const entity = new Screenshot({
@@ -131,7 +143,7 @@ export class ScreenshotController {
 
 			// Create the screenshot entity in the database
 			const screenshot = await this._screenshotService.create(entity);
-			if (this.logging) console.log(`Screenshot created for employee (${user.name})`, screenshot);
+			if (this.logging) this.logger.log(`Screenshot created for employee`);
 
 			// Publish the screenshot created event
 			const ctx = RequestContext.currentRequestContext(); // Get current request context;
@@ -141,7 +153,7 @@ export class ScreenshotController {
 			// Find screenshot by ID
 			return await this._screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
-			console.error(`Error while creating screenshot for employee (${user.name})`, error);
+			this.logger.error(`Error while creating screenshot`);
 		}
 	}
 

@@ -9,6 +9,7 @@ import { TaskEstimationService } from './task-estimation.service';
 import { TaskModule } from '../task.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmTaskEstimationRepository } from './repository/type-orm-estimation.repository';
+import { MikroOrmTaskEstimationRepository } from './repository/mikro-orm-estimation.repository';
 
 @Module({
 	imports: [
@@ -19,6 +20,6 @@ import { TypeOrmTaskEstimationRepository } from './repository/type-orm-estimatio
 		TaskModule
 	],
 	controllers: [TaskEstimationController],
-	providers: [TaskEstimationService, TypeOrmTaskEstimationRepository, ...CommandHandlers]
+	providers: [TaskEstimationService, TypeOrmTaskEstimationRepository, MikroOrmTaskEstimationRepository, ...CommandHandlers]
 })
 export class TaskEstimationModule {}

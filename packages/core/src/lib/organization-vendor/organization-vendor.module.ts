@@ -7,6 +7,7 @@ import { OrganizationVendorService } from './organization-vendor.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmOrganizationVendorRepository } from './repository/type-orm-organization-vendor.repository';
+import { MikroOrmOrganizationVendorRepository } from './repository/mikro-orm-organization-vendor.repository';
 
 @Module({
 	imports: [
@@ -15,7 +16,7 @@ import { TypeOrmOrganizationVendorRepository } from './repository/type-orm-organ
 		RolePermissionModule
 	],
 	controllers: [OrganizationVendorController],
-	providers: [OrganizationVendorService, TypeOrmOrganizationVendorRepository, ...CommandHandlers],
+	providers: [OrganizationVendorService, TypeOrmOrganizationVendorRepository, MikroOrmOrganizationVendorRepository, ...CommandHandlers],
 	exports: [OrganizationVendorService]
 })
 export class OrganizationVendorModule {}

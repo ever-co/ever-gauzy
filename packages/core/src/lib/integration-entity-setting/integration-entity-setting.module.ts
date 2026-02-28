@@ -9,6 +9,7 @@ import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import { IntegrationEntitySettingController } from './integration-entity-setting.controller';
 import { IntegrationEntitySettingService } from './integration-entity-setting.service';
 import { TypeOrmIntegrationEntitySettingRepository } from './repository/type-orm-integration-entity-setting.repository';
+import { MikroOrmIntegrationEntitySettingRepository } from './repository/mikro-orm-integration-entity-setting.repository';
 
 @Module({
 	imports: [
@@ -19,7 +20,7 @@ import { TypeOrmIntegrationEntitySettingRepository } from './repository/type-orm
 		CqrsModule
 	],
 	controllers: [IntegrationEntitySettingController],
-	providers: [IntegrationEntitySettingService, TypeOrmIntegrationEntitySettingRepository, ...CommandHandlers],
+	providers: [IntegrationEntitySettingService, TypeOrmIntegrationEntitySettingRepository, MikroOrmIntegrationEntitySettingRepository, ...CommandHandlers],
 	exports: [IntegrationEntitySettingService]
 })
 export class IntegrationEntitySettingModule {}

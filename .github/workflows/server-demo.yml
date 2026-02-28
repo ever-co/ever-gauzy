@@ -1,0 +1,173 @@
+name: Server App Build Demo
+
+on:
+  workflow_run:
+    workflows: ['Release Demo']
+    branches:
+      - develop
+    types:
+      - completed
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  release-windows:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 300
+
+    strategy:
+      matrix:
+        os: [[self-hosted, Windows, X64]]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Selective cleanup (preserve .nx/cache)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'SilentlyContinue'
+          # Stop NX daemon first to release file locks before cleanup (guard for fresh runners without Node)
+          if (Get-Command npx -ErrorAction SilentlyContinue) { npx nx daemon --stop 2>&1 | Out-Null }
+          # Remove build artifacts but keep NX cache for faster rebuilds
+          if (Test-Path "dist") { Remove-Item -Recurse -Force "dist" }
+          if (Test-Path "node_modules") { Remove-Item -Recurse -Force "node_modules" }
+          exit 0
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.14.0
+
+      - name: Install Visual Studio 2022 Build Tools (VCTools)
+        shell: powershell
+        run: |
+          choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive --norestart"
+
+      - name: Configure node-gyp to use VS 2022
+        shell: powershell
+        run: |
+          "GYP_MSVS_VERSION=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "npm_config_msvs_version=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Fix node-gyp and Python
+        run: python3 -m pip install packaging setuptools
+
+      - name: Setup MSVC (VS 2022 dev env)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install latest version of NPM
+        run: 'npm install -g npm@11.6.2'
+
+      - name: Install globally node-gyp, ts-node and nx packages
+        run: 'npm install --quiet -g node-gyp@10.2.0 ts-node@10.9.2 nx@^22.5.2'
+
+      - name: Configure npm python for node-gyp
+        shell: powershell
+        run: |
+          $py = (Get-Command python.exe).Source
+          Write-Host "python is: $py"
+          "npm_config_python=$py" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Install Yarn dependencies
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
+
+      - name: Run Postinstall Manually
+        run: 'yarn postinstall.manual'
+
+      - name: Bump server version
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.scripts/bump-version-electron.js')
+            console.log(script.server(false))
+        env:
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          DESKTOP_SERVER_APP_NAME: 'gauzy-server'
+          # Demo electron releases go to the same repo
+          DESKTOP_SERVER_REPO_NAME: 'ever-gauzy'
+          DESKTOP_SERVER_REPO_OWNER: 'ever-co'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          DESKTOP_SERVER_APP_DESCRIPTION: 'Gauzy Server'
+          DESKTOP_SERVER_APP_ID: 'com.ever.gauzyserver'
+
+      - name: Fix Node.js PATH for child processes
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $nodeExe = (Get-Command node -ErrorAction Stop).Source
+          $nodePath = Split-Path $nodeExe -Parent
+          $npmGlobalBin = & npm config get prefix
+          $localBin = Join-Path $PWD "node_modules\.bin"
+          $yarnCmd = Get-Command yarn -ErrorAction SilentlyContinue
+          $yarnPath = if ($yarnCmd) { Split-Path $yarnCmd.Source -Parent } else { "" }
+
+          $npmNodeExe = Join-Path $npmGlobalBin "node.exe"
+          if (-not (Test-Path $npmNodeExe)) { Copy-Item $nodeExe $npmNodeExe -Force }
+
+          $localNodeExe = Join-Path $localBin "node.exe"
+          if (-not (Test-Path $localNodeExe)) { Copy-Item $nodeExe $localNodeExe -Force }
+
+          $newPath = "$nodePath;$npmGlobalBin;$localBin;$yarnPath;$($env:PATH)"
+          "PATH=$newPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          @($nodePath, $npmGlobalBin, $localBin, $yarnPath) | Where-Object { $_ } | ForEach-Object {
+            $_ | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          }
+
+          "NODE=$nodeExe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "NODE_PATH=$nodePath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          $env:PATH = $newPath
+          [System.Environment]::SetEnvironmentVariable("PATH", $newPath, "Process")
+
+      - name: Ensure dist directory exists
+        shell: bash
+        run: mkdir -p dist/packages
+
+      - name: Increase file handle limits
+        shell: powershell
+        run: |
+          # Increase Node.js UV threadpool for parallel I/O (default is 4)
+          "UV_THREADPOOL_SIZE=32" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Patch graceful-fs to retry EMFILE errors with backoff
+          node -e "try { var gfs = require('graceful-fs'); gfs.gracefulify(require('fs')); console.log('graceful-fs patched'); } catch(e) { console.log('graceful-fs not available, skipping'); }"
+
+      - name: Reset NX
+        shell: powershell
+        run: npx nx reset
+
+      - name: Build Server
+        shell: cmd
+        run: 'yarn build:gauzy-server:windows:release:gh:x64'
+        env:
+          USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
+          NX_DAEMON: false
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          # Demo electron releases go to the same repo
+          DESKTOP_SERVER_REPO_OWNER: 'ever-co'
+          DESKTOP_SERVER_REPO_NAME: 'ever-gauzy'
+          DESKTOP_SERVER_APP_NAME: 'gauzy-server'
+          DESKTOP_SERVER_APP_DESCRIPTION: 'Gauzy Server'
+          DESKTOP_SERVER_APP_ID: 'com.ever.gauzyserver'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
