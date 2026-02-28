@@ -6,13 +6,12 @@ import {
 	HttpException,
 	InternalServerErrorException
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IntegrationEnum, IIntegration, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
 import type { WorkflowExecutionResult, AsyncExecutionResult } from 'simstudio-ts-sdk';
 import { ConfigService } from '@gauzy/config';
 import { IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
 import { SimClientFactory } from './sim-client.factory';
+import { SimRepositoryService } from './sim-repository.service';
 import { SimWorkflowExecution } from './sim-workflow-execution.entity';
 import { SIM_DEFAULT_BASE_URL } from './sim.config';
 import { IConfigureSimInput, IExecuteWorkflowInput, ISimIntegrationSettings, SimSettingName } from './interfaces';
@@ -26,8 +25,7 @@ export class SimService {
 		private readonly integrationService: IntegrationService,
 		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly simClientFactory: SimClientFactory,
-		@InjectRepository(SimWorkflowExecution)
-		private readonly executionRepository: Repository<SimWorkflowExecution>
+		private readonly simRepositoryService: SimRepositoryService
 	) {}
 
 	/**
@@ -247,7 +245,7 @@ export class SimService {
 		const client = await this.simClientFactory.getClient(integrationTenant.id);
 
 		// Create execution log entry
-		const execution = this.executionRepository.create({
+		const execution = await this.simRepositoryService.create({
 			workflowId: input.workflowId,
 			status: 'processing',
 			input: input.input,
@@ -256,7 +254,6 @@ export class SimService {
 			tenantId,
 			organizationId: integrationTenant.organizationId
 		});
-		await this.executionRepository.save(execution);
 
 		try {
 			// The simstudio-ts-sdk does not handle SSE streaming responses —
@@ -290,19 +287,24 @@ export class SimService {
 			const syncResult = result as WorkflowExecutionResult;
 			const asyncResult = result as AsyncExecutionResult;
 
-			execution.status = asyncResult.taskId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
+			// Map result fields — the SIM API returns different shapes for sync vs async:
+			// Async: { success, async, jobId, executionId, message, statusUrl }
+			// Sync:  { success, output, metadata: { executionId, duration }, totalDuration }
+			const jobId = (result as any).jobId || asyncResult.taskId;
+
+			execution.status = jobId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
 			execution.output = syncResult.output ?? result;
-			execution.executionId = syncResult.metadata?.executionId || asyncResult.taskId;
+			execution.executionId = (result as any).executionId || syncResult.metadata?.executionId || jobId;
 			execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
 			execution.error = syncResult.error ? { message: syncResult.error } : undefined;
-			await this.executionRepository.save(execution);
+			await this.simRepositoryService.save(execution);
 
 			return result;
 		} catch (error: any) {
 			// Update execution log with failure
 			execution.status = 'failed';
 			execution.error = { message: error.message, ...(error.code ? { code: error.code } : {}) };
-			await this.executionRepository.save(execution);
+			await this.simRepositoryService.save(execution);
 
 			this.logger.error(`Workflow execution failed: ${error.message}`, {
 				workflowId: input.workflowId,
@@ -434,14 +436,14 @@ export class SimService {
 		const limit = Math.min(Math.max(options?.limit || 20, 1), 100);
 		const offset = Math.max(options?.offset || 0, 0);
 
-		const [data, total] = await this.executionRepository.findAndCount({
+		const { items, total } = await this.simRepositoryService.findAll({
 			where,
 			order: { createdAt: 'DESC' },
 			take: limit,
 			skip: offset
 		});
 
-		return { data, total };
+		return { data: items, total };
 	}
 
 	/**
@@ -520,7 +522,7 @@ export class SimService {
 			const client = await this.simClientFactory.getClient(integrationTenant.id);
 
 			// Create execution log entry
-			const execution = this.executionRepository.create({
+			const execution = await this.simRepositoryService.create({
 				workflowId,
 				status: 'queued',
 				input: params.data,
@@ -529,7 +531,6 @@ export class SimService {
 				tenantId: params.tenantId,
 				organizationId: params.organizationId
 			});
-			await this.executionRepository.save(execution);
 
 			try {
 				// Execute asynchronously
@@ -546,12 +547,12 @@ export class SimService {
 				execution.executionId = syncResult.metadata?.executionId || asyncResult.taskId;
 				execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
 				execution.error = syncResult.error ? { message: syncResult.error } : undefined;
-				await this.executionRepository.save(execution);
+				await this.simRepositoryService.save(execution);
 			} catch (execError: any) {
 				// Update execution log with failure
 				execution.status = 'failed';
 				execution.error = { message: execError.message, ...(execError.code ? { code: execError.code } : {}) };
-				await this.executionRepository.save(execution);
+				await this.simRepositoryService.save(execution);
 				throw execError;
 			}
 

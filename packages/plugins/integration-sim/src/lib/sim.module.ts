@@ -15,6 +15,7 @@ import {
 import { SimService } from './sim.service';
 import { SimController } from './sim.controller';
 import { SimClientFactory } from './sim-client.factory';
+import { SimRepositoryService } from './sim-repository.service';
 import { SimWorkflowExecution } from './sim-workflow-execution.entity';
 import { MikroOrmSimWorkflowExecutionRepository } from './repository/mikro-orm-sim-workflow-execution.repository';
 import { TypeOrmSimWorkflowExecutionRepository } from './repository/type-orm-sim-workflow-execution.repository';
@@ -37,9 +38,10 @@ import { TypeOrmSimWorkflowExecutionRepository } from './repository/type-orm-sim
 	providers: [
 		SimService,
 		SimClientFactory,
+		SimRepositoryService,
 		MikroOrmSimWorkflowExecutionRepository,
 		TypeOrmSimWorkflowExecutionRepository
 	],
-	exports: [SimService, SimClientFactory]
+	exports: [SimService, SimClientFactory, SimRepositoryService]
 })
 export class SimModule {}

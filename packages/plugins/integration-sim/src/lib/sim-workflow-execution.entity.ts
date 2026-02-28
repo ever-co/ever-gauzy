@@ -12,7 +12,7 @@ import {
 } from '@gauzy/core';
 import { MikroOrmSimWorkflowExecutionRepository } from './repository/mikro-orm-sim-workflow-execution.repository';
 
-@MultiORMEntity('sim_workflow_execution', {
+@MultiORMEntity('integration_sim_workflow_execution', {
 	mikroOrmRepository: () => MikroOrmSimWorkflowExecutionRepository
 })
 export class SimWorkflowExecution extends TenantOrganizationBaseEntity {
