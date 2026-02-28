@@ -116,6 +116,7 @@ COPY --chown=node:node packages/plugins/integration-make-com/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-make-com-ui/package.json ./packages/plugins/integration-make-com-ui/
 COPY --chown=node:node packages/plugins/integration-zapier-ui/package.json ./packages/plugins/integration-zapier-ui/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
+COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-activepieces-ui/package.json ./packages/plugins/integration-activepieces-ui/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/

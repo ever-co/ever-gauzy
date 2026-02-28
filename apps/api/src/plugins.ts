@@ -8,6 +8,7 @@ import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
 import { IntegrationMakeComPlugin } from '@gauzy/plugin-integration-make-com';
 import { IntegrationZapierPlugin } from '@gauzy/plugin-integration-zapier';
 import { IntegrationActivepiecesPlugin } from '@gauzy/plugin-integration-activepieces';
+import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -59,6 +60,8 @@ export const plugins = [
 	IntegrationJiraPlugin,
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
 	IntegrationUpworkPlugin,
+	// Indicates the inclusion or intention to use the IntegrationSimPlugin in the codebase.
+	IntegrationSimPlugin,
 	// Indicates the inclusion or intention to use the IntegrationZapierPlugin in the codebase.
 	IntegrationZapierPlugin,
 	// Indicates the inclusion or intention to use the JobProposalPlugin in the codebase.

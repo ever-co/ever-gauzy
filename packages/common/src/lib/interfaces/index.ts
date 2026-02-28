@@ -20,6 +20,7 @@ export * from './IMakeComConfig';
 export * from './IMicrosoftConfig';
 export * from './IOAuthAppConfig';
 export * from './IPosthogConfig';
+export * from './ISimConfig';
 export * from './ISMTPConfig';
 export * from './ITwitterConfig';
 export * from './IUnleashConfig';
