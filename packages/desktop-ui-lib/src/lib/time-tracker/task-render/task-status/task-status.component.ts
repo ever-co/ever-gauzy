@@ -5,13 +5,17 @@ import { Store } from '../../../services';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TaskBadgeViewComponent } from '../task-badge-view/task-badge-view.component';
+import { NbPopoverModule } from '@nebular/theme';
+import { TaskBadgeDefaultComponent } from '../task-badge-default/task-badge-default.component';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-task-status',
     templateUrl: './task-status.component.html',
     styleUrls: ['./task-status.component.scss'],
-    standalone: false
+    imports: [TaskBadgeViewComponent, NbPopoverModule, TaskBadgeDefaultComponent, AsyncPipe]
 })
 export class TaskStatusComponent extends TaskRenderComponent implements OnInit {
 	public statuses$: Observable<ITaskStatus[]>;

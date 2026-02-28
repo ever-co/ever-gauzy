@@ -1,9 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { SetupComponent } from './setup.component';
-// import { AlertComponent } from '../../@shared/dialogs/alert/alert.component';
 import { FormsModule } from '@angular/forms';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -21,13 +19,13 @@ import {
 	NbStepperModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
+
 import { LanguageModule } from '../language/language.module';
 import { SslModule } from '../settings/ssl';
 import { SetupService } from './setup.service';
 
 @NgModule({
-	declarations: [SetupComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -40,16 +38,15 @@ import { SetupService } from './setup.service';
 		NbSpinnerModule,
 		NbCheckboxModule,
 		NbIconModule,
-		NbEvaIconsModule,
+		TablerIconsModule,
 		NbStepperModule,
-		NbIconModule,
 		NbRadioModule,
 		NbProgressBarModule,
 		NbFormFieldModule,
 		NbDialogModule,
-		DesktopDirectiveModule,
 		LanguageModule.forChild(),
-		SslModule
+		SslModule,
+		SetupComponent
 	],
 	exports: [SetupComponent],
 	providers: [SetupService, NbDialogService]

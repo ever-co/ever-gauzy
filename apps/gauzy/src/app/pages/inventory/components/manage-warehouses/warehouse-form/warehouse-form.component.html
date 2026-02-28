@@ -4,12 +4,7 @@
 			<div class="top-nav">
 				<h4>
 					<ngx-back-navigation></ngx-back-navigation>
-					{{
-					(!warehouse
-							? 'INVENTORY_PAGE.CREATE_WAREHOUSE'
-							: 'INVENTORY_PAGE.EDIT_WAREHOUSE'
-					) | translate
-					}}
+					{{ (!warehouse ? 'INVENTORY_PAGE.CREATE_WAREHOUSE' : 'INVENTORY_PAGE.EDIT_WAREHOUSE') | translate }}
 				</h4>
 			</div>
 		</div>
@@ -20,22 +15,13 @@
 				<form class="step-container" [formGroup]="form">
 					<div class="row step-form">
 						<div class="col-md-3 col-sm-12 image-container">
-							<ng-container
-								*ngTemplateOutlet="warehouseImage"
-							></ng-container>
+							<ng-container [ngTemplateOutlet]="warehouseImage"></ng-container>
 						</div>
 						<div class="col-md-9 col-sm-12 pl-5">
 							<div class="row">
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
-										<label
-											class="label"
-											for="name"
-											[innerHtml]="
-												'INVENTORY_PAGE.NAME'
-													| translate
-											"
-										>
+										<label class="label" for="name" [innerHtml]="'INVENTORY_PAGE.NAME' | translate">
 										</label>
 										<input
 											fullWidth
@@ -43,36 +29,21 @@
 											type="text"
 											formControlName="name"
 											nbInput
-											[placeholder]="
-												'INVENTORY_PAGE.NAME'
-													| translate
-											"
-											[status]="
-												FormHelpers.isInvalidControl(form, 'name')
-													? 'danger'
-													: 'basic'
-											"
+											[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+											[status]="FormHelpers.isInvalidControl(form, 'name') ? 'danger' : 'basic'"
 										/>
-										<div
-											class="text-danger"
-											*ngIf="FormHelpers.isInvalidControl(form, 'name')"
-										>
-											{{
-											'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED'
-												| translate
-											}}
+										@if (FormHelpers.isInvalidControl(form, 'name')) {
+										<div class="text-danger">
+											{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
 										</div>
+										}
 									</div>
 								</div>
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
 										<ga-tags-color-input
-											[selectedTags]="
-												form.get('tags').value
-											"
-											(selectedTagsEvent)="
-												selectedTagsEvent($event)
-											"
+											[selectedTags]="form.get('tags').value"
+											(selectedTagsEvent)="selectedTagsEvent($event)"
 											[isOrgLevel]="true"
 										></ga-tags-color-input>
 									</div>
@@ -81,14 +52,7 @@
 							<div class="row">
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
-										<label
-											class="label"
-											for="code"
-											[innerHtml]="
-												'INVENTORY_PAGE.CODE'
-													| translate
-											"
-										>
+										<label class="label" for="code" [innerHtml]="'INVENTORY_PAGE.CODE' | translate">
 										</label>
 										<input
 											fullWidth
@@ -96,25 +60,14 @@
 											type="text"
 											formControlName="code"
 											nbInput
-											[placeholder]="
-												'INVENTORY_PAGE.CODE'
-													| translate
-											"
-											[status]="
-												FormHelpers.isInvalidControl(form, 'code')
-													? 'danger'
-													: 'basic'
-											"
+											[placeholder]="'INVENTORY_PAGE.CODE' | translate"
+											[status]="FormHelpers.isInvalidControl(form, 'code') ? 'danger' : 'basic'"
 										/>
-										<div
-											class="text-danger"
-											*ngIf="FormHelpers.isInvalidControl(form, 'code')"
-										>
-											{{
-											'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED'
-												| translate
-											}}
+										@if (FormHelpers.isInvalidControl(form, 'code')) {
+										<div class="text-danger">
+											{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
 										</div>
+										}
 									</div>
 								</div>
 								<div class="col-md-6 col-sm-12">
@@ -122,10 +75,7 @@
 										<label
 											class="label"
 											for="email"
-											[innerHtml]="
-												'INVENTORY_PAGE.EMAIL'
-													| translate
-											"
+											[innerHtml]="'INVENTORY_PAGE.EMAIL' | translate"
 										>
 										</label>
 										<input
@@ -134,34 +84,21 @@
 											type="text"
 											formControlName="email"
 											nbInput
-											[placeholder]="
-												'INVENTORY_PAGE.EMAIL'
-													| translate
-											"
-											[status]="
-												FormHelpers.isInvalidControl(form, 'email')
-													? 'danger'
-													: 'basic'
-											"
+											[placeholder]="'INVENTORY_PAGE.EMAIL' | translate"
+											[status]="FormHelpers.isInvalidControl(form, 'email') ? 'danger' : 'basic'"
 										/>
-										<div
-											class="text-danger"
-											*ngIf="FormHelpers.isInvalidControl(form, 'email')"
-										>
-											{{
-											'INVENTORY_PAGE.EMAIL_WRONG_FORMAT'
-												| translate
-											}}
+										@if (FormHelpers.isInvalidControl(form, 'email')) {
+										<div class="text-danger">
+											{{ 'INVENTORY_PAGE.EMAIL_WRONG_FORMAT' | translate }}
 										</div>
+										}
 									</div>
 								</div>
 							</div>
 							<div class="row mb-2">
 								<div class="col-md-6 col-sm-12">
-									<nb-checkbox
-										status="basic"
-										formControlName="active"
-									>{{ 'INVENTORY_PAGE.ACTIVE' | translate }}
+									<nb-checkbox status="basic" formControlName="active"
+										>{{ 'INVENTORY_PAGE.ACTIVE' | translate }}
 									</nb-checkbox>
 								</div>
 							</div>
@@ -171,10 +108,7 @@
 										<label
 											class="label"
 											for="description"
-											[innerHtml]="
-												'INVENTORY_PAGE.DESCRIPTION'
-													| translate
-											"
+											[innerHtml]="'INVENTORY_PAGE.DESCRIPTION' | translate"
 										>
 										</label>
 										<textarea
@@ -183,10 +117,7 @@
 											type="text"
 											formControlName="description"
 											nbInput
-											[placeholder]="
-												'INVENTORY_PAGE.DESCRIPTION'
-													| translate
-											"
+											[placeholder]="'INVENTORY_PAGE.DESCRIPTION' | translate"
 										></textarea>
 									</div>
 								</div>
@@ -195,10 +126,12 @@
 					</div>
 					<div class="row">
 						<div class="col-12 next-button-container">
-							<button status="basic" outline (click)="cancel()" nbButton
-									nbStepperNext>{{ 'BUTTONS.CANCEL' | translate }}</button>
-							<button class="green" outline nbButton
-									nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
+							<button status="basic" outline (click)="cancel()" nbButton>
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+							<button class="green" outline nbButton nbStepperNext>
+								{{ 'BUTTONS.NEXT' | translate }}
+							</button>
 						</div>
 					</div>
 				</form>
@@ -215,78 +148,53 @@
 							></ga-location-form>
 						</div>
 						<div class="col-md-8 col-sm-7">
-							<ga-leaflet-map
-								#leafletTemplate
-								(mapClicked)="onMapClicked($event)"
-							></ga-leaflet-map>
+							<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)"></ga-leaflet-map>
 						</div>
 					</div>
 					<div class="row">
 						<div class="col-12 next-button-container">
-							<button
-								(click)="cancel()"
-								status="basic"
-								outline
-								nbButton
-							>
+							<button (click)="cancel()" status="basic" outline nbButton>
 								{{ 'BUTTONS.CANCEL' | translate }}
 							</button>
-							<button class="gray" outline nbButton
-									nbStepperPrevious>{{ 'BUTTONS.PREVIOUS' | translate }}</button>
-							<button class="green" outline nbButton *ngIf="isActiveInventoryTab()"
-									nbStepperNext>{{ 'BUTTONS.NEXT' | translate }}</button>
-							<button
-								[disabled]="form.invalid"
-								status="success"
-								nbButton
-								(click)="onSaveRequest()"
-								*ngIf="!isActiveInventoryTab()"
-							>
+							<button class="gray" outline nbButton nbStepperPrevious>
+								{{ 'BUTTONS.PREVIOUS' | translate }}
+							</button>
+							@if (isActiveInventoryTab()) {
+							<button class="green" outline nbButton nbStepperNext>
+								{{ 'BUTTONS.NEXT' | translate }}
+							</button>
+							} @else {
+							<button [disabled]="form.invalid" status="success" nbButton (click)="onSaveRequest()">
+								{{ 'BUTTONS.SAVE' | translate }}
+							</button>
+							}
+						</div>
+					</div>
+				</div>
+			</nb-step>
+			<nb-step [label]="'INVENTORY_PAGE.INVENTORY' | translate" [hidden]="!isActiveInventoryTab()">
+				@if (isActiveInventoryTab()) {
+				<div class="step-container">
+					<div class="row step-form">
+						<div class="col-md-12 col-sm-12">
+							<ga-warehouse-products-table [warehouse]="warehouse"></ga-warehouse-products-table>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-12 next-button-container">
+							<button (click)="cancel()" status="basic" outline nbButton>
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+							<button class="gray" outline nbButton nbStepperPrevious>
+								{{ 'BUTTONS.PREVIOUS' | translate }}
+							</button>
+							<button [disabled]="form.invalid" status="success" nbButton (click)="onSaveRequest()">
 								{{ 'BUTTONS.SAVE' | translate }}
 							</button>
 						</div>
 					</div>
 				</div>
-
-			</nb-step>
-			<nb-step
-				[label]="'INVENTORY_PAGE.INVENTORY' | translate"
-				[hidden]="!isActiveInventoryTab()"
-			>
-				<ng-container *ngIf="isActiveInventoryTab()">
-					<div class="step-container">
-						<div class="row step-form">
-							<div class="col-md-12 col-sm-12">
-								<ga-warehouse-products-table
-									[warehouse]="warehouse"
-								></ga-warehouse-products-table>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-12 next-button-container">
-								<button
-									(click)="cancel()"
-									status="basic"
-									outline
-									nbButton
-								>
-									{{ 'BUTTONS.CANCEL' | translate }}
-								</button>
-								<button class="gray" outline nbButton
-										nbStepperPrevious>{{ 'BUTTONS.PREVIOUS' | translate }}</button>
-								<button
-									[disabled]="form.invalid"
-									status="success"
-									nbButton
-									(click)="onSaveRequest()"
-								>
-									{{ 'BUTTONS.SAVE' | translate }}
-								</button>
-							</div>
-						</div>
-					</div>
-
-				</ng-container>
+				}
 			</nb-step>
 		</nb-stepper>
 	</nb-card-body>
@@ -299,14 +207,14 @@
 		(mouseleave)="hoverState = false"
 		(click)="onImageSelect()"
 	>
+		@if (logo && logo.url) {
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			xmlns:xlink="http://www.w3.org/1999/xlink"
 			width="68"
 			height="68"
 			viewBox="0 0 68 68"
-			[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
-			*ngIf="logo && logo.url"
+			[style.opacity]="hoverState ? '1' : '0.3'"
 		>
 			<defs>
 				<path
@@ -315,26 +223,16 @@
 				/>
 			</defs>
 			<g fill="none" fill-rule="evenodd">
-				<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3"/>
-				<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9"/>
-				<use fill="#FFF" fill-rule="nonzero" xlink:href="#a"/>
+				<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+				<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
+				<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 			</g>
 		</svg>
-		<div
-			class="image-overlay"
-			[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
-		></div>
-		<ga-no-image
-			*ngIf="!logo || !logo.url"
-			[fontSize]="14"
-			[placeholder]="'NO_IMAGE.ADD_DROP'"
-			class="store-image"
-		></ga-no-image>
-		<img
-			class="store-image"
-			*ngIf="logo && logo.url"
-			[src]="logo.url"
-			alt="Warehouse Photo"
-		/>
+		<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
+		<img class="store-image" [src]="logo.url" alt="Warehouse Photo" />
+		} @else {
+		<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
+		<ga-no-image [fontSize]="14" [placeholder]="'NO_IMAGE.ADD_DROP'" class="store-image"></ga-no-image>
+		}
 	</div>
 </ng-template>

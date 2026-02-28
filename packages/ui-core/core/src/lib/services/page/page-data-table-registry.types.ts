@@ -1,5 +1,5 @@
 import { IColumn } from 'angular2-smart-table';
-import { PageDataTableRegistryId } from '../../common/component-registry.types';
+import { PageDataTablePageId } from '../../common/component-registry.types';
 
 /**
  * Page route configuration with additional table columns options.
@@ -9,7 +9,7 @@ export interface PageDataTableRegistryConfig extends Omit<IColumn, 'title'> {
 	 * @description
 	 * The location identifier for the page route.
 	 */
-	dataTableId: PageDataTableRegistryId;
+	dataTableId: PageDataTablePageId;
 
 	/**
 	 * @description

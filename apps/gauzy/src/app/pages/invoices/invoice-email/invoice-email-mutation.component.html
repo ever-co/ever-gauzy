@@ -1,48 +1,54 @@
 <nb-card class="pdf-preview-card">
-	<nb-card-header>
+  <nb-card-header>
     <span class="cancel"
-			><i class="fas fa-times" (click)="cancel()"></i
-		></span>
-		<h5 class="title">
-			<span *ngIf="!isEstimate">{{
-				'INVOICES_PAGE.EMAIL.EMAIL_INVOICE' | translate
-			}}</span>
-			<span *ngIf="isEstimate">{{
-				'INVOICES_PAGE.EMAIL.EMAIL_ESTIMATE' | translate
-			}}</span>
-		</h5>
-	</nb-card-header>
-	<nb-card-body class="invoice-email-body">
-		<ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
-		<form [formGroup]="form" *ngIf="form">
-			<div class="row">
-				<div class="form-group col-12">
-					<label for="email" class="label">{{
-						'FORM.EMAIL' | translate
-					}}</label>
-					<textarea
-						type="text"
-						nbInput
-						fullWidth
-						formControlName="email"
-						id="email"
-						placeholder="{{ 'FORM.EMAIL' | translate }}"
-					></textarea>
-				</div>
-			</div>
-		</form>
-	</nb-card-body>
-	<nb-card-footer class="text-left">
-		<button status="basic" outline class="mr-3" nbButton (click)="cancel()">
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button
-			(click)="sendEmail()"
-			status="success"
-			[disabled]="form.invalid"
-			nbButton
-		>
-			{{ 'BUTTONS.SEND' | translate }}
-		</button>
-	</nb-card-footer>
+      ><i class="fas fa-times" (click)="cancel()"></i
+    ></span>
+    <h5 class="title">
+      @if (!isEstimate) {
+        <span>{{
+          'INVOICES_PAGE.EMAIL.EMAIL_INVOICE' | translate
+        }}</span>
+      }
+      @if (isEstimate) {
+        <span>{{
+          'INVOICES_PAGE.EMAIL.EMAIL_ESTIMATE' | translate
+        }}</span>
+      }
+    </h5>
+  </nb-card-header>
+  <nb-card-body class="invoice-email-body">
+    <ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
+    @if (form) {
+      <form [formGroup]="form">
+        <div class="row">
+          <div class="form-group col-12">
+            <label for="email" class="label">{{
+              'FORM.EMAIL' | translate
+            }}</label>
+            <textarea
+              type="text"
+              nbInput
+              fullWidth
+              formControlName="email"
+              id="email"
+              placeholder="{{ 'FORM.EMAIL' | translate }}"
+            ></textarea>
+          </div>
+        </div>
+      </form>
+    }
+  </nb-card-body>
+  <nb-card-footer class="text-left">
+    <button status="basic" outline class="mr-3" nbButton (click)="cancel()">
+      {{ 'BUTTONS.CANCEL' | translate }}
+    </button>
+    <button
+      (click)="sendEmail()"
+      status="success"
+      [disabled]="form.invalid"
+      nbButton
+      >
+      {{ 'BUTTONS.SEND' | translate }}
+    </button>
+  </nb-card-footer>
 </nb-card>

@@ -5,13 +5,16 @@ import { TaskEstimateComponent } from '../task-estimate/task-estimate.component'
 import { Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { map } from 'rxjs/operators';
+import { TaskDueDateComponent } from '../task-due-date/task-due-date.component';
+import { NbProgressBarModule } from '@nebular/theme';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-task-progress',
     templateUrl: './task-progress.component.html',
     styleUrls: ['./task-progress.component.scss'],
-    standalone: false
+    imports: [TaskEstimateComponent, TaskDueDateComponent, NbProgressBarModule, AsyncPipe]
 })
 export class TaskProgressComponent extends TaskRenderComponent implements AfterViewInit {
 	public updated: EventEmitter<number>;

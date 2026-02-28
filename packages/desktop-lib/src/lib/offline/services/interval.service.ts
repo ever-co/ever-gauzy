@@ -86,6 +86,9 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 	public async countNoSynced(): Promise<number> {
 		try {
 			const user = await this._userService.retrieve();
+			if (!user?.employeeId) {
+				return 0;
+			}
 			const [res] = await this._intervalDAO.count(false, user);
 			const total = await this._timerService.countNoSynced();
 			return res.total > 0 ? res.total : total;
@@ -98,6 +101,9 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 	public async screenshots(): Promise<any[]> {
 		try {
 			const user = await this._userService.retrieve();
+			if (!user?.employeeId) {
+				return [];
+			}
 			return await this._intervalDAO.screenshots(user);
 		} catch (error) {
 			console.error(error);

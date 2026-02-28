@@ -11,10 +11,10 @@ import { GauzyEditableGridComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-tasks-sprint-view',
-    templateUrl: './tasks-sprint-view.component.html',
-    styleUrls: ['./tasks-sprint-view.component.scss'],
-    standalone: false
+	selector: 'ga-tasks-sprint-view',
+	templateUrl: './tasks-sprint-view.component.html',
+	styleUrls: ['./tasks-sprint-view.component.scss'],
+	standalone: false
 })
 export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask> implements OnInit, OnChanges {
 	sprints: IOrganizationSprint[] = [];
@@ -45,9 +45,9 @@ export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask> 
 	@Input() sync: boolean = false;
 
 	constructor(
-		private readonly store$: SprintStoreService,
 		translateService: TranslateService,
 		dialogService: NbDialogService,
+		private readonly store$: SprintStoreService,
 		private readonly taskStore: TasksStoreService,
 		private readonly storeService: Store
 	) {

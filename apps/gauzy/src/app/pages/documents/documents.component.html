@@ -17,45 +17,43 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE && documentList?.length">
-			<div class="table-scroll-container">
-				<nb-card class="p-0" *ngFor="let document of documentList">
-					<nb-card-body
-						class="custom-table"
-						[ngClass]="{
-							selected: selected?.state && document === selected?.document
-						}"
-						(click)="selectDocument(document)"
-					>
-						<div>
-							<nb-icon icon="file-text-outline"></nb-icon>
-							<a [href]="document.documentUrl">
-								{{ document.name }}
-							</a>
-						</div>
-						<div>
-							{{ document.updatedAt | dateTimeFormat }}
-						</div>
-					</nb-card-body>
-				</nb-card>
-			</div>
-		</ng-template>
-		<ng-template [ngIf]="!documentList?.length">
-			<div class="no-data">
-				<ngx-no-data-message
-					[message]="'ORGANIZATIONS_PAGE.DOCUMENTS_NO_DATA_MESSAGE' | translate"
-				></ngx-no-data-message>
-			</div>
-		</ng-template>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && documentList?.length">
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				[settings]="settingsSmartTable"
-				[source]="documentList"
-				(onSelectedItem)="selectDocument($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
-		</ng-template>
+		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE && documentList?.length) {
+		<div class="table-scroll-container">
+			@for (document of documentList; track document.id) {
+			<nb-card class="p-0">
+				<nb-card-body
+					class="custom-table"
+					[class.selected]="selected?.state && document === selected?.document"
+					(click)="selectDocument(document)"
+				>
+					<div>
+						<nb-icon icon="file-text-outline"></nb-icon>
+						<a [href]="document.documentUrl">
+							{{ document.name }}
+						</a>
+					</div>
+					<div>
+						{{ document.updatedAt | dateTimeFormat }}
+					</div>
+				</nb-card-body>
+			</nb-card>
+			}
+		</div>
+		} @else if (!documentList?.length) {
+		<div class="no-data">
+			<ngx-no-data-message
+				[message]="'ORGANIZATIONS_PAGE.DOCUMENTS_NO_DATA_MESSAGE' | translate"
+			></ngx-no-data-message>
+		</div>
+		} @else if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && documentList?.length) {
+		<ga-card-grid
+			[totalItems]="pagination?.totalItems"
+			[settings]="settingsSmartTable"
+			[source]="documentList"
+			(onSelectedItem)="selectDocument($event)"
+			(scroll)="onScroll()"
+		></ga-card-grid>
+		}
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
@@ -82,7 +80,7 @@
 			nbButton
 			status="basic"
 			class="action"
-			[disabled]="isDisabled"
+			[disabled]="disabled"
 			size="small"
 		>
 			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
@@ -95,17 +93,19 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
+					<nb-icon icon="close-outline" (click)="ref.close(); disabled = true"></nb-icon>
 				</div>
 			</div>
 			<div class="row mb-3">
 				<h5 class="title mr-3 ml-3">
-					{{ this.selected.document ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}
+					{{ selected.document ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}
 				</h5>
 			</div>
-			<form [formGroup]="form" *ngIf="form">
+			@if (form) {
+			<form [formGroup]="form">
 				<div formArrayName="documents">
-					<div *ngFor="let document of form.controls.documents['controls']; let i = index">
+					@for (document of documentControls; track $index; let i = $index) {
+					<div>
 						<div [formGroupName]="i">
 							<div class="row mb-3">
 								<div class="col-sm-12 d-flex flex-column">
@@ -125,8 +125,10 @@
 							</div>
 						</div>
 					</div>
+					}
 				</div>
 			</form>
+			}
 
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex flex-column">

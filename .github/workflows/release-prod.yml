@@ -2,12 +2,13 @@ name: Release Prod
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
 
 jobs:
   release:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 150
+    timeout-minutes: 300
 
     strategy:
       matrix:

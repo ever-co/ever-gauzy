@@ -4,9 +4,9 @@ import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { CKEditor4 } from 'ckeditor4-angular';
 import { NbDateService } from '@nebular/theme';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
 	ITag,
 	IOrganization,
@@ -30,10 +30,10 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-proposal-register',
-    templateUrl: './proposal-register.component.html',
-    styleUrls: ['././proposal-register.component.scss'],
-    standalone: false
+	selector: 'ga-proposal-register',
+	templateUrl: './proposal-register.component.html',
+	styleUrls: ['././proposal-register.component.scss'],
+	standalone: false
 })
 export class ProposalRegisterComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	proposalTemplate: IEmployeeProposalTemplate;

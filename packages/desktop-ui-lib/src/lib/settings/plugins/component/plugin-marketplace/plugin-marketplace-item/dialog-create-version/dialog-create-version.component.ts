@@ -1,33 +1,29 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-import {
-	AbstractControl,
-	FormArray,
-	FormControl,
-	FormGroup,
-	ValidationErrors,
-	ValidatorFn,
-	Validators
-} from '@angular/forms';
+import { AbstractControl, FormArray, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
-import { NbDateService, NbDialogRef, NbDialogService } from '@nebular/theme';
+import { NbDateService, NbDialogRef, NbDialogService, NbCardModule, NbIconModule, NbButtonModule, NbStepperModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { filter, Subject, take, tap } from 'rxjs';
 import { PluginSourceActions } from '../../+state/actions/plugin-source.action';
 import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../../services';
 import { SourceContext } from '../../plugin-marketplace-upload/plugin-source/creator/source.context';
+import { FormRowComponent } from '../../plugin-marketplace-upload/form-row/form-row.component';
+import { VersionSelectorComponent } from '../version-selector/version-selector.component';
+import { SourceContainerComponent } from '../../../../shared/ui/source-container/source-container.component';
+import { PluginVersionComponent } from '../../plugin-marketplace-upload/plugin-version/plugin-version.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'lib-dialog-create-version',
-	templateUrl: './dialog-create-version.component.html',
-	styleUrls: ['./dialog-create-version.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-dialog-create-version',
+    templateUrl: './dialog-create-version.component.html',
+    styleUrls: ['./dialog-create-version.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormsModule, ReactiveFormsModule, NbCardModule, NbIconModule, NbButtonModule, NbStepperModule, FormRowComponent, VersionSelectorComponent, SourceContainerComponent, PluginVersionComponent, TranslatePipe]
 })
 export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	versionForm: FormGroup;

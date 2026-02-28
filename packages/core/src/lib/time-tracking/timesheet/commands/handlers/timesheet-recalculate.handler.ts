@@ -6,15 +6,19 @@ import { ITimesheet } from '@gauzy/contracts';
 import { TimeSheetService } from '../../timesheet.service';
 import { TimesheetRecalculateCommand } from '../timesheet-recalculate.command';
 import { RequestContext } from './../../../../core/context';
-import { getDateRangeFormat } from './../../../../core/utils';
+import { getDateRangeFormat, MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-orm-time-slot.repository';
 
 @CommandHandler(TimesheetRecalculateCommand)
 export class TimesheetRecalculateHandler implements ICommandHandler<TimesheetRecalculateCommand> {
+	protected ormType: MultiORM = getORMType();
+
 	constructor(
 		private readonly timesheetService: TimeSheetService,
-		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository
 	) {}
 
 	/**
@@ -47,32 +51,58 @@ export class TimesheetRecalculateHandler implements ICommandHandler<TimesheetRec
 			moment.utc(timesheet.stoppedAt)
 		);
 
-		const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
-		const timeSlot = await query
-			.select('SUM(duration)', 'duration')
-			.addSelect('AVG(keyboard)', 'keyboard')
-			.addSelect('AVG(mouse)', 'mouse')
-			.addSelect('AVG(overall)', 'overall')
-			.where(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.where(
-						p(`"${query.alias}"."employeeId" = :employeeId
-						   AND "${query.alias}"."organizationId" = :organizationId
-						   AND "${query.alias}"."tenantId" = :tenantId
-						   AND "${query.alias}"."startedAt" >= :startedAt
-						   AND "${query.alias}"."startedAt" < :stoppedAt`),
-						{ employeeId, organizationId, tenantId, startedAt, stoppedAt }
-					);
-				})
-			)
-			.getRawOne();
+		let timeSlot;
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = this.mikroOrmTimeSlotRepository.getKnex();
+				timeSlot = await knex('time_slot')
+					.withSchema(knex.userParams.schema)
+					.select(knex.raw('SUM(duration) as duration'))
+					.select(knex.raw('AVG(keyboard) as keyboard'))
+					.select(knex.raw('AVG(mouse) as mouse'))
+					.select(knex.raw('AVG(overall) as overall'))
+					.where({
+						employeeId,
+						organizationId,
+						tenantId
+					})
+					.andWhere('startedAt', '>=', startedAt)
+					.andWhere('startedAt', '<', stoppedAt)
+					.first();
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
+				timeSlot = await query
+					.select('SUM(duration)', 'duration')
+					.addSelect('AVG(keyboard)', 'keyboard')
+					.addSelect('AVG(mouse)', 'mouse')
+					.addSelect('AVG(overall)', 'overall')
+					.where(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.where(
+								p(`"${query.alias}"."employeeId" = :employeeId
+								   AND "${query.alias}"."organizationId" = :organizationId
+								   AND "${query.alias}"."tenantId" = :tenantId
+								   AND "${query.alias}"."startedAt" >= :startedAt
+								   AND "${query.alias}"."startedAt" < :stoppedAt`),
+								{ employeeId, organizationId, tenantId, startedAt, stoppedAt }
+							);
+						})
+					)
+					.getRawOne();
+				break;
+			}
+		}
 
 		try {
 			await this.timesheetService.update(id, {
-				duration: Math.round(timeSlot.duration),
-				keyboard: Math.round(timeSlot.keyboard),
-				mouse: Math.round(timeSlot.mouse),
-				overall: Math.round(timeSlot.overall)
+				duration: Math.round(timeSlot.duration || 0),
+				keyboard: Math.round(timeSlot.keyboard || 0),
+				mouse: Math.round(timeSlot.mouse || 0),
+				overall: Math.round(timeSlot.overall || 0)
 			});
 		} catch (error) {
 			throw new BadRequestException(

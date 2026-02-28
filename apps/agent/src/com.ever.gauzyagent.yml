@@ -1,45 +1,36 @@
 app-id: com.ever.gauzyagent
 runtime: org.freedesktop.Platform
-runtime-version: '23.08'
+runtime-version: '24.08'
 sdk: org.freedesktop.Sdk
 base: org.electronjs.Electron2.BaseApp
-base-version: '23.08'
+base-version: '24.08'
+
 command: gauzy-agent
 separate-locales: false
 
 finish-args:
-  # X11 and Wayland
   - --share=ipc
-  - --socket=x11
-  - --socket=wayland
-  # Audio
-  - --socket=pulseaudio
-  # Network access for time tracking and syncing
   - --share=network
-  # Device access for screen capture and activity monitoring
-  - --device=all
-  # Filesystem access
-  - --filesystem=host
-  # Notifications
-  - --talk-name=org.freedesktop.Notifications
-  # System tray support
-  - --talk-name=org.kde.StatusNotifierWatcher
-  - --own-name=org.kde.StatusNotifierItem-*
-  # Session management
-  - --system-talk-name=org.freedesktop.login1
-  # Environment variables
-  - --env=TMPDIR=/var/tmp
+  - --system-talk-name=org.freedesktop.portal.Inhibit
+  - --system-talk-name=org.freedesktop.NetworkManager
+  - --system-talk-name=org.freedesktop.UPower
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
 
 modules:
   - name: gauzy-agent
     buildsystem: simple
     build-commands:
-      # Extract and install the application
-      - install -D apply_extra /app/bin/apply_extra
-      - install -D gauzy-agent.sh /app/bin/gauzy-agent
+      - ar x gauzy-agent.deb
+      - tar xf data.tar.xz
+      - mkdir -p /app/lib/gauzy-agent
+      - cp -r "opt/Gauzy Agent"/* /app/lib/gauzy-agent/
+      - if [ -f "/app/lib/gauzy-agent/Gauzy Agent" ]; then mv "/app/lib/gauzy-agent/Gauzy Agent" /app/lib/gauzy-agent/gauzy-agent; fi
+      - install -Dm755 gauzy-agent.sh /app/bin/gauzy-agent
       - install -Dm644 com.ever.gauzyagent.desktop /app/share/applications/com.ever.gauzyagent.desktop
       - install -Dm644 com.ever.gauzyagent.metainfo.xml /app/share/metainfo/com.ever.gauzyagent.metainfo.xml
-      # Install icons
+
       - install -Dm644 icons/16x16.png /app/share/icons/hicolor/16x16/apps/com.ever.gauzyagent.png
       - install -Dm644 icons/32x32.png /app/share/icons/hicolor/32x32/apps/com.ever.gauzyagent.png
       - install -Dm644 icons/64x64.png /app/share/icons/hicolor/64x64/apps/com.ever.gauzyagent.png
@@ -48,32 +39,22 @@ modules:
       - install -Dm644 icons/512x512.png /app/share/icons/hicolor/512x512/apps/com.ever.gauzyagent.png
     sources:
       - type: script
-        dest-filename: apply_extra
-        commands:
-          - ar x gauzy-agent.deb
-          - tar xf data.tar.xz
-          - mv opt/gauzy-agent gauzy-agent
-          - rm -rf control.tar.* data.tar.* debian-binary gauzy-agent.deb usr
-      - type: script
         dest-filename: gauzy-agent.sh
         commands:
           - export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
-          - exec zypak-wrapper /app/extra/gauzy-agent/gauzy-agent "$@"
+          - /app/lib/gauzy-agent/gauzy-agent --no-sandbox --ozone-platform=x11
+
       - type: file
         path: com.ever.gauzyagent.desktop
+
       - type: file
         path: com.ever.gauzyagent.metainfo.xml
+
       - type: dir
         path: icons/linux
         dest: icons
-      - type: extra-data
-        filename: gauzy-agent.deb
-        url: https://github.com/ever-co/ever-gauzy/releases/download/v0.1.0/gauzy-agent-x64-0.1.0.deb
-        sha256: REPLACE_WITH_ACTUAL_SHA256
-        size: REPLACE_WITH_ACTUAL_SIZE
-        x-checker-data:
-          type: json
-          url: https://api.github.com/repos/ever-co/ever-gauzy/releases/latest
-          version-query: .tag_name | sub("^v"; "")
-          url-query: .assets[] | select(.name | test("gauzy-agent-x64-.*\\.deb$")) | .browser_download_url
-          is-main-source: true
+
+      - type: file
+        url: https://github.com/ever-co/ever-gauzy-agent/releases/download/v50.0.1/gauzy-agent-amd64-50.0.1.deb
+        dest-filename: gauzy-agent.deb
+        sha256: b6a73edfbaf81c0287b180bca88d2c944ec9c14b2225e07ec2ac7ee071bf1924

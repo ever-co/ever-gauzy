@@ -9,6 +9,7 @@ import { ProductCategoryTranslation } from './product-category-translation.entit
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmProductCategoryRepository } from './repository/type-orm-product-category.repository';
+import { MikroOrmProductCategoryRepository } from './repository/mikro-orm-product-category.repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { TypeOrmProductCategoryRepository } from './repository/type-orm-product-
 		CqrsModule
 	],
 	controllers: [ProductCategoryController],
-	providers: [ProductCategoryService, TypeOrmProductCategoryRepository, ...CommandHandlers],
+	providers: [ProductCategoryService, TypeOrmProductCategoryRepository, MikroOrmProductCategoryRepository, ...CommandHandlers],
 	exports: [ProductCategoryService]
 })
 export class ProductCategoryModule {}

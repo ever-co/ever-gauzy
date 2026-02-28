@@ -7,22 +7,21 @@ import { ICandidate } from '@gauzy/contracts';
 @Component({
     selector: 'ga-overall-rating-chart',
     template: `
-		<ng-container *ngIf="rating?.length > 0 && candidates?.length > 0; else noDataTemplate">
-			<canvas
-				style="height: 400px; width: 100%;"
-				[type]="'bar'"
-				baseChart
-				[data]="data"
-				[options]="options"
-			></canvas>
-		</ng-container>
-		<ng-template #noDataTemplate>
-			<div class="no-data">
-				<nb-icon icon="info-outline" class="info-icon"></nb-icon>
-				<span>{{ 'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate }}</span>
-			</div>
-		</ng-template>
-	`,
+		@if (rating?.length > 0 && candidates?.length > 0) {
+		  <canvas
+		    style="height: 400px; width: 100%;"
+		    [type]="'bar'"
+		    baseChart
+		    [data]="data"
+		    [options]="options"
+		  ></canvas>
+		} @else {
+		  <div class="no-data">
+		    <nb-icon icon="info-outline" class="info-icon"></nb-icon>
+		    <span>{{ 'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate }}</span>
+		  </div>
+		}
+		`,
     standalone: false
 })
 export class CandidateRatingChartComponent implements OnInit, OnDestroy {

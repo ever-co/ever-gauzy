@@ -1,35 +1,35 @@
 <div class="row align-items-center clickable">
 	<div [class]="isDashboard ? 'col-sm-5' : 'col-sm-2'" [nbTooltip]="item.title">
 		<div class="row w-100 align-items-center">
-			<div class="arrow" *ngIf="allowChild">
-				<button
-					nbButton
-					ghost
-					*ngIf="childOpen"
-					(click)="toggleChild()"
-				>
+			@if (allowChild) {
+			<div class="arrow">
+				@if (childOpen) {
+				<button nbButton ghost (click)="toggleChild()">
 					<nb-icon icon="arrow-ios-downward-outline"></nb-icon>
 				</button>
-				<button
-					nbButton
-					ghost
-					*ngIf="!childOpen"
-					(click)="toggleChild()"
-				>
+				} @if (!childOpen) {
+				<button nbButton ghost (click)="toggleChild()">
 					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 				</button>
+				}
 			</div>
-			<div [ngClass]="allowChild ? 'col child' : 'col no-child'">
+			}
+			<div
+				[class.col]="allowChild"
+				[class.child]="allowChild"
+				[class.col]="!allowChild"
+				[class.no-child]="!allowChild"
+			>
 				{{ item.title }}
 			</div>
 		</div>
 	</div>
-	<div *ngIf="!isDashboard" class="col-sm-3 times">{{ visitedDate }}</div>
-  <div class="col-sm-5">
+	@if (!isDashboard) {
+	<div class="col-sm-3 times">{{ visitedDate }}</div>
+	}
+	<div class="col-sm-5">
 		<div class="row align-items-center">
-			<div class="col-auto percentage-col">
-				{{ item.durationPercentage || 0 }}%
-			</div>
+			<div class="col-auto percentage-col">{{ item.durationPercentage || 0 }}%</div>
 			<div class="col">
 				<nb-progress-bar
 					class="mb-1"
@@ -45,9 +45,9 @@
 	<div class="col-sm-2 text-right">
 		{{ item.duration | durationFormat }}
 	</div>
-
 </div>
-<div *ngIf="item?.childItems?.length && childOpen" class="child-items pt-3">
+@if (item?.childItems?.length && childOpen) {
+<div class="child-items pt-3">
 	<div class="row pt-2 title pb-2">
 		<div class="col-sm-3">{{ 'TIMESHEET.TITLE' | translate }}</div>
 		<div class="col-sm-6">{{ 'TIMESHEET.URL' | translate }}</div>
@@ -55,7 +55,8 @@
 			{{ 'TIMESHEET.TIME_SPENT' | translate }}
 		</div>
 	</div>
-	<div class="row pt-2" *ngFor="let childItem of item.childItems">
+	@for (childItem of item.childItems; track childItem) {
+	<div class="row pt-2">
 		<div class="col-sm-3">
 			{{ childItem.title }}
 		</div>
@@ -70,4 +71,6 @@
 			{{ childItem.duration | durationFormat }}
 		</div>
 	</div>
+	}
 </div>
+}

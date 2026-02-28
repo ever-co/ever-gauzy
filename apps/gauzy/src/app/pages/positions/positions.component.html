@@ -17,37 +17,35 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE && positions?.length">
-			<div class="table-scroll-container">
-				<nb-card class="p-0" *ngFor="let position of positions">
-					<nb-card-body
-						class="custom-table"
-						[ngClass]="{
-							selected: selected?.state && position === selected?.position
-						}"
-						(click)="selectPosition(position)"
-					>
-						<ga-notes-with-tags [rowData]="position"> </ga-notes-with-tags>
-					</nb-card-body>
-				</nb-card>
-			</div>
-		</ng-template>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && positions?.length">
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				[settings]="settingsSmartTable"
-				[source]="positions"
-				(onSelectedItem)="selectPosition($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
-		</ng-template>
-		<ng-template [ngIf]="!loading && positions?.length == 0">
-			<div class="no-data">
-				<ngx-no-data-message
-					[message]="'ORGANIZATIONS_PAGE.POSITION_NO_DATA_MESSAGE' | translate"
-				></ngx-no-data-message>
-			</div>
-		</ng-template>
+		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE && positions?.length) {
+		<div class="table-scroll-container">
+			@for (position of positions; track position) {
+			<nb-card class="p-0">
+				<nb-card-body
+					class="custom-table"
+					[class.selected]="selected?.state && position === selected?.position"
+					(click)="selectPosition(position)"
+				>
+					<ga-notes-with-tags [rowData]="position"> </ga-notes-with-tags>
+				</nb-card-body>
+			</nb-card>
+			}
+		</div>
+		} @if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && positions?.length) {
+		<ga-card-grid
+			[totalItems]="pagination?.totalItems"
+			[settings]="settingsSmartTable"
+			[source]="positions"
+			(onSelectedItem)="selectPosition($event)"
+			(scroll)="onScroll()"
+		></ga-card-grid>
+		} @if (!loading && positions?.length == 0) {
+		<div class="no-data">
+			<ngx-no-data-message
+				[message]="'ORGANIZATIONS_PAGE.POSITION_NO_DATA_MESSAGE' | translate"
+			></ngx-no-data-message>
+		</div>
+		}
 	</nb-card-body>
 </nb-card>
 <ng-template #actionButtons>
@@ -68,7 +66,7 @@
 			nbButton
 			status="basic"
 			class="action"
-			[disabled]="isDisabled"
+			[disabled]="disabled"
 			size="small"
 			[nbTooltip]="'BUTTONS.DELETE' | translate"
 		>
@@ -102,7 +100,7 @@
 						type="text"
 						[placeholder]="'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate"
 						fullWidth
-						[ngModel]="isGridEdit ? selectPosition.level : ''"
+						[ngModel]="isGridEdit ? selectedPosition.name : ''"
 						required
 					/>
 				</div>
@@ -118,18 +116,25 @@
 				</div>
 			</div>
 			<div class="row mb-3">
-				<div class="col-sm-12"></div>
-				<button class="delete mr-3 ml-3" (click)="ref.close(); disabled = true" nbButton status="basic" outline>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
-				<button
-					(click)="save(addInput.value); disabled = true; ref.close()"
-					nbButton
-					status="success"
-					[disabled]="addInput.invalid"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
+				<div class="col-sm-12 d-flex">
+					<button
+						class="delete mr-3 ml-3"
+						(click)="ref.close(); disabled = true"
+						nbButton
+						status="basic"
+						outline
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+					<button
+						(click)="save(addInput.value); disabled = true; ref.close()"
+						nbButton
+						status="success"
+						[disabled]="addInput.invalid"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -183,10 +188,10 @@
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
 					<button
-						(click)="editPosition(selected.position.id, editInput.value); disabled = true; ref.close()"
+						(click)="editPosition(selected.position.id, editInput.value); ref.close()"
 						nbButton
 						status="success"
-						[disabled]="disabled"
+						[disabled]="editInput.invalid"
 					>
 						{{ 'BUTTONS.UPDATE' | translate }}
 					</button>

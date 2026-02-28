@@ -1,0 +1,44 @@
+<div class="oauth-authorize-container">
+	<!-- Loading state -->
+	<nb-card *ngIf="loading" class="oauth-card">
+		<nb-card-body class="text-center">
+			<nb-spinner status="primary" size="large"></nb-spinner>
+			<p class="loading-text">Loading authorization request...</p>
+		</nb-card-body>
+	</nb-card>
+
+	<!-- Error state -->
+	<nb-card *ngIf="error && !loading" class="oauth-card">
+		<nb-card-body>
+			<nb-alert status="danger">{{ error }}</nb-alert>
+		</nb-card-body>
+	</nb-card>
+
+	<!-- Consent screen -->
+	<nb-card *ngIf="requestInfo && !loading && !error" class="oauth-card">
+		<nb-card-header>
+			<h4>Authorize Application</h4>
+		</nb-card-header>
+		<nb-card-body>
+			<p>An application is requesting access to your Ever Gauzy account.</p>
+			<div class="request-details">
+				<div class="detail-row">
+					<span class="detail-label">Application:</span>
+					<span class="detail-value">{{ requestInfo.clientId }}</span>
+				</div>
+				<div class="detail-row" *ngIf="requestInfo.scope">
+					<span class="detail-label">Permissions:</span>
+					<span class="detail-value">{{ requestInfo.scope }}</span>
+				</div>
+			</div>
+		</nb-card-body>
+		<nb-card-footer class="actions">
+			<button nbButton status="primary" [disabled]="approving" (click)="approve()">
+				{{ approving ? 'Authorizing...' : 'Authorize' }}
+			</button>
+			<button nbButton status="basic" [disabled]="approving" (click)="deny()">
+				Deny
+			</button>
+		</nb-card-footer>
+	</nb-card>
+</div>

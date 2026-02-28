@@ -1,6 +1,6 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as multerS3 from 'multer-s3';
-import { basename, join } from 'path';
+import { basename, join } from 'node:path';
 import * as moment from 'moment';
 import {
 	S3Client,
@@ -105,6 +105,7 @@ const WASABI_REGION_SERVICE_URLS: IWasabiRegionServiceURL[] = [
 
 export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	public readonly name = FileStorageProviderEnum.WASABI;
+	private readonly logger = new Logger(WasabiS3Provider.name);
 	private readonly detailedLoggingEnabled = false;
 	public instance: WasabiS3Provider;
 	public config: IWasabiProviderConfig;
@@ -156,8 +157,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			...this.defaultConfig
 		};
 
-		if (this.detailedLoggingEnabled)
-			console.log(`setWasabiConfiguration this.config value: ${JSON.stringify(this.config)}`);
+		if (this.detailedLoggingEnabled) this.logger.debug('setWasabiConfiguration: initializing with default config');
 
 		try {
 			const request = RequestContext.currentRequest();
@@ -167,16 +167,14 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 
 				if (settings) {
 					if (this.detailedLoggingEnabled) {
-						console.log(`setWasabiConfiguration Tenant Settings Value: ${JSON.stringify(settings)}`);
+						this.logger.debug('setWasabiConfiguration: applying tenant settings overrides');
 					}
 
 					if (trimIfNotEmpty(settings.wasabi_aws_access_key_id)) {
 						this.config.wasabi_aws_access_key_id = trimIfNotEmpty(settings.wasabi_aws_access_key_id);
 
 						if (this.detailedLoggingEnabled) {
-							console.log(
-								`setWasabiConfiguration this.config.wasabi_aws_access_key_id value: ${this.config.wasabi_aws_access_key_id}`
-							);
+							this.logger.debug('setWasabiConfiguration: wasabi_aws_access_key_id overridden');
 						}
 					}
 
@@ -186,9 +184,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						);
 
 						if (this.detailedLoggingEnabled) {
-							console.log(
-								`setWasabiConfiguration this.config.wasabi_aws_secret_access_key value: ${this.config.wasabi_aws_secret_access_key}`
-							);
+							this.logger.debug('setWasabiConfiguration: wasabi_aws_secret_access_key overridden');
 						}
 					}
 
@@ -198,10 +194,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						);
 
 						if (this.detailedLoggingEnabled) {
-							console.log(
-								'setWasabiConfiguration this.config.wasabi_aws_service_url value: ',
-								this.config.wasabi_aws_service_url
-							);
+							this.logger.debug('setWasabiConfiguration: wasabi_aws_service_url overridden');
 						}
 					}
 
@@ -209,10 +202,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						this.config.wasabi_aws_default_region = trimIfNotEmpty(settings.wasabi_aws_default_region);
 
 						if (this.detailedLoggingEnabled) {
-							console.log(
-								'setWasabiConfiguration this.config.wasabi_aws_default_region value: ',
-								this.config.wasabi_aws_default_region
-							);
+							this.logger.debug('setWasabiConfiguration: wasabi_aws_default_region overridden');
 						}
 					}
 
@@ -220,10 +210,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						this.config.wasabi_aws_bucket = trimIfNotEmpty(settings.wasabi_aws_bucket);
 
 						if (this.detailedLoggingEnabled) {
-							console.log(
-								'setWasabiConfiguration this.config.wasabi_aws_bucket value: ',
-								this.config.wasabi_aws_bucket
-							);
+							this.logger.debug('setWasabiConfiguration: wasabi_aws_bucket overridden');
 						}
 					}
 
@@ -232,15 +219,12 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					this.config.wasabi_aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
 					if (this.detailedLoggingEnabled) {
-						console.log(
-							'setWasabiConfiguration this.config.wasabi_aws_force_path_style value: ',
-							this.config.wasabi_aws_force_path_style
-						);
+						this.logger.debug('setWasabiConfiguration: wasabi_aws_force_path_style overridden');
 					}
 				}
 			}
 		} catch (error) {
-			console.error('Error while setting Wasabi configuration. Default configuration will be used', error);
+			this.logger.error('Error while setting Wasabi configuration. Default configuration will be used');
 		}
 	}
 
@@ -272,11 +256,11 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 
 				return signedUrl;
 			} else {
-				console.error('Error while retrieving signed URL: s3Client is null');
+				this.logger.error('Error while retrieving signed URL: s3Client is null');
 				return null;
 			}
 		} catch (error) {
-			console.error('Error while retrieving signed URL:', error);
+			this.logger.error('Error while retrieving signed URL');
 			return null;
 		}
 	}
@@ -338,11 +322,11 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					}
 				});
 			} else {
-				console.error('Error while retrieving Multer for Wasabi: s3Client is null');
+				this.logger.error('Error while retrieving Multer for Wasabi: s3Client is null');
 				return null;
 			}
 		} catch (error) {
-			console.error('Error while retrieving Multer for Wasabi:', error);
+			this.logger.error('Error while retrieving Multer for Wasabi');
 			return null;
 		}
 	}
@@ -370,10 +354,10 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				const data: GetObjectCommandOutput = await s3Client.send(command);
 				return data.Body;
 			} else {
-				console.error('Error while retrieving signed URL: s3Client is null');
+				this.logger.error('Error while retrieving file: s3Client is null');
 			}
 		} catch (error) {
-			console.error(`Error while fetching file with key '${key}':`, error);
+			this.logger.error(`Error while fetching file with key '${key}'`);
 		}
 	}
 
@@ -427,10 +411,10 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 
 				return await this.mapUploadedFile(file);
 			} else {
-				console.warn('Error while retrieving signed URL: s3Client is null');
+				this.logger.warn('Error while putting file: s3Client is null');
 			}
 		} catch (error) {
-			console.error('Error while put file for wasabi provider', error);
+			this.logger.error('Error while put file for wasabi provider');
 		}
 	}
 
@@ -461,10 +445,10 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					data
 				});
 			} else {
-				console.warn('Error while retrieving signed URL: s3Client is null');
+				this.logger.warn('Error while deleting file: s3Client is null');
 			}
 		} catch (error) {
-			console.error(`Error while deleting file with key '${key}':`, error);
+			this.logger.error(`Error while deleting file with key '${key}'`);
 			throw new HttpException(error, HttpStatus.BAD_REQUEST, {
 				description: `Error while deleting file with key: '${key}'`
 			});
@@ -505,14 +489,14 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 
 				return s3Client;
 			} else {
-				console.warn(
-					`Can't retrieve ${FileStorageProviderEnum.WASABI} instance for tenant: this.config.wasabi_aws_service_url, wasabi_aws_access_key_id or wasabi_aws_secret_access_key undefined in that tenant settings`
+				this.logger.warn(
+					`Can't retrieve ${FileStorageProviderEnum.WASABI} instance: service URL or credentials are missing in tenant settings`
 				);
 
 				return null;
 			}
 		} catch (error) {
-			console.error(`Error while retrieving ${FileStorageProviderEnum.WASABI} instance:`, error);
+			this.logger.error(`Error while retrieving ${FileStorageProviderEnum.WASABI} instance`);
 			return null;
 		}
 	}

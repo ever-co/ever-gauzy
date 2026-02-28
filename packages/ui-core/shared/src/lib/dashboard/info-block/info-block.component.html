@@ -1,60 +1,65 @@
 <div
-	class="info-block-wrapper {{ listItem && 'info-block-wrapper--list-item' }}"
->
-	<div
-		*ngIf="!accordion"
-		(click)="handleClick()"
-		class="info-block {{ blockType && 'info-block--' + blockType }}"
-	>
-		<div class="info-text">
-			{{ title }}
-			<div *ngIf="meta" class="meta-text">
-				{{ meta }}
-			</div>
-		</div>
-
-		<div class="info-value">
-			<span [style.color]="color">{{ value }}</span>
-			<nb-icon
-				icon="link-2-outline"
-				nbTooltip="Open Records History"
-				nbTooltipTrigger="hover"
-			>
-			</nb-icon>
-		</div>
-	</div>
-	<nb-accordion *ngIf="accordion">
-		<nb-accordion-item>
-			<nb-accordion-item-header>
-				<div
+  class="info-block-wrapper {{ listItem && 'info-block-wrapper--list-item' }}"
+  >
+  @if (!accordion) {
+    <div
+      (click)="handleClick()"
+      class="info-block {{ blockType && 'info-block--' + blockType }}"
+      >
+      <div class="info-text">
+        {{ title }}
+        @if (meta) {
+          <div class="meta-text">
+            {{ meta }}
+          </div>
+        }
+      </div>
+      <div class="info-value">
+        <span [style.color]="color">{{ value }}</span>
+        <nb-icon
+          icon="link-2-outline"
+          nbTooltip="Open Records History"
+          nbTooltipTrigger="hover"
+          >
+        </nb-icon>
+      </div>
+    </div>
+  }
+  @if (accordion) {
+    <nb-accordion>
+      <nb-accordion-item>
+        <nb-accordion-item-header>
+          <div
 					class="info-block {{
 						blockType && 'info-block--' + blockType
 					}}"
-				>
-					<div class="info-text">
-						{{ title }}
-						<div *ngIf="meta" class="meta-text">
-							{{ meta }}
-						</div>
-					</div>
-
-					<div class="info-value">
-						<span [style.color]="color">{{ value }}</span>
-						<nb-icon
-							icon="link-2-outline"
-							nbTooltip="Open Records History"
-							nbTooltipTrigger="hover"
-							(click)="handleClick()"
-						>
-						</nb-icon>
-					</div>
-				</div>
-			</nb-accordion-item-header>
-			<nb-accordion-item-body>
-				<div>
-					<ng-content></ng-content>
-				</div>
-			</nb-accordion-item-body>
-		</nb-accordion-item>
-	</nb-accordion>
+            >
+            <div class="info-text">
+              {{ title }}
+              @if (meta) {
+                <div class="meta-text">
+                  {{ meta }}
+                </div>
+              }
+            </div>
+            <div class="info-value">
+              <span [style.color]="color">{{ value }}</span>
+              <nb-icon
+                icon="link-2-outline"
+                nbTooltip="Open Records History"
+                nbTooltipTrigger="hover"
+                (click)="handleClick()"
+                >
+              </nb-icon>
+            </div>
+          </div>
+        </nb-accordion-item-header>
+        <nb-accordion-item-body>
+          <div>
+            <ng-content></ng-content>
+          </div>
+        </nb-accordion-item-body>
+      </nb-accordion-item>
+    </nb-accordion>
+  }
 </div>

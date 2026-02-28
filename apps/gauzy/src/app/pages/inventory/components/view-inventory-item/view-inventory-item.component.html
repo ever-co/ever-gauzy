@@ -6,52 +6,29 @@
 		</h5>
 	</nb-card-header>
 
-	<nb-card-body
-		[nbSpinner]="loading"
-		nbSpinnerStatus="primary"
-		nbSpinnerSize="large"
-	>
-		<div class="row" *ngIf="inventoryItem">
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+		@if (inventoryItem) {
+		<div class="row">
 			<div class="col-md-3">
 				<div class="product-container">
 					<div class="product-container-inner">
-						<img
-							*ngIf="
-								inventoryItem.featuredImage &&
-								inventoryItem.featuredImage.fullUrl
-							"
-							class="featured-image"
-							[src]="inventoryItem.featuredImage.fullUrl"
-							alt="Feature image"
-						/>
-						<ga-no-image
-							*ngIf="
-								!inventoryItem?.featuredImage &&
-								!inventoryItem?.featuredImage?.fullUrl
-							"
-							class="no-image"
-							[fontSize]="16"
-						></ga-no-image>
+						@if (inventoryItem.featuredImage?.fullUrl) {
+						<img class="featured-image" [src]="inventoryItem.featuredImage.fullUrl" alt="Feature image" />
+						} @else {
+						<ga-no-image class="no-image" [fontSize]="16"></ga-no-image>
+						}
 					</div>
-					<div
-						*ngIf="inventoryItem.gallery"
-						class="gallery-preview-items mt-3"
-					>
+					@if (inventoryItem.gallery) {
+					<div class="gallery-preview-items mt-3">
 						<div class="row">
-							<div
-								class="col-sm-3 col-md-4 gallery-sm-preview"
-								*ngFor="
-									let galleryItem of inventoryItem.gallery
-								"
-								(click)="onGalleryItemClick(galleryItem)"
-							>
-								<img
-									class="gallery-sm-preview-item"
-									[src]="galleryItem.fullUrl"
-								/>
+							@for ( galleryItem of inventoryItem.gallery ; track galleryItem.id) {
+							<div class="col-sm-3 col-md-4 gallery-sm-preview" (click)="onGalleryItemClick(galleryItem)">
+								<img class="gallery-sm-preview-item" [src]="galleryItem.fullUrl" />
 							</div>
+							}
 						</div>
 					</div>
+					}
 				</div>
 			</div>
 			<div class="col-md-9 right-content">
@@ -59,99 +36,52 @@
 					<div class="row mb-1">
 						<div class="col-md-6 col-sm-12">
 							<p>
-								<span class="key-description"
-									>{{
-										'INVENTORY_PAGE.NAME' | translate
-									}}:</span
+								<span class="key-description">{{ 'INVENTORY_PAGE.NAME' | translate }}:</span
 								>{{ getTranslatedProp(inventoryItem, 'name') }}
 							</p>
 							<p>
-								<span class="key-description"
-									>{{
-										'INVENTORY_PAGE.DESCRIPTION'
-											| translate
-									}}:</span
-								>{{
-									getTranslatedProp(
-										inventoryItem,
-										'description'
-									)
-								}}
+								<span class="key-description">{{ 'INVENTORY_PAGE.DESCRIPTION' | translate }}:</span
+								>{{ getTranslatedProp(inventoryItem, 'description') }}
 							</p>
 							<p>
-								<span class="key-description"
-									>{{
-										'INVENTORY_PAGE.TYPE' | translate
-									}}:</span
-								>{{
-									getTranslatedProp(
-										inventoryItem.productType,
-										'name'
-									)
-								}}
+								<span class="key-description">{{ 'INVENTORY_PAGE.TYPE' | translate }}:</span
+								>{{ getTranslatedProp(inventoryItem.productType, 'name') }}
 							</p>
 							<p>
-								<span class="key-description"
-									>{{
-										'INVENTORY_PAGE.CATEGORY' | translate
-									}}:</span
-								>{{
-									getTranslatedProp(
-										inventoryItem.productCategory,
-										'name'
-									)
-								}}
+								<span class="key-description">{{ 'INVENTORY_PAGE.CATEGORY' | translate }}:</span
+								>{{ getTranslatedProp(inventoryItem.productCategory, 'name') }}
 							</p>
 							<p>
-								<span class="key-description"
-									>{{
-										'INVENTORY_PAGE.ENABLED' | translate
-									}}:</span
-								>
-								<nb-icon
-									*ngIf="inventoryItem.enabled"
-									icon="checkmark"
-									status="success"
-								></nb-icon>
-								<nb-icon
-									*ngIf="!inventoryItem.enabled"
-									icon="close"
-									status="danger"
-								></nb-icon>
+								<span class="key-description">{{ 'INVENTORY_PAGE.ENABLED' | translate }}:</span>
+								@if (inventoryItem.enabled) {
+								<nb-icon icon="checkmark" status="success"></nb-icon>
+								} @else {
+								<nb-icon icon="close" status="danger"></nb-icon>
+								}
 							</p>
 							<div class="d-flex">
-								<div class="key-description">
-									{{ 'INVENTORY_PAGE.OPTIONS' | translate }}:
-								</div>
-								<div class="options" *ngIf="inventoryItem">
-									<div
-										*ngFor="let option of options"
-										class="option-item"
-									>
+								<div class="key-description">{{ 'INVENTORY_PAGE.OPTIONS' | translate }}:</div>
+								<div class="options">
+									@for (option of options; track option.id) {
+									<div class="option-item">
 										{{ option.name }}
 									</div>
+									}
 								</div>
 							</div>
 						</div>
-						<div
-							class="col-md-6 col-sm-12"
-							*ngIf="inventoryItem.tags"
-						>
-							<span class="key-description mb-2"
-								>{{ 'INVENTORY_PAGE.TAGS' | translate }}:</span
-							>
+						@if (inventoryItem.tags) {
+						<div class="col-md-6 col-sm-12">
+							<span class="key-description mb-2">{{ 'INVENTORY_PAGE.TAGS' | translate }}:</span>
 							<div class="inventory-item-tags">
-								<div
-									*ngFor="let tag of inventoryItem.tags"
-									class="tag-item"
-									[ngStyle]="{
-										background: tag.color
-									}"
-								>
+								@for (tag of inventoryItem.tags; track tag.id) {
+								<div class="tag-item" [style.background]="tag.color">
 									{{ tag.name }}
 								</div>
+								}
 							</div>
 						</div>
+						}
 					</div>
 					<div class="row mt-5">
 						<div class="table-scroll-container">
@@ -166,5 +96,6 @@
 				</div>
 			</div>
 		</div>
+		}
 	</nb-card-body>
 </nb-card>

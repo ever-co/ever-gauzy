@@ -1,15 +1,15 @@
 import { ChangeDetectorRef, Directive, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
 import { filter, tap, map, switchMap, distinctUntilChanged } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as camelcase from 'camelcase';
+import camelcase from 'camelcase';
 import { IOrganization, IUser } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-    selector: '[ngxTimeTrackingAuthorized]',
-    standalone: false
+	selector: '[ngxTimeTrackingAuthorized]',
+	standalone: true
 })
 export class TimeTrackingAuthorizedDirective implements OnInit {
 	private _permission: string | string[] = []; // Default initialization
@@ -51,11 +51,11 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 							// Determine permission based on employee existence
 							const hasPermission = user.employee
 								? camelcase(this.permission) in organization &&
-								  organization[camelcase(this.permission)] &&
-								  camelcase(this.permission) in user.employee &&
-								  user.employee[camelcase(this.permission)]
+									organization[camelcase(this.permission)] &&
+									camelcase(this.permission) in user.employee &&
+									user.employee[camelcase(this.permission)]
 								: camelcase(this.permission) in organization &&
-								  organization[camelcase(this.permission)];
+									organization[camelcase(this.permission)];
 
 							return hasPermission;
 						}),

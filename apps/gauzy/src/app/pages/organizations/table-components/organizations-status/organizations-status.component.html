@@ -1,12 +1,13 @@
-<div class="text-center badge" *ngIf="rowData.isActive; else archived">
-	<div class="text-center  badge-success">
-		{{ 'ORGANIZATIONS_PAGE.ACTIVE' | translate }}
-	</div>
-</div>
-<ng-template #archived>
-	<div class="text-center badge">
-		<div class="badge-danger d-block">
-			{{ 'ORGANIZATIONS_PAGE.ARCHIVED' | translate }}
-		</div>
-	</div>
-</ng-template>
+@if (rowData.isActive) {
+  <div class="text-center badge">
+    <div class="text-center  badge-success">
+      {{ 'ORGANIZATIONS_PAGE.ACTIVE' | translate }}
+    </div>
+  </div>
+} @else {
+  <div class="text-center badge">
+    <div class="badge-danger d-block">
+      {{ 'ORGANIZATIONS_PAGE.ARCHIVED' | translate }}
+    </div>
+  </div>
+}

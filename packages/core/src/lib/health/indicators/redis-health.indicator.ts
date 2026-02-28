@@ -1,21 +1,36 @@
 import { Injectable } from '@nestjs/common';
-import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
+import { HealthIndicatorResult } from '@nestjs/terminus';
 import { v4 as uuid } from 'uuid';
 import { createClient } from 'redis';
 
 @Injectable()
-export class RedisHealthIndicator extends HealthIndicator {
+export class RedisHealthIndicator {
 	// Redis Client
 	private _client: any;
 
-	/**
-	 *
-	 */
 	constructor() {
-		super();
 		// Start Redis asynchronously
 		// (no need to wait for it to finish, we just need to start it once and let it run in the background)
 		this.startRedis();
+	}
+
+	/**
+	 * @param {string} key - The service key to check (e.g., 'redis').
+	 * @param {boolean} isHealthy - Whether the service is healthy.
+	 * @param {Record<string, any>} data - Additional data to include in the result.
+	 * @returns {HealthIndicatorResult} - The health check result.
+	 */
+	private getStatus(
+		key: string,
+		isHealthy: boolean,
+		data: Record<string, any> = {}
+	): HealthIndicatorResult {
+		return {
+			[key]: {
+				status: isHealthy ? 'up' : 'down',
+				...data
+			}
+		};
 	}
 
 	/**
@@ -31,17 +46,19 @@ export class RedisHealthIndicator extends HealthIndicator {
 	 * is accessible by calling `checkRedis()`. If the check fails, it throws a `HealthCheckError`.
 	 */
 	async isHealthy(key: string): Promise<HealthIndicatorResult> {
-		if (key == 'redis') {
+		if (key === 'redis') {
 			const isHealthy = await this.checkRedis();
 
-			const result = this.getStatus(key, isHealthy, {});
+			const result = this.getStatus(key, isHealthy);
 
 			if (isHealthy) {
 				return result;
 			}
 
-			throw new HealthCheckError('Cache Health failed', result);
+			throw new Error(`Redis health check failed: ${JSON.stringify(result)}`);
 		}
+
+		throw new Error(`Invalid key for redis health check: ${key}`);
 	}
 
 	/**

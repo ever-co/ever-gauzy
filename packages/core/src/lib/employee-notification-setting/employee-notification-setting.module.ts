@@ -7,6 +7,7 @@ import { CommandHandlers } from './commands/handlers';
 import { EmployeeNotificationSettingService } from './employee-notification-setting.service';
 import { EmployeeNotificationSettingController } from './employee-notification-setting.controller';
 import { TypeOrmEmployeeNotificationSettingRepository } from './repository/type-orm-employee-notification-setting.repository';
+import { MikroOrmEmployeeNotificationSettingRepository } from './repository/mikro-orm-employee-notification-setting.repository';
 import { EmployeeNotificationSetting } from './employee-notification-setting.entity';
 
 @Module({
@@ -17,7 +18,7 @@ import { EmployeeNotificationSetting } from './employee-notification-setting.ent
 		CqrsModule
 	],
 	controllers: [EmployeeNotificationSettingController],
-	providers: [EmployeeNotificationSettingService, TypeOrmEmployeeNotificationSettingRepository, ...CommandHandlers],
+	providers: [EmployeeNotificationSettingService, TypeOrmEmployeeNotificationSettingRepository, MikroOrmEmployeeNotificationSettingRepository, ...CommandHandlers],
 	exports: [EmployeeNotificationSettingService]
 })
 export class EmployeeNotificationSettingModule {}

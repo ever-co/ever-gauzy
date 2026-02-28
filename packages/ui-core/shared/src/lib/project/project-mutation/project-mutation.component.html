@@ -11,16 +11,14 @@
 									(uploadedImageAsset)="updateImageAsset($event)"
 									(uploadImageAssetError)="handleImageUploadError($event)"
 								></ngx-image-uploader>
+								@if (form && form.get('imageUrl').value) {
 								<svg
-									*ngIf="form && form.get('imageUrl').value"
 									xmlns="http://www.w3.org/2000/svg"
 									xmlns:xlink="http://www.w3.org/1999/xlink"
 									width="68"
 									height="68"
 									viewBox="0 0 68 68"
-									[ngStyle]="{
-										opacity: hoverState ? '1' : '0.3'
-									}"
+									[style.opacity]="hoverState ? '1' : '0.3'"
 								>
 									<defs>
 										<path
@@ -34,23 +32,21 @@
 										<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 									</g>
 								</svg>
-								<div
-									class="image-overlay"
-									[ngStyle]="{
-										opacity: hoverState ? '0.2' : '0'
-									}"
-								></div>
+								}
+								<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
 
+								@if (form && form.get('imageUrl').value) {
 								<img
-									*ngIf="form && form.get('imageUrl').value"
 									[src]="form.get('imageUrl').value"
 									alt="Contact Photo"
 									(mouseenter)="hoverState = true"
 									(mouseleave)="hoverState = false"
 								/>
-								<div *ngIf="!form || !form.get('imageUrl').value" class="image">
+								} @if (!form || !form.get('imageUrl').value) {
+								<div class="image">
 									<span><i class="fas fa-image"></i>Add or Drop Image</span>
 								</div>
+								}
 							</div>
 						</div>
 						<div class="project-form-container">
@@ -67,9 +63,11 @@
 										id="name"
 										[status]="FormHelpers.isInvalidControl(form, 'name') ? 'danger' : 'basic'"
 									/>
-									<p class="caption status-danger" *ngIf="FormHelpers.isInvalidControl(form, 'name')">
+									@if (FormHelpers.isInvalidControl(form, 'name')) {
+									<p class="caption status-danger">
 										{{ 'FORM.ERROR.PROJECT_NAME' | translate }}
 									</p>
+									}
 								</div>
 								<div class="form-group col-6">
 									<label for="code" class="label">{{ 'FORM.PLACEHOLDERS.CODE' | translate }}</label>
@@ -99,12 +97,11 @@
 										formControlName="projectUrl"
 										[status]="FormHelpers.isInvalidControl(form, 'projectUrl') ? 'danger' : 'basic'"
 									/>
-									<div
-										class="caption status-danger position-absolute"
-										*ngIf="projectUrl.hasError('pattern')"
-									>
+									@if (projectUrl.hasError('pattern')) {
+									<div class="caption status-danger position-absolute">
 										{{ 'FORM.ERROR.PROJECT_URL' | translate }}
 									</div>
+									}
 								</div>
 								<div class="form-group col-6">
 									<ga-employee-multi-select
@@ -125,9 +122,9 @@
 										id="owner"
 										(selectedChange)="changeProjectOwner($event)"
 									>
-										<nb-option *ngFor="let owner of owners" [value]="owner"
-											>{{ 'SM_TABLE.' + owner | translate }}
-										</nb-option>
+										@for (owner of owners; track owner) {
+										<nb-option [value]="owner">{{ 'SM_TABLE.' + owner | translate }} </nb-option>
+										}
 									</nb-select>
 								</div>
 								<div class="form-group col-6">
@@ -240,9 +237,11 @@
 								formControlName="billing"
 								id="billing"
 							>
-								<nb-option *ngFor="let billing of billings" [value]="billing">
+								@for (billing of billings; track billing) {
+								<nb-option [value]="billing">
 									{{ 'SM_TABLE.' + billing | translate }}
 								</nb-option>
+								}
 							</nb-select>
 						</div>
 						<div class="col-4">
@@ -260,18 +259,15 @@
 								[placeholder]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"
 								formControlName="budgetType"
 							>
-								<nb-option
-									*ngFor="let budgetType of OrganizationProjectBudgetTypeEnum | keyvalue"
-									[value]="budgetType.value"
-								>
+								@for (budgetType of OrganizationProjectBudgetTypeEnum | keyvalue; track budgetType) {
+								<nb-option [value]="budgetType.value">
 									{{ budgetType.value | titlecase }}
 								</nb-option>
+								}
 							</nb-select>
 						</div>
-						<div
-							class="form-group col-4"
-							*ngIf="form.controls.budgetType.value === OrganizationProjectBudgetTypeEnum.HOURS"
-						>
+						@if (form.controls.budgetType.value === OrganizationProjectBudgetTypeEnum.HOURS) {
+						<div class="form-group col-4">
 							<label class="label">{{ 'FORM.PLACEHOLDERS.HOURS' | translate }}</label>
 							<input
 								nbInput
@@ -282,10 +278,8 @@
 								[placeholder]="'FORM.PLACEHOLDERS.HOURS' | translate"
 							/>
 						</div>
-						<div
-							class="form-group col-4"
-							*ngIf="form.controls.budgetType.value === OrganizationProjectBudgetTypeEnum.COST"
-						>
+						} @if (form.controls.budgetType.value === OrganizationProjectBudgetTypeEnum.COST) {
+						<div class="form-group col-4">
 							<label class="label">{{ 'FORM.PLACEHOLDERS.COST' | translate }}</label>
 							<input
 								nbInput
@@ -296,6 +290,7 @@
 								[placeholder]="'FORM.PLACEHOLDERS.COST' | translate"
 							/>
 						</div>
+						}
 					</div>
 				</nb-tab>
 				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.OPEN_SOURCE' | translate">
@@ -312,7 +307,8 @@
 								{{ 'FORM.LABELS.IS_PROJECT_OPEN_SOURCE' | translate }}
 							</nb-toggle>
 						</div>
-						<div *ngIf="form.get('openSource').value" class="form-group col-4">
+						@if (form.get('openSource').value) {
+						<div class="form-group col-4">
 							<label for="openSourceProjectUrl" class="label">
 								{{ 'FORM.LABELS.OPEN_SOURCE_PROJECT_URL' | translate }}
 							</label>
@@ -327,21 +323,20 @@
 									FormHelpers.isInvalidControl(form, 'openSourceProjectUrl') ? 'danger' : 'basic'
 								"
 							/>
-							<div
-								class="caption status-danger position-absolute"
-								*ngIf="openSourceProjectUrl.hasError('pattern')"
-							>
+							@if (openSourceProjectUrl.hasError('pattern')) {
+							<div class="caption status-danger position-absolute">
 								{{ 'FORM.ERROR.OPEN_SOURCE_PROJECT_URL' | translate }}
 							</div>
+							}
 						</div>
+						}
 					</div>
 				</nb-tab>
-				<nb-tab
-					*ngIf="form.get('taskListType').value == TaskListTypeEnum.SPRINT && project"
-					[tabTitle]="'ORGANIZATIONS_PAGE.SPRINTS' | translate"
-				>
+				@if (form.get('taskListType').value == TaskListTypeEnum.SPRINT && project) {
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.SPRINTS' | translate">
 					<ngx-tasks-sprint-settings-view [project]="project"></ngx-tasks-sprint-settings-view>
 				</nb-tab>
+				}
 				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.SETTINGS' | translate" [style.minHeight]="'330px'">
 					<div class="row">
 						<div class="form-group col-3">
@@ -372,7 +367,9 @@
 								formControlName="taskListType"
 								id="taskListType"
 							>
-								<nb-option *ngFor="let mode of taskViewModeTypes" [value]="mode">{{ mode }} </nb-option>
+								@for (mode of taskViewModeTypes; track mode) {
+								<nb-option [value]="mode">{{ mode }} </nb-option>
+								}
 							</nb-select>
 						</div>
 					</div>
@@ -403,7 +400,8 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab *ngIf="integration" [tabTitle]="'ORGANIZATIONS_PAGE.INTEGRATIONS' | translate">
+				@if (integration) {
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.INTEGRATIONS' | translate">
 					<div class="setting-block block">
 						<div class="setting-row p-2">
 							<div class="row">
@@ -431,7 +429,8 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab *ngIf="integration" [tabTitle]="'ORGANIZATIONS_PAGE.AUTOMATION' | translate">
+				} @if (integration) {
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.AUTOMATION' | translate">
 					<form [formGroup]="projectSettingForm">
 						<div class="fields">
 							<div class="row">
@@ -489,9 +488,11 @@
 						</div>
 					</form>
 				</nb-tab>
-				<nb-tab *ngIf="project?.id" [tabTitle]="'TASKS_PAGE.MODULE' | translate">
+				} @if (project?.id) {
+				<nb-tab [tabTitle]="'TASKS_PAGE.MODULE' | translate">
 					<ngx-project-module-table [projectId]="project.id"></ngx-project-module-table>
 				</nb-tab>
+				}
 			</nb-tabset>
 			<ng-container [ngTemplateOutlet]="actionButtons"></ng-container>
 		</form>
@@ -506,19 +507,14 @@
 		<button class="mr-3" nbButton status="success" [disabled]="form.invalid" (click)="onSubmit()">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
-		<button *ngIf="project?.id" class="mr-3" nbButton status="success" (click)="createProjectModuleDialog()">
+		@if (project?.id) {
+		<button class="mr-3" nbButton status="success" (click)="createProjectModuleDialog()">
 			{{ 'BUTTONS.ADD_MODULE' | translate }}
 		</button>
-		<ng-template [ngIf]="project">
-			<button
-				*ngIf="form.get('taskListType').value === TaskListTypeEnum.SPRINT"
-				nbButton
-				class="float-right"
-				status="success"
-				(click)="openTasksSettings()"
-			>
-				{{ 'BUTTONS.MANAGE_SPRINTS' | translate }}
-			</button>
-		</ng-template>
+		} @if (project) { @if (form.get('taskListType').value === TaskListTypeEnum.SPRINT) {
+		<button nbButton class="float-right" status="success" (click)="openTasksSettings()">
+			{{ 'BUTTONS.MANAGE_SPRINTS' | translate }}
+		</button>
+		} }
 	</div>
 </ng-template>

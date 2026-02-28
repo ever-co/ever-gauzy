@@ -8,6 +8,7 @@ import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { PaymentMapService } from './payment.map.service';
 import { TypeOrmPaymentRepository } from './repository/type-orm-payment.repository';
+import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { TypeOrmPaymentRepository } from './repository/type-orm-payment.reposito
 		EmailSendModule
 	],
 	controllers: [PaymentController],
-	providers: [PaymentService, PaymentMapService, TypeOrmPaymentRepository],
-	exports: [PaymentService, PaymentMapService, TypeOrmPaymentRepository]
+	providers: [PaymentService, PaymentMapService, TypeOrmPaymentRepository, MikroOrmPaymentRepository],
+	exports: [PaymentService, PaymentMapService, TypeOrmPaymentRepository, MikroOrmPaymentRepository]
 })
 export class PaymentModule {}

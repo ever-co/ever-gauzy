@@ -9,10 +9,10 @@ import { AuthService, ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-magic-sign-in-workspace',
-    templateUrl: './magic-login-workspace.component.html',
-    styleUrls: ['./magic-login-workspace.component.scss'],
-    standalone: false
+	selector: 'ngx-magic-sign-in-workspace',
+	templateUrl: './magic-login-workspace.component.html',
+	styleUrls: ['./magic-login-workspace.component.scss'],
+	standalone: false
 })
 export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	public error: boolean = false;
@@ -41,7 +41,7 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 				// Tap into the observable to update the 'form.email' property with the 'email' query parameter.
 				tap(({ email, code }: Params) => {
 					if (email && code) {
-						this.confirmSingInCode();
+						this.confirmSignInCode();
 					}
 				}),
 				// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
@@ -53,7 +53,7 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	/**
 	 * Confirm the sign in code
 	 */
-	async confirmSingInCode() {
+	async confirmSignInCode() {
 		// Get the email & code value from the query params
 		const { email, code } = this._activatedRoute.snapshot.queryParams;
 		if (!email || !code) {

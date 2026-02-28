@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { progressStatus } from '@gauzy/ui-core/common';
-import { NbComponentOrCustomStatus } from '@nebular/theme';
+import { NbComponentOrCustomStatus, NbProgressBarModule } from '@nebular/theme';
+import { PercentPipe } from '@angular/common';
 
 export interface IProgressStatusDisplayValue {
 	in?: boolean;
@@ -11,7 +12,7 @@ export interface IProgressStatusDisplayValue {
     selector: 'ngx-progress-status',
     templateUrl: './progress-status.component.html',
     styleUrls: ['./progress-status.component.scss'],
-    standalone: false
+    imports: [NbProgressBarModule, PercentPipe]
 })
 export class ProgressStatusComponent {
 	/*

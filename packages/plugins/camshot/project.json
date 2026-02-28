@@ -12,7 +12,7 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["contracts", "core", "plugin"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -23,7 +23,8 @@
 				"packageJson": "packages/plugins/camshot/package.json",
 				"main": "packages/plugins/camshot/src/index.ts",
 				"assets": ["packages/plugins/camshot/*.md"]
-			}
+			},
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {

@@ -40,6 +40,7 @@ export async function createAboutWindow(filePath: string, preloadPath?: string, 
 	// Load the URL with the specified file path and hash
 	await setLaunchPathAndLoad(window, filePath, '/about');
 	window.setMenu(null);
+	manager.overrideSystemContextMenu(window);
 
 	// Set up event listeners for the window
 	handleShowEvent(window); // Disable the "About" menu item when the window is shown

@@ -6,10 +6,11 @@ import { EquipmentController } from './equipment.controller';
 import { EquipmentService } from './equipment.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmEquipmentRepository } from './repository/type-orm-equipment.repository';
+import { MikroOrmEquipmentRepository } from './repository/mikro-orm-equipment.repository';
 
 @Module({
 	imports: [TypeOrmModule.forFeature([Equipment]), MikroOrmModule.forFeature([Equipment]), RolePermissionModule],
 	controllers: [EquipmentController],
-	providers: [EquipmentService, TypeOrmEquipmentRepository]
+	providers: [EquipmentService, TypeOrmEquipmentRepository, MikroOrmEquipmentRepository]
 })
 export class EquipmentModule {}

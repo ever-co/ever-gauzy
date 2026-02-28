@@ -1,4 +1,3 @@
-export * from './shared.module';
 export * from './decorators';
 export * from './dto';
 export * from './guards';

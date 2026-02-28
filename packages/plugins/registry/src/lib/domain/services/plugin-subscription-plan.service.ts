@@ -1,5 +1,5 @@
 import { ID, PluginSubscriptionType } from '@gauzy/contracts';
-import { CrudService } from '@gauzy/core';
+import { CrudService, MultiORMEnum } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions, MoreThan } from 'typeorm';
 import {
@@ -203,14 +203,12 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 			}
 
 			// Check if new name already exists for this plugin
-			const existingPlan = await this.typeOrmRepository.findOne({
-				where: {
-					pluginId: sourcePlan.pluginId,
-					name: newName
-				}
+			const { success: nameExists } = await this.findOneOrFailByWhereOptions({
+				pluginId: sourcePlan.pluginId,
+				name: newName
 			});
 
-			if (existingPlan) {
+			if (nameExists) {
 				throw new BadRequestException(`A plan with name "${newName}" already exists for this plugin`);
 			}
 
@@ -245,15 +243,38 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 
 			switch (operation) {
 				case 'activate':
-					await this.typeOrmRepository.update(planIds, { isActive: true });
+					switch (this.ormType) {
+						case MultiORMEnum.MikroORM:
+							await this.mikroOrmRepository.nativeUpdate({ id: { $in: planIds } } as any, { isActive: true } as any);
+							break;
+						case MultiORMEnum.TypeORM:
+						default:
+							await this.typeOrmRepository.update(planIds, { isActive: true });
+							break;
+					}
 					break;
 				case 'deactivate':
-					await this.typeOrmRepository.update(planIds, { isActive: false });
+					switch (this.ormType) {
+						case MultiORMEnum.MikroORM:
+							await this.mikroOrmRepository.nativeUpdate({ id: { $in: planIds } } as any, { isActive: false } as any);
+							break;
+						case MultiORMEnum.TypeORM:
+						default:
+							await this.typeOrmRepository.update(planIds, { isActive: false });
+							break;
+					}
 					break;
 				case 'delete':
 					// Check for active subscriptions before deletion
-					// Note: Implement subscription check when relationships are available
-					await this.typeOrmRepository.delete(planIds);
+					switch (this.ormType) {
+						case MultiORMEnum.MikroORM:
+							await this.mikroOrmRepository.nativeDelete({ id: { $in: planIds } } as any);
+							break;
+						case MultiORMEnum.TypeORM:
+						default:
+							await this.typeOrmRepository.delete(planIds);
+							break;
+					}
 					break;
 				default:
 					throw new BadRequestException(`Invalid operation: ${operation}`);
@@ -313,7 +334,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 				}
 			};
 
-			return await this.typeOrmRepository.find(queryOptions);
+			return await this.find(queryOptions);
 		} catch (error) {
 			throw new BadRequestException(`Failed to search plans: ${error.message}`);
 		}
@@ -329,8 +350,8 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 				relations
 			};
 
-			const plan = await this.typeOrmRepository.findOne(queryOptions);
-			if (!plan) {
+			const { success, record: plan } = await this.findOneOrFailByOptions(queryOptions);
+			if (!success) {
 				throw new NotFoundException(`Subscription plan with ID ${id} not found`);
 			}
 

@@ -7,13 +7,13 @@
 						{{ 'REPORT_PAGE.MANUAL_TIME_EDIT_REPORT' | translate }}
 					</ngx-header-title>
 				</h4>
-				<ng-container *ngIf="request?.startDate && request?.endDate">
+				@if (request?.startDate && request?.endDate) {
 					<ngx-date-range-title
 						[start]="request?.startDate"
 						[end]="request?.endDate"
 						[format]="'dddd, LL'"
 					></ngx-date-range-title>
-				</ng-container>
+				}
 			</div>
 		</div>
 		<div class="row">
@@ -50,119 +50,129 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
-					<ng-template class="table-template" [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
-						<nb-card class="card" *ngFor="let day of dailyData">
-							<nb-card-header class="card-title">
-								{{ day.date | dateFormat }}
-							</nb-card-header>
-							<nb-card-body class="manual-time-container">
-								<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-								<div class="cart-body project-row" *ngFor="let timeLogRow of day.timeLogs">
-									<div class="table-row">
-										<div class="table-inner-wrapper">
-											<div class="responsive-table-row employee-column">
-												<div class="responsive-table-header">
-													{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-												</div>
-												<div class="responsive-table-content project-name">
-													<ng-container
-														*ngTemplateOutlet="
-															employeeEl;
-															context: { $implicit: timeLogRow?.employee }
-														"
-													>
-													</ng-container>
+					@if (dailyData?.length > 0) {
+						<ng-template class="table-template">
+							@for (day of dailyData; track day) {
+								<nb-card class="card">
+									<nb-card-header class="card-title">
+										{{ day.date | dateFormat }}
+									</nb-card-header>
+									<nb-card-body class="manual-time-container">
+										<ng-container [ngTemplateOutlet]="columnsHeader"></ng-container>
+										@for (timeLogRow of day.timeLogs; track timeLogRow) {
+											<div class="cart-body project-row">
+												<div class="table-row">
+													<div class="table-inner-wrapper">
+														<div class="responsive-table-row employee-column">
+															<div class="responsive-table-header">
+																{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+															</div>
+															<div class="responsive-table-content project-name">
+																<ng-container
+																	[ngTemplateOutlet]="employeeEl"
+																	[ngTemplateOutletContext]="{
+																		$implicit: timeLogRow?.employee
+																	}"
+																>
+																</ng-container>
+															</div>
+														</div>
+														<div class="responsive-table-row project-column">
+															<div class="responsive-table-header">
+																{{ 'REPORT_PAGE.PROJECT' | translate }}
+															</div>
+															<div class="responsive-table-content project-name">
+																<ng-container
+																	[ngTemplateOutlet]="projectEl"
+																	[ngTemplateOutletContext]="{
+																		$implicit: timeLogRow?.project
+																	}"
+																>
+																</ng-container>
+															</div>
+														</div>
+														<div class="responsive-table-row to-do-column">
+															<div class="responsive-table-header">
+																{{ 'REPORT_PAGE.TO_DO' | translate }}
+															</div>
+															<div class="responsive-table-content project-name">
+																<ng-container
+																	[ngTemplateOutlet]="taskEl"
+																	[ngTemplateOutletContext]="{
+																		$implicit: timeLogRow?.task
+																	}"
+																>
+																</ng-container>
+															</div>
+														</div>
+														<div class="responsive-table-row small-column">
+															<div class="responsive-table-header">
+																{{ 'REPORT_PAGE.REASON' | translate }}
+															</div>
+															<div class="responsive-table-content day-col">
+																{{ timeLogRow.reason || '&#8212;' }}
+															</div>
+														</div>
+														<div class="responsive-table-row small-column">
+															<div class="responsive-table-header">
+																{{ 'REPORT_PAGE.FROM' | translate }}
+															</div>
+															<div class="responsive-table-content day-col">
+																{{ timeLogRow.createdAt | timeFormat }}
+															</div>
+														</div>
+														<div class="responsive-table-row small-column">
+															<div class="responsive-table-header">
+																{{ 'REPORT_PAGE.TIME_SPAN' | translate }}
+															</div>
+															<div class="responsive-table-content day-col">
+																{{ timeLogRow.duration | durationFormat }}
+															</div>
+														</div>
+														<div class="responsive-table-row small-column">
+															<div class="responsive-table-header">
+																{{ 'REPORT_PAGE.CHANGED_AT' | translate }}
+															</div>
+															<div class="responsive-table-content day-col">
+																{{ timeLogRow.editedAt | dateTimeFormat }}
+															</div>
+														</div>
+														<div class="responsive-table-row small-column action-column">
+															<div class="responsive-table-header">
+																{{ 'REPORT_PAGE.ACTION' | translate }}
+															</div>
+															<div class="responsive-table-content day-col">
+																@switch (timeLogRow.isEdited) {
+																	@case (true) {
+																		<nb-badge
+																			[text]="
+																				ManualTimeLogAction.EDITED | titlecase
+																			"
+																		></nb-badge>
+																	}
+																	@case (false) {
+																		<nb-badge
+																			[text]="
+																				ManualTimeLogAction.ADDED | titlecase
+																			"
+																		></nb-badge>
+																	}
+																}
+															</div>
+														</div>
+													</div>
 												</div>
 											</div>
-											<div class="responsive-table-row project-column">
-												<div class="responsive-table-header">
-													{{ 'REPORT_PAGE.PROJECT' | translate }}
-												</div>
-												<div class="responsive-table-content project-name">
-													<ng-container
-														*ngTemplateOutlet="
-															projectEl;
-															context: { $implicit: timeLogRow?.project }
-														"
-													>
-													</ng-container>
-												</div>
-											</div>
-											<div class="responsive-table-row to-do-column">
-												<div class="responsive-table-header">
-													{{ 'REPORT_PAGE.TO_DO' | translate }}
-												</div>
-												<div class="responsive-table-content project-name">
-													<ng-container
-														*ngTemplateOutlet="
-															taskEl;
-															context: { $implicit: timeLogRow?.task }
-														"
-													>
-													</ng-container>
-												</div>
-											</div>
-											<div class="responsive-table-row small-column">
-												<div class="responsive-table-header">
-													{{ 'REPORT_PAGE.REASON' | translate }}
-												</div>
-												<div class="responsive-table-content day-col">
-													{{ timeLogRow.reason || '&#8212;' }}
-												</div>
-											</div>
-											<div class="responsive-table-row small-column">
-												<div class="responsive-table-header">
-													{{ 'REPORT_PAGE.FROM' | translate }}
-												</div>
-												<div class="responsive-table-content day-col">
-													{{ timeLogRow.createdAt | timeFormat }}
-												</div>
-											</div>
-											<div class="responsive-table-row small-column">
-												<div class="responsive-table-header">
-													{{ 'REPORT_PAGE.TIME_SPAN' | translate }}
-												</div>
-												<div class="responsive-table-content day-col">
-													{{ timeLogRow.duration | durationFormat }}
-												</div>
-											</div>
-											<div class="responsive-table-row small-column">
-												<div class="responsive-table-header">
-													{{ 'REPORT_PAGE.CHANGED_AT' | translate }}
-												</div>
-												<div class="responsive-table-content day-col">
-													{{ timeLogRow.editedAt | dateTimeFormat }}
-												</div>
-											</div>
-											<div class="responsive-table-row small-column action-column">
-												<div class="responsive-table-header">
-													{{ 'REPORT_PAGE.ACTION' | translate }}
-												</div>
-												<div
-													class="responsive-table-content day-col"
-													[ngSwitch]="timeLogRow.isEdited"
-												>
-													<nb-badge
-														*ngSwitchCase="true"
-														[text]="ManualTimeLogAction.EDITED | titlecase"
-													></nb-badge>
-													<nb-badge
-														*ngSwitchCase="false"
-														[text]="ManualTimeLogAction.ADDED | titlecase"
-													></nb-badge>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
-							</nb-card-body>
-						</nb-card>
-					</ng-template>
-					<ng-template #notFound>
+										}
+									</nb-card-body>
+								</nb-card>
+							}
+						</ng-template>
+					} @else {
 						<ngx-no-data-message
 							[message]="'REPORT_PAGE.NO_DATA.MANUAL_ACTIVITY' | translate"
 						></ngx-no-data-message>
-					</ng-template>
+					}
 				</div>
 			</div>
 		</div>
@@ -170,29 +180,32 @@
 </nb-card>
 
 <ng-template let-project #projectEl>
-	<ga-project-column-view *ngIf="project; else noProjects" [project]="project"></ga-project-column-view>
-	<ng-template #noProjects>
+	@if (project) {
+		<ga-project-column-view [project]="project"></ga-project-column-view>
+	} @else {
 		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
-	</ng-template>
+	}
 </ng-template>
 
 <ng-template let-task #taskEl>
-	<span *ngIf="task; else noTaSK">{{ task?.title }} </span>
-	<ng-template #noTaSK>
+	@if (task) {
+		<span>{{ task?.title }} </span>
+	} @else {
 		<span>{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
-	</ng-template>
+	}
 </ng-template>
 
 <ng-template let-employee #employeeEl>
 	<div class="avatar-wrapper-outer">
-		<ngx-avatar
-			class="report-table"
-			*ngIf="employee"
-			[src]="employee?.user?.imageUrl"
-			[name]="employee?.user?.name"
-			[id]="employee?.id"
-			[employee]="employee"
-		></ngx-avatar>
+		@if (employee) {
+			<ngx-avatar
+				class="report-table"
+				[src]="employee?.user?.imageUrl"
+				[name]="employee?.user?.name"
+				[id]="employee?.id"
+				[employee]="employee"
+			></ngx-avatar>
+		}
 	</div>
 	<ng-template #noEmployee>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
@@ -200,32 +213,34 @@
 </ng-template>
 
 <ng-template #columnsHeader>
-	<div class="columns-header" *ngIf="dailyData?.length > 0">
-		<div class="table-inner-wrapper font-weight-bold align-items-center">
-			<div class="responsive-table-row column-heading employee-column">
-				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-			</div>
-			<div class="responsive-table-row column-heading project-column">
-				{{ 'REPORT_PAGE.PROJECT' | translate }}
-			</div>
-			<div class="responsive-table-row column-heading to-do-column">
-				{{ 'REPORT_PAGE.TO_DO' | translate }}
-			</div>
-			<div class="responsive-table-row column-heading small-column">
-				{{ 'REPORT_PAGE.REASON' | translate }}
-			</div>
-			<div class="responsive-table-row column-heading small-column">
-				{{ 'REPORT_PAGE.FROM' | translate }}
-			</div>
-			<div class="responsive-table-row column-heading small-column">
-				{{ 'REPORT_PAGE.TIME_SPAN' | translate }}
-			</div>
-			<div class="responsive-table-row column-heading small-column">
-				{{ 'REPORT_PAGE.CHANGED_AT' | translate }}
-			</div>
-			<div class="responsive-table-row column-heading small-column action-column">
-				{{ 'REPORT_PAGE.ACTION' | translate }}
+	@if (dailyData?.length > 0) {
+		<div class="columns-header">
+			<div class="table-inner-wrapper font-weight-bold align-items-center">
+				<div class="responsive-table-row column-heading employee-column">
+					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+				</div>
+				<div class="responsive-table-row column-heading project-column">
+					{{ 'REPORT_PAGE.PROJECT' | translate }}
+				</div>
+				<div class="responsive-table-row column-heading to-do-column">
+					{{ 'REPORT_PAGE.TO_DO' | translate }}
+				</div>
+				<div class="responsive-table-row column-heading small-column">
+					{{ 'REPORT_PAGE.REASON' | translate }}
+				</div>
+				<div class="responsive-table-row column-heading small-column">
+					{{ 'REPORT_PAGE.FROM' | translate }}
+				</div>
+				<div class="responsive-table-row column-heading small-column">
+					{{ 'REPORT_PAGE.TIME_SPAN' | translate }}
+				</div>
+				<div class="responsive-table-row column-heading small-column">
+					{{ 'REPORT_PAGE.CHANGED_AT' | translate }}
+				</div>
+				<div class="responsive-table-row column-heading small-column action-column">
+					{{ 'REPORT_PAGE.ACTION' | translate }}
+				</div>
 			</div>
 		</div>
-	</div>
+	}
 </ng-template>

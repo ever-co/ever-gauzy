@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ActivatedRoute, Params } from '@angular/router';
 import { IImportHistory, ImportTypeEnum, ImportStatusEnum } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { saveAs } from 'file-saver';
 import { environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';

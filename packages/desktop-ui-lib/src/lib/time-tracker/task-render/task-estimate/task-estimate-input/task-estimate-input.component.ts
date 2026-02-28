@@ -6,10 +6,11 @@ import {
 	OnInit,
 	Output,
 } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import * as moment from 'moment';
 import { Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbIconModule } from '@nebular/theme';
 
 export interface IEstimateInput {
 	hourTen: number;
@@ -23,7 +24,7 @@ export interface IEstimateInput {
     selector: 'gauzy-task-estimate-input',
     templateUrl: './task-estimate-input.component.html',
     styleUrls: ['./task-estimate-input.component.scss'],
-    standalone: false
+    imports: [FormsModule, ReactiveFormsModule, NbIconModule]
 })
 export class TaskEstimateInputComponent implements OnInit, AfterViewInit {
 	@Output()

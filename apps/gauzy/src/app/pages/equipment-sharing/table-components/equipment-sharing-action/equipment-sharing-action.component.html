@@ -1,19 +1,21 @@
-<button
-	nbButton
-	status="success"
-	(click)="approval()"
-	*ngIf="isApproval"
-	class="mr-3"
-	[size]="'tiny'"
->
-	{{ 'EQUIPMENT_SHARING_PAGE.APPROVE' | translate }}
-</button>
-<button
-	nbButton
-	status="danger"
-	(click)="refuse()"
-	*ngIf="isRefuse"
-	[size]="'tiny'"
->
-	{{ 'EQUIPMENT_SHARING_PAGE.REFUSE' | translate }}
-</button>
+@if (isApproval) {
+  <button
+    nbButton
+    status="success"
+    (click)="approval()"
+    class="mr-3"
+    [size]="'tiny'"
+    >
+    {{ 'EQUIPMENT_SHARING_PAGE.APPROVE' | translate }}
+  </button>
+}
+@if (isRefuse) {
+  <button
+    nbButton
+    status="danger"
+    (click)="refuse()"
+    [size]="'tiny'"
+    >
+    {{ 'EQUIPMENT_SHARING_PAGE.REFUSE' | translate }}
+  </button>
+}

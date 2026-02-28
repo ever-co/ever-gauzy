@@ -13,7 +13,8 @@
 		"lib": ["es2020", "dom", "es2018", "esnext.array", "ES2022"],
 		"skipLibCheck": true,
 		"skipDefaultLibCheck": true,
-		"baseUrl": "."
+		"baseUrl": ".",
+		"incremental": true
 	},
 	"exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
 }

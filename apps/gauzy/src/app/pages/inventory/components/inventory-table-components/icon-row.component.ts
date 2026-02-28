@@ -4,9 +4,11 @@ import { IProductTypeTranslated } from '@gauzy/contracts';
 @Component({
     template: `
 		<div class="icon-container">
-			<nb-icon *ngIf="rowData.icon" [icon]="rowData.icon"></nb-icon>
+		  @if (rowData.icon) {
+		    <nb-icon [icon]="rowData.icon"></nb-icon>
+		  }
 		</div>
-	`,
+		`,
     styles: [
         `
 			.icon-container {

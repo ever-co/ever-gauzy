@@ -4,13 +4,16 @@ import { Observable, Subject } from 'rxjs';
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
 import { PluginSourceQuery } from '../../../+state/queries/plugin-source.query';
 import { PluginMarketplaceUtilsService } from '../../../plugin-marketplace-utils.service';
+import { NbIconModule, NbBadgeModule, NbTooltipModule } from '@nebular/theme';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
-	selector: 'gauzy-plugin-source-code-tab',
-	standalone: false,
-	templateUrl: './source-code-tab.component.html',
-	styleUrls: ['./source-code-tab.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-plugin-source-code-tab',
+    templateUrl: './source-code-tab.component.html',
+    styleUrls: ['./source-code-tab.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbIconModule, NbBadgeModule, NbTooltipModule, AsyncPipe, TranslatePipe]
 })
 export class SourceCodeTabComponent implements OnInit, OnDestroy {
 	private readonly destroy$ = new Subject<void>();

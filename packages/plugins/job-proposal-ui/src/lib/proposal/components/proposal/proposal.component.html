@@ -34,7 +34,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body class="content">
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
+		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 			<div class="table-scroll-container custom-table">
 				<angular2-smart-table
 					style="cursor: pointer"
@@ -44,12 +44,11 @@
 				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
-				<ng-container *ngIf="smartTableSource">
+				@if (smartTableSource) {
 					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-				</ng-container>
+				}
 			</div>
-		</ng-template>
-		<ng-template #gridLayout>
+		} @else {
 			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="smartTableSettings"
@@ -57,7 +56,7 @@
 				(onSelectedItem)="selectProposal($event)"
 				(scroll)="onScroll()"
 			></ga-card-grid>
-		</ng-template>
+		}
 	</nb-card-body>
 </nb-card>
 
@@ -126,7 +125,7 @@
 
 <!-- Status Button Template -->
 <ng-template #statusButtonTemplate let-item="item" let-buttonSize="buttonSize">
-	<ng-container *ngIf="item?.status">
+	@if (item?.status) {
 		<button
 			nbButton
 			type="button"
@@ -144,7 +143,7 @@
 				}}
 			</span>
 		</button>
-	</ng-container>
+	}
 </ng-template>
 
 <!-- Visible Button Template -->

@@ -1,32 +1,41 @@
-<div *ngIf="rowData" class="organization-render-container">
-	<div class="organization-render">
-		<img *ngIf="rowData" src="{{ rowData.imageUrl }}" />
-		<span>
-			<div>{{ rowData?.name }}</div>
-			<div class="member" *ngIf="rowData?.totalEmployees">Members count {{ rowData?.totalEmployees }}</div>
-		</span>
-	</div>
-	<ng-template [ngIf]="rowData?.isDefault">
-		<div class="tags">
-			<nb-badge
-				class="color"
-				position="centered"
-				[style.background]="background(rowData?.color)"
-				[style.color]="backgroundContrast(rowData?.brandColor)"
-				text="Default"
-			>
-			</nb-badge>
-		</div>
-	</ng-template>
-	<div *ngIf="rowData.tags.length > 0" class="tags">
-		<nb-badge
-			*ngFor="let tag of rowData.tags"
-			class="color"
-			position="centered"
-			[style.background]="background(tag.color)"
-			text="{{ tag.name }}"
-			[style.color]="backgroundContrast(tag.color)"
-		>
-		</nb-badge>
-	</div>
-</div>
+@if (rowData) {
+  <div class="organization-render-container">
+    <div class="organization-render">
+      @if (rowData) {
+        <img src="{{ rowData.imageUrl }}" [alt]="rowData?.name || 'Organization logo'" />
+      }
+      <span>
+        <div>{{ rowData?.name }}</div>
+        @if (rowData?.totalEmployees) {
+          <div class="member">Members count {{ rowData?.totalEmployees }}</div>
+        }
+      </span>
+    </div>
+    @if (rowData?.isDefault) {
+      <div class="tags">
+        <nb-badge
+          class="color"
+          position="centered"
+          [style.background]="background(rowData?.color)"
+          [style.color]="backgroundContrast(rowData?.brandColor)"
+          text="Default"
+          >
+        </nb-badge>
+      </div>
+    }
+    @if (rowData.tags.length > 0) {
+      <div class="tags">
+        @for (tag of rowData.tags; track tag) {
+          <nb-badge
+            class="color"
+            position="centered"
+            [style.background]="background(tag.color)"
+            text="{{ tag.name }}"
+            [style.color]="backgroundContrast(tag.color)"
+            >
+          </nb-badge>
+        }
+      </div>
+    }
+  </div>
+}

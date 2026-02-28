@@ -5,7 +5,6 @@ import { LanguageModule } from '../../language/language.module';
 import { AboutComponent } from './about.component';
 
 @NgModule({
-	declarations: [AboutComponent],
-	imports: [CommonModule, NbCardModule, NbButtonModule, NbLayoutModule, LanguageModule.forChild()]
+    imports: [CommonModule, NbCardModule, NbButtonModule, NbLayoutModule, LanguageModule.forChild(), AboutComponent]
 })
 export class AboutModule {}

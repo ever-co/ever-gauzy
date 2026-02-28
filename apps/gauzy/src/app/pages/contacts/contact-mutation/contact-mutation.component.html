@@ -14,9 +14,6 @@
 		<nb-stepper #stepper disableStepNavigation>
 			<!-- Step 1 Contact Main Form -->
 			<nb-step [stepControl]="contMainForm" [label]="'CONTACTS_PAGE.MAIN' | translate">
-				<ng-template #mainStep>
-					{{ 'CONTACTS_PAGE.MAIN' | translate }}
-				</ng-template>
 				<div class="custom-card">
 					<form
 						[formGroup]="contMainForm"
@@ -30,16 +27,14 @@
 									(uploadedImageAsset)="updateImageAsset($event)"
 									(uploadImageAssetError)="handleImageUploadError($event)"
 								></ngx-image-uploader>
+								@if (contMainForm && contMainForm.get('imageUrl').value) {
 								<svg
-									*ngIf="contMainForm && contMainForm.get('imageUrl').value"
 									xmlns="http://www.w3.org/2000/svg"
 									xmlns:xlink="http://www.w3.org/1999/xlink"
 									width="68"
 									height="68"
 									viewBox="0 0 68 68"
-									[ngStyle]="{
-										opacity: hoverState ? '1' : '0.3'
-									}"
+									[style.opacity]="hoverState ? '1' : '0.3'"
 								>
 									<defs>
 										<path
@@ -53,23 +48,21 @@
 										<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 									</g>
 								</svg>
-								<div
-									class="image-overlay"
-									[ngStyle]="{
-										opacity: hoverState ? '0.2' : '0'
-									}"
-								></div>
+								}
+								<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
 
+								@if (contMainForm && contMainForm.get('imageUrl').value) {
 								<img
-									*ngIf="contMainForm && contMainForm.get('imageUrl').value"
 									[src]="contMainForm.get('imageUrl').value"
 									alt="Contact Photo"
 									(mouseenter)="hoverState = true"
 									(mouseleave)="hoverState = false"
 								/>
-								<div *ngIf="!contMainForm || !contMainForm.get('imageUrl').value" class="image">
+								} @else {
+								<div class="image">
 									<span><i class="fas fa-image"></i>Add or Drop Image</span>
 								</div>
+								}
 							</div>
 						</div>
 						<div class="fields container">
@@ -88,11 +81,11 @@
 											FormHelpers.isInvalidControl(contMainForm, 'name') ? 'danger' : 'basic'
 										"
 									/>
-									<ng-container *ngIf="FormHelpers.isInvalidControl(contMainForm, 'name')">
-										<p class="caption status-danger mt-1">
-											{{ 'TOASTR.MESSAGE.NAME_REQUIRED' | translate }}
-										</p>
-									</ng-container>
+									@if (FormHelpers.isInvalidControl(contMainForm, 'name')) {
+									<p class="caption status-danger mt-1">
+										{{ 'TOASTR.MESSAGE.NAME_REQUIRED' | translate }}
+									</p>
+									}
 								</div>
 							</div>
 							<div class="row">
@@ -116,14 +109,12 @@
 												: 'basic'
 										"
 									/>
-									<ng-container *ngIf="FormHelpers.isInvalidControl(contMainForm, 'primaryEmail')">
-										<p
-											class="caption status-danger mt-1"
-											*ngIf="contMainForm.controls.primaryEmail.errors?.pattern"
-										>
-											{{ 'TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL' | translate }}
-										</p>
-									</ng-container>
+									@if (FormHelpers.isInvalidControl(contMainForm, 'primaryEmail')) { @if
+									(contMainForm.controls.primaryEmail.errors?.pattern) {
+									<p class="caption status-danger mt-1">
+										{{ 'TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL' | translate }}
+									</p>
+									} }
 								</div>
 								<div class="form-group col-5">
 									<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}</label>
@@ -200,9 +191,9 @@
 										[placeholder]="'CONTACTS_PAGE.CONTACT_TYPE' | translate"
 										appendTo="body"
 									>
-										<ng-option [value]="type" *ngFor="let type of contactTypes">{{
-											type
-										}}</ng-option>
+										@for (type of contactTypes; track type) {
+										<ng-option [value]="type">{{ type }}</ng-option>
+										}
 									</ng-select>
 								</div>
 							</div>
@@ -241,11 +232,10 @@
 
 			<!-- Step 2 Address Form -->
 			<nb-step [stepControl]="locationForm" [label]="'CONTACTS_PAGE.ADDRESS' | translate">
-				<ng-template #addressStep>{{ 'CONTACTS_PAGE.ADDRESS' | translate }}</ng-template>
+				@if (locationForm) {
 				<form
 					class="step-container custom-card"
 					[formGroup]="locationForm"
-					*ngIf="locationForm"
 					(ngSubmit)="locationForm.markAsDirty()"
 				>
 					<div class="fields h-100">
@@ -280,20 +270,20 @@
 								</div>
 							</div>
 							<div class="col-7">
-								<ng-container *ngIf="stepper._selectedIndex === 1">
-									<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)">
-									</ga-leaflet-map>
-								</ng-container>
+								@if (stepper.selectedIndex === 1) {
+								<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)"> </ga-leaflet-map>
+								}
 							</div>
 						</div>
 					</div>
 				</form>
+				}
 			</nb-step>
 			<!-- Step 2 Address Form End -->
 
 			<!-- Step 3 Budget Form -->
+			@if (budgetForm) {
 			<nb-step
-				*ngIf="budgetForm"
 				[stepControl]="budgetForm"
 				[label]="'CONTACTS_PAGE.BUDGET' | translate"
 				(ngSubmit)="budgetForm.markAsDirty()"
@@ -307,40 +297,38 @@
 								[placeholder]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"
 								formControlName="budgetType"
 							>
-								<nb-option
-									*ngFor="let budgetType of organizationContactBudgetTypeEnum | keyvalue"
-									[value]="budgetType.value"
-								>
+								@for (budgetType of organizationContactBudgetTypeEnum | keyvalue; track budgetType) {
+								<nb-option [value]="budgetType.value">
 									{{ budgetType.value | titlecase }}
 								</nb-option>
+								}
 							</nb-select>
 						</div>
-						<ng-container *ngIf="budgetType === organizationContactBudgetTypeEnum.HOURS">
-							<div class="form-group col-3">
-								<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.HOURS' | translate"></label>
-								<input
-									nbInput
-									type="number"
-									[min]="0"
-									fullWidth
-									formControlName="budget"
-									[placeholder]="'FORM.PLACEHOLDERS.HOURS' | translate"
-								/>
-							</div>
-						</ng-container>
-						<ng-container *ngIf="budgetType === organizationContactBudgetTypeEnum.COST">
-							<div class="form-group col-3">
-								<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.COST' | translate"></label>
-								<input
-									nbInput
-									type="number"
-									[min]="0"
-									fullWidth
-									formControlName="budget"
-									[placeholder]="'FORM.PLACEHOLDERS.COST' | translate"
-								/>
-							</div>
-						</ng-container>
+						@if (budgetType === organizationContactBudgetTypeEnum.HOURS) {
+						<div class="form-group col-3">
+							<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.HOURS' | translate"></label>
+							<input
+								nbInput
+								type="number"
+								[min]="0"
+								fullWidth
+								formControlName="budget"
+								[placeholder]="'FORM.PLACEHOLDERS.HOURS' | translate"
+							/>
+						</div>
+						} @else if (budgetType === organizationContactBudgetTypeEnum.COST) {
+						<div class="form-group col-3">
+							<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.COST' | translate"></label>
+							<input
+								nbInput
+								type="number"
+								[min]="0"
+								fullWidth
+								formControlName="budget"
+								[placeholder]="'FORM.PLACEHOLDERS.COST' | translate"
+							/>
+						</div>
+						}
 					</div>
 					<div class="buttons">
 						<button nbButton nbStepperPrevious class="gray mr-2" status="basic" outline>
@@ -362,11 +350,11 @@
 					</div>
 				</form>
 			</nb-step>
+			}
 			<!-- Step 3 Budget Form End -->
 
 			<!-- Step 4 Members Form -->
 			<nb-step [label]="'CONTACTS_PAGE.MEMBERS' | translate">
-				<ng-template #membersStep>{{ 'CONTACTS_PAGE.MEMBERS' | translate }}</ng-template>
 				<div class="fields custom-card">
 					<div class="row">
 						<div class="col-6">
@@ -379,9 +367,11 @@
 								</ga-employee-multi-select>
 							</div>
 						</div>
-						<div class="col-6" *ngIf="selectedMembers">
+						@if (selectedMembers) {
+						<div class="col-6">
 							<div class="team-card">
-								<div class="name-container" *ngFor="let member of selectedMembers">
+								@for (member of selectedMembers; track member.id) {
+								<div class="name-container">
 									<ngx-avatar
 										class="report-table"
 										[src]="member.user.imageUrl"
@@ -391,8 +381,10 @@
 										[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.CLICK_EMPLOYEE' | translate"
 									></ngx-avatar>
 								</div>
+								}
 							</div>
 						</div>
+						}
 					</div>
 					<div class="buttons">
 						<button class="gray mr-2" status="basic" outline nbButton nbStepperPrevious>

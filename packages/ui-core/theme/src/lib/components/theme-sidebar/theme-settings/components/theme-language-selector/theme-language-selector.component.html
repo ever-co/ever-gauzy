@@ -1,21 +1,23 @@
 <div class="theme-container">
-	{{ 'SETTINGS_MENU.LANGUAGE' | translate }}
-	<div>
-		<ng-container *ngIf="languages.length">
-			<nb-select
-				[(selected)]="preferredLanguage"
-				[(ngModel)]="preferredLanguage"
-				[placeholder]="'SETTINGS_MENU.ENGLISH' | translate"
-				(selectedChange)="switchLanguage()"
-				status="basic"
-				size="small"
-				outline
-				optionsListClass="fit-content"
-			>
-				<nb-option *ngFor="let lang of languages" [value]="lang.value">
-					{{ lang.value | uppercase }} ({{ lang.name | translate }})
-				</nb-option>
-			</nb-select>
-		</ng-container>
-	</div>
+  {{ 'SETTINGS_MENU.LANGUAGE' | translate }}
+  <div>
+    @if (languages.length) {
+      <nb-select
+        [(selected)]="preferredLanguage"
+        [(ngModel)]="preferredLanguage"
+        [placeholder]="'SETTINGS_MENU.ENGLISH' | translate"
+        (selectedChange)="switchLanguage()"
+        status="basic"
+        size="small"
+        outline
+        optionsListClass="fit-content"
+        >
+        @for (lang of languages; track lang) {
+          <nb-option [value]="lang.value">
+            {{ lang.value | uppercase }} ({{ lang.name | translate }})
+          </nb-option>
+        }
+      </nb-select>
+    }
+  </div>
 </div>

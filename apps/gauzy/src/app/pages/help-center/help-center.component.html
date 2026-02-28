@@ -5,12 +5,15 @@
 			<nb-card-header class="head">
 				<div class="header">
 					<div class="header-article">
-						<h6 *ngIf="!categoryName">
+						@if (!categoryName) {
+						<h6>
 							{{ 'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate }}
 						</h6>
-						<h6 *ngIf="categoryName">{{ categoryName }}</h6>
+						} @else {
+						<h6>{{ categoryName }}</h6>
+						}
 						<h6 class="articles">
-							{{ this.articleList.length }}
+							{{ articleList.length }}
 							{{ 'HELP_PAGE.ARTICLES' | translate }}
 						</h6>
 					</div>
@@ -27,7 +30,8 @@
 						<nb-icon icon="plus-outline"></nb-icon>
 					</button>
 				</div>
-				<div class="gauzy-button-container mt-4" *ngIf="categoryName">
+				@if (categoryName) {
+				<div class="gauzy-button-container mt-4">
 					<ngx-gauzy-button-action
 						[hasLayoutSelector]="false"
 						[buttonTemplate]="actionButtons"
@@ -35,94 +39,75 @@
 						[isDisable]="isDisable"
 					></ngx-gauzy-button-action>
 				</div>
-				<ng-template [ngIf]="showFilters">
-					<div *ngIf="categoryName" class="row row-search ml-1 mb-3 align-items-end">
-						<div class="col-lg-5">
-							<div class="form-group">
-								<label for="employee" class="label">{{ 'HELP_PAGE.SEARCH_BY_NAME' | translate }}</label>
-								<input
-									fullWidth
-									[formControl]="search"
-									placeholder="Search"
-									value="inputValue"
-									type="text"
-									nbInput
-								/>
-							</div>
-						</div>
-						<div class="col-lg-5">
-							<div class="form-group">
-								<label for="employee" class="label">{{
-									'HELP_PAGE.FILTER_BY_AUTHOR' | translate
-								}}</label>
-								<ga-employee-multi-select
-									[multiple]="false"
-									[label]="false"
-									[allEmployees]="employees"
-									(selectedChange)="onEmployeeSelected($event)"
-									[reset]="isResetSelect"
-								></ga-employee-multi-select>
-							</div>
-						</div>
-						<div class="col-lg-2">
-							<button
-								status="danger"
-								class="action clear-button"
-								(click)="clearFilters()"
-								outline
-								nbButton
-							>
-								{{ 'HELP_PAGE.CLEAR' | translate }}
-							</button>
+				} @if (showFilters) { @if (categoryName) {
+				<div class="row row-search ml-1 mb-3 align-items-end">
+					<div class="col-lg-5">
+						<div class="form-group">
+							<label for="employee" class="label">{{ 'HELP_PAGE.SEARCH_BY_NAME' | translate }}</label>
+							<input fullWidth [formControl]="search" placeholder="Search" type="text" nbInput />
 						</div>
 					</div>
-				</ng-template>
+					<div class="col-lg-5">
+						<div class="form-group">
+							<label for="employee" class="label">{{ 'HELP_PAGE.FILTER_BY_AUTHOR' | translate }}</label>
+							<ga-employee-multi-select
+								[multiple]="false"
+								[label]="false"
+								[allEmployees]="employees"
+								(selectedChange)="onEmployeeSelected($event)"
+								[reset]="isResetSelect"
+							></ga-employee-multi-select>
+						</div>
+					</div>
+					<div class="col-lg-2">
+						<button status="danger" class="action clear-button" (click)="clearFilters()" outline nbButton>
+							{{ 'HELP_PAGE.CLEAR' | translate }}
+						</button>
+					</div>
+				</div>
+				} }
 			</nb-card-header>
 			<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="giant">
-				<div
-					*ngIf="this.articleList.length; else nodata"
-					class="table-scroll"
-					[ngClass]="{ filter: showFilters }"
-				>
-					<div
-						class="custom-table"
-						[ngClass]="{
-							selected: isSelected(i, article)
-						}"
-						*ngFor="let article of this.filteredArticles; let i = index"
-						(click)="selectItem(i, article)"
-					>
+				@if (articleList.length) {
+				<div class="table-scroll" [class.filter]="showFilters">
+					@for (article of filteredArticles; track article.id) {
+					<div class="custom-table" [class.selected]="isSelected(article)" (click)="selectItem(article)">
 						<div class="row-name">
 							<p class="name">
 								{{ article.name }}
 							</p>
-							<p class="draft" *ngIf="article.draft === true">
+							@if (article.draft) {
+							<p class="draft">
 								{{ 'HELP_PAGE.DRAFT' | translate }}
 							</p>
-							<p class="privacy" *ngIf="article.privacy === true">
+							} @if (article.privacy) {
+							<p class="privacy">
 								{{ 'HELP_PAGE.EMPLOYEES' | translate }}
 							</p>
+							}
 						</div>
 						<p>{{ article.description }}</p>
-						<div class="data" *ngIf="showData[i]" [innerHtml]="dataArray[i]"></div>
+						@if (expandedArticles.has(article.id)) {
+						<div class="data" [innerHtml]="articleContent.get(article.id)"></div>
+						}
 						<div class="user-info">
 							<p>
 								{{ 'HELP_PAGE.WRITTEN_BY' | translate }}
 							</p>
 							<div class="image-wrap">
+								@for (employee of article.employees; track employee) {
 								<span
-									*ngFor="let employee of article.employees"
-									nbTooltip=" {{ employee?.user?.firstName }}
-									{{ employee?.user?.lastName }}"
+									nbTooltip="{{ employee?.user?.firstName }} {{ employee?.user?.lastName }}"
 									nbTooltipPlacement="top"
 								>
 									<ngx-avatar
 										[src]="employee?.user?.imageUrl"
-										[size]="sm"
+										size="sm"
 										[id]="employee?.id"
 										[employee]="employee"
 									></ngx-avatar>
 								</span>
+								}
 							</div>
 							<div class="create-at">
 								<nb-icon class="icon" icon="clock-outline"></nb-icon>
@@ -133,7 +118,19 @@
 							</div>
 						</div>
 					</div>
+					} @empty {
+					<div class="no-data">
+						<ngx-no-data-message
+							[message]="'HELP_PAGE.NO_MATCHING_ARTICLES' | translate"
+						></ngx-no-data-message>
+					</div>
+					}
 				</div>
+				} @else {
+				<div class="no-data">
+					<ngx-no-data-message [message]="'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate"></ngx-no-data-message>
+				</div>
+				}
 			</nb-card-body>
 		</nb-card>
 	</div>
@@ -150,37 +147,30 @@
 	</button>
 </ng-template>
 <ng-template #actionButtons>
-	<ng-container>
-		<div class="actions">
-			<button
-				size="small"
-				class="action secondary"
-				(click)="openArticle(selectedItem?.index)"
-				status="basic"
-				nbButton
-			>
-				<nb-icon icon="eye-outline"></nb-icon>
-				{{ 'BUTTONS.VIEW' | translate }}
-			</button>
-			<button size="small" class="action primary" (click)="editNode(selectedItem?.index)" status="basic" nbButton>
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				class="action primary"
-				status="basic"
-				size="small"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-				(click)="deleteNode(selectedItem?.index)"
-				nbButton
-			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>
-		</div>
-	</ng-container>
-</ng-template>
-<ng-template #nodata>
-	<div class="no-data">
-		<ngx-no-data-message [message]="'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate"></ngx-no-data-message>
+	<div class="actions">
+		<button
+			size="small"
+			class="action secondary"
+			(click)="openArticle(selectedItem?.article)"
+			status="basic"
+			nbButton
+		>
+			<nb-icon icon="eye-outline"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button size="small" class="action primary" (click)="editNode(selectedItem?.article)" status="basic" nbButton>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			class="action primary"
+			status="basic"
+			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
+			(click)="deleteNode(selectedItem?.article)"
+			nbButton
+		>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
 	</div>
 </ng-template>

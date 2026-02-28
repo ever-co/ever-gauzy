@@ -1,38 +1,39 @@
 <div class="theme-container">
-	<span class="preferred-layout"
-		>{{ 'SETTINGS_MENU.PREFERRED_LAYOUT' | translate }}
-		<nb-icon  
-			[nbTooltip]="'SETTINGS_MENU.PREFERRED_LAYOUT_TOOLTIP' | translate"
-			icon="question-mark-circle-outline"
-		></nb-icon
-	></span>
-	<div>
-		<nb-select
-			[placeholder]="'SETTINGS_MENU.PREFERRED_LAYOUT' | translate"
-			(selectedChange)="switchComponentLayout()"
-			[(selected)]="preferredComponentLayout"
-			[(ngModel)]="preferredComponentLayout"
-			status="basic"
-			size="small"
-			outline
-		>
-			<nb-option
-				*ngFor="let componentLayout of componentLayouts"
-				[value]="componentLayout"
-			>
-				{{ 'SETTINGS_MENU.' + componentLayout | translate }}</nb-option
-			>
-		</nb-select>
-	</div>
-</div>
-<div class="reset-button">
-	<button
-		[nbTooltip]="'SETTINGS_MENU.RESET_LAYOUT_TOOLTIP' | translate"
-		status="danger"
-		nbButton
-		size="small"
-		(click)="resetLayoutForAllComponents()"
-	>
-		{{ 'SETTINGS_MENU.RESET_LAYOUT' | translate }}
-	</button>
-</div>
+  <span class="preferred-layout"
+    >{{ 'SETTINGS_MENU.PREFERRED_LAYOUT' | translate }}
+    <nb-icon
+      [nbTooltip]="'SETTINGS_MENU.PREFERRED_LAYOUT_TOOLTIP' | translate"
+      icon="question-mark-circle-outline"
+      ></nb-icon
+    ></span>
+    <div>
+      <nb-select
+        [placeholder]="'SETTINGS_MENU.PREFERRED_LAYOUT' | translate"
+        (selectedChange)="switchComponentLayout()"
+        [(selected)]="preferredComponentLayout"
+        [(ngModel)]="preferredComponentLayout"
+        status="basic"
+        size="small"
+        outline
+        >
+        @for (componentLayout of componentLayouts; track componentLayout) {
+          <nb-option
+            [value]="componentLayout"
+            >
+            {{ 'SETTINGS_MENU.' + componentLayout | translate }}</nb-option
+            >
+          }
+        </nb-select>
+      </div>
+    </div>
+    <div class="reset-button">
+      <button
+        [nbTooltip]="'SETTINGS_MENU.RESET_LAYOUT_TOOLTIP' | translate"
+        status="danger"
+        nbButton
+        size="small"
+        (click)="resetLayoutForAllComponents()"
+        >
+        {{ 'SETTINGS_MENU.RESET_LAYOUT' | translate }}
+      </button>
+    </div>

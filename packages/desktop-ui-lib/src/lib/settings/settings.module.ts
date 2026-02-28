@@ -22,18 +22,16 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
+
 import { LanguageModule } from '../language/language.module';
 import { Store } from '../services';
-import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.module';
+
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { TaskRenderModule } from '../time-tracker/task-render';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
-import { SettingsComponent } from './settings.component';
 import { SslModule } from './ssl';
 
 @NgModule({
-	declarations: [SettingsComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -54,14 +52,11 @@ import { SslModule } from './ssl';
 		NbAccordionModule,
 		NbTooltipModule,
 		NbSpinnerModule,
-		DesktopDirectiveModule,
 		LanguageModule.forChild(),
 		TaskRenderModule,
 		SslModule,
-		PipeModule,
-		SwitchThemeModule
+		PipeModule
 	],
-	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store],
-	exports: [SettingsComponent]
+	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store]
 })
 export class SettingsModule {}

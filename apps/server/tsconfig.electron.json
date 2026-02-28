@@ -9,7 +9,8 @@
         "downlevelIteration": true,
         "module": "commonjs",
         "target": "ES2022",
-        "types": []
+        "types": [],
+		"skipLibCheck": true
     },
     "files": [
         "global.d.ts"

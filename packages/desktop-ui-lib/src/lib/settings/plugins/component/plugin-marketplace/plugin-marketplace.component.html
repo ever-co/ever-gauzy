@@ -1,5 +1,5 @@
-@let plugins = query.plugins$ | async; @let available = plugins && plugins.length > 0; @let isLoading =
-(query.isLoading$ | async) && plugins.length === 0; @let uploading = query.uploading$() | async; @let progress =
+@let plugins = query.plugins$ | async; @let available = (plugins?.length || 0) > 0; @let isLoading = (query.isLoading$ |
+async) && ((plugins?.length || 0) === 0); @let uploading = query.uploading$() | async; @let progress =
 query.uploadProgress$() | async; @let isOffline = store.isOffline$ | async; @let totalCount = query.totalCount$ | async;
 @let filteredCount = query.filteredCount$ | async; @let showAdvancedFilters = query.showAdvancedFilters$ | async; @let
 selectedView = query.selectedView$ | async;
@@ -23,19 +23,20 @@ selectedView = query.selectedView$ | async;
 	<!-- Main Content -->
 	<div class="content-panel">
 		<!-- Results Header -->
-		<div class="results-header" *ngIf="available || isLoading">
+		@if (available || isLoading) {
+		<div class="results-header">
 			<div class="header-icon-container">
 				<nb-icon icon="shopping-bag-outline"></nb-icon>
 			</div>
-
 			<div class="results-info">
 				<h6 class="results-title">Plugin Marketplace</h6>
-				<div class="results-stats" *ngIf="!isLoading">
+				@if (!isLoading) {
+				<div class="results-stats">
 					<nb-icon icon="layers-outline" class="stats-icon"></nb-icon>
 					<span class="stats-text"> Showing {{ filteredCount || 0 }} of {{ totalCount || 0 }} plugins </span>
 				</div>
+				}
 			</div>
-
 			<div class="results-actions">
 				<!-- View Toggle -->
 				<nb-button-group class="view-toggle">
@@ -58,7 +59,6 @@ selectedView = query.selectedView$ | async;
 						<nb-icon icon="list-outline"></nb-icon>
 					</button>
 				</nb-button-group>
-
 				<!-- Advanced Filters Toggle -->
 				<button
 					nbButton
@@ -73,6 +73,7 @@ selectedView = query.selectedView$ | async;
 				</button>
 			</div>
 		</div>
+		}
 
 		<!-- Plugin List -->
 		<nb-card
@@ -92,7 +93,7 @@ selectedView = query.selectedView$ | async;
 			@for (plugin of plugins; track plugin.id; let isLast = $last) { @defer (on viewport) {
 			<lib-plugin-marketplace-detail
 				class="plugin"
-				[ngClass]="{ none: isLast }"
+				[class.none]="isLast"
 				[plugin]="plugin"
 				[viewMode]="selectedView || 'grid'"
 			>

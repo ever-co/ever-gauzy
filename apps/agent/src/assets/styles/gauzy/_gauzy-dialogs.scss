@@ -1,9 +1,14 @@
-@import './gauzy-overrides';
+// Forward gauzy-overrides so dialog, input-appearance mixins are available to importers
+@forward './gauzy-overrides';
+@use './gauzy-overrides' as *;
 $orange: rgba(245, 109, 88, 1);
 $gray: rgba(126, 126, 143, 1);
 $green: rgba(37, 184, 105, 1);
-$shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $green,
-    $alpha: 0.05),
+$shadow: 0 0 0 nb-theme(button-outline-width)
+    rgba(
+      $color: $green,
+      $alpha: 0.05
+    ),
   inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
 
 :host {
@@ -101,7 +106,7 @@ $shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $green,
     color: nb-theme(text-primary-color);
     border: unset;
     background-color: nb-theme(color-primary-transparent-default);
-    box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.15);
+    box-shadow: var(--gauzy-shadow);
   }
 
   ::ng-deep {

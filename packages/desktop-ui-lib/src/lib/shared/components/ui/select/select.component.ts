@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, forwardRef, Input, Output } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
+import { NgSelectComponent, NgOptionTemplateDirective, NgLabelTemplateDirective } from '@ng-select/ng-select';
+import { NbTooltipModule } from '@nebular/theme';
+import { NgTemplateOutlet, UpperCasePipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
     selector: 'gauzy-select',
@@ -14,7 +18,7 @@ import { Subject } from 'rxjs';
             multi: true
         }
     ],
-    standalone: false
+    imports: [NgSelectComponent, FormsModule, NbTooltipModule, NgOptionTemplateDirective, NgTemplateOutlet, NgLabelTemplateDirective, UpperCasePipe, TranslatePipe]
 })
 export class SelectComponent implements ControlValueAccessor {
 	private _selectedItem: string = null;

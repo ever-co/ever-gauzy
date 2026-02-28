@@ -1,94 +1,91 @@
 <nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
-	<nb-card-header>
-		<div class="header-title-with-back">
-			<ngx-back-navigation></ngx-back-navigation>
-			<span class="info-text">
-				<span class="title">{{
-					'MENU.IMPORT_EXPORT.EXPORT_DATA' | translate
-				}}</span>
-				<span class="message">{{
-					'MENU.IMPORT_EXPORT.EXPORT_MESSAGE' | translate
-				}}</span>
-			</span>
-		</div>
-		<div class="row">
-			<div class="col-sm-12 col-md-6">
-				<div class="mt-3">
-					<nb-checkbox
-						[checked]="checkedAll"
-						status="basic"
-						(checkedChange)="onCheckboxChangeAll($event)"
-					>
-						{{ 'MENU.IMPORT_EXPORT.ALL_ENTITIES' | translate }}
-					</nb-checkbox>
-				</div>
-			</div>
-			<div class="col-sm-12 col-md-6 export-container">
-				<div class="download">
-					<button
-						class="action"
-						nbButton
-						status="info"
-						size="small"
-						(click)="onSubmit()"
-					>
-						<nb-icon icon="download-outline"></nb-icon>
-						{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
-					</button>
-				</div>
-			</div>
-		</div>
-	</nb-card-header>
-	<nb-card-body class="card-body">
-		<form class="w-100">
-			<ng-container *ngFor="let entity of entities; let i = index">
-				<div class="row">
-					<div class="col-sm-12 col-md-12">
-						<nb-card>
-							<nb-card-header>
-								<nb-checkbox
-									[checked]="entity.checked"
-									status="basic"
+  [nbSpinner]="loading"
+  nbSpinnerStatus="primary"
+  nbSpinnerSize="large"
+  >
+  <nb-card-header>
+    <div class="header-title-with-back">
+      <ngx-back-navigation></ngx-back-navigation>
+      <span class="info-text">
+        <span class="title">{{
+          'MENU.IMPORT_EXPORT.EXPORT_DATA' | translate
+        }}</span>
+        <span class="message">{{
+          'MENU.IMPORT_EXPORT.EXPORT_MESSAGE' | translate
+        }}</span>
+      </span>
+    </div>
+    <div class="row">
+      <div class="col-sm-12 col-md-6">
+        <div class="mt-3">
+          <nb-checkbox
+            [checked]="checkedAll"
+            status="basic"
+            (checkedChange)="onCheckboxChangeAll($event)"
+            >
+            {{ 'MENU.IMPORT_EXPORT.ALL_ENTITIES' | translate }}
+          </nb-checkbox>
+        </div>
+      </div>
+      <div class="col-sm-12 col-md-6 export-container">
+        <div class="download">
+          <button
+            class="action"
+            nbButton
+            status="info"
+            size="small"
+            (click)="onSubmit()"
+            >
+            <nb-icon icon="download-outline"></nb-icon>
+            {{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </nb-card-header>
+  <nb-card-body class="card-body">
+    <form class="w-100">
+      @for (entity of entities; track entity; let i = $index) {
+        <div class="row">
+          <div class="col-sm-12 col-md-12">
+            <nb-card>
+              <nb-card-header>
+                <nb-checkbox
+                  [checked]="entity.checked"
+                  status="basic"
 									(checkedChange)="
 										onCheckboxChange($event, entity)
 									"
-									>{{ entity?.name }}
-								</nb-checkbox>
-							</nb-card-header>
-							<ng-container *ngIf="entity.isGroup">
-								<nb-card-body>
-									<ng-container
-										*ngFor="
-											let item of entity.entities;
-											let j = index
-										"
-									>
-										<div
-											class="col-sm-12 col-md-3 float-left p-0"
-										>
-											<nb-checkbox
-												[checked]="entity.checked"
-												status="basic"
+                  >{{ entity?.name }}
+                </nb-checkbox>
+              </nb-card-header>
+              @if (entity.isGroup) {
+                <nb-card-body>
+                  @for (
+                    item of entity.entities; track
+                    item; let j = $index) {
+                    <div
+                      class="col-sm-12 col-md-3 float-left p-0"
+                      >
+                      <nb-checkbox
+                        [checked]="entity.checked"
+                        status="basic"
 												(checkedChange)="
 													onCheckboxChange(
 														$event,
 														item
 													)
 												"
-												>{{ item?.name }}
-											</nb-checkbox>
-										</div>
-									</ng-container>
-								</nb-card-body>
-							</ng-container>
-						</nb-card>
-					</div>
-				</div>
-			</ng-container>
-		</form>
-	</nb-card-body>
+                        >{{ item?.name }}
+                      </nb-checkbox>
+                    </div>
+                  }
+                </nb-card-body>
+              }
+            </nb-card>
+          </div>
+        </div>
+      }
+    </form>
+  </nb-card-body>
 </nb-card>

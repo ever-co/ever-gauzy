@@ -1,53 +1,69 @@
 <nb-card class="pdf-preview-card card-scroll">
-	<nb-card-header>
-		<span class="cancel"
-			><i class="fas fa-times" (click)="closeDialog()"></i
-		></span>
-		<h5 class="title">
-			<span *ngIf="!isEstimate">{{
-				'INVOICES_PAGE.SEND.CONFIRMATION_INVOICE' | translate
-			}}</span>
-			<span *ngIf="isEstimate">{{
-				'INVOICES_PAGE.SEND.CONFIRMATION_ESTIMATE' | translate
-			}}</span>
-			{{ invoice.toContact.name }} ?
-		</h5>
-	</nb-card-header>
-	<nb-card-body>
-		<span *ngIf="!alreadySent">
-			<ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
-		</span>
-		<span *ngIf="alreadySent">
-			<span *ngIf="!isEstimate">{{
-				'INVOICES_PAGE.SEND.ALREADY_SENT_INVOICE' | translate
-			}}</span>
-			<span *ngIf="isEstimate">{{
-				'INVOICES_PAGE.SEND.ALREADY_SENT_ESTIMATE' | translate
-			}}</span>
-			{{ invoice.toContact.name }}.
-		</span>
-	</nb-card-body>
-	<nb-card-footer class="text-left">
-		<button
-			(click)="closeDialog()"
-			outline
-			status="basic"
-			class="mr-3"
-			*ngIf="!alreadySent"
-			nbButton
-		>
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button (click)="send()" status="success" *ngIf="!alreadySent" nbButton>
-			{{ 'BUTTONS.SEND' | translate }}
-		</button>
-		<button
-			(click)="closeDialog()"
-			status="success"
-			*ngIf="alreadySent"
-			nbButton
-		>
-			{{ 'BUTTONS.OK' | translate }}
-		</button>
-	</nb-card-footer>
+  <nb-card-header>
+    <span class="cancel"
+      ><i class="fas fa-times" (click)="closeDialog()"></i
+    ></span>
+    <h5 class="title">
+      @if (!isEstimate) {
+        <span>{{
+          'INVOICES_PAGE.SEND.CONFIRMATION_INVOICE' | translate
+        }}</span>
+      }
+      @if (isEstimate) {
+        <span>{{
+          'INVOICES_PAGE.SEND.CONFIRMATION_ESTIMATE' | translate
+        }}</span>
+      }
+      {{ invoice.toContact.name }} ?
+    </h5>
+  </nb-card-header>
+  <nb-card-body>
+    @if (!alreadySent) {
+      <span>
+        <ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
+      </span>
+    }
+    @if (alreadySent) {
+      <span>
+        @if (!isEstimate) {
+          <span>{{
+            'INVOICES_PAGE.SEND.ALREADY_SENT_INVOICE' | translate
+          }}</span>
+        }
+        @if (isEstimate) {
+          <span>{{
+            'INVOICES_PAGE.SEND.ALREADY_SENT_ESTIMATE' | translate
+          }}</span>
+        }
+        {{ invoice.toContact.name }}.
+      </span>
+    }
+  </nb-card-body>
+  <nb-card-footer class="text-left">
+    @if (!alreadySent) {
+      <button
+        (click)="closeDialog()"
+        outline
+        status="basic"
+        class="mr-3"
+        nbButton
+        >
+        {{ 'BUTTONS.CANCEL' | translate }}
+      </button>
+    }
+    @if (!alreadySent) {
+      <button (click)="send()" status="success" nbButton>
+        {{ 'BUTTONS.SEND' | translate }}
+      </button>
+    }
+    @if (alreadySent) {
+      <button
+        (click)="closeDialog()"
+        status="success"
+        nbButton
+        >
+        {{ 'BUTTONS.OK' | translate }}
+      </button>
+    }
+  </nb-card-footer>
 </nb-card>

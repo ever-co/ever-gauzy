@@ -11,7 +11,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, EmployeeStatisticsService, Store } from '@gauzy/ui-core/core';

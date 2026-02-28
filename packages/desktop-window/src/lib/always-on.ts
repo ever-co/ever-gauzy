@@ -55,6 +55,7 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 		);
 		this.browserWindow.setMenuBarVisibility(false);
 		this.manager.register(RegisteredWindow.WIDGET, this);
+		this.manager.overrideSystemContextMenu(this.browserWindow);
 	}
 
 	public show(): void {

@@ -219,7 +219,7 @@ const seedSuperAdminUsers = async (dataSource: DataSource, tenant: ITenant): Pro
 
 	// Generate default super admins
 	for (const superAdmin of DEFAULT_SUPER_ADMINS) {
-		const superAdminUser: Promise<IUser> = generateDefaultUser(superAdmin, superAdminRole, tenant);
+		const superAdminUser: Promise<IUser> = generateDefaultUser(dataSource, superAdmin, superAdminRole, tenant);
 		superAdmins.push(superAdminUser);
 	}
 	return Promise.all(superAdmins);
@@ -236,7 +236,7 @@ const seedAdminUsers = async (dataSource: DataSource, tenant: ITenant): Promise<
 
 	// Generate default admins
 	for (const admin of DEFAULT_ADMINS) {
-		const adminUser: Promise<IUser> = generateDefaultUser(admin, adminRole, tenant);
+		const adminUser: Promise<IUser> = generateDefaultUser(dataSource, admin, adminRole, tenant);
 		admins.push(adminUser);
 	}
 	return Promise.all(admins);
@@ -256,7 +256,7 @@ const seedDefaultEmployeeUsers = async (
 	const defaultUsers: Promise<IUser>[] = [];
 	// Generate default users
 	for (const employee of employees) {
-		const user: Promise<IUser> = generateDefaultUser(employee, employeeRole, tenant);
+		const user: Promise<IUser> = generateDefaultUser(dataSource, employee, employeeRole, tenant);
 		defaultUsers.push(user);
 	}
 
@@ -297,15 +297,19 @@ const seedDefaultCandidateUsers = async (dataSource: DataSource, tenant: ITenant
 
 	// Generate default candidate users
 	for (const candidate of defaultCandidates) {
-		user = generateDefaultUser(candidate, candidateRole, tenant);
+		user = generateDefaultUser(dataSource, candidate, candidateRole, tenant);
 		defaultCandidateUsers.push(user);
 	}
 
 	return Promise.all(defaultCandidateUsers);
 };
 
-const generateDefaultUser = async (defaultUser: IDefaultUser, role: IRole, tenant: ITenant): Promise<IUser> => {
-	const user = new User();
+const generateDefaultUser = async (
+	dataSource: DataSource,
+	defaultUser: IDefaultUser,
+	role: IRole,
+	tenant: ITenant
+): Promise<IUser> => {
 	const {
 		firstName,
 		lastName,
@@ -314,6 +318,16 @@ const generateDefaultUser = async (defaultUser: IDefaultUser, role: IRole, tenan
 		preferredLanguage,
 		preferredComponentLayout = ComponentLayoutStyleEnum.TABLE
 	} = defaultUser;
+
+	// Check if force password overwrite is enabled via environment variable
+	const forcePasswordOverwrite = process.env.FORCE_SEED_PASSWORD === 'true';
+
+	// Check if the user already exists in the database
+	const existingUser = await dataSource.manager.findOne(User, {
+		where: { email, tenant: { id: tenant.id } }
+	});
+
+	const user = existingUser ? existingUser : new User();
 
 	user.email = email;
 	user.firstName = firstName;
@@ -324,9 +338,28 @@ const generateDefaultUser = async (defaultUser: IDefaultUser, role: IRole, tenan
 	user.tenant = tenant;
 	user.preferredLanguage = preferredLanguage;
 	user.preferredComponentLayout = preferredComponentLayout;
-	user.emailVerifiedAt = new Date();
-	user.lastLoginAt = getRandomDateWithinLast3Months();
-	user.hash = await hashPassword(defaultUser.password);
+	user.emailVerifiedAt = user.emailVerifiedAt || new Date();
+	user.lastLoginAt = user.lastLoginAt || getRandomDateWithinLast3Months();
+
+	// Only set the password hash if:
+	// 1. The user is new (no existing hash), or
+	// 2. FORCE_SEED_PASSWORD=true is set explicitly
+	if (!existingUser || !existingUser.hash) {
+		user.hash = await hashPassword(defaultUser.password);
+	} else if (forcePasswordOverwrite) {
+		const atIdx = email.indexOf('@');
+		const masked = atIdx > 2 ? email.slice(0, 2) + '***' + email.slice(atIdx) : '***';
+		console.warn(`⚠️  [Seed] FORCE_SEED_PASSWORD is enabled — overwriting password for existing user "${masked}".`);
+		user.hash = await hashPassword(defaultUser.password);
+	} else {
+		const atIdx = email.indexOf('@');
+		const masked = atIdx > 2 ? email.slice(0, 2) + '***' + email.slice(atIdx) : '***';
+		console.log(
+			`ℹ️  [Seed] User "${masked}" already exists with a password — skipping password overwrite. ` +
+				`Set FORCE_SEED_PASSWORD=true to override.`
+		);
+		// Keep the existing password hash — do NOT overwrite
+	}
 
 	return user;
 };

@@ -63,29 +63,30 @@
 				>
 					{{ 'BUTTONS.AUTO_REFRESH' | translate }}
 				</nb-toggle>
-				<ng-container *ngIf="autoRefresh">
-					<ng-container *ngTemplateOutlet="sync"></ng-container>
-				</ng-container>
-				<button
-					*ngIf="!autoRefresh"
-					type="button"
-					(click)="refresh()"
-					nbButton
-					status="basic"
-					outline
-					size="small"
-					class="refresh-button"
-				>
-					<ng-container *ngTemplateOutlet="sync"></ng-container>
-					{{ 'BUTTONS.REFRESH' | translate }}
-				</button>
+				@if (autoRefresh) {
+					<ng-container [ngTemplateOutlet]="sync"></ng-container>
+				}
+				@if (!autoRefresh) {
+					<button
+						type="button"
+						(click)="refresh()"
+						nbButton
+						status="basic"
+						outline
+						size="small"
+						class="refresh-button"
+					>
+						<ng-container [ngTemplateOutlet]="sync"></ng-container>
+						{{ 'BUTTONS.REFRESH' | translate }}
+					</button>
+				}
 			</div>
 		</div>
 		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
 			<nb-tab [tabId]="JobSearchTabsEnum.ACTIONS" [tabTitle]="'JOBS.BROWSE' | translate">
-				<ng-container *ngIf="(nbTab$ | async) === JobSearchTabsEnum.ACTIONS">
+				@if ((nbTab$ | async) === JobSearchTabsEnum.ACTIONS) {
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
-				</ng-container>
+				}
 			</nb-tab>
 			<nb-tab [tabId]="JobSearchTabsEnum.SEARCH" [tabTitle]="'JOBS.SEARCH' | translate">
 				<div class="job-filters">
@@ -120,12 +121,11 @@
 												multiple
 												formControlName="jobSource"
 											>
-												<nb-option
-													*ngFor="let source of JobPostSourceEnum | keyvalue"
-													[value]="source?.value | lowercase"
-												>
-													{{ 'JOBS.' + source.key | translate }}
-												</nb-option>
+												@for (source of JobPostSourceEnum | keyvalue; track source) {
+													<nb-option [value]="source?.value | lowercase">
+														{{ 'JOBS.' + source.key | translate }}
+													</nb-option>
+												}
 											</nb-select>
 										</div>
 										<div class="col-xl-2 col-lg-3 col-md-6 form-group">
@@ -139,12 +139,11 @@
 												multiple
 												formControlName="jobType"
 											>
-												<nb-option
-													*ngFor="let type of JobPostTypeEnum | keyvalue"
-													[value]="type.value | lowercase"
-												>
-													{{ 'JOBS.' + type.key | translate }}
-												</nb-option>
+												@for (type of JobPostTypeEnum | keyvalue; track type) {
+													<nb-option [value]="type.value | lowercase">
+														{{ 'JOBS.' + type.key | translate }}
+													</nb-option>
+												}
 											</nb-select>
 										</div>
 										<div class="col-xl-2 col-lg-3 col-md-6 form-group">
@@ -158,12 +157,11 @@
 												formControlName="jobStatus"
 												[multiple]="true"
 											>
-												<nb-option
-													*ngFor="let type of JobPostStatusEnum | keyvalue"
-													[value]="type.value | lowercase"
-												>
-													{{ 'JOBS.' + type.key | translate }}
-												</nb-option>
+												@for (type of JobPostStatusEnum | keyvalue; track type) {
+													<nb-option [value]="type.value | lowercase">
+														{{ 'JOBS.' + type.key | translate }}
+													</nb-option>
+												}
 											</nb-select>
 										</div>
 										<div class="col-xl-2 col-lg-3 col-md-6 form-group">
@@ -216,9 +214,9 @@
 						</nb-card>
 					</div>
 				</div>
-				<ng-container *ngIf="(nbTab$ | async) === JobSearchTabsEnum.SEARCH">
+				@if ((nbTab$ | async) === JobSearchTabsEnum.SEARCH) {
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
-				</ng-container>
+				}
 			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>
@@ -228,19 +226,19 @@
 <ng-template #tableLayout>
 	<ng-template [ngxPermissionsOnly]="['ORG_JOB_SEARCH']">
 		<div class="table-scroll-container">
-			<ng-template [ngIf]="settingsSmartTable">
+			@if (settingsSmartTable) {
 				<angular2-smart-table
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					(userRowSelect)="onSelectJob($event)"
 					[source]="smartTableSource"
 				></angular2-smart-table>
-			</ng-template>
+			}
 		</div>
 		<div class="pagination-container">
-			<ng-container *ngIf="smartTableSource">
+			@if (smartTableSource) {
 				<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-			</ng-container>
+			}
 		</div>
 	</ng-template>
 	<ng-template [ngxPermissionsExcept]="['ORG_JOB_SEARCH']">
@@ -336,6 +334,6 @@
 <!-- Template for the sync button -->
 <ng-template #sync>
 	<div class="sync-container">
-		<nb-icon class="sync" icon="sync-outline" [ngClass]="{ spin: isRefresh }" size="small"></nb-icon>
+		<nb-icon class="sync" icon="sync-outline" [class.spin]="isRefresh" size="small"></nb-icon>
 	</div>
 </ng-template>

@@ -18,29 +18,23 @@
 				{{ 'DASHBOARD_PAGE.PLAN_MY_DAY' | translate }}
 			</button>
 			<div
-				infinite-scroll
+				infiniteScroll
 				(scrolled)="onScrollTasks()"
 				[scrollWindow]="false"
 				class="card-body-content"
-				[ngStyle]="{ height: !tasks?.length ? '100%' : '' }"
+				[style.height]="!tasks?.length ? '100%' : null"
 			>
-				<ng-container *ngFor="let task of tasks">
-					<div class="card todo">
-						<div
-							[ngClass]="{
-								checked: status.COMPLETED === task?.status
-							}"
-							class="dot"
-						></div>
-						<div>
-							<div class="status">{{ task?.status }}:</div>
-							<div class="title">{{ task?.title }}</div>
-						</div>
+				@for (task of tasks; track task.id) {
+				<div class="card todo">
+					<div [class.checked]="status.COMPLETED === task?.status" class="dot"></div>
+					<div>
+						<div class="status">{{ task?.status }}:</div>
+						<div class="title">{{ task?.title }}</div>
 					</div>
-				</ng-container>
-				<ng-template [ngIf]="!tasks?.length">
-					<ngx-no-data-message [message]="'REPORT_PAGE.NO_TASK' | translate"></ngx-no-data-message>
-				</ng-template>
+				</div>
+				} @if (!tasks?.length) {
+				<ngx-no-data-message [message]="'REPORT_PAGE.NO_TASK' | translate"></ngx-no-data-message>
+				}
 			</div>
 			<div *ngxPermissionsOnly="[permissions.ORG_TASK_ADD]" (click)="addTodo()" class="more">
 				<i class="fas fa-plus"></i>
@@ -49,7 +43,7 @@
 		</nb-card-body>
 	</nb-card>
 	<div class="last-column">
-		<nb-card [ngStyle]="{ height: !selectedEmployeeId ? '100%' : '' }" class="projects">
+		<nb-card [style.height]="!selectedEmployeeId ? '100%' : null" class="projects">
 			<nb-card-header>
 				{{ 'DASHBOARD_PAGE.MOST_VIEW_PROJECTS' | translate }}
 			</nb-card-header>
@@ -65,52 +59,45 @@
 					{{ 'BUTTONS.VIEW_ALL' | translate }}
 				</button>
 				<div class="card-body-content">
-					<ng-container *ngFor="let project of projects">
-						<div class="card project">
-							<ngx-project [rowData]="{ project: project }"></ngx-project>
-						</div>
-					</ng-container>
-					<ng-template [ngIf]="!projects?.length">
-						<ngx-no-data-message [message]="'TIMESHEET.NO_PROJECT' | translate"></ngx-no-data-message>
-					</ng-template>
+					@for (project of projects; track project.id) {
+					<div class="card project">
+						<ngx-project [rowData]="{ project: project }"></ngx-project>
+					</div>
+					} @if (!projects?.length) {
+					<ngx-no-data-message [message]="'TIMESHEET.NO_PROJECT' | translate"></ngx-no-data-message>
+					}
 				</div>
 			</nb-card-body>
 		</nb-card>
-		<ng-template [ngIf]="selectedEmployeeId">
-			<nb-card class="recently">
-				<nb-card-header>
-					{{ 'DASHBOARD_PAGE.RECENTLY_ASSIGNED' | translate }}
-				</nb-card-header>
-				<nb-card-body>
-					<button
-						*ngIf="isMyTask"
-						(click)="redirectToMyTasks()"
-						status="primary"
-						size="small"
-						outline
-						nbButton
-					>
-						{{ 'BUTTONS.VIEW_ALL' | translate }}
-					</button>
-					<div [ngStyle]="{ 'max-height': !isMyTask ? 'calc(100% - 28px)' : '' }" class="card-body-content">
-						<ng-container *ngFor="let task of assigned">
-							<div class="card assigned">
-								<div class="">
-									<div class="title">
-										{{ task?.title }}
-									</div>
-									<ga-only-tags [rowData]="task"></ga-only-tags>
-								</div>
+		@if (selectedEmployeeId) {
+		<nb-card class="recently">
+			<nb-card-header>
+				{{ 'DASHBOARD_PAGE.RECENTLY_ASSIGNED' | translate }}
+			</nb-card-header>
+			<nb-card-body>
+				@if (isMyTask) {
+				<button (click)="redirectToMyTasks()" status="primary" size="small" outline nbButton>
+					{{ 'BUTTONS.VIEW_ALL' | translate }}
+				</button>
+				}
+				<div [style.max-height]="!isMyTask ? 'calc(100% - 28px)' : null" class="card-body-content">
+					@for (task of assigned; track task.id) {
+					<div class="card assigned">
+						<div class="">
+							<div class="title">
+								{{ task?.title }}
 							</div>
-						</ng-container>
-						<ng-template [ngIf]="!assigned?.length">
-							<ngx-no-data-message
-								[message]="'DASHBOARD_PAGE.NO_TODO_ASSIGNED' | translate"
-							></ngx-no-data-message>
-						</ng-template>
+							<ga-only-tags [rowData]="task"></ga-only-tags>
+						</div>
 					</div>
-				</nb-card-body>
-			</nb-card>
-		</ng-template>
+					} @if (!assigned?.length) {
+					<ngx-no-data-message
+						[message]="'DASHBOARD_PAGE.NO_TODO_ASSIGNED' | translate"
+					></ngx-no-data-message>
+					}
+				</div>
+			</nb-card-body>
+		</nb-card>
+		}
 	</div>
 </div>

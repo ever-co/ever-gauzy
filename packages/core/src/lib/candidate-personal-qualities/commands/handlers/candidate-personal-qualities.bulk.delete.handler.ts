@@ -3,25 +3,16 @@ import { CandidatePersonalQualitiesBulkDeleteCommand } from '../candidate-person
 import { CandidatePersonalQualitiesService } from '../../candidate-personal-qualities.service';
 
 @CommandHandler(CandidatePersonalQualitiesBulkDeleteCommand)
-export class CandidatePersonalQualitiesBulkDeleteHandler
-	implements ICommandHandler<CandidatePersonalQualitiesBulkDeleteCommand> {
-	constructor(
-		private readonly candidatePersonalQualitiesService: CandidatePersonalQualitiesService
-	) {}
+export class CandidatePersonalQualitiesBulkDeleteHandler implements ICommandHandler<CandidatePersonalQualitiesBulkDeleteCommand> {
+	constructor(private readonly candidatePersonalQualitiesService: CandidatePersonalQualitiesService) {}
 
-	public async execute(
-		command: CandidatePersonalQualitiesBulkDeleteCommand
-	): Promise<any> {
+	public async execute(command: CandidatePersonalQualitiesBulkDeleteCommand): Promise<any> {
 		const { id, personalQualities } = command;
 		if (personalQualities) {
-			await this.candidatePersonalQualitiesService.deleteBulk(
-				personalQualities.map((item) => item.id)
-			);
+			await this.candidatePersonalQualitiesService.deleteMany(personalQualities.map((item) => item.id));
 		} else {
 			const qualities = await this.candidatePersonalQualitiesService.getPersonalQualitiesByInterviewId(id);
-			await this.candidatePersonalQualitiesService.deleteBulk(
-				qualities.map((item) => item.id)
-			);
+			await this.candidatePersonalQualitiesService.deleteMany(qualities.map((item) => item.id));
 		}
 
 		return;

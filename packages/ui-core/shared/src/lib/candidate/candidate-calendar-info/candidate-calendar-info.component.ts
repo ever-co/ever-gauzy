@@ -11,16 +11,16 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-candidate-interviews-calendar-info',
-    templateUrl: './candidate-calendar-info.component.html',
-    styleUrls: ['./candidate-calendar-info.component.scss'],
-    standalone: false
+	selector: 'ga-candidate-interviews-calendar-info',
+	templateUrl: './candidate-calendar-info.component.html',
+	styleUrls: ['./candidate-calendar-info.component.scss'],
+	standalone: false
 })
 export class CandidateCalendarInfoComponent implements OnInit {
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;

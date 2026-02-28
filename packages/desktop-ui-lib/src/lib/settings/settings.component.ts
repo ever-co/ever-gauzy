@@ -1,3 +1,4 @@
+import { AsyncPipe, LowerCasePipe, NgTemplateOutlet, TitleCasePipe } from '@angular/common';
 import {
 	AfterViewInit,
 	Component,
@@ -9,22 +10,46 @@ import {
 	Optional,
 	ViewChild
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS } from '@gauzy/constants';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import {
+	NbAccordionModule,
+	NbButtonModule,
+	NbCardModule,
+	NbDialogService,
+	NbIconModule,
+	NbInputModule,
+	NbLayoutModule,
+	NbListModule,
+	NbOptionModule,
+	NbProgressBarModule,
+	NbSelectModule,
+	NbSidebarModule,
+	NbSpinnerModule,
+	NbTabsetModule,
+	NbToastrService,
+	NbToggleModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { BehaviorSubject, Observable, filter, firstValueFrom, tap } from 'rxjs';
 import { AuthStrategy } from '../auth';
 import { GAUZY_ENV } from '../constants';
 import { AboutComponent } from '../dialogs/about/about.component';
+import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { ElectronService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
+import { LanguageSelectorComponent } from '../language/language-selector.component';
 import { TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
 import { SetupService } from '../setup/setup.service';
+import { SwitchThemeComponent } from '../theme-selector/switch-theme/switch-theme.component';
+import { ReplacePipe } from '../time-tracker/pipes/replace.pipe';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
+import { SslComponent } from './ssl/ssl.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,7 +63,34 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 			}
 		`
 	],
-	standalone: false
+	imports: [
+		NbLayoutModule,
+		NbSpinnerModule,
+		NbSidebarModule,
+		NbListModule,
+		LanguageSelectorComponent,
+		SwitchThemeComponent,
+		NbCardModule,
+		NbIconModule,
+		NbToggleModule,
+		FormsModule,
+		NbSelectModule,
+		NbOptionModule,
+		NbButtonModule,
+		NbTooltipModule,
+		NbProgressBarModule,
+		NbAccordionModule,
+		NbTabsetModule,
+		NbInputModule,
+		SpinnerButtonDirective,
+		NgTemplateOutlet,
+		SslComponent,
+		AsyncPipe,
+		LowerCasePipe,
+		TitleCasePipe,
+		TranslatePipe,
+		ReplacePipe
+	]
 })
 export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
@@ -394,6 +446,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		autoStart: true
 	};
 	version = '0.0.0';
+	arch = '';
 	message = {
 		text: 'TIMER_TRACKER.SETTINGS.MESSAGES.APP_UPDATE',
 		status: 'basic'
@@ -456,7 +509,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		private _ngZone: NgZone,
 		private readonly timeTrackerService: TimeTrackerService,
 		private toastrService: NbToastrService,
-		private _dialogService: NbDialogService,
+		private readonly _dialogService: NbDialogService,
 		private _setupService: SetupService,
 		private _notifier: ToastrNotificationService,
 		private _translateService: TranslateService,
@@ -503,6 +556,12 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	ngOnInit(): void {
 		// this.electronService.ipcRenderer.send('request_permission');
+		this.electronService.ipcRenderer.once('get-arch', (_, arg) => {
+			this._ngZone.run(() => {
+				this.arch = arg;
+			});
+		});
+		this.electronService.ipcRenderer.send('get-arch');
 		this.version = this.electronService.remote.app.getVersion();
 		this.isConnectedDatabase$
 			.pipe(
@@ -752,6 +811,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.getAppSetting();
 		this.electronService.ipcRenderer.on('setting_page_ipc', this.handleIpcEvent);
 		this._languageElectronService.initialize<void>();
+		this.electronService.ipcRenderer.send('setting_window_ready');
 	}
 
 	mappingAdditionalSetting(values) {

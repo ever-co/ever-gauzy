@@ -10,21 +10,24 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 @Component({
     selector: 'ga-employee-stacked-bar-chart',
     template: `
-		<div *ngIf="noData" style="display: flex; flex-direction: column; align-items: center;">
-			<nb-icon icon="info-outline"></nb-icon>
-			<div>
-				{{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
-			</div>
-		</div>
-		<canvas
-			*ngIf="!noData"
-			style="height: 500px; width: 500px;"
-			baseChart
-			[type]="'bar'"
-			[data]="data"
-			[options]="options"
-		></canvas>
-	`,
+		@if (noData) {
+		  <div style="display: flex; flex-direction: column; align-items: center;">
+		    <nb-icon icon="info-outline"></nb-icon>
+		    <div>
+		      {{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
+		    </div>
+		  </div>
+		}
+		@if (!noData) {
+		  <canvas
+		    style="height: 500px; width: 500px;"
+		    baseChart
+		    [type]="'bar'"
+		    [data]="data"
+		    [options]="options"
+		  ></canvas>
+		}
+		`,
     standalone: false
 })
 export class EmployeeStackedBarChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {

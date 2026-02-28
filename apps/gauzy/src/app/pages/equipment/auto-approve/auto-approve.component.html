@@ -1,4 +1,8 @@
 <div>
-	<nb-icon *ngIf="rowData.autoApproveShare" status="success" icon="checkmark"></nb-icon>
-	<nb-icon *ngIf="!rowData.autoApproveShare" status="danger" icon="close"></nb-icon>
+  @if (rowData.autoApproveShare) {
+    <nb-icon status="success" icon="checkmark"></nb-icon>
+  }
+  @if (!rowData.autoApproveShare) {
+    <nb-icon status="danger" icon="close"></nb-icon>
+  }
 </div>

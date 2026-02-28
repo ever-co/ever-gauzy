@@ -1,7 +1,7 @@
 import { ID } from '@gauzy/contracts';
 import { logger } from '@gauzy/desktop-core';
 import { app, MenuItemConstructorOptions } from 'electron';
-import { existsSync } from 'fs';
+import { existsSync } from 'node:fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { PluginMetadataService } from '../database/plugin-metadata.service';
@@ -193,12 +193,12 @@ export class PluginManager implements IPluginManager {
 		return this.pluginMetadataService.findOne({ marketplaceId });
 	}
 
-	public initializePlugins(): void {
-		this.activePlugins.forEach(async (plugin) => await plugin.initialize());
+	public async initializePlugins(): Promise<void> {
+		await Promise.all(Array.from(this.activePlugins).map(async (plugin) => await plugin.initialize()));
 	}
 
-	public disposePlugins(): void {
-		this.activePlugins.forEach(async (plugin) => await plugin.dispose());
+	public async disposePlugins(): Promise<void> {
+		await Promise.all(Array.from(this.activePlugins).map(async (plugin) => await plugin.dispose()));
 	}
 
 	public getMenuPlugins(): MenuItemConstructorOptions[] {

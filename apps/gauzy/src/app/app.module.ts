@@ -3,7 +3,7 @@
 
 import { VERSION } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -20,8 +20,6 @@ import {
 	NbCalendarModule,
 	NbCalendarKitModule
 } from '@nebular/theme';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { FileUploadModule } from 'ng2-file-upload';
 import { CookieService } from 'ngx-cookie-service';
@@ -32,8 +30,9 @@ import { ColorPickerService } from 'ngx-color-picker';
 // Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/
 import * as Sentry from '@sentry/angular';
 import * as moment from 'moment';
-import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
+import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
 import { UiCoreModule } from '@gauzy/ui-core';
+import { getPluginUiConfig } from '@gauzy/plugin-ui';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import {
 	APIInterceptor,
@@ -54,8 +53,8 @@ import {
 } from '@gauzy/ui-core/core';
 import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { CommonModule } from '@gauzy/ui-core/common';
-import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n';
-import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
+import { I18nModule, I18nService } from '@gauzy/ui-core/i18n';
+import { SharedModule, TimeTrackerModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
@@ -98,35 +97,22 @@ const NB_MODULES = [
 	NbDialogModule.forRoot(),
 	NbWindowModule.forRoot(),
 	NbToastrModule.forRoot(),
-	NbChatModule.forRoot({ messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP }),
-	NbEvaIconsModule
+	NbChatModule.forRoot({ messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP })
 ];
 
 // Third Party Modules
 const THIRD_PARTY_MODULES = [
-	isProd ? [] : AkitaNgDevtools,
+	...(isProd ? [] : [AkitaNgDevtools]),
 	FeatureToggleModule,
 	FileUploadModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
+	PostHogModule.forRoot({
+		apiKey: environment.POSTHOG_KEY || '',
+		options: {
+			api_host: environment.POSTHOG_HOST,
+			capture_pageview: environment.POSTHOG_ENABLED
 		}
-	}),
-
-	...(environment.POSTHOG_ENABLED && environment.POSTHOG_KEY && environment.POSTHOG_KEY !== 'DOCKER_POSTHOG_KEY'
-		? [
-				PostHogModule.forRoot({
-					apiKey: environment.POSTHOG_KEY,
-					options: {
-						api_host: environment.POSTHOG_HOST,
-						capture_pageview: true
-					}
-				})
-		  ]
-		: [])
+	})
 ];
 
 // Feature Modules
@@ -142,7 +128,7 @@ const FEATURE_MODULES = [
 
 @NgModule({
 	declarations: [AppComponent],
-	bootstrap: [AppComponent],
+	exports: [AppComponent],
 	imports: [
 		BrowserModule,
 		BrowserAnimationsModule,
@@ -255,20 +241,33 @@ export class AppModule {
 	}
 
 	/**
-	 * Initialize UI languages and Update Locale
+	 * Initialize UI languages and Update Locale using `plugin-ui.config.ts`.
 	 */
 	private initializeUiLanguagesAndLocale(): void {
-		// Set Monday as start of the week
-		moment.updateLocale(LanguagesEnum.ENGLISH, {
-			week: { dow: dayOfWeekAsString(WeekDaysEnum.MONDAY) },
-			fallbackLocale: LanguagesEnum.ENGLISH
-		});
+		const uiConfig = getPluginUiConfig();
 
-		// Get the list of available languages from the LanguagesEnum
-		const availableLanguages: LanguagesEnum[] = Object.values(LanguagesEnum);
+		const localeOptions: moment.LocaleSpecification = {};
+		const dow = uiConfig.startWeekOn;
 
-		// Set the available languages in the translation service
-		this._i18nService.setAvailableLanguages(availableLanguages);
+		// Validate the day of the week number (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+		if (typeof dow === 'number' && dow >= 0 && dow <= 6) {
+			localeOptions.week = { dow };
+		}
+
+		/** Update the locale with the default language. */
+		moment.updateLocale(uiConfig.defaultLanguage, localeOptions);
+
+		// Set current locale with fallback chain (moment.locale accepts string[] for fallback)
+		const fallbackLocale = uiConfig.fallbackLocale ?? uiConfig.defaultLanguage;
+		moment.locale([uiConfig.defaultLanguage, fallbackLocale]);
+
+		// Set available languages from the UI plugin configuration (validate against LanguagesEnum)
+		const validLanguages = new Set<string>(Object.values(LanguagesEnum));
+		const validatedLanguages = (uiConfig.availableLanguages ?? []).filter((lang): lang is LanguagesEnum =>
+			validLanguages.has(lang)
+		);
+
+		this._i18nService.setAvailableLanguages(validatedLanguages);
 	}
 }
 

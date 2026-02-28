@@ -2,34 +2,29 @@
 	<nb-card-header class="d-flex">
 		<ngx-back-navigation></ngx-back-navigation>
 		<span class="info-text m-0">
-			<span class="title">{{
-				'MENU.IMPORT_EXPORT.IMPORT_DATA' | translate
-			}}</span>
-			<span class="message">{{
-				'MENU.IMPORT_EXPORT.IMPORT_MESSAGE' | translate
-			}}</span>
+			<span class="title">{{ 'MENU.IMPORT_EXPORT.IMPORT_DATA' | translate }}</span>
+			<span class="message">{{ 'MENU.IMPORT_EXPORT.IMPORT_MESSAGE' | translate }}</span>
 		</span>
 	</nb-card-header>
 	<nb-card-body class="import-data">
 		<div class="import-zone">
-			<ng-container *ngIf="uploader?.queue?.length === 0; else noUpload">
-				<div
-					ng2FileDrop
-					[ngClass]="{ 'nv-file-over': hasBaseDropZoneOver }"
-					(onFileDrop)="dropFile($event)"
-					(fileOver)="fileOverBase($event)"
-					[uploader]="uploader"
-					class="well my-drop-zone"
-				>
-					{{ 'MENU.IMPORT_EXPORT.DROP_FILE' | translate }}
-				</div>
-			</ng-container>
-			<ng-template #noUpload>
-				<div class="well my-drop-zone">
-					{{ 'MENU.IMPORT_EXPORT.NO_DROP_FILE' | translate }}
-				</div>
-			</ng-template>
-			<div class="ilmport_export_wrapper">
+			@if (uploader?.queue?.length === 0) {
+			<div
+				ng2FileDrop
+				[class.nv-file-over]="hasBaseDropZoneOver"
+				(onFileDrop)="dropFile($event)"
+				(fileOver)="fileOverBase($event)"
+				[uploader]="uploader"
+				class="well my-drop-zone"
+			>
+				{{ 'MENU.IMPORT_EXPORT.DROP_FILE' | translate }}
+			</div>
+			} @else {
+			<div class="well my-drop-zone">
+				{{ 'MENU.IMPORT_EXPORT.NO_DROP_FILE' | translate }}
+			</div>
+			}
+			<div class="import_export_wrapper">
 				<nb-radio-group
 					class="radio-buttons-group"
 					[value]="importType"
@@ -57,9 +52,7 @@
 						[disabled]="uploader?.queue?.length !== 0"
 						(click)="fileInput.click()"
 					>
-						<span class="btn-text">{{
-							'MENU.IMPORT_EXPORT.BROWSE' | translate | titlecase
-						}}</span>
+						<span class="btn-text">{{ 'MENU.IMPORT_EXPORT.BROWSE' | translate | titlecase }}</span>
 					</button>
 					<input
 						#fileInput
@@ -71,7 +64,8 @@
 						(change)="onFileClick($event)"
 					/>
 				</div>
-				<div *ngIf="uploader?.queue?.length > 0">
+				@if (uploader?.queue?.length > 0) {
+				<div>
 					<ng-container *ngxPermissionsOnly="IMPORT_EXPORT_VIEW">
 						<ngx-gauzy-button-action
 							[hasLayoutSelector]="false"
@@ -80,21 +74,16 @@
 						></ngx-gauzy-button-action>
 					</ng-container>
 				</div>
+				}
 			</div>
 			<div class="queue-progress">
 				<h6>{{ 'MENU.IMPORT_EXPORT.QUEUE_PROGRESS' | translate }}</h6>
-				<span class="progress-percent">
+				<div class="progress-percent">
 					<div class="progress w-100">
-						<div
-							class="progress-bar"
-							role="progressbar"
-							[ngStyle]="{
-								width: uploader?.progress + '%'
-							}"
-						></div>
+						<div class="progress-bar" role="progressbar" [style.width]="uploader?.progress + '%'"></div>
 					</div>
 					{{ uploader?.progress }}%
-				</span>
+				</div>
 			</div>
 			<div>
 				<div class="row custom-header m-0 align-items-center">
@@ -113,66 +102,53 @@
 				</div>
 
 				<div class="custom-body queue">
+					@for (item of uploader.queue; track item.file?.name; let lastItem = $last) {
 					<div
 						class="row border-bottom m-0 py-3 align-items-center"
-						*ngFor="let item of uploader.queue; let lastItem = last"
-						[ngClass]="{ 'border-bottom-none': lastItem }"
+						[class.border-bottom-none]="lastItem"
 						(click)="selectItem(item)"
 					>
 						<div class="col-4">
 							{{ item?.file?.name }}
 						</div>
-						<div
-							class="col-1"
-							*ngIf="uploader.options.isHTML5"
-							style="white-space: nowrap"
-						>
+						@if (uploader.options.isHTML5) {
+						<div class="col-1" style="white-space: nowrap">
 							{{ item?.file?.size | fileSize }}
 						</div>
-						<div class="col-5" *ngIf="uploader.options.isHTML5">
+						<div class="col-5">
 							<div class="d-flex align-items-center">
-								<div
-									class="progress w-100 mr-1"
-									style="margin-bottom: 0; height: 10px"
-								>
+								<div class="progress w-100 mr-1" style="margin-bottom: 0; height: 10px">
 									<div
 										class="progress-bar"
 										role="progressbar"
-										[ngStyle]="{
-											width: item.progress + '%'
-										}"
+										[style.width]="item.progress + '%'"
 									></div>
 								</div>
 								{{ item?.progress }}%
 							</div>
 						</div>
+						}
 						<div class="col-2">
-							<span *ngIf="item.isUploaded && !item.isError">
-								<nb-badge
-									status="success"
-									[text]="importStatus.SUCCESS"
-								></nb-badge>
+							@if (item.isUploaded && !item.isError) {
+							<span>
+								<nb-badge status="success" [text]="importStatus.SUCCESS"></nb-badge>
 							</span>
-							<span *ngIf="item.isCancel">
-								<nb-badge
-									status="warning"
-									[text]="importStatus.CANCELLED"
-								></nb-badge>
+							} @else if (item.isCancel) {
+							<span>
+								<nb-badge status="warning" [text]="importStatus.CANCELLED"></nb-badge>
 							</span>
-							<span *ngIf="item.isUploading">
-								<nb-badge
-									status="info"
-									[text]="importStatus.IN_PROGRESS"
-								></nb-badge>
+							} @else if (item.isUploading) {
+							<span>
+								<nb-badge status="info" [text]="importStatus.IN_PROGRESS"></nb-badge>
 							</span>
-							<span *ngIf="item.isError">
-								<nb-badge
-									status="danger"
-									[text]="importStatus.FAILED"
-								></nb-badge>
+							} @else if (item.isError) {
+							<span>
+								<nb-badge status="danger" [text]="importStatus.FAILED"></nb-badge>
 							</span>
+							}
 						</div>
 					</div>
+					}
 				</div>
 			</div>
 		</div>
@@ -184,11 +160,9 @@
 		<h4 class="title">
 			{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY' | translate }}
 		</h4>
-		<span class="message">{{
-			'MENU.IMPORT_EXPORT.IMPORT_HISTORY_MESSAGE' | translate
-		}}</span>
+		<span class="message">{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY_MESSAGE' | translate }}</span>
 	</nb-card-header>
-	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" >
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		<div class="row custom-header m-0 align-items-center">
 			<div class="col-3">{{ 'MENU.IMPORT_EXPORT.NAME' | translate }}</div>
 			<div class="col-2">{{ 'MENU.IMPORT_EXPORT.SIZE' | translate }}</div>
@@ -203,43 +177,32 @@
 			</div>
 		</div>
 		<div class="custom-body history">
-			<div
-				class="row border-bottom m-0 py-3 align-items-center"
-				*ngFor="let history of history$ | async; let lastHistory = last"
-				[ngClass]="{ 'border-bottom-none': lastHistory }"
-			>
+			@for (history of history$ | async; track history.id; let lastHistory = $last) {
+			<div class="row border-bottom m-0 py-3 align-items-center" [class.border-bottom-none]="lastHistory">
 				<div class="col-3">{{ history.file }}</div>
 				<div class="col-2">{{ history.size | fileSize }}</div>
 				<div class="col-3">
 					{{ history.importDate | dateTimeFormat }}
 				</div>
 				<div class="col-1">
-					<span *ngIf="history.status === importStatus.SUCCESS">
-						<nb-badge
-							[text]="importStatus.SUCCESS"
-							status="success"
-						></nb-badge>
+					@if (history.status === importStatus.SUCCESS) {
+					<span>
+						<nb-badge [text]="importStatus.SUCCESS" status="success"></nb-badge>
 					</span>
-					<span *ngIf="history.status === importStatus.FAILED">
-						<nb-badge
-							[text]="importStatus.FAILED"
-							status="success"
-						></nb-badge>
+					} @else if (history.status === importStatus.FAILED) {
+					<span>
+						<nb-badge [text]="importStatus.FAILED" status="danger"></nb-badge>
 					</span>
+					}
 				</div>
 				<div class="col-3" nowrap>
-					<button
-						nbButton
-						status="basic"
-						(click)="download(history)"
-						class="action primary"
-						size="small"
-					>
+					<button nbButton status="basic" (click)="download(history)" class="action primary" size="small">
 						<nb-icon icon="download-outline"></nb-icon>
 						{{ 'BUTTONS.DOWNLOAD' | translate }}
 					</button>
 				</div>
 			</div>
+			}
 		</div>
 	</nb-card-body>
 </nb-card>

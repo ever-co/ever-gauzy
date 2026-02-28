@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ICandidateTechnologies, ICandidateTechnologiesCreateInput, ID } from '@gauzy/contracts';
+import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { MultiORMEnum } from './../core/utils';
 import { CandidateTechnologies } from './candidate-technologies.entity';
 import { TypeOrmCandidateTechnologiesRepository } from './repository/type-orm-candidate-technologies.repository';
 import { MikroOrmCandidateTechnologiesRepository } from './repository/mikro-orm-candidate-technologies.repository';
@@ -20,7 +21,7 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async createBulk(createInput: ICandidateTechnologiesCreateInput[]) {
-		return await this.typeOrmRepository.save(createInput);
+		return await this.saveMany(createInput);
 	}
 
 	/**
@@ -29,20 +30,17 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async getTechnologiesByInterviewId(interviewId: string): Promise<ICandidateTechnologies[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('candidate_technology')
-			.where('candidate_technology.interviewId = :interviewId', {
-				interviewId
-			})
-			.getMany();
-	}
-
-	/**
-	 *
-	 * @param ids
-	 * @returns
-	 */
-	async deleteBulk(ids: ID[]) {
-		return await this.typeOrmRepository.delete(ids);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.find({ interviewId } as any);
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRepository
+					.createQueryBuilder('candidate_technology')
+					.where('candidate_technology.interviewId = :interviewId', {
+						interviewId
+					})
+					.getMany();
+		}
 	}
 }

@@ -1,179 +1,175 @@
 <ng-template [ngxPermissionsOnly]="PermissionsEnum.CUSTOM_SMTP_VIEW">
-	<nb-card
-		class="card-smtp"
-		[nbSpinner]="loading"
-		nbSpinnerStatus="primary"
-		nbSpinnerSize="large"
-	>
-		<nb-card-header>
-			<ng-template
-				[ngIf]="isOrganization"
-				[ngIfElse]="tenantHeader"
-			>
-				<header>
-					{{
-						'CUSTOM_SMTP_PAGE.HEADER'
-							| translate: { name: organization?.name }
-					}}
-				</header>
-			</ng-template>
-			<ng-template #tenantHeader>
-				<header>
-					{{
-						'CUSTOM_SMTP_PAGE.HEADER'
-							| translate: { name: user?.tenant?.name }
-					}}
-				</header>
-			</ng-template>
-		</nb-card-header>
-		<nb-card-body>
-			<form
-				[formGroup]="form"
-				id="smtpForm"
-				#formDirective="ngForm"
-				(ngSubmit)="onSubmit()"
-			>
-				<div class="row">
-					<div class="col-sm-12 col-md-3">
-						<label class="label" for="fromAddress">
-							{{ 'CUSTOM_SMTP_PAGE.FROM_ADDRESS' | translate }}
-						</label>
-						<input
-							id="fromAddress"
-							nbInput
-							fullWidth
-							type="text"
-							[placeholder]="'CUSTOM_SMTP_PAGE.FROM_ADDRESS' | translate"
-							formControlName="fromAddress"
+  <nb-card
+    class="card-smtp"
+    [nbSpinner]="loading"
+    nbSpinnerStatus="primary"
+    nbSpinnerSize="large"
+    >
+    <nb-card-header>
+      @if (isOrganization) {
+        <header>
+          {{
+          'CUSTOM_SMTP_PAGE.HEADER'
+          | translate: { name: organization?.name }
+          }}
+        </header>
+      } @else {
+        <header>
+          {{
+          'CUSTOM_SMTP_PAGE.HEADER'
+          | translate: { name: user?.tenant?.name }
+          }}
+        </header>
+      }
+    </nb-card-header>
+    <nb-card-body>
+      <form
+        [formGroup]="form"
+        id="smtpForm"
+        #formDirective="ngForm"
+        (ngSubmit)="onSubmit()"
+        >
+        <div class="row">
+          <div class="col-sm-12 col-md-3">
+            <label class="label" for="fromAddress">
+              {{ 'CUSTOM_SMTP_PAGE.FROM_ADDRESS' | translate }}
+            </label>
+            <input
+              id="fromAddress"
+              nbInput
+              fullWidth
+              type="text"
+              [placeholder]="'CUSTOM_SMTP_PAGE.FROM_ADDRESS' | translate"
+              formControlName="fromAddress"
 							[status]="
 								FormHelpers.isInvalidControl(form, 'fromAddress')
 									? 'danger' :
 									'basic'
 							"
-						/>
-					</div>
-					<div class="col-sm-12 col-md-3">
-						<label class="label" for="host">
-							{{ 'CUSTOM_SMTP_PAGE.HOST' | translate }}
-						</label>
-						<input
-							id="host"
-							nbInput
-							fullWidth
-							type="text"
-							[placeholder]="'CUSTOM_SMTP_PAGE.HOST' | translate"
-							formControlName="host"
+              />
+            </div>
+            <div class="col-sm-12 col-md-3">
+              <label class="label" for="host">
+                {{ 'CUSTOM_SMTP_PAGE.HOST' | translate }}
+              </label>
+              <input
+                id="host"
+                nbInput
+                fullWidth
+                type="text"
+                [placeholder]="'CUSTOM_SMTP_PAGE.HOST' | translate"
+                formControlName="host"
 							[status]="
 								FormHelpers.isInvalidControl(form, 'host')
 									? 'danger' :
 									'basic'
 							"
-						/>
-					</div>
-					<div class="col-sm-12 col-md-3">
-						<label class="label" for="port">
-							{{ 'CUSTOM_SMTP_PAGE.PORT' | translate }}
-						</label>
-						<input
-							id="port"
-							nbInput
-							fullWidth
-							type="number"
-							[placeholder]="'CUSTOM_SMTP_PAGE.PORT' | translate"
-							formControlName="port"
-						/>
-					</div>
-					<div class="col-sm-12 col-md-3">
-						<label class="label" for="secure">
-							{{ 'CUSTOM_SMTP_PAGE.SECURE' | translate }}
-						</label>
-						<nb-select
-							id="secure"
-							class="d-block"
-							size="medium"
-							fullWidth
-							formControlName="secure"
-						>
-							<nb-option
-								*ngFor="let secure of secureOptions"
-								[value]="secure.value"
-							>
-								{{ secure.label | titlecase }}
-							</nb-option>
-						</nb-select>
-					</div>
-				</div>
-				<div class="row mt-2">
-					<div class="col-sm-12 col-md-5">
-						<label class="label" for="username">
-							{{ 'CUSTOM_SMTP_PAGE.AUTH.USERNAME' | translate }}
-						</label>
-						<input
-							nbInput
-							type="text"
-							fullWidth
-							[placeholder]="'CUSTOM_SMTP_PAGE.AUTH.USERNAME' | translate"
-							id="username"
-							formControlName="username"
+                />
+              </div>
+              <div class="col-sm-12 col-md-3">
+                <label class="label" for="port">
+                  {{ 'CUSTOM_SMTP_PAGE.PORT' | translate }}
+                </label>
+                <input
+                  id="port"
+                  nbInput
+                  fullWidth
+                  type="number"
+                  [placeholder]="'CUSTOM_SMTP_PAGE.PORT' | translate"
+                  formControlName="port"
+                  />
+                </div>
+                <div class="col-sm-12 col-md-3">
+                  <label class="label" for="secure">
+                    {{ 'CUSTOM_SMTP_PAGE.SECURE' | translate }}
+                  </label>
+                  <nb-select
+                    id="secure"
+                    class="d-block"
+                    size="medium"
+                    fullWidth
+                    formControlName="secure"
+                    >
+                    @for (secure of secureOptions; track secure) {
+                      <nb-option
+                        [value]="secure.value"
+                        >
+                        {{ secure.label | titlecase }}
+                      </nb-option>
+                    }
+                  </nb-select>
+                </div>
+              </div>
+              <div class="row mt-2">
+                <div class="col-sm-12 col-md-5">
+                  <label class="label" for="username">
+                    {{ 'CUSTOM_SMTP_PAGE.AUTH.USERNAME' | translate }}
+                  </label>
+                  <input
+                    nbInput
+                    type="text"
+                    fullWidth
+                    [placeholder]="'CUSTOM_SMTP_PAGE.AUTH.USERNAME' | translate"
+                    id="username"
+                    formControlName="username"
 							[status]="
 								FormHelpers.isInvalidControl(form, 'username')
 									? 'danger' :
 									'basic'
 							"
-						/>
-					</div>
-					<div class="col-sm-12 col-md-5">
-						<label class="label" for="password">
-							{{ 'CUSTOM_SMTP_PAGE.AUTH.PASSWORD' | translate }}
-						</label>
-						<input
-							nbInput
-							type="text"
-							fullWidth
-							[placeholder]="'CUSTOM_SMTP_PAGE.AUTH.PASSWORD' | translate"
-							id="password"
-							formControlName="password"
+                    />
+                  </div>
+                  <div class="col-sm-12 col-md-5">
+                    <label class="label" for="password">
+                      {{ 'CUSTOM_SMTP_PAGE.AUTH.PASSWORD' | translate }}
+                    </label>
+                    <input
+                      nbInput
+                      type="text"
+                      fullWidth
+                      [placeholder]="'CUSTOM_SMTP_PAGE.AUTH.PASSWORD' | translate"
+                      id="password"
+                      formControlName="password"
 							[status]="
 								FormHelpers.isInvalidControl(form, 'password')
 									? 'danger' :
 									'basic'
 							"
-						/>
-					</div>
-				</div>
-			</form>
-		</nb-card-body>
-		<nb-card-footer>
-			<ng-template [ngIf]="isValidated" [ngIfElse]="notValidatedTemplate">
-				<button
-					class="mr-2"
-					nbButton
-					status="success"
-					(click)="formDirective.ngSubmit.emit()"
-					[disabled]="form.invalid || isWrapped"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
-				<button
-					class="mr-2"
-					nbButton
-					status="success"
-					[disabled]="isValidated"
-				>
-					{{ 'BUTTONS.VALIDATED' | translate }}
-				</button>
-			</ng-template>
-			<ng-template #notValidatedTemplate>
-				<button
-					class="mr-2"
-					nbButton
-					status="primary"
-					(click)="validateSmtp()"
-					[disabled]="form.invalid"
-				>
-					{{ 'BUTTONS.VALIDATE' | translate }}
-				</button>
-			</ng-template>
-		</nb-card-footer>
-	</nb-card>
-</ng-template>
+                      />
+                    </div>
+                  </div>
+                </form>
+              </nb-card-body>
+              <nb-card-footer>
+                @if (isValidated) {
+                  <button
+                    class="mr-2"
+                    nbButton
+                    status="success"
+                    (click)="formDirective.ngSubmit.emit()"
+                    [disabled]="form.invalid || isWrapped"
+                    >
+                    {{ 'BUTTONS.SAVE' | translate }}
+                  </button>
+                  <button
+                    class="mr-2"
+                    nbButton
+                    status="success"
+                    [disabled]="isValidated"
+                    >
+                    {{ 'BUTTONS.VALIDATED' | translate }}
+                  </button>
+                } @else {
+                  <button
+                    class="mr-2"
+                    nbButton
+                    status="primary"
+                    (click)="validateSmtp()"
+                    [disabled]="form.invalid"
+                    >
+                    {{ 'BUTTONS.VALIDATE' | translate }}
+                  </button>
+                }
+              </nb-card-footer>
+            </nb-card>
+          </ng-template>

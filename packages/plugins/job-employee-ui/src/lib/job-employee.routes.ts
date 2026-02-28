@@ -1,29 +1,37 @@
-import { Route } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
+import { PageRouteRegistryConfig, PermissionsGuard } from '@gauzy/ui-core/core';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
 
+/** Path for the job employee tab under /pages/jobs. */
+export const JOB_EMPLOYEE_PATH = 'employee';
+
+/** Full path for the job employee page. */
+export const JOB_EMPLOYEE_PAGE_LINK = `/pages/jobs/${JOB_EMPLOYEE_PATH}`;
+
+/** Route data selectors for the job employee page. */
+const JOB_EMPLOYEE_SELECTORS = {
+	date: true,
+	employee: true,
+	project: false,
+	team: false
+} as const;
+
 /**
- * Creates jobs employee routes for the application
- *
- * @param _pageRouteRegistryService An instance of PageRouteRegistryService
- * @returns An array of Route objects
+ * Route config for registering the job employee section at jobs-sections.
+ * Used by JobEmployeePlugin for declarative route registration.
  */
-export const createJobEmployeeRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Route[] => [
-	{
-		path: '',
-		component: JobEmployeeComponent,
-		canActivate: [PermissionsGuard],
-		data: {
-			// The tabset identifier for the route
-			tabsetId: 'job-employee',
-			// The data table identifier for the route
-			dataTableId: 'job-employee',
-			// The permission required to access the route
-			permissions: {
-				only: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW],
-				redirectTo: '/pages/jobs/search'
-			}
+export const JOB_EMPLOYEE_PAGE_ROUTE: PageRouteRegistryConfig = {
+	location: 'jobs-sections',
+	path: JOB_EMPLOYEE_PATH,
+	component: JobEmployeeComponent,
+	canActivate: [PermissionsGuard],
+	data: {
+		tabsetId: 'job-employee',
+		dataTableId: 'job-employee-page',
+		selectors: { ...JOB_EMPLOYEE_SELECTORS },
+		permissions: {
+			only: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW],
+			redirectTo: '/pages/jobs/search'
 		}
 	}
-];
+};

@@ -1,75 +1,74 @@
 <nb-card>
-	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label for="appliedDateInput" class="label">{{
-							'FORM.LABELS.APPLIED_DATE' | translate
-						}}</label>
-						<input
-							fullWidth
-							id="appliedDateInput"
-							formControlName="appliedDate"
-							nbInput
-							[nbDatepicker]="appliedDatePicker"
-							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-							autocomplete="off"
-						/>
-
-						<nb-datepicker #appliedDatePicker></nb-datepicker>
-					</div>
-				</div>
-				<div class="col">
-					<div class="form-group">
-						<label for="hiredDateInput" class="label">{{
-							'FORM.LABELS.HIRED_DATE' | translate
-						}}</label>
-						<input
-							fullWidth
-							id="hiredDateInput"
-							formControlName="hiredDate"
-							nbInput
-							[nbDatepicker]="hiredDatePicker"
-							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-							autocomplete="off"
-						/>
-						<nb-datepicker #hiredDatePicker></nb-datepicker>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label for="rejectDateInput" class="label">{{
-							'FORM.LABELS.REJECT_DATE' | translate
-						}}</label>
-						<input
-							fullWidth
-							id="rejectDateInput"
-							formControlName="rejectDate"
-							nbInput
-							[nbDatepicker]="rejectDatePicker"
-							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-							autocomplete="off"
-						/>
-						<nb-datepicker #rejectDatePicker></nb-datepicker>
-					</div>
-				</div>
-				<div class="col"></div>
-			</div>
-
-			<div class="actions">
-				<button
-					nbButton
-					status="success"
-					[disabled]="form.invalid"
-					(click)="submitForm()"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
-			</div>
-		</form>
-	</nb-card-body>
-</nb-card>
+  <nb-card-body>
+    @if (form) {
+      <form [formGroup]="form">
+        <div class="row">
+          <div class="col">
+            <div class="form-group">
+              <label for="appliedDateInput" class="label">{{
+                'FORM.LABELS.APPLIED_DATE' | translate
+              }}</label>
+              <input
+                fullWidth
+                id="appliedDateInput"
+                formControlName="appliedDate"
+                nbInput
+                [nbDatepicker]="appliedDatePicker"
+                placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+                autocomplete="off"
+                />
+                <nb-datepicker #appliedDatePicker></nb-datepicker>
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label for="hiredDateInput" class="label">{{
+                  'FORM.LABELS.HIRED_DATE' | translate
+                }}</label>
+                <input
+                  fullWidth
+                  id="hiredDateInput"
+                  formControlName="hiredDate"
+                  nbInput
+                  [nbDatepicker]="hiredDatePicker"
+                  placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+                  autocomplete="off"
+                  />
+                  <nb-datepicker #hiredDatePicker></nb-datepicker>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label for="rejectDateInput" class="label">{{
+                    'FORM.LABELS.REJECT_DATE' | translate
+                  }}</label>
+                  <input
+                    fullWidth
+                    id="rejectDateInput"
+                    formControlName="rejectDate"
+                    nbInput
+                    [nbDatepicker]="rejectDatePicker"
+                    placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+                    autocomplete="off"
+                    />
+                    <nb-datepicker #rejectDatePicker></nb-datepicker>
+                  </div>
+                </div>
+                <div class="col"></div>
+              </div>
+              <div class="actions">
+                <button
+                  nbButton
+                  status="success"
+                  [disabled]="form.invalid"
+                  (click)="submitForm()"
+                  >
+                  {{ 'BUTTONS.SAVE' | translate }}
+                </button>
+              </div>
+            </form>
+          }
+        </nb-card-body>
+      </nb-card>

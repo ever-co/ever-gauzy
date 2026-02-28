@@ -1,20 +1,28 @@
-<div *ngIf="project" class="project-render">
-	<img
-		*ngIf="project?.imageUrl"
-		src="{{ project.imageUrl }}"
-	/>
-	<span>
-		<div class="name">{{ project?.name }}</div>
-		<div class="member" *ngIf="project?.count">
-			Members count {{ project?.count }}
-		</div>
-	</span>
-</div>
-<div *ngIf="projects" class="project-render">
-	<ng-container *ngFor="let project of projects">
-		<img
-			*ngIf="project?.imageUrl"
-			src="{{ project.imageUrl }}"
-		/>
-	</ng-container>
-</div>
+@if (project) {
+  <div class="project-render">
+    @if (project?.imageUrl) {
+      <img
+        src="{{ project.imageUrl }}"
+        />
+    }
+    <span>
+      <div class="name">{{ project?.name }}</div>
+      @if (project?.count) {
+        <div class="member">
+          Members count {{ project?.count }}
+        </div>
+      }
+    </span>
+  </div>
+}
+@if (projects) {
+  <div class="project-render">
+    @for (project of projects; track project) {
+      @if (project?.imageUrl) {
+        <img
+          src="{{ project.imageUrl }}"
+          />
+      }
+    }
+  </div>
+}

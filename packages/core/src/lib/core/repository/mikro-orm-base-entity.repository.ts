@@ -1,6 +1,6 @@
 import { EntityManager, EntityRepository, AnyEntity } from '@mikro-orm/knex';
 
-export class MikroOrmBaseEntityRepository<T extends Object> extends EntityRepository<T> {
+export class MikroOrmBaseEntityRepository<T extends object> extends EntityRepository<T> {
 
 	/**
 	 * Persists the given entity or array of entities in the database.
@@ -21,7 +21,7 @@ export class MikroOrmBaseEntityRepository<T extends Object> extends EntityReposi
 	 * @param entity - The entity or array of entities to persist and flush.
 	 */
 	async persistAndFlush(entity: AnyEntity | AnyEntity[]): Promise<void> {
-		await this.em.persistAndFlush(entity);
+		await this.em.persist(entity).flush();
 	}
 
 	/**
@@ -44,7 +44,7 @@ export class MikroOrmBaseEntityRepository<T extends Object> extends EntityReposi
 	 * @param entity - The entity to remove and flush.
 	 */
 	async removeAndFlush(entity: AnyEntity): Promise<void> {
-		await this.em.removeAndFlush(entity);
+		await this.em.remove(entity).flush();
 	}
 
 	/**

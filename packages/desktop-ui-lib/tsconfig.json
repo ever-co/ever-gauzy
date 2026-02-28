@@ -1,6 +1,5 @@
 {
 	"compilerOptions": {
-		"baseUrl": ".",
 		"target": "es2022",
 		"useDefineForClassFields": false,
 		"forceConsistentCasingInFileNames": true,
@@ -9,11 +8,8 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
-		"paths": {
-			"@gauzy/ui-core/*": [
-				"./../../dist/packages/ui-core/*/index.d.ts"
-			]
-		}
+		"module": "preserve",
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],

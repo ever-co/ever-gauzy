@@ -1,5 +1,5 @@
 import * as multer from 'multer';
-import { join, resolve } from 'path';
+import { join, resolve } from 'node:path';
 import { FileStorageOption, UploadedFile } from '@gauzy/contracts';
 import { environment, getConfig } from '@gauzy/config';
 import { getApiPublicPath } from '../../util/path-util';

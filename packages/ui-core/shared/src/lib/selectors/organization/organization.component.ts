@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, distinctUntilChanged, filter, map, of, tap } from 'rxjs';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { uniq } from 'underscore';
 import { IOrganization, CrudActionEnum, PermissionsEnum, ID } from '@gauzy/contracts';

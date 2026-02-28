@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ quiet: true });
 
 import * as path from 'path';
 import { ApplicationPluginConfig } from '@gauzy/common';
@@ -65,8 +65,9 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
-		retryAttempts: 100,
-		retryDelay: 3000,
+		// Reduce connection retries to avoid long startup hangs in dev/local runs
+		retryAttempts: 5,
+		retryDelay: 1000,
 		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
 		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
 		...dbTypeOrmConnectionConfig
@@ -75,8 +76,8 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 		...dbMikroOrmConnectionConfig
 	},
 	dbKnexConnectionOptions: {
-		retryAttempts: 100, // Number of retry attempts in case of connection failures
-		retryDelay: 3000, // Delay between retry attempts in milliseconds
+		retryAttempts: 5, // Number of retry attempts in case of connection failures
+		retryDelay: 1000, // Delay between retry attempts in milliseconds
 		...dbKnexConnectionConfig
 	},
 	plugins: [],

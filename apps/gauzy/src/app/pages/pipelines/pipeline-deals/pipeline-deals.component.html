@@ -1,5 +1,6 @@
 <nb-card [nbSpinner]="loading" class="card-scroll" nbSpinnerSize="large" nbSpinnerStatus="primary">
-	<nb-card-header class="card-header-title" *ngIf="pipeline$ | async as pipeline">
+	<nb-card-header class="card-header-title">
+		@if (pipeline$ | async; as pipeline) {
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
@@ -14,6 +15,7 @@
 				[isDisable]="disableButton"
 			></ngx-gauzy-button-action>
 		</div>
+		}
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row btn-container mb-3">
@@ -26,17 +28,20 @@
 					<nb-option [value]="''" style="white-space: nowrap">
 						{{ 'PIPELINE_DEALS_PAGE.ALL_STAGES' | translate }}
 					</nb-option>
-					<nb-option *ngFor="let stage of pipeline?.stages" [value]="stage.id" style="white-space: nowrap">
+					@for (stage of pipeline?.stages; track stage) {
+					<nb-option [value]="stage.id" style="white-space: nowrap">
 						{{ stage.name }}
 					</nb-option>
+					}
 				</nb-select>
 			</div>
 		</div>
-		<ng-container *ngIf="deals$ | async as deals">
-			<ng-template
-				[ngTemplateOutlet]="dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout"
-			></ng-template>
-		</ng-container>
+		@if (deals$ | async; as deals) {
+		<ng-template
+			[ngTemplateOutlet]="dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout"
+			[ngTemplateOutletContext]="{ deals: deals }"
+		></ng-template>
+		}
 	</nb-card-body>
 </nb-card>
 
@@ -51,17 +56,17 @@
 		></angular2-smart-table>
 	</div>
 	<div class="pagination-container">
-		<ng-container *ngIf="smartTableSource">
-			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-		</ng-container>
+		@if (smartTableSource) {
+		<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+		}
 	</div>
 </ng-template>
 
-<ng-template #gridLayout>
+<ng-template #gridLayout let-deals="deals">
 	<div class="grid">
 		<ga-card-grid
 			(onSelectedItem)="selectPipelineDeals($event)"
-			(scroll)="onScroll()"
+			(scroll)="loadMoreDeals()"
 			[settings]="smartTableSettings"
 			[source]="deals"
 			[totalItems]="pagination?.totalItems"

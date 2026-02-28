@@ -82,8 +82,10 @@ ARG MCP_WS_ALLOWED_ORIGINS
 ARG MCP_WS_SESSION_ENABLED
 ARG MCP_WS_SESSION_COOKIE_NAME
 ARG MCP_WS_TRUSTED_PROXIES
+ARG NX_CLOUD_ACCESS_TOKEN
+ARG NX_BRANCH
 
-FROM node:24.12.0-alpine3.23 AS dependencies
+FROM node:24.14.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -133,8 +135,13 @@ COPY --chown=node:node tsconfig.base.json tsconfig.json ./
 COPY --chown=node:node nx.json lerna.json ./
 
 ARG NODE_OPTIONS
+ARG NX_CLOUD_ACCESS_TOKEN
+ARG NX_BRANCH
 
-ENV NX_NO_CLOUD=true
+# Enable NX Cloud caching for faster builds
+ENV NX_NO_CLOUD=false
+ENV NX_CLOUD_ACCESS_TOKEN=${NX_CLOUD_ACCESS_TOKEN}
+ENV NX_BRANCH=${NX_BRANCH}
 ENV CI=true
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
@@ -146,11 +153,11 @@ RUN rm -rf /srv/gauzy-mcp/dist
 RUN yarn build:mcp:prod
 
 # Only prod dependencies
-FROM node:24.12.0-alpine3.23 AS proddependencies
+FROM node:24.14.0-alpine3.23 AS proddependencies
 
 RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
     && npm install --quiet node-gyp@10.2.0 -g \
-	&& npm install yarn -g --force \
+    && npm install yarn -g --force \
     && npm install --quiet ts-node@10.9.2 -g
 
 USER node:node

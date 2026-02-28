@@ -1,4 +1,5 @@
 @use 'gauzy/_gauzy-cards' as *;
+@use './swiper' as swiper;
 
 :host {
   background-color: rgba(50, 50, 50, 0.02);
@@ -11,73 +12,10 @@
         }
       }
     }
-    .swiper {
-      width: 100%;
-      height: 100%;
-      padding-bottom: 1rem;
-    }
-
-    .swiper-slide {
-      text-align: center;
-      /* Center slide text vertically */
-      display: -webkit-box;
-      display: -ms-flexbox;
-      display: -webkit-flex;
-      display: flex;
-      -webkit-box-pack: center;
-      -ms-flex-pack: center;
-      -webkit-justify-content: center;
-      justify-content: center;
-      -webkit-box-align: center;
-      -ms-flex-align: center;
-      -webkit-align-items: center;
-      align-items: center;
-    }
-
-    .swiper-slide {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    .swiper-button-next,
-    .swiper-button-prev {
-      display: none;
-    }
-
-    .swiper-button {
-      padding: 2px 7.5px;
-      border: 2px solid var(--gauzy-background-transparent);
-      color: var(--text-primary-color);
-      border-radius: var(--button-rectangle-border-radius);
-      i {
-        font-weight: 900;
-      }
-      height: fit-content;
-    }
-
-    .swiper-button-container {
-      display: flex;
-      gap: 4px;
-    }
-
-    .swiper-button-next:after,
-    .swiper-button-prev:after {
-      font-size: 8px;
-      font-weight: 900;
-    }
-
-    .swiper-pagination-bullet-active {
-      background-color: var(--text-primary-color);
-    }
-
-    .swiper-horizontal > .swiper-pagination-bullets,
-    .swiper-pagination-bullets.swiper-pagination-horizontal,
-    .swiper-pagination-custom,
-    .swiper-pagination-fraction {
-      bottom: -2px;
-    }
   }
+
+  // Include Swiper styles from separate file (doesn't need ng-deep for Custom Elements in template)
+  @include swiper.swiper-styles();
 
   nb-card.member-list {
     nb-card-body {

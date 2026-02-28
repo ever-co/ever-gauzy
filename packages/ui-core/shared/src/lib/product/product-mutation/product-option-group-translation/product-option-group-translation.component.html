@@ -1,76 +1,89 @@
 <nb-card class="main">
-	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"
-			><i class="fas fa-times" (click)="dialogRef.close()"></i
-		></span>
-		<h5 class="title">
-			{{ 'INVENTORY_PAGE.OPTION_TRANSLATIONS' | translate }}
-		</h5>
-	</nb-card-header>
-	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
-			<!-- group title -->
-			<div class="row option-row">
-				<div class="col-md-3 col-sm-12" *ngFor="let ln of languages">
-					<div
-						(click)="setActiveGroupValueLngCode(ln.value)"
-						*ngIf="!isOptionGroupValueActive(ln.value)"
-						class="option-line"
-					>
-						<span class="language-span">{{ ln.value }}</span
-						>{{ getGroupTitleTranslation(ln.value) || '' }}
-					</div>
-					<div class="input-container" *ngIf="isOptionGroupValueActive(ln.value)">
-						<span class="language-label">{{ ln.value }}</span>
-						<input
-							fullWidth
-							id="groupNameInput_{{ln.value}}"
-							type="text"
-							nbInput
-							[formControlName]="ln.value"
-						/>
-					</div>
-				</div>
-			</div>
-			<div
-				class="row option-row"
-				*ngFor="let option of productOptionGroup.options"
-			>
-				<div class="col-md-3 col-sm-12" *ngFor="let ln of languages">
-					<div
-						*ngIf="!isOptionActive(option, ln.value)"
-						(click)="setActiveOptionLngCode(option, ln.value)"
-						class="option-line"
-					>
-						<span class="language-span">{{ ln.value }}</span
-						>{{ getOptionNameTranslation(option, ln.value) || '' }}
-					</div>
-					<div class="input-container" *ngIf="isOptionActive(option, ln.value)">
-						<span class="language-label">{{ ln.value }}</span>
-						<input
-							fullWidth
-							id="groupNameInput_{{ln.value}}"
-							type="text"
-							nbInput
-							[formControlName]="ln.value"
-						/>
-					</div>
-				</div>
-			</div>
-		</form>
-	</nb-card-body>
-	<nb-card-footer class="text-left">
-		<button
-			(click)="dialogRef.close()"
-			status="basic"
-			outline
-			class="mr-2"
-			nbButton
-		>
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button status="success" nbButton (click)="onSaveRequest()">
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</nb-card-footer>
-</nb-card>
+  <nb-card-header class="d-flex flex-column">
+    <span class="cancel"
+      ><i class="fas fa-times" (click)="dialogRef.close()"></i
+    ></span>
+    <h5 class="title">
+      {{ 'INVENTORY_PAGE.OPTION_TRANSLATIONS' | translate }}
+    </h5>
+  </nb-card-header>
+  <nb-card-body>
+    @if (form) {
+      <form [formGroup]="form">
+        <!-- group title -->
+        <div class="row option-row">
+          @for (ln of languages; track ln) {
+            <div class="col-md-3 col-sm-12">
+              @if (!isOptionGroupValueActive(ln.value)) {
+                <div
+                  (click)="setActiveGroupValueLngCode(ln.value)"
+                  class="option-line"
+                  >
+                  <span class="language-span">{{ ln.value }}</span
+                    >{{ getGroupTitleTranslation(ln.value) || '' }}
+                  </div>
+                }
+                @if (isOptionGroupValueActive(ln.value)) {
+                  <div class="input-container">
+                    <span class="language-label">{{ ln.value }}</span>
+                    <input
+                      fullWidth
+                      id="groupNameInput_{{ln.value}}"
+                      type="text"
+                      nbInput
+                      [formControlName]="ln.value"
+                      />
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+            @for (option of productOptionGroup.options; track option) {
+              <div
+                class="row option-row"
+                >
+                @for (ln of languages; track ln) {
+                  <div class="col-md-3 col-sm-12">
+                    @if (!isOptionActive(option, ln.value)) {
+                      <div
+                        (click)="setActiveOptionLngCode(option, ln.value)"
+                        class="option-line"
+                        >
+                        <span class="language-span">{{ ln.value }}</span
+                          >{{ getOptionNameTranslation(option, ln.value) || '' }}
+                        </div>
+                      }
+                      @if (isOptionActive(option, ln.value)) {
+                        <div class="input-container">
+                          <span class="language-label">{{ ln.value }}</span>
+                          <input
+                            fullWidth
+                            id="groupNameInput_{{ln.value}}"
+                            type="text"
+                            nbInput
+                            [formControlName]="ln.value"
+                            />
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </form>
+            }
+          </nb-card-body>
+          <nb-card-footer class="text-left">
+            <button
+              (click)="dialogRef.close()"
+              status="basic"
+              outline
+              class="mr-2"
+              nbButton
+              >
+              {{ 'BUTTONS.CANCEL' | translate }}
+            </button>
+            <button status="success" nbButton (click)="onSaveRequest()">
+              {{ 'BUTTONS.SAVE' | translate }}
+            </button>
+          </nb-card-footer>
+        </nb-card>

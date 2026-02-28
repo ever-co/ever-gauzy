@@ -4,19 +4,19 @@ import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ISelectedEmployee, PermissionsEnum } from '@gauzy/contracts';
-import { PageTabRegistryService, Store, PageTabsetRegistryId } from '@gauzy/ui-core/core';
+import { PageTabRegistryService, Store, PageTabsetPageId } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DynamicTabsComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy()
 @Component({
-    selector: 'ga-dashboard-layout',
-    templateUrl: './dashboard.component.html',
-    styleUrls: ['./dashboard.component.scss'],
-    standalone: false
+	selector: 'ga-dashboard-layout',
+	templateUrl: './dashboard.component.html',
+	styleUrls: ['./dashboard.component.scss'],
+	standalone: false
 })
 export class DashboardComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	public selectedEmployee: ISelectedEmployee;
 
 	@ViewChild('dynamicTabs', { static: true }) dynamicTabsComponent!: DynamicTabsComponent;
@@ -102,8 +102,8 @@ export class DashboardComponent extends TranslationBaseComponent implements OnIn
 	 */
 	registerAccountingTabs(): void {
 		// Remove the specified page tabs for the current tenant
-		this._pageTabRegistryService.removePageTab('dashboard', 'accounting');
-		this._pageTabRegistryService.removePageTab('dashboard', 'hr');
+		this._pageTabRegistryService.removePageTab(this.tabsetId, 'accounting');
+		this._pageTabRegistryService.removePageTab(this.tabsetId, 'hr');
 
 		// Check if the user has permission to view accounting
 		if (!this.selectedEmployee || !this.selectedEmployee.id) {

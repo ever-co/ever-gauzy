@@ -1,58 +1,64 @@
 <div>
-	<ng-container *ngIf="label">
-		<label class="label" for="addTags">
-			{{ 'TAGS_PAGE.HEADER' | translate }}
-		</label>
-	</ng-container>
-	<ng-select
-		id="addTags"
-		[items]="tags"
-		[multiple]="multiple"
-		bindLabel="name"
-		appendTo="body"
-		[loading]="loading"
-		[addTag]="(hasAddTag$ | async) && addTag ? createNewTag : null"
-		(change)="selectedTagsEvent.emit(selectedTags)"
-		[(ngModel)]="selectedTags"
-		[closeOnSelect]="false"
-		[placeholder]="'MENU.TAGS' | translate"
-	>
-		<ng-template ng-option-tmp let-tag="item" let-tag$="item$">
-			<div class="d-flex align-items-center">
-				<ng-container *ngIf="multiple">
-					<input type="checkbox" [ngModel]="tag$.selected" />
-				</ng-container>
-				<nb-badge
-					[style.background]="background(tag.color)"
-					class="tag-color"
-				></nb-badge>
-				<span class="text">{{ tag.name }}</span>
-			</div>
-		</ng-template>
-		<ng-template ng-multi-label-tmp let-tags="selectedTags" let-clear="clear">
-			<ng-container *ngIf="!!noOfTagsFits; else notOverflown">
-				<div class="ng-value" *ngFor="
-								let item of selectedTags
-									| slice : 0 : noOfTagsFits || selectedTags.length
-							">
-					<nb-badge class="tag-color tag-label" [style.background]="background(item.color)"
-						[style.color]="backgroundContrast(item.color)" [text]="item.name" (click)="clear(item)"></nb-badge>
-				</div>
-				<div class="ng-value" *ngIf="selectedTags && selectedTags.length > noOfTagsFits">
-					<span class="ng-value-label">...</span>
-				</div>
-			</ng-container>
+  @if (label) {
+    <label class="label" for="addTags">
+      {{ 'TAGS_PAGE.HEADER' | translate }}
+    </label>
+  }
+  <ng-select
+    id="addTags"
+    [items]="tags"
+    [multiple]="multiple"
+    bindLabel="name"
+    appendTo="body"
+    [loading]="loading"
+    [addTag]="(hasAddTag$ | async) && addTag ? createNewTag : null"
+    (change)="selectedTagsEvent.emit(selectedTags)"
+    [(ngModel)]="selectedTags"
+    [closeOnSelect]="false"
+    [placeholder]="'MENU.TAGS' | translate"
+    >
+    <ng-template ng-option-tmp let-tag="item" let-tag$="item$">
+      <div class="d-flex align-items-center">
+        @if (multiple) {
+          <input type="checkbox" [ngModel]="tag$.selected" />
+        }
+        <nb-badge
+          [style.background]="background(tag.color)"
+          class="tag-color"
+        ></nb-badge>
+        <span class="text">{{ tag.name }}</span>
+      </div>
+    </ng-template>
+    <ng-template ng-multi-label-tmp let-tags="selectedTags" let-clear="clear">
+      @if (!!noOfTagsFits) {
+        @for (
+          item of selectedTags
+          | slice : 0 : noOfTagsFits || selectedTags.length
+          ; track
+          item) {
+          <div class="ng-value">
+            <nb-badge class="tag-color tag-label" [style.background]="background(item.color)"
+            [style.color]="backgroundContrast(item.color)" [text]="item.name" (click)="clear(item)"></nb-badge>
+          </div>
+        }
+        @if (selectedTags && selectedTags.length > noOfTagsFits) {
+          <div class="ng-value">
+            <span class="ng-value-label">...</span>
+          </div>
+        }
+      } @else {
+        @for (item of selectedTags; track item) {
+          <div class="ng-value">
+            <nb-badge class="tag-color tag-label"
+              [style.background]="background(item.color)"
+              [style.color]="backgroundContrast(item.color)"
+              [text]="item.name"
+              (click)="clear(item)"
+            ></nb-badge>
+          </div>
+        }
+      }
 
-			<ng-template #notOverflown>
-				<div class="ng-value" *ngFor="let item of selectedTags">
-					<nb-badge class="tag-color tag-label"
-						[style.background]="background(item.color)"
-						[style.color]="backgroundContrast(item.color)"
-						[text]="item.name"
-						(click)="clear(item)"
-					></nb-badge>
-				</div>
-			</ng-template>
-		</ng-template>
-	</ng-select>
+    </ng-template>
+  </ng-select>
 </div>

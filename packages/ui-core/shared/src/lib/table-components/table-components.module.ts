@@ -7,7 +7,6 @@ import { ComponentsModule } from '../components/components.module';
 import { PipesModule } from '../pipes/pipes.module';
 import {
 	EmployeeLinkEditorComponent,
-	JobSearchAvailabilityEditorComponent,
 	NonEditableNumberEditorComponent,
 	NumberEditorComponent
 } from './editors';
@@ -110,8 +109,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		TrustHtmlLinkComponent,
 		ValueWithUnitComponent,
 		VisibilityComponent,
-		NonEditableNumberEditorComponent,
-		JobSearchAvailabilityEditorComponent
+		NonEditableNumberEditorComponent
 	],
 	exports: [
 		AllowScreenshotCaptureComponent,
@@ -136,7 +134,6 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		InvoiceTotalValueComponent,
 		NotesWithTagsComponent,
 		NumberEditorComponent,
-		JobSearchAvailabilityEditorComponent,
 		NonEditableNumberEditorComponent,
 		OrganizationWithTagsComponent,
 		PhoneUrlComponent,

@@ -1,7 +1,9 @@
 <nb-card>
-	<nb-card-header *ngIf="showHeader">
-		<ng-container *ngTemplateOutlet="headerTemplate"></ng-container>
-	</nb-card-header>
+	@if (showHeader) {
+		<nb-card-header>
+			<ng-container [ngTemplateOutlet]="headerTemplate"></ng-container>
+		</nb-card-header>
+	}
 	<nb-card-body>
 		<div class="calendar-container">
 			<full-calendar #calendar [options]="calendarOptions"></full-calendar>

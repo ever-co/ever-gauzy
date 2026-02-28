@@ -1,23 +1,15 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"
-			><i class="fas fa-times" (click)="dialogRef.close()"s></i
-		></span>
+		<span class="cancel"><i class="fas fa-times" (click)="dialogRef.close()" s></i></span>
 		<h5 class="title">
 			{{
-				(productCategory
-					? 'INVENTORY_PAGE.EDIT_PRODUCT_CATEGORY'
-					: 'INVENTORY_PAGE.ADD_PRODUCT_CATEGORY'
-				) | translate
+				(productCategory ? 'INVENTORY_PAGE.EDIT_PRODUCT_CATEGORY' : 'INVENTORY_PAGE.ADD_PRODUCT_CATEGORY')
+					| translate
 			}}
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
-		<form
-			[formGroup]="form"
-			#productCategoryForm="ngForm"
-			(ngSubmit)="onSubmit()"
-		>
+		<form [formGroup]="form" #productCategoryForm="ngForm" (ngSubmit)="onSubmit()">
 			<div class="row mb-2">
 				<div class="col-md-4">
 					<div class="category-img">
@@ -33,7 +25,7 @@
 							width="68"
 							height="68"
 							viewBox="0 0 68 68"
-							[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+							[style.opacity]="hoverState ? '1' : '0.3'"
 						>
 							<defs>
 								<path
@@ -42,40 +34,21 @@
 								/>
 							</defs>
 							<g fill="none" fill-rule="evenodd">
-								<circle
-									cx="34"
-									cy="34"
-									r="34"
-									fill="#0091FF"
-									opacity=".3"
-								/>
-								<circle
-									cx="34"
-									cy="34"
-									r="26"
-									fill="#0091FF"
-									opacity=".9"
-								/>
-								<use
-									fill="#FFF"
-									fill-rule="nonzero"
-									xlink:href="#a"
-								/>
+								<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+								<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
+								<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 							</g>
 						</svg>
-						<div
-							class="image-overlay"
-							[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
-						></div>
-						<ng-template [ngIf]="form.get('imageUrl').value">
-							<img
-								[src]="form.get('imageUrl').value"
-								alt="Category Image"
-								class="uploadimage"
-								(mouseenter)="hoverState = true"
-								(mouseleave)="hoverState = false"
-							/>
-						</ng-template>
+						<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
+						@if (form.get('imageUrl').value) {
+						<img
+							[src]="form.get('imageUrl').value"
+							alt="Category Image"
+							class="uploadimage"
+							(mouseenter)="hoverState = true"
+							(mouseleave)="hoverState = false"
+						/>
+						}
 					</div>
 				</div>
 				<div class="col-sm-8 mb-2 pr-4 col-left">
@@ -84,9 +57,7 @@
 							{{ 'INVENTORY_PAGE.LANGUAGE' | translate }}
 						</label>
 						<ngx-language-selector
-							[placeholder]="
-								'INVENTORY_PAGE.LANGUAGE' | translate
-							"
+							[placeholder]="'INVENTORY_PAGE.LANGUAGE' | translate"
 							class="d-block"
 							size="medium"
 							[template]="'ng-select'"
@@ -111,9 +82,7 @@
 			</div>
 			<div class="row">
 				<div class="col-sm-12">
-					<label class="label" for="description">{{
-						'INVENTORY_PAGE.DESCRIPTION' | translate
-					}}</label>
+					<label class="label" for="description">{{ 'INVENTORY_PAGE.DESCRIPTION' | translate }}</label>
 					<textarea
 						fullWidth
 						id="description"
@@ -126,21 +95,10 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button
-			(click)="dialogRef.close()"
-			status="basic"
-			class="mr-2"
-			outline
-			nbButton
-		>
+		<button (click)="dialogRef.close()" status="basic" class="mr-2" outline nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button
-			[disabled]="form.invalid"
-			(click)="productCategoryForm.ngSubmit.emit()"
-			status="success"
-			nbButton
-		>
+		<button [disabled]="form.invalid" (click)="productCategoryForm.ngSubmit.emit()" status="success" nbButton>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

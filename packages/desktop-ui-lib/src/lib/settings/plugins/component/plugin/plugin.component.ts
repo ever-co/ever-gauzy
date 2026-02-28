@@ -6,12 +6,13 @@ import { concatMap, from } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginLoaderService } from '../../services/plugin-loader.service';
 
+
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ngx-plugin',
     templateUrl: './plugin.component.html',
     styleUrls: ['./plugin.component.scss'],
-    standalone: false
+    imports: [DynamicDirective]
 })
 export class PluginComponent implements AfterViewInit {
 	private readonly loaderService = inject(PluginLoaderService);

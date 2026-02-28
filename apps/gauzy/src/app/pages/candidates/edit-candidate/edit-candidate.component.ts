@@ -30,7 +30,7 @@ export class EditCandidateComponent extends TranslationBaseComponent implements 
 		private candidatesService: CandidatesService,
 		private route: ActivatedRoute,
 		readonly translateService: TranslateService,
-		private dialogService: NbDialogService
+		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
 	}

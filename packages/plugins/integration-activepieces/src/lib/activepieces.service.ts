@@ -4,6 +4,7 @@ import {
 	Logger,
 	HttpException,
 	HttpStatus,
+	NotFoundException,
 	UnauthorizedException,
 	InternalServerErrorException
 } from '@nestjs/common';
@@ -13,7 +14,6 @@ import { firstValueFrom, catchError, throwError } from 'rxjs';
 import { AxiosError } from 'axios';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
-import { IActivepiecesConfig } from '@gauzy/common';
 import {
 	IActivepiecesConnection,
 	IActivepiecesConnectionRequest,
@@ -39,6 +39,133 @@ export class ActivepiecesService {
 	) {}
 
 	/**
+	 * Set up the ActivePieces integration by saving the API key.
+	 * Finds or creates the ACTIVE_PIECES integration record and creates an integration tenant
+	 * with API_KEY and IS_ENABLED settings.
+	 */
+	async setupIntegration(apiKey: string, organizationId?: string): Promise<{ integrationTenantId: string }> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
+			// Find or create the integration
+			let integration: any = null;
+			try {
+				integration = await this.integrationService.findOneByOptions({
+					where: { provider: IntegrationEnum.ACTIVE_PIECES }
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
+
+			if (!integration) {
+				integration = await this.integrationService.create({
+					provider: IntegrationEnum.ACTIVE_PIECES,
+					name: IntegrationEnum.ACTIVE_PIECES
+				});
+			}
+
+			// Define the settings to save
+			const settings = [
+				{
+					settingsName: ActivepiecesSettingName.API_KEY,
+					settingsValue: apiKey,
+					tenantId,
+					organizationId
+				},
+				{
+					settingsName: ActivepiecesSettingName.IS_ENABLED,
+					settingsValue: JSON.stringify(true),
+					tenantId,
+					organizationId
+				}
+			];
+
+			// Look up an existing integration tenant for this tenant/org
+			let existingTenant: any = null;
+			try {
+				existingTenant = await this.integrationTenantService.findOneByOptions({
+					where: {
+						tenantId,
+						...(organizationId ? { organizationId } : {}),
+						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+					},
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
+
+			let integrationTenantId: string;
+
+			if (existingTenant?.id) {
+				// Update existing tenant's settings by merging/replacing API_KEY and IS_ENABLED
+				const existingSettings: any[] = existingTenant.settings ?? [];
+				const settingsByName = new Map(settings.map((s) => [s.settingsName, s]));
+
+				// Update existing rows in-place (preserve their database id) and track which were updated
+				const updatedNames = new Set<string>();
+				const mergedSettings = existingSettings.map((existing: any) => {
+					const update = settingsByName.get(existing.settingsName);
+					if (update) {
+						updatedNames.add(existing.settingsName);
+						return { ...existing, settingsValue: update.settingsValue };
+					}
+					return existing;
+				});
+
+				// Append truly new settings that had no pre-existing row
+				for (const [name, setting] of settingsByName) {
+					if (!updatedNames.has(name)) {
+						mergedSettings.push(setting);
+					}
+				}
+
+				await this.integrationTenantService.save({
+					...existingTenant,
+					settings: mergedSettings
+				});
+
+				integrationTenantId = existingTenant.id;
+			} else {
+				// Create a new integration tenant
+				const integrationTenant = await this.integrationTenantService.create({
+					name: IntegrationEnum.ACTIVE_PIECES,
+					integration,
+					tenantId,
+					organizationId,
+					settings
+				});
+
+				if (!integrationTenant.id) {
+					throw new BadRequestException('Failed to create integration tenant: missing ID');
+				}
+
+				integrationTenantId = integrationTenant.id;
+			}
+
+			this.logger.log(
+				`Successfully set up ActivePieces integration for tenant ${tenantId}. ` +
+					`Integration tenant ID: ${integrationTenantId}`
+			);
+
+			return { integrationTenantId };
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			this.logger.error('Failed to set up ActivePieces integration:', error);
+			throw new InternalServerErrorException('Failed to set up ActivePieces integration');
+		}
+	}
+
+	/**
 	 * Create or update ActivePieces connection for the tenant (using upsert endpoint)
 	 */
 	async upsertConnection(input: ICreateActivepiecesIntegrationInput): Promise<IActivepiecesConnection> {
@@ -50,21 +177,13 @@ export class ActivepiecesService {
 				throw new BadRequestException('Tenant ID not found in request context');
 			}
 
-			// Get ActivePieces OAuth credentials from configuration
-			const clientId = this.configService.get('activepieces')?.clientId;
-			const clientSecret = this.configService.get('activepieces')?.clientSecret;
-
-			if (!clientId || !clientSecret) {
-				throw new BadRequestException('ActivePieces OAuth credentials are not configured');
-			}
-
 			// Create external ID for the connection (unique identifier for this tenant)
 			const externalId = `gauzy-tenant-${tenantId}${organizationId ? `-org-${organizationId}` : ''}`;
 
 			// Create display name for the connection
 			const displayName = input.connectionName || `Ever Gauzy - ${tenantId}`;
 
-			// Prepare the connection request for ActivePieces (upsert format)
+			// Prepare the connection request for ActivePieces (upsert format with SECRET_TEXT)
 			const connectionRequest: IActivepiecesConnectionRequest = {
 				externalId,
 				displayName,
@@ -76,25 +195,43 @@ export class ActivepiecesService {
 					createdAt: new Date().toISOString(),
 					gauzyVersion: '1.0.0'
 				},
-				type: ActivepiecesConnectionType.OAUTH2,
+				type: ActivepiecesConnectionType.SECRET_TEXT,
 				value: {
-					type: ActivepiecesConnectionType.OAUTH2,
-					client_id: clientId,
-					client_secret: clientSecret,
-					data: {
-						tenantId,
-						organizationId: organizationId || 'default',
-						accessToken: input.accessToken
-					}
+					type: ActivepiecesConnectionType.SECRET_TEXT,
+					secret_text: input.accessToken
 				}
 			};
+
+			// Get API key for Activepieces API calls
+			let existingIntegrationTenant: any = null;
+			try {
+				existingIntegrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: {
+						tenantId,
+						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+					}
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
+
+			if (!existingIntegrationTenant) {
+				this.logger.warn(
+					`No integration tenant found for tenant ${tenantId}. ` +
+						'setupIntegration was likely not run; falling back to global GAUZY_ACTIVEPIECES_API_KEY env variable.'
+				);
+			}
+
+			const apiKey = await this.getApiKey(existingIntegrationTenant?.id);
 
 			// Make the API call to create the connection
 			const response = await firstValueFrom(
 				this.httpService
 					.post<IActivepiecesConnection>(ACTIVEPIECES_CONNECTIONS_URL, connectionRequest, {
 						headers: {
-							Authorization: `Bearer ${input.accessToken}`,
+							Authorization: `Bearer ${apiKey}`,
 							'Content-Type': 'application/json'
 						}
 					})
@@ -166,7 +303,7 @@ export class ActivepiecesService {
 			if (!integrationId) {
 				throw new BadRequestException('Integration ID is required to list connections');
 			}
-			const accessToken = await this.getValidAccessToken(integrationId);
+			const apiKey = await this.getApiKey(integrationId);
 
 			// Build query parameters
 			const queryParams = new URLSearchParams();
@@ -185,7 +322,7 @@ export class ActivepiecesService {
 						`${ACTIVEPIECES_CONNECTIONS_URL}?${queryParams.toString()}`,
 						{
 							headers: {
-								Authorization: `Bearer ${accessToken}`,
+								Authorization: `Bearer ${apiKey}`,
 								'Content-Type': 'application/json'
 							}
 						}
@@ -248,10 +385,21 @@ export class ActivepiecesService {
 		try {
 			// Get integration tenant with settings
 			const tenantId = RequestContext.currentTenantId();
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId: tenantId || undefined },
-				relations: ['settings']
-			});
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
+			let integrationTenant: any = null;
+			try {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: { id: integrationTenantId, tenantId },
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integrationTenant) {
 				return null;
@@ -266,7 +414,7 @@ export class ActivepiecesService {
 				return null;
 			}
 
-			const accessToken = await this.getValidAccessToken(integrationTenantId);
+			const apiKey = await this.getApiKey(integrationTenantId);
 
 			const response = await firstValueFrom(
 				this.httpService
@@ -274,7 +422,7 @@ export class ActivepiecesService {
 						`${ACTIVEPIECES_CONNECTIONS_URL}/${connectionIdSetting.settingsValue}`,
 						{
 							headers: {
-								Authorization: `Bearer ${accessToken}`,
+								Authorization: `Bearer ${apiKey}`,
 								'Content-Type': 'application/json'
 							}
 						}
@@ -307,10 +455,21 @@ export class ActivepiecesService {
 		try {
 			// Get integration tenant with settings
 			const tenantId = RequestContext.currentTenantId();
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId: tenantId || undefined },
-				relations: ['settings']
-			});
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
+			let integrationTenant: any = null;
+			try {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: { id: integrationTenantId, tenantId },
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integrationTenant) {
 				this.logger.warn(`Integration tenant not found: ${integrationTenantId}`);
@@ -327,13 +486,13 @@ export class ActivepiecesService {
 				return false;
 			}
 
-			const accessToken = await this.getValidAccessToken(integrationTenantId);
+			const apiKey = await this.getApiKey(integrationTenantId);
 
 			await firstValueFrom(
 				this.httpService
 					.delete(`${ACTIVEPIECES_CONNECTIONS_URL}/${connectionIdSetting.settingsValue}`, {
 						headers: {
-							Authorization: `Bearer ${accessToken}`,
+							Authorization: `Bearer ${apiKey}`,
 							'Content-Type': 'application/json'
 						}
 					})
@@ -360,53 +519,55 @@ export class ActivepiecesService {
 	}
 
 	/**
-	 * Get valid access token for API calls
+	 * Get API key for Activepieces API calls.
+	 * Looks for a tenant-specific API key in the database first, then falls back to global config.
 	 * @param integrationTenantId - The integration tenant ID (not the base integration ID)
 	 */
-	async getValidAccessToken(integrationTenantId: string): Promise<string> {
+	async getApiKey(integrationTenantId?: string): Promise<string> {
 		try {
-			this.logger.debug(`Looking for access token for integration tenant: ${integrationTenantId}`);
+			// 1. Try tenant-specific API key from database
+			if (integrationTenantId) {
+				const tenantId = RequestContext.currentTenantId();
+				if (!tenantId) {
+					throw new BadRequestException('Tenant ID not found in request context');
+				}
 
-			// First, try to find the integration tenant to get its settings
-			const tenantId = RequestContext.currentTenantId();
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId: tenantId || undefined },
-				relations: ['settings']
-			});
+				let integrationTenant: any = null;
+				try {
+					integrationTenant = await this.integrationTenantService.findOneByOptions({
+						where: { id: integrationTenantId, tenantId },
+						relations: ['settings']
+					});
+				} catch (error) {
+					if (!(error instanceof NotFoundException)) {
+						throw error;
+					}
+				}
 
-			if (!integrationTenant) {
-				this.logger.error(`Integration tenant not found: ${integrationTenantId}`);
-				throw new BadRequestException('Integration tenant not found');
+				const apiKeySetting = integrationTenant?.settings?.find(
+					(s: any) => s.settingsName === ActivepiecesSettingName.API_KEY
+				);
+
+				if (apiKeySetting?.settingsValue) {
+					return apiKeySetting.settingsValue;
+				}
 			}
 
-			this.logger.debug(`Integration tenant found. Settings count: ${integrationTenant.settings?.length || 0}`);
-
-			// Log settings summary (only in non-production debug mode)
-			if (integrationTenant.settings && process.env['NODE_ENV'] !== 'production') {
-				// Only log setting keys (names), never values, to prevent accidental exposure
-				const settingKeys = integrationTenant.settings.map((s: any) => s.settingsName).join(', ');
-				this.logger.debug(`Available setting keys: ${settingKeys}`);
+			// 2. Fallback to global config
+			const globalApiKey = this.configService.get('activepieces')?.apiKey;
+			if (globalApiKey) {
+				return globalApiKey;
 			}
 
-			// Find the access token setting
-			const accessTokenSetting = integrationTenant.settings?.find(
-				(s: any) => s.settingsName === ActivepiecesSettingName.ACCESS_TOKEN
+			throw new InternalServerErrorException(
+				'Activepieces API key is not configured. Set GAUZY_ACTIVEPIECES_API_KEY or run setupIntegration first.'
 			);
-
-			if (!accessTokenSetting?.settingsValue) {
-				this.logger.error('Access token setting not found or empty');
-				throw new BadRequestException('Access token not found for this integration');
-			}
-
-			this.logger.debug('Access token found successfully');
-			return accessTokenSetting.settingsValue;
 		} catch (error: any) {
-			this.logger.error('Failed to get valid access token:', error);
 			if (error instanceof HttpException) {
 				throw error;
 			}
 			throw new HttpException(
-				`Failed to get valid access token: ${error.message}`,
+				`Failed to get Activepieces API key: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
@@ -419,10 +580,21 @@ export class ActivepiecesService {
 		try {
 			// Get integration tenant with settings
 			const tenantId = RequestContext.currentTenantId();
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId: tenantId || undefined },
-				relations: ['settings']
-			});
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
+			let integrationTenant: any = null;
+			try {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: { id: integrationTenantId, tenantId },
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integrationTenant) {
 				return [];
@@ -456,10 +628,21 @@ export class ActivepiecesService {
 		try {
 			// Get integration tenant with settings
 			const tenantId = RequestContext.currentTenantId();
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenantId, tenantId: tenantId || undefined },
-				relations: ['settings']
-			});
+			if (!tenantId) {
+				throw new BadRequestException('Tenant ID not found in request context');
+			}
+
+			let integrationTenant: any = null;
+			try {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: { id: integrationTenantId, tenantId },
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integrationTenant) {
 				return false;
@@ -509,200 +692,6 @@ export class ActivepiecesService {
 	}
 
 	/**
-	 * Get configuration for a specific tenant and organization
-	 * Falls back to global configuration if tenant-specific config is not found
-	 */
-	async getConfig(tenantId: string, organizationId?: string): Promise<IActivepiecesConfig> {
-		try {
-			// Try to get tenant-specific configuration from integration_settings
-			try {
-				const integrationTenant = await this.integrationTenantService.findOneByOptions({
-					where: {
-						tenantId,
-						...(organizationId && { organizationId }),
-						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-					},
-					relations: ['settings', 'integration']
-				});
-
-				if (integrationTenant?.settings) {
-					const clientId = integrationTenant.settings.find(
-						(s) => s.settingsName === ActivepiecesSettingName.CLIENT_ID
-					)?.settingsValue;
-					const clientSecret = integrationTenant.settings.find(
-						(s) => s.settingsName === ActivepiecesSettingName.CLIENT_SECRET
-					)?.settingsValue;
-					const callbackUrl = integrationTenant.settings.find(
-						(s) => s.settingsName === ActivepiecesSettingName.CALLBACK_URL
-					)?.settingsValue;
-					const postInstallUrl = integrationTenant.settings.find(
-						(s) => s.settingsName === ActivepiecesSettingName.POST_INSTALL_URL
-					)?.settingsValue;
-					const stateSecret = integrationTenant.settings.find(
-						(s) => s.settingsName === ActivepiecesSettingName.STATE_SECRET
-					)?.settingsValue;
-
-					if (clientId && clientSecret) {
-						return {
-							clientId,
-							clientSecret,
-							callbackUrl: callbackUrl || this.getDefaultCallbackUrl(),
-							postInstallUrl: postInstallUrl || this.getDefaultPostInstallUrl(),
-							stateSecret: stateSecret || this.getDefaultStateSecret()
-						};
-					}
-				}
-			} catch (findError) {
-				// Log and continue to fallback - tenant-specific config not found
-				this.logger.debug(
-					`Tenant-specific config not found for tenant ${tenantId}, falling back to global config`
-				);
-			}
-
-			// Fallback to global configuration
-			const globalConfig = this.configService.get('activepieces');
-			if (!globalConfig?.clientId || !globalConfig?.clientSecret) {
-				throw new BadRequestException(
-					'ActivePieces integration not configured(missing clientId or clientSecret)'
-				);
-			}
-
-			return {
-				clientId: globalConfig.clientId,
-				clientSecret: globalConfig.clientSecret,
-				callbackUrl: globalConfig.callbackUrl || this.getDefaultCallbackUrl(),
-				postInstallUrl: globalConfig.postInstallUrl || this.getDefaultPostInstallUrl(),
-				stateSecret: globalConfig.stateSecret || this.getDefaultStateSecret()
-			};
-		} catch (error: any) {
-			this.logger.error('Failed to get ActivePieces configuration', error);
-			throw error;
-		}
-	}
-
-	/**
-	 * Check if tenant has specific OAuth configuration
-	 */
-	async hasTenantConfig(tenantId: string, organizationId?: string): Promise<boolean> {
-		try {
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					tenantId,
-					...(organizationId && { organizationId }),
-					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-				},
-				relations: ['settings', 'integration']
-			});
-
-			if (!integrationTenant?.settings) {
-				return false;
-			}
-
-			const hasClientId = integrationTenant.settings.some((s) => s.settingsName === ActivepiecesSettingName.CLIENT_ID);
-			const hasClientSecret = integrationTenant.settings.some((s) => s.settingsName === ActivepiecesSettingName.CLIENT_SECRET);
-
-			return hasClientId && hasClientSecret;
-		} catch (error) {
-			this.logger.error('Failed to check if tenant has specific OAuth configuration:', error);
-			return false;
-		}
-	}
-
-	/**
-	 * Save OAuth settings for a tenant/organization
-	 */
-	async saveOAuthSettings(
-		clientId: string,
-		clientSecret: string,
-		tenantId: string,
-		organizationId?: string
-	): Promise<any> {
-		try {
-			// Find or create the integration
-			let integration = await this.integrationService.findOneByOptions({
-				where: { provider: IntegrationEnum.ACTIVE_PIECES }
-			});
-
-			if (!integration) {
-				integration = await this.integrationService.create({
-					provider: IntegrationEnum.ACTIVE_PIECES,
-					name: IntegrationEnum.ACTIVE_PIECES
-				});
-			}
-
-			// Define the settings to save
-			const settings = [
-				{
-					settingsName: 'client_id',
-					settingsValue: clientId,
-					tenantId,
-					organizationId
-				},
-				{
-					settingsName: 'client_secret',
-					settingsValue: clientSecret,
-					tenantId,
-					organizationId
-				}
-			];
-
-			// Create or update integration tenant
-			const integrationTenant = await this.integrationTenantService.create({
-				name: IntegrationEnum.ACTIVE_PIECES,
-				integration,
-				tenantId,
-				organizationId,
-				settings
-			});
-
-			this.logger.log(
-				`Successfully saved ActivePieces OAuth settings for tenant ${tenantId}. ` +
-					`Integration tenant ID: ${integrationTenant.id}`
-			);
-
-			return integrationTenant;
-		} catch (error: any) {
-			this.logger.error('Failed to save ActivePieces OAuth settings:', error);
-			throw new BadRequestException(`Failed to save OAuth settings: ${error.message}`);
-		}
-	}
-
-	/**
-	 * Get default callback URL from global configuration
-	 */
-	private getDefaultCallbackUrl(): string {
-		const globalConfig = this.configService.get('activepieces');
-		const apiBaseUrl = this.configService.get('baseUrl') ?? process.env['API_BASE_URL'];
-		if (!apiBaseUrl) {
-			throw new BadRequestException('API base URL not found');
-		}
-		return globalConfig?.callbackUrl || `${apiBaseUrl}/api/integration/activepieces/callback`;
-	}
-
-	/**
-	 * Get default post-install URL from global configuration
-	 */
-	private getDefaultPostInstallUrl(): string {
-		const globalConfig = this.configService.get('activepieces');
-		const clientBaseUrl = this.configService.get('clientBaseUrl') ?? process.env['CLIENT_BASE_URL'];
-		if (!clientBaseUrl) {
-			throw new BadRequestException('Client base URL not found');
-		}
-		return globalConfig?.postInstallUrl || `${clientBaseUrl}/#/pages/integrations/activepieces/callback`;
-	}
-
-	/**
-	 * Get default state secret from global configuration
-	 */
-	private getDefaultStateSecret(): string {
-		const globalConfig = this.configService.get('activepieces');
-		if (!globalConfig?.stateSecret) {
-			throw new BadRequestException('State secret not found');
-		}
-		return globalConfig?.stateSecret;
-	}
-
-	/**
 	 * Save connection settings to the database
 	 */
 	private async saveConnectionSettings(
@@ -713,9 +702,16 @@ export class ActivepiecesService {
 	): Promise<any> {
 		try {
 			// Find or create the integration
-			let integration = await this.integrationService.findOneByOptions({
-				where: { provider: IntegrationEnum.ACTIVE_PIECES }
-			});
+			let integration: any = null;
+			try {
+				integration = await this.integrationService.findOneByOptions({
+					where: { provider: IntegrationEnum.ACTIVE_PIECES }
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integration) {
 				integration = await this.integrationService.create({

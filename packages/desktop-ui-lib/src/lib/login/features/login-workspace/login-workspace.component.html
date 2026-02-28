@@ -1,34 +1,34 @@
-<ng-container *ngIf="showPopup; then workspacesTemplate; else signInTemplate"> </ng-container>
-
-<ng-template #signInTemplate>
-	<section class="section-wrapper">
-		<div class="-wrapper">
-			<div class="svg-wrapper">
-				<gauzy-logo></gauzy-logo>
-			</div>
-
-			<h1 class="title">{{ 'WORKSPACES.SIGN_IN_TITLE' | translate }}</h1>
-
-			<div class="hr-div-strong"></div>
-
-			<ng-container [ngTemplateOutlet]="signInForm"></ng-container>
-
-			<div class="hr-div-soft"></div>
-
-			<section class="sign-in-or-up" aria-label="Sign in or sign up">
-				<p class="redirect-link-p">
-					<span>{{ 'WORKSPACES.BACK_TO' | translate }}</span>
-					<a class="text-link" [routerLink]="['/auth/login']">
-						<span>{{ 'BUTTONS.LOGIN' | translate }}</span>
-					</a>
-				</p>
-				<p class="redirect-link-p">
-					<a [routerLink]="['/auth/register']" class="text-link">{{ 'BUTTONS.REGISTER' | translate }}</a>
-				</p>
-			</section>
+@if (showPopup) { @if (workspaces.length > 0) {
+<ngx-workspace-selection
+	[workspaces]="workspaces"
+	[loading]="loading"
+	[confirmedEmail]="confirmedEmail"
+	(selectedWorkspace)="signInWorkspace($event)"
+></ngx-workspace-selection>
+} } @else {
+<section class="section-wrapper">
+	<div class="-wrapper">
+		<div class="svg-wrapper">
+			<gauzy-logo></gauzy-logo>
 		</div>
-	</section>
-</ng-template>
+		<h1 class="title">{{ 'WORKSPACES.SIGN_IN_TITLE' | translate }}</h1>
+		<div class="hr-div-strong"></div>
+		<ng-container [ngTemplateOutlet]="signInForm"></ng-container>
+		<div class="hr-div-soft"></div>
+		<section class="sign-in-or-up" aria-label="Sign in or sign up">
+			<p class="redirect-link-p">
+				<span>{{ 'WORKSPACES.BACK_TO' | translate }}</span>
+				<a class="text-link" [routerLink]="['/auth/login']">
+					<span>{{ 'BUTTONS.LOGIN' | translate }}</span>
+				</a>
+			</p>
+			<p class="redirect-link-p">
+				<a [routerLink]="['/auth/register']" class="text-link">{{ 'BUTTONS.REGISTER' | translate }}</a>
+			</p>
+		</section>
+	</div>
+</section>
+}
 
 <ng-template #signInForm>
 	<form [formGroup]="form" class="form" (ngSubmit)="onSubmit()" autocomplete="off">
@@ -84,29 +84,19 @@
 							></nb-icon>
 						</a>
 					</nb-form-field>
-					<ng-container *ngIf="password.invalid && password.touched && !password.pristine">
-						<p class="caption status-danger" *ngIf="password.errors?.required">
-							{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
-						</p>
-					</ng-container>
+					@if (password.invalid && password.touched && !password.pristine) { @if (password.errors?.required) {
+					<p class="caption status-danger">
+						{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
+					</p>
+					} }
 				</div>
 			</div>
 		</div>
 		<div class="submit-btn-wrapper">
 			<button nbButton size="small" [disabled]="form.invalid || loading" class="submit-btn" type="submit">
 				{{ 'BUTTONS.SIGNIN' | translate }}
-				<nb-icon [ngStyle]="{ display: 'none' }" *gauzySpinnerButton="loading"></nb-icon>
+				<nb-icon [style.display]="'none'" *gauzySpinnerButton="loading"></nb-icon>
 			</button>
 		</div>
 	</form>
-</ng-template>
-
-<ng-template #workspacesTemplate>
-	<ng-container *ngIf="workspaces.length > 0">
-		<ngx-workspace-selection
-			[workspaces]="workspaces"
-			[confirmedEmail]="confirmedEmail"
-			(selectedWorkspace)="signInWorkspace($event)"
-		></ngx-workspace-selection>
-	</ng-container>
 </ng-template>

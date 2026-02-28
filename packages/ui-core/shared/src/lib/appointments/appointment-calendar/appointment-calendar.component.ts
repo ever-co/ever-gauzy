@@ -13,8 +13,8 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import momentTimezonePlugin from '@fullcalendar/moment-timezone';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
+import moment from 'moment';
+import timezone from 'moment-timezone';
 import {
 	IEmployeeAppointment,
 	ITimeOff,
@@ -39,17 +39,17 @@ import { TimezoneSelectorComponent } from '../timezone-selector/timezone-selecto
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-appointment-calendar',
-    templateUrl: './appointment-calendar.component.html',
-    styleUrls: ['./appointment-calendar.component.scss'],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => AppointmentCalendarComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ngx-appointment-calendar',
+	templateUrl: './appointment-calendar.component.html',
+	styleUrls: ['./appointment-calendar.component.scss'],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => AppointmentCalendarComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class AppointmentCalendarComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
@@ -111,8 +111,8 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 				this.selectedEventType.durationUnit === 'Day(s)'
 					? this.selectedEventType.duration * 24 * 60
 					: this.selectedEventType.durationUnit === 'Hour(s)'
-					? this.selectedEventType.duration * 60
-					: this.selectedEventType.duration * 1;
+						? this.selectedEventType.duration * 60
+						: this.selectedEventType.duration * 1;
 		}
 		this._store.selectedOrganization$
 			.pipe(
@@ -599,7 +599,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 				if (data) {
 					this.selectedTimeZoneName = data;
 					this.selectedTimeZoneOffset = timezone.tz(data).format('Z');
-					this.setCalenderTimezone(this.selectedTimeZoneName);
+					this.setCalendarTimezone(this.selectedTimeZoneName);
 				}
 			});
 	}
@@ -607,9 +607,9 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	markUnavailability() {}
 
 	/*
-	 * Set calender timezone option
+	 * Set calendar timezone option
 	 */
-	setCalenderTimezone(timeZone: string) {
+	setCalendarTimezone(timeZone: string) {
 		if (this.calendarComponent) {
 			if (this._selectedEmployeeId) {
 				this.renderAppointmentsAndSlots(this._selectedEmployeeId);

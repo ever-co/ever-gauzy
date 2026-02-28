@@ -7,7 +7,7 @@ import { EmployeeAvailabilityService } from './employee-availability.service';
 import { EmployeeAvailabilityController } from './employee-availability.controller';
 import { EmployeeAvailability } from './employee-availability.entity';
 import { TypeOrmEmployeeAvailabilityRepository } from './repository/type-orm-employee-availability.repository';
-import { MikroOrmEmployeeAvailabilityRepository } from './repository/micro-orm-employee-availability.repository';
+import { MikroOrmEmployeeAvailabilityRepository } from './repository/mikro-orm-employee-availability.repository';
 
 @Module({
 	imports: [

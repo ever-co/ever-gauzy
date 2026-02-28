@@ -3,7 +3,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import type {
-	IActivepiecesOAuthTokens,
 	IActivepiecesConnection,
 	ICreateActivepiecesIntegrationInput,
 	IActivepiecesConnectionsListResponse,
@@ -13,8 +12,7 @@ import type {
 	IActivepiecesMcpServersListParams,
 	IActivepiecesMcpServerUpdateRequest,
 	ID,
-	IIntegrationTenant,
-	IIntegrationSetting
+	IIntegrationTenant
 } from '@gauzy/contracts';
 
 @Injectable({
@@ -24,59 +22,17 @@ export class ActivepiecesService {
 	constructor(private readonly http: HttpClient) {}
 
 	/**
-	 * Get ActivePieces OAuth configuration
+	 * Set up ActivePieces integration with an API key
 	 */
-	getConfig(): Observable<{ clientId: string; callbackUrl: string }> {
-		return this.http.get<{ clientId: string; callbackUrl: string }>(
-			`${API_PREFIX}/integration/activepieces/config`
-		);
-	}
-
-	/**
-	 * Initiate OAuth flow with ActivePieces
-	 */
-	authorize(tenantId: string, organizationId?: string): Observable<{
-		authorizationUrl: string;
-		state: string;
-		tenantId: string;
-		organizationId?: string;
-	}> {
-		let params = new HttpParams().set('tenantId', tenantId);
-		if (organizationId) params = params.set('organizationId', organizationId);
-
-		return this.http.get<{
-			authorizationUrl: string;
-			state: string;
-			tenantId: string;
-			organizationId?: string;
-		}>(`${API_PREFIX}/integration/activepieces/authorize`, { params });
-	}
-
-	/**
-	 * Save OAuth settings (client ID and client secret)
-	 */
-	saveOAuthSettings(clientId: string, clientSecret: string, organizationId?: string): Observable<{
-		message: string;
-		integrationTenantId: string;
-	}> {
-		const body: { client_id: string; client_secret: string; organizationId?: string } = {
-			client_id: clientId,
-			client_secret: clientSecret
-		};
+	setup(apiKey: string, organizationId?: string): Observable<{ integrationTenantId: string }> {
+		const body: { apiKey: string; organizationId?: string } = { apiKey };
 		if (organizationId) {
 			body.organizationId = organizationId;
 		}
-		return this.http.post<{ message: string; integrationTenantId: string }>(
-			`${API_PREFIX}/integration/activepieces/oauth/settings`,
+		return this.http.post<{ integrationTenantId: string }>(
+			`${API_PREFIX}/integration/activepieces/setup`,
 			body
 		);
-	}
-
-	/**
-	 * Exchange authorization code for access token
-	 */
-	exchangeToken(body: { code: string; state: string }): Observable<IActivepiecesOAuthTokens> {
-		return this.http.post<IActivepiecesOAuthTokens>(`${API_PREFIX}/integration/activepieces/oauth/token`, body);
 	}
 
 	/**
@@ -149,15 +105,6 @@ export class ActivepiecesService {
 	getIntegrationTenant(integrationId: ID): Observable<IIntegrationTenant> {
 		return this.http.get<IIntegrationTenant>(
 			`${API_PREFIX}/integration/activepieces/integration-tenant/${integrationId}`
-		);
-	}
-
-	/**
-	 * Get ActivePieces access token from integration settings
-	 */
-	getAccessToken(integrationId: ID): Observable<IIntegrationSetting> {
-		return this.http.get<IIntegrationSetting>(
-			`${API_PREFIX}/integration/activepieces/access-token/${integrationId}`
 		);
 	}
 

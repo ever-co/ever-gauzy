@@ -9,22 +9,26 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-pdf',
-	template: `<iframe
-			type="application/pdf"
-			id="iframe"
-			class="pdfDoc"
-			[src]="fileURL | safeUrl"
-			frameBorder="0"
-			*ngIf="fileURL"
-		></iframe>
-		<div
-			[nbSpinner]="isLoading"
-			nbSpinnerStatus="primary"
-			nbSpinnerSize="large"
-			class="pdfDoc loading"
-			*ngIf="isLoading"
-		></div>
-		<div class="pdfDoc error" *ngIf="error">An error occurred, please reload.</div>`,
+	template: `@if (fileURL) {
+  <iframe
+    type="application/pdf"
+    id="iframe"
+    class="pdfDoc"
+    [src]="fileURL | safeUrl"
+    frameBorder="0"
+  ></iframe>
+}
+@if (isLoading) {
+  <div
+    [nbSpinner]="isLoading"
+    nbSpinnerStatus="primary"
+    nbSpinnerSize="large"
+    class="pdfDoc loading"
+  ></div>
+}
+@if (error) {
+  <div class="pdfDoc error">An error occurred, please reload.</div>
+}`,
 	styles: [
 		`
 			::ng-deep .pdf-preview-card {

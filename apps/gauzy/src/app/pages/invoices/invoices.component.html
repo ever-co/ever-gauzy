@@ -28,14 +28,14 @@
 			<div class="actions-container">
 				<ng-template ngxPermissionsOnly="INVOICES_EDIT">
 					<div class="transition-container">
-						<div class="transition" [ngClass]="{ show: !disableButton, hide: disableButton }">
-							<span class="transition" [ngClass]="{ show: !disableButton, 'show-button': disableButton }">
+						<div class="transition" [class.show]="!disableButton" [class.hide]="disableButton">
+							<span class="transition" [class.show]="!disableButton" [class.show-button]="disableButton">
 								<button nbButton status="success" (click)="add()" size="small">
 									<nb-icon icon="plus-outline"> </nb-icon>
 									{{ 'BUTTONS.ADD' | translate }}
 								</button>
 							</span>
-							<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+							<ng-container [ngTemplateOutlet]="actionButtons"></ng-container>
 						</div>
 					</div>
 				</ng-template>
@@ -48,7 +48,7 @@
 				[tabTitle]="'INVOICES_PAGE.BROWSE' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.ACTIONS"
 			>
-				<ng-container *ngIf="(nbTab$ | async) === invoiceTabsEnum.ACTIONS">
+				@if ((nbTab$ | async) === invoiceTabsEnum.ACTIONS) {
 					<div class="custom-content-body">
 						<ng-template
 							[ngTemplateOutlet]="
@@ -56,17 +56,17 @@
 							"
 						></ng-template>
 					</div>
-				</ng-container>
+				}
 			</nb-tab>
 			<nb-tab
 				class="remove-scroll search-tab"
 				[tabTitle]="'INVOICES_PAGE.SEARCH' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.SEARCH"
 			>
-				<ng-container *ngIf="(nbTab$ | async) === invoiceTabsEnum.SEARCH">
+				@if ((nbTab$ | async) === invoiceTabsEnum.SEARCH) {
 					<div class="custom-content-body">
 						<nb-accordion class="mb-3">
-							<nb-accordion-item collapsed="false">
+							<nb-accordion-item [collapsed]="false">
 								<nb-accordion-item-header>
 									{{
 										(isEstimate ? 'INVOICES_PAGE.ESTIMATES.HEADER' : 'INVOICES_PAGE.HEADER')
@@ -210,34 +210,34 @@
 													<label for="inputStatus" class="label">
 														{{ 'INVOICES_PAGE.STATUS' | translate }}
 													</label>
-													<nb-select
-														id="inputStatus"
-														*ngIf="!isEstimate"
-														formControlName="status"
-														fullWidth
-														[placeholder]="'FORM.PLACEHOLDERS.STATUS' | translate"
-													>
-														<nb-option
-															*ngFor="let status of invoiceStatusTypes"
-															[value]="status"
+													@if (!isEstimate) {
+														<nb-select
+															id="inputStatus"
+															formControlName="status"
+															fullWidth
+															[placeholder]="'FORM.PLACEHOLDERS.STATUS' | translate"
 														>
-															{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
-														</nb-option>
-													</nb-select>
-													<nb-select
-														id="inputStatus"
-														*ngIf="isEstimate"
-														formControlName="status"
-														fullWidth
-														[placeholder]="'FORM.PLACEHOLDERS.STATUS' | translate"
-													>
-														<nb-option
-															*ngFor="let status of estimateStatusTypes"
-															[value]="status"
+															@for (status of invoiceStatusTypes; track status) {
+																<nb-option [value]="status">
+																	{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
+																</nb-option>
+															}
+														</nb-select>
+													}
+													@if (isEstimate) {
+														<nb-select
+															id="inputStatus"
+															formControlName="status"
+															fullWidth
+															[placeholder]="'FORM.PLACEHOLDERS.STATUS' | translate"
 														>
-															{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
-														</nb-option>
-													</nb-select>
+															@for (status of estimateStatusTypes; track status) {
+																<nb-option [value]="status">
+																	{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
+																</nb-option>
+															}
+														</nb-select>
+													}
 												</div>
 											</div>
 										</div>
@@ -277,17 +277,17 @@
 						>
 						</ng-template>
 					</div>
-				</ng-container>
+				}
 			</nb-tab>
 			<nb-tab
 				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.HISTORY"
 				class="remove-scroll history-tab"
 			>
-				<ng-container *ngIf="(nbTab$ | async) === invoiceTabsEnum.HISTORY">
+				@if ((nbTab$ | async) === invoiceTabsEnum.HISTORY) {
 					<div class="custom-content-body">
 						<nb-accordion class="mb-3">
-							<nb-accordion-item collapsed="true" [collapsed]="selectedInvoice ? 'false' : 'true'">
+							<nb-accordion-item [collapsed]="!selectedInvoice">
 								<nb-accordion-item-header class="nb-accordion-item-header">
 									{{
 										(!isEstimate ? 'INVOICES_PAGE.HEADER' : 'INVOICES_PAGE.ESTIMATES.HEADER')
@@ -306,7 +306,7 @@
 								<nb-accordion-item-body>
 									<div class="row comments-container">
 										<div class="col-6">
-											<ng-container *ngIf="selectedInvoice">
+											@if (selectedInvoice) {
 												{{ 'INVOICES_PAGE.COMMENT' | translate }}
 												<form
 													[formGroup]="historyForm"
@@ -317,7 +317,7 @@
 														<input
 															nbInput
 															type="text"
-															placeholder="Title"
+															placeholder="{{ 'INVOICES_PAGE.TITLE' | translate }}"
 															fullWidth
 															formControlName="title"
 														/>
@@ -325,7 +325,7 @@
 													<div class="col px-0 mt-3">
 														<textarea
 															nbInput
-															placeholder="Comment"
+															placeholder="{{ 'INVOICES_PAGE.COMMENT' | translate }}"
 															fullWidth
 															formControlName="comment"
 														></textarea>
@@ -342,39 +342,42 @@
 														</button>
 													</div>
 												</form>
-											</ng-container>
+											}
 										</div>
-										<div *ngIf="!disableButton" class="col-6">
-											{{ 'INVOICES_PAGE.COMMENTS' | translate }}
-											<div class="comments w-100">
-												<nb-list class="history-list">
-													<nb-list-item
-														*ngFor="let history of histories"
-														class="history-list-item"
-														style="align-items: baseline"
-													>
-														<div class="d-flex">
-															<div>
-																<ngx-avatar
-																	[src]="history.user.imageUrl"
-																	[name]="history.user.name"
-																	[value]="history.user"
-																></ngx-avatar>
-																<div class="history-date history-item">
-																	{{ history.createdAt | dateTimeFormat }}
+										@if (!disableButton) {
+											<div class="col-6">
+												{{ 'INVOICES_PAGE.COMMENTS' | translate }}
+												<div class="comments w-100">
+													<nb-list class="history-list">
+														@for (history of histories; track history) {
+															<nb-list-item
+																class="history-list-item"
+																style="align-items: baseline"
+															>
+																<div class="d-flex">
+																	<div>
+																		<ngx-avatar
+																			[src]="history.user.imageUrl"
+																			[name]="history.user.name"
+																			[value]="history.user"
+																		></ngx-avatar>
+																		<div class="history-date history-item">
+																			{{ history.createdAt | dateTimeFormat }}
+																		</div>
+																		<div class="history-item history-title">
+																			<span>{{ history.title }}</span>
+																		</div>
+																		<div class="history-item history-comment">
+																			<span>{{ history.action }}</span>
+																		</div>
+																	</div>
 																</div>
-																<div class="history-item history-title">
-																	<span>{{ history.title }}</span>
-																</div>
-																<div class="history-item history-comment">
-																	<span>{{ history.action }}</span>
-																</div>
-															</div>
-														</div>
-													</nb-list-item>
-												</nb-list>
+															</nb-list-item>
+														}
+													</nb-list>
+												</div>
 											</div>
-										</div>
+										}
 									</div>
 								</nb-accordion-item-body>
 							</nb-accordion-item>
@@ -386,7 +389,7 @@
 						>
 						</ng-template>
 					</div>
-				</ng-container>
+				}
 			</nb-tab>
 		</nb-tabset>
 		<ng-template #tableLayout>
@@ -399,11 +402,13 @@
 					#invoicesTable
 				></angular2-smart-table>
 			</div>
-			<div *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE" class="pagination-container">
-				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-				</ng-container>
-			</div>
+			@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+				<div class="pagination-container">
+					@if (smartTableSource) {
+						<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+					}
+				</div>
+			}
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="grid">
@@ -419,51 +424,58 @@
 	</nb-card-body>
 </nb-card>
 
-<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
+<ng-template #actionButtons>
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
-			<button
-				*ngIf="isEstimate"
-				nbButton
-				status="info"
-				(click)="convert(selectedItem)"
-				class="action info mr-2"
-				[disabled]="!selectedItem && disableButton"
-				size="small"
-			>
-				<nb-icon icon="swap"> </nb-icon>
-				{{ 'BUTTONS.TO_INVOICE' | translate }}
-			</button>
-			<nb-select
-				filled
-				status="basic"
-				class="action select-nb mr-2 ml-1"
-				*ngIf="!isEstimate"
-				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate | titlecase"
-				[(selected)]="status"
-				[disabled]="disableButton"
-				(selectedChange)="selectStatus($event)"
-				[size]="'small'"
-			>
-				<nb-option *ngFor="let status of invoiceStatusTypes" [value]="status">
-					{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
-				</nb-option>
-			</nb-select>
-			<nb-select
-				filled
-				status="basic"
-				class="action select-nb mr-2"
-				*ngIf="isEstimate"
-				[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate | titlecase"
-				[(selected)]="status"
-				[disabled]="disableButton"
-				(selectedChange)="selectStatus($event)"
-				[size]="'small'"
-			>
-				<nb-option *ngFor="let status of estimateStatusTypes" [value]="status">
-					{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
-				</nb-option>
-			</nb-select>
+			@if (isEstimate) {
+				<button
+					nbButton
+					status="info"
+					(click)="convert(selectedInvoice)"
+					class="action info mr-2"
+					[disabled]="!selectedInvoice && disableButton"
+					size="small"
+				>
+					<nb-icon icon="swap"> </nb-icon>
+					{{ 'BUTTONS.TO_INVOICE' | translate }}
+				</button>
+			}
+			@if (!isEstimate) {
+				<nb-select
+					filled
+					status="basic"
+					class="action select-nb mr-2 ml-1"
+					[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate | titlecase"
+					[(selected)]="status"
+					[disabled]="disableButton"
+					(selectedChange)="selectStatus($event)"
+					[size]="'small'"
+				>
+					@for (status of invoiceStatusTypes; track status) {
+						<nb-option [value]="status">
+							{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
+						</nb-option>
+					}
+				</nb-select>
+			}
+			@if (isEstimate) {
+				<nb-select
+					filled
+					status="basic"
+					class="action select-nb mr-2"
+					[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate | titlecase"
+					[(selected)]="status"
+					[disabled]="disableButton"
+					(selectedChange)="selectStatus($event)"
+					[size]="'small'"
+				>
+					@for (status of estimateStatusTypes; track status) {
+						<nb-option [value]="status">
+							{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
+						</nb-option>
+					}
+				</nb-select>
+			}
 			<ng-template ngxPermissionsOnly="INVOICES_VIEW">
 				<button
 					nbButton
@@ -480,9 +492,9 @@
 			<button
 				nbButton
 				status="basic"
-				(click)="edit(selectedItem)"
+				(click)="edit(selectedInvoice)"
 				class="action primary"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedInvoice && disableButton"
 				size="small"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
@@ -491,27 +503,28 @@
 			<button
 				nbButton
 				status="basic"
-				(click)="download(selectedItem)"
+				(click)="download(selectedInvoice)"
 				class="action primary"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="!selectedInvoice && disableButton"
 				size="small"
 			>
 				<nb-icon icon="download-outline"></nb-icon>
 				{{ 'BUTTONS.DOWNLOAD' | translate }}
 			</button>
 		</ng-template>
-		<button
-			*ngIf="!isEstimate"
-			nbButton
-			status="basic"
-			(click)="payments()"
-			class="action secondary mr-2"
-			[disabled]="!selectedItem && disableButton"
-			size="small"
-		>
-			<nb-icon icon="clipboard-outline"></nb-icon>
-			{{ 'BUTTONS.PAYMENTS' | translate }}
-		</button>
+		@if (!isEstimate) {
+			<button
+				nbButton
+				status="basic"
+				(click)="payments()"
+				class="action secondary mr-2"
+				[disabled]="!selectedInvoice && disableButton"
+				size="small"
+			>
+				<nb-icon icon="clipboard-outline"></nb-icon>
+				{{ 'BUTTONS.PAYMENTS' | translate }}
+			</button>
+		}
 		<button
 			nbButton
 			status="basic"
@@ -542,31 +555,39 @@
 		<span class="d-flex justify-content-end w-100"
 			><i class="fas fa-times" (click)="toggleTableSettingsPopover()"></i
 		></span>
-		<span class="title">Settings</span>
-		<div class="show-columns" *ngIf="columns">
-			<label class="show-columns-label label">
-				{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}
-			</label>
-			<nb-select
-				class="show-columns-select"
-				[multiple]="true"
-				[(selected)]="columns"
-				(selectedChange)="selectColumn($event)"
-				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
-			>
-				<nb-option class="column" *ngFor="let column of getColumns()" [value]="column">
-					{{ 'INVOICES_PAGE.' + column | translate }}
-				</nb-option>
-			</nb-select>
-		</div>
+		<span class="title">{{ 'INVOICES_PAGE.SETTINGS' | translate }}</span>
+		@if (columns) {
+			<div class="show-columns">
+				<label class="show-columns-label label">
+					{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}
+				</label>
+				<nb-select
+					class="show-columns-select"
+					[multiple]="true"
+					[(selected)]="columns"
+					(selectedChange)="selectColumn($event)"
+					placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
+				>
+					@for (column of getColumns(); track column) {
+						<nb-option class="column" [value]="column">
+							{{ 'INVOICES_PAGE.' + column | translate }}
+						</nb-option>
+					}
+				</nb-select>
+			</div>
+		}
 		<div class="per-page-container mr-3">
 			<div class="per-page">
-				<label class="label per-page-label" *ngIf="!isEstimate">
-					{{ 'INVOICES_PAGE.INVOICES_PER_PAGE' | translate }}
-				</label>
-				<label class="label per-page-label" *ngIf="isEstimate">
-					{{ 'INVOICES_PAGE.ESTIMATES_PER_PAGE' | translate }}
-				</label>
+				@if (!isEstimate) {
+					<label class="label per-page-label">
+						{{ 'INVOICES_PAGE.INVOICES_PER_PAGE' | translate }}
+					</label>
+				}
+				@if (isEstimate) {
+					<label class="label per-page-label">
+						{{ 'INVOICES_PAGE.ESTIMATES_PER_PAGE' | translate }}
+					</label>
+				}
 				<input class="per-page-input" [(ngModel)]="perPage" type="number" nbInput />
 			</div>
 		</div>
@@ -583,95 +604,86 @@
 
 <ng-template #actionsPopover>
 	<div gauzyOutside (clickOutside)="onClickOutside($event)" class="popover-container-action d-flex flex-column">
-		<ng-container>
-			<button
-				nbButton
-				status="basic"
-				class="action primary"
-				size="small"
-				(click)="addInternalNote()"
-				[disabled]="disableButton"
-			>
-				<nb-icon icon="book-open-outline"> </nb-icon>
-				<span class="icon-text">{{ 'BUTTONS.NOTE' | translate }}</span>
-			</button>
-			<button
-				nbButton
-				status="basic"
-				class="action primary"
-				size="small"
-				(click)="duplicated()"
-				[disabled]="disableButton"
-			>
-				<nb-icon icon="copy-outline"></nb-icon>
-				<span class="icon-text">{{ 'BUTTONS.DUPLICATE' | translate }}</span>
-			</button>
-			<button
-				nbButton
-				status="basic"
-				class="action primary"
-				size="small"
-				(click)="send()"
-				[disabled]="!canBeSend"
-			>
-				<nb-icon icon="upload-outline"> </nb-icon>
-				<span class="icon-text">{{ 'BUTTONS.SEND' | translate }}</span>
-			</button>
-			<button
-				nbButton
-				status="basic"
-				class="action primary"
-				size="small"
-				(click)="generatePublicLink()"
-				[disabled]="disableButton"
-			>
-				<nb-icon icon="link-2-outline"> </nb-icon>
-				<span class="icon-text">{{ 'BUTTONS.PUBLIC_LINK' | translate }}</span>
-			</button>
-			<button
-				nbButton
-				status="basic"
-				class="action primary"
-				size="small"
-				(click)="email()"
-				[disabled]="disableButton"
-			>
-				<nb-icon icon="email-outline"> </nb-icon>
-				<span class="icon-text">{{ 'BUTTONS.EMAIL' | translate }}</span>
-			</button>
-			<button
-				nbButton
-				status="basic"
-				class="action primary"
-				size="small"
-				(click)="exportToCsv()"
-				[disabled]="disableButton"
-			>
-				<nb-icon icon="file-text-outline"> </nb-icon>
-				<span class="icon-text">{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}</span>
-			</button>
-			<button
-				nbButton
-				status="basic"
-				class="action primary"
-				size="small"
-				(click)="archive()"
-				[disabled]="disableButton || selectedInvoice.isArchived"
-			>
-				<nb-icon icon="archive-outline"> </nb-icon>
-				<span class="icon-text">{{ 'BUTTONS.ARCHIVE' | translate }}</span>
-			</button>
-			<button
-				nbButton
-				status="basic"
-				class="action danger"
-				size="small"
-				(click)="delete()"
-				[disabled]="disableButton"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-				<span class="icon-text">{{ 'BUTTONS.DELETE' | translate }}</span>
-			</button>
-		</ng-container>
+		<button
+			nbButton
+			status="basic"
+			class="action primary"
+			size="small"
+			(click)="addInternalNote()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="book-open-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.NOTE' | translate }}</span>
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action primary"
+			size="small"
+			(click)="duplicated()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="copy-outline"></nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.DUPLICATE' | translate }}</span>
+		</button>
+		<button nbButton status="basic" class="action primary" size="small" (click)="send()" [disabled]="!canBeSend">
+			<nb-icon icon="upload-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.SEND' | translate }}</span>
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action primary"
+			size="small"
+			(click)="generatePublicLink()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="link-2-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.PUBLIC_LINK' | translate }}</span>
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action primary"
+			size="small"
+			(click)="email()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="email-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.EMAIL' | translate }}</span>
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action primary"
+			size="small"
+			(click)="exportToCsv()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="file-text-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}</span>
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action primary"
+			size="small"
+			(click)="archive()"
+			[disabled]="disableButton || selectedInvoice.isArchived"
+		>
+			<nb-icon icon="archive-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.ARCHIVE' | translate }}</span>
+		</button>
+		<button
+			nbButton
+			status="basic"
+			class="action danger"
+			size="small"
+			(click)="delete()"
+			[disabled]="disableButton"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.DELETE' | translate }}</span>
+		</button>
 	</div>
 </ng-template>

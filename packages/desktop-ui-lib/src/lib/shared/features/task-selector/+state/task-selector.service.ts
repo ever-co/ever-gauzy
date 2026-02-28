@@ -118,15 +118,18 @@ export class TaskSelectorService extends SelectorService<ITask> {
 			const existing = result.find((item: any) => item.id === current.id);
 			if (existing) {
 				const updatedAtMoment = moment(existing?.updatedAt, moment.ISO_8601).utc(true);
-				Object.assign(
-					existing,
-					current,
-					updatedAtMoment.isAfter(current?.updatedAt)
+				const merged = {
+					...existing,
+					...current,
+					...(updatedAtMoment.isAfter(current?.updatedAt)
 						? {
-								updatedAt: updatedAtMoment.toISOString()
-						  }
-						: {}
-				);
+							updatedAt: updatedAtMoment.toISOString()
+						}
+						: {})
+				};
+				// Replace the existing item in result
+				const index = result.indexOf(existing);
+				result[index] = merged;
 			} else {
 				result.push(current);
 			}

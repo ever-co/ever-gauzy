@@ -1,9 +1,13 @@
-<ng-container *ngIf="value">
-	<ng-container *ngFor="let team of value; let i = index">
-		<span>
-			<div>{{ team.name || team }}</div>
-      <div [style.font-size]="'11px'" *ngIf="team?.members">Members {{ team?.members?.length }}</div>
-			<span *ngIf="i !== value.length - 1">, </span>
-		</span>
-	</ng-container>
-</ng-container>
+@if (value) {
+  @for (team of value; track team; let i = $index) {
+    <span>
+      <div>{{ team.name || team }}</div>
+      @if (team?.members) {
+        <div [style.font-size]="'11px'">Members {{ team?.members?.length }}</div>
+      }
+      @if (i !== value.length - 1) {
+        <span>, </span>
+      }
+    </span>
+  }
+}

@@ -1,180 +1,192 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="pb-0 pt-0">
-		<div class="d-flex justify-content-end">
-			<ngx-gauzy-button-action
-				[buttonTemplate]="actionButtons"
-				[buttonTemplateVisible]="visibleButton"
-				[hasLayoutSelector]="!showAddCard"
-				[isDisable]="disableButton"
-				[componentName]="viewComponentName"
-			></ngx-gauzy-button-action>
-		</div>
-		<div *ngIf="showAddCard" class="row m-0">
-			<form class="col-11" [formGroup]="form" *ngIf="form">
-				<div formArrayName="educations">
-					<div
-						*ngFor="
-							let education of educations?.controls;
-							let i = index
-						"
-					>
-						<div [formGroupName]="i">
-							<input
-								#addInput
-								class="col-5"
-								nbInput
-								formControlName="schoolName"
-								type="text"
+  <nb-card-header class="pb-0 pt-0">
+    <div class="d-flex justify-content-end">
+      <ngx-gauzy-button-action
+        [buttonTemplate]="actionButtons"
+        [buttonTemplateVisible]="visibleButton"
+        [hasLayoutSelector]="!showAddCard"
+        [isDisable]="disableButton"
+        [componentName]="viewComponentName"
+      ></ngx-gauzy-button-action>
+    </div>
+    @if (showAddCard) {
+      <div class="row m-0">
+        @if (form) {
+          <form class="col-11" [formGroup]="form">
+            <div formArrayName="educations">
+              @for (
+                education of educations?.controls; track
+                education; let i = $index) {
+                <div
+                  >
+                  <div [formGroupName]="i">
+                    <input
+                      #addInput
+                      class="col-5"
+                      nbInput
+                      formControlName="schoolName"
+                      type="text"
 								placeholder="{{
 									'FORM.PLACEHOLDERS.ADD_EDUCATION.SCHOOL_NAME'
 										| translate
 								}}"
-								fullWidth
-							/>
-							<input
-								#addInput
-								class="col-5"
-								nbInput
-								formControlName="degree"
-								type="text"
+                      fullWidth
+                      />
+                      <input
+                        #addInput
+                        class="col-5"
+                        nbInput
+                        formControlName="degree"
+                        type="text"
 								placeholder="{{
 									'FORM.PLACEHOLDERS.ADD_EDUCATION.DEGREE'
 										| translate
 								}}"
-								fullWidth
-							/>
-							<input
-								#addInput
-								class="col-5"
-								nbInput
-								formControlName="field"
-								type="text"
+                        fullWidth
+                        />
+                        <input
+                          #addInput
+                          class="col-5"
+                          nbInput
+                          formControlName="field"
+                          type="text"
 								placeholder="{{
 									'FORM.PLACEHOLDERS.ADD_EDUCATION.FIELD_OF_STUDY'
 										| translate
 								}}"
-								fullWidth
-							/>
-							<input
-								readonly
-								#addInput
-								class="col-5"
-								nbInput
-								type="text"
-								formControlName="completionDate"
+                          fullWidth
+                          />
+                          <input
+                            readonly
+                            #addInput
+                            class="col-5"
+                            nbInput
+                            type="text"
+                            formControlName="completionDate"
 								placeholder="{{
 									'FORM.PLACEHOLDERS.ADD_EDUCATION.DATE_OF_COMPLETION'
 										| translate
 								}}"
-								fullWidth
-								[nbDatepicker]="appliedDatePicker"
-							/>
-							<nb-datepicker #appliedDatePicker></nb-datepicker>
-							<textarea
-								class="notes col-5"
-								nbInput
-								formControlName="notes"
+                            fullWidth
+                            [nbDatepicker]="appliedDatePicker"
+                            />
+                            <nb-datepicker #appliedDatePicker></nb-datepicker>
+                            <textarea
+                              class="notes col-5"
+                              nbInput
+                              formControlName="notes"
 								placeholder="{{
 									'FORM.PLACEHOLDERS.ADD_EDUCATION.ADDITIONAL_NOTES'
 										| translate
 								}}"
-							>
-							</textarea>
-						</div>
-					</div>
-				</div>
-			</form>
-			<div class="col-1">
-				<span class="col-2 pl-2 pr-0"
-					><button
-						class="w-100 form-btn"
-						(click)="submitForm()"
-						nbButton
-						status="success"
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button></span
-				>
-				<span class="col-2 pl-2 pr-0"
-					><button
-						class="w-100 form-btn"
-						(click)="cancel()"
-						outline
-						nbButton
-						status="basic"
-					>
-						{{ 'BUTTONS.CANCEL' | translate }}
-					</button></span
-				>
-			</div>
-		</div>
-	</nb-card-header>
-	<nb-card-body *ngIf="educationList?.length">
-		<div class="table-scroll-container">
-			<angular2-smart-table
-				*ngIf="dataLayoutStyle === 'TABLE'"
-				style="cursor: pointer"
-				[settings]="settingsSmartTable"
-				[source]="sourceSmartTable"
-				(userRowSelect)="selectEducation($event)"
-			></angular2-smart-table>
-		</div>
-	</nb-card-body>
-	<nb-card-body *ngIf="educationList?.length">
-		<ga-card-grid
-			[totalItems]="pagination?.totalItems"
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[settings]="settingsSmartTable"
-			[source]="educationList"
-			(onSelectedItem)="selectEducation($event)"
-		></ga-card-grid>
-	</nb-card-body>
+                              >
+                            </textarea>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </form>
+                }
+                <div class="col-1">
+                  <span class="col-2 pl-2 pr-0"
+                    ><button
+                    class="w-100 form-btn"
+                    (click)="submitForm()"
+                    nbButton
+                    status="success"
+                    >
+                    {{ 'BUTTONS.SAVE' | translate }}
+                  </button></span
+                  >
+                  <span class="col-2 pl-2 pr-0"
+                    ><button
+                    class="w-100 form-btn"
+                    (click)="cancel()"
+                    outline
+                    nbButton
+                    status="basic"
+                    >
+                    {{ 'BUTTONS.CANCEL' | translate }}
+                  </button></span
+                  >
+                </div>
+              </div>
+            }
+          </nb-card-header>
+          @if (educationList?.length) {
+            <nb-card-body>
+              <div class="table-scroll-container">
+                @if (dataLayoutStyle === 'TABLE') {
+                  <angular2-smart-table
+                    style="cursor: pointer"
+                    [settings]="settingsSmartTable"
+                    [source]="sourceSmartTable"
+                    (userRowSelect)="selectEducation($event)"
+                  ></angular2-smart-table>
+                }
+              </div>
+            </nb-card-body>
+          }
+          @if (educationList?.length) {
+            <nb-card-body>
+              @if (dataLayoutStyle === 'CARDS_GRID') {
+                <ga-card-grid
+                  [totalItems]="pagination?.totalItems"
+                  [settings]="settingsSmartTable"
+                  [source]="educationList"
+                  (onSelectedItem)="selectEducation($event)"
+                ></ga-card-grid>
+              }
+            </nb-card-body>
+          }
 
-	<ng-template #actionButtons let-selectedItem="selectedItem">
-		<div
-			class="btn-group actions"
-			*ngIf="
-				dataLayoutStyle === 'TABLE' &&
-				!showAddCard &&
-				educationList?.length
-			"
-		>
-			<button
-				(click)="editEducation(selectedItem)"
-				nbButton
-				status="basic"
-				class="action primary"
-				size="small"
-				[disabled]="!selectedItem && disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="removeEducation(selectedItem)"
-				nbButton
-				status="basic"
-				class="action"
-				size="small"
-				[disabled]="!selectedItem && disableButton"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-			</button>
-		</div>
-	</ng-template>
-</nb-card>
+          <ng-template #actionButtons let-selectedItem="selectedItem">
+            @if (
+              dataLayoutStyle === 'TABLE' &&
+              !showAddCard &&
+              educationList?.length
+              ) {
+              <div
+                class="btn-group actions"
+                >
+                <button
+                  (click)="editEducation(selectedItem)"
+                  nbButton
+                  status="basic"
+                  class="action primary"
+                  size="small"
+                  [disabled]="!selectedItem && disableButton"
+                  >
+                  <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+                  {{ 'BUTTONS.EDIT' | translate }}
+                </button>
+                <button
+                  (click)="removeEducation(selectedItem)"
+                  nbButton
+                  status="basic"
+                  class="action"
+                  size="small"
+                  [disabled]="!selectedItem && disableButton"
+                  [nbTooltip]="'BUTTONS.DELETE' | translate"
+                  >
+                  <nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+                </button>
+              </div>
+            }
+          </ng-template>
+        </nb-card>
 
-<ng-template #visibleButton>
-	<button
-		nbButton
-		status="success"
-		class="action"
-		size="small"
-		*ngIf="!showAddCard"
-		(click)="add()"
-	>
-		<nb-icon icon="plus-outline"></nb-icon>
-		{{ 'BUTTONS.ADD' | translate }}
-	</button>
-</ng-template>
+        <ng-template #visibleButton>
+          @if (!showAddCard) {
+            <button
+              nbButton
+              status="success"
+              class="action"
+              size="small"
+              (click)="add()"
+              >
+              <nb-icon icon="plus-outline"></nb-icon>
+              {{ 'BUTTONS.ADD' | translate }}
+            </button>
+          }
+        </ng-template>

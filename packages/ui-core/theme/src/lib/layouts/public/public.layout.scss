@@ -1,5 +1,6 @@
 @use '@nebular/theme/styles/global/breakpoints' as *;
-@use 'bootstrap/scss/mixins/breakpoints' as *;
 @use 'themes' as *;
 
-@include nb-install-component() {}
+
+@include nb-install-component() {
+}

@@ -4,6 +4,7 @@ import { ID, IOrganizationContact, IOrganizationContactFindInput, IPagination, B
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { isNotEmpty } from '@gauzy/utils';
+import { MultiORMEnum } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationContact } from './organization-contact.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -33,24 +34,42 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 			const tenantId = RequestContext.currentTenantId() ?? options.tenantId;
 			const { organizationId, contactType } = options;
 
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			query.setFindOptions({
-				select: {
-					id: true,
-					name: true,
-					imageUrl: true
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const where: any = {
+						tenantId,
+						organizationId,
+						members: { id: employeeId }
+					};
+					if (isNotEmpty(contactType)) where.contactType = contactType;
+
+					const items = await this.mikroOrmRepository.find(where as any, {
+						fields: ['id', 'name', 'imageUrl'] as any[]
+					});
+					return items.map((e) => this.serialize(e)) as IOrganizationContact[];
 				}
-			});
-			query.innerJoin(`${query.alias}.members`, 'member');
-			query.andWhere(p('member.id = :employeeId'), { employeeId });
-			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				case MultiORMEnum.TypeORM:
+				default: {
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					query.setFindOptions({
+						select: {
+							id: true,
+							name: true,
+							imageUrl: true
+						}
+					});
+					query.innerJoin(`${query.alias}.members`, 'member');
+					query.andWhere(p('member.id = :employeeId'), { employeeId });
+					query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
-			if (isNotEmpty(contactType)) {
-				query.andWhere(p(`${query.alias}.contactType = :contactType`), { contactType });
+					if (isNotEmpty(contactType)) {
+						query.andWhere(p(`${query.alias}.contactType = :contactType`), { contactType });
+					}
+
+					return await query.getMany();
+				}
 			}
-
-			return await query.getMany();
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -82,35 +101,53 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		const createdByUserId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId() ?? findInput.tenantId;
 
-		const query = this.typeOrmRepository.createQueryBuilder('organization_contact');
-		if (relations.length > 0) {
-			relations.forEach((relation: string) => {
-				if (relation.indexOf('.') !== -1) {
-					const alias = relation.split('.').slice(-1)[0];
-					query.leftJoinAndSelect(`${relation}`, alias);
-				} else {
-					const alias = relation;
-					query.leftJoinAndSelect(`${query.alias}.${relation}`, alias);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where: any = {
+					$or: [{ members: { id: employeeId } }, { createdByUserId }],
+					contactType,
+					tenantId,
+					...(organizationId ? { organizationId } : {})
+				};
+
+				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
+					populate: relations as any[]
+				});
+				return { items: items.map((e) => this.serialize(e)), total };
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmRepository.createQueryBuilder('organization_contact');
+				if (relations.length > 0) {
+					relations.forEach((relation: string) => {
+						if (relation.indexOf('.') !== -1) {
+							const alias = relation.split('.').slice(-1)[0];
+							query.leftJoinAndSelect(`${relation}`, alias);
+						} else {
+							const alias = relation;
+							query.leftJoinAndSelect(`${query.alias}.${relation}`, alias);
+						}
+					});
 				}
-			});
+				query.where(
+					new Brackets((subQuery) => {
+						subQuery
+							.where('members.id =:employeeId', { employeeId })
+							.orWhere(`${query.alias}.createdByUserId = :createdByUserId`, { createdByUserId });
+					})
+				);
+
+				query.andWhere(`${query.alias}.contactType = :contactType`, { contactType });
+				query.andWhere(`${query.alias}.tenantId = :tenantId`, { tenantId });
+
+				if (organizationId) {
+					query.andWhere(`${query.alias}.organizationId = :organizationId`, { organizationId });
+				}
+
+				const [items, total] = await query.getManyAndCount();
+				return { items, total };
+			}
 		}
-		query.where(
-			new Brackets((subQuery) => {
-				subQuery
-					.where('members.id =:employeeId', { employeeId })
-					.orWhere(`${query.alias}.createdByUserId = :createdByUserId`, { createdByUserId });
-			})
-		);
-
-		query.andWhere(`${query.alias}.contactType = :contactType`, { contactType });
-		query.andWhere(`${query.alias}.tenantId = :tenantId`, { tenantId });
-
-		if (organizationId) {
-			query.andWhere(`${query.alias}.organizationId = :organizationId`, { organizationId });
-		}
-
-		const [items, total] = await query.getManyAndCount();
-		return { items, total };
 	}
 
 	/**

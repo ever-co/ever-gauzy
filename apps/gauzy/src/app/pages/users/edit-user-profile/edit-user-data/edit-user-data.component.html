@@ -1,7 +1,7 @@
-<ng-container *ngIf="!!user">
-	<ngx-profile
-		[selectedUser]="user"
-		[allowRoleChange]="true"
-		(userSubmitted)="goBack()"
-	></ngx-profile>
-</ng-container>
+@if (!!user) {
+  <ngx-profile
+    [selectedUser]="user"
+    [allowRoleChange]="true"
+    (userSubmitted)="goBack()"
+  ></ngx-profile>
+}

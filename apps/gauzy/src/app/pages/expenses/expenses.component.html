@@ -1,127 +1,126 @@
 <nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
-	<nb-card-header class="card-custom-header">
-		<div class="card-header-title">
-			<h4>
-				<ngx-header-title>
-					{{ 'EXPENSES_PAGE.EXPENSES' | translate }}
-				</ngx-header-title>
-			</h4>
-      		<button
-				nbButton
-				status="basic"
-				class="action primary soft"
-				(click)="manageCategories()"
-        		size="small"
-			>
-				{{ 'BUTTONS.MANAGE_CATEGORIES' | translate }}
-			</button>
-		</div>
-		<div class="gauzy-button-container">
-			<ngx-gauzy-button-action
-				[isDisable]="disableButton"
-				[buttonTemplate]="actionButtons"
-				[componentName]="viewComponentName"
-				[buttonTemplateVisible]="visibleButton"
-			></ngx-gauzy-button-action>
-		</div>
-	</nb-card-header>
-	<nb-card-body>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
-			<div class="table-scroll-container">
-				<angular2-smart-table
-					style="cursor: pointer"
-					[settings]="smartTableSettings"
-					[source]="smartTableSource"
-					(userRowSelect)="selectExpense($event)"
-				></angular2-smart-table>
-			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination
-						[source]="smartTableSource"
-					></ngx-pagination>
-				</ng-container>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				[settings]="smartTableSettings"
-				[source]="expenses"
-				(onSelectedItem)="selectExpense($event)"
-				(scroll)="onScroll()"
-        	></ga-card-grid>
-		</ng-template>
-	</nb-card-body>
+  [nbSpinner]="loading"
+  nbSpinnerStatus="primary"
+  nbSpinnerSize="large"
+  >
+  <nb-card-header class="card-custom-header">
+    <div class="card-header-title">
+      <h4>
+        <ngx-header-title>
+          {{ 'EXPENSES_PAGE.EXPENSES' | translate }}
+        </ngx-header-title>
+      </h4>
+      <button
+        nbButton
+        status="basic"
+        class="action primary soft"
+        (click)="manageCategories()"
+        size="small"
+        >
+        {{ 'BUTTONS.MANAGE_CATEGORIES' | translate }}
+      </button>
+    </div>
+    <div class="gauzy-button-container">
+      <ngx-gauzy-button-action
+        [isDisable]="disableButton"
+        [buttonTemplate]="actionButtons"
+        [componentName]="viewComponentName"
+        [buttonTemplateVisible]="visibleButton"
+      ></ngx-gauzy-button-action>
+    </div>
+  </nb-card-header>
+  <nb-card-body>
+    @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+      <div class="table-scroll-container">
+        <angular2-smart-table
+          style="cursor: pointer"
+          [settings]="smartTableSettings"
+          [source]="smartTableSource"
+          (userRowSelect)="selectExpense($event)"
+        ></angular2-smart-table>
+      </div>
+      <div class="pagination-container">
+        @if (smartTableSource) {
+          <ngx-pagination
+            [source]="smartTableSource"
+          ></ngx-pagination>
+        }
+      </div>
+    } @else {
+      <ga-card-grid
+        [totalItems]="pagination?.totalItems"
+        [settings]="smartTableSettings"
+        [source]="expenses"
+        (onSelectedItem)="selectExpense($event)"
+        (scroll)="onScroll()"
+      ></ga-card-grid>
+    }
+  </nb-card-body>
 </nb-card>
 <ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
-	<div class="btn-group actions">
-		<ng-template ngxPermissionsOnly="ORG_EXPENSES_EDIT">
-			<button
-				nbButton
-				status="basic"
-				class="action secondary"
-				[disabled]="disableButton"
-				size="small"
-				underConstruction
-			>
-				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-				{{ 'BUTTONS.VIEW' | translate }}
-			</button>
-			<button
-				nbButton
-				status="basic"
-				class="action primary"
-				[disabled]="!selectedItem && disableButton"
-				(click)="openEditExpenseDialog(selectedItem)"
-				size="small"
-			>
-				<nb-icon icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				nbButton
-				status="basic"
-				class="action primary"
-				[disabled]="!selectedItem && disableButton"
-				(click)="openDuplicateExpenseDialog(selectedItem)"
-				size="small"
-			>
-				<nb-icon icon="copy-outline"></nb-icon>
-				{{ 'BUTTONS.DUPLICATE' | translate }}
-			</button>
-			<button
-				nbButton
-				status="basic"
-				class="action"
-				[disabled]="!selectedItem && disableButton"
-				(click)="deleteExpense(selectedItem)"
-				size="small"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-			</button>
-		</ng-template>
-	</div>
+  #actionButtons
+  let-buttonSize="buttonSize"
+  let-selectedItem="selectedItem"
+  >
+  <div class="btn-group actions">
+    <ng-template ngxPermissionsOnly="ORG_EXPENSES_EDIT">
+      <button
+        nbButton
+        status="basic"
+        class="action secondary"
+        [disabled]="disableButton"
+        size="small"
+        underConstruction
+        >
+        <nb-icon icon="eye-outline" pack="eva"></nb-icon>
+        {{ 'BUTTONS.VIEW' | translate }}
+      </button>
+      <button
+        nbButton
+        status="basic"
+        class="action primary"
+        [disabled]="!selectedItem && disableButton"
+        (click)="openEditExpenseDialog(selectedItem)"
+        size="small"
+        >
+        <nb-icon icon="edit-outline"></nb-icon>
+        {{ 'BUTTONS.EDIT' | translate }}
+      </button>
+      <button
+        nbButton
+        status="basic"
+        class="action primary"
+        [disabled]="!selectedItem && disableButton"
+        (click)="openDuplicateExpenseDialog(selectedItem)"
+        size="small"
+        >
+        <nb-icon icon="copy-outline"></nb-icon>
+        {{ 'BUTTONS.DUPLICATE' | translate }}
+      </button>
+      <button
+        nbButton
+        status="basic"
+        class="action"
+        [disabled]="!selectedItem && disableButton"
+        (click)="deleteExpense(selectedItem)"
+        size="small"
+        [nbTooltip]="'BUTTONS.DELETE' | translate"
+        >
+        <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+      </button>
+    </ng-template>
+  </div>
 </ng-template>
 <ng-template #visibleButton>
-	<ng-template ngxPermissionsOnly="ORG_EXPENSES_EDIT">
-		<button
-			nbButton
-			status="success"
-			size="small"
-      		(click)="openAddExpenseDialog()"
-		>
-			<nb-icon icon="plus-outline"> </nb-icon>
-      		{{ 'BUTTONS.ADD' | translate }}
-		</button>
-	</ng-template>
+  <ng-template ngxPermissionsOnly="ORG_EXPENSES_EDIT">
+    <button
+      nbButton
+      status="success"
+      size="small"
+      (click)="openAddExpenseDialog()"
+      >
+      <nb-icon icon="plus-outline"> </nb-icon>
+      {{ 'BUTTONS.ADD' | translate }}
+    </button>
+  </ng-template>
 </ng-template>

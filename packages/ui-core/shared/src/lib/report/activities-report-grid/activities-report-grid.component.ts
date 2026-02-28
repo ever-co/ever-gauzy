@@ -9,7 +9,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick } from 'underscore';
 import { filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivityService, DateRangePickerBuilderService, Store } from '@gauzy/ui-core/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
@@ -17,10 +17,10 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-activities-report-grid',
-    templateUrl: './activities-report-grid.component.html',
-    styleUrls: ['./activities-report-grid.component.scss'],
-    standalone: false
+	selector: 'ga-activities-report-grid',
+	templateUrl: './activities-report-grid.component.html',
+	styleUrls: ['./activities-report-grid.component.scss'],
+	standalone: false
 })
 export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	dailyData: IReportDayData[] = [];
@@ -69,6 +69,14 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
+	}
+
+	getDateRowProjects(dateRow: any): any[] {
+		return dateRow?.projects || [];
+	}
+
+	getDateRowEmployees(dateRow: any): any[] {
+		return dateRow?.employees || [];
 	}
 
 	/**

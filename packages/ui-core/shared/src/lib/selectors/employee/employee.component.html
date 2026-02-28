@@ -1,29 +1,33 @@
 <ng-select
-	#select
-	[addTag]="(hasEditEmployee$ | async) && addTag ? createNew : null"
-	[clearable]="isClearable()"
-	[disabled]="disabled"
-	[(items)]="employees"
-	(change)="selectEmployee($event); select.blur()"
-	(clear)="select.blur()"
-	[(ngModel)]="selectedEmployee"
-	[placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_EMPLOYEES' | translate"
-	[addTagText]="'FORM.PLACEHOLDERS.ADD_EMPLOYEE' | translate"
-	[searchFn]="searchEmployee"
-	bindName="firstName"
-	appendTo="body"
-	class="employee"
->
-	<ng-template ng-option-tmp let-item="item" let-index="index">
-		<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20" height="20" />
-		{{ getShortenedName(item.firstName, item.lastName, 42) }}
-	</ng-template>
-	<ng-template ng-label-tmp let-item="item">
-		<div class="selector-template">
-			<img *ngIf="item.imageUrl" height="20" width="20" [src]="item.imageUrl" />
-			<span>
-				{{ getShortenedName(item.firstName, item.lastName) }}
-			</span>
-		</div>
-	</ng-template>
+  #select
+  [addTag]="(hasEditEmployee$ | async) && addTag ? createNew : null"
+  [clearable]="isClearable()"
+  [disabled]="disabled"
+  [(items)]="employees"
+  (change)="selectEmployee($event); select.blur()"
+  (clear)="select.blur()"
+  [(ngModel)]="selectedEmployee"
+  [placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_EMPLOYEES' | translate"
+  [addTagText]="'FORM.PLACEHOLDERS.ADD_EMPLOYEE' | translate"
+  [searchFn]="searchEmployee"
+  bindName="firstName"
+  appendTo="body"
+  class="employee"
+  >
+  <ng-template ng-option-tmp let-item="item" let-index="index">
+    @if (item.imageUrl) {
+      <img [src]="item.imageUrl" width="20" height="20" />
+    }
+    {{ getShortenedName(item.firstName, item.lastName, 42) }}
+  </ng-template>
+  <ng-template ng-label-tmp let-item="item">
+    <div class="selector-template">
+      @if (item.imageUrl) {
+        <img height="20" width="20" [src]="item.imageUrl" />
+      }
+      <span>
+        {{ getShortenedName(item.firstName, item.lastName) }}
+      </span>
+    </div>
+  </ng-template>
 </ng-select>

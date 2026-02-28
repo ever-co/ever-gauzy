@@ -8,7 +8,8 @@
 			<div class="headings-inner">
 				<h2 id="title" class="title">{{ 'LOGIN_PAGE.TITLE' | translate }}</h2>
 				<p class="sub-title">{{ 'LOGIN_PAGE.SUB_TITLE' | translate }}</p>
-				<nb-accordion *ngIf="!electronService?.isElectron && isDemo" class="demo-credentials-select">
+				@if (!electronService?.isElectron && isDemo) {
+				<nb-accordion class="demo-credentials-select">
 					<nb-accordion-item class="demo-credentials-select-item">
 						<nb-accordion-item-header class="demo-credentials-header">
 							<div class="demo-credentials-head-text">
@@ -36,24 +37,32 @@
 						</nb-accordion-item-body>
 					</nb-accordion-item>
 				</nb-accordion>
+				}
 			</div>
 		</div>
-		<nb-alert *ngIf="showMessages.error && errors?.length && !submitted" outline="danger" role="alert">
+		@if (showMessages.error && errors?.length && !submitted) {
+		<nb-alert outline="danger" role="alert">
 			<p class="alert-title"><b>Oh snap!</b></p>
 			<ul class="alert-message-list">
-				<li *ngFor="let error of errors" class="alert-message">
+				@for (error of errors; track $index) {
+				<li class="alert-message">
 					{{ error }}
 				</li>
+				}
 			</ul>
 		</nb-alert>
-		<nb-alert *ngIf="showMessages.success && messages?.length && !submitted" outline="success" role="alert">
+		} @if (showMessages.success && messages?.length && !submitted) {
+		<nb-alert outline="success" role="alert">
 			<p class="alert-title"><b>Hooray!</b></p>
 			<ul class="alert-message-list">
-				<li *ngFor="let message of messages" class="alert-message">
+				@for (message of messages; track $index) {
+				<li class="alert-message">
 					{{ message }}
 				</li>
+				}
 			</ul>
 		</nb-alert>
+		}
 		<div class="hr-div-strong"></div>
 		<form (ngSubmit)="login()" #form="ngForm" aria-labelledby="title">
 			<div class="form-control-group">
@@ -77,21 +86,24 @@
 					[attr.aria-invalid]="email.invalid && email.touched ? true : null"
 					autocomplete="off"
 				/>
-				<ng-container *ngIf="email.invalid && email.touched">
-					<p class="caption status-danger" *ngIf="email.errors?.required">
+				@if (email.invalid && email.touched) {
+				<ng-container>
+					@if (email.errors?.required) {
+					<p class="caption status-danger">
 						{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
 					</p>
-					<p class="caption status-danger" *ngIf="email.errors?.pattern">
+					} @if (email.errors?.pattern) {
+					<p class="caption status-danger">
 						{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REAL_REQUIRED' | translate }}
 					</p>
+					}
 				</ng-container>
+				}
 			</div>
 			<div class="form-control-group">
-				<span class="label-with-link">
-					<label class="label" for="input-password">
-						{{ 'LOGIN_PAGE.LABELS.PASSWORD' | translate }}
-					</label>
-				</span>
+				<label class="label" for="input-password">
+					{{ 'LOGIN_PAGE.LABELS.PASSWORD' | translate }}
+				</label>
 				<nb-form-field>
 					<input
 						nbInput
@@ -100,6 +112,7 @@
 						#password="ngModel"
 						[pattern]="passwordNoSpaceEdges"
 						name="password"
+						noSpaceEdges
 						[type]="showPassword ? 'text' : 'password'"
 						id="input-password"
 						[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.PASSWORD' | translate"
@@ -126,49 +139,63 @@
 						></nb-icon>
 					</a>
 				</nb-form-field>
-				<ng-container *ngIf="password.invalid && password.touched">
-					<p class="caption status-danger" *ngIf="password.errors?.pattern">
-						{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_NO_SPACE_EDGES' | translate }}
-					</p>
-					<p class="caption status-danger" *ngIf="password.errors?.required">
-						{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
-					</p>
-					<p class="caption status-danger" *ngIf="password.errors?.minlength || password.errors?.maxlength">
-						{{
-							'LOGIN_PAGE.VALIDATION.PASSWORD_SHOULD_CONTAIN'
-								| translate
-									: {
-											minLength: getConfigValue('forms.validation.password.minLength'),
-											maxLength: getConfigValue('forms.validation.password.maxLength')
-									  }
-						}}
-					</p>
-				</ng-container>
+				<div class="error-container">
+					@if (password.invalid && password.touched) {
+					<ng-container>
+						@if (password.errors?.pattern) {
+						<p class="caption status-danger">
+							{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_NO_SPACE_EDGES' | translate }}
+						</p>
+						} @if (password.errors?.required) {
+						<p class="caption status-danger">
+							{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
+						</p>
+						} @if (password.errors?.minlength || password.errors?.maxlength) {
+						<p class="caption status-danger">
+							{{
+								'LOGIN_PAGE.VALIDATION.PASSWORD_SHOULD_CONTAIN'
+									| translate
+										: {
+												minLength: getConfigValue('forms.validation.password.minLength'),
+												maxLength: getConfigValue('forms.validation.password.maxLength')
+										  }
+							}}
+						</p>
+						}
+					</ng-container>
+					}
+				</div>
 			</div>
-			<div class="form-control-group accept-group">
-				<nb-checkbox name="rememberMe" [(ngModel)]="user.rememberMe" class="remember-me" *ngIf="rememberMe">{{
-					'LOGIN_PAGE.REMEMBER_ME_TITLE' | translate
-				}}</nb-checkbox>
-			</div>
-			<div class="submit-btn-wrapper">
-				<a class="forgot-password caption-2 forgot-password-big" routerLink="/auth/request-password">
-					{{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
-				</a>
-				<div class="submit-inner-wrapper">
-					<a class="forgot-password caption-2 forgot-password-small" routerLink="/auth/request-password">
+
+			<div class="options-row">
+				<div class="accept-group">
+					@if (rememberMe) {
+					<nb-checkbox name="rememberMe" [(ngModel)]="user.rememberMe" class="remember-me">
+						{{ 'LOGIN_PAGE.REMEMBER_ME_TITLE' | translate }}
+					</nb-checkbox>
+					}
+				</div>
+				<div class="forgot-link-container">
+					<a class="forgot-password-link caption-2" routerLink="/auth/request-password" tabindex="-1">
 						{{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
 					</a>
-					<button
-						type="submit"
-						nbButton
-						size="small"
-						class="submit-btn"
-						[disabled]="submitted || !form.valid"
-						[class.btn-pulse]="submitted"
-					>
-						{{ 'BUTTONS.LOGIN' | translate }}
-					</button>
 				</div>
+			</div>
+
+			<div class="submit-btn-wrapper">
+				<button
+					type="submit"
+					nbButton
+					fullWidth
+					status="primary"
+					size="large"
+					class="submit-btn"
+					[disabled]="submitted || !form.valid"
+					[class.btn-pulse]="submitted"
+					[class.btn-error]="errors?.length > 0 && !submitted"
+				>
+					{{ 'BUTTONS.LOGIN' | translate }}
+				</button>
 			</div>
 			<div class="login-magic-wrapper">
 				<a routerLink="/auth/login-magic">
@@ -196,7 +223,8 @@
 		</section>
 	</div>
 	<div class="features-wrapper">
-		<ng-container *ngIf="!electronService?.isElectron && isDemo; else whatsNew">
+		@if (!electronService?.isElectron && isDemo) {
+		<ng-container>
 			<div class="demo-credentials-buttons">
 				<nb-card class="features-card">
 					<nb-card-body class="card-body">
@@ -236,10 +264,12 @@
 				</nb-card>
 			</div>
 		</ng-container>
+		} @else {
 		<ng-template #whatsNew>
 			<div>
 				<ngx-whats-new></ngx-whats-new>
 			</div>
 		</ng-template>
+		}
 	</div>
 </section>

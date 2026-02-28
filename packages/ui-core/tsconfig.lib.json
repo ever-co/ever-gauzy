@@ -4,7 +4,15 @@
 		"outDir": "../../dist/out-tsc",
 		"declaration": true,
 		"declarationMap": true,
-		"inlineSources": true
+		"inlineSources": true,
+		"incremental": true,
+		"baseUrl": "../..",
+		"paths": {
+			"@gauzy/ui-core/*": ["./packages/ui-core/*/src/index.ts"],
+			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
+			"@gauzy/contracts": ["./packages/contracts/src/index.ts"],
+			"@gauzy/constants": ["./packages/constants/src/index.ts"]
+		}
 	},
 	"exclude": ["src/**/*.spec.ts", "src/test-setup.ts", "jest.config.ts", "src/**/*.test.ts"],
 	"include": [
@@ -14,6 +22,7 @@
 		"i18n/**/*.ts",
 		"shared/**/*.ts",
 		"theme/**/*.ts",
+		"icons/**/*.ts",
 		"typings.d.ts"
 	]
 }

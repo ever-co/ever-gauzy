@@ -1,197 +1,205 @@
 <ng-container>
-	<nb-card>
-		<nb-card-header class="d-flex justify-content-between align-items-center">
-			<ngx-back-navigation></ngx-back-navigation>
-			<ngx-favorite-toggle
-				*ngIf="selectedContact"
-				[entityType]="'OrganizationContact'"
-				[entityId]="selectedContact.id"
-				[entityName]="selectedContact.name"
-				size="small"
-				status="basic"
-				spacing="detail"
-				[showLabel]="false"
-				(favoriteToggled)="onFavoriteToggled($event)"
-			></ngx-favorite-toggle>
-		</nb-card-header>
-		<nb-card-body>
-			<div class="row">
-				<div class="col-3">
-					<div class="profile-sidebar">
-						<div class="profile-userpic">
-							<img class="rounded-circle" type="user" [src]="selectedContact?.imageUrl" />
-							<div class="profile-usertitle">
-								<div class="profile-user-title-name">
-									{{ selectedContact?.name }}
-								</div>
-								<div class="profile-usertitle-tags">
-									<ga-only-tags
-										*ngIf="selectedContact?.tags?.length"
-										[rowData]="selectedContact"
-									></ga-only-tags>
-								</div>
-							</div>
-						</div>
-						<nb-accordion>
-							<nb-accordion-item class="about-accordion-item" [expanded]="true">
-								<nb-accordion-item-header>
-									{{ 'MENU.ABOUT' | translate }}
-								</nb-accordion-item-header>
-								<nb-accordion-item-body>
-									<label class="label">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate }}
-									</label>
-									<div class="text-caption border-bottom caption">
-										<gauzy-email
+  <nb-card>
+    <nb-card-header class="d-flex justify-content-between align-items-center">
+      <ngx-back-navigation></ngx-back-navigation>
+      @if (selectedContact) {
+        <ngx-favorite-toggle
+          [entityType]="'OrganizationContact'"
+          [entityId]="selectedContact.id"
+          [entityName]="selectedContact.name"
+          size="small"
+          status="basic"
+          spacing="detail"
+          [showLabel]="false"
+          (favoriteToggled)="onFavoriteToggled($event)"
+        ></ngx-favorite-toggle>
+      }
+    </nb-card-header>
+    <nb-card-body>
+      <div class="row">
+        <div class="col-3">
+          <div class="profile-sidebar">
+            <div class="profile-userpic">
+              <img class="rounded-circle" type="user" [src]="selectedContact?.imageUrl" />
+              <div class="profile-usertitle">
+                <div class="profile-user-title-name">
+                  {{ selectedContact?.name }}
+                </div>
+                <div class="profile-usertitle-tags">
+                  @if (selectedContact?.tags?.length) {
+                    <ga-only-tags
+                      [rowData]="selectedContact"
+                    ></ga-only-tags>
+                  }
+                </div>
+              </div>
+            </div>
+            <nb-accordion>
+              <nb-accordion-item class="about-accordion-item" [expanded]="true">
+                <nb-accordion-item-header>
+                  {{ 'MENU.ABOUT' | translate }}
+                </nb-accordion-item-header>
+                <nb-accordion-item-body>
+                  <label class="label">
+                    {{ 'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate }}
+                  </label>
+                  <div class="text-caption border-bottom caption">
+                    <gauzy-email
 											[rowData]="{
 												email: selectedContact?.primaryEmail
 											}"
-										></gauzy-email>
-									</div>
+                    ></gauzy-email>
+                  </div>
 
-									<label class="label mt-3">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}
-									</label>
-									<div class="text-caption border-bottom caption">
-										<ga-phone-url [rowData]="selectedContact"></ga-phone-url>
-									</div>
+                  <label class="label mt-3">
+                    {{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}
+                  </label>
+                  <div class="text-caption border-bottom caption">
+                    <ga-phone-url [rowData]="selectedContact"></ga-phone-url>
+                  </div>
 
-									<label class="label mt-3">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}
-									</label>
-									<div class="text-caption border-bottom caption">
-										{{ selectedContact?.contact?.fax }}
-									</div>
+                  <label class="label mt-3">
+                    {{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}
+                  </label>
+                  <div class="text-caption border-bottom caption">
+                    {{ selectedContact?.contact?.fax }}
+                  </div>
 
-									<label class="label mt-3">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION' | translate }}
-									</label>
-									<div class="text-caption border-bottom caption">
-										{{ selectedContact?.contact?.fiscalInformation }}
-									</div>
+                  <label class="label mt-3">
+                    {{ 'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION' | translate }}
+                  </label>
+                  <div class="text-caption border-bottom caption">
+                    {{ selectedContact?.contact?.fiscalInformation }}
+                  </div>
 
-									<label class="label mt-3">
-										{{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}
-									</label>
-									<div class="text-caption border-bottom caption">
-										<gauzy-external-link [rowData]="selectedContact?.contact"></gauzy-external-link>
-									</div>
+                  <label class="label mt-3">
+                    {{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}
+                  </label>
+                  <div class="text-caption border-bottom caption">
+                    <gauzy-external-link [rowData]="selectedContact?.contact"></gauzy-external-link>
+                  </div>
 
-									<label class="label mt-3">
-										{{ 'MENU.TAGS' | translate }}
-									</label>
-									<div class="text-caption caption">
-										<ga-only-tags
-											*ngIf="selectedContact?.tags?.length"
-											[rowData]="selectedContact"
-										></ga-only-tags>
-									</div>
-								</nb-accordion-item-body>
-							</nb-accordion-item>
-							<nb-accordion-item>
-								<nb-accordion-item-header>
-									{{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}
-								</nb-accordion-item-header>
-								<nb-accordion-item-body>
-									<ngx-project
-										*ngIf="selectedContact?.projects?.length"
-										[rowData]="selectedContact"
-									></ngx-project>
-								</nb-accordion-item-body>
-							</nb-accordion-item>
-							<nb-accordion-item>
-								<nb-accordion-item-header>
-									{{ 'CONTACTS_PAGE.BUDGET' | translate }}
-								</nb-accordion-item-header>
-								<nb-accordion-item-body>
-									<label class="label mt-3">
-										{{ 'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate }}
-									</label>
-									<div class="text-caption caption">
-										{{ selectedContact?.budgetType }}
-									</div>
+                  <label class="label mt-3">
+                    {{ 'MENU.TAGS' | translate }}
+                  </label>
+                  <div class="text-caption caption">
+                    @if (selectedContact?.tags?.length) {
+                      <ga-only-tags
+                        [rowData]="selectedContact"
+                      ></ga-only-tags>
+                    }
+                  </div>
+                </nb-accordion-item-body>
+              </nb-accordion-item>
+              <nb-accordion-item>
+                <nb-accordion-item-header>
+                  {{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}
+                </nb-accordion-item-header>
+                <nb-accordion-item-body>
+                  @if (selectedContact?.projects?.length) {
+                    <ngx-project
+                      [rowData]="selectedContact"
+                    ></ngx-project>
+                  }
+                </nb-accordion-item-body>
+              </nb-accordion-item>
+              <nb-accordion-item>
+                <nb-accordion-item-header>
+                  {{ 'CONTACTS_PAGE.BUDGET' | translate }}
+                </nb-accordion-item-header>
+                <nb-accordion-item-body>
+                  <label class="label mt-3">
+                    {{ 'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate }}
+                  </label>
+                  <div class="text-caption caption">
+                    {{ selectedContact?.budgetType }}
+                  </div>
 
-									<label class="label mt-3">
-										{{ 'FORM.PLACEHOLDERS.HOURS' | translate }}
-									</label>
-									<div class="text-caption caption">
-										{{ selectedContact?.budget }}
-									</div>
-								</nb-accordion-item-body>
-							</nb-accordion-item>
-						</nb-accordion>
-					</div>
-				</div>
-				<div class="col-9">
-					<nb-tabset>
-						<nb-tab [tabTitle]="'CONTACTS_PAGE.ADDRESS' | translate">
-							<div class="row map">
-								<div class="col-md-12">
-									<div class="address-details d-flex flex-column">
-										<label class="label">
-											{{ 'CONTACTS_PAGE.COUNTRY' | translate }}
-										</label>
-										<div class="text-caption caption mb-3">
-											{{ selectedContact?.contact?.country }}
-										</div>
-										<label class="label">{{ 'CONTACTS_PAGE.CITY' | translate }}</label>
-										<div class="text-caption caption mb-3">
-											{{ selectedContact?.contact?.city }}
-										</div>
-										<label class="label">
-											{{ 'CONTACTS_PAGE.ADDRESS' | translate }}
-										</label>
-										<div class="text-caption caption mb-3">
-											{{ selectedContact?.contact?.address }}
-										</div>
-										<label class="label">
-											{{ 'CONTACTS_PAGE.ADDRESS_2' | translate }}
-										</label>
-										<div class="text-caption caption mb-3">
-											{{ selectedContact?.contact?.address2 }}
-										</div>
-									</div>
-									<ga-leaflet-map #leafletTemplate> </ga-leaflet-map>
-								</div>
-							</div>
-						</nb-tab>
-						<nb-tab [tabTitle]="'CONTACTS_PAGE.MEMBERS' | translate">
-							<div class="row">
-								<div class="col-12">
-									<div class="form-group">
-										<ga-employee-multi-select
-											[selectedEmployeeIds]="selectedEmployeeIds"
-											[allEmployees]="employees"
-											(selectedChange)="onMembersSelected($event)"
-											class="select"
-											[multiple]="true"
-											[label]="false"
-										>
-										</ga-employee-multi-select>
-									</div>
-								</div>
-							</div>
-							<div class="row">
-								<div class="col-12">
-									<div *ngIf="selectedMembers?.length > 0">
-										<nb-list>
-											<nb-list-item *ngFor="let member of selectedMembers" class="p-1">
-												<ngx-avatar
-													class="report-table"
-													[name]="member?.user?.name"
-													[src]="member.user?.imageUrl"
-													[id]="member?.id"
-													[employee]="member"
-												></ngx-avatar>
-											</nb-list-item>
-										</nb-list>
-									</div>
-								</div>
-							</div>
-						</nb-tab>
-					</nb-tabset>
-				</div>
-			</div>
-		</nb-card-body>
-	</nb-card>
+                  <label class="label mt-3">
+                    {{ 'FORM.PLACEHOLDERS.HOURS' | translate }}
+                  </label>
+                  <div class="text-caption caption">
+                    {{ selectedContact?.budget }}
+                  </div>
+                </nb-accordion-item-body>
+              </nb-accordion-item>
+            </nb-accordion>
+          </div>
+        </div>
+        <div class="col-9">
+          <nb-tabset>
+            <nb-tab [tabTitle]="'CONTACTS_PAGE.ADDRESS' | translate">
+              <div class="row map">
+                <div class="col-md-12">
+                  <div class="address-details d-flex flex-column">
+                    <label class="label">
+                      {{ 'CONTACTS_PAGE.COUNTRY' | translate }}
+                    </label>
+                    <div class="text-caption caption mb-3">
+                      {{ selectedContact?.contact?.country }}
+                    </div>
+                    <label class="label">{{ 'CONTACTS_PAGE.CITY' | translate }}</label>
+                    <div class="text-caption caption mb-3">
+                      {{ selectedContact?.contact?.city }}
+                    </div>
+                    <label class="label">
+                      {{ 'CONTACTS_PAGE.ADDRESS' | translate }}
+                    </label>
+                    <div class="text-caption caption mb-3">
+                      {{ selectedContact?.contact?.address }}
+                    </div>
+                    <label class="label">
+                      {{ 'CONTACTS_PAGE.ADDRESS_2' | translate }}
+                    </label>
+                    <div class="text-caption caption mb-3">
+                      {{ selectedContact?.contact?.address2 }}
+                    </div>
+                  </div>
+                  <ga-leaflet-map #leafletTemplate> </ga-leaflet-map>
+                </div>
+              </div>
+            </nb-tab>
+            <nb-tab [tabTitle]="'CONTACTS_PAGE.MEMBERS' | translate">
+              <div class="row">
+                <div class="col-12">
+                  <div class="form-group">
+                    <ga-employee-multi-select
+                      [selectedEmployeeIds]="selectedEmployeeIds"
+                      [allEmployees]="employees"
+                      (selectedChange)="onMembersSelected($event)"
+                      class="select"
+                      [multiple]="true"
+                      [label]="false"
+                      >
+                    </ga-employee-multi-select>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  @if (selectedMembers?.length > 0) {
+                    <div>
+                      <nb-list>
+                        @for (member of selectedMembers; track member) {
+                          <nb-list-item class="p-1">
+                            <ngx-avatar
+                              class="report-table"
+                              [name]="member?.user?.name"
+                              [src]="member.user?.imageUrl"
+                              [id]="member?.id"
+                              [employee]="member"
+                            ></ngx-avatar>
+                          </nb-list-item>
+                        }
+                      </nb-list>
+                    </div>
+                  }
+                </div>
+              </div>
+            </nb-tab>
+          </nb-tabset>
+        </div>
+      </div>
+    </nb-card-body>
+  </nb-card>
 </ng-container>

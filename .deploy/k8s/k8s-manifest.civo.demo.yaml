@@ -39,8 +39,17 @@ spec:
             labels:
                 app: gauzy-demo-api
         spec:
+            securityContext:
+                seccompProfile:
+                    type: RuntimeDefault
             containers:
                 - name: gauzy-demo-api
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      runAsNonRoot: true
+                      capabilities:
+                          drop: ["ALL"]
                   image: ghcr.io/ever-co/gauzy-api-demo:latest
                   env:
                       - name: API_HOST
@@ -73,6 +82,8 @@ spec:
                         value: 'refreshSecretKey'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '86400'
+                      - name: ALLOWED_ORIGINS
+                        value: '$ALLOWED_ORIGINS'
                       - name: CLOUD_PROVIDER
                         value: '$CLOUD_PROVIDER'
                       - name: OTEL_ENABLED
@@ -101,8 +112,17 @@ spec:
             labels:
                 app: gauzy-demo-webapp
         spec:
+            securityContext:
+                seccompProfile:
+                    type: RuntimeDefault
             containers:
                 - name: gauzy-demo-webapp
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      runAsNonRoot: true
+                      capabilities:
+                          drop: ["ALL"]
                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
                   env:
                       - name: DEMO

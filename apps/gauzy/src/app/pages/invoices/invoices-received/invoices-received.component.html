@@ -1,128 +1,132 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="card-custom-header">
-		<div class="col-auto">
-			<h4>
-				<ngx-header-title [allowEmployee]="false">
-					{{ (isEstimate ? 'INVOICES_PAGE.RECEIVED_ESTIMATES' : 'INVOICES_PAGE.RECEIVED_INVOICES') | translate }}
-				</ngx-header-title>
-			</h4>
-			<ngx-date-range-title [format]="'dddd, LL'"></ngx-date-range-title>
-		</div>
-		<div class="gauzy-button-container">
-			<ngx-gauzy-button-action
-				[buttonTemplateVisible]="visibleButton"
-				[isDisable]="disableButton"
-				[buttonTemplate]="actionButtons"
-				[componentName]="viewComponentName"
-			></ngx-gauzy-button-action>
-		</div>
-	</nb-card-header>
-	<nb-card-body>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
-			<div class="table-scroll-container">
-				<angular2-smart-table
-					style="cursor: pointer"
-					[settings]="settingsSmartTable"
-					[source]="smartTableSource"
-					(userRowSelect)="selectInvoice($event)"
-				></angular2-smart-table>
-			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-				</ng-container>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				[settings]="settingsSmartTable"
-				[source]="invoices"
-				(onSelectedItem)="selectInvoice($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
-		</ng-template>
-	</nb-card-body>
+  <nb-card-header class="card-custom-header">
+    <div class="col-auto">
+      <h4>
+        <ngx-header-title [allowEmployee]="false">
+          {{ (isEstimate ? 'INVOICES_PAGE.RECEIVED_ESTIMATES' : 'INVOICES_PAGE.RECEIVED_INVOICES') | translate }}
+        </ngx-header-title>
+      </h4>
+      <ngx-date-range-title [format]="'dddd, LL'"></ngx-date-range-title>
+    </div>
+    <div class="gauzy-button-container">
+      <ngx-gauzy-button-action
+        [buttonTemplateVisible]="visibleButton"
+        [isDisable]="disableButton"
+        [buttonTemplate]="actionButtons"
+        [componentName]="viewComponentName"
+      ></ngx-gauzy-button-action>
+    </div>
+  </nb-card-header>
+  <nb-card-body>
+    @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+      <div class="table-scroll-container">
+        <angular2-smart-table
+          style="cursor: pointer"
+          [settings]="settingsSmartTable"
+          [source]="smartTableSource"
+          (userRowSelect)="selectInvoice($event)"
+        ></angular2-smart-table>
+      </div>
+      <div class="pagination-container">
+        @if (smartTableSource) {
+          <ngx-pagination [source]="smartTableSource"></ngx-pagination>
+        }
+      </div>
+    } @else {
+      <ga-card-grid
+        [totalItems]="pagination?.totalItems"
+        [settings]="settingsSmartTable"
+        [source]="invoices"
+        (onSelectedItem)="selectInvoice($event)"
+        (scroll)="onScroll()"
+      ></ga-card-grid>
+    }
+  </nb-card-body>
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
-	<div class="btn-group actions">
-		<button
-			nbButton
-			status="basic"
-			class="action secondary"
-			(click)="view(selectedItem)"
-			[disabled]="!selectedItem && disableButton"
-			size="small"
-			underConstruction
-		>
-			<nb-icon icon="eye-outline"></nb-icon>
-			{{ 'BUTTONS.VIEW' | translate }}
-		</button>
-		<button
-			*ngIf="!isEstimate"
-			nbButton
-			status="basic"
-			class="action primary"
-			[disabled]="disableButton"
-			size="small"
-			(click)="edit(selectedItem)"
-		>
-			<nb-icon icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			*ngIf="!isEstimate"
-			nbButton
-			status="basic"
-			class="action primary"
-			[disabled]="disableButton"
-			size="small"
-			(click)="download(selectedItem)"
-		>
-			<nb-icon icon="download-outline"></nb-icon>
-			{{ 'BUTTONS.DOWNLOAD' | translate }}
-		</button>
-		<button
-			*ngIf="!isEstimate"
-			nbButton
-			status="basic"
-			class="action secondary"
-			[disabled]="!selectedItem && disableButton"
-			(click)="payments()"
-			size="small"
-		>
-			<nb-icon icon="clipboard-outline"></nb-icon>
-			{{ 'BUTTONS.PAYMENTS' | translate }}
-		</button>
-		<button
-			*ngIf="isEstimate"
-			nbButton
-			status="basic"
-			class="action success"
-			size="small"
-			(click)="accept(selectedItem)"
-			[disabled]="!selectedItem && disableButton"
-		>
-			<nb-icon icon="checkmark-outline"></nb-icon>
-			{{ 'INVOICES_PAGE.ESTIMATES.ACCEPT' | translate }}
-		</button>
-		<button
-			*ngIf="isEstimate"
-			nbButton
-			status="basic"
-			class="action warning"
-			size="small"
-			(click)="reject(selectedItem)"
-			[disabled]="!selectedItem && disableButton"
-		>
-			<nb-icon icon="close-outline"></nb-icon>
-			{{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
-		</button>
-	</div>
+  <div class="btn-group actions">
+    <button
+      nbButton
+      status="basic"
+      class="action secondary"
+      (click)="view(selectedItem)"
+      [disabled]="!selectedItem && disableButton"
+      size="small"
+      underConstruction
+      >
+      <nb-icon icon="eye-outline"></nb-icon>
+      {{ 'BUTTONS.VIEW' | translate }}
+    </button>
+    @if (!isEstimate) {
+      <button
+        nbButton
+        status="basic"
+        class="action primary"
+        [disabled]="disableButton"
+        size="small"
+        (click)="edit(selectedItem)"
+        >
+        <nb-icon icon="edit-outline"></nb-icon>
+        {{ 'BUTTONS.EDIT' | translate }}
+      </button>
+    }
+    @if (!isEstimate) {
+      <button
+        nbButton
+        status="basic"
+        class="action primary"
+        [disabled]="disableButton"
+        size="small"
+        (click)="download(selectedItem)"
+        >
+        <nb-icon icon="download-outline"></nb-icon>
+        {{ 'BUTTONS.DOWNLOAD' | translate }}
+      </button>
+    }
+    @if (!isEstimate) {
+      <button
+        nbButton
+        status="basic"
+        class="action secondary"
+        [disabled]="!selectedItem && disableButton"
+        (click)="payments()"
+        size="small"
+        >
+        <nb-icon icon="clipboard-outline"></nb-icon>
+        {{ 'BUTTONS.PAYMENTS' | translate }}
+      </button>
+    }
+    @if (isEstimate) {
+      <button
+        nbButton
+        status="basic"
+        class="action success"
+        size="small"
+        (click)="accept(selectedItem)"
+        [disabled]="!selectedItem && disableButton"
+        >
+        <nb-icon icon="checkmark-outline"></nb-icon>
+        {{ 'INVOICES_PAGE.ESTIMATES.ACCEPT' | translate }}
+      </button>
+    }
+    @if (isEstimate) {
+      <button
+        nbButton
+        status="basic"
+        class="action warning"
+        size="small"
+        (click)="reject(selectedItem)"
+        [disabled]="!selectedItem && disableButton"
+        >
+        <nb-icon icon="close-outline"></nb-icon>
+        {{ 'INVOICES_PAGE.ESTIMATES.REJECT' | translate }}
+      </button>
+    }
+  </div>
 </ng-template>
 <ng-template #visibleButton>
-	<button nbButton status="success" size="small" underConstruction>
-		<nb-icon [icon]="isEstimate ? 'plus-outline' : 'credit-card-outline'"></nb-icon>
-		{{ (isEstimate ? 'BUTTONS.ADD' : 'BUTTONS.PAY') | translate }}
-	</button>
+  <button nbButton status="success" size="small" underConstruction>
+    <nb-icon [icon]="isEstimate ? 'plus-outline' : 'credit-card-outline'"></nb-icon>
+    {{ (isEstimate ? 'BUTTONS.ADD' : 'BUTTONS.PAY') | translate }}
+  </button>
 </ng-template>

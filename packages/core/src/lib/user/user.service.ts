@@ -27,7 +27,6 @@ import {
 	UserStats
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { ConfigService } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -45,7 +44,6 @@ export class UserService extends TenantAwareCrudService<User> {
 	constructor(
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
-		private readonly _configService: ConfigService,
 		private readonly _employeeService: EmployeeService,
 		private readonly _taskService: TaskService,
 		private readonly _passwordHashService: PasswordHashService
@@ -54,14 +52,17 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Counts the total number of records in the current repository/table.
-	 * This method utilizes the base `count` method from the parent class
-	 * to quickly return the total number of records without additional filters or conditions.
-	 *
-	 * @returns {Promise<number>} - A promise that resolves to the total count of records.
+	 * Returns the total number of users without any filters/options.
+	 * Uses the underlying ORM repositories directly.
 	 */
-	public async countFast(): Promise<number> {
-		return await super.count();
+	public async countAll(): Promise<number> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.count();
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmUserRepository.count();
+		}
 	}
 
 	/**
@@ -199,7 +200,14 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns
 	 */
 	async getUserByEmail(email: string): Promise<IUser | null> {
-		return await this.typeOrmRepository.findOneBy({ email });
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.findOne({ email } as any);
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.findOneBy({ email });
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
@@ -210,7 +218,14 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async getOAuthLoginEmail(email: string): Promise<IUser> {
 		try {
-			return await this.typeOrmRepository.findOneByOrFail({ email });
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					return await this.mikroOrmRepository.findOneOrFail({ email } as any);
+				case MultiORMEnum.TypeORM:
+					return await this.typeOrmRepository.findOneByOrFail({ email });
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -222,7 +237,14 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExistsEmail(email: string): Promise<boolean> {
-		return !!(await this.typeOrmRepository.findOneBy({ email }));
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return !!(await this.mikroOrmRepository.findOne({ email } as any));
+			case MultiORMEnum.TypeORM:
+				return !!(await this.typeOrmRepository.findOneBy({ email }));
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
@@ -231,7 +253,14 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExists(id: string): Promise<boolean> {
-		return !!(await this.typeOrmRepository.findOneBy({ id }));
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return !!(await this.mikroOrmRepository.findOne({ id } as any));
+			case MultiORMEnum.TypeORM:
+				return !!(await this.typeOrmRepository.findOneBy({ id }));
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
@@ -240,7 +269,14 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
-		return !!(await this.typeOrmRepository.findOneBy({ thirdPartyId }));
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return !!(await this.mikroOrmRepository.findOne({ thirdPartyId } as any));
+			case MultiORMEnum.TypeORM:
+				return !!(await this.typeOrmRepository.findOneBy({ thirdPartyId }));
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
@@ -283,7 +319,21 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<InsertResult>} - A promise that resolves to the insert result.
 	 */
 	async createOne(user: User): Promise<InsertResult> {
-		return await this.typeOrmRepository.insert(user);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const entity = this.mikroOrmRepository.create(user as any, { partial: true, managed: true });
+				await this.mikroOrmRepository.persistAndFlush(entity);
+				const result = new InsertResult();
+				result.identifiers = [{ id: entity.id }];
+				result.generatedMaps = [{ id: entity.id }];
+				result.raw = entity;
+				return result;
+			}
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.insert(user);
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
@@ -303,7 +353,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			user.hash = hash;
 
 			// Save the updated user entity
-			return await this.typeOrmRepository.save(user);
+			return await this.save(user);
 		} catch (error) {
 			// Throw a ForbiddenException if any error occurs
 			throw new ForbiddenException('Failed to update the password.');
@@ -384,20 +434,32 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	async getAdminUsers(tenantId: string): Promise<User[]> {
-		return await this.typeOrmRepository.find({
-			join: {
-				alias: 'user',
-				leftJoin: {
-					role: 'user.role'
-				}
-			},
-			where: {
-				tenantId,
-				role: {
-					name: In([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN])
-				}
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const items = await this.mikroOrmRepository.find(
+					{ tenantId, role: { name: { $in: [RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN] } } } as any,
+					{ populate: ['role'] }
+				);
+				return items.map((entity) => this.serialize(entity)) as User[];
 			}
-		});
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.find({
+					join: {
+						alias: 'user',
+						leftJoin: {
+							role: 'user.role'
+						}
+					},
+					where: {
+						tenantId,
+						role: {
+							name: In([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN])
+						}
+					}
+				});
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
@@ -443,8 +505,12 @@ export class UserService extends TenantAwareCrudService<User> {
 				refreshToken = await this._passwordHashService.hash(refreshToken);
 			}
 
-			// Update the user's refresh token in the repository
-			return await this.typeOrmRepository.update(userId, { refreshToken });
+			// Scope update by both userId and tenantId for multi-tenant safety
+			const tenantId = RequestContext.currentTenantId();
+			const criteria = tenantId ? { id: userId, tenantId } : { id: userId };
+
+			// Update the user's refresh token using ORM-agnostic base class update
+			return (await this.update(criteria as any, { refreshToken } as any)) as UpdateResult;
 		} catch (error) {
 			// Log error if any
 			console.error('Error while setting current refresh token:', error);
@@ -462,9 +528,10 @@ export class UserService extends TenantAwareCrudService<User> {
 		try {
 			const userId = RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId();
+			const criteria = tenantId ? { id: userId, tenantId } : { id: userId };
 
 			try {
-				await this.typeOrmRepository.update({ id: userId, tenantId }, { refreshToken: null });
+				await this.update(criteria as any, { refreshToken: null } as any);
 			} catch (error) {
 				console.log('Error while remove refresh token', error);
 			}
@@ -509,33 +576,54 @@ export class UserService extends TenantAwareCrudService<User> {
 	async getUserIfRefreshTokenMatches(refreshToken: string, payload: JwtPayload) {
 		try {
 			const { id, email, tenantId, role } = payload;
-			const query = this.typeOrmRepository.createQueryBuilder('user');
-			query.setFindOptions({
-				join: {
-					alias: 'user',
-					leftJoin: { role: 'user.role' }
+			let user: User;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const where: any = { id, email };
+					if (isNotEmpty(tenantId)) where.tenantId = tenantId;
+					if (isNotEmpty(role)) where.role = { name: role };
+
+					user = (await this.mikroOrmRepository.findOneOrFail(where, {
+						populate: ['role'],
+						orderBy: { createdAt: 'DESC' as any }
+					})) as any;
+					break;
 				}
-			});
-			query.where((query: SelectQueryBuilder<User>) => {
-				query.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(p(`"${query.alias}"."id" = :id`), { id });
-						web.andWhere(p(`"${query.alias}"."email" = :email`), { email });
-					})
-				);
-				query.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						if (isNotEmpty(tenantId)) {
-							web.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				case MultiORMEnum.TypeORM: {
+					const query = this.typeOrmRepository.createQueryBuilder('user');
+					query.setFindOptions({
+						join: {
+							alias: 'user',
+							leftJoin: { role: 'user.role' }
 						}
-						if (isNotEmpty(role)) {
-							web.andWhere(p(`"role"."name" = :role`), { role });
-						}
-					})
-				);
-				query.orderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
-			});
-			const user = await query.getOneOrFail();
+					});
+					query.where((qb: SelectQueryBuilder<User>) => {
+						qb.andWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+								web.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
+								web.andWhere(p(`"${qb.alias}"."email" = :email`), { email });
+							})
+						);
+						qb.andWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+								if (isNotEmpty(tenantId)) {
+									web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+								}
+								if (isNotEmpty(role)) {
+									web.andWhere(p(`"role"."name" = :role`), { role });
+								}
+							})
+						);
+						qb.orderBy(p(`"${qb.alias}"."createdAt"`), 'DESC');
+					});
+					user = await query.getOneOrFail();
+					break;
+				}
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+
 			const isRefreshTokenMatching = await this._passwordHashService.verify(refreshToken, user.refreshToken);
 
 			if (isRefreshTokenMatching) {

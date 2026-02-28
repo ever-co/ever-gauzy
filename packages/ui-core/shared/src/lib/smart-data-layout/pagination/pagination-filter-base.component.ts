@@ -1,8 +1,7 @@
 import { AfterViewInit, Component } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs/internal/Subject';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Subject, BehaviorSubject } from 'rxjs';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { cleanKeys, isNotEmpty, mergeDeep } from '@gauzy/ui-core/common';
 
@@ -15,8 +14,8 @@ export interface IPaginationBase {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    template: '',
-    standalone: false
+	template: '',
+	standalone: false
 })
 export class PaginationFilterBaseComponent extends TranslationBaseComponent implements AfterViewInit {
 	public activePage: number = 1;

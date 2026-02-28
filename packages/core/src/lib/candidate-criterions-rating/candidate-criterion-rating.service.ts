@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ICandidateCriterionsRating, ICandidateCriterionsRatingCreateInput, ID } from '@gauzy/contracts';
+
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import { TypeOrmCandidateCriterionsRatingRepository } from './repository/type-orm-candidate-criterions-rating.repository';
@@ -15,49 +16,46 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 	}
 
 	/**
-	 *
-	 * @param technologyCreateInput
-	 * @param qualityCreateInput
-	 * @returns
+	 * Creates bulk candidate criterion ratings.
 	 */
 	async createBulk(
-		technologyCreateInput: ICandidateCriterionsRatingCreateInput[],
-		qualityCreateInput: ICandidateCriterionsRatingCreateInput[]
-	) {
-		return [
-			await this.typeOrmRepository.save(technologyCreateInput),
-			await this.typeOrmRepository.save(qualityCreateInput)
-		];
+		technologyInputs: ICandidateCriterionsRatingCreateInput[] = [],
+		qualityInputs: ICandidateCriterionsRatingCreateInput[] = []
+	): Promise<CandidateCriterionsRating[]> {
+		return this.saveBulk(technologyInputs, qualityInputs);
 	}
 
-	/***
-	 *
+	/**
+	 * Updates bulk candidate criterion ratings.
+	 */
+	async updateBulk(
+		technologyRatings: ICandidateCriterionsRating[] = [],
+		qualityRatings: ICandidateCriterionsRating[] = []
+	): Promise<CandidateCriterionsRating[]> {
+		return this.saveBulk(technologyRatings, qualityRatings);
+	}
+
+	/**
+	 * Fetch criterions by feedback ID.
 	 */
 	async getCriterionsByFeedbackId(feedbackId: ID): Promise<CandidateCriterionsRating[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('candidate_feedback')
-			.where('candidate_feedback.feedbackId = :feedbackId', {
-				feedbackId
-			})
-			.getMany();
+		return this.find({
+			where: { feedbackId }
+		});
 	}
 
 	/**
-	 *
-	 * @param ids
-	 * @returns
+	 * Shared bulk save logic.
 	 */
-	async deleteBulk(ids: ID[]) {
-		return await this.typeOrmRepository.delete(ids);
-	}
+	private async saveBulk(
+		tech: Partial<CandidateCriterionsRating>[],
+		qual: Partial<CandidateCriterionsRating>[]
+	): Promise<CandidateCriterionsRating[]> {
+		const [techResults, qualResults] = await Promise.all([
+			tech.length ? this.saveMany(tech) : Promise.resolve([]),
+			qual.length ? this.saveMany(qual) : Promise.resolve([])
+		]);
 
-	/**
-	 *
-	 * @param tech
-	 * @param qual
-	 * @returns
-	 */
-	async updateBulk(tech: ICandidateCriterionsRating[], qual: ICandidateCriterionsRating[]) {
-		return [await this.typeOrmRepository.save(tech), await this.typeOrmRepository.save(qual)];
+		return [...techResults, ...qualResults];
 	}
 }

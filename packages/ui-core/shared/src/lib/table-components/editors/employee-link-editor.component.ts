@@ -4,15 +4,19 @@ import { Cell, DefaultEditor } from 'angular2-smart-table';
 
 @Component({
     template: `
-		<ng-container *ngIf="value">
-			<a *ngIf="value?.name">
-				<img *ngIf="value.imageUrl" width="18px" height="18px" [src]="value.imageUrl" />
-				<div class="names-wrapper">
-					{{ value.name }}
-				</div>
-			</a>
-		</ng-container>
-	`,
+		@if (value) {
+		  @if (value?.name) {
+		    <a>
+		      @if (value.imageUrl) {
+		        <img width="18px" height="18px" [src]="value.imageUrl" />
+		      }
+		      <div class="names-wrapper">
+		        {{ value.name }}
+		      </div>
+		    </a>
+		  }
+		}
+		`,
     styleUrls: ['../employee-links/employee-links.component.scss'],
     standalone: false
 })

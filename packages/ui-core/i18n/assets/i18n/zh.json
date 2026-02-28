@@ -1387,16 +1387,13 @@
 			"SUBTITLE": "Activepieces 集成设置",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "您的 Activepieces 集成已就绪。点击下面的按钮进行授权。",
-				"INFOS": "接下来您将被带到 Activepieces 以授予 Gauzy 权限。",
-				"START_BUTTON": "授权 Activepieces",
+				"INFOS": "输入您的 Activepieces API 密钥以连接您的账户。",
 				"NEXT": "下一步",
 				"ERRORS": {
 					"INVALID_FORM": "请正确填写所有必填字段",
 					"SAVE_SETTINGS": "保存设置失败",
 					"START_AUTHORIZATION": "启动授权失败",
 					"ORGANIZATION_NOT_FOUND": "未找到组织",
-					"CHECK_TENANT_SETTINGS": "检查租户设置失败",
 					"CHECK_REMEMBER_STATE": "检查记忆状态失败"
 				},
 				"SUCCESS": {
@@ -1406,21 +1403,8 @@
 			"SETTINGS": {
 				"TITLE": "Activepieces 设置",
 				"SUBTITLE": "配置您的 Activepieces 集成设置",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "输入您的 Client ID",
-				"CLIENT_ID_HINT": "您的 Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "输入您的 Client Secret",
-				"CLIENT_SECRET_HINT": "您的 Activepieces OAuth Client Secret",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "输入您的 State Secret（最少32个字符）",
-				"STATE_SECRET_HINT": "用于 OAuth 状态验证的安全随机字符串",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "输入您的 Callback URL",
-				"CALLBACK_URL_HINT": "Activepieces 授权后将重定向到的 URL",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "输入您的 Post Install URL",
-				"POST_INSTALL_URL_HINT": "安装完成后重定向到的 URL",
+				"API_KEY": "API 密钥",
+				"API_KEY_PLACEHOLDER": "输入您的 Activepieces API 密钥",
 				"SETTINGS_UPDATED": "Activepieces 设置更新成功"
 			},
 			"CONNECTIONS": {
@@ -2588,6 +2572,7 @@
 		"TIME_OFF": "休假"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "您没有权限查看此页面",
 		"HEADER": "休假",
 		"REQUEST": "请求",
 		"REQUEST_TIME_OFF": "请假申请",
@@ -4160,6 +4145,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "为了更灵活地跟踪时间和活动，请<a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">下载并使用</a> <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy桌面计时器应用</a>。",
 		"STATUS": "时间跟踪器已经在{{source}}中运行。",
 		"VERSION": "版本 v{{ version }}",
+		"ARCHITECTURE": "架构: {{ arch }}",
 		"WAIT_FOR": "等待{{ name }}开始...",
 		"SETUP": {
 			"WELCOME": "欢迎",
@@ -4387,7 +4373,8 @@
 			"LARGE_FILE": "文件过大。",
 			"SERVICE_UNAVAILABLE": "服务暂不可用，请稍后重试。",
 			"UNEXPECTED_ERROR": "发生未知错误。",
-			"NETWORK_ERROR": "网络错误：{{message}}"
+			"NETWORK_ERROR": "网络错误：{{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "需要屏幕访问权限才能启用自动屏幕截图。请在系统设置中授予权限。"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "由于不活动，追踪器已停止！",
@@ -4804,6 +4791,38 @@
 				"DELIVERY_URL": "交付URL",
 				"SECURE": "安全"
 			}
+		}
+	},
+	"SETTINGS_MONITORING": {
+		"HEADER": "监控与分析",
+		"SERVICES": "服务",
+		"SCOPE": "范围",
+		"GLOBAL": "全局",
+		"TENANT": "租户",
+		"POSTHOG": {
+			"TITLE": "PostHog 分析",
+			"ENABLED": "启用 PostHog",
+			"API_KEY": "API 密钥",
+			"API_KEY_PLACEHOLDER": "输入你 PostHog 项目的 API 密钥",
+			"HOST": "主机 URL",
+			"HOST_PLACEHOLDER": "https://app.posthog.com",
+			"FLUSH_INTERVAL": "批量发送间隔（毫秒）",
+			"FLUSH_INTERVAL_PLACEHOLDER": "10000",
+			"FLUSH_INTERVAL_HINT": "批量事件发送之间的时间（毫秒）"
+		},
+		"SENTRY": {
+			"TITLE": "Sentry 错误跟踪",
+			"ENABLED": "启用 Sentry",
+			"DSN": "DSN",
+			"DSN_PLACEHOLDER": "https://xxx@sentry.io/xxx"
+		},
+		"JITSU": {
+			"TITLE": "Jitsu 分析",
+			"ENABLED": "启用 Jitsu",
+			"HOST": "主机 URL",
+			"HOST_PLACEHOLDER": "https://your-jitsu-host.com",
+			"WRITE_KEY": "写入密钥",
+			"WRITE_KEY_PLACEHOLDER": "输入你的 Jitsu 写入密钥"
 		}
 	},
 	"CUSTOM_SMTP_PAGE": {

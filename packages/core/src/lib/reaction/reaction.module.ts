@@ -9,6 +9,7 @@ import { ReactionService } from './reaction.service';
 import { ReactionController } from './reaction.controller';
 import { Reaction } from './reaction.entity';
 import { TypeOrmReactionRepository } from './repository/type-orm-reaction.repository';
+import { MikroOrmReactionRepository } from './repository/mikro-orm-reaction.repository';
 
 @Module({
 	imports: [
@@ -19,7 +20,7 @@ import { TypeOrmReactionRepository } from './repository/type-orm-reaction.reposi
 		EmployeeModule
 	],
 	controllers: [ReactionController],
-	providers: [ReactionService, TypeOrmReactionRepository, ...CommandHandlers],
+	providers: [ReactionService, TypeOrmReactionRepository, MikroOrmReactionRepository, ...CommandHandlers],
 	exports: []
 })
 export class ReactionModule {}

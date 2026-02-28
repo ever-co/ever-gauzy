@@ -1,3 +1,5 @@
+import { TimerSyncStateEnum } from '@gauzy/contracts';
+
 export interface TimerTO {
 	id?: number;
 	day?: Date;
@@ -16,6 +18,9 @@ export interface TimerTO {
 	version?: string;
 	organizationTeamId?: string;
 	description?: string;
+	startSyncState?: TimerSyncStateEnum;
+	stopSyncState?: TimerSyncStateEnum;
+	syncDuration?: number;
 }
 
 export const TABLE_NAME_TIMERS: string = 'timers';

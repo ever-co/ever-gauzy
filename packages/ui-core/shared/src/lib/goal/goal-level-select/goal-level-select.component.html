@@ -1,7 +1,8 @@
-<div [formGroup]="parentFormGroup" *ngIf="alignedGoal ? !!parentFormGroup.value.assignAsObjective : true">
-	<div [ngClass]="{ row: enableHelperText }">
+@if (alignedGoal ? !!parentFormGroup.value.assignAsObjective : true) {
+<div [formGroup]="parentFormGroup">
+	<div [class.row]="enableHelperText">
 		<div
-			[ngClass]="{ 'col-md-7': enableHelperText }"
+			[class.col-md-7]="enableHelperText"
 			(mouseenter)="enableHelperText ? (helperText = 'objective-level') : null"
 			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
@@ -15,36 +16,35 @@
 				(selectedChange)="onLevelChange($event)"
 				fullWidth
 			>
-				<nb-option
-					*ngFor="let level of goalLevelEnum | keyvalue"
-					[hidden]="isLevelHidden(level.value)"
-					[value]="level.value"
-				>
+				@for (level of goalLevelEnum | keyvalue; track level) {
+				<nb-option [hidden]="isLevelHidden(level.value)" [value]="level.value">
 					{{ 'GOALS_PAGE.LEVELS.' + level.key | translate }}
 				</nb-option>
+				}
 			</nb-select>
 		</div>
 		<div class="col-md-5 position-relative helper-text">
-			<div class="mt-3 position-absolute" *ngIf="helperText == 'objective-level'">
+			@if (helperText == 'objective-level') {
+			<div class="mt-3 position-absolute">
 				<p>
 					{{ 'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_LEVEL' | translate }}
 				</p>
 			</div>
+			}
 		</div>
 	</div>
-
-	<div [ngClass]="{ row: enableHelperText }">
+	<div [class.row]="enableHelperText">
+		@if (alignedGoal ? !!parentFormGroup.value.level : true) {
 		<div
-			*ngIf="alignedGoal ? !!parentFormGroup.value.level : true"
-			[ngClass]="{ 'col-md-7': enableHelperText }"
+			[class.col-md-7]="enableHelperText"
 			(mouseenter)="enableHelperText ? (helperText = 'objective-owner') : null"
 			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
 			<label for="objective-owner" class="label mt-3">
 				{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
 			</label>
+			@if (parentFormGroup.value.level === goalLevelEnum.EMPLOYEE) {
 			<ga-employee-multi-select
-				*ngIf="parentFormGroup.value.level === goalLevelEnum.EMPLOYEE"
 				[multiple]="false"
 				[allEmployees]="employees"
 				[selectedEmployeeIds]="parentFormGroup.value.owner"
@@ -54,21 +54,24 @@
 				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
+			}
 		</div>
+		}
 		<div class="col-md-5 position-relative helper-text">
-			<div class="mt-3 position-absolute" *ngIf="helperText == 'objective-owner'">
+			@if (helperText == 'objective-owner') {
+			<div class="mt-3 position-absolute">
 				<p>
 					{{ 'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_OWNER' | translate }}
 				</p>
 			</div>
+			}
 		</div>
 	</div>
-
-	<div [ngClass]="{ row: enableHelperText }">
+	<div [class.row]="enableHelperText">
+		@if (parentFormGroup.value.level === goalLevelEnum.TEAM) {
 		<div
-			*ngIf="parentFormGroup.value.level === goalLevelEnum.TEAM"
 			(selectedChange)="selectEmployee($event, 'owner')"
-			[ngClass]="{ 'col-md-7': enableHelperText }"
+			[class.col-md-7]="enableHelperText"
 			(mouseenter)="enableHelperText ? (helperText = 'objective-owner') : null"
 			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
@@ -77,18 +80,20 @@
 				fullWidth
 				placeholder="{{ 'GOALS_PAGE.FORM.LABELS.OWNER' | translate }}"
 			>
-				<nb-option *ngFor="let team of teams" [value]="team.id">
+				@for (team of teams; track team) {
+				<nb-option [value]="team.id">
 					{{ team.name }}
 				</nb-option>
+				}
 			</nb-select>
 		</div>
+		}
 		<div class="col-md-5"></div>
 	</div>
-
-	<div [ngClass]="{ row: enableHelperText }">
+	<div [class.row]="enableHelperText">
+		@if (parentFormGroup?.value.level === goalLevelEnum.ORGANIZATION) {
 		<div
-			*ngIf="parentFormGroup?.value.level === goalLevelEnum.ORGANIZATION"
-			[ngClass]="{ 'col-md-7': enableHelperText }"
+			[class.col-md-7]="enableHelperText"
 			(mouseenter)="enableHelperText ? (helperText = 'objective-owner') : null"
 			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
@@ -104,12 +109,13 @@
 				</nb-option>
 			</nb-select>
 		</div>
+		}
 		<div class="col-md-5"></div>
 	</div>
-
-	<div *ngIf="!alignedGoal" [ngClass]="{ row: enableHelperText }">
+	@if (!alignedGoal) {
+	<div [class.row]="enableHelperText">
 		<div
-			[ngClass]="{ 'col-md-7': enableHelperText }"
+			[class.col-md-7]="enableHelperText"
 			(mouseenter)="enableHelperText ? (helperText = 'objective-lead') : null"
 			(mouseleave)="enableHelperText ? (helperText = '') : null"
 		>
@@ -128,11 +134,15 @@
 			></ga-employee-multi-select>
 		</div>
 		<div class="col-md-5 position-relative helper-text">
-			<div class="mt-3 position-absolute" *ngIf="helperText == 'objective-lead'">
+			@if (helperText == 'objective-lead') {
+			<div class="mt-3 position-absolute">
 				<p>
 					{{ 'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_LEAD' | translate }}
 				</p>
 			</div>
+			}
 		</div>
 	</div>
+	}
 </div>
+}

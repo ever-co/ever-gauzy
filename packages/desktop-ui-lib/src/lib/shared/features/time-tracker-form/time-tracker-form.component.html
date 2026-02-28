@@ -1,18 +1,24 @@
 <div class="selector-container">
-	<!-- Edit clickable icon -->
-	<nb-icon class="edit" (click)="onChange($event)" *ngIf="isShowEdit$ | async" icon="edit-2-outline"></nb-icon>
-	<!-- Client selector -->
-	<gauzy-client-selector class="selector"></gauzy-client-selector>
+  <!-- Edit clickable icon -->
+  @if (isShowEdit$ | async) {
+    <nb-icon class="edit" (click)="onChange($event)" icon="edit-2-outline"></nb-icon>
+  }
+  <!-- Client selector -->
+  <gauzy-client-selector class="selector"></gauzy-client-selector>
 
-	<!-- Project selector -->
-	<gauzy-project-selector class="selector"></gauzy-project-selector>
+  <!-- Project selector -->
+  <gauzy-project-selector class="selector"></gauzy-project-selector>
 
-	<!-- Team selector -->
-	<gauzy-team-selector *ngIf="isShowTeamSelector$ | async" class="selector"></gauzy-team-selector>
+  <!-- Team selector -->
+  @if (isShowTeamSelector$ | async) {
+    <gauzy-team-selector class="selector"></gauzy-team-selector>
+  }
 
-	<!-- Task selector -->
-	<gauzy-task-selector *ngIf="isShowTaskSelector$ | async" class="selector"></gauzy-task-selector>
+  <!-- Task selector -->
+  @if (isShowTaskSelector$ | async) {
+    <gauzy-task-selector class="selector"></gauzy-task-selector>
+  }
 
-	<!-- Note -->
-	<gauzy-note class="selector"></gauzy-note>
+  <!-- Note -->
+  <gauzy-note class="selector"></gauzy-note>
 </div>

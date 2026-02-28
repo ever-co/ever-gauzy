@@ -12,7 +12,7 @@
 				width="68"
 				height="68"
 				viewBox="0 0 68 68"
-				[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+				[style.opacity]="hoverState ? '1' : '0.3'"
 			>
 				<defs>
 					<path
@@ -21,75 +21,55 @@
 					/>
 				</defs>
 				<g fill="none" fill-rule="evenodd">
-					<circle
-						cx="34"
-						cy="34"
-						r="34"
-						fill="#0091FF"
-						opacity=".3"
-					/>
-					<circle
-						cx="34"
-						cy="34"
-						r="26"
-						fill="#0091FF"
-						opacity=".9"
-					/>
+					<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+					<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
 					<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 				</g>
 			</svg>
-			<div [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
+			<div [style.opacity]="hoverState ? '0.2' : '0'"></div>
+			@if (form) {
 			<img
-				*ngIf="form"
-				[src]="form.get('imageUrl').value"
+				[src]="form.get('imageUrl')?.value"
 				alt="Profile Photo"
 				(mouseenter)="hoverState = true"
 				(mouseleave)="hoverState = false"
 			/>
+			}
 		</div>
+		@if (selectedEmployee?.isVetted) {
 		<nb-badge
-			*ngIf="selectedEmployee && selectedEmployee.isVetted"
 			status="success"
 			style="position: relative; margin-top: 20px"
 			[text]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.VETTED' | translate"
 			position="bottom-left"
 		>
 		</nb-badge>
-		<div *ngIf="selectedEmployee">
-			<div
-				class="employee-optional-info"
-				*ngIf="selectedEmployee.jobSuccess"
-			>
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.JOB_SUCCESS' | translate }}:
-				{{ selectedEmployee.jobSuccess }}%
+		} @if (selectedEmployee) {
+		<div>
+			@if (selectedEmployee?.jobSuccess) {
+			<div class="employee-optional-info">
+				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.JOB_SUCCESS' | translate }}: {{ selectedEmployee.jobSuccess }}%
 			</div>
-			<div
-				class="employee-optional-info"
-				*ngIf="selectedEmployee.totalJobs"
-			>
+			} @if (selectedEmployee?.totalJobs) {
+			<div class="employee-optional-info">
 				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_JOBS' | translate }}:
 				{{ selectedEmployee.totalJobs }}
 			</div>
-			<div
-				class="employee-optional-info"
-				*ngIf="selectedEmployee.totalWorkHours"
-			>
+			} @if (selectedEmployee?.totalWorkHours) {
+			<div class="employee-optional-info">
 				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_HOURS' | translate }}:
 				{{ selectedEmployee.totalWorkHours }}
 			</div>
-			<div
-				class="employee-optional-info"
-				*ngIf="
-					selectedEmployee.billRateCurrency &&
-					selectedEmployee.billRateValue
-				"
-			>
+			} @if ( selectedEmployee?.billRateCurrency && selectedEmployee?.billRateValue ) {
+			<div class="employee-optional-info">
 				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATE' | translate }}:
 				{{ selectedEmployee.billRateCurrency }}
 				{{ selectedEmployee.billRateValue }} /
 				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HR' | translate }}
 			</div>
+			}
 		</div>
+		}
 	</div>
 
 	<div class="employee-form w-75">
@@ -97,9 +77,7 @@
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label class="label" for="usernameInput">{{
-							'FORM.USERNAME' | translate
-						}}</label>
+						<label class="label" for="usernameInput">{{ 'FORM.USERNAME' | translate }}</label>
 						<input
 							fullWidth
 							id="usernameInput"
@@ -112,9 +90,7 @@
 				</div>
 				<div class="col">
 					<div class="form-group">
-						<label for="emailInput" class="label">{{
-							'FORM.EMAIL' | translate
-						}}</label>
+						<label for="emailInput" class="label">{{ 'FORM.EMAIL' | translate }}</label>
 						<input
 							fullWidth
 							id="emailInput"
@@ -130,35 +106,27 @@
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label class="label" for="firstNameInput">{{
-							'FORM.LABELS.FIRST_NAME' | translate
-						}}</label>
+						<label class="label" for="firstNameInput">{{ 'FORM.LABELS.FIRST_NAME' | translate }}</label>
 						<input
 							fullWidth
 							id="firstNameInput"
 							type="text"
 							nbInput
 							formControlName="firstName"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.FIRST_NAME' | translate
-							}}"
+							placeholder="{{ 'FORM.PLACEHOLDERS.FIRST_NAME' | translate }}"
 						/>
 					</div>
 				</div>
 				<div class="col">
 					<div class="form-group">
-						<label for="lastNameInput" class="label">{{
-							'FORM.LABELS.LAST_NAME' | translate
-						}}</label>
+						<label for="lastNameInput" class="label">{{ 'FORM.LABELS.LAST_NAME' | translate }}</label>
 						<input
 							fullWidth
 							id="lastNameInput"
 							type="text"
 							nbInput
 							formControlName="lastName"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.LAST_NAME' | translate
-							}}"
+							placeholder="{{ 'FORM.PLACEHOLDERS.LAST_NAME' | translate }}"
 						/>
 					</div>
 				</div>
@@ -170,7 +138,7 @@
 							'FORM.LABELS.PREFERRED_LANGUAGE' | translate
 						}}</label>
 						<ngx-language-selector
-							[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE'| translate"
+							[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE' | translate"
 							class="d-block"
 							selectBy="object"
 							[template]="'ng-select'"
@@ -181,30 +149,21 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label for="profileLinkInput" class="label">{{
-							'FORM.LABELS.PROFILE_LINK' | translate
-						}}</label>
+						<label for="profileLinkInput" class="label">{{ 'FORM.LABELS.PROFILE_LINK' | translate }}</label>
 						<input
 							fullWidth
 							id="profileLinkInput"
 							type="text"
 							nbInput
 							formControlName="profile_link"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.PROFILE_LINK' | translate
-							}}"
+							placeholder="{{ 'FORM.PLACEHOLDERS.PROFILE_LINK' | translate }}"
 						/>
 					</div>
 				</div>
 			</div>
 
 			<div class="actions">
-				<button
-					[disabled]="form.invalid"
-					(click)="submitForm()"
-					nbButton
-					status="success"
-				>
+				<button [disabled]="form.invalid" (click)="submitForm()" nbButton status="success">
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</div>

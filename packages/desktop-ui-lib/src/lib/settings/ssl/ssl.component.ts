@@ -2,6 +2,11 @@ import { Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular
 import { BehaviorSubject, Observable } from 'rxjs';
 import { IProxyConfig } from '@gauzy/contracts';
 import { ElectronService } from '../../electron/services/electron/electron.service';
+import { NbCardModule, NbToggleModule, NbIconModule, NbTooltipModule, NbInputModule, NbButtonModule } from '@nebular/theme';
+import { FormsModule } from '@angular/forms';
+import { SpinnerButtonDirective } from '../../directives/spinner-button.directive';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 interface ICheckSslResponse {
 	status: boolean;
@@ -12,7 +17,7 @@ interface ICheckSslResponse {
     selector: 'gauzy-ssl',
     templateUrl: './ssl.component.html',
     styleUrls: ['./ssl.component.scss'],
-    standalone: false
+    imports: [NbCardModule, NbToggleModule, FormsModule, NbIconModule, NbTooltipModule, NbInputModule, NbButtonModule, SpinnerButtonDirective, AsyncPipe, TranslatePipe]
 })
 export class SslComponent implements OnInit {
 	public isCheckSsl$: BehaviorSubject<boolean>;

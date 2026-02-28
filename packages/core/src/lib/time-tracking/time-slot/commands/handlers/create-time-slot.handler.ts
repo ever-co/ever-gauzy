@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import * as moment from 'moment';
@@ -6,22 +7,28 @@ import * as chalk from 'chalk';
 import { ID, ITimeLog, ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { RequestContext } from '../../../../core/context';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 import { TypeOrmEmployeeRepository } from '../../../../employee/repository/type-orm-employee.repository';
 import { TypeOrmTimeLogRepository } from '../../../time-log/repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from '../../../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from '../../repository/mikro-orm-time-slot.repository';
 import { TimeSlot } from './../../time-slot.entity';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotCommand> {
+	protected ormType: MultiORM = getORMType();
 	private logging: boolean = true;
 
 	constructor(
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _commandBus: CommandBus
 	) {}
@@ -62,8 +69,11 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		 * If organization not found in request then assign current logged user organization
 		 */
 		if (isEmpty(organizationId)) {
-			let employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId });
-			organizationId = employee ? employee.organizationId : null;
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId, tenantId });
+			if (!employee) {
+				throw new NotFoundException('Employee not found or not in tenant');
+			}
+			organizationId = employee.organizationId || RequestContext.currentOrganizationId();
 		}
 
 		// Input.startedAt is a string, so convert it to a Date object
@@ -75,20 +85,39 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 
 		let timeSlot: ITimeSlot;
 		try {
-			// Find TimeLog for TimeSlot Range
-			const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
-			query.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+					const found = await em.findOneOrFail('TimeSlot', {
+						tenantId,
+						organizationId,
+						employeeId,
+						startedAt: input.startedAt
+					} as any, {
+						populate: ['timeLogs']
+					});
+					timeSlot = found as any;
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Find TimeLog for TimeSlot Range
+					const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
+					query.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 
-			// Add where clauses
-			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
-			query.andWhere(p(`"${query.alias}"."startedAt" = :startedAt`), { startedAt: input.startedAt });
+					// Add where clauses
+					query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+					query.andWhere(p(`"${query.alias}"."startedAt" = :startedAt`), { startedAt: input.startedAt });
 
-			this.log(`Get Time Slot Query & Parameters For employee (${user.name}): ${query.getQueryAndParameters()}`);
+					this.log(`Get Time Slot Query & Parameters For employee (${user.name}): ${query.getQueryAndParameters()}`);
 
-			// Get the last time slot
-			timeSlot = await query.getOneOrFail();
+					// Get the last time slot
+					timeSlot = await query.getOneOrFail();
+					break;
+				}
+			}
 		} catch (error) {
 			// Create a new TimeSlot instance if not found
 			timeSlot = new TimeSlot({
@@ -101,43 +130,87 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		}
 
 		try {
-			// Find TimeLog for TimeSlot Range
-			const query = this.typeOrmTimeLogRepository.createQueryBuilder();
-			// Add where clauses
-			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
-			query.andWhere(p(`"${query.alias}"."source" = :source`), { source });
-			query.andWhere(p(`"${query.alias}"."logType" = :logType`), { logType });
-			query.andWhere(p(`"${query.alias}"."stoppedAt" IS NOT NULL`));
-			// Add order by clause
-			query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
-			this.log(`Find timelog for specific query: ${query.getQueryAndParameters()}`);
-			// Get the last time log
-			const timeLog = await query.getOneOrFail();
-			this.log(`Found timelog for specific timeLog: ${JSON.stringify(timeLog)}`);
-			timeSlot.timeLogs.push(timeLog);
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const em = this.mikroOrmTimeLogRepository.getEntityManager();
+					// Find TimeLog for TimeSlot Range
+					const timeLog = await em.findOneOrFail('TimeLog', {
+						tenantId,
+						organizationId,
+						employeeId,
+						source,
+						logType,
+						stoppedAt: { $ne: null }
+					} as any, {
+						orderBy: { createdAt: 'DESC' } as any
+					});
+					this.log(`Found timelog for specific timeLog: ${JSON.stringify(timeLog)}`);
+					timeSlot.timeLogs.push(timeLog as any);
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Find TimeLog for TimeSlot Range
+					const query = this.typeOrmTimeLogRepository.createQueryBuilder();
+					// Add where clauses
+					query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+					query.andWhere(p(`"${query.alias}"."source" = :source`), { source });
+					query.andWhere(p(`"${query.alias}"."logType" = :logType`), { logType });
+					query.andWhere(p(`"${query.alias}"."stoppedAt" IS NOT NULL`));
+					// Add order by clause
+					query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+					this.log(`Find timelog for specific query: ${query.getQueryAndParameters()}`);
+					// Get the last time log
+					const timeLog = await query.getOneOrFail();
+					this.log(`Found timelog for specific timeLog: ${JSON.stringify(timeLog)}`);
+					timeSlot.timeLogs.push(timeLog);
+					break;
+				}
+			}
 		} catch (error) {
 			if (input.timeLogId) {
 				// Convert input.timeLogId to an array if it's not already
 				const timeLogIds: ID[] = [].concat(input.timeLogId);
 
-				// Reuse the base query and add the condition for timeLogIds
-				const query = this.typeOrmTimeLogRepository.createQueryBuilder();
+				switch (this.ormType) {
+					case MultiORMEnum.MikroORM: {
+						const em = this.mikroOrmTimeLogRepository.getEntityManager();
+						const timeLogs = await em.find('TimeLog', {
+							id: { $in: timeLogIds },
+							tenantId,
+							organizationId,
+							source,
+							logType,
+							employeeId,
+							stoppedAt: { $ne: null }
+						} as any);
+						this.log(`Recent time logs using timelog ids for employee (${user.name}): ${JSON.stringify(timeLogs)}`);
+						timeSlot.timeLogs.push(...(timeLogs as any[]));
+						break;
+					}
+					case MultiORMEnum.TypeORM:
+					default: {
+						// Reuse the base query and add the condition for timeLogIds
+						const query = this.typeOrmTimeLogRepository.createQueryBuilder();
 
-				// Add where clauses
-				query.where(p(`"${query.alias}"."id" IN (:...timeLogIds)`), { timeLogIds });
-				query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-				query.andWhere(p(`"${query.alias}"."source" = :source`), { source });
-				query.andWhere(p(`"${query.alias}"."logType" = :logType`), { logType });
-				query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
-				query.andWhere(p(`"${query.alias}"."stoppedAt" IS NOT NULL`));
-				this.log(`Timelog query for timeLog IDs for employee (${user.name}): ${query.getQueryAndParameters()}`);
-				// Retrieve time logs
-				const timeLogs = await query.getMany();
-				this.log(`Recent time logs using timelog ids for employee (${user.name}): ${JSON.stringify(timeLogs)}`);
-				timeSlot.timeLogs.push(...timeLogs);
+						// Add where clauses
+						query.where(p(`"${query.alias}"."id" IN (:...timeLogIds)`), { timeLogIds });
+						query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+						query.andWhere(p(`"${query.alias}"."source" = :source`), { source });
+						query.andWhere(p(`"${query.alias}"."logType" = :logType`), { logType });
+						query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+						query.andWhere(p(`"${query.alias}"."stoppedAt" IS NOT NULL`));
+						this.log(`Timelog query for timeLog IDs for employee (${user.name}): ${query.getQueryAndParameters()}`);
+						// Retrieve time logs
+						const timeLogs = await query.getMany();
+						this.log(`Recent time logs using timelog ids for employee (${user.name}): ${JSON.stringify(timeLogs)}`);
+						timeSlot.timeLogs.push(...timeLogs);
+						break;
+					}
+				}
 			}
 		}
 
@@ -148,13 +221,27 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 
 		// Only update running timer
 		if (isNotEmpty(ids)) {
-			await this.typeOrmTimeLogRepository.update(
-				{
-					id: In(ids),
-					isRunning: true
-				},
-				{ stoppedAt }
-			);
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const knex = this.mikroOrmTimeLogRepository.getKnex();
+					await knex('time_log')
+						.withSchema(knex.userParams.schema)
+						.whereIn('id', ids)
+						.andWhere('isRunning', true)
+						.update({ stoppedAt });
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default:
+					await this.typeOrmTimeLogRepository.update(
+						{
+							id: In(ids),
+							isRunning: true
+						},
+						{ stoppedAt }
+					);
+					break;
+			}
 		}
 
 		this.log(`Bulk activities save parameters employee (${user.name}): ${JSON.stringify({ activities })}`);
@@ -173,7 +260,17 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		timeSlot.activities = bulkActivities || [];
 
 		// Save the time slot
-		await this.typeOrmTimeSlotRepository.save(timeSlot);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+				await em.persistAndFlush(timeSlot);
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmTimeSlotRepository.save(timeSlot);
+				break;
+		}
 
 		// Merge timeSlots into 10 minutes slots
 		let [mergedTimeSlot] = await this._commandBus.execute(
@@ -186,10 +283,20 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			timeSlot = mergedTimeSlot;
 		}
 
-		return await this.typeOrmTimeSlotRepository.findOne({
-			where: { id: timeSlot.id },
-			relations: { timeLogs: true, screenshots: true }
-		});
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+				return await em.findOne('TimeSlot', { id: timeSlot.id } as any, {
+					populate: ['timeLogs', 'screenshots']
+				}) as any;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmTimeSlotRepository.findOne({
+					where: { id: timeSlot.id },
+					relations: { timeLogs: true, screenshots: true }
+				});
+		}
 	}
 
 	/**

@@ -2,9 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular
 import { NavigationStart, Router } from '@angular/router';
 import { from } from 'rxjs';
 import { filter, switchMap, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Subject } from 'rxjs/internal/Subject';
+import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { chain, indexBy, pick, sortBy } from 'underscore';
 import * as moment from 'moment-timezone';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -31,10 +29,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-screenshots',
-    templateUrl: './screenshot.component.html',
-    styleUrls: ['./screenshot.component.scss'],
-    standalone: false
+	selector: 'ngx-screenshots',
+	templateUrl: './screenshot.component.html',
+	styleUrls: ['./screenshot.component.scss'],
+	standalone: false
 })
 export class ScreenshotComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);

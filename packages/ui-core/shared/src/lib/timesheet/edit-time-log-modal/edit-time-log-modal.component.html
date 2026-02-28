@@ -1,276 +1,306 @@
-<form #f="ngForm" *ngIf="form" [formGroup]="form" (submit)="addTime()">
-	<nb-card>
-		<nb-card-header class="header">
-			<span class="cancel"> <i class="fas fa-times" (click)="close()"></i></span>
-			<div class="row">
-				<div class="col title">
-					{{ (mode == 'update' ? 'TIMESHEET.EDIT_TIME_LOGS' : 'TIMESHEET.ADD_TIME_LOGS') | translate }}
-				</div>
-			</div>
-		</nb-card-header>
-		<nb-card-body>
-			<div class="form-group" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
-				<div class="description col-6" *ngIf="mode == 'update'; else employeeSelect">
-					<ngx-avatar
-						[id]="timeLog?.employee?.id"
-						[employee]="timeLog?.employee"
-						[name]="timeLog?.employee?.user?.name"
-						[src]="timeLog?.employee?.user?.imageUrl"
-						class="report-table"
-					></ngx-avatar>
-				</div>
-				<ng-template #employeeSelect>
-					<div class="col-6">
-						<ga-employee-multi-select
-							name="employeeId"
-							[multiple]="false"
-							label="TIMESHEET.SELECT_EMPLOYEE"
-							[placeholder]="'TIMESHEET.SELECT_EMPLOYEE' | translate"
-							formControlName="employeeId"
-							required
-						>
-						</ga-employee-multi-select>
-					</div>
-					<div *ngIf="form.get('employeeId')?.invalid && f.submitted" class="invalid-feedback d-block">
-						<div *ngIf="form.get('employeeId')?.errors.required">
-							{{ 'TIMESHEET.VALIDATION.EMPLOYEE' | translate }}
-						</div>
-					</div>
-				</ng-template>
-			</div>
-			<div class="row range-picker-row">
-				<div class="col-6">
-					<ngx-timer-range-picker
-						name="selectedRange"
-						[maxDate]="futureDateAllowed ? null : today"
-						formControlName="selectedRange"
-					>
-					</ngx-timer-range-picker>
-				</div>
-				<div class="col-6 show-time" *ngIf="timeDiff">
-					<label>{{ 'FORM.LABELS.PERIOD' | translate }}</label>
-					<div>{{ timeDiff | durationFormat }}</div>
-				</div>
-			</div>
-			<div class="form-group">
-				<div class="col-12">
-					<nb-card class="w-100 custom-card" status="danger" *ngIf="overlaps.length > 0">
-						<nb-card-header>
-							<div class="d-flex align-items-center">
-								<nb-icon icon="alert-triangle-outline" class="mr-3"></nb-icon>
-								{{ 'TIMESHEET.TIME_OVERLAPS' | translate }}
-							</div>
-						</nb-card-header>
-						<nb-card-body class="custom-card-body">
-							<p>{{ 'TIMESHEET.OVERLAP_MESSAGE' | translate }}</p>
-							<div class="row align-items-center m-0 custom-header">
-								<div class="col">
-									{{ 'TIMESHEET.PROJECT' | translate }} /
-									{{ 'TIMESHEET.TODO' | translate }}
-								</div>
-								<div class="col text-center">
-									{{ 'TIMESHEET.DURATION' | translate }}
-								</div>
-							</div>
-							<div
+@if (form) {
+  <form #f="ngForm" [formGroup]="form" (submit)="addTime()">
+    <nb-card>
+      <nb-card-header class="header">
+        <span class="cancel"> <i class="fas fa-times" (click)="close()"></i></span>
+        <div class="row">
+          <div class="col title">
+            {{ (mode == 'update' ? 'TIMESHEET.EDIT_TIME_LOGS' : 'TIMESHEET.ADD_TIME_LOGS') | translate }}
+          </div>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div class="form-group" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
+          @if (mode == 'update') {
+            <div class="description col-6">
+              <ngx-avatar
+                [id]="timeLog?.employee?.id"
+                [employee]="timeLog?.employee"
+                [name]="timeLog?.employee?.user?.name"
+                [src]="timeLog?.employee?.user?.imageUrl"
+                class="report-table"
+              ></ngx-avatar>
+            </div>
+          } @else {
+            <div class="col-6">
+              <ga-employee-multi-select
+                name="employeeId"
+                [multiple]="false"
+                label="TIMESHEET.SELECT_EMPLOYEE"
+                [placeholder]="'TIMESHEET.SELECT_EMPLOYEE' | translate"
+                formControlName="employeeId"
+                required
+                >
+              </ga-employee-multi-select>
+            </div>
+            @if (form.get('employeeId')?.invalid && f.submitted) {
+              <div class="invalid-feedback d-block">
+                @if (form.get('employeeId')?.errors.required) {
+                  <div>
+                    {{ 'TIMESHEET.VALIDATION.EMPLOYEE' | translate }}
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+        <div class="row range-picker-row">
+          <div class="col-6">
+            <ngx-timer-range-picker
+              name="selectedRange"
+              [maxDate]="futureDateAllowed ? null : today"
+              formControlName="selectedRange"
+              >
+            </ngx-timer-range-picker>
+          </div>
+          @if (timeDiff) {
+            <div class="col-6 show-time">
+              <label>{{ 'FORM.LABELS.PERIOD' | translate }}</label>
+              <div>{{ timeDiff | durationFormat }}</div>
+            </div>
+          }
+        </div>
+        <div class="form-group">
+          <div class="col-12">
+            @if (overlaps.length > 0) {
+              <nb-card class="w-100 custom-card" status="danger">
+                <nb-card-header>
+                  <div class="d-flex align-items-center">
+                    <nb-icon icon="alert-triangle-outline" class="mr-3"></nb-icon>
+                    {{ 'TIMESHEET.TIME_OVERLAPS' | translate }}
+                  </div>
+                </nb-card-header>
+                <nb-card-body class="custom-card-body">
+                  <p>{{ 'TIMESHEET.OVERLAP_MESSAGE' | translate }}</p>
+                  <div class="row align-items-center m-0 custom-header">
+                    <div class="col">
+                      {{ 'TIMESHEET.PROJECT' | translate }} /
+                      {{ 'TIMESHEET.TODO' | translate }}
+                    </div>
+                    <div class="col text-center">
+                      {{ 'TIMESHEET.DURATION' | translate }}
+                    </div>
+                  </div>
+                  @for (overlapTimeLog of overlaps; track overlapTimeLog) {
+                    <div
 								[class]="
 									overlaps.at(-1) === overlapTimeLog
 										? 'row item m-0 py-3 align-items-center'
 										: 'row item border-bottom m-0 py-3 align-items-center'
 								"
-								*ngFor="let overlapTimeLog of overlaps"
-							>
-								<div class="col">
-									<span *ngIf="overlapTimeLog?.project; else noProject">
-										{{ overlapTimeLog?.project?.name }}
-									</span>
-									<ng-template #noProject>
-										<span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
-									</ng-template>
-									<div class="mt-2 small">
-										<span *ngIf="overlapTimeLog?.task; else noToDo">
-											<strong
-												>{{ 'TIMESHEET.TODO' | translate }}
-												:
-											</strong>
-											{{ overlapTimeLog?.task?.title }}
-										</span>
-										<ng-template #noToDo>
-											<span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
-										</ng-template>
-									</div>
-								</div>
-								<div class="col text-center">
-									{{ overlapTimeLog.overlapDuration | durationFormat }}
-								</div>
-							</div>
-						</nb-card-body>
-					</nb-card>
-				</div>
-			</div>
-
-			<div class="form-group">
-				<div class="col-12">
-					<nb-checkbox formControlName="isBillable" name="isBillable" status="primary">
-						{{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
-					</nb-checkbox>
-				</div>
-			</div>
-
-			<div class="form-group">
-				<div class="col-12 d-flex">
-					<div class="mr-3">
-						<label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
-						<ga-contact-selector
-							[employeeId]="form.get('employeeId')?.value"
-							name="organizationContactId"
-							formControlName="organizationContactId"
-							[required]="organization?.requireClient"
-						></ga-contact-selector>
-						<div
-							*ngIf="form.get('organizationContactId')?.invalid && f.submitted"
-							class="invalid-feedback d-block"
-						>
-							<div *ngIf="form.get('organizationContactId')?.errors.required">
-								{{ 'TIMER_TRACKER.VALIDATION.CLIENT_REQUIRED' | translate }}
-							</div>
-						</div>
-					</div>
-					<div class="ml-3">
-						<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
-						<ga-project-selector
-							name="projectId"
-							formControlName="projectId"
-							[skipGlobalChange]="true"
-							[showAllOption]="false"
-							[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
-							[defaultSelected]="false"
-							[employeeId]="form.get('employeeId')?.value"
-							[organizationContactId]="form.get('organizationContactId')?.value"
-							[required]="organization?.requireProject"
-						></ga-project-selector>
-						<div *ngIf="form.get('projectId')?.invalid && f.submitted" class="invalid-feedback d-block">
-							<div *ngIf="form.get('projectId')?.errors.required">
-								{{ 'TIMESHEET.VALIDATION.PROJECT' | translate }}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div class="form-group">
-				<div class="col-6">
-					<label>{{ 'TIMER_TRACKER.SELECT_TEAM' | translate }}</label>
-					<ga-team-selector
-						formControlName="organizationTeamId"
-						[skipGlobalChange]="true"
-						[showAllOption]="false"
-						[defaultSelected]="false"
-						[placeholder]="'TIMER_TRACKER.SELECT_TEAM' | translate"
-						[employeeId]="getControlValue('employeeId')"
-						[projectId]="getControlValue('projectId')"
-					></ga-team-selector>
-				</div>
-			</div>
-
-			<div class="form-group">
-				<div class="col-12">
-					<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
-					<ga-task-selector
-						name="taskId"
-						[employeeId]="getControlValue('employeeId')"
-						[projectId]="getControlValue('projectId')"
-						formControlName="taskId"
-						[required]="organization?.requireTask"
-					></ga-task-selector>
-					<div *ngIf="form.get('taskId')?.invalid && f.submitted" class="invalid-feedback d-block">
-						<div *ngIf="form.get('taskId').errors.required">
-							{{ 'TIMESHEET.VALIDATION.TASK' | translate }}
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="form-group">
-				<div class="col-12">
-					<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
-					<textarea
-						nbInput
-						fullWidth
-						class="form-control"
-						rows="2"
-						[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
-						name="description"
-						formControlName="description"
-						[required]="organization?.requireDescription"
-					></textarea>
-					<div *ngIf="form.get('description')?.invalid && f.submitted" class="invalid-feedback d-block">
-						<div *ngIf="form.get('description')?.errors.required">
-							{{ 'TIMESHEET.VALIDATION.DESCRIPTION' | translate }}
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="form-group">
-				<div class="col-12">
-					<label>{{ 'TIMESHEET.REASON' | translate }}</label>
-					<nb-form-field fullWidth>
-						<input
-							fullWidth
-							nbInput
-							placeholder="{{ 'TIMESHEET.REASON' | translate }}"
-							name="reason"
-							formControlName="reason"
-							[nbAutocomplete]="auto"
-							[required]="organization?.requireReason"
-						/>
-						<nb-autocomplete #auto fullWidth>
-							<nb-option *ngFor="let reason of reasons" [value]="reason">
-								{{ reason }}
-							</nb-option>
-						</nb-autocomplete>
-					</nb-form-field>
-				</div>
-
-				<div *ngIf="form.get('reason')?.invalid && f.submitted" class="invalid-feedback d-block">
-					<div *ngIf="form.get('reason')?.errors.required">
-						{{ 'TIMESHEET.VALIDATION.REASON' | translate }}
-					</div>
-				</div>
-			</div>
-
-			<div class="form-group"></div>
-		</nb-card-body>
-		<nb-card-footer>
-			<button
-				nbButton
-				status="success"
-				size="small"
-				[nbSpinner]="loading"
-				[disabled]="loading"
-				nbSpinnerStatus="primary"
-			>
-				<nb-icon icon="save-outline"></nb-icon>
-				{{ (mode == 'create' ? 'TIMESHEET.ADD_TIME' : 'TIMESHEET.UPDATE_TIME') | translate }}
-			</button>
-			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
-				<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
-					<button
-						type="button"
-						class="action ml-3"
-						nbButton
-						size="small"
-						status="basic"
-						outline
-						ngxConfirmDialog
-						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-						(confirm)="onDeleteConfirm(timeLog)"
-						*ngIf="mode === 'update'"
-						[nbTooltip]="'BUTTONS.DELETE' | translate"
-					>
-						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-					</button>
-				</ng-template>
-			</ng-template>
-		</nb-card-footer>
-	</nb-card>
-</form>
+                      >
+                      <div class="col">
+                        @if (overlapTimeLog?.project) {
+                          <span>
+                            {{ overlapTimeLog?.project?.name }}
+                          </span>
+                        } @else {
+                          <span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
+                        }
+                        <div class="mt-2 small">
+                          @if (overlapTimeLog?.task) {
+                            <span>
+                              <strong
+                                >{{ 'TIMESHEET.TODO' | translate }}
+                                :
+                              </strong>
+                              {{ overlapTimeLog?.task?.title }}
+                            </span>
+                          } @else {
+                            <span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
+                          }
+                        </div>
+                      </div>
+                      <div class="col text-center">
+                        {{ overlapTimeLog.overlapDuration | durationFormat }}
+                      </div>
+                    </div>
+                  }
+                </nb-card-body>
+              </nb-card>
+            }
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-12">
+            <nb-checkbox formControlName="isBillable" name="isBillable" status="primary">
+              {{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
+            </nb-checkbox>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-12 d-flex">
+            <div class="mr-3">
+              <label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
+              <ga-contact-selector
+                [employeeId]="form.get('employeeId')?.value"
+                name="organizationContactId"
+                formControlName="organizationContactId"
+                [required]="organization?.requireClient"
+              ></ga-contact-selector>
+              @if (form.get('organizationContactId')?.invalid && f.submitted) {
+                <div
+                  class="invalid-feedback d-block"
+                  >
+                  @if (form.get('organizationContactId')?.errors.required) {
+                    <div>
+                      {{ 'TIMER_TRACKER.VALIDATION.CLIENT_REQUIRED' | translate }}
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+            <div class="ml-3">
+              <label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
+              <ga-project-selector
+                name="projectId"
+                formControlName="projectId"
+                [skipGlobalChange]="true"
+                [showAllOption]="false"
+                [placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
+                [defaultSelected]="false"
+                [employeeId]="form.get('employeeId')?.value"
+                [organizationContactId]="form.get('organizationContactId')?.value"
+                [required]="organization?.requireProject"
+              ></ga-project-selector>
+              @if (form.get('projectId')?.invalid && f.submitted) {
+                <div class="invalid-feedback d-block">
+                  @if (form.get('projectId')?.errors.required) {
+                    <div>
+                      {{ 'TIMESHEET.VALIDATION.PROJECT' | translate }}
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-6">
+            <label>{{ 'TIMER_TRACKER.SELECT_TEAM' | translate }}</label>
+            <ga-team-selector
+              formControlName="organizationTeamId"
+              [skipGlobalChange]="true"
+              [showAllOption]="false"
+              [defaultSelected]="false"
+              [placeholder]="'TIMER_TRACKER.SELECT_TEAM' | translate"
+              [employeeId]="getControlValue('employeeId')"
+              [projectId]="getControlValue('projectId')"
+            ></ga-team-selector>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-12">
+            <label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
+            <ga-task-selector
+              name="taskId"
+              [employeeId]="getControlValue('employeeId')"
+              [projectId]="getControlValue('projectId')"
+              formControlName="taskId"
+              [required]="organization?.requireTask"
+            ></ga-task-selector>
+            @if (form.get('taskId')?.invalid && f.submitted) {
+              <div class="invalid-feedback d-block">
+                @if (form.get('taskId').errors.required) {
+                  <div>
+                    {{ 'TIMESHEET.VALIDATION.TASK' | translate }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-12">
+            <label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
+            <textarea
+              nbInput
+              fullWidth
+              class="form-control"
+              rows="2"
+              [placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
+              name="description"
+              formControlName="description"
+              [required]="organization?.requireDescription"
+            ></textarea>
+            @if (form.get('description')?.invalid && f.submitted) {
+              <div class="invalid-feedback d-block">
+                @if (form.get('description')?.errors.required) {
+                  <div>
+                    {{ 'TIMESHEET.VALIDATION.DESCRIPTION' | translate }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-12">
+            <label>{{ 'TIMESHEET.REASON' | translate }}</label>
+            <nb-form-field fullWidth>
+              <input
+                fullWidth
+                nbInput
+                placeholder="{{ 'TIMESHEET.REASON' | translate }}"
+                name="reason"
+                formControlName="reason"
+                [nbAutocomplete]="auto"
+                [required]="organization?.requireReason"
+                />
+                <nb-autocomplete #auto fullWidth>
+                  @for (reason of reasons; track reason) {
+                    <nb-option [value]="reason">
+                      {{ reason }}
+                    </nb-option>
+                  }
+                </nb-autocomplete>
+              </nb-form-field>
+            </div>
+            @if (form.get('reason')?.invalid && f.submitted) {
+              <div class="invalid-feedback d-block">
+                @if (form.get('reason')?.errors.required) {
+                  <div>
+                    {{ 'TIMESHEET.VALIDATION.REASON' | translate }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <div class="form-group"></div>
+        </nb-card-body>
+        <nb-card-footer>
+          <button
+            nbButton
+            status="success"
+            size="small"
+            [nbSpinner]="loading"
+            [disabled]="loading"
+            nbSpinnerStatus="primary"
+            >
+            <nb-icon icon="save-outline"></nb-icon>
+            {{ (mode == 'create' ? 'TIMESHEET.ADD_TIME' : 'TIMESHEET.UPDATE_TIME') | translate }}
+          </button>
+          <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
+            <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
+              @if (mode === 'update') {
+                <button
+                  type="button"
+                  class="action ml-3"
+                  nbButton
+                  size="small"
+                  status="basic"
+                  outline
+                  ngxConfirmDialog
+                  [message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+                  (confirm)="onDeleteConfirm(timeLog)"
+                  [nbTooltip]="'BUTTONS.DELETE' | translate"
+                  >
+                  <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+                </button>
+              }
+            </ng-template>
+          </ng-template>
+        </nb-card-footer>
+      </nb-card>
+    </form>
+  }

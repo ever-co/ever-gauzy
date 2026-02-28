@@ -1,22 +1,50 @@
-import { ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { NgForm } from '@angular/forms';
-import { NavigationExtras, Router } from '@angular/router';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
+import { NavigationExtras, Router, RouterLink } from '@angular/router';
 import { HttpStatus, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { NB_AUTH_OPTIONS, NbAuthService, NbLoginComponent } from '@nebular/auth';
+import {
+	NbAlertModule,
+	NbButtonModule,
+	NbCheckboxModule,
+	NbFormFieldModule,
+	NbIconModule,
+	NbInputModule
+} from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { catchError, EMPTY, tap } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
+import { catchError, EMPTY, finalize, tap } from 'rxjs';
 import { AuthService } from '../auth';
 import { GAUZY_ENV } from '../constants';
+import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { ElectronService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { ErrorHandlerService } from '../services';
+import { SwitchThemeComponent } from '../theme-selector/switch-theme/switch-theme.component';
+import { LogoComponent } from './shared/ui/logo/logo.component';
+import { SocialLinksComponent } from './shared/ui/social-links/social-links.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-desktop-timer-login',
-    templateUrl: './login.component.html',
-    styleUrls: ['./login.component.scss'],
-    standalone: false
+	selector: 'ngx-desktop-timer-login',
+	templateUrl: './login.component.html',
+	styleUrls: ['./login.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		LogoComponent,
+		SwitchThemeComponent,
+		NbAlertModule,
+		FormsModule,
+		NbInputModule,
+		NbFormFieldModule,
+		NbButtonModule,
+		NbIconModule,
+		NbCheckboxModule,
+		SpinnerButtonDirective,
+		RouterLink,
+		SocialLinksComponent,
+		TranslatePipe
+	]
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	@ViewChild('form')
@@ -28,7 +56,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly nbAuthService: NbAuthService,
 		public readonly languageElectronService: LanguageElectronService,
 		public readonly cdr: ChangeDetectorRef,
-		public readonly router: Router,
+		public readonly _router: Router,
 		private readonly authService: AuthService,
 		private readonly errorHandlingService: ErrorHandlerService,
 		@Inject(NB_AUTH_OPTIONS)
@@ -36,7 +64,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		@Inject(GAUZY_ENV)
 		private readonly environment: any
 	) {
-		super(nbAuthService, options, cdr, router);
+		super(nbAuthService, options, cdr, _router);
 	}
 
 	ngOnInit() {
@@ -84,11 +112,15 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 									show_popup
 								}
 							};
-							await this.router.navigate(['/', 'auth', 'login-workspace'], extra);
-							this.submitted = false;
+							await this._router.navigate(['/', 'auth', 'login-workspace'], extra);
 						}
 					}
 				),
+				finalize(() => {
+					this.submitted = false;
+					this.cdr.markForCheck();
+				}),
+				// Handle and log errors using the error handling service
 				catchError((error) => {
 					this.submitted = false;
 					// Handle and log errors using the error handling service

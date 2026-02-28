@@ -12,10 +12,9 @@ export const createCategories = async (
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories = [];
 
-	for await (const organization of organizations) {
-		for await (const seedProductCategory of categories) {
-			const { category } = seedProductCategory;
-			const image = faker.image.urlLoremFlickr({ category });
+	for (const organization of organizations) {
+		for (const seedProductCategory of categories) {
+			const image = faker.image.url();
 
 			const newCategory = new ProductCategory();
 			newCategory.imageUrl = image;
@@ -49,12 +48,11 @@ export const createRandomProductCategories = async (
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories: ProductCategory[] = [];
-	for await (const tenant of tenants) {
+	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-		for await (const organization of organizations) {
+		for (const organization of organizations) {
 			for (const seedProductCategory of categories) {
-				const { category } = seedProductCategory;
-				const image = faker.image.urlLoremFlickr({ category });
+				const image = faker.image.url();
 
 				const newCategory = new ProductCategory();
 				newCategory.imageUrl = image;

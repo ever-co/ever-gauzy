@@ -1,5 +1,7 @@
 <div class="gauzy-select-container">
-	<label *ngIf="label">{{ label | translate }}</label>
+	@if (label) {
+		<label>{{ label | translate }}</label>
+	}
 	<ng-select
 		(clear)="onClear()"
 		[loading]="isLoading"
@@ -43,15 +45,20 @@
 
 <!-- Default Template -->
 <ng-template #defaultTemplate let-item="item">
-	<ng-container *ngTemplateOutlet="commonTemplate; context: { item: item, label: item[bindLabel] }"></ng-container>
+	<ng-container
+		[ngTemplateOutlet]="commonTemplate"
+		[ngTemplateOutletContext]="{ item: item, label: item[bindLabel] }"
+	></ng-container>
 </ng-template>
 
 <!-- Title Template -->
 <ng-template #titleTemplate let-item="item">
 	<span class="text-container">
-		<span *ngIf="item?.number" class="gray-bold-text">
-			#{{ item?.prefix ? (item?.prefix + '-' + item?.number | uppercase) : item?.number }}
-		</span>
+		@if (item?.number) {
+			<span class="gray-bold-text">
+				#{{ item?.prefix ? (item?.prefix + '-' + item?.number | uppercase) : item?.number }}
+			</span>
+		}
 		<span class="black-bold-text">{{ item?.title }}</span>
 	</span>
 </ng-template>
@@ -59,7 +66,9 @@
 <!-- Common Template (for both option and label) -->
 <ng-template #commonTemplate let-item="item" let-label="label">
 	<div class="common-template">
-		<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" height="20px" width="20px" />
+		@if (item?.imageUrl) {
+			<img [src]="item?.imageUrl" height="20px" width="20px" />
+		}
 		<span class="black-bold-text">{{ label }}</span>
 	</div>
 </ng-template>

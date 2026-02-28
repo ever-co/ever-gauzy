@@ -17,20 +17,19 @@ import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
 @Component({
     selector: 'ga-employee-horizontal-bar-chart',
     template: `
-		<ng-template [ngIf]="employeeStatistics.length" [ngIfElse]="chartNotFoundTemplate">
-			<div class="chart">
-				<canvas baseChart [data]="data" [options]="chartOptions" [type]="chartType"></canvas>
-			</div>
-		</ng-template>
-		<ng-template #chartNotFoundTemplate>
-			<div class="title">
-				<nb-icon icon="info-outline"></nb-icon>
-				<div>
-					{{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
-				</div>
-			</div>
-		</ng-template>
-	`,
+		@if (employeeStatistics.length) {
+		  <div class="chart">
+		    <canvas baseChart [data]="data" [options]="chartOptions" [type]="chartType"></canvas>
+		  </div>
+		} @else {
+		  <div class="title">
+		    <nb-icon icon="info-outline"></nb-icon>
+		    <div>
+		      {{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
+		    </div>
+		  </div>
+		}
+		`,
     styles: [
         `
 			:host {

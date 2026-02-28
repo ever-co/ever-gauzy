@@ -1,16 +1,17 @@
 import {
-	Component,
-	Input,
-	EventEmitter,
-	Output,
-	ViewChild,
-	ElementRef,
-	AfterViewInit,
-	Inject,
-	Renderer2,
-	ChangeDetectorRef
+  Component,
+  Input,
+  EventEmitter,
+  Output,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  Inject,
+  Renderer2,
+  ChangeDetectorRef,
+  DOCUMENT
 } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+
 import { FormArray, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

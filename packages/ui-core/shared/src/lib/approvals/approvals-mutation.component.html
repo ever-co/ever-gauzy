@@ -23,10 +23,8 @@
 						formControlName="name"
 						fullWidth
 						[placeholder]="'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME' | translate"
-						[ngClass]="{
-							'status-danger': FormHelpers.isInvalidControl(form, 'name'),
-							'status-success': FormHelpers.isValidControl(form, 'name')
-						}"
+						[class.status-danger]="FormHelpers.isInvalidControl(form, 'name')"
+						[class.status-success]="FormHelpers.isValidControl(form, 'name')"
 					/>
 				</div>
 			</div>
@@ -56,10 +54,16 @@
 						fullWidth
 						placeholder="{{ 'APPROVAL_REQUEST_PAGE.CHOOSE_POLICIES' | translate }}"
 					>
-						<nb-option *ngFor="let approvalPolicy of approvalPolicies" [value]="approvalPolicy.id">
-							{{ approvalPolicy.name }}</nb-option
-						>
+						@for (approvalPolicy of approvalPolicies; track approvalPolicy) {
+						<nb-option [value]="approvalPolicy.id"> {{ approvalPolicy.name }}</nb-option>
+						}
 					</nb-select>
+					@if (approvalPolicies?.length === 0) {
+					<div class="caption-2 mt-1 status-danger">
+						{{ 'SM_TABLE.NO_DATA.APPROVAL_POLICY' | translate }}
+						<a href="javascript:void(0)" (click)="navigateToPolicy()">{{ 'BUTTONS.CREATE' | translate }}</a>
+					</div>
+					}
 				</div>
 			</div>
 			<div class="row">
@@ -71,7 +75,8 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-12 mb-3" *ngIf="participants === 'employees'">
+				@if (participants === 'employees') {
+				<div class="col-sm-12 mb-3">
 					<label for="employees" class="label">
 						{{ 'APPROVAL_REQUEST_PAGE.EMPLOYEES' | translate }}
 					</label>
@@ -83,7 +88,8 @@
 					>
 					</ga-employee-multi-select>
 				</div>
-				<div class="col-sm-12 mb-3" *ngIf="participants === 'teams'">
+				} @if (participants === 'teams') {
+				<div class="col-sm-12 mb-3">
 					<label for="teams" class="label">
 						{{ 'APPROVAL_REQUEST_PAGE.TEAMS' | translate }}
 					</label>
@@ -96,9 +102,12 @@
 						fullWidth
 						placeholder="{{ 'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate }}"
 					>
-						<nb-option *ngFor="let team of teams" [value]="team.id"> {{ team.name }}</nb-option>
+						@for (team of teams; track team) {
+						<nb-option [value]="team.id"> {{ team.name }}</nb-option>
+						}
 					</nb-select>
 				</div>
+				}
 				<div class="col-sm-12 mb-3">
 					<ga-tags-color-input
 						[selectedTags]="tags"

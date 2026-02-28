@@ -6,7 +6,7 @@ import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { moment } from '../../core/moment-extend';
-import { getDateRangeFormat } from './../../core/utils';
+import { getDateRangeFormat, MultiORMEnum } from './../../core/utils';
 import { generateTimeSlots } from './utils';
 import { TimeSlot } from './time-slot.entity';
 import {
@@ -69,109 +69,151 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			moment.utc(endDate || moment().endOf('day'))
 		);
 
-		// Create a query builder for the TimeSlot entity
-		const query = this.typeOrmRepository.createQueryBuilder('time_slot');
-		query.leftJoin(
-			`${query.alias}.employee`,
-			'employee',
-			`"employee"."tenantId" = :tenantId AND "employee"."organizationId" = :organizationId`,
-			{ tenantId, organizationId }
-		);
-		query.innerJoin(`${query.alias}.timeLogs`, 'time_log');
-
-		// Set find options for the query
-		query.setFindOptions({
-			// Define selected fields for the result
-			select: {
-				organization: {
-					id: true,
-					name: true
-				},
-				employee: {
-					id: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						imageUrl: true
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where: any = {
+					tenantId,
+					organizationId,
+					startedAt: { $gte: start, $lte: end },
+					timeLogs: {
+						tenantId,
+						organizationId
 					}
+				};
+
+				if (!syncSlots) {
+					where.timeLogs.startedAt = { $gte: start, $lte: end };
 				}
-			},
-			// Spread relations if provided, otherwise an empty array
-			relations: request.relations || []
-		});
+				if (isNotEmpty(employeeIds)) {
+					where.employeeId = { $in: employeeIds };
+					where.timeLogs.employeeId = { $in: employeeIds };
+				}
+				if (isNotEmpty(projectIds)) {
+					where.timeLogs.projectId = { $in: projectIds };
+				}
+				if (isNotEmpty(activityLevel)) {
+					where.overall = { $gte: activityLevel.start * 6, $lte: activityLevel.end * 6 };
+				}
+				if (isNotEmpty(source)) {
+					where.timeLogs.source = source instanceof Array ? { $in: source } : source;
+				}
+				if (isNotEmpty(logType)) {
+					where.timeLogs.logType = logType instanceof Array ? { $in: logType } : logType;
+				}
 
-		// Add where conditions to the query
-		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
-			// Filter by time range for both time_slot and time_log
-			qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
-				startDate: start,
-				endDate: end
-			});
-
-			// If syncSlots is true, filter by time_log.startedAt
-			if (isEmpty(syncSlots)) {
-				qb.andWhere(p(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`), {
-					startDate: start,
-					endDate: end
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: (request.relations || []) as any[],
+					orderBy: { createdAt: 'ASC' as any }
 				});
+				return items.map((e) => this.serialize(e));
 			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the TimeSlot entity
+				const query = this.typeOrmRepository.createQueryBuilder('time_slot');
+				query.leftJoin(
+					`${query.alias}.employee`,
+					'employee',
+					`"employee"."tenantId" = :tenantId AND "employee"."organizationId" = :organizationId`,
+					{ tenantId, organizationId }
+				);
+				query.innerJoin(`${query.alias}.timeLogs`, 'time_log');
 
-			// Filter by employeeIds and projectIds if provided
-			if (isNotEmpty(employeeIds)) {
-				qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
-				qb.andWhere(p(`"time_log"."employeeId" IN (:...employeeIds)`), { employeeIds });
-			}
-			if (isNotEmpty(projectIds)) {
-				qb.andWhere(p(`"time_log"."projectId" IN (:...projectIds)`), { projectIds });
-			}
+				// Set find options for the query
+				query.setFindOptions({
+					// Define selected fields for the result
+					select: {
+						organization: {
+							id: true,
+							name: true
+						},
+						employee: {
+							id: true,
+							user: {
+								id: true,
+								firstName: true,
+								lastName: true,
+								imageUrl: true
+							}
+						}
+					},
+					// Spread relations if provided, otherwise an empty array
+					relations: request.relations || []
+				});
 
-			// Filter by activity level if provided
-			if (isNotEmpty(activityLevel)) {
+				// Add where conditions to the query
+				query.where((qb: SelectQueryBuilder<TimeSlot>) => {
+					// Filter by time range for both time_slot and time_log
+					qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
+						startDate: start,
+						endDate: end
+					});
+
+					// If syncSlots is true, filter by time_log.startedAt
+					if (isEmpty(syncSlots)) {
+						qb.andWhere(p(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`), {
+							startDate: start,
+							endDate: end
+						});
+					}
+
+					// Filter by employeeIds and projectIds if provided
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+						qb.andWhere(p(`"time_log"."employeeId" IN (:...employeeIds)`), { employeeIds });
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(p(`"time_log"."projectId" IN (:...projectIds)`), { projectIds });
+					}
+
+					// Filter by activity level if provided
+					if (isNotEmpty(activityLevel)) {
 				/**
 				 * Activity Level should be 0-100%
 				 * Convert it into a 10-minute time slot by multiplying by 6
 				 */
 				// Filters records based on the overall column, representing the activity level.
-				qb.andWhere(p(`"${qb.alias}"."overall" BETWEEN :start AND :end`), {
-					start: activityLevel.start * 6,
-					end: activityLevel.end * 6
+						qb.andWhere(p(`"${qb.alias}"."overall" BETWEEN :start AND :end`), {
+							start: activityLevel.start * 6,
+							end: activityLevel.end * 6
+						});
+					}
+
+					// Filters records based on the source column.
+					if (isNotEmpty(source)) {
+						const whereClause =
+							source instanceof Array
+								? p(`"time_log"."source" IN (:...source)`)
+								: p(`"time_log"."source" = :source`);
+
+						qb.andWhere(whereClause, { source });
+					}
+
+					// Filter by logType if provided
+					if (isNotEmpty(logType)) {
+						const whereClause =
+							logType instanceof Array
+								? p(`"time_log"."logType" IN (:...logType)`)
+								: p(`"time_log"."logType" = :logType`);
+
+						qb.andWhere(whereClause, { logType });
+					}
+
+					// Filter by tenantId and organizationId for both time_slot and time_log in a single AND condition
+					qb.andWhere(
+						`"${qb.alias}"."tenantId" = :tenantId AND "${qb.alias}"."organizationId" = :organizationId AND
+						"time_log"."tenantId" = :tenantId AND "time_log"."organizationId" = :organizationId`,
+						{ tenantId, organizationId }
+					);
+
+					// Sort by createdAt
+					qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
 				});
+
+				const slots = await query.getMany();
+				return slots;
 			}
-
-			// Filters records based on the source column.
-			if (isNotEmpty(source)) {
-				const whereClause =
-					source instanceof Array
-						? p(`"time_log"."source" IN (:...source)`)
-						: p(`"time_log"."source" = :source`);
-
-				qb.andWhere(whereClause, { source });
-			}
-
-			// Filter by logType if provided
-			if (isNotEmpty(logType)) {
-				const whereClause =
-					logType instanceof Array
-						? p(`"time_log"."logType" IN (:...logType)`)
-						: p(`"time_log"."logType" = :logType`);
-
-				qb.andWhere(whereClause, { logType });
-			}
-
-			// Filter by tenantId and organizationId for both time_slot and time_log in a single AND condition
-			qb.andWhere(
-				`"${qb.alias}"."tenantId" = :tenantId AND "${qb.alias}"."organizationId" = :organizationId AND
-				"time_log"."tenantId" = :tenantId AND "time_log"."organizationId" = :organizationId`,
-				{ tenantId, organizationId }
-			);
-
-			// Sort by createdAt
-			qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
-		});
-
-		const slots = await query.getMany();
-		return slots;
+		}
 	}
 
 	/**
@@ -187,7 +229,11 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 * @returns A promise that resolves when the command is executed, performing bulk creation or update.
 	 */
 	async bulkCreateOrUpdate(slots: ITimeSlot[], employeeId: ID, organizationId: ID) {
-		return await this._commandBus.execute(new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId));
+		const tenantId = RequestContext.currentTenantId();
+
+		return await this._commandBus.execute(
+			new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId, tenantId)
+		);
 	}
 
 	/**
@@ -199,7 +245,11 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 * @returns The result of the bulk creation command
 	 */
 	async bulkCreate(slots: ITimeSlot[], employeeId: ID, organizationId: ID): Promise<ITimeSlot[]> {
-		return await this._commandBus.execute(new TimeSlotBulkCreateCommand(slots, employeeId, organizationId));
+		const tenantId = RequestContext.currentTenantId();
+
+		return await this._commandBus.execute(
+			new TimeSlotBulkCreateCommand(slots, employeeId, organizationId, tenantId)
+		);
 	}
 
 	/**

@@ -3,6 +3,7 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef,
 	Component,
+	ElementRef,
 	OnDestroy,
 	OnInit,
 	QueryList,
@@ -17,9 +18,8 @@ import { indexBy, range, reduce } from 'underscore';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
-import { SwiperComponent } from 'swiper/angular';
-// import Swiper core and required modules
-import SwiperCore, { Virtual, Pagination, Navigation } from 'swiper';
+// Import and register Swiper custom elements (Web Component)
+import { register } from 'swiper/element/bundle';
 import {
 	IOrganization,
 	IGetTimeSlotStatistics,
@@ -60,12 +60,14 @@ import {
 	GalleryService,
 	TimeZoneService,
 	WidgetService,
+	WidgetTemplateDirective,
 	WindowService,
+	WindowTemplateDirective,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
 
-// install Swiper modules
-SwiperCore.use([Pagination, Navigation, Virtual]);
+// Register Swiper custom elements globally
+register();
 
 export enum RangePeriod {
 	DAY = 'DAY',
@@ -84,10 +86,10 @@ enum Windows {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-time-tracking-dashboard',
-    templateUrl: './time-tracking.component.html',
-    styleUrls: ['./time-tracking.component.scss'],
-    standalone: false
+	selector: 'ga-time-tracking-dashboard',
+	templateUrl: './time-tracking.component.html',
+	styleUrls: ['./time-tracking.component.scss'],
+	standalone: false
 })
 export class TimeTrackingComponent
 	extends TranslationBaseComponent
@@ -140,10 +142,11 @@ export class TimeTrackingComponent
 	public filters: ITimeLogFilters = { timeFormat: TimeFormatEnum.FORMAT_12_HOURS };
 	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
-	@ViewChildren('widget') listOfWidgets: QueryList<TemplateRef<HTMLElement>>;
-	@ViewChildren('window') listOfWindows: QueryList<TemplateRef<HTMLElement>>;
-	public widgetsRef: TemplateRef<HTMLElement>[] = [];
-	public windowsRef: TemplateRef<HTMLElement>[] = [];
+	@ViewChildren(WidgetTemplateDirective, { read: TemplateRef }) listOfWidgets: QueryList<TemplateRef<any>>;
+	@ViewChildren(WindowTemplateDirective, { read: TemplateRef }) listOfWindows: QueryList<TemplateRef<any>>;
+
+	public widgetsRef: TemplateRef<any>[] = [];
+	public windowsRef: TemplateRef<any>[] = [];
 	public widgets: GuiDrag[];
 	public windows: GuiDrag[];
 
@@ -632,7 +635,7 @@ export class TimeTrackingComponent
 						employeeLevel: people.employeeLevel,
 						fullName: people.user.name,
 						shortDescription: people.short_description
-				  } as ISelectedEmployee)
+					} as ISelectedEmployee)
 				: ALL_EMPLOYEES_SELECTED;
 			if (this._store.selectedEmployee) {
 				this._router.navigate([`/pages/employees/activity/screenshots`]);
@@ -822,12 +825,14 @@ export class TimeTrackingComponent
 		isWindow ? this._windowService.undoDrag() : this._widgetService.undoDrag();
 	}
 
-	public slideNext(swiper: SwiperComponent) {
-		swiper.swiperRef.slideNext(100);
+	public slideNext(swiperEl: ElementRef<HTMLElement> | HTMLElement): void {
+		const el = swiperEl instanceof ElementRef ? swiperEl.nativeElement : swiperEl;
+		(el as any).swiper?.slideNext(100);
 	}
 
-	public slidePrev(swiper: SwiperComponent) {
-		swiper.swiperRef.slidePrev(100);
+	public slidePrev(swiperEl: ElementRef<HTMLElement> | HTMLElement): void {
+		const el = swiperEl instanceof ElementRef ? swiperEl.nativeElement : swiperEl;
+		(el as any).swiper?.slidePrev(100);
 	}
 
 	public async recover(position: number) {

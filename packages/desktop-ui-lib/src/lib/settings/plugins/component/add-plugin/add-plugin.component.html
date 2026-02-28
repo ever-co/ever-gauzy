@@ -33,9 +33,10 @@
 					[class.disabled]="installing"
 					(click)="!installing && localPluginInstall()"
 					(keydown.enter)="!installing && localPluginInstall()"
-					(keydown.space)="!installing && localPluginInstall()"
+					(keydown.space)="$event.preventDefault(); !installing && localPluginInstall()"
 					[tabindex]="installing ? -1 : 0"
 					[attr.aria-label]="'BUTTONS.LOAD_PLUGIN' | translate"
+					[attr.aria-disabled]="installing"
 					role="button"
 				>
 					<nb-card-body>
@@ -58,9 +59,10 @@
 					[class.disabled]="installing"
 					(click)="!installing && switchContext('cdn')"
 					(keydown.enter)="!installing && switchContext('cdn')"
-					(keydown.space)="!installing && switchContext('cdn')"
+					(keydown.space)="$event.preventDefault(); !installing && switchContext('cdn')"
 					[tabindex]="installing ? -1 : 0"
 					[attr.aria-label]="'BUTTONS.FROM_CDN' | translate"
+					[attr.aria-disabled]="installing"
 					role="button"
 				>
 					<nb-card-body>
@@ -79,9 +81,10 @@
 					[class.disabled]="installing"
 					(click)="!installing && switchContext('npm')"
 					(keydown.enter)="!installing && switchContext('npm')"
-					(keydown.space)="!installing && switchContext('npm')"
+					(keydown.space)="$event.preventDefault(); !installing && switchContext('npm')"
 					[tabindex]="installing ? -1 : 0"
 					[attr.aria-label]="'BUTTONS.FROM_NPM' | translate"
+					[attr.aria-disabled]="installing"
 					role="button"
 				>
 					<nb-card-body>
@@ -117,15 +120,18 @@
 				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_CDN_DESCRIPTION' | translate }}
 			</div>
 
+			<label for="cdnUrl" class="form-label">
+				{{ 'TIMER_TRACKER.SETTINGS.CDN_URL' | translate }} <span class="required">*</span>
+			</label>
 			<input
 				nbInput
 				fullWidth
+				id="cdnUrl"
 				[value]="cdnUrl()"
 				(input)="cdnUrl.set($any($event.target).value)"
 				type="url"
 				[status]="error() ? 'danger' : 'basic'"
 				placeholder="https://cdn.server.tld/public/plugin.zip"
-				[attr.aria-label]="'TIMER_TRACKER.SETTINGS.CDN_URL' | translate"
 				autocomplete="url"
 				required
 			/>
@@ -225,7 +231,7 @@
 							replacement: 0.75,
 							maskFromLeft: false
 						}"
-						(unmaskedValueChange)="handleUnmaskedValueChange($event)"
+						(unmaskedValueChange)="updateRegistryAuthToken($event)"
 						type="text"
 						id="authToken"
 						[status]="error() ? 'danger' : 'basic'"
@@ -250,12 +256,14 @@
 					/>
 				</div>
 			</div>
-			} @if (error()) {
+			}
+			<!-- Check if there errors and show alert -->
+			@if (error()) {
 			<nb-alert status="danger" class="error-alert">
 				{{ error() | translate }}
 			</nb-alert>
 			}
-
+			<!-- Submit Button -->
 			<button
 				nbButton
 				fullWidth

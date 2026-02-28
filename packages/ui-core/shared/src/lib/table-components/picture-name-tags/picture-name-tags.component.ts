@@ -5,32 +5,35 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
     selector: 'ga-picture-name-tags',
     template: `
 		<ngx-avatar
-			[src]="avatar?.imageUrl"
-			[name]="avatar?.name"
-			[id]="avatar?.id"
-			[employee]="avatar.employee"
-			class="report-table"
+		  [src]="avatar?.imageUrl"
+		  [name]="avatar?.name"
+		  [id]="avatar?.id"
+		  [employee]="avatar.employee"
+		  class="report-table"
 		></ngx-avatar>
-		<ng-template [ngIf]="rowData?.isDefault">
-			<nb-badge
-				class="color"
-				position="centered"
-				[style.background]="background(rowData?.color)"
-				[style.color]="backgroundContrast(rowData?.brandColor)"
-				text="Default"
-			></nb-badge>
-		</ng-template>
-		<div class="badges-block" *ngIf="isTags">
-			<nb-badge
-				*ngFor="let tag of (data | async)?.tags"
-				class="color"
-				position="centered"
-				[style.background]="background(tag?.color)"
-				[style.color]="backgroundContrast(tag?.color)"
-				[text]="tag?.name"
-			></nb-badge>
-		</div>
-	`,
+		@if (rowData?.isDefault) {
+		  <nb-badge
+		    class="color"
+		    position="centered"
+		    [style.background]="background(rowData?.color)"
+		    [style.color]="backgroundContrast(rowData?.brandColor)"
+		    text="Default"
+		  ></nb-badge>
+		}
+		@if (isTags) {
+		  <div class="badges-block">
+		    @for (tag of (data | async)?.tags; track tag) {
+		      <nb-badge
+		        class="color"
+		        position="centered"
+		        [style.background]="background(tag?.color)"
+		        [style.color]="backgroundContrast(tag?.color)"
+		        [text]="tag?.name"
+		      ></nb-badge>
+		    }
+		  </div>
+		}
+		`,
     styles: [
         `
 			.image-container {

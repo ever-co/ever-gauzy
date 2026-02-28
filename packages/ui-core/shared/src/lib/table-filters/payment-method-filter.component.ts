@@ -6,16 +6,18 @@ import { PaymentMethodEnum } from '@gauzy/contracts';
     selector: 'ga-payment-method-filter',
     template: `
 		<ng-select
-			[clearable]="true"
-			[closeOnSelect]="true"
-			[placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD' | translate"
-			(change)="onChange($event)"
-		>
-			<ng-option *ngFor="let paymentMethod of paymentMethods" [value]="paymentMethod">
-				{{ 'INVOICES_PAGE.PAYMENTS.' + paymentMethod | translate }}
-			</ng-option>
+		  [clearable]="true"
+		  [closeOnSelect]="true"
+		  [placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD' | translate"
+		  (change)="onChange($event)"
+		  >
+		  @for (paymentMethod of paymentMethods; track paymentMethod) {
+		    <ng-option [value]="paymentMethod">
+		      {{ 'INVOICES_PAGE.PAYMENTS.' + paymentMethod | translate }}
+		    </ng-option>
+		  }
 		</ng-select>
-	`,
+		`,
     standalone: false
 })
 export class PaymentMethodFilterComponent extends DefaultFilter implements OnChanges {

@@ -2,8 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { pluck } from 'underscore';
 import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import {
@@ -24,10 +23,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-amounts-owed-report',
-    templateUrl: './amounts-owed-report.component.html',
-    styleUrls: ['./amounts-owed-report.component.scss'],
-    standalone: false
+	selector: 'ga-amounts-owed-report',
+	templateUrl: './amounts-owed-report.component.html',
+	styleUrls: ['./amounts-owed-report.component.scss'],
+	standalone: false
 })
 export class AmountsOwedReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: IGetExpenseInput;

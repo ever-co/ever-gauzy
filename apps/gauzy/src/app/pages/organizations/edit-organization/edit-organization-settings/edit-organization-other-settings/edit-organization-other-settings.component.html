@@ -5,52 +5,52 @@
 		</h4>
 		<ul>
 			<span (click)="general.toggle()">
-				<li [ngClass]="{ active: general?.expanded }">
+				<li [class.active]="general?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' | translate }}
 				</li>
 			</span>
 			<span (click)="design.toggle()">
-				<li [ngClass]="{ active: design?.expanded }">
+				<li [class.active]="design?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.DESIGN' | translate }}
 				</li>
 			</span>
 			<span (click)="accounting.toggle()">
-				<li [ngClass]="{ active: accounting?.expanded }">
+				<li [class.active]="accounting?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.ACCOUNTING' | translate }}
 				</li>
 			</span>
 			<span (click)="bonus.toggle()">
-				<li [ngClass]="{ active: bonus?.expanded }">
+				<li [class.active]="bonus?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.BONUS' | translate }}
 				</li>
 			</span>
 			<span (click)="invites.toggle()">
-				<li [ngClass]="{ active: invites?.expanded }">
+				<li [class.active]="invites?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.INVITE' | translate }}
 				</li>
 			</span>
 			<span (click)="dateLimit.toggle()">
-				<li [ngClass]="{ active: dateLimit?.expanded }">
+				<li [class.active]="dateLimit?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.DATE_LIMIT' | translate }}
 				</li>
 			</span>
 			<span (click)="timer.toggle()">
-				<li [ngClass]="{ active: timer?.expanded }">
+				<li [class.active]="timer?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
 				</li>
 			</span>
 			<span (click)="agent.toggle()">
-				<li [ngClass]="{ active: agent?.expanded }">
+				<li [class.active]="agent?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
 				</li>
 			</span>
 			<span (click)="taskSetting.toggle()">
-				<li [ngClass]="{ active: taskSetting?.expanded }">
+				<li [class.active]="taskSetting?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING' | translate }}
 				</li>
 			</span>
 			<span (click)="integrations.toggle()">
-				<li [ngClass]="{ active: integrations?.expanded }">
+				<li [class.active]="integrations?.expanded">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' | translate }}
 				</li>
 			</span>
@@ -93,9 +93,11 @@
 											[placeholder]="'FORM.PLACEHOLDERS.START_WEEK_ON' | translate"
 											fullWidth="true"
 										>
-											<nb-option *ngFor="let weekday of weekdays" [value]="weekday">
+											@for (weekday of weekdays; track weekday) {
+											<nb-option [value]="weekday">
 												{{ 'SM_TABLE.' + weekday | translate }}
 											</nb-option>
+											}
 										</nb-select>
 									</div>
 								</div>
@@ -119,9 +121,11 @@
 											[placeholder]="'FORM.PLACEHOLDERS.DATE_TYPE' | translate"
 											fullWidth
 										>
-											<nb-option *ngFor="let type of defaultValueDateTypes" [value]="type">
+											@for (type of defaultValueDateTypes; track type) {
+											<nb-option [value]="type">
 												{{ 'SM_TABLE.' + type | translate }}
 											</nb-option>
+											}
 										</nb-select>
 									</div>
 								</div>
@@ -135,9 +139,11 @@
 											formControlName="regionCode"
 											fullWidth
 										>
-											<nb-option *ngFor="let code of regionCodes" [value]="code">
+											@for (code of regionCodes; track code) {
+											<nb-option [value]="code">
 												{{ 'SM_TABLE.REGION.' + code | translate }}
 											</nb-option>
+											}
 										</nb-select>
 									</div>
 								</div>
@@ -151,9 +157,11 @@
 											formControlName="numberFormat"
 											fullWidth
 										>
-											<nb-option *ngFor="let numFormat of numberFormats" [value]="numFormat">
+											@for (numFormat of numberFormats; track numFormat) {
+											<nb-option [value]="numFormat">
 												{{ numberFormatPreview(numFormat) }}
 											</nb-option>
+											}
 										</nb-select>
 									</div>
 								</div>
@@ -169,9 +177,11 @@
 											[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_FORMAT' | translate"
 											fullWidth
 										>
-											<nb-option *ngFor="let format of listOfDateFormats" [value]="format">
+											@for (format of listOfDateFormats; track format) {
+											<nb-option [value]="format">
 												{{ dateFormatPreview(format) }}
 											</nb-option>
+											}
 										</nb-select>
 									</div>
 								</div>
@@ -211,12 +221,11 @@
 											formControlName="isDefault"
 											fullWidth
 										>
-											<nb-option
-												*ngFor="let item of defaultOrganizationSelection"
-												[value]="item.value"
-											>
+											@for (item of defaultOrganizationSelection; track item) {
+											<nb-option [value]="item.value">
 												{{ item?.key }}
 											</nb-option>
+											}
 										</nb-select>
 									</div>
 								</div>
@@ -232,18 +241,18 @@
 						<div class="fields">
 							<div class="row">
 								<!-- <div class="col-6 color-pick">
-									<div class="form-group">
-										<label class="label">
-											{{
-												'FORM.LABELS.BRAND_COLOR'
-													| translate
-											}}
-										</label>
-										<input
-											fullWidth
-											id="brandColorInput"
-											nbInput
-											formControlName="brandColor"
+                <div class="form-group">
+                  <label class="label">
+                    {{
+                    'FORM.LABELS.BRAND_COLOR'
+                    | translate
+                    }}
+                  </label>
+                  <input
+                    fullWidth
+                    id="brandColorInput"
+                    nbInput
+                    formControlName="brandColor"
 											[placeholder]="
 												'FORM.PLACEHOLDERS.ADD_COLOR'
 													| translate
@@ -257,15 +266,15 @@
 											[style.background]="
 												form.get('brandColor').value+' !important'
 											"
-											[value]="form.get('brandColor').value"
+                    [value]="form.get('brandColor').value"
 											(colorPickerChange)="
 												form
 													.get('brandColor')
 													.setValue($event)
 											"
-										/>
-									</div>
-								</div> -->
+                    />
+                  </div>
+                </div> -->
 								<div class="select-wrapper">
 									<div class="form-group design-select">
 										<label class="label">
@@ -278,12 +287,11 @@
 											[placeholder]="'FORM.PLACEHOLDERS.ALIGN_LOGO_TO' | translate"
 											fullWidth
 										>
-											<nb-option
-												*ngFor="let type of defaultAlignmentTypes"
-												[value]="type.toUpperCase()"
-											>
+											@for (type of defaultAlignmentTypes; track type) {
+											<nb-option [value]="type.toUpperCase()">
 												{{ type }}
 											</nb-option>
+											}
 										</nb-select>
 									</div>
 									<div class="form-group design-select">
@@ -297,12 +305,11 @@
 											[placeholder]="'FORM.PLACEHOLDERS.CURRENCY_POSITION' | translate"
 											fullWidth
 										>
-											<nb-option
-												*ngFor="let pos of defaultCurrencyPosition"
-												[value]="pos.toUpperCase()"
-											>
+											@for (pos of defaultCurrencyPosition; track pos) {
+											<nb-option [value]="pos.toUpperCase()">
 												{{ pos }}
 											</nb-option>
+											}
 										</nb-select>
 									</div>
 								</div>
@@ -409,7 +416,8 @@
 										/>
 									</div>
 								</div>
-								<div *ngIf="invoiceTemplates" class="col-6">
+								@if (invoiceTemplates) {
+								<div class="col-6">
 									<label class="label">
 										{{ 'FORM.LABELS.DEFAULT_INVOICE_TEMPLATE' | translate }}
 									</label>
@@ -420,13 +428,16 @@
 										(selectedChange)="selectTemplate($event)"
 										formControlName="invoiceTemplate"
 									>
-										<nb-option *ngFor="let template of invoiceTemplates" [value]="template.id">
+										@for (template of invoiceTemplates; track template) {
+										<nb-option [value]="template.id">
 											{{
 												'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' + template.name | translate
 											}}
 										</nb-option>
+										}
 									</nb-select>
 								</div>
+								}
 							</div>
 							<div class="row half-width-inputs">
 								<div class="col-6">
@@ -440,11 +451,13 @@
 										fullWidth
 										(selectedChange)="selectTemplate($event)"
 									>
-										<nb-option [value]="template.id" *ngFor="let template of estimateTemplates">
+										@for (template of estimateTemplates; track template) {
+										<nb-option [value]="template.id">
 											{{
 												'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' + template.name | translate
 											}}
 										</nb-option>
+										}
 									</nb-select>
 								</div>
 								<div class="col-6">
@@ -458,11 +471,13 @@
 										fullWidth
 										(selectedChange)="selectTemplate($event)"
 									>
-										<nb-option [value]="template.id" *ngFor="let template of receiptTemplates">
+										@for (template of receiptTemplates; track template) {
+										<nb-option [value]="template.id">
 											{{
 												'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' + template.name | translate
 											}}
 										</nb-option>
+										}
 									</nb-select>
 								</div>
 							</div>
@@ -491,9 +506,11 @@
 											<nb-option [value]="null">
 												{{ 'SM_TABLE.NONE' | translate }}
 											</nb-option>
-											<nb-option *ngFor="let type of defaultBonusTypes" [value]="type">
+											@for (type of defaultBonusTypes; track type) {
+											<nb-option [value]="type">
 												{{ 'SM_TABLE.' + type | translate }}
 											</nb-option>
+											}
 										</nb-select>
 									</div>
 								</div>
@@ -510,9 +527,7 @@
 											[placeholder]="'FORM.PLACEHOLDERS.BONUS_PERCENTAGE' | translate"
 											fullWidth
 											class="d-block"
-											[ngClass]="{
-												'status-danger': form.get('bonusPercentage').invalid
-											}"
+											[class.status-danger]="form.get('bonusPercentage').invalid"
 										/>
 									</div>
 								</div>
@@ -555,9 +570,7 @@
 											[placeholder]="'FORM.PLACEHOLDERS.INVITE_EXPIRY_PERIOD' | translate"
 											fullWidth
 											class="d-block"
-											[ngClass]="{
-												'status-danger': form.get('inviteExpiryPeriod').invalid
-											}"
+											[class.status-danger]="form.get('inviteExpiryPeriod').invalid"
 										/>
 									</div>
 								</div>
@@ -781,7 +794,7 @@
 											formControlName="allowTrackInactivity"
 											labelPosition="start"
 											status="primary"
-											[ngClass]="{ start: isTrackInactivity }"
+											[class.start]="isTrackInactivity"
 										>
 											<div class="row">
 												<div class="col-12">
@@ -804,7 +817,8 @@
 													</button>
 												</div>
 											</div>
-											<div *ngIf="isTrackInactivity" class="row">
+											@if (isTrackInactivity) {
+											<div class="row">
 												<div class="col-xl-6 col-12">
 													<label class="label">
 														{{
@@ -834,12 +848,11 @@
 														fullWidth
 														size="medium"
 													>
-														<nb-option
-															*ngFor="let inactivity of listOfInactivityLimits"
-															[value]="inactivity"
-														>
+														@for (inactivity of listOfInactivityLimits; track inactivity) {
+														<nb-option [value]="inactivity">
 															{{ inactivity }}
 														</nb-option>
+														}
 													</nb-select>
 												</div>
 												<div class="col-xl-6 col-12">
@@ -871,22 +884,22 @@
 														fullWidth
 														size="medium"
 													>
-														<nb-option
-															*ngFor="let proof of listOfActivityProofDuration"
-															[value]="proof"
-														>
+														@for (proof of listOfActivityProofDuration; track proof) {
+														<nb-option [value]="proof">
 															{{ proof }}
 														</nb-option>
+														}
 													</nb-select>
 												</div>
 											</div>
+											}
 										</nb-toggle>
 									</div>
 								</div>
 								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">
 										<nb-toggle
-											[ngClass]="{ start: isEnforced }"
+											[class.start]="isEnforced"
 											class="d-block"
 											formControlName="enforced"
 											labelPosition="start"
@@ -909,7 +922,8 @@
 													</button>
 												</div>
 											</div>
-											<div *ngIf="isEnforced" class="row">
+											@if (isEnforced) {
+											<div class="row">
 												<div class="col-12 mt-2">
 													<nb-toggle
 														class="d-block"
@@ -991,17 +1005,16 @@
 														fullWidth
 														size="medium"
 													>
-														<nb-option
-															*ngFor="
-																let screenshotFrequency of screenshotFrequencyOptions
-															"
-															[value]="screenshotFrequency"
-														>
+														@for ( screenshotFrequency of screenshotFrequencyOptions ; track
+														screenshotFrequency) {
+														<nb-option [value]="screenshotFrequency">
 															{{ screenshotFrequency }}
 														</nb-option>
+														}
 													</nb-select>
 												</div>
 											</div>
+											}
 										</nb-toggle>
 									</div>
 								</div>
@@ -1033,12 +1046,11 @@
 												fullWidth
 												size="medium"
 											>
-												<nb-option
-													*ngFor="let hour of standardWorkHoursPerDayOptions"
-													[value]="hour"
-												>
+												@for (hour of standardWorkHoursPerDayOptions; track hour) {
+												<nb-option [value]="hour">
 													{{ hour }}
 												</nb-option>
+												}
 											</nb-select>
 										</div>
 									</div>
@@ -1360,15 +1372,14 @@
 														| translate
 												}}
 											</nb-option>
-											<nb-option
-												*ngFor="let type of defaultTaskProofOfCompletionTypes"
-												[value]="type"
-											>
+											@for (type of defaultTaskProofOfCompletionTypes; track type) {
+											<nb-option [value]="type">
 												{{
 													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE_DROPDOWN.' +
 														type | translate
 												}}
 											</nb-option>
+											}
 										</nb-select>
 									</div>
 								</div>
@@ -1560,10 +1571,9 @@
 											"
 											fullWidth
 											class="d-block"
-											[ngClass]="{
-												'status-danger':
-													taskSettingForm.get('tasksNotifyLeftPeriodDays').invalid
-											}"
+											[class.status-danger]="
+												taskSettingForm.get('tasksNotifyLeftPeriodDays').invalid
+											"
 										/>
 									</div>
 								</div>
@@ -1605,9 +1615,9 @@
 											"
 											fullWidth
 											class="d-block"
-											[ngClass]="{
-												'status-danger': taskSettingForm.get('tasksAutoClosePeriodDays').invalid
-											}"
+											[class.status-danger]="
+												taskSettingForm.get('tasksAutoClosePeriodDays').invalid
+											"
 										/>
 									</div>
 								</div>
@@ -1649,10 +1659,9 @@
 											"
 											fullWidth
 											class="d-block"
-											[ngClass]="{
-												'status-danger':
-													taskSettingForm.get('tasksAutoArchivePeriodDays').invalid
-											}"
+											[class.status-danger]="
+												taskSettingForm.get('tasksAutoArchivePeriodDays').invalid
+											"
 										/>
 									</div>
 								</div>

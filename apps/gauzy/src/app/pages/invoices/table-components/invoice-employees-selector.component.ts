@@ -10,23 +10,25 @@ import { DateRangePickerBuilderService, EmployeesService, Store } from '@gauzy/u
 @Component({
     template: `
 		<nb-select
-			fullWidth
-			[placeholder]="'INVOICES_PAGE.SELECT_EMPLOYEE' | translate"
-			[(ngModel)]="employee"
-			(selectedChange)="selectEmployee($event)"
-		>
-			<nb-option *ngFor="let employee of employees" [value]="employee">
-				<img
-					[src]="employee.user.imageUrl"
-					alt="Smiley face"
-					height="40"
-					width="40"
-					style="margin-right:10px"
-				/>
-				{{ employee.fullName }}
-			</nb-option>
-		</nb-select>
-	`,
+		  fullWidth
+		  [placeholder]="'INVOICES_PAGE.SELECT_EMPLOYEE' | translate"
+		  [(ngModel)]="employee"
+		  (selectedChange)="selectEmployee($event)"
+		  >
+		  @for (employee of employees; track employee) {
+		    <nb-option [value]="employee">
+		      <img
+		        [src]="employee.user.imageUrl"
+		        alt="Smiley face"
+		        height="40"
+		        width="40"
+		        style="margin-right:10px"
+		        />
+		        {{ employee.fullName }}
+		      </nb-option>
+		    }
+		  </nb-select>
+		`,
     styles: [],
     standalone: false
 })

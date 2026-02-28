@@ -1,8 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -12,16 +8,11 @@
 			</h4>
 			<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
 				<ng-template [ngxPermissionsOnly]="['ORG_INVITE_VIEW', 'ORG_INVITE_EDIT']">
-					<button
-						*ngIf="organizationInvitesAllowed"
-						nbButton
-						class="action"
-						size="small"
-						status="primary"
-						(click)="manageInvites()"
-					>
-						{{ 'BUTTONS.MANAGE_INVITES' | translate }}
-					</button>
+					@if (organizationInvitesAllowed) {
+						<button nbButton class="action" size="small" status="primary" (click)="manageInvites()">
+							{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+						</button>
+					}
 				</ng-template>
 			</ng-template>
 		</div>
@@ -38,7 +29,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
-			<ng-template [ngIf]="showAddCard">
+			@if (showAddCard) {
 				<div class="edit-user-mutation">
 					<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
 						<ga-edit-user-mutation
@@ -48,14 +39,14 @@
 						></ga-edit-user-mutation>
 					</ng-template>
 				</div>
-			</ng-template>
+			}
 		</ng-template>
 
 		<!-- Check if the user has the 'ORG_INVITE_VIEW' permission -->
 		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_USERS_VIEW]">
-			<ng-container [ngSwitch]="dataLayoutStyle">
+			@switch (dataLayoutStyle) {
 				<!-- Table View -->
-				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.TABLE">
+				@case (componentLayoutStyleEnum.TABLE) {
 					<div class="table-scroll-container">
 						<angular2-smart-table
 							style="cursor: pointer"
@@ -65,14 +56,13 @@
 						></angular2-smart-table>
 					</div>
 					<div class="pagination-container">
-						<ng-container *ngIf="smartTableSource">
-							<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-						</ng-container>
+						@if (sourceSmartTable) {
+							<ngx-pagination [source]="sourceSmartTable"></ngx-pagination>
+						}
 					</div>
-				</ng-template>
-
+				}
 				<!-- Card Grid View -->
-				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.CARDS_GRID">
+				@case (componentLayoutStyleEnum.CARDS_GRID) {
 					<ga-card-grid
 						[totalItems]="pagination?.totalItems"
 						[settings]="settingsSmartTable"
@@ -80,13 +70,12 @@
 						(scroll)="onScroll()"
 						(onSelectedItem)="selectUser($event)"
 					></ga-card-grid>
-				</ng-template>
-
+				}
 				<!-- Optional: Default case if no specific layout matches -->
-				<ng-template *ngSwitchDefault>
+				@default {
 					<p>{{ 'SETTINGS_MENU.NO_LAYOUT' | translate }}</p>
-				</ng-template>
-			</ng-container>
+				}
+			}
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -146,36 +135,19 @@
 <!-- Invite -->
 <ng-template #visible>
 	<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
-		<button
-			nbButton
-			*ngIf="organizationInvitesAllowed"
-			status="basic"
-			(click)="invite()"
-			class="action info"
-			size="small"
-		>
-			<nb-icon icon="email-outline"></nb-icon>
-			{{ 'BUTTONS.INVITE' | translate }}
-		</button>
+		@if (organizationInvitesAllowed) {
+			<button nbButton status="basic" (click)="invite()" class="action info" size="small">
+				<nb-icon icon="email-outline"></nb-icon>
+				{{ 'BUTTONS.INVITE' | translate }}
+			</button>
+		}
 	</ng-template>
-	<button
-		nbButton
-		status="success"
-		size="small"
-		class="action"
-		(click)="add()"
-	>
+	<button nbButton status="success" size="small" class="action" (click)="add()">
 		<nb-icon icon="plus-outline"></nb-icon>
 		{{ 'BUTTONS.ADD_NEW' | translate }}
 	</button>
 	<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
-		<button
-			(click)="toggleAddCard()"
-			nbButton
-			status="warning"
-			class="action"
-			size="small"
-		>
+		<button (click)="toggleAddCard()" nbButton status="warning" class="action" size="small">
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD_EXISTING' | translate }}
 		</button>

@@ -6,10 +6,27 @@ import { ILanguage, IOrganizationLanguage } from '@gauzy/contracts';
 import { BaseEntity, OrganizationLanguage } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmLanguageRepository } from './repository/mikro-orm-language.repository';
+import { MultiORMEnum, getORMType } from '../core/utils';
+
+/**
+ * Conditionally applies the appropriate Unique decorator based on the active ORM.
+ * This prevents MikroORM metadata validation errors when TypeORM is the active ORM
+ * (and vice versa), since MultiORMColumn only registers properties for the active ORM.
+ */
+function ConditionalUnique(properties: string[]): ClassDecorator {
+	return (target: any) => {
+		const ormType = getORMType();
+		if (ormType === MultiORMEnum.TypeORM) {
+			TypeOrmUnique(properties)(target);
+		}
+		if (ormType === MultiORMEnum.MikroORM) {
+			MikroOrmUnique({ properties } as any)(target);
+		}
+	};
+}
 
 @MultiORMEntity('language', { mikroOrmRepository: () => MikroOrmLanguageRepository })
-@TypeOrmUnique(['code'])
-@MikroOrmUnique({ properties: ['code'] })
+@ConditionalUnique(['code'])
 export class Language extends BaseEntity implements ILanguage {
 	@ApiProperty({ type: () => String })
 	@MultiORMColumn()

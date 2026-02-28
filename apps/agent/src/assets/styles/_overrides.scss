@@ -1,5 +1,8 @@
-@import 'themes';
-@import 'var';
+// Forward so mixins/themes are available to importers
+@forward 'themes';
+@forward 'var';
+@use 'themes' as *;
+@use 'var' as *;
 
 /* Apply style on scrollbar for Firefox */
 * {
@@ -173,7 +176,7 @@ body {
 
   .ng-dropdown-panel {
     background-color: var(--gauzy-card-5) !important;
-	border-radius: var(--border-radius) !important;
+    border-radius: var(--border-radius) !important;
 
     .scroll-host {
       scrollbar-width: thin;
@@ -278,7 +281,7 @@ body {
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
-	color: var(--gauzy-text-color-1) !important;
+    color: var(--gauzy-text-color-1) !important;
     background-color: var(--background-basic-color-1) !important;
   }
 
@@ -635,7 +638,7 @@ angular2-smart-table {
   }
 
   .ng-arrow {
-    font-family: 'Font Awesome\ 6 Free' !important;
+    font-family: 'Font Awesome 7 Free' !important;
     border-color: inherit !important;
     border-width: 0 !important;
     font-size: 10px;
@@ -689,7 +692,7 @@ angular2-smart-table table tr.angular2-smart-titles th a.sort {
     &:before {
       color: rgba(126, 126, 143, 0.25);
       font-size: 10px;
-      font-family: 'Font Awesome\ 5 Free' !important;
+      font-family: 'Font Awesome 7 Free' !important;
       content: '\f063' !important;
       font-weight: 900;
       transform: rotate(180deg) !important;
@@ -706,7 +709,7 @@ angular2-smart-table table tr.angular2-smart-titles th a.sort {
     &:before {
       color: rgba(126, 126, 143, 0.25);
       font-size: 10px;
-      font-family: 'Font Awesome\ 6 Free' !important;
+      font-family: 'Font Awesome 7 Free' !important;
       content: '\f063' !important;
       font-weight: 900;
       top: 55% !important;
@@ -736,13 +739,13 @@ angular2-smart-table a:hover {
   text-decoration: auto !important;
 }
 nb-toastr-container {
-  position:  absolute !important;
+  position: absolute !important;
   top: 20px !important;
   right: 0px !important;
 }
 
 nb-toast {
-	width: 21rem !important;
+  width: 21rem !important;
 }
 
 .sentry-error-embed {

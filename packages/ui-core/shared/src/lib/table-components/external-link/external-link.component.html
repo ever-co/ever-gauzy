@@ -1,1 +1,3 @@
-<a [href]="rowData?.website" *ngIf="rowData" rel="noopener" target="_blank">{{ rowData?.website }}</a>
+@if (rowData) {
+  <a [href]="rowData?.website" rel="noopener" target="_blank">{{ rowData?.website }}</a>
+}

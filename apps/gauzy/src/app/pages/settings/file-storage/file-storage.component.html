@@ -22,28 +22,32 @@
 				></file-provider-selector>
 
 				<!-- File Storage Provider Configuration -->
-				<ng-container [ngSwitch]="fileStorageProvider">
-					<ng-container *ngSwitchCase="FileStorageProviderEnum.S3">
+				@switch (fileStorageProvider) {
+					@case (FileStorageProviderEnum.S3) {
 						<ng-container
-							*ngTemplateOutlet="s3StorageFormTemplate; context: { group: form }"
+							[ngTemplateOutlet]="s3StorageFormTemplate"
+							[ngTemplateOutletContext]="{ group: form }"
 						></ng-container>
-					</ng-container>
-					<ng-container *ngSwitchCase="FileStorageProviderEnum.WASABI">
+					}
+					@case (FileStorageProviderEnum.WASABI) {
 						<ng-container
-							*ngTemplateOutlet="wasabiStorageFormTemplate; context: { group: form }"
+							[ngTemplateOutlet]="wasabiStorageFormTemplate"
+							[ngTemplateOutletContext]="{ group: form }"
 						></ng-container>
-					</ng-container>
-					<ng-container *ngSwitchCase="FileStorageProviderEnum.CLOUDINARY">
+					}
+					@case (FileStorageProviderEnum.CLOUDINARY) {
 						<ng-container
-							*ngTemplateOutlet="cloudinaryStorageFormTemplate; context: { group: form }"
+							[ngTemplateOutlet]="cloudinaryStorageFormTemplate"
+							[ngTemplateOutletContext]="{ group: form }"
 						></ng-container>
-					</ng-container>
-					<ng-container *ngSwitchCase="FileStorageProviderEnum.DIGITALOCEAN">
+					}
+					@case (FileStorageProviderEnum.DIGITALOCEAN) {
 						<ng-container
-							*ngTemplateOutlet="digitalOceanStorageFormTemplate; context: { group: form }"
+							[ngTemplateOutlet]="digitalOceanStorageFormTemplate"
+							[ngTemplateOutletContext]="{ group: form }"
 						></ng-container>
-					</ng-container>
-				</ng-container>
+					}
+				}
 			</nb-card-body>
 			<nb-card-footer>
 				<button type="submit" class="mr-2" nbButton status="success">
@@ -317,9 +321,11 @@
 						class="w-100"
 						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.SECURE' | translate"
 					>
-						<nb-option *ngFor="let secure of secureOptions" [value]="secure.value">
-							{{ secure.label | titlecase }}
-						</nb-option>
+						@for (secure of secureOptions; track secure) {
+							<nb-option [value]="secure.value">
+								{{ secure.label | titlecase }}
+							</nb-option>
+						}
 					</nb-select>
 				</div>
 			</div>

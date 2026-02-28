@@ -1,47 +1,47 @@
 <nb-card-body class="container-content">
-	<div class="d-flex justify-content-end">
-		<ngx-gauzy-button-action
-			[buttonTemplateVisible]="visible"
-			[hasLayoutSelector]="false"
-			[buttonTemplate]="action"
-			[isDisable]="!selectedWarehouse?.isSelected"
-		></ngx-gauzy-button-action>
-	</div>
-	<div class="table-scroll-container">
-		<angular2-smart-table
-			style="cursor: pointer"
-			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
-			(userRowSelect)="selectWarehouse($event)"
-		></angular2-smart-table>
-	</div>
-	<ng-container *ngIf="smartTableSource">
-		<ngx-pagination
-			[source]="smartTableSource"
-		></ngx-pagination>
-	</ng-container>
+  <div class="d-flex justify-content-end">
+    <ngx-gauzy-button-action
+      [buttonTemplateVisible]="visible"
+      [hasLayoutSelector]="false"
+      [buttonTemplate]="action"
+      [isDisable]="!selectedWarehouse?.isSelected"
+    ></ngx-gauzy-button-action>
+  </div>
+  <div class="table-scroll-container">
+    <angular2-smart-table
+      style="cursor: pointer"
+      [settings]="settingsSmartTable"
+      [source]="smartTableSource"
+      (userRowSelect)="selectWarehouse($event)"
+    ></angular2-smart-table>
+  </div>
+  @if (smartTableSource) {
+    <ngx-pagination
+      [source]="smartTableSource"
+    ></ngx-pagination>
+  }
 </nb-card-body>
 
 <ng-template #visible>
-	<ng-container *ngxPermissionsOnly="'ALL_ORG_VIEW'">
-		<button
-			nbButton
-			status="success"
-			size="small"
-			(click)="onAddProduct()"
-		>
-			<nb-icon icon="plus-outline"></nb-icon>
-			{{ 'INVENTORY_PAGE.ADD_PRODUCT' | translate }}
-		</button>
-	</ng-container>
+  <ng-container *ngxPermissionsOnly="'ALL_ORG_VIEW'">
+    <button
+      nbButton
+      status="success"
+      size="small"
+      (click)="onAddProduct()"
+      >
+      <nb-icon icon="plus-outline"></nb-icon>
+      {{ 'INVENTORY_PAGE.ADD_PRODUCT' | translate }}
+    </button>
+  </ng-container>
 </ng-template>
 
 <ng-template #action>
-	<ng-container *ngxPermissionsOnly="'ALL_ORG_EDIT'">
-		<div class="actions">
-			<ga-manage-variants-quantity
-				[value]="variants"
-			></ga-manage-variants-quantity>
-		</div>
-	</ng-container>
+  <ng-container *ngxPermissionsOnly="'ALL_ORG_EDIT'">
+    <div class="actions">
+      <ga-manage-variants-quantity
+        [value]="variants"
+      ></ga-manage-variants-quantity>
+    </div>
+  </ng-container>
 </ng-template>

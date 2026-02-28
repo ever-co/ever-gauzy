@@ -6,10 +6,8 @@
 					<div class="col-3">
 						<div class="dot-container">
 							<div
-								[ngClass]="{
-									online: member?.isRunningTimer,
-									offline: !member?.isWorkingToday
-								}"
+								[class.online]="member?.isRunningTimer"
+								[class.offline]="!member?.isWorkingToday"
 								class="dot"
 							></div>
 						</div>
@@ -25,73 +23,79 @@
 					</div>
 				</div>
 			</div>
-			<ng-template [ngIfElse]="classic" [ngIf]="!isClassic">
-				<div class="col-8">
-					<div *ngIf="!member?.tasks?.length" class="col-6">&#8212;</div>
-					<div *ngFor="let task of member?.tasks" class="row">
-						<div class="col-6">
-							{{ task.title ? task.title : ('REPORT_PAGE.NO_TASK' | translate) }}
-						</div>
-						<div class="col-6">
-							<div class="row align-items-center">
-								<div class="col-3">
-									{{ task.duration | durationFormat }}
-								</div>
-								<div class="col">
-									<nb-progress-bar
-										[displayValue]="false"
-										[status]="progressStatus(calculatePercentage(task.duration, task?.estimate))"
-										[value]="calculatePercentage(task.duration, task?.estimate)"
-										class="mb-1"
-										size="tiny"
-									></nb-progress-bar>
-								</div>
-								<div class="col-3">
-									<ng-template [ngIf]="task?.estimate">
-										{{ task?.estimate | durationFormat }}
-									</ng-template>
-								</div>
+			@if (!isClassic) {
+			<div class="col-8">
+				@for (task of member?.tasks; track task.id) {
+				<div class="row">
+					<div class="col-6">
+						{{ task.title ? task.title : ('REPORT_PAGE.NO_TASK' | translate) }}
+					</div>
+					<div class="col-6">
+						<div class="row align-items-center">
+							<div class="col-3">
+								{{ task.duration | durationFormat }}
+							</div>
+							<div class="col">
+								<nb-progress-bar
+									[displayValue]="false"
+									[status]="progressStatus(calculatePercentage(task.duration, task?.estimate))"
+									[value]="calculatePercentage(task.duration, task?.estimate)"
+									class="mb-1"
+									size="tiny"
+								></nb-progress-bar>
+							</div>
+							<div class="col-3">
+								@if (task?.estimate) {
+								{{ task?.estimate | durationFormat }}
+								}
 							</div>
 						</div>
 					</div>
 				</div>
-				<div *ngIf="member?.isWorkingToday" class="col-1">
-					<nb-badge
-						[status]="progressStatus(member?.activity || 0)"
-						[text]="(member?.activity || 0) + '%'"
-					></nb-badge>
-				</div>
-			</ng-template>
-		</div>
-	</nb-card-body>
-</nb-card>
-
-<ng-template #classic>
-	<div class="col-7">
-		<div class="row align-items-center">
-			<div class="col-7">
-				<nb-progress-bar
-					[displayValue]="false"
-					[status]="progressStatus(calculatePercentage(member?.todayWorkDuration, member?.workPeriod))"
-					[value]="calculatePercentage(member?.todayWorkDuration, member?.workPeriod)"
-					class="mb-1"
-					size="tiny"
-				>
-				</nb-progress-bar>
+				} @empty {
+				<div class="col-6">&#8212;</div>
+				}
 			</div>
-			<div [class]="member?.isWorkingToday ? 'col-3 text-right' : 'col-4'">
-				{{
-					member?.todayWorkDuration > 0
-						? humanize(member?.todayWorkDuration)
-						: ('ORGANIZATIONS_PAGE.NOT_WORKED' | translate)
-				}}
-			</div>
-			<div *ngIf="member?.isWorkingToday" class="col-1">
+			@if (member?.isWorkingToday) {
+			<div class="col-1">
 				<nb-badge
 					[status]="progressStatus(member?.activity || 0)"
 					[text]="(member?.activity || 0) + '%'"
 				></nb-badge>
 			</div>
+			} } @else {
+			<div class="col-7">
+				<div class="row align-items-center">
+					<div class="col-7">
+						<nb-progress-bar
+							[displayValue]="false"
+							[status]="
+								progressStatus(calculatePercentage(member?.todayWorkDuration, member?.workPeriod))
+							"
+							[value]="calculatePercentage(member?.todayWorkDuration, member?.workPeriod)"
+							class="mb-1"
+							size="tiny"
+						>
+						</nb-progress-bar>
+					</div>
+					<div [class]="member?.isWorkingToday ? 'col-3 text-right' : 'col-4'">
+						{{
+							member?.todayWorkDuration > 0
+								? humanize(member?.todayWorkDuration)
+								: ('ORGANIZATIONS_PAGE.NOT_WORKED' | translate)
+						}}
+					</div>
+					@if (member?.isWorkingToday) {
+					<div class="col-1">
+						<nb-badge
+							[status]="progressStatus(member?.activity || 0)"
+							[text]="(member?.activity || 0) + '%'"
+						></nb-badge>
+					</div>
+					}
+				</div>
+			</div>
+			}
 		</div>
-	</div>
-</ng-template>
+	</nb-card-body>
+</nb-card>

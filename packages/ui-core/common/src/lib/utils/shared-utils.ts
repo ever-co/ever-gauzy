@@ -1,6 +1,6 @@
 import { HttpParams } from '@angular/common/http';
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
+import moment from 'moment';
+import timezone from 'moment-timezone';
 import { Observable } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import slugify from 'slugify';
@@ -72,15 +72,18 @@ export function isNotEmpty(item: any): boolean {
  */
 export function isEmpty(item: any): boolean {
 	if (item instanceof Array) {
-		item = item.filter((val) => !isEmpty(val));
-		return item.length === 0;
+		return item.filter((val) => !isEmpty(val)).length === 0;
 	} else if (item && typeof item === 'object') {
-		for (var key in item) {
-			if (item[key] === null || item[key] === undefined || item[key] === '') {
-				delete item[key];
+		// Check if there is any key with a non-empty value
+		for (const key in item) {
+			if (Object.prototype.hasOwnProperty.call(item, key)) {
+				const value = item[key];
+				if (value !== null && value !== undefined && value !== '') {
+					return false;
+				}
 			}
 		}
-		return Object.keys(item).length === 0;
+		return true;
 	} else {
 		return !item || (item + '').toLocaleLowerCase() === 'null' || (item + '').toLocaleLowerCase() === 'undefined';
 	}
@@ -124,16 +127,17 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 	return fd;
 }
 
-export function progressStatus(value) {
-	if (value <= 25) {
-		return 'danger';
-	} else if (value <= 50) {
-		return 'warning';
-	} else if (value <= 75) {
-		return 'info';
-	} else {
-		return 'success';
-	}
+/**
+ * Maps a percentage value (0–100) to a NbComponentStatus string.
+ *
+ * @param value - The progress percentage.
+ * @returns The status: 'danger' (≤25), 'warning' (≤50), 'info' (≤75), or 'success' (>75).
+ */
+export function progressStatus(value: number): 'danger' | 'warning' | 'info' | 'success' {
+	if (value <= 25) return 'danger';
+	if (value <= 50) return 'warning';
+	if (value <= 75) return 'info';
+	return 'success';
 }
 
 /**

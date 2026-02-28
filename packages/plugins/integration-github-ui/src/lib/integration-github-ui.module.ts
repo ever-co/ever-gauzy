@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -12,14 +12,12 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	ProjectSelectModule,
 	RepositorySelectorModule,
-	SharedModule,
-	getBrowserLanguage
+	SharedModule
 } from '@gauzy/ui-core/shared';
 import { IntegrationGithubRoutes } from './integration-github.routes';
 import { IntegrationGithubLayoutComponent } from './integration-github.layout.component';
@@ -47,14 +45,7 @@ import { GithubSettingsComponent } from './components/settings/settings.componen
 		NbToggleModule,
 		NgSelectModule,
 		NgxPermissionsModule.forRoot(),
-		TranslateModule.forRoot({
-			defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule.forChild(),
 		IntegrationGithubRoutes,
 		SharedModule,
 		SmartDataViewLayoutModule,

@@ -43,6 +43,6 @@ import { AddArticleModule } from './add-article/add-article.module';
 		SmartDataViewLayoutModule,
 		SharedModule
 	],
-	declarations: [HelpCenterComponent]
+	declarations: []
 })
 export class HelpCenterModule {}

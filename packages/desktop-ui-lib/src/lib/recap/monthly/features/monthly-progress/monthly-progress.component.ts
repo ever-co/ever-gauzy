@@ -3,6 +3,12 @@ import { ReportDayData } from '@gauzy/contracts';
 import { map, tap } from 'rxjs';
 import { MonthlyRecapService } from '../../+state/monthly.service';
 import { updateMonthWeeks, weekDateRange } from '../../../shared/features/date-range-picker';
+import { ProgressStatusComponent } from '../../../shared/ui/progress-status/progress-status.component';
+
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
+import { NoDataMessageComponent } from '../../../../time-tracker/no-data-message/no-data-message.component';
+import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
 
 export interface IMonthWeekdays {
 	week: string;
@@ -10,11 +16,11 @@ export interface IMonthWeekdays {
 }
 
 @Component({
-    selector: 'ngx-monthly-progress',
-    templateUrl: './monthly-progress.component.html',
-    styleUrls: ['./monthly-progress.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+	selector: 'ngx-monthly-progress',
+	templateUrl: './monthly-progress.component.html',
+	styleUrls: ['./monthly-progress.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [ProgressStatusComponent, NoDataMessageComponent, AsyncPipe, TranslatePipe, PipeModule]
 })
 export class MonthlyProgressComponent {
 	public monthWeekdays: IMonthWeekdays[] = [];

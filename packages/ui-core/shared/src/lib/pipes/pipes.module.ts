@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { Pipes } from './index';
 
 @NgModule({
-	declarations: [...Pipes],
+	imports: [...Pipes],
 	exports: [...Pipes],
 	providers: [...Pipes]
 })

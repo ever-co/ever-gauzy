@@ -6,6 +6,7 @@ import { EmailService } from './../email-send/email.service';
 import { IInvoice, IOrganization, InvoiceStats, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
+import { MultiORMEnum } from './../core/utils';
 import { I18nService } from 'nestjs-i18n';
 import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
@@ -36,17 +37,34 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * @returns {Promise<InvoiceStats>} An object containing the count of invoices and the total amount.
 	 */
 	async getInvoiceStats(): Promise<InvoiceStats> {
-		const result = await this.typeOrmInvoiceRepository
-			.createQueryBuilder('invoice')
-			.select('COUNT(invoice.id)', 'count')
-			.addSelect('SUM(invoice.totalValue)', 'amount')
-			.where('invoice.isEstimate = :isEstimate', { isEstimate: false })
-			.getRawOne();
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = this.mikroOrmRepository.getEntityManager().getKnex();
+				const result = await knex('invoice')
+					.where('isEstimate', false)
+					.count('id as count')
+					.sum('totalValue as amount')
+					.first();
+				return {
+					count: parseInt(result?.count ?? '0', 10),
+					amount: parseFloat(result?.amount ?? '0') || 0
+				};
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const result = await this.typeOrmInvoiceRepository
+					.createQueryBuilder('invoice')
+					.select('COUNT(invoice.id)', 'count')
+					.addSelect('SUM(invoice.totalValue)', 'amount')
+					.where('invoice.isEstimate = :isEstimate', { isEstimate: false })
+					.getRawOne();
 
-		return {
-			count: parseInt(result.count, 10),
-			amount: parseFloat(result.amount) || 0
-		};
+				return {
+					count: parseInt(result.count, 10),
+					amount: parseFloat(result.amount) || 0
+				};
+			}
+		}
 	}
 
 	/**
@@ -56,8 +74,18 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 */
 	async getHighestInvoiceNumber(): Promise<IInvoice> {
 		try {
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			return await query.select(`COALESCE(MAX(${query.alias}.invoiceNumber), 0)`, 'max').getRawOne();
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const knex = this.mikroOrmRepository.getEntityManager().getKnex();
+					const result = await knex(this.tableName).max('invoiceNumber as max').first();
+					return { max: result?.max ?? 0 } as any;
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					return await query.select(`COALESCE(MAX(${query.alias}.invoiceNumber), 0)`, 'max').getRawOne();
+				}
+			}
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

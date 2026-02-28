@@ -3,13 +3,16 @@ import { Router } from '@angular/router';
 import { Observable, from } from 'rxjs';
 import { SegmentControlService } from './+state/segment-control.service';
 import { ISegmentControlState } from './+state/segment-control.store';
+import { AsyncPipe } from '@angular/common';
+import { NbIconModule } from '@nebular/theme';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
-    selector: 'ngx-segmented-control',
-    templateUrl: './segmented-control.component.html',
-    styleUrls: ['./segmented-control.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+	selector: 'ngx-segmented-control',
+	templateUrl: './segmented-control.component.html',
+	styleUrls: ['./segmented-control.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NbIconModule, AsyncPipe, TranslatePipe]
 })
 export class SegmentedControlComponent implements OnInit {
 	@Input()

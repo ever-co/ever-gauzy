@@ -5,6 +5,12 @@ import { MonthlyRecapService } from '../../+state/monthly.service';
 import { AutoRefreshService } from '../../../+state/auto-refresh/auto-refresh.service';
 import { RequestQuery } from '../../../+state/request/request.query';
 import { LoggerService } from '../../../../electron/services';
+import { NbCardModule, NbIconModule } from '@nebular/theme';
+import { MonthlyCalendarComponent } from '../monthly-calendar/monthly-calendar.component';
+import { FilterComponent } from '../../../features/filter/filter.component';
+import { MonthlyStatisticComponent } from '../monthly-statistic/monthly-statistic.component';
+import { MonthlyProgressComponent } from '../monthly-progress/monthly-progress.component';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -12,7 +18,7 @@ import { LoggerService } from '../../../../electron/services';
     templateUrl: './monthly-recap.component.html',
     styleUrls: ['./monthly-recap.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+    imports: [NbCardModule, NbIconModule, MonthlyCalendarComponent, FilterComponent, MonthlyStatisticComponent, MonthlyProgressComponent, AsyncPipe]
 })
 export class MonthlyRecapComponent implements OnInit {
 	public isLoading$ = new BehaviorSubject(false);

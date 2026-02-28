@@ -1,9 +1,4 @@
-<nb-card
-	class="main-wrapper"
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card class="main-wrapper" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-header-title pb-0">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
@@ -23,76 +18,46 @@
 				[isDisable]="disableButton"
 			></ngx-gauzy-button-action>
 		</div>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
-			<ng-container *ngIf="expenseCategories?.length > 0">
-				<div
-					class="table-scroll-container"
-					infinite-scroll
-					[scrollWindow]="false"
-					(scrolled)="onScroll()"
+		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) { @if (expenseCategories?.length > 0) {
+		<div class="table-scroll-container" infiniteScroll [scrollWindow]="false" (scrolled)="onScroll()">
+			@for (item of expenseCategories; track item) {
+			<nb-card class="p-0">
+				<nb-card-body
+					class="custom-table"
+					[class.selected]="selected?.state && item === selected?.expenseCategory"
+					(click)="selectExpenseCategory(item)"
 				>
-					<nb-card class="p-0" *ngFor="let item of expenseCategories">
-						<nb-card-body
-							class="custom-table"
-							[ngClass]="
-								selected?.state &&
-								item === selected?.expenseCategory
-									? 'custom-table selected'
-									: 'custom-table'
-							"
-							(click)="selectExpenseCategory(item)"
-						>
-							<ga-notes-with-tags [rowData]="item">
-							</ga-notes-with-tags>
-						</nb-card-body>
-					</nb-card>
-				</div>
-			</ng-container>
-			<ng-template [ngIf]="!loading && expenseCategories?.length == 0">
-				<div class="no-data">
-					<ngx-no-data-message
-						[message]="'SM_TABLE.NO_DATA.EXPENSE_CATEGORY' | translate"
-					></ngx-no-data-message>
-				</div>
-			</ng-template>
-		</ng-template>
-		<ng-template #gridLayout>
-			<div class="grid">
-				<ga-card-grid
-					[totalItems]="pagination?.totalItems"
-					[settings]="settingsSmartTable"
-					[source]="expenseCategories"
-					(onSelectedItem)="selectExpenseCategory($event)"
-					(scroll)="onScroll()"
-				></ga-card-grid>
-			</div>
-		</ng-template>
+					<ga-notes-with-tags [rowData]="item"> </ga-notes-with-tags>
+				</nb-card-body>
+			</nb-card>
+			}
+		</div>
+		} @if (!loading && expenseCategories?.length == 0) {
+		<div class="no-data">
+			<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.EXPENSE_CATEGORY' | translate"></ngx-no-data-message>
+		</div>
+		} } @else {
+		<div class="grid">
+			<ga-card-grid
+				[totalItems]="pagination?.totalItems"
+				[settings]="settingsSmartTable"
+				[source]="expenseCategories"
+				(onSelectedItem)="selectExpenseCategory($event)"
+				(scroll)="onScroll()"
+			></ga-card-grid>
+		</div>
+		}
 	</nb-card-body>
 </nb-card>
 
 <ng-template #actionButtons>
 	<div class="actions">
-		<button
-			(click)="edit()"
-			nbButton
-			status="basic"
-			class="action primary"
-			[disabled]="disableButton"
-			size="small"
-		>
+		<button (click)="edit()" nbButton status="basic" class="action primary" [disabled]="disableButton" size="small">
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		<button
-			(click)="
-				removeCategory(
-					selected.expenseCategory.id,
-					selected.expenseCategory.name
-				)
-			"
+			(click)="removeCategory(selected.expenseCategory.id, selected.expenseCategory.name)"
 			nbButton
 			status="basic"
 			class="action"

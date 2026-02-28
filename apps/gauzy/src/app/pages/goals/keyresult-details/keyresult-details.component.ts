@@ -32,10 +32,10 @@ import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.c
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 
 @Component({
-    selector: 'ga-keyresult-details',
-    templateUrl: './keyresult-details.component.html',
-    styleUrls: ['./keyresult-details.component.scss'],
-    standalone: false
+	selector: 'ga-keyresult-details',
+	templateUrl: './keyresult-details.component.html',
+	styleUrls: ['./keyresult-details.component.scss'],
+	standalone: false
 })
 export class KeyResultDetailsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	src: string;
@@ -58,7 +58,7 @@ export class KeyResultDetailsComponent extends TranslationBaseComponent implemen
 	constructor(
 		private dialogRef: NbDialogRef<KeyResultDetailsComponent>,
 		private employeeService: EmployeesService,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private keyResultService: KeyResultService,
 		private goalSettingsService: GoalSettingsService,
 		private store: Store,

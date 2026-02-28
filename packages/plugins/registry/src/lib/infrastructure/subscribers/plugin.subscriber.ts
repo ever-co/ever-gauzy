@@ -1,5 +1,5 @@
 import { ID, PluginInstallationStatus } from '@gauzy/contracts';
-import { RequestContext } from '@gauzy/core';
+import { MultiORM, MultiORMEnum, getORMType, RequestContext } from '@gauzy/core';
 import { Logger } from '@nestjs/common';
 import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
 import { Plugin } from '../../domain/entities/plugin.entity';
@@ -8,6 +8,9 @@ import { PluginSourceService } from '../../domain/services/plugin-source.service
 import { PluginSubscriptionPlanService } from '../../domain/services/plugin-subscription-plan.service';
 import { PluginVersionService } from '../../domain/services/plugin-version.service';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
+
+// Get the type of the Object-Relational Mapping (ORM) used in the application.
+const ormType: MultiORM = getORMType();
 
 @EventSubscriber()
 export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
@@ -151,29 +154,34 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 		try {
 			this.logger.debug(`Finding latest version for plugin: ${pluginId}`);
 
-			// This approach uses a query builder to find the latest version
-			// We'll need to use the repository from the PluginVersionService
-			const queryBuilder = this.pluginVersionService.typeOrmPluginVersionRepository
-				.createQueryBuilder('version')
-				.where('version.pluginId = :pluginId', { pluginId })
-				.orderBy('version.createdAt', 'DESC') // Temporary ordering to get a result
-				.limit(1);
+			let allVersions: any[];
 
-			// Execute the query
-			const latestVersion = await queryBuilder.getOne();
+			switch (ormType) {
+				case MultiORMEnum.MikroORM: {
+					// MikroORM: Use ORM-agnostic findAll on the version service
+					const result = await this.pluginVersionService.findAll({
+						where: { pluginId } as any,
+						relations: ['sources']
+					});
+					allVersions = result.items || [];
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Get all versions to perform semantic versioning sort
+					allVersions = await this.pluginVersionService.typeOrmPluginVersionRepository
+						.createQueryBuilder('version')
+						.leftJoinAndSelect('version.sources', 'sources')
+						.where('version.pluginId = :pluginId', { pluginId })
+						.getMany();
+					break;
+				}
+			}
 
-			if (!latestVersion) {
+			if (!allVersions || allVersions.length === 0) {
 				this.logger.debug(`No versions found for plugin: ${pluginId}`);
 				return undefined;
 			}
-
-			// Get all versions to perform semantic versioning sort
-			// This is needed because SQL doesn't natively support semantic version sorting
-			const allVersions = await this.pluginVersionService.typeOrmPluginVersionRepository
-				.createQueryBuilder('version')
-				.leftJoinAndSelect('version.sources', 'sources')
-				.where('version.pluginId = :pluginId', { pluginId })
-				.getMany();
 
 			// Sort versions based on semantic versioning (newest first)
 			const sortedVersions = allVersions.sort((a, b) => {

@@ -9,16 +9,18 @@ import { ExpensesService, Store } from '@gauzy/ui-core/core';
 @Component({
     template: `
 		<nb-select
-			fullWidth
-			[placeholder]="'FORM.PLACEHOLDERS.SELECT_EXPENSE' | translate"
-			[(ngModel)]="expense"
-			(selectedChange)="selectExpense($event)"
-		>
-			<nb-option *ngFor="let expense of expenses" [value]="expense">
-				{{ expense.purpose }}
-			</nb-option>
+		  fullWidth
+		  [placeholder]="'FORM.PLACEHOLDERS.SELECT_EXPENSE' | translate"
+		  [(ngModel)]="expense"
+		  (selectedChange)="selectExpense($event)"
+		  >
+		  @for (expense of expenses; track expense) {
+		    <nb-option [value]="expense">
+		      {{ expense.purpose }}
+		    </nb-option>
+		  }
 		</nb-select>
-	`,
+		`,
     styles: [],
     standalone: false
 })

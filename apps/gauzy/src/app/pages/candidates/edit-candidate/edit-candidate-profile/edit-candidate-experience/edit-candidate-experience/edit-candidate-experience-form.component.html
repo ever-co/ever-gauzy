@@ -1,167 +1,177 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="pb-0 pt-0">
-		<div class="d-flex justify-content-end">
-			<ngx-gauzy-button-action
-				[buttonTemplate]="actionButtons"
-				[buttonTemplateVisible]="visibleButton"
-				[hasLayoutSelector]="!showAddCard"
-				[isDisable]="disableButton"
-				[componentName]="viewComponentName"
-			>
-			</ngx-gauzy-button-action>
-		</div>
-		<div *ngIf="showAddCard" class="row m-0 w-100">
-			<form class="col-11" [formGroup]="form" *ngIf="form">
-				<div formArrayName="experiences">
-					<div
-						*ngFor="let exp of experiences?.controls; let i = index"
-					>
-						<div [formGroupName]="i" class="experience-add-card">
-							<div class="col-6 add-card-wrapp">
-								<input
-									#addInput
-									class="col-10"
-									nbInput
-									formControlName="occupation"
-									type="text"
+  <nb-card-header class="pb-0 pt-0">
+    <div class="d-flex justify-content-end">
+      <ngx-gauzy-button-action
+        [buttonTemplate]="actionButtons"
+        [buttonTemplateVisible]="visibleButton"
+        [hasLayoutSelector]="!showAddCard"
+        [isDisable]="disableButton"
+        [componentName]="viewComponentName"
+        >
+      </ngx-gauzy-button-action>
+    </div>
+    @if (showAddCard) {
+      <div class="row m-0 w-100">
+        @if (form) {
+          <form class="col-11" [formGroup]="form">
+            <div formArrayName="experiences">
+              @for (exp of experiences?.controls; track exp; let i = $index) {
+                <div
+                  >
+                  <div [formGroupName]="i" class="experience-add-card">
+                    <div class="col-6 add-card-wrapp">
+                      <input
+                        #addInput
+                        class="col-10"
+                        nbInput
+                        formControlName="occupation"
+                        type="text"
 									placeholder="{{
 										'FORM.PLACEHOLDERS.ADD_EXPERIENCE.OCCUPATION'
 											| translate
 									}}"
-									fullWidth
-								/>
-								<!-- <input
-									#addInput
-									class="col-10"
-									nbInput
-									formControlName="organization"
-									type="text"
+                        fullWidth
+                        />
+                        <!-- <input
+                        #addInput
+                        class="col-10"
+                        nbInput
+                        formControlName="organization"
+                        type="text"
 									placeholder="{{
 										'FORM.PLACEHOLDERS.ADD_EXPERIENCE.ORGANIZATION'
 											| translate
 									}}"
-									fullWidth
-								/> -->
-								<input
-									#addInput
-									class="col-10"
-									nbInput
-									formControlName="duration"
-									type="text"
+                        fullWidth
+                        /> -->
+                        <input
+                          #addInput
+                          class="col-10"
+                          nbInput
+                          formControlName="duration"
+                          type="text"
 									placeholder="{{
 										'FORM.PLACEHOLDERS.ADD_EXPERIENCE.DURATION'
 											| translate
 									}}"
-									fullWidth
-								/>
-							</div>
-
-							<textarea
-								class="description col-6"
-								nbInput
-								formControlName="description"
+                          fullWidth
+                          />
+                        </div>
+                        <textarea
+                          class="description col-6"
+                          nbInput
+                          formControlName="description"
 								placeholder="{{
 									'FORM.PLACEHOLDERS.ADD_EXPERIENCE.DESCRIPTION'
 										| translate
 								}}"
-							>
-							</textarea>
-						</div>
-					</div>
-				</div>
-			</form>
-			<div class="col-1">
-				<span class="col-2 pl-2 pr-0"
-					><button
-						class="w-100 form-btn"
-						(click)="submitForm()"
-						nbButton
-						status="success"
-						size="small"
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button></span
-				>
-				<span class="col-2 pl-2 pr-0"
-					><button
-						class="w-100 form-btn"
-						(click)="cancel()"
-						nbButton
-						status="basic"
-						size="small"
-						outline
-					>
-						{{ 'BUTTONS.CANCEL' | translate }}
-					</button></span
-				>
-			</div>
-		</div>
-	</nb-card-header>
+                          >
+                        </textarea>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </form>
+            }
+            <div class="col-1">
+              <span class="col-2 pl-2 pr-0"
+                ><button
+                class="w-100 form-btn"
+                (click)="submitForm()"
+                nbButton
+                status="success"
+                size="small"
+                >
+                {{ 'BUTTONS.SAVE' | translate }}
+              </button></span
+              >
+              <span class="col-2 pl-2 pr-0"
+                ><button
+                class="w-100 form-btn"
+                (click)="cancel()"
+                nbButton
+                status="basic"
+                size="small"
+                outline
+                >
+                {{ 'BUTTONS.CANCEL' | translate }}
+              </button></span
+              >
+            </div>
+          </div>
+        }
+      </nb-card-header>
 
-	<nb-card-body *ngIf="experienceList?.length">
-		<div class="table-scroll-container">
-			<angular2-smart-table
-				*ngIf="dataLayoutStyle === 'TABLE'"
-				style="cursor: pointer"
-				[settings]="settingsSmartTable"
-				[source]="sourceSmartTable"
-				(userRowSelect)="selectExperience($event)"
-				#experienceTable
-			>
-			</angular2-smart-table>
-		</div>
-		<ga-card-grid
-			[totalItems]="pagination?.totalItems"
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[settings]="settingsSmartTable"
-			[source]="experienceList"
-			(onSelectedItem)="selectExperience($event)"
-		></ga-card-grid>
-	</nb-card-body>
-	<ng-template #actionButtons let-selectedItem="selectedItem">
-		<div
-			class="btn-group actions"
-			*ngIf="
-				dataLayoutStyle === 'TABLE' &&
-				!showAddCard &&
-				experienceList?.length
-			"
-		>
-			<button
-				(click)="editExperience(selectedItem)"
-				nbButton
-				status="basic"
-				class="action primary"
-				size="small"
-				[disabled]="!selectedItem && disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="removeExperience(selectedItem)"
-				nbButton
-				status="basic"
-				class="action"
-				size="small"
-				[disabled]="!selectedItem && disableButton"
-				[nbTooltip]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-			</button>
-		</div>
-	</ng-template>
-</nb-card>
-<ng-template #visibleButton>
-	<button
-		nbButton
-		status="success"
-		*ngIf="!showAddCard"
-		(click)="add()"
-		class="action"
-		size="small"
-	>
-		<nb-icon icon="plus-outline"></nb-icon>
-		{{ 'BUTTONS.ADD' | translate }}
-	</button>
-</ng-template>
+      @if (experienceList?.length) {
+        <nb-card-body>
+          <div class="table-scroll-container">
+            @if (dataLayoutStyle === 'TABLE') {
+              <angular2-smart-table
+                style="cursor: pointer"
+                [settings]="settingsSmartTable"
+                [source]="sourceSmartTable"
+                (userRowSelect)="selectExperience($event)"
+                #experienceTable
+                >
+              </angular2-smart-table>
+            }
+          </div>
+          @if (dataLayoutStyle === 'CARDS_GRID') {
+            <ga-card-grid
+              [totalItems]="pagination?.totalItems"
+              [settings]="settingsSmartTable"
+              [source]="experienceList"
+              (onSelectedItem)="selectExperience($event)"
+            ></ga-card-grid>
+          }
+        </nb-card-body>
+      }
+      <ng-template #actionButtons let-selectedItem="selectedItem">
+        @if (
+          dataLayoutStyle === 'TABLE' &&
+          !showAddCard &&
+          experienceList?.length
+          ) {
+          <div
+            class="btn-group actions"
+            >
+            <button
+              (click)="editExperience(selectedItem)"
+              nbButton
+              status="basic"
+              class="action primary"
+              size="small"
+              [disabled]="!selectedItem && disableButton"
+              >
+              <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+              {{ 'BUTTONS.EDIT' | translate }}
+            </button>
+            <button
+              (click)="removeExperience(selectedItem)"
+              nbButton
+              status="basic"
+              class="action"
+              size="small"
+              [disabled]="!selectedItem && disableButton"
+              [nbTooltip]="'BUTTONS.DELETE' | translate"
+              >
+              <nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+            </button>
+          </div>
+        }
+      </ng-template>
+    </nb-card>
+    <ng-template #visibleButton>
+      @if (!showAddCard) {
+        <button
+          nbButton
+          status="success"
+          (click)="add()"
+          class="action"
+          size="small"
+          >
+          <nb-icon icon="plus-outline"></nb-icon>
+          {{ 'BUTTONS.ADD' | translate }}
+        </button>
+      }
+    </ng-template>

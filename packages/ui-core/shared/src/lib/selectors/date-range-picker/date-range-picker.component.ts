@@ -8,7 +8,7 @@ import {
 	DaterangepickerDirective as DateRangePickerDirective,
 	LocaleConfig
 } from 'ngx-daterangepicker-material';
-import * as moment from 'moment';
+import moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import {
@@ -30,10 +30,10 @@ import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-date-range-picker',
-    templateUrl: './date-range-picker.component.html',
-    styleUrls: ['./date-range-picker.component.scss'],
-    standalone: false
+	selector: 'ngx-date-range-picker',
+	templateUrl: './date-range-picker.component.html',
+	styleUrls: ['./date-range-picker.component.scss'],
+	standalone: false
 })
 export class DateRangePickerComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public picker: NgxDateRangePickerComponent;

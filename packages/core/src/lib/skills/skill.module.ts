@@ -6,10 +6,11 @@ import { SkillController } from './skill.controller';
 import { Skill } from './skill.entity';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmSkillRepository } from './repository/type-orm-skill.repository';
+import { MikroOrmSkillRepository } from './repository/mikro-orm-skill.repository';
 
 @Module({
 	imports: [TypeOrmModule.forFeature([Skill]), MikroOrmModule.forFeature([Skill]), RolePermissionModule],
 	controllers: [SkillController],
-	providers: [SkillService, TypeOrmSkillRepository]
+	providers: [SkillService, TypeOrmSkillRepository, MikroOrmSkillRepository]
 })
 export class SkillModule {}

@@ -3,11 +3,11 @@
 		<div class="content">
 			<div class="employee-container">
 				<div class="employee-photo">
-					<ng-container *ngTemplateOutlet="imageUploaderTemplate"></ng-container>
+					<ng-container [ngTemplateOutlet]="imageUploaderTemplate"></ng-container>
 				</div>
-				<ng-template [ngIf]="role">
+				@if (role) {
 					<gauzy-role class="badge" [value]="role"></gauzy-role>
-				</ng-template>
+				}
 			</div>
 			<div class="employee-form">
 				<form [formGroup]="form" autocomplete-off>
@@ -53,14 +53,15 @@
 								formControlName="repeatPassword"
 								[autocomplete]="'new-password'"
 							>
-								<div
-									*ngIf="FormHelpers.isInvalidControl(form, 'repeatPassword')"
-									class="invalid-feedback d-block"
-								>
-									<div *ngIf="form.get('repeatPassword').errors.mustMatch">
-										{{ 'PROFILE_PAGE.VALIDATION.PASSWORDS_DO_NOT_MATCH' | translate }}
+								@if (FormHelpers.isInvalidControl(form, 'repeatPassword')) {
+									<div class="invalid-feedback d-block">
+										@if (form.get('repeatPassword').errors.mustMatch) {
+											<div>
+												{{ 'PROFILE_PAGE.VALIDATION.PASSWORDS_DO_NOT_MATCH' | translate }}
+											</div>
+										}
 									</div>
-								</div>
+								}
 							</ngx-password-form-field>
 						</div>
 					</div>
@@ -76,14 +77,15 @@
 									formControlName="email"
 									[status]="FormHelpers.isInvalidControl(form, 'email') ? 'danger' : 'basic'"
 								/>
-								<div
-									*ngIf="FormHelpers.isInvalidControl(form, 'email')"
-									class="invalid-feedback d-block"
-								>
-									<div *ngIf="form.get('email').errors.required">
-										{{ 'PROFILE_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
+								@if (FormHelpers.isInvalidControl(form, 'email')) {
+									<div class="invalid-feedback d-block">
+										@if (form.get('email').errors.required) {
+											<div>
+												{{ 'PROFILE_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
+											</div>
+										}
 									</div>
-								</div>
+								}
 							</div>
 						</div>
 						<div class="col-6">
@@ -97,16 +99,18 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-sm-6" *ngIf="allowRoleChange">
-							<ngx-role-form-field
-								[id]="'role'"
-								[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
-								[label]="'FORM.LABELS.ROLE' | translate"
-								formControlName="role"
-								(selectedChange)="onSelectionChange($event)"
-								[excludes]="excludes"
-							></ngx-role-form-field>
-						</div>
+						@if (allowRoleChange) {
+							<div class="col-sm-6">
+								<ngx-role-form-field
+									[id]="'role'"
+									[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
+									[label]="'FORM.LABELS.ROLE' | translate"
+									formControlName="role"
+									(selectedChange)="onSelectionChange($event)"
+									[excludes]="excludes"
+								></ngx-role-form-field>
+							</div>
+						}
 						<div class="col-sm-6">
 							<div class="form-group">
 								<label
@@ -168,7 +172,7 @@
 		width="68"
 		height="68"
 		viewBox="0 0 68 68"
-		[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+		[style.opacity]="hoverState ? '1' : '0.3'"
 	>
 		<defs>
 			<path
@@ -182,12 +186,13 @@
 			<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 		</g>
 	</svg>
-	<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
-	<img
-		*ngIf="!!form"
-		[src]="form.get('imageUrl').value"
-		alt="Profile Photo"
-		(mouseenter)="hoverState = true"
-		(mouseleave)="hoverState = false"
-	/>
+	<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
+	@if (!!form) {
+		<img
+			[src]="form.get('imageUrl').value"
+			alt="Profile Photo"
+			(mouseenter)="hoverState = true"
+			(mouseleave)="hoverState = false"
+		/>
+	}
 </ng-template>

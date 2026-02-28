@@ -23,6 +23,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { RelationsQueryDTO } from '../shared/dto';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
+import { MultiORMEnum } from '../core/utils';
 import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -412,41 +413,65 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId; // Use the current tenant ID or fallback to input tenantId
 		const { organizationId, organizationContactId, organizationTeamId, relations = [] } = input;
 
-		// Create a query to fetch organization projects
-		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-		query.setFindOptions({
-			select: {
-				id: true,
-				name: true,
-				imageUrl: true,
-				currency: true,
-				billing: true,
-				public: true,
-				owner: true,
-				taskListType: true
-			},
-			relations
-		});
-		query.innerJoin(`${query.alias}.members`, 'project_members').leftJoin(`${query.alias}.teams`, 'project_team');
-		query
-			.where(`project_members.employeeId = :employeeId`, { employeeId })
-			.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
-			.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where: any = {
+					tenantId,
+					organizationId,
+					members: { employeeId }
+				};
+				if (isNotEmpty(organizationContactId)) {
+					where.organizationContactId = organizationContactId;
+				}
+				if (isNotEmpty(organizationTeamId)) {
+					where.teams = { id: organizationTeamId };
+				}
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: relations as any[]
+				});
+				return items.map((e) => this.serialize(e)) as IOrganizationProject[];
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query to fetch organization projects
+				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+				query.setFindOptions({
+					select: {
+						id: true,
+						name: true,
+						imageUrl: true,
+						currency: true,
+						billing: true,
+						public: true,
+						owner: true,
+						taskListType: true
+					},
+					relations
+				});
+				query
+					.innerJoin(`${query.alias}.members`, 'project_members')
+					.leftJoin(`${query.alias}.teams`, 'project_team');
+				query
+					.where(`project_members.employeeId = :employeeId`, { employeeId })
+					.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
+					.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
-		// Apply additional filters if organizationContactId is provided
-		if (isNotEmpty(organizationContactId)) {
-			query.andWhere(p(`"${query.alias}"."organizationContactId" = :organizationContactId`), {
-				organizationContactId
-			});
+				// Apply additional filters if organizationContactId is provided
+				if (isNotEmpty(organizationContactId)) {
+					query.andWhere(p(`"${query.alias}"."organizationContactId" = :organizationContactId`), {
+						organizationContactId
+					});
+				}
+
+				// Apply additional filters if organizationTeamId is provided
+				if (isNotEmpty(organizationTeamId)) {
+					query.andWhere(`project_team.id = :organizationTeamId`, { organizationTeamId });
+				}
+
+				// Get the results
+				return query.getMany();
+			}
 		}
-
-		// Apply additional filters if organizationTeamId is provided
-		if (isNotEmpty(organizationTeamId)) {
-			query.andWhere(`project_team.id = :organizationTeamId`, { organizationTeamId });
-		}
-
-		// Get the results
-		return query.getMany();
 	}
 
 	/**
@@ -503,7 +528,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			const { organizationId, projectId, integrationId } = options;
 
 			// Attempt to retrieve the organization projects by the provided parameters.
-			const projects = await this.typeOrmRepository.find({
+			const projects = await this.find({
 				where: {
 					...(projectId ? { id: projectId } : {}),
 					organizationId,
@@ -604,28 +629,49 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns A paginated list of synchronized organization projects with associated issue counts.
 	 */
 	async findSyncedProjects(options?: BaseQueryDTO<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
-		// Get the list of custom fields for the specified entity, defaulting to an empty array if none are found
-		const customFields = getConfig().customFields?.['OrganizationProject'] ?? [];
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const tenantId = RequestContext.currentTenantId();
+				const where: any = { tenantId };
 
-		// Create a query builder for the `OrganizationProject` entity
-		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+				if (options?.where) {
+					for (const key of Object.keys(options.where)) {
+						where[key] = options.where[key];
+					}
+				}
 
-		// Set find options (skip, take, and relations)
-		query.skip(options && options.skip ? options.take * (options.skip - 1) : 0);
-		query.take(options && options.take ? options.take : 10);
+				// Match TypeORM's repositoryId IS NOT NULL filter
+				where.repositoryId = { $ne: null };
 
-		// Conditionally add joins based on custom fields
-		this.addCustomFieldJoins(query, customFields);
+				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
+					limit: options?.take || 10,
+					offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0
+				});
+				return { items: items.map((e) => this.serialize(e)) as OrganizationProject[], total };
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Get the list of custom fields for the specified entity, defaulting to an empty array if none are found
+				const customFields = getConfig().customFields?.['OrganizationProject'] ?? [];
 
-		// Add where conditions
-		this.addWhereConditions(query, options);
+				// Create a query builder for the `OrganizationProject` entity
+				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-		// Log the SQL query (for debugging)
-		// console.log(await query.getRawMany());
+				// Set find options (skip, take, and relations)
+				query.skip(options && options.skip ? options.take * (options.skip - 1) : 0);
+				query.take(options && options.take ? options.take : 10);
 
-		// Execute the query and return the paginated result
-		const [items, total] = await query.getManyAndCount();
-		return { items, total };
+				// Conditionally add joins based on custom fields
+				this.addCustomFieldJoins(query, customFields);
+
+				// Add where conditions
+				this.addWhereConditions(query, options);
+
+				// Execute the query and return the paginated result
+				const [items, total] = await query.getManyAndCount();
+				return { items, total };
+			}
+		}
 	}
 
 	/**
@@ -672,14 +718,15 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					});
 
 				// Save updated projects
-				await Promise.all(updatedProjectsToAdd.map((project) => this.save(project)));
+				await this.saveMany(updatedProjectsToAdd);
 			}
 
 			// Handle removing projects
 			if (removedProjectIds.length > 0) {
 				await this.typeOrmOrganizationProjectEmployeeRepository.delete({
 					organizationProjectId: In(removedProjectIds),
-					employeeId: member.id
+					employeeId: member.id,
+					tenantId
 				});
 			}
 
@@ -698,16 +745,33 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns A boolean indicating whether the employee is a manager of the project.
 	 */
 	async isManagerOfProject(projectId: ID, employeeId: ID): Promise<boolean> {
-		const project = await this.typeOrmRepository
-			.createQueryBuilder('project')
-			.innerJoin('project.members', 'members')
-			.where('project.id = :projectId', { projectId })
-			.andWhere('members.employeeId = :employeeId', { employeeId })
-			.andWhere('members.isActive = :isActive', { isActive: true })
-			.andWhere('members.isArchived = :isArchived', { isArchived: false })
-			.andWhere('members.isManager = :isManager', { isManager: true })
-			.getOne();
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const project = await this.mikroOrmRepository.findOne({
+					id: projectId,
+					members: {
+						employeeId,
+						isActive: true,
+						isArchived: false,
+						isManager: true
+					}
+				} as any);
+				return !!project;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const project = await this.typeOrmRepository
+					.createQueryBuilder('project')
+					.innerJoin('project.members', 'members')
+					.where('project.id = :projectId', { projectId })
+					.andWhere('members.employeeId = :employeeId', { employeeId })
+					.andWhere('members.isActive = :isActive', { isActive: true })
+					.andWhere('members.isArchived = :isArchived', { isArchived: false })
+					.andWhere('members.isManager = :isManager', { isManager: true })
+					.getOne();
 
-		return !!project;
+				return !!project;
+			}
+		}
 	}
 }

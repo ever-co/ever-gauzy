@@ -1,3 +1,5 @@
+/// <reference types="google.maps" />
+
 /**
  * @license
  * Copyright Akveo. All Rights Reserved.
@@ -10,8 +12,6 @@ declare var module: NodeModule;
 interface NodeModule {
 	id: string;
 }
-
-declare var echarts: any;
 
 interface Window {
 	require: NodeRequire;

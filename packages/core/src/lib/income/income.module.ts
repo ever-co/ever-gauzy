@@ -13,6 +13,7 @@ import { ExpenseModule } from './../expense/expense.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationRecurringExpenseModule } from './../organization-recurring-expense/organization-recurring-expense.module';
 import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository';
+import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
 
 @Module({
 	imports: [
@@ -27,7 +28,7 @@ import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository
 		forwardRef(() => EmployeeStatisticsModule)
 	],
 	controllers: [IncomeController],
-	providers: [IncomeService, TypeOrmIncomeRepository, ...CommandHandlers],
+	providers: [IncomeService, TypeOrmIncomeRepository, MikroOrmIncomeRepository, ...CommandHandlers],
 	exports: [IncomeService]
 })
 export class IncomeModule {}

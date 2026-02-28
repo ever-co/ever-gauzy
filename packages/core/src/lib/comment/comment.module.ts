@@ -10,6 +10,7 @@ import { CommentService } from './comment.service';
 import { CommentController } from './comment.controller';
 import { Comment } from './comment.entity';
 import { TypeOrmCommentRepository } from './repository/type-orm-comment.repository';
+import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
 
 @Module({
 	imports: [
@@ -21,6 +22,6 @@ import { TypeOrmCommentRepository } from './repository/type-orm-comment.reposito
 		CqrsModule
 	],
 	controllers: [CommentController],
-	providers: [CommentService, TypeOrmCommentRepository, ...CommandHandlers]
+	providers: [CommentService, TypeOrmCommentRepository, MikroOrmCommentRepository, ...CommandHandlers]
 })
 export class CommentModule {}

@@ -2,12 +2,24 @@ import { Component, ViewChild, ElementRef, AfterViewChecked, OnDestroy, OnInit }
 import { Observable, Subscription } from 'rxjs';
 import { LogEntry } from '../models/logs.models';
 import { LogService } from '../services/logs.service';
+import { NbCardModule, NbSelectModule, NbOptionModule, NbInputModule, NbCheckboxModule } from '@nebular/theme';
+import { FormsModule } from '@angular/forms';
+import { AsyncPipe, DatePipe } from '@angular/common';
 
 @Component({
 	selector: 'app-logs-page',
 	templateUrl: './logs.component.html',
 	styleUrls: ['./logs.component.scss'],
-	standalone: false
+	imports: [
+		NbCardModule,
+		NbSelectModule,
+		NbOptionModule,
+		NbInputModule,
+		FormsModule,
+		NbCheckboxModule,
+		AsyncPipe,
+		DatePipe
+	]
 })
 export class LogsPageComponent implements AfterViewChecked, OnDestroy, OnInit {
 	@ViewChild('logContainer') private logContainer: ElementRef;
@@ -26,7 +38,6 @@ export class LogsPageComponent implements AfterViewChecked, OnDestroy, OnInit {
 		});
 	}
 
-
 	ngAfterViewChecked() {
 		if (this.autoScroll && !this.isUserScrolling) {
 			this.scrollToBottom();
@@ -40,7 +51,7 @@ export class LogsPageComponent implements AfterViewChecked, OnDestroy, OnInit {
 	}
 
 	ngOnInit(): void {
-	    this.svc.loadLogs();
+		this.svc.loadLogs();
 	}
 
 	scrollToBottom(): void {
@@ -54,7 +65,7 @@ export class LogsPageComponent implements AfterViewChecked, OnDestroy, OnInit {
 	}
 
 	filter(logs: LogEntry[]): LogEntry[] {
-		return logs.filter(l => {
+		return logs.filter((l) => {
 			if (this.level !== 'all' && l.level !== this.level) return false;
 			if (this.query && !l.msg.toLowerCase().includes(this.query.toLowerCase())) return false;
 			return true;

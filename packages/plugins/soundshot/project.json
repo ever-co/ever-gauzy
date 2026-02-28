@@ -12,7 +12,7 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["contracts", "core", "plugin"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -23,7 +23,8 @@
 				"packageJson": "packages/plugins/soundshot/package.json",
 				"main": "packages/plugins/soundshot/src/index.ts",
 				"assets": ["packages/plugins/soundshot/*.md"]
-			}
+			},
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {

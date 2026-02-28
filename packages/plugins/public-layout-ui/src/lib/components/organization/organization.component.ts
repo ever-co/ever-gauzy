@@ -6,7 +6,7 @@ import { NbDialogService, NbTabComponent, NbTabsetComponent } from '@nebular/the
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, of, Subject } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
 	DateRangePickerBuilderService,
 	EmployeeStatisticsService,
@@ -21,10 +21,10 @@ import { PublicPageOrganizationMutationComponent } from '../mutation/public-page
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-public-organization',
-    templateUrl: './organization.component.html',
-    styleUrls: ['./organization.component.scss'],
-    standalone: false
+	selector: 'ngx-public-organization',
+	templateUrl: './organization.component.html',
+	styleUrls: ['./organization.component.scss'],
+	standalone: false
 })
 export class OrganizationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public hasEditPublicPage$: Observable<boolean> = of(false);

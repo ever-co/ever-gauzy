@@ -6,11 +6,11 @@ import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import { ID, ISocialAccount, IUser, ProviderEnum } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
-import { MicroOrmSocialAccountRepository } from './repository/micro-orm-social-account.repository';
+import { MikroOrmSocialAccountRepository } from './repository/mikro-orm-social-account.repository';
 
-@MultiORMEntity('social_account', { mikroOrmRepository: () => MicroOrmSocialAccountRepository })
+@MultiORMEntity('social_account', { mikroOrmRepository: () => MikroOrmSocialAccountRepository })
 export class SocialAccount extends TenantBaseEntity implements ISocialAccount {
-	[EntityRepositoryType]?: MicroOrmSocialAccountRepository;
+	[EntityRepositoryType]?: MikroOrmSocialAccountRepository;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

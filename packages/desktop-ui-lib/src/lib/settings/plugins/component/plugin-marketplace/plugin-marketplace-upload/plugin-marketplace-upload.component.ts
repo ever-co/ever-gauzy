@@ -1,13 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import {
-	AbstractControl,
-	FormArray,
-	FormControl,
-	FormGroup,
-	ValidationErrors,
-	ValidatorFn,
-	Validators
-} from '@angular/forms';
+import { AbstractControl, FormArray, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	IPlugin,
 	IPluginPlanCreateInput,
@@ -16,10 +8,10 @@ import {
 	PluginStatus,
 	PluginType
 } from '@gauzy/contracts';
-import { NbDateService, NbDialogRef, NbDialogService, NbStepperComponent } from '@nebular/theme';
+import { NbDateService, NbDialogRef, NbDialogService, NbStepperComponent, NbCardModule, NbIconModule, NbButtonModule, NbStepperModule, NbCheckboxModule, NbAlertModule, NbBadgeModule, NbSpinnerModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { asapScheduler, filter, take, tap } from 'rxjs';
 import { PluginSourceActions } from '../+state/actions/plugin-source.action';
 import { PluginVersionQuery } from '../+state/queries/plugin-version.query';
@@ -28,14 +20,20 @@ import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { ToastrNotificationService } from '../../../../../services';
 import { SourceContext } from './plugin-source/creator/source.context';
 import { PluginSubscriptionPlanCreatorComponent } from './plugin-subscription-plan-creator/plugin-subscription-plan-creator.component';
+import { PluginBasicInformationComponent } from './plugin-basic-information/plugin-basic-information.component';
+import { FormRowComponent } from './form-row/form-row.component';
+import { VersionSelectorComponent } from '../plugin-marketplace-item/version-selector/version-selector.component';
+import { SourceContainerComponent } from '../../../shared/ui/source-container/source-container.component';
+import { PluginVersionComponent } from './plugin-version/plugin-version.component';
+import { PluginMetadataComponent } from './plugin-metadata/plugin-metadata.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'lib-plugin-marketplace-upload',
-	templateUrl: './plugin-marketplace-upload.component.html',
-	styleUrls: ['./plugin-marketplace-upload.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-plugin-marketplace-upload',
+    templateUrl: './plugin-marketplace-upload.component.html',
+    styleUrls: ['./plugin-marketplace-upload.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, NbButtonModule, FormsModule, ReactiveFormsModule, NbStepperModule, PluginBasicInformationComponent, FormRowComponent, VersionSelectorComponent, SourceContainerComponent, PluginVersionComponent, PluginMetadataComponent, NbCheckboxModule, PluginSubscriptionPlanCreatorComponent, NbAlertModule, NbBadgeModule, NbSpinnerModule, TranslatePipe]
 })
 export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	@ViewChild('stepper', { static: false }) stepper: NbStepperComponent;

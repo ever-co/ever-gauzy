@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Gauzy Desktop Timer
+Comment=Gauzy Desktop Timer
+Exec=gauzy-desktop-timer %U
+Icon=com.ever.gauzydesktoptimer
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Development;
+Keywords=timer;tracking;productivity;
+StartupWMClass=Gauzy Desktop Timer
+MimeType=x-scheme-handler/gauzy;

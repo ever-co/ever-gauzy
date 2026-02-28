@@ -12,10 +12,8 @@
 					nbInput
 					formControlName="fullName"
 					fieldSize="large"
-					[ngClass]="{
-						'status-danger': FormHelpers.isInvalidControl(form, 'fullName'),
-						'status-success': FormHelpers.isValidControl(form, 'fullName')
-					}"
+					[class.status-danger]="FormHelpers.isInvalidControl(form, 'fullName')"
+					[class.status-success]="FormHelpers.isValidControl(form, 'fullName')"
 				/>
 			</div>
 		</div>
@@ -29,10 +27,8 @@
 				[ctrl]="form.controls.password"
 				formControlName="password"
 				[fieldSize]="'large'"
-				[ngClass]="{
-					'status-danger': FormHelpers.isInvalidControl(form, 'password'),
-					'status-success': FormHelpers.isValidControl(form, 'password')
-				}"
+				[class.status-danger]="FormHelpers.isInvalidControl(form, 'password')"
+				[class.status-success]="FormHelpers.isValidControl(form, 'password')"
 			></ngx-password-form-field>
 		</div>
 	</div>
@@ -45,16 +41,18 @@
 				[ctrl]="form.controls.repeatPassword"
 				formControlName="repeatPassword"
 				[fieldSize]="'large'"
-				[ngClass]="{
-					'status-danger': FormHelpers.isInvalidControl(form, 'repeatPassword'),
-					'status-success': FormHelpers.isValidControl(form, 'repeatPassword')
-				}"
+				[class.status-danger]="FormHelpers.isInvalidControl(form, 'repeatPassword')"
+				[class.status-success]="FormHelpers.isValidControl(form, 'repeatPassword')"
 			>
-				<div *ngIf="FormHelpers.isInvalidControl(form, 'repeatPassword')" class="invalid-feedback d-block">
-					<div *ngIf="form.get('repeatPassword').errors.mustMatch">
+				@if (FormHelpers.isInvalidControl(form, 'repeatPassword')) {
+				<div class="invalid-feedback d-block">
+					@if (form.get('repeatPassword').errors.mustMatch) {
+					<div>
 						{{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORDS_DO_NOT_MATCH' | translate }}
 					</div>
+					}
 				</div>
+				}
 			</ngx-password-form-field>
 		</div>
 	</div>

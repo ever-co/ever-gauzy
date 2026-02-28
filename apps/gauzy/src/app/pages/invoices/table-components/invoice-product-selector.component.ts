@@ -10,16 +10,18 @@ import { ProductService, Store, TranslatableService } from '@gauzy/ui-core/core'
 @Component({
     template: `
 		<nb-select
-			fullWidth
-			[placeholder]="'INVOICES_PAGE.SELECT_PRODUCT' | translate"
-			[(ngModel)]="product"
-			(selectedChange)="selectProduct($event)"
-		>
-			<nb-option *ngFor="let product of products" [value]="product">
-				{{ geProductTranslatedName(product) }}
-			</nb-option>
+		  fullWidth
+		  [placeholder]="'INVOICES_PAGE.SELECT_PRODUCT' | translate"
+		  [(ngModel)]="product"
+		  (selectedChange)="selectProduct($event)"
+		  >
+		  @for (product of products; track product) {
+		    <nb-option [value]="product">
+		      {{ geProductTranslatedName(product) }}
+		    </nb-option>
+		  }
 		</nb-select>
-	`,
+		`,
     styles: [],
     standalone: false
 })

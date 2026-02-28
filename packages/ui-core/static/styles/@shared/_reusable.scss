@@ -1,4 +1,6 @@
-@import 'themes';
+// Forward so mixins/themes are available to importers
+@forward 'themes';
+@use 'themes' as *;
 
 $button-color: #fa754e;
 $wrapper-padding: 30px;
@@ -69,13 +71,16 @@ $register-background-light-color: nb-theme(gauzy-card-1);
   }
 }
 @mixin social-links-style {
-  text-align: start;
+  text-align: center;
   color: #808080;
   @include mobile-screen {
     text-align: center;
   }
   & .socials {
-    margin-left: -11px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
     & .social-link {
       margin: 0 10px 0 0;
       border: 1px solid transparent;
@@ -86,10 +91,13 @@ $register-background-light-color: nb-theme(gauzy-card-1);
       justify-content: center;
       align-items: center;
       @include small-mobile-screen {
-        margin: 0;
+        margin: 0 2px;
+        width: 40px;
+        height: 40px;
       }
       & nb-icon {
-        height: 28px;
+        height: 32px;
+        width: 32px;
         color: nb-theme(background-alternative-color-2) !important;
         opacity: 0.8;
         @include small-laptop-screen {

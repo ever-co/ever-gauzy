@@ -1,126 +1,115 @@
-import { AfterViewInit, Component, Inject, PLATFORM_ID, ViewChild, OnInit, OnDestroy } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { Observable } from 'rxjs';
+import { Component, inject, viewChild, afterNextRender, DestroyRef, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { IUser } from '@gauzy/contracts';
 import { LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
-import { WindowModeBlockScrollService } from '../../services';
+import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
 
-@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-one-column-layout',
-	styleUrls: ['./one-column.layout.scss'],
+	styleUrl: './one-column.layout.scss',
 	templateUrl: './one-column.layout.html',
 	standalone: false
 })
-export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
-	userMenu = [
-		{ title: 'Profile', link: '/pages/auth/profile' },
-		{ title: 'Log out', link: '/auth/logout' }
-	];
-	loading: boolean;
-	isOpen = false;
-	isWorkspaceOpen = false;
-	isExpanded = true;
-	isCollapse = true;
-	trigger = true;
+export class OneColumnLayoutComponent {
+	readonly isOpen = signal(false);
+	readonly isWorkspaceOpen = signal(false);
+	readonly isExpanded = signal(true);
+	readonly isCollapse = signal(true);
+	readonly trigger = signal(true);
 
-	/**
-	 * User observable
-	 */
-	private _user$: Observable<IUser> = new Observable();
-	public get user$(): Observable<IUser> {
-		return this._user$;
-	}
-	public set user$(value: Observable<IUser>) {
-		this._user$ = value;
-	}
+	readonly layout = viewChild.required(NbLayoutComponent);
 
-	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
+	private readonly windowModeBlockScrollService = inject(WindowModeBlockScrollService);
+	private readonly store = inject(Store);
+	public readonly navigationBuilderService = inject(NavigationBuilderService);
+	private readonly sidebarService = inject(NbSidebarService);
+	private readonly layoutService = inject(LayoutService);
+	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);
+	private readonly destroyRef = inject(DestroyRef);
 
-	constructor(
-		@Inject(PLATFORM_ID) private platformId,
-		private readonly windowModeBlockScrollService: WindowModeBlockScrollService,
-		private readonly store: Store,
-		public readonly navigationBuilderService: NavigationBuilderService,
-		private readonly sidebarService: NbSidebarService,
-		private readonly layoutService: LayoutService,
-		private readonly languageSelectorService: ThemeLanguageSelectorService
-	) {
+	/** User signal for template — derived from store observable. */
+	readonly user = toSignal(this.store.user$);
+
+	/** User observable — kept for child component compatibility (gauzy-user, gauzy-user-menu). */
+	readonly user$ = this.store.user$;
+
+	constructor() {
 		Object.entries(DEFAULT_SIDEBARS).forEach(([id, config]) => {
-			navigationBuilderService.registerSidebar(id, config);
-			navigationBuilderService.addSidebarActionItem(config.actionItem);
+			this.navigationBuilderService.registerSidebar(id, config);
+			this.navigationBuilderService.addSidebarActionItem(config.actionItem);
 		});
-		navigationBuilderService.getSidebarWidgets();
-	}
+		this.navigationBuilderService.getSidebarWidgets();
 
-	ngOnInit() {
-		this.loading = true;
-		this.user$ = this.store.user$;
-		this.loading = false;
-		this.languageSelectorService.initialize();
-	}
+		this.themeLanguageSelectorService.initialize();
 
-	ngAfterViewInit() {
-		if (isPlatformBrowser(this.platformId)) {
-			this.windowModeBlockScrollService.register(this.layout);
-		}
+		// Runs only in the browser, after the first render — replaces ngAfterViewInit + isPlatformBrowser
+		afterNextRender(() => {
+			this.windowModeBlockScrollService.register(this.layout());
+		});
+
+		this.destroyRef.onDestroy(() => {
+			this.navigationBuilderService.clearSidebars();
+			this.navigationBuilderService.clearActionBars();
+		});
 	}
 
 	/**
-	 * Toggles the expansion state of the component and updates the sidebar accordingly.
-	 * If the component is expanded, it expands the 'menu-sidebar'.
-	 * If the component is collapsed, it triggers a sidebar toggle and changes the layout size.
+	 * Toggles the expansion state of the sidebar.
 	 */
-	toggle() {
-		this.isExpanded = !this.isExpanded;
-		if (this.isExpanded) {
+	toggle(): void {
+		this.isExpanded.update((v) => !v);
+		if (this.isExpanded()) {
 			this.sidebarService.expand('menu-sidebar');
 		} else {
-			this.trigger = true;
+			this.trigger.set(true);
 			this.sidebarService.toggle(true, 'menu-sidebar');
 			this.layoutService.changeLayoutSize();
 		}
 	}
 
 	/**
-	 * Updates the state of the component based on the given event.
-	 *
-	 * @param {boolean} event - The event that triggered the collapse.
+	 * Handles the sidebar collapse event. Auto-expands if both collapsed and compacted.
 	 */
-	onCollapse(event: boolean) {
-		this.isCollapse = event;
-		if (!this.isCollapse && !this.isExpanded) this.toggle();
+	onCollapse(event: boolean): void {
+		this.isCollapse.set(event);
+		if (!this.isCollapse() && !this.isExpanded()) this.toggle();
 	}
 
 	/**
-	 * Updates the state of the component based on the given event.
-	 *
-	 * @param {string} event - The event that triggered the state change.
-	 *
+	 * Syncs expansion and trigger signals with the sidebar state change.
 	 */
 	onStateChange(event: string): void {
-		this.isExpanded = event === 'expanded' ? true : false;
-		this.trigger = event === 'compacted' ? true : false;
+		this.isExpanded.set(event === 'expanded');
+		this.trigger.set(event === 'compacted');
 	}
 
 	/**
-	 * Handles the workspace toggle event.
-	 *
-	 * @param {boolean} isOpen - Whether the workspace menu should be open.
+	 * Toggles the workspace menu visibility.
 	 */
 	onWorkspaceToggle(isOpen: boolean): void {
-		this.isWorkspaceOpen = isOpen;
+		this.isWorkspaceOpen.set(isOpen);
 	}
 
 	/**
-	 * Clears the sidebars and action bars on component destroy.
+	 * Toggles the user menu overlay.
 	 */
-	ngOnDestroy() {
-		this.navigationBuilderService.clearSidebars();
-		this.navigationBuilderService.clearActionBars();
+	toggleUserMenu(): void {
+		this.isOpen.update((v) => !v);
+	}
+
+	/**
+	 * Closes the user menu overlay.
+	 */
+	closeUserMenu(): void {
+		this.isOpen.set(false);
+	}
+
+	/**
+	 * Closes the workspace menu overlay.
+	 */
+	closeWorkspaceMenu(): void {
+		this.isWorkspaceOpen.set(false);
 	}
 }

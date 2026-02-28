@@ -4,22 +4,22 @@
 			icon="edit-outline"
 			class="mr-1"
 			(click)="edit()"
-			[ngClass]="{
-				icons: !isPastInterview(currentInterview),
-				disabled: isPastInterview(currentInterview)
-			}"
+			[class.icons]="!isPastInterview(currentInterview)"
+			[class.disabled]="isPastInterview(currentInterview)"
 		></nb-icon>
 		<nb-icon icon="close-outline" class="icons" (click)="closeDialog()"></nb-icon>
 	</div>
 
 	<div class="card">
+		@if (isSlider && interviews.length > 1) {
 		<nb-icon
-			*ngIf="isSlider && interviews.length > 1"
 			icon="arrow-ios-back"
 			class="arrow-icon"
 			(click)="previous()"
-			[ngClass]="{ show: isPreviousBtn, disable: !isPreviousBtn }"
+			[class.show]="isPreviousBtn"
+			[class.disable]="!isPreviousBtn"
 		></nb-icon>
+		}
 
 		<div class="card-info">
 			<nb-card-header class="d-flex header">
@@ -80,7 +80,8 @@
 						{{ nameList }}
 					</p>
 				</div>
-				<div *ngIf="currentInterview?.location">
+				@if (currentInterview?.location) {
+				<div>
 					<div class="interview-info">
 						<nb-icon icon="navigation-2-outline" class="icons"></nb-icon>
 						<p class="interview-text">
@@ -91,7 +92,8 @@
 						{{ currentInterview?.location }}
 					</p>
 				</div>
-				<div *ngIf="currentInterview?.note">
+				} @if (currentInterview?.note) {
+				<div>
 					<div class="interview-info">
 						<nb-icon icon="edit-outline" class="icons"></nb-icon>
 						<p class="interview-text">
@@ -100,18 +102,22 @@
 					</div>
 					<p class="interview-data">{{ currentInterview?.note }}</p>
 				</div>
+				}
 			</nb-card-body>
 		</div>
 
+		@if (isSlider && interviews.length > 1) {
 		<nb-icon
-			*ngIf="isSlider && interviews.length > 1"
 			icon="arrow-ios-forward"
 			class="arrow-icon"
 			(click)="next()"
-			[ngClass]="{ disable: !isNextBtn, show: isNextBtn }"
+			[class.disable]="!isNextBtn"
+			[class.show]="isNextBtn"
 		></nb-icon>
+		}
 	</div>
-	<div class="pages" *ngIf="isSlider && interviews.length > 1">
+	@if (isSlider && interviews.length > 1) {
+	<div class="pages">
 		<div class="interview-text">
 			{{ index }}
 			{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.OF' | translate }}
@@ -119,4 +125,5 @@
 			{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.INTERVIEWS_LOWER_CASE' | translate }}
 		</div>
 	</div>
+	}
 </nb-card>

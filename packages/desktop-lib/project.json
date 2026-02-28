@@ -11,11 +11,12 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["contracts", "desktop-activity", "desktop-core", "desktop-window"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
+			"dependsOn": ["^build"],
 			"options": {
 				"outputPath": "dist/packages/desktop-lib",
 				"main": "packages/desktop-lib/src/index.ts",

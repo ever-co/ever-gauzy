@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, inject, Inject, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { NB_DIALOG_CONFIG, NbDialogRef } from '@nebular/theme';
+import { FormBuilder, FormControl, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NB_DIALOG_CONFIG, NbDialogRef, NbCardModule, NbIconModule, NbInputModule, NbSelectModule, NbOptionModule, NbCheckboxModule, NbButtonModule, NbSpinnerModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { asyncScheduler, distinctUntilChanged, filter, map, tap } from 'rxjs';
@@ -12,6 +12,7 @@ import {
 	PluginSettingType
 } from '../../../services/plugin-settings.service';
 import { CategorySelectorComponent } from '../plugin-marketplace-item/category-selector/category-selector.component';
+import { TitleCasePipe } from '@angular/common';
 
 export interface CreatePluginSettingDialogData {
 	pluginId: string;
@@ -22,11 +23,11 @@ export interface CreatePluginSettingDialogData {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'lib-plugin-create-setting-dialog',
-	templateUrl: './plugin-create-setting-dialog.component.html',
-	styleUrls: ['./plugin-create-setting-dialog.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'lib-plugin-create-setting-dialog',
+    templateUrl: './plugin-create-setting-dialog.component.html',
+    styleUrls: ['./plugin-create-setting-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, FormsModule, ReactiveFormsModule, NbInputModule, NbSelectModule, NbOptionModule, CategorySelectorComponent, NbCheckboxModule, NbButtonModule, NbSpinnerModule, TitleCasePipe]
 })
 export class PluginCreateSettingDialogComponent implements OnInit, AfterViewInit {
 	public createForm: FormGroup;

@@ -1,133 +1,134 @@
-<form [formGroup]="form" *ngIf="form">
-	<nb-card>
-		<nb-card-header>
-			<div class="row align-items-center">
-				<div class="col-6">
-					<h4>
-						<ngx-header-title>
-							<span class="menu-setting"
-								>{{ 'MENU.SETTINGS' | translate }}/
-							</span>
-							{{ 'ACCOUNTING_TEMPLATES_PAGE.HEADER' | translate }}
-						</ngx-header-title>
-					</h4>
-				</div>
-			</div>
-		</nb-card-header>
-		<nb-card-body>
-			<div class="row">
-				<div class="col-6 email-template-column">
-					<nb-card>
-						<nb-card-header class="editor-header">
-							{{ 'EMAIL_TEMPLATES_PAGE.HTML_EDITOR' | translate }}
-						</nb-card-header>
-						<nb-card-body class="editor">
-							<div class="form-group">
-								<label class="label" for="template">
-									{{
-										'FORM.LABELS.TEMPLATE_BODY' | translate
-									}}
-								</label>
-								<ace-editor
-									#templateEditor
-									id="template"
-									[mode]="'handlebars'"
-									class="ace-editor"
-									[durationBeforeCallback]="400"
-									(textChange)="onTemplateChange($event)"
-								>
-								</ace-editor>
-							</div>
-						</nb-card-body>
-					</nb-card>
-				</div>
-
-				<div class="col-6 email-template-column">
-					<nb-card class="email-template-right">
-						<nb-card-header class="email-column-header">
-							<div class="select">
-								<div class="select-block">
-									<label class="label" for="languageCode">
-										{{ 'FORM.LABELS.LANGUAGE' | translate }}
-									</label>
-									<ngx-language-selector
-										class="d-block"
-										size="small"
-										[template]="'ng-select'"
-										formControlName="languageCode"
+@if (form) {
+  <form [formGroup]="form">
+    <nb-card>
+      <nb-card-header>
+        <div class="row align-items-center">
+          <div class="col-6">
+            <h4>
+              <ngx-header-title>
+                <span class="menu-setting"
+                  >{{ 'MENU.SETTINGS' | translate }}/
+                </span>
+                {{ 'ACCOUNTING_TEMPLATES_PAGE.HEADER' | translate }}
+              </ngx-header-title>
+            </h4>
+          </div>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <div class="row">
+          <div class="col-6 email-template-column">
+            <nb-card>
+              <nb-card-header class="editor-header">
+                {{ 'EMAIL_TEMPLATES_PAGE.HTML_EDITOR' | translate }}
+              </nb-card-header>
+              <nb-card-body class="editor">
+                <div class="form-group">
+                  <label class="label" for="template">
+                    {{
+                    'FORM.LABELS.TEMPLATE_BODY' | translate
+                    }}
+                  </label>
+                  <ace-editor
+                    #templateEditor
+                    id="template"
+                    [mode]="'handlebars'"
+                    class="ace-editor"
+                    [durationBeforeCallback]="400"
+                    (textChange)="onTemplateChange($event)"
+                    >
+                  </ace-editor>
+                </div>
+              </nb-card-body>
+            </nb-card>
+          </div>
+          <div class="col-6 email-template-column">
+            <nb-card class="email-template-right">
+              <nb-card-header class="email-column-header">
+                <div class="select">
+                  <div class="select-block">
+                    <label class="label" for="languageCode">
+                      {{ 'FORM.LABELS.LANGUAGE' | translate }}
+                    </label>
+                    <ngx-language-selector
+                      class="d-block"
+                      size="small"
+                      [template]="'ng-select'"
+                      formControlName="languageCode"
 										(selectedLanguageEvent)="
 											subject$.next(true)
 										"
-									>
-									</ngx-language-selector>
-								</div>
-								<div class="select-block">
-									<label class="label" for="templateName">
-										{{
-											'FORM.PLACEHOLDERS.TEMPLATES'
-												| translate
-										}}
-									</label>
-									<nb-select
-										id="templateName"
-										class="d-block"
-										size="small"
+                      >
+                    </ngx-language-selector>
+                  </div>
+                  <div class="select-block">
+                    <label class="label" for="templateName">
+                      {{
+                      'FORM.PLACEHOLDERS.TEMPLATES'
+                      | translate
+                      }}
+                    </label>
+                    <nb-select
+                      id="templateName"
+                      class="d-block"
+                      size="small"
 										placeholder="{{
 											'FORM.LABELS.TEMPLATE_NAME'
 												| translate
 										}}"
-										formControlName="templateType"
-										(selectedChange)="subject$.next(true)"
-									>
-										<nb-option
-											*ngFor="let name of templateTypes"
-											[value]="name"
-										>
-											{{
-												'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' +
-													name | translate
-											}}
-										</nb-option>
-									</nb-select>
-								</div>
-							</div>
-							<div class="template-save">
-								<button
-									nbButton
-									status="success"
-									(click)="onSave()"
-								>
-									{{
-										'EMAIL_TEMPLATES_PAGE.SAVE' | translate
-									}}
-								</button>
-							</div>
-						</nb-card-header>
-						<nb-card-body>
-							<div class="email-column-sub-header">
-								<div class="form-group preview-subject">
-									<label class="label" for="previewTemplate">
-										{{
-											'FORM.LABELS.TEMPLATE_PREVIEW'
-												| translate
-										}}
-									</label>
-								</div>
-							</div>
-
-							<div class="form-group">
-								<div class="custom-parent-email-content">
-									<div
-										id="previewTemplate"
-										[innerHtml]="previewTemplate"
-										class="custom-preview-template"
-									></div>
-								</div>
-							</div>
-						</nb-card-body>
-					</nb-card>
-				</div>
-			</div>
-		</nb-card-body>
-	</nb-card>
-</form>
+                      formControlName="templateType"
+                      (selectedChange)="subject$.next(true)"
+                      >
+                      @for (name of templateTypes; track name) {
+                        <nb-option
+                          [value]="name"
+                          >
+                          {{
+                          'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' +
+                          name | translate
+                          }}
+                        </nb-option>
+                      }
+                    </nb-select>
+                  </div>
+                </div>
+                <div class="template-save">
+                  <button
+                    nbButton
+                    status="success"
+                    (click)="onSave()"
+                    >
+                    {{
+                    'EMAIL_TEMPLATES_PAGE.SAVE' | translate
+                    }}
+                  </button>
+                </div>
+              </nb-card-header>
+              <nb-card-body>
+                <div class="email-column-sub-header">
+                  <div class="form-group preview-subject">
+                    <label class="label" for="previewTemplate">
+                      {{
+                      'FORM.LABELS.TEMPLATE_PREVIEW'
+                      | translate
+                      }}
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="custom-parent-email-content">
+                    <div
+                      id="previewTemplate"
+                      [innerHtml]="previewTemplate"
+                      class="custom-preview-template"
+                    ></div>
+                  </div>
+                </div>
+              </nb-card-body>
+            </nb-card>
+          </div>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </form>
+}

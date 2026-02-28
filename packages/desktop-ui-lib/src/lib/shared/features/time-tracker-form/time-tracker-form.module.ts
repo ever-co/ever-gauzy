@@ -12,17 +12,17 @@ import { TeamSelectorModule } from '../team-selector/team-selector.module';
 import { TimeTrackerFormComponent } from './time-tracker-form.component';
 
 @NgModule({
-	declarations: [TimeTrackerFormComponent],
-	exports: [TimeTrackerFormComponent],
-	imports: [
-		CommonModule,
-		TeamSelectorModule,
-		TaskSelectorModule,
-		ProjectSelectorModule,
-		ClientSelectorModule,
-		NoteModule,
-		NbIconModule
-	],
-	providers: [TimeTrackerStore, TimeTrackerQuery, TeamSelectorService]
+    exports: [TimeTrackerFormComponent],
+    imports: [
+        CommonModule,
+        TeamSelectorModule,
+        TaskSelectorModule,
+        ProjectSelectorModule,
+        ClientSelectorModule,
+        NoteModule,
+        NbIconModule,
+        TimeTrackerFormComponent
+    ],
+    providers: [TimeTrackerStore, TimeTrackerQuery, TeamSelectorService]
 })
 export class TimeTrackerFormModule {}

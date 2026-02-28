@@ -5,21 +5,25 @@ import { Router } from '@angular/router';
 	selector: 'ngx-contact-links',
 	template: `
 		<div class="contact-links-container">
-			<ng-container *ngIf="value?.name">
-				<div [nbTooltip]="value.name" (click)="navigateToContact()" class="inner-wrapper">
-					<div *ngIf="!value.imageUrl" class="prefix">
-						{{ value.name.substr(0, 1).toUpperCase() }}
-					</div>
-					<div *ngIf="value.imageUrl" class="avatar">
-						<img [src]="value?.imageUrl" />
-					</div>
-					<div class="names-wrapper">
-						<a class="link-text">{{ value.name }}</a>
-					</div>
-				</div>
-			</ng-container>
+		  @if (value?.name) {
+		    <div [nbTooltip]="value.name" (click)="navigateToContact()" class="inner-wrapper">
+		      @if (!value.imageUrl) {
+		        <div class="prefix">
+		          {{ value.name.substr(0, 1).toUpperCase() }}
+		        </div>
+		      }
+		      @if (value.imageUrl) {
+		        <div class="avatar">
+		          <img [src]="value?.imageUrl" />
+		        </div>
+		      }
+		      <div class="names-wrapper">
+		        <a class="link-text">{{ value.name }}</a>
+		      </div>
+		    </div>
+		  }
 		</div>
-	`,
+		`,
 	styleUrls: ['./contact-links.component.scss'],
 	standalone: false
 })

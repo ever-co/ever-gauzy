@@ -21,7 +21,8 @@
 				"packageJson": "packages/plugins/posthog/package.json",
 				"main": "packages/plugins/posthog/src/index.ts",
 				"assets": ["packages/plugins/posthog/*.md"]
-			}
+			},
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {
@@ -38,5 +39,6 @@
 				"jestConfig": "packages/plugins/posthog/jest.config.ts"
 			}
 		}
-	}
+	},
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin"]
 }

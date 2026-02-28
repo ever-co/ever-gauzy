@@ -1,6 +1,6 @@
 <div class="confirmation-container">
 	<!-- Action Header -->
-	<div class="action-header" [ngClass]="getHeaderClass()">
+	<div class="action-header" [class]="getHeaderClass()">
 		<nb-icon [icon]="getActionIcon()" size="large"></nb-icon>
 		<h4>{{ getActionTitle() }}</h4>
 		<p class="action-description">{{ getActionDescription() }}</p>
@@ -8,7 +8,8 @@
 
 	<!-- Plan Details -->
 	<div class="plan-details">
-		<div class="current-plan" *ngIf="currentSubscription && comparisonResult.actionType !== PlanActionType.NEW">
+		@if (currentSubscription && comparisonResult.actionType !== PlanActionType.NEW) {
+		<div class="current-plan">
 			<h5>Current Plan</h5>
 			<div class="plan-info">
 				<span class="plan-name">{{ formatSubscriptionType(currentSubscription.plan.type) }}</span>
@@ -19,94 +20,111 @@
 				>
 			</div>
 		</div>
-
-		<div class="arrow-container" *ngIf="comparisonResult.actionType !== PlanActionType.NEW">
+		} @if (comparisonResult.actionType !== PlanActionType.NEW) {
+		<div class="arrow-container">
 			<nb-icon icon="arrow-forward-outline" size="large"></nb-icon>
 		</div>
+		}
 
 		<div class="selected-plan">
 			<h5>{{ comparisonResult.actionType === PlanActionType.NEW ? 'Selected Plan' : 'New Plan' }}</h5>
 			<div class="plan-info">
 				<span class="plan-name">{{ selectedPlan.name }}</span>
 				<span class="plan-price">{{ selectedPlan.formattedPrice }}</span>
-				<span class="plan-period" *ngIf="!selectedPlan.isFree">/{{ selectedPlan.formattedBillingPeriod }}</span>
+				@if (!selectedPlan.isFree) {
+				<span class="plan-period">/{{ selectedPlan.formattedBillingPeriod }}</span>
+				}
 			</div>
 		</div>
 	</div>
 
 	<!-- Payment Information -->
-	<div class="payment-info" *ngIf="comparisonResult.requiresPayment">
+	@if (comparisonResult.requiresPayment) {
+	<div class="payment-info">
 		<h5>Payment Details</h5>
-
 		<div class="payment-breakdown">
-			<div class="line-item" *ngIf="subscriptionPreview">
+			@if (subscriptionPreview) {
+			<div class="line-item">
 				<span>Base amount</span>
 				<span>{{ subscriptionPreview.formattedBaseAmount }}</span>
 			</div>
-
-			<div class="line-item" *ngIf="comparisonResult.prorationAmount && comparisonResult.prorationAmount > 0">
+			} @if (comparisonResult.prorationAmount && comparisonResult.prorationAmount > 0) {
+			<div class="line-item">
 				<span>Prorated amount</span>
 				<span>${{ comparisonResult.prorationAmount.toFixed(2) }}</span>
 			</div>
-
-			<div class="line-item" *ngIf="subscriptionPreview?.discount && subscriptionPreview.discount > 0">
+			} @if (subscriptionPreview?.discount && subscriptionPreview.discount > 0) {
+			<div class="line-item">
 				<span>Discount</span>
 				<span class="discount">-{{ subscriptionPreview.formattedDiscount }}</span>
 			</div>
-
-			<div class="line-item total" *ngIf="subscriptionPreview">
+			} @if (subscriptionPreview) {
+			<div class="line-item total">
 				<span><strong>Total</strong></span>
 				<span
 					><strong>{{ subscriptionPreview.formattedTotalAmount }}</strong></span
 				>
 			</div>
+			}
 		</div>
-
 		<!-- Payment Timing -->
 		<div class="payment-timing">
 			<nb-icon icon="calendar-outline"></nb-icon>
 			<span>{{ getPaymentTimingText() }}</span>
 		</div>
 	</div>
+	}
 
 	<!-- Free Plan Information -->
-	<div class="free-plan-info" *ngIf="selectedPlan.isFree">
+	@if (selectedPlan.isFree) {
+	<div class="free-plan-info">
 		<div class="free-badge">
 			<nb-icon icon="gift-outline" status="success"></nb-icon>
 			<span>This plan is completely free!</span>
 		</div>
 	</div>
+	}
 
 	<!-- Benefits and Restrictions -->
 	<div class="action-details">
 		<!-- Benefits -->
-		<div class="benefits" *ngIf="comparisonResult.benefits.length > 0">
+		@if (comparisonResult.benefits.length > 0) {
+		<div class="benefits">
 			<h6><nb-icon icon="trending-up-outline" status="success"></nb-icon> Benefits</h6>
 			<ul>
-				<li *ngFor="let benefit of comparisonResult.benefits">
+				@for (benefit of comparisonResult.benefits; track benefit) {
+				<li>
 					<nb-icon icon="checkmark-circle-outline" status="success"></nb-icon>
 					{{ benefit }}
 				</li>
+				}
 			</ul>
 		</div>
+		}
 
 		<!-- Important Notes/Restrictions -->
-		<div class="restrictions" *ngIf="comparisonResult.restrictions.length > 0">
+		@if (comparisonResult.restrictions.length > 0) {
+		<div class="restrictions">
 			<h6><nb-icon icon="alert-circle-outline" status="warning"></nb-icon> Important Notes</h6>
 			<ul>
-				<li *ngFor="let restriction of comparisonResult.restrictions">
+				@for (restriction of comparisonResult.restrictions; track restriction) {
+				<li>
 					<nb-icon icon="alert-triangle-outline" status="warning"></nb-icon>
 					{{ restriction }}
 				</li>
+				}
 			</ul>
 		</div>
+		}
 	</div>
 
 	<!-- Trial Information -->
-	<div class="trial-info" *ngIf="selectedPlan.trialDays && comparisonResult.actionType === PlanActionType.NEW">
+	@if (selectedPlan.trialDays && comparisonResult.actionType === PlanActionType.NEW) {
+	<div class="trial-info">
 		<nb-alert status="info" size="small">
 			<nb-icon icon="clock-outline"></nb-icon>
 			<strong>Free Trial:</strong> You'll get {{ selectedPlan.trialDays }} days free before billing begins.
 		</nb-alert>
 	</div>
+	}
 </div>

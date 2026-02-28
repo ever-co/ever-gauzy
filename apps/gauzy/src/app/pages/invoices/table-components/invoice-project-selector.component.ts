@@ -9,16 +9,18 @@ import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 @Component({
     template: `
 		<nb-select
-			fullWidth
-			[placeholder]="'INVOICES_PAGE.SELECT_PROJECT' | translate"
-			[(ngModel)]="project"
-			(selectedChange)="selectProject($event)"
-		>
-			<nb-option *ngFor="let project of projects" [value]="project">
-				{{ project.name }}
-			</nb-option>
+		  fullWidth
+		  [placeholder]="'INVOICES_PAGE.SELECT_PROJECT' | translate"
+		  [(ngModel)]="project"
+		  (selectedChange)="selectProject($event)"
+		  >
+		  @for (project of projects; track project) {
+		    <nb-option [value]="project">
+		      {{ project.name }}
+		    </nb-option>
+		  }
 		</nb-select>
-	`,
+		`,
     styles: [],
     standalone: false
 })

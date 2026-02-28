@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, FindManyOptions, FindOneOptions, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, FindManyOptions, FindOneOptions, In, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
@@ -51,36 +51,32 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
-	 * Define find conditions when retrieving data with employee by user.
+	 * Builds TypeORM find conditions to restrict data
+	 * to the currently logged-in employee.
 	 *
-	 * @returns The find conditions based on the current user's relationship with employees.
+	 * If the user has permission to change the selected employee
+	 * or filtering is skipped, no automatic restriction is applied.
 	 */
 	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T> {
-		// If skipEmployeeFilter is enabled, don't apply automatic filtering
+		// Skip automatic filtering if explicitly disabled
 		if (this.getSkipEmployeeFilter()) {
 			return {} as FindOptionsWhere<T>;
 		}
 
 		const employeeId = RequestContext.currentEmployeeId();
-		return (
-			/**
-			 * If the employee has logged in, retrieve their own data unless
-			 * they have the permission to change the selected employee.
-			 */
-			(
-				isNotEmpty(employeeId)
-					? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-					  this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
-						? {
-								employee: {
-									id: employeeId
-								},
-								employeeId: employeeId
-						  }
-						: {}
-					: {}
-			) as FindOptionsWhere<T>
-		);
+
+		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
+		const canChangeEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
+		// Restrict to current employee only
+		if (isNotEmpty(employeeId) && hasEmployeeColumn && !canChangeEmployee) {
+			return {
+				employee: { id: employeeId },
+				employeeId
+			} as unknown as FindOptionsWhere<T>;
+		}
+
+		return {} as FindOptionsWhere<T>;
 	}
 
 	/**
@@ -122,7 +118,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 							id: user.tenantId
 						},
 						tenantId: user.tenantId
-				  }
+					}
 				: {}),
 			...this.findConditionsWithEmployeeByUser()
 		} as FindOptionsWhere<T>;
@@ -154,10 +150,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				? {
 						...where,
 						...this.findConditionsWithTenantByUser(user)
-				  }
+					}
 				: {
 						...this.findConditionsWithTenantByUser(user)
-				  }
+					}
 		) as FindOptionsWhere<T>;
 	}
 
@@ -381,31 +377,51 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 
+		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
+
+		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 		return await super.create({
 			...entity,
-			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
-				? {
-						tenant: {
-							id: tenantId
-						},
-						tenantId
-				  }
-				: {}),
+			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {}),
 			/**
 			 * If employee has login & create data for self
 			 */
-			...(isNotEmpty(employeeId)
-				? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-				  this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
-					? {
-							employee: {
-								id: employeeId
-							},
-							employeeId: employeeId
-					  }
-					: {}
+			...(isNotEmpty(employeeId) && !hasPermission && hasEmployeeColumn
+				? {
+						employee: { id: employeeId },
+						employeeId: employeeId
+					}
 				: {})
 		});
+	}
+
+	/**
+	 * Creates multiple new entities in a single bulk operation with tenant scoping.
+	 * Enriches all entities with tenantId and employeeId (same logic as create()).
+	 * More efficient than calling create() in a loop.
+	 *
+	 * @param entities The array of partial entity data for creation.
+	 * @returns The array of created entities.
+	 */
+	public async createMany(entities: IPartialEntity<T>[]): Promise<T[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const employeeId = RequestContext.currentEmployeeId();
+
+		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
+		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
+		const shouldSetEmployee = isNotEmpty(employeeId) && !hasPermission && hasEmployeeColumn;
+
+		const enriched = entities.map((entity) => ({
+			...entity,
+			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {}),
+			...(shouldSetEmployee ? { employee: { id: employeeId }, employeeId } : {})
+		}));
+
+		return await super.createMany(enriched);
 	}
 
 	/**
@@ -417,17 +433,38 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	public async save(entity: IPartialEntity<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
+		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+
 		return await super.save({
 			...entity,
-			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
-				? {
-						tenant: {
-							id: tenantId
-						},
-						tenantId
-				  }
-				: {})
+			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {})
 		});
+	}
+
+	/**
+	 * Saves multiple entities in a single bulk operation with tenant scoping.
+	 * Enriches all entities with tenantId (same logic as save()).
+	 * More efficient than calling save() in a loop.
+	 *
+	 * NOTE: Any tenant or tenantId properties on provided entities will be OVERWRITTEN with
+	 * RequestContext.currentTenantId() (consistent with save() behavior). Callers passing
+	 * per-entity tenant values should be aware they will be replaced to prevent silent
+	 * data loss and ensure correct scoping. (Reference: related usage in
+	 * bulkCreateTenantsStatus/status.service where this caused issues).
+	 *
+	 * @param entities The array of partial entity data.
+	 * @returns The array of saved entities.
+	 */
+	public async saveMany(entities: IPartialEntity<T>[]): Promise<T[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+
+		const enriched = entities.map((entity) => ({
+			...entity,
+			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {})
+		}));
+
+		return await super.saveMany(enriched);
 	}
 
 	/**
@@ -476,6 +513,43 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		} catch (err) {
 			console.error('Error during delete operation:', err);
 			throw new NotFoundException(`The record was not found`, err);
+		}
+	}
+
+	/**
+	 * Deletes multiple records by their IDs with tenant scoping.
+	 * Verifies records exist within the current tenant before deletion.
+	 *
+	 * @param ids - An array of entity IDs to delete.
+	 * @returns {Promise<DeleteResult>} - Result indicating the number of affected records.
+	 */
+	public async deleteMany(ids: ID[]): Promise<DeleteResult> {
+		if (!ids.length) {
+			return { affected: 0, raw: [] } as DeleteResult;
+		}
+
+		try {
+			const tenantId = RequestContext.currentTenantId();
+
+			// Retrieve matching entities scoped to the current tenant
+			const entities = await this.find({
+				where: {
+					id: In(ids),
+					...(tenantId ? { tenantId } : {})
+				} as FindOptionsWhere<T>
+			});
+
+			// Extract IDs of entities that actually belong to this tenant
+			const tenantScopedIds = entities.map((entity) => entity.id);
+
+			if (!tenantScopedIds.length) {
+				return { affected: 0, raw: [] } as DeleteResult;
+			}
+
+			return await super.deleteMany(tenantScopedIds);
+		} catch (err) {
+			console.error('Error during deleteMany operation:', err);
+			throw err;
 		}
 	}
 

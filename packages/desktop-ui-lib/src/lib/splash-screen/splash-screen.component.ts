@@ -4,13 +4,16 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 import { GAUZY_ENV } from '../constants';
 import { ElectronService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
+import { NbLayoutModule, NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
+import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ngx-splash-screen',
     templateUrl: './splash-screen.component.html',
     styleUrls: ['./splash-screen.component.scss'],
-    standalone: false
+    imports: [NbLayoutModule, NbCardModule, NbButtonModule, SpinnerButtonDirective, NbIconModule, TranslatePipe]
 })
 export class SplashScreenComponent implements OnInit {
 	private _application = {

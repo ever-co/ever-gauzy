@@ -1,25 +1,27 @@
 <div class="container">
-	<input
-		#autoInput
-		nbInput
-		type="text"
-		[formControl]="searchControl"
-		placeholder="Add candidate"
-		[nbAutocomplete]="auto"
-	/>
+  <input
+    #autoInput
+    nbInput
+    type="text"
+    [formControl]="searchControl"
+    placeholder="Add candidate"
+    [nbAutocomplete]="auto"
+    />
 
-	<nb-autocomplete #auto (selectedChange)="onCandidateSelected($event)">
-		<nb-option *ngFor="let candidate of filteredCandidates$ | async" [value]="candidate.id">
-			<ngx-avatar
-				size="sm"
-				[src]="candidate.user?.imageUrl"
-				[name]="candidate.user?.name"
-				[isOption]="true"
-			></ngx-avatar>
-		</nb-option>
-	</nb-autocomplete>
+    <nb-autocomplete #auto (selectedChange)="onCandidateSelected($event)">
+      @for (candidate of filteredCandidates$ | async; track candidate) {
+        <nb-option [value]="candidate.id">
+          <ngx-avatar
+            size="sm"
+            [src]="candidate.user?.imageUrl"
+            [name]="candidate.user?.name"
+            [isOption]="true"
+          ></ngx-avatar>
+        </nb-option>
+      }
+    </nb-autocomplete>
 
-	<nb-checkbox [(ngModel)]="showRejected" class="checkbox" (ngModelChange)="toggleShowRejected()">
-		{{ 'CANDIDATES_PAGE.SHOW_REJECTED' | translate }}
-	</nb-checkbox>
-</div>
+    <nb-checkbox [(ngModel)]="showRejected" class="checkbox" (ngModelChange)="toggleShowRejected()">
+      {{ 'CANDIDATES_PAGE.SHOW_REJECTED' | translate }}
+    </nb-checkbox>
+  </div>

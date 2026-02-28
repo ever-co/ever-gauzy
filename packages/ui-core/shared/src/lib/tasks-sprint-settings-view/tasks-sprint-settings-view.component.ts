@@ -1,12 +1,10 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 
-import * as moment from 'moment';
+import { IOrganization, IOrganizationProject, IOrganizationSprint } from '@gauzy/contracts';
+import { SprintStoreService, Store } from '@gauzy/ui-core/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { IOrganizationSprint, IOrganizationProject, IOrganization } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { SprintStoreService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/core';
 import { ItemActionType } from '../editable-grid/gauzy-editable-grid.component';
 
 @UntilDestroy()
@@ -17,8 +15,9 @@ import { ItemActionType } from '../editable-grid/gauzy-editable-grid.component';
     standalone: false
 })
 export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
-	@Input() project: IOrganizationProject;
-	sprints$: Observable<IOrganizationSprint[]> = this.store.sprints$.pipe(
+  @Input() project: IOrganizationProject;
+
+  sprints$: Observable<IOrganizationSprint[]> = this.store.sprints$.pipe(
 		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] =>
 			sprints.filter((sprint: IOrganizationSprint) => sprint.projectId === this.project?.id)
 		),
@@ -26,7 +25,6 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 			return sprints.sort((sprint, nextSprint) => (sprint.startDate < nextSprint.startDate ? -1 : 1));
 		})
 	);
-	moment: any = moment;
 	organization: IOrganization;
 
 	constructor(private store: SprintStoreService, private storeService: Store) {}

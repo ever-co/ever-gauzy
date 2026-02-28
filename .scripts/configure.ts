@@ -272,7 +272,7 @@ if (!isDocker) {
 		POSTHOG_KEY: 'DOCKER_POSTHOG_KEY',
 		POSTHOG_HOST: 'DOCKER_POSTHOG_HOST',
 		// @ts-ignore
-		POSTHOG_ENABLED: 'DOCKER_POSTHOG_ENABLED' == 'true',
+		POSTHOG_ENABLED: String('DOCKER_POSTHOG_ENABLED').toLowerCase() === 'true',
 		// @ts-ignore
 		POSTHOG_FLUSH_INTERVAL: parseInt('DOCKER_POSTHOG_FLUSH_INTERVAL'),
 
@@ -284,7 +284,7 @@ if (!isDocker) {
 		GOOGLE_MAPS_API_KEY: 'DOCKER_GOOGLE_MAPS_API_KEY',
 
 		// @ts-ignore
-		GOOGLE_PLACE_AUTOCOMPLETE: 'DOCKER_GOOGLE_PLACE_AUTOCOMPLETE' == 'true',
+		GOOGLE_PLACE_AUTOCOMPLETE: String('DOCKER_GOOGLE_PLACE_AUTOCOMPLETE').toLowerCase() === 'true',
 
 		DEFAULT_LATITUDE: ${env.DEFAULT_LATITUDE},
 		DEFAULT_LONGITUDE: ${env.DEFAULT_LONGITUDE},
@@ -292,7 +292,7 @@ if (!isDocker) {
 		DEFAULT_COUNTRY: 'DOCKER_DEFAULT_COUNTRY',
 
 		// @ts-ignore
-		DEMO: 'DOCKER_DEMO' == 'true',
+		DEMO: String('DOCKER_DEMO').toLowerCase() === 'true',
 
 		DEMO_SUPER_ADMIN_EMAIL: '${env.DEMO_SUPER_ADMIN_EMAIL}',
 		DEMO_SUPER_ADMIN_PASSWORD: '${env.DEMO_SUPER_ADMIN_PASSWORD}',
@@ -375,11 +375,16 @@ if (!isProd) {
 }
 
 // we always want first to remove old generated files (one of them is not needed for current build)
+// Use path relative to script location to ensure correct path regardless of working directory
+const scriptDir = __dirname;
+const workspaceRoot = path.resolve(scriptDir, '../');
+const environmentsFolder = path.resolve(workspaceRoot, 'packages/ui-config/src/lib/environments');
+
 try {
-	unlinkSync(`./packages/ui-config/src/lib/environments/environment.ts`);
+	unlinkSync(path.join(environmentsFolder, 'environment.ts'));
 } catch {}
 try {
-	unlinkSync(`./packages/ui-config/src/lib/environments/environment.prod.ts`);
+	unlinkSync(path.join(environmentsFolder, 'environment.prod.ts'));
 } catch {}
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
@@ -388,9 +393,6 @@ const envFileDestOther: string = !isProd ? 'environment.prod.ts' : 'environment.
 console.log(`Generating Angular environment file: ${envFileDest}`);
 console.log(`Generating Second Angular environment file: ${envFileDestOther}`);
 
-// Define the folder paths
-const environmentsFolder = './packages/ui-config/src/lib/environments';
-
 // Ensure the environments folder exists
 if (!existsSync(environmentsFolder)) {
 	mkdirSync(environmentsFolder, { recursive: true });
@@ -398,8 +400,8 @@ if (!existsSync(environmentsFolder)) {
 }
 
 // Paths to environment files
-const envFilePath = path.resolve(`${environmentsFolder}/${envFileDest}`);
-const envFileOtherPath = path.resolve(`${environmentsFolder}/${envFileDestOther}`);
+const envFilePath = path.join(environmentsFolder, envFileDest);
+const envFileOtherPath = path.join(environmentsFolder, envFileDestOther);
 
 writeFile(envFilePath, envFileContent, (error) => {
 	if (error) {
@@ -411,13 +413,15 @@ writeFile(envFilePath, envFileContent, (error) => {
 	}
 });
 
-let envFileDestOtherContent = `export const environment = { production: ${!isProd} }`;
+// Generate full content for the other file, but with the production flag toggled
+// This ensures TypeScript sees the complete Environment interface in both files
+let envFileContentOther = envFileContent.replace(`production:  ${isProd},`, `production:  ${!isProd},`);
 
-writeFile(envFileOtherPath, envFileDestOtherContent, (error) => {
+writeFile(envFileOtherPath, envFileContentOther, (error) => {
 	if (error) {
 		console.error(`Error writing environment file: ${error}`);
 	} else {
 		const envFileOtherPath = path.resolve(`./packages/ui-config/src/lib/environments/${envFileDestOther}`);
-		console.log(`Generated Second Empty Angular environment file: ${envFileOtherPath}`);
+		console.log(`Generated Second Angular environment file: ${envFileOtherPath}`);
 	}
 });

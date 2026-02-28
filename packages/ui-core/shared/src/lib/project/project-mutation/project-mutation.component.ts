@@ -3,7 +3,7 @@ import { AbstractControl, UntypedFormBuilder, FormControl, UntypedFormGroup, Val
 import { EMPTY, firstValueFrom, of, switchMap } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { CKEditor4 } from 'ckeditor4-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';

@@ -1,40 +1,43 @@
-<nb-accordion
-	*ngxPermissionsOnly="item?.data?.permissionKeys"
-	[ngClass]="state ? item?.class : item?.class + ' closed'"
->
-	<nb-accordion-item [collapsed]="collapse" (collapsedChange)="onCollapse($event)" [ngClass]="{ opened: selected }">
+<nb-accordion *ngxPermissionsOnly="item?.data?.permissionKeys" [class]="item?.class" [class.closed]="!state">
+	<nb-accordion-item [collapsed]="collapse" (collapsedChange)="onCollapse($event)" [class.opened]="selected">
+		@if (!state) {
 		<nb-accordion-item-header
 			[gaTooltip]="item?.title"
 			[icon]="item?.icon"
-			*ngIf="!state"
-			[ngClass]="onCollapse ? 'collapsed' : ''"
+			[class.collapsed]="onCollapse"
 			(click)="redirectTo()"
 		>
 			<i [class]="item?.icon"></i>
-			<span *ngIf="state">
+			@if (state) {
+			<span>
 				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
 					{{ item?.title }}
 				</a>
 			</span>
+			}
 		</nb-accordion-item-header>
+		} @if (state) {
 		<nb-accordion-item-header
 			[nbTooltip]="item?.title"
 			nbTooltipPlacement="right"
-			*ngIf="state"
-			[ngClass]="onCollapse ? 'collapsed' : ''"
+			[class.collapsed]="onCollapse"
 			(click)="redirectTo()"
 		>
 			<i [class]="item?.icon"></i>
-			<span *ngIf="state">
+			@if (state) {
+			<span>
 				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
 					{{ item?.title }}
 				</a>
 			</span>
+			}
 		</nb-accordion-item-header>
-		<nb-accordion-item-body [ngClass]="{ 'item-collapsed': !state }" *ngIf="item?.children?.length > 0">
-			<div *ngFor="let subItem of item.children; trackBy: subItem?.title">
+		} @if (item?.children?.length > 0) {
+		<nb-accordion-item-body [class.item-collapsed]="!state">
+			@for (subItem of item.children; track subItem?.title) {
+			<div>
+				@if (!item?.hidden) {
 				<ga-children-menu-item
-					*ngIf="!item?.hidden"
 					[id]="subItem?.id"
 					[item]="subItem"
 					[parent]="item"
@@ -42,7 +45,10 @@
 					[selected]="subItem === selectedChildren && selected"
 					(focusItemChange)="focusOn($event)"
 				></ga-children-menu-item>
+				}
 			</div>
+			}
 		</nb-accordion-item-body>
+		}
 	</nb-accordion-item>
 </nb-accordion>

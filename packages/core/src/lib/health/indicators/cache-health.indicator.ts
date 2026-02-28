@@ -1,13 +1,30 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
+import { HealthIndicatorResult } from '@nestjs/terminus';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
-export class CacheHealthIndicator extends HealthIndicator {
-	constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
-		super();
+export class CacheHealthIndicator {
+	constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+
+	/**
+	 * @param {string} key - The service key to check (e.g., 'cache').
+	 * @param {boolean} isHealthy - Whether the service is healthy.
+	 * @param {Record<string, any>} data - Additional data to include in the result.
+	 * @returns {HealthIndicatorResult} - The health check result.
+	 */
+	private getStatus(
+		key: string,
+		isHealthy: boolean,
+		data: Record<string, any> = {}
+	): HealthIndicatorResult {
+		return {
+			[key]: {
+				status: isHealthy ? 'up' : 'down',
+				...data
+			}
+		};
 	}
 
 	/**
@@ -31,7 +48,7 @@ export class CacheHealthIndicator extends HealthIndicator {
 	 */
 	async isHealthy(key: string): Promise<HealthIndicatorResult> {
 		if (key !== 'cache') {
-			throw new HealthCheckError('Invalid key for health check', { key });
+			throw new Error(`Invalid key for cache health check: ${key}`);
 		}
 
 		const randomKey = `health-check-${uuid()}`;
@@ -56,6 +73,6 @@ export class CacheHealthIndicator extends HealthIndicator {
 		}
 
 		// Throw an error if the health check fails
-		throw new HealthCheckError('Cache health check failed', result);
+		throw new Error(`Cache health check failed: ${JSON.stringify(result)}`);
 	}
 }

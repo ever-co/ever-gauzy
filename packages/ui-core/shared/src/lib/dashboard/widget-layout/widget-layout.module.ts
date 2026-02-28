@@ -7,6 +7,6 @@ import { WidgetModule } from '../widget/widget.module';
 @NgModule({
 	declarations: [WidgetLayoutComponent],
 	imports: [CommonModule, WidgetModule, DragDropModule],
-	exports: [WidgetLayoutComponent]
+	exports: [WidgetLayoutComponent, WidgetModule]
 })
 export class WidgetLayoutModule {}

@@ -2,7 +2,7 @@ import { Cascade, EntityName, ManyToManyOptions } from '@mikro-orm/core';
 import { RelationOptions as TypeOrmRelationOptions } from 'typeorm';
 import { omit } from 'underscore';
 import { deepClone, isObject } from '@gauzy/utils';
-import { MultiORMEnum } from '../../../../core/utils';
+import { MultiORMEnum, getORMType } from '../../../../core/utils';
 import { TypeOrmManyToMany } from './type-orm';
 import { MikroOrmManyToMany } from './mikro-orm';
 import { MikroORMInverseSide, TypeORMInverseSide, TypeORMRelationOptions, TypeORMTarget } from './shared-types';
@@ -56,21 +56,28 @@ export function MultiORMManyToMany<T>(
 		// If options are not provided, initialize an empty object
 		if (!options) options = {} as RelationOptions<T>;
 
-		// Use TypeORM decorator for Many-to-Many
-		TypeOrmManyToMany(
-			typeFunctionOrTarget as TypeORMTarget<T>,
-			inverseSideProperty as TypeORMInverseSide<T>,
-			options as TypeORMRelationOptions
-		)(target, propertyKey);
+		// Determine which ORM is in use
+		const ormType = getORMType();
 
-		// Use MikroORM decorator for Many-to-Many
-		MikroOrmManyToMany(
-			mapManyToManyArgsForMikroORM({
-				typeFunctionOrTarget,
-				inverseSide: inverseSideProperty as InverseSide<T>,
-				options
-			})
-		)(target, propertyKey);
+		// Apply TypeORM decorator when using TypeORM
+		if (ormType === MultiORMEnum.TypeORM) {
+			TypeOrmManyToMany(
+				typeFunctionOrTarget as TypeORMTarget<T>,
+				inverseSideProperty as TypeORMInverseSide<T>,
+				options as TypeORMRelationOptions
+			)(target, propertyKey);
+		}
+
+		// Apply MikroORM decorator when using MikroORM
+		if (ormType === MultiORMEnum.MikroORM) {
+			MikroOrmManyToMany(
+				mapManyToManyArgsForMikroORM({
+					typeFunctionOrTarget,
+					inverseSide: inverseSideProperty as InverseSide<T>,
+					options
+				})
+			)(target, propertyKey);
+		}
 	};
 }
 

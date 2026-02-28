@@ -3,10 +3,7 @@
 		<h5>
 			<ngx-back-navigation></ngx-back-navigation>
 			{{
-				(inventoryItem
-					? 'INVENTORY_PAGE.EDIT_INVENTORY_ITEM'
-					: 'INVENTORY_PAGE.ADD_INVENTORY_ITEM'
-				) | translate
+				(inventoryItem ? 'INVENTORY_PAGE.EDIT_INVENTORY_ITEM' : 'INVENTORY_PAGE.ADD_INVENTORY_ITEM') | translate
 			}}
 		</h5>
 	</nb-card-header>
@@ -18,57 +15,27 @@
 						<ngx-product-gallery></ngx-product-gallery>
 					</div>
 				</div>
-				<div class="d-flex align-self-end">
-					<nb-card-footer>
-						<button
-							(click)="onCancel()"
-							status="danger"
-							outline
-							nbButton
-						>
-							{{ 'BUTTONS.CANCEL' | translate }}
-						</button>
-						<button
-							status="success"
-							[disabled]="form && form.invalid"
-							nbButton
-							(click)="onSaveRequest()"
-						>
-							{{ 'BUTTONS.SAVE' | translate }}
-						</button>
-					</nb-card-footer>
-				</div>
+				<div class="d-flex align-self-end"></div>
 			</div>
 			<div class="col-md-9">
 				<nb-tabset #inventoryTabset (changeTab)="onChangeTab($event)">
-					<nb-tab
-						[tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate"
-						#mainTab
-						[active]="isActive(mainTab)"
-					>
-						<div class="">
-							<form [formGroup]="form" *ngIf="form" class="mb-4">
+					<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.MAIN' | translate" #mainTab [active]="isActive(mainTab)">
+						<div>
+							@if (form) {
+							<form [formGroup]="form" class="mb-4">
 								<div class="form-group">
 									<div class="row mb-3">
 										<div class="col-sm-7">
 											<label class="label" for="lang">
-												{{
-													'INVENTORY_PAGE.LANGUAGE'
-														| translate
-												}}
+												{{ 'INVENTORY_PAGE.LANGUAGE' | translate }}
 											</label>
 											<ngx-language-selector
 												class="d-block"
-												[placeholder]="
-													'INVENTORY_PAGE.LANGUAGE'
-														| translate
-												"
+												[placeholder]="'INVENTORY_PAGE.LANGUAGE' | translate"
 												size="medium"
 												template="ng-select"
 												formControlName="languageCode"
-												(selectedLanguageEvent)="
-													onLangChange($event)
-												"
+												(selectedLanguageEvent)="onLangChange($event)"
 											>
 											</ngx-language-selector>
 										</div>
@@ -76,10 +43,7 @@
 									<div class="row mb-3">
 										<div class="col-sm-7">
 											<label class="label" for="name">
-												{{
-													'INVENTORY_PAGE.NAME'
-														| translate
-												}}
+												{{ 'INVENTORY_PAGE.NAME' | translate }}
 											</label>
 											<input
 												fullWidth
@@ -87,49 +51,24 @@
 												type="text"
 												nbInput
 												formControlName="name"
-												[placeholder]="
-													'INVENTORY_PAGE.NAME'
-														| translate
+												[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+												[class.status-danger]="
+													form.controls['name'].invalid && form.controls['name'].touched
 												"
-												[ngClass]="{
-													'status-danger':
-														form.controls['name']
-															.invalid &&
-														form.controls['name']
-															.touched
-												}"
 											/>
-											<div
-												*ngIf="
-													form.controls['name']
-														.errors &&
-													form.controls['name']
-														.touched
-												"
-											>
-												<div
-													class="text-danger"
-													*ngIf="
-														form.controls['name']
-															.errors.required
-													"
-												>
-													{{
-														'VALIDATION.FIELD_REQUIRED'
-															| translate
-													}}
+											@if ( form.controls['name'].errors && form.controls['name'].touched ) {
+											<div>
+												@if ( form.controls['name'].errors.required ) {
+												<div class="text-danger">
+													{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 												</div>
+												}
 											</div>
+											}
 										</div>
 										<div class="col-sm-5">
-											<label
-												class="label"
-												for="codeInput"
-											>
-												{{
-													'INVENTORY_PAGE.CODE'
-														| translate
-												}}
+											<label class="label" for="codeInput">
+												{{ 'INVENTORY_PAGE.CODE' | translate }}
 											</label>
 											<input
 												fullWidth
@@ -137,39 +76,20 @@
 												type="text"
 												nbInput
 												formControlName="code"
-												[placeholder]="
-													'INVENTORY_PAGE.CODE'
-														| translate
+												[placeholder]="'INVENTORY_PAGE.CODE' | translate"
+												[class.status-danger]="
+													form.controls['code'].invalid && form.controls['code'].touched
 												"
-												[ngClass]="{
-													'status-danger':
-														form.controls['code']
-															.invalid &&
-														form.controls['code']
-															.touched
-												}"
 											/>
-											<div
-												*ngIf="
-													form.controls['code']
-														.errors &&
-													form.controls['code']
-														.touched
-												"
-											>
-												<div
-													class="text-danger"
-													*ngIf="
-														form.controls['code']
-															.errors.required
-													"
-												>
-													{{
-														'VALIDATION.FIELD_REQUIRED'
-															| translate
-													}}
+											@if ( form.controls['code'].errors && form.controls['code'].touched ) {
+											<div>
+												@if ( form.controls['code'].errors.required ) {
+												<div class="text-danger">
+													{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 												</div>
+												}
 											</div>
+											}
 										</div>
 									</div>
 									<div class="row mb-3">
@@ -194,51 +114,33 @@
 									</div>
 									<div class="row mb-3">
 										<div class="col-sm-12">
-											<label
-												class="label"
-												for="description"
-											>
-												{{
-													'INVENTORY_PAGE.DESCRIPTION'
-														| translate
-												}}
+											<label class="label" for="description">
+												{{ 'INVENTORY_PAGE.DESCRIPTION' | translate }}
 											</label>
 											<textarea
 												formControlName="description"
 												nbInput
 												fullWidth
 												id="description"
-												[placeholder]="
-													'INVENTORY_PAGE.DESCRIPTION'
-														| translate
+												[placeholder]="'INVENTORY_PAGE.DESCRIPTION' | translate"
+												[class.status-danger]="
+													form.controls['description'].invalid &&
+													form.controls['description'].touched
 												"
-												[ngClass]="{
-													'status-danger':
-														form.controls[
-															'description'
-														].invalid &&
-														form.controls[
-															'description'
-														].touched
-												}"
 											>
 											</textarea>
 										</div>
 									</div>
 									<div class="row">
 										<div class="col-sm-12">
-											<nb-checkbox
-												formControlName="enabled"
-											>
-												<span>{{
-													'INVENTORY_PAGE.ENABLED'
-														| translate
-												}}</span>
+											<nb-checkbox formControlName="enabled">
+												<span>{{ 'INVENTORY_PAGE.ENABLED' | translate }}</span>
 											</nb-checkbox>
 										</div>
 									</div>
 								</div>
 							</form>
+							}
 						</div>
 					</nb-tab>
 					<nb-tab
@@ -252,9 +154,7 @@
 							<div class="col-sm-12">
 								<ga-tags-color-input
 									[selectedTags]="tags"
-									(selectedTagsEvent)="
-										selectedTagsEvent($event)
-									"
+									(selectedTagsEvent)="selectedTagsEvent($event)"
 									[isOrgLevel]="true"
 								>
 								</ga-tags-color-input>
@@ -273,4 +173,12 @@
 			</div>
 		</div>
 	</nb-card-body>
+	<nb-card-footer>
+		<button (click)="onCancel()" status="danger" outline nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button status="success" [disabled]="form && form.invalid" nbButton (click)="onSaveRequest()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
 </nb-card>

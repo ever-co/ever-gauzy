@@ -1,24 +1,19 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WeeklyComponent } from './weekly.component';
-
 describe('WeeklyComponent', () => {
 	let component: WeeklyComponent;
 	let fixture: ComponentFixture<WeeklyComponent>;
-
-	beforeEach(async(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			declarations: [WeeklyComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
-	}));
-
+	});
 	beforeEach(() => {
 		fixture = TestBed.createComponent(WeeklyComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
-
 	it('should create', () => {
 		expect(component).toBeTruthy();
 	});

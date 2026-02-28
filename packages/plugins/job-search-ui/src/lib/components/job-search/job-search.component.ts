@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Data, Router } from '@angular/router';
@@ -51,10 +51,10 @@ import { JobTitleDescriptionDetailsComponent } from '../job-title-description-de
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-job-search',
-    templateUrl: './job-search.component.html',
-    styleUrls: ['./job-search.component.scss'],
-    standalone: false
+	selector: 'ga-job-search',
+	templateUrl: './job-search.component.html',
+	styleUrls: ['./job-search.component.scss'],
+	standalone: false
 })
 export class JobSearchComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	loading: boolean = false;
@@ -82,6 +82,11 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 	public organization: IOrganization;
 	public selectedEmployee: ISelectedEmployee;
 	public selectedDateRange: IDateRangePicker;
+
+	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	@ViewChild('actionButtons', { static: true }) readonly actionButtons!: any;
+	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
+	@ViewChild('visibleButton', { static: true }) readonly visibleButton!: any;
 
 	/*
 	 * Search Tab Form
@@ -667,7 +672,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 									};
 								}
 							}
-					  }),
+						}),
 				jobDetails: {
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
 					width: '85%',
@@ -754,7 +759,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 									field: 'tenantId',
 									search: tenantId
 								}
-						  ]
+							]
 						: []),
 					...(isNotEmpty(this.selectedEmployee?.id)
 						? [
@@ -762,7 +767,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 									field: 'employeeIds',
 									search: [this.selectedEmployee?.id]
 								}
-						  ]
+							]
 						: []),
 					...(startDate && endDate
 						? [
@@ -775,7 +780,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 										}
 									}
 								}
-						  ]
+							]
 						: []),
 					...(title
 						? [
@@ -783,7 +788,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 									field: 'title',
 									search: title
 								}
-						  ]
+							]
 						: []),
 					...(jobSource
 						? [
@@ -791,7 +796,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 									field: 'jobSource',
 									search: jobSource
 								}
-						  ]
+							]
 						: []),
 					...(jobType
 						? [
@@ -799,7 +804,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 									field: 'jobType',
 									search: jobType
 								}
-						  ]
+							]
 						: []),
 					...(jobStatus
 						? [
@@ -807,7 +812,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 									field: 'jobStatus',
 									search: jobStatus
 								}
-						  ]
+							]
 						: []),
 					...(budget
 						? [
@@ -815,7 +820,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 									field: 'budget',
 									search: budget
 								}
-						  ]
+							]
 						: []),
 					// Get only fresh jobs (not applied yet)
 					...(true
@@ -824,7 +829,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 									field: 'isApplied',
 									search: 'false'
 								}
-						  ]
+							]
 						: [])
 				],
 				false

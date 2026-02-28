@@ -629,18 +629,40 @@ export class TimerService {
 			stoppedAt: Not(IsNull()) // Logs should have a non-null `stoppedAt`
 		};
 
-		// Determine whether to fetch a single log or multiple logs
-		return fetchAll
-			? await this.typeOrmTimeLogRepository.find({
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const findOptions = parseTypeORMFindToMikroOrm<TimeLog>({
 					where: whereClause,
-					order: { startedAt: 'DESC', createdAt: 'DESC' }
-			  })
-			: await this.typeOrmTimeLogRepository.findOne({
-					where: whereClause,
-					order: { startedAt: 'DESC', createdAt: 'DESC' },
-					// Determine relations if includeTimeSlots is true
-					...(includeTimeSlots && { relations: { timeSlots: true } })
-			  });
+					order: { startedAt: 'DESC', createdAt: 'DESC' } as any,
+					...(includeTimeSlots && !fetchAll ? { relations: { timeSlots: true } } : {})
+				});
+
+				if (fetchAll) {
+					const items = await this.mikroOrmTimeLogRepository.findAll(findOptions);
+					return items.map((entity: TimeLog) => wrapSerialize(entity)) as TimeLog[];
+				} else {
+					const item = await this.mikroOrmTimeLogRepository.findOne(
+						findOptions.where,
+						findOptions.mikroOptions
+					);
+					return item ? (wrapSerialize(item) as TimeLog) : null;
+				}
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				// Determine whether to fetch a single log or multiple logs
+				return fetchAll
+					? await this.typeOrmTimeLogRepository.find({
+							where: whereClause,
+							order: { startedAt: 'DESC', createdAt: 'DESC' }
+					  })
+					: await this.typeOrmTimeLogRepository.findOne({
+							where: whereClause,
+							order: { startedAt: 'DESC', createdAt: 'DESC' },
+							// Determine relations if includeTimeSlots is true
+							...(includeTimeSlots && { relations: { timeSlots: true } })
+					  });
+		}
 	}
 
 	/**

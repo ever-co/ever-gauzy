@@ -8,8 +8,8 @@ import { logger as log, store } from '@gauzy/desktop-core';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
-import * as path from 'path';
-import * as Url from 'url';
+import * as path from 'node:path';
+import * as Url from 'node:url';
 import { initSentry } from './sentry';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
@@ -30,6 +30,7 @@ remoteMain.initialize();
 import {
 	AppError,
 	AppMenu,
+	AppWindowManager,
 	DesktopDialog,
 	DesktopThemeListener,
 	DesktopUpdater,
@@ -44,23 +45,21 @@ import {
 	ProviderFactory,
 	removeMainListener,
 	removeTimerListener,
+	setupAkitaStorageHandler,
 	TranslateLoader,
 	TranslateService,
-	TrayIcon,
+	TrayIconFactory,
 	UIError
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
-	createImageViewerWindow,
 	createSettingsWindow,
-	createSetupWindow,
 	createTimeTrackerWindow,
-	createUpdaterWindow,
-	PluginMarketplaceWindow,
 	ScreenCaptureNotification,
-	SplashScreen,
-	timeTrackerPage
+	setLaunchPathAndLoad,
+	SplashScreen
 } from '@gauzy/desktop-window';
+import { DesktopSetupConfig } from '@gauzy/contracts';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 
@@ -94,7 +93,7 @@ ipcMain.handle('PREFERRED_THEME', () => {
 	const setting = LocalStore.getStore('appSetting');
 	return !setting ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : setting.theme;
 });
-
+let appWindowManager: AppWindowManager;
 let notificationWindow = null;
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
@@ -225,7 +224,23 @@ eventErrorManager.onShowError(async (message) => {
 	}
 });
 
-async function startServer(value, restart = false) {
+function initializeAppManager() {
+	appWindowManager = AppWindowManager.getInstance();
+	appWindowManager.preloadPath = pathWindow.preloadPath;
+}
+
+function setGlobalVariable(configs: {
+	isLocalServer?: boolean;
+	serverUrl?: string;
+	port?: string;
+}) {
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(configs || {}),
+		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
+	};
+}
+
+function updateApplicationConfig(setupConfig: DesktopSetupConfig) {
 	try {
 		const project = LocalStore.getStore('project') || {};
 		// Ensure that project.aw exists before spreading it
@@ -236,7 +251,7 @@ async function startServer(value, restart = false) {
 		// Update the aw object
 		const aw = {
 			...project.aw,
-			host: value.awHost
+			host: setupConfig.awHost
 		};
 
 		// Update the project
@@ -244,26 +259,40 @@ async function startServer(value, restart = false) {
 
 		// Update the setting
 		LocalStore.updateConfigSetting({
-			...value,
+			...setupConfig,
+			port: setupConfig.port ? Number(setupConfig.port) : undefined,
 			isSetup: true
 		});
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
 	}
+}
 
+async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
+	updateApplicationConfig(setupConfig);
 	/* create main window */
-	if (value.serverConfigConnected || !value.isLocalServer) {
-		setupWindow.hide();
+	if (setupConfig.serverConfigConnected || !setupConfig.isLocalServer) {
+		setupWindow?.close();
 		try {
+			/* ping server before launch the ui */
+			ipcMain.removeAllListeners('app_is_init');
+			ipcMain.on('app_is_init', () => {
+				if (!isAlreadyRun && setupConfig && !restart) {
+					onWaitingServer = true;
+					timeTrackerWindow.webContents.send('server_ping', {
+						host: getApiBaseUrl(setupConfig)
+					});
+				}
+			});
 			if (!timeTrackerWindow) {
 				timeTrackerWindow = await createTimeTrackerWindow(
 					timeTrackerWindow,
 					pathWindow.timeTrackerUi,
-					pathWindow.preloadPath
+					pathWindow.preloadPath,
+					false
 				);
-			} else {
-				await timeTrackerWindow.loadURL(timeTrackerPage(pathWindow.timeTrackerUi));
 			}
+			await setLaunchPathAndLoad(timeTrackerWindow, pathWindow.timeTrackerUi, '/time-tracker');
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);
 			await notificationWindow.loadURL();
 		} catch (error) {
@@ -273,9 +302,8 @@ async function startServer(value, restart = false) {
 		gauzyWindow.setVisibleOnAllWorkspaces(false);
 		gauzyWindow.show();
 		splashScreen.close();
-		// timeTrackerWindow.webContents.toggleDevTools();
 	}
-	const auth = store.get('auth');
+
 	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
 
 	if (tray) {
@@ -283,89 +311,38 @@ async function startServer(value, restart = false) {
 	}
 	console.log('dir name:', __dirname);
 	console.log('app path', app.getAppPath());
-	tray = new TrayIcon(
-		setupWindow,
-		knex,
-		timeTrackerWindow,
-		auth,
-		settingsWindow,
-		{ ...environment },
-		pathWindow,
-		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-		gauzyWindow,
-		alwaysOn
-	);
-
+	// Create the tray icon and menu
+	tray = TrayIconFactory.create(environment, pathWindow, path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
+	// Language change
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
-
-		if (tray) {
-			tray.destroy();
-		}
-		tray = new TrayIcon(
-			setupWindow,
-			knex,
-			timeTrackerWindow,
-			auth,
-			settingsWindow,
-			{ ...environment },
-			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-			gauzyWindow,
-			alwaysOn
-		);
-	});
-
-	/* ping server before launch the ui */
-	ipcMain.on('app_is_init', () => {
-		if (!isAlreadyRun && value && !restart) {
-			onWaitingServer = true;
-			timeTrackerWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value)
-			});
-		}
 	});
 
 	return true;
 }
 
-const getApiBaseUrl = (configs) => {
+const getApiBaseUrl = (configs: {
+	serverUrl?: string;
+	port?: string;
+}) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
 		return configs.port ? `http://localhost:${configs.port}` : `http://localhost:${environment.API_DEFAULT_PORT}`;
 	}
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-// Added 5000 ms to fix the black background issue while using transparent window.
-// More details at https://github.com/electron/electron/issues/15947
-
-app.on('ready', async () => {
-	const configs: any = store.get('configs');
-	const settings: any = store.get('appSetting');
-
-	if (!settings) {
-		launchAtStartup(true, false);
-		LocalStore.setAllDefaultConfig();
-	}
-
-	// Set up theme listener for desktop windows
-	new DesktopThemeListener();
-	// default global
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(configs || {}),
-		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
-	};
+async function launchSplashScreen() {
 	try {
 		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
 		await splashScreen.loadURL();
 		splashScreen.show();
 	} catch (error) {
 		console.error(error);
+		throw new AppError('MAINLOADSPLASH', error);
 	}
+}
 
+async function setupDatabase() {
 	if (['sqlite', 'better-sqlite', 'better-sqlite3'].includes(provider.dialect)) {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`);
@@ -380,6 +357,9 @@ app.on('ready', async () => {
 	} catch (error) {
 		throw new AppError('MAINDB', error);
 	}
+}
+
+function initialAppMenu() {
 	const menu: MenuItemConstructorOptions[] = [
 		{
 			label: app.getName(),
@@ -398,43 +378,73 @@ app.on('ready', async () => {
 		}
 	];
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
+}
+
+async function launchWidget(settings: any) {
+	const auth = store.get('auth');
+
+	if (settings?.alwaysOn && auth?.token && !auth?.isLogout) {
+		await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
+		appWindowManager.alwaysOnWindow.show();
+	}
+}
+
+async function setupUpdater() {
+	updater.settingWindow = appWindowManager.settingWindow;
+	updater.gauzyWindow = gauzyWindow;
+	appWindowManager.updater = updater;
+	try {
+		await updater.checkUpdate();
+	} catch (error) {
+		throw new UIError('400', error, 'MAINWININIT');
+	}
+}
+
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+// Added 5000 ms to fix the black background issue while using transparent window.
+// More details at https://github.com/electron/electron/issues/15947
+
+app.on('ready', async () => {
+	initializeAppManager();
+	const configs: any = store.get('configs');
+	const settings: any = store.get('appSetting');
+
+	if (!settings) {
+		launchAtStartup(true, false);
+		LocalStore.setAllDefaultConfig();
+	}
+
+	// Setup Akita storage handler for IPC communication
+	setupAkitaStorageHandler();
+	// Set up theme listener for desktop windows
+	new DesktopThemeListener();
+	// default global
+	setGlobalVariable(configs || {});
+	await launchSplashScreen();
+	await setupDatabase();
+	initialAppMenu();
 	try {
 		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi,
-			pathWindow.preloadPath
+			pathWindow.preloadPath,
+			false
 		);
-		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
-		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
-		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
-		const marketplace = new PluginMarketplaceWindow(pathWindow.timeTrackerUi);
-		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
-		await alwaysOn.loadURL();
-		await marketplace.loadURL();
 
+		await launchWidget(settings);
 		if (configs && configs.isSetup) {
-			global.variableGlobal = {
-				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer
-			};
-			setupWindow = await createSetupWindow(setupWindow, true, pathWindow.timeTrackerUi);
 			await startServer(configs);
 		} else {
-			setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
+			setupWindow = await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
 			setupWindow.show();
 			splashScreen.close();
 		}
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
-
-	updater.settingWindow = settingsWindow;
-	updater.gauzyWindow = gauzyWindow;
-	try {
-		await updater.checkUpdate();
-	} catch (error) {
-		throw new UIError('400', error, 'MAINWININIT');
-	}
+	await setupUpdater();
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 });
@@ -493,21 +503,18 @@ ipcMain.on('restore', () => {
 });
 
 ipcMain.on('restart_app', async (event, arg) => {
+	initializeAppManager();
 	LocalStore.updateConfigSetting(arg);
 	const configs = LocalStore.getStore('configs');
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(configs),
-		IS_INTEGRATED_DESKTOP: configs.isLocalServer
-	};
+	setGlobalVariable(configs);
 	/* Killing the provider. */
 	await provider.kill();
 	/* Creating a database if not exit. */
 	await ProviderFactory.instance.createDatabase();
 	/* Kill all windows */
-	if (alwaysOn) alwaysOn.close();
-	if (settingsWindow && !settingsWindow.isDestroyed()) {
-		settingsWindow.hide();
-		settingsWindow.destroy();
+	if (appWindowManager.alwaysOnWindow) appWindowManager.alwaysOnWindow.close();
+	if (appWindowManager.settingWindow && !appWindowManager.settingWindow?.isDestroyed()) {
+		appWindowManager.settingWindow?.close();
 	}
 	if (timeTrackerWindow && !timeTrackerWindow.isDestroyed()) {
 		timeTrackerWindow.destroy();
@@ -608,7 +615,7 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 	if (arg) {
 		if (!setting) LocalStore.setDefaultApplicationSetting();
 		TranslateService.preferredLanguage = arg;
-		settingsWindow?.webContents?.send('preferred_language_change', arg);
+		appWindowManager.settingWindow?.webContents?.send?.('preferred_language_change', arg);
 	}
 	return TranslateService.preferredLanguage;
 });
@@ -800,9 +807,13 @@ ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
 ipcMain.handle('set-tray-icon', () => {
 	return {
-		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon_gray.png')
-	}
+		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon@2x.png'),
+		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon@2x_gray.png')
+	};
+});
+
+ipcMain.on('get-arch', (event) => {
+	event.sender.send('get-arch', process.arch);
 });
 
 nativeTheme.on('updated', () => {

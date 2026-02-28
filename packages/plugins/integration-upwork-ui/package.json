@@ -24,25 +24,27 @@
 		"lib:watch": "yarn nx build plugin-integration-upwork-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^19.2.0",
-		"@angular/core": "^19.2.0"
+		"@angular/common": "21.0.7",
+		"@angular/core": "21.0.7"
 	},
 	"dependencies": {
-		"@angular/forms": "^19.2.18",
-		"@angular/router": "^19.2.18",
+		"@angular/forms": "21.0.7",
+		"@angular/router": "21.0.7",
 		"@gauzy/contracts": "^0.1.0",
-		"@nebular/theme": "^15.0.0",
+		"@gauzy/plugin-ui": "^0.1.0",
+		"@gauzy/ui-core": "^0.1.0",
+		"@nebular/theme": "^17.0.0",
 		"@ngneat/until-destroy": "^10.0.0",
-		"@ngx-translate/core": "^16.0.4",
-		"angular2-smart-table": "^3.6.2",
+		"@ngx-translate/core": "^17.0.0",
+		"angular2-smart-table": "^4.1.1",
 		"ngx-permissions": "^19.0.0",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
-		"@types/node": "^20.14.9",
-		"jest-preset-angular": "14.5.5"
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"jest-preset-angular": "16.0.0"
 	},
 	"keywords": [
 		"gauzy",

@@ -1,16 +1,17 @@
+import { AsyncPipe } from '@angular/common';
 import {
 	AfterViewInit,
+	ChangeDetectorRef,
 	Component,
 	ElementRef,
-	forwardRef,
 	Inject,
 	NgZone,
 	OnInit,
 	TemplateRef,
 	ViewChild
 } from '@angular/core';
-import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import {
 	IOrganization,
 	IOrganizationTeam,
@@ -19,12 +20,30 @@ import {
 	ITimeLog,
 	ITimeSlotTimeLogs,
 	PermissionsEnum,
-	TaskStatusEnum
+	TaskStatusEnum,
+	TimerActionTypeEnum,
+	TimerSyncStateEnum
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDialogRef, NbDialogService, NbIconLibraries, NbRouteTab, NbToastrService } from '@nebular/theme';
+import {
+	NbBadgeModule,
+	NbButtonModule,
+	NbCardModule,
+	NbDialogRef,
+	NbDialogService,
+	NbIconLibraries,
+	NbIconModule,
+	NbLayoutModule,
+	NbRouteTab,
+	NbRouteTabsetModule,
+	NbSpinnerModule,
+	NbToastrService,
+	NbToggleModule,
+	NbTooltipModule
+} from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import 'moment-duration-format';
 import {
@@ -33,18 +52,18 @@ import {
 	BehaviorSubject,
 	concatMap,
 	debounceTime,
+	exhaustMap,
 	filter,
-	firstValueFrom,
 	from,
 	lastValueFrom,
+	mergeMap,
 	Observable,
 	of,
 	Subject,
 	Subscription,
+	switchMap,
 	tap,
-	timer,
-	exhaustMap,
-	mergeMap
+	timer
 } from 'rxjs';
 import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
 import { AuthStrategy } from '../auth';
@@ -52,6 +71,7 @@ import { BLOCK_DELAY, GAUZY_ENV } from '../constants';
 import { ElectronService, LoggerService } from '../electron/services';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { ActivityWatchViewService } from '../integrations';
+import { ActivityWatchComponent } from '../integrations/activity-watch/view/activity-watch.component';
 import { LanguageElectronService } from '../language/language-electron.service';
 import {
 	InterruptedSequenceQueue,
@@ -69,17 +89,22 @@ import {
 	ToastrNotificationService,
 	ZoneEnum
 } from '../services';
+import { PendingInstallationActions } from '../settings/plugins/component/+state/pending-installation.action';
 import { ClientSelectorService } from '../shared/features/client-selector/+state/client-selector.service';
 import { NoteService } from '../shared/features/note/+state/note.service';
 import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../shared/features/task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
+import { TimeTrackerFormComponent } from '../shared/features/time-tracker-form/time-tracker-form.component';
 import { TimeTrackerFormService } from '../shared/features/time-tracker-form/time-tracker-form.service';
 import { hasAllPermissions } from '../shared/utils/permission.util';
 import { SelectorValidator } from '../shared/utils/validation/selector.validator';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
+import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
+import { HumanizePipe } from './pipes/humanize.pipe';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
+import { TimeTrackerStatusComponent } from './time-tracker-status/time-tracker-status.component';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { TimeTrackerService } from './time-tracker.service';
 import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
@@ -95,14 +120,24 @@ enum TimerStartMode {
 	selector: 'ngx-desktop-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TimeTrackerComponent),
-			multi: true
-		}
-	],
-	standalone: false
+	imports: [
+		NbLayoutModule,
+		NbSpinnerModule,
+		NbButtonModule,
+		NbIconModule,
+		NbCardModule,
+		OrganizationSelectorComponent,
+		NbTooltipModule,
+		TimeTrackerStatusComponent,
+		TimeTrackerFormComponent,
+		ActivityWatchComponent,
+		NbToggleModule,
+		NbRouteTabsetModule,
+		NbBadgeModule,
+		AsyncPipe,
+		TranslatePipe,
+		HumanizePipe
+	]
 })
 export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _lastTotalWorkedToday$: BehaviorSubject<number> = new BehaviorSubject(0);
@@ -168,11 +203,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	sound: any = null;
 	private dialogRequest$ = new Subject<{ dialog: TemplateRef<any>; option: any }>();
+	private readonly logout$ = new Subject<void>();
 
 	constructor(
 		private electronService: ElectronService,
 		private timeTrackerService: TimeTrackerService,
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private sanitize: DomSanitizer,
 		private _ngZone: NgZone,
@@ -188,6 +224,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _authStrategy: AuthStrategy,
 		private _translateService: TranslateService,
 		private _alwaysOnService: AlwaysOnService,
+		private _actions: Actions,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 		private readonly _activityWatchViewService: ActivityWatchViewService,
@@ -199,7 +236,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly noteService: NoteService,
 		private readonly timeTrackerQuery: TimeTrackerQuery,
 		private readonly timeTrackerStore: TimeTrackerStore,
-		private readonly timeTrackerFormService: TimeTrackerFormService
+		private readonly timeTrackerFormService: TimeTrackerFormService,
+		private readonly cdr: ChangeDetectorRef,
+		private readonly router: Router
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -397,14 +436,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		) {
 			// Verify if user are already started to work for organization, if yes you can run time tracker else no
 			if (!this.userData?.employee?.startedWorkOn) {
-				this._toastrNotifier.error(
-					this._translateService.instant('TIMER_TRACKER.TOASTR.NOT_AUTHORIZED')
-				);
+				this._toastrNotifier.error(this._translateService.instant('TIMER_TRACKER.TOASTR.NOT_AUTHORIZED'));
 			}
 			// Verify if user are deleted for organization, if yes can't run time tracker
 			if (this.userData?.employee?.startedWorkOn && !this.userData?.employee?.isActive) {
-				this._toastrNotifier.error(
-					this._translateService.instant('TIMER_TRACKER.TOASTR.ACCOUNT_DELETED'));
+				this._toastrNotifier.error(this._translateService.instant('TIMER_TRACKER.TOASTR.ACCOUNT_DELETED'));
 			}
 			isPassed = false;
 		} else isPassed = true;
@@ -472,13 +508,34 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			if (isStarted) {
 				if (!this._isOffline && !this._remoteSleepLock) {
 					try {
+						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.START_TIMER,
+							data: {
+								timerId: lastTimer.id,
+								state: TimerSyncStateEnum.SYNCING
+							}
+						});
 						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.preventDuplicateApiRequest({ ...lastTimer, ...params }, (payload) =>
-								this.timeTrackerService.toggleApiStart(payload)
-							);
+									this.timeTrackerService.toggleApiStart(payload)
+							  );
+						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.START_TIMER,
+							data: {
+								timerId: lastTimer.id,
+								state: TimerSyncStateEnum.SYNCED
+							}
+						});
 					} catch (error) {
 						lastTimer.isStartedOffline = true;
+						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.START_TIMER,
+							data: {
+								timerId: lastTimer.id,
+								state: TimerSyncStateEnum.FAILED
+							}
+						});
 						this._loggerService.error(error);
 					}
 				}
@@ -501,14 +558,36 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								...params,
 								...lastTimer
 							};
+							await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+								actionType: TimerActionTypeEnum.STOP_TIMER,
+								data: {
+									timerId: lastTimer.id,
+									state: TimerSyncStateEnum.SYNCING
+								}
+							});
 							// Execute API request to stop timer and store the result in timelog
 							timelog = await this.preventDuplicateApiRequest(requestParams, (payload) =>
 								this.timeTrackerService.toggleApiStop(payload)
 							);
+							await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+								actionType: TimerActionTypeEnum.STOP_TIMER,
+								data: {
+									timerId: lastTimer.id,
+									state: TimerSyncStateEnum.SYNCED,
+									duration: timelog.duration
+								}
+							});
 						}
 					} catch (error) {
 						// Handle any error during the process
 						lastTimer.isStoppedOffline = true;
+						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.STOP_TIMER,
+							data: {
+								timerId: lastTimer.id,
+								state: TimerSyncStateEnum.FAILED
+							}
+						});
 						await this.electronService.ipcRenderer.invoke('MARK_AS_STOPPED_OFFLINE');
 						this._loggerService.error(error);
 					}
@@ -553,13 +632,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			organizationId,
 			...(this.projectSelectorService.selectedId
 				? {
-					projectId: this.projectSelectorService.selectedId
-				}
+						projectId: this.projectSelectorService.selectedId
+				  }
 				: {})
 		});
 	}
 
 	ngOnInit(): void {
+		this.checkPendingInstallations();
 		this._lastTotalWorkedToday$
 			.pipe(
 				tap((todayDuration: number) => {
@@ -614,14 +694,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this._timeTrackerStatus.external$
 			.pipe(
-				filter(
-					(remoteTimer: IRemoteTimer) =>
+				filter((remoteTimer: IRemoteTimer) => {
+					const { state } = this.timeTrackerQuery.ignition;
+					const isTransitional = [
+						IgnitionState.STOPPING,
+						IgnitionState.STARTING,
+						IgnitionState.RESTARTING
+					].includes(state);
+					return (
+						!isTransitional &&
 						!!remoteTimer.lastLog &&
 						this.xor(this.start, remoteTimer.running) &&
 						!this._isLockSyncProcess &&
 						this._isReady &&
 						this.inQueue.size === 0
-				),
+					);
+				}),
 				tap(async (remoteTimer: IRemoteTimer) => {
 					this.timeTrackerFormService.setState({
 						clientId: remoteTimer.lastLog.organizationContactId,
@@ -667,7 +755,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this._alwaysOnService.state$
 			.pipe(
-				filter((state: AlwaysOnStateEnum) => state === AlwaysOnStateEnum.LOADING),
+				filter((state: AlwaysOnStateEnum) => {
+					const { state: ignitionState } = this.timeTrackerQuery.ignition;
+					const isTransitional = [
+						IgnitionState.STOPPING,
+						IgnitionState.STARTING,
+						IgnitionState.RESTARTING
+					].includes(ignitionState);
+					return !isTransitional && state === AlwaysOnStateEnum.LOADING;
+				}),
 				concatMap(() => this.toggleStart(!this.start, true)),
 				untilDestroyed(this)
 			)
@@ -790,6 +886,26 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						})
 					);
 				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		// Logout handling with exhaustMap to prevent multiple logouts
+		this.logout$
+			.asObservable()
+			.pipe(
+				tap(() =>
+					this.processing$.next({
+						state: true,
+						message: this._translateService.instant('TIMER_TRACKER.LOADING.LOGOUT_IN_PROGRESS')
+					})
+				),
+				exhaustMap(() =>
+					timer(3000).pipe(
+						switchMap(() => this._authStrategy.logout()),
+						tap(() => this.afterLogout())
+					)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -1032,7 +1148,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this.stopTimer();
 				}
 				if (!this._isSpecialLogout) {
-					await this.logout();
+					this.logout();
 				}
 			})
 		);
@@ -1058,9 +1174,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('show_error_message', (event, arg) =>
+		this.electronService.ipcRenderer.on('show_toast_message', (event, arg) =>
 			this._ngZone.run(() => {
-				this.showErrorMessage(arg);
+				this.showToastMessage({
+					type: arg.type,
+					message: arg.message
+				});
 			})
 		);
 
@@ -1660,7 +1779,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			if (this._isSpecialLogout) {
 				// wait 3 sec and logout
-				await this.logout();
+				this.logout();
 			}
 
 			if (this.quitApp) {
@@ -1753,11 +1872,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async getLastTimeSlotImage(arg): Promise<void> {
-		if (this._isOffline || this.lastTimeSlot?.id === arg?.timeSlotId) {
-			return;
-		}
 		try {
-			const res = await this.timeTrackerService.getTimeSlot(arg);
+			const lastTimeSlot: { timeSlotId?: string } = await this.electronService.invoke('GET_LAST_CAPTURE');
+			if (this._isOffline || !lastTimeSlot?.timeSlotId) {
+				return;
+			}
+
+			const res = await this.timeTrackerService.getTimeSlot({ timeSlotId: lastTimeSlot.timeSlotId });
 			const { screenshots = [] } = res || {};
 			if (screenshots && screenshots.length > 0) {
 				const [lastCaptureScreen] = screenshots;
@@ -1792,8 +1913,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				typeof img === 'object' && img.thumbUrl
 					? await this._imageViewerService.getBase64ImageFromUrl(img.thumbUrl)
 					: typeof img === 'string'
-						? img
-						: undefined;
+					? img
+					: undefined;
 
 			// Set timestamp, preferring recordedAt if available
 			const timestamp = typeof img === 'object' && img.recordedAt ? new Date(img.recordedAt) : new Date();
@@ -1888,7 +2009,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._loggerService.warn(`WARN: ${message}`);
 			return;
 		}
-		this.electronService.ipcRenderer.send('show_image', this.screenshots);
+
+		this.electronService.ipcRenderer.send('show_image', {
+			screenshots: this.screenshots,
+			timeSlotId: !this._isOffline ? this.lastTimeSlot?.id : null
+		});
 	}
 
 	public open(dialog: TemplateRef<any>, option): void {
@@ -2232,8 +2357,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public showErrorMessage(msg: string): void {
-		this._toastrNotifier.error(`${msg}`);
+	public showToastMessage({ message, type }: { message: string; type: string }): void {
+		if (type === 'warning') {
+			this._toastrNotifier.warn(message);
+			return;
+		}
+		this._toastrNotifier.error(message);
 	}
 
 	public toggle(event: boolean) {
@@ -2258,16 +2387,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return value === Infinity;
 	}
 
-	public async logout() {
-		// we wait 3 sec and then logout
-		asyncScheduler.schedule(async () => {
-			await firstValueFrom(this._authStrategy.logout());
-			this._isSpecialLogout = false;
-			this.electronService.ipcRenderer.send(
-				this._isRestartAndUpdate ? 'restart_and_update' : 'navigate_to_login'
-			);
-			localStorage.clear();
-		}, 3000);
+	public logout(): void {
+		this.logout$.next();
+	}
+
+	private async afterLogout(): Promise<void> {
+		this._isSpecialLogout = false;
+
+		if (this._isRestartAndUpdate) {
+			this.electronService.ipcRenderer.send('restart_and_update');
+		} else {
+			this.electronService.ipcRenderer.send('navigate_to_login');
+			await this.router.navigate(['/auth/login']);
+		}
+
+		localStorage.clear();
+		this.cdr.markForCheck();
 	}
 
 	public async restart(callback?: Function): Promise<any> {
@@ -2451,4 +2586,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			disabled: this._isOffline
 		}
 	]);
+
+	private checkPendingInstallations(): void {
+		this._actions.dispatch(PendingInstallationActions.checkAndShowDialog());
+	}
 }

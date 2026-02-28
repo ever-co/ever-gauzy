@@ -3,7 +3,7 @@
 	"dest": "../../../dist/packages/plugins/integration-hubstaff-ui",
 	"lib": {
 		"entryFile": "src/index.ts",
-		"styleIncludePaths": ["../../../dist/packages/ui-core/static/styles"]
+		"styleIncludePaths": ["../../ui-core/static/styles"]
 	},
 	"allowedNonPeerDependencies": ["."],
 	"assets": []

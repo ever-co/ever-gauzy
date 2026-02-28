@@ -1,16 +1,16 @@
 import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
-import { NbMenuItem, NbSidebarState } from '@nebular/theme';
+import { NbMenuItem, NbSidebarState, NbLayoutModule, NbSidebarModule, NbMenuModule } from '@nebular/theme';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { GAUZY_ENV } from '../constants';
 import { IpcService } from './services/ipc.service';
 import { TasksService } from './services/tasks-service';
-
+import { RouterOutlet } from '@angular/router';
 
 @Component({
 	selector: 'ngx-agent-dashboard',
 	templateUrl: './agent-dashboard.component.html',
 	styleUrls: ['./agent-dashboard.component.scss'],
-	standalone: false
+	imports: [NbLayoutModule, NbSidebarModule, NbMenuModule, RouterOutlet]
 })
 export class AgentDashboardComponent implements OnInit, OnDestroy {
 	menu: NbMenuItem[] = [
@@ -23,7 +23,7 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
 			title: 'Sync API Activity',
 			link: '/server-dashboard/sync-activity', // Assuming this will be the route for sync activity
 			icon: 'cloud-upload-outline'
-		},
+		}
 	];
 	gauzyIcon: SafeResourceUrl;
 	styles = {
@@ -43,7 +43,9 @@ export class AgentDashboardComponent implements OnInit, OnDestroy {
 
 	onSidebarStateChange(newState: NbSidebarState) {
 		if (newState === 'compacted') {
-			this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.GAUZY_DESKTOP_LOGO_512X512);
+			this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(
+				this._environment.GAUZY_DESKTOP_LOGO_512X512
+			);
 		} else {
 			this.gauzyIcon = this.domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
 		}

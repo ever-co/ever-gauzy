@@ -13,8 +13,8 @@
 					<ng-template #treeNodeTemplate let-node let-index="index" class="tree">
 						<div
 							class="base"
-							[ngClass]="setClasses(node)"
-							[ngStyle]="{ color: node.data.color }"
+							[class]="setClasses(node)"
+							[style.color]="node.data.color"
 							(click)="onNodeClicked(node.data)"
 						>
 							<div>
@@ -27,36 +27,32 @@
 										class="icons privacy"
 										icon="{{ node.data.privacy }}"
 										(click)="changePrivacy(node.data)"
-										[ngClass]="{
-											'privacy-base': node.data.flag === 'base',
-											'privacy-category': node.data.flag === 'category'
-										}"
+										[class.privacy-base]="node.data.flag === 'base'"
+										[class.privacy-category]="node.data.flag === 'category'"
 									></nb-icon>
+									@if (node.data.flag === 'base') {
 									<nb-action
-										*ngIf="node.data.flag === 'base'"
 										icon="settings-2-outline"
 										class="icons"
 										[nbContextMenu]="settingsContextMenu"
 									></nb-action>
+									}
 								</div>
+								@if (node.data.flag === 'category') {
 								<nb-icon
-									*ngIf="node.data.flag === 'category'"
-									[ngStyle]="{
-										color: 'var(--text-primary-color)'
-									}"
+									[style.color]="'var(--text-primary-color)'"
 									class="edit-icons"
 									icon="edit-outline"
 									(click)="addEditCategory(actionEnum.EDIT, node.data)"
 								></nb-icon>
+								} @if (node.data.flag === 'category') {
 								<nb-icon
-									*ngIf="node.data.flag === 'category'"
-									[ngStyle]="{
-										color: 'var(--color-danger-default)'
-									}"
+									[style.color]="'var(--color-danger-default)'"
 									class="edit-icons"
 									icon="trash-2-outline"
 									(click)="deleteCategory(node.data)"
 								></nb-icon>
+								}
 							</div>
 						</div>
 					</ng-template>

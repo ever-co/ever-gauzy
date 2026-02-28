@@ -1,35 +1,38 @@
 <div class="calendar-picker" id="dashboard-calendar">
-	<input
-		[value]="formatDateMMMMyy(date)"
-		[(ngModel)]="dateInputValue"
-		nbInput
-		size="small"
-		(focus)="handleCalendarOpen()"
-		placeholder="{{ 'FORM.PLACEHOLDERS.PICK_DATE' | translate }}"
-	/>
-	<span
-		*ngIf="dateInputValue"
-		class="date-reset ng-clear-wrapper ng-star-inserted"
-		title="Clear all"
-		(click)="clear()"
-		><span aria-hidden="true" class="ng-clear"
-			><i class="far fa-calendar-times"></i></span
-	></span>
-	<nb-card class="calendar" *ngIf="loadCalendar">
-		<nb-calendar-year-picker
-			[year]="date"
-			[max]="max"
-			[min]="min"
-			(yearChange)="handleDateChange($event)"
-		>
-		</nb-calendar-year-picker>
-		<nb-calendar-month-picker
-			#month
-			[month]="date"
-			[max]="max"
-			[min]="min"
-			(monthChange)="handleDateChange($event)"
-		>
-		</nb-calendar-month-picker>
-	</nb-card>
-</div>
+  <input
+    [value]="formatDateMMMMyy(date)"
+    [(ngModel)]="dateInputValue"
+    nbInput
+    size="small"
+    (focus)="handleCalendarOpen()"
+    placeholder="{{ 'FORM.PLACEHOLDERS.PICK_DATE' | translate }}"
+    />
+    @if (dateInputValue) {
+      <span
+        class="date-reset ng-clear-wrapper ng-star-inserted"
+        title="Clear all"
+        (click)="clear()"
+        ><span aria-hidden="true" class="ng-clear"
+        ><i class="far fa-calendar-times"></i></span
+      ></span>
+    }
+    @if (loadCalendar) {
+      <nb-card class="calendar">
+        <nb-calendar-year-picker
+          [year]="date"
+          [max]="max"
+          [min]="min"
+          (yearChange)="handleDateChange($event)"
+          >
+        </nb-calendar-year-picker>
+        <nb-calendar-month-picker
+          #month
+          [month]="date"
+          [max]="max"
+          [min]="min"
+          (monthChange)="handleDateChange($event)"
+          >
+        </nb-calendar-month-picker>
+      </nb-card>
+    }
+  </div>

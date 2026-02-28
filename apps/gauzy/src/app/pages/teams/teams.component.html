@@ -17,30 +17,29 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-			<div class="table-scroll-container">
-				<angular2-smart-table
-					style="cursor: pointer"
-					[settings]="smartTableSettings"
-					[source]="smartTableSource"
-					(userRowSelect)="selectTeam($event)"
-				></angular2-smart-table>
-			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-				</ng-container>
-			</div>
-		</ng-container>
-		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
+		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+		<div class="table-scroll-container">
+			<angular2-smart-table
+				style="cursor: pointer"
 				[settings]="smartTableSettings"
-				[source]="teams"
-				(onSelectedItem)="selectTeam($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
-		</ng-container>
+				[source]="smartTableSource"
+				(userRowSelect)="selectTeam($event)"
+			></angular2-smart-table>
+		</div>
+		<div class="pagination-container">
+			@if (smartTableSource) {
+			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+			}
+		</div>
+		} @else if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) {
+		<ga-card-grid
+			[totalItems]="pagination?.totalItems"
+			[settings]="smartTableSettings"
+			[source]="teams"
+			(onSelectedItem)="selectTeam($event)"
+			(scroll)="onScroll()"
+		></ga-card-grid>
+		}
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
@@ -54,8 +53,8 @@
 	</ng-template>
 </ng-template>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
+	@if (selectedTeam) {
 	<ngx-favorite-toggle
-		*ngIf="selectedTeam"
 		[entityType]="'OrganizationTeam'"
 		[entityId]="selectedTeam.id"
 		[entityName]="selectedTeam.name"
@@ -66,6 +65,7 @@
 		[showLabel]="false"
 		(favoriteToggled)="onTeamFavoriteToggled($event)"
 	></ngx-favorite-toggle>
+	}
 	<ng-template [ngxPermissionsOnly]="['ORG_TEAM_EDIT', 'ORG_TEAM_DELETE', 'ALL_ORG_EDIT']">
 		<div class="btn-group actions">
 			<ng-template [ngxPermissionsOnly]="['ORG_TEAM_EDIT', 'ALL_ORG_EDIT']">

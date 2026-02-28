@@ -43,62 +43,67 @@
 
 <!-- Main template -->
 <nb-card class="content-active first plugin-details-card">
-	<nb-card-header>
-		<div class="header-content">
-			<div class="header-left">
-				<div class="icon-container">
-					<nb-icon icon="cube-outline"></nb-icon>
-				</div>
-				<div class="header-info">
-					<h5 class="title">{{ plugin?.name || ('SM_TABLE.NO_DATA.LOADING' | translate) }}</h5>
-					<!-- Category Section -->
-					@if(plugin?.category; as category) {
-					<div class="category-container mb-2" [style.color]="category.color">
-						<nb-icon [icon]="category.icon" class="mr-1"></nb-icon>
-						<span>{{ category.name }}</span>
-					</div>
-					}
-					<div class="badge-container">
-						<nb-badge
-							*ngIf="plugin"
-							[status]="getStatusBadgeStatus(plugin.status)"
-							[text]="getStatusLabel(plugin.status)"
-							class="mr-2"
-						></nb-badge>
-						<!-- Subscription Status Badge -->
-						<gauzy-subscription-status-badge
-							*ngIf="subscription"
-							[status]="subscription.status"
-							class="mr-2"
-						></gauzy-subscription-status-badge>
-						<nb-badge
-							*ngIf="plugin"
-							[status]="getPluginTypeBadgeStatus(plugin.type)"
-							[text]="getTypeLabel(plugin.type)"
-							class="mr-2"
-						></nb-badge>
-						<nb-badge
-							*ngIf="plugin && !plugin.hasPlan"
-							status="success"
-							text="Free"
-							class="mr-2"
-						></nb-badge>
-						<!-- Access Level Badge -->
-						<nb-badge
-							*ngIf="accessLevel$ | async as accessLevel"
-							[status]="getAccessLevelBadgeStatus(accessLevel)"
-							[text]="getAccessLevelLabel(accessLevel)"
-							class="mr-2"
-						>
-						</nb-badge>
-					</div>
-				</div>
-			</div>
-			<button nbButton ghost size="small" (click)="navigateBack()" class="close-button">
-				<nb-icon icon="close-outline"></nb-icon>
-			</button>
-		</div>
-	</nb-card-header>
+  <nb-card-header>
+    <div class="header-content">
+      <div class="header-left">
+        <div class="icon-container">
+          <nb-icon icon="cube-outline"></nb-icon>
+        </div>
+        <div class="header-info">
+          <h5 class="title">{{ plugin?.name || ('SM_TABLE.NO_DATA.LOADING' | translate) }}</h5>
+          <!-- Category Section -->
+          @if(plugin?.category; as category) {
+            <div class="category-container mb-2" [style.color]="category.color">
+              <nb-icon [icon]="category.icon" class="mr-1"></nb-icon>
+              <span>{{ category.name }}</span>
+            </div>
+          }
+          <div class="badge-container">
+            @if (plugin) {
+              <nb-badge
+                [status]="getStatusBadgeStatus(plugin.status)"
+                [text]="getStatusLabel(plugin.status)"
+                class="mr-2"
+              ></nb-badge>
+            }
+            <!-- Subscription Status Badge -->
+            @if (subscription) {
+              <gauzy-subscription-status-badge
+                [status]="subscription.status"
+                class="mr-2"
+              ></gauzy-subscription-status-badge>
+            }
+            @if (plugin) {
+              <nb-badge
+                [status]="getPluginTypeBadgeStatus(plugin.type)"
+                [text]="getTypeLabel(plugin.type)"
+                class="mr-2"
+              ></nb-badge>
+            }
+            @if (plugin && !plugin.hasPlan) {
+              <nb-badge
+                status="success"
+                text="Free"
+                class="mr-2"
+              ></nb-badge>
+            }
+            <!-- Access Level Badge -->
+            @if (accessLevel$ | async; as accessLevel) {
+              <nb-badge
+                [status]="getAccessLevelBadgeStatus(accessLevel)"
+                [text]="getAccessLevelLabel(accessLevel)"
+                class="mr-2"
+                >
+              </nb-badge>
+            }
+          </div>
+        </div>
+      </div>
+      <button nbButton ghost size="small" (click)="navigateBack()" class="close-button">
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </div>
+  </nb-card-header>
 
 	<nb-card-body>
 		@if(loading) {
@@ -229,192 +234,192 @@
 				}
 			</div>
 
-			<!-- Plugin Info Tabs with Lazy Loading -->
-			<nb-route-tabset
-				class="plugin-tabs"
-				[tabs]="tabs$ | async"
-				[activeLinkOptions]="{ exact: false }"
-			></nb-route-tabset>
-		</div>
-		}
-	</nb-card-body>
+        <!-- Plugin Info Tabs with Lazy Loading -->
+        <nb-route-tabset
+          class="plugin-tabs"
+          [tabs]="tabs$ | async"
+          [activeLinkOptions]="{ exact: false }"
+        ></nb-route-tabset>
+      </div>
+    }
+  </nb-card-body>
 
-	<nb-card-footer>
-		<div class="footer-content">
-			<button
-				nbButton
-				type="button"
-				outline
-				status="primary"
-				size="medium"
-				class="back-button"
-				(click)="navigateBack()"
-			>
-				<nb-icon icon="arrow-back-outline" class="mr-1"></nb-icon>
-				{{ 'BUTTONS.BACK' | translate | titlecase }}
-			</button>
+  <nb-card-footer>
+    <div class="footer-content">
+      <button
+        nbButton
+        type="button"
+        outline
+        status="primary"
+        size="medium"
+        class="back-button"
+        (click)="navigateBack()"
+        >
+        <nb-icon icon="arrow-back-outline" class="mr-1"></nb-icon>
+        {{ 'BUTTONS.BACK' | translate | titlecase }}
+      </button>
 
-			<div class="footer-actions">
-				<!-- View Subscription Button (shown when plugin has subscription) -->
-				@if(hasSubscription$ | async) {
-				<button
-					nbButton
-					type="button"
-					outline
-					size="medium"
-					status="info"
-					[disabled]="disabled"
-					(click)="viewSubscription()"
-					class="subscription-button"
-					[nbTooltip]="'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate"
-				>
-					<nb-icon
-						*gauzySpinnerButton="subscriptionLoading"
-						icon="credit-card-outline"
-						class="mr-1"
-					></nb-icon>
-					{{ 'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate }}
-				</button>
-				}
-				<!-- Owner Management Actions in Popover -->
-				@if(isOwner) {
-				<button
-					nbButton
-					type="button"
-					outline
-					size="medium"
-					status="primary"
-					[disabled]="disabled"
-					[nbPopover]="ownerActionsTemplate"
-					nbPopoverPlacement="top"
-					nbPopoverTrigger="click"
-					class="owner-actions-button"
-					[nbTooltip]="'PLUGIN.BUTTONS.MANAGE_PLUGIN' | translate"
-				>
-					<nb-icon icon="more-vertical-outline" class="mr-1"></nb-icon>
-					{{ 'PLUGIN.BUTTONS.MANAGE' | translate }}
-				</button>
-				}
-			</div>
-		</div>
-	</nb-card-footer>
+      <div class="footer-actions">
+        <!-- View Subscription Button (shown when plugin has subscription) -->
+        @if(hasSubscription$ | async) {
+          <button
+            nbButton
+            type="button"
+            outline
+            size="medium"
+            status="info"
+            [disabled]="disabled"
+            (click)="viewSubscription()"
+            class="subscription-button"
+            [nbTooltip]="'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate"
+            >
+            <nb-icon
+              *gauzySpinnerButton="subscriptionLoading"
+              icon="credit-card-outline"
+              class="mr-1"
+            ></nb-icon>
+            {{ 'PLUGIN.BUTTONS.VIEW_SUBSCRIPTION' | translate }}
+          </button>
+        }
+        <!-- Owner Management Actions in Popover -->
+        @if(isOwner) {
+          <button
+            nbButton
+            type="button"
+            outline
+            size="medium"
+            status="primary"
+            [disabled]="disabled"
+            [nbPopover]="ownerActionsTemplate"
+            nbPopoverPlacement="top"
+            nbPopoverTrigger="click"
+            class="owner-actions-button"
+            [nbTooltip]="'PLUGIN.BUTTONS.MANAGE_PLUGIN' | translate"
+            >
+            <nb-icon icon="more-vertical-outline" class="mr-1"></nb-icon>
+            {{ 'PLUGIN.BUTTONS.MANAGE' | translate }}
+          </button>
+        }
+      </div>
+    </div>
+  </nb-card-footer>
 </nb-card>
 
 <!-- Owner Actions Popover Template -->
 <ng-template #ownerActionsTemplate>
-	<nb-card class="owner-actions-popover">
-		<nb-card-body class="p-0">
-			<nb-list class="action-list p-0">
-				@if(canAssign$ | async) {
-				<nb-list-item class="action-item p-0">
-					<!-- Assign Users Button (for users with canAssign permission) -->
-					<button
-						nbButton
-						type="button"
-						outline
-						size="medium"
-						status="info"
-						fullWidth
-						[disabled]="disabled"
-						(click)="showAssignUsersDialog()"
-						class="assign-button action-button"
-					>
-						<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
-						{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
-					</button>
-				</nb-list-item>
-				}
-				<nb-list-item class="action-item p-0">
-					<button
-						nbButton
-						fullWidth
-						outline
-						status="info"
-						[disabled]="disabled"
-						(click)="openPlanCreator()"
-						class="action-button"
-					>
-						<div class="button-content">
-							<nb-icon icon="pricetags-outline" class="mr-1"></nb-icon>
-							<span class="action-label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS' | translate }}</span>
-						</div>
-					</button>
-				</nb-list-item>
-				<nb-list-item class="action-item p-0">
-					<button
-						nbButton
-						fullWidth
-						outline
-						status="primary"
-						[disabled]="disabled"
-						(click)="addVersion()"
-						class="action-button"
-					>
-						<div class="button-content">
-							<nb-icon *gauzySpinnerButton="adding && isSelected" icon="layers-outline"></nb-icon>
-							<span class="action-label">{{ 'BUTTONS.ADD_VERSION' | translate }}</span>
-						</div>
-						@if(uploading && adding){
-						<span class="progress-text">{{ progress | percent : '1.2-2' }}</span>
-						}
-					</button>
-				</nb-list-item>
+  <nb-card class="owner-actions-popover">
+    <nb-card-body class="p-0">
+      <nb-list class="action-list p-0">
+        @if(canAssign$ | async) {
+          <nb-list-item class="action-item p-0">
+            <!-- Assign Users Button (for users with canAssign permission) -->
+            <button
+              nbButton
+              type="button"
+              outline
+              size="medium"
+              status="info"
+              fullWidth
+              [disabled]="disabled"
+              (click)="showAssignUsersDialog()"
+              class="assign-button action-button"
+              >
+              <nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
+              {{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}
+            </button>
+          </nb-list-item>
+        }
+        <nb-list-item class="action-item p-0">
+          <button
+            nbButton
+            fullWidth
+            outline
+            status="info"
+            [disabled]="disabled"
+            (click)="openPlanCreator()"
+            class="action-button"
+            >
+            <div class="button-content">
+              <nb-icon icon="pricetags-outline" class="mr-1"></nb-icon>
+              <span class="action-label">{{ 'PLUGIN.FORM.SUBSCRIPTION_PLANS' | translate }}</span>
+            </div>
+          </button>
+        </nb-list-item>
+        <nb-list-item class="action-item p-0">
+          <button
+            nbButton
+            fullWidth
+            outline
+            status="primary"
+            [disabled]="disabled"
+            (click)="addVersion()"
+            class="action-button"
+            >
+            <div class="button-content">
+              <nb-icon *gauzySpinnerButton="adding && isSelected" icon="layers-outline"></nb-icon>
+              <span class="action-label">{{ 'BUTTONS.ADD_VERSION' | translate }}</span>
+            </div>
+            @if(uploading && adding){
+              <span class="progress-text">{{ progress | percent : '1.2-2' }}</span>
+            }
+          </button>
+        </nb-list-item>
 
-				<nb-list-item class="action-item p-0">
-					<button
-						nbButton
-						fullWidth
-						outline
-						status="info"
-						[disabled]="disabled"
-						(click)="addSource()"
-						class="action-button"
-					>
-						<div class="button-content">
-							<nb-icon *gauzySpinnerButton="creatingSource && isSelected" icon="code-outline"></nb-icon>
-							<span class="action-label">{{ 'BUTTONS.ADD_MORE_SOURCES' | translate }}</span>
-						</div>
-						@if(uploading && creatingSource){
-						<span class="progress-text">{{ progress | percent : '1.2-2' }}</span>
-						}
-					</button>
-				</nb-list-item>
+        <nb-list-item class="action-item p-0">
+          <button
+            nbButton
+            fullWidth
+            outline
+            status="info"
+            [disabled]="disabled"
+            (click)="addSource()"
+            class="action-button"
+            >
+            <div class="button-content">
+              <nb-icon *gauzySpinnerButton="creatingSource && isSelected" icon="code-outline"></nb-icon>
+              <span class="action-label">{{ 'BUTTONS.ADD_MORE_SOURCES' | translate }}</span>
+            </div>
+            @if(uploading && creatingSource){
+              <span class="progress-text">{{ progress | percent : '1.2-2' }}</span>
+            }
+          </button>
+        </nb-list-item>
 
-				<nb-list-item class="action-item p-0">
-					<button
-						nbButton
-						fullWidth
-						outline
-						status="primary"
-						[disabled]="disabled"
-						(click)="navigateToEdit()"
-						class="action-button"
-					>
-						<div class="button-content">
-							<nb-icon *gauzySpinnerButton="editing && isSelected" icon="edit-2-outline"></nb-icon>
-							<span class="action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
-						</div>
-					</button>
-				</nb-list-item>
+        <nb-list-item class="action-item p-0">
+          <button
+            nbButton
+            fullWidth
+            outline
+            status="primary"
+            [disabled]="disabled"
+            (click)="navigateToEdit()"
+            class="action-button"
+            >
+            <div class="button-content">
+              <nb-icon *gauzySpinnerButton="editing && isSelected" icon="edit-2-outline"></nb-icon>
+              <span class="action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
+            </div>
+          </button>
+        </nb-list-item>
 
-				<nb-list-item class="action-item p-0">
-					<button
-						nbButton
-						fullWidth
-						outline
-						status="danger"
-						[disabled]="disabled"
-						(click)="delete()"
-						class="action-button"
-						*gauzySpinnerButton="deleting && isSelected"
-					>
-						<div class="button-content">
-							<nb-icon icon="trash-2-outline"></nb-icon>
-							<span class="action-label">{{ 'BUTTONS.DELETE' | translate }}</span>
-						</div>
-					</button>
-				</nb-list-item>
-			</nb-list>
-		</nb-card-body>
-	</nb-card>
+        <nb-list-item class="action-item p-0">
+          <button
+            nbButton
+            fullWidth
+            outline
+            status="danger"
+            [disabled]="disabled"
+            (click)="delete()"
+            class="action-button"
+            *gauzySpinnerButton="deleting && isSelected"
+            >
+            <div class="button-content">
+              <nb-icon icon="trash-2-outline"></nb-icon>
+              <span class="action-label">{{ 'BUTTONS.DELETE' | translate }}</span>
+            </div>
+          </button>
+        </nb-list-item>
+      </nb-list>
+    </nb-card-body>
+  </nb-card>
 </ng-template>

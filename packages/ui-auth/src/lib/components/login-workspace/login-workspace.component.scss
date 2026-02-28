@@ -47,18 +47,40 @@
         @include hr-div-strong;
       }
       .form {
-        & .form-control-group {
-          margin-bottom: 24px;
+        margin-top: 21px;
+        margin-bottom: 25px;
+        & .form-group {
+          margin-bottom: 16px;
           & .label {
-            font-family: 'Inter';
-            font-style: normal;
+            display: block;
+            margin-bottom: 8px;
+            font-family: Inter;
             font-weight: 600;
-            font-size: 11px;
-            line-height: 13px;
-            display: flex;
-            align-items: center;
-            letter-spacing: -0.01em;
-            color: #7e7e8f;
+            font-size: 0.9375rem;
+            color: nb-theme(text-basic-color);
+            padding-left: 0;
+            text-transform: none;
+          }
+          ::ng-deep input.input-full-width {
+            border: 1px solid rgba(98, 54, 255, 0.5) !important;
+            background-color: transparent;
+            color: nb-theme(text-basic-color);
+          }
+        }
+        // Ensure consistent styling for ngx-password-form-field
+        ::ng-deep ngx-password-form-field {
+          .label {
+            display: block;
+            margin-bottom: 8px;
+            font-family: Inter;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: nb-theme(text-basic-color);
+          }
+          input {
+            border: 1px solid rgba(98, 54, 255, 0.5) !important;
+            background-color: transparent;
+            color: nb-theme(text-basic-color);
           }
         }
         & .submit-btn-wrapper {
@@ -66,8 +88,59 @@
           justify-content: flex-end;
           & .submit-btn {
             @include submit-btn;
-            margin-bottom: 25px;
+            margin-bottom: 0;
             margin-top: 15px;
+            padding: 13px 65px;
+            font-weight: 700;
+            text-transform: none;
+            letter-spacing: normal;
+            border-radius: 8px;
+            line-height: 20px;
+            transition: background-color 0.2s, border-color 0.2s;
+            // Disabled/Submitting state (MUST BE FIRST)
+            &[disabled],
+            &.btn-pulse {
+              cursor: not-allowed !important;
+              // Light theme: Visible grey with purple tint
+              @include nb-for-theme(default) {
+                background-color: rgba(98, 54, 255, 0.08) !important;
+                border-color: rgba(98, 54, 255, 0.25) !important;
+                color: rgba(98, 54, 255, 0.65) !important;
+              }
+              // Dark theme: Original subtle style
+              @include nb-for-theme(dark) {
+                background-color: nb-theme(background-basic-color-3) !important;
+                border-color: transparent !important;
+                color: nb-theme(text-hint-color) !important;
+              }
+              &:hover,
+              &:active,
+              &:focus {
+                @include nb-for-theme(default) {
+                  background-color: rgba(98, 54, 255, 0.08) !important;
+                  border-color: rgba(98, 54, 255, 0.25) !important;
+                  color: rgba(98, 54, 255, 0.65) !important;
+                }
+                @include nb-for-theme(dark) {
+                  background-color: nb-theme(background-basic-color-3) !important;
+                  border-color: transparent !important;
+                  color: nb-theme(text-hint-color) !important;
+                }
+              }
+            }
+            // Enabled state
+            &:not([disabled]):not(.btn-pulse) {
+              background-color: nb-theme(color-primary-default) !important;
+              border-color: nb-theme(color-primary-default) !important;
+              color: white !important;
+              &:hover,
+              &:active,
+              &:focus {
+                background-color: nb-theme(color-primary-hover) !important;
+                border-color: nb-theme(color-primary-hover) !important;
+                color: white !important;
+              }
+            }
           }
         }
       }
@@ -90,8 +163,11 @@
           font-weight: 600;
           line-height: 17px;
           letter-spacing: 0em;
-          color: #6e49e8;
+          color: nb-theme(color-primary-default);
           text-decoration: none;
+          &:hover {
+            text-decoration: underline;
+          }
         }
       }
     }

@@ -1,100 +1,100 @@
 <div class="main-wrapper">
-	<ng-container *ngIf="!request.employeeIds">
-		<div
-			class="daily-item"
-			*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
-			<nb-card
-				[nbSpinner]="loading"
-				nbSpinnerSize="giant"
-				nbSpinnerStatus="primary"
-				class="mb-0">
-				<nb-card-body>
-					<p>
-						{{ 'REPORT_PAGE.MEMBERS_WORKED' | translate }}
-					</p>
-					<div class="h1">
-						{{ counts?.employeesCount || 0 }}
-					</div>
-					<div class="progress-container">
-						<gauzy-counter-point
-							[total]="employeesCount"
-							[value]="counts?.employeesCount || 0"
-							[color]="'#0088FE'"
-						></gauzy-counter-point>
-					</div>
-				</nb-card-body>
-			</nb-card>
-		</div>
-	</ng-container>
-	<ng-container *ngIf="!request.projectIds">
-		<div class="daily-item">
-			<nb-card
-				[nbSpinner]="loading"
-				nbSpinnerSize="giant"
-				nbSpinnerStatus="primary"
-				class="mb-0"
-			>
-				<nb-card-body>
-					<p>
-						{{ 'REPORT_PAGE.PROJECTS_WORKED' | translate }}
-					</p>
-					<div class="h1">
-						{{ counts?.projectsCount || 0 }}
-					</div>
-					<div class="progress-container">
-						<gauzy-counter-point
-							[total]="projectsCount"
-							[value]="counts?.projectsCount || 0"
-							[color]="'#00D68F'"
-						></gauzy-counter-point>
-					</div>
-				</nb-card-body>
-			</nb-card>
-		</div>
-	</ng-container>
-	<div class="daily-item">
-		<nb-card
-			[nbSpinner]="loading"
-			nbSpinnerSize="giant"
-			nbSpinnerStatus="primary"
-			class="mb-0"
-		>
-			<nb-card-body>
-				<p>
-					{{ 'REPORT_PAGE.ACTIVITY' | translate }}
-				</p>
-				<div class="h1">{{ counts?.weekActivities || 0 }}%</div>
-				<div class="progress-container">
-					<gauzy-counter-point
-							[progress]="true"
-							[value]="counts?.weekActivities || 0"
-					></gauzy-counter-point>
-				</div>
-			</nb-card-body>
-		</nb-card>
-	</div>
-	<div class="daily-item">
-		<nb-card
-			[nbSpinner]="loading"
-			nbSpinnerSize="giant"
-			nbSpinnerStatus="primary"
-			class="mb-0"
-		>
-			<nb-card-body>
-				<p>
-					{{ 'REPORT_PAGE.TOTAL_HOURS' | translate }}
-				</p>
-				<div class="h1">
-					{{ counts?.weekDuration || 0 | durationFormat }}
-				</div>
-				<div class="progress-container">
-					<gauzy-counter-point
-						[total]="period"
-						[value]="counts?.weekDuration || 0"
-						[color]="'#00D68F'"
-					></gauzy-counter-point>
-				</div>
-			</nb-card-body>
-		</nb-card>
-	</div>
+  @if (!request.employeeIds) {
+    <div
+      class="daily-item"
+      *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
+      <nb-card
+        [nbSpinner]="loading"
+        nbSpinnerSize="giant"
+        nbSpinnerStatus="primary"
+        class="mb-0">
+        <nb-card-body>
+          <p>
+            {{ 'REPORT_PAGE.MEMBERS_WORKED' | translate }}
+          </p>
+          <div class="h1">
+            {{ counts?.employeesCount || 0 }}
+          </div>
+          <div class="progress-container">
+            <gauzy-counter-point
+              [total]="employeesCount"
+              [value]="counts?.employeesCount || 0"
+              [color]="'#0088FE'"
+            ></gauzy-counter-point>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  }
+  @if (!request.projectIds) {
+    <div class="daily-item">
+      <nb-card
+        [nbSpinner]="loading"
+        nbSpinnerSize="giant"
+        nbSpinnerStatus="primary"
+        class="mb-0"
+        >
+        <nb-card-body>
+          <p>
+            {{ 'REPORT_PAGE.PROJECTS_WORKED' | translate }}
+          </p>
+          <div class="h1">
+            {{ counts?.projectsCount || 0 }}
+          </div>
+          <div class="progress-container">
+            <gauzy-counter-point
+              [total]="projectsCount"
+              [value]="counts?.projectsCount || 0"
+              [color]="'#00D68F'"
+            ></gauzy-counter-point>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  }
+  <div class="daily-item">
+    <nb-card
+      [nbSpinner]="loading"
+      nbSpinnerSize="giant"
+      nbSpinnerStatus="primary"
+      class="mb-0"
+      >
+      <nb-card-body>
+        <p>
+          {{ 'REPORT_PAGE.ACTIVITY' | translate }}
+        </p>
+        <div class="h1">{{ counts?.weekActivities || 0 }}%</div>
+        <div class="progress-container">
+          <gauzy-counter-point
+            [progress]="true"
+            [value]="counts?.weekActivities || 0"
+          ></gauzy-counter-point>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="daily-item">
+    <nb-card
+      [nbSpinner]="loading"
+      nbSpinnerSize="giant"
+      nbSpinnerStatus="primary"
+      class="mb-0"
+      >
+      <nb-card-body>
+        <p>
+          {{ 'REPORT_PAGE.TOTAL_HOURS' | translate }}
+        </p>
+        <div class="h1">
+          {{ counts?.weekDuration || 0 | durationFormat }}
+        </div>
+        <div class="progress-container">
+          <gauzy-counter-point
+            [total]="period"
+            [value]="counts?.weekDuration || 0"
+            [color]="'#00D68F'"
+          ></gauzy-counter-point>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
 </div>

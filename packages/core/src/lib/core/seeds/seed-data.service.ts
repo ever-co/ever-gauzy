@@ -3,7 +3,7 @@
 // Copyright (c) 2019 Alexi Taylor
 
 import * as rimraf from 'rimraf';
-import * as path from 'path';
+import * as path from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { DataSource, DataSourceOptions } from 'typeorm';
@@ -386,9 +386,9 @@ export class SeedDataService {
 	}
 
 	/**
-	 * Seed Default & Random Data
+	 * Seed Default & Random Data for Demo
 	 */
-	public async executeDemoSeed() {
+	public async runDemoSeed() {
 		try {
 			console.log('Database Demo Seed Started');
 
@@ -1687,7 +1687,7 @@ export class SeedDataService {
 				this.log(chalk.green(`✅ DISCONNECTED TO DATABASE!`));
 			}
 		} catch (error) {
-			this.log('NOTE: DATABASE CONNECTION DOES NOT EXIST YET. CANT CLOSE CONNECTION!');
+			this.log("NOTE: DATABASE CONNECTION DOES NOT EXIST YET. CAN'T CLOSE CONNECTION!");
 		}
 	}
 

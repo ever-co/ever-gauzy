@@ -18,16 +18,14 @@
 					(uploadedImageAsset)="updateImageAsset($event)"
 					(uploadImageAssetError)="handleImageUploadError($event)"
 				></ngx-image-uploader>
+				@if (form && form.get('imageUrl').value) {
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					xmlns:xlink="http://www.w3.org/1999/xlink"
 					width="48"
 					height="48"
 					viewBox="0 0 68 68"
-					[ngStyle]="{
-						opacity: hoverState ? '1' : '0.3'
-					}"
-					*ngIf="form && form.get('imageUrl').value"
+					[style.opacity]="hoverState ? '1' : '0.3'"
 				>
 					<defs>
 						<path
@@ -41,20 +39,20 @@
 						<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 					</g>
 				</svg>
-				<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0.1' }"></div>
-				<ng-template [ngIf]="form.get('imageUrl').value" [ngIfElse]="noImageTemplate">
-					<img
-						[src]="form.get('imageUrl').value"
-						alt="Team Photo"
-						(mouseenter)="hoverState = true"
-						(mouseleave)="hoverState = false"
-					/>
-				</ng-template>
-				<ng-template #noImageTemplate>
-					<div class="no-image">
-						<i class="fas fa-image"></i>
-					</div>
-				</ng-template>
+				}
+				<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0.1'"></div>
+				@if (form && form.get('imageUrl').value) {
+				<img
+					[src]="form.get('imageUrl').value"
+					alt="Team Photo"
+					(mouseenter)="hoverState = true"
+					(mouseleave)="hoverState = false"
+				/>
+				} @else {
+				<div class="no-image">
+					<i class="fas fa-image"></i>
+				</div>
+				}
 			</div>
 
 			<div class="row mb-3">

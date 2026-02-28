@@ -6,6 +6,7 @@ import { EmployeeAwardController } from './employee-award.controller';
 import { EmployeeAwardService } from './employee-award.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmEmployeeAwardRepository } from './repository/type-orm-employee-award.repository';
+import { MikroOrmEmployeeAwardRepository } from './repository/mikro-orm-employee-award.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmEmployeeAwardRepository } from './repository/type-orm-employee-a
 		RolePermissionModule
 	],
 	controllers: [EmployeeAwardController],
-	providers: [EmployeeAwardService, TypeOrmEmployeeAwardRepository]
+	providers: [EmployeeAwardService, TypeOrmEmployeeAwardRepository, MikroOrmEmployeeAwardRepository]
 })
 export class EmployeeAwardModule {}

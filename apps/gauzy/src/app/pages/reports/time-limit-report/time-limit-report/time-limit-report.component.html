@@ -7,13 +7,13 @@
 						{{ title | translate }}
 					</ngx-header-title>
 				</h4>
-				<ng-container *ngIf="request?.startDate && request?.endDate">
+				@if (request?.startDate && request?.endDate) {
 					<ngx-date-range-title
 						[start]="request?.startDate"
 						[end]="request?.endDate"
 						[format]="'dddd, LL'"
 					></ngx-date-range-title>
-				</ng-container>
+				}
 			</div>
 		</div>
 		<div class="row">
@@ -29,56 +29,63 @@
 	<nb-card-body class="report-body">
 		<div class="report-container">
 			<div class="table">
-				<div
-					class="time-logs row-table"
-					*ngIf="loading"
-					[nbSpinner]="loading"
-					[nbSpinnerSize]="'giant'"
-					[nbSpinnerStatus]="'primary'"
-				></div>
-				<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
-					<nb-card class="card" *ngFor="let day of dailyData">
-						<nb-card-header class="card-title">
-							{{ day.date | dateFormat }}
-						</nb-card-header>
-						<nb-card-body class="budget-container">
-							<div class="columns-header" *ngIf="day.employees?.length > 0; else noEmployees">
-								<div class="table-inner-wrapper font-weight-bold align-items-center">
-									<ng-template [ngIf]="duration === 'week'">
-										<ng-container *ngTemplateOutlet="weeklyHeadings"></ng-container>
-									</ng-template>
-									<ng-template [ngIf]="duration === 'day'">
-										<ng-container *ngTemplateOutlet="dailyHeadings"></ng-container>
-									</ng-template>
-								</div>
-							</div>
-							<ng-template #noEmployees>
-								<div class="ml-3">
-									{{ 'REPORT_PAGE.NO_EMPLOYEES_WORKED' | translate }}
-								</div>
-							</ng-template>
-							<div class="cart-body project-row">
-								<div class="table-row" *ngFor="let timeLogRow of day.employees">
-									<div class="table-inner-wrapper">
-										<ng-template [ngIf]="duration === 'week'">
-											<ng-container
-												*ngTemplateOutlet="weeklyTable; context: { $implicit: timeLogRow }"
-											>
-											</ng-container>
-										</ng-template>
-										<ng-template [ngIf]="duration === 'day'">
-											<ng-container
-												*ngTemplateOutlet="dailyTable; context: { $implicit: timeLogRow }"
-											>
-											</ng-container>
-										</ng-template>
+				@if (loading) {
+					<div
+						class="time-logs row-table"
+						[nbSpinner]="loading"
+						[nbSpinnerSize]="'giant'"
+						[nbSpinnerStatus]="'primary'"
+					></div>
+				}
+				@if (dailyData?.length > 0) {
+					@for (day of dailyData; track day) {
+						<nb-card class="card">
+							<nb-card-header class="card-title">
+								{{ day.date | dateFormat }}
+							</nb-card-header>
+							<nb-card-body class="budget-container">
+								@if (day.employees?.length > 0) {
+									<div class="columns-header">
+										<div class="table-inner-wrapper font-weight-bold align-items-center">
+											@if (duration === 'week') {
+												<ng-container [ngTemplateOutlet]="weeklyHeadings"></ng-container>
+											}
+											@if (duration === 'day') {
+												<ng-container [ngTemplateOutlet]="dailyHeadings"></ng-container>
+											}
+										</div>
 									</div>
+								} @else {
+									<div class="ml-3">
+										{{ 'REPORT_PAGE.NO_EMPLOYEES_WORKED' | translate }}
+									</div>
+								}
+								<div class="cart-body project-row">
+									@for (timeLogRow of day.employees; track timeLogRow) {
+										<div class="table-row">
+											<div class="table-inner-wrapper">
+												@if (duration === 'week') {
+													<ng-container
+														[ngTemplateOutlet]="weeklyTable"
+														[ngTemplateOutletContext]="{ $implicit: timeLogRow }"
+													>
+													</ng-container>
+												}
+												@if (duration === 'day') {
+													<ng-container
+														[ngTemplateOutlet]="dailyTable"
+														[ngTemplateOutletContext]="{ $implicit: timeLogRow }"
+													>
+													</ng-container>
+												}
+											</div>
+										</div>
+									}
 								</div>
-							</div>
-						</nb-card-body>
-					</nb-card>
-				</ng-template>
-				<ng-template #notFound>
+							</nb-card-body>
+						</nb-card>
+					}
+				} @else {
 					<nb-card>
 						<nb-card-body>
 							<div class="row font-weight-bold py-5 align-items-center">
@@ -88,37 +95,40 @@
 							</div>
 						</nb-card-body>
 					</nb-card>
-				</ng-template>
+				}
 			</div>
 		</div>
 	</nb-card-body>
 </nb-card>
 
 <ng-template let-project #projectEl>
-	<ga-project-column-view *ngIf="project; else noProjects" [project]="project"></ga-project-column-view>
-	<ng-template #noProjects>
+	@if (project) {
+		<ga-project-column-view [project]="project"></ga-project-column-view>
+	} @else {
 		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
-	</ng-template>
+	}
 </ng-template>
 
 <ng-template let-task #taskEl>
-	<span *ngIf="task; else noTaSK">{{ task?.title }} </span>
-	<ng-template #noTaSK>
+	@if (task) {
+		<span>{{ task?.title }} </span>
+	} @else {
 		<span>{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
-	</ng-template>
+	}
 </ng-template>
 
 <ng-template let-employee #employeeEl>
 	<div class="avatar-wrapper-outer">
-		<ngx-avatar
-			class="report-table"
-			*ngIf="employee"
-			[src]="employee?.user?.imageUrl"
-			[name]="employee?.user?.name"
-			[id]="employee?.id"
-			[employee]="employee"
-		>
-		</ngx-avatar>
+		@if (employee) {
+			<ngx-avatar
+				class="report-table"
+				[src]="employee?.user?.imageUrl"
+				[name]="employee?.user?.name"
+				[id]="employee?.id"
+				[employee]="employee"
+			>
+			</ngx-avatar>
+		}
 	</div>
 	<ng-template #noEmployee>
 		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
@@ -148,7 +158,11 @@
 			{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 		</div>
 		<div class="responsive-table-content project-name">
-			<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: timeLogRow?.employee }"> </ng-container>
+			<ng-container
+				[ngTemplateOutlet]="employeeEl"
+				[ngTemplateOutletContext]="{ $implicit: timeLogRow?.employee }"
+			>
+			</ng-container>
 		</div>
 	</div>
 	<div class="responsive-table-row limit-column">
@@ -210,7 +224,11 @@
 			{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 		</div>
 		<div class="responsive-table-content project-name">
-			<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: timeLogRow?.employee }"> </ng-container>
+			<ng-container
+				[ngTemplateOutlet]="employeeEl"
+				[ngTemplateOutletContext]="{ $implicit: timeLogRow?.employee }"
+			>
+			</ng-container>
 		</div>
 	</div>
 	<div class="responsive-table-row activity-column">

@@ -68,94 +68,89 @@
 											</nb-form-field>
 										</div>
 									</div>
-									<ng-container *ngIf="form.get('employeeId').value">
-										<div class="col-xl-7 col-lg-12">
-											<div class="row">
-												<div class="col-7">
-													<label class="label" for="proposal_template">
-														{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
-													</label>
-													<ngx-proposal-template-select
-														id="proposal_template"
-														[employeeId]="form.get('employeeId').value"
-														(selectedChange)="onProposalTemplateChange($event)"
-													></ngx-proposal-template-select>
-												</div>
-												<div class="col-5 h-100 align-self-end">
-													<button
-														status="primary"
-														class="button-generate-proposal"
-														outline
-														nbButton
-														debounceClick
-														(throttledClick)="proposal$.next(true)"
-													>
-														{{ 'BUTTONS.GENERATE_PROPOSAL' | translate }}
-													</button>
-												</div>
-											</div>
-										</div>
-									</ng-container>
-								</div>
-								<ng-template
-									[ngIf]="JobPostSourceEnum.UPWORK === employeeJobPost?.jobPost?.providerCode"
-								>
-									<div class="row">
-										<div class="col-12">
-											<div class="form-group">
-												<label class="label" for="proposal">
-													{{ 'FORM.LABELS.COVER_LETTER' | translate }}
+									@if (form.get('employeeId').value) {
+									<div class="col-xl-7 col-lg-12">
+										<div class="row">
+											<div class="col-7">
+												<label class="label" for="proposal_template">
+													{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
 												</label>
-												<div class="sync-container">
-													<nb-icon
-														class="sync caption-2"
-														icon="sync-outline"
-														debounceClick
-														(throttledClick)="proposal$.next(true)"
-														[ngClass]="{ spin: loading }"
-													></nb-icon>
-													<ng-template [ngIf]="loading">
-														<span class="ml-1 caption-2">Generating Proposal ...</span>
-													</ng-template>
-												</div>
-												<ckeditor
-													#ckeditor
-													id="proposal"
-													formControlName="proposal"
-													[config]="ckConfig"
-													(ngModelChange)="onEditorChange($event)"
-												></ckeditor>
+												<ngx-proposal-template-select
+													id="proposal_template"
+													[employeeId]="form.get('employeeId').value"
+													(selectedChange)="onProposalTemplateChange($event)"
+												></ngx-proposal-template-select>
+											</div>
+											<div class="col-5 h-100 align-self-end">
+												<button
+													status="primary"
+													class="button-generate-proposal"
+													outline
+													nbButton
+													debounceClick
+													(throttledClick)="proposal$.next(true)"
+												>
+													{{ 'BUTTONS.GENERATE_PROPOSAL' | translate }}
+												</button>
 											</div>
 										</div>
 									</div>
-								</ng-template>
-								<ng-template
-									[ngIf]="JobPostSourceEnum.UPWORK !== employeeJobPost?.jobPost?.providerCode"
-								>
-									<div class="row">
-										<div class="col-12">
-											<div class="form-group">
-												<div class="sync-container">
-													<label class="label m-0" for="details">
-														{{ 'FORM.LABELS.DETAILS' | translate }}
-													</label>
-													<nb-icon
-														class="sync"
-														icon="sync-outline"
-														debounceClick
-														(throttledClick)="proposal$.next(true)"
-														[ngClass]="{ spin: loading }"
-													></nb-icon>
-												</div>
-												<ckeditor
-													id="details"
-													formControlName="details"
-													[config]="ckConfig"
-												></ckeditor>
+									}
+								</div>
+								@if (JobPostSourceEnum.UPWORK === employeeJobPost?.jobPost?.providerCode) {
+								<div class="row">
+									<div class="col-12">
+										<div class="form-group">
+											<label class="label" for="proposal">
+												{{ 'FORM.LABELS.COVER_LETTER' | translate }}
+											</label>
+											<div class="sync-container">
+												<nb-icon
+													class="sync caption-2"
+													icon="sync-outline"
+													debounceClick
+													(throttledClick)="proposal$.next(true)"
+													[class.spin]="loading"
+												></nb-icon>
+												@if (loading) {
+												<span class="ml-1 caption-2">Generating Proposal ...</span>
+												}
 											</div>
+											<ckeditor
+												#ckeditor
+												id="proposal"
+												formControlName="proposal"
+												[config]="ckConfig"
+												(ngModelChange)="onEditorChange($event)"
+											></ckeditor>
 										</div>
 									</div>
-								</ng-template>
+								</div>
+								} @if (JobPostSourceEnum.UPWORK !== employeeJobPost?.jobPost?.providerCode) {
+								<div class="row">
+									<div class="col-12">
+										<div class="form-group">
+											<div class="sync-container">
+												<label class="label m-0" for="details">
+													{{ 'FORM.LABELS.DETAILS' | translate }}
+												</label>
+												<nb-icon
+													class="sync"
+													icon="sync-outline"
+													debounceClick
+													(throttledClick)="proposal$.next(true)"
+													[class.spin]="loading"
+												></nb-icon>
+											</div>
+											<ckeditor
+												id="details"
+												formControlName="details"
+												[config]="ckConfig"
+											></ckeditor>
+										</div>
+									</div>
+								</div>
+								}
 								<div class="row drag-drop">
 									<div class="col-12">
 										<div class="form-group">
@@ -166,7 +161,7 @@
 												ng2FileDrop
 												[uploader]="uploader"
 												(fileOver)="fileOverBase($event)"
-												[ngClass]="{ 'nv-file-over': hasDropZoneOver }"
+												[class.nv-file-over]="hasDropZoneOver"
 												class="well my-drop-zone"
 											>
 												{{ 'FORM.PLACEHOLDERS.DRAG_DROP_FILE' | translate }}

@@ -1,203 +1,205 @@
 <nb-card class="main">
-	<nb-card-header>
-    	<span class="cancel">
-			<i class="fas fa-times" (click)="cancel()"></i>
-		</span>
-		<h5 class="title">
-			{{
-				(payment
-					? 'INVOICES_PAGE.PAYMENTS.EDIT_PAYMENT'
-					: 'INVOICES_PAGE.PAYMENTS.RECORD_PAYMENT'
-				) | translate
-			}}
-		</h5>
-	</nb-card-header>
-	<nb-card-body class="body">
-		<form [formGroup]="form">
-			<ng-container *ngIf="!invoice">
-				<div class="row">
-					<div class="col-9">
-						<div class="form-group">
-							<label for="inputInvoiceNumber" class="label">
-								{{
-									'INVOICES_PAGE.PAYMENTS.SELECT_INVOICE'
-										| translate
-								}}
-							</label>
-							<nb-select
-								class="d-block"
-								formControlName="invoice"
-								[placeholder]="'FORM.PLACEHOLDERS.INVOICE_NUMBER' | translate"
-								fullWidth
-								id="inputInvoiceNumber"
-							>
-								<nb-option
-									*ngFor="let invoice of invoices"
-									[value]="invoice"
-								>
-									{{ invoice.invoiceNumber }}
-								</nb-option>
-							</nb-select>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-6">
-						<div class="form-group">
-							<label for="inputOrganizationContact" class="label">
-								{{ 'INVOICES_PAGE.CONTACT' | translate }}
-							</label>
-							<ga-contact-select
-								[addTag]="true"
-								[clearable]="true"
-								[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
-								formControlName="organizationContact"
-								(onChanged)="selectOrganizationContact($event)"
-							></ga-contact-select>
-						</div>
-					</div>
-					<div class="col-6">
-						<div class="form-group">
-							<label class="label">
-								{{
-									'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS'
-										| translate
-								}}
-							</label>
-							<ga-project-selector
-								formControlName="projectId"
-								[placeholder]="'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS' | translate"
-								[skipGlobalChange]="true"
-								[defaultSelected]="false"
-								[showAllOption]="false"
-								(onChanged)="selectProject($event)"
-							></ga-project-selector>
-						</div>
-					</div>
-				</div>
-			</ng-container>
-			<div class="row">
-				<div class="col-6">
-					<div class="form-group">
-						<label for="inputPaymentDate" class="label">
-							{{
-								'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
-									| translate
-							}}
-						</label>
-						<input
-							nbInput
-							[placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE' | translate"
-							[nbDatepicker]="paymentDatePicker"
-							formControlName="paymentDate"
-							id="inputPaymentDate"
-							fullWidth
-						/>
-						<nb-datepicker #paymentDatePicker></nb-datepicker>
-					</div>
-				</div>
-				<div class="col-6">
-					<div class="form-group">
-						<label for="inputPaymentMethod" class="label">
-							{{
-								'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
-									| translate
-							}}
-						</label>
-						<nb-select
-							id="inputPaymentMethod"
-							class="d-block"
-							formControlName="paymentMethod"
-							[placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD' | translate"
-							fullWidth
-						>
-							<nb-option
-								*ngFor="let paymentMethod of paymentMethods"
-								[value]="paymentMethod"
-							>
-								{{
-									'INVOICES_PAGE.PAYMENTS.' + paymentMethod
-										| translate
-								}}
-							</nb-option>
-						</nb-select>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-12">
-					<ga-currency
-						formControlName="currency"
-						[formControl]="form.get('currency')"
-						(optionChange)="currencyChanged($event)"
-					></ga-currency>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-12 mb-3">
-					<ga-tags-color-input
-						[selectedTags]="form.get('tags').value"
-						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isOrgLevel]="true"
-					></ga-tags-color-input>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-12">
-					<div class="form-group">
-						<label for="inputAmount" class="label">
-							<span>
-								{{ 'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate }}
-							</span>
-						</label>
-						<input
-							type="number"
-							nbInput
-							[placeholder]="'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate"
-							formControlName="amount"
-							id="inputAmount"
-							fullWidth
-						/>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-12">
-					<div class="form-group">
-						<label for="inputNote" class="label">
-							{{ 'INVOICES_PAGE.PAYMENTS.NOTE' | translate }}
-						</label>
-						<textarea
-							nbInput
-							[placeholder]="'INVOICES_PAGE.PAYMENTS.NOTE' | translate"
-							formControlName="note"
-							id="inputNote"
-							fullWidth
-						></textarea>
-					</div>
-				</div>
-			</div>
-		</form>
-	</nb-card-body>
-	<nb-card-footer class="text-left">
-		<button
-			status="basic"
-			outline
-			size="small"
-			class="mr-3"
-			nbButton
-			(click)="cancel()"
-		>
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button
-			(click)="addEditPayment()"
-			status="success"
-			[disabled]="form.invalid"
-      		size="small"
-			nbButton
-		>
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</nb-card-footer>
-</nb-card>
+  <nb-card-header>
+    <span class="cancel">
+      <i class="fas fa-times" (click)="cancel()"></i>
+    </span>
+    <h5 class="title">
+      {{
+      (payment
+      ? 'INVOICES_PAGE.PAYMENTS.EDIT_PAYMENT'
+      : 'INVOICES_PAGE.PAYMENTS.RECORD_PAYMENT'
+      ) | translate
+      }}
+    </h5>
+  </nb-card-header>
+  <nb-card-body class="body">
+    <form [formGroup]="form">
+      @if (!invoice) {
+        <div class="row">
+          <div class="col-9">
+            <div class="form-group">
+              <label for="inputInvoiceNumber" class="label">
+                {{
+                'INVOICES_PAGE.PAYMENTS.SELECT_INVOICE'
+                | translate
+                }}
+              </label>
+              <nb-select
+                class="d-block"
+                formControlName="invoice"
+                [placeholder]="'FORM.PLACEHOLDERS.INVOICE_NUMBER' | translate"
+                fullWidth
+                id="inputInvoiceNumber"
+                >
+                @for (invoice of invoices; track invoice) {
+                  <nb-option
+                    [value]="invoice"
+                    >
+                    {{ invoice.invoiceNumber }}
+                  </nb-option>
+                }
+              </nb-select>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-6">
+            <div class="form-group">
+              <label for="inputOrganizationContact" class="label">
+                {{ 'INVOICES_PAGE.CONTACT' | translate }}
+              </label>
+              <ga-contact-select
+                [addTag]="true"
+                [clearable]="true"
+                [placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+                formControlName="organizationContact"
+                (onChanged)="selectOrganizationContact($event)"
+              ></ga-contact-select>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="form-group">
+              <label class="label">
+                {{
+                'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS'
+                | translate
+                }}
+              </label>
+              <ga-project-selector
+                formControlName="projectId"
+                [placeholder]="'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS' | translate"
+                [skipGlobalChange]="true"
+                [defaultSelected]="false"
+                [showAllOption]="false"
+                (onChanged)="selectProject($event)"
+              ></ga-project-selector>
+            </div>
+          </div>
+        </div>
+      }
+      <div class="row">
+        <div class="col-6">
+          <div class="form-group">
+            <label for="inputPaymentDate" class="label">
+              {{
+              'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
+              | translate
+              }}
+            </label>
+            <input
+              nbInput
+              [placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE' | translate"
+              [nbDatepicker]="paymentDatePicker"
+              formControlName="paymentDate"
+              id="inputPaymentDate"
+              fullWidth
+              />
+              <nb-datepicker #paymentDatePicker></nb-datepicker>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="form-group">
+              <label for="inputPaymentMethod" class="label">
+                {{
+                'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
+                | translate
+                }}
+              </label>
+              <nb-select
+                id="inputPaymentMethod"
+                class="d-block"
+                formControlName="paymentMethod"
+                [placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD' | translate"
+                fullWidth
+                >
+                @for (paymentMethod of paymentMethods; track paymentMethod) {
+                  <nb-option
+                    [value]="paymentMethod"
+                    >
+                    {{
+                    'INVOICES_PAGE.PAYMENTS.' + paymentMethod
+                    | translate
+                    }}
+                  </nb-option>
+                }
+              </nb-select>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12">
+            <ga-currency
+              formControlName="currency"
+              [formControl]="form.get('currency')"
+              (optionChange)="currencyChanged($event)"
+            ></ga-currency>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 mb-3">
+            <ga-tags-color-input
+              [selectedTags]="form.get('tags').value"
+              (selectedTagsEvent)="selectedTagsEvent($event)"
+              [isOrgLevel]="true"
+            ></ga-tags-color-input>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12">
+            <div class="form-group">
+              <label for="inputAmount" class="label">
+                <span>
+                  {{ 'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate }}
+                </span>
+              </label>
+              <input
+                type="number"
+                nbInput
+                [placeholder]="'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate"
+                formControlName="amount"
+                id="inputAmount"
+                fullWidth
+                />
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <div class="form-group">
+                <label for="inputNote" class="label">
+                  {{ 'INVOICES_PAGE.PAYMENTS.NOTE' | translate }}
+                </label>
+                <textarea
+                  nbInput
+                  [placeholder]="'INVOICES_PAGE.PAYMENTS.NOTE' | translate"
+                  formControlName="note"
+                  id="inputNote"
+                  fullWidth
+                ></textarea>
+              </div>
+            </div>
+          </div>
+        </form>
+      </nb-card-body>
+      <nb-card-footer class="text-left">
+        <button
+          status="basic"
+          outline
+          size="small"
+          class="mr-3"
+          nbButton
+          (click)="cancel()"
+          >
+          {{ 'BUTTONS.CANCEL' | translate }}
+        </button>
+        <button
+          (click)="addEditPayment()"
+          status="success"
+          [disabled]="form.invalid"
+          size="small"
+          nbButton
+          >
+          {{ 'BUTTONS.SAVE' | translate }}
+        </button>
+      </nb-card-footer>
+    </nb-card>

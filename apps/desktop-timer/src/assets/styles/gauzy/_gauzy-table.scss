@@ -1,4 +1,6 @@
-@import 'var';
+// Forward var so respond mixin and themes are available to importers
+@forward 'var';
+@use 'var' as *;
 
 .action {
   box-shadow: var(--gauzy-shadow);

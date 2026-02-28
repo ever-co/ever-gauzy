@@ -63,10 +63,19 @@ spec:
                                             - gauzy-stage-api
                               topologyKey: kubernetes.io/hostname
                           weight: 1
+            securityContext:
+                seccompProfile:
+                    type: RuntimeDefault
             imagePullSecrets:
                 - name: ever-registry-docker-registry-credentials
             containers:
                 - name: gauzy-stage-api
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      runAsNonRoot: true
+                      capabilities:
+                          drop: ['ALL']
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-api-stage:latest
                   env:
                       - name: API_HOST
@@ -171,6 +180,8 @@ spec:
                         value: '$JWT_REFRESH_TOKEN_SECRET'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '$JWT_REFRESH_TOKEN_EXPIRATION_TIME'
+                      - name: ALLOWED_ORIGINS
+                        value: '$ALLOWED_ORIGINS'
                       - name: CLOUDINARY_API_KEY
                         value: '$CLOUDINARY_API_KEY'
                       - name: CLOUDINARY_API_SECRET
@@ -333,6 +344,12 @@ spec:
                 - name: ever-registry-docker-registry-credentials
             containers:
                 - name: gauzy-stage-webapp
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      runAsNonRoot: true
+                      capabilities:
+                          drop: ['ALL']
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-webapp-stage:latest
                   env:
                       - name: DEMO

@@ -11,7 +11,7 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "plugin-job-proposal", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -22,7 +22,8 @@
 				"packageJson": "packages/plugins/integration-upwork/package.json",
 				"main": "packages/plugins/integration-upwork/src/index.ts",
 				"assets": ["packages/plugins/integration-upwork/*.md"]
-			}
+			},
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, PasswordHashService } from '@gauzy/core';
+import { PasswordHashService, User } from '@gauzy/core';
 import { IUser } from '@gauzy/contracts';
 
 /**
@@ -14,6 +14,7 @@ import { IUser } from '@gauzy/contracts';
 @Injectable()
 export class OAuthUserService {
 	private readonly logger = new Logger(OAuthUserService.name);
+
 	constructor(
 		@InjectRepository(User)
 		private readonly typeOrmRepository: Repository<User>,

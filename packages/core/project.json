@@ -11,7 +11,7 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["auth", "common", "config", "constants", "contracts", "plugin", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -29,7 +29,8 @@
 						"glob": "**/*.{gql,hbs,mjml,csv,json}"
 					}
 				]
-			}
+			},
+			"dependsOn": ["^build"]
 		},
 		"serve": {
 			"executor": "nx:run-commands",

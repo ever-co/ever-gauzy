@@ -1,6 +1,7 @@
 @use 'sass:math';
-// @nebular out of the box themes
-@import 'themes';
+// @nebular out of the box themes - forward so nb-theme() etc. are available to importers
+@forward 'themes';
+@use 'themes' as *;
 
 $break-xs: 360px;
 $break-sm: 480px;

@@ -16,7 +16,8 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
-		<div *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE" class="columns-header row align-items-center">
+		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+		<div class="columns-header row align-items-center">
 			<div class="col-md-2 pl-3 float-left text-truncate">
 				{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
 			</div>
@@ -33,61 +34,66 @@
 				{{ 'ORGANIZATIONS_PAGE.TAGS' | translate }}
 			</div>
 		</div>
+		}
 	</nb-card-header>
 	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-			<div class="table-scroll-container" infinite-scroll [scrollWindow]="false" (scrolled)="onScroll()">
-				<nb-card class="p-0" *ngFor="let vendor of vendors">
-					<nb-card-body
-						class="custom-table"
-						[ngClass]="{ selected: selected?.state && vendor === selected?.vendor }"
-						(click)="selectVendor(vendor)"
-					>
-						<div class="row align-items-center">
-							<div class="col-md-2 p-0 float-left text-truncate">
-								<ga-company-logo [rowData]="vendor"></ga-company-logo>
-								{{ vendor.name }}
-							</div>
-							<div class="col-md-2 p-0 float-left text-truncate">
-								{{ vendor.phone }}
-							</div>
-							<div class="col-md-2 p-0 float-left text-truncate">
-								<gauzy-email [rowData]="vendor"></gauzy-email>
-							</div>
-							<div class="col-md-3 p-0 float-left text-truncate">
-								<gauzy-external-link [rowData]="vendor"></gauzy-external-link>
-							</div>
-							<div class="col-md-3 float-left p-0 text-truncate">
-								<ga-only-tags [rowData]="vendor"></ga-only-tags>
-							</div>
+		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
+		<div class="table-scroll-container" infiniteScroll [scrollWindow]="false" (scrolled)="onScroll()">
+			@for (vendor of vendors; track vendor.id) {
+			<nb-card class="p-0">
+				<nb-card-body
+					class="custom-table"
+					[class.selected]="selected?.state && vendor === selected?.vendor"
+					(click)="selectVendor(vendor)"
+				>
+					<div class="row align-items-center">
+						<div class="col-md-2 p-0 float-left text-truncate">
+							<ga-company-logo [rowData]="vendor"></ga-company-logo>
+							{{ vendor.name }}
 						</div>
-					</nb-card-body>
-				</nb-card>
+						<div class="col-md-2 p-0 float-left text-truncate">
+							{{ vendor.phone }}
+						</div>
+						<div class="col-md-2 p-0 float-left text-truncate">
+							<gauzy-email [rowData]="vendor"></gauzy-email>
+						</div>
+						<div class="col-md-3 p-0 float-left text-truncate">
+							<gauzy-external-link [rowData]="vendor"></gauzy-external-link>
+						</div>
+						<div class="col-md-3 float-left p-0 text-truncate">
+							<ga-only-tags [rowData]="vendor"></ga-only-tags>
+						</div>
+					</div>
+				</nb-card-body>
+			</nb-card>
+			} @empty {
+			<div class="no-data">
+				<ngx-no-data-message
+					[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
+				></ngx-no-data-message>
 			</div>
-		</ng-template>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
-			<ng-template [ngIf]="vendors?.length > 0" [ngIfElse]="noVendorTemplate">
-				<ga-card-grid
-					[totalItems]="pagination?.totalItems"
-					[settings]="settingsSmartTable"
-					[source]="vendors"
-					(onSelectedItem)="selectVendor($event)"
-					(scroll)="onScroll()"
-				></ga-card-grid>
-			</ng-template>
-			<ng-template #noVendorTemplate>
-				<div class="no-data">
-					<ngx-no-data-message
-						[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
-					></ngx-no-data-message>
-				</div>
-			</ng-template>
-		</ng-template>
+			}
+		</div>
+		} @else if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && vendors?.length > 0) {
+		<ga-card-grid
+			[totalItems]="pagination?.totalItems"
+			[settings]="settingsSmartTable"
+			[source]="vendors"
+			(onSelectedItem)="selectVendor($event)"
+			(scroll)="onScroll()"
+		></ga-card-grid>
+		} @else {
+		<div class="no-data">
+			<ngx-no-data-message
+				[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
+			></ngx-no-data-message>
+		</div>
+		}
 	</nb-card-body>
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
+	@if (selectedItem) {
 	<ngx-favorite-toggle
-		*ngIf="selectedItem"
 		[entityType]="'OrganizationVendor'"
 		[entityId]="selectedItem.id"
 		[entityName]="selectedItem.name"
@@ -98,6 +104,7 @@
 		[showLabel]="false"
 		(favoriteToggled)="onVendorFavoriteToggled($event)"
 	></ngx-favorite-toggle>
+	}
 	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
 		<div class="actions">
 			<button
@@ -150,7 +157,8 @@
 					}}
 				</h5>
 			</div>
-			<form [formGroup]="form" *ngIf="form" class="form">
+			@if (form) {
+			<form [formGroup]="form" class="form">
 				<div class="row mb-3">
 					<div class="col-sm-12 d-flex flex-column">
 						<label class="label" for="name">{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}</label>
@@ -217,6 +225,7 @@
 					</div>
 				</div>
 			</form>
+			}
 			<div class="row mb-3">
 				<div class="d-flex">
 					<button
@@ -228,7 +237,7 @@
 					>
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
-					<button (click)="save()" nbButton status="success" [disabled]="form.invalid || saveDisabled">
+					<button (click)="save()" nbButton status="success" [disabled]="form?.invalid || saveDisabled">
 						{{ 'BUTTONS.SAVE' | translate }}
 					</button>
 				</div>

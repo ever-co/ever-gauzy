@@ -1,3 +1,4 @@
+import { In, FindOptionsWhere, DeleteResult } from 'typeorm';
 import { IHelpCenterAuthor } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from '@gauzy/core';
@@ -15,40 +16,49 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 		super(typeOrmHelpCenterAuthorRepository, mikroOrmHelpCenterAuthorRepository);
 	}
 
-	async findByArticleId(articleId: string): Promise<HelpCenterAuthor[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('knowledge_base_author')
-			.where('knowledge_base_author.articleId = :articleId', {
-				articleId
-			})
-			.getMany();
+	/**
+	 * Get authors by article ID.
+	 *
+	 * @param articleId - The ID of the article to filter authors by.
+	 * @returns A promise that resolves to an array of help center authors for the article.
+	 */
+	public async findByArticleId(articleId: string): Promise<HelpCenterAuthor[]> {
+		return await this.find({
+			where: { articleId } as FindOptionsWhere<HelpCenterAuthor>
+		});
 	}
 
 	/**
+	 * Create authors in Bulk
 	 *
-	 * @param createInput
+	 * @param input
 	 * @returns
 	 */
-	async createBulk(createInput: IHelpCenterAuthor[]) {
-		return await this.typeOrmRepository.save(createInput);
+	async createBulk(input: IHelpCenterAuthor[]): Promise<HelpCenterAuthor[]> {
+		return await this.saveMany(input);
 	}
 
 	/**
+	 * Delete authors by IDs in Bulk
 	 *
 	 * @param ids
 	 * @returns
 	 */
-	async deleteBulkByArticleId(ids: string[]) {
+	async deleteBulk(ids: string[]): Promise<DeleteResult> {
 		if (isNotEmpty(ids)) {
-			return await this.typeOrmRepository.delete(ids);
+			return await this.delete({ id: In(ids) } as FindOptionsWhere<HelpCenterAuthor>);
 		}
+
+		return { affected: 0, raw: [] };
 	}
 
 	/**
+	 * Get all authors with optional filters and relations.
 	 *
-	 * @returns
+	 * @param options - Find options to customize the query (e.g., relations, order).
+	 * @returns A promise that resolves to an array of help center authors.
 	 */
-	async getAll(): Promise<IHelpCenterAuthor[]> {
-		return await this.typeOrmRepository.createQueryBuilder('knowledge_base_author').getMany();
+	public async getAll(options?: any): Promise<IHelpCenterAuthor[]> {
+		return await this.find(options);
 	}
 }

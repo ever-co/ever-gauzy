@@ -1,11 +1,11 @@
-import { Directive, ElementRef, EventEmitter, Output, HostListener } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, Output, HostListener, inject } from '@angular/core';
 
 @Directive({
-    selector: '[gauzyOutside]',
-    standalone: false
+	selector: '[gauzyOutside]',
+	standalone: true
 })
 export class OutsideDirective {
-	constructor(private readonly elementRef: ElementRef) {}
+	private readonly elementRef = inject(ElementRef);
 
 	@Output() clickOutside = new EventEmitter<MouseEvent>();
 

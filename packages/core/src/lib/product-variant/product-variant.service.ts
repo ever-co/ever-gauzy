@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { In, FindOptionsWhere } from 'typeorm';
 import { IPagination, IProductVariant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductVariant } from './product-variant.entity';
@@ -15,29 +16,20 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 	}
 
 	async findAllProductVariants(): Promise<IPagination<IProductVariant>> {
-		const total = await this.typeOrmRepository.count();
-		const items = await this.typeOrmRepository.find({
+		return this.findAll({
 			relations: ['settings', 'price', 'image']
 		});
-
-		return { items, total };
 	}
 
 	async findAllVariantsByProductId(productId: string): Promise<IPagination<IProductVariant>> {
-		const total = await this.typeOrmRepository.count();
-		const items = await this.typeOrmRepository.find({
+		return this.findAll({
 			relations: ['image'],
 			where: { productId: productId }
 		});
-
-		return { items, total };
 	}
 
 	async findOne(id: string): Promise<ProductVariant> {
-		return await this.typeOrmRepository.findOne({
-			where: {
-				id: id
-			},
+		return await this.findOneByIdString(id, {
 			relations: {
 				setting: true,
 				price: true,
@@ -47,28 +39,39 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 	}
 
 	async createBulk(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
-		return this.typeOrmRepository.save(productVariants);
+		return await this.saveMany(productVariants);
 	}
 
 	async createVariant(productVariant: ProductVariant): Promise<ProductVariant> {
-		return this.typeOrmRepository.save(productVariant);
+		return this.save(productVariant);
 	}
 
 	async updateVariant(productVariant: ProductVariant): Promise<ProductVariant> {
-		return this.typeOrmRepository.save(productVariant);
+		return this.save(productVariant);
 	}
 
-	async deleteMany(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
-		return this.typeOrmRepository.remove(productVariants);
+	async deleteManyVariants(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
+		const ids = productVariants.map((v) => v.id).filter((id): id is string => !!id);
+		if (ids.length > 0) {
+			const entities = await this.find({
+				where: {
+					id: In(ids)
+				} as FindOptionsWhere<ProductVariant>,
+				relations: {
+					warehouseProductVariants: true
+				}
+			});
+			await this.deleteMany(ids);
+			return entities;
+		}
+		return [];
 	}
 
 	async deleteFeaturedImage(id: string): Promise<IProductVariant> {
 		try {
-			let variant = await this.typeOrmRepository.findOneBy({
-				id
-			});
+			const variant = await this.findOneByIdString(id);
 			variant.image = null;
-			return await this.typeOrmRepository.save(variant);
+			return await this.save(variant);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

@@ -1,22 +1,15 @@
-<div
-	*ngIf="!hide"
-	[ngClass]="{
-		collapsed: isCollapse,
-		expanded: isExpand,
-		moved: move
-	}"
-	id="window"
-	#window
->
-	<nb-icon
-		icon="more-vertical-outline"
-		nbPopoverPlacement="bottom"
-		[nbPopover]="setting"
-		nbPopoverTrigger="click"
-		nbButton
-	></nb-icon>
-	<ng-container *ngTemplateOutlet="templateRef"></ng-container>
-</div>
+@if (!hide) {
+	<div [class.collapsed]="isCollapse" [class.expanded]="isExpand" [class.moved]="move" id="window" #window>
+		<nb-icon
+			icon="more-vertical-outline"
+			nbPopoverPlacement="bottom"
+			[nbPopover]="setting"
+			nbPopoverTrigger="click"
+			nbButton
+		></nb-icon>
+		<ng-container [ngTemplateOutlet]="templateRef"></ng-container>
+	</div>
+}
 <!-- Settings -->
 <ng-template #setting>
 	<div gauzyOutside (clickOutside)="onClickSetting($event)" class="setting">

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, Input, OnDestroy, AfterViewInit } from '@
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
-import * as moment from 'moment';
+import moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -32,10 +32,10 @@ import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-recurring-expense-mutation',
-    templateUrl: './recurring-expense-mutation.component.html',
-    styleUrls: ['./recurring-expense-mutation.component.scss'],
-    standalone: false
+	selector: 'ga-recurring-expense-mutation',
+	templateUrl: './recurring-expense-mutation.component.html',
+	styleUrls: ['./recurring-expense-mutation.component.scss'],
+	standalone: false
 })
 export class RecurringExpenseMutationComponent
 	extends TranslationBaseComponent
@@ -332,11 +332,11 @@ export class RecurringExpenseMutationComponent
 					? await this.organizationRecurringExpenseService.getStartDateUpdateType({
 							newStartDate,
 							recurringExpenseId: this.recurringExpense.id
-					  })
+						})
 					: await this.employeeRecurringExpenseService.getStartDateUpdateType({
 							newStartDate,
 							recurringExpenseId: this.recurringExpense.id
-					  });
+						});
 			this.startDateUpdateType = value;
 			this.conflicts = conflicts;
 		}

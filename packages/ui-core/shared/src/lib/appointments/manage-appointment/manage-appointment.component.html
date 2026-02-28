@@ -7,7 +7,8 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="appointment-form">
-			<form [formGroup]="form" *ngIf="form">
+			@if (form) {
+			<form [formGroup]="form">
 				<div class="row">
 					<div class="col-6">
 						<div class="form-group">
@@ -48,23 +49,27 @@
 							</nb-checkbox>
 						</div>
 					</div>
-					<div class="col-2" *ngIf="form.get('bufferTime').value">
+					@if (form.get('bufferTime').value) {
+					<div class="col-2">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTimeStart">
 								{{ 'APPOINTMENTS_PAGE.BUFFER_AT_START' | translate }}
 							</nb-checkbox>
 						</div>
 					</div>
-					<div class="col-2" *ngIf="form.get('bufferTime').value">
+					} @if (form.get('bufferTime').value) {
+					<div class="col-2">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTimeEnd">
 								{{ 'APPOINTMENTS_PAGE.BUFFER_AT_END' | translate }}
 							</nb-checkbox>
 						</div>
 					</div>
+					}
 				</div>
 				<div class="row">
-					<div class="col-6 form-group" *ngIf="form.get('bufferTime').value">
+					@if (form.get('bufferTime').value) {
+					<div class="col-6 form-group">
 						<input
 							fullWidth
 							id="bufferTimeInMins"
@@ -75,6 +80,7 @@
 							placeholder="{{ 'FORM.PLACEHOLDERS.BUFFER_TIME' | translate }}"
 						/>
 					</div>
+					}
 				</div>
 				<div class="row">
 					<div class="col-3">
@@ -86,7 +92,8 @@
 					</div>
 				</div>
 				<div class="row">
-					<div class="col-6 form-group" *ngIf="form.get('breakTime').value">
+					@if (form.get('breakTime').value) {
+					<div class="col-6 form-group">
 						<ga-timer-picker
 							name="break_start_time"
 							[min]="form.get('selectedRange').value.start"
@@ -94,9 +101,11 @@
 							formControlName="breakStartTime"
 						></ga-timer-picker>
 					</div>
+					}
 				</div>
 				<div class="row">
-					<div class="col-6 form-group" *ngIf="form.get('breakTime').value">
+					@if (form.get('breakTime').value) {
+					<div class="col-6 form-group">
 						<input
 							fullWidth
 							id="breakTimeInMins"
@@ -107,6 +116,7 @@
 							placeholder="{{ 'FORM.PLACEHOLDERS.BREAK_TIME' | translate }}"
 						/>
 					</div>
+					}
 				</div>
 				<div class="row">
 					<div class="col-6">
@@ -140,7 +150,8 @@
 						</div>
 					</div>
 				</div>
-				<div class="row" *ngIf="!hidePrivateFields">
+				@if (!hidePrivateFields) {
+				<div class="row">
 					<div class="col-4">
 						<div class="form-group">
 							<label for="description" class="label">{{
@@ -156,7 +167,8 @@
 						</div>
 					</div>
 				</div>
-				<div class="row" *ngIf="hidePrivateFields">
+				} @if (hidePrivateFields) {
+				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
 							<label for="emailsSelect" class="label">{{ 'FORM.LABELS.EMAILS' | translate }}</label>
@@ -172,24 +184,26 @@
 								placeholder="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
 								notFoundText="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
 								appendTo="body"
-								[ngClass]="{
-									'item-invalid': emails.invalid && (emails.dirty || emails.touched),
-									'item-valid': emails.valid && (emails.dirty || emails.touched)
-								}"
+								[class.item-invalid]="emails.invalid && (emails.dirty || emails.touched)"
+								[class.item-valid]="emails.valid && (emails.dirty || emails.touched)"
 							>
 							</ng-select>
 						</div>
 					</div>
 				</div>
+				}
 			</form>
+			}
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
 		<button status="success" nbButton (click)="onSaveRequest()">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
-		<button *ngIf="editMode" style="margin-left: 10px" status="warning" nbButton (click)="cancelAppointment()">
+		@if (editMode) {
+		<button style="margin-left: 10px" status="warning" nbButton (click)="cancelAppointment()">
 			{{ 'APPOINTMENTS_PAGE.CANCEL_APPOINTMENT' | translate }}
 		</button>
+		}
 	</nb-card-footer>
 </nb-card>

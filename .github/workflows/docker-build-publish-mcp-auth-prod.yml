@@ -16,7 +16,7 @@ concurrency:
 jobs:
   gauzy-mcp-auth:
     runs-on: ubicloud-standard-8
-    timeout-minutes: 150
+    timeout-minutes: 300
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
           driver: docker
 
       - name: Build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./.deploy/mcp-auth/Dockerfile
@@ -45,6 +45,8 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+            NX_BRANCH=${{ github.ref_name }}
 
       - name: Docker images list
         run: |
@@ -83,12 +85,12 @@ jobs:
         run: |
           docker push ghcr.io/ever-co/gauzy-mcp-auth:latest
 
-      - name: Login to CW Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.CW_DOCKER_REGISTRY }}
-          username: ${{ secrets.CW_DOCKER_USER }}
-          password: ${{ secrets.CW_DOCKER_USER_PASSWORD }}
-#  - name: Push to CW Registry
-#    run: |
-#      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-mcp-auth:latest
+    #   - name: Login to CW Container Registry
+    #     uses: docker/login-action@v3
+    #     with:
+    #       registry: ${{ secrets.CW_DOCKER_REGISTRY }}
+    #       username: ${{ secrets.CW_DOCKER_USER }}
+    #       password: ${{ secrets.CW_DOCKER_USER_PASSWORD }}
+    #  - name: Push to CW Registry
+    #    run: |
+    #      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-mcp-auth:latest

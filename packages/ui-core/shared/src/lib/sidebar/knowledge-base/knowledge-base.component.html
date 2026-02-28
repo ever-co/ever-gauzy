@@ -2,14 +2,11 @@
 	<nb-card-header class="d-flex flex-column">
 		<span class="cancel"><i class="fas fa-times" (click)="closeDialog()"></i></span>
 		<h6 class="title">
-			<ng-template [ngIf]="flag === flagEnum.BASE" [ngIfElse]="categoryTitle">
-				{{ (editType === actionEnum.EDIT ? 'HELP_PAGE.MANAGE_BASE' : 'HELP_PAGE.ADD_BASE') | translate }}
-			</ng-template>
-			<ng-template #categoryTitle>
-				{{
-					(editType === actionEnum.EDIT ? 'HELP_PAGE.MANAGE_CATEGORY' : 'HELP_PAGE.ADD_CATEGORY') | translate
-				}}
-			</ng-template>
+			@if (flag === flagEnum.BASE) {
+			{{ (editType === actionEnum.EDIT ? 'HELP_PAGE.MANAGE_BASE' : 'HELP_PAGE.ADD_BASE') | translate }}
+			} @else {
+			{{ (editType === actionEnum.EDIT ? 'HELP_PAGE.MANAGE_CATEGORY' : 'HELP_PAGE.ADD_CATEGORY') | translate }}
+			}
 		</h6>
 	</nb-card-header>
 	<nb-card-body class="card-body">
@@ -53,14 +50,17 @@
 							id="icon"
 							[status]="isInvalidControl('icon') ? 'danger' : 'basic'"
 						>
-							<nb-select-label *ngIf="icon">
-								<nb-icon [ngStyle]="{ color: 'inherit' }" class="mr-1" [icon]="icon.value"></nb-icon
+							@if (icon) {
+							<nb-select-label>
+								<nb-icon [style.color]="'inherit'" class="mr-1" [icon]="icon.value"></nb-icon
 								>{{ icon.label }}
 							</nb-select-label>
-							<nb-option *ngFor="let icon of icons" [value]="icon">
+							} @for (icon of icons; track icon) {
+							<nb-option [value]="icon">
 								<nb-icon class="mr-1" [icon]="icon.value"></nb-icon>
 								{{ icon.label }}
 							</nb-option>
+							}
 						</nb-select>
 					</div>
 				</div>
@@ -100,12 +100,15 @@
 							[status]="isInvalidControl('name') ? 'danger' : 'basic'"
 							class="mb-1"
 						/>
-						<div *ngIf="name.touched && name.hasError('required')" class="caption status-danger">
+						@if (name.touched && name.hasError('required')) {
+						<div class="caption status-danger">
 							{{ 'HELP_PAGE.ERRORS.NAME_REQUIRE' | translate }}
 						</div>
-						<div *ngIf="name.hasError('maxlength')" class="caption status-danger">
+						} @if (name.hasError('maxlength')) {
+						<div class="caption status-danger">
 							{{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
 						</div>
+						}
 					</div>
 				</div>
 				<div class="col-12">
@@ -123,9 +126,11 @@
 							id="description"
 							class="mb-1"
 						/>
-						<div *ngIf="description.hasError('maxlength')" class="caption status-danger">
+						@if (description.hasError('maxlength')) {
+						<div class="caption status-danger">
 							{{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
 						</div>
+						}
 					</div>
 				</div>
 			</div>

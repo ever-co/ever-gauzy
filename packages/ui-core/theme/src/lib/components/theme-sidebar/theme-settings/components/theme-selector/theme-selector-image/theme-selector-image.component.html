@@ -7,17 +7,16 @@
 			outline
 			placeholder="{{ (selected | async)?.name | translate }}"
 			(click)="isOpen = !isOpen"
-			[ngClass]="isOpen ? 'open' : ''"
+			[class.open]="isOpen"
 		></nb-select>
 	</div>
-	<div class="themes" *ngIf="isOpen">
+	@if (isOpen) {
+	<div class="themes">
+		@for (theme of themes; track theme) {
 		<div
-			*ngFor="let theme of themes"
-			[ngClass]="
-				(selected | async)?.value === theme.value
-					? 'card-container selected'
-					: 'card-container'
-			"
+			[class.card-container]="(selected | async)?.value === theme.value"
+			[class.selected]="(selected | async)?.value === theme.value"
+			[class.card-container]="!((selected | async)?.value === theme.value)"
 			(click)="onSelectedTheme(theme.value)"
 		>
 			<span>
@@ -28,5 +27,7 @@
 				<img [src]="theme.imageUrl" />
 			</div>
 		</div>
+		}
 	</div>
+	}
 </div>

@@ -53,17 +53,22 @@ let mikroOrmConnectionConfig: MikroOrmModuleOptions;
 let knexConnectionConfig: KnexModuleOptions;
 
 // We set default pool size as 40. Usually PG has 100 connections max by default.
-const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 40;
+const dbPoolSize = process.env.DB_POOL_SIZE ? Number.parseInt(process.env.DB_POOL_SIZE) : 40;
 
 // For now we limit Knex to 10 connections max because it's only used in few places and we don't want to overload the DB.
-const dbPoolSizeKnex = process.env.DB_POOL_SIZE_KNEX ? parseInt(process.env.DB_POOL_SIZE_KNEX) : 10;
+const dbPoolSizeKnex = process.env.DB_POOL_SIZE_KNEX ? Number.parseInt(process.env.DB_POOL_SIZE_KNEX) : 10;
 
-const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
+// Reduce connection timeout in development to fail faster and avoid long startup delays
+const defaultDbConnectionTimeout = process.env.NODE_ENV === 'production' ? 5000 : 2000; // 2 seconds for dev, 5 seconds for prod
 
-const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
+const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT
+	? Number.parseInt(process.env.DB_CONNECTION_TIMEOUT)
+	: defaultDbConnectionTimeout;
+
+const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? Number.parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
 
 const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-	? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+	? Number.parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
 	: 10000; // 10 seconds default
 
 const dbSslMode = process.env.DB_SSL_MODE === 'true';
@@ -86,7 +91,7 @@ switch (dbType) {
 		const mikroOrmMySqlOptions: MikroOrmMySqlOptions = {
 			driver: MySqlDriver,
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
+			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 3306,
 			dbName: process.env.DB_NAME || 'mysql',
 			user: process.env.DB_USER || 'root',
 			password: process.env.DB_PASS || 'root',
@@ -115,7 +120,7 @@ switch (dbType) {
 			type: dbType,
 			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
+			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 3306,
 			database: process.env.DB_NAME || 'mysql',
 			username: process.env.DB_USER || 'root',
 			password: process.env.DB_PASS || 'root',
@@ -177,7 +182,7 @@ switch (dbType) {
 		const mikroOrmPostgresOptions: MikroOrmPostgreSqlOptions = {
 			driver: PostgreSqlDriver,
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
+			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 5432,
 			dbName: process.env.DB_NAME || 'postgres',
 			user: process.env.DB_USER || 'postgres',
 			password: process.env.DB_PASS || 'root',
@@ -211,7 +216,7 @@ switch (dbType) {
 			type: dbType,
 			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
+			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 5432,
 			database: process.env.DB_NAME || 'postgres',
 			username: process.env.DB_USER || 'postgres',
 			password: process.env.DB_PASS || 'root',

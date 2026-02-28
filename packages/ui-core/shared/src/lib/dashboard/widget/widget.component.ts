@@ -1,17 +1,17 @@
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NbPopoverDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { GuiDrag } from '@gauzy/ui-core/common';
 import { WidgetService } from './widget.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-widget',
-    templateUrl: './widget.component.html',
-    styleUrls: ['./widget.component.scss'],
-    standalone: false
+	selector: 'ga-widget',
+	templateUrl: './widget.component.html',
+	styleUrls: ['./widget.component.scss'],
+	standalone: false
 })
 export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit, OnDestroy {
 	private _widgetDragEnded: Observable<any>;

@@ -5,6 +5,7 @@ import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauz
 import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
+import { MultiORMEnum } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { Tag } from './tag.entity';
 import { FileStorage } from './../core/file-storage';
@@ -26,21 +27,45 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	 * @returns A pagination object containing the filtered tags and total count.
 	 */
 	async findTagsByLevel(input: ITagFindInput, relations: string[] = []): Promise<IPagination<ITag>> {
-		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const { organizationId, organizationTeamId, name, color, description } = input;
 
-		// Add relations if specified
-		if (relations.length) {
-			query.setFindOptions({ relations });
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where: any = {
+					tenantId,
+					$or: [{ organizationId: null }, { organizationId }],
+					isSystem: false
+				};
+				if (isNotEmpty(organizationTeamId)) where.organizationTeamId = organizationTeamId;
+				if (isNotEmpty(name)) where.name = { $ilike: `%${name}%` };
+				if (isNotEmpty(color)) where.color = { $ilike: `%${color}%` };
+				if (isNotEmpty(description)) where.description = { $ilike: `%${description}%` };
+
+				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
+					populate: relations as any[]
+				});
+				return { items: items.map((e) => this.serialize(e)) as ITag[], total };
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+				// Add relations if specified
+				if (relations.length) {
+					query.setFindOptions({ relations });
+				}
+
+				// Apply filter criteria
+				this.getFilterTagQuery(query, input);
+
+				// Fetch the filtered data and count
+				const [items, total] = await query.getManyAndCount();
+
+				// Return the paginated result
+				return { items, total };
+			}
 		}
-
-		// Apply filter criteria
-		this.getFilterTagQuery(query, input);
-
-		// Fetch the filtered data and count
-		const [items, total] = await query.getManyAndCount();
-
-		// Return the paginated result
-		return { items, total };
 	}
 
 	/**
@@ -55,116 +80,159 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		relations: string[] | FindOptionsRelations<Tag> = []
 	): Promise<IPagination<ITag>> {
 		try {
-			// Get the list of custom fields for the specified entity, defaulting to an empty array if none are found
-			const customFields = getConfig().customFields?.['Tag'] ?? [];
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const tenantId = RequestContext.currentTenantId() || input.tenantId;
+					const { organizationId, organizationTeamId, name, color, description } = input;
 
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			// Define special criteria to find specific relations
-			query.setFindOptions({
-				...(relations ? { relations: relations } : {})
-			});
+					const where: any = {
+						tenantId,
+						$or: [{ organizationId: null }, { organizationId }],
+						isSystem: false
+					};
+					if (isNotEmpty(organizationTeamId)) where.organizationTeamId = organizationTeamId;
+					if (isNotEmpty(name)) where.name = { $ilike: `%${name}%` };
+					if (isNotEmpty(color)) where.color = { $ilike: `%${color}%` };
+					if (isNotEmpty(description)) where.description = { $ilike: `%${description}%` };
 
-			// Left join all relational tables with tag table
-			query.leftJoin(`${query.alias}.tagType`, 'tagType');
-			query.leftJoin(`${query.alias}.candidates`, 'candidate');
-			query.leftJoin(`${query.alias}.employees`, 'employee');
-			query.leftJoin(`${query.alias}.employeeLevels`, 'employeeLevel');
-			query.leftJoin(`${query.alias}.equipments`, 'equipment');
-			query.leftJoin(`${query.alias}.eventTypes`, 'eventType');
-			query.leftJoin(`${query.alias}.expenses`, 'expense');
-			query.leftJoin(`${query.alias}.incomes`, 'income');
-			query.leftJoin(`${query.alias}.integrations`, 'integration');
-			query.leftJoin(`${query.alias}.invoices`, 'invoice');
-			query.leftJoin(`${query.alias}.merchants`, 'merchant');
-			query.leftJoin(`${query.alias}.organizations`, 'organization');
-			query.leftJoin(`${query.alias}.organizationContacts`, 'organizationContact');
-			query.leftJoin(`${query.alias}.organizationDepartments`, 'organizationDepartment');
-			query.leftJoin(`${query.alias}.organizationEmploymentTypes`, 'organizationEmploymentType');
-			query.leftJoin(`${query.alias}.expenseCategories`, 'expenseCategory');
-			query.leftJoin(`${query.alias}.organizationPositions`, 'organizationPosition');
-			query.leftJoin(`${query.alias}.organizationProjects`, 'organizationProject');
-			query.leftJoin(`${query.alias}.organizationTeams`, 'organizationTeam');
-			query.leftJoin(`${query.alias}.organizationVendors`, 'organizationVendor');
-			query.leftJoin(`${query.alias}.payments`, 'payment');
-			query.leftJoin(`${query.alias}.products`, 'product');
-			query.leftJoin(`${query.alias}.requestApprovals`, 'requestApproval');
-			query.leftJoin(`${query.alias}.tasks`, 'task');
-			query.leftJoin(`${query.alias}.users`, 'user');
-			query.leftJoin(`${query.alias}.warehouses`, 'warehouse');
+					const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
+						populate: (Array.isArray(relations) ? relations : Object.keys(relations)) as any[]
+					});
 
-			// Custom Entity Fields: Add left joins for each custom field if they exist
-			if (customFields.length > 0) {
-				customFields.forEach((field) => {
-					if (field.relationType === 'many-to-many') {
-						query.leftJoin(`${query.alias}.customFields.${field.name}`, field.name);
+					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+					const serialized = await Promise.all(items.map(async (item: any) => {
+						const s = this.serialize(item);
+						if (s.icon) s.fullIconUrl = await store.getProviderInstance().url(s.icon);
+						return s;
+					}));
+					return { items: serialized as ITag[], total };
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Get the list of custom fields for the specified entity
+					const customFields = getConfig().customFields?.['Tag'] ?? [];
+
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					// Define special criteria to find specific relations
+					query.setFindOptions({
+						...(relations ? { relations: relations } : {})
+					});
+
+					// Left join all relational tables with tag table
+					query.leftJoin(`${query.alias}.tagType`, 'tagType');
+					query.leftJoin(`${query.alias}.candidates`, 'candidate');
+					query.leftJoin(`${query.alias}.employees`, 'employee');
+					query.leftJoin(`${query.alias}.employeeLevels`, 'employeeLevel');
+					query.leftJoin(`${query.alias}.equipments`, 'equipment');
+					query.leftJoin(`${query.alias}.eventTypes`, 'eventType');
+					query.leftJoin(`${query.alias}.expenses`, 'expense');
+					query.leftJoin(`${query.alias}.incomes`, 'income');
+					query.leftJoin(`${query.alias}.integrations`, 'integration');
+					query.leftJoin(`${query.alias}.invoices`, 'invoice');
+					query.leftJoin(`${query.alias}.merchants`, 'merchant');
+					query.leftJoin(`${query.alias}.organizations`, 'organization');
+					query.leftJoin(`${query.alias}.organizationContacts`, 'organizationContact');
+					query.leftJoin(`${query.alias}.organizationDepartments`, 'organizationDepartment');
+					query.leftJoin(`${query.alias}.organizationEmploymentTypes`, 'organizationEmploymentType');
+					query.leftJoin(`${query.alias}.expenseCategories`, 'expenseCategory');
+					query.leftJoin(`${query.alias}.organizationPositions`, 'organizationPosition');
+					query.leftJoin(`${query.alias}.organizationProjects`, 'organizationProject');
+					query.leftJoin(`${query.alias}.organizationTeams`, 'organizationTeam');
+					query.leftJoin(`${query.alias}.organizationVendors`, 'organizationVendor');
+					query.leftJoin(`${query.alias}.payments`, 'payment');
+					query.leftJoin(`${query.alias}.products`, 'product');
+					query.leftJoin(`${query.alias}.requestApprovals`, 'requestApproval');
+					query.leftJoin(`${query.alias}.tasks`, 'task');
+					query.leftJoin(`${query.alias}.users`, 'user');
+					query.leftJoin(`${query.alias}.warehouses`, 'warehouse');
+
+					// Custom Entity Fields: Add left joins for each custom field if they exist
+					if (customFields.length > 0) {
+						customFields.forEach((field) => {
+							if (field.relationType === 'many-to-many') {
+								query.leftJoin(`${query.alias}.customFields.${field.name}`, field.name);
+							}
+						});
 					}
-				});
-			}
 
-			// Add new selection to the SELECT query
-			query.select(`${query.alias}.*`);
+					// Add new selection to the SELECT query
+					query.select(`${query.alias}.*`);
 
-			query.addSelect(p(`"tagType"."type"`), `tagTypeName`);
-			// Add the select statement for counting, and cast it to integer
-			query.addSelect(p(`CAST(COUNT("candidate"."id") AS INTEGER)`), `candidate_counter`);
-			query.addSelect(p(`CAST(COUNT("employee"."id") AS INTEGER)`), `employee_counter`);
-			query.addSelect(p(`CAST(COUNT("employeeLevel"."id") AS INTEGER)`), `employee_level_counter`);
-			query.addSelect(p(`CAST(COUNT("equipment"."id") AS INTEGER)`), `equipment_counter`);
-			query.addSelect(p(`CAST(COUNT("eventType"."id") AS INTEGER)`), `event_type_counter`);
-			query.addSelect(p(`CAST(COUNT("expense"."id") AS INTEGER)`), `expense_counter`);
-			query.addSelect(p(`CAST(COUNT("income"."id") AS INTEGER)`), `income_counter`);
-			query.addSelect(p(`CAST(COUNT("integration"."id") AS INTEGER)`), `integration_counter`);
-			query.addSelect(p(`CAST(COUNT("invoice"."id") AS INTEGER)`), `invoice_counter`);
-			query.addSelect(p(`CAST(COUNT("merchant"."id") AS INTEGER)`), `merchant_counter`);
-			query.addSelect(p(`CAST(COUNT("organization"."id") AS INTEGER)`), `organization_counter`);
-			query.addSelect(p(`CAST(COUNT("organizationContact"."id") AS INTEGER)`), `organization_contact_counter`);
-			query.addSelect(
-				p(`CAST(COUNT("organizationDepartment"."id") AS INTEGER)`),
-				`organization_department_counter`
-			);
-			query.addSelect(
-				p(`CAST(COUNT("organizationEmploymentType"."id") AS INTEGER)`),
-				`organization_employment_type_counter`
-			);
-			query.addSelect(p(`CAST(COUNT("expenseCategory"."id") AS INTEGER)`), `expense_category_counter`);
-			query.addSelect(p(`CAST(COUNT("organizationPosition"."id") AS INTEGER)`), `organization_position_counter`);
-			query.addSelect(p(`CAST(COUNT("organizationProject"."id") AS INTEGER)`), `organization_project_counter`);
-			query.addSelect(p(`CAST(COUNT("organizationTeam"."id") AS INTEGER)`), `organization_team_counter`);
-			query.addSelect(p(`CAST(COUNT("organizationVendor"."id") AS INTEGER)`), `organization_vendor_counter`);
-			query.addSelect(p(`CAST(COUNT("payment"."id") AS INTEGER)`), `payment_counter`);
-			query.addSelect(p(`CAST(COUNT("product"."id") AS INTEGER)`), `product_counter`);
-			query.addSelect(p(`CAST(COUNT("requestApproval"."id") AS INTEGER)`), `request_approval_counter`);
-			query.addSelect(p(`CAST(COUNT("task"."id") AS INTEGER)`), `task_counter`);
-			query.addSelect(p(`CAST(COUNT("user"."id") AS INTEGER)`), `user_counter`);
-			query.addSelect(p(`CAST(COUNT("warehouse"."id") AS INTEGER)`), `warehouse_counter`);
+					query.addSelect(p(`"tagType"."type"`), `tagTypeName`);
+					// Add the select statement for counting, and cast it to integer
+					query.addSelect(p(`CAST(COUNT("candidate"."id") AS INTEGER)`), `candidate_counter`);
+					query.addSelect(p(`CAST(COUNT("employee"."id") AS INTEGER)`), `employee_counter`);
+					query.addSelect(p(`CAST(COUNT("employeeLevel"."id") AS INTEGER)`), `employee_level_counter`);
+					query.addSelect(p(`CAST(COUNT("equipment"."id") AS INTEGER)`), `equipment_counter`);
+					query.addSelect(p(`CAST(COUNT("eventType"."id") AS INTEGER)`), `event_type_counter`);
+					query.addSelect(p(`CAST(COUNT("expense"."id") AS INTEGER)`), `expense_counter`);
+					query.addSelect(p(`CAST(COUNT("income"."id") AS INTEGER)`), `income_counter`);
+					query.addSelect(p(`CAST(COUNT("integration"."id") AS INTEGER)`), `integration_counter`);
+					query.addSelect(p(`CAST(COUNT("invoice"."id") AS INTEGER)`), `invoice_counter`);
+					query.addSelect(p(`CAST(COUNT("merchant"."id") AS INTEGER)`), `merchant_counter`);
+					query.addSelect(p(`CAST(COUNT("organization"."id") AS INTEGER)`), `organization_counter`);
+					query.addSelect(
+						p(`CAST(COUNT("organizationContact"."id") AS INTEGER)`),
+						`organization_contact_counter`
+					);
+					query.addSelect(
+						p(`CAST(COUNT("organizationDepartment"."id") AS INTEGER)`),
+						`organization_department_counter`
+					);
+					query.addSelect(
+						p(`CAST(COUNT("organizationEmploymentType"."id") AS INTEGER)`),
+						`organization_employment_type_counter`
+					);
+					query.addSelect(p(`CAST(COUNT("expenseCategory"."id") AS INTEGER)`), `expense_category_counter`);
+					query.addSelect(
+						p(`CAST(COUNT("organizationPosition"."id") AS INTEGER)`),
+						`organization_position_counter`
+					);
+					query.addSelect(
+						p(`CAST(COUNT("organizationProject"."id") AS INTEGER)`),
+						`organization_project_counter`
+					);
+					query.addSelect(p(`CAST(COUNT("organizationTeam"."id") AS INTEGER)`), `organization_team_counter`);
+					query.addSelect(
+						p(`CAST(COUNT("organizationVendor"."id") AS INTEGER)`),
+						`organization_vendor_counter`
+					);
+					query.addSelect(p(`CAST(COUNT("payment"."id") AS INTEGER)`), `payment_counter`);
+					query.addSelect(p(`CAST(COUNT("product"."id") AS INTEGER)`), `product_counter`);
+					query.addSelect(p(`CAST(COUNT("requestApproval"."id") AS INTEGER)`), `request_approval_counter`);
+					query.addSelect(p(`CAST(COUNT("task"."id") AS INTEGER)`), `task_counter`);
+					query.addSelect(p(`CAST(COUNT("user"."id") AS INTEGER)`), `user_counter`);
+					query.addSelect(p(`CAST(COUNT("warehouse"."id") AS INTEGER)`), `warehouse_counter`);
 
-			// Custom Entity Fields: Add select statements for each custom field if they exist
-			if (customFields.length > 0) {
-				customFields.forEach((field) => {
-					if (field.relationType === 'many-to-many') {
-						const selectionAliasName = `${field.name}_counter`;
-						query.addSelect(`CAST(COUNT(${field.name}.id) AS INTEGER)`, selectionAliasName);
+					// Custom Entity Fields: Add select statements for each custom field if they exist
+					if (customFields.length > 0) {
+						customFields.forEach((field) => {
+							if (field.relationType === 'many-to-many') {
+								const selectionAliasName = `${field.name}_counter`;
+								query.addSelect(`CAST(COUNT(${field.name}.id) AS INTEGER)`, selectionAliasName);
+							}
+						});
 					}
-				});
+
+					// Adds GROUP BY condition in the query builder.
+					query.addGroupBy(`${query.alias}.id`);
+					query.addGroupBy(`tagType.type`);
+					// Additionally you can add parameters used in where expression.
+					query.where((qb: SelectQueryBuilder<Tag>) => {
+						this.getFilterTagQuery(qb, input);
+					});
+					let items = await query.getRawMany();
+
+					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+					items = await Promise.all(items.map(async (item) => {
+						if (item.icon) item.fullIconUrl = await store.getProviderInstance().url(item.icon);
+						return item;
+					}));
+					const total = items.length;
+
+					return { items, total };
+				}
 			}
-
-			// Adds GROUP BY condition in the query builder.
-			query.addGroupBy(`${query.alias}.id`);
-			query.addGroupBy(`tagType.type`);
-			// Additionally you can add parameters used in where expression.
-			query.where((qb: SelectQueryBuilder<Tag>) => {
-				this.getFilterTagQuery(qb, input);
-			});
-			let items = await query.getRawMany();
-
-			const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-			items = items.map((item) => {
-				if (item.icon) item.fullIconUrl = store.getProviderInstance().url(item.icon);
-				return item;
-			});
-			const total = items.length;
-
-			return { items, total };
 		} catch (error) {
 			console.log('Error while getting tags', error);
 			throw new BadRequestException(error);

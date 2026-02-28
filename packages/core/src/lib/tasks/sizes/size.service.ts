@@ -88,7 +88,9 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 					sizes.push(create);
 				}
 			}
-			return await this.typeOrmRepository.save(sizes);
+			return this.ormType === MultiORMEnum.MikroORM
+				? await this.mikroOrmRepository.upsertMany(sizes as any)
+				: await this.typeOrmRepository.save(sizes);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -120,7 +122,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 				});
 				sizes.push(create);
 			}
-			return await this.typeOrmRepository.save(sizes);
+			return await this.saveMany(sizes);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -137,13 +139,11 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 			const { organizationId } = entity;
 			const tenantId = RequestContext.currentTenantId();
 
-			const sizes: ITaskSize[] = [];
 			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			for (const item of items) {
+			const entitiesToCreate = items.map((item) => {
 				const { name, value, description, icon, color } = item;
-
-				const size = await this.create({
+				return {
 					...entity,
 					name,
 					value,
@@ -151,11 +151,9 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 					icon,
 					color,
 					isSystem: false
-				});
-				sizes.push(size);
-			}
-
-			return sizes;
+				};
+			});
+			return await this.createMany(entitiesToCreate);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

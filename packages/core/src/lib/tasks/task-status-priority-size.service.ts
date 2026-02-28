@@ -15,7 +15,6 @@ import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-
 import { FileStorage } from '../core/file-storage';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
-import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { TenantBaseEntity } from '../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
 
@@ -112,25 +111,12 @@ export class TaskStatusPrioritySizeService<
 			let items: BaseEntity[]; // Array to store retrieved items
 			let total: number; // Variable to store total count of items
 
-			// Determine the ORM type and execute the appropriate logic accordingly.
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					// Parse the where clause for MikroORM
-					const mikroOrmOptions = parseTypeORMFindToMikroOrm<BaseEntity>(
-						options as FindManyOptions<BaseEntity>
-					);
-					// Retrieve entities and their count
-					[items, total] = await this.mikroOrmRepository.findAndCount(mikroOrmOptions.where);
-					// Optionally serialize the items
-					items = items.map((item: BaseEntity) => this.serialize(item));
-					break;
-				case MultiORMEnum.TypeORM:
-					// Retrieve entities and their count
-					[items, total] = await this.typeOrmRepository.findAndCount(options as FindManyOptions<BaseEntity>);
-					break;
-				default:
-					throw new Error(`Not implemented for ${this.ormType}`);
-			}
+			// Use base class super.findAll which handles both ORMs every time here because we supply explicit tenant
+			// scoping via the where clause (tenantId: RequestContext.currentTenantId() || params.tenantId), so we
+			// intentionally bypass any automatic tenant scoping and rely on our explicit filter.
+			const result = await super.findAll(options as FindManyOptions<BaseEntity>);
+			items = result.items;
+			total = result.total;
 
 			// If no entities are found, fallback to default entities
 			if (total === 0) {
@@ -170,22 +156,11 @@ export class TaskStatusPrioritySizeService<
 			let items: BaseEntity[]; // Array to store retrieved items
 			let total: number; // Variable to store total count of items
 
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					// Parse the where clause for MikroORM
-					const { where } = parseTypeORMFindToMikroOrm<BaseEntity>(options as FindManyOptions<BaseEntity>);
-					// Retrieve entities and their count
-					[items, total] = await this.mikroOrmRepository.findAndCount(where);
-					// Optionally serialize the items
-					items = items.map((item: BaseEntity) => this.serialize(item));
-					break;
-				case MultiORMEnum.TypeORM:
-					// Retrieve entities and their count
-					[items, total] = await this.typeOrmRepository.findAndCount(options as FindManyOptions<BaseEntity>);
-					break;
-				default:
-					throw new Error(`Not implemented for ${this.ormType}`);
-			}
+			// Use base class findAll which handles both ORMs
+			// Note: getDefaultEntities queries for system entities with tenantId=null
+			const result = await super.findAll(options as FindManyOptions<BaseEntity>);
+			items = result.items;
+			total = result.total;
 
 			return { items, total };
 		} catch (error) {

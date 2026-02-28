@@ -6,13 +6,18 @@ import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { DeleteTimeSpanCommand } from '../../../time-log/commands/delete-time-span.command';
 import { DeleteTimeSlotCommand } from '../delete-time-slot.command';
 import { RequestContext } from './../../../../core/context';
+import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from '../../repository/mikro-orm-time-slot.repository';
 
 @CommandHandler(DeleteTimeSlotCommand)
 export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotCommand> {
+	protected ormType: MultiORM = getORMType();
+
 	constructor(
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		private readonly commandBus: CommandBus
 	) {}
 
@@ -46,27 +51,50 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 		const employeeIds: ID[] = !hasChangeSelectedEmployeePermission ? [RequestContext.currentEmployeeId()] : [];
 
 		for await (const id of Object.values(ids)) {
-			// Create a query builder for the TimeSlot entity
-			const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
-			query
-				.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
-				.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
-				.leftJoinAndSelect(`${query.alias}.activities`, 'activities')
-				.leftJoinAndSelect(`${query.alias}.timeSlotMinutes`, 'timeSlotMinutes');
+			let timeSlots: ITimeSlot[] = [];
 
-			// Add where clauses to the query
-			query.where(p(`"${query.alias}"."id" = :id`), { id });
-			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+					const qb: any = {};
+					qb.id = id;
+					qb.tenantId = tenantId;
+					qb.organizationId = organizationId;
+					if (isNotEmpty(employeeIds)) {
+						qb.employeeId = { $in: employeeIds };
+					}
+					timeSlots = await em.find('TimeSlot', qb, {
+						populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes'],
+						orderBy: { createdAt: 'ASC' }
+					}) as any[];
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Create a query builder for the TimeSlot entity
+					const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
+					query
+						.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
+						.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
+						.leftJoinAndSelect(`${query.alias}.activities`, 'activities')
+						.leftJoinAndSelect(`${query.alias}.timeSlotMinutes`, 'timeSlotMinutes');
 
-			// Restrict deletion based on employeeId if permission is not granted
-			if (isNotEmpty(employeeIds)) {
-				query.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+					// Add where clauses to the query
+					query.where(p(`"${query.alias}"."id" = :id`), { id });
+					query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+
+					// Restrict deletion based on employeeId if permission is not granted
+					if (isNotEmpty(employeeIds)) {
+						query.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+					}
+
+					// Order by creation date
+					query.orderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
+					timeSlots = await query.getMany();
+					break;
+				}
 			}
-
-			// Order by creation date
-			query.orderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
-			const timeSlots: ITimeSlot[] = await query.getMany();
 
 			// If no time slots are found, stop processing
 			if (isEmpty(timeSlots)) {

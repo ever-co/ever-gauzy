@@ -13,22 +13,22 @@ import { dayOfWeekAsString } from './date-picker.utils';
 import { DateRangePickerComponent } from './date-range-picker.component';
 
 @NgModule({
-	declarations: [DateRangePickerComponent],
-	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
-		NbButtonModule,
-		NbIconModule,
-		NbInputModule,
-		NgSelectModule,
-		TranslateModule,
-		PipeModule,
-		NgxDateRangePickerMd.forRoot({
-			firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
-		})
-	],
-	providers: [RecapStore, RecapQuery],
-	exports: [DateRangePickerComponent]
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        NbButtonModule,
+        NbIconModule,
+        NbInputModule,
+        NgSelectModule,
+        TranslateModule,
+        PipeModule,
+        NgxDateRangePickerMd.forRoot({
+            firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
+        }),
+        DateRangePickerComponent
+    ],
+    providers: [RecapStore, RecapQuery],
+    exports: [DateRangePickerComponent]
 })
 export class DateRangePickerModule {}

@@ -4,6 +4,7 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef,
 	Component,
+	inject,
 	Input,
 	OnDestroy,
 	OnInit,
@@ -19,24 +20,24 @@ import { WidgetService } from '../widget/widget.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-widget-layout',
-    templateUrl: './widget-layout.component.html',
-    styleUrls: ['./widget-layout.component.scss'],
-    standalone: false
+	selector: 'ga-widget-layout',
+	templateUrl: './widget-layout.component.html',
+	styleUrls: ['./widget-layout.component.scss'],
+	standalone: false
 })
 export class WidgetLayoutComponent
 	extends LayoutWithDraggableObject
 	implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy
 {
+	private readonly widgetService = inject(WidgetService);
+	private readonly cdr = inject(ChangeDetectorRef);
+
 	@Input()
-	set widgets(value: TemplateRef<HTMLElement>[]) {
-		this.draggableObject = value;
+	set widgets(value: TemplateRef<any>[]) {
+		this.draggableObject = value as any;
 	}
 	@ViewChildren(WidgetComponent) listWidgets: QueryList<GuiDrag>;
 
-	constructor(private readonly widgetService: WidgetService, private readonly cdr: ChangeDetectorRef) {
-		super();
-	}
 	ngAfterViewChecked(): void {
 		this.cdr.detectChanges();
 	}
@@ -52,18 +53,18 @@ export class WidgetLayoutComponent
 
 	protected drop(event: CdkDragDrop<number>): void {
 		moveItemInArray(this.draggableObject, event.previousContainer.data, event.container.data);
-		this.widgetService.widgetsRef = this.draggableObject;
+		this.widgetService.widgetsRef = this.draggableObject as any;
 		this.widgetService.save();
 	}
 
 	ngOnInit(): void {
-		this.widgetService.widgetsRef = this.draggableObject;
+		this.widgetService.widgetsRef = this.draggableObject as any;
 	}
 
 	get widgets() {
-		if (this.widgetService.widgetsRef.length > 0 && this.draggableObject !== this.widgetService.widgetsRef)
-			this.draggableObject = this.widgetService.widgetsRef;
-		return this.draggableObject;
+		if (this.widgetService.widgetsRef.length > 0 && (this.draggableObject as any) !== this.widgetService.widgetsRef)
+			this.draggableObject = this.widgetService.widgetsRef as any;
+		return this.draggableObject as any;
 	}
 
 	ngOnDestroy(): void {}

@@ -79,9 +79,9 @@
 							>
 								<ng-template let-tag="item" let-tag$="item$" ng-option-tmp>
 									<div class="d-flex align-items-center">
-										<ng-container *ngIf="multiple">
-											<input [ngModel]="tag$.selected" type="checkbox" />
-										</ng-container>
+										@if (multiple) {
+										<input [ngModel]="tag$.selected" type="checkbox" />
+										}
 										<nb-badge
 											[style.background]="background(tag.color)"
 											class="tag-color"
@@ -216,7 +216,7 @@
 		</button>
 		<button (click)="save()" [disabled]="form?.invalid" nbButton status="success">
 			{{ 'BUTTONS.SAVE' | translate }}
-			<nb-icon *gauzySpinnerButton="isSaving" [ngStyle]="{ display: 'none' }"></nb-icon>
+			<nb-icon *gauzySpinnerButton="isSaving" [style.display]="'none'"></nb-icon>
 		</button>
 	</nb-card-footer>
 </nb-card>

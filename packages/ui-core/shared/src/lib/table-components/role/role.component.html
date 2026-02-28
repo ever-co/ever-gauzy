@@ -1,9 +1,9 @@
 <div class="badge-container">
-	<ng-container *ngIf="role">
-		<nb-badge
-			position="left"
-			[status]="status"
-			[text]="role?.name | replace: '_':' '"
-		></nb-badge>
-	</ng-container>
+  @if (role) {
+    <nb-badge
+      position="left"
+      [status]="status"
+      [text]="role?.name | replace: '_':' '"
+    ></nb-badge>
+  }
 </div>

@@ -83,6 +83,18 @@
   & form {
     margin-top: 29px;
     margin-bottom: 42px;
+    & .label {
+      color: nb-theme(text-basic-color); // Theme aware
+      display: block;
+      margin-bottom: 0.5rem;
+      font-family: Inter;
+      font-weight: 600;
+    }
+    ::ng-deep input.input-full-width {
+      border: 1px solid rgba(98, 54, 255, 0.5) !important;
+      background-color: transparent;
+      color: nb-theme(text-basic-color); // Theme aware
+    }
     & .form-control-group {
       .not-allowed {
         cursor: not-allowed;
@@ -120,7 +132,7 @@
       align-items: center;
       margin-bottom: 2rem;
       & .forgot-email {
-        text-decoration-line: underline;
+        text-decoration: none;
         margin-bottom: 0;
         font-family: Inter;
         font-size: 14px;
@@ -129,12 +141,13 @@
         line-height: 17px;
         letter-spacing: -0.01em;
         text-align: left;
+        color: nb-theme(color-primary-default); // Make it alive
         @include mobile-screen {
           display: none;
         }
       }
       & .forgot-email:hover {
-        color: $button-color;
+        text-decoration: underline;
       }
       & .forgot-email-big {
         display: block;
@@ -155,6 +168,52 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        border-radius: 8px;
+        transition: background-color 0.2s, border-color 0.2s;
+        // Disabled/Submitting state (MUST BE FIRST)
+        &[disabled],
+        &.btn-pulse {
+          cursor: not-allowed !important;
+          // Light theme: Visible grey with purple tint
+          @include nb-for-theme(default) {
+            background-color: rgba(98, 54, 255, 0.08) !important;
+            border-color: rgba(98, 54, 255, 0.25) !important;
+            color: rgba(98, 54, 255, 0.65) !important;
+          }
+          // Dark theme: Original subtle style
+          @include nb-for-theme(dark) {
+            background-color: nb-theme(background-basic-color-3) !important;
+            border-color: transparent !important;
+            color: nb-theme(text-hint-color) !important;
+          }
+          &:hover,
+          &:active,
+          &:focus {
+            @include nb-for-theme(default) {
+              background-color: #e4e9f2 !important;
+              border-color: #c5cee0 !important;
+              color: #8f9bb3 !important;
+            }
+            @include nb-for-theme(dark) {
+              background-color: nb-theme(background-basic-color-3) !important;
+              border-color: transparent !important;
+              color: nb-theme(text-hint-color) !important;
+            }
+          }
+        }
+        // Enabled state
+        &:not([disabled]):not(.btn-pulse) {
+          background-color: nb-theme(color-primary-default) !important;
+          border-color: nb-theme(color-primary-default) !important;
+          color: white !important;
+          &:hover,
+          &:active,
+          &:focus {
+            background-color: nb-theme(color-primary-hover) !important;
+            border-color: nb-theme(color-primary-hover) !important;
+            color: white !important;
+          }
+        }
 
         & nb-icon {
           position: relative;
@@ -178,7 +237,11 @@
         text-align: left;
         font-size: 0.85rem;
         & a {
-          color: var(--link-text-color);
+          color: nb-theme(color-primary-default);
+          text-decoration: none;
+          &:hover {
+            text-decoration: underline;
+          }
         }
       }
     }
@@ -192,7 +255,7 @@
     }
   }
   & .another-action {
-	margin-top: 10px;
+    margin-top: 10px;
     @include another-action;
   }
 }

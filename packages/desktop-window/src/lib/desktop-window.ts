@@ -1,6 +1,6 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, ipcMain, screen } from 'electron';
-import * as url from 'url';
+import * as url from 'node:url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent } from './utils/desktop-window-utils';
@@ -72,6 +72,8 @@ export async function createGauzyWindow(
 		attachTitlebarToWindow(gauzyWindow);
 		gauzyWindow.webContents.send('adjust_view');
 	}
+
+	manager.overrideSystemContextMenu(gauzyWindow);
 
 	// Return the created window
 	return gauzyWindow;

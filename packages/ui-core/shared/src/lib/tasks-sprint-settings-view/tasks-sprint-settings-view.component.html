@@ -1,117 +1,71 @@
 <div class="sprints">
-	<div class="sprints__settings">
-		<nb-card class="card">
-			<nb-card-body class="pt-0" *ngIf="sprints$ | async as sprints">
-				<ga-editable-grid
-					[itemTmpl]="item"
-					[items]="sprints"
-					[addDialogTmpl]="addDialog"
-					[editDialogTmpl]="editDialog"
-					[deleteDialogTmpl]="deleteDialog"
-					(dialogData)="sprintAction($event)"
-				>
-					<ng-template
-						#addDialog
-						let-sprint
-						let-action="action"
-						let-dialogRef="dialogRef"
-					>
-						<ngx-sprint-dialog
-							[action]="action"
-							[dialogRef]="dialogRef"
-							[options]="{
-								sprintIndex: sprints?.length,
-								sprintStartDate: sprints.slice(-1)[0]?.endDate
-							}"
-						></ngx-sprint-dialog>
-					</ng-template>
-					<ng-template
-						#editDialog
-						let-sprint
-						let-action="action"
-						let-dialogRef="dialogRef"
-					>
-						<ngx-sprint-dialog
-							[action]="action"
-							[sprintData]="sprint"
-							[dialogRef]="dialogRef"
-						></ngx-sprint-dialog>
-					</ng-template>
-					<ng-template
-						#deleteDialog
-						let-sprint
-						let-dialogRef="dialogRef"
-					>
-						<nb-card>
-							<nb-card-header>{{
-								'TASKS_PAGE.DELETE_SPRINT' | translate
-							}}</nb-card-header>
-							<nb-card-body
-								>{{ 'TASKS_PAGE.ARE_YOU_SURE' | translate }}:
-								{{ sprint.name }}?</nb-card-body
-							>
-							<nb-card-footer>
-								<button
-									nbButton
-									status="warning"
-									class="mr-3"
-									(click)="dialogRef.close()"
-									size="small"
-								>
-									{{ 'BUTTONS.NO' | translate }}
-								</button>
-								<button
-									nbButton
-									status="success"
-									(click)="dialogRef.close(sprint)"
-									size="small"
-								>
-									{{ 'BUTTONS.YES' | translate }}
-								</button>
-							</nb-card-footer>
-						</nb-card>
-					</ng-template>
-
-					<ng-template #item let-sprint>
-						<div
-							class="d-flex justify-content-between align-items-center px-2 sprints__item w-100"
-						>
-							<span class="col-2">{{ sprint.name }}</span>
-							<span class="col">{{ sprint.goal | truncate: 50 }}</span>
-							<span class="col-4 d-flex flex-column">
-								<div class="row" *ngIf="sprint.startDate">
-									<span class="col-6"
-										>{{
-											'TASKS_PAGE.DATE_START' | translate
-										}}:</span
-									>
-									<span class="col-6">{{
-										sprint.startDate
-											? moment(sprint.startDate).format(
-													'DD-MM-YYYY'
-											  )
-											: null
-									}}</span>
-								</div>
-								<div class="row" *ngIf="sprint.startDate">
-									<span class="col-6"
-										>{{
-											'TASKS_PAGE.DATE_END' | translate
-										}}:</span
-									>
-									<span class="col-6">{{
-										sprint.startDate
-											? moment(sprint.endDate).format(
-													'DD-MM-YYYY'
-											  )
-											: null
-									}}</span>
-								</div>
-							</span>
-						</div>
-					</ng-template>
-				</ga-editable-grid>
-			</nb-card-body>
-		</nb-card>
-	</div>
+  <div class="sprints__settings">
+    <nb-card class="card">
+      @if (sprints$ | async; as sprints) {
+      <ng-container ngProjectAs="nb-card-body">
+        <nb-card-body class="pt-0">
+          <ga-editable-grid
+            [itemTmpl]="item"
+            [items]="sprints"
+            [addDialogTmpl]="addDialog"
+            [editDialogTmpl]="editDialog"
+            [deleteDialogTmpl]="deleteDialog"
+            (dialogData)="sprintAction($event)"
+          >
+            <ng-template #addDialog let-sprint let-action="action" let-dialogRef="dialogRef">
+              <ngx-sprint-dialog
+                [action]="action"
+                [dialogRef]="dialogRef"
+                [options]="{
+                  sprintIndex: sprints?.length,
+                  sprintStartDate: sprints.slice(-1)[0]?.endDate
+                }"
+              ></ngx-sprint-dialog>
+            </ng-template>
+            <ng-template #editDialog let-sprint let-action="action" let-dialogRef="dialogRef">
+              <ngx-sprint-dialog [action]="action" [sprintData]="sprint" [dialogRef]="dialogRef"></ngx-sprint-dialog>
+            </ng-template>
+            <ng-template #deleteDialog let-sprint let-dialogRef="dialogRef">
+              <nb-card>
+                <nb-card-header>{{ 'TASKS_PAGE.DELETE_SPRINT' | translate }}</nb-card-header>
+                <nb-card-body> {{ 'TASKS_PAGE.ARE_YOU_SURE' | translate }}: {{ sprint.name }}? </nb-card-body>
+                <nb-card-footer>
+                  <button nbButton status="warning" class="mr-3" (click)="dialogRef.close()" size="small">
+                    {{ 'BUTTONS.NO' | translate }}
+                  </button>
+                  <button nbButton status="success" (click)="dialogRef.close(sprint)" size="small">
+                    {{ 'BUTTONS.YES' | translate }}
+                  </button>
+                </nb-card-footer>
+              </nb-card>
+            </ng-template>
+            <ng-template #item let-sprint>
+              <div class="d-flex justify-content-between align-items-center px-2 sprints__item w-100">
+                <span class="col-2">{{ sprint.name }}</span>
+                <span class="col">{{ sprint.goal | truncate : 50 }}</span>
+                <span class="col-4 d-flex flex-column">
+                  @if (sprint.startDate) {
+                    <div class="row">
+                      <span class="col-6"> {{ 'TASKS_PAGE.DATE_START' | translate }}: </span>
+                      <span class="col-6">
+                        {{ sprint.startDate | dateFormat : '' : 'DD-MM-YYYY' }}
+                      </span>
+                    </div>
+                  } @if (sprint.endDate) {
+                    <div class="row">
+                      <span class="col-6"> {{ 'TASKS_PAGE.DATE_END' | translate }}: </span>
+                      <span class="col-6">
+                        {{ sprint.endDate | dateFormat : '' : 'DD-MM-YYYY' }}
+                      </span>
+                    </div>
+                  }
+                </span>
+              </div>
+            </ng-template>
+          </ga-editable-grid>
+        </nb-card-body>
+      </ng-container>
+      }
+    </nb-card>
+  </div>
 </div>

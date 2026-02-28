@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ITenantCreateInput, RolesEnum, ITenant, IUser, FileStorageProviderEnum } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
+import { MultiORMEnum } from '../core/utils';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantFeatureOrganizationCreateCommand } from './commands';
 import { TenantRoleBulkCreateCommand } from '../role/commands';
@@ -12,7 +13,9 @@ import { TenantTaskSizeBulkCreateCommand } from './../tasks/sizes/commands';
 import { TenantTaskPriorityBulkCreateCommand } from './../tasks/priorities/commands';
 import { TenantIssueTypeBulkCreateCommand } from './../tasks/issue-type/commands';
 import { TypeOrmRoleRepository } from '../role/repository/type-orm-role.repository';
+import { MikroOrmRoleRepository } from '../role/repository/mikro-orm-role.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 import { Tenant } from './tenant.entity';
@@ -23,7 +26,9 @@ export class TenantService extends CrudService<Tenant> {
 		readonly typeOrmTenantRepository: TypeOrmTenantRepository,
 		readonly mikroOrmTenantRepository: MikroOrmTenantRepository,
 		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
+		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
+		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		readonly commandBus: CommandBus,
 		readonly configService: ConfigService
 	) {
@@ -53,17 +58,40 @@ export class TenantService extends CrudService<Tenant> {
 		// Store the unique identifier of the tenant for easy access in subsequent operations.
 		const tenantId = tenant.id;
 
-		// Find SUPER_ADMIN role to relative tenant.
-		const role = await this.typeOrmRoleRepository.findOneBy({
-			tenantId,
-			name: RolesEnum.SUPER_ADMIN
-		});
+		// Find SUPER_ADMIN role for the relative tenant.
+		let role;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				role = await this.mikroOrmRoleRepository.findOne({
+					tenantId,
+					name: RolesEnum.SUPER_ADMIN
+				} as any);
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				role = await this.typeOrmRoleRepository.findOneBy({
+					tenantId,
+					name: RolesEnum.SUPER_ADMIN
+				});
+				break;
+		}
 
 		// Update the user entity to assign the specified tenant and role.
-		await this.typeOrmUserRepository.update(user.id, {
-			tenant: { id: tenantId },
-			role: { id: role.id }
-		});
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmUserRepository.nativeUpdate(
+					{ id: user.id } as any,
+					{ tenant: tenantId, role: role.id } as any
+				);
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmUserRepository.update(user.id, {
+					tenant: { id: tenantId },
+					role: { id: role.id }
+				});
+				break;
+		}
 
 		// Create Import Records while migrating for relative tenant.
 		await this.importRecords(entity, tenant, user);
@@ -132,7 +160,7 @@ export class TenantService extends CrudService<Tenant> {
 			// Executes a command to either update an existing import record or create a new one for the tenant entity.
 			await this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
-					entityType: this.typeOrmTenantRepository.metadata.tableName,
+					entityType: this.typeOrmTenantRepository?.metadata?.tableName ?? 'tenant',
 					sourceId,
 					destinationId: tenantId,
 					tenantId
@@ -144,7 +172,7 @@ export class TenantService extends CrudService<Tenant> {
 				await this.commandBus.execute(
 					new ImportRecordUpdateOrCreateCommand(
 						{
-							entityType: this.typeOrmUserRepository.metadata.tableName,
+							entityType: this.typeOrmUserRepository?.metadata?.tableName ?? 'user',
 							sourceId: userSourceId,
 							destinationId: user.id
 						},

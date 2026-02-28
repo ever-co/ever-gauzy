@@ -8,7 +8,8 @@
 		</h5>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form [formGroup]="form" *ngIf="form">
+		@if (form) {
+		<form [formGroup]="form">
 			<nb-tabset class="tab_sections">
 				<nb-tab tabTitle="{{ 'POP_UPS.MAIN' | translate }}" tabIcon="person-outline" responsive>
 					<div class="row">
@@ -22,10 +23,8 @@
 									fullWidth
 									placeholder="{{ 'POP_UPS.COMPANY_NAME' | translate }}"
 									formControlName="name"
-									[ngClass]="{
-										'status-danger': name?.invalid && (name.dirty || name.touched),
-										'status-success': name?.valid && (name.dirty || name.touched)
-									}"
+									[class.status-danger]="name?.invalid && (name.dirty || name.touched)"
+									[class.status-success]="name?.valid && (name.dirty || name.touched)"
 									autocomplete="off"
 								/>
 							</div>
@@ -41,12 +40,12 @@
 									fullWidth
 									placeholder="{{ 'POP_UPS.SIZE' | translate }}"
 									formControlName="totalEmployees"
-									[ngClass]="{
-										'status-danger':
-											totalEmployees?.invalid && (totalEmployees.dirty || totalEmployees.touched),
-										'status-success':
-											totalEmployees?.valid && (totalEmployees.dirty || totalEmployees.touched)
-									}"
+									[class.status-danger]="
+										totalEmployees?.invalid && (totalEmployees.dirty || totalEmployees.touched)
+									"
+									[class.status-success]="
+										totalEmployees?.valid && (totalEmployees.dirty || totalEmployees.touched)
+									"
 									autocomplete="off"
 								/>
 							</div>
@@ -61,10 +60,8 @@
 									fullWidth
 									placeholder="{{ 'POP_UPS.YEAR_FOUNDED' | translate }}"
 									formControlName="founded"
-									[ngClass]="{
-										'status-danger': founded?.invalid && (founded.dirty || founded.touched),
-										'status-success': founded?.valid && (founded.dirty || founded.touched)
-									}"
+									[class.status-danger]="founded?.invalid && (founded.dirty || founded.touched)"
+									[class.status-success]="founded?.valid && (founded.dirty || founded.touched)"
 									autocomplete="off"
 								/>
 							</div>
@@ -88,16 +85,13 @@
 									placeholder="{{ 'POP_UPS.BANNER' | translate }}"
 									formControlName="banner"
 									class="banner"
-									[ngClass]="{
-										'status-danger': banner?.invalid && (banner.dirty || banner.touched),
-										'status-success': banner?.valid && (banner.dirty || banner.touched)
-									}"
+									[class.status-danger]="banner?.invalid && (banner.dirty || banner.touched)"
+									[class.status-success]="banner?.valid && (banner.dirty || banner.touched)"
 									autocomplete="off"
 								/>
 							</div>
 						</div>
 					</div>
-
 					<div class="row">
 						<div class="col">
 							<div class="form-group">
@@ -111,17 +105,16 @@
 									formControlName="minimumProjectSize"
 									id="minimumProjectSize"
 								>
-									<nb-option
-										*ngFor="let minimumProjectSize of minimumProjectSizes"
-										value="{{ minimumProjectSize }}"
+									@for (minimumProjectSize of minimumProjectSizes; track minimumProjectSize) {
+									<nb-option value="{{ minimumProjectSize }}"
 										>{{ organization.currency }}
 										{{ minimumProjectSize }}
 									</nb-option>
+									}
 								</nb-select>
 							</div>
 						</div>
 					</div>
-
 					<div class="row">
 						<div class="col">
 							<div class="form-group">
@@ -168,14 +161,14 @@
 									placeholder="{{ 'POP_UPS.SHORT_DESCRIPTION' | translate }}"
 									formControlName="short_description"
 									class="short_description"
-									[ngClass]="{
-										'status-danger':
-											short_description?.invalid &&
-											(short_description.dirty || short_description.touched),
-										'status-success':
-											short_description?.valid &&
-											(short_description.dirty || short_description.touched)
-									}"
+									[class.status-danger]="
+										short_description?.invalid &&
+										(short_description.dirty || short_description.touched)
+									"
+									[class.status-success]="
+										short_description?.valid &&
+										(short_description.dirty || short_description.touched)
+									"
 								>
 								</textarea>
 							</div>
@@ -192,10 +185,10 @@
 										formControlName="overview"
 										class="overview"
 										[config]="ckConfig"
-										[ngClass]="{
-											'status-danger': overview?.invalid && (overview.dirty || overview.touched),
-											'status-success': overview?.valid && (overview.dirty || overview.touched)
-										}"
+										[class.status-danger]="
+											overview?.invalid && (overview.dirty || overview.touched)
+										"
+										[class.status-success]="overview?.valid && (overview.dirty || overview.touched)"
 									></ckeditor>
 								</div>
 							</div>
@@ -205,25 +198,29 @@
 				<nb-tab tabTitle="{{ 'POP_UPS.AWARDS' | translate }}" tabIcon="award-outline" responsive>
 					<div class="row">
 						<div class="col">
-							<div class="row" *ngIf="awardExist">
+							@if (awardExist) {
+							<div class="row">
 								<div class="col">
 									<nb-tag-list>
+										@for (award of awards; track award) {
 										<nb-tag
-											*ngFor="let award of awards"
 											(remove)="removeAward(award)"
 											[text]="award.name + ' (' + award.year + ')'"
 											removable
 										></nb-tag>
+										}
 									</nb-tag-list>
 								</div>
 							</div>
-							<div *ngIf="!showAddAward" (click)="showAddAward = !showAddAward" class="button-add-award">
+							} @if (!showAddAward) {
+							<div (click)="showAddAward = !showAddAward" class="button-add-award">
 								<button nbButton status="success" outline size="small">
 									<i class="fas fa-plus"></i>
 								</button>
 								<span class="heading_title">{{ 'POP_UPS.AWARDS' | translate }}</span>
 							</div>
-							<div class="row mt-3 show-add-award" *ngIf="showAddAward">
+							} @if (showAddAward) {
+							<div class="row mt-3 show-add-award">
 								<div class="col-sm-4 d-flex flex-column justify-content-end">
 									<label class="label">{{ 'POP_UPS.NAME' | translate }}</label>
 									<input
@@ -247,7 +244,6 @@
 										fullWidth
 									/>
 								</div>
-
 								<span class="col d-flex align-items-end">
 									<button
 										(click)="addAward(addInputName.value, addInputYear.value)"
@@ -268,6 +264,7 @@
 									</button>
 								</span>
 							</div>
+							}
 						</div>
 					</div>
 				</nb-tab>
@@ -293,29 +290,29 @@
 				<nb-tab tabTitle="{{ 'POP_UPS.LANGUAGES' | translate }}" tabIcon="globe-outline" responsive>
 					<div class="row">
 						<div class="col">
-							<div class="row" *ngIf="languageExist">
+							@if (languageExist) {
+							<div class="row">
 								<div class="col">
 									<nb-tag-list>
+										@for (lang of organization_languages; track lang) {
 										<nb-tag
-											*ngFor="let lang of organization_languages"
 											(remove)="removeLanguage(lang)"
 											[text]="lang.name + ' (' + lang.level + ')'"
 											removable
 										></nb-tag>
+										}
 									</nb-tag-list>
 								</div>
 							</div>
-							<div
-								*ngIf="!showAddLanguage"
-								(click)="showAddLanguage = !showAddLanguage"
-								class="button-add-language"
-							>
+							} @if (!showAddLanguage) {
+							<div (click)="showAddLanguage = !showAddLanguage" class="button-add-language">
 								<button nbButton status="success" outline size="small">
 									<i class="fas fa-plus"></i>
 								</button>
 								<span class="heading_title"> {{ 'POP_UPS.ADD_LANGUAGE' | translate }}</span>
 							</div>
-							<div class="row mt-3 show-add-language" *ngIf="showAddLanguage">
+							} @if (showAddLanguage) {
+							<div class="row mt-3 show-add-language">
 								<div class="col d-flex flex-column justify-content-end">
 									<label class="label">{{ 'POP_UPS.NAME' | translate }}</label>
 									<ngx-language-selector
@@ -364,6 +361,7 @@
 									</button>
 								</span>
 							</div>
+							}
 						</div>
 					</div>
 					<div class="row">
@@ -464,7 +462,6 @@
 								</nb-toggle>
 							</div>
 						</div>
-
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
 								<nb-toggle
@@ -478,7 +475,6 @@
 								</nb-toggle>
 							</div>
 						</div>
-
 						<div class="col-sm-6">
 							<div class="form-group extra_padding">
 								<nb-toggle
@@ -496,6 +492,7 @@
 				</nb-tab>
 			</nb-tabset>
 		</form>
+		}
 	</nb-card-body>
 	<nb-card-footer>
 		<button (click)="editPublicPage()" status="success" size="small" nbButton>

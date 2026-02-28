@@ -2,24 +2,24 @@ import { Component, OnInit, forwardRef, OnDestroy, Input, Output, EventEmitter }
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject, of } from 'rxjs';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGithubRepository, IGithubRepositoryResponse, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
 import { ErrorHandlingService, GithubService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-github-repository-selector',
-    templateUrl: './repository-selector.component.html',
-    styleUrls: ['./repository-selector.component.scss'],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => RepositorySelectorComponent),
-            multi: true
-        }
-    ],
-    standalone: false
+	selector: 'ngx-github-repository-selector',
+	templateUrl: './repository-selector.component.html',
+	styleUrls: ['./repository-selector.component.scss'],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => RepositorySelectorComponent),
+			multi: true
+		}
+	],
+	standalone: false
 })
 export class RepositorySelectorComponent implements OnInit, OnDestroy {
 	public preSelected: boolean = false;

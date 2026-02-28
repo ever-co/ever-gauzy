@@ -4,27 +4,26 @@
 			<i class="fas fa-times" (click)="close()"></i>
 		</div>
 		<div>
-			<h4 class="title" *ngIf="expense; else headerAdd">
+			@if (expense) {
+			<h4 class="title">
 				{{ (duplicate ? 'POP_UPS.DUPLICATE' : 'POP_UPS.EDIT_EXPENSE') | translate }}
 			</h4>
-			<ng-template #headerAdd>
-				<h4 class="title">
-					{{ 'POP_UPS.ADD_EXPENSE' | translate }}
-				</h4>
-			</ng-template>
+			} @else {
+			<h4 class="title">
+				{{ 'POP_UPS.ADD_EXPENSE' | translate }}
+			</h4>
+			}
 		</div>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
 			<div class="text-center">
 				<nb-radio-group formControlName="typeOfExpense">
-					<nb-radio
-						*ngFor="let expenseType of expenseTypes"
-						[value]="expenseType"
-						(valueChange)="setExpenseStatuses($event)"
-					>
+					@for (expenseType of expenseTypes; track expenseType) {
+					<nb-radio [value]="expenseType" (valueChange)="setExpenseStatuses($event)">
 						{{ 'EXPENSES_PAGE.MUTATION.' + expenseType | translate }}
 					</nb-radio>
+					}
 				</nb-radio-group>
 			</div>
 			<div class="row employees">
@@ -42,7 +41,7 @@
 						(selectionChanged)="onEmployeeChange($event)"
 					></ga-employee-selector>
 				</div>
-				<div class="col-sm-6 categories" [ngClass]="{ 'col-sm-12': expense && !duplicate }">
+				<div class="col-sm-6 categories" [class.col-sm-12]="expense && !duplicate">
 					<div class="form-group">
 						<label class="label">{{ 'POP_UPS.CATEGORIES' | translate }}</label>
 						<ga-expense-category-select
@@ -85,11 +84,11 @@
 					<div class="form-group">
 						<label class="label d-flex align-items-center">
 							{{ 'POP_UPS.AMOUNT' | translate }}
-							<ng-container *ngIf="showTooltip">
-								<span class="help-text ml-2" [nbTooltip]="'EXPENSES_PAGE.SPLIT_HELP' | translate">
-									<nb-icon size="small" status="danger" icon="alert-triangle-outline"></nb-icon>
-								</span>
-							</ng-container>
+							@if (showTooltip) {
+							<span class="help-text ml-2" [nbTooltip]="'EXPENSES_PAGE.SPLIT_HELP' | translate">
+								<nb-icon size="small" status="danger" icon="alert-triangle-outline"></nb-icon>
+							</span>
+							}
 						</label>
 						<input
 							nbInput
@@ -121,7 +120,8 @@
 					</div>
 				</div>
 			</div>
-			<nb-card accent="warning" class="p-3" *ngIf="showWarning">
+			@if (showWarning) {
+			<nb-card accent="warning" class="p-3">
 				<nb-icon class="ml-auto close" (click)="closeWarning()" icon="close-outline"></nb-icon>
 				<p>
 					<b>{{ 'EXPENSES_PAGE.MUTATION.CONTACT_IS_REQUIRED' | translate }}</b>
@@ -130,6 +130,7 @@
 					{{ 'EXPENSES_PAGE.MUTATION.PLEASE_SELECT_A_CONTACT_OR_CHANGE_EXPENSE_TYPE' | translate }}
 				</p>
 			</nb-card>
+			}
 			<div>
 				<h6 class="title mb-3">
 					{{ 'EXPENSES_PAGE.MUTATION.ASSIGN_TO' | translate }}
@@ -189,39 +190,42 @@
 								fullWidth
 								formControlName="status"
 							>
-								<nb-option *ngFor="let status of statuses" [value]="status">
+								@for (status of statuses; track status) {
+								<nb-option [value]="status">
 									{{ 'EXPENSES_PAGE.MUTATION.' + status | translate }}
 								</nb-option>
+								}
 							</nb-select>
 						</div>
 					</div>
 				</div>
 				<div class="col-8">
 					<div class="mt-2 text-right">
+						@if (!showNotes) {
 						<button
 							nbButton
 							size="tiny"
 							status="basic"
 							outline
 							(click)="showNotesInput()"
-							*ngIf="!showNotes"
 							class="gray ml-2 mt-3"
 						>
 							<i class="fas fa-plus mr-1"></i>
 							{{ 'BUTTONS.ADD_NOTE' | translate }}
 						</button>
+						} @if (!showTaxesInput) {
 						<button
 							nbButton
 							size="tiny"
 							status="basic"
 							outline
 							(click)="includeTaxes()"
-							*ngIf="!showTaxesInput"
 							class="gray ml-2 mt-3"
 						>
 							<i class="fas fa-percentage mr-1"></i>
 							{{ 'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES' | translate }}
 						</button>
+						}
 						<button
 							nbButton
 							size="tiny"
@@ -236,7 +240,8 @@
 					</div>
 				</div>
 			</div>
-			<div *ngIf="showNotes">
+			@if (showNotes) {
+			<div>
 				<h6 class="title mb-3">
 					{{ 'POP_UPS.NOTES' | translate }}
 				</h6>
@@ -255,7 +260,8 @@
 					</div>
 				</div>
 			</div>
-			<div *ngIf="showTaxesInput">
+			} @if (showTaxesInput) {
+			<div>
 				<h6 class="title mb-3">
 					{{ 'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES' | translate }}
 				</h6>
@@ -278,9 +284,11 @@
 								[placeholder]="'POP_UPS.TAX_TYPE' | translate"
 								fullWidth
 							>
-								<nb-option *ngFor="let taxType of taxTypes" [value]="taxType">
+								@for (taxType of taxTypes; track taxType) {
+								<nb-option [value]="taxType">
 									{{ 'EXPENSES_PAGE.MUTATION.' + taxType | translate }}
 								</nb-option>
+								}
 							</nb-select>
 						</div>
 					</div>
@@ -302,6 +310,7 @@
 					</div>
 				</div>
 			</div>
+			}
 		</form>
 	</nb-card-body>
 	<nb-card-footer>

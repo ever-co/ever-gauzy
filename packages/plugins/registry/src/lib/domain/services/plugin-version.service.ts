@@ -1,5 +1,5 @@
 import { ID } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
+import { TenantAwareCrudService, MultiORMEnum } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdatePluginVersionDTO } from '../../shared/dto/update-plugin-version.dto';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
@@ -18,10 +18,22 @@ export class PluginVersionService extends TenantAwareCrudService<PluginVersion> 
 		super(typeOrmPluginVersionRepository, mikroOrmPluginVersionRepository);
 	}
 
-	public getTotalDownloadCount(pluginId: IPlugin['id']): Promise<number> {
-		return this.typeOrmRepository.sum('downloadCount', {
-			pluginId
-		});
+	public async getTotalDownloadCount(pluginId: IPlugin['id']): Promise<number> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = (this.mikroOrmPluginVersionRepository as any).getKnex();
+				const result = await knex('plugin_versions')
+					.where({ pluginId })
+					.sum('downloadCount as total')
+					.first();
+				return Number(result?.total ?? 0);
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return this.typeOrmRepository.sum('downloadCount', {
+					pluginId
+				});
+		}
 	}
 
 	/**

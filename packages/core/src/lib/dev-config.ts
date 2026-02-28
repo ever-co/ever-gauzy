@@ -19,8 +19,9 @@ export const devConfig: ApplicationPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
-		retryAttempts: 100,
-		retryDelay: 3000,
+		// Reduce connection retries to avoid long startup hangs in dev/local runs
+		retryAttempts: 5,
+		retryDelay: 1000,
 		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
 		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
 		...dbTypeOrmConnectionConfig
@@ -29,8 +30,8 @@ export const devConfig: ApplicationPluginConfig = {
 		...dbMikroOrmConnectionConfig
 	},
 	dbKnexConnectionOptions: {
-		retryAttempts: 100,
-		retryDelay: 3000,
+		retryAttempts: 5,
+		retryDelay: 1000,
 		...dbKnexConnectionConfig
 	},
 	plugins: []

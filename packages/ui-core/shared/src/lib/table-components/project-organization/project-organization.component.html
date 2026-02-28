@@ -1,23 +1,32 @@
-<div *ngIf="project" class="project-render">
-	<img
-		*ngIf="project?.imageUrl"
-		src="{{ project.imageUrl }}"
-	/>
-	<span>
-		<div class="name">{{ project?.name }}</div>
-		<div class="member" *ngIf="project?.count">
-			{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }} {{ project?.count }}
-		</div>
-		<div *ngIf="rowData?.projectUrl">
-			<a [href]="rowData?.projectUrl" rel="noopener" target="_blank">{{
-				this.rowData.projectUrl | truncate: 20
-			}}</a>
-		</div>
-		<div *ngIf="rowData?.owner">
-			<nb-badge
-				[status]="rowData?.owner === 'INTERNAL' ? 'primary' : 'danger'"
-				[text]="rowData?.owner | titlecase"
-			></nb-badge>
-		</div>
-	</span>
-</div>
+@if (project) {
+  <div class="project-render">
+    @if (project?.imageUrl) {
+      <img
+        src="{{ project.imageUrl }}"
+        />
+    }
+    <span>
+      <div class="name">{{ project?.name }}</div>
+      @if (project?.count) {
+        <div class="member">
+          {{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }} {{ project?.count }}
+        </div>
+      }
+      @if (rowData?.projectUrl) {
+        <div>
+          <a [href]="rowData?.projectUrl" rel="noopener" target="_blank">{{
+            this.rowData.projectUrl | truncate: 20
+          }}</a>
+        </div>
+      }
+      @if (rowData?.owner) {
+        <div>
+          <nb-badge
+            [status]="rowData?.owner === 'INTERNAL' ? 'primary' : 'danger'"
+            [text]="rowData?.owner | titlecase"
+          ></nb-badge>
+        </div>
+      }
+    </span>
+  </div>
+}

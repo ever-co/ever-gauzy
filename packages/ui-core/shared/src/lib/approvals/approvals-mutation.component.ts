@@ -1,4 +1,5 @@
 import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,10 +26,10 @@ import { FormHelpers } from '../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-approval-mutation',
-    templateUrl: './approvals-mutation.component.html',
-    styleUrls: ['./approvals-mutation.component.scss'],
-    standalone: false
+	selector: 'ngx-approval-mutation',
+	templateUrl: './approvals-mutation.component.html',
+	styleUrls: ['./approvals-mutation.component.scss'],
+	standalone: false
 })
 export class RequestApprovalMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
@@ -56,9 +57,15 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent i
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private readonly fb: UntypedFormBuilder,
 		public readonly translationService: TranslateService,
-		public readonly store: Store
+		public readonly store: Store,
+		private readonly router: Router
 	) {
 		super(translationService);
+	}
+
+	navigateToPolicy() {
+		this.dialogRef.close();
+		this.router.navigate(['/pages/organization/approval-policy']);
 	}
 
 	ngOnInit(): void {

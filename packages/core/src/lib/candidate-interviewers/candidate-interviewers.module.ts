@@ -8,6 +8,7 @@ import { CandidateInterviewersController } from './candidate-interviewers.contro
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmCandidateInterviewersRepository } from './repository/type-orm-candidate-interviewers.repository';
+import { MikroOrmCandidateInterviewersRepository } from './repository/mikro-orm-candidate-interviewers.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmCandidateInterviewersRepository } from './repository/type-orm-ca
 		CqrsModule
 	],
 	controllers: [CandidateInterviewersController],
-	providers: [CandidateInterviewersService, TypeOrmCandidateInterviewersRepository, ...CommandHandlers]
+	providers: [CandidateInterviewersService, TypeOrmCandidateInterviewersRepository, MikroOrmCandidateInterviewersRepository, ...CommandHandlers]
 })
 export class CandidateInterviewersModule {}

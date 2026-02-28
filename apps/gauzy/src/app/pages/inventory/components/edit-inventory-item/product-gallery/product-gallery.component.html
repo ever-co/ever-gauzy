@@ -1,14 +1,9 @@
-<div [ngClass]="{
-	'image-container-notSelected': !gallery?.length,
-	'image-container-selected': gallery?.length
-}">
-	<img
-		*ngIf="displayImageUrl"
-		class="featured-image"
-		[src]="displayImageUrl"
-		alt="Feature image"
-	/>
-	<ga-no-image [fontSize]="14" *ngIf="!displayImageUrl"> </ga-no-image>
+<div [class.image-container-notSelected]="!gallery?.length" [class.image-container-selected]="gallery?.length">
+	@if (displayImageUrl) {
+	<img class="featured-image" [src]="displayImageUrl" alt="Feature image" />
+	} @else {
+	<ga-no-image [fontSize]="14"> </ga-no-image>
+	}
 </div>
 
 <div class="actions-container mt-2">
@@ -88,26 +83,24 @@
 </div>
 
 <div class="gallery-preview-items mt-3">
-	<div *ngIf="gallery?.length" class="row">
-		<div
-			class="col-sm-3 col-md-4 gallery-sm-preview"
-			*ngFor="let galleryItem of gallery"
-			(click)="onSmallImgPreviewClick(galleryItem)"
-		>
+	@if (gallery?.length) {
+	<div class="row">
+		@for (galleryItem of gallery; track galleryItem.id) {
+		<div class="col-sm-3 col-md-4 gallery-sm-preview" (click)="onSmallImgPreviewClick(galleryItem)">
 			<img
 				class="gallery-sm-preview-item"
 				[src]="galleryItem?.fullUrl"
-				[ngClass]="{ selected: isSelected(galleryItem) }"
+				[class.selected]="isSelected(galleryItem)"
 			/>
-			<div class="featured-icon" *ngIf="isFeaturedImage(galleryItem)">
+			@if (isFeaturedImage(galleryItem)) {
+			<div class="featured-icon">
 				<div class="interview-info">
-					<nb-icon
-						icon="checkmark-circle-2-outline"
-						status="success"
-						class="icons"
-					></nb-icon>
+					<nb-icon icon="checkmark-circle-2-outline" status="success" class="icons"></nb-icon>
 				</div>
 			</div>
+			}
 		</div>
+		}
 	</div>
+	}
 </div>

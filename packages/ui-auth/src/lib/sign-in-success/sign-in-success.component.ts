@@ -27,7 +27,17 @@ export class SignInSuccessComponent {
 			.subscribe(async ({ jwt, userId }) => {
 				this._store.token = jwt;
 				this._store.userId = userId;
-				await this._router.navigate(['/']);
+
+				// Check for a pending OAuth authorization request
+				const pendingRequestId = sessionStorage.getItem('oauth_pending_request_id');
+				if (pendingRequestId) {
+					sessionStorage.removeItem('oauth_pending_request_id');
+					await this._router.navigate(['/auth/oauth-authorize'], {
+						queryParams: { request_id: pendingRequestId }
+					});
+				} else {
+					await this._router.navigate(['/']);
+				}
 			});
 	}
 }

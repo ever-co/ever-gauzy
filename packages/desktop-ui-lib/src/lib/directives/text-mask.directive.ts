@@ -8,10 +8,7 @@ interface IMaskConfig {
 	maskFromLeft: boolean; // New property to control mask direction
 }
 
-@Directive({
-    selector: '[gaTextMask]',
-    standalone: false
-})
+@Directive({ selector: '[gaTextMask]' })
 export class TextMaskDirective {
 	// Default configuration for text masking
 	private readonly _config: IMaskConfig = {

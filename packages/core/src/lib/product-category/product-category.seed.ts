@@ -11,10 +11,9 @@ export const createDefaultProductCategories = async (
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories = [];
 
-	organizations.forEach(async (organization) => {
-		seed.forEach(async (seedProductCategory) => {
-			const { category } = seedProductCategory;
-			const image = faker.image.urlLoremFlickr({ category });
+	organizations.forEach((organization) => {
+		seed.forEach((seedProductCategory) => {
+			const image = faker.image.url();
 
 			const newCategory = new ProductCategory();
 			newCategory.imageUrl = image;
@@ -35,9 +34,6 @@ export const createDefaultProductCategories = async (
 	return seedProductCategories;
 };
 
-const insertProductCategories = async (
-	dataSource: DataSource,
-	categories: ProductCategory[]
-): Promise<void> => {
+const insertProductCategories = async (dataSource: DataSource, categories: ProductCategory[]): Promise<void> => {
 	await dataSource.manager.save(categories);
 };

@@ -1,6 +1,6 @@
 import { EventSubscriber } from 'typeorm';
 import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
-import { getDummyImage, replacePlaceholders } from './../core/utils';
+import { getDummyImage, getORMType, MultiORMEnum, replacePlaceholders } from './../core/utils';
 import { OrganizationProject } from './organization-project.entity';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import {
@@ -119,6 +119,8 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
 				return;
 			}
 
+			// Get ORM type dynamically at runtime to ensure correct environment selection
+			const ormType = getORMType();
 			const dbType = getConfig().dbConnectionOptions.type;
 			const { organizationId, tenantId, id: projectId } = entity;
 
@@ -141,26 +143,29 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
 
 			let totalMembers = 0;
 
-			// Handle TypeORM specific logic
-			if (em instanceof TypeOrmEntityManager) {
+			// Handle TypeORM specific logic - check both ORM type and instanceof
+			if (ormType === MultiORMEnum.TypeORM && em instanceof TypeOrmEntityManager) {
 				const result = await em.query(query, [projectId, organizationId, tenantId]);
 				// Extract count from result - the structure of this may vary based on the database and driver
 				totalMembers = parseInt(result[0]?.count ?? 0, 10);
 			}
-			// Handle MikroORM specific logic
-			else if (em instanceof MikroOrmEntityManager) {
+			// Handle MikroORM specific logic - check both ORM type and instanceof
+			else if (ormType === MultiORMEnum.MikroORM && em instanceof MikroOrmEntityManager) {
 				// Replace $ placeholders with ? for MikroORM
 				query = query.replace(/\$\d/g, '?');
 				const result = await em.getConnection().execute(query, [projectId, organizationId, tenantId]);
 				totalMembers = parseInt(result[0]?.count ?? 0, 10);
+			} else {
+				console.warn('OrganizationProjectSubscriber: Entity manager type mismatch or unsupported ORM type.');
+				return;
 			}
 
 			// Update members count in both TypeORM and MikroORM
 			if (totalMembers >= 0) {
-				// Common update logic for both ORMs
-				if (em instanceof TypeOrmEntityManager) {
+				// Common update logic for both ORMs - check both ORM type and instanceof
+				if (ormType === MultiORMEnum.TypeORM && em instanceof TypeOrmEntityManager) {
 					await em.query(updateQuery, [totalMembers, projectId, organizationId, tenantId]);
-				} else if (em instanceof MikroOrmEntityManager) {
+				} else if (ormType === MultiORMEnum.MikroORM && em instanceof MikroOrmEntityManager) {
 					// Replace $ placeholders with ? for MikroORM
 					updateQuery = updateQuery.replace(/\$\d/g, '?');
 					await em.getConnection().execute(updateQuery, [totalMembers, projectId, organizationId, tenantId]);

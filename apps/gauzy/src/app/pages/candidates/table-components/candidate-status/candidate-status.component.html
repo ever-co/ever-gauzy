@@ -1,27 +1,37 @@
 <div class="rating">
-	<ga-star-rating-output [rate]="rowData.rating"></ga-star-rating-output>
+  <ga-star-rating-output [rate]="rowData.rating"></ga-star-rating-output>
 </div>
 
-<div *ngIf="!rowData.isArchived">
-	<div *ngIf="rowData.status === 'APPLIED'">
-		<div class="badge badge-primary">
-			{{ 'CANDIDATES_PAGE.APPLIED' | translate }}
-		</div>
-	</div>
-	<div *ngIf="rowData.status === 'HIRED'">
-		<div class="badge badge-success">
-			{{ 'CANDIDATES_PAGE.HIRED' | translate }}
-		</div>
-	</div>
-	<div *ngIf="rowData.status === 'REJECTED'">
-		<div class="badge badge-danger">
-			{{ 'CANDIDATES_PAGE.REJECTED' | translate }}
-		</div>
-	</div>
-</div>
+@if (!rowData.isArchived) {
+  <div>
+    @if (rowData.status === 'APPLIED') {
+      <div>
+        <div class="badge badge-primary">
+          {{ 'CANDIDATES_PAGE.APPLIED' | translate }}
+        </div>
+      </div>
+    }
+    @if (rowData.status === 'HIRED') {
+      <div>
+        <div class="badge badge-success">
+          {{ 'CANDIDATES_PAGE.HIRED' | translate }}
+        </div>
+      </div>
+    }
+    @if (rowData.status === 'REJECTED') {
+      <div>
+        <div class="badge badge-danger">
+          {{ 'CANDIDATES_PAGE.REJECTED' | translate }}
+        </div>
+      </div>
+    }
+  </div>
+}
 
-<div *ngIf="rowData.isArchived">
-	<div class="badge badge-warning">
-		{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
-	</div>
-</div>
+@if (rowData.isArchived) {
+  <div>
+    <div class="badge badge-warning">
+      {{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
+    </div>
+  </div>
+}

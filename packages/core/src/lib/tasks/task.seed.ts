@@ -31,7 +31,7 @@ export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant,
 	console.log(`Done ${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
 
 	let labels = [];
-	issues.forEach(async (issue) => {
+	issues.forEach((issue) => {
 		labels = labels.concat(issue.labels);
 	});
 
@@ -117,7 +117,7 @@ export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[
 	console.log(`Done ${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
 
 	let labels = [];
-	issues.forEach(async (issue) => {
+	issues.forEach((issue) => {
 		labels = labels.concat(issue.labels);
 	});
 

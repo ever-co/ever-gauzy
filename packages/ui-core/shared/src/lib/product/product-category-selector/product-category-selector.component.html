@@ -1,17 +1,19 @@
 
-<label class="label" *ngIf="label !== ''">
-	{{ label || 'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate }}
-</label>
+@if (label !== '') {
+  <label class="label">
+    {{ label || 'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate }}
+  </label>
+}
 <ng-select
-	[addTag]="((hasEditProductCategory$ | async) && addTag) ? addProductCategory : null"
-	[loading]="loading"
-	[placeholder]="placeholder || 'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate"
-	[readonly]="disabled"
-	[virtualScroll]="true"
-	[items]="(productCategories$ | async)"
-	[(ngModel)]="productCategoryId"
-	(change)="selectProductCategory($event)"
-	bindLabel="name"
-	bindValue="id"
-	appendTo="body"
+  [addTag]="((hasEditProductCategory$ | async) && addTag) ? addProductCategory : null"
+  [loading]="loading"
+  [placeholder]="placeholder || 'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate"
+  [readonly]="disabled"
+  [virtualScroll]="true"
+  [items]="(productCategories$ | async)"
+  [(ngModel)]="productCategoryId"
+  (change)="selectProductCategory($event)"
+  bindLabel="name"
+  bindValue="id"
+  appendTo="body"
 ></ng-select>

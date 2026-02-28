@@ -175,11 +175,11 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		this.jitsuTrackClick();
 
 		// Redirect to the specified URL
-		if (!this.item.children) {
+		if (!this.item.children && this.item.link) {
 			// If the item doesn't have children, navigate to its link
 			this._router.navigateByUrl(this.item.link);
 		}
-		if (this.item.home) {
+		if (this.item.home && this.item.url) {
 			// If the item represents the home page, navigate to its URL
 			this._router.navigateByUrl(this.item.url);
 		}
@@ -210,13 +210,18 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	 * @param url The URL to prepare.
 	 * @returns The prepared external URL.
 	 */
-	public getExternalUrl(url: string): string {
-		return url ? this._location.prepareExternalUrl(url) : url;
+	public getExternalUrl(url: string | undefined): string {
+		if (!url) {
+			return '';
+		}
+		try {
+			return this._location.prepareExternalUrl(url);
+		} catch (error) {
+			console.warn('Error preparing external URL:', url, error);
+			return '';
+		}
 	}
 
-	/**
-	 *
-	 */
 	ngAfterViewChecked(): void {
 		const state$ = this._sidebarService.getSidebarState('menu-sidebar');
 		state$.pipe(tap((state) => (this.state = state === 'expanded' ? true : false))).subscribe();

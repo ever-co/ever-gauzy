@@ -2,17 +2,21 @@ import { Component, Input } from '@angular/core';
 
 @Component({
     template: `<div>
-		<div *ngIf="!value">
-			<div class="badge badge-disabled">
-				{{ 'INVENTORY_PAGE.INACTIVE' | translate }}
-			</div>
-		</div>
-		<div *ngIf="value">
-			<div class="badge badge-success">
-				{{ 'INVENTORY_PAGE.ACTIVE' | translate }}
-			</div>
-		</div>
-	</div> `,
+		  @if (!value) {
+		    <div>
+		      <div class="badge badge-disabled">
+		        {{ 'INVENTORY_PAGE.INACTIVE' | translate }}
+		      </div>
+		    </div>
+		  }
+		  @if (value) {
+		    <div>
+		      <div class="badge badge-success">
+		        {{ 'INVENTORY_PAGE.ACTIVE' | translate }}
+		      </div>
+		    </div>
+		  }
+		</div>`,
     styles: [
         `
 			.badge-disabled {
