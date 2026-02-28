@@ -7,3 +7,11 @@
 
 // Plugin definitions
 export { ReactUiPlugin } from './lib/react-ui.plugin';
+
+// Type-safe event contracts (for cross-plugin consumption)
+export {
+	DashboardRefreshedEvent,
+	WidgetVisibilityChangedEvent,
+	type DashboardRefreshedPayload,
+	type WidgetVisibilityPayload
+} from './lib/react-ui.events';

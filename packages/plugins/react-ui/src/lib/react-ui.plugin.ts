@@ -15,6 +15,14 @@ import en from '../i18n/en.json';
  * injection required. Routes and tabs are registered automatically at
  * bootstrap via the services provided to `PluginUiModule.init()`.
  *
+ * ## Features Demonstrated
+ *
+ * - **Versioning**: `version: '1.0.0'` — enables compatibility checks
+ * - **Namespace Isolation**: `translationNamespace: 'REACT_UI'` — prevents i18n key collisions
+ * - **Settings**: Dashboard widget visibility toggles with auto-generated UI
+ * - **Type-Safe Events**: `DashboardRefreshedEvent` / `WidgetVisibilityChangedEvent` in `react-ui.events.ts`
+ * - **Permissions**: Tab visibility gated by `ADMIN_DASHBOARD_VIEW` + `TIME_TRACKING_DASHBOARD`
+ *
  * ## Usage
  *
  * Add to your plugin config:
@@ -27,24 +35,87 @@ import en from '../i18n/en.json';
  * ```
  */
 export const ReactUiPlugin = defineDeclarativePlugin('react-ui', {
+	// ── Versioning & Compatibility ────────────────────────────────
+	version: '1.0.0',
+
 	location: 'page-sections',
 	routes: [REACT_TIME_TRACKING_DASHBOARD_ROUTE as PluginRouteInput],
-	// ─────────────────────────────────────────────────────────────
-	// Plugin-specific translations (deep-merged into @ngx-translate at bootstrap).
-	// Core keys like TIMESHEET.TIME_TRACKING remain untouched.
-	// Add more languages: import fr from '../i18n/fr.json'; → { en, fr }
-	// ─────────────────────────────────────────────────────────────
+
+	// ── Namespace-isolated translations ──────────────────────────
+	// All keys are auto-wrapped under 'REACT_UI' to avoid collisions.
+	// Use: instant('REACT_UI.DASHBOARD_PAGE.TABS.REACT_TIME_TRACKING')
+	// or via NamespacedTranslateHelper: instant('DASHBOARD_PAGE.TABS.REACT_TIME_TRACKING')
+	translationNamespace: 'REACT_UI',
 	translations: { en },
-	// ─────────────────────────────────────────────────────────────
-	// Register the React Time Tracking dashboard tab via page extension
-	// ─────────────────────────────────────────────────────────────
+
+	// ── Plugin Settings (auto-generated UI) ──────────────────────
+	settings: {
+		title: 'React Dashboard Widgets',
+		description: 'Configure which widgets are visible on the React Time Tracking dashboard.',
+		category: 'dashboard',
+		fields: [
+			{
+				key: 'showMembersWorked',
+				type: 'boolean',
+				label: 'Show Members Worked',
+				defaultValue: true,
+				order: 1
+			},
+			{
+				key: 'showProjectsWorked',
+				type: 'boolean',
+				label: 'Show Projects Worked',
+				defaultValue: true,
+				order: 2
+			},
+			{
+				key: 'showTodayActivity',
+				type: 'boolean',
+				label: 'Show Today Activity',
+				defaultValue: true,
+				order: 3
+			},
+			{
+				key: 'showWorkedToday',
+				type: 'boolean',
+				label: 'Show Worked Today',
+				defaultValue: true,
+				order: 4
+			},
+			{
+				key: 'showWorkedThisWeek',
+				type: 'boolean',
+				label: 'Show Worked This Week',
+				defaultValue: true,
+				order: 5
+			},
+			{
+				key: 'showWeeklyActivity',
+				type: 'boolean',
+				label: 'Show Weekly Activity',
+				defaultValue: true,
+				order: 6
+			},
+			{
+				key: 'refreshInterval',
+				type: 'number',
+				label: 'Auto-refresh interval (seconds)',
+				description: 'How often to refresh dashboard data. Set to 0 to disable.',
+				defaultValue: 300,
+				validation: { min: 0, max: 3600 },
+				order: 7
+			}
+		]
+	},
+
+	// ── Dashboard Tab ────────────────────────────────────────────
 	tabs: [
 		{
 			tabsetId: 'dashboard-page',
 			tabId: 'react-time-tracking',
 			tabsetType: 'route',
 			path: `/pages/dashboard/${REACT_TIME_TRACKING_PATH}`,
-			tabTitle: (_i18n: IPluginI18nService) => _i18n.getTranslation('DASHBOARD_PAGE.TABS.REACT_TIME_TRACKING'),
+			tabTitle: (_i18n: IPluginI18nService) => _i18n.getTranslation('REACT_UI.DASHBOARD_PAGE.TABS.REACT_TIME_TRACKING'),
 			tabIcon: 'code-outline',
 			responsive: true,
 			activeLinkOptions: { exact: false },

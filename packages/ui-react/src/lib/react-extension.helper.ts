@@ -1,4 +1,5 @@
 import {
+	ChangeDetectorRef,
 	Component,
 	Input,
 	Type,
@@ -38,12 +39,18 @@ export interface ReactExtensionVisibilityContext {
 /**
  * Wrapper configuration for React extensions.
  */
-export type ReactExtensionWrapper = 'none' | 'card' | 'widget' | 'window' | 'panel' | {
-	type: 'none' | 'card' | 'widget' | 'window' | 'panel' | 'custom';
-	title?: string;
-	cssClass?: string;
-	showHeader?: boolean;
-};
+export type ReactExtensionWrapper =
+	| 'none'
+	| 'card'
+	| 'widget'
+	| 'window'
+	| 'panel'
+	| {
+			type: 'none' | 'card' | 'widget' | 'window' | 'panel' | 'custom';
+			title?: string;
+			cssClass?: string;
+			showHeader?: boolean;
+	  };
 
 /**
  * Configuration for defining a React extension.
@@ -198,7 +205,25 @@ function createReactWrapperComponent<TProps>(
 				React.createElement(
 					NgContextProvider,
 					{ injector: this._injector, context: finalContext },
-					React.createElement(reactComponent, finalProps)
+					// Wrap in Suspense to support React.lazy() components
+					React.createElement(
+						React.Suspense,
+						{
+							fallback: React.createElement(
+								'div',
+								{
+									style: {
+										padding: '1rem',
+										textAlign: 'center',
+										color: '#8f9bb3',
+										fontSize: '0.875rem'
+									}
+								},
+								'Loading…'
+							)
+						},
+						React.createElement(reactComponent as React.ComponentType<any>, finalProps)
+					)
 				)
 			);
 		}
@@ -280,4 +305,219 @@ export function isReactExtension(ext: unknown): ext is ReactExtensionDefinition 
 		'reactComponent' in ext &&
 		typeof (ext as ReactExtensionDefinition).reactComponent === 'function'
 	);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lazy React Extension (Code-Splitting)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Configuration for defining a lazy-loaded React extension.
+ * The React component is loaded via dynamic import for code-splitting.
+ */
+export interface LazyReactExtensionConfig<TProps = Record<string, unknown>> extends Omit<
+	ReactExtensionConfig<TProps>,
+	'component'
+> {
+	/**
+	 * Dynamic import function that returns the React component.
+	 *
+	 * @example
+	 * ```ts
+	 * loadComponent: () => import('./HeavyDashboard').then(m => m.default)
+	 * // or with named export:
+	 * loadComponent: () => import('./HeavyDashboard').then(m => m.HeavyDashboard)
+	 * ```
+	 */
+	loadComponent: () => Promise<React.ComponentType<TProps>>;
+}
+
+/**
+ * Creates a dynamic Angular component that lazy-loads a React component on mount.
+ * The React chunk is only downloaded when the extension is rendered.
+ */
+function createLazyReactWrapperComponent<TProps>(
+	loadComponent: () => Promise<React.ComponentType<TProps>>,
+	defaultProps?: TProps | (() => TProps),
+	defaultContext?: Record<string, unknown>
+): Type<unknown> {
+	@Component({
+		selector: 'gz-react-lazy-extension-wrapper',
+		standalone: true,
+		template: `
+			@if (_loading) {
+				<div class="react-lazy-loading">Loading…</div>
+			} @else if (_error) {
+				<div class="react-lazy-error">Failed to load component</div>
+			} @else {
+				<div #host></div>
+			}
+		`,
+		styles: [
+			`
+				:host {
+					display: contents;
+				}
+				.react-lazy-loading {
+					padding: 1rem;
+					text-align: center;
+					color: var(--text-hint-color, #8f9bb3);
+					font-size: 0.875rem;
+				}
+				.react-lazy-error {
+					padding: 1rem;
+					text-align: center;
+					color: var(--color-danger-500, #ff3d71);
+					font-size: 0.875rem;
+				}
+			`
+		]
+	})
+	class LazyReactExtensionWrapperComponent implements OnInit, OnDestroy, OnChanges {
+		@Input() props?: TProps;
+		@Input() context?: Record<string, unknown>;
+
+		@ViewChild('host', { static: false }) hostRef?: ElementRef<HTMLElement>;
+
+		private readonly _injector = inject(Injector);
+		private readonly _cdr = inject(ChangeDetectorRef);
+		private _root: Root | null = null;
+		private _resolvedComponent: React.ComponentType<TProps> | null = null;
+
+		_loading = true;
+		_error = false;
+
+		async ngOnInit(): Promise<void> {
+			try {
+				this._resolvedComponent = await loadComponent();
+				this._loading = false;
+				this._cdr.detectChanges();
+
+				// After detectChanges, the #host element is now in the DOM
+				if (this.hostRef) {
+					this._root = createRoot(this.hostRef.nativeElement);
+					this._render();
+				}
+			} catch (error) {
+				console.error('[LazyReactExtension] Failed to load component:', error);
+				this._loading = false;
+				this._error = true;
+				this._cdr.markForCheck();
+			}
+		}
+
+		ngOnChanges(changes: SimpleChanges): void {
+			if (this._root && this._resolvedComponent && (changes['props'] || changes['context'])) {
+				this._render();
+			}
+		}
+
+		ngOnDestroy(): void {
+			this._root?.unmount();
+			this._root = null;
+			this._resolvedComponent = null;
+		}
+
+		private _render(): void {
+			if (!this._root || !this._resolvedComponent) return;
+
+			const resolvedDefaultProps =
+				typeof defaultProps === 'function' ? (defaultProps as () => TProps)() : defaultProps;
+			const finalProps = { ...resolvedDefaultProps, ...this.props } as TProps;
+			const finalContext = { ...defaultContext, ...this.context };
+
+			this._root.render(
+				React.createElement(
+					NgContextProvider,
+					{ injector: this._injector, context: finalContext },
+					// Wrap in Suspense to support React.lazy() components
+					React.createElement(
+						React.Suspense,
+						{
+							fallback: React.createElement(
+								'div',
+								{
+									style: {
+										padding: '1rem',
+										textAlign: 'center',
+										color: '#8f9bb3',
+										fontSize: '0.875rem'
+									}
+								},
+								'Loading…'
+							)
+						},
+						React.createElement(this._resolvedComponent as React.ComponentType<any>, finalProps)
+					)
+				)
+			);
+		}
+	}
+
+	return LazyReactExtensionWrapperComponent as Type<unknown>;
+}
+
+/**
+ * Define a lazy-loaded React extension for code-splitting.
+ *
+ * The React component is loaded via dynamic import only when the extension
+ * is rendered, keeping the initial bundle small.
+ *
+ * @example
+ * ```typescript
+ * defineLazyReactExtension({
+ *   id: 'heavy-dashboard-widget',
+ *   slotId: PAGE_EXTENSION_SLOTS.DASHBOARD_WIDGETS,
+ *   loadComponent: () => import('./HeavyDashboard').then(m => m.default),
+ *   props: { columns: 3 },
+ *   order: 20
+ * })
+ * ```
+ *
+ * @param config Configuration with `loadComponent` instead of `component`
+ * @returns A ReactExtensionDefinition that can be used in plugin definitions
+ */
+export function defineLazyReactExtension<TProps = Record<string, unknown>>(
+	config: LazyReactExtensionConfig<TProps>
+): ReactExtensionDefinition<TProps> {
+	const wrapperComponent = createLazyReactWrapperComponent(config.loadComponent, config.props, config.context);
+
+	// Use a placeholder component type for reactComponent since the real one is lazy
+	const placeholderComponent = (() => null) as unknown as React.ComponentType<TProps>;
+
+	return {
+		id: config.id,
+		slotId: config.slotId,
+		component: wrapperComponent,
+		config: {
+			props: typeof config.props === 'function' ? undefined : config.props,
+			context: config.context
+		},
+		order: config.order,
+		frameworkId: 'react',
+
+		// Visibility
+		permissions: config.permissions,
+		permissionsAny: config.permissionsAny,
+		featureKey: config.featureKey,
+		visible: config.visible as any,
+		hidden: config.hidden,
+
+		// Wrapper
+		wrapper: config.wrapper as any,
+
+		// Lifecycle
+		onMount: config.onMount as any,
+		onUnmount: config.onUnmount as any,
+		onActivate: config.onActivate as any,
+		onDeactivate: config.onDeactivate as any,
+
+		// Metadata
+		metadata: config.metadata,
+
+		// React-specific (placeholder — real component loaded lazily)
+		reactComponent: placeholderComponent,
+		reactProps: config.props,
+		reactContext: config.context
+	};
 }

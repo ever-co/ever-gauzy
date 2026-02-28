@@ -6,6 +6,12 @@ import {
 	PageExtensionSlotDefinition,
 	ExtensionVisibilityContext
 } from './page-extension-slot.types';
+import {
+	PLUGIN_PERMISSION_CHECKER,
+	PLUGIN_FEATURE_CHECKER,
+	type IPluginPermissionChecker,
+	type IPluginFeatureChecker
+} from '../plugin-ui.helper';
 
 /**
  * Extended registration options for tracking plugin ownership.
@@ -57,6 +63,8 @@ export interface SlotRegistrationOptions {
 @Injectable({ providedIn: 'root' })
 export class PageExtensionRegistryService {
 	private readonly _injector = inject(Injector);
+	private readonly _permissionChecker: IPluginPermissionChecker | null = inject(PLUGIN_PERMISSION_CHECKER, { optional: true }) ?? null;
+	private readonly _featureChecker: IPluginFeatureChecker | null = inject(PLUGIN_FEATURE_CHECKER, { optional: true }) ?? null;
 
 	// Extension storage with BehaviorSubject for reactivity
 	private readonly _extensions$ = new BehaviorSubject<Map<PageExtensionSlotId, PageExtensionDefinition[]>>(
@@ -377,55 +385,62 @@ export class PageExtensionRegistryService {
 
 	/**
 	 * Checks if an extension is visible (sync version for Observable).
+	 * Uses injected permission/feature checkers when available (both are synchronous).
+	 * Falls back to showing the extension when checkers are not configured.
 	 */
-	private _isExtensionVisibleSync(ext: PageExtensionDefinition, context: ExtensionVisibilityContext): boolean {
+	private _isExtensionVisibleSync(ext: PageExtensionDefinition, _context: ExtensionVisibilityContext): boolean {
 		if (ext.hidden) {
 			return false;
 		}
 
-		// Skip async checks in sync version
-		if (ext.visible || ext.permissions?.length || ext.permissionsAny?.length || ext.featureKey) {
-			// For extensions with async visibility, always show and let the component handle it
-			// Or use getVisibleExtensions() for proper async filtering
+		// Custom async visibility function — can't evaluate sync, show by default
+		if (ext.visible) {
 			return true;
+		}
+
+		// Check permissions synchronously (IPluginPermissionChecker is sync)
+		if (ext.permissions?.length && this._permissionChecker) {
+			if (!this._permissionChecker.hasAllPermissions(ext.permissions)) return false;
+		}
+		if (ext.permissionsAny?.length && this._permissionChecker) {
+			if (!this._permissionChecker.hasAnyPermission(ext.permissionsAny)) return false;
+		}
+
+		// Check feature flag synchronously (IPluginFeatureChecker is sync)
+		if (ext.featureKey && this._featureChecker) {
+			if (!this._featureChecker.isFeatureEnabled(ext.featureKey)) return false;
 		}
 
 		return true;
 	}
 
 	/**
-	 * Checks permissions (placeholder - integrate with your permission service).
+	 * Checks user permissions via the injected PLUGIN_PERMISSION_CHECKER.
+	 * Falls back to allowing access when no checker is provided.
 	 */
 	private async _checkPermissions(
 		permissions: string[],
 		_context: ExtensionVisibilityContext,
 		mode: 'all' | 'any'
 	): Promise<boolean> {
-		// TODO: Integrate with NgxPermissionsService or your permission system
-		// For now, return true to not block extensions
-		// Example integration:
-		// const permissionService = context.injector.get(NgxPermissionsService);
-		// if (mode === 'all') {
-		//   return await permissionService.hasPermission(permissions);
-		// } else {
-		//   for (const perm of permissions) {
-		//     if (await permissionService.hasPermission(perm)) return true;
-		//   }
-		//   return false;
-		// }
-		console.debug(`[ExtensionRegistry] Checking permissions (${mode}):`, permissions);
-		return true;
+		if (!this._permissionChecker) {
+			// No permission checker configured — allow by default
+			return true;
+		}
+		return mode === 'all'
+			? this._permissionChecker.hasAllPermissions(permissions)
+			: this._permissionChecker.hasAnyPermission(permissions);
 	}
 
 	/**
-	 * Checks feature flag (placeholder - integrate with your feature service).
+	 * Checks a feature flag via the injected PLUGIN_FEATURE_CHECKER.
+	 * Falls back to allowing access when no checker is provided.
 	 */
 	private async _checkFeature(featureKey: string, _context: ExtensionVisibilityContext): Promise<boolean> {
-		// TODO: Integrate with your feature flag service
-		// Example integration:
-		// const featureService = context.injector.get(FeatureStoreService);
-		// return featureService.isFeatureEnabled(featureKey);
-		console.debug(`[ExtensionRegistry] Checking feature:`, featureKey);
-		return true;
+		if (!this._featureChecker) {
+			// No feature checker configured — allow by default
+			return true;
+		}
+		return this._featureChecker.isFeatureEnabled(featureKey);
 	}
 }

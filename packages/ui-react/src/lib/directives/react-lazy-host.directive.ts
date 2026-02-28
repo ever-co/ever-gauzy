@@ -10,7 +10,7 @@ import { NgContextProvider } from '../ng-react-context';
  * @example
  * ```html
  * <div
- *   [reactLazyHost]="loadKanban"
+ *   [gaReactLazyHost]="loadKanban"
  *   [props]="kanbanProps">
  * </div>
  * ```
@@ -21,7 +21,7 @@ import { NgContextProvider } from '../ng-react-context';
  * ```
  */
 @Directive({
-	selector: '[reactLazyHost]',
+	selector: '[gaReactLazyHost]',
 	standalone: true
 })
 export class LazyReactHostDirective implements OnInit, OnDestroy {
@@ -30,14 +30,14 @@ export class LazyReactHostDirective implements OnInit, OnDestroy {
 	private root: Root | null = null;
 
 	@Input({ required: true })
-	reactLazyHost!: () => Promise<{ default: React.ComponentType<unknown> }>;
+	gaReactLazyHost!: () => Promise<{ default: React.ComponentType<unknown> }>;
 
 	@Input() props: Record<string, unknown> = {};
 	/** Extra context merged with injector (accessible via useBridgeContext) */
 	@Input() context: Record<string, unknown> = {};
 
 	async ngOnInit(): Promise<void> {
-		const module = await this.reactLazyHost();
+		const module = await this.gaReactLazyHost();
 		const Component = module.default;
 
 		if (!Component) {

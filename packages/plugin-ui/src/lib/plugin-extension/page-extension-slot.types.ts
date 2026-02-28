@@ -201,6 +201,17 @@ export interface PageExtensionDefinition<T = unknown>
 	/** Angular component to render (or wrapper component for React/Vue). */
 	component?: Type<unknown>;
 
+	/**
+	 * Lazy-load the component via dynamic import for code-splitting.
+	 * Mutually exclusive with `component` — if both are set, `loadComponent` takes precedence.
+	 *
+	 * @example
+	 * ```ts
+	 * loadComponent: () => import('./heavy-widget.component').then(m => m.HeavyWidgetComponent)
+	 * ```
+	 */
+	loadComponent?: () => Promise<Type<unknown>>;
+
 	/** Optional static config/props passed to the component. */
 	config?: T;
 

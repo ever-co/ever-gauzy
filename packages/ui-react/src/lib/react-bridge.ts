@@ -1,7 +1,13 @@
 import { createRoot, type Root } from 'react-dom/client';
 import React from 'react';
 import { NgContextProvider } from './ng-react-context';
-import { UiBridge, UiBridgeConfig, UiBridgeMountOptions, UiBridgeMountResult, UI_BRIDGE_FRAMEWORK } from '@gauzy/plugin-ui';
+import {
+	UiBridge,
+	UiBridgeConfig,
+	UiBridgeMountOptions,
+	UiBridgeMountResult,
+	UI_BRIDGE_FRAMEWORK
+} from '@gauzy/plugin-ui';
 
 // Convenience type aliases
 export type ReactBridgeConfig = UiBridgeConfig;
@@ -50,7 +56,25 @@ export class ReactBridge extends UiBridge {
 					injector,
 					context: (context as Record<string, unknown>) ?? {}
 				},
-				React.createElement(component as React.ComponentType, currentProps as Record<string, unknown>)
+				// Wrap in Suspense to support React.lazy() components
+				React.createElement(
+					React.Suspense,
+					{
+						fallback: React.createElement(
+							'div',
+							{
+								style: {
+									padding: '1rem',
+									textAlign: 'center',
+									color: '#8f9bb3',
+									fontSize: '0.875rem'
+								}
+							},
+							'Loading…'
+						)
+					},
+					React.createElement(component as React.ComponentType, currentProps as Record<string, unknown>)
+				)
 			);
 			root.render(element);
 		};

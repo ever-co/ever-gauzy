@@ -19,16 +19,16 @@ import { NgContextProvider } from '../ng-react-context';
  *
  * @example
  * ```html
- * <div [reactHost]="MyReactComponent" [props]="componentProps"></div>
+ * <div [gaReactHost]="MyReactComponent" [props]="componentProps"></div>
  * ```
  *
  * With extra context:
  * ```html
- * <div [reactHost]="KanbanBoard" [props]="props" [context]="ctx"></div>
+ * <div [gaReactHost]="KanbanBoard" [props]="props" [context]="ctx"></div>
  * ```
  */
 @Directive({
-	selector: '[reactHost]',
+	selector: '[gaReactHost]',
 	standalone: true
 })
 export class ReactHostDirective implements OnInit, OnChanges, OnDestroy {
@@ -36,7 +36,7 @@ export class ReactHostDirective implements OnInit, OnChanges, OnDestroy {
 	private readonly injector = inject(Injector);
 	private root: Root | null = null;
 
-	@Input({ required: true }) reactHost!: React.ComponentType<unknown>;
+	@Input({ required: true }) gaReactHost!: React.ComponentType<unknown>;
 	@Input() props: Record<string, unknown> = {};
 	@Input() context: Record<string, unknown> = {};
 
@@ -46,15 +46,15 @@ export class ReactHostDirective implements OnInit, OnChanges, OnDestroy {
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
-		if (this.root && (changes['reactHost'] || changes['props'] || changes['context'])) {
+		if (this.root && (changes['gaReactHost'] || changes['props'] || changes['context'])) {
 			this.render();
 		}
 	}
 
 	private render(): void {
-		if (!this.root || !this.reactHost) return;
+		if (!this.root || !this.gaReactHost) return;
 
-		const Component = this.reactHost;
+		const Component = this.gaReactHost;
 		const componentProps = this.props ?? {};
 		const bridgeContext = this.context ?? {};
 

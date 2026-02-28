@@ -16,5 +16,16 @@ export {
 	type SubscribeOptions
 } from './plugin-event-bus.service';
 
+export {
+	definePluginEvent,
+	bindEventToBus,
+	PluginEventSchemaRegistry,
+	type PluginEventContract,
+	type TypedEventEmitter,
+	type TypedEventSubscriber,
+	type TypedEventHandle,
+	type EventSchemaEntry
+} from './plugin-event-contracts';
+
 // Components
 export { PageExtensionSlotComponent } from './page-extension-slot.component';

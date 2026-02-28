@@ -10,6 +10,8 @@ import {
 } from './plugin-ui.types';
 import { PluginUiLifecycleMethods } from './plugin-ui.interface';
 import { PageExtensionRegistryService } from './plugin-extension/page-extension-registry.service';
+import { PluginSettingsRegistryService } from './plugin-host/plugin-settings-registry.service';
+import { namespaceTranslations } from './plugin-i18n-namespace';
 
 // ─── Declarative service tokens ──────────────────────────────────────────────
 
@@ -106,6 +108,126 @@ export interface IPluginTranslateService {
  */
 export const PLUGIN_TRANSLATE_SERVICE = new InjectionToken<IPluginTranslateService>('PLUGIN_TRANSLATE_SERVICE');
 
+// ─── Translate Backing Delegates ─────────────────────────────────────────────
+
+/**
+ * Minimal interface for the backing translate service (e.g. `TranslateService` from `@ngx-translate/core`).
+ * Used by the built-in `TranslateAdapterService` inside `@gauzy/plugin-ui`.
+ *
+ * The host application provides the concrete service via:
+ * ```typescript
+ * { provide: PLUGIN_TRANSLATE_DELEGATE, useExisting: TranslateService }
+ * ```
+ */
+export interface IPluginTranslateDelegate {
+	setTranslation(lang: string, translations: Record<string, any>, shouldMerge?: boolean): void;
+	getCurrentLang(): string;
+	getFallbackLang(): string | null;
+	instant(key: string, params?: Record<string, unknown>): string;
+	stream(key: string, params?: Record<string, unknown>): Observable<string>;
+	onLangChange: Observable<{ lang: string }>;
+}
+
+/**
+ * Minimal interface for the backing translate store (e.g. `TranslateStore` from `@ngx-translate/core`).
+ * Provides access to compiled translation data by language.
+ *
+ * The host application provides the concrete store via:
+ * ```typescript
+ * { provide: PLUGIN_TRANSLATE_STORE_DELEGATE, useExisting: TranslateStore }
+ * ```
+ */
+export interface IPluginTranslateStoreDelegate {
+	getTranslations(lang: string): Readonly<Record<string, any>> | undefined;
+}
+
+/**
+ * InjectionToken for the host application's translate service (e.g. `TranslateService`).
+ */
+export const PLUGIN_TRANSLATE_DELEGATE = new InjectionToken<IPluginTranslateDelegate>('PLUGIN_TRANSLATE_DELEGATE');
+
+/**
+ * InjectionToken for the host application's translate store (e.g. `TranslateStore`).
+ */
+export const PLUGIN_TRANSLATE_STORE_DELEGATE = new InjectionToken<IPluginTranslateStoreDelegate>(
+	'PLUGIN_TRANSLATE_STORE_DELEGATE'
+);
+
+// ─── Permission & Feature Flag Interfaces ────────────────────────────────────
+
+/**
+ * Minimal interface for checking user permissions.
+ * Implement by wrapping your app's permission service (e.g. Store.hasPermission).
+ *
+ * Provided via `PluginUiModule.init({ permissionChecker: ... })`.
+ * Used by `PageExtensionRegistryService` to gate extension visibility.
+ */
+export interface IPluginPermissionChecker {
+	/** Returns true if the user has the specified permission. */
+	hasPermission(permission: string): boolean;
+	/** Returns true if the user has ALL specified permissions. */
+	hasAllPermissions(permissions: string[]): boolean;
+	/** Returns true if the user has ANY of the specified permissions. */
+	hasAnyPermission(permissions: string[]): boolean;
+}
+
+/**
+ * Minimal interface for checking feature flags.
+ * Implement by wrapping your app's feature store (e.g. Store.hasFeatureEnabled).
+ *
+ * Provided via `PluginUiModule.init({ featureChecker: ... })`.
+ * Used by `PageExtensionRegistryService` to gate extension visibility.
+ */
+export interface IPluginFeatureChecker {
+	/** Returns true if the specified feature is enabled. */
+	isFeatureEnabled(featureKey: string): boolean;
+}
+
+/**
+ * Optional InjectionToken for checking user permissions.
+ * Provide via `PluginUiModule.init({ permissionChecker: PermissionAdapterService })`.
+ * Used by `PageExtensionRegistryService._checkPermissions()`.
+ */
+export const PLUGIN_PERMISSION_CHECKER = new InjectionToken<IPluginPermissionChecker>('PLUGIN_PERMISSION_CHECKER');
+
+/**
+ * Optional InjectionToken for checking feature flags.
+ * Provide via `PluginUiModule.init({ featureChecker: FeatureAdapterService })`.
+ * Used by `PageExtensionRegistryService._checkFeature()`.
+ */
+export const PLUGIN_FEATURE_CHECKER = new InjectionToken<IPluginFeatureChecker>('PLUGIN_FEATURE_CHECKER');
+
+// ─── Backing Store Interface ─────────────────────────────────────────────────
+
+/**
+ * Minimal interface for the application's backing store (e.g. `Store` from `@gauzy/ui-core/core`).
+ *
+ * Used by the built-in `PermissionAdapterService` and `FeatureAdapterService` inside
+ * `@gauzy/plugin-ui`. The host application provides its store via:
+ *
+ * ```typescript
+ * { provide: PLUGIN_APP_STORE, useExisting: Store }
+ * ```
+ *
+ * This avoids a dependency from `@gauzy/plugin-ui` → `@gauzy/ui-core/core`.
+ */
+export interface IPluginAppStore {
+	hasPermission(permission: any): boolean;
+	hasAllPermissions(...permissions: any[]): boolean;
+	hasAnyPermission(...permissions: any[]): boolean;
+	hasFeatureEnabled(featureKey: any): boolean;
+}
+
+/**
+ * InjectionToken for the host application's backing store.
+ *
+ * Provide via the root module's `providers` array:
+ * ```typescript
+ * { provide: PLUGIN_APP_STORE, useExisting: Store }
+ * ```
+ */
+export const PLUGIN_APP_STORE = new InjectionToken<IPluginAppStore>('PLUGIN_APP_STORE');
+
 /**
  * Filters incoming translation data to only include keys that don't already
  * exist in the target. Recursively walks nested objects so that new nested
@@ -150,6 +272,10 @@ export function filterNewTranslationKeys(
 
 /**
  * Options for defining a simple plugin.
+ *
+ * Supports the full range of declarative fields (routes, tabs, navMenu, etc.)
+ * so `definePlugin()` can serve as the single API for both module-based and
+ * feature-rich plugins.
  */
 export interface DefinePluginOptions {
 	/** Page-route registry location (e.g. 'jobs-sections', 'integrations-sections'). */
@@ -158,6 +284,32 @@ export interface DefinePluginOptions {
 	options?: Record<string, unknown>;
 	/** Lazy-load the module. Use for code-splitting. */
 	loadModule?: () => Promise<Type<any>>;
+	/** Declarative page routes. */
+	routes?: PluginUiDefinition['routes'];
+	/** Declarative nav menu contributions. */
+	navMenu?: PluginUiDefinition['navMenu'];
+	/** Page tabs to register. */
+	tabs?: PluginUiDefinition['tabs'];
+	/** Extensions to register at bootstrap. */
+	extensions?: PluginUiDefinition['extensions'];
+	/** Plugin translations keyed by language code. */
+	translations?: PluginUiDefinition['translations'];
+	/** Translation namespace prefix. */
+	translationNamespace?: PluginUiDefinition['translationNamespace'];
+	/** Plugin settings schema. */
+	settings?: PluginUiDefinition['settings'];
+	/** Semantic version of this plugin. */
+	version?: PluginUiDefinition['version'];
+	/** Peer plugin requirements. */
+	peerPlugins?: PluginUiDefinition['peerPlugins'];
+	/** Plugin IDs that must be bootstrapped first. */
+	dependsOn?: PluginUiDefinition['dependsOn'];
+	/** Feature key for activation predicate. */
+	featureKey?: PluginUiDefinition['featureKey'];
+	/** Permission keys for activation predicate. */
+	permissionKeys?: PluginUiDefinition['permissionKeys'];
+	/** Loading strategy (only meaningful with loadModule). */
+	loadStrategy?: PluginUiDefinition['loadStrategy'];
 }
 
 /**
@@ -207,7 +359,20 @@ export function definePlugin(
 		module: isLoader ? undefined : (moduleOrLoad as Type<any>),
 		loadModule: isLoader ? (moduleOrLoad as () => Promise<Type<any>>) : options?.loadModule,
 		location: options?.location,
-		options: options?.options
+		options: options?.options,
+		routes: options?.routes,
+		navMenu: options?.navMenu,
+		tabs: options?.tabs,
+		extensions: options?.extensions,
+		translations: options?.translations,
+		translationNamespace: options?.translationNamespace,
+		settings: options?.settings,
+		version: options?.version,
+		peerPlugins: options?.peerPlugins,
+		dependsOn: options?.dependsOn,
+		featureKey: options?.featureKey,
+		permissionKeys: options?.permissionKeys,
+		loadStrategy: options?.loadStrategy
 	};
 }
 
@@ -444,9 +609,15 @@ export function defineDeclarativePlugin(
 		if (plugin.translations) {
 			const translateService = injector.get(PLUGIN_TRANSLATE_SERVICE, null);
 			if (translateService) {
+				// Apply namespace isolation: wrap translations under the namespace key
+				// so plugins never collide with core or other plugins' keys.
+				const translations = plugin.translationNamespace
+					? namespaceTranslations(plugin.translationNamespace, plugin.translations)
+					: plugin.translations;
+
 				const mergeForLang = (lang: string): void => {
 					const fallbackLang = translateService.getFallbackLang() || 'en';
-					const data = plugin.translations![lang] ?? plugin.translations![fallbackLang];
+					const data = translations[lang] ?? translations[fallbackLang];
 					if (!data) return;
 
 					const existing = translateService.getTranslations(lang);
@@ -470,6 +641,14 @@ export function defineDeclarativePlugin(
 				translateService.onLangChange.subscribe(({ lang }) => {
 					mergeForLang(lang);
 				});
+			}
+		}
+
+		// Register plugin settings schema with the settings registry.
+		if (plugin.settings) {
+			const settingsRegistry = injector.get(PluginSettingsRegistryService, null);
+			if (settingsRegistry) {
+				settingsRegistry.register(id, plugin.settings);
 			}
 		}
 	};

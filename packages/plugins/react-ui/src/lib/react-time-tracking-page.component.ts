@@ -14,7 +14,7 @@ import { ReactTimeTrackingPage } from './components/ReactTimeTrackingPage';
 	selector: 'gz-react-time-tracking-page',
 	standalone: true,
 	imports: [CommonModule, ReactHostDirective],
-	template: `<div [reactHost]="page"></div>`
+	template: `<div [gaReactHost]="page"></div>`
 })
 export class ReactTimeTrackingPageComponent {
 	readonly page = ReactTimeTrackingPage;

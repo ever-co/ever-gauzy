@@ -11,6 +11,7 @@ import {
 	OnChanges,
 	OnDestroy,
 	OnInit,
+	Type,
 	SimpleChanges,
 	ViewContainerRef
 } from '@angular/core';
@@ -26,6 +27,8 @@ import {
 	ExtensionWrapperType
 } from './page-extension-slot.types';
 import { PageExtensionRegistryService } from './page-extension-registry.service';
+import { FrameworkHostComponent } from '../ui-bridge/framework-host.component';
+import { isFrameworkExtension, FrameworkExtensionDefinition } from '../ui-bridge/framework-extension.helper';
 
 /**
  * Internal tracking for mounted extension components.
@@ -33,7 +36,19 @@ import { PageExtensionRegistryService } from './page-extension-registry.service'
 interface MountedExtension {
 	extension: PageExtensionDefinition;
 	componentRef?: ComponentRef<unknown>;
+	/** Resolved component class (from eager `component` or lazy `loadComponent`). */
+	resolvedComponent?: Type<unknown>;
+	/** Whether the lazy component is still loading. */
+	loading: boolean;
 	mounted: boolean;
+	/** Error message if lazy loading failed. */
+	error?: string;
+	/** Whether this extension is a framework (non-Angular) extension. */
+	isFramework: boolean;
+	/** Resolved framework component (from eager or lazy loading). */
+	resolvedFrameworkComponent?: unknown;
+	/** Lazy loader for framework component (from FrameworkExtensionDefinition). */
+	loadFrameworkComponent?: () => Promise<unknown>;
 }
 
 /**
@@ -44,6 +59,8 @@ interface MountedExtension {
  * - **Lifecycle Hooks**: Calls onMount, onUnmount, onActivate, onDeactivate
  * - **Visibility Control**: Filters extensions based on permissions/features
  * - **Wrappers**: Supports built-in wrappers (card, widget, window, panel)
+ * - **Multi-framework**: Auto-detects framework extensions and renders via `<gz-framework-host>`
+ * - **Error/retry**: Shows error state with retry button on lazy load failure
  *
  * @example
  * ```html
@@ -66,7 +83,7 @@ interface MountedExtension {
 @Component({
 	selector: 'ga-page-extension-slot',
 	standalone: true,
-	imports: [CommonModule, NbCardModule],
+	imports: [CommonModule, NbCardModule, FrameworkHostComponent],
 	template: `
 		@for (mounted of _mountedExtensions; track mounted.extension.id) {
 			@if (mounted.mounted) {
@@ -76,61 +93,198 @@ interface MountedExtension {
 					[attr.data-extension-id]="mounted.extension.id"
 					[attr.data-framework]="mounted.extension.frameworkId"
 				>
-					@switch (getWrapperType(mounted.extension)) {
-						@case ('card') {
-							<nb-card>
-								@if (getWrapperConfig(mounted.extension)?.showHeader !== false) {
-									<nb-card-header>
-										{{ getWrapperConfig(mounted.extension)?.title || mounted.extension.metadata?.title || mounted.extension.id }}
-									</nb-card-header>
-								}
-								<nb-card-body>
-									@if (mounted.extension.component) {
-										<ng-container *ngComponentOutlet="mounted.extension.component; inputs: $any(mounted.extension.config)" />
+					@if (mounted.loading) {
+						<div class="extension-loading">Loading…</div>
+					} @else if (mounted.error) {
+						<div class="extension-error">
+							<span>Failed to load "{{ mounted.extension.id }}"</span>
+							<button (click)="retryExtension(mounted)">Retry</button>
+						</div>
+					} @else if (mounted.isFramework) {
+						<!-- Framework extension: delegate to gz-framework-host -->
+						@switch (getWrapperType(mounted.extension)) {
+							@case ('card') {
+								<nb-card>
+									@if (getWrapperConfig(mounted.extension)?.showHeader !== false) {
+										<nb-card-header>
+											{{
+												getWrapperConfig(mounted.extension)?.title ||
+													mounted.extension.metadata?.title ||
+													mounted.extension.id
+											}}
+										</nb-card-header>
 									}
-								</nb-card-body>
-							</nb-card>
-						}
-						@case ('widget') {
-							<nb-card class="extension-widget">
-								<nb-card-body>
-									@if (mounted.extension.component) {
-										<ng-container *ngComponentOutlet="mounted.extension.component; inputs: $any(mounted.extension.config)" />
+									<nb-card-body>
+										<gz-framework-host
+											[frameworkId]="mounted.extension.frameworkId!"
+											[component]="mounted.resolvedFrameworkComponent"
+											[loadComponent]="mounted.loadFrameworkComponent"
+											[props]="$any(mounted.extension.config)?.props"
+											[context]="$any(mounted.extension.config)?.context"
+										/>
+									</nb-card-body>
+								</nb-card>
+							}
+							@case ('widget') {
+								<nb-card class="extension-widget">
+									<nb-card-body>
+										<gz-framework-host
+											[frameworkId]="mounted.extension.frameworkId!"
+											[component]="mounted.resolvedFrameworkComponent"
+											[loadComponent]="mounted.loadFrameworkComponent"
+											[props]="$any(mounted.extension.config)?.props"
+											[context]="$any(mounted.extension.config)?.context"
+										/>
+									</nb-card-body>
+								</nb-card>
+							}
+							@case ('window') {
+								<nb-card class="extension-window">
+									@if (getWrapperConfig(mounted.extension)?.showHeader !== false) {
+										<nb-card-header>
+											{{
+												getWrapperConfig(mounted.extension)?.title ||
+													mounted.extension.metadata?.title ||
+													mounted.extension.id
+											}}
+										</nb-card-header>
 									}
-								</nb-card-body>
-							</nb-card>
-						}
-						@case ('window') {
-							<nb-card class="extension-window">
-								@if (getWrapperConfig(mounted.extension)?.showHeader !== false) {
-									<nb-card-header>
-										{{ getWrapperConfig(mounted.extension)?.title || mounted.extension.metadata?.title || mounted.extension.id }}
-									</nb-card-header>
-								}
-								<nb-card-body>
-									@if (mounted.extension.component) {
-										<ng-container *ngComponentOutlet="mounted.extension.component; inputs: $any(mounted.extension.config)" />
+									<nb-card-body>
+										<gz-framework-host
+											[frameworkId]="mounted.extension.frameworkId!"
+											[component]="mounted.resolvedFrameworkComponent"
+											[loadComponent]="mounted.loadFrameworkComponent"
+											[props]="$any(mounted.extension.config)?.props"
+											[context]="$any(mounted.extension.config)?.context"
+										/>
+									</nb-card-body>
+								</nb-card>
+							}
+							@case ('panel') {
+								<div class="extension-panel" [class]="getWrapperConfig(mounted.extension)?.cssClass">
+									@if (
+										getWrapperConfig(mounted.extension)?.showHeader !== false &&
+										getWrapperConfig(mounted.extension)?.title
+									) {
+										<div class="extension-panel-header">
+											{{ getWrapperConfig(mounted.extension)?.title }}
+										</div>
 									}
-								</nb-card-body>
-							</nb-card>
-						}
-						@case ('panel') {
-							<div class="extension-panel" [class]="getWrapperConfig(mounted.extension)?.cssClass">
-								@if (getWrapperConfig(mounted.extension)?.showHeader !== false && getWrapperConfig(mounted.extension)?.title) {
-									<div class="extension-panel-header">
-										{{ getWrapperConfig(mounted.extension)?.title }}
+									<div class="extension-panel-body">
+										<gz-framework-host
+											[frameworkId]="mounted.extension.frameworkId!"
+											[component]="mounted.resolvedFrameworkComponent"
+											[loadComponent]="mounted.loadFrameworkComponent"
+											[props]="$any(mounted.extension.config)?.props"
+											[context]="$any(mounted.extension.config)?.context"
+										/>
 									</div>
-								}
-								<div class="extension-panel-body">
-									@if (mounted.extension.component) {
-										<ng-container *ngComponentOutlet="mounted.extension.component; inputs: $any(mounted.extension.config)" />
-									}
 								</div>
-							</div>
+							}
+							@default {
+								<gz-framework-host
+									[frameworkId]="mounted.extension.frameworkId!"
+									[component]="mounted.resolvedFrameworkComponent"
+									[loadComponent]="mounted.loadFrameworkComponent"
+									[props]="$any(mounted.extension.config)?.props"
+									[context]="$any(mounted.extension.config)?.context"
+								/>
+							}
 						}
-						@default {
-							@if (mounted.extension.component) {
-								<ng-container *ngComponentOutlet="mounted.extension.component; inputs: $any(mounted.extension.config)" />
+					} @else {
+						<!-- Angular extension: use ngComponentOutlet -->
+						@switch (getWrapperType(mounted.extension)) {
+							@case ('card') {
+								<nb-card>
+									@if (getWrapperConfig(mounted.extension)?.showHeader !== false) {
+										<nb-card-header>
+											{{
+												getWrapperConfig(mounted.extension)?.title ||
+													mounted.extension.metadata?.title ||
+													mounted.extension.id
+											}}
+										</nb-card-header>
+									}
+									<nb-card-body>
+										@if (mounted.resolvedComponent) {
+											<ng-container
+												*ngComponentOutlet="
+													mounted.resolvedComponent;
+													inputs: $any(mounted.extension.config)
+												"
+											/>
+										}
+									</nb-card-body>
+								</nb-card>
+							}
+							@case ('widget') {
+								<nb-card class="extension-widget">
+									<nb-card-body>
+										@if (mounted.resolvedComponent) {
+											<ng-container
+												*ngComponentOutlet="
+													mounted.resolvedComponent;
+													inputs: $any(mounted.extension.config)
+												"
+											/>
+										}
+									</nb-card-body>
+								</nb-card>
+							}
+							@case ('window') {
+								<nb-card class="extension-window">
+									@if (getWrapperConfig(mounted.extension)?.showHeader !== false) {
+										<nb-card-header>
+											{{
+												getWrapperConfig(mounted.extension)?.title ||
+													mounted.extension.metadata?.title ||
+													mounted.extension.id
+											}}
+										</nb-card-header>
+									}
+									<nb-card-body>
+										@if (mounted.resolvedComponent) {
+											<ng-container
+												*ngComponentOutlet="
+													mounted.resolvedComponent;
+													inputs: $any(mounted.extension.config)
+												"
+											/>
+										}
+									</nb-card-body>
+								</nb-card>
+							}
+							@case ('panel') {
+								<div class="extension-panel" [class]="getWrapperConfig(mounted.extension)?.cssClass">
+									@if (
+										getWrapperConfig(mounted.extension)?.showHeader !== false &&
+										getWrapperConfig(mounted.extension)?.title
+									) {
+										<div class="extension-panel-header">
+											{{ getWrapperConfig(mounted.extension)?.title }}
+										</div>
+									}
+									<div class="extension-panel-body">
+										@if (mounted.resolvedComponent) {
+											<ng-container
+												*ngComponentOutlet="
+													mounted.resolvedComponent;
+													inputs: $any(mounted.extension.config)
+												"
+											/>
+										}
+									</div>
+								</div>
+							}
+							@default {
+								@if (mounted.resolvedComponent) {
+									<ng-container
+										*ngComponentOutlet="
+											mounted.resolvedComponent;
+											inputs: $any(mounted.extension.config)
+										"
+									/>
+								}
 							}
 						}
 					}
@@ -163,6 +317,35 @@ interface MountedExtension {
 			}
 			.extension-panel-body {
 				padding: 0.5rem;
+			}
+			.extension-loading {
+				padding: 1rem;
+				text-align: center;
+				color: var(--text-hint-color, #8f9bb3);
+				font-size: 0.875rem;
+			}
+			.extension-error {
+				padding: 1rem;
+				text-align: center;
+				color: var(--color-danger-500, #ff3d71);
+				font-size: 0.875rem;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 0.5rem;
+			}
+			.extension-error button {
+				padding: 0.25rem 0.75rem;
+				border: 1px solid var(--color-danger-500, #ff3d71);
+				border-radius: 4px;
+				background: transparent;
+				color: var(--color-danger-500, #ff3d71);
+				cursor: pointer;
+				font-size: 0.75rem;
+			}
+			.extension-error button:hover {
+				background: var(--color-danger-500, #ff3d71);
+				color: #fff;
 			}
 		`
 	],
@@ -232,6 +415,25 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 	}
 
 	/**
+	 * Retry loading a failed extension.
+	 */
+	async retryExtension(mounted: MountedExtension): Promise<void> {
+		mounted.error = undefined;
+		mounted.loading = true;
+		this._cdr.markForCheck();
+
+		// Re-attempt lazy loading
+		if (mounted.isFramework) {
+			// For framework extensions, the FrameworkHostComponent handles retry
+			// Just clear the error and let it re-render
+			mounted.loading = false;
+			this._cdr.markForCheck();
+		} else {
+			await this._resolveLazyComponent(mounted);
+		}
+	}
+
+	/**
 	 * Subscribes to extension changes for reactive updates.
 	 */
 	private _subscribeToExtensions(): void {
@@ -265,9 +467,7 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 		);
 
 		// Find extensions to mount (new)
-		const toMount = visibleExtensions.filter(
-			(e) => !this._mountedExtensions.find((m) => m.extension.id === e.id)
-		);
+		const toMount = visibleExtensions.filter((e) => !this._mountedExtensions.find((m) => m.extension.id === e.id));
 
 		// Unmount removed extensions
 		for (const mounted of toUnmount) {
@@ -275,9 +475,7 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 		}
 
 		// Remove unmounted from list
-		this._mountedExtensions = this._mountedExtensions.filter(
-			(m) => !toUnmount.includes(m)
-		);
+		this._mountedExtensions = this._mountedExtensions.filter((m) => !toUnmount.includes(m));
 
 		// Mount new extensions
 		for (const ext of toMount) {
@@ -285,9 +483,7 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 		}
 
 		// Sort by order
-		this._mountedExtensions.sort(
-			(a, b) => (a.extension.order ?? 999) - (b.extension.order ?? 999)
-		);
+		this._mountedExtensions.sort((a, b) => (a.extension.order ?? 999) - (b.extension.order ?? 999));
 
 		this._cdr.markForCheck();
 	}
@@ -295,9 +491,7 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 	/**
 	 * Filters extensions based on visibility rules.
 	 */
-	private async _filterVisibleExtensions(
-		extensions: PageExtensionDefinition[]
-	): Promise<PageExtensionDefinition[]> {
+	private async _filterVisibleExtensions(extensions: PageExtensionDefinition[]): Promise<PageExtensionDefinition[]> {
 		const context: ExtensionVisibilityContext = {
 			injector: this._injector,
 			user: this.visibilityContext?.user,
@@ -317,10 +511,7 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 	/**
 	 * Checks if an extension is visible.
 	 */
-	private async _isVisible(
-		ext: PageExtensionDefinition,
-		context: ExtensionVisibilityContext
-	): Promise<boolean> {
+	private async _isVisible(ext: PageExtensionDefinition, context: ExtensionVisibilityContext): Promise<boolean> {
 		if (ext.hidden) return false;
 
 		if (ext.visible) {
@@ -335,14 +526,39 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 
 	/**
 	 * Mounts an extension and calls onMount lifecycle hook.
+	 * Detects framework extensions and sets up accordingly.
+	 * If the extension uses `loadComponent`, resolves it lazily before rendering.
 	 */
 	private async _mountExtension(extension: PageExtensionDefinition): Promise<void> {
+		const framework = isFrameworkExtension(extension);
+		const hasLazyComponent = !framework && !!extension.loadComponent;
+
+		// For framework extensions, extract the component and loader
+		let resolvedFrameworkComponent: unknown | undefined;
+		let loadFrameworkComponent: (() => Promise<unknown>) | undefined;
+
+		if (framework) {
+			const fwExt = extension as FrameworkExtensionDefinition;
+			resolvedFrameworkComponent = fwExt.frameworkComponent;
+			loadFrameworkComponent = fwExt.loadFrameworkComponent;
+		}
+
 		const mounted: MountedExtension = {
 			extension,
-			mounted: true
+			resolvedComponent: hasLazyComponent ? undefined : extension.component,
+			loading: hasLazyComponent,
+			mounted: true,
+			isFramework: framework,
+			resolvedFrameworkComponent,
+			loadFrameworkComponent
 		};
 
 		this._mountedExtensions.push(mounted);
+
+		// Resolve lazy Angular component
+		if (hasLazyComponent && extension.loadComponent) {
+			await this._resolveLazyComponent(mounted);
+		}
 
 		// Call onMount lifecycle hook
 		if (extension.onMount) {
@@ -352,6 +568,25 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 			} catch (error) {
 				console.error(`[ExtensionSlot] onMount error for '${extension.id}':`, error);
 			}
+		}
+	}
+
+	/**
+	 * Resolves a lazy Angular component for a mounted extension.
+	 * Sets error state on failure for retry support.
+	 */
+	private async _resolveLazyComponent(mounted: MountedExtension): Promise<void> {
+		try {
+			mounted.resolvedComponent = await mounted.extension.loadComponent!();
+			mounted.loading = false;
+			mounted.error = undefined;
+			this._cdr.markForCheck();
+		} catch (error: any) {
+			const message = error?.message ?? String(error);
+			console.error(`[ExtensionSlot] loadComponent failed for '${mounted.extension.id}':`, error);
+			mounted.loading = false;
+			mounted.error = message;
+			this._cdr.markForCheck();
 		}
 	}
 

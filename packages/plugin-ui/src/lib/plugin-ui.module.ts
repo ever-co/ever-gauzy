@@ -27,13 +27,20 @@ import {
 	IDeclarativePageRouteRegistry,
 	IDeclarativePageTabRegistry,
 	IPluginTranslateService,
+	IPluginPermissionChecker,
+	IPluginFeatureChecker,
 	PLUGIN_NAV_BUILDER,
 	PLUGIN_ROUTE_REGISTRY,
 	PLUGIN_TAB_REGISTRY,
-	PLUGIN_TRANSLATE_SERVICE
+	PLUGIN_TRANSLATE_SERVICE,
+	PLUGIN_PERMISSION_CHECKER,
+	PLUGIN_FEATURE_CHECKER
 } from './plugin-ui.helper';
 import { PageExtensionRegistryService } from './plugin-extension/page-extension-registry.service';
 import { PluginUiRegistryService } from './plugin-ui-registry.service';
+import { PluginHealthService } from './plugin-health.service';
+import { validatePluginDependencies, logDependencyValidation } from './plugin-dependency-graph';
+import { checkVersionCompatibility } from './plugin-version-compat';
 
 /**
  * Service bindings for `PluginUiModule.init()`.
@@ -51,6 +58,10 @@ export interface PluginUiServices {
 	tabRegistry?: Type<IDeclarativePageTabRegistry>;
 	/** Translate service for plugin translations (bound to PLUGIN_TRANSLATE_SERVICE). */
 	translateService?: Type<IPluginTranslateService>;
+	/** Permission checker for extension visibility (bound to PLUGIN_PERMISSION_CHECKER). */
+	permissionChecker?: Type<IPluginPermissionChecker>;
+	/** Feature flag checker for extension visibility (bound to PLUGIN_FEATURE_CHECKER). */
+	featureChecker?: Type<IPluginFeatureChecker>;
 }
 
 /** Maps PluginUiServices keys to their InjectionTokens. */
@@ -58,7 +69,9 @@ const SERVICE_TOKEN_MAP: Record<keyof PluginUiServices, InjectionToken<any>> = {
 	navBuilder: PLUGIN_NAV_BUILDER,
 	routeRegistry: PLUGIN_ROUTE_REGISTRY,
 	tabRegistry: PLUGIN_TAB_REGISTRY,
-	translateService: PLUGIN_TRANSLATE_SERVICE
+	translateService: PLUGIN_TRANSLATE_SERVICE,
+	permissionChecker: PLUGIN_PERMISSION_CHECKER,
+	featureChecker: PLUGIN_FEATURE_CHECKER
 };
 
 /**
@@ -87,6 +100,7 @@ export class PluginUiModule implements OnDestroy {
 	private readonly _envInjector = inject(EnvironmentInjector);
 	private readonly _registry = inject(PluginUiRegistryService);
 	private readonly _extRegistry = inject(PageExtensionRegistryService);
+	private readonly _health = inject(PluginHealthService);
 
 	/** Plugin instances and definitions created during app initializer. Stored so lifecycle methods can be called on destroy. */
 	private readonly _plugins: Array<{ instance: any; definition: PluginUiDefinition }> = [];
@@ -177,11 +191,38 @@ export class PluginUiModule implements OnDestroy {
 	 * correctly.
 	 */
 	async bootstrapPlugins(): Promise<void> {
+		// ── Validate dependency graph and version compatibility ──
+		try {
+			const config = getPluginUiConfig();
+			const allFlat = flattenPlugins(config.plugins);
+
+			// Dependency graph validation (cycles, missing deps, duplicates)
+			const depResult = validatePluginDependencies(allFlat);
+			if (!depResult.valid) {
+				logDependencyValidation(depResult);
+			}
+
+			// Version compatibility check (peerPlugins)
+			const verResult = checkVersionCompatibility(allFlat);
+			if (!verResult.compatible) {
+				for (const issue of verResult.issues) {
+					if (issue.severity === 'error') {
+						console.error(`[PluginUiModule] [${issue.pluginId}] ${issue.message}`);
+					} else {
+						console.warn(`[PluginUiModule] [${issue.pluginId}] ${issue.message}`);
+					}
+				}
+			}
+		} catch (e) {
+			// Config not available yet — skip validation
+		}
+
 		const plugins = await this.createPluginInstances();
 		this._plugins.push(...plugins);
 
-		for (const { instance } of plugins) {
+		for (const { instance, definition } of plugins) {
 			this._registry.register(instance);
+			this._health.recordBootEnd(definition.id);
 		}
 
 		// Invoke ngOnPluginBootstrap for all plugins
@@ -192,6 +233,37 @@ export class PluginUiModule implements OnDestroy {
 
 		// Handle bootstrap-only plugins (no module/loadModule — pure declarative registrations)
 		await this.bootstrapDeclarativePlugins();
+
+		// Preload plugins with loadStrategy: 'preload' (fire-and-forget after bootstrap)
+		this.preloadPlugins();
+	}
+
+	/**
+	 * Fires off background module loads for plugins with `loadStrategy: 'preload'`.
+	 * Does not block bootstrap — errors are logged but not thrown.
+	 */
+	private preloadPlugins(): void {
+		try {
+			const config = getPluginUiConfig();
+			const allFlat = flattenPlugins(config.plugins);
+			const preloadable = allFlat.filter((p) => p.loadStrategy === 'preload' && p.loadModule);
+
+			if (preloadable.length === 0) return;
+
+			console.log(`[PluginUiModule] Preloading ${preloadable.length} plugin(s)…`);
+
+			for (const plugin of preloadable) {
+				plugin.loadModule!()
+					.then(() => {
+						console.log(`[PluginUiModule] Preloaded '${plugin.id}'`);
+					})
+					.catch((err: unknown) => {
+						console.warn(`[PluginUiModule] Failed to preload '${plugin.id}':`, err);
+					});
+			}
+		} catch {
+			// Config not available — skip preloading
+		}
 	}
 
 	// ─── Private helpers ─────────────────────────────────────────
@@ -243,6 +315,7 @@ export class PluginUiModule implements OnDestroy {
 		const plugins: Array<{ instance: any; definition: PluginUiDefinition }> = [];
 		for (const { definition, module: mod, loadModule } of filtered) {
 			try {
+				this._health.recordBootStart(definition.id);
 				const resolvedModule = mod ?? (loadModule ? await loadModule() : null);
 				if (!resolvedModule) continue;
 
@@ -259,6 +332,7 @@ export class PluginUiModule implements OnDestroy {
 			} catch (e: any) {
 				const trace = typeof e?.stack === 'string' ? e.stack : undefined;
 				console.error(`Error creating UI plugin [${definition.id}]`, trace, e);
+				this._health.recordError(definition.id, e);
 			}
 		}
 		return plugins;
@@ -300,12 +374,15 @@ export class PluginUiModule implements OnDestroy {
 					if (!active) continue;
 				}
 
+				this._health.recordBootStart(definition.id);
 				const result = runInInjectionContext(this._envInjector, () => definition.bootstrap!(this._envInjector));
 				if (result instanceof Promise) await result;
 				this._declarativePluginDefs.push(definition);
+				this._health.recordBootEnd(definition.id);
 			} catch (e: any) {
 				const trace = typeof e?.stack === 'string' ? e.stack : undefined;
 				console.error(`[PluginUiModule] Error in bootstrap for plugin [${definition.id}]`, trace, e);
+				this._health.recordError(definition.id, e);
 			}
 		}
 	}

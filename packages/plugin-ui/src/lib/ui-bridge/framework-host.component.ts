@@ -9,8 +9,10 @@ import {
 	SimpleChanges,
 	inject,
 	Injector,
-	ChangeDetectionStrategy
+	ChangeDetectionStrategy,
+	ChangeDetectorRef
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { UiBridgeRegistryService } from './ui-bridge-registry.service';
 import { UiBridgeMountResult, UiBridgeFramework } from './ui-bridge.interface';
 
@@ -21,6 +23,11 @@ import { UiBridgeMountResult, UiBridgeFramework } from './ui-bridge.interface';
  * (React, Vue, Svelte, etc.) by delegating mounting/unmounting to the
  * appropriate registered bridge.
  *
+ * Supports:
+ * - **Lazy bridges**: Async resolution via `UiBridgeRegistryService.getAsync()`
+ * - **Lazy components**: `loadFrameworkComponent` for code-splitting
+ * - **Error/retry**: Shows an error state with a retry button on load failure
+ *
  * @example
  * ```html
  * <gz-framework-host
@@ -28,12 +35,30 @@ import { UiBridgeMountResult, UiBridgeFramework } from './ui-bridge.interface';
  *   [component]="MyReactComponent"
  *   [props]="{ title: 'Hello!' }"
  * />
+ *
+ * <!-- Lazy component -->
+ * <gz-framework-host
+ *   frameworkId="react"
+ *   [loadComponent]="loadMyReactComponent"
+ *   [props]="{ title: 'Lazy!' }"
+ * />
  * ```
  */
 @Component({
 	selector: 'gz-framework-host',
 	standalone: true,
-	template: '<div #host class="framework-host"></div>',
+	imports: [CommonModule],
+	template: `
+		@if (_loading) {
+			<div class="framework-host-loading">Loading…</div>
+		} @else if (_error) {
+			<div class="framework-host-error">
+				<span>{{ _error }}</span>
+				<button (click)="retry()">Retry</button>
+			</div>
+		}
+		<div #host class="framework-host"></div>
+	`,
 	styles: [
 		`
 			:host {
@@ -41,6 +66,35 @@ import { UiBridgeMountResult, UiBridgeFramework } from './ui-bridge.interface';
 			}
 			.framework-host {
 				display: contents;
+			}
+			.framework-host-loading {
+				padding: 1rem;
+				text-align: center;
+				color: var(--text-hint-color, #8f9bb3);
+				font-size: 0.875rem;
+			}
+			.framework-host-error {
+				padding: 1rem;
+				text-align: center;
+				color: var(--color-danger-500, #ff3d71);
+				font-size: 0.875rem;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 0.5rem;
+			}
+			.framework-host-error button {
+				padding: 0.25rem 0.75rem;
+				border: 1px solid var(--color-danger-500, #ff3d71);
+				border-radius: 4px;
+				background: transparent;
+				color: var(--color-danger-500, #ff3d71);
+				cursor: pointer;
+				font-size: 0.75rem;
+			}
+			.framework-host-error button:hover {
+				background: var(--color-danger-500, #ff3d71);
+				color: #fff;
 			}
 		`
 	],
@@ -54,9 +108,15 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 	@Input({ required: true }) frameworkId!: UiBridgeFramework;
 
 	/**
-	 * The framework component to render.
+	 * The framework component to render (eager).
 	 */
-	@Input({ required: true }) component!: unknown;
+	@Input() component?: unknown;
+
+	/**
+	 * Lazy-load the framework component for code-splitting.
+	 * Mutually exclusive with `component` — if both set, `loadComponent` takes precedence.
+	 */
+	@Input() loadComponent?: () => Promise<unknown>;
 
 	/**
 	 * Props to pass to the framework component.
@@ -72,7 +132,14 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 
 	private readonly _bridgeRegistry = inject(UiBridgeRegistryService);
 	private readonly _injector = inject(Injector);
+	private readonly _cdr = inject(ChangeDetectorRef);
 	private _mountResult?: UiBridgeMountResult;
+
+	/** Whether the component/bridge is currently loading. */
+	_loading = false;
+
+	/** Error message if loading failed. */
+	_error: string | null = null;
 
 	ngOnInit(): void {
 		this._mount();
@@ -86,7 +153,7 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 			}
 		}
 
-		if (changes['component'] || changes['frameworkId']) {
+		if (changes['component'] || changes['loadComponent'] || changes['frameworkId']) {
 			this._unmount();
 			this._mount();
 		}
@@ -96,33 +163,68 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 		this._unmount();
 	}
 
-	private _mount(): void {
-		if (!this.frameworkId || !this.component) {
+	/**
+	 * Retry mounting after a failure.
+	 */
+	retry(): void {
+		this._error = null;
+		this._unmount();
+		this._mount();
+	}
+
+	private async _mount(): Promise<void> {
+		if (!this.frameworkId || (!this.component && !this.loadComponent)) {
 			return;
 		}
 
-		const bridge = this._bridgeRegistry.get(this.frameworkId);
-		if (!bridge) {
-			const available = this._bridgeRegistry.getRegisteredFrameworks();
-			const availableStr = available.length > 0 ? available.join(', ') : 'none';
-			console.warn(
-				`[FrameworkHost] Bridge '${this.frameworkId}' not registered. ` +
-					`Available bridges: ${availableStr}. ` +
-					`Make sure to import and provide the bridge (e.g., provideReactBridge()).`
-			);
-			return;
-		}
+		this._loading = true;
+		this._error = null;
+		this._cdr.markForCheck();
 
 		try {
+			// Resolve bridge (async — supports lazy bridges)
+			const bridge = await this._bridgeRegistry.getAsync(this.frameworkId);
+			if (!bridge) {
+				const available = this._bridgeRegistry.getRegisteredFrameworks();
+				const availableStr = available.length > 0 ? available.join(', ') : 'none';
+				this._error =
+					`Bridge '${this.frameworkId}' not registered. ` +
+					`Available: ${availableStr}. ` +
+					`Make sure to import and provide the bridge.`;
+				this._loading = false;
+				this._cdr.markForCheck();
+				return;
+			}
+
+			// Resolve component (lazy if loadComponent is provided)
+			let resolvedComponent = this.component;
+			if (this.loadComponent) {
+				resolvedComponent = await this.loadComponent();
+			}
+
+			if (!resolvedComponent) {
+				this._error = `No component resolved for framework '${this.frameworkId}'.`;
+				this._loading = false;
+				this._cdr.markForCheck();
+				return;
+			}
+
 			this._mountResult = bridge.mount({
-				component: this.component,
+				component: resolvedComponent,
 				props: this.props,
 				context: this.context,
 				hostElement: this.hostRef.nativeElement,
 				injector: this._injector
 			});
-		} catch (error) {
+
+			this._loading = false;
+			this._cdr.markForCheck();
+		} catch (error: any) {
+			const message = error?.message ?? String(error);
 			console.error(`[FrameworkHost] Failed to mount ${this.frameworkId} component:`, error);
+			this._error = `Failed to load: ${message}`;
+			this._loading = false;
+			this._cdr.markForCheck();
 		}
 	}
 

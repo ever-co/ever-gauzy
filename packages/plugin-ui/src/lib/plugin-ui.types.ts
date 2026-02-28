@@ -1,5 +1,6 @@
 import { Injector, InjectionToken, Type } from '@angular/core';
 import type { PageExtensionDefinition } from './plugin-extension/page-extension-slot.types';
+import type { UiBridgeFramework } from './ui-bridge/ui-bridge.interface';
 
 /**
  * Minimal shape for a plugin-contributed page route.
@@ -14,6 +15,32 @@ export interface PluginRouteInput {
 	component?: Type<unknown>;
 	/** Lazy load a module. */
 	loadChildren?: () => Promise<Type<unknown> | unknown> | Type<unknown> | unknown;
+	/**
+	 * Lazy-load a standalone component for the route (Angular 17+ pattern).
+	 * Use for code-splitting without creating an NgModule wrapper.
+	 *
+	 * @example
+	 * loadComponent: () => import('./my-page').then(m => m.MyPageComponent)
+	 */
+	loadComponent?: () => Promise<Type<unknown>>;
+	/**
+	 * Framework identifier for non-Angular route components.
+	 * When set, the route renders a FrameworkHostComponent wrapper.
+	 */
+	frameworkId?: UiBridgeFramework;
+	/**
+	 * Framework component to render at this route (eager).
+	 * Used with frameworkId.
+	 */
+	frameworkComponent?: unknown;
+	/**
+	 * Lazy-load the framework component for this route.
+	 * Used with frameworkId for code-splitting.
+	 *
+	 * @example
+	 * loadFrameworkComponent: () => import('./ReactPage').then(m => m.ReactPage)
+	 */
+	loadFrameworkComponent?: () => Promise<unknown>;
 	/** Route data. */
 	data?: Record<string, unknown>;
 	/** Route guards. */
@@ -226,6 +253,9 @@ export interface PluginUiDefinition {
 	 *
 	 * Core translations remain untouched — only additive merging happens.
 	 *
+	 * When `translationNamespace` is set, translations are auto-wrapped under
+	 * that namespace key (e.g. `{ TITLE: 'Hello' }` becomes `{ MY_PLUGIN: { TITLE: 'Hello' } }`).
+	 *
 	 * @example
 	 * translations: {
 	 *   en: { MY_PLUGIN: { TITLE: 'My Plugin' } },
@@ -233,6 +263,147 @@ export interface PluginUiDefinition {
 	 * }
 	 */
 	translations?: Record<string, Record<string, any>>;
+
+	/**
+	 * Translation namespace prefix for this plugin.
+	 *
+	 * When set, plugin translations are automatically wrapped under this key
+	 * to prevent collisions with core or other plugins' translation keys.
+	 *
+	 * Convention: use UPPER_SNAKE_CASE matching the plugin's domain (e.g. 'TIME_TRACKER', 'ANALYTICS').
+	 *
+	 * @example
+	 * ```ts
+	 * defineDeclarativePlugin('time-tracker', {
+	 *   translationNamespace: 'TIME_TRACKER',
+	 *   translations: {
+	 *     en: { TITLE: 'Time Tracker', START: 'Start' },
+	 *     fr: { TITLE: 'Suivi du temps', START: 'Démarrer' }
+	 *   }
+	 * });
+	 * // Stored as: { TIME_TRACKER: { TITLE: 'Time Tracker', START: 'Start' } }
+	 * // Use: instant('TIME_TRACKER.TITLE') or via NamespacedTranslateHelper: instant('TITLE')
+	 * ```
+	 */
+	translationNamespace?: string;
+
+	/**
+	 * Declarative settings schema for plugin configuration UI.
+	 *
+	 * When provided, the plugin is automatically registered in the
+	 * `PluginSettingsRegistryService` and can expose a settings page.
+	 *
+	 * @example
+	 * ```ts
+	 * settings: {
+	 *   title: 'Time Tracker Settings',
+	 *   fields: [
+	 *     { key: 'autoStart', type: 'boolean', label: 'Auto-start tracking', defaultValue: false },
+	 *     { key: 'interval', type: 'number', label: 'Tracking interval (seconds)', defaultValue: 10 },
+	 *     { key: 'idleTimeout', type: 'number', label: 'Idle timeout (minutes)', defaultValue: 5 }
+	 *   ]
+	 * }
+	 * ```
+	 */
+	settings?: PluginSettingsSchema;
+
+	/**
+	 * Semantic version of this plugin (e.g. '1.2.3').
+	 * Used by compatibility checks to ensure dependent plugins are compatible.
+	 */
+	version?: string;
+
+	/**
+	 * Peer plugin requirements: other plugins that must be present and
+	 * optionally at a compatible version.
+	 *
+	 * Uses a simplified semver range syntax:
+	 * - `'^1.0.0'` — compatible with 1.x.x (≥1.0.0, <2.0.0)
+	 * - `'~1.2.0'` — patch-level compatible (≥1.2.0, <1.3.0)
+	 * - `'>=2.0.0'` — at least 2.0.0
+	 * - `'*'` — any version (just require the plugin to be present)
+	 *
+	 * @example
+	 * ```ts
+	 * defineDeclarativePlugin('analytics-charts', {
+	 *   version: '1.0.0',
+	 *   peerPlugins: {
+	 *     'analytics-core': '^1.0.0',
+	 *     'data-export': '*'
+	 *   }
+	 * });
+	 * ```
+	 */
+	peerPlugins?: Record<string, string>;
+
+	/**
+	 * Loading strategy for plugins that use `loadModule`.
+	 *
+	 * - `'eager'` (default): Module is loaded during bootstrap.
+	 * - `'lazy'`: Module is loaded on first use (e.g. route navigation).
+	 * - `'preload'`: Module is lazy-loaded but prefetched after bootstrap completes.
+	 *
+	 * Only meaningful when `loadModule` is set.
+	 */
+	loadStrategy?: 'eager' | 'lazy' | 'preload';
+}
+
+// ─── Plugin Settings Types ──────────────────────────────────────────────────
+
+/**
+ * Supported setting field types for auto-generated plugin settings UI.
+ */
+export type PluginSettingFieldType = 'string' | 'number' | 'boolean' | 'select' | 'text';
+
+/**
+ * Definition of a single plugin setting field.
+ */
+export interface PluginSettingField {
+	/** Unique key for this setting (used as storage key). */
+	key: string;
+	/** Field type (determines the UI control). */
+	type: PluginSettingFieldType;
+	/** Display label (translation key or plain text). */
+	label: string;
+	/** Optional help text shown below the field. */
+	description?: string;
+	/** Default value when no user preference exists. */
+	defaultValue?: unknown;
+	/** Options for 'select' type fields. */
+	selectOptions?: Array<{ value: unknown; label: string }>;
+	/** Validation rules. */
+	validation?: {
+		required?: boolean;
+		min?: number;
+		max?: number;
+		pattern?: string;
+	};
+	/** Order hint (lower = earlier). */
+	order?: number;
+}
+
+/**
+ * Settings schema for a plugin.
+ * Describes the configuration fields and optional settings component.
+ */
+export interface PluginSettingsSchema {
+	/** Display title for the settings section. */
+	title?: string;
+	/** Description of what these settings control. */
+	description?: string;
+	/** Setting field definitions (for auto-generated UI). */
+	fields?: PluginSettingField[];
+	/**
+	 * Custom settings component (overrides auto-generated UI).
+	 * When provided, `fields` are ignored and this component is rendered instead.
+	 */
+	component?: Type<unknown>;
+	/**
+	 * Lazy-load a custom settings component for code-splitting.
+	 */
+	loadComponent?: () => Promise<Type<unknown>>;
+	/** Group/category for organizing settings (e.g. 'general', 'advanced'). */
+	category?: string;
 }
 
 /**
