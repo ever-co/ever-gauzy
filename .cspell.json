@@ -860,7 +860,15 @@
 		"threadpool",
 		"THREADPOOL",
 		"EMFILE",
-		"gracefulify"
+		"gracefulify",
+		"kanban",
+		"Kanban",
+		"unsubscriptions",
+		"Tobus",
+		"preloadable",
+		"Suivi",
+		"Démarrer",
+		"Neue"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
