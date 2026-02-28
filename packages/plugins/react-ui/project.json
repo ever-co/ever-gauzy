@@ -4,7 +4,7 @@
 	"sourceRoot": "packages/plugins/react-ui/src",
 	"prefix": "gz",
 	"projectType": "library",
-	"tags": ["scope:plugin", "type:ui"],
+	"tags": [],
 	"implicitDependencies": ["plugin-ui", "plugin-ui-react", "ui-core"],
 	"targets": {
 		"build": {

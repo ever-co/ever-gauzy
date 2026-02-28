@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, firstValueFrom, map } from 'rxjs';
+import { BehaviorSubject, Observable, map } from 'rxjs';
 import { UiBridge, UiBridgeFramework } from './ui-bridge.interface';
 
 /**

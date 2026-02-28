@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import type { PluginEvent, PluginEventBusService, EmitOptions, SubscribeOptions } from './plugin-event-bus.service';
+import type { PluginEvent, PluginEventBusService, SubscribeOptions } from './plugin-event-bus.service';
 
 // ─── Event Contract Definition ──────────────────────────────────────────────
 

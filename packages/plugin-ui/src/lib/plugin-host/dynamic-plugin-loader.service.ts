@@ -1,11 +1,4 @@
-import {
-	EnvironmentInjector,
-	inject,
-	Injectable,
-	Injector,
-	runInInjectionContext,
-	Type
-} from '@angular/core';
+import { EnvironmentInjector, inject, Injectable, Injector, runInInjectionContext, Type } from '@angular/core';
 import { BehaviorSubject, Observable, map } from 'rxjs';
 import { PluginUiDefinition, PLUGIN_OPTIONS, PLUGIN_DEFINITION } from '../plugin-ui.types';
 import { PluginUiRegistryService } from '../plugin-ui-registry.service';
@@ -165,7 +158,7 @@ export class DynamicPluginLoaderService {
 		}
 
 		try {
-			const { definition, instance } = entry;
+			const { instance } = entry;
 
 			// Invoke lifecycle hooks on module-based plugins
 			if (instance) {
@@ -240,7 +233,8 @@ export class DynamicPluginLoaderService {
 	 * invokes lifecycle hooks.
 	 */
 	private async _loadModulePlugin(definition: PluginUiDefinition): Promise<any> {
-		const resolvedModule: Type<any> | undefined = definition.module ?? (definition.loadModule ? await definition.loadModule() : undefined);
+		const resolvedModule: Type<any> | undefined =
+			definition.module ?? (definition.loadModule ? await definition.loadModule() : undefined);
 
 		if (!resolvedModule) {
 			throw new Error(`Plugin '${definition.id}' loadModule resolved to null/undefined.`);
