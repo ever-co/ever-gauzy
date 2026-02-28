@@ -2,15 +2,16 @@ name: Deploy to Render Demo
 
 on:
   workflow_run:
-    workflows: ["Build and Publish Docker Images Demo"]
-    branches: [render]
+    workflows: ['Build and Publish Docker Images Demo']
+    branches:
+      - render
     types:
       - completed
 
 jobs:
   deploy-demo:
     runs-on: ubicloud-standard-4
-    timeout-minutes: 150
+    timeout-minutes: 300
 
     environment: demo
 

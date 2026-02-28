@@ -4,13 +4,20 @@ import * as moment from 'moment';
 import { isEmpty } from '@gauzy/utils';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { TimeLog } from './../../time-log.entity';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
-	constructor(readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository) {}
+	protected ormType: MultiORM = getORMType();
+
+	constructor(
+		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository
+	) {}
 
 	/**
 	 * Executes the scheduling of TimeLog entries based on the given command parameters.
@@ -48,47 +55,84 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * @returns A list of pending time logs
 	 */
 	private async getPendingTimeLogs(tenantId: ID, organizationId: ID, employeeId?: ID): Promise<ITimeLog[]> {
-		// Construct the query with find options
-		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log').setFindOptions({
-			relations: { timeSlots: true }
-		});
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = this.mikroOrmTimeLogRepository.getKnex();
+				const qb = knex('time_log')
+					.withSchema(knex.userParams.schema)
+					.where(function () {
+						// Main condition: (stoppedAt IS NOT NULL AND isRunning = true) OR (stoppedAt IS NULL)
+						this.where(function () {
+							this.whereNotNull('stoppedAt').andWhere('isRunning', true);
+						}).orWhere(function () {
+							this.whereNull('stoppedAt');
+						});
+					});
 
-		// Define the main query structure
-		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			const andWhere = new Brackets((web: WhereExpressionBuilder) => {
-				web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NOT NULL`));
-				web.andWhere(p(`"${qb.alias}"."isRunning" = :isRunning`), { isRunning: true });
-			});
+				if (!!employeeId && !!organizationId) {
+					qb.andWhere({ employeeId, organizationId, tenantId });
+				}
 
-			const orWhere = new Brackets((web: WhereExpressionBuilder) => {
-				web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NULL`));
-			});
+				const results = await qb.select('time_log.id');
+				console.log(
+					`Schedule Time Log Query For ${employeeId ? 'Tenant Organization' : 'All'} Entries`,
+					results.length
+				);
 
-			// Apply filtering based on employeeId and organizationId
-			if (!!employeeId && !!organizationId) {
-				qb.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), { employeeId });
-						web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
-						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
-					})
+				if (results.length === 0) return [];
+
+				// Re-fetch as entities with timeSlots populated (matching TypeORM's relations: { timeSlots: true })
+				const ids = results.map((r: any) => r.id);
+				return await this.mikroOrmTimeLogRepository.find(
+					{ id: { $in: ids } } as any,
+					{ populate: ['timeSlots'] as any }
 				);
 			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Construct the query with find options
+				const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log').setFindOptions({
+					relations: { timeSlots: true }
+				});
 
-			qb.andWhere(
-				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(andWhere);
-					web.orWhere(orWhere);
-				})
-			);
-		});
+				// Define the main query structure
+				query.where((qb: SelectQueryBuilder<TimeLog>) => {
+					const andWhere = new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NOT NULL`));
+						web.andWhere(p(`"${qb.alias}"."isRunning" = :isRunning`), { isRunning: true });
+					});
 
-		console.log(
-			`Schedule Time Log Query For ${employeeId ? 'Tenant Organization' : 'All'} Entries`,
-			query.getQueryAndParameters()
-		);
+					const orWhere = new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NULL`));
+					});
 
-		return await query.getMany();
+					// Apply filtering based on employeeId and organizationId
+					if (!!employeeId && !!organizationId) {
+						qb.andWhere(
+							new Brackets((web: WhereExpressionBuilder) => {
+								web.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), { employeeId });
+								web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+								web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+							})
+						);
+					}
+
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							web.andWhere(andWhere);
+							web.orWhere(orWhere);
+						})
+					);
+				});
+
+				console.log(
+					`Schedule Time Log Query For ${employeeId ? 'Tenant Organization' : 'All'} Entries`,
+					query.getQueryAndParameters()
+				);
+
+				return await query.getMany();
+			}
+		}
 	}
 
 	/**
@@ -142,10 +186,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		// then stoppedAt will be calculated as "2024-09-24 21:00:10" (10 seconds later).
 
 		// Update the stoppedAt field in the database
-		await this.typeOrmTimeLogRepository.save({
-			id: timeLog.id,
-			stoppedAt
-		});
+		await this.saveTimeLog({ id: timeLog.id, stoppedAt });
 
 		console.log('Schedule Time Log Entry Updated StoppedAt Using StartedAt', timeLog.startedAt);
 		// Example log output: "Schedule Time Log Entry Updated StoppedAt Using StartedAt 2024-09-24 21:00:00"
@@ -213,10 +254,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 			// In this case, the stoppedAt field will be updated in the database.
 
 			// Calculate the potential stoppedAt time using the total duration
-			await this.typeOrmTimeLogRepository.save({
-				id: timeLog.id,
-				stoppedAt
-			});
+			await this.saveTimeLog({ id: timeLog.id, stoppedAt });
 
 			// Example log output: "Schedule Time Log Entry Updated StoppedAt Using StoppedAt 2024-09-24 21:15:00"
 			console.log('Schedule Time Log Entry Updated StoppedAt Using StoppedAt', stoppedAt);
@@ -264,10 +302,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 				stoppedAt = startedAt.add(duration, 'seconds').toDate();
 
 				// Update the stoppedAt field in the database
-				await this.typeOrmTimeLogRepository.save({
-					id: timeLog.id,
-					stoppedAt
-				});
+				await this.saveTimeLog({ id: timeLog.id, stoppedAt });
 			}
 		}
 
@@ -281,9 +316,27 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 */
 	private async stopTimeLog(log: ITimeLog): Promise<ITimeLog> {
 		// Update the isRunning field to false in the database for the given time log
-		return await this.typeOrmTimeLogRepository.save({
-			id: log.id,
-			isRunning: false
-		});
+		return await this.saveTimeLog({ id: log.id, isRunning: false });
+	}
+
+	/**
+	 * Saves a partial time log entity using the active ORM.
+	 *
+	 * @param partial - A partial time log entity with at least an id
+	 * @returns The saved time log entity
+	 */
+	private async saveTimeLog(partial: Partial<ITimeLog> & { id: ID }): Promise<any> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmTimeLogRepository.getEntityManager();
+				const entity = em.getReference('TimeLog', partial.id) as any;
+				em.assign(entity, partial);
+				await em.persistAndFlush(entity);
+				return entity;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmTimeLogRepository.save(partial);
+		}
 	}
 }

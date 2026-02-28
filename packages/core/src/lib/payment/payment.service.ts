@@ -17,7 +17,7 @@ import { Payment } from './payment.entity';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { LIKE_OPERATOR } from '../core/util';
-import { getDateRangeFormat, getDaysBetweenDates } from '../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum } from '../core/utils';
 import { EmailService } from './../email-send/email.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
@@ -39,16 +39,29 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 * @returns {Promise<PaymentStats>} An object containing the count of payments and the total amount.
 	 */
 	async getPaymentStats(): Promise<PaymentStats> {
-		const result = await this.typeOrmPaymentRepository
-			.createQueryBuilder('payment')
-			.select('COUNT(payment.id)', 'count')
-			.addSelect('SUM(payment.amount)', 'amount')
-			.getRawOne();
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = this.mikroOrmRepository.getEntityManager().getKnex();
+				const result = await knex('payment').count('id as count').sum('amount as amount').first();
+				return {
+					count: parseInt(result?.count ?? '0', 10),
+					amount: parseFloat(result?.amount ?? '0') || 0
+				};
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const result = await this.typeOrmPaymentRepository
+					.createQueryBuilder('payment')
+					.select('COUNT(payment.id)', 'count')
+					.addSelect('SUM(payment.amount)', 'amount')
+					.getRawOne();
 
-		return {
-			count: parseInt(result.count, 10),
-			amount: parseFloat(result.amount) || 0
-		};
+				return {
+					count: parseInt(result.count, 10),
+					amount: parseFloat(result.amount) || 0
+				};
+			}
+		}
 	}
 
 	/**
@@ -58,52 +71,83 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 * @returns A Promise that resolves to an array of payments.
 	 */
 	async getPayments(request: IGetPaymentInput) {
-		// Create a query builder for the Payment entity
-		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const tenantId = RequestContext.currentTenantId();
+				const { organizationId, startDate, endDate } = request;
+				let { projectIds = [], contactIds = [] } = request;
+				const { start, end } = getDateRangeFormat(
+					moment.utc(startDate || moment().startOf('week')),
+					moment.utc(endDate || moment().endOf('week'))
+				);
 
-		// Set up the find options for the query
-		query.setFindOptions({
-			...(request && request.limit > 0
-				? {
-						take: request.limit,
-						skip: (request.page || 0) * request.limit
-				  }
-				: {}),
-			join: {
-				alias: `${this.tableName}`,
-				leftJoin: {
-					project: `${this.tableName}.project`
-				}
-			},
-			select: {
-				project: {
-					id: true,
-					name: true,
-					imageUrl: true,
-					membersCount: true
-				},
-				organizationContact: {
-					id: true,
-					name: true,
-					imageUrl: true
-				}
-			},
-			relations: {
-				project: true,
-				organizationContact: true
-			},
-			order: {
-				paymentDate: 'ASC'
+				const where: any = {
+					tenantId,
+					organizationId,
+					paymentDate: { $gte: start, $lte: end }
+				};
+				if (isNotEmpty(projectIds)) where.projectId = { $in: projectIds };
+				if (isNotEmpty(contactIds)) where.organizationContactId = { $in: contactIds };
+
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: ['project', 'organizationContact'] as any[],
+					orderBy: { paymentDate: 'ASC' as any },
+					...(request && request.limit > 0
+						? { limit: request.limit, offset: (request.page || 0) * request.limit }
+						: {})
+				});
+				return items.map((e) => this.serialize(e));
 			}
-		});
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the Payment entity
+				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-		// Set up the where clause using the provided filter function
-		query.where((qb: SelectQueryBuilder<Payment>) => {
-			this.getFilterQuery(qb, request);
-		});
+				// Set up the find options for the query
+				query.setFindOptions({
+					...(request && request.limit > 0
+						? {
+								take: request.limit,
+								skip: (request.page || 0) * request.limit
+						  }
+						: {}),
+					join: {
+						alias: `${this.tableName}`,
+						leftJoin: {
+							project: `${this.tableName}.project`
+						}
+					},
+					select: {
+						project: {
+							id: true,
+							name: true,
+							imageUrl: true,
+							membersCount: true
+						},
+						organizationContact: {
+							id: true,
+							name: true,
+							imageUrl: true
+						}
+					},
+					relations: {
+						project: true,
+						organizationContact: true
+					},
+					order: {
+						paymentDate: 'ASC'
+					}
+				});
 
-		// Set up the where clause using the provided filter function
-		return await query.getMany();
+				// Set up the where clause using the provided filter function
+				query.where((qb: SelectQueryBuilder<Payment>) => {
+					this.getFilterQuery(qb, request);
+				});
+
+				// Set up the where clause using the provided filter function
+				return await query.getMany();
+			}
+		}
 	}
 
 	/**
@@ -113,30 +157,62 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 * @returns A Promise that resolves to an array of daily payment report charts.
 	 */
 	async getDailyReportCharts(request: IGetPaymentInput) {
-		// Create a query builder for the Payment entity
-		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+		let payments: IPayment[];
 
-		// Set up the find options for the query
-		query.setFindOptions({
-			...(request.limit > 0
-				? {
-						take: request.limit,
-						skip: (request.page || 0) * request.limit
-				  }
-				: {}),
-			order: {
-				// Order results by the 'startedAt' field in ascending order
-				paymentDate: 'ASC'
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const tenantId = RequestContext.currentTenantId();
+				const { organizationId, startDate, endDate } = request;
+				let { projectIds = [], contactIds = [] } = request;
+				const { start, end } = getDateRangeFormat(
+					moment.utc(startDate || moment().startOf('week')),
+					moment.utc(endDate || moment().endOf('week'))
+				);
+
+				const where: any = {
+					tenantId,
+					organizationId,
+					paymentDate: { $gte: start, $lte: end }
+				};
+				if (isNotEmpty(projectIds)) where.projectId = { $in: projectIds };
+				if (isNotEmpty(contactIds)) where.organizationContactId = { $in: contactIds };
+
+				const items = await this.mikroOrmRepository.find(where, {
+					orderBy: { paymentDate: 'ASC' as any },
+					...(request.limit > 0 ? { limit: request.limit, offset: (request.page || 0) * request.limit } : {})
+				});
+				payments = items.map((e) => this.serialize(e));
+				break;
 			}
-		});
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the Payment entity
+				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-		// Set up the where clause using the provided filter function
-		query.where((qb: SelectQueryBuilder<Payment>) => {
-			this.getFilterQuery(qb, request);
-		});
+				// Set up the find options for the query
+				query.setFindOptions({
+					...(request.limit > 0
+						? {
+								take: request.limit,
+								skip: (request.page || 0) * request.limit
+						  }
+						: {}),
+					order: {
+						// Order results by the 'startedAt' field in ascending order
+						paymentDate: 'ASC'
+					}
+				});
 
-		// Set up the where clause using the provided filter function
-		const payments = await query.getMany();
+				// Set up the where clause using the provided filter function
+				query.where((qb: SelectQueryBuilder<Payment>) => {
+					this.getFilterQuery(qb, request);
+				});
+
+				// Set up the where clause using the provided filter function
+				payments = await query.getMany();
+				break;
+			}
+		}
 
 		// Gets an array of days between the given start date, end date and timezone.
 		const { startDate, endDate, timeZone } = request;

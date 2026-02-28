@@ -1,12 +1,14 @@
 {
-	"extends": "../../../tsconfig.base.json",
+	"extends": "../../../tsconfig.json",
 	"compilerOptions": {
 		"forceConsistentCasingInFileNames": true,
 		"strict": true,
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
-		"noPropertyAccessFromIndexSignature": true
+		"noPropertyAccessFromIndexSignature": true,
+		"module": "preserve",
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],

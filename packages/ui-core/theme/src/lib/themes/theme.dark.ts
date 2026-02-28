@@ -170,17 +170,7 @@ export const DARK_THEME = {
 
 			chartInnerLineColor: theme.bg2
 		},
-
-		echarts: {
-			bg: theme.bg,
-			textColor: theme.fgText,
-			axisLineColor: theme.fgText,
-			splitLineColor: theme.separator,
-			itemHoverShadowColor: 'rgba(0, 0, 0, 0.5)',
-			tooltipBackgroundColor: theme.primary,
-			areaOpacity: '0.7'
-		},
-
+		
 		chartjs: {
 			axisLineColor: theme.separator,
 			textColor: theme.fgText

@@ -8,9 +8,8 @@ import { ActivityWatchViewService } from './activity-watch-view.service';
 import { ActivityWatchElectronService } from './activity-watch-electron.service';
 
 @NgModule({
-	declarations: [ActivityWatchComponent],
-	exports: [ActivityWatchComponent],
-	imports: [CommonModule, NbIconModule, NbTooltipModule, NbToggleModule, TranslateModule],
-	providers: [ActivityWatchEventService, ActivityWatchViewService, ActivityWatchElectronService]
+    exports: [ActivityWatchComponent],
+    imports: [CommonModule, NbIconModule, NbTooltipModule, NbToggleModule, TranslateModule, ActivityWatchComponent],
+    providers: [ActivityWatchEventService, ActivityWatchViewService, ActivityWatchElectronService]
 })
 export class ActivityWatchModule {}

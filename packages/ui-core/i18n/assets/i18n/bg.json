@@ -1455,16 +1455,13 @@
 			"SUBTITLE": "Настройка на интеграция с Activepieces",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "Вашата интеграция с Activepieces е готова. Щракнете на бутона по-долу, за да разрешите.",
-				"INFOS": "След това ще бъдете прехвърлени към Activepieces, за да предоставите разрешение на Gauzy.",
-				"START_BUTTON": "Разрешаване на Activepieces",
+				"INFOS": "Въведете вашия API ключ за Activepieces, за да свържете акаунта си.",
 				"NEXT": "Напред",
 				"ERRORS": {
 					"INVALID_FORM": "Моля, попълнете правилно всички задължителни полета",
 					"SAVE_SETTINGS": "Неуспешно запазване на настройките",
 					"START_AUTHORIZATION": "Неуспешно стартиране на разрешаването",
 					"ORGANIZATION_NOT_FOUND": "Организацията не е намерена",
-					"CHECK_TENANT_SETTINGS": "Неуспешна проверка на настройките на клиента",
 					"CHECK_REMEMBER_STATE": "Неуспешна проверка на състоянието на запомняне"
 				},
 				"SUCCESS": {
@@ -1474,21 +1471,8 @@
 			"SETTINGS": {
 				"TITLE": "Настройки на Activepieces",
 				"SUBTITLE": "Конфигурирайте настройките си за интеграция с Activepieces",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "Въведете вашия Client ID",
-				"CLIENT_ID_HINT": "Вашият Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "Въведете вашия Client Secret",
-				"CLIENT_SECRET_HINT": "Вашият Activepieces OAuth Client Secret",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "Въведете вашия State Secret (минимум 32 символа)",
-				"STATE_SECRET_HINT": "Сигурен случаен низ, използван за проверка на състоянието на OAuth",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "Въведете вашия Callback URL",
-				"CALLBACK_URL_HINT": "URL адресът, към който Activepieces ще пренасочи след разрешаване",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "Въведете вашия Post Install URL",
-				"POST_INSTALL_URL_HINT": "URL адресът за пренасочване след завършване на инсталацията",
+				"API_KEY": "API ключ",
+				"API_KEY_PLACEHOLDER": "Въведете вашия Activepieces API ключ",
 				"SETTINGS_UPDATED": "Настройките на Activepieces са актуализирани успешно"
 			},
 			"CONNECTIONS": {
@@ -2647,6 +2631,7 @@
 		"TIME_OFF": "Time Off"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "Нямате разрешение за преглед на тази страница",
 		"HEADER": "Time Off",
 		"REQUEST": "Request",
 		"REQUEST_TIME_OFF": "Request Time Off",
@@ -4436,7 +4421,8 @@
 			"LARGE_FILE": "Файлът е твърде голям.",
 			"SERVICE_UNAVAILABLE": "Услугата временно не е достъпна.",
 			"UNEXPECTED_ERROR": "Възникна неочаквана грешка.",
-			"NETWORK_ERROR": "Мрежова грешка: {{message}}"
+			"NETWORK_ERROR": "Мрежова грешка: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "Разрешението за достъп до екрана е необходимо за активиране на автоматичното заснемане на екран. Моля, дайте разрешение в настройките на системата."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Тракерът беше спрян поради неактивност!",

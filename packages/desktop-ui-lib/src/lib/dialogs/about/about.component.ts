@@ -4,12 +4,14 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 import { GAUZY_ENV } from '../../constants';
 import { ElectronService } from '../../electron/services';
 import { LanguageElectronService } from '../../language/language-electron.service';
+import { NbLayoutModule, NbCardModule } from '@nebular/theme';
+import { TranslatePipe } from '@ngx-translate/core';
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-about',
-	templateUrl: './about.component.html',
-	styleUrls: ['./about.component.scss'],
-	standalone: false
+    selector: 'gauzy-about',
+    templateUrl: './about.component.html',
+    styleUrls: ['./about.component.scss'],
+    imports: [NbLayoutModule, NbCardModule, TranslatePipe]
 })
 export class AboutComponent implements OnInit {
 	private _application = {

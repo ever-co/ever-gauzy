@@ -11,6 +11,60 @@ import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { IEnvironment, IGauzyFeatures } from './ienvironment';
 import { isFeatureEnabled } from './environment.helper';
 
+/**
+ * Insecure default JWT secrets that must NEVER be used in production.
+ * If any of these are detected at startup, the server will refuse to start.
+ */
+const INSECURE_DEFAULT_SECRETS = new Set([
+	'secretkey', // cspell:ignore secretkey
+	'refreshsecretkey', // cspell:ignore refreshsecretkey
+	'verificationsecretkey', // cspell:ignore verificationsecretkey
+	'changeme', // cspell:ignore changeme
+	'secret',
+	'password',
+	'default',
+	'gauzy'
+]);
+
+/**
+ * Validates that critical JWT secrets are set and not using insecure defaults.
+ * Called at module load time to fail fast before the server starts accepting requests.
+ */
+function validateProductionSecrets(): void {
+	const errors: string[] = [];
+
+	const secretChecks: Array<{ name: string; value: string | undefined }> = [
+		{ name: 'JWT_SECRET', value: process.env.JWT_SECRET },
+		{ name: 'JWT_REFRESH_TOKEN_SECRET', value: process.env.JWT_REFRESH_TOKEN_SECRET },
+		{ name: 'JWT_VERIFICATION_TOKEN_SECRET', value: process.env.JWT_VERIFICATION_TOKEN_SECRET },
+		{ name: 'EXPRESS_SESSION_SECRET', value: process.env.EXPRESS_SESSION_SECRET }
+	];
+
+	for (const { name, value } of secretChecks) {
+		if (!value || value.trim() === '') {
+			errors.push(`${name} is not set. This is required in production.`);
+		} else if (INSECURE_DEFAULT_SECRETS.has(value.trim().toLowerCase())) {
+			errors.push(
+				`${name} is set to a known insecure default value [REDACTED]. ` +
+					`Generate a strong, unique secret for production use (e.g., openssl rand -base64 64).`
+			);
+		}
+	}
+
+	if (errors.length > 0) {
+		const message =
+			'\n🚨 PRODUCTION SECURITY ERROR: Refusing to start with insecure JWT configuration!\n\n' +
+			errors.map((e) => `  ❌ ${e}`).join('\n') +
+			'\n\nSet these environment variables to strong, unique secrets before deploying to production.\n';
+
+		console.error(message);
+		throw new Error('Production startup aborted: insecure JWT secrets detected. See above for details.');
+	}
+}
+
+// Validate JWT secrets at module load time (production only)
+validateProductionSecrets();
+
 if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
 	require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
 }
@@ -30,16 +84,16 @@ export const environment: IEnvironment = {
 	EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET || 'gauzy',
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
-	JWT_SECRET: process.env.JWT_SECRET || 'secretKey',
+	JWT_SECRET: process.env.JWT_SECRET!, // Validated at startup — must be set in production
 	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
-	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
+	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET!, // Validated at startup — must be set in production
 	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options
 	 */
-	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
+	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET!, // Validated at startup — must be set in production
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
 
 	/**
@@ -60,7 +114,7 @@ export const environment: IEnvironment = {
 	 */
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60 * 1000,
 	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 60000,
-	THROTTLE_ENABLED: process.env.THROTTLE_ENABLED == 'true',
+	THROTTLE_ENABLED: !['false', '0', 'no', 'off'].includes((process.env.THROTTLE_ENABLED ?? '').trim().toLowerCase()), // Enabled by default in production (unset → enabled)
 
 	/**
 	 * Jitsu Server Configuration
@@ -167,16 +221,18 @@ export const environment: IEnvironment = {
 		domain: process.env.AUTH0_DOMAIN
 	},
 
+	oauthApp: {
+		clientId: process.env.GAUZY_OAUTH_APP_CLIENT_ID,
+		clientSecret: process.env.GAUZY_OAUTH_APP_CLIENT_SECRET,
+		codeSecret: process.env.GAUZY_OAUTH_APP_CODE_SECRET,
+		redirectUris: (process.env.GAUZY_OAUTH_APP_REDIRECT_URIS ?? '')
+			.split(',')
+			.map((uri) => uri.trim())
+			.filter(Boolean)
+	},
+
 	activepieces: {
-		clientId: process.env.GAUZY_ACTIVEPIECES_CLIENT_ID,
-		clientSecret: process.env.GAUZY_ACTIVEPIECES_CLIENT_SECRET,
-		callbackUrl:
-			process.env.GAUZY_ACTIVEPIECES_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/integration/activepieces/callback`,
-		postInstallUrl:
-			process.env.GAUZY_ACTIVEPIECES_POST_INSTALL_URL ||
-			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/activepieces`,
-		stateSecret: process.env.ACTIVEPIECES_STATE_SECRET
+		apiKey: process.env.GAUZY_ACTIVEPIECES_API_KEY
 	},
 
 	sentry: {

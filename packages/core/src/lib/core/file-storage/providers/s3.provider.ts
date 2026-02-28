@@ -1,6 +1,6 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as multerS3 from 'multer-s3';
-import { basename, join } from 'path';
+import { basename, join } from 'node:path';
 import * as moment from 'moment';
 import {
 	S3Client,
@@ -44,6 +44,7 @@ export interface IS3ProviderConfig {
 
 export class S3Provider extends Provider<S3Provider> {
 	public readonly name = FileStorageProviderEnum.S3;
+	private readonly logger = new Logger(S3Provider.name);
 	private readonly detailedLoggingEnabled = false;
 	public instance: S3Provider;
 	public config: IS3ProviderConfig;
@@ -102,7 +103,7 @@ export class S3Provider extends Provider<S3Provider> {
 
 				if (settings) {
 					if (this.detailedLoggingEnabled) {
-						console.log(`setAwsS3Configuration Tenant Settings value: ${JSON.stringify(settings)}`);
+						this.logger.debug('setAwsS3Configuration: applying tenant settings overrides');
 					}
 
 					if (trimIfNotEmpty(settings.aws_access_key_id))
@@ -127,7 +128,7 @@ export class S3Provider extends Provider<S3Provider> {
 				}
 			}
 		} catch (error) {
-			console.error('Error while setting S3 configuration. Default configuration will be used', error);
+			this.logger.error('Error while setting S3 configuration. Default configuration will be used');
 		}
 	}
 
@@ -158,7 +159,7 @@ export class S3Provider extends Provider<S3Provider> {
 
 			return signedUrl;
 		} catch (error) {
-			console.error('Error while retrieving signed URL:', error);
+			this.logger.error('Error while retrieving signed URL');
 			return null;
 		}
 	}
@@ -218,11 +219,11 @@ export class S3Provider extends Provider<S3Provider> {
 					}
 				});
 			} else {
-				console.warn('Error while retrieving Multer for S3: s3Client is null');
+				this.logger.warn('Error while retrieving Multer for S3: s3Client is null');
 				return null;
 			}
 		} catch (error) {
-			console.error('Error while retrieving Multer for S3:', error);
+			this.logger.error('Error while retrieving Multer for S3');
 			return null;
 		}
 	}
@@ -249,7 +250,7 @@ export class S3Provider extends Provider<S3Provider> {
 			const data: GetObjectCommandOutput = await s3Client.send(command);
 			return data.Body;
 		} catch (error) {
-			console.error(`Error while fetching file with key '${key}':`, error);
+			this.logger.error(`Error while fetching file with key '${key}'`);
 		}
 	}
 
@@ -301,7 +302,7 @@ export class S3Provider extends Provider<S3Provider> {
 
 			return await this.mapUploadedFile(file);
 		} catch (error) {
-			console.log('Error while put file for aws S3 provider', error);
+			this.logger.error('Error while put file for aws S3 provider');
 		}
 	}
 
@@ -331,7 +332,7 @@ export class S3Provider extends Provider<S3Provider> {
 				data
 			});
 		} catch (error) {
-			console.error(`Error while deleting file with key '${key}':`, error);
+			this.logger.error(`Error while deleting file with key '${key}'`);
 			throw new HttpException(error, HttpStatus.BAD_REQUEST, {
 				description: `Error while deleting file with key: '${key}'`
 			});
@@ -366,11 +367,11 @@ export class S3Provider extends Provider<S3Provider> {
 
 				return s3Client;
 			} else {
-				console.warn(`Can't retrieve ${FileStorageProviderEnum.S3} instance: AWS credentials are missing`);
+				this.logger.warn(`Can't retrieve ${FileStorageProviderEnum.S3} instance: AWS credentials are missing`);
 				return null;
 			}
 		} catch (error) {
-			console.error(`Error while retrieving ${FileStorageProviderEnum.S3} instance:`, error);
+			this.logger.error(`Error while retrieving ${FileStorageProviderEnum.S3} instance`);
 			return null;
 		}
 	}

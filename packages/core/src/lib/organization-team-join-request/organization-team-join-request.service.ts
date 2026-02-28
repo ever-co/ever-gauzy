@@ -16,6 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { generateAlphaNumericCode } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
+import { MultiORMEnum } from '../core/utils';
 import { RequestContext } from './../core/context';
 import { User } from './../core/entities/internal';
 import { EmailService } from './../email-send/email.service';
@@ -70,9 +71,11 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		const { organizationTeamId, email } = entity;
 
 		/** find existing team join request and throw exception */
-		const request = await this.typeOrmRepository.countBy({
-			organizationTeamId,
-			email
+		const request = await this.count({
+			where: {
+				organizationTeamId,
+				email
+			}
 		});
 		if (request > 0) {
 			throw new ConflictException(
@@ -118,7 +121,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				token,
 				status: null
 			});
-			const organizationTeamJoinRequest = await this.typeOrmRepository.save(createEntityLike);
+			const organizationTeamJoinRequest = await this.save(createEntityLike);
 
 			/** Place here organization team join request email to send verification code*/
 			let { appName, appLogo, appSignature, appLink, companyLink, companyName } = entity;
@@ -155,33 +158,52 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	): Promise<IOrganizationTeamJoinRequest> {
 		const { email, token, code, organizationTeamId } = options;
 		try {
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			query.setFindOptions({
-				select: {
-					id: true,
-					email: true,
-					organizationTeamId: true
-				}
-			});
-			query.where((qb: SelectQueryBuilder<OrganizationTeamJoinRequest>) => {
-				qb.andWhere({
-					email,
-					organizationTeamId,
-					expiredAt: MoreThanOrEqual(new Date()),
-					status: IsNull()
-				});
-				qb.andWhere([
-					{
-						code
-					},
-					{
-						token
-					}
-				]);
-			});
-			const record = await query.getOneOrFail();
+			let record: IOrganizationTeamJoinRequest;
 
-			await this.typeOrmRepository.update(record.id, {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const item = await this.mikroOrmRepository.findOneOrFail({
+						email,
+						organizationTeamId,
+						expiredAt: { $gte: new Date() },
+						status: null,
+						$or: [{ code }, { token }]
+					} as any);
+					record = this.serialize(item);
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					query.setFindOptions({
+						select: {
+							id: true,
+							email: true,
+							organizationTeamId: true
+						}
+					});
+					query.where((qb: SelectQueryBuilder<OrganizationTeamJoinRequest>) => {
+						qb.andWhere({
+							email,
+							organizationTeamId,
+							expiredAt: MoreThanOrEqual(new Date()),
+							status: IsNull()
+						});
+						qb.andWhere([
+							{
+								code
+							},
+							{
+								token
+							}
+						]);
+					});
+					record = await query.getOneOrFail();
+					break;
+				}
+			}
+
+			await super.update(record.id, {
 				status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
 			});
 			delete record.id;
@@ -199,7 +221,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 		try {
 			/** find existing team join request */
-			const request = await this.typeOrmRepository.findOneOrFail({
+			const request = await this.findOneByOptions({
 				where: {
 					organizationTeamId,
 					email,
@@ -227,7 +249,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			});
 
 			/** Update code, token and expiredAt */
-			await this.typeOrmRepository.update(request.id, {
+			await super.update(request.id, {
 				code,
 				token,
 				expiredAt: moment(new Date()).add(environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME, 'seconds').toDate()
@@ -265,11 +287,9 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		const tenantId = RequestContext.currentTenantId();
 		const createdByUserId = RequestContext.currentUserId();
 
-		const request = await this.typeOrmRepository.findOne({
-			where: {
-				id,
-				tenantId
-			}
+		const request = await this.findOneByWhereOptions({
+			id,
+			tenantId
 		});
 		if (!request) {
 			throw new NotFoundException('Request not found.');
@@ -329,7 +349,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 						organizationId: request.organizationId
 					});
 
-					await this.typeOrmRepository.update(id, {
+					await super.update(id, {
 						status: OrganizationTeamJoinRequestStatusEnum.ACCEPTED,
 						userId: currentTenantUser.id
 					});
@@ -362,7 +382,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					languageCode
 				);
 
-				await this.typeOrmRepository.update(id, {
+				await super.update(id, {
 					status: OrganizationTeamJoinRequestStatusEnum.ACCEPTED,
 					userId: newTenantUser.id
 				});
@@ -373,7 +393,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		 * REJECTED
 		 */
 		if (action === OrganizationTeamJoinRequestStatusEnum.REJECTED) {
-			await this.typeOrmRepository.update(id, {
+			await super.update(id, {
 				status: OrganizationTeamJoinRequestStatusEnum.REJECTED
 			});
 		}

@@ -1,21 +1,23 @@
+import { AsyncPipe } from '@angular/common';
 import { AfterViewInit, Component, Input, NgZone, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
 import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { UserOrganizationService } from '../time-tracker/organization-selector/user-organization.service';
-import { LanguageService } from './language.service';
+import { NbOptionModule, NbSelectModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { tap, filter, from, BehaviorSubject, Observable, concatMap, Subject } from 'rxjs';
-import { Store } from '../services';
-import { LanguageSelectorService } from './language-selector.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { BehaviorSubject, concatMap, filter, from, Observable, Subject, tap } from 'rxjs';
 import { ElectronService } from '../electron/services';
+import { Store } from '../services';
+import { UserOrganizationService } from '../time-tracker/organization-selector/user-organization.service';
+import { LanguageSelectorService } from './language-selector.service';
+import { LanguageService } from './language.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-language-selector',
     templateUrl: './language-selector.component.html',
     styleUrls: ['./language-selector.component.scss'],
-    standalone: false
+    imports: [NbSelectModule, NbOptionModule, AsyncPipe, TranslatePipe]
 })
 export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 	private _user: IUser;
@@ -53,7 +55,7 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 				tap((user: IUser) => (this._user = user)),
 				tap(({ preferredLanguage }: IUser) => {
 					if (!this._store.preferredLanguage) {
-						this._store.preferredLanguage = preferredLanguage || LanguagesEnum.ENGLISH;
+						this._store.preferredLanguage = preferredLanguage as LanguagesEnum || LanguagesEnum.ENGLISH;
 					}
 				}),
 				untilDestroyed(this)

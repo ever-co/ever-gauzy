@@ -1,447 +1,326 @@
 @if (isOpen) {
-  <nb-card
-    class="timer-card card"
-    [ngStyle]="{ 'padding-bottom': isExpanded ? '' : '0px' }"
-		[ngClass]="
-			theme === 'default' ||
-			theme === 'corporate' ||
-			theme === 'gauzy-light'
-				? 'background-basic-color-1'
-				: 'background-basic-color-2'
-		"
-		[style.transform]="
-			'matrix(1, 0, 0, 1,' +
-			this.position.x +
-			', ' +
-			this.position.y +
-			')'
-		"
-    ngxDraggableDom="true"
-    (stopped)="draggablePosition($event)"
-    >
-    <nb-card-body>
-      <div class="header">
-        @if (!isExpanded) {
-          <button
-            nbButton
-            ghost
-            size="small"
-            (click)="isExpanded = true"
-            >
-            <nb-icon icon="expand-outline"></nb-icon>
-          </button>
-        }
-        @if (isExpanded) {
-          <button
-            nbButton
-            ghost
-            size="small"
-					(click)="
-						$event.stopPropagation();
-						setTimeType(timeLogType.TRACKED);
-						isExpanded = false
-					"
-            >
-            <nb-icon icon="minus-outline"></nb-icon>
-          </button>
-        }
-        <button
-          class="btn-close"
-          size="small"
-          nbButton
-          ghost
-          (click)="toggleWindow()"
-          >
-          <nb-icon icon="close-outline"></nb-icon>
-        </button>
-      </div>
-      <form #form="ngForm">
-        <div
-          [ngStyle]="{ margin: isExpanded ? '' : '0px' }"
-          class="timer-container form-group"
-          >
-          @if ((trackType$ | async) == timeLogType.TRACKED) {
-            <div class="timer">
-              @if (isExpanded) {
-                <h6>
-                  {{ 'TIMER_TRACKER.TIMER' | translate }}
-                </h6>
-              }
-              <div class="row">
-                <div class="col">
-                  <div class="time-tracker">
-                    <div class="is_billable">
-                      <button
-                        nbButton
-                        type="button"
-												(click)="
-													$event.stopPropagation();
-													isBillable = !isBillable
-												"
-                        size="small"
-												[status]="
-													isBillable
-														? 'primary'
-														: 'basic'
-												"
-												[nbTooltip]="
-													'TIMER_TRACKER.IS_BILLABLE'
-														| translate
-												"
-                        [disabled]="running"
-                        >
-                        $
-                      </button>
-                    </div>
-                    <div class="time-count">
-                      <span class="current-session">
-                        {{ currentSessionTime }}
-                      </span>
-                      <span class="today-time mt-2">
-                        {{
-                        'TIMER_TRACKER.TODAY'
-                        | translate
-                        }}
-                        {{ todaySessionTime }}
-                      </span>
-                      <ga-time-tracker-status class="status"></ga-time-tracker-status>
-                    </div>
-                    <div class="actions">
-                      <div class="toggle">
-                        <button
-                          nbButton
-                          type="submit"
-													[status]="
-														running
-															? 'danger'
-															: 'success'
-													"
-													[ngClass]="
-														running
-															? ''
-															: 'button success'
-													"
-                          shape="round"
-													[nbTooltip]="
-														(running
-															? 'TIMER_TRACKER.STOP_TIMER'
-															: 'TIMER_TRACKER.START_TIMER'
-														) | translate
-													"
-                          (click)="toggleTimer(true)"
-                          [disabled]="isDisable"
-                          >
-                          <fa-icon
-														[icon]="
-															!running
-																? play
-																: pause
-														"
-                          ></fa-icon>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          }
-          @if ((trackType$ | async) == timeLogType.MANUAL) {
-            <div class="time-manual">
-              <h6>{{ 'TIMER_TRACKER.ADD_TIME' | translate }}</h6>
-              <div class="row">
-                <div class="col-12">
-                  <ngx-timer-range-picker
-                    class="custom-range-picker"
-                    name="selectedRange"
-										[maxDate]="
-											allowFutureDate ? null : today
-										"
-                    [(ngModel)]="selectedRange"
-                  ></ngx-timer-range-picker>
-                </div>
-                <div class="col-12 mb-5">
-                  <nb-checkbox
-                    [(ngModel)]="isBillable"
-                    name="isBillable"
-                    status="primary"
-                    >
-                    <span
-											[ngClass]="
-												isBillable ? 'primary' : ''
+<nb-card
+	class="timer-card card"
+	[style.padding-bottom]="isExpanded ? '' : '0px'"
+	[class.background-basic-color-1]="theme === 'default' || theme === 'corporate' || theme === 'gauzy-light'"
+	[class.background-basic-color-2]="!(theme === 'default' || theme === 'corporate' || theme === 'gauzy-light')"
+	[style.transform]="'matrix(1, 0, 0, 1,' + this.position.x + ', ' + this.position.y + ')'"
+	ngxDraggableDom="true"
+	(stopped)="draggablePosition($event)"
+>
+	<nb-card-body>
+		<div class="header">
+			@if (!isExpanded) {
+			<button nbButton ghost size="small" (click)="isExpanded = true">
+				<nb-icon icon="expand-outline"></nb-icon>
+			</button>
+			} @if (isExpanded) {
+			<button
+				nbButton
+				ghost
+				size="small"
+				(click)="$event.stopPropagation(); setTimeType(timeLogType.TRACKED); isExpanded = false"
+			>
+				<nb-icon icon="minus-outline"></nb-icon>
+			</button>
+			}
+			<button class="btn-close" size="small" nbButton ghost (click)="toggleWindow()">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+		<form #form="ngForm">
+			<div [style.margin]="isExpanded ? '' : '0px'" class="timer-container form-group">
+				@if ((trackType$ | async) == timeLogType.TRACKED) {
+				<div class="timer">
+					@if (isExpanded) {
+					<h6>
+						{{ 'TIMER_TRACKER.TIMER' | translate }}
+					</h6>
+					}
+					<div class="row">
+						<div class="col">
+							<div class="time-tracker">
+								<div class="is_billable">
+									<button
+										nbButton
+										type="button"
+										(click)="$event.stopPropagation(); isBillable = !isBillable"
+										size="small"
+										[status]="isBillable ? 'primary' : 'basic'"
+										[nbTooltip]="'TIMER_TRACKER.IS_BILLABLE' | translate"
+										[disabled]="running"
+									>
+										$
+									</button>
+								</div>
+								<div class="time-count">
+									<span class="current-session">
+										{{ currentSessionTime }}
+									</span>
+									<span class="today-time mt-2">
+										{{ 'TIMER_TRACKER.TODAY' | translate }}
+										{{ todaySessionTime }}
+									</span>
+									<ga-time-tracker-status class="status"></ga-time-tracker-status>
+								</div>
+								<div class="actions">
+									<div class="toggle">
+										<button
+											nbButton
+											type="submit"
+											[status]="running ? 'danger' : 'success'"
+											[class.button]="!running"
+											[class.success]="!running"
+											shape="round"
+											[nbTooltip]="
+												(running ? 'TIMER_TRACKER.STOP_TIMER' : 'TIMER_TRACKER.START_TIMER')
+													| translate
 											"
-                      >
-                      {{
-                      'TIMER_TRACKER.IS_BILLABLE'
-                      | translate
-                      }}
-                    </span>
-                  </nb-checkbox>
-                </div>
-              </div>
-            </div>
-          }
-          <div
-            [ngClass]="isExpanded ? 'mode expanded' : 'mode'"
-            >
-            <button
-              nbButton
-              type="button"
-							(click)="
-								$event.stopPropagation();
-								setTimeType(timeLogType.TRACKED)
-							"
-              size="tiny"
-							[status]="
-								(trackType$ | async) == timeLogType.TRACKED
-									? 'primary'
-									: 'basic'
-							"
-              class="button switch"
-              [nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
-              [disabled]="running"
-              >
-              <fa-icon [icon]="stopwatch"></fa-icon>
-            </button>
-            <span
-							[nbTooltip]="
-								(organization?.allowManualTime
-									? 'TIMER_TRACKER.MANUAL'
-									: 'TIMER_TRACKER.MANUAL_NOT_ALLOW'
-								) | translate
-							"
-              >
-              <button
-                nbButton
-                type="button"
-								(click)="
-									$event.stopPropagation();
-									setTimeType(timeLogType.MANUAL);
-									isExpanded = true
-								"
-                size="tiny"
-								[status]="
-									(trackType$ | async) == timeLogType.MANUAL
-										? 'primary'
-										: 'basic'
-								"
-                class="button switch"
-								[disabled]="
-									running || !organization?.allowManualTime
-								"
-                >
-                <nb-icon icon="menu-outline"></nb-icon>
-              </button>
-            </span>
-          </div>
-        </div>
-        @if (isExpanded) {
-          <div>
-            <div class="form-group">
-              <label>
-                {{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}
-              </label>
-              <ga-contact-selector
-                name="organizationContactId"
-                [employeeId]="employee?.id"
-                [disabled]="running"
-                [(ngModel)]="organizationContactId"
-                #clientInput="ngModel"
-                [required]="organization?.requireClient"
-              ></ga-contact-selector>
-              @if (clientInput.invalid && form.submitted) {
-                <div
-                  class="invalid-feedback d-block"
-                  >
-                  @if (clientInput.errors.required) {
-                    <div>
-                      {{
-                      'TIMER_TRACKER.VALIDATION.CLIENT_REQUIRED'
-                      | translate
-                      }}
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-            <div class="form-group">
-              <label>
-                {{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}
-              </label>
-              <ga-project-selector
-                name="projectId"
-                [skipGlobalChange]="true"
-                [showAllOption]="false"
-                [placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
-                [defaultSelected]="false"
-                [organizationContactId]="organizationContactId"
-                [employeeId]="employee?.id"
-                [disabled]="running"
-                [(ngModel)]="projectId"
-                #projectInput="ngModel"
-                [required]="organization?.requireProject"
-              ></ga-project-selector>
-              @if (projectInput.invalid && form.submitted) {
-                <div
-                  class="invalid-feedback d-block"
-                  >
-                  @if (projectInput.errors.required) {
-                    <div>
-                      {{
-                      'TIMER_TRACKER.VALIDATION.PROJECT_REQUIRED'
-                      | translate
-                      }}
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-            <!-- Team Selector Start -->
-            <div class="form-group">
-              <label>
-                {{ 'TIMER_TRACKER.SELECT_TEAM' | translate }}
-              </label>
-              <ga-team-selector
-                name="organizationTeamId"
-                [skipGlobalChange]="true"
-                [showAllOption]="false"
-                [defaultSelected]="false"
-                [placeholder]="'TIMER_TRACKER.SELECT_TEAM' | translate"
-                [employeeId]="employee?.id"
-                [projectId]="projectId"
-                [(ngModel)]="organizationTeamId"
-                [required]="false"
-              ></ga-team-selector>
-            </div>
-            <!-- Team Selector Emd -->
-            <div class="form-group">
-              <label>
-                {{ 'TIMER_TRACKER.SELECT_TASK' | translate }}
-              </label>
-              <ga-task-selector
-                name="taskId"
-                [projectId]="projectId"
-                [employeeId]="employee?.id"
-                [disabled]="running"
-                [(ngModel)]="taskId"
-                #taskInput="ngModel"
-                [required]="organization?.requireTask"
-              ></ga-task-selector>
-              @if (taskInput.invalid && form.submitted) {
-                <div
-                  class="invalid-feedback d-block"
-                  >
-                  @if (taskInput.errors.required) {
-                    <div>
-                      {{
-                      'TIMER_TRACKER.VALIDATION.TASK_REQUIRED'
-                      | translate
-                      }}
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-            <div class="form-group custom">
-              <label>
-                {{ 'TIMER_TRACKER.DESCRIPTION' | translate }}
-              </label>
-              <textarea
-                class="form-control"
-                rows="2"
-                fullWidth
-							[placeholder]="
-								'TIMER_TRACKER.DESCRIPTION' | translate
-							"
-                name="description"
-                [disabled]="running"
-                [(ngModel)]="description"
-                #descriptionInput="ngModel"
-                [required]="organization?.requireDescription"
-              ></textarea>
-              @if (descriptionInput.invalid && form.submitted) {
-                <div
-                  class="invalid-feedback d-block"
-                  >
-                  @if (descriptionInput.errors.required) {
-                    <div>
-                      {{
-                      'TIMER_TRACKER.VALIDATION.DESCRIPTION_REQUIRED'
-                      | translate
-                      }}
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-            @if (user?.employee?.id) {
-              <div
-                class="view-log-button mt-2"
-                >
-                <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
-                  <ng-template
-                    ngxTimeTrackingAuthorized
-                    [permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
-                    >
-                    @if ((trackType$ | async) == timeLogType.MANUAL) {
-                      <div
-                        class="time-manual"
-                        >
-                        <button
-                          nbButton
-                          status="success"
-                          class="button success add"
-                          size="medium"
-                          (click)="addTime()"
-                          >
-                          {{ 'TIMER_TRACKER.ADD_TIME' | translate }}
-                        </button>
-                      </div>
-                    }
-                  </ng-template>
-                </ng-template>
-                @if ((trackType$ | async) == timeLogType.TRACKED) {
-                  <div
-                    >
-                    <button
-                      nbButton
-                      status="success"
-								[ngClass]="
-									running
-										? 'button disabled'
-										: 'button success start'
-								"
-                      size="medium"
-                      [disabled]="running"
-                      (click)="toggleTimer(true)"
-                      >
-                      {{ 'TIMER_TRACKER.START_TIMER' | translate }}
-                    </button>
-                  </div>
-                }
-                <a
-                  nbButton
-                  ghost
-                  outline
-                  class="button timesheet"
-                  [routerLink]="['/pages/employees/timesheets']"
-                  size="medium"
-                  >
-                  {{ 'TIMER_TRACKER.VIEW_TIMESHEET' | translate }}
-                </a>
-              </div>
-            }
-          </div>
-        }
-      </form>
-    </nb-card-body>
-    <nb-card-footer [ngStyle]="{'visibility': hideAlert ? 'hidden': 'visible'}">
-      <nb-alert (close)="hideAlert = true" status="primary" class="alert" closable>
-        <nb-icon size="tiny" icon="info-outline"></nb-icon>
-        <div
-          [innerHTML]="'TIMER_TRACKER.ALERT_DESKTOP_DOWNLOAD' | translate : { downloadURL: PLATFORM_WEBSITE_DOWNLOAD_URL }">
-        </div>
-      </nb-alert>
-    </nb-card-footer>
-  </nb-card>
+											(click)="toggleTimer(true)"
+											[disabled]="isDisable"
+										>
+											<fa-icon [icon]="!running ? play : pause"></fa-icon>
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				} @if ((trackType$ | async) == timeLogType.MANUAL) {
+				<div class="time-manual">
+					<h6>{{ 'TIMER_TRACKER.ADD_TIME' | translate }}</h6>
+					<div class="row">
+						<div class="col-12">
+							<ngx-timer-range-picker
+								class="custom-range-picker"
+								name="selectedRange"
+								[maxDate]="allowFutureDate ? null : today"
+								[(ngModel)]="selectedRange"
+							></ngx-timer-range-picker>
+						</div>
+						<div class="col-12 mb-5">
+							<nb-checkbox [(ngModel)]="isBillable" name="isBillable" status="primary">
+								<span [class.primary]="isBillable">
+									{{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
+								</span>
+							</nb-checkbox>
+						</div>
+					</div>
+				</div>
+				}
+				<div [class.mode]="isExpanded" [class.expanded]="isExpanded" [class.mode]="!isExpanded">
+					<button
+						nbButton
+						type="button"
+						(click)="$event.stopPropagation(); setTimeType(timeLogType.TRACKED)"
+						size="tiny"
+						[status]="(trackType$ | async) == timeLogType.TRACKED ? 'primary' : 'basic'"
+						class="button switch"
+						[nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
+						[disabled]="running"
+					>
+						<fa-icon [icon]="stopwatch"></fa-icon>
+					</button>
+					<span
+						[nbTooltip]="
+							(organization?.allowManualTime ? 'TIMER_TRACKER.MANUAL' : 'TIMER_TRACKER.MANUAL_NOT_ALLOW')
+								| translate
+						"
+					>
+						<button
+							nbButton
+							type="button"
+							(click)="$event.stopPropagation(); setTimeType(timeLogType.MANUAL); isExpanded = true"
+							size="tiny"
+							[status]="(trackType$ | async) == timeLogType.MANUAL ? 'primary' : 'basic'"
+							class="button switch"
+							[disabled]="running || !organization?.allowManualTime"
+						>
+							<nb-icon icon="menu-outline"></nb-icon>
+						</button>
+					</span>
+				</div>
+			</div>
+			@if (isExpanded) {
+			<div>
+				<div class="form-group">
+					<label>
+						{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}
+					</label>
+					<ga-contact-selector
+						name="organizationContactId"
+						[employeeId]="employee?.id"
+						[disabled]="running"
+						[(ngModel)]="organizationContactId"
+						#clientInput="ngModel"
+						[required]="organization?.requireClient"
+					></ga-contact-selector>
+					@if (clientInput.invalid && form.submitted) {
+					<div class="invalid-feedback d-block">
+						@if (clientInput.errors.required) {
+						<div>
+							{{ 'TIMER_TRACKER.VALIDATION.CLIENT_REQUIRED' | translate }}
+						</div>
+						}
+					</div>
+					}
+				</div>
+				<div class="form-group">
+					<label>
+						{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}
+					</label>
+					<ga-project-selector
+						name="projectId"
+						[skipGlobalChange]="true"
+						[showAllOption]="false"
+						[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
+						[defaultSelected]="false"
+						[organizationContactId]="organizationContactId"
+						[employeeId]="employee?.id"
+						[disabled]="running"
+						[(ngModel)]="projectId"
+						#projectInput="ngModel"
+						[required]="organization?.requireProject"
+					></ga-project-selector>
+					@if (projectInput.invalid && form.submitted) {
+					<div class="invalid-feedback d-block">
+						@if (projectInput.errors.required) {
+						<div>
+							{{ 'TIMER_TRACKER.VALIDATION.PROJECT_REQUIRED' | translate }}
+						</div>
+						}
+					</div>
+					}
+				</div>
+				<!-- Team Selector Start -->
+				<div class="form-group">
+					<label>
+						{{ 'TIMER_TRACKER.SELECT_TEAM' | translate }}
+					</label>
+					<ga-team-selector
+						name="organizationTeamId"
+						[skipGlobalChange]="true"
+						[showAllOption]="false"
+						[defaultSelected]="false"
+						[placeholder]="'TIMER_TRACKER.SELECT_TEAM' | translate"
+						[employeeId]="employee?.id"
+						[projectId]="projectId"
+						[(ngModel)]="organizationTeamId"
+						[required]="false"
+					></ga-team-selector>
+				</div>
+				<!-- Team Selector Emd -->
+				<div class="form-group">
+					<label>
+						{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}
+					</label>
+					<ga-task-selector
+						name="taskId"
+						[projectId]="projectId"
+						[employeeId]="employee?.id"
+						[disabled]="running"
+						[(ngModel)]="taskId"
+						#taskInput="ngModel"
+						[required]="organization?.requireTask"
+					></ga-task-selector>
+					@if (taskInput.invalid && form.submitted) {
+					<div class="invalid-feedback d-block">
+						@if (taskInput.errors.required) {
+						<div>
+							{{ 'TIMER_TRACKER.VALIDATION.TASK_REQUIRED' | translate }}
+						</div>
+						}
+					</div>
+					}
+				</div>
+				<div class="form-group custom">
+					<label>
+						{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}
+					</label>
+					<textarea
+						class="form-control"
+						rows="2"
+						fullWidth
+						[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
+						name="description"
+						[disabled]="running"
+						[(ngModel)]="description"
+						#descriptionInput="ngModel"
+						[required]="organization?.requireDescription"
+					></textarea>
+					@if (descriptionInput.invalid && form.submitted) {
+					<div class="invalid-feedback d-block">
+						@if (descriptionInput.errors.required) {
+						<div>
+							{{ 'TIMER_TRACKER.VALIDATION.DESCRIPTION_REQUIRED' | translate }}
+						</div>
+						}
+					</div>
+					}
+				</div>
+				@if (user?.employee?.id) {
+				<div class="view-log-button mt-2">
+					<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
+						<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MANUAL_TIME">
+							@if ((trackType$ | async) == timeLogType.MANUAL) {
+							<div class="time-manual">
+								<button
+									nbButton
+									status="success"
+									class="button success add"
+									size="medium"
+									(click)="addTime()"
+								>
+									{{ 'TIMER_TRACKER.ADD_TIME' | translate }}
+								</button>
+							</div>
+							}
+						</ng-template>
+					</ng-template>
+					@if ((trackType$ | async) == timeLogType.TRACKED) {
+					<div>
+						<button
+							nbButton
+							status="success"
+							[class.button]="running"
+							[class.disabled]="running"
+							[class.button]="!running"
+							[class.success]="!running"
+							[class.start]="!running"
+							size="medium"
+							[disabled]="running"
+							(click)="toggleTimer(true)"
+						>
+							{{ 'TIMER_TRACKER.START_TIMER' | translate }}
+						</button>
+					</div>
+					}
+					<a
+						nbButton
+						ghost
+						outline
+						class="button timesheet"
+						[routerLink]="['/pages/employees/timesheets']"
+						size="medium"
+					>
+						{{ 'TIMER_TRACKER.VIEW_TIMESHEET' | translate }}
+					</a>
+				</div>
+				}
+			</div>
+			}
+		</form>
+	</nb-card-body>
+	<nb-card-footer [style.visibility]="hideAlert ? 'hidden' : 'visible'">
+		<nb-alert (close)="hideAlert = true" status="primary" class="alert" closable>
+			<nb-icon size="tiny" icon="info-outline"></nb-icon>
+			<div
+				[innerHTML]="
+					'TIMER_TRACKER.ALERT_DESKTOP_DOWNLOAD' | translate : { downloadURL: PLATFORM_WEBSITE_DOWNLOAD_URL }
+				"
+			></div>
+		</nb-alert>
+	</nb-card-footer>
+</nb-card>
 }

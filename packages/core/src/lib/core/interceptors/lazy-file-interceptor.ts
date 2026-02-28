@@ -1,4 +1,4 @@
-import { CallHandler, ExecutionContext, Inject, mixin, NestInterceptor, Optional, Type } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Inject, Logger, mixin, NestInterceptor, Optional, Type } from '@nestjs/common';
 import { MulterModuleOptions } from '@nestjs/platform-express';
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { MULTER_MODULE_OPTIONS } from '@nestjs/platform-express/multer/files.constants';
@@ -11,6 +11,7 @@ type MulterInstance = any;
 export function LazyFileInterceptor(fieldName: string, localOptions?: MulterOptions): Type<NestInterceptor> {
 	class MixinInterceptor implements NestInterceptor {
 		protected multer: MulterInstance;
+		private readonly logger = new Logger('LazyFileInterceptor');
 
 		constructor(
 			@Optional()
@@ -32,7 +33,7 @@ export function LazyFileInterceptor(fieldName: string, localOptions?: MulterOpti
 				this.multer.single(fieldName)(ctx.getRequest(), ctx.getResponse(), (err: any) => {
 					if (err) {
 						const error = transformException(err);
-						console.log('Error while uploading file using multer', err);
+						this.logger.error('Error while uploading file using multer', err?.stack ?? String(err));
 						return reject(error);
 					}
 					resolve();

@@ -1,257 +1,292 @@
-<nb-layout [nbSpinner]="(processing$ | async)?.state" [nbSpinnerMessage]="(processing$ | async)?.message" nbSpinnerSize="small">
-  <nb-layout-column class="top-space">
-    <button (click)="expand()" class="expand-icon" ghost nbButton status="primary">
-      <nb-icon [icon]="expandIcon"></nb-icon>
-    </button>
-    <div class="timer-window-container">
-			<div [ngClass]="{
-					expanded: isExpand$ | async,
-					collapsed: isCollapse$ | async
-				}" class="no-padding full-width timer">
-        <nb-card class="full-height max-width">
-          <nb-card-body class="timer-body">
-            <div class="row mb-3">
-              <div class="col-12">
-                <ngx-desktop-timer-organization-selector
-                  (organizationChange)="selectOrganization($event)"
-                [disabled]="start$ | async"></ngx-desktop-timer-organization-selector>
-              </div>
-            </div>
-            <div class="row d-flex justify-content-between">
-              <div class="col-9 timer-box mt-2 mb-2">
-								<div [ngStyle]="{
-										opacity: isRemoteTimer ? '50%' : '100%'
-									}" class="timer-container">
-                  {{ timeRun$ | async }}
-                </div>
-                <div class="mt-3 d-flex justify-content-between">
-                  <div class="work-duration-container">
-                    <div class="work-today-duration">
-                      {{ todayDuration$ | async }}
-                    </div>
-                    <div class="work-today">
-                      {{ 'TIMER_TRACKER.TODAY' | translate }}
-                    </div>
-                  </div>
-                  <div [nbTooltipDisabled]="!(isOver$ | async)"
-                    [nbTooltip]="'TIMER_TRACKER.WEEKLY_LIMIT_EXCEEDED' | translate"
-                    [ngClass]="{ over: (isOver$ | async) }" class="work-duration-container"
-                    nbTooltipIcon="alert-triangle-outline" nbTooltipStatus="danger">
-                    <div class="work-weekly-duration">
-                      <div>
-                        {{ weeklyDuration$ | async }}
-                      </div>
-                      @if (!noLimit(weeklyLimit$ | async)) {
-                        <small>{{
-                          'TIMER_TRACKER.OF_HRS'
-                          | translate
-                          : {
-                          limit: (weeklyLimit$ | async)
-                        }
-                      }}</small>
-                    } @else {
-                      <small>{{ 'TIMER_TRACKER.NO_LIMIT' | translate }}</small>
-                    }
-                  </div>
-                  <div class="work-weekly">
-                    {{ 'TIMESHEET.WEEK' | translate }}
-                  </div>
-                </div>
-              </div>
-              @if (isRemoteTimer) {
-                <gauzy-time-tracker-status class="status"></gauzy-time-tracker-status>
-              }
-            </div>
-            <div class="col-3 d-flex flex-column align-items-center">
-              <div>
-                @if (!(start$ | async)) {
-                  <button
-                    (click)="toggleStart(true)"
-                    [ngClass]="{ 'pulse-border start-button': isProcessingEnabled }"
-                    [disabled]="loading || !isTrackingEnabled"
-                    class="button-ghost"
-                    nbButton
-                    status="success"
-                    >
-                    <nb-icon
-                      [nbTooltipDisabled]="isTrackingEnabled"
+<nb-layout
+	[nbSpinner]="(processing$ | async)?.state"
+	[nbSpinnerMessage]="(processing$ | async)?.message"
+	nbSpinnerSize="small"
+>
+	<nb-layout-column class="top-space">
+		<button (click)="expand()" class="expand-icon" ghost nbButton status="primary">
+			<nb-icon [icon]="expandIcon"></nb-icon>
+		</button>
+		<div class="timer-window-container">
+			<div
+				[class.expanded]="isExpand$ | async"
+				[class.collapsed]="isCollapse$ | async"
+				class="no-padding full-width timer"
+			>
+				<nb-card class="full-height max-width">
+					<nb-card-body class="timer-body">
+						<div class="row mb-3">
+							<div class="col-12">
+								<ngx-desktop-timer-organization-selector
+									(organizationChange)="selectOrganization($event)"
+									[disabled]="start$ | async"
+								></ngx-desktop-timer-organization-selector>
+							</div>
+						</div>
+						<div class="row d-flex justify-content-between">
+							<div class="col-9 timer-box mt-2 mb-2">
+								<div [style.opacity]="isRemoteTimer ? '50%' : '100%'" class="timer-container">
+									{{ timeRun$ | async }}
+								</div>
+								<div class="mt-3 d-flex justify-content-between">
+									<div class="work-duration-container">
+										<div class="work-today-duration">
+											{{ todayDuration$ | async }}
+										</div>
+										<div class="work-today">
+											{{ 'TIMER_TRACKER.TODAY' | translate }}
+										</div>
+									</div>
+									<div
+										[nbTooltipDisabled]="!(isOver$ | async)"
+										[nbTooltip]="'TIMER_TRACKER.WEEKLY_LIMIT_EXCEEDED' | translate"
+										[class.over]="isOver$ | async"
+										class="work-duration-container"
+										nbTooltipIcon="alert-triangle-outline"
+										nbTooltipStatus="danger"
+									>
+										<div class="work-weekly-duration">
+											<div>
+												{{ weeklyDuration$ | async }}
+											</div>
+											@if (!noLimit(weeklyLimit$ | async)) {
+											<small>{{
+												'TIMER_TRACKER.OF_HRS'
+													| translate
+														: {
+																limit: (weeklyLimit$ | async)
+														  }
+											}}</small>
+											} @else {
+											<small>{{ 'TIMER_TRACKER.NO_LIMIT' | translate }}</small>
+											}
+										</div>
+										<div class="work-weekly">
+											{{ 'TIMESHEET.WEEK' | translate }}
+										</div>
+									</div>
+								</div>
+								@if (isRemoteTimer) {
+								<gauzy-time-tracker-status class="status"></gauzy-time-tracker-status>
+								}
+							</div>
+							<div class="col-3 d-flex flex-column align-items-center">
+								<div>
+									@if (!(start$ | async)) {
+									<button
+										(click)="toggleStart(true)"
+										[class.pulse-border]="isProcessingEnabled"
+										[class.start-button]="isProcessingEnabled"
+										[disabled]="loading || !isTrackingEnabled"
+										class="button-ghost"
+										nbButton
+										status="success"
+									>
+										<nb-icon
+											[nbTooltipDisabled]="isTrackingEnabled"
 											[nbTooltipIcon]="{
 												icon: 'alert-triangle-outline',
 												pack: 'eva'
 											}"
-                      [nbTooltip]="'TIMER_TRACKER.TIME_TRACKER_DISABLED' | translate"
-                      class="start-button"
-                      icon="play"
-                      nbTooltipPlacement="bottom"
-                      nbTooltipStatus="warning"
-                      pack="font-awesome"
-                      >
-                    </nb-icon>
-                  </button>
-                }
-                @if (start$ | async) {
-                  <button
-                    (click)="toggleStart(false)"
-                    [disabled]="loading"
-                    [ngClass]="{ 'pulse-border stop-button': isProcessingEnabled }"
-                    class="button-ghost"
-                    nbButton
-                    status="danger"
-                    >
-                    <nb-icon class="start-button" icon="pause" pack="font-awesome"> </nb-icon>
-                  </button>
-                }
-              </div>
-            </div>
-          </div>
-          <gauzy-time-tracker-form></gauzy-time-tracker-form>
-          <div class="row">
-            @if ((appSetting$ | async) && (appSetting$ | async)?.visibleAwOption) {
-              <div class="col-12">
-                <gauzy-activity-watch></gauzy-activity-watch>
-              </div>
-            }
-            @if ((appSetting$ | async) && (appSetting$ | async)?.visibleWakatimeOption) {
-              <div
-                class="col-12">
-                <div class="row">
-                  <div class="col-8">
-                    <nb-toggle [disabled]="true">{{ 'TIMER_TRACKER.WAKATIME_INTEGRATION' | translate
-                    }}</nb-toggle>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-          <div class="row last">
-            <div class="col-12 center-text">
-              <nb-card>
-                <nb-card-header class="p-0 mb-1">
-                  @if ((lastScreenCapture$ | async)?.recordedAt) {
-                    <div
-                      class="screen-capture-label-left">
-                      <span>{{ 'TIMER_TRACKER.LAST_CAPTURE_TAKEN' | translate }} </span>
-                      <span>{{ (lastScreenCapture$ | async)?.recordedAt | humanize }}</span>
-                    </div>
-                  }
-                </nb-card-header>
-                <nb-card-body class="p-0 last-capture-container">
-                  @if ((lastScreenCapture$ | async)?.thumbUrl) {
-                    <img (error)="updateImageUrl($event)"
-                      [src]="(lastScreenCapture$ | async)?.thumbUrl" class="screen-capture-img" />
-                  }
-                  @if (!(lastScreenCapture$ | async)?.thumbUrl) {
-                    <nb-icon class="icon-img-size"
-                      icon="image-outline">
-                    </nb-icon>
-                  }
-                  <div class="overlay-img">
-                    <div class="row">
-                      <div class="col-8 img-button">
-                        <div class="row">
-                          <div class="col-6">
-                            <button (click)="showImage()" nbButton status="basic">
-                              <nb-icon
-                                [icon]="screenshots.length > 0 ? 'eye' : 'eye-slash'"
-                                pack="font-awesome"
-                              ></nb-icon>
-                            </button>
-                          </div>
-                          <div class="col-6">
-															<button (click)="
+											[nbTooltip]="'TIMER_TRACKER.TIME_TRACKER_DISABLED' | translate"
+											class="start-button"
+											icon="play"
+											nbTooltipPlacement="bottom"
+											nbTooltipStatus="warning"
+											pack="font-awesome"
+										>
+										</nb-icon>
+									</button>
+									} @if (start$ | async) {
+									<button
+										(click)="toggleStart(false)"
+										[disabled]="loading"
+										[class.pulse-border]="isProcessingEnabled"
+										[class.stop-button]="isProcessingEnabled"
+										class="button-ghost"
+										nbButton
+										status="danger"
+									>
+										<nb-icon class="start-button" icon="pause" pack="font-awesome"> </nb-icon>
+									</button>
+									}
+								</div>
+							</div>
+						</div>
+						<gauzy-time-tracker-form></gauzy-time-tracker-form>
+						<div class="row">
+							@if ((appSetting$ | async) && (appSetting$ | async)?.visibleAwOption) {
+							<div class="col-12">
+								<gauzy-activity-watch></gauzy-activity-watch>
+							</div>
+							} @if ((appSetting$ | async) && (appSetting$ | async)?.visibleWakatimeOption) {
+							<div class="col-12">
+								<div class="row">
+									<div class="col-8">
+										<nb-toggle [disabled]="true">{{
+											'TIMER_TRACKER.WAKATIME_INTEGRATION' | translate
+										}}</nb-toggle>
+									</div>
+								</div>
+							</div>
+							}
+						</div>
+						<div class="row last">
+							<div class="col-12 center-text">
+								<nb-card>
+									<nb-card-header class="p-0 mb-1">
+										@if ((lastScreenCapture$ | async)?.recordedAt) {
+										<div class="screen-capture-label-left">
+											<span>{{ 'TIMER_TRACKER.LAST_CAPTURE_TAKEN' | translate }} </span>
+											<span>{{ (lastScreenCapture$ | async)?.recordedAt | humanize }}</span>
+										</div>
+										}
+									</nb-card-header>
+									<nb-card-body class="p-0 last-capture-container">
+										@if ((lastScreenCapture$ | async)?.thumbUrl) {
+										<img
+											(error)="updateImageUrl($event)"
+											[src]="(lastScreenCapture$ | async)?.thumbUrl"
+											class="screen-capture-img"
+										/>
+										} @if (!(lastScreenCapture$ | async)?.thumbUrl) {
+										<nb-icon class="icon-img-size" icon="image-outline"> </nb-icon>
+										}
+										<div class="overlay-img">
+											<div class="row">
+												<div class="col-8 img-button">
+													<div class="row">
+														<div class="col-6">
+															<button (click)="showImage()" nbButton status="basic">
+																<nb-icon
+																	[icon]="
+																		screenshots.length > 0 ? 'eye' : 'eye-slash'
+																	"
+																	pack="font-awesome"
+																></nb-icon>
+															</button>
+														</div>
+														<div class="col-6">
+															<button
+																(click)="
 																	open(dialog, {
 																		type: 'deleteLog'
 																	})
-																" nbButton status="basic">
-                              <nb-icon icon="trash-2" status="danger"></nb-icon>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </nb-card-body>
-              </nb-card>
-            </div>
-          </div>
-        </nb-card-body>
-      </nb-card>
-    </div>
-    @if (isExpand$ | async) {
-      <div class="content-active">
-        <nb-route-tabset [tabs]="tabs$ | async"></nb-route-tabset>
-      </div>
-    }
-  </div>
-</nb-layout-column>
-<nb-layout-footer class="no-padding-footer footer-fixed" fixed>
-  @if (userData && userData?.name) {
-    <div (click)="openSetting()" class="footer-button" ghost nbButton
-      size="small">
-      <nb-icon [nbTooltip]="'TIMER_TRACKER.OPEN_SETTINGS' | translate" class="icon pointed" icon="cog"
-      pack="font-awesome"></nb-icon>
-      <span class="user-label pointed">{{ userData?.name }}</span>
-    </div>
-  }
-  @if (isRefresh$ | async) {
-    <nb-icon class="icon ml-2 mr-2 sync spin" icon="loader-outline"></nb-icon>
-  }
-  @if (!(isRefresh$ | async)) {
-    <nb-icon (click)="refreshTimer()"
-      [nbTooltip]="'TIMER_TRACKER.REFRESH' | translate" class="icon pointed" icon="redo-alt" pack="font-awesome">
-    </nb-icon>
-  }
-		<div [nbTooltip]="
+																"
+																nbButton
+																status="basic"
+															>
+																<nb-icon icon="trash-2" status="danger"></nb-icon>
+															</button>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</nb-card-body>
+								</nb-card>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			@if (isExpand$ | async) {
+			<div class="content-active">
+				<nb-route-tabset [tabs]="tabs$ | async"></nb-route-tabset>
+			</div>
+			}
+		</div>
+	</nb-layout-column>
+	<nb-layout-footer class="no-padding-footer footer-fixed" fixed>
+		@if (userData && userData?.name) {
+		<div (click)="openSetting()" class="footer-button" ghost nbButton size="small">
+			<nb-icon
+				[nbTooltip]="'TIMER_TRACKER.OPEN_SETTINGS' | translate"
+				class="icon pointed"
+				icon="cog"
+				pack="font-awesome"
+			></nb-icon>
+			<span class="user-label pointed">{{ userData?.name }}</span>
+		</div>
+		} @if (isRefresh$ | async) {
+		<nb-icon class="icon ml-2 mr-2 sync spin" icon="loader-outline"></nb-icon>
+		} @if (!(isRefresh$ | async)) {
+		<nb-icon
+			(click)="refreshTimer()"
+			[nbTooltip]="'TIMER_TRACKER.REFRESH' | translate"
+			class="icon pointed"
+			icon="redo-alt"
+			pack="font-awesome"
+		>
+		</nb-icon>
+		}
+		<div
+			[nbTooltip]="
 				((isOffline$ | async) ? 'TIMER_TRACKER.SWITCHED_OFFLINE' : 'TIMER_TRACKER.SWITCHED_ONLINE') | translate
-			" [ngClass]="{ offline: isOffline$ | async }" class="state-container">
-    <div [ngClass]="{ offline: isOffline$ | async }" class="state"></div>
-    {{ ((isOffline$ | async) ? 'TIMER_TRACKER.OFFLINE' : 'TIMER_TRACKER.ONLINE') | translate }}
-  </div>
-  @if ((inQueue$ | async)?.size === 0) {
-    <div [nbTooltip]="'TIMER_TRACKER.SWITCHED_ONLINE' | translate"
-      class="sync-container">
-      <nb-icon class="sync-check" icon="check-circle" pack="font-awesome" size="tiny" status="success"></nb-icon>
-    </div>
-  }
-  @if ((inQueue$ | async)?.size) {
-    <div class="sync-container">
-      <nb-badge [text]="(inQueue$ | async)?.size" class="sync-badge" position="top right" size="small"
-      status="info"></nb-badge>
-			<nb-icon [nbTooltip]="
+			"
+			[class.offline]="isOffline$ | async"
+			class="state-container"
+		>
+			<div [class.offline]="isOffline$ | async" class="state"></div>
+			{{ ((isOffline$ | async) ? 'TIMER_TRACKER.OFFLINE' : 'TIMER_TRACKER.ONLINE') | translate }}
+		</div>
+		@if ((inQueue$ | async)?.size === 0) {
+		<div [nbTooltip]="'TIMER_TRACKER.SWITCHED_ONLINE' | translate" class="sync-container">
+			<nb-icon class="sync-check" icon="check-circle" pack="font-awesome" size="tiny" status="success"></nb-icon>
+		</div>
+		} @if ((inQueue$ | async)?.size) {
+		<div class="sync-container">
+			<nb-badge
+				[text]="(inQueue$ | async)?.size"
+				class="sync-badge"
+				position="top right"
+				size="small"
+				status="info"
+			></nb-badge>
+			<nb-icon
+				[nbTooltip]="
 					((inQueue$ | async)?.inProgress ? 'TIMER_TRACKER.SYNCED_PROGRESS' : 'TIMER_TRACKER.WAIT_SYNCED')
 						| translate
-				" [ngClass]="{ spin: (inQueue$ | async)?.inProgress }" class="sync" icon="sync-alt" pack="font-awesome"
-      size="tiny"></nb-icon>
-    </div>
-  }
-</nb-layout-footer>
+				"
+				[class.spin]="(inQueue$ | async)?.inProgress"
+				class="sync"
+				icon="sync-alt"
+				pack="font-awesome"
+				size="tiny"
+			></nb-icon>
+		</div>
+		}
+	</nb-layout-footer>
 </nb-layout>
 
 <!-- dialog template -->
 <ng-template #dialog class="dialog-container" let-data let-ref="dialogRef">
-  <nb-card accent="danger" class="dialog">
-    <nb-card-header>{{ 'TIMER_TRACKER.DIALOG.WARNING' | translate }}</nb-card-header>
-    <nb-card-body>{{ data | translate }}</nb-card-body>
-    <nb-card-footer>
-      <div class="row">
-        <div class="col-3">
-          <button (click)="ref?.close(false)" nbButton status="primary">
-            {{ 'BUTTONS.NO' | translate }}
-          </button>
-        </div>
-        <div class="col-3">
-          <button (click)="ref?.close(true)" nbButton status="danger">
-            {{ 'BUTTONS.YES' | translate }}
-          </button>
-        </div>
-      </div>
-    </nb-card-footer>
-  </nb-card>
+	<nb-card accent="danger" class="dialog">
+		<nb-card-header>{{ 'TIMER_TRACKER.DIALOG.WARNING' | translate }}</nb-card-header>
+		<nb-card-body>{{ data | translate }}</nb-card-body>
+		<nb-card-footer>
+			<div class="row">
+				<div class="col-3">
+					<button (click)="ref?.close(false)" nbButton status="primary">
+						{{ 'BUTTONS.NO' | translate }}
+					</button>
+				</div>
+				<div class="col-3">
+					<button (click)="ref?.close(true)" nbButton status="danger">
+						{{ 'BUTTONS.YES' | translate }}
+					</button>
+				</div>
+			</div>
+		</nb-card-footer>
+	</nb-card>
 </ng-template>
 
-<button #dialogOpenBtn (click)="
+<button
+	#dialogOpenBtn
+	(click)="
 		open(dialog, {
 			type: 'timeTrackingOption'
 		})
-	" style="display: none"></button>
-
+	"
+	style="display: none"
+></button>

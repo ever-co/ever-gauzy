@@ -1,7 +1,7 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as multer from 'multer';
-import * as fs from 'fs';
-import { basename, join, resolve } from 'path';
+import * as fs from 'node:fs';
+import { basename, join, resolve } from 'node:path';
 import * as moment from 'moment';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { environment, getConfig } from '@gauzy/config';
@@ -14,6 +14,7 @@ import { Provider } from './provider';
 export class LocalProvider extends Provider<LocalProvider> {
 	public instance: LocalProvider;
 	public readonly name = FileStorageProviderEnum.LOCAL;
+	private readonly logger = new Logger(LocalProvider.name);
 	public config: { rootPath: string; baseUrl: string };
 
 	constructor() {
@@ -116,7 +117,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 				}
 			});
 		} catch (error) {
-			console.error(`Error while creating multer disk storage:`, error);
+			this.logger.error('Error while creating multer disk storage', error?.stack ?? String(error));
 			return null;
 		}
 	}
@@ -131,7 +132,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 		try {
 			return await fs.promises.readFile(this.path(file));
 		} catch (error) {
-			console.error(`Error while reading file "${file}":`, error);
+			this.logger.error(`Error while reading file "${file}"`, error?.stack ?? String(error));
 		}
 	}
 
@@ -159,7 +160,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 
 			return await this.mapUploadedFile(file);
 		} catch (error) {
-			console.error(`Error while putting file at path "${path}":`, error);
+			this.logger.error(`Error while putting file at path "${path}"`, error?.stack ?? String(error));
 			throw new HttpException(error, HttpStatus.BAD_REQUEST, {
 				description: `Error while putting file at path "${path}":`
 			});
@@ -181,7 +182,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 				return fs.unlinkSync(filePath);
 			}
 		} catch (error) {
-			console.error(`Error while deleting file "${file}":`, error);
+			this.logger.error(`Error while deleting file "${file}"`, error?.stack ?? String(error));
 			throw error; // Rethrow the error to let the calling code handle it
 		}
 	}

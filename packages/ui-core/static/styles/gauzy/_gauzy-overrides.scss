@@ -1,4 +1,6 @@
-@import 'themes';
+// Forward themes so files importing this also get nb-theme() etc.
+@forward 'themes';
+@use 'themes' as *;
 
 $default-box-shadow-inset: var(--gauzy-shadow) inset;
 $default-height: 42px;

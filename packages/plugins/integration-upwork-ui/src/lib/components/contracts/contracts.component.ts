@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of, EMPTY, firstValueFrom, filter, catchError, tap } from 'rxjs';
@@ -13,29 +13,28 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DateViewComponent } from '@gauzy/ui-core/shared';
 import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-selection.component';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
-    selector: 'ngx-contracts',
-    templateUrl: './contracts.component.html',
-    styleUrls: ['./contracts.component.scss'],
-    providers: [TitleCasePipe],
-    standalone: false
+	selector: 'ngx-contracts',
+	templateUrl: './contracts.component.html',
+	styleUrls: ['./contracts.component.scss'],
+	providers: [TitleCasePipe],
+	standalone: false
 })
 export class ContractsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	private readonly _upworkStoreServices = inject(UpworkStoreService);
+	private readonly _toastrService = inject(ToastrService);
+	private readonly _errorHandlingService = inject(ErrorHandlingService);
+	private readonly _nbDialogService = inject(NbDialogService);
+	private readonly _route = inject(ActivatedRoute);
+	private readonly _titleCasePipe = inject(TitleCasePipe);
+
 	public smartTableSettings: any;
 	public contracts$: Observable<IEngagement[]> = this._upworkStoreServices.contracts$;
 	public selectedContracts: IEngagement[] = [];
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly _upworkStoreServices: UpworkStoreService,
-		private readonly _toastrService: ToastrService,
-		private readonly _errorHandlingService: ErrorHandlingService,
-		private readonly _nbDialogService: NbDialogService,
-		private readonly _route: ActivatedRoute,
-		private readonly _titleCasePipe: TitleCasePipe
-	) {
-		super(translateService);
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit() {

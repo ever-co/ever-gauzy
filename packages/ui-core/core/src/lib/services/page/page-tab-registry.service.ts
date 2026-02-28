@@ -1,5 +1,5 @@
 import { Inject, Injectable, TemplateRef, Type } from '@angular/core';
-import { PageTabsetRegistryId } from '../../common/component-registry.types';
+import { PageTabsetPageId } from '../../common/component-registry.types';
 import { IPageTabRegistry, PageTabRegistryConfig } from './page-tab-registry.types';
 import { Store } from '../store/store.service';
 
@@ -12,9 +12,9 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	/**
 	 * Registry for storing page tab configurations.
 	 *
-	 * This Map stores arrays of PageTabRegistryConfig objects, keyed by PageTabsetRegistryId.
+	 * This Map stores arrays of PageTabRegistryConfig objects, keyed by PageTabsetPageId.
 	 */
-	private readonly registry = new Map<PageTabsetRegistryId, PageTabRegistryConfig[]>();
+	private readonly registry = new Map<PageTabsetPageId, PageTabRegistryConfig[]>();
 
 	constructor(@Inject(Store) private readonly _store: Store) {}
 
@@ -23,10 +23,10 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	 *
 	 * This method returns a map of tab configurations, organized by their tabset identifiers.
 	 *
-	 * @returns A `Map` where each key is a `PageTabsetRegistryId` and each value is an array of
+	 * @returns A `Map` where each key is a `PageTabsetPageId` and each value is an array of
 	 *          `PageTabRegistryConfig` objects associated with that tabset.
 	 */
-	public getRegistry(): ReadonlyMap<PageTabsetRegistryId, PageTabRegistryConfig[]> {
+	public getRegistry(): ReadonlyMap<PageTabsetPageId, PageTabRegistryConfig[]> {
 		return new Map(this.registry); // Return a new Map to ensure immutability
 	}
 
@@ -58,7 +58,7 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	 * @param config The configuration object representing the new tab to add.
 	 * @param tabsetId The identifier of the tab set to which the new tab should be added.
 	 */
-	public addPageTab(config: PageTabRegistryConfig, tabsetId: PageTabsetRegistryId): void {
+	public addPageTab(config: PageTabRegistryConfig, tabsetId: PageTabsetPageId): void {
 		// Check if the configuration has a location property
 		if (!config.tabsetId) {
 			throw new Error('Page tab configuration must have a tabsetId property');
@@ -100,7 +100,7 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	 * @param tabsetId The identifier of the tab set from which the tab should be removed.
 	 * @param tabId The identifier of the tab to remove.
 	 */
-	public removePageTab(tabsetId: PageTabsetRegistryId, tabId: string): void {
+	public removePageTab(tabsetId: PageTabsetPageId, tabId: string): void {
 		// Retrieve the list of tabs for the specified tabset, or initialize as an empty array if not found
 		const tabs = this.registry.get(tabsetId) || [];
 
@@ -147,7 +147,7 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	 * @param tabsetId The identifier for the tabset.
 	 * @returns An array of `PageTabRegistryConfig` objects, sorted by their `order` property.
 	 */
-	private getPageTabsByOrder(tabsetId: PageTabsetRegistryId): PageTabRegistryConfig[] {
+	private getPageTabsByOrder(tabsetId: PageTabsetPageId): PageTabRegistryConfig[] {
 		// Retrieve the tabs for the specified tabsetId from the registry
 		const tabs = this.registry.get(tabsetId) || [];
 
@@ -165,7 +165,7 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	 * @param tabsetId The identifier for the tabset whose tabs are to be retrieved.
 	 * @returns An array of unique page tabs for the specified tabset.
 	 */
-	public getPageTabset(tabsetId: PageTabsetRegistryId): PageTabRegistryConfig[] {
+	public getPageTabset(tabsetId: PageTabsetPageId): PageTabRegistryConfig[] {
 		// Get all permitted registered tabs for the specified tabset, ordered as required
 		const tabs = this.getPermittedPageTabset(tabsetId);
 
@@ -192,7 +192,7 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	 * @param tabsetId The identifier for the tabset whose permitted tabs are to be retrieved.
 	 * @returns An array of `PageTabRegistryConfig` objects representing the permitted tabs for the specified tabset.
 	 */
-	public getPermittedPageTabset(tabsetId: PageTabsetRegistryId): PageTabRegistryConfig[] {
+	public getPermittedPageTabset(tabsetId: PageTabsetPageId): PageTabRegistryConfig[] {
 		// Retrieve all registered tabs for the specified tabset
 		const tabs = this.getPageTabsByOrder(tabsetId);
 
@@ -241,7 +241,7 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	 *
 	 * @param tabsetId The identifier for the tabset to delete.
 	 */
-	public deleteTabset(tabsetId: PageTabsetRegistryId): void {
+	public deleteTabset(tabsetId: PageTabsetPageId): void {
 		// Check if the tabset exists in the registry
 		if (!this.registry.has(tabsetId)) {
 			// Log the warning if logging is enabled
@@ -277,7 +277,7 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	 * @returns The component or template associated with the specified tab ID, or `undefined` if neither is found.
 	 */
 	public getComponentOrTemplateForTab(
-		tabsetId: PageTabsetRegistryId,
+		tabsetId: PageTabsetPageId,
 		tabId: string
 	): Type<any> | TemplateRef<any> | undefined {
 		// Retrieve the list of tabs for the specified tabsetId

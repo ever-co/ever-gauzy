@@ -6,13 +6,16 @@ import { filter, Observable, Subject, takeUntil, tap } from 'rxjs';
 import { PluginSettingsActions } from '../../../+state';
 import { PluginSubscriptionAccessFacade } from '../../../+state/plugin-subscription-access.facade';
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
+import { NbIconModule, NbCardModule, NbButtonModule } from '@nebular/theme';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
-	selector: 'gauzy-plugin-settings-tab',
-	standalone: false,
-	templateUrl: './settings-tab.component.html',
-	styleUrls: ['./settings-tab.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-plugin-settings-tab',
+    templateUrl: './settings-tab.component.html',
+    styleUrls: ['./settings-tab.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbIconModule, NbCardModule, NbButtonModule, AsyncPipe, TranslatePipe]
 })
 export class SettingsTabComponent implements OnInit, OnDestroy {
 	private readonly destroy$ = new Subject<void>();

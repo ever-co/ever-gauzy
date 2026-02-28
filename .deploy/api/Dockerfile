@@ -104,8 +104,10 @@ ARG REDIS_PORT
 ARG REDIS_USER
 ARG REDIS_TLS
 ARG REDIS_URL
+ARG NX_CLOUD_ACCESS_TOKEN
+ARG NX_BRANCH
 
-FROM node:24.12.0-alpine3.23 AS dependencies
+FROM node:24.14.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -175,7 +177,7 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
 
-FROM node:24.12.0-alpine3.23 AS prodDependencies
+FROM node:24.14.0-alpine3.23 AS prodDependencies
 
 ENV CI=true
 
@@ -245,7 +247,7 @@ RUN rm -r node_modules/@angular
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r node_modules/@gauzy
 
-FROM node:24.12.0-alpine3.23 AS development
+FROM node:24.14.0-alpine3.23 AS development
 
 USER node:node
 
@@ -255,7 +257,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:24.12.0-alpine3.23 AS build
+FROM node:24.14.0-alpine3.23 AS build
 
 WORKDIR /srv/gauzy
 
@@ -273,6 +275,8 @@ ENV CI=true
 ARG NODE_ENV
 ARG DEMO
 ARG NODE_OPTIONS
+ARG NX_CLOUD_ACCESS_TOKEN
+ARG NX_BRANCH
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
 ENV NODE_ENV=${NODE_ENV}
@@ -280,14 +284,10 @@ ENV DEMO=${DEMO:-false}
 
 ENV IS_DOCKER=true
 
-# Temporary disable caching in NX Cloud for builds
-ENV NX_NO_CLOUD=true
-
-RUN if [ "$NODE_ENV" = "production" ]; then \
-    yarn build:package:api:docker; \
-    else \
-    yarn build:package:api:dev:docker; \
-    fi
+# Enable NX Cloud caching for faster builds
+ENV NX_NO_CLOUD=false
+ENV NX_CLOUD_ACCESS_TOKEN=${NX_CLOUD_ACCESS_TOKEN}
+ENV NX_BRANCH=${NX_BRANCH}
 
 RUN if [ "$NODE_ENV" = "production" ]; then \
     yarn build:api:prod:docker; \
@@ -299,7 +299,7 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r dist/apps/api/node_modules/@gauzy
 
-FROM node:24.12.0-alpine3.23 AS production
+FROM node:24.14.0-alpine3.23 AS production
 
 WORKDIR /srv/gauzy
 

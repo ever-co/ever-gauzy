@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { CKEditor4 } from 'ckeditor4-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IHelpCenterArticle, IEmployee, IHelpCenterAuthor, IOrganization } from '@gauzy/contracts';
 import { ckEditorConfig } from '@gauzy/ui-core/shared';
@@ -17,10 +17,10 @@ import {
 
 @UntilDestroy()
 @Component({
-    selector: 'ga-add-article',
-    templateUrl: 'add-article.component.html',
-    styleUrls: ['add-article.component.scss'],
-    standalone: false
+	selector: 'ga-add-article',
+	templateUrl: 'add-article.component.html',
+	styleUrls: ['add-article.component.scss'],
+	standalone: false
 })
 export class AddArticleComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() article?: IHelpCenterArticle;

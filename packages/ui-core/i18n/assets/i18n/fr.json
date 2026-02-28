@@ -1388,16 +1388,13 @@
 			"SUBTITLE": "Configuration de l'intégration Activepieces",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "Votre intégration Activepieces est prête. Cliquez sur le bouton ci-dessous pour autoriser.",
-				"INFOS": "Ensuite, vous serez redirigé vers Activepieces pour accorder l'autorisation à Gauzy.",
-				"START_BUTTON": "Autoriser Activepieces",
+				"INFOS": "Saisissez votre clé API Activepieces pour connecter votre compte.",
 				"NEXT": "Suivant",
 				"ERRORS": {
 					"INVALID_FORM": "Veuillez remplir correctement tous les champs obligatoires",
 					"SAVE_SETTINGS": "Échec de l'enregistrement des paramètres",
 					"START_AUTHORIZATION": "Échec du démarrage de l'autorisation",
 					"ORGANIZATION_NOT_FOUND": "Organisation introuvable",
-					"CHECK_TENANT_SETTINGS": "Échec de la vérification des paramètres du locataire",
 					"CHECK_REMEMBER_STATE": "Échec de la vérification de l'état mémorisé"
 				},
 				"SUCCESS": {
@@ -1407,21 +1404,8 @@
 			"SETTINGS": {
 				"TITLE": "Paramètres Activepieces",
 				"SUBTITLE": "Configurez vos paramètres d'intégration Activepieces",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "Entrez votre Client ID",
-				"CLIENT_ID_HINT": "Votre Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "Entrez votre Client Secret",
-				"CLIENT_SECRET_HINT": "Votre Activepieces OAuth Client Secret",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "Entrez votre State Secret (minimum 32 caractères)",
-				"STATE_SECRET_HINT": "Une chaîne aléatoire sécurisée utilisée pour la vérification de l'état OAuth",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "Entrez votre Callback URL",
-				"CALLBACK_URL_HINT": "L'URL vers laquelle Activepieces redirigera après l'autorisation",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "Entrez votre Post Install URL",
-				"POST_INSTALL_URL_HINT": "L'URL vers laquelle rediriger une fois l'installation terminée",
+				"API_KEY": "Clé API",
+				"API_KEY_PLACEHOLDER": "Entrez votre clé API Activepieces",
 				"SETTINGS_UPDATED": "Paramètres Activepieces mis à jour avec succès"
 			},
 			"CONNECTIONS": {
@@ -2583,6 +2567,7 @@
 		"TIME_OFF": "Temps libre"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "Vous n'avez pas la permission de voir cette page",
 		"HEADER": "Congé",
 		"REQUEST": "Demande",
 		"REQUEST_TIME_OFF": "Demander du temps libre.",
@@ -4379,7 +4364,8 @@
 			"LARGE_FILE": "Le fichier est trop volumineux.",
 			"SERVICE_UNAVAILABLE": "Service temporairement indisponible.",
 			"UNEXPECTED_ERROR": "Une erreur inattendue s’est produite.",
-			"NETWORK_ERROR": "Erreur réseau : {{message}}"
+			"NETWORK_ERROR": "Erreur réseau : {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorisation d'accès à l'écran est requise pour activer la capture d'écran automatique. Veuillez accorder l'autorisation dans les paramètres système."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Le tracker a été arrêté en raison d'inactivité !",

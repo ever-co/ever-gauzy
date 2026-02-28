@@ -11,8 +11,7 @@ import {
 } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { Subject } from 'rxjs/internal/Subject';
+import { Observable, Subject } from 'rxjs';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,10 +23,10 @@ import { PictureNameTagsComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-tags-color-input',
-    templateUrl: './tags-color-input.component.html',
-    styleUrls: ['./tags-color-input.component.scss'],
-    standalone: false
+	selector: 'ga-tags-color-input',
+	templateUrl: './tags-color-input.component.html',
+	styleUrls: ['./tags-color-input.component.scss'],
+	standalone: false
 })
 export class TagsColorInputComponent extends PictureNameTagsComponent implements OnInit, OnDestroy {
 	public subject$: Subject<boolean> = new Subject();

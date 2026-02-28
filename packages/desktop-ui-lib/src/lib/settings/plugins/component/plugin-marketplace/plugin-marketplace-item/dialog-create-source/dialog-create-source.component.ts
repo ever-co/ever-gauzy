@@ -1,11 +1,15 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IPlugin, IPluginSource, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbCardModule, NbIconModule, NbButtonModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs';
 import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 import { SourceContext } from '../../plugin-marketplace-upload/plugin-source/creator/source.context';
+import { FormRowComponent } from '../../plugin-marketplace-upload/form-row/form-row.component';
+import { VersionSelectorComponent } from '../version-selector/version-selector.component';
+import { SourceContainerComponent } from '../../../../shared/ui/source-container/source-container.component';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Component for creating a new plugin source through a dialog
@@ -13,11 +17,11 @@ import { SourceContext } from '../../plugin-marketplace-upload/plugin-source/cre
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'lib-dialog-create-source',
-	standalone: false,
-	templateUrl: './dialog-create-source.component.html',
-	styleUrl: './dialog-create-source.component.scss',
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-dialog-create-source',
+    templateUrl: './dialog-create-source.component.html',
+    styleUrl: './dialog-create-source.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormsModule, ReactiveFormsModule, NbCardModule, NbIconModule, NbButtonModule, FormRowComponent, VersionSelectorComponent, SourceContainerComponent, TranslatePipe]
 })
 export class DialogCreateSourceComponent implements OnInit {
 	/** The plugin for which the source is being created */

@@ -1,51 +1,58 @@
-import {
-	Controller,
-	Post,
-	HttpStatus,
-	HttpCode,
-	Body,
-	Get,
-	Headers,
-	Query,
-	UseGuards,
-	BadRequestException
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestResponse } from '@nestjs/swagger';
-import { CommandBus } from '@nestjs/cqrs';
-import { I18nLang } from 'nestjs-i18n';
+import { Public } from '@gauzy/common';
 import {
 	IAuthResponse,
 	ISocialAccount,
 	ISocialAccountExistUser,
+	ITokenPair,
 	IUserSigninWorkspaceResponse,
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { Public } from '@gauzy/common';
 import { parseToBoolean } from '@gauzy/utils';
-import { AuthService } from './auth.service';
+import {
+	BadRequestException,
+	Body,
+	Controller,
+	Get,
+	Headers,
+	HttpCode,
+	HttpStatus,
+	Post,
+	Query,
+	UseGuards
+} from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { I18nLang } from 'nestjs-i18n';
+import { RequestContext } from '../core/context';
+import { UseValidationPipe } from '../shared/pipes';
 import { User as IUser } from '../user/user.entity';
+import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
+import { Permissions } from './../shared/decorators';
+import {
+	AuthRefreshGuard,
+	PermissionGuard,
+	RegisterAuthorizationGuard,
+	TenantPermissionGuard
+} from './../shared/guards';
+import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
+import { UserService } from './../user/user.service';
+import { AuthService } from './auth.service';
 import {
 	AuthLoginCommand,
 	AuthRegisterCommand,
 	WorkspaceSigninSendCodeCommand,
 	WorkspaceSigninVerifyTokenCommand
 } from './commands';
-import { RequestContext } from '../core/context';
-import { AuthRefreshGuard, PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
-import { UseValidationPipe } from '../shared/pipes';
-import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
-import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
-import { UserService } from './../user/user.service';
 import {
 	HasPermissionsQueryDTO,
 	HasRoleQueryDTO,
 	RefreshTokenDto,
-	WorkspaceSigninEmailVerifyDTO,
-	WorkspaceSigninDTO,
 	SwitchOrganizationDTO,
-	SwitchWorkspaceDTO
+	SwitchWorkspaceDTO,
+	WorkspaceSigninDTO,
+	WorkspaceSigninEmailVerifyDTO
 } from './dto';
 import { FindUserBySocialLoginDTO, SocialLoginBodyRequestDTO } from './social-account/dto';
 
@@ -122,7 +129,9 @@ export class AuthController {
 	})
 	@Post('/register')
 	@Public()
-	@UseValidationPipe({ transform: true })
+	@UseGuards(RegisterAuthorizationGuard)
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async register(
 		@Body() input: RegisterUserDTO,
 		@I18nLang() languageCode: LanguagesEnum,
@@ -149,6 +158,7 @@ export class AuthController {
 	@Post('/login')
 	@Public()
 	@UseValidationPipe({ transform: true })
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async login(@Body() input: UserLoginDTO): Promise<IAuthResponse | null> {
 		return await this.commandBus.execute(new AuthLoginCommand(input));
 	}
@@ -162,6 +172,7 @@ export class AuthController {
 	@Post('/signin.email.password')
 	@Public()
 	@UseValidationPipe()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async signinWorkspacesByPassword(@Body() input: UserSigninWorkspaceDTO): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspacesByEmailPassword(input, parseToBoolean(input.includeTeams));
 	}
@@ -177,6 +188,7 @@ export class AuthController {
 	@Post('/signup.provider.social')
 	@Public()
 	@UseValidationPipe()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async socialSignupCheckIfUserExistsBySocial(
 		@Body() input: FindUserBySocialLoginDTO
 	): Promise<ISocialAccountExistUser> {
@@ -193,6 +205,7 @@ export class AuthController {
 	@Post('/signin.email.social')
 	@Public()
 	@UseValidationPipe()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async signinWorkspacesBySocial(@Body() input: SocialLoginBodyRequestDTO): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspacesByEmailSocial(input, parseToBoolean(input.includeTeams));
 	}
@@ -201,6 +214,7 @@ export class AuthController {
 	@Post('/signup.link.account')
 	@Public()
 	@UseValidationPipe()
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async linkUserToSocialAccount(@Body() input: SocialLoginBodyRequestDTO): Promise<ISocialAccount> {
 		return await this.authService.linkUserToSocialAccount(input);
 	}
@@ -216,6 +230,7 @@ export class AuthController {
 	@Post('/signin.email')
 	@Public()
 	@UseValidationPipe({ transform: true })
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async sendWorkspaceSigninCode(@Body() entity: UserEmailDTO, @I18nLang() locale: LanguagesEnum): Promise<any> {
 		return await this.commandBus.execute(new WorkspaceSigninSendCodeCommand(entity, locale));
 	}
@@ -229,6 +244,7 @@ export class AuthController {
 	@Post('/signin.email/confirm')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async confirmWorkspaceSigninByCode(
 		@Body() input: WorkspaceSigninEmailVerifyDTO
 	): Promise<IUserSigninWorkspaceResponse> {
@@ -244,6 +260,7 @@ export class AuthController {
 	@Post('/signin.workspace')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	async signinWorkspaceByToken(@Body() input: WorkspaceSigninDTO): Promise<IAuthResponse | null> {
 		return await this.commandBus.execute(new WorkspaceSigninVerifyTokenCommand(input));
 	}
@@ -257,6 +274,7 @@ export class AuthController {
 	@Post('/reset-password')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async resetPassword(@Body() request: ChangePasswordRequestDTO) {
 		return await this.authService.resetPassword(request);
 	}
@@ -272,6 +290,7 @@ export class AuthController {
 	@Post('/request-password')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async requestPassword(
 		@Body() body: ResetPasswordRequestDTO,
 		@Headers('origin') origin: string,
@@ -281,15 +300,44 @@ export class AuthController {
 	}
 
 	/**
-	 * Logout (Removed refresh token from database)
+	 * Logout the user by revoking the provided refresh token and the current access token. If no refresh token is provided, it will attempt to revoke the current access token only. Any errors during the revocation process are logged but do not prevent the logout from completing.
 	 *
-	 * @returns
+	 * @param refreshToken The refresh token to be revoked. This is optional as the function will attempt to revoke the current access token regardless.
+	 * @returns void
 	 */
 	@HttpCode(HttpStatus.OK)
-	@ApiOperation({ summary: 'Logout' })
-	@Get('/logout')
-	async getLogOut() {
-		return await this.userService.removeRefreshToken();
+	@ApiOperation({
+		summary: 'Logout user',
+		description:
+			'Revokes the provided refresh token. If no token is supplied, ' +
+			'the token from the current request context is used. ' +
+			'Individual revocation failures are logged but do not cause the request to fail.'
+	})
+	@ApiBody({
+		description: 'Optional token pair to revoke.',
+		required: false,
+		schema: {
+			type: 'object',
+			properties: {
+				refresh_token: {
+					type: 'string',
+					description: 'Refresh token to revoke.'
+				}
+			}
+		}
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully logged out. The provided token has been revoked.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Request body is malformed or contains unrecognized fields.'
+	})
+	@Post('/logout')
+	@UseValidationPipe({ whitelist: true })
+	async logout(@Body('refresh_token') refreshToken?: string): Promise<void> {
+		await this.authService.logout(refreshToken);
 	}
 
 	/**
@@ -304,8 +352,8 @@ export class AuthController {
 	@UseGuards(AuthRefreshGuard)
 	@Post('/refresh-token')
 	@UseValidationPipe()
-	async refreshToken(@Body() input: RefreshTokenDto): Promise<{ token: string } | null> {
-		return await this.authService.getAccessTokenFromRefreshToken();
+	async refreshToken(@Body() input: RefreshTokenDto): Promise<ITokenPair | null> {
+		return await this.authService.rotateTokens(input.refresh_token, input);
 	}
 
 	/**

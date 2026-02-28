@@ -11,8 +11,8 @@ export const createDefaultProductCategories = async (
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories = [];
 
-	organizations.forEach(async (organization) => {
-		seed.forEach(async (seedProductCategory) => {
+	organizations.forEach((organization) => {
+		seed.forEach((seedProductCategory) => {
 			const image = faker.image.url();
 
 			const newCategory = new ProductCategory();

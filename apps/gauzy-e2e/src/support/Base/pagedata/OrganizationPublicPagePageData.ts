@@ -8,7 +8,7 @@ export const OrganizationPublicPagePageData = {
 	totalClients: '1',
 	clientFocus: 'Medium Businesses',
 	shortDescription: 'Engineering company specialized for building the web!',
-	awardName: 'Enviromentaly friendly company SICO Award',
+	awardName: 'Environmentally friendly company SICO Award',
 	awardYear: 2020,
 	language: 'English',
 	languageLevel: 'Fluent',

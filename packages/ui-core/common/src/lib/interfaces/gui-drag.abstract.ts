@@ -8,7 +8,7 @@ import { Expandable } from './expandable.interface';
     standalone: false
 })
 export abstract class GuiDrag implements Draggable, Expandable, Collapsable {
-	private _templateRef: TemplateRef<HTMLElement>;
+	private _templateRef: TemplateRef<any>;
 	private _position: number;
 	private _title: string;
 	private _collapsed: boolean = false;
@@ -20,11 +20,11 @@ export abstract class GuiDrag implements Draggable, Expandable, Collapsable {
 
 	public onClickSetting(event: boolean) {}
 	@Input()
-	public set templateRef(value: TemplateRef<HTMLElement>) {
+	public set templateRef(value: TemplateRef<any>) {
 		this._templateRef = value;
 	}
 
-	public get templateRef(): TemplateRef<HTMLElement> {
+	public get templateRef(): TemplateRef<any> {
 		return this._templateRef;
 	}
 	public set title(value: string) {

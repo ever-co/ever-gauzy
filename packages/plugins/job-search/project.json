@@ -11,7 +11,7 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "plugin-integration-ai", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -22,7 +22,8 @@
 				"packageJson": "packages/plugins/job-search/package.json",
 				"main": "packages/plugins/job-search/src/index.ts",
 				"assets": ["packages/plugins/job-search/*.md"]
-			}
+			},
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {

@@ -289,10 +289,11 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			/**
 			 * User try to delete permission for below role
 			 */
-			const { role: wantToDeletePermissionForRole } = await this.typeOrmRepository.findOne({
+			const permRecord = await this.findOneByOptions({
 				where: { id },
-				relations: ['role']
+				relations: { role: true }
 			});
+			const wantToDeletePermissionForRole = permRecord?.role;
 			if (role.name === RolesEnum.SUPER_ADMIN) {
 				/**
 				 * Reject request, if SUPER ADMIN try to delete permissions for SUPER ADMIN role.
@@ -336,14 +337,15 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		const { defaultEnabledPermissions } = DEFAULT_ROLE_PERMISSIONS.find(
 			(defaultRole) => role.name === defaultRole.role
 		);
-		for await (const permission of defaultEnabledPermissions) {
+		const rolePermissions = defaultEnabledPermissions.map((permission) => {
 			const rolePermission = new RolePermission();
 			rolePermission.roleId = role.id;
 			rolePermission.permission = permission;
 			rolePermission.enabled = true;
 			rolePermission.tenant = tenant;
-			await this.create(rolePermission);
-		}
+			return rolePermission;
+		});
+		await this.createMany(rolePermissions);
 	}
 
 	public async updateRolesAndPermissions(tenants: ITenant[]): Promise<IRolePermission[] & RolePermission[]> {
@@ -381,12 +383,23 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				}
 			}
 		}
-		await this.typeOrmRepository.save(rolesPermissions);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmRepository.getEntityManager();
+				rolesPermissions.forEach((rp) => em.persist(rp));
+				await em.flush();
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmRepository.save(rolesPermissions);
+				break;
+		}
 		return rolesPermissions;
 	}
 
 	public async migratePermissions(): Promise<IRolePermissionMigrateInput[]> {
-		const permissions: IRolePermission[] = await this.typeOrmRepository.find({
+		const permissions: IRolePermission[] = await this.find({
 			where: {
 				tenantId: RequestContext.currentTenantId()
 			},
@@ -429,7 +442,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				const { permission, role: name } = item;
 				const role = roles.find((role: IRole) => role.name === name);
 
-				const destination = await this.typeOrmRepository.findOneBy({
+				const destination = await this.findOneByWhereOptions({
 					tenantId: RequestContext.currentTenantId(),
 					permission,
 					roleId: role.id
@@ -438,7 +451,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: this.typeOrmRepository.metadata.tableName,
+								entityType: this.tableName,
 								sourceId,
 								destinationId: destination.id,
 								tenantId: RequestContext.currentTenantId()

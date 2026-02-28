@@ -3,26 +3,17 @@ import { CandidateTechnologiesBulkDeleteCommand } from '../candidate-technologie
 import { CandidateTechnologiesService } from '../../candidate-technologies.service';
 
 @CommandHandler(CandidateTechnologiesBulkDeleteCommand)
-export class CandidateTechnologiesBulkDeleteHandler
-	implements ICommandHandler<CandidateTechnologiesBulkDeleteCommand> {
-	constructor(
-		private readonly candidateTechnologiesService: CandidateTechnologiesService
-	) {}
+export class CandidateTechnologiesBulkDeleteHandler implements ICommandHandler<CandidateTechnologiesBulkDeleteCommand> {
+	constructor(private readonly candidateTechnologiesService: CandidateTechnologiesService) {}
 
-	public async execute(
-		command: CandidateTechnologiesBulkDeleteCommand
-	): Promise<any> {
+	public async execute(command: CandidateTechnologiesBulkDeleteCommand): Promise<any> {
 		const { id, technologies } = command;
 
 		if (technologies) {
-			await this.candidateTechnologiesService.deleteBulk(
-				technologies.map((item) => item.id)
-			);
+			await this.candidateTechnologiesService.deleteMany(technologies.map((item) => item.id));
 		} else {
 			const technologies = await this.candidateTechnologiesService.getTechnologiesByInterviewId(id);
-			await this.candidateTechnologiesService.deleteBulk(
-				technologies.map((item) => item.id)
-			);
+			await this.candidateTechnologiesService.deleteMany(technologies.map((item) => item.id));
 		}
 		return;
 	}

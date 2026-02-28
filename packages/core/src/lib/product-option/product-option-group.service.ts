@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { In, FindOptionsWhere } from 'typeorm';
 import { ProductOptionGroupTranslation } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { IProductOptionGroupTranslation, IProductOptionGroupTranslatable } from '@gauzy/contracts';
@@ -17,20 +18,13 @@ export class ProductOptionGroupService extends TenantAwareCrudService<ProductOpt
 		super(typeOrmProductOptionGroupRepository, mikroOrmProductOptionGroupRepository);
 	}
 
-	async create(productOptionsGroupInput: ProductOptionGroup): Promise<ProductOptionGroup> {
-		return this.typeOrmRepository.save(productOptionsGroupInput);
-	}
-
-	async createBulk(productOptionsGroupInput: ProductOptionGroup[]): Promise<ProductOptionGroup[]> {
-		return this.typeOrmRepository.save(productOptionsGroupInput);
-	}
-
-	async saveBulk(productOptionsGroupInput: ProductOptionGroup[]): Promise<ProductOptionGroup[]> {
-		return this.typeOrmRepository.save(productOptionsGroupInput);
-	}
-
-	async deleteBulk(productOptionGroupsInput: IProductOptionGroupTranslatable[]) {
-		return this.typeOrmRepository.remove(productOptionGroupsInput as any);
+	async deleteBulk(productOptionGroupsInput: IProductOptionGroupTranslatable[]): Promise<void> {
+		const ids = productOptionGroupsInput
+			.filter((g): g is IProductOptionGroupTranslatable & { id: string } => 'id' in g && !!g.id)
+			.map((g) => g.id);
+		if (ids.length > 0) {
+			await this.delete({ id: In(ids) } as FindOptionsWhere<ProductOptionGroup>);
+		}
 	}
 
 	async createTranslations(

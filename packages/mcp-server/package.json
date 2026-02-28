@@ -24,21 +24,23 @@
 	"scripts": {
 		"start": "nx serve mcp",
 		"lib:build": "cross-env NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server",
-		"lib:build:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn nx build mcp-server",
+		"lib:build:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server",
 		"lib:watch": "cross-env NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server --watch"
 	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.13.1",
-		"@nestjs/common": "^11.1.12",
-		"@nestjs/core": "^11.1.12",
-		"@nestjs/platform-express": "^11.1.12",
+		"@modelcontextprotocol/sdk": "^1.25.3",
+		"@nestjs/platform-express": "^11.1.14",
 		"express": "^5.2.1",
 		"express-rate-limit": "^8.0.1",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.5",
 		"csrf-csrf": "4.0.3",
-		"axios": "^1.9.0",
-		"zod": "^4.3.5",
+		"axios": "^1.13.5",
+		"zod": "^4.3.6",
 		"ws": "^8.18.3",
 		"tslib": "^2.6.2",
 		"jose": "^6.0.13",
@@ -48,12 +50,12 @@
 		"express-session": "^1.18.1",
 		"connect-redis": "^7.1.0",
 		"ioredis": "^5.7.0",
-		"helmet": "^4.1.1",
+		"helmet": "^8.1.0",
 		"escape-html": "^1.0.3",
 		"zod-to-json-schema": "^3.25.0"
 	},
 	"devDependencies": {
-		"@types/jest": "29.5.14",
+		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"@types/express": "^5.0.3",
 		"@types/cors": "^2.8.19",

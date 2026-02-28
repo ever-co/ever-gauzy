@@ -52,10 +52,19 @@ spec:
                                     operator: In
                                     values:
                                         - intel-xeon-v3
+            securityContext:
+                seccompProfile:
+                    type: RuntimeDefault
             imagePullSecrets:
                 - name: ever-registry-docker-registry-credentials
             containers:
                 - name: gauzy-demo-api
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      runAsNonRoot: true
+                      capabilities:
+                          drop: ['ALL']
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-api-demo:latest
                   env:
                       - name: API_HOST
@@ -90,6 +99,8 @@ spec:
                         value: 'refreshSecretKey'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '86400'
+                      - name: ALLOWED_ORIGINS
+                        value: '$ALLOWED_ORIGINS'
                       - name: OTEL_ENABLED
                         value: '$OTEL_ENABLED'
                       - name: OTEL_PROVIDER
@@ -140,6 +151,12 @@ spec:
                 - name: ever-registry-docker-registry-credentials
             containers:
                 - name: gauzy-demo-webapp
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      runAsNonRoot: true
+                      capabilities:
+                          drop: ['ALL']
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-webapp-demo:latest
                   env:
                       - name: DEMO

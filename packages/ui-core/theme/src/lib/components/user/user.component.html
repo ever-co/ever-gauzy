@@ -1,12 +1,12 @@
 <div class="user-container" (click)="onClicked()">
-  <div class="img-container">
-    <img [src]="(user$ | async)?.imageUrl" [alt]="(user$ | async)?.name">
-    <div [ngClass]="{ 'online' : online$ | async, 'offline': !(online$ | async) }"></div>
-  </div>
-  @if (showIdentity) {
-    <div class="identity-container">
-      <div class="name">{{ (user$ | async)?.fullName }}</div>
-      <div class="email">{{ (user$ | async)?.email }}</div>
-    </div>
-  }
+	<div class="img-container">
+		<img [src]="(user$ | async)?.imageUrl" [alt]="(user$ | async)?.name" />
+		<div [class.online]="online$ | async" [class.offline]="!(online$ | async)"></div>
+	</div>
+	@if (showIdentity) {
+		<div class="identity-container">
+			<div class="name">{{ (user$ | async)?.name }}</div>
+			<div class="email">{{ (user$ | async)?.email }}</div>
+		</div>
+	}
 </div>

@@ -8,6 +8,7 @@ import { CustomSmtpService } from './custom-smtp.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands';
 import { TypeOrmCustomSmtpRepository } from './repository/type-orm-custom-smtp.repository';
+import { MikroOrmCustomSmtpRepository } from './repository/mikro-orm-custom-smtp.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { TypeOrmCustomSmtpRepository } from './repository/type-orm-custom-smtp.r
 		CqrsModule
 	],
 	controllers: [CustomSmtpController],
-	providers: [CustomSmtpService, TypeOrmCustomSmtpRepository, ...CommandHandlers],
-	exports: [CustomSmtpService, TypeOrmCustomSmtpRepository]
+	providers: [CustomSmtpService, TypeOrmCustomSmtpRepository, MikroOrmCustomSmtpRepository, ...CommandHandlers],
+	exports: [CustomSmtpService, TypeOrmCustomSmtpRepository, MikroOrmCustomSmtpRepository]
 })
 export class CustomSmtpModule {}

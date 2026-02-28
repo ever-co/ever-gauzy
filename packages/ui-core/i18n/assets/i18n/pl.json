@@ -1386,16 +1386,13 @@
 			"SUBTITLE": "Konfiguracja integracji Activepieces",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "Twoja integracja Activepieces jest gotowa. Kliknij przycisk poniżej, aby autoryzować.",
-				"INFOS": "Następnie zostaniesz przeniesiony do Activepieces, aby przyznać uprawnienia Gauzy.",
-				"START_BUTTON": "Autoryzuj Activepieces",
+				"INFOS": "Wprowadź swój klucz API Activepieces, aby połączyć konto.",
 				"NEXT": "Dalej",
 				"ERRORS": {
 					"INVALID_FORM": "Proszę poprawnie wypełnić wszystkie wymagane pola",
 					"SAVE_SETTINGS": "Nie udało się zapisać ustawień",
 					"START_AUTHORIZATION": "Nie udało się rozpocząć autoryzacji",
 					"ORGANIZATION_NOT_FOUND": "Nie znaleziono organizacji",
-					"CHECK_TENANT_SETTINGS": "Nie udało się sprawdzić ustawień najemcy",
 					"CHECK_REMEMBER_STATE": "Nie udało się sprawdzić stanu zapamiętywania"
 				},
 				"SUCCESS": {
@@ -1405,21 +1402,8 @@
 			"SETTINGS": {
 				"TITLE": "Ustawienia Activepieces",
 				"SUBTITLE": "Skonfiguruj ustawienia integracji Activepieces",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "Wprowadź swój Client ID",
-				"CLIENT_ID_HINT": "Twój Activepieces OAuth Client ID",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "Wprowadź swój Client Secret",
-				"CLIENT_SECRET_HINT": "Twój Activepieces OAuth Client Secret",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "Wprowadź swój State Secret (minimum 32 znaki)",
-				"STATE_SECRET_HINT": "Bezpieczny losowy ciąg znaków używany do weryfikacji stanu OAuth",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "Wprowadź swój Callback URL",
-				"CALLBACK_URL_HINT": "Adres URL, do którego Activepieces przekieruje po autoryzacji",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "Wprowadź swój Post Install URL",
-				"POST_INSTALL_URL_HINT": "Adres URL przekierowania po zakończeniu instalacji",
+				"API_KEY": "Klucz API",
+				"API_KEY_PLACEHOLDER": "Wprowadź swój klucz API Activepieces",
 				"SETTINGS_UPDATED": "Ustawienia Activepieces zaktualizowane pomyślnie"
 			},
 			"CONNECTIONS": {
@@ -2587,6 +2571,7 @@
 		"TIME_OFF": "Czas wolny"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "Nie masz uprawnień do przeglądania tej strony",
 		"HEADER": "Czas wolny",
 		"REQUEST": "Prośba",
 		"REQUEST_TIME_OFF": "Zgłosić urlop",
@@ -4387,7 +4372,8 @@
 			"LARGE_FILE": "Plik jest zbyt duży.",
 			"SERVICE_UNAVAILABLE": "Usługa chwilowo niedostępna.",
 			"UNEXPECTED_ERROR": "Wystąpił nieoczekiwany błąd.",
-			"NETWORK_ERROR": "Błąd sieci: {{message}}"
+			"NETWORK_ERROR": "Błąd sieci: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "Uprawnienia do dostępu do ekranu są wymagane, aby włączyć automatyczne przechwytywanie ekranu. Proszę udzielić uprawnień w ustawieniach systemu."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Śledzenie zostało zatrzymane z powodu braku aktywności!",

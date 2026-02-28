@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { NbIconModule } from '@nebular/theme';
 
 @Component({
     selector: 'ga-custom-render-selector',
@@ -15,7 +16,7 @@ import { Component, Input, OnInit } from '@angular/core';
 		</div>
 		`,
     styleUrls: ['./time-tracker.component.scss'],
-    standalone: false
+    imports: [NbIconModule]
 })
 export class CustomRenderComponent implements OnInit {
 	isSelected: boolean = false;

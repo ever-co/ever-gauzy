@@ -12,7 +12,7 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -23,7 +23,8 @@
 				"packageJson": "packages/plugins/integration-activepieces/package.json",
 				"main": "packages/plugins/integration-activepieces/src/index.ts",
 				"assets": ["packages/plugins/integration-activepieces/*.md"]
-			}
+			},
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {

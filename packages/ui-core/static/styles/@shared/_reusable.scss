@@ -1,4 +1,6 @@
-@import 'themes';
+// Forward so mixins/themes are available to importers
+@forward 'themes';
+@use 'themes' as *;
 
 $button-color: #fa754e;
 $wrapper-padding: 30px;

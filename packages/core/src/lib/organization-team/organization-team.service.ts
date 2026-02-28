@@ -616,7 +616,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 			// Check if the team was found before attempting deletion
 			if (team) {
-				return await this.typeOrmRepository.remove(team);
+				return await this.delete(team.id);
 			} else {
 				// You might want to handle the case where the team was not found differently
 				throw new NotFoundException(`Organization team with ID ${teamId} not found.`);

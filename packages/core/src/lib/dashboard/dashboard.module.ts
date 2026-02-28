@@ -8,6 +8,7 @@ import { Dashboard } from './dashboard.entity';
 import { DashboardService } from './dashboard.service';
 import { DashboardController } from './dashboard.controller';
 import { TypeOrmDashboardRepository } from './repository/type-orm-dashboard.repository';
+import { MikroOrmDashboardRepository } from './repository/mikro-orm-dashboard.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmDashboardRepository } from './repository/type-orm-dashboard.repo
 		CqrsModule
 	],
 	controllers: [DashboardController],
-	providers: [DashboardService, TypeOrmDashboardRepository, ...CommandHandlers]
+	providers: [DashboardService, TypeOrmDashboardRepository, MikroOrmDashboardRepository, ...CommandHandlers]
 })
 export class DashboardModule {}

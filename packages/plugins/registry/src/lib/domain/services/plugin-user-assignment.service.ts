@@ -1,7 +1,10 @@
 import { IRole } from '@gauzy/contracts';
-import { RequestContext, RoleService } from '@gauzy/core';
+import { MultiORM, MultiORMEnum, getORMType, RequestContext, RoleService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PluginTenantService } from './plugin-tenant.service';
+
+// Get the type of the Object-Relational Mapping (ORM) used in the application.
+const ormType: MultiORM = getORMType();
 
 export interface UserAssignmentRecord {
 	id?: string;
@@ -346,31 +349,58 @@ export class PluginUserAssignmentService {
 				return [];
 			}
 
-			// Use query builder for more efficient and flexible query
-			const query = this.roleService
-				.createQueryBuilder('role')
-				.innerJoin('role.users', 'user')
-				.where('user.id = :userId', { userId })
-				.andWhere('role.tenantId = :tenantId', { tenantId })
-				.andWhere('role.isActive = :isActive', { isActive: true })
-				.andWhere('role.isArchived = :isArchived', { isArchived: false });
+			switch (ormType) {
+				case MultiORMEnum.MikroORM: {
+					// MikroORM: Use roleService's ORM-agnostic findAll through the base service
+					const result = await this.roleService.findAll({
+						where: {
+							tenantId,
+							isActive: true,
+							isArchived: false,
+							...(organizationId ? { organizationId } : {}),
+							users: { id: userId }
+						} as any,
+						order: { name: 'ASC' } as any
+					});
 
-			// Add organization filter if available
-			if (organizationId) {
-				query.andWhere('role.organizationId = :organizationId', { organizationId });
+					const roles = result.items || [];
+
+					this.logger.debug(
+						`Found ${roles.length} active roles for user ${userId} in tenant ${tenantId}${
+							organizationId ? ` and organization ${organizationId}` : ''
+						}`
+					);
+					return roles;
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					// Use query builder for more efficient and flexible query
+					const query = this.roleService
+						.createQueryBuilder('role')
+						.innerJoin('role.users', 'user')
+						.where('user.id = :userId', { userId })
+						.andWhere('role.tenantId = :tenantId', { tenantId })
+						.andWhere('role.isActive = :isActive', { isActive: true })
+						.andWhere('role.isArchived = :isArchived', { isArchived: false });
+
+					// Add organization filter if available
+					if (organizationId) {
+						query.andWhere('role.organizationId = :organizationId', { organizationId });
+					}
+
+					// Order by role name for consistent results
+					query.orderBy('role.name', 'ASC');
+
+					const roles = await query.getMany();
+
+					this.logger.debug(
+						`Found ${roles.length} active roles for user ${userId} in tenant ${tenantId}${
+							organizationId ? ` and organization ${organizationId}` : ''
+						}`
+					);
+					return roles;
+				}
 			}
-
-			// Order by role name for consistent results
-			query.orderBy('role.name', 'ASC');
-
-			const roles = await query.getMany();
-
-			this.logger.debug(
-				`Found ${roles.length} active roles for user ${userId} in tenant ${tenantId}${
-					organizationId ? ` and organization ${organizationId}` : ''
-				}`
-			);
-			return roles;
 		} catch (error) {
 			return [];
 		}

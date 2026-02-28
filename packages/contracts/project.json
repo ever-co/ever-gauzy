@@ -11,7 +11,7 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["constants"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -22,7 +22,8 @@
 				"packageJson": "packages/contracts/package.json",
 				"main": "packages/contracts/src/index.ts",
 				"assets": ["packages/contracts/*.md"]
-			}
+			},
+			"dependsOn": ["^build"]
 		},
 		"nx-release-publish": {
 			"options": {

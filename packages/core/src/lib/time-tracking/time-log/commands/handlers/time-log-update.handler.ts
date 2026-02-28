@@ -6,18 +6,23 @@ import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './..
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { RequestContext } from './../../../../core/context';
+import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-orm-time-slot.repository';
 
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
+	protected ormType: MultiORM = getORMType();
+
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		private readonly timeSlotService: TimeSlotService
 	) {}
 
@@ -159,25 +164,46 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		startTimes: Date[],
 		forceDelete: boolean
 	): Promise<ITimeSlot | ITimeSlot[]> {
-		// Query to fetch conflicting time slots
-		const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
+		let slots: ITimeSlot[] = [];
 
-		// Add joins to the query
-		query
-			.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
-			.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
-			.leftJoinAndSelect(`${query.alias}.activities`, 'activities')
-			.leftJoinAndSelect(`${query.alias}.timeSlotMinutes`, 'timeSlotMinutes');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+				slots = await em.find('TimeSlot', {
+					organizationId,
+					tenantId,
+					employeeId,
+					startedAt: { $in: startTimes }
+				} as any, {
+					populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
+				}) as any[];
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Query to fetch conflicting time slots
+				const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 
-		// Add where clauses to the query
-		query
-			.where(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
-			.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
-			.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId })
-			.andWhere(p(`"${query.alias}"."startedAt" IN (:...startTimes)`), { startTimes });
+				// Add joins to the query
+				query
+					.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
+					.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
+					.leftJoinAndSelect(`${query.alias}.activities`, 'activities')
+					.leftJoinAndSelect(`${query.alias}.timeSlotMinutes`, 'timeSlotMinutes');
 
-		// Get the conflicting time slots
-		const slots = await query.getMany();
+				// Add where clauses to the query
+				query
+					.where(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
+					.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
+					.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId })
+					.andWhere(p(`"${query.alias}"."startedAt" IN (:...startTimes)`), { startTimes });
+
+				// Get the conflicting time slots
+				slots = await query.getMany();
+				break;
+			}
+		}
+
 		console.log(`conflicting time slots for ${forceDelete ? 'hard' : 'soft'} deleting: %s`, slots.length);
 
 		if (isEmpty(slots)) {
@@ -185,9 +211,25 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		}
 
 		// Delete or soft delete the conflicting time slots
-		return forceDelete
-			? this.typeOrmTimeSlotRepository.remove(slots)
-			: this.typeOrmTimeSlotRepository.softRemove(slots);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+				if (forceDelete) {
+					await em.removeAndFlush(slots);
+				} else {
+					for (const slot of slots) {
+						(slot as any).deletedAt = new Date();
+					}
+					await em.persistAndFlush(slots);
+				}
+				return slots;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return forceDelete
+					? this.typeOrmTimeSlotRepository.remove(slots)
+					: this.typeOrmTimeSlotRepository.softRemove(slots);
+		}
 	}
 
 	/**

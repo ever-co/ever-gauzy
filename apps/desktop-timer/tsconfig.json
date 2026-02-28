@@ -9,7 +9,9 @@
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
 		"skipLibCheck": true,
-		"types": ["node", "google.maps"]
+		"types": ["node", "google.maps"],
+		"module": "preserve",
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],

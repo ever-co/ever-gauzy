@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { NB_DIALOG_CONFIG, NbDialogRef } from '@nebular/theme';
+import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NB_DIALOG_CONFIG, NbDialogRef, NbCardModule, NbIconModule, NbInputModule, NbTooltipModule, NbButtonModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { asyncScheduler, filter, pairwise, tap } from 'rxjs';
@@ -13,11 +13,11 @@ export interface CreateCategoryDialogData {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-create-category-dialog',
-	templateUrl: './create-category-dialog.component.html',
-	styleUrls: ['./create-category-dialog.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'gauzy-create-category-dialog',
+    templateUrl: './create-category-dialog.component.html',
+    styleUrls: ['./create-category-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, FormsModule, ReactiveFormsModule, NbInputModule, NbTooltipModule, NbButtonModule]
 })
 export class CreateCategoryDialogComponent implements OnInit {
 	public categoryForm: FormGroup;

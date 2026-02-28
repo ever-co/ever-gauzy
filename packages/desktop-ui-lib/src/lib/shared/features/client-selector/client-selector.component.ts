@@ -9,6 +9,8 @@ import { ProjectSelectorService } from '../project-selector/+state/project-selec
 import { ClientSelectorQuery } from './+state/client-selector.query';
 import { ClientSelectorService } from './+state/client-selector.service';
 import { ClientSelectorStore } from './+state/client-selector.store';
+import { SelectComponent } from '../../components/ui/select/select.component';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
     selector: 'gauzy-client-selector',
@@ -22,7 +24,7 @@ import { ClientSelectorStore } from './+state/client-selector.store';
             multi: true
         }
     ],
-    standalone: false
+    imports: [SelectComponent, AsyncPipe]
 })
 export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganizationContact> implements OnInit, OnDestroy {
 	constructor(

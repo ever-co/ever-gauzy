@@ -413,13 +413,15 @@ writeFile(envFilePath, envFileContent, (error) => {
 	}
 });
 
-let envFileDestOtherContent = `export const environment = { production: ${!isProd} }`;
+// Generate full content for the other file, but with the production flag toggled
+// This ensures TypeScript sees the complete Environment interface in both files
+let envFileContentOther = envFileContent.replace(`production:  ${isProd},`, `production:  ${!isProd},`);
 
-writeFile(envFileOtherPath, envFileDestOtherContent, (error) => {
+writeFile(envFileOtherPath, envFileContentOther, (error) => {
 	if (error) {
 		console.error(`Error writing environment file: ${error}`);
 	} else {
 		const envFileOtherPath = path.resolve(`./packages/ui-config/src/lib/environments/${envFileDestOther}`);
-		console.log(`Generated Second Empty Angular environment file: ${envFileOtherPath}`);
+		console.log(`Generated Second Angular environment file: ${envFileOtherPath}`);
 	}
 });

@@ -3,7 +3,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { CKEditor4 } from 'ckeditor4-angular';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { IProposal, ITag } from '@gauzy/contracts';
 import {
@@ -19,10 +19,10 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-proposal-edit',
-    templateUrl: './proposal-edit.component.html',
-    styleUrls: ['./proposal-edit.component.scss'],
-    standalone: false
+	selector: 'ngx-proposal-edit',
+	templateUrl: './proposal-edit.component.html',
+	styleUrls: ['./proposal-edit.component.scss'],
+	standalone: false
 })
 export class ProposalEditComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
 	public proposal: IProposal;

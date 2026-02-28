@@ -1,16 +1,14 @@
 import { Routes } from '@angular/router';
-import { PluginComponent } from './plugin/plugin.component';
-import { PluginListComponent } from './plugin-list/plugin-list.component';
 
 export const pluginInstalledRoutes: Routes = [
 	{
 		path: '',
 		pathMatch: 'full',
-		component: PluginListComponent
+		loadComponent: () => import('./plugin-list/plugin-list.component').then(m => m.PluginListComponent)
 	},
 	{
 		path: ':name',
-		component: PluginComponent
+		loadComponent: () => import('./plugin/plugin.component').then(m => m.PluginComponent)
 	},
 	{
 		path: '**',

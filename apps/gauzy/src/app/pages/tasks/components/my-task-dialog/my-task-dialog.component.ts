@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { IEmployee, IOrganizationProject, ITag, ITask, TaskStatusEnum } from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { CKEditor4 } from 'ckeditor4-angular';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -29,10 +29,10 @@ const initialTaskValue = {
 };
 
 @Component({
-    selector: 'ngx-my-task-dialog',
-    templateUrl: './my-task-dialog.component.html',
-    styleUrls: ['./my-task-dialog.component.scss'],
-    standalone: false
+	selector: 'ngx-my-task-dialog',
+	templateUrl: './my-task-dialog.component.html',
+	styleUrls: ['./my-task-dialog.component.scss'],
+	standalone: false
 })
 export class MyTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	selectedTaskId: string;

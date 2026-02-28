@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { IPagination, IProductCategoryTranslatable, LanguagesEnum } from '@gauzy/contracts';
+import { ID, IPagination, IProductCategoryTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { ProductCategory } from './product-category.entity';
 import { TypeOrmProductCategoryRepository } from './repository/type-orm-product-category.repository';
@@ -35,10 +35,10 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	 * @param entity
 	 * @returns
 	 */
-	async updateProductCategory(id: string, entity: ProductCategory): Promise<ProductCategory> {
+	async updateProductCategory(id: ID, entity: ProductCategory): Promise<ProductCategory> {
 		try {
-			await this.typeOrmRepository.delete(id);
-			return this.typeOrmRepository.save(entity);
+			await super.delete(id);
+			return this.save(entity);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

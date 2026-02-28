@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, NgZone, OnInit } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import {
 	ActivityWatchElectronService,
 	ElectronService,
@@ -11,7 +12,7 @@ import { AppService } from './app.service';
 @Component({
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>',
-	standalone: false
+	imports: [RouterOutlet]
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	public title: string;
@@ -36,11 +37,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			this._electronService.ipcRenderer.send('app_is_init');
 			this._isInitialized = true;
 		}
-
-		// Start token refresh timer if user is authenticated
-		if (this._store.token && this._store.refreshToken) {
-			this.tokenRefreshService.start();
-		}
+		this.tokenRefreshService.start();
 	}
 
 	ngAfterViewInit(): void {

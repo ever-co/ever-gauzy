@@ -1,46 +1,41 @@
 @if (organizations) {
-  <div>
-    <ng-select
-      #select
-      [addTag]="((hasEditOrganization$ | async) && addTag && isOpen) ? createNew : null"
-      [searchable]="isOpen"
-      [clearable]="false"
-      [items]="organizations"
-      bindLabel="name"
-      (change)="selectOrganization($event); select.blur();"
-      (clear)="select.blur();"
-      [(ngModel)]="selectedOrganization"
-      [placeholder]="'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate"
-      [addTagText]="'FORM.PLACEHOLDERS.ADD_ORGANIZATION' | translate"
-      appendTo="body"
-      [isOpen]="isOpen"
-      (change)="onChange()"
-      (click)="isOpen = !isOpen"
-      [ngClass]="isOpen ? 'organization' : 'organization close'"
-      gauzyOutside (clickOutside)="onClickOutside($event)"
-      >
-      <ng-template ng-option-tmp let-item="item" let-index="index">
-        @if (item.imageUrl) {
-          <img
-            [src]="item.imageUrl"
-            width="40"
-            height="40"
-            />
-        }
-        {{ item.name }}
-      </ng-template>
-      <ng-template ng-label-tmp let-item="item">
-        <div class="selector-template">
-          @if (item.imageUrl) {
-            <img
-              height="25"
-              width="25"
-              [src]="item.imageUrl"
-              />
-          }
-          <span>{{ item.name }}</span>
-        </div>
-      </ng-template>
-    </ng-select>
-  </div>
+<div>
+	<ng-select
+		#select
+		[addTag]="(hasEditOrganization$ | async) && addTag && isOpen ? createNew : null"
+		[searchable]="isOpen"
+		[clearable]="false"
+		[items]="organizations"
+		bindLabel="name"
+		(change)="selectOrganization($event); select.blur()"
+		(clear)="select.blur()"
+		[(ngModel)]="selectedOrganization"
+		[placeholder]="'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate"
+		[addTagText]="'FORM.PLACEHOLDERS.ADD_ORGANIZATION' | translate"
+		appendTo="body"
+		[isOpen]="isOpen"
+		(change)="onChange()"
+		(click)="isOpen = !isOpen"
+		[class.organization]="isOpen"
+		[class.organization]="!isOpen"
+		[class.close]="!isOpen"
+		gauzyOutside
+		(clickOutside)="onClickOutside($event)"
+	>
+		<ng-template ng-option-tmp let-item="item" let-index="index">
+			@if (item.imageUrl) {
+			<img [src]="item.imageUrl" width="40" height="40" />
+			}
+			{{ item.name }}
+		</ng-template>
+		<ng-template ng-label-tmp let-item="item">
+			<div class="selector-template">
+				@if (item.imageUrl) {
+				<img height="25" width="25" [src]="item.imageUrl" />
+				}
+				<span>{{ item.name }}</span>
+			</div>
+		</ng-template>
+	</ng-select>
+</div>
 }

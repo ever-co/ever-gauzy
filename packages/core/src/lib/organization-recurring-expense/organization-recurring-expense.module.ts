@@ -11,6 +11,7 @@ import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmOrganizationRecurringExpenseRepository } from './repository/type-orm-organization-recurring-expense.repository';
+import { MikroOrmOrganizationRecurringExpenseRepository } from './repository/mikro-orm-organization-recurring-expense.repository';
 
 @Module({
 	imports: [
@@ -24,7 +25,7 @@ import { TypeOrmOrganizationRecurringExpenseRepository } from './repository/type
 	controllers: [OrganizationRecurringExpenseController],
 	providers: [
 		OrganizationRecurringExpenseService,
-		TypeOrmOrganizationRecurringExpenseRepository,
+		TypeOrmOrganizationRecurringExpenseRepository, MikroOrmOrganizationRecurringExpenseRepository,
 		...QueryHandlers,
 		...CommandHandlers
 	],

@@ -1,5 +1,6 @@
-import { Injectable, BadRequestException, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@gauzy/config';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { firstValueFrom, catchError } from 'rxjs';
 import { AxiosError } from 'axios';
@@ -19,6 +20,7 @@ export class ActivepiecesMcpService {
 
 	constructor(
 		private readonly httpService: HttpService,
+		private readonly configService: ConfigService,
 		private readonly integrationTenantService: IntegrationTenantService
 	) {}
 
@@ -150,11 +152,11 @@ export class ActivepiecesMcpService {
 		data?: unknown,
 		params?: Record<string, unknown>
 	): Promise<T> {
-		const accessToken = await this.getValidAccessToken();
+		const apiKey = await this.getApiKey();
 
 		const config = {
 			headers: {
-				Authorization: `Bearer ${accessToken}`,
+				Authorization: `Bearer ${apiKey}`,
 				'Content-Type': 'application/json'
 			},
 			...(params && { params })
@@ -185,48 +187,53 @@ export class ActivepiecesMcpService {
 	}
 
 	/**
-	 * Get valid access token for API calls
+	 * Get API key for Activepieces API calls.
+	 * Looks for a tenant-specific API key in the database first, then falls back to global config.
 	 */
-	private async getValidAccessToken(): Promise<string> {
+	private async getApiKey(): Promise<string> {
 		try {
-			// This method would need to be updated to get the token from the appropriate integration
-			// For now, we'll use a similar approach as the main service
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
 				throw new BadRequestException('Tenant ID not found in request context');
 			}
 
-			// Find the ActivePieces integration for this tenant
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					tenantId,
-					integration: {
-						provider: IntegrationEnum.ACTIVE_PIECES
-					}
-				},
-				relations: ['settings']
-			});
-
-			if (!integrationTenant) {
-				throw new BadRequestException('ActivePieces integration not found for this tenant');
+			// 1. Try tenant-specific API key from database
+			let integrationTenant: any = null;
+			try {
+				integrationTenant = await this.integrationTenantService.findOneByOptions({
+					where: {
+						tenantId,
+						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+					},
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
 			}
 
-			const tokenSetting = integrationTenant.settings?.find(
-				(setting) => setting.settingsName === ActivepiecesSettingName.ACCESS_TOKEN
+			const apiKeySetting = integrationTenant?.settings?.find(
+				(setting: any) => setting.settingsName === ActivepiecesSettingName.API_KEY
 			);
 
-			if (!tokenSetting?.settingsValue) {
-				throw new BadRequestException('Access token not found for this integration');
+			if (apiKeySetting?.settingsValue) {
+				return apiKeySetting.settingsValue;
 			}
 
-			return tokenSetting.settingsValue;
+			// 2. Fallback to global config
+			const globalApiKey = this.configService.get('activepieces')?.apiKey;
+			if (globalApiKey) {
+				return globalApiKey;
+			}
+
+			throw new BadRequestException('Activepieces API key not configured');
 		} catch (error: any) {
-			this.logger.error('Failed to get valid access token:', error);
 			if (error instanceof HttpException) {
 				throw error;
 			}
 			throw new HttpException(
-				`Failed to get valid access token: ${error.message}`,
+				`Failed to get Activepieces API key: ${error.message}`,
 				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}

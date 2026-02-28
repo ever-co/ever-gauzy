@@ -1,66 +1,55 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
-import {
-	AboutComponent,
-	AgentDashboardComponent,
-	AlwaysOnComponent,
-	AuthConnectionGuard,
-	ScreenCaptureComponent,
-	ServerDownPage,
-	SettingsComponent,
-	SetupComponent,
-	SplashScreenComponent,
-	UpdaterComponent
-} from '@gauzy/desktop-ui-lib';
-import { AppModuleGuard } from './app.module.guards';
+import { authConnectionGuard, authGuard, noAuthGuard } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
 	{
 		path: 'setup',
-		component: SetupComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SetupComponent)
 	},
 	{
 		path: 'auth',
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.authRoutes),
-		canActivate: [AppModuleGuard]
+		canActivate: [noAuthGuard],
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule)
 	},
 	{
 		path: 'plugins',
-		canActivate: [AuthConnectionGuard],
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginsModule)
+		canActivate: [authConnectionGuard],
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
 	},
 	{
 		path: 'settings',
-		component: SettingsComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SettingsComponent)
 	},
 	{
 		path: 'updater',
-		component: UpdaterComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.UpdaterComponent)
 	},
 	{
 		path: 'splash-screen',
-		component: SplashScreenComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.SplashScreenComponent)
 	},
 	{
 		path: 'server-down',
-		component: ServerDownPage
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ServerDownPage)
 	},
 	{
 		path: 'always-on',
-		component: AlwaysOnComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AlwaysOnComponent)
 	},
 	{
 		path: 'about',
-		component: AboutComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AboutComponent)
 	},
 	{
 		path: 'server-dashboard',
-		component: AgentDashboardComponent,
+		canActivate: [authConnectionGuard, authGuard],
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AgentDashboardComponent),
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.agentDashboardRoutes)
 	},
 	{
 		path: 'screen-capture',
-		component: ScreenCaptureComponent
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ScreenCaptureComponent)
 	}
 ];
 

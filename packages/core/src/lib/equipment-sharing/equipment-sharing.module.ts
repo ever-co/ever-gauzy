@@ -8,6 +8,7 @@ import { EquipmentSharingService } from './equipment-sharing.service';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
+import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 import { RequestApprovalModule } from '../request-approval/request-approval.module';
 
 @Module({
@@ -19,7 +20,7 @@ import { RequestApprovalModule } from '../request-approval/request-approval.modu
 		RolePermissionModule
 	],
 	controllers: [EquipmentSharingController],
-	providers: [EquipmentSharingService, TypeOrmEquipmentSharingRepository, ...CommandHandlers],
+	providers: [EquipmentSharingService, TypeOrmEquipmentSharingRepository, MikroOrmEquipmentSharingRepository, ...CommandHandlers],
 	exports: [EquipmentSharingService]
 })
 export class EquipmentSharingModule {}

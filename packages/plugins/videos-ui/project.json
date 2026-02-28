@@ -5,10 +5,10 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["contracts", "ui-config", "ui-core"],
 	"targets": {
 		"build": {
-			"executor": "@nx/angular:package",
+			"executor": "@nx/angular:ng-packagr-lite",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
 				"project": "packages/plugins/videos-ui/ng-package.json",
@@ -20,7 +20,8 @@
 				},
 				"development": {}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development",
+			"dependsOn": ["^build"]
 		},
 		"test": {
 			"executor": "@nx/jest:jest",

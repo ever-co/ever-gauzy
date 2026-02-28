@@ -2,14 +2,17 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable, from, tap } from 'rxjs';
 import { ElectronService } from '../../electron/services';
+import { NbToggleModule } from '@nebular/theme';
+import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-switch-theme',
-    templateUrl: './switch-theme.component.html',
-    styleUrls: ['./switch-theme.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+	selector: 'gauzy-switch-theme',
+	templateUrl: './switch-theme.component.html',
+	styleUrls: ['./switch-theme.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NbToggleModule, AsyncPipe, TranslatePipe]
 })
 export class SwitchThemeComponent implements OnInit {
 	private _switch$ = new BehaviorSubject<boolean>(true);

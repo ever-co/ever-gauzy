@@ -1,6 +1,6 @@
 import { Type } from '@angular/core';
-import { Route } from '@angular/router';
-import { PageRouteRegistryId } from '../../common/component-registry.types';
+import { Route, Routes } from '@angular/router';
+import { PageRouteLocationId } from '../../common/component-registry.types';
 
 /**
  * Page route configuration with additional route options.
@@ -9,7 +9,7 @@ export interface PageRouteRegistryConfig extends Route {
 	/**
 	 * The location identifier for the page route.
 	 */
-	location: PageRouteRegistryId;
+	location: PageRouteLocationId;
 
 	/**
 	 * The path to navigate to when the page is selected.
@@ -25,7 +25,7 @@ export interface PageRouteRegistryConfig extends Route {
 	/**
 	 * Optional loadChildren function to load a module lazily.
 	 */
-	loadChildren?: () => Promise<Type<any>> | Type<any>;
+	loadChildren?: () => Promise<Type<any> | Routes> | Type<any> | Routes;
 
 	/**
 	 * Additional route configuration options.

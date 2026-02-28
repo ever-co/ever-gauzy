@@ -11,7 +11,7 @@ import {
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
 import { TenantAwareCrudService } from '../../core/crud';
-import { getDateRangeFormat } from '../../core/utils';
+import { getDateRangeFormat, MultiORMEnum } from '../../core/utils';
 import { moment } from '../../core/moment-extend';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { TimeSlot } from '../time-slot/time-slot.entity';
@@ -241,33 +241,65 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		startDate: Date,
 		endDate: Date
 	): Promise<TimeSlotSession[]> {
-		const qb = this.typeOrmTimeSlotSessionRepository.createQueryBuilder('tss');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const mikroWhere: any = {
+					tenantId,
+					organizationId,
+					createdAt: { $gte: startDate, $lte: endDate },
+					timeSlot: { customActivity: { $ne: null } }
+				};
 
-		qb.leftJoinAndSelect('tss.timeSlot', 'timeSlot');
-		qb.leftJoinAndSelect('timeSlot.timeLogs', 'timeLogs');
+				if (isNotEmpty(employeeIds)) {
+					mikroWhere.employeeId = { $in: employeeIds };
+				}
+				if (query.sessionId) {
+					mikroWhere.sessionId = query.sessionId;
+				}
+				if (isNotEmpty(query.projectIds)) {
+					mikroWhere.timeSlot = {
+						...mikroWhere.timeSlot,
+						timeLogs: { projectId: { $in: query.projectIds } }
+					};
+				}
 
-		qb.where(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
-		qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+				const items = await this.mikroOrmTimeSlotSessionRepository.find(mikroWhere, {
+					populate: ['timeSlot', 'timeSlot.timeLogs'] as any[],
+					orderBy: { createdAt: 'ASC' } as any
+				});
+				return items as TimeSlotSession[];
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const qb = this.typeOrmTimeSlotSessionRepository.createQueryBuilder('tss');
 
-		qb.andWhere(p(`"${qb.alias}"."createdAt" BETWEEN :startDate AND :endDate`), { startDate, endDate });
+				qb.leftJoinAndSelect('tss.timeSlot', 'timeSlot');
+				qb.leftJoinAndSelect('timeSlot.timeLogs', 'timeLogs');
 
-		if (isNotEmpty(employeeIds)) {
-			qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+				qb.where(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+				qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+
+				qb.andWhere(p(`"${qb.alias}"."createdAt" BETWEEN :startDate AND :endDate`), { startDate, endDate });
+
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+				}
+
+				if (query.sessionId) {
+					qb.andWhere(p(`"${qb.alias}"."sessionId" = :sessionId`), { sessionId: query.sessionId });
+				}
+
+				if (isNotEmpty(query.projectIds)) {
+					qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), { projectIds: query.projectIds });
+				}
+
+				qb.andWhere(p(`"timeSlot"."customActivity" IS NOT NULL`));
+
+				qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'ASC');
+
+				return await qb.getMany();
+			}
 		}
-
-		if (query.sessionId) {
-			qb.andWhere(p(`"${qb.alias}"."sessionId" = :sessionId`), { sessionId: query.sessionId });
-		}
-
-		if (isNotEmpty(query.projectIds)) {
-			qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), { projectIds: query.projectIds });
-		}
-
-		qb.andWhere(p(`"timeSlot"."customActivity" IS NOT NULL`));
-
-		qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'ASC');
-
-		return await qb.getMany();
 	}
 
 	/**

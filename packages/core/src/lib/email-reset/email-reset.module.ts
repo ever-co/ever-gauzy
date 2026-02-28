@@ -13,6 +13,7 @@ import { EmailSendModule } from './../email-send/email-send.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { AuthModule } from './../auth/auth.module';
 import { TypeOrmEmailResetRepository } from './repository/type-orm-email-reset.repository';
+import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset.repository';
 
 @Module({
 	imports: [
@@ -26,7 +27,7 @@ import { TypeOrmEmailResetRepository } from './repository/type-orm-email-reset.r
 		AuthModule
 	],
 	controllers: [EmailResetController],
-	providers: [EmailResetService, TypeOrmEmailResetRepository, ...CommandHandlers, ...QueryHandlers],
+	providers: [EmailResetService, TypeOrmEmailResetRepository, MikroOrmEmailResetRepository, ...CommandHandlers, ...QueryHandlers],
 	exports: [EmailResetService]
 })
 export class EmailResetModule {}

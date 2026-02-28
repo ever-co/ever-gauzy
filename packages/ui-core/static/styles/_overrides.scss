@@ -1,5 +1,8 @@
-@import './themes';
-@import 'var';
+// Forward so mixins/themes are available to importers
+@forward './themes';
+@forward 'var';
+@use './themes' as *;
+@use 'var' as *;
 
 /* Apply style on scrollbar for Firefox */
 * {
@@ -24,6 +27,23 @@
 
 body {
   -ms-overflow-style: none;
+  /* Dark theme overrides when body has nb-theme-gauzy-dark */
+  &.nb-theme-gauzy-dark {
+    background: var(--card-background-color) !important;
+    color: var(--card-text-color) !important;
+    .spinner {
+      background: var(--card-background-color) !important;
+      div:first-child {
+        box-shadow: 0 3px 3px 0 rgba(255, 255, 255, 0.04);
+      }
+      div:first-child:before {
+        box-shadow: 0 3px 3px 0 rgba(120, 120, 120, 0.08);
+      }
+      div:first-child:after {
+        box-shadow: 0 3px 3px 0 rgba(220, 80, 90, 0.6);
+      }
+    }
+  }
 }
 
 .cdk-global-scrollblock {
@@ -64,6 +84,10 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .cursor-pointer {
+    cursor: pointer;
   }
 
   .cdk-global-scrollblock {
@@ -117,9 +141,11 @@ body {
   }
 
   nb-card nb-list {
-    @include nb-scrollbars(nb-theme(card-scrollbar-color),
+    @include nb-scrollbars(
+      nb-theme(card-scrollbar-color),
       nb-theme(card-scrollbar-background-color),
-      nb-theme(card-scrollbar-width));
+      nb-theme(card-scrollbar-width)
+    );
   }
 
   nb-flip-card {

@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnInit, ViewChild } from '@angular/core';
 import { ITask, ITaskStatus, ITaskUpdateInput, TaskStatusEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { Angular2SmartTableComponent, Cell, Angular2SmartTableModule } from 'angular2-smart-table';
 import { combineLatest, concatMap, Observable, tap } from 'rxjs';
 import { TaskTableStore } from '../+state/task-table.store';
 import { API_PREFIX } from '../../../constants';
@@ -21,13 +21,20 @@ import { TimeTrackerService } from '../../time-tracker.service';
 import { ActionButtonStore } from '../action-button/+state/action-button.store';
 import { SearchTermQuery } from '../search/+state/search-term.query';
 import { SearchTermStore } from '../search/+state/search-term.store';
+import { NbCardModule, NbSpinnerModule } from '@nebular/theme';
+import { SearchComponent } from '../search/search.component';
+import { ActionButtonComponent } from '../action-button/action-button.component';
+import { PaginationComponent } from '../../pagination/pagination.component';
+import { NoDataMessageComponent } from '../../no-data-message/no-data-message.component';
+import { AsyncPipe } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-task-table',
-	templateUrl: './task-table.component.html',
-	styleUrls: ['./task-table.component.scss'],
-	standalone: false
+    selector: 'ngx-task-table',
+    templateUrl: './task-table.component.html',
+    styleUrls: ['./task-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, SearchComponent, ActionButtonComponent, NbSpinnerModule, Angular2SmartTableModule, PaginationComponent, NoDataMessageComponent, AsyncPipe, TranslatePipe]
 })
 export class TaskTableComponent implements OnInit, AfterViewInit {
 	private _smartTable: Angular2SmartTableComponent;
@@ -75,6 +82,7 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this.loadSmartTableSettings();
 		this.setSmartTableSource();
+		this.monitorLoadingState();
 	}
 
 	ngAfterViewInit(): void {
@@ -82,7 +90,6 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 			this.loadSmartTableSettings();
 		});
 		this.onChangedSource();
-		this.monitorLoadingState();
 	}
 
 	private monitorLoadingState(): void {

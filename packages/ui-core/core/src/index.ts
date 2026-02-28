@@ -6,6 +6,7 @@ export * from './lib/common/component-registry.types';
 export * from './lib/components';
 export * from './lib/core.module';
 export * from './lib/extension';
+export * from './lib/logger';
 export * from './lib/guards';
 export * from './lib/interceptors';
 export * from './lib/module-import-guard';

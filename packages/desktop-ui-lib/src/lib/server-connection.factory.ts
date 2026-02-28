@@ -1,8 +1,8 @@
 import { Injector } from '@angular/core';
 import { Router } from '@angular/router';
+import { GAUZY_ENV } from './constants/app.constants';
 import { ServerConnectionService } from './services/server-connection.service';
 import { Store } from './services/store.service';
-import { GAUZY_ENV } from './constants/app.constants';
 
 /**
  * Creates a factory function that checks the server connection and performs actions based on the result.
@@ -29,7 +29,9 @@ export function serverConnectionFactory(
 			// Check server connection
 			await provider.checkServerConnection(url);
 
-			console.log(`Server connection status in serverConnectionFactory for URL: ${url} is ${store.serverConnection}`);
+			console.log(
+				`Server connection status in serverConnectionFactory for URL: ${url} is ${store.serverConnection}`
+			);
 
 			// Navigate to server-down page if the connection is not successful
 			// Uncomment the following lines if needed
@@ -37,10 +39,7 @@ export function serverConnectionFactory(
 			//     router.navigate(['server-down']);
 			// }
 		} catch (err) {
-			console.error(
-				`Error checking server connection in serverConnectionFactory for URL: ${url}`,
-				err
-			);
+			console.error(`Error checking server connection in serverConnectionFactory for URL: ${url}`, err);
 		}
 	};
 }

@@ -8,6 +8,8 @@ import { SelectorElectronService } from '../../services/selector-electron.servic
 import { TaskSelectorQuery } from './+state/task-selector.query';
 import { TaskSelectorService } from './+state/task-selector.service';
 import { TaskSelectorStore } from './+state/task-selector.store';
+import { SelectComponent } from '../../components/ui/select/select.component';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
     selector: 'gauzy-task-selector',
@@ -21,7 +23,7 @@ import { TaskSelectorStore } from './+state/task-selector.store';
             multi: true
         }
     ],
-    standalone: false
+    imports: [SelectComponent, AsyncPipe]
 })
 export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> implements OnInit, OnDestroy {
 	constructor(

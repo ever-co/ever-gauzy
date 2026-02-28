@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	IPlugin,
 	IPluginSubscription,
@@ -9,7 +9,7 @@ import {
 	PluginScope,
 	PluginSubscriptionType
 } from '@gauzy/contracts';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbAlertModule, NbButtonGroupModule, NbFormFieldModule, NbInputModule, NbCheckboxModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -32,6 +32,12 @@ import { SubscriptionPlanService, SubscriptionStatusService } from '../shared';
 import { IPlanViewModel, ISubscriptionPreviewViewModel } from './models/plan-view.model';
 import { IPlanComparisonResult, PlanActionType, PlanComparisonService } from './services/plan-comparison.service';
 import { PlanFormatterService } from './services/plan-formatter.service';
+import { SubscriptionStatusBadgeComponent } from '../shared/components/subscription-status-badge/subscription-status-badge.component';
+import { PlanCardComponent } from './components/plan-card/plan-card.component';
+
+import { SubscriptionPreviewComponent } from './components/subscription-preview/subscription-preview.component';
+import { AsyncPipe, TitleCasePipe } from '@angular/common';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 
 export interface IPluginSubscriptionPlanSelectionContext {
 	plugin: IPlugin;
@@ -55,11 +61,11 @@ export interface IPluginSubscriptionPlanSelectionResult {
  */
 @UntilDestroy()
 @Component({
-	selector: 'lib-plugin-subscription-plan-selection',
-	templateUrl: './plugin-subscription-plan-selection.component.html',
-	styleUrls: ['./plugin-subscription-plan-selection.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-plugin-subscription-plan-selection',
+    templateUrl: './plugin-subscription-plan-selection.component.html',
+    styleUrls: ['./plugin-subscription-plan-selection.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, NbButtonModule, NbTooltipModule, NbAlertModule, SubscriptionStatusBadgeComponent, FormsModule, ReactiveFormsModule, PlanCardComponent, NbButtonGroupModule, NbFormFieldModule, NbInputModule, SpinnerButtonDirective, NbCheckboxModule, SubscriptionPreviewComponent, AsyncPipe, TitleCasePipe]
 })
 export class PluginSubscriptionPlanSelectionComponent implements OnInit, OnDestroy {
 	@Input() plugin: IPlugin;

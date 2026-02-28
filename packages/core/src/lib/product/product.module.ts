@@ -13,7 +13,9 @@ import { ProductTranslation } from './product-translation.entity';
 import { ProductOptionModule } from './../product-option/product-option-module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmProductRepository } from './repository/type-orm-product.repository';
+import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
 import { TypeOrmProductTranslationRepository } from './repository/type-orm-product-translation.repository';
+import { MikroOrmProductTranslationRepository } from './repository/mikro-orm-product-translation.repository';
 
 @Module({
 	imports: [
@@ -27,7 +29,7 @@ import { TypeOrmProductTranslationRepository } from './repository/type-orm-produ
 		forwardRef(() => ProductVariantModule)
 	],
 	controllers: [ProductController],
-	providers: [ProductService, TypeOrmProductRepository, TypeOrmProductTranslationRepository, ...CommandHandlers],
+	providers: [ProductService, TypeOrmProductRepository, MikroOrmProductRepository, TypeOrmProductTranslationRepository, MikroOrmProductTranslationRepository, ...CommandHandlers],
 	exports: [ProductService]
 })
 export class ProductModule {}

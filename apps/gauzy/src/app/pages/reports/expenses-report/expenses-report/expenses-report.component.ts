@@ -3,8 +3,7 @@ import { IGetExpenseInput, ITimeLogFilters, ReportGroupByFilter, ReportGroupFilt
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { pluck } from 'underscore';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, ExpensesService, Store, TimesheetFilterService } from '@gauzy/ui-core/core';
@@ -18,10 +17,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-expenses-report',
-    templateUrl: './expenses-report.component.html',
-    styleUrls: ['./expenses-report.component.scss'],
-    standalone: false
+	selector: 'ga-expenses-report',
+	templateUrl: './expenses-report.component.html',
+	styleUrls: ['./expenses-report.component.scss'],
+	standalone: false
 })
 export class ExpensesReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: ITimeLogFilters;

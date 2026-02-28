@@ -1,6 +1,6 @@
 import { OnInit, Component } from '@angular/core';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
@@ -15,10 +15,10 @@ import { DateViewComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-profit-history-selector',
-    templateUrl: './profit-history.component.html',
-    styleUrls: ['./profit-history.component.scss'],
-    standalone: false
+	selector: 'ga-profit-history-selector',
+	templateUrl: './profit-history.component.html',
+	styleUrls: ['./profit-history.component.scss'],
+	standalone: false
 })
 export class ProfitHistoryComponent extends PaginationFilterBaseComponent implements OnInit {
 	public organization: IOrganization;

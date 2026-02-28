@@ -6,6 +6,7 @@ import { OrganizationPositionController } from './organization-position.controll
 import { OrganizationPositionService } from './organization-position.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmOrganizationPositionRepository } from './repository/type-orm-organization-position.repository';
+import { MikroOrmOrganizationPositionRepository } from './repository/mikro-orm-organization-position.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmOrganizationPositionRepository } from './repository/type-orm-org
 		RolePermissionModule
 	],
 	controllers: [OrganizationPositionController],
-	providers: [OrganizationPositionService, TypeOrmOrganizationPositionRepository]
+	providers: [OrganizationPositionService, TypeOrmOrganizationPositionRepository, MikroOrmOrganizationPositionRepository]
 })
 export class OrganizationPositionModule {}

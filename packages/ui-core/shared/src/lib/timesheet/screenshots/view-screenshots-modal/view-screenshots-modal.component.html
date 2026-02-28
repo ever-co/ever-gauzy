@@ -1,218 +1,206 @@
 <button size="small" class="close-button" nbButton ghost (click)="close()" type="button">
-  <nb-icon icon="close-outline"></nb-icon>
+	<nb-icon icon="close-outline"></nb-icon>
 </button>
 <nb-card>
-  <nb-card-body class="custom-scroll">
-    @if (timeSlot) {
-      <h6>
-        {{ timeSlot?.startedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
-        {{ timeSlot?.startedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }} -
-        {{ timeSlot?.stoppedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }}
-      </h6>
-      <div class="activity mb-3">
-        <nb-progress-bar
-          class="mb-1"
-          [value]="timeSlot?.percentage"
-          [status]="progressStatus(timeSlot?.percentage)"
-          [displayValue]="true"
-          size="tiny"
-        ></nb-progress-bar>
-        <div class="activity-count">
-          {{ timeSlot?.percentage || 0 }}%
-          {{ 'TIMESHEET.SCREENSHOTS.OF' | translate }}
-          {{ timeSlot?.duration | amFromUnix | amFromUtc | amDateFormat : 'mm' }}
-          {{ 'ACTIVITY.MINUTES' | translate }}
-        </div>
-      </div>
-      @if (screenshots.length > 0) {
-        <h6>{{ 'TIMESHEET.SCREENSHOTS.SCREENSHOTS' | translate }}</h6>
-        <div class="row mb-3 justify-content-left">
-          @for (image of screenshots; track image) {
-            <div class="col-3 mb-2">
-              <div
-                class="screenshot"
-							[ngClass]="{
-								'danger-bordered': image?.isWorkRelated === false
-							}"
-                >
-                <img nb-card-image draggable="false" [src]="image?.thumbUrl" />
-                @if (image?.description) {
-                  <button
-                    class="ml-right info select-hidden"
-                    status="info"
-                    nbButton
-                    size="tiny"
-                    [nbTooltip]="image?.description"
-                    >
-                    <nb-icon icon="info-outline"></nb-icon>
-                  </button>
-                }
-                <button
-                  class="ml-auto select-hidden"
-                  status="danger"
-                  nbButton
-                  size="tiny"
-                  (click)="deleteImage(image, image?.employee)"
-                  >
-                  <nb-icon icon="trash-2-outline"></nb-icon>
-                </button>
-                <div class="text-caption caption text-center mt-1">
-                  {{ image?.recordedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
-                  {{
-                  image?.recordedAt
-                  | utcToTimezone : (timeZone$ | async)
-                  | timeFormat : (timeFormat$ | async)
-                  }}
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      }
-      @if (apps?.length > 0) {
-        <h6>{{ 'TIMESHEET.APPS' | translate }}</h6>
-        <div class="row mb-3 justify-content-start">
-          <!--  -->
-          <div class="col-12">
-            <div>
-              @for (app of apps; track app) {
-                <span class="badge">{{ app }}</span>
-              }
-            </div>
-          </div>
-        </div>
-      }
-      <h6>{{ 'TIMESHEET.SCREENSHOTS.TIME_LOG' | translate }}</h6>
-      @if (timeLogs?.length > 0) {
-        @for (timeLog of timeLogs; track timeLog) {
-          <div class="mt-3 p-3 card">
-            <div class="row" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
-              <div class="col">
-                <ngx-avatar
-                  [id]="timeSlot?.employee?.id"
-                  [employee]="timeSlot?.employee"
-                  [name]="timeSlot?.employee?.user?.name"
-                  [src]="timeSlot?.employee?.user?.imageUrl"
-								[caption]="
-									(timeLog?.startedAt
-										| utcToTimezone : (timeZone$ | async)
-										| timeFormat : (timeFormat$ | async) : true) +
-									' - ' +
-									(!timeLog?.isRunning
-										? (timeLog?.stoppedAt
-										  | utcToTimezone : (timeZone$ | async)
-										  | timeFormat : (timeFormat$ | async) : true)
-										: ('TIMESHEET.TILL_NOW' | translate)) +
-									' (' +
-									(timeLog?.duration | durationFormat) +
-									')'
-								"
-                ></ngx-avatar>
-              </div>
-              <div class="col-auto">
-                <nb-badge
-                  [status]="TimeLogsLabel[timeLog?.logType].status"
-                  [text]="TimeLogsLabel[timeLog?.logType].text"
-                ></nb-badge>
-              </div>
-            </div>
-            <div class="mt-3 row align-items-center">
-              <div class="col">
-                <div class="mb-2">
-                  <div class="subtitle">{{ 'TIMESHEET.SOURCE' | translate }}:</div>
-                  <div class="d-flex">
-                    <div class="mr-1">
-                      <nb-badge
-                        class="medium"
-                        status="primary"
-                        [text]="timeLog?.source | replace : '_' : ' ' | titlecase"
-                      ></nb-badge>
-                    </div>
-                    @if (timeLog?.version) {
-                      <div>
-                        <nb-badge [text]="timeLog?.version" status="info"></nb-badge>
-                      </div>
-                    }
-                  </div>
-                </div>
-                <div class="mb-2">
-                  <div class="subtitle">{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }}:</div>
-                  <ngx-contact-links
-									[value]="
-										timeLog?.organizationContact
-											? timeLog?.organizationContact
-											: {
-													name: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
-											  }
-									"
-                ></ngx-contact-links>
-              </div>
-              <div class="mb-2">
-                <div class="subtitle">{{ 'TIMESHEET.PROJECT' | translate }}:</div>
-                {{ timeLog?.project ? '' : ('TIMESHEET.NO_PROJECT' | translate) }}
-                @if (timeLog?.project) {
-                  <ngx-project [rowData]="timeLog"></ngx-project>
-                }
-              </div>
-              <div class="mb-2">
-                <div class="subtitle">{{ 'TIMESHEET.TODO' | translate }}:</div>
-                <div>
-                  {{ timeLog?.task ? timeLog?.task?.title : ('TIMESHEET.NO_TODO' | translate) }}
-                </div>
-              </div>
-              @if (timeLog?.description) {
-                <div class="mb-2">
-                  <div class="subtitle">{{ 'TIMESHEET.NOTES' | translate }}:</div>
-                  <div>
-                    {{ timeLog?.description }}
-                  </div>
-                </div>
-              }
-              @if (timeLog?.reason) {
-                <div class="mb-2">
-                  <div class="subtitle">{{ 'TIMESHEET.REASON' | translate }}:</div>
-                  <div>
-                    {{ timeLog?.reason }}
-                  </div>
-                </div>
-              }
-            </div>
-            <div class="col-auto">
-              <button
-                nbButton
-                status="basic"
-                size="small"
-                class="action secondary"
-                (click)="viewTimeLog(timeLog)"
-                >
-                <nb-icon icon="eye-outline"></nb-icon>
-                {{ 'TIMESHEET.VIEW' | translate }}
-              </button>
-              <button
-                nbButton
-                status="basic"
-                class="action danger"
-                size="small"
-                (click)="$event.stopPropagation()"
-                ngxConfirmDialog
-                [message]="'TIMESHEET.DELETE_CONFIRM' | translate"
-                (confirm)="deleteTimeLog(timeLog, timeSlot?.employee)"
-                [disabled]="timeLog.isRunning"
-                >
-                <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-              </button>
-            </div>
-          </div>
-          <div class="mt-3">
-            @if (timeLog?.isRunning) {
-              <nb-alert status="warning" [size]="'tiny'">
-                {{ 'TIMESHEET.RUNNING_TIMER_WARNING' | translate }}
-              </nb-alert>
-            }
-          </div>
-        </div>
-      }
-    }
-  }
-</nb-card-body>
+	<nb-card-body class="custom-scroll">
+		@if (timeSlot) {
+		<h6>
+			{{ timeSlot?.startedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
+			{{ timeSlot?.startedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }} -
+			{{ timeSlot?.stoppedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }}
+		</h6>
+		<div class="activity mb-3">
+			<nb-progress-bar
+				class="mb-1"
+				[value]="timeSlot?.percentage"
+				[status]="progressStatus(timeSlot?.percentage)"
+				[displayValue]="true"
+				size="tiny"
+			></nb-progress-bar>
+			<div class="activity-count">
+				{{ timeSlot?.percentage || 0 }}%
+				{{ 'TIMESHEET.SCREENSHOTS.OF' | translate }}
+				{{ timeSlot?.duration | amFromUnix | amFromUtc | amDateFormat : 'mm' }}
+				{{ 'ACTIVITY.MINUTES' | translate }}
+			</div>
+		</div>
+		@if (screenshots.length > 0) {
+		<h6>{{ 'TIMESHEET.SCREENSHOTS.SCREENSHOTS' | translate }}</h6>
+		<div class="row mb-3 justify-content-left">
+			@for (image of screenshots; track image) {
+			<div class="col-3 mb-2">
+				<div class="screenshot" [class.danger-bordered]="image?.isWorkRelated === false">
+					<img nb-card-image draggable="false" [src]="image?.thumbUrl" />
+					@if (image?.description) {
+					<button
+						class="ml-right info select-hidden"
+						status="info"
+						nbButton
+						size="tiny"
+						[nbTooltip]="image?.description"
+					>
+						<nb-icon icon="info-outline"></nb-icon>
+					</button>
+					}
+					<button
+						class="ml-auto select-hidden"
+						status="danger"
+						nbButton
+						size="tiny"
+						(click)="deleteImage(image, image?.employee)"
+					>
+						<nb-icon icon="trash-2-outline"></nb-icon>
+					</button>
+					<div class="text-caption caption text-center mt-1">
+						{{ image?.recordedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
+						{{
+							image?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async)
+						}}
+					</div>
+				</div>
+			</div>
+			}
+		</div>
+		} @if (apps?.length > 0) {
+		<h6>{{ 'TIMESHEET.APPS' | translate }}</h6>
+		<div class="row mb-3 justify-content-start">
+			<!--  -->
+			<div class="col-12">
+				<div>
+					@for (app of apps; track app) {
+					<span class="badge">{{ app }}</span>
+					}
+				</div>
+			</div>
+		</div>
+		}
+		<h6>{{ 'TIMESHEET.SCREENSHOTS.TIME_LOG' | translate }}</h6>
+		@if (timeLogs?.length > 0) { @for (timeLog of timeLogs; track timeLog) {
+		<div class="mt-3 p-3 card">
+			<div class="row" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
+				<div class="col">
+					<ngx-avatar
+						[id]="timeSlot?.employee?.id"
+						[employee]="timeSlot?.employee"
+						[name]="timeSlot?.employee?.user?.name"
+						[src]="timeSlot?.employee?.user?.imageUrl"
+						[caption]="
+							(timeLog?.startedAt
+								| utcToTimezone : (timeZone$ | async)
+								| timeFormat : (timeFormat$ | async) : true) +
+							' - ' +
+							(!timeLog?.isRunning
+								? (timeLog?.stoppedAt
+								  | utcToTimezone : (timeZone$ | async)
+								  | timeFormat : (timeFormat$ | async) : true)
+								: ('TIMESHEET.TILL_NOW' | translate)) +
+							' (' +
+							(timeLog?.duration | durationFormat) +
+							')'
+						"
+					></ngx-avatar>
+				</div>
+				<div class="col-auto">
+					<nb-badge
+						[status]="TimeLogsLabel[timeLog?.logType].status"
+						[text]="TimeLogsLabel[timeLog?.logType].text"
+					></nb-badge>
+				</div>
+			</div>
+			<div class="mt-3 row align-items-center">
+				<div class="col">
+					<div class="mb-2">
+						<div class="subtitle">{{ 'TIMESHEET.SOURCE' | translate }}:</div>
+						<div class="d-flex">
+							<div class="mr-1">
+								<nb-badge
+									class="medium"
+									status="primary"
+									[text]="timeLog?.source | replace : '_' : ' ' | titlecase"
+								></nb-badge>
+							</div>
+							@if (timeLog?.version) {
+							<div>
+								<nb-badge [text]="timeLog?.version" status="info"></nb-badge>
+							</div>
+							}
+						</div>
+					</div>
+					<div class="mb-2">
+						<div class="subtitle">{{ 'TIMESHEET.ORGANIZATION_CONTACT' | translate }}:</div>
+						<ngx-contact-links
+							[value]="
+								timeLog?.organizationContact
+									? timeLog?.organizationContact
+									: {
+											name: ('TIMESHEET.NO_ORGANIZATION_CONTACT' | translate)
+									  }
+							"
+						></ngx-contact-links>
+					</div>
+					<div class="mb-2">
+						<div class="subtitle">{{ 'TIMESHEET.PROJECT' | translate }}:</div>
+						{{ timeLog?.project ? '' : ('TIMESHEET.NO_PROJECT' | translate) }}
+						@if (timeLog?.project) {
+						<ngx-project [rowData]="timeLog"></ngx-project>
+						}
+					</div>
+					<div class="mb-2">
+						<div class="subtitle">{{ 'TIMESHEET.TODO' | translate }}:</div>
+						<div>
+							{{ timeLog?.task ? timeLog?.task?.title : ('TIMESHEET.NO_TODO' | translate) }}
+						</div>
+					</div>
+					@if (timeLog?.description) {
+					<div class="mb-2">
+						<div class="subtitle">{{ 'TIMESHEET.NOTES' | translate }}:</div>
+						<div>
+							{{ timeLog?.description }}
+						</div>
+					</div>
+					} @if (timeLog?.reason) {
+					<div class="mb-2">
+						<div class="subtitle">{{ 'TIMESHEET.REASON' | translate }}:</div>
+						<div>
+							{{ timeLog?.reason }}
+						</div>
+					</div>
+					}
+				</div>
+				<div class="col-auto">
+					<button
+						nbButton
+						status="basic"
+						size="small"
+						class="action secondary"
+						(click)="viewTimeLog(timeLog)"
+					>
+						<nb-icon icon="eye-outline"></nb-icon>
+						{{ 'TIMESHEET.VIEW' | translate }}
+					</button>
+					<button
+						nbButton
+						status="basic"
+						class="action danger"
+						size="small"
+						(click)="$event.stopPropagation()"
+						ngxConfirmDialog
+						[message]="'TIMESHEET.DELETE_CONFIRM' | translate"
+						(confirm)="deleteTimeLog(timeLog, timeSlot?.employee)"
+						[disabled]="timeLog.isRunning"
+					>
+						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+					</button>
+				</div>
+			</div>
+			<div class="mt-3">
+				@if (timeLog?.isRunning) {
+				<nb-alert status="warning" [size]="'tiny'">
+					{{ 'TIMESHEET.RUNNING_TIMER_WARNING' | translate }}
+				</nb-alert>
+				}
+			</div>
+		</div>
+		} } }
+	</nb-card-body>
 </nb-card>

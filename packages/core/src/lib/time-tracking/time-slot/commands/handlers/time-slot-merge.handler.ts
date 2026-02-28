@@ -6,12 +6,13 @@ import { DateRange, IActivity, ID, IScreenshot, ITimeLog, ITimeSlot } from '@gau
 import { isNotEmpty } from '@gauzy/utils';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
-import { getDateRangeFormat } from './../../../../core/utils';
+import { getDateRangeFormat, MultiORM, MultiORMEnum, getORMType, wrapSerialize } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../time-log/commands/update-employee-total-worked-hours.command';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from '../../repository/mikro-orm-time-slot.repository';
 
 interface IAggregatedTimeSlot {
 	duration: number;
@@ -25,8 +26,11 @@ interface IAggregatedTimeSlot {
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeCommand> {
+	protected ormType: MultiORM = getORMType();
+
 	constructor(
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		private readonly commandBus: CommandBus
 	) {}
 
@@ -166,7 +170,14 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 
 		console.log('Newly Created Time Slot with Aggregated Data:', newTimeSlot);
 		// Save the new time slot to the database
-		return await this.typeOrmTimeSlotRepository.save(newTimeSlot);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmTimeSlotRepository.persistAndFlush(newTimeSlot);
+				return newTimeSlot;
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmTimeSlotRepository.save(newTimeSlot);
+		}
 	}
 
 	/**
@@ -177,20 +188,33 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	 */
 	private async cleanUpOldTimeSlots(slots: ITimeSlot[], forceDelete: boolean) {
 		try {
-			const idsToDelete = pluck(slots, 'id');
+			const idsToDelete = pluck(slots, 'id') as string[];
 			// Keep the most recent time slot by removing it from deletion
 			idsToDelete.splice(0, 1);
 
 			console.log('---------------TimeSlots Ids Will Be Deleted---------------', idsToDelete);
 
 			if (isNotEmpty(idsToDelete)) {
-				if (forceDelete) {
-					// Hard delete (permanent deletion)
-					return await this.typeOrmTimeSlotRepository.delete({ id: In(idsToDelete) });
-				}
+				switch (this.ormType) {
+					case MultiORMEnum.MikroORM: {
+						if (forceDelete) {
+							return await this.mikroOrmTimeSlotRepository.nativeDelete({ id: { $in: idsToDelete } });
+						}
+						return await this.mikroOrmTimeSlotRepository.nativeUpdate({ id: { $in: idsToDelete } }, {
+							deletedAt: new Date()
+						} as any);
+					}
+					case MultiORMEnum.TypeORM:
+					default: {
+						if (forceDelete) {
+							// Hard delete (permanent deletion)
+							return await this.typeOrmTimeSlotRepository.delete({ id: In(idsToDelete) });
+						}
 
-				// Soft delete (mark records as deleted)
-				return await this.typeOrmTimeSlotRepository.softDelete({ id: In(idsToDelete) });
+						// Soft delete (mark records as deleted)
+						return await this.typeOrmTimeSlotRepository.softDelete({ id: In(idsToDelete) });
+					}
+				}
 			}
 		} catch (error) {
 			console.error('Error while cleaning up old time slots:', error);
@@ -314,25 +338,48 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	 * @returns A promise that resolves to an array of TimeSlot instances.
 	 */
 	private async getTimeSlots({ organizationId, employeeId, tenantId, startedAt, stoppedAt }): Promise<TimeSlot[]> {
-		// Create a query builder for the TimeSlot entity
-		const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
-		query
-			.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
-			.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
-			.leftJoinAndSelect(`${query.alias}.activities`, 'activities');
-		query
-			.where(p(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`), {
-				startedAt,
-				stoppedAt
-			})
-			.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId })
-			.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
-			.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
-			.addOrderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const items = await this.mikroOrmTimeSlotRepository.find(
+					{
+						tenantId,
+						organizationId,
+						employeeId,
+						startedAt: { $gte: moment.utc(startedAt).toDate(), $lt: moment.utc(stoppedAt).toDate() }
+					},
+					{
+						populate: ['timeLogs', 'screenshots', 'activities'],
+						orderBy: { createdAt: 'ASC' } as any
+					}
+				);
+				return items.map((item) => wrapSerialize(item)) as TimeSlot[];
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the TimeSlot entity
+				const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
+				query
+					.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
+					.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
+					.leftJoinAndSelect(`${query.alias}.activities`, 'activities');
+				query
+					.where(
+						p(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`),
+						{
+							startedAt,
+							stoppedAt
+						}
+					)
+					.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId })
+					.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
+					.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
+					.addOrderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
 
-		console.log('GET Time Slots Query:', query.getQueryAndParameters());
-		// Execute the query and return the results
-		return await query.getMany();
+				console.log('GET Time Slots Query:', query.getQueryAndParameters());
+				// Execute the query and return the results
+				return await query.getMany();
+			}
+		}
 	}
 
 	/**

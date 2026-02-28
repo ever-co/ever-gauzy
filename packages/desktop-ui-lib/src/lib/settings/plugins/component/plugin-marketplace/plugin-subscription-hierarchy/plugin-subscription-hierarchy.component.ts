@@ -1,6 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CurrenciesEnum, IPluginSubscription, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { SubscriptionStatusService } from '../shared';
+import { NbCardModule, NbIconModule, NbBadgeModule } from '@nebular/theme';
+import { SubscriptionStatusBadgeComponent } from '../shared/components/subscription-status-badge/subscription-status-badge.component';
+import { TitleCasePipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 interface SubscriptionNode {
 	subscription: IPluginSubscription;
@@ -10,10 +14,10 @@ interface SubscriptionNode {
 }
 
 @Component({
-	selector: 'gauzy-plugin-subscription-hierarchy',
-	templateUrl: './plugin-subscription-hierarchy.component.html',
-	styleUrls: ['./plugin-subscription-hierarchy.component.scss'],
-	standalone: false
+    selector: 'gauzy-plugin-subscription-hierarchy',
+    templateUrl: './plugin-subscription-hierarchy.component.html',
+    styleUrls: ['./plugin-subscription-hierarchy.component.scss'],
+    imports: [NbCardModule, SubscriptionStatusBadgeComponent, NbIconModule, NbBadgeModule, TitleCasePipe, TranslatePipe]
 })
 export class PluginSubscriptionHierarchyComponent implements OnInit {
 	@Input() subscriptions: IPluginSubscription[] = [];

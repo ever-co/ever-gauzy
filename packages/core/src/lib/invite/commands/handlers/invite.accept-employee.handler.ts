@@ -202,90 +202,98 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	 * @param employee
 	 */
 	public async updateEmployeeMemberships(invite: IInvite, employee: IEmployee): Promise<void> {
-		//Update organization Contacts members
+		// Update organization Contacts members
 		if (invite.organizationContacts) {
-			invite.organizationContacts.forEach(async (organizationContact: IOrganizationContact) => {
-				let members = organizationContact.members || [];
-				members = [...members, employee];
-				/**
-				 * Creates a new entity instance and copies all entity properties from this object into a new entity.
-				 */
-				const create = this.typeOrmOrganizationContactRepository.create({
-					...organizationContact,
-					members
-				});
-				//This will call save() on the project (and not really create a new organization contact)
-				await this.typeOrmOrganizationContactRepository.save(create);
-			});
+			await Promise.all(
+				invite.organizationContacts.map(async (organizationContact: IOrganizationContact) => {
+					let members = organizationContact.members || [];
+					members = [...members, employee];
+					/**
+					 * Creates a new entity instance and copies all entity properties from this object into a new entity.
+					 */
+					const create = this.typeOrmOrganizationContactRepository.create({
+						...organizationContact,
+						members
+					});
+					// This will call save() on the project (and not really create a new organization contact)
+					await this.typeOrmOrganizationContactRepository.save(create);
+				})
+			);
 		}
 
-		//Update department members
+		// Update department members
 		if (invite.departments) {
-			invite.departments.forEach(async (department: IOrganizationDepartment) => {
-				let members = department.members || [];
-				members = [...members, employee];
-				/**
-				 * Creates a new entity instance and copies all entity properties from this object into a new entity.
-				 */
-				const create = this.typeOrmOrganizationDepartmentRepository.create({
-					...department,
-					members
-				});
-				//This will call save() on the department (and not really create a new organization department)
-				await this.typeOrmOrganizationDepartmentRepository.save(create);
-			});
+			await Promise.all(
+				invite.departments.map(async (department: IOrganizationDepartment) => {
+					let members = department.members || [];
+					members = [...members, employee];
+					/**
+					 * Creates a new entity instance and copies all entity properties from this object into a new entity.
+					 */
+					const create = this.typeOrmOrganizationDepartmentRepository.create({
+						...department,
+						members
+					});
+					// This will call save() on the department (and not really create a new organization department)
+					await this.typeOrmOrganizationDepartmentRepository.save(create);
+				})
+			);
 		}
 
-		//Update team members
+		// Update team members
 		if (invite.teams) {
-			invite.teams.forEach(async (team: IOrganizationTeam) => {
-				let members = team.members || [];
+			await Promise.all(
+				invite.teams.map(async (team: IOrganizationTeam) => {
+					let members = team.members || [];
 
-				// Create new team member
-				const member = new OrganizationTeamEmployee();
-				member.organizationId = employee.organizationId;
-				member.tenantId = employee.tenantId;
-				member.employee = employee;
+					// Create new team member
+					const member = new OrganizationTeamEmployee();
+					member.organizationId = employee.organizationId;
+					member.tenantId = employee.tenantId;
+					member.employee = employee;
 
-				// Add member to team
-				members = [...members, member];
+					// Add member to team
+					members = [...members, member];
 
-				/**
-				 * Creates a new entity instance and copies all entity properties from this object into a new entity.
-				 */
-				const create = this.typeOrmOrganizationTeamRepository.create({
-					...team,
-					members
-				});
-				//This will call save() on the department (and not really create a new organization department)
-				await this.typeOrmOrganizationTeamRepository.save(create);
-			});
+					/**
+					 * Creates a new entity instance and copies all entity properties from this object into a new entity.
+					 */
+					const create = this.typeOrmOrganizationTeamRepository.create({
+						...team,
+						members
+					});
+					// This will call save() on the department (and not really create a new organization department)
+					await this.typeOrmOrganizationTeamRepository.save(create);
+				})
+			);
 		}
 
-		//Update project members
+		// Update project members
 		if (invite.projects) {
-			invite.projects.forEach(async (project: IOrganizationProject) => {
-				// Get existing project members
-				let members = project.members || [];
+			await Promise.all(
+				invite.projects.map(async (project: IOrganizationProject) => {
+					// Get existing project members
+					let members = project.members || [];
 
-				// Create new project member
-				const member = new OrganizationProjectEmployee();
-				member.employee = employee;
-				member.organizationId = employee.organizationId;
-				member.tenantId = employee.tenantId;
+					// Create new project member
+					const member = new OrganizationProjectEmployee();
+					member.employee = employee;
+					member.organizationId = employee.organizationId;
+					member.tenantId = employee.tenantId;
 
-				// Add member to project
-				members = [...members, member];
+					// Add member to project
+					members = [...members, member];
 
-				// Create new project
-				const create = this.typeOrmOrganizationProjectRepository.create({
-					...project,
-					members
-				});
+					// Create new project
+					const create = this.typeOrmOrganizationProjectRepository.create({
+						...project,
+						members
+					});
 
-				//This will call save() on the project (and not really create a new organization project)
-				await this.typeOrmOrganizationProjectRepository.save(create);
-			});
+					// This will call save() on the project (and not really create a new organization project)
+					await this.typeOrmOrganizationProjectRepository.save(create);
+				})
+			);
 		}
 	}
 }

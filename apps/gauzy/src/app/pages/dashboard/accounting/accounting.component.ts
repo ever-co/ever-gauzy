@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, debounceTime, firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { pluck } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';

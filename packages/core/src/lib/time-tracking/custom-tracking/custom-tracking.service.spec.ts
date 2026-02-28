@@ -8,11 +8,9 @@ import { TimeSlotService } from '../time-slot/time-slot.service';
 import { TimeLogService } from '../time-log/time-log.service';
 import { ProcessTrackingDataCommand } from './commands/process-tracking-data.command';
 import { IProcessTrackingDataInput } from '@gauzy/contracts';
-
 describe('CustomTrackingService', () => {
 	let service: CustomTrackingService;
 	let commandBus: CommandBus;
-
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -52,15 +50,12 @@ describe('CustomTrackingService', () => {
 				}
 			]
 		}).compile();
-
 		service = module.get<CustomTrackingService>(CustomTrackingService);
 		commandBus = module.get<CommandBus>(CommandBus);
 	});
-
 	it('should be defined', () => {
 		expect(service).toBeDefined();
 	});
-
 	describe('submitTrackingData', () => {
 		it('should execute ProcessTrackingDataCommand', async () => {
 			const dto = {
@@ -71,17 +66,13 @@ describe('CustomTrackingService', () => {
 				...dto,
 				startTime: new Date(dto.startTime)
 			};
-
 			const expectedResult = {
 				success: true,
 				sessionId: 'test-session',
 				timeSlotId: 'test-timeslot'
 			};
-
 			jest.spyOn(commandBus, 'execute').mockResolvedValue(expectedResult);
-
 			const result = await service.submitTrackingData(input);
-
 			expect(commandBus.execute).toHaveBeenCalledWith(expect.any(ProcessTrackingDataCommand));
 			expect(result).toEqual(expectedResult);
 		});

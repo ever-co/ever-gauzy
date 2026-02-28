@@ -1,77 +1,69 @@
 @if (source && (source$ | async).length > 0) {
-  <div
-    class="card-layout grid-scroll-container"
-    infinite-scroll
-    [scrollWindow]="false"
-    (scrolled)="onScroll()"
-    #grid
-    >
-    @for (item of source$ | async; track item) {
-      <nb-card class="card-item">
-        <nb-card-body
-          [ngClass]="selected.isSelected && selected.data.id === item.id ? 'card-body active' : 'card-body'"
-          (click)="selectedItem(item)"
-          >
-          @for (key of getKeys(); track key) {
-            <div class="info-line">
-              <div
-                class="info-meta"
-					[ngClass]="{
-						'image-logo': settings.columns[key].title === 'Image',
-						active: selected.isSelected && selected.data.id === item.id
-					}"
-                >
-                {{ settings.columns[key].title }}
-              </div>
-              <div
-                class="info-value"
-					[ngClass]="{
-						'image-logo': settings.columns[key].title === 'Image',
-						active: selected.isSelected && selected.data.id === item.id
-					}"
-                >
-                @switch (settings.columns[key].type) {
-                  @case ('html') {
-                    <div [innerHTML]="item[key]"></div>
-                  }
-                  @case ('date') {
-                    <div>{{ item[key] | date }}</div>
-                  }
-                  @case ('function') {
-                    <div>{{ item[key].name }}</div>
-                  }
-                  @case ('custom') {
-                    <div>
-                      <ga-custom-component
-                        #component
-                        [renderComponent]="settings.columns[key].renderComponent"
-                        [value]="item[key]"
-                        [rowData]="item"
-                        class="custom"
-                        (click)="selectCustomViewComponent(component)"
-                      ></ga-custom-component>
-                    </div>
-                  }
-                  @default {
-                    <div>{{ getValue(item, key) }}</div>
-                  }
-                }
-              </div>
-            </div>
-          }
-        </nb-card-body>
-      </nb-card>
-    }
-    <div class="show-more-button">
-      @if (showMore) {
-        <button nbButton (click)="onScroll()" status="basic" size="small" class="d-flex">
-          <nb-icon icon="arrowhead-down-outline"></nb-icon>{{ 'BUTTONS.SHOW_MORE' | translate }}
-        </button>
-      }
-    </div>
-  </div>
+	<div class="card-layout grid-scroll-container" infinite-scroll [scrollWindow]="false" (scrolled)="onScroll()" #grid>
+		@for (item of source$ | async; track item) {
+			<nb-card class="card-item">
+				<nb-card-body
+					[class.card-body]="selected.isSelected && selected.data.id === item.id"
+					[class.active]="selected.isSelected && selected.data.id === item.id"
+					[class.card-body]="!(selected.isSelected && selected.data.id === item.id)"
+					(click)="selectedItem(item)"
+				>
+					@for (key of getKeys(); track key) {
+						<div class="info-line">
+							<div
+								class="info-meta"
+								[class.image-logo]="settings.columns[key].title === 'Image'"
+								[class.active]="selected.isSelected && selected.data.id === item.id"
+							>
+								{{ settings.columns[key].title }}
+							</div>
+							<div
+								class="info-value"
+								[class.image-logo]="settings.columns[key].title === 'Image'"
+								[class.active]="selected.isSelected && selected.data.id === item.id"
+							>
+								@switch (settings.columns[key].type) {
+									@case ('html') {
+										<div [innerHTML]="item[key]"></div>
+									}
+									@case ('date') {
+										<div>{{ item[key] | date }}</div>
+									}
+									@case ('function') {
+										<div>{{ item[key].name }}</div>
+									}
+									@case ('custom') {
+										<div>
+											<ga-custom-component
+												#component
+												[renderComponent]="settings.columns[key].renderComponent"
+												[value]="item[key]"
+												[rowData]="item"
+												class="custom"
+												(click)="selectCustomViewComponent(component)"
+											></ga-custom-component>
+										</div>
+									}
+									@default {
+										<div>{{ getValue(item, key) }}</div>
+									}
+								}
+							</div>
+						</div>
+					}
+				</nb-card-body>
+			</nb-card>
+		}
+		<div class="show-more-button">
+			@if (showMore) {
+				<button nbButton (click)="onScroll()" status="basic" size="small" class="d-flex">
+					<nb-icon icon="arrowhead-down-outline"></nb-icon>{{ 'BUTTONS.SHOW_MORE' | translate }}
+				</button>
+			}
+		</div>
+	</div>
 } @else {
-  <div class="no-data">
-    <ngx-no-data-message [message]="getNoDataMessage()"></ngx-no-data-message>
-  </div>
+	<div class="no-data">
+		<ngx-no-data-message [message]="getNoDataMessage()"></ngx-no-data-message>
+	</div>
 }

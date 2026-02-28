@@ -26,7 +26,10 @@ export class ProjectManagerOrPermissionGuard extends PermissionGuard implements 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		// Extract request and projectId from params
 		const request = super.getRequest(context);
-		const projectId = request.params?.id;
+		const projectIdParam = request.params?.id;
+
+		// Handle case where projectId could be string or string[]
+		const projectId = Array.isArray(projectIdParam) ? projectIdParam[0] : projectIdParam;
 
 		// Get employeeId from RequestContext
 		const employeeId = RequestContext.currentEmployeeId();

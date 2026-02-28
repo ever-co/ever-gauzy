@@ -4,8 +4,8 @@ import { IPluginMetadata, IPluginMetadataFindOne } from './plugin-metadata.inter
 
 export interface IPluginManager {
 	loadPlugins(): Promise<void>;
-	initializePlugins(): void;
-	disposePlugins(): void;
+	initializePlugins(): Promise<void>;
+	disposePlugins(): Promise<void>;
 	downloadPlugin(config: any): Promise<IPluginMetadata>;
 	activatePlugin(name: string): Promise<void>;
 	deactivatePlugin(name: string): Promise<void>;

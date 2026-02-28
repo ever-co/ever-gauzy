@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { environment } from '@gauzy/ui-config';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { map } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { IAppConfig } from '@gauzy/contracts';
 import { AppService } from '@gauzy/ui-core/core';
 
@@ -32,13 +32,9 @@ export interface ISocialLink {
 	standalone: false
 })
 export class SocialLinksComponent implements OnInit {
-	/** */
 	public socialLinks$: Observable<ISocialLink[]>; // Observable for an array of social links
 	public configs: IAppConfig;
-
 	private readonly _appService = inject(AppService);
-
-	constructor() {}
 
 	/**
 	 * Lifecycle hook called after Angular has initialized all data-bound properties of a directive.

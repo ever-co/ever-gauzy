@@ -1,12 +1,10 @@
-import { environment } from './environments/environment';
-Object.assign(process.env, environment);
 import { logger as log } from '@gauzy/desktop-core';
-import { BrowserWindow, shell, app, ipcMain } from 'electron';
+import { LocalStore, setupAkitaStorageHandler } from '@gauzy/desktop-lib';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
+import { environment } from './environments/environment';
 import { InitApplication } from './main/init';
-import {
-	LocalStore,
-} from '@gauzy/desktop-lib';
+Object.assign(process.env, environment);
 
 let popupWin: BrowserWindow | null = null;
 
@@ -26,6 +24,8 @@ if (process.platform === 'win32') {
 	app.setAppUserModelId(process.env.APP_ID);
 }
 
+// Setup storage handler for Akita state management
+setupAkitaStorageHandler();
 // init application
 InitApplication();
 

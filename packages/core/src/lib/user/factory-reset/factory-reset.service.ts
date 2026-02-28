@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { filter, map, some } from 'underscore';
 import { ConfigService } from '@gauzy/config';
+import { MultiORMEnum, getORMType } from '../../core/utils';
 import {
 	Activity,
 	AppointmentEmployee,
@@ -270,6 +271,13 @@ import { TypeOrmUserRepository } from '../../user/repository/type-orm-user.repos
 export class FactoryResetService {
 	repositories: Repository<any>[];
 
+	/**
+	 * Get the type of the Object-Relational Mapping (ORM) used in the application.
+	 */
+	private get ormType(): MultiORMEnum {
+		return getORMType() as MultiORMEnum;
+	}
+
 	constructor(
 		@InjectRepository(Activity)
 		private typeOrmActivityRepository: TypeOrmActivityRepository,
@@ -524,7 +532,7 @@ export class FactoryResetService {
 		@InjectRepository(Organization)
 		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
 
-		mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
+		private mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
 
 		@InjectRepository(OrganizationContact)
 		private typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
@@ -689,12 +697,12 @@ export class FactoryResetService {
 		@InjectRepository(User)
 		private typeOrmUserRepository: TypeOrmUserRepository,
 
-		mikroOrmUserRepository: MikroOrmUserRepository,
+		private mikroOrmUserRepository: MikroOrmUserRepository,
 
 		@InjectRepository(UserOrganization)
 		private typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 
-		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
+		private mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 
 		private configService: ConfigService
 	) {}
@@ -710,30 +718,57 @@ export class FactoryResetService {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const user = await this.typeOrmUserRepository.findOneBy({
-			id: userId,
-			tenantId
-		});
+		let user;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				user = await this.mikroOrmUserRepository.findOne({ id: userId, tenantId } as any);
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				user = await this.typeOrmUserRepository.findOneBy({ id: userId, tenantId });
+				break;
+		}
 		user.thirdPartyId = null;
 		user.preferredLanguage = null;
 		user.preferredComponentLayout = null;
-		await this.typeOrmUserRepository.save(user);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmUserRepository.getEntityManager();
+				await em.persistAndFlush(user);
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmUserRepository.save(user);
+				break;
+		}
 
-		const oldOrganization: any = await this.typeOrmUserOrganizationRepository.findOne({
-			order: {
-				createdAt: 'ASC'
-			},
-			select: ['organizationId'],
-			where: {
-				userId: userId
-			}
-		});
-		const organizations: any = await this.typeOrmUserOrganizationRepository.find({
-			select: ['organizationId'],
-			where: {
-				userId: userId
-			}
-		});
+		let oldOrganization: any;
+		let organizations: any;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				oldOrganization = await this.mikroOrmUserOrganizationRepository.findOne(
+					{ userId } as any,
+					{ orderBy: { createdAt: 'ASC' as any }, fields: ['organizationId'] }
+				);
+				organizations = await this.mikroOrmUserOrganizationRepository.find(
+					{ userId } as any,
+					{ fields: ['organizationId'] }
+				);
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				oldOrganization = await this.typeOrmUserOrganizationRepository.findOne({
+					order: { createdAt: 'ASC' },
+					select: ['organizationId'],
+					where: { userId: userId }
+				});
+				organizations = await this.typeOrmUserOrganizationRepository.find({
+					select: ['organizationId'],
+					where: { userId: userId }
+				});
+				break;
+		}
 
 		const allOrganizationsIds = map(organizations, (org) => {
 			return org.organizationId;
@@ -749,20 +784,47 @@ export class FactoryResetService {
 
 		await this.deleteSpecificTables(findInput);
 		if (deleteOrganizationIds?.length > 0) {
-			await this.typeOrmUserOrganizationRepository.delete({
-				userId: userId,
-				organizationId: In(deleteOrganizationIds),
-				tenantId: user.tenantId
-			});
-			await this.typeOrmOrganizationRepository.delete({
-				id: In(deleteOrganizationIds),
-				tenantId: user.tenantId
-			});
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					await this.mikroOrmUserOrganizationRepository.nativeDelete({
+						userId,
+						organizationId: { $in: deleteOrganizationIds },
+						tenantId: user.tenantId
+					} as any);
+					await this.mikroOrmOrganizationRepository.nativeDelete({
+						id: { $in: deleteOrganizationIds },
+						tenantId: user.tenantId
+					} as any);
+					break;
+				case MultiORMEnum.TypeORM:
+				default:
+					await this.typeOrmUserOrganizationRepository.delete({
+						userId: userId,
+						organizationId: In(deleteOrganizationIds),
+						tenantId: user.tenantId
+					});
+					await this.typeOrmOrganizationRepository.delete({
+						id: In(deleteOrganizationIds),
+						tenantId: user.tenantId
+					});
+					break;
+			}
 		}
 
-		const firstOrganization = await this.typeOrmOrganizationRepository.findOneBy({
-			id: oldOrganization.organizationId
-		});
+		let firstOrganization;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				firstOrganization = await this.mikroOrmOrganizationRepository.findOne({
+					id: oldOrganization.organizationId
+				} as any);
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				firstOrganization = await this.typeOrmOrganizationRepository.findOneBy({
+					id: oldOrganization.organizationId
+				});
+				break;
+		}
 
 		return firstOrganization;
 	}

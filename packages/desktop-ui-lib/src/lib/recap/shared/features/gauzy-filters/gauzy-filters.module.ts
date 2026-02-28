@@ -9,20 +9,20 @@ import { PipeModule } from './../../../../time-tracker/pipes/pipe.module';
 import { GauzyFiltersComponent } from './gauzy-filters.component';
 
 @NgModule({
-	declarations: [GauzyFiltersComponent],
-	exports: [GauzyFiltersComponent],
-	imports: [
-		CommonModule,
-		FormsModule,
-		NbButtonModule,
-		NbCardModule,
-		NbIconModule,
-		NbPopoverModule,
-		NbSelectModule,
-		NgxSliderModule,
-		TranslateModule,
-		PipeModule
-	],
-	providers: [TimesheetFilterService]
+    exports: [GauzyFiltersComponent],
+    imports: [
+        CommonModule,
+        FormsModule,
+        NbButtonModule,
+        NbCardModule,
+        NbIconModule,
+        NbPopoverModule,
+        NbSelectModule,
+        NgxSliderModule,
+        TranslateModule,
+        PipeModule,
+        GauzyFiltersComponent
+    ],
+    providers: [TimesheetFilterService]
 })
 export class GauzyFiltersModule {}

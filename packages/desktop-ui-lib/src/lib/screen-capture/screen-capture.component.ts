@@ -1,18 +1,19 @@
-import { Component, OnInit, NgZone, Inject } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import {
-	DomSanitizer,
-	SafeResourceUrl,
-	SafeUrl,
-} from '@angular/platform-browser';
-import { ElectronService } from '../electron/services';
+import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
+import { NbCardModule, NbLayoutModule } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { BehaviorSubject, catchError, Observable, tap } from 'rxjs';
 import { GAUZY_ENV } from '../constants';
+import { ElectronService } from '../electron/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-screen-capture',
 	templateUrl: './screen-capture.component.html',
 	styleUrls: ['./screen-capture.component.scss'],
-	standalone: false
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NbLayoutModule, NbCardModule, AsyncPipe]
 })
 export class ScreenCaptureComponent implements OnInit {
 	private _screenCaptureUrl$: BehaviorSubject<SafeUrl>;
@@ -21,7 +22,6 @@ export class ScreenCaptureComponent implements OnInit {
 
 	constructor(
 		private readonly electronService: ElectronService,
-		private _ngZone: NgZone,
 		private domSanitizer: DomSanitizer,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
@@ -31,24 +31,31 @@ export class ScreenCaptureComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		this.electronService.ipcRenderer.on(
-			'show_popup_screen_capture',
-			(_, arg) => {
-				this._ngZone.run(() => {
-					this.note = arg.note;
-					this._screenCaptureUrl$.next(
-						this.domSanitizer.bypassSecurityTrustUrl(arg.imgUrl)
-					);
-				});
-			}
-		);
+		this.electronService
+			.fromEvent<{ note: string; imgUrl: string }>('show_popup_screen_capture')
+			.pipe(
+				tap(({ note, imgUrl }) => {
+					this.note = note;
+					this._screenCaptureUrl$.next(this.domSanitizer.bypassSecurityTrustUrl(imgUrl));
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.sendRendererReady();
 	}
 
 	private async sendRendererReady() {
-		await this.electronService.ipcRenderer.invoke('capture_window_init').catch(() =>
-			console.error('Page initialize not implemented in main process')
-		);
+		if (!this._environment.IS_AGENT) return;
+		this.electronService
+			.invoke$('capture_window_init')
+			.pipe(
+				catchError((error) => {
+					console.error('Error initializing screen capture:', error);
+					return [];
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	public get screenCaptureUrl$(): Observable<SafeUrl> {
@@ -56,8 +63,6 @@ export class ScreenCaptureComponent implements OnInit {
 	}
 
 	public get logoUrl(): SafeResourceUrl {
-		return this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.GAUZY_DESKTOP_LOGO_512X512
-		);
+		return this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.GAUZY_DESKTOP_LOGO_512X512);
 	}
 }

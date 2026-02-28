@@ -30,13 +30,41 @@ import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.co
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 import { GoalTemplateSelectComponent } from './goal-template-select/goal-template-select.component';
+import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
+import {
+	NbCardModule,
+	NbButtonModule,
+	NbIconModule,
+	NbSpinnerModule,
+	NbProgressBarModule,
+	NbAccordionModule,
+	NbTooltipModule
+} from '@nebular/theme';
+import { SharedModule } from '@gauzy/ui-core/shared';
+import { GoalsComponentsModule } from './goals-components.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-goals',
-    templateUrl: './goals.component.html',
-    styleUrls: ['./goals.component.scss'],
-    standalone: false
+	selector: 'ga-goals',
+	templateUrl: './goals.component.html',
+	styleUrls: ['./goals.component.scss'],
+	standalone: true,
+	imports: [
+		GoalsComponentsModule,
+		CommonModule,
+		TranslateModule,
+		NbCardModule,
+		NbButtonModule,
+		NbIconModule,
+		NbSpinnerModule,
+		NbProgressBarModule,
+		NbAccordionModule,
+		NbTooltipModule,
+		SharedModule,
+		GauzyButtonActionModule
+	]
 })
 export class GoalsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
@@ -106,6 +134,16 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		private readonly goalSettingsService: GoalSettingsService
 	) {
 		super(translateService);
+	}
+
+	get activeGroups() {
+		return this.objectiveGroup === 'timeFrames' ? this.goalTimeFrames : this.goalLevels;
+	}
+
+	goalsForGroup(group: string): IGoal[] {
+		return this.goals.filter((goal) =>
+			this.objectiveGroup === 'timeFrames' ? goal.deadline === group : goal.level === group
+		);
 	}
 
 	ngOnInit() {

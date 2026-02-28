@@ -3,17 +3,18 @@ import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core
 import { IPluginSubscription } from '../../../../services/plugin-subscription.service';
 import { IPlanComparisonDisplayInfo, IPlanViewModel } from '../models/plan-view.model';
 import { IPlanComparisonResult, PlanActionType, PlanComparisonService } from '../services/plan-comparison.service';
+import { NbBadgeModule, NbIconModule, NbButtonModule } from '@nebular/theme';
 
 /**
  * Plan card component that shows comparison information
  * Follows SOLID principles for clean, maintainable UI components
  */
 @Component({
-	selector: 'lib-plan-card-comparison',
-	templateUrl: './plan-card-comparison.component.html',
-	styleUrls: ['./plan-card-comparison.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'lib-plan-card-comparison',
+    templateUrl: './plan-card-comparison.component.html',
+    styleUrls: ['./plan-card-comparison.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbBadgeModule, NbIconModule, NbButtonModule]
 })
 export class PlanCardComparisonComponent implements OnInit {
 	@Input() planViewModel!: IPlanViewModel;

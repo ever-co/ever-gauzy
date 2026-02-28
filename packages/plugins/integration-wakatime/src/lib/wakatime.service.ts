@@ -1,11 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import * as moment from 'moment';
+import { MultiORM, MultiORMEnum, getORMType } from '@gauzy/core';
 import { Wakatime } from './wakatime.entity';
 import { TypeOrmWakatimeRepository } from './repository/type-orm-wakatime.repository';
+import { MikroOrmWakatimeRepository } from './repository/mikro-orm-wakatime.repository';
+
+// Get the type of the Object-Relational Mapping (ORM) used in the application.
+const ormType: MultiORM = getORMType();
 
 @Injectable()
 export class WakatimeService {
-	constructor(private readonly typeOrmWakatimeRepository: TypeOrmWakatimeRepository) {}
+	constructor(
+		private readonly typeOrmWakatimeRepository: TypeOrmWakatimeRepository,
+		private readonly mikroOrmWakatimeRepository: MikroOrmWakatimeRepository
+	) {}
 
 	/**
 	 *
@@ -13,15 +21,40 @@ export class WakatimeService {
 	 * @returns
 	 */
 	async getSummaries(params: any): Promise<any> {
-		const result = await this.typeOrmWakatimeRepository.query(`
-			SELECT SUM(seconds) AS seconds
-			FROM (
-				SELECT COUNT(*) AS seconds
-				FROM heartbeats
-				WHERE DATE(time, 'unixepoch') = date('now')
-				GROUP BY entities
-			) t;
-		`);
+		let result: any[];
+
+		switch (ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
+				result = await knex
+					.raw(
+						`
+					SELECT SUM(seconds) AS seconds
+					FROM (
+						SELECT COUNT(*) AS seconds
+						FROM heartbeats
+						WHERE DATE(time, 'unixepoch') = date('now')
+						GROUP BY entities
+					) t;
+				`
+					)
+					.then((res: any) => (Array.isArray(res) ? res : res.rows || [res]));
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				result = await this.typeOrmWakatimeRepository.query(`
+					SELECT SUM(seconds) AS seconds
+					FROM (
+						SELECT COUNT(*) AS seconds
+						FROM heartbeats
+						WHERE DATE(time, 'unixepoch') = date('now')
+						GROUP BY entities
+					) t;
+				`);
+				break;
+		}
+
 		return {
 			data: [
 				{
@@ -51,13 +84,25 @@ export class WakatimeService {
 	 * @param wakatime
 	 * @returns
 	 */
-	bulkSave(wakatime: Wakatime[]) {
-		return this.typeOrmWakatimeRepository
-			.createQueryBuilder()
-			.insert()
-			.values(wakatime)
-			.onConflict(`("time", "entities") do nothing`)
-			.execute();
+	async bulkSave(wakatime: Wakatime[]) {
+		switch (ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
+				await knex('heartbeats')
+					.insert(wakatime.map((w) => ({ ...w })))
+					.onConflict(['time', 'entities'])
+					.ignore();
+				return;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return this.typeOrmWakatimeRepository
+					.createQueryBuilder()
+					.insert()
+					.values(wakatime)
+					.onConflict(`("time", "entities") do nothing`)
+					.execute();
+		}
 	}
 
 	/**
@@ -65,13 +110,25 @@ export class WakatimeService {
 	 * @param wakatime
 	 * @returns
 	 */
-	save(wakatime: Wakatime) {
-		return this.typeOrmWakatimeRepository
-			.createQueryBuilder()
-			.insert()
-			.values(wakatime)
-			.onConflict(`("time", "entities") do nothing`)
-			.execute();
+	async save(wakatime: Wakatime) {
+		switch (ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
+				await knex('heartbeats')
+					.insert({ ...wakatime })
+					.onConflict(['time', 'entities'])
+					.ignore();
+				return;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return this.typeOrmWakatimeRepository
+					.createQueryBuilder()
+					.insert()
+					.values(wakatime)
+					.onConflict(`("time", "entities") do nothing`)
+					.execute();
+		}
 	}
 
 	/**

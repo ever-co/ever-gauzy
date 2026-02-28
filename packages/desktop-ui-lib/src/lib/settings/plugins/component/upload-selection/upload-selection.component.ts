@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbCardModule, NbIconModule, NbButtonModule } from '@nebular/theme';
 import { UploadIntent } from '../plugin-marketplace/+state/stores/plugin-upload-intent.store';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
-	selector: 'ngx-upload-selection',
-	templateUrl: './upload-selection.component.html',
-	styleUrls: ['./upload-selection.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: false
+    selector: 'ngx-upload-selection',
+    templateUrl: './upload-selection.component.html',
+    styleUrls: ['./upload-selection.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, NbButtonModule, TranslatePipe]
 })
 export class UploadSelectionComponent {
 	private readonly dialogRef = inject(NbDialogRef<UploadSelectionComponent>);

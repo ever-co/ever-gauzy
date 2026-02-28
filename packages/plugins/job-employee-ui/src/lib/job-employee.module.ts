@@ -1,102 +1,76 @@
-import { Inject, NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { RouterModule, ROUTES } from '@angular/router';
+import { inject, NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import {
-	NbButtonModule,
-	NbCardModule,
-	NbIconModule,
-	NbSpinnerModule,
-	NbTabsetModule,
-	NbToggleModule
-} from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
-import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
-import { createJobEmployeeRoutes } from './job-employee.routes';
+	applyDeclarativeRegistrations,
+	IOnPluginUiBootstrap,
+	IOnPluginUiDestroy,
+	PluginUiDefinition,
+	PLUGIN_DEFINITION
+} from '@gauzy/plugin-ui';
+import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
+import {
+	DynamicTabsModule,
+	NebularModule,
+	SharedModule,
+	SmartDataViewLayoutModule,
+	TableComponentsModule
+} from '@gauzy/ui-core/shared';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
-
-/**
- * Nebular Modules
- */
-const NB_MODULES = [NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, NbTabsetModule, NbToggleModule];
-
-/*
- * Third party modules
- */
-const THIRD_PARTY_MODULES = [
-	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
-];
+import { JobSearchStatusEditorComponent } from './components/job-search-status-editor/job-search-status-editor.component';
+import { JobSearchStoreService } from './providers/job-search-store.service';
 
 @NgModule({
 	declarations: [JobEmployeeComponent],
+	providers: [JobSearchStoreService],
 	imports: [
 		RouterModule.forChild([]),
-		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
+		NebularModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		SmartDataViewLayoutModule,
-		DynamicTabsModule
-	],
-	providers: [
-		{
-			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createJobEmployeeRoutes(service),
-			deps: [PageRouteRegistryService],
-			multi: true
-		}
+		DynamicTabsModule,
+		TableComponentsModule,
+		JobSearchStatusEditorComponent
 	]
 })
-export class JobEmployeeModule {
-	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+export class JobEmployeeModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
+	private static _hasAppliedRegistrations = false;
 
-	constructor(
-		@Inject(PageRouteRegistryService)
-		private readonly _pageRouteRegistryService: PageRouteRegistryService
-	) {
-		this.registerPageRoutes(this._pageRouteRegistryService); // Register the routes
+	private readonly _log = inject(LoggerService).withContext('JobEmployeeModule');
+	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
+	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION as unknown as any, { optional: true }) as
+		| PluginUiDefinition
+		| null;
+
+	constructor() {}
+
+	// ─── Plugin Lifecycle ─────────────────────────────────────────
+
+	/** Called by PluginUiModule after the plugin module is instantiated. */
+	ngOnPluginBootstrap(): void {
+		this._log.log('Plugin bootstrapped');
+		this._applyDeclarativeRegistrations();
 	}
 
-	/**
-	 * Register routes for the JobEmployeeModule
-	 *
-	 * @param _pageRouteRegistryService
-	 * @returns {void}
-	 */
-	registerPageRoutes(_pageRouteRegistryService: PageRouteRegistryService): void {
-		if (JobEmployeeModule.hasRegisteredPageRoutes) {
-			return;
-		}
+	/** Called by PluginUiModule when the application is shutting down. */
+	ngOnPluginDestroy(): void {
+		this._log.log('Plugin destroyed');
+		JobEmployeeModule._hasAppliedRegistrations = false;
+	}
 
-		// Register Job Employee Page Routes
-		_pageRouteRegistryService.registerPageRoute({
-			// Register the location 'jobs'
-			location: 'jobs',
-			// Register the path 'employee'
-			path: 'employee',
-			// Register the loadChildren function to load the EmployeesModule lazy module
-			loadChildren: () => import('./job-employee.module').then((m) => m.JobEmployeeModule),
-			// Register the data object
-			data: {
-				selectors: {
-					date: true,
-					employee: true,
-					project: false,
-					team: false
-				}
-			}
+	// ─── Registration ─────────────────────────────────────────────
+
+	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
+	private _applyDeclarativeRegistrations(): void {
+		if (JobEmployeeModule._hasAppliedRegistrations || !this._pluginDefinition) return;
+
+		applyDeclarativeRegistrations(this._pluginDefinition, {
+			navBuilder: this._navMenuBuilderService,
+			pageRouteRegistry: this._pageRouteRegistryService
 		});
 
-		// Set hasRegisteredRoutes to true
-		JobEmployeeModule.hasRegisteredPageRoutes = true;
+		JobEmployeeModule._hasAppliedRegistrations = true;
 	}
 }

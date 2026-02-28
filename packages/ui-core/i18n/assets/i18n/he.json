@@ -1421,16 +1421,13 @@
 			"SUBTITLE": "הגדרת אינטגרציה של Activepieces",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "האינטגרציה שלך עם Activepieces מוכנה. לחץ על הכפתור למטה כדי לאשר.",
-				"INFOS": "בשלב הבא תועבר ל-Activepieces כדי להעניק הרשאה ל-Gauzy.",
-				"START_BUTTON": "אשר את Activepieces",
+				"INFOS": "הזן את מפתח ה-API של Activepieces כדי לחבר את החשבון שלך.",
 				"NEXT": "הבא",
 				"ERRORS": {
 					"INVALID_FORM": "אנא מלא את כל השדות הנדרשים בצורה נכונה",
 					"SAVE_SETTINGS": "שמירת ההגדרות נכשלה",
 					"START_AUTHORIZATION": "התחלת האישור נכשלה",
 					"ORGANIZATION_NOT_FOUND": "הארגון לא נמצא",
-					"CHECK_TENANT_SETTINGS": "בדיקת הגדרות הדייר נכשלה",
 					"CHECK_REMEMBER_STATE": "בדיקת מצב הזכירה נכשלה"
 				},
 				"SUCCESS": {
@@ -1440,21 +1437,8 @@
 			"SETTINGS": {
 				"TITLE": "הגדרות Activepieces",
 				"SUBTITLE": "הגדר את הגדרות האינטגרציה שלך עם Activepieces",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "הזן את Client ID שלך",
-				"CLIENT_ID_HINT": "Activepieces OAuth Client ID שלך",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "הזן את Client Secret שלך",
-				"CLIENT_SECRET_HINT": "Activepieces OAuth Client Secret שלך",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "הזן את State Secret שלך (מינימום 32 תווים)",
-				"STATE_SECRET_HINT": "מחרוזת אקראית מאובטחת המשמשת לאימות מצב OAuth",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "הזן את Callback URL שלך",
-				"CALLBACK_URL_HINT": "כתובת ה-URL שאליה Activepieces יפנה לאחר האישור",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "הזן את Post Install URL שלך",
-				"POST_INSTALL_URL_HINT": "כתובת ה-URL להפניה לאחר השלמת ההתקנה",
+				"API_KEY": "מפתח API",
+				"API_KEY_PLACEHOLDER": "הזן את מפתח ה-API של Activepieces",
 				"SETTINGS_UPDATED": "הגדרות Activepieces עודכנו בהצלחה"
 			},
 			"CONNECTIONS": {
@@ -2613,6 +2597,7 @@
 		"TIME_OFF": "Time Off"
 	},
 	"TIME_OFF_PAGE": {
+		"NO_PERMISSION": "אין לך הרשאה לצפות בדף זה",
 		"HEADER": "Time Off",
 		"REQUEST": "Request",
 		"REQUEST_TIME_OFF": "Request Time Off",
@@ -4400,7 +4385,8 @@
 			"LARGE_FILE": "הקובץ גדול מדי.",
 			"SERVICE_UNAVAILABLE": "השירות אינו זמין כעת.",
 			"UNEXPECTED_ERROR": "אירעה שגיאה בלתי צפויה.",
-			"NETWORK_ERROR": "שגיאת רשת: {{message}}"
+			"NETWORK_ERROR": "שגיאת רשת: {{message}}",
+			"SCREEN_ACCESS_REQUIRED_MSG": "נדרשת הרשאת גישה למסך כדי לאפשר לכידת מסך אוטומטית. אנא העניקו את ההרשאה בהגדרות המערכת."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "המעקב נעצר בשל ביטול הפעילות!",

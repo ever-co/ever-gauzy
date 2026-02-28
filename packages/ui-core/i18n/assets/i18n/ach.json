@@ -1272,16 +1272,13 @@
 			"SUBTITLE": "Activepieces Integration Setup",
 			"AUTHORIZE": {
 				"TITLE": "Activepieces",
-				"READY_MESSAGE": "Activepieces integration ni tye kare. Dii button me authorize.",
-				"INFOS": "Ikare i nen teri i Activepieces me miyo permission bot Gauzy.",
-				"START_BUTTON": "Authorize Activepieces",
+				"INFOS": "Ket lapeny me API ni Activepieces me kube akaunt mamegi.",
 				"NEXT": "Malubo",
 				"ERRORS": {
 					"INVALID_FORM": "Tim ber i pik jami ma mite weng maber",
 					"SAVE_SETTINGS": "Gwoko settings pe olare",
 					"START_AUTHORIZATION": "Cakke authorization pe olare",
 					"ORGANIZATION_NOT_FOUND": "Pe inongo organization",
-					"CHECK_TENANT_SETTINGS": "Roto tenant settings pe olare",
 					"CHECK_REMEMBER_STATE": "Roto remember state pe olare"
 				},
 				"SUCCESS": {
@@ -1291,21 +1288,8 @@
 			"SETTINGS": {
 				"TITLE": "Activepieces Settings",
 				"SUBTITLE": "Yub Activepieces integration settings ni",
-				"CLIENT_ID": "Client ID",
-				"CLIENT_ID_PLACEHOLDER": "Ket Client ID ni",
-				"CLIENT_ID_HINT": "Activepieces OAuth Client ID ni",
-				"CLIENT_SECRET": "Client Secret",
-				"CLIENT_SECRET_PLACEHOLDER": "Ket Client Secret ni",
-				"CLIENT_SECRET_HINT": "Activepieces OAuth Client Secret ni",
-				"STATE_SECRET": "State Secret",
-				"STATE_SECRET_PLACEHOLDER": "Ket State Secret ni (characters 32 minimum)",
-				"STATE_SECRET_HINT": "String me random ma ber pi OAuth state verification",
-				"CALLBACK_URL": "Callback URL",
-				"CALLBACK_URL_PLACEHOLDER": "Ket Callback URL ni",
-				"CALLBACK_URL_HINT": "URL ma Activepieces bi nwoyo kany ikom authorization",
-				"POST_INSTALL_URL": "Post Install URL",
-				"POST_INSTALL_URL_PLACEHOLDER": "Ket Post Install URL ni",
-				"POST_INSTALL_URL_HINT": "URL me nwoyo kany installation otum",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Ket API Key ni me Activepieces",
 				"SETTINGS_UPDATED": "Kiyubu Activepieces settings maber"
 			},
 			"CONNECTIONS": {

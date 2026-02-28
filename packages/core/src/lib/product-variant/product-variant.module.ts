@@ -11,6 +11,7 @@ import { ProductModule } from './../product/product.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmProductVariantRepository } from './repository/type-orm-product-variant.repository';
+import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
 
 @Module({
 	imports: [
@@ -23,7 +24,7 @@ import { TypeOrmProductVariantRepository } from './repository/type-orm-product-v
 		forwardRef(() => ProductModule)
 	],
 	controllers: [ProductVariantController],
-	providers: [ProductVariantService, TypeOrmProductVariantRepository, ...CommandHandlers],
+	providers: [ProductVariantService, TypeOrmProductVariantRepository, MikroOrmProductVariantRepository, ...CommandHandlers],
 	exports: [ProductVariantService]
 })
 export class ProductVariantModule {}

@@ -6,6 +6,7 @@ import { GoalTemplateService } from './goal-template.service';
 import { GoalTemplate } from './goal-template.entity';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmGoalTemplateRepository } from './repository/type-orm-goal-template.repository';
+import { MikroOrmGoalTemplateRepository } from './repository/mikro-orm-goal-template.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmGoalTemplateRepository } from './repository/type-orm-goal-templa
 		RolePermissionModule
 	],
 	controllers: [GoalTemplateController],
-	providers: [GoalTemplateService, TypeOrmGoalTemplateRepository]
+	providers: [GoalTemplateService, TypeOrmGoalTemplateRepository, MikroOrmGoalTemplateRepository]
 })
 export class GoalTemplateModule {}

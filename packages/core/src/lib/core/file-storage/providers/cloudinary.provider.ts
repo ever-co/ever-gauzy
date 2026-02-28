@@ -1,8 +1,8 @@
 import { Request } from 'express';
 import * as multer from 'multer';
 import * as moment from 'moment';
-import { join } from 'path';
-import { URL } from 'url';
+import { join } from 'node:path';
+import { URL } from 'node:url';
 import * as streamifier from 'streamifier';
 import axios from 'axios';
 import { ConfigOptions, UploadApiErrorResponse, UploadApiResponse, v2 as cloudinaryV2 } from 'cloudinary';
@@ -11,6 +11,7 @@ import { ICloudinaryConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, FileSystem, UploadedFile } from '@gauzy/contracts';
 import { isNotEmpty, trimIfNotEmpty } from '@gauzy/utils';
+import { Logger } from '@nestjs/common';
 import { Provider } from './provider';
 import { RequestContext } from './../../../core/context';
 
@@ -19,6 +20,7 @@ const { cloudinary } = environment;
 
 export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 	public readonly name = FileStorageProviderEnum.CLOUDINARY;
+	private readonly logger = new Logger(CloudinaryProvider.name);
 	private readonly detailedLoggingEnabled = false;
 	public instance: CloudinaryProvider;
 	public config: ICloudinaryConfig & FileSystem;
@@ -75,11 +77,11 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 				});
 			} else {
 				// Log a warning if any of the required Cloudinary settings are missing
-				console.warn(`Missing Cloudinary settings: ${JSON.stringify(this.config)}`);
+				this.logger.warn('Missing Cloudinary settings: cloud_name, api_key, or api_secret is not configured');
 			}
 		} catch (error) {
 			// Log any errors that occur during the process
-			console.error(`Error while retrieving ${FileStorageProviderEnum.CLOUDINARY} instance:`, error);
+			this.logger.error(`Error while retrieving ${FileStorageProviderEnum.CLOUDINARY} instance`);
 		}
 	}
 
@@ -102,7 +104,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 
 				if (settings) {
 					if (this.detailedLoggingEnabled) {
-						console.log(`setCloudinaryConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
+						this.logger.debug('setCloudinaryConfiguration: applying tenant settings overrides');
 					}
 
 					if (trimIfNotEmpty(settings.cloudinary_cloud_name))
@@ -124,7 +126,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 				}
 			}
 		} catch (error) {
-			console.error('Error while setting Wasabi configuration. Default configuration will be used', error);
+			this.logger.error('Error while setting Cloudinary configuration. Default configuration will be used');
 		}
 	}
 
@@ -170,7 +172,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 				}
 			});
 		} catch (error) {
-			console.error(`Error while creating ${FileStorageProviderEnum.CLOUDINARY} storage engine:`, error);
+			this.logger.error(`Error while creating ${FileStorageProviderEnum.CLOUDINARY} storage engine`);
 			return null;
 		}
 	}
@@ -211,7 +213,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 			// Attempt to construct a new URL using the Cloudinary configuration
 			return new URL(join(this.config.cloud_name, filePath), this.config.baseUrl).toString();
 		} catch (error) {
-			console.error(`Error constructing URL for file path: ${filePath}`, error);
+			this.logger.error(`Error constructing URL for file path: ${filePath}`);
 			return null;
 		}
 	}
@@ -235,7 +237,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 
 			return fileBuffer;
 		} catch (error) {
-			console.error('Error while retrieving Cloudinary image from server', error);
+			this.logger.error('Error while retrieving Cloudinary image from server');
 			// Return any value to indicate an error occurred
 			return null;
 		}

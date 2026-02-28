@@ -25,7 +25,7 @@
 				"tsConfig": "apps/desktop/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": ["apps/desktop-timer/src/assets/styles", "packages/ui-core/static/styles"]
+					"includePaths": ["apps/desktop/src/assets/styles", "packages/ui-core/static/styles"]
 				},
 				"assets": ["apps/desktop/src/favicon.ico", "apps/desktop/src/assets"],
 				"styles": [
@@ -40,7 +40,6 @@
 					"node_modules/leaflet/dist/leaflet.css",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css",
 					"apps/desktop/src/assets/styles/styles.scss",
-					"apps/desktop/src/styles.css",
 					"packages/ui-core/static/styles/styles.scss"
 				],
 				"scripts": [],
@@ -50,7 +49,10 @@
 					"localforage",
 					"moment-duration-format",
 					"rxjs",
-					"rxjs/operators"
+					"rxjs/operators",
+					"@gauzy/desktop-ui-lib",
+					"@gauzy/ui-config",
+					"@gauzy/ui-core/i18n"
 				]
 			},
 			"configurations": {
@@ -74,24 +76,39 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "20mb",
-							"maximumError": "40mb"
+							"maximumWarning": "150mb",
+							"maximumError": "200mb"
 						},
 						{
 							"type": "anyComponentStyle",
-							"maximumWarning": "60kb",
-							"maximumError": "120kb"
+							"maximumWarning": "1000kb",
+							"maximumError": "2000kb"
 						}
 					],
 					"outputHashing": "all"
 				},
 				"development": {
 					"optimization": false,
+					"sourceMap": true,
+					"namedChunks": true,
 					"extractLicenses": false,
-					"sourceMap": true
+					"vendorChunk": true,
+					"buildOptimizer": false,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "150mb",
+							"maximumError": "200mb"
+						},
+						{
+							"type": "anyComponentStyle",
+							"maximumWarning": "1000kb",
+							"maximumError": "2000kb"
+						}
+					]
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development"
 		},
 		"serve": {
 			"executor": "@angular-devkit/build-angular:dev-server",

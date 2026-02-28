@@ -8,6 +8,7 @@ import { CommandHandlers } from './commands/handlers';
 import { TaskViewService } from './view.service';
 import { TaskViewController } from './view.controller';
 import { TypeOrmTaskViewRepository } from './repository/type-orm-task-view.repository';
+import { MikroOrmTaskViewRepository } from './repository/mikro-orm-task-view.repository';
 
 @Module({
 	imports: [
@@ -16,8 +17,8 @@ import { TypeOrmTaskViewRepository } from './repository/type-orm-task-view.repos
 		RolePermissionModule,
 		CqrsModule
 	],
-	providers: [TaskViewService, TypeOrmTaskViewRepository, ...CommandHandlers],
+	providers: [TaskViewService, TypeOrmTaskViewRepository, MikroOrmTaskViewRepository, ...CommandHandlers],
 	controllers: [TaskViewController],
-	exports: [TaskViewService, TypeOrmTaskViewRepository]
+	exports: [TaskViewService, TypeOrmTaskViewRepository, MikroOrmTaskViewRepository]
 })
 export class TaskViewModule {}

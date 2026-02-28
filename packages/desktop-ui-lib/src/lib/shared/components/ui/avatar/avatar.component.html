@@ -1,35 +1,32 @@
 <div class="avatar-wrapper">
-  <div class="inner-wrapper">
-    @if (src) {
-      <div class="image-outer-wrapper">
-        <div class="image-container" [ngClass]="size">
-          <img class="rounded-circle" type="user" [src]="src" />
-          @if (employee) {
-            <span
-              class="status-indicator"
-              [ngClass]="{ online: online$ | async, offline: !(online$ | async) }"
-            ></span>
-          }
-        </div>
-      </div>
-    }
-    <div class="names-wrapper">
-      @if (name) {
-        @if (!isOption) {
-          <a class="link-text" [title]="name">{{ name }}</a>
-        }
-        @if (isOption) {
-          <div>{{ name }}</div>
-        }
-      }
-      @if (caption) {
-        <div class="text-caption caption">
-          @if (appendCaption) {
-            {{ appendCaption }}
-          }
-          {{ caption }}
-        </div>
-      }
-    </div>
-  </div>
+	<div class="inner-wrapper">
+		@if (src) {
+		<div class="image-outer-wrapper">
+			<div class="image-container" [class]="size">
+				<img class="rounded-circle" type="user" [src]="src" />
+				@if (employee) {
+				<span
+					class="status-indicator"
+					[class.online]="online$ | async"
+					[class.offline]="!(online$ | async)"
+				></span>
+				}
+			</div>
+		</div>
+		}
+		<div class="names-wrapper">
+			@if (name) { @if (!isOption) {
+			<a class="link-text" [title]="name">{{ name }}</a>
+			} @if (isOption) {
+			<div>{{ name }}</div>
+			} } @if (caption) {
+			<div class="text-caption caption">
+				@if (appendCaption) {
+				{{ appendCaption }}
+				}
+				{{ caption }}
+			</div>
+			}
+		</div>
+	</div>
 </div>

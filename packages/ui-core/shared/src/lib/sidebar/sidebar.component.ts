@@ -51,7 +51,7 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 	@ViewChild(TreeComponent) private tree: TreeComponent;
 
 	constructor(
-		private dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
 		private helpService: HelpCenterService,
 		readonly translateService: TranslateService,

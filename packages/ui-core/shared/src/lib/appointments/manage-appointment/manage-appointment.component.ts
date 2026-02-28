@@ -14,8 +14,8 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
+import moment from 'moment';
+import timezone from 'moment-timezone';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IEmployeeAppointment, IAvailabilitySlot, ID, EmployeeAppointmentStatus } from '@gauzy/contracts';
@@ -34,11 +34,11 @@ import { AlertModalComponent } from '../../components/alert-modal/alert-modal.co
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-manage-appointment',
-    templateUrl: './manage-appointment.component.html',
-    styleUrls: ['./manage-appointment.component.scss'],
-    providers: [AppointmentEmployeesService, AvailabilitySlotsService, EmployeeAppointmentService],
-    standalone: false
+	selector: 'ga-manage-appointment',
+	templateUrl: './manage-appointment.component.html',
+	styleUrls: ['./manage-appointment.component.scss'],
+	providers: [AppointmentEmployeesService, AvailabilitySlotsService, EmployeeAppointmentService],
+	standalone: false
 })
 export class ManageAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	form: UntypedFormGroup;
@@ -282,8 +282,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 				(this.employee
 					? this.employee.id
 					: this._store.selectedEmployee
-					? this._store.selectedEmployee.id
-					: null)
+						? this._store.selectedEmployee.id
+						: null)
 		);
 
 		this.employees.map((e) => {
@@ -339,8 +339,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 				employeeId: this.employee
 					? this.employee.id
 					: this._store.selectedEmployee
-					? this._store.selectedEmployee.id
-					: null,
+						? this._store.selectedEmployee.id
+						: null,
 				organizationId: this._selectedOrganizationId,
 				tenantId
 			};

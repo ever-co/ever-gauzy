@@ -7,13 +7,16 @@ import { distinctUntilChanged, map, tap } from 'rxjs';
 import { PluginSourceActions } from '../../+state/actions/plugin-source.action';
 import { PluginSourceQuery } from '../../+state/queries/plugin-source.query';
 
+import { AsyncPipe } from '@angular/common';
+import { SelectComponent } from '../../../../../../shared/components/ui/select/select.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-source-selector',
-	templateUrl: './source-selector.component.html',
-	styleUrls: ['./source-selector.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-source-selector',
+    templateUrl: './source-selector.component.html',
+    styleUrls: ['./source-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [SelectComponent, AsyncPipe]
 })
 export class SourceSelectorComponent implements OnInit, OnChanges {
 	@ViewChild(NbSelectComponent) select: NbSelectComponent;

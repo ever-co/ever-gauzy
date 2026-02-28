@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { defaultDateFormat } from '@gauzy/ui-core/core';
 import {
 	IOrganization,
@@ -11,10 +11,10 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-    selector: 'ga-recurring-expense-block',
-    templateUrl: './recurring-expense-block.component.html',
-    styleUrls: ['./recurring-expense-block.component.scss'],
-    standalone: false
+	selector: 'ga-recurring-expense-block',
+	templateUrl: './recurring-expense-block.component.html',
+	styleUrls: ['./recurring-expense-block.component.scss'],
+	standalone: false
 })
 export class RecurringExpenseBlockComponent extends TranslationBaseComponent implements OnInit {
 	@Input()

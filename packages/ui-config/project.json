@@ -8,12 +8,13 @@
 	"implicitDependencies": [],
 	"targets": {
 		"build": {
-			"executor": "@nx/angular:package",
+			"executor": "@nx/angular:ng-packagr-lite",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"dependsOn": [
 				{
 					"target": "setup-env",
-					"projects": "self"
+					"projects": "self",
+					"params": "forward"
 				}
 			],
 			"options": {
@@ -28,7 +29,7 @@
 					"tsConfig": "packages/ui-config/tsconfig.lib.json"
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development"
 		},
 		"setup-env": {
 			"executor": "nx:run-script",
@@ -40,7 +41,7 @@
 					"script": "setup-env:dev"
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development"
 		},
 		"test": {
 			"executor": "@nx/jest:jest",

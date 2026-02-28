@@ -5,16 +5,17 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["constants", "contracts", "ui-config"],
 	"targets": {
 		"build": {
-			"executor": "@nx/angular:package",
+			"executor": "@nx/angular:ng-packagr-lite",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"dependsOn": [
 				"^build",
 				{
 					"target": "config",
-					"projects": "self"
+					"projects": "self",
+					"params": "forward"
 				}
 			],
 			"options": {
@@ -29,7 +30,7 @@
 					"tsConfig": "packages/ui-core/tsconfig.lib.json"
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development"
 		},
 		"config": {
 			"executor": "nx:run-commands",
@@ -41,7 +42,7 @@
 					"commands": ["nx build ui-config --configuration=development"]
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development"
 		},
 		"test": {
 			"executor": "@nx/jest:jest",

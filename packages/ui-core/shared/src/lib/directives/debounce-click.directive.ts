@@ -2,8 +2,8 @@ import { Directive, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output
 import { debounceTime, Subject, Subscription, tap } from 'rxjs';
 
 @Directive({
-    selector: '[debounceClick]',
-    standalone: false
+	selector: '[debounceClick]',
+	standalone: true
 })
 export class DebounceClickDirective implements OnInit, OnDestroy {
 	private clicks = new Subject();

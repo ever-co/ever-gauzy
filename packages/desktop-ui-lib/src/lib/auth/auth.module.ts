@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { NbAuthModule } from '@nebular/auth';
 import { socialLinks } from '../constants';
 import { Store } from '../services';
-import { AuthGuard } from './auth.guard';
-import { NoAuthGuard } from './no-auth.guard';
+import { authRoutes } from './auth.routes';
 import { AuthService, AuthStrategy } from './services';
 
 export * from './auth.guard';
@@ -20,7 +20,7 @@ const nbAuthModule = NbAuthModule.forRoot({
 });
 
 @NgModule({
-	imports: [CommonModule, nbAuthModule],
-	providers: [...nbAuthModule.providers, AuthGuard, NoAuthGuard, AuthStrategy, AuthService, Store]
+	imports: [CommonModule, nbAuthModule, RouterModule.forChild(authRoutes)],
+	providers: [...nbAuthModule.providers, AuthStrategy, AuthService, Store]
 })
 export class AuthModule {}

@@ -2,7 +2,8 @@ name: Build and Publish Docker Images Stage
 
 on:
   push:
-    branches: stage
+    branches:
+      - stage
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -11,7 +12,7 @@ concurrency:
 jobs:
   gauzy-api:
     runs-on: ubicloud-standard-8
-    timeout-minutes: 150
+    timeout-minutes: 300
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,6 +42,8 @@ jobs:
           build-args: |
             NODE_ENV=production
             DEMO=false
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+            NX_BRANCH=${{ github.ref_name }}
 
       - name: Docker images list
         run: |
@@ -79,12 +82,12 @@ jobs:
         run: |
           docker push ghcr.io/ever-co/gauzy-api-stage:latest
 
-      - name: Login to CW Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.CW_DOCKER_REGISTRY }}
-          username: ${{ secrets.CW_DOCKER_USER }}
-          password: ${{ secrets.CW_DOCKER_USER_PASSWORD }}
+    #   - name: Login to CW Container Registry
+    #     uses: docker/login-action@v3
+    #     with:
+    #       registry: ${{ secrets.CW_DOCKER_REGISTRY }}
+    #       username: ${{ secrets.CW_DOCKER_USER }}
+    #       password: ${{ secrets.CW_DOCKER_USER_PASSWORD }}
 
     #  - name: Push to CW Registry
     #    run: |
@@ -92,7 +95,7 @@ jobs:
 
   gauzy-webapp:
     runs-on: ubicloud-standard-8
-    timeout-minutes: 150
+    timeout-minutes: 300
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -120,6 +123,8 @@ jobs:
           build-args: |
             NODE_ENV=production
             DEMO=false
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+            NX_BRANCH=${{ github.ref_name }}
 
       - name: Docker images list
         run: |
@@ -158,12 +163,12 @@ jobs:
         run: |
           docker push ghcr.io/ever-co/gauzy-webapp-stage:latest
 
-      - name: Login to CW Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.CW_DOCKER_REGISTRY }}
-          username: ${{ secrets.CW_DOCKER_USER }}
-          password: ${{ secrets.CW_DOCKER_USER_PASSWORD }}
+    #   - name: Login to CW Container Registry
+    #     uses: docker/login-action@v3
+    #     with:
+    #       registry: ${{ secrets.CW_DOCKER_REGISTRY }}
+    #       username: ${{ secrets.CW_DOCKER_USER }}
+    #       password: ${{ secrets.CW_DOCKER_USER_PASSWORD }}
 
     #  - name: Push to CW Registry
     #    run: |

@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, NgZone, OnInit, Renderer2 } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
 import {
 	ActivityWatchElectronService,
 	AuthStrategy,
@@ -9,9 +10,10 @@ import {
 	TokenRefreshService
 } from '@gauzy/desktop-ui-lib';
 import { NbToastrService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { firstValueFrom } from 'rxjs';
+import { catchError, exhaustMap, filter, from, interval, map, Observable, of, tap } from 'rxjs';
+import { concatMap, switchMap, take, takeWhile } from 'rxjs/operators';
 import { AppService } from './app.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -19,7 +21,7 @@ import { AppService } from './app.service';
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>',
 	styleUrls: ['./app.component.scss'],
-	standalone: false
+	imports: [RouterOutlet]
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	constructor(
@@ -33,46 +35,57 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private _renderer: Renderer2,
 		readonly activityWatchElectronService: ActivityWatchElectronService,
 		readonly languageElectronService: LanguageElectronService,
-		private readonly tokenRefreshService: TokenRefreshService
+		private readonly tokenRefreshService: TokenRefreshService,
+		private readonly router: Router
 	) {
 		activityWatchElectronService.setupActivitiesCollection();
 	}
 
 	ngOnInit(): void {
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
-		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
+		if (nebularLinkMedia) this._renderer?.setAttribute(nebularLinkMedia, 'media', 'all');
 
 		this.electronService.ipcRenderer.send('app_is_init');
-
-		// Start token refresh timer if user is authenticated
-		if (this.store.token && this.store.refreshToken) {
-			this.tokenRefreshService.start();
-		}
 	}
 
 	ngAfterViewInit(): void {
 		this.languageElectronService.initialize();
 
-		this.electronService.ipcRenderer.on('server_ping', (event, arg) =>
-			this._ngZone.run(() => {
-				const pingHost = setInterval(async () => {
-					try {
-						await this.appService.pingServer(arg);
-						console.log('Server Found');
-						event.sender.send('server_is_ready');
-						this.store.serverConnection = 200;
-						clearInterval(pingHost);
-					} catch (error) {
-						console.log('ping status result', error.status);
-						this.store.serverConnection = 0;
-						if (this.store.userId) {
-							event.sender.send('server_is_ready');
-							clearInterval(pingHost);
-						}
-					}
-				}, 1000);
-			})
-		);
+		this.electronService
+			.fromEvent('timer_tracker_show')
+			.pipe(
+				take(1),
+				tap(() => this.tokenRefreshService.start()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.electronService
+			.fromEvent<{ host: string }>('server_ping')
+			.pipe(
+				switchMap((arg) =>
+					interval(1000).pipe(
+						exhaustMap(() =>
+							from(this.appService.pingServer(arg)).pipe(
+								map(() => 200),
+								catchError((err) => of(err?.status ?? 0))
+							)
+						),
+						tap((status) => {
+							this.store.serverConnection = status;
+						}),
+						takeWhile((status) => status !== 200 && !this.store.userId, true),
+						filter((status) => status === 200 || !!this.store.userId),
+						//take(1),
+						tap(() => {
+							console.log('Server Ready');
+							this.electronService.ipcRenderer.send('server_is_ready');
+						})
+					)
+				)
+			)
+			.pipe(untilDestroyed(this))
+			.subscribe();
 
 		this.electronService.ipcRenderer.on('server_ping_restart', (event, arg) =>
 			this._ngZone.run(() => {
@@ -101,17 +114,21 @@ export class AppComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('__logout__', (event, arg) =>
-			this._ngZone.run(async () => {
-				try {
-					await firstValueFrom(this.authStrategy.logout());
-					this.electronService.ipcRenderer.send('navigate_to_login');
-					if (arg) this.electronService.ipcRenderer.send('restart_and_update');
-				} catch (error) {
-					console.log('ERROR', error);
-				}
-			})
-		);
+		this.electronService
+			.fromEvent<boolean>('__logout__')
+			.pipe(
+				tap(() => this.tokenRefreshService.stop()),
+				// Ensure logout runs sequentially
+				concatMap((shouldRestart) =>
+					this.performLogout().pipe(
+						map(() => shouldRestart),
+						catchError(() => of(shouldRestart)) // Logout failure should not block UI flow
+					)
+				),
+				tap((shouldRestart) => this.handlePostLogout(shouldRestart)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		this.electronService.ipcRenderer.on('social_auth_success', (event, arg) =>
 			this._ngZone.run(async () => {
@@ -119,11 +136,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 					this.store.userId = arg.userId;
 					this.store.token = arg.token;
 					await this.authFromSocial(arg);
-
-					// Start token refresh timer on authentication
-					if (arg.token && this.store.refreshToken) {
-						this.tokenRefreshService.start();
-					}
 				} catch (error) {
 					console.log('ERROR', error);
 				}
@@ -162,5 +174,22 @@ export class AppComponent implements OnInit, AfterViewInit {
 		} catch (e) {
 			return null;
 		}
+	}
+
+	private performLogout(): Observable<void> {
+		return this.authStrategy.logout().pipe(
+			take(1),
+			map(() => void 0)
+		);
+	}
+
+	private handlePostLogout(shouldRestart: boolean): void {
+		if (shouldRestart) {
+			this.electronService.ipcRenderer.send('restart_and_update');
+			return;
+		}
+
+		this.electronService.ipcRenderer.send('navigate_to_login');
+		this.router.navigate(['/auth/login']);
 	}
 }

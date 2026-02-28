@@ -1,6 +1,6 @@
 const { composePlugins, withNx } = require('@nx/webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const path = require('path');
+const path = require('node:path');
 const { getCopyPatterns } = require('./webpack-package-copy-patterns');
 
 console.log('Using custom Webpack Config -> __dirname: ' + __dirname);
@@ -18,7 +18,7 @@ const targetNodeModulesDir = path.resolve(__dirname, '../../../dist/apps/api/nod
 
 module.exports = composePlugins(
 	withNx({
-		target: 'node', // Target for Node.js
+		target: 'node' // Target for Node.js
 	}),
 	(config) => {
 		// Configure watch options for development
@@ -49,9 +49,7 @@ module.exports = composePlugins(
 		}
 
 		// Add CopyWebpackPlugin with the generated patterns
-		config.plugins.push(
-			new CopyWebpackPlugin({ patterns: packagePatterns })
-		);
+		config.plugins.push(new CopyWebpackPlugin({ patterns: packagePatterns }));
 
 		return config;
 	}

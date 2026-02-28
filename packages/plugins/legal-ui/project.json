@@ -5,10 +5,10 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["ui-core", "ui-config"],
 	"targets": {
 		"build": {
-			"executor": "@nx/angular:package",
+			"executor": "@nx/angular:ng-packagr-lite",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
 				"project": "packages/plugins/legal-ui/ng-package.json",
@@ -22,7 +22,8 @@
 					"tsConfig": "packages/plugins/legal-ui/tsconfig.lib.json"
 				}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "development",
+			"dependsOn": ["^build"]
 		},
 		"test": {
 			"executor": "@nx/jest:jest",

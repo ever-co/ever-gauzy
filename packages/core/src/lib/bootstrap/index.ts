@@ -33,14 +33,14 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { EventSubscriber, MikroORM, RequestContext } from '@mikro-orm/core';
 import { useContainer } from 'class-validator';
-import * as helmet from 'helmet';
+import helmet from 'helmet';
 import * as chalk from 'chalk';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { urlencoded, json } from 'express';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
-import { getConfig, defineConfig, environment as env } from '@gauzy/config';
+import { getConfig, defineConfig, environment } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
 import { MultiORMEnum, getORMType } from '../core/utils';
 import { coreEntities } from '../core/entities';
@@ -74,7 +74,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	console.time(chalk.yellow('✔ Create NestJS Application Time'));
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Set logging levels
-		bufferLogs: env.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
+		bufferLogs: environment.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
 	});
 	console.timeEnd(chalk.yellow('✔ Create NestJS Application Time'));
 
@@ -95,7 +95,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	app.useGlobalGuards(new AuthGuard(reflector));
 
 	// Configure Sentry for error tracking, if applicable
-	const { sentry } = env;
+	const { sentry } = environment;
 	if (sentry && sentry.dsn && config.logger) {
 		app.useLogger(config.logger); // Use Sentry logger
 	} else {
@@ -109,9 +109,32 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	app.use(urlencoded({ extended: true, limit: '50mb' }));
 
 	// Enable CORS with specific settings
+	// In production, ALLOWED_ORIGINS should be set to a comma-separated list of trusted origins.
+	// Using origin: '*' with credentials: true violates the CORS spec and is insecure.
+	const allowedOrigins = process.env.ALLOWED_ORIGINS
+		? process.env.ALLOWED_ORIGINS.split(',')
+				.map((o) => o.trim())
+				.filter(Boolean)
+		: undefined;
+
+	// Treat an empty array the same as undefined (no valid origins specified)
+	const validOrigins = allowedOrigins?.length ? allowedOrigins : undefined;
+
+	// Compute once — used for CORS warnings and Helmet CSP
+	const isProduction = process.env.NODE_ENV === 'production';
+
+	if (!validOrigins) {
+		const level = isProduction ? 'WARN' : 'INFO';
+		console[isProduction ? 'warn' : 'log'](
+			`[${level}] ALLOWED_ORIGINS is not set. CORS will allow all origins ("*"). ` +
+				`In production, set ALLOWED_ORIGINS to a comma-separated list of trusted origins ` +
+				`(e.g. "https://app.example.com,https://admin.example.com") for secure CORS handling.`
+		);
+	}
+
 	app.enableCors({
-		origin: '*',
-		credentials: true,
+		origin: validOrigins || '*',
+		credentials: !!validOrigins, // Only enable credentials when origins are explicitly specified
 		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
 		allowedHeaders: [
 			'Authorization',
@@ -142,10 +165,14 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Configure Redis or in-memory sessions
 	await configureRedisSession(app);
 
-	// let's use helmet for security in production
-	if (env.envName === 'prod') {
-		app.use(helmet());
-	}
+	// Use helmet for security headers — relax CSP in non-production to avoid blocking Swagger/Scalar UI
+	app.use(
+		helmet({
+			contentSecurityPolicy: isProduction
+				? undefined // use Helmet's strict default CSP in production
+				: false // disable CSP in dev/stage so Swagger/Scalar inline scripts work
+		})
+	);
 
 	// Set the global prefix for routes
 	const globalPrefix = 'api';
@@ -189,10 +216,17 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			process.send(message);
 		}
 
-		if (env.demo) {
-			seedDemoIfEmpty(app, appService).catch((error) => {
-				console.error('Demo seed failed:', error);
-			});
+		if (environment.demo) {
+			console.log(chalk.yellow('Application is running in DEMO mode'));
+
+			// Run demo seed after the HTTP server starts
+			seedDemoIfEmpty(app, appService)
+				.then(() => {
+					console.log(chalk.green('Demo environment seeded successfully'));
+				})
+				.catch((error) => {
+					console.log(chalk.red('Error seeding demo environment:'), error);
+				});
 		}
 	});
 
@@ -237,6 +271,8 @@ export async function registerPluginConfig(config: Partial<ApplicationPluginConf
  * When MikroORM is selected, wrap in a RequestContext so repositories use a scoped EntityManager.
  */
 async function seedDemoIfEmpty(app: INestApplication, appService: AppService): Promise<void> {
+	console.log('Seeding demo data if database is empty...', environment.demo);
+
 	// Get the ORM type
 	const ormType = getORMType();
 
@@ -262,6 +298,8 @@ async function seedDemoIfEmpty(app: INestApplication, appService: AppService): P
  * - Otherwise (TypeORM), keep the existing behavior.
  */
 async function seedDatabaseIfEmpty(app: INestApplication, appService: AppService): Promise<void> {
+	console.log('Seeding database if empty...', environment.demo);
+
 	// Get the ORM type
 	const ormType = getORMType();
 
@@ -455,7 +493,7 @@ async function preBootstrapRegisterSubscribers(
 export function getMigrationsConfig() {
 	// Determine if running from dist or source
 	const isDist = __dirname.includes('dist');
-	const isElectron = !!env.isElectron; // check if electron
+	const isElectron = !!environment.isElectron; // check if electron
 
 	console.log('Migration isDist: ->', isDist);
 	console.log('Migration isElectron: ->', isElectron);

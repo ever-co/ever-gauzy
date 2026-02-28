@@ -8,6 +8,7 @@ import { KeyResultUpdate } from './keyresult-update.entity';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmKeyResultUpdateRepository } from './repository/type-orm-keyresult-update.repository';
+import { MikroOrmKeyResultUpdateRepository } from './repository/mikro-orm-keyresult-update.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmKeyResultUpdateRepository } from './repository/type-orm-keyresul
 		CqrsModule
 	],
 	controllers: [KeyResultUpdateController],
-	providers: [KeyResultUpdateService, TypeOrmKeyResultUpdateRepository, ...CommandHandlers]
+	providers: [KeyResultUpdateService, TypeOrmKeyResultUpdateRepository, MikroOrmKeyResultUpdateRepository, ...CommandHandlers]
 })
 export class KeyResultUpdateModule {}

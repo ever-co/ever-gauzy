@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
-import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators, AbstractControl } from '@angular/forms';
 import { IOrganizationDocument, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
@@ -18,14 +18,14 @@ import {
 	PaginationFilterBaseComponent
 } from '@gauzy/ui-core/shared';
 import { ActivatedRoute } from '@angular/router';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-documents',
-    templateUrl: './documents.component.html',
-    styleUrls: ['documents.component.scss'],
-    standalone: false
+	selector: 'ga-documents',
+	templateUrl: './documents.component.html',
+	styleUrls: ['documents.component.scss'],
+	standalone: false
 })
 export class DocumentsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('uploadDoc') uploadDoc: UploadDocumentComponent;
@@ -131,6 +131,10 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 
 	documents(): FormArray {
 		return this.form.get('documents') as FormArray;
+	}
+
+	get documentControls(): AbstractControl[] {
+		return (this.form.get('documents') as FormArray).controls;
 	}
 
 	setView() {

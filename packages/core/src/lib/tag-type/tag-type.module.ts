@@ -7,6 +7,7 @@ import { TagType } from './tag-type.entity';
 import { TagTypeService } from './tag-type.service';
 import { TagTypeController } from './tag-type.controller';
 import { TypeOrmTagTypeRepository } from './repository/type-orm-tag-type.repository';
+import { MikroOrmTagTypeRepository } from './repository/mikro-orm-tag-type.repository';
 
 @Module({
 	imports: [
@@ -16,7 +17,7 @@ import { TypeOrmTagTypeRepository } from './repository/type-orm-tag-type.reposit
 		RolePermissionModule
 	],
 	controllers: [TagTypeController],
-	providers: [TagTypeService, TypeOrmTagTypeRepository],
+	providers: [TagTypeService, TypeOrmTagTypeRepository, MikroOrmTagTypeRepository],
 	exports: [TagTypeService]
 })
 export class TagTypeModule {}

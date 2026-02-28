@@ -7,13 +7,16 @@ import { distinctUntilChanged, map, tap } from 'rxjs';
 import { PluginVersionActions } from '../../+state/actions/plugin-version.action';
 import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 
+import { AsyncPipe } from '@angular/common';
+import { SelectComponent } from '../../../../../../shared/components/ui/select/select.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-version-selector',
-	templateUrl: './version-selector.component.html',
-	styleUrls: ['./version-selector.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-version-selector',
+    templateUrl: './version-selector.component.html',
+    styleUrls: ['./version-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [SelectComponent, AsyncPipe]
 })
 export class VersionSelectorComponent implements OnInit, OnChanges {
 	@ViewChild(NbSelectComponent) select: NbSelectComponent;

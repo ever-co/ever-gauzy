@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Renderer2, Input } from '@angular/core';
+import { Directive, ElementRef, Renderer2, Input, inject } from '@angular/core';
 
 // Interface representing the configuration for text masking
 interface IMaskConfig {
@@ -8,19 +8,20 @@ interface IMaskConfig {
 }
 
 @Directive({
-    selector: '[gaTextMask]',
-    standalone: false
+	selector: '[gaTextMask]',
+	standalone: true
 })
 export class TextMaskDirective {
+	// Constructor to inject dependencies
+	private readonly el = inject(ElementRef);
+	private readonly renderer = inject(Renderer2);
+
 	// Default configuration for text masking
 	private readonly _config: IMaskConfig = {
 		text: '',
 		showOriginal: false,
 		replacement: 0.5
 	};
-
-	// Constructor to inject dependencies
-	constructor(private readonly el: ElementRef, private readonly renderer: Renderer2) {}
 
 	// Apply the configured text mask to the element
 	private applyTextMask(): void {

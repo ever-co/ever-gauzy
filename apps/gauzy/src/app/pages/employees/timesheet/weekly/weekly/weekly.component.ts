@@ -2,8 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { chain, pick } from 'underscore';
 import {
 	DateRangePickerBuilderService,
@@ -30,10 +29,10 @@ interface WeeklyDayData {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-weekly-timesheet',
-    templateUrl: './weekly.component.html',
-    styleUrls: ['./weekly.component.scss'],
-    standalone: false
+	selector: 'ngx-weekly-timesheet',
+	templateUrl: './weekly.component.html',
+	styleUrls: ['./weekly.component.scss'],
+	standalone: false
 })
 export class WeeklyComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;

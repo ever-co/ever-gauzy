@@ -10,6 +10,7 @@ import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmEventTypeRepository } from './repository/type-orm-event-types.repository';
+import { MikroOrmEventTypeRepository } from './repository/mikro-orm-event-type.repository';
 
 @Module({
 	imports: [
@@ -21,6 +22,6 @@ import { TypeOrmEventTypeRepository } from './repository/type-orm-event-types.re
 		CqrsModule
 	],
 	controllers: [EventTypeController],
-	providers: [EventTypeService, TypeOrmEventTypeRepository, ...CommandHandlers]
+	providers: [EventTypeService, TypeOrmEventTypeRepository, MikroOrmEventTypeRepository, ...CommandHandlers]
 })
 export class EventTypeModule {}

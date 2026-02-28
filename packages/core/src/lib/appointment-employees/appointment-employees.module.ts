@@ -6,6 +6,7 @@ import { AppointmentEmployeesController } from './appointment-employees.controll
 import { AppointmentEmployeesService } from './appointment-employees.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmAppointmentEmployeeRepository } from './repository/type-orm-appointment-employee.repository';
+import { MikroOrmAppointmentEmployeeRepository } from './repository/mikro-orm-appointment-employee.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmAppointmentEmployeeRepository } from './repository/type-orm-appo
 		RolePermissionModule
 	],
 	controllers: [AppointmentEmployeesController],
-	providers: [AppointmentEmployeesService, TypeOrmAppointmentEmployeeRepository]
+	providers: [AppointmentEmployeesService, TypeOrmAppointmentEmployeeRepository, MikroOrmAppointmentEmployeeRepository]
 })
 export class AppointmentEmployeesModule {}

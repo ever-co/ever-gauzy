@@ -8,12 +8,13 @@
 		"build": {
 			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
-				"compiler": "tsc",
+				"compiler": "swc",
 				"outputPath": "dist/apps/desktop/desktop-api",
 				"main": "apps/desktop-api/src/main.ts",
+				"maxWorkers": 8,
 				"tsConfig": "apps/desktop-api/tsconfig.app.json",
 				"assets": [
 					"apps/desktop-api/src/assets",
@@ -26,7 +27,11 @@
 				"webpackConfig": "apps/desktop-api/config/custom-webpack.config.js"
 			},
 			"configurations": {
-				"development": {},
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
+				},
 				"production": {
 					"optimization": false,
 					"extractLicenses": true,

@@ -5,24 +5,23 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["contracts", "ui-config", "ui-core"],
 	"targets": {
 		"build": {
-			"executor": "@nx/angular:package",
+			"executor": "@nx/angular:ng-packagr-lite",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
 				"project": "packages/plugins/integration-zapier-ui/ng-package.json",
-				"tsConfig": "packages/plugins/integration-zapier-ui/tsconfig.json"
+				"tsConfig": "packages/plugins/integration-zapier-ui/tsconfig.lib.json"
 			},
 			"configurations": {
 				"production": {
 					"tsConfig": "packages/plugins/integration-zapier-ui/tsconfig.lib.prod.json"
 				},
-				"development": {
-					"tsConfig": "packages/plugins/integration-zapier-ui/tsconfig.lib.json"
-				}
+				"development": {}
 			},
-			"defaultConfiguration": "production"
+			"defaultConfiguration": "production",
+			"dependsOn": ["^build"]
 		},
 		"test": {
 			"executor": "@nx/jest:jest",

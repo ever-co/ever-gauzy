@@ -23,11 +23,10 @@ export const recapRoutes: Routes = [
 	},
 	{
 		path: 'tasks',
-		loadChildren: () =>
-			import('../time-tracker/task-table/task-table.routing.module').then((m) => m.taskTableRoutes)
+		loadChildren: () => import('../time-tracker/task-table/task-table.module').then((m) => m.TaskTableModule)
 	},
 	{
 		path: '**',
-		redirectTo: 'tasks'
+		redirectTo: ''
 	}
 ];

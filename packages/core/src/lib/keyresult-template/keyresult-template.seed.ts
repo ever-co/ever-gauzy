@@ -11,18 +11,12 @@ export const createDefaultKeyResultTemplates = async (
 	tenant: ITenant
 ): Promise<KeyResultTemplate[]> => {
 	const defaultKeyResultTemplates = [];
-	const goalTemplates: GoalTemplate[] = await dataSource.manager.find(
-		GoalTemplate
-	);
-	const goalKPITemplates: GoalKPITemplate[] = await dataSource.manager.find(
-		GoalKPITemplate
-	);
+	const goalTemplates: GoalTemplate[] = await dataSource.manager.find(GoalTemplate);
+	const goalKPITemplates: GoalKPITemplate[] = await dataSource.manager.find(GoalKPITemplate);
 	if (goalTemplates && goalTemplates.length > 0) {
 		goalTemplates.forEach((goal) => {
-			const keyResultsOfGoal = DEFAULT_KEY_RESULT_TEMPLATES.find(
-				(goalData) => goalData.name === goal.name
-			);
-			keyResultsOfGoal.keyResults.forEach(async (keyResultData) => {
+			const keyResultsOfGoal = DEFAULT_KEY_RESULT_TEMPLATES.find((goalData) => goalData.name === goal.name);
+			keyResultsOfGoal.keyResults.forEach((keyResultData) => {
 				const keyResult = new KeyResultTemplate();
 				keyResult.type = keyResultData.type;
 
@@ -31,9 +25,7 @@ export const createDefaultKeyResultTemplates = async (
 					keyResult.targetValue = 1;
 				} else {
 					if (keyResult.type === KeyResultTypeEnum.KPI) {
-						keyResult.kpi = faker.helpers.arrayElement(
-							goalKPITemplates
-						);
+						keyResult.kpi = faker.helpers.arrayElement(goalKPITemplates);
 					}
 					keyResult.initialValue = keyResultData.initialValue;
 					keyResult.targetValue = keyResultData.targetValue;
@@ -48,10 +40,7 @@ export const createDefaultKeyResultTemplates = async (
 			});
 		});
 
-		return await insertDefaultKeyResults(
-			dataSource,
-			defaultKeyResultTemplates
-		);
+		return await insertDefaultKeyResults(dataSource, defaultKeyResultTemplates);
 	}
 };
 

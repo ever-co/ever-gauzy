@@ -10,9 +10,9 @@ import {
 	PluginType
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbRouteTab } from '@nebular/theme';
+import { NbRouteTab, NbCardModule, NbIconModule, NbBadgeModule, NbButtonModule, NbSpinnerModule, NbTooltipModule, NbRouteTabsetModule, NbPopoverModule, NbListModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { combineLatest, Observable, Subject, tap } from 'rxjs';
 import { catchError, filter, map, takeUntil } from 'rxjs/operators';
 import { PluginSubscriptionActions, PluginSubscriptionQuery } from '../+state';
@@ -30,14 +30,20 @@ import { PluginQuery } from '../../+state/plugin.query';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
+import { SubscriptionStatusBadgeComponent } from '../shared/components/subscription-status-badge/subscription-status-badge.component';
+
+
+import { AsyncPipe, PercentPipe, TitleCasePipe } from '@angular/common';
+import { NoDataMessageComponent } from '../../../../../time-tracker/no-data-message/no-data-message.component';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 // Installation and subscription side-effects moved to effects
 
 @Component({
-	selector: 'gauzy-plugin-marketplace-item',
-	templateUrl: './plugin-marketplace-item.component.html',
-	styleUrls: ['./plugin-marketplace-item.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-plugin-marketplace-item',
+    templateUrl: './plugin-marketplace-item.component.html',
+    styleUrls: ['./plugin-marketplace-item.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbCardModule, NbIconModule, NbBadgeModule, SubscriptionStatusBadgeComponent, NbButtonModule, NbSpinnerModule, NoDataMessageComponent, SpinnerButtonDirective, NbTooltipModule, NbRouteTabsetModule, NbPopoverModule, NbListModule, AsyncPipe, PercentPipe, TitleCasePipe, TranslatePipe]
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private readonly destroy$ = new Subject<void>();

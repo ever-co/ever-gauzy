@@ -11,7 +11,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { DesktopDirectiveModule } from '../../directives/desktop-directive.module';
+
 import { PipeModule } from '../pipes/pipe.module';
 import { TaskBadgeDefaultComponent } from './task-badge-default/task-badge-default.component';
 import { TaskBadgeViewComponent } from './task-badge-view/task-badge-view.component';
@@ -25,33 +25,30 @@ import { TaskRenderCellComponent } from './task-render-cell/task-render-cell.com
 import { TaskStatusComponent } from './task-status/task-status.component';
 
 @NgModule({
-	declarations: [
-		TaskProgressComponent,
-		TaskDurationComponent,
-		TaskEstimateComponent,
-		TaskRenderCellComponent,
-		TaskEstimateInputComponent,
-		TaskDueDateComponent,
-		TaskBadgeViewComponent,
-		TaskStatusComponent,
-		TaskBadgeDefaultComponent,
-		TaskDetailComponent
-	],
-	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
-		NbProgressBarModule,
-		NbIconModule,
-		NbTooltipModule,
-		DesktopDirectiveModule,
-		NbButtonModule,
-		TranslateModule,
-		NbPopoverModule,
-		NbBadgeModule,
-		NbCardModule,
-		PipeModule
-	],
-	exports: [TaskBadgeViewComponent]
+    imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    NbProgressBarModule,
+    NbIconModule,
+    NbTooltipModule,
+    NbButtonModule,
+    TranslateModule,
+    NbPopoverModule,
+    NbBadgeModule,
+    NbCardModule,
+    PipeModule,
+    TaskProgressComponent,
+    TaskDurationComponent,
+    TaskEstimateComponent,
+    TaskRenderCellComponent,
+    TaskEstimateInputComponent,
+    TaskDueDateComponent,
+    TaskBadgeViewComponent,
+    TaskStatusComponent,
+    TaskBadgeDefaultComponent,
+    TaskDetailComponent
+],
+    exports: [TaskBadgeViewComponent]
 })
 export class TaskRenderModule {}

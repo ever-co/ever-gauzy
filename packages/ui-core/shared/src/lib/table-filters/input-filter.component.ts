@@ -1,13 +1,13 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs/internal/Subscription';
+import { Subscription } from 'rxjs';
 import { DefaultFilter } from 'angular2-smart-table';
 
 @Component({
-    selector: 'ga-input-filter-selector',
-    template: ` <input [formControl]="inputControl" class="form-control" [placeholder]="column.title" /> `,
-    standalone: false
+	selector: 'ga-input-filter-selector',
+	template: ` <input [formControl]="inputControl" class="form-control" [placeholder]="column.title" /> `,
+	standalone: false
 })
 export class InputFilterComponent extends DefaultFilter implements OnInit, OnDestroy, OnChanges {
 	public inputControl = new FormControl();

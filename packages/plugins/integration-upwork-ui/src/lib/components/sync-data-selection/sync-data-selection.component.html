@@ -1,75 +1,57 @@
 <nb-card class="sync-data-selection">
-  <nb-card-header>
-    {{ 'INTEGRATIONS.SETTINGS' | translate }}
-  </nb-card-header>
-  <nb-card-body>
-    @if (contractsSettings$ | async; as contractsSettings) {
-      <div
-        class="switcher-wrapper"
-        >
-        @for (entity of contractsSettings.entitiesToSync; track entity) {
-          <nb-toggle
-            [(checked)]="entity.sync"
-            labelPosition="start"
-            status="basic"
-            [disabled]="contractsSettings.onlyContracts"
-            >
-            {{ entity.name }}
-          </nb-toggle>
-          @if (entity.datePicker) {
-            <div class="datepicker">
-              <ga-employee-selector
-                [skipGlobalChange]="true"
-                [showAllEmployeesOption]="false"
-                (selectionChanged)="setSelectedEmployee($event)"
-                class="employee-selector"
-              ></ga-employee-selector>
-              <div class="datepicker-wrapper">
-                <label for="dueDate" class="label">
-                  {{
-                  'INTEGRATIONS.UPWORK_PAGE.SELECT_DATE'
-                  | translate
-                  }}
-                </label>
-                <input
-                  type="text"
-                  nbInput
-							placeholder="{{
-								'INTEGRATIONS.UPWORK_PAGE.SELECT_DATE'
-									| translate
-							}}"
-                  [nbDatepicker]="taskDueDatePicker"
-                  [(ngModel)]="entity.datePicker.selectedDate"
-                  fullWidth
-                  [disabled]="contractsSettings.onlyContracts"
-                  />
-                  <nb-datepicker
-                    #taskDueDatePicker
-                    [max]="entity.datePicker.max"
-                  ></nb-datepicker>
-                </div>
-              </div>
-            }
-          }
-          <nb-checkbox
-            class="only-contracts"
-            [(checked)]="contractsSettings.onlyContracts"
-            ><strong>
-            {{
-            'INTEGRATIONS.UPWORK_PAGE.ONLY_CONTRACTS' | translate
-            }}</strong
-            ></nb-checkbox
-            >
-          </div>
-        }
-      </nb-card-body>
+	<nb-card-header>
+		{{ 'INTEGRATIONS.SETTINGS' | translate }}
+	</nb-card-header>
+	<nb-card-body>
+		@if (contractsSettings$ | async; as contractsSettings) {
+			<div class="switcher-wrapper">
+				@for (entity of contractsSettings.entitiesToSync; track entity) {
+					<nb-toggle
+						[(checked)]="entity.sync"
+						labelPosition="start"
+						status="basic"
+						[disabled]="contractsSettings.onlyContracts"
+					>
+						{{ entity.name }}
+					</nb-toggle>
+					@if (entity.datePicker) {
+						<div class="datepicker">
+							<ga-employee-selector
+								[skipGlobalChange]="true"
+								[showAllEmployeesOption]="false"
+								(selectionChanged)="setSelectedEmployee($event)"
+								class="employee-selector"
+							></ga-employee-selector>
+							<div class="datepicker-wrapper">
+								<label for="dueDate" class="label">
+									{{ 'INTEGRATIONS.UPWORK_PAGE.SELECT_DATE' | translate }}
+								</label>
+								<input
+									type="text"
+									nbInput
+									placeholder="{{ 'INTEGRATIONS.UPWORK_PAGE.SELECT_DATE' | translate }}"
+									[nbDatepicker]="taskDueDatePicker"
+									[(ngModel)]="entity.datePicker.selectedDate"
+									fullWidth
+									[disabled]="contractsSettings.onlyContracts"
+								/>
+								<nb-datepicker #taskDueDatePicker [max]="entity.datePicker.max"></nb-datepicker>
+							</div>
+						</div>
+					}
+				}
+				<nb-checkbox class="only-contracts" [(checked)]="contractsSettings.onlyContracts"
+					><strong> {{ 'INTEGRATIONS.UPWORK_PAGE.ONLY_CONTRACTS' | translate }}</strong></nb-checkbox
+				>
+			</div>
+		}
+	</nb-card-body>
 
-      <nb-card-footer>
-        <div class="dialog-footer">
-          <button nbButton (click)="syncData()" status="primary" class="mr-2">
-            <nb-icon class="mr-1" icon="edit-outline"></nb-icon
-              >{{ 'BUTTONS.SYNC' | translate }}
-            </button>
-          </div>
-        </nb-card-footer>
-      </nb-card>
+	<nb-card-footer>
+		<div class="dialog-footer">
+			<button nbButton (click)="syncData()" status="primary" class="mr-2">
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'BUTTONS.SYNC' | translate }}
+			</button>
+		</div>
+	</nb-card-footer>
+</nb-card>

@@ -11,8 +11,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { pluck } from 'underscore';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import {
@@ -26,10 +25,10 @@ import { DateRangePickerBuilderService, PaymentService, Store, TimesheetFilterSe
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-payment-report',
-    templateUrl: './payment-report.component.html',
-    styleUrls: ['./payment-report.component.scss'],
-    standalone: false
+	selector: 'ga-payment-report',
+	templateUrl: './payment-report.component.html',
+	styleUrls: ['./payment-report.component.scss'],
+	standalone: false
 })
 export class PaymentReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: IGetPaymentInput;

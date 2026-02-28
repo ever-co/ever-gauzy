@@ -12,7 +12,9 @@
 		"paths": {
 			"@gauzy/ui-core/*": ["./*/src/index.ts"],
 			"@gauzy/ui-config": ["./../../dist/packages/ui-config"]
-		}
+		},
+		"module": "preserve",
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],
@@ -24,7 +26,7 @@
 			"path": "./tsconfig.spec.json"
 		}
 	],
-	"extends": "../../tsconfig.base.json",
+	"extends": "../../tsconfig.json",
 	"angularCompilerOptions": {
 		"enableI18nLegacyMessageIdFormat": false,
 		"strictInjectionParameters": false,

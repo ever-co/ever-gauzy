@@ -31,7 +31,7 @@ import {
 	NbRouteTabsetModule,
 	NbDialogModule
 } from '@nebular/theme';
-import { NbTablerIconsModule } from '@gauzy/ui-core/theme';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import { AgentDashboardComponent } from './agent-dashboard.component';
 import { LogsPageComponent } from './logs/logs.component';
 import { SyncPageComponent } from './activity-sync/activity-sync.component';
@@ -42,13 +42,6 @@ import { StatusBadgeComponent } from './activity-sync/activity-render/status-ren
 import { ActivitySyncDetailModalComponent } from './activity-sync/activity-sync-detail-modal/activity-sync-detail-modal.component';
 
 @NgModule({
-	declarations: [
-		AgentDashboardComponent,
-		LogsPageComponent,
-		SyncPageComponent,
-		StatusBadgeComponent,
-		ActivitySyncDetailModalComponent
-	],
 	imports: [
 		CommonModule,
 		BrowserModule,
@@ -61,7 +54,7 @@ import { ActivitySyncDetailModalComponent } from './activity-sync/activity-sync-
 		NbSidebarModule.forRoot(),
 		NbMenuModule,
 		NbIconModule,
-		NbTablerIconsModule,
+		TablerIconsModule,
 		NbButtonModule,
 		NbCardModule,
 		NbActionsModule,
@@ -83,7 +76,12 @@ import { ActivitySyncDetailModalComponent } from './activity-sync/activity-sync-
 		NbRouteTabsetModule,
 		NbDialogModule.forChild(),
 		TasksModule,
-		Angular2SmartTableModule
+		Angular2SmartTableModule,
+		AgentDashboardComponent,
+		LogsPageComponent,
+		SyncPageComponent,
+		StatusBadgeComponent,
+		ActivitySyncDetailModalComponent
 	],
 	exports: [FilterStatusPipe, LocalDateParse]
 })

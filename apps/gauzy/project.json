@@ -50,11 +50,7 @@
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": [
-					"node_modules/echarts/dist/echarts.min.js",
-					"node_modules/echarts/dist/extension/bmap.min.js",
-					"node_modules/chart.js/dist/chart.js"
-				],
+				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
 					"@gauzy/contracts",
 					"@gauzy/ui-config",
@@ -62,7 +58,9 @@
 					"brace/mode/handlebars",
 					"camelcase",
 					"dayjs",
+					"deepmerge",
 					"file-saver",
+					"jalaali-js",
 					"leaflet",
 					"localforage",
 					"mobx",
@@ -98,13 +96,13 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "20mb",
-							"maximumError": "40mb"
+							"maximumWarning": "100mb",
+							"maximumError": "150mb"
 						},
 						{
 							"type": "anyComponentStyle",
-							"maximumWarning": "100kb",
-							"maximumError": "1mb"
+							"maximumWarning": "1000kb",
+							"maximumError": "2000kb"
 						}
 					]
 				},
@@ -119,8 +117,8 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "20mb",
-							"maximumError": "40mb"
+							"maximumWarning": "100mb",
+							"maximumError": "150mb"
 						},
 						{
 							"type": "anyComponentStyle",
@@ -169,7 +167,7 @@
 		"desktop-ui": {
 			"executor": "@angular-builders/custom-webpack:browser",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"customWebpackConfig": {
 					"path": "apps/desktop/config/custom-webpack.config.js"
@@ -200,7 +198,7 @@
 					}
 				],
 				"styles": [
-					"apps/desktop/src/styles.css",
+					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
 					"node_modules/typeface-exo/index.css",
 					"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
@@ -212,11 +210,7 @@
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": [
-					"node_modules/echarts/dist/echarts.min.js",
-					"node_modules/echarts/dist/extension/bmap.min.js",
-					"node_modules/chart.js/dist/chart.js"
-				],
+				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
 					"@gauzy/contracts",
 					"@gauzy/ui-config",
@@ -224,7 +218,9 @@
 					"brace/mode/handlebars",
 					"camelcase",
 					"dayjs",
+					"deepmerge",
 					"file-saver",
+					"jalaali-js",
 					"leaflet",
 					"localforage",
 					"mobx",
@@ -239,6 +235,21 @@
 				]
 			},
 			"configurations": {
+				"development": {
+					"optimization": false,
+					"sourceMap": true,
+					"namedChunks": true,
+					"extractLicenses": false,
+					"vendorChunk": true,
+					"buildOptimizer": false,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "100mb",
+							"maximumError": "150mb"
+						}
+					]
+				},
 				"production": {
 					"fileReplacements": [
 						{
@@ -263,8 +274,8 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "20mb",
-							"maximumError": "40mb"
+							"maximumWarning": "100mb",
+							"maximumError": "150mb"
 						}
 					]
 				}
@@ -273,7 +284,7 @@
 		"server-ui": {
 			"executor": "@angular-builders/custom-webpack:browser",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"customWebpackConfig": {
 					"path": "apps/gauzy/config/custom-webpack.config.js"
@@ -309,11 +320,7 @@
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": [
-					"node_modules/echarts/dist/echarts.min.js",
-					"node_modules/echarts/dist/extension/bmap.min.js",
-					"node_modules/chart.js/dist/chart.js"
-				],
+				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
 					"@gauzy/contracts",
 					"@gauzy/ui-config",
@@ -321,7 +328,9 @@
 					"brace/mode/handlebars",
 					"camelcase",
 					"dayjs",
+					"deepmerge",
 					"file-saver",
+					"jalaali-js",
 					"leaflet",
 					"localforage",
 					"mobx",
@@ -335,6 +344,21 @@
 				]
 			},
 			"configurations": {
+				"development": {
+					"optimization": false,
+					"sourceMap": true,
+					"namedChunks": true,
+					"extractLicenses": false,
+					"vendorChunk": true,
+					"buildOptimizer": false,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "100mb",
+							"maximumError": "150mb"
+						}
+					]
+				},
 				"production": {
 					"fileReplacements": [
 						{
@@ -355,8 +379,8 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "20mb",
-							"maximumError": "40mb"
+							"maximumWarning": "100mb",
+							"maximumError": "150mb"
 						}
 					]
 				}

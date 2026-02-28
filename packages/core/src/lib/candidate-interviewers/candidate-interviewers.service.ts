@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ICandidateInterviewersDeleteInput, ICandidateInterviewersCreateInput, ID } from '@gauzy/contracts';
+import { ICandidateInterviewersCreateInput, ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { IPartialEntity } from './../core/crud/icrud.service';
 import { TypeOrmCandidateInterviewersRepository } from './repository/type-orm-candidate-interviewers.repository';
 import { MikroOrmCandidateInterviewersRepository } from './repository/mikro-orm-candidate-interviewers.repository';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
@@ -15,48 +16,44 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 	}
 
 	/**
-	 *
-	 * @param interviewId
-	 * @returns
+	 * Get interviewers by interview ID.
 	 */
 	async getInterviewersByInterviewId(interviewId: ID): Promise<CandidateInterviewers[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('candidate_interviewer')
-			.where('candidate_interviewer.interviewId = :interviewId', {
-				interviewId
-			})
-			.getMany();
+		return await this.find({
+			where: { interviewId }
+		});
 	}
 
 	/**
-	 *
-	 * @param employeeId
-	 * @returns
+	 * Create interviewers in bulk.
 	 */
-	async getInterviewersByEmployeeId(employeeId: ICandidateInterviewersDeleteInput): Promise<any> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('candidate_interviewer')
-			.where('candidate_interviewer.employeeId = :employeeId', {
-				employeeId
-			})
-			.getMany();
-	}
+	async createBulk(input: ICandidateInterviewersCreateInput[] = []): Promise<CandidateInterviewers[]> {
+		if (!input.length) {
+			return [];
+		}
 
-	/**
-	 *
-	 * @param ids
-	 * @returns
-	 */
-	async deleteBulk(ids: string[]) {
-		return await this.typeOrmRepository.delete(ids);
-	}
+		const interviewers: IPartialEntity<CandidateInterviewers>[] = input.flatMap(
+			({ employeeId, employeeIds, ...rest }) => {
+				if (employeeIds?.length) {
+					return employeeIds.map((id) => ({
+						...rest,
+						employeeId: id
+					}));
+				}
 
-	/**
-	 *
-	 * @param createInput
-	 * @returns
-	 */
-	async createBulk(createInput: ICandidateInterviewersCreateInput[]) {
-		return await this.typeOrmRepository.save(createInput);
+				if (employeeId) {
+					return [
+						{
+							...rest,
+							employeeId
+						}
+					];
+				}
+
+				return [];
+			}
+		);
+
+		return interviewers.length ? this.saveMany(interviewers) : [];
 	}
 }

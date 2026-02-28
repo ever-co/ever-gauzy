@@ -21,6 +21,8 @@ export interface SentryCloseOptions {
 
 /**
  * Sentry module options.
+ * Note: We override 'integrations' to only accept an array, not a function,
+ * for simpler handling in our plugin.
  */
 export type SentryModuleOptions = Omit<Options, 'integrations'> & {
 	/**

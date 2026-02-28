@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ComponentLayoutStyleEnum, IOrganization, ITimeOffPolicy, PermissionsEnum } from '@gauzy/contracts';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { Subject } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,10 +20,10 @@ import { PaidIcon, RequestApprovalIcon } from '../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-time-off-policy-list',
-    templateUrl: './time-off-settings.component.html',
-    styleUrls: ['./time-off-settings.component.scss'],
-    standalone: false
+	selector: 'ga-time-off-policy-list',
+	templateUrl: './time-off-settings.component.html',
+	styleUrls: ['./time-off-settings.component.scss'],
+	standalone: false
 })
 export class TimeOffSettingsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public smartTableSettings: object;

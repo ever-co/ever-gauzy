@@ -20,7 +20,7 @@ export class CandidatePersonalQualitiesService extends TenantAwareCrudService<Ca
 	 * @returns
 	 */
 	async createBulk(createInput: ICandidatePersonalQualitiesCreateInput[]) {
-		return await this.typeOrmRepository.save(createInput);
+		return await this.saveMany(createInput);
 	}
 
 	/**
@@ -35,14 +35,5 @@ export class CandidatePersonalQualitiesService extends TenantAwareCrudService<Ca
 				interviewId
 			})
 			.getMany();
-	}
-
-	/**
-	 *
-	 * @param ids
-	 * @returns
-	 */
-	async deleteBulk(ids: string[]) {
-		return await this.typeOrmRepository.delete(ids);
 	}
 }

@@ -1,12 +1,4 @@
-import {
-	Directive,
-	ComponentRef,
-	HostListener,
-	Input,
-	ElementRef,
-	OnDestroy,
-	OnInit
-} from '@angular/core';
+import { Directive, ComponentRef, HostListener, Input, ElementRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { sortBy } from 'underscore';
 import { IEmployee, IScreenshot } from '@gauzy/contracts';
@@ -24,10 +16,14 @@ export interface GalleryItem {
 }
 
 @Directive({
-    selector: '[ngxGallery]',
-    standalone: false
+	selector: '[ngxGallery]',
+	standalone: true
 })
 export class GalleryDirective implements OnDestroy, OnInit {
+	private readonly el = inject(ElementRef);
+	private readonly nbDialogService = inject(NbDialogService);
+	private readonly galleryService = inject(GalleryService);
+
 	public disableClick: boolean = false;
 	public dialogRef: ComponentRef<GalleryComponent>;
 
@@ -45,12 +41,6 @@ export class GalleryDirective implements OnDestroy, OnInit {
 			this.el.nativeElement.classList.remove('disabled');
 		}
 	}
-
-	constructor(
-		private readonly el: ElementRef,
-		private readonly nbDialogService: NbDialogService,
-		private readonly galleryService: GalleryService
-	) { }
 
 	/**
 	 * Host listener for click events
@@ -87,5 +77,5 @@ export class GalleryDirective implements OnDestroy, OnInit {
 		this.galleryService.appendItems(this.items);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

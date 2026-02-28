@@ -1,13 +1,14 @@
 import { CurrencyPipe } from '@angular/common';
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { CurrenciesEnum } from '@gauzy/contracts';
 
 @Pipe({
-    name: 'budget',
-    standalone: false
+	name: 'budget',
+	standalone: true
 })
 export class JobBudgetPipe implements PipeTransform {
-	constructor(private readonly currencyPipe: CurrencyPipe) {}
+	private readonly currencyPipe = inject(CurrencyPipe);
+
 	/**
 	 * Convert string to currency format
 	 *
