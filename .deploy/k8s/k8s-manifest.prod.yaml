@@ -100,8 +100,6 @@ spec:
                       allowPrivilegeEscalation: false
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
-                      capabilities:
-                          drop: ['ALL']
                   image: registry.digitalocean.com/ever/gauzy-api:latest
                   resources:
                       requests:
@@ -352,8 +350,6 @@ spec:
                       allowPrivilegeEscalation: false
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
-                      capabilities:
-                          drop: ['ALL']
                   image: registry.digitalocean.com/ever/gauzy-webapp:latest
                   env:
                       - name: DEMO

@@ -37,8 +37,6 @@ spec:
                       allowPrivilegeEscalation: false
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
-                      capabilities:
-                          drop: ['ALL']
                   image: registry.digitalocean.com/ever/gauzy-mcp-auth-demo:latest
                   env:
                       - name: DB_URI

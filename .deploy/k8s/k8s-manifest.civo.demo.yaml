@@ -48,8 +48,6 @@ spec:
                       allowPrivilegeEscalation: false
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
-                      capabilities:
-                          drop: ["ALL"]
                   image: ghcr.io/ever-co/gauzy-api-demo:latest
                   env:
                       - name: API_HOST
@@ -121,8 +119,6 @@ spec:
                       allowPrivilegeEscalation: false
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
-                      capabilities:
-                          drop: ["ALL"]
                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest
                   env:
                       - name: DEMO
