@@ -109,7 +109,7 @@ export class ReactBridge extends UiBridge {
 			}
 		}
 
-		if (typeof component === 'object' && component !== null) {
+		if (typeof component === 'object') {
 			if ('$$typeof' in component) {
 				return true;
 			}
