@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, } from '@nestjs/common';
 import { IOrganization, IReport, UpdateReportMenuInput } from '@gauzy/contracts';
-import { MultiORMEnum, TenantAwareCrudService } from '@gauzy/core';
+import { MultiORMEnum } from './../core/utils';
+import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { ReportOrganization } from './report-organization.entity';
 import { TypeOrmReportRepository } from './repository/type-orm-report.repository';

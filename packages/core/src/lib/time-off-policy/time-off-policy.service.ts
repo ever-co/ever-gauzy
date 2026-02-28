@@ -1,7 +1,8 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ID, ITimeOffPolicyCreateInput, ITimeOffPolicyUpdateInput } from '@gauzy/contracts';
-import { MultiORMEnum, TenantAwareCrudService } from '@gauzy/core';
+import { MultiORMEnum } from './../core/utils';
+import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
