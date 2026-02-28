@@ -39,8 +39,8 @@ spec:
                 - name: gauzy-prod-mcp
                   securityContext:
                       allowPrivilegeEscalation: false
-                      readOnlyRootFilesystem: true
-                      runAsNonRoot: true
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
                       capabilities:
                           drop: ['ALL']
                   image: registry.digitalocean.com/ever/gauzy-mcp:latest

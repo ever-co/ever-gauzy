@@ -46,8 +46,8 @@ spec:
                 - name: gauzy-demo-api
                   securityContext:
                       allowPrivilegeEscalation: false
-                      readOnlyRootFilesystem: true
-                      runAsNonRoot: true
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
                       capabilities:
                           drop: ["ALL"]
                   image: ghcr.io/ever-co/gauzy-api-demo:latest
@@ -119,8 +119,8 @@ spec:
                 - name: gauzy-demo-webapp
                   securityContext:
                       allowPrivilegeEscalation: false
-                      readOnlyRootFilesystem: true
-                      runAsNonRoot: true
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
                       capabilities:
                           drop: ["ALL"]
                   image: ghcr.io/ever-co/gauzy-webapp-demo:latest

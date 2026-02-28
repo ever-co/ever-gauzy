@@ -98,8 +98,8 @@ spec:
                 - name: gauzy-prod-api
                   securityContext:
                       allowPrivilegeEscalation: false
-                      readOnlyRootFilesystem: true
-                      runAsNonRoot: true
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
                       capabilities:
                           drop: ['ALL']
                   image: registry.digitalocean.com/ever/gauzy-api:latest
@@ -350,8 +350,8 @@ spec:
                 - name: gauzy-prod-webapp
                   securityContext:
                       allowPrivilegeEscalation: false
-                      readOnlyRootFilesystem: true
-                      runAsNonRoot: true
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
                       capabilities:
                           drop: ['ALL']
                   image: registry.digitalocean.com/ever/gauzy-webapp:latest

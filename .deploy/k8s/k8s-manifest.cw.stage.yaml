@@ -72,8 +72,8 @@ spec:
                 - name: gauzy-stage-api
                   securityContext:
                       allowPrivilegeEscalation: false
-                      readOnlyRootFilesystem: true
-                      runAsNonRoot: true
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
                       capabilities:
                           drop: ['ALL']
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-api-stage:latest
@@ -346,8 +346,8 @@ spec:
                 - name: gauzy-stage-webapp
                   securityContext:
                       allowPrivilegeEscalation: false
-                      readOnlyRootFilesystem: true
-                      runAsNonRoot: true
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
                       capabilities:
                           drop: ['ALL']
                   image: ever-registry.tenant-acb888-ever.ord1.ingress.coreweave.cloud/ever-co/gauzy-webapp-stage:latest
