@@ -10,7 +10,7 @@
     background: nb-theme(gauzy-card-2);
     border-radius: nb-theme(border-radius);
     box-sizing: border-box;
-    padding: 30px;
+    padding: 20px 30px;
     width: 476px;
     height: 100%;
     & > * {
@@ -22,7 +22,7 @@
       justify-content: space-between;
 
       & .ever-logo-svg {
-        margin-bottom: 57px;
+        margin-bottom: 40px;
       }
     }
     & .headings {
@@ -143,7 +143,9 @@
         letter-spacing: normal;
         border-radius: 8px;
         min-height: 48px;
-        transition: background-color 0.2s, border-color 0.2s;
+        transition:
+          background-color 0.2s,
+          border-color 0.2s;
         // Disabled/Submitting state: Different for light vs dark theme (MUST BE FIRST)
         &[disabled],
         &.btn-pulse {
@@ -417,8 +419,59 @@
   }
 }
 
+// Compact layout for short viewport heights (e.g. MacBook 14" ~980px, standard laptops ~768px)
+@media screen and (max-height: 980px) and (min-width: 491px) {
+  .login-container {
+    & .login-wrapper {
+      padding: 20px 30px;
+      & .svg-wrapper {
+        & .ever-logo-svg {
+          margin-bottom: 40px;
+        }
+      }
+      & .headings {
+        & .headings-inner {
+          & .title {
+            margin-bottom: 15px;
+          }
+          & .sub-title {
+            margin-bottom: 12px;
+          }
+        }
+      }
+    }
+    & .another-action {
+      margin-top: 4px;
+    }
+  }
+}
+
+// Extra compact for very short viewports (e.g. 768px-height laptops)
+@media (max-height: 700px) {
+  .login-container {
+    & .login-wrapper {
+      padding: 20px 30px;
+      & .svg-wrapper {
+        & .ever-logo-svg {
+          margin-bottom: 40px;
+        }
+      }
+      & .headings {
+        & .headings-inner {
+          & .title {
+            margin-bottom: 6px;
+          }
+          & .sub-title {
+            margin-bottom: 8px;
+          }
+        }
+      }
+    }
+  }
+}
+
 .hr-div-soft {
-  margin-bottom: 12px;
+  margin-bottom: 2px;
   @include hr-div-soft;
 }
 .theme-switch {

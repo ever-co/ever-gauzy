@@ -98,7 +98,9 @@
       letter-spacing: normal;
       border-radius: 8px;
       line-height: 20px;
-      transition: background-color 0.2s, border-color 0.2s;
+      transition:
+        background-color 0.2s,
+        border-color 0.2s;
       // Disabled/Submitting state (MUST BE FIRST)
       &[disabled],
       &.btn-pulse {
@@ -218,17 +220,51 @@
     }
   }
   .svg-wrapper {
-    margin-bottom: 30px;
+    margin-bottom: 40px;
   }
   .form {
-    margin-bottom: 25px;
+    margin-top: 12px;
+    margin-bottom: 16px;
+    & .form-control-group {
+      margin-bottom: 10px;
+    }
     & .accept-group {
-      margin-top: 15px;
+      margin-top: 10px;
     }
   }
   .links {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+}
+
+// Compact layout for short viewport heights (e.g. 768px-height laptops)
+@media screen and (max-height: 980px) and (min-width: 491px) {
+  .register-wrapper {
+    padding: 20px 30px;
+    & .title-wrapper {
+      margin-bottom: 12px;
+    }
+    & .another-action {
+      margin-top: 4px;
+    }
+  }
+  .svg-wrapper {
+    margin-bottom: 30px;
+  }
+  .form {
+    margin-top: 12px;
+    margin-bottom: 16px;
+    & .form-control-group {
+      margin-bottom: 10px;
+    }
+    & .accept-group {
+      margin: 0 0 10px 0;
+    }
+  }
+  .links {
+    margin-top: 8px;
+    margin-bottom: 8px;
   }
 }
 
