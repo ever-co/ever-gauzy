@@ -237,10 +237,32 @@
     margin-top: 8px;
     margin-bottom: 8px;
   }
+
+  // Further compact for short viewports within the small-laptop width range
+  // (491–1024px wide, height <1080px) — deterministic: no conflict with the
+  // wide-screen height query below.
+  @media screen and (max-height: 1080px) {
+    .register-wrapper {
+      & .title-wrapper {
+        margin-bottom: 8px;
+      }
+      & .another-action {
+        margin-top: 4px;
+      }
+    }
+    .svg-wrapper {
+      margin-bottom: 16px;
+    }
+    .form {
+      & .accept-group {
+        margin: 0 0 8px 0;
+      }
+    }
+  }
 }
 
-// Compact layout for short viewport heights (e.g. 768px-height laptops)
-@media screen and (max-height: 1080px) and (min-width: 491px) {
+// Compact layout for short viewport heights on wider screens (>1024px wide)
+@media screen and (max-height: 1080px) and (min-width: 1025px) {
   .register-wrapper {
     padding: 16px 24px;
     & .title-wrapper {
