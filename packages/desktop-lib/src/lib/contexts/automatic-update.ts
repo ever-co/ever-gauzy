@@ -38,7 +38,7 @@ export class AutomaticUpdate {
 			try {
 				await this._context.checkUpdate();
 			} catch (e) {
-				this._window.webContents.send('setting_page_ipc', {
+				this._window?.webContents?.send('setting_page_ipc', {
 					type: 'error_update',
 					data: e
 				});
@@ -64,9 +64,7 @@ export class AutomaticUpdate {
 	 */
 	public get delay(): number {
 		const setting = LocalStore.getStore('appSetting');
-		this._delay = setting?.automaticUpdateDelay
-			? setting?.automaticUpdateDelay
-			: 1;
+		this._delay = setting?.automaticUpdateDelay ? setting?.automaticUpdateDelay : 1;
 		return moment.duration(this._delay, 'hours').asMilliseconds();
 	}
 

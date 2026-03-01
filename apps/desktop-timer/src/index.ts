@@ -62,30 +62,23 @@ import {
 import { DesktopSetupConfig } from '@gauzy/contracts';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
+import { Knex } from 'knex';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop-timer
 
-process.env.GAUZY_USER_PATH = app.getPath('userData');
-log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
-
-const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
-log.info(`Sqlite DB path: ${sqlite3filename}`);
-
-const provider = ProviderFactory.instance;
-const knex = provider.connection;
+// Deferred until app.ready — app.getPath('userData'), native DB modules (better-sqlite3),
+// and DesktopUpdater ipcMain registration must not run before Electron is fully initialized.
+let provider: ProviderFactory;
+let knex: Knex;
+let updater: DesktopUpdater;
+let report: ErrorReport;
 
 const exeName = path.basename(process.execPath);
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 const args = process.argv.slice(1);
 const serverGauzy = null;
-const updater = new DesktopUpdater({
-	repository: process.env.REPO_NAME,
-	owner: process.env.REPO_OWNER,
-	typeRelease: 'releases'
-});
-const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
 const eventErrorManager = ErrorEventManager.instance;
 args.some((val) => val === '--serve');
 
@@ -229,11 +222,7 @@ function initializeAppManager() {
 	appWindowManager.preloadPath = pathWindow.preloadPath;
 }
 
-function setGlobalVariable(configs: {
-	isLocalServer?: boolean;
-	serverUrl?: string;
-	port?: string;
-}) {
+function setGlobalVariable(configs: { isLocalServer?: boolean; serverUrl?: string; port?: string }) {
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
 		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
@@ -321,10 +310,7 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 	return true;
 }
 
-const getApiBaseUrl = (configs: {
-	serverUrl?: string;
-	port?: string;
-}) => {
+const getApiBaseUrl = (configs: { serverUrl?: string; port?: string }) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
 		return configs.port ? `http://localhost:${configs.port}` : `http://localhost:${environment.API_DEFAULT_PORT}`;
@@ -408,6 +394,22 @@ async function setupUpdater() {
 
 app.on('ready', async () => {
 	initializeAppManager();
+
+	// Initialize DB and updater here — safe after app.ready
+	process.env.GAUZY_USER_PATH = app.getPath('userData');
+	log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
+	log.info(`Sqlite DB path: ${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`);
+
+	provider = ProviderFactory.instance;
+	knex = provider.connection;
+
+	updater = new DesktopUpdater({
+		repository: process.env.REPO_NAME,
+		owner: process.env.REPO_OWNER,
+		typeRelease: 'releases'
+	});
+	report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
+
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 

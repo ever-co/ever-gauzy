@@ -81,6 +81,3 @@ export class ActivityWatchEventManager {
 		ipcMain.on(ActivityWatchMainEvent.PUSH_EDGE, listener);
 	}
 }
-
-// Singleton Initialization
-ActivityWatchEventManager.instance;

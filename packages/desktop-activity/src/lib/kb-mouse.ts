@@ -1,5 +1,7 @@
 import { EventEmitter } from 'node:events';
-import { uIOhook, UiohookKeyboardEvent, UiohookMouseEvent, UiohookWheelEvent } from 'uiohook-napi';
+
+// Type-only imports — these do NOT load the native binary at parse time.
+import type { UiohookKeyboardEvent, UiohookMouseEvent, UiohookWheelEvent } from 'uiohook-napi';
 
 type KeyboardMouseEvent = {
 	keydown: (event: UiohookKeyboardEvent) => void;
@@ -10,11 +12,18 @@ type KeyboardMouseEvent = {
 	mouseup: (event: UiohookMouseEvent) => void;
 	mousedown: (event: UiohookMouseEvent) => void;
 	mousemove: (event: UiohookMouseEvent) => void;
+};
+
+type EventNames = keyof KeyboardMouseEvent;
+
+// Lazy accessor — the native .node binary is loaded only when KeyboardMouse is
+// first instantiated (i.e. after app.ready), not at module parse time.
+function getUIOhook() {
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	return require('uiohook-napi').uIOhook as { on: Function; start: Function; stop: Function };
 }
 
-type EventNames =  keyof KeyboardMouseEvent;
-
-export default class KeyboardMouse extends EventEmitter  {
+export default class KeyboardMouse extends EventEmitter {
 	private handleKeydown: (event: UiohookKeyboardEvent) => void;
 	private handleInput: (event: UiohookKeyboardEvent) => void;
 	private handleKeyup: (event: UiohookKeyboardEvent) => void;
@@ -23,8 +32,10 @@ export default class KeyboardMouse extends EventEmitter  {
 	private handleMouseup: (event: UiohookMouseEvent) => void;
 	private handleMousedown: (event: UiohookMouseEvent) => void;
 	private handleMousemove: (event: UiohookMouseEvent) => void;
+
 	constructor() {
 		super();
+		const uIOhook = getUIOhook();
 		this.handleKeydown = (event: UiohookKeyboardEvent) => this.emit('keydown', event);
 		this.handleInput = (event: UiohookKeyboardEvent) => this.emit('input', event);
 		this.handleKeyup = (event: UiohookKeyboardEvent) => this.emit('keyup', event);
@@ -45,15 +56,14 @@ export default class KeyboardMouse extends EventEmitter  {
 	}
 
 	start(): void {
-		uIOhook.start();
+		getUIOhook().start();
 	}
 
 	stop(): void {
-		uIOhook.stop();
+		getUIOhook().stop();
 	}
 
 	override on<K extends EventNames>(event: K, listener: KeyboardMouseEvent[K]): this {
 		return super.on(event, listener);
 	}
 }
-

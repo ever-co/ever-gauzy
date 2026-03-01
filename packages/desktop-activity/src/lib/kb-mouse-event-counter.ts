@@ -1,6 +1,7 @@
 import KeyboardMouse from './kb-mouse';
 import { KeyboardMouseActivityStores } from './kb-mouse-activity-stores';
-import { UiohookMouseEvent, UiohookWheelEvent } from 'uiohook-napi';
+// Type-only import — does NOT load the native binary at parse time
+import type { UiohookMouseEvent, UiohookWheelEvent } from 'uiohook-napi';
 import { debounce } from 'underscore';
 import { KbMouseTimer } from './kb-mouse-timer';
 
