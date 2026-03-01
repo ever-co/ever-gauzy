@@ -860,7 +860,9 @@
 		"threadpool",
 		"THREADPOOL",
 		"EMFILE",
-		"gracefulify"
+		"gracefulify",
+		"viewports",
+		"sidemenu"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
