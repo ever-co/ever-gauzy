@@ -213,13 +213,14 @@
 
 @include small-laptop-screen {
   .register-wrapper {
-    padding: 20px 30px;
+    padding: 16px 24px;
     & .another-action {
       margin-top: 0;
       padding-left: 10px;
     }
   }
   .svg-wrapper {
+    padding-top: 8px;
     margin-bottom: 32px;
   }
   .form {
@@ -239,9 +240,9 @@
 }
 
 // Compact layout for short viewport heights (e.g. 768px-height laptops)
-@media screen and (max-height: 980px) and (min-width: 491px) {
+@media screen and (max-height: 1080px) and (min-width: 491px) {
   .register-wrapper {
-    padding: 20px 30px;
+    padding: 16px 24px;
     & .title-wrapper {
       margin-bottom: 8px;
     }
@@ -250,7 +251,8 @@
     }
   }
   .svg-wrapper {
-    margin-bottom: 32px;
+    padding-top: 8px;
+    margin-bottom: 16px;
   }
   .form {
     margin-top: 16px;
