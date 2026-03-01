@@ -10,7 +10,7 @@
     background: nb-theme(gauzy-card-2);
     border-radius: nb-theme(border-radius);
     box-sizing: border-box;
-    padding: 20px 30px;
+    padding: 24px 32px;
     width: 476px;
     height: 100%;
     & > * {
@@ -22,7 +22,7 @@
       justify-content: space-between;
 
       & .ever-logo-svg {
-        margin-bottom: 40px;
+        margin-bottom: 32px;
       }
     }
     & .headings {
@@ -423,19 +423,19 @@
 @media screen and (max-height: 980px) and (min-width: 491px) {
   .login-container {
     & .login-wrapper {
-      padding: 20px 30px;
+      padding: 16px 32px;
       & .svg-wrapper {
         & .ever-logo-svg {
-          margin-bottom: 40px;
+          margin-bottom: 16px;
         }
       }
       & .headings {
         & .headings-inner {
           & .title {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
           }
           & .sub-title {
-            margin-bottom: 12px;
+            margin-bottom: 8px;
           }
         }
       }
@@ -450,16 +450,16 @@
 @media (max-height: 700px) {
   .login-container {
     & .login-wrapper {
-      padding: 20px 30px;
+      padding: 8px 32px;
       & .svg-wrapper {
         & .ever-logo-svg {
-          margin-bottom: 40px;
+          margin-bottom: 8px;
         }
       }
       & .headings {
         & .headings-inner {
           & .title {
-            margin-bottom: 6px;
+            margin-bottom: 8px;
           }
           & .sub-title {
             margin-bottom: 8px;
@@ -471,7 +471,7 @@
 }
 
 .hr-div-soft {
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   @include hr-div-soft;
 }
 .theme-switch {
