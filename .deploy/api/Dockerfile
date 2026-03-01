@@ -155,6 +155,7 @@ COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
+COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -218,6 +219,7 @@ COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
+COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -344,7 +346,10 @@ RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin
     cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/ && \
     cp -r ./packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/ && \
     cp -r ./packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/ && \
+    cp -r ./packages/plugins/integration-make-com/node_modules ./node_modules/@gauzy/plugin-integration-make-com/ && \
+    cp -r ./packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
     cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/ && \
+    cp -r ./packages/plugins/integration-zapier/node_modules ./node_modules/@gauzy/plugin-integration-zapier/ && \
     cp -r ./packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/ && \
     cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/ && \
     cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/ && \

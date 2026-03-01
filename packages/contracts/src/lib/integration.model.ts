@@ -140,7 +140,8 @@ export enum IntegrationEnum {
 	JIRA = 'Jira',
 	MakeCom = 'MakeCom',
 	ZAPIER = 'Zapier',
-	ACTIVE_PIECES = 'ActivePieces'
+	ACTIVE_PIECES = 'ActivePieces',
+	SIM = 'Sim'
 }
 
 export enum IntegrationEntity {
@@ -180,7 +181,8 @@ export enum IntegrationTypeEnum {
 	TOOLS = 'Tools',
 	PROJECT_MANAGEMENT = 'Project Management',
 	COMMUNICATION = 'Communication',
-	AUTOMATION_TOOLS = 'Automation Tools'
+	AUTOMATION_TOOLS = 'Automation Tools',
+	AI_AGENTS = 'AI Agents'
 }
 
 export enum IntegrationFilterEnum {
