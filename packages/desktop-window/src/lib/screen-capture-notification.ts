@@ -40,15 +40,16 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 					skipTaskbar: true, // Excludes the window from the taskbar
 					x: screen.getPrimaryDisplay().size.width - (ScreenCaptureNotification.WIDTH + 16), // Sets the X position
 					y: 16, // Sets the Y position
-					...(preloadPath ? {
-						webPreferences: {
-							nodeIntegration: false,
-							contextIsolation: true,
-							webSecurity: false,
-							sandbox: false,
-							preload: preloadPath
-						}
-					} : {})
+					...(preloadPath
+						? {
+								webPreferences: {
+									nodeIntegration: false,
+									contextIsolation: true,
+									webSecurity: false,
+									preload: preloadPath
+								}
+							}
+						: {})
 				})
 			)
 		);

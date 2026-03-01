@@ -11,12 +11,16 @@ separate-locales: false
 finish-args:
   - --share=ipc
   - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=session-bus
+  - --device=dri
+  - --device=all
   - --system-talk-name=org.freedesktop.portal.Inhibit
   - --system-talk-name=org.freedesktop.NetworkManager
   - --system-talk-name=org.freedesktop.UPower
-  - --socket=wayland
-  - --socket=fallback-x11
-  - --device=dri
+  - --talk-name=org.freedesktop.Notifications
+  - --env=ELECTRON_OZONE_PLATFORM_HINT=auto
 
 modules:
   - name: gauzy-desktop-timer
@@ -42,7 +46,7 @@ modules:
         dest-filename: gauzy-desktop-timer.sh
         commands:
           - export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
-          - /app/lib/gauzy-desktop-timer/gauzy-desktop-timer --no-sandbox --ozone-platform=x11
+          - zypak-wrapper /app/lib/gauzy-desktop-timer/gauzy-desktop-timer "$@"
 
       - type: file
         path: com.ever.gauzydesktoptimer.desktop

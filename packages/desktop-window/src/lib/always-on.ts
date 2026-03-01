@@ -32,24 +32,27 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 					roundedCorners: true,
 					width: AlwaysOn.WIDTH,
 					height: AlwaysOn.HEIGHT,
-					...(isExpandMode ? {
-						transparent: true
-					} : {
-						opacity: 0.8
-					}),
+					...(isExpandMode
+						? {
+								transparent: true
+							}
+						: {
+								opacity: 0.8
+							}),
 					alwaysOnTop: true,
 					center: false,
 					x: 16,
 					y: Math.floor((screen.getPrimaryDisplay().workAreaSize.height - AlwaysOn.HEIGHT) / 2),
-					...(contextIsolation && preloadPath ? {
-						webPreferences: {
-							nodeIntegration: false,
-							contextIsolation: true,
-							sandbox: false,
-							webSecurity: false,
-							preload: preloadPath
-						},
-					} : {})
+					...(contextIsolation && preloadPath
+						? {
+								webPreferences: {
+									nodeIntegration: false,
+									contextIsolation: true,
+									webSecurity: false,
+									preload: preloadPath
+								}
+							}
+						: {})
 				})
 			)
 		);
