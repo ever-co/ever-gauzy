@@ -7,7 +7,6 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 @Module({
 	imports: [
 		DatabaseModule,
-		DatabaseModule,
 		TokenModule.forRoot({
 			enableScheduler: WORKER_SCHEDULER_ENABLED
 		}),
