@@ -33,7 +33,8 @@ export class TokenCleanupScheduler {
 		cron: CronExpression.EVERY_6_HOURS,
 		queueName: TOKEN_QUEUE_NAME,
 		queueJobName: TOKEN_CLEANUP_INACTIVE_JOB,
-		runOnStart: true
+		runOnStart: true,
+		preventOverlap: true
 	})
 	async enqueueInactiveCleanup(): Promise<ITokenJob> {
 		const requestedAt = new Date().toISOString();
