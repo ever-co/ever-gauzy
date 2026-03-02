@@ -2,7 +2,6 @@ import { DynamicModule, FactoryProvider, Module, ModuleMetadata, Provider, Type 
 import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { JwtService } from '@nestjs/jwt';
-import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Entities
@@ -15,7 +14,6 @@ import { TokenRepository } from './repositories/token.repository';
 import { ScopedJwtService } from './services/scoped-jwt.service';
 import { TokenHasherService } from './services/token-hasher.service';
 import { TokenService } from './services/token.service';
-import { TokenCleanupScheduler } from './token-cleanup.scheduler';
 import { TokenConfigModule } from './token-config.module';
 import { TokenConfigRegistry } from './token-config.registry';
 
@@ -38,6 +36,7 @@ import {
 	ValidateTokenHandler
 } from './queries';
 
+import { SchedulerModule } from '@gauzy/scheduler';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { IJwtService, ITokenConfig } from './interfaces';
 import { MikroOrmTokenRepository, TypeOrmTokenRepository } from './repositories';
@@ -51,6 +50,9 @@ import {
 	TokenWriteRepositoryToken
 } from './shared';
 import { TokenHasher } from './shared/token-hasher';
+import { TokenCleanupScheduler } from './token-cleanup.scheduler';
+import { TokenCleanupWorker } from './token-cleanup.worker';
+import { TOKEN_QUEUE_NAME } from './token-constant';
 
 type TokenProviderToken = string | symbol;
 type AsyncInjectTokens = NonNullable<FactoryProvider['inject']>;
@@ -282,6 +284,16 @@ export class TokenModule {
 		];
 	}
 
+	private static importScheduler(): DynamicModule[] {
+		return [
+			SchedulerModule.forFeature({
+				queues: [TOKEN_QUEUE_NAME],
+				jobProviders: [TokenCleanupScheduler, TokenCleanupWorker],
+				imports: [CqrsModule]
+			})
+		];
+	}
+
 	/**
 	 * Register token module with options
 	 */
@@ -291,17 +303,12 @@ export class TokenModule {
 		const providers: Provider[] = [...this.buildBaseProviders()];
 		providers.push(...CommandHandlers, ...QueryHandlers);
 
-		// Conditionally add scheduler
-		if (enableScheduler) {
-			providers.push(TokenCleanupScheduler);
-		}
-
 		return {
 			module: TokenModule,
 			imports: [
 				ConfigModule,
 				...this.buildFeatureImports(),
-				...(enableScheduler ? [ScheduleModule.forRoot()] : [])
+				...(enableScheduler ? [...this.importScheduler()] : [])
 			],
 			providers,
 			exports: BaseExports

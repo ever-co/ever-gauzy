@@ -1,112 +1,99 @@
 /**
  * Public API Surface of @gauzy/core
  */
-export { bootstrap } from './lib/bootstrap';
+export { bootstrap, registerPluginConfig } from './lib/bootstrap';
+export * from './lib/core';
+export { FileStorage, FileStorageFactory, UploadedFileStorage } from './lib/core/file-storage';
+export { LazyFileInterceptor } from './lib/core/interceptors';
+export * from './lib/core/seeds';
 export {
-	createMigration,
-	ConnectionEntityManager,
-	generateMigration,
+	ConnectionEntityManager, createMigration, generateMigration,
 	prepareSQLQuery,
 	revertLastDatabaseMigration,
 	runDatabaseMigrations
 } from './lib/database';
-export * from './lib/logger';
-export * from './lib/core';
-export * from './lib/core/seeds';
-export { LazyFileInterceptor } from './lib/core/interceptors';
-export { FileStorage, FileStorageFactory, UploadedFileStorage } from './lib/core/file-storage';
-export * from './lib/shared';
 export * from './lib/event-bus';
-export { RedisModule, EVER_REDIS_CLIENT } from './lib/redis';
+export * from './lib/logger';
+export { EVER_REDIS_CLIENT, RedisModule } from './lib/redis';
+export * from './lib/shared';
 
-export * from './lib/tenant';
+export { PasswordHashModule, PasswordHashService } from './lib/password-hash';
 export { RoleModule, RoleService } from './lib/role';
 export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
+export * from './lib/tenant';
 export { UserModule, UserService } from './lib/user';
-export { PasswordHashModule, PasswordHashService } from './lib/password-hash';
 
 export * from './lib/organization';
 export {
-	OrganizationVendorModule,
-	OrganizationVendorService,
-	OrganizationVendorFirstOrCreateCommand
-} from './lib/organization-vendor';
-export {
-	OrganizationContactModule,
-	OrganizationContactService,
-	OrganizationContactCreateCommand
+	OrganizationContactCreateCommand, OrganizationContactModule,
+	OrganizationContactService
 } from './lib/organization-contact';
 export {
-	OrganizationProjectModule,
-	OrganizationProjectService,
-	OrganizationProjectCreateCommand,
-	OrganizationProjectUpdateCommand
+	OrganizationProjectCreateCommand, OrganizationProjectModule,
+	OrganizationProjectService, OrganizationProjectUpdateCommand
 } from './lib/organization-project';
+export {
+	OrganizationVendorFirstOrCreateCommand, OrganizationVendorModule,
+	OrganizationVendorService
+} from './lib/organization-vendor';
 
 export * from './lib/employee';
-export { TaskModule, TaskService, TaskCreateCommand, TaskUpdateCommand, AutomationTaskSyncCommand } from './lib/tasks';
+export { AutomationTaskSyncCommand, TaskCreateCommand, TaskModule, TaskService, TaskUpdateCommand } from './lib/tasks';
 
 export { IntegrationModule, IntegrationService } from './lib/integration';
 export {
-	IntegrationTenantModule,
-	IntegrationTenantService,
-	IntegrationTenantGetCommand,
-	IntegrationTenantUpdateOrCreateCommand
-} from './lib/integration-tenant';
-export {
-	IntegrationMapModule,
-	IntegrationMapService,
-	IntegrationMapSyncActivityCommand,
-	IntegrationMapSyncEntityCommand,
-	IntegrationMapSyncOrganizationCommand,
-	IntegrationMapSyncProjectCommand,
-	IntegrationMapSyncScreenshotCommand,
-	IntegrationMapSyncTaskCommand,
-	IntegrationMapSyncTimeLogCommand,
-	IntegrationMapSyncTimeSlotCommand,
-	IntegrationMapSyncIssueCommand,
-	IntegrationMapSyncLabelCommand
-} from './lib/integration-map';
-export {
-	IntegrationSettingModule,
-	IntegrationSettingService,
-	IntegrationSettingCreateCommand,
-	IntegrationSettingGetCommand,
-	IntegrationSettingGetManyCommand
-} from './lib/integration-setting';
-export {
-	IntegrationEntitySettingModule,
-	IntegrationEntitySettingService,
-	DEFAULT_ENTITY_SETTINGS
+	DEFAULT_ENTITY_SETTINGS, IntegrationEntitySettingModule,
+	IntegrationEntitySettingService
 } from './lib/integration-entity-setting';
 export {
 	IntegrationEntitySettingTiedModule,
 	IntegrationEntitySettingTiedService,
 	PROJECT_TIED_ENTITIES
 } from './lib/integration-entity-setting-tied';
-
 export {
-	TimeSlotModule,
-	TimeSlotService,
-	TimeSlotCreateCommand,
-	CreateTimeSlotMinutesCommand
-} from './lib/time-tracking/time-slot';
-export { TimeLogModule, TimeLogService, TimeLogCreateCommand } from './lib/time-tracking/time-log';
-export { CustomTrackingModule, CustomTrackingService } from './lib/time-tracking/custom-tracking';
-export { ScreenshotModule, ScreenshotService, ScreenshotCreateCommand } from './lib/time-tracking/screenshot';
-export { TimerStartedEvent, TimerStoppedEvent, TimerStatusUpdatedEvent } from './lib/time-tracking/timer';
-export { TimerService } from './lib/time-tracking/timer/timer.service';
-export { TimerModule } from './lib/time-tracking/timer/timer.module';
-export { GetTimerStatusQuery, StartTimerCommand, StopTimerCommand } from './lib/time-tracking/timer';
-export { QueryHandlers } from './lib/time-tracking/timer/queries/handlers';
-export { CommandHandlers } from './lib/time-tracking/timer/commands/handlers';
+	IntegrationMapModule,
+	IntegrationMapService,
+	IntegrationMapSyncActivityCommand,
+	IntegrationMapSyncEntityCommand, IntegrationMapSyncIssueCommand,
+	IntegrationMapSyncLabelCommand, IntegrationMapSyncOrganizationCommand,
+	IntegrationMapSyncProjectCommand,
+	IntegrationMapSyncScreenshotCommand,
+	IntegrationMapSyncTaskCommand,
+	IntegrationMapSyncTimeLogCommand,
+	IntegrationMapSyncTimeSlotCommand
+} from './lib/integration-map';
+export {
+	IntegrationSettingCreateCommand,
+	IntegrationSettingGetCommand,
+	IntegrationSettingGetManyCommand, IntegrationSettingModule,
+	IntegrationSettingService
+} from './lib/integration-setting';
+export {
+	IntegrationTenantGetCommand, IntegrationTenantModule,
+	IntegrationTenantService, IntegrationTenantUpdateOrCreateCommand
+} from './lib/integration-tenant';
 
-export { IncomeModule, IncomeService, IncomeCreateCommand } from './lib/income';
-export { ExpenseModule, ExpenseService, ExpenseCreateCommand } from './lib/expense';
+export { CustomTrackingModule, CustomTrackingService } from './lib/time-tracking/custom-tracking';
+export { ScreenshotCreateCommand, ScreenshotModule, ScreenshotService } from './lib/time-tracking/screenshot';
+export { TimeLogCreateCommand, TimeLogModule, TimeLogService } from './lib/time-tracking/time-log';
+export {
+	CreateTimeSlotMinutesCommand, TimeSlotCreateCommand, TimeSlotModule,
+	TimeSlotService
+} from './lib/time-tracking/time-slot';
+export { GetTimerStatusQuery, StartTimerCommand, StopTimerCommand, TimerStartedEvent, TimerStatusUpdatedEvent, TimerStoppedEvent } from './lib/time-tracking/timer';
+export { CommandHandlers } from './lib/time-tracking/timer/commands/handlers';
+export { QueryHandlers } from './lib/time-tracking/timer/queries/handlers';
+export { TimerModule } from './lib/time-tracking/timer/timer.module';
+export { TimerService } from './lib/time-tracking/timer/timer.service';
+
+export * from './lib/database/database.module';
+export { ExpenseCreateCommand, ExpenseModule, ExpenseService } from './lib/expense';
 export {
 	ExpenseCategoriesModule,
 	ExpenseCategoriesService,
 	ExpenseCategoryFirstOrCreateCommand
 } from './lib/expense-categories';
-export { TagModule, TagService, Taggable, AutomationLabelSyncCommand, RelationalTagDTO } from './lib/tags';
+export { IncomeCreateCommand, IncomeModule, IncomeService } from './lib/income';
 export { TagTypeModule, TagTypeService } from './lib/tag-type';
+export { AutomationLabelSyncCommand, RelationalTagDTO, Taggable, TagModule, TagService } from './lib/tags';
+export * from './lib/token';
