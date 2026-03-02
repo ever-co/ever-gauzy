@@ -14,7 +14,9 @@ export class TokenCleanupWorker extends QueueWorkerHost {
 	private readonly logger = new Logger(TokenCleanupWorker.name);
 
 	constructor(
-	private readonly commandBus: CommandBus, private readonly configRegistry: TokenConfigRegistry){
+		private readonly commandBus: CommandBus,
+		private readonly configRegistry: TokenConfigRegistry
+	) {
 		super();
 	}
 
