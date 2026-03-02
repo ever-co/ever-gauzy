@@ -529,7 +529,23 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns The update result from the database operation.
 	 */
 	async setUserLastLoginTimestamp(userId: ID): Promise<UpdateResult> {
-		return (await this.update(userId as string, { lastLoginAt: new Date() })) as UpdateResult;
+		try {
+			const lastLoginAt = new Date();
+			const id = userId;
+
+			// Update the last login time
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const updatedRow = await this.mikroOrmRepository.nativeUpdate({ id }, { lastLoginAt });
+					return { affected: updatedRow } as UpdateResult;
+				case MultiORMEnum.TypeORM:
+					return await this.typeOrmRepository.update({ id }, { lastLoginAt });
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+		} catch (error) {
+			console.log('[setUserLastLoginTimestamp] Error while updating last login time', error);
+		}
 	}
 
 	/**
