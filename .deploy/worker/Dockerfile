@@ -31,31 +31,40 @@ ARG SENTRY_PROFILING_ENABLED
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
 
-FROM node:24.14.0-alpine3.23 AS dependencies
+FROM node:24.14.0-alpine3.23 AS base
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
+ENV PYTHON /usr/bin/python
+
+# Install system dependencies
+RUN apk --update add bash dos2unix && \
+    apk add --no-cache --virtual build-deps \
+        bind-tools curl tar xz jq python3 python3-dev \
+        py3-configobj py3-pip py3-setuptools build-base \
+        snappy libheif gcc g++ snappy-dev git libgcc libstdc++ \
+        linux-headers autoconf automake make nasm vips-dev vips && \
+    npm i -g npm@9 node-gyp@10.2.0 && \
+    npm install yarn -g --force && \
+    npm install --quiet ts-node@10.9.2 -g
+
+RUN node --version && npm --version && python3 --version && yarn --version
+
+RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
+
+WORKDIR /srv/gauzy
+
+FROM base AS dependencies
+
 ENV CI=true
 ENV NODE_ENV=development
 
-ENV PYTHON /usr/bin/python
-
-RUN apk --update add bash && npm i -g npm@9 \
-    && apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
-    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
-
-RUN node --version && npm --version && python3 --version
-
-RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force && npm install --quiet ts-node@10.9.2 -g
-RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
-
 COPY wait .deploy/worker/entrypoint.prod.sh .deploy/worker/entrypoint.compose.sh /
-RUN chmod +x /wait /entrypoint.compose.sh /entrypoint.prod.sh && dos2unix /entrypoint.prod.sh && dos2unix /entrypoint.compose.sh
+RUN chmod +x /wait /entrypoint.compose.sh /entrypoint.prod.sh && \
+    dos2unix /entrypoint.prod.sh && dos2unix /entrypoint.compose.sh
 
 USER node:node
-
-WORKDIR /srv/gauzy
 
 COPY --chown=node:node packages/common/package.json ./packages/common/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
@@ -70,26 +79,16 @@ COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
+RUN --mount=type=cache,target=/home/node/.yarn/cache \
+    yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && \
+    yarn postinstall.manual && yarn cache clean
 
-FROM node:24.14.0-alpine3.23 AS prod_dependencies
+FROM base AS prod_dependencies
 
 ENV CI=true
 ARG NODE_ENV
-ENV PYTHON /usr/bin/python
-
-RUN apk --update add bash && npm i -g npm@9 \
-    && apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
-    snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
-
-RUN node --version && npm --version && python3 --version
-
-RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force && npm install --quiet ts-node@10.9.2 -g
-RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node
-
-WORKDIR /srv/gauzy
 
 COPY --chown=node:node packages/common/package.json ./packages/common/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
@@ -104,23 +103,20 @@ COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn postinstall.manual && yarn cache clean
+RUN --mount=type=cache,target=/home/node/.yarn/cache \
+    yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && \
+    yarn postinstall.manual && yarn cache clean && \
+    rm -rf node_modules/@angular
 
-RUN rm -r node_modules/@angular
-
-FROM node:24.14.0-alpine3.23 AS development
+FROM base AS development
 
 USER node:node
-
-WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:24.14.0-alpine3.23 AS build
-
-WORKDIR /srv/gauzy
+FROM base AS build
 
 RUN mkdir dist
 
@@ -135,40 +131,32 @@ ARG NX_BRANCH
 
 ENV NODE_OPTIONS="${NODE_OPTIONS:-"--max-old-space-size=30000"}"
 ENV NODE_ENV="${NODE_ENV}"
-
 ENV IS_DOCKER=true
-
 ENV NX_NO_CLOUD=false
 ENV NX_CLOUD_ACCESS_TOKEN="${NX_CLOUD_ACCESS_TOKEN}"
 ENV NX_BRANCH="${NX_BRANCH}"
 
 RUN yarn build:worker:prod
 
-FROM node:24.14.0-alpine3.23 AS production
-
-WORKDIR /srv/gauzy
+FROM base AS production
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/worker .
 
-COPY --chown=node:node --from=prod_dependencies /srv/gauzy/node_modules /tmp/node_modules_temp
-RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
+COPY --chown=node:node --from=prod_dependencies /srv/gauzy/node_modules ./node_modules
 
-RUN mkdir /import && chown node:node /import && touch worker.log && chown node:node worker.log && chown node:node wait && \
-    chmod +x wait entrypoint.compose.sh entrypoint.prod.sh
-
-RUN yarn cache clean
-
-RUN cp -r ./packages/auth/node_modules ./node_modules/@gauzy/auth/
-RUN cp -r ./packages/common/node_modules ./node_modules/@gauzy/common/
-RUN cp -r ./packages/utils/node_modules ./node_modules/@gauzy/utils/
-RUN cp -r ./packages/config/node_modules ./node_modules/@gauzy/config/
-RUN cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/
-RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
-RUN cp -r ./packages/scheduler/node_modules ./node_modules/@gauzy/scheduler/
-
-RUN rm -rf ./packages
+RUN mkdir /import && touch worker.log && \
+    chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && \
+    cp -r ./packages/auth/node_modules ./node_modules/@gauzy/auth/ && \
+    cp -r ./packages/common/node_modules ./node_modules/@gauzy/common/ && \
+    cp -r ./packages/utils/node_modules ./node_modules/@gauzy/utils/ && \
+    cp -r ./packages/config/node_modules ./node_modules/@gauzy/config/ && \
+    cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/ && \
+    cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/ && \
+    cp -r ./packages/scheduler/node_modules ./node_modules/@gauzy/scheduler/ && \
+    rm -rf ./packages && \
+    yarn cache clean
 
 USER node:node
 
