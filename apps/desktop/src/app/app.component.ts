@@ -32,12 +32,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	ngOnInit(): void {
-		const isEmployee = this._store.user && this._store.user.employee;
-		if (!this._isInitialized && isEmployee) {
-			this._electronService.ipcRenderer.send('app_is_init');
-			this._isInitialized = true;
-		}
-		this.tokenRefreshService.start();
+		this._electronService.ipcRenderer.send('app_is_init');
+		this._isInitialized = true;
 	}
 
 	ngAfterViewInit(): void {
@@ -85,7 +81,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			});
 		});
 
-		this._electronService.ipcRenderer.on('set_auth_user', (event, arg) => {});
+		this._electronService.ipcRenderer.on('set_auth_user', (event, arg) => { });
 
 		this._electronService.ipcRenderer.on('set_time_slot', (event, arg) => {
 			this._ngZone.run(() => {

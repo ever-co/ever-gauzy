@@ -51,13 +51,16 @@ import {
 	SplashScreen,
 	createGauzyWindow,
 	createSettingsWindow,
-	createTimeTrackerWindow
+	createTimeTrackerWindow,
+	timeTrackerPage,
+	setLaunchPathAndLoad
 } from '@gauzy/desktop-window';
 
 import * as Sentry from '@sentry/electron/main';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
+import { DesktopSetupConfig } from '@gauzy/contracts';
 
 /**
  * Describes the configuration for building the Gauzy API base URL.
@@ -274,42 +277,57 @@ if (!gotTheLock) {
 	});
 }
 
-async function startServer(value, restart = false) {
-	console.log('Starting the Server...');
-
+function setGlobalVariable(setupConfig: {
+	host?: string;
+	port?: string;
+	protocol?: string;
+	isLocalServer?: boolean,
+	serverUrl?: string
+}) {
 	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(value),
-		IS_INTEGRATED_DESKTOP: value.isLocalServer
+		API_BASE_URL: getApiBaseUrl({
+			host: setupConfig.host,
+			port: setupConfig.port ? Number(setupConfig.port) : 3000,
+			protocol: setupConfig.protocol,
+			serverUrl: setupConfig.serverUrl
+		}),
+		IS_INTEGRATED_DESKTOP: setupConfig.isLocalServer
 	};
+}
+
+async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
+	console.log('Starting the Server...', setupConfig);
+
+	setGlobalVariable(setupConfig);
 
 	process.env.IS_ELECTRON = 'true';
 	if (process.resourcesPath) {
 		process.env.ELECTRON_RESOURCES_PATH = process.resourcesPath;
 	}
 
-	if (value.db === 'sqlite') {
+	if (setupConfig.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'sqlite';
-	} else if (value.db === 'better-sqlite' || value.db === 'better-sqlite3') {
+	} else if (setupConfig.db === 'better-sqlite' || setupConfig.db === 'better-sqlite3') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'better-sqlite3';
 	} else {
 		process.env.DB_TYPE = 'postgres';
-		process.env.DB_HOST = value['postgres']?.dbHost;
-		process.env.DB_PORT = value['postgres']?.dbPort;
-		process.env.DB_NAME = value['postgres']?.dbName;
-		process.env.DB_USER = value['postgres']?.dbUsername;
-		process.env.DB_PASS = value['postgres']?.dbPassword;
+		process.env.DB_HOST = setupConfig['postgres']?.dbHost;
+		process.env.DB_PORT = setupConfig['postgres']?.dbPort;
+		process.env.DB_NAME = setupConfig['postgres']?.dbName;
+		process.env.DB_USER = setupConfig['postgres']?.dbUsername;
+		process.env.DB_PASS = setupConfig['postgres']?.dbPassword;
 	}
 
 	try {
 		const config: any = {
-			...value,
+			...setupConfig,
 			isSetup: true
 		};
 		const aw = {
-			host: value.awHost,
-			isAw: value.aw
+			host: setupConfig.awHost,
+			isAw: setupConfig.aw
 		};
 		store.set({
 			configs: config,
@@ -325,11 +343,11 @@ async function startServer(value, restart = false) {
 		throw new AppError('MAINSTRSERVER', error);
 	}
 
-	if (value.isLocalServer) {
-		console.log(`Starting local server on port ${value.port || environment.API_DEFAULT_PORT}`);
-		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
+	if (setupConfig.isLocalServer) {
+		console.log(`Starting local server on port ${setupConfig.port || environment.API_DEFAULT_PORT}`);
+		process.env.API_PORT = setupConfig.port ? String(setupConfig.port) : String(environment.API_DEFAULT_PORT);
 		process.env.API_HOST = '0.0.0.0';
-		process.env.API_BASE_URL = `http://127.0.0.1:${value.port || environment.API_DEFAULT_PORT}`;
+		process.env.API_BASE_URL = `http://127.0.0.1:${setupConfig.port || environment.API_DEFAULT_PORT}`;
 
 		console.log('Setting additional environment variables...', process.env.API_PORT);
 		console.log('Setting additional environment variables...', process.env.API_HOST);
@@ -351,12 +369,36 @@ async function startServer(value, restart = false) {
 		}
 	}
 
+	/* ping server before launch the ui */
+	ipcMain.on('app_is_init', () => {
+		console.log('init app');
+		if (!isAlreadyRun && setupConfig && !restart) {
+			console.log('want to ping', timeTrackerWindow);
+			onWaitingServer = true;
+			timeTrackerWindow?.webContents?.send?.('server_ping', {
+				host: getApiBaseUrl({
+					host: setupConfig.host,
+					port: setupConfig.port ? Number(setupConfig.port) : null,
+					protocol: setupConfig.protocol,
+					serverUrl: setupConfig.serverUrl
+				})
+			});
+		} else {
+			timeTrackerWindow.webContents.send('ready_to_show_renderer');
+		}
+	});
+
 	/* create main window */
 	try {
+		/* create window */
+		await setLaunchPathAndLoad(timeTrackerWindow, pathWindow.timeTrackerUi, '/time-tracker');
+		if (setupConfig.gauzyWindow) {
+			timeTrackerWindow.hide();
+		}
 		gauzyWindow = await createGauzyWindow(
 			gauzyWindow,
 			serve,
-			{ ...environment, gauzyWindow: value.gauzyWindow },
+			{ ...environment, gauzyWindow: setupConfig.gauzyWindow },
 			pathWindow.gauzyWindow,
 			pathWindow.preloadPath
 		);
@@ -380,16 +422,6 @@ async function startServer(value, restart = false) {
 
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
-	});
-
-	/* ping server before launch the ui */
-	ipcMain.on('app_is_init', () => {
-		if (!isAlreadyRun && value && !restart) {
-			onWaitingServer = true;
-			appWindowManager.setupWindow?.webContents?.send?.('server_ping', {
-				host: getApiBaseUrl(value)
-			});
-		}
 	});
 
 	return true;
@@ -419,10 +451,7 @@ function setEnvAdditional() {
 			process.env[key] = additionalConfig[key];
 		}
 	});
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(config),
-		IS_INTEGRATED_DESKTOP: config.isLocalServer
-	};
+	setGlobalVariable(config);
 }
 
 /**
@@ -467,6 +496,52 @@ const closeSplashScreen = () => {
 	}
 };
 
+async function launchSplashScreen() {
+	try {
+		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
+		await splashScreen.loadURL();
+
+		splashScreen.show();
+	} catch (error) {
+		throw new AppError('MAINWININIT', error);
+	}
+}
+
+async function initialDatabase() {
+	if (['sqlite', 'better-sqlite', 'better-sqlite3'].includes(provider.dialect)) {
+		try {
+			const res = await knex.raw(`pragma journal_mode = WAL;`);
+			console.log(res);
+		} catch (error) {
+			console.log('ERROR', error);
+		}
+	}
+
+	try {
+		await provider.createDatabase();
+		await provider.migrate();
+	} catch (error) {
+		console.error('ERROR: Occurred while database migration:' + error);
+		throw new AppError('MAINDB', error);
+	}
+}
+
+function initialApplicationMenu() {
+	const menu: MenuItemConstructorOptions[] = [
+		{
+			label: app.getName(),
+			submenu: [
+				{ role: 'about', label: TranslateService.instant('MENU.ABOUT') },
+				{ type: 'separator' },
+				{ type: 'separator' },
+				{ role: 'quit', label: TranslateService.instant('BUTTONS.EXIT') }
+			]
+		}
+	];
+
+	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -489,59 +564,20 @@ app.on('ready', async () => {
 	}
 
 	// default global
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(configs || {}),
-		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
-	};
-
-	try {
-		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
-		await splashScreen.loadURL();
-
-		splashScreen.show();
-	} catch (error) {
-		throw new AppError('MAINWININIT', error);
+	if (configs) {
+		setGlobalVariable(configs);
 	}
 
-	if (['sqlite', 'better-sqlite', 'better-sqlite3'].includes(provider.dialect)) {
-		try {
-			const res = await knex.raw(`pragma journal_mode = WAL;`);
-			console.log(res);
-		} catch (error) {
-			console.log('ERROR', error);
-		}
-	}
-
+	await launchSplashScreen();
+	await initialDatabase();
+	initialApplicationMenu();
 	try {
-		await provider.createDatabase();
-		await provider.migrate();
-	} catch (error) {
-		console.error('ERROR: Occurred while database migration:' + error);
-		throw new AppError('MAINDB', error);
-	}
-
-	const menu: MenuItemConstructorOptions[] = [
-		{
-			label: app.getName(),
-			submenu: [
-				{ role: 'about', label: TranslateService.instant('MENU.ABOUT') },
-				{ type: 'separator' },
-				{ type: 'separator' },
-				{ role: 'quit', label: TranslateService.instant('BUTTONS.EXIT') }
-			]
-		}
-	];
-
-	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
-
-	try {
-		/* create window */
 		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi,
-			pathWindow.preloadPath
+			pathWindow.preloadPath,
+			false
 		);
-
 		/* Set Menu */
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
 
@@ -554,10 +590,7 @@ app.on('ready', async () => {
 					...configs
 				});
 			} else {
-				global.variableGlobal = {
-					API_BASE_URL: getApiBaseUrl(configs),
-					IS_INTEGRATED_DESKTOP: configs.isLocalServer
-				};
+				setGlobalVariable(configs)
 				await startServer(configs);
 			}
 		} else {
@@ -644,8 +677,6 @@ ipcMain.on('server_is_ready', async () => {
 			alwaysOn
 		);
 
-		timeTrackerWindow.webContents.send('ready_to_show_renderer');
-
 		isAlreadyRun = true;
 	}
 });
@@ -673,10 +704,7 @@ ipcMain.on('restart_app', async (event, arg) => {
 		LocalStore.updateConfigSetting(arg);
 		isAlreadyRun = false;
 		const configs = LocalStore.getStore('configs');
-		global.variableGlobal = {
-			API_BASE_URL: getApiBaseUrl(configs),
-			IS_INTEGRATED_DESKTOP: configs.isLocalServer
-		};
+		setGlobalVariable(configs);
 		await server.stop();
 		closeAllWindows();
 	} catch (error) {
