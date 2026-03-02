@@ -495,18 +495,22 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns The update result from the database operation.
 	 */
 	async setCurrentRefreshToken(refreshToken: string, userId: ID): Promise<UpdateResult> {
-		// Hash the refresh token using PasswordHashService if provided
-		const hashedToken = refreshToken ? await this._passwordHashService.hash(refreshToken) : refreshToken;
+		try {
+			// Hash the refresh token using PasswordHashService if provided
+			const hashedToken = refreshToken ? await this._passwordHashService.hash(refreshToken) : refreshToken;
 
-		// Scope update by both userId and tenantId for multi-tenant safety.
-		// When tenantId is available, pass as FindOptionsWhere for scoped lookup.
-		// Otherwise pass userId as string so TenantAwareCrudService.update() uses
-		// findOneByIdString (which handles null RequestContext safely).
-		const tenantId = RequestContext.currentTenantId();
-		const criteria: string | FindOptionsWhere<User> = tenantId ? { id: userId, tenantId } : (userId as string);
+			// Scope update by both userId and tenantId for multi-tenant safety.
+			// When tenantId is available, pass as FindOptionsWhere for scoped lookup.
+			// Otherwise pass userId as string so TenantAwareCrudService.update() uses
+			// findOneByIdString (which handles null RequestContext safely).
+			const tenantId = RequestContext.currentTenantId();
+			const criteria: string | FindOptionsWhere<User> = tenantId ? { id: userId, tenantId } : (userId as string);
 
-		// Update the user's refresh token
-		return (await this.update(criteria, { refreshToken: hashedToken })) as UpdateResult;
+			// Update the user's refresh token
+			return (await this.update(criteria, { refreshToken: hashedToken })) as UpdateResult;
+		} catch (error) {
+			console.error('[setCurrentRefreshToken] Error while setting current refresh token:', error);
+		}
 	}
 
 	/**
@@ -515,11 +519,15 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns The update result from the database operation.
 	 */
 	async removeRefreshToken(): Promise<UpdateResult> {
-		const userId = RequestContext.currentUserId();
-		const tenantId = RequestContext.currentTenantId();
-		const criteria: FindOptionsWhere<User> = tenantId ? { id: userId, tenantId } : { id: userId };
+		try {
+			const userId = RequestContext.currentUserId();
+			const tenantId = RequestContext.currentTenantId();
+			const criteria: FindOptionsWhere<User> = tenantId ? { id: userId, tenantId } : { id: userId };
 
-		return (await this.update(criteria, { refreshToken: null })) as UpdateResult;
+			return (await this.update(criteria, { refreshToken: null })) as UpdateResult;
+		} catch (error) {
+			console.error('[RemoveRefreshToken] Error while removing refresh token:', error);
+		}
 	}
 
 	/**
