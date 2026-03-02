@@ -55,73 +55,15 @@ export class OAuth2ClientManager {
 
 	constructor() {
 		this.securityLogger = new SecurityLogger();
-		this.initializeDefaultClients();
 	}
 
 	/**
-	 * Initialize default clients for common MCP integrations
-	 */
-	private initializeDefaultClients() {
-
-		//Test Client
-		void this.registerClient({
-			client_name: 'Test Client',
-			client_type: 'public',
-			redirect_uris: [
-				'http://localhost:3001/callback',
-			],
-			grant_types: ['authorization_code', 'refresh_token'],
-			response_types: ['code'],
-			scope: 'mcp.read mcp.write',
-			metadata: {
-				integration_type: 'test',
-				auto_created: true
-			}
-		}, 'test-client').catch((err) => this.securityLogger.error('Default client init failed:', err as Error));
-
-		// ChatGPT default client
-		void this.registerClient({
-			client_name: 'ChatGPT MCP Integration',
-			client_type: 'public',
-			redirect_uris: [
-				'https://chatgpt.com/oauth/callback',
-				'https://chat.openai.com/oauth/callback'
-			],
-			grant_types: ['authorization_code', 'refresh_token'],
-			response_types: ['code'],
-			scope: 'mcp.read mcp.write',
-			logo_uri: 'https://openai.com/favicon.ico',
-			client_uri: 'https://chat.openai.com',
-			metadata: {
-				integration_type: 'chatgpt',
-				auto_created: true
-			}
-		}, 'chatgpt-mcp-client').catch((err) => this.securityLogger.error('Default client init failed:', err as Error));
-
-		// Claude Desktop default client
-		void this.registerClient({
-			client_name: 'Claude MCP Integration',
-			client_type: 'public',
-			redirect_uris: [
-				'http://localhost:*',
-				'https://claude.ai/oauth/callback'
-			],
-			grant_types: ['authorization_code'],
-			response_types: ['code'],
-			scope: 'mcp.read mcp.write',
-			logo_uri: 'https://claude.ai/favicon.ico',
-			client_uri: 'https://claude.ai',
-			metadata: {
-				integration_type: 'claude',
-				auto_created: true
-			}
-		}, 'claude-mcp-client').catch((err) => this.securityLogger.error('Default client init failed:', err as Error));
-
-		this.securityLogger.log('Default OAuth 2.0 clients initialized');
-	}
-
-	/**
-	 * Register a new OAuth 2.0 client
+	 * Register a new OAuth 2.0 client (public or confidential)
+	 *
+	 * - Public clients: No client_secret is generated (e.g., SPAs, native apps)
+	 * - Confidential clients: A client_secret is generated and hashed (e.g., server-side apps)
+	 *
+	 * Clients should be registered dynamically via the /oauth/register endpoint.
 	 */
 	async registerClient(
 		request: ClientRegistrationRequest,
