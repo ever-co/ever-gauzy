@@ -7,6 +7,10 @@ import { registerAs } from '@nestjs/config';
  * using the @nestjs/config library. These values can be overridden per platform
  * via environment variables.
  *
+ * Note: Transport-specific settings (port, host, websocket, etc.) are managed by
+ * the MCP server's own environment files at packages/mcp-server/src/lib/environments/.
+ * This config provides app-level identity used by NestJS modules.
+ *
  * @returns An object representing the MCP server configuration.
  */
 export default registerAs('mcp', () => ({
@@ -21,22 +25,6 @@ export default registerAs('mcp', () => ({
 	 * Override via MCP_APP_ID to customize for different platforms.
 	 */
 	app_id: process.env.MCP_APP_ID || 'co.gauzy.mcp-server',
-
-	/**
-	 * The transport mode for the MCP server.
-	 * Options: stdio | http | websocket
-	 */
-	transport: process.env.MCP_TRANSPORT || 'stdio',
-
-	/**
-	 * The HTTP host for the MCP server.
-	 */
-	http_host: process.env.MCP_HTTP_HOST || 'localhost',
-
-	/**
-	 * The HTTP port for the MCP server.
-	 */
-	http_port: parseInt(process.env.MCP_HTTP_PORT, 10) || 3001,
 
 	/**
 	 * Whether debug mode is enabled.
