@@ -1,5 +1,4 @@
 import { QueueJobHandler, QueueWorker, QueueWorkerHost } from '@gauzy/scheduler';
-import { isNotEmpty } from '@gauzy/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Job } from 'bullmq';
@@ -43,7 +42,7 @@ export class TokenCleanupWorker extends QueueWorkerHost {
 
 			for (const tokenType of registeredTypes) {
 				const config = this.configRegistry.getConfig(tokenType);
-				if (isNotEmpty(config.threshold)) {
+				if (config.threshold != null) {
 					const count = await this.commandBus.execute(
 						new CleanupInactiveTokensCommand(tokenType, config.threshold)
 					);
