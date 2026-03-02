@@ -329,6 +329,15 @@ export class HttpTransport {
 			);
 		}
 
+		// Root endpoint
+		this.app.get('/', (req, res) => {
+			res.json({
+				name: 'Gauzy MCP Server',
+				status: 'running',
+				timestamp: new Date().toISOString()
+			});
+		});
+
 		// Health check endpoint (no session required)
 		this.app.get('/health', (req, res) => {
 			const sessionStats = this.transportConfig.session.enabled ? sessionManager.getStats() : null;
