@@ -1,0 +1,44 @@
+{
+	"name": "@gauzy/ui-react-components",
+	"version": "0.1.0",
+	"description": "Reusable React UI components (StatCard, ProgressBar, ProjectDots) and design tokens for Gauzy dashboards.",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/ui-react-components"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"scripts": {
+		"lib:build": "yarn nx build ui-react-components",
+		"lib:watch": "yarn nx build ui-react-components --watch"
+	},
+	"peerDependencies": {
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0"
+	},
+	"devDependencies": {
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0"
+	},
+	"keywords": [
+		"gauzy",
+		"ui-react-components",
+		"react",
+		"ever-gauzy"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}

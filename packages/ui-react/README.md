@@ -11,7 +11,7 @@ This package provides the glue layer between Angular and React. It is intentiona
        │
        └── @gauzy/ui-react   (React bridge)
                   │
-                  └── @gauzy/plugin-react-ui   (example React plugin)
+                  └── @gauzy/plugin-dashboard-time-track-react-ui   (example React dashboard plugin)
 ```
 
 ## Installation
