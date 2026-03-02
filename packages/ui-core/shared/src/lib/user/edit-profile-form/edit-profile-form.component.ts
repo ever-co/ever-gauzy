@@ -4,6 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, filter, debounceTime, tap, firstValueFrom } from 'rxjs';
 import { DEFAULT_TIME_FORMATS } from '@gauzy/constants';
 import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset } from '@gauzy/contracts';
+import { patterns } from '@gauzy/constants';
 import {
 	AuthService,
 	EmailValidator,
@@ -15,14 +16,13 @@ import {
 	UsersService
 } from '@gauzy/ui-core/core';
 import { FormHelpers } from '../../forms/helpers';
-import { patterns } from '../../regex';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-profile',
-    templateUrl: './edit-profile-form.component.html',
-    styleUrls: ['./edit-profile-form.component.scss'],
-    standalone: false
+	selector: 'ngx-profile',
+	templateUrl: './edit-profile-form.component.html',
+	styleUrls: ['./edit-profile-form.component.scss'],
+	standalone: false
 })
 export class EditProfileFormComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;

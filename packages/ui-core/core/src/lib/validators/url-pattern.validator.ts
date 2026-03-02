@@ -1,5 +1,5 @@
 import { AbstractControl, ValidatorFn } from '@angular/forms';
-import { patterns } from './regex-patterns.const';
+import { patterns } from '@gauzy/constants';
 
 export class UrlPatternValidator {
 	/**
