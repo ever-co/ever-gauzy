@@ -85,7 +85,7 @@ ARG MCP_WS_TRUSTED_PROXIES
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
 
-FROM node:24.12.0-alpine3.23 AS dependencies
+FROM node:24.14.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -153,18 +153,25 @@ RUN rm -rf /srv/gauzy-mcp/dist
 RUN yarn build:mcp:prod
 
 # Only prod dependencies
-FROM node:24.12.0-alpine3.23 AS proddependencies
+FROM node:24.14.0-alpine3.23 AS proddependencies
 
 RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
     && npm install --quiet node-gyp@10.2.0 -g \
     && npm install yarn -g --force \
     && npm install --quiet ts-node@10.9.2 -g
 
+# Create working directory with correct ownership so node user can create symlinks
+RUN mkdir -p /srv/gauzy-mcp && chown node:node /srv/gauzy-mcp
+
 USER node:node
 
 WORKDIR /srv/gauzy-mcp
 
 COPY --chown=node:node --from=build /srv/gauzy-mcp/dist .
+
+# Create dist -> . symlink so ../../../dist/ paths in package.json resolve correctly in Docker
+RUN ln -s . dist
+
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 

@@ -28,7 +28,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -123,7 +123,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -226,7 +226,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -337,7 +337,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
@@ -456,6 +456,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
           NX_DAEMON: false
 
   release-windows-arm64:
@@ -486,7 +487,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.13.0
+          node-version: 24.14.0
           architecture: arm64
 
       - name: Get yarn cache directory path
@@ -618,4 +619,5 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
           NX_DAEMON: false

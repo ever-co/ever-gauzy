@@ -671,6 +671,7 @@
 		"signup",
 		"signup",
 		"signups",
+		"simstudio",
 		"slnt",
 		"sluggable",
 		"Smee",
@@ -856,7 +857,13 @@
 		"TOCTOU",
 		"Gmqh",
 		"bullmq",
-		"MAINLOADSPLASH"
+		"MAINLOADSPLASH",
+		"threadpool",
+		"THREADPOOL",
+		"EMFILE",
+		"gracefulify",
+		"viewports",
+		"sidemenu"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
