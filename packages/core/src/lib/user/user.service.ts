@@ -353,7 +353,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			user.hash = hash;
 
 			// Save the updated user entity
-			return await this.save(user);
+			return await this.typeOrmRepository.save(user);
 		} catch (error) {
 			// Throw a ForbiddenException if any error occurs
 			throw new ForbiddenException('Failed to update the password.');

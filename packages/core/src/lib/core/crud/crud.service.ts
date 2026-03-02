@@ -396,6 +396,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				record = (await this.mikroOrmRepository.findOne(where, mikroOptions)) as any;
 				break;
 			case MultiORMEnum.TypeORM:
+				console.log('Find One Options', options);
 				record = await this.typeOrmRepository.findOne(options as FindOneOptions<T>);
 				break;
 			default:
