@@ -1,5 +1,5 @@
 #!/bin/sh
-set -ex
+set -e
 
 # This Entrypoint used when we run Docker container outside of Docker Compose (e.g. in k8s)
 
