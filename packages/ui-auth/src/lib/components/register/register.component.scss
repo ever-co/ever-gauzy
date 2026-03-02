@@ -98,7 +98,9 @@
       letter-spacing: normal;
       border-radius: 8px;
       line-height: 20px;
-      transition: background-color 0.2s, border-color 0.2s;
+      transition:
+        background-color 0.2s,
+        border-color 0.2s;
       // Disabled/Submitting state (MUST BE FIRST)
       &[disabled],
       &.btn-pulse {
@@ -211,24 +213,82 @@
 
 @include small-laptop-screen {
   .register-wrapper {
-    padding: 20px 30px;
+    padding: 16px 24px;
     & .another-action {
       margin-top: 0;
       padding-left: 10px;
     }
   }
   .svg-wrapper {
-    margin-bottom: 30px;
+    padding-top: 8px;
+    margin-bottom: 32px;
   }
   .form {
-    margin-bottom: 25px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    & .form-control-group {
+      margin-bottom: 12px;
+    }
     & .accept-group {
-      margin-top: 15px;
+      margin-top: 12px;
     }
   }
   .links {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  // Further compact for short viewports within the small-laptop width range
+  // (491–1024px wide, height <1080px) — deterministic: no conflict with the
+  // wide-screen height query below.
+  @media screen and (max-height: 1080px) {
+    .register-wrapper {
+      & .title-wrapper {
+        margin-bottom: 8px;
+      }
+      & .another-action {
+        margin-top: 4px;
+      }
+    }
+    .svg-wrapper {
+      margin-bottom: 16px;
+    }
+    .form {
+      & .accept-group {
+        margin: 0 0 8px 0;
+      }
+    }
+  }
+}
+
+// Compact layout for short viewport heights on wider screens (>1024px wide)
+@media screen and (max-height: 1080px) and (min-width: 1025px) {
+  .register-wrapper {
+    padding: 16px 24px;
+    & .title-wrapper {
+      margin-bottom: 8px;
+    }
+    & .another-action {
+      margin-top: 4px;
+    }
+  }
+  .svg-wrapper {
+    padding-top: 8px;
+    margin-bottom: 16px;
+  }
+  .form {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    & .form-control-group {
+      margin-bottom: 12px;
+    }
+    & .accept-group {
+      margin: 0 0 8px 0;
+    }
+  }
+  .links {
+    margin-top: 8px;
+    margin-bottom: 8px;
   }
 }
 

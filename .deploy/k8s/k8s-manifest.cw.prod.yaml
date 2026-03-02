@@ -355,15 +355,15 @@ spec:
                       - name: CLIENT_BASE_URL
                         value: 'https://appcw.gauzy.co'
                       - name: SENTRY_DSN
-                        value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+                        value: '$SENTRY_DSN'
                       - name: CHATWOOT_SDK_TOKEN
-                        value: 'fPgSSzSQoAWRuDqYyNXmpGLM'
+                        value: '$CHATWOOT_SDK_TOKEN'
                       - name: CLOUDINARY_API_KEY
-                        value: '256868982483961'
+                        value: '$CLOUDINARY_API_KEY'
                       - name: CLOUDINARY_CLOUD_NAME
-                        value: 'dv6ezkfxg'
+                        value: '$CLOUDINARY_CLOUD_NAME'
                       - name: GOOGLE_MAPS_API_KEY
-                        value: 'AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo'
+                        value: '$GOOGLE_MAPS_API_KEY'
                       - name: GOOGLE_PLACE_AUTOCOMPLETE
                         value: 'true'
                       - name: DEFAULT_LATITUDE

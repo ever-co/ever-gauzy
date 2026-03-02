@@ -671,6 +671,7 @@
 		"signup",
 		"signup",
 		"signups",
+		"simstudio",
 		"slnt",
 		"sluggable",
 		"Smee",
@@ -860,7 +861,9 @@
 		"threadpool",
 		"THREADPOOL",
 		"EMFILE",
-		"gracefulify"
+		"gracefulify",
+		"viewports",
+		"sidemenu"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
