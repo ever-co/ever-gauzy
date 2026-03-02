@@ -38,7 +38,7 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			email: [null, Validators.compose([Validators.required, Validators.pattern(patterns.email)])],
-			code: [null, Validators.compose([Validators.required, Validators.minLength(6), Validators.maxLength(6)])]
+			code: [null, Validators.compose([Validators.required, Validators.minLength(8), Validators.maxLength(8)])]
 		});
 	}
 
