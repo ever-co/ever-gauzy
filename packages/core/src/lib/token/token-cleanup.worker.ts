@@ -29,6 +29,7 @@ export class TokenCleanupWorker extends QueueWorkerHost {
 			this.logger.log(`Marked ${count} tokens as expired`);
 		} catch (error) {
 			this.logger.error('Failed to cleanup expired tokens', error);
+			throw error;
 		}
 	}
 
@@ -54,6 +55,7 @@ export class TokenCleanupWorker extends QueueWorkerHost {
 			this.logger.log(`Total inactive tokens revoked: ${totalRevoked}`);
 		} catch (error) {
 			this.logger.error('Failed to cleanup inactive tokens', error);
+			throw error;
 		}
 	}
 }
