@@ -1,3 +1,3 @@
-# Changelog for @gauzy/plugin-ui-react
+# Changelog for @gauzy/ui-react
 
 ## [Unreleased]

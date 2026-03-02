@@ -1,4 +1,4 @@
-# @gauzy/plugin-ui-react
+# @gauzy/ui-react
 
 React-to-Angular bridge for Gauzy UI plugins. Renders React 19 components inside Angular with full access to Angular services via the dependency injection system.
 
@@ -9,7 +9,7 @@ This package provides the glue layer between Angular and React. It is intentiona
 ```
 @gauzy/plugin-ui          (core, Angular-only)
        │
-       └── @gauzy/plugin-ui-react   (React bridge)
+       └── @gauzy/ui-react   (React bridge)
                   │
                   └── @gauzy/plugin-react-ui   (example React plugin)
 ```
@@ -17,7 +17,7 @@ This package provides the glue layer between Angular and React. It is intentiona
 ## Installation
 
 ```bash
-yarn add @gauzy/plugin-ui-react
+yarn add @gauzy/ui-react
 ```
 
 ## Peer Dependencies
@@ -49,14 +49,11 @@ Renders a React component synchronously inside any Angular template.
 Lazy-loads a React component via dynamic `import()` for code-splitting.
 
 ```html
-<div
-  [reactLazyHost]="loadKanban"
-  [props]="kanbanProps">
-</div>
+<div [reactLazyHost]="loadKanban" [props]="kanbanProps"></div>
 ```
 
 ```ts
-loadKanban = () => import('./kanban/KanbanBoard').then(m => m);
+loadKanban = () => import('./kanban/KanbanBoard').then((m) => m);
 ```
 
 ---
@@ -68,13 +65,13 @@ loadKanban = () => import('./kanban/KanbanBoard').then(m => m);
 Access Angular services from inside any React component rendered via the bridge.
 
 ```tsx
-import { useInjector } from '@gauzy/plugin-ui-react';
+import { useInjector } from '@gauzy/ui-react';
 import { Router } from '@angular/router';
 
 function MyWidget() {
-  const router = useInjector(Router);
+	const router = useInjector(Router);
 
-  return <button onClick={() => router.navigate(['/home'])}>Go Home</button>;
+	return <button onClick={() => router.navigate(['/home'])}>Go Home</button>;
 }
 ```
 
@@ -90,19 +87,19 @@ const http = injector.get(HttpClient);
 Inter-plugin event bus from React. Subscribe and emit events across plugins.
 
 ```tsx
-import { usePluginEvents } from '@gauzy/plugin-ui-react';
+import { usePluginEvents } from '@gauzy/ui-react';
 
 function MyWidget() {
-  const events = usePluginEvents('my-plugin');
+	const events = usePluginEvents('my-plugin');
 
-  useEffect(() => {
-    const sub = events.on('time-tracked').subscribe(event => {
-      console.log('Payload:', event.payload);
-    });
-    return () => sub.unsubscribe();
-  }, [events]);
+	useEffect(() => {
+		const sub = events.on('time-tracked').subscribe((event) => {
+			console.log('Payload:', event.payload);
+		});
+		return () => sub.unsubscribe();
+	}, [events]);
 
-  return <button onClick={() => events.emit('widget-clicked', { id: 1 })}>Click</button>;
+	return <button onClick={() => events.emit('widget-clicked', { id: 1 })}>Click</button>;
 }
 ```
 
@@ -111,14 +108,14 @@ function MyWidget() {
 Single-event subscription with automatic cleanup on unmount.
 
 ```tsx
-import { usePluginEvent } from '@gauzy/plugin-ui-react';
+import { usePluginEvent } from '@gauzy/ui-react';
 
 function MyWidget() {
-  usePluginEvent('time-tracked', (event) => {
-    console.log('Time tracked:', event.payload);
-  });
+	usePluginEvent('time-tracked', (event) => {
+		console.log('Time tracked:', event.payload);
+	});
 
-  return <div>Listening...</div>;
+	return <div>Listening...</div>;
 }
 ```
 
@@ -127,11 +124,11 @@ function MyWidget() {
 Access the full bridge context (injector + any extra values passed via the `context` input).
 
 ```tsx
-import { useBridgeContext } from '@gauzy/plugin-ui-react';
+import { useBridgeContext } from '@gauzy/ui-react';
 
 function MyWidget() {
-  const { injector, theme } = useBridgeContext();
-  return <div style={{ color: theme as string }}>Hello</div>;
+	const { injector, theme } = useBridgeContext();
+	return <div style={{ color: theme as string }}>Hello</div>;
 }
 ```
 
@@ -144,15 +141,15 @@ function MyWidget() {
 Low-level class implementing `UiBridge` from `@gauzy/plugin-ui`. Use it when you need direct control over mounting/unmounting.
 
 ```ts
-import { ReactBridge } from '@gauzy/plugin-ui-react';
+import { ReactBridge } from '@gauzy/ui-react';
 
 const bridge = new ReactBridge();
 
 const result = bridge.mount({
-  component: MyReactComponent,
-  props: { title: 'Hello' },
-  hostElement: document.getElementById('host')!,
-  injector: angularInjector
+	component: MyReactComponent,
+	props: { title: 'Hello' },
+	hostElement: document.getElementById('host')!,
+	injector: angularInjector
 });
 
 // Later:
@@ -166,10 +163,10 @@ result.updateProps?.({ title: 'Updated' });
 Environment provider — registers `ReactBridge` in Angular DI.
 
 ```ts
-import { provideReactBridge, REACT_BRIDGE } from '@gauzy/plugin-ui-react';
+import { provideReactBridge, REACT_BRIDGE } from '@gauzy/ui-react';
 
 // In app.config.ts or AppModule providers:
-provideReactBridge()
+provideReactBridge();
 
 // Then inject anywhere:
 const bridge = inject(REACT_BRIDGE);
@@ -182,15 +179,15 @@ const bridge = inject(REACT_BRIDGE);
 Use `defineReactExtension()` to register a React component as a plugin extension slot contribution.
 
 ```ts
-import { defineReactExtension } from '@gauzy/plugin-ui-react';
+import { defineReactExtension } from '@gauzy/ui-react';
 import { MyWidget } from './MyWidget';
 
 export const myExtension = defineReactExtension({
-  id: 'my-widget',
-  slotId: 'dashboard-widgets',
-  component: MyWidget,
-  props: { title: 'My Widget' },
-  order: 10
+	id: 'my-widget',
+	slotId: 'dashboard-widgets',
+	component: MyWidget,
+	props: { title: 'My Widget' },
+	order: 10
 });
 ```
 
@@ -200,7 +197,7 @@ Then add it to a plugin definition:
 import { defineDeclarativePlugin } from '@gauzy/plugin-ui';
 
 export const MyPlugin = defineDeclarativePlugin('my-plugin', {
-  extensions: [myExtension]
+	extensions: [myExtension]
 });
 ```
 

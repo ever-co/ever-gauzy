@@ -1,5 +1,5 @@
 /*
- * Public API Surface of @gauzy/plugin-ui-react
+ * Public API Surface of @gauzy/ui-react
  *
  * React-to-Angular bridge: renders React components inside Angular with
  * access to Angular services via the Angular injector.
@@ -31,11 +31,7 @@ export {
 } from './lib/react-hooks';
 
 // Error boundary (for isolating React component failures)
-export {
-	PluginErrorBoundary,
-	type PluginErrorBoundaryProps,
-	type PluginErrorInfo
-} from './lib/plugin-error-boundary';
+export { PluginErrorBoundary, type PluginErrorBoundaryProps, type PluginErrorInfo } from './lib/plugin-error-boundary';
 
 // Directives (for use in Angular templates)
 export { ReactHostDirective, LazyReactHostDirective } from './lib/directives';

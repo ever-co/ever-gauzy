@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useInjector, usePluginSettings, useTypedEvent } from '@gauzy/plugin-ui-react';
+import { useInjector, usePluginSettings, useTypedEvent } from '@gauzy/ui-react';
 import { TimesheetStatisticsService, Store } from '@gauzy/ui-core/core';
 import { theme } from './theme';
 import { formatDuration, currentWeekRange, todayRange } from './helpers';
@@ -66,10 +66,7 @@ export function TimeTrackingDashboardWidgets() {
 		if (!injector) return;
 
 		try {
-			const statsService = injector.get(
-				TimesheetStatisticsService,
-				null
-			) as TimesheetStatisticsService | null;
+			const statsService = injector.get(TimesheetStatisticsService, null) as TimesheetStatisticsService | null;
 			const store = injector.get(Store, null) as Store | null;
 
 			if (!statsService || !store) return;

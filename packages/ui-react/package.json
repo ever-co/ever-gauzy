@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/plugin-ui-react",
+	"name": "@gauzy/ui-react",
 	"version": "0.1.0",
 	"description": "React-to-Angular bridge for Gauzy UI plugins. Renders React components inside Angular with access to Angular services.",
 	"author": {
@@ -19,9 +19,9 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
-		"lib:build": "yarn nx build plugin-ui-react --configuration=development",
-		"lib:build:prod": "yarn nx build plugin-ui-react --configuration=production",
-		"lib:watch": "yarn nx build plugin-ui-react --watch --configuration=development"
+		"lib:build": "yarn nx build ui-react --configuration=development",
+		"lib:build:prod": "yarn nx build ui-react --configuration=production",
+		"lib:watch": "yarn nx build ui-react --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "21.0.7",
@@ -40,7 +40,7 @@
 	},
 	"keywords": [
 		"gauzy",
-		"plugin-ui-react",
+		"ui-react",
 		"angular",
 		"react",
 		"plugin",

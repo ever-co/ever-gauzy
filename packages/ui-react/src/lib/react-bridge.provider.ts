@@ -12,7 +12,7 @@ export const REACT_BRIDGE = new InjectionToken<ReactBridge>('ReactBridge');
  * @example
  * ```typescript
  * // In your app.config.ts
- * import { provideReactBridge } from '@gauzy/plugin-ui-react';
+ * import { provideReactBridge } from '@gauzy/ui-react';
  *
  * export const appConfig: ApplicationConfig = {
  *   providers: [
@@ -25,7 +25,7 @@ export const REACT_BRIDGE = new InjectionToken<ReactBridge>('ReactBridge');
  * @example
  * ```typescript
  * // Using the bridge in a component
- * import { REACT_BRIDGE } from '@gauzy/plugin-ui-react';
+ * import { REACT_BRIDGE } from '@gauzy/ui-react';
  *
  * const bridge = inject(REACT_BRIDGE);
  * bridge.mount({ component: MyReactComponent, hostElement, injector });

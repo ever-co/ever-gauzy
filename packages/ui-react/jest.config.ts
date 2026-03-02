@@ -1,5 +1,5 @@
 export default {
-	displayName: 'plugin-ui-react',
+	displayName: 'ui-react',
 	preset: '../../jest.preset.js',
 	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
 	coverageDirectory: '../../coverage/packages/ui-react',
