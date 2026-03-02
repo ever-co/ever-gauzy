@@ -148,6 +148,13 @@ COPY --chown=node:node --from=prod_dependencies /srv/gauzy/node_modules ./node_m
 
 RUN mkdir /import && touch worker.log && \
     chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && \
+    mkdir -p ./node_modules/@gauzy/auth && \
+    mkdir -p ./node_modules/@gauzy/common && \
+    mkdir -p ./node_modules/@gauzy/utils && \
+    mkdir -p ./node_modules/@gauzy/config && \
+    mkdir -p ./node_modules/@gauzy/contracts && \
+    mkdir -p ./node_modules/@gauzy/core && \
+    mkdir -p ./node_modules/@gauzy/scheduler && \
     cp -r ./packages/auth/node_modules ./node_modules/@gauzy/auth/ && \
     cp -r ./packages/common/node_modules ./node_modules/@gauzy/common/ && \
     cp -r ./packages/utils/node_modules ./node_modules/@gauzy/utils/ && \
@@ -165,7 +172,6 @@ ENV CI=true
 ENV NODE_OPTIONS="${NODE_OPTIONS:-"--max-old-space-size=12288"}"
 ENV NODE_ENV="${NODE_ENV:-production}"
 
-ENV SENTRY_DSN="${SENTRY_DSN}"
 ENV SENTRY_HTTP_TRACING_ENABLED="${SENTRY_HTTP_TRACING_ENABLED:-false}"
 ENV SENTRY_PROFILING_ENABLED="${SENTRY_PROFILING_ENABLED:-false}"
 ENV SENTRY_POSTGRES_TRACKING_ENABLED="${SENTRY_POSTGRES_TRACKING_ENABLED:-false}"
@@ -174,7 +180,6 @@ ENV DB_HOST="${DB_HOST:-db}"
 ENV DB_NAME="${DB_NAME:-postgres}"
 ENV DB_PORT="${DB_PORT:-5432}"
 ENV DB_USER="${DB_USER}"
-ENV DB_PASS="${DB_PASS}"
 ENV DB_TYPE="${DB_TYPE:-better-sqlite3}"
 ENV DB_SSL_MODE="${DB_SSL_MODE}"
 ENV DB_CA_CERT="${DB_CA_CERT}"
@@ -182,7 +187,6 @@ ENV DB_POOL_SIZE="${DB_POOL_SIZE}"
 ENV DB_POOL_SIZE_KNEX="${DB_POOL_SIZE_KNEX}"
 ENV REDIS_ENABLED="${REDIS_ENABLED:-true}"
 ENV REDIS_HOST="${REDIS_HOST:-redis}"
-ENV REDIS_PASSWORD="${REDIS_PASSWORD}"
 ENV REDIS_PORT="${REDIS_PORT:-6379}"
 ENV REDIS_USER="${REDIS_USER}"
 ENV REDIS_TLS="${REDIS_TLS}"

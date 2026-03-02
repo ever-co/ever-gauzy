@@ -4,6 +4,7 @@ import { CronExpression } from '@nestjs/schedule';
 import { ITokenJob } from './interfaces';
 import {
 	TOKEN_CLEANUP_EXPIRED_JOB,
+	TOKEN_CLEANUP_EXPIRED_SCHEDULE,
 	TOKEN_CLEANUP_INACTIVE_JOB,
 	TOKEN_CLEANUP_INACTIVE_SCHEDULER,
 	TOKEN_QUEUE_NAME
@@ -14,7 +15,7 @@ export class TokenCleanupScheduler {
 	private readonly logger = new Logger(TokenCleanupScheduler.name);
 
 	@ScheduledJob({
-		name: TOKEN_CLEANUP_EXPIRED_JOB,
+		name: TOKEN_CLEANUP_EXPIRED_SCHEDULE,
 		cron: CronExpression.EVERY_HOUR,
 		queueName: TOKEN_QUEUE_NAME,
 		queueJobName: TOKEN_CLEANUP_EXPIRED_JOB,
