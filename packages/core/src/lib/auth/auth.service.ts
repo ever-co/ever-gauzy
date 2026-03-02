@@ -899,18 +899,9 @@ export class AuthService extends SocialAuthService {
 	async resetPassword(request: IChangePasswordRequest) {
 		try {
 			const { password, token } = request;
-			console.log(
-				'[ResetPassword] Step 1 - Received request with token:',
-				token ? `${token.substring(0, 20)}...` : 'missing'
-			);
 
 			// Validate the password reset token
 			const record: IPasswordReset = await this.commandBus.execute(new PasswordResetGetCommand({ token }));
-			console.log('[ResetPassword] Step 2 - Password reset record found:', {
-				id: record?.id,
-				expired: record?.expired,
-				email: record?.email
-			});
 
 			if (record.expired) {
 				throw new BadRequestException('Password Reset Failed: Token has expired.');
@@ -923,11 +914,6 @@ export class AuthService extends SocialAuthService {
 				id: ID;
 				tenantId: ID;
 			};
-			console.log('[ResetPassword] Step 3 - Token decoded:', {
-				purpose: decoded.purpose,
-				id: decoded.id,
-				tenantId: decoded.tenantId
-			});
 
 			// Reject tokens without the password-reset purpose claim
 			if (decoded.purpose !== 'password-reset') {
@@ -937,15 +923,9 @@ export class AuthService extends SocialAuthService {
 			const { id, tenantId } = decoded;
 
 			// Fetch the user by ID and tenant
-			console.log('[ResetPassword] Step 4 - Fetching user by id:', id, 'tenantId:', tenantId);
 			const user = await this.userService.findOneByIdString(id, {
 				where: { tenantId },
 				relations: { tenant: true }
-			});
-			console.log('[ResetPassword] Step 5 - User found:', {
-				id: user?.id,
-				email: user?.email,
-				tenantId: user?.tenantId
 			});
 
 			if (!user) {
@@ -954,14 +934,11 @@ export class AuthService extends SocialAuthService {
 
 			// Hash the new password using PasswordHashService and update it for the user
 			const hash = await this.passwordHashService.hash(password);
-			console.log('[ResetPassword] Step 6 - Password hashed, calling changePassword for user:', user.id);
 			await this.userService.changePassword(user.id, hash);
-			console.log('[ResetPassword] Step 7 - Password changed successfully');
 
 			// Invalidate the used password-reset record and all other records for this user
 			try {
 				const deleteWhere = { email: user.email, ...(tenantId ? { tenantId } : {}) };
-				console.log('[ResetPassword] Step 8 - Deleting password reset records:', deleteWhere);
 				switch (this.ormType) {
 					case MultiORMEnum.MikroORM:
 						await this.mikroOrmPasswordResetRepository.nativeDelete(deleteWhere);
@@ -972,7 +949,6 @@ export class AuthService extends SocialAuthService {
 					default:
 						throw new Error(`ORM type not implemented: ${this.ormType}`);
 				}
-				console.log('[ResetPassword] Step 9 - Password reset records deleted');
 			} catch (deleteError) {
 				// Log but don't fail the password reset if cleanup fails
 				this.logger.warn(
@@ -980,10 +956,9 @@ export class AuthService extends SocialAuthService {
 				);
 			}
 
-			console.log('[ResetPassword] Step 10 - Reset password completed successfully');
 			return true;
 		} catch (error) {
-			console.error('[ResetPassword] Failed at error:', error?.message, error?.stack);
+			this.logger.error(`Password reset failed: ${error?.message}`);
 			throw new BadRequestException('Password Reset Failed.');
 		}
 	}

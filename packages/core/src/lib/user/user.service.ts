@@ -344,16 +344,10 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns A promise resolving to the updated user entity.
 	 * @throws ForbiddenException if the operation fails.
 	 */
-	async changePassword(id: ID, hash: string): Promise<User> {
+	async changePassword(id: ID, hash: string): Promise<UpdateResult | User> {
 		try {
-			// Fetch the user by ID
-			const user = await this.findOneByIdString(id);
-
-			// Update the user's password hash
-			user.hash = hash;
-
-			// Save the updated user entity
-			return await this.typeOrmRepository.save(user);
+			// Update only the password hash for the user
+			return await this.update(id as string, { hash });
 		} catch (error) {
 			// Throw a ForbiddenException if any error occurs
 			throw new ForbiddenException('Failed to update the password.');

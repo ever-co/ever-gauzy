@@ -276,7 +276,6 @@ export class AuthController {
 	@UseValidationPipe({ whitelist: true })
 	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async resetPassword(@Body() request: ChangePasswordRequestDTO) {
-		console.log('Change Password Request', request);
 		return await this.authService.resetPassword(request);
 	}
 
