@@ -8,6 +8,7 @@ import {
 	SelectQueryBuilder,
 	Brackets,
 	WhereExpressionBuilder,
+	FindOptionsWhere,
 	In,
 	UpdateResult,
 	DeleteResult,
@@ -488,76 +489,47 @@ export class UserService extends TenantAwareCrudService<User> {
 
 	/**
 	 * Sets the current refresh token for the user.
-	 * @param {string} refreshToken - The refresh token to set.
-	 * @param {string} userId - The ID of the user for whom to set the refresh token.
-	 * @returns {Promise<void>} - A promise that resolves once the refresh token is set.
+	 *
+	 * @param refreshToken - The refresh token to set.
+	 * @param userId - The ID of the user for whom to set the refresh token.
+	 * @returns The update result from the database operation.
 	 */
 	async setCurrentRefreshToken(refreshToken: string, userId: ID): Promise<UpdateResult> {
-		try {
-			// Hash the refresh token using PasswordHashService if refreshToken is provided
-			if (refreshToken) {
-				refreshToken = await this._passwordHashService.hash(refreshToken);
-			}
+		// Hash the refresh token using PasswordHashService if provided
+		const hashedToken = refreshToken ? await this._passwordHashService.hash(refreshToken) : refreshToken;
 
-			// Scope update by both userId and tenantId for multi-tenant safety
-			const tenantId = RequestContext.currentTenantId();
-			const criteria = tenantId ? { id: userId, tenantId } : { id: userId };
+		// Scope update by both userId and tenantId for multi-tenant safety.
+		// When tenantId is available, pass as FindOptionsWhere for scoped lookup.
+		// Otherwise pass userId as string so TenantAwareCrudService.update() uses
+		// findOneByIdString (which handles null RequestContext safely).
+		const tenantId = RequestContext.currentTenantId();
+		const criteria: string | FindOptionsWhere<User> = tenantId ? { id: userId, tenantId } : (userId as string);
 
-			// Update the user's refresh token using ORM-agnostic base class update
-			return (await this.update(criteria as any, { refreshToken } as any)) as UpdateResult;
-		} catch (error) {
-			// Log error if any
-			console.error('Error while setting current refresh token:', error);
-		}
+		// Update the user's refresh token
+		return (await this.update(criteria, { refreshToken: hashedToken })) as UpdateResult;
 	}
 
 	/**
-	 * Removes the refresh token from the database.
-	 * Logout Device
+	 * Removes the refresh token from the database for the current user (logout device).
 	 *
-	 * @param userId
-	 * @returns
+	 * @returns The update result from the database operation.
 	 */
-	async removeRefreshToken() {
-		try {
-			const userId = RequestContext.currentUserId();
-			const tenantId = RequestContext.currentTenantId();
-			const criteria = tenantId ? { id: userId, tenantId } : { id: userId };
+	async removeRefreshToken(): Promise<UpdateResult> {
+		const userId = RequestContext.currentUserId();
+		const tenantId = RequestContext.currentTenantId();
+		const criteria: FindOptionsWhere<User> = tenantId ? { id: userId, tenantId } : { id: userId };
 
-			try {
-				await this.update(criteria as any, { refreshToken: null } as any);
-			} catch (error) {
-				console.log('Error while remove refresh token', error);
-			}
-		} catch (error) {
-			console.log('Error while logout device', error);
-		}
+		return (await this.update(criteria, { refreshToken: null })) as UpdateResult;
 	}
 
 	/**
-	 * Update the last login time after user logged in
-	 * @param {string} userId - The ID of the user for whom to set the last login time
-	 * @return - A promise that resolves once the last login time is set
-	 * @memberof UserService
+	 * Updates the last login timestamp for a user.
+	 *
+	 * @param userId - The ID of the user for whom to set the last login time.
+	 * @returns The update result from the database operation.
 	 */
 	async setUserLastLoginTimestamp(userId: ID): Promise<UpdateResult> {
-		try {
-			const lastLoginAt = new Date(); // Define the last login time
-			const id = userId; // Define the user ID
-
-			// Update the last login time
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					const updatedRow = await this.mikroOrmRepository.nativeUpdate({ id }, { lastLoginAt });
-					return { affected: updatedRow } as UpdateResult;
-				case MultiORMEnum.TypeORM:
-					return await this.typeOrmRepository.update({ id }, { lastLoginAt });
-				default:
-					throw new Error(`Not implemented for ${this.ormType}`);
-			}
-		} catch (error) {
-			console.log('Error while updating last login time', error);
-		}
+		return (await this.update(userId as string, { lastLoginAt: new Date() })) as UpdateResult;
 	}
 
 	/**
