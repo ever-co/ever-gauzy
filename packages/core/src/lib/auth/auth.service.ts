@@ -1798,17 +1798,17 @@ export class AuthService extends SocialAuthService {
 				this.getJwtAccessToken(user, organizationId),
 				this.getJwtRefreshToken(user, organizationId)
 			]);
-
-			// Store refresh token and update login metadata concurrently
+			
 			await Promise.all([
+				// Store refresh token and update login metadata concurrently
 				this.userService.setCurrentRefreshToken(refreshToken, user.id),
-				this.userService.setUserLastLoginTimestamp(user.id)
+				this.userService.setUserLastLoginTimestamp(user.id),
+				
+				// Persist the resolved organization/team preference so the DB stays
+				// in sync with whatever value was embedded in the tokens above.
+				this.userService.setLastOrganizationAndTeam(user.id, organizationId, lastTeamId)
 			]);
-
-			// Persist the resolved organization/team preference so the DB stays
-			// in sync with whatever value was embedded in the tokens above.
-			this.userService.setLastOrganizationAndTeam(user.id, organizationId, lastTeamId);
-
+			
 			return {
 				user: new User({
 					...user,
