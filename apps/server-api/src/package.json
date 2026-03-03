@@ -155,6 +155,7 @@
         "@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
         "@gauzy/plugin-soundshot": "file:../../../dist/packages/plugins/soundshot",
         "@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
+        "@gauzy/scheduler": "file:../../../dist/packages/scheduler",
         "@gauzy/ui-config": "file:../../../dist/packages/ui-config",
         "@gauzy/utils": "file:../../../dist/packages/utils",
         "@sentry/electron": "7.7.1",
@@ -223,6 +224,7 @@
         "@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
         "@gauzy/plugin-soundshot": "file:../../../dist/packages/plugins/soundshot",
         "@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
+        "@gauzy/scheduler": "file:../../../dist/packages/scheduler",
         "@gauzy/ui-config": "file:../../../dist/packages/ui-config",
         "@gauzy/utils": "file:../../../dist/packages/utils"
     },

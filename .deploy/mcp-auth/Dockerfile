@@ -64,6 +64,7 @@ COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
+COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
@@ -89,6 +90,7 @@ COPY --chown=node:node packages/contracts ./packages/contracts/
 COPY --chown=node:node packages/core ./packages/core/
 COPY --chown=node:node packages/plugin ./packages/plugin/
 COPY --chown=node:node packages/utils ./packages/utils/
+COPY --chown=node:node packages/scheduler ./packages/scheduler/
 
 # BUILD
 FROM dependencies AS build
