@@ -46,11 +46,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 					this._store.token = arg.token;
 					this._store.organizationId = arg.organizationId;
 					this._store.tenantId = arg.tenantId;
-					if (!this._isInitialized) {
-						this._electronService.ipcRenderer.send('app_is_init');
-						this._isInitialized = true;
-					}
-					// Start token refresh timer on authentication
 					if (arg.token && this._store.refreshToken) {
 						this.tokenRefreshService.start();
 					}
@@ -81,7 +76,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			});
 		});
 
-		this._electronService.ipcRenderer.on('set_auth_user', (event, arg) => { });
+		this._electronService.ipcRenderer.on('set_auth_user', (event, arg) => {});
 
 		this._electronService.ipcRenderer.on('set_time_slot', (event, arg) => {
 			this._ngZone.run(() => {

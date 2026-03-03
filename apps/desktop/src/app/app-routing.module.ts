@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
-import { authConnectionGuard, authGuard, noAuthGuard } from '@gauzy/desktop-ui-lib';
+import { authConnectionGuard, noAuthGuard } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
 	{

@@ -36,7 +36,7 @@ export class AuthIPCHandler {
 			if (timeTrackerWindow && arg.employeeId) {
 				this.initializeTimeTracker(timeTrackerWindow, arg, appConfig.gauzyWindow);
 			}
-			if (appConfig.gauzyWindow) {
+			if (appConfig.gauzyWindow && timeTrackerWindow) {
 				timeTrackerWindow.webContents.send('gauzy_auth_success', arg);
 			}
 

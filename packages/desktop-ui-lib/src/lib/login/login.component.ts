@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NavigationExtras, Router, RouterLink } from '@angular/router';
 import { HttpStatus, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
@@ -46,7 +46,7 @@ import { SocialLinksComponent } from './shared/ui/social-links/social-links.comp
 		TranslatePipe
 	]
 })
-export class NgxLoginComponent extends NbLoginComponent implements OnInit {
+export class NgxLoginComponent extends NbLoginComponent implements OnInit, OnDestroy {
 	@ViewChild('form')
 	public form: NgForm;
 	public showPassword = false;
@@ -73,10 +73,14 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		if (this.isAgent) {
 			this.user.rememberMe = true;
 		}
-		this.electronService.ipcRenderer.on('gauzy_auth_success', async (_, message) => {
+		this.electronService.ipcRenderer.once('gauzy_auth_success', async (_, message) => {
 			this.authStrategy.storeAuthenticationData(message);
 			await this._router.navigate(['/']);
 		});
+	}
+
+	ngOnDestroy(): void {
+		this.electronService.ipcRenderer.removeAllListeners('gauzy_auth_success');
 	}
 
 	public override login(): void {

@@ -52,7 +52,6 @@ import {
 	createGauzyWindow,
 	createSettingsWindow,
 	createTimeTrackerWindow,
-	timeTrackerPage,
 	setLaunchPathAndLoad
 } from '@gauzy/desktop-window';
 
@@ -281,13 +280,13 @@ function setGlobalVariable(setupConfig: {
 	host?: string;
 	port?: string;
 	protocol?: string;
-	isLocalServer?: boolean,
-	serverUrl?: string
+	isLocalServer?: boolean;
+	serverUrl?: string;
 }) {
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl({
 			host: setupConfig.host,
-			port: setupConfig.port ? Number(setupConfig.port) : 3000,
+			port: setupConfig.port ? Number(setupConfig.port) : environment.API_DEFAULT_PORT,
 			protocol: setupConfig.protocol,
 			serverUrl: setupConfig.serverUrl
 		}),
@@ -594,7 +593,7 @@ app.on('ready', async () => {
 					...configs
 				});
 			} else {
-				setGlobalVariable(configs)
+				setGlobalVariable(configs);
 				await startServer(configs);
 			}
 		} else {
