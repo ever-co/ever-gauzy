@@ -72,6 +72,11 @@ export class PublicInvoiceService {
 							description: true
 						},
 						productId: true,
+						product: {
+							id: true,
+							code: true,
+							imageUrl: true
+						},
 						expenseId: true,
 						expense: {
 							id: true,
