@@ -12,11 +12,8 @@ import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-fe
 export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOrganization> {
 	constructor(
 		readonly typeOrmFeatureOrganizationRepository: TypeOrmFeatureOrganizationRepository,
-
 		readonly mikroOrmFeatureOrganizationRepository: MikroOrmFeatureOrganizationRepository,
-
-		@Inject(forwardRef(() => FeatureService))
-		private readonly _featureService: FeatureService
+		@Inject(forwardRef(() => FeatureService)) private readonly _featureService: FeatureService
 	) {
 		super(typeOrmFeatureOrganizationRepository, mikroOrmFeatureOrganizationRepository);
 	}
@@ -72,27 +69,34 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 	 * @returns A Promise resolving to an array of IFeatureOrganization.
 	 */
 	public async updateTenantFeatureOrganizations(tenants: ITenant[]): Promise<IFeatureOrganization[]> {
-		if (!tenants.length) {
-			return [];
-		}
+		try {
+			if (!tenants || tenants.length === 0) {
+				return [];
+			}
 
-		const featureOrganizations: IFeatureOrganization[] = [];
-		const features: IFeature[] = await this._featureService.find();
+			// Retrieve all available features
+			const features: IFeature[] = await this._featureService.find();
 
-		for (const feature of features) {
-			const isEnabled = feature.isEnabled;
-			const tenantFeatureOrganizations = tenants.map(
-				(tenant) =>
-					new FeatureOrganization({
-						isEnabled,
-						tenant,
-						feature
-					})
+			// Generate a cartesian product of features and tenants to create FeatureOrganization entities
+			const featureOrganizations: IFeatureOrganization[] = features.flatMap((feature: IFeature) =>
+				tenants.map(
+					(tenant: ITenant) =>
+						new FeatureOrganization({
+							isEnabled: !!feature.isEnabled,
+							tenant,
+							feature
+						})
+				)
 			);
 
-			featureOrganizations.push(...tenantFeatureOrganizations);
+			/**
+			 * Use saveManyWithoutEnrichment to avoid TenantAwareCrudService.saveMany()
+			 * which would overwrite per-entity tenantId with the current RequestContext tenantId.
+			 */
+			return await this.saveManyWithoutEnrichment(featureOrganizations);
+		} catch (error) {
+			console.log('Error while updating tenant feature organizations', error);
+			return [];
 		}
-
-		return await this.saveMany(featureOrganizations);
 	}
 }

@@ -1218,9 +1218,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 		}
 
 		// If none of the above conditions are met, the section should not be hidden
-		if (isHidden) {
-			console.log(`Final hidden status for ${id}: ${isHidden}`);
-		}
 		return isHidden;
 	}
 
