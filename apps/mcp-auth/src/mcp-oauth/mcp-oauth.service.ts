@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { OAuth2AuthorizationServer, UserInfo } from '@gauzy/auth';
+import { OAuth2AuthorizationServer, UserInfo, oAuth2ClientManager } from '@gauzy/auth';
 import { OAuthUserService } from '../user/oauth-user.service';
 import { IUser } from '@gauzy/contracts';
 
@@ -121,8 +121,9 @@ export class McpOAuthService implements OnModuleInit {
 		};
 	}
 
-	onModuleInit() {
-		// No-op; providers wired in constructor
+	async onModuleInit() {
+		// Pre-register well-known MCP clients (ChatGPT, Claude) as public clients
+		await oAuth2ClientManager.registerDefaultClients();
 	}
 
 	/**
