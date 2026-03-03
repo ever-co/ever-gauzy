@@ -42,7 +42,8 @@ import {
 	Store,
 	TenantInterceptor,
 	TimeoutInterceptor,
-	TokenInterceptor
+	TokenInterceptor,
+	ServerConnectionService
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { provideI18n } from '@gauzy/ui-core/i18n';
@@ -97,6 +98,7 @@ bootstrapApplication(AppComponent, {
 		AuthStrategy,
 		AuthService,
 		Store,
+		ServerConnectionService,
 		provideAppInitializer(() => {
 			const storage = inject(GauzyStorageService);
 			persistState({

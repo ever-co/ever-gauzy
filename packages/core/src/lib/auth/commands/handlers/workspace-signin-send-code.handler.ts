@@ -6,10 +6,7 @@ import { AuthService } from '../../auth.service';
 
 @CommandHandler(WorkspaceSigninSendCodeCommand)
 export class WorkspaceSigninSendCodeCommandHandler implements ICommandHandler<WorkspaceSigninSendCodeCommand> {
-
-	constructor(
-		private readonly authService: AuthService
-	) { }
+	constructor(private readonly authService: AuthService) {}
 
 	public async execute(command: WorkspaceSigninSendCodeCommand): Promise<any> {
 		try {

@@ -76,6 +76,14 @@ jobs:
           "npm_config_python=$py" | Out-File -FilePath $env:GITHUB_ENV -Append
           "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Configure Registry
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
+            echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
+            echo "registry=https://packages.ever.co/" >> .npmrc
+          fi
+
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
