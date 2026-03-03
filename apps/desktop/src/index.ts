@@ -371,9 +371,7 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
-		console.log('init app');
 		if (!isAlreadyRun && setupConfig && !restart) {
-			console.log('want to ping', timeTrackerWindow);
 			onWaitingServer = true;
 			timeTrackerWindow?.webContents?.send?.('server_ping', {
 				host: getApiBaseUrl({
@@ -394,14 +392,20 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 		await setLaunchPathAndLoad(timeTrackerWindow, pathWindow.timeTrackerUi, '/time-tracker');
 		if (setupConfig.gauzyWindow) {
 			timeTrackerWindow.hide();
+		} else {
+			timeTrackerWindow.show();
 		}
-		gauzyWindow = await createGauzyWindow(
-			gauzyWindow,
-			serve,
-			{ ...environment, gauzyWindow: setupConfig.gauzyWindow },
-			pathWindow.gauzyWindow,
-			pathWindow.preloadPath
-		);
+		if (setupConfig.gauzyWindow) {
+			gauzyWindow = await createGauzyWindow(
+				gauzyWindow,
+				serve,
+				{ ...environment, gauzyWindow: setupConfig.gauzyWindow },
+				pathWindow.gauzyWindow,
+				pathWindow.preloadPath
+			);
+		} else {
+			gauzyWindow = timeTrackerWindow;
+		}
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}

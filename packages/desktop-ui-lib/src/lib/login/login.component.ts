@@ -14,7 +14,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
 import { catchError, EMPTY, finalize, tap } from 'rxjs';
-import { AuthService } from '../auth';
+import { AuthService, AuthStrategy } from '../auth';
 import { GAUZY_ENV } from '../constants';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { ElectronService } from '../electron/services';
@@ -58,6 +58,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly cdr: ChangeDetectorRef,
 		public readonly _router: Router,
 		private readonly authService: AuthService,
+		private readonly authStrategy: AuthStrategy,
 		private readonly errorHandlingService: ErrorHandlerService,
 		@Inject(NB_AUTH_OPTIONS)
 		options: any,
@@ -72,6 +73,10 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		if (this.isAgent) {
 			this.user.rememberMe = true;
 		}
+		this.electronService.ipcRenderer.on('gauzy_auth_success', async (_, message) => {
+			this.authStrategy.storeAuthenticationData(message);
+			await this._router.navigate(['/']);
+		});
 	}
 
 	public override login(): void {
