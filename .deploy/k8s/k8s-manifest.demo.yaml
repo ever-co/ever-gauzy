@@ -218,3 +218,67 @@ spec:
                   ports:
                       - containerPort: 4200
                         protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: gauzy-demo-worker
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: gauzy-demo-worker
+    template:
+        metadata:
+            labels:
+                app: gauzy-demo-worker
+        spec:
+            securityContext:
+                seccompProfile:
+                    type: RuntimeDefault
+            containers:
+                - name: gauzy-demo-worker
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
+                  image: registry.digitalocean.com/ever/gauzy-worker-demo:latest
+                  env:
+                      - name: API_HOST
+                        value: 0.0.0.0
+                      - name: DEMO
+                        value: 'true'
+                      - name: CLOUD_PROVIDER
+                        value: '$CLOUD_PROVIDER'
+                      - name: NODE_ENV
+                        value: 'development'
+                      - name: LOG_LEVEL
+                        value: 'info'
+                      - name: SENTRY_DSN
+                        value: '$SENTRY_DSN'
+                      - name: SENTRY_HTTP_TRACING_ENABLED
+                        value: '$SENTRY_HTTP_TRACING_ENABLED'
+                      - name: SENTRY_PROFILING_ENABLED
+                        value: '$SENTRY_PROFILING_ENABLED'
+                      - name: SENTRY_POSTGRES_TRACKING_ENABLED
+                        value: '$SENTRY_POSTGRES_TRACKING_ENABLED'
+                      - name: API_BASE_URL
+                        value: 'https://apidemo.gauzy.co'
+                      - name: CLIENT_BASE_URL
+                        value: 'https://demo.gauzy.co'
+                      - name: OTEL_ENABLED
+                        value: '$OTEL_ENABLED'
+                      - name: OTEL_PROVIDER
+                        value: '$OTEL_PROVIDER'
+                      - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+                        value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
+                      - name: OTEL_EXPORTER_OTLP_HEADERS
+                        value: '$OTEL_EXPORTER_OTLP_HEADERS'
+                      - name: WORKER_DEFAULT_QUEUE
+                        value: '$WORKER_DEFAULT_QUEUE'
+                      - name: WORKER_QUEUE_ENABLED
+                        value: '$WORKER_QUEUE_ENABLED'
+                      - name: WORKER_SCHEDULER_ENABLED
+                        value: '$WORKER_SCHEDULER_ENABLED'
+                      - name: WORKER_TIMEZONE
+                        value: '$WORKER_TIMEZONE'

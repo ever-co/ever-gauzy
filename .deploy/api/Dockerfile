@@ -148,6 +148,9 @@ COPY --chown=node:node packages/constants/package.json ./packages/constants/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
+COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
+
+# Copy plugins
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
@@ -170,7 +173,6 @@ COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugi
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
-COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
 
 # We do not build Wakatime plugin here, because it is used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -222,6 +224,9 @@ COPY --chown=node:node packages/constants/package.json ./packages/constants/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
+COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
+
+# Copy plugins
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
@@ -244,7 +249,6 @@ COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugi
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
-COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -344,6 +348,8 @@ COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
 # Copy node_modules to a temporary location
 COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node_modules_temp
+# Ensure node_modules directory exists (safety net in case build output doesn't include one)
+RUN mkdir -p ./node_modules
 # Add a script to merge directories inside the container (skip files that already exists)
 RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
 
@@ -360,6 +366,7 @@ RUN cp -r ./packages/utils/node_modules ./node_modules/@gauzy/utils/
 RUN cp -r ./packages/config/node_modules ./node_modules/@gauzy/config/
 RUN cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/
 RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
+RUN cp -r ./packages/scheduler/node_modules ./node_modules/@gauzy/scheduler/
 
 RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/ && \
     cp -r ./packages/plugins/integration-activepieces/node_modules ./node_modules/@gauzy/plugin-integration-activepieces/ && \
@@ -381,8 +388,7 @@ RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin
     cp -r ./packages/plugins/posthog/node_modules ./node_modules/@gauzy/plugin-posthog/ && \
     cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/ && \
     cp -r ./packages/plugins/soundshot/node_modules ./node_modules/@gauzy/plugin-soundshot/ && \
-    cp -r ./packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/ && \
-    cp -r ./packages/scheduler/node_modules ./node_modules/@gauzy/scheduler/
+    cp -r ./packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/
 
 # We do not copy node_modules for Wakatime plugin here, because it is used in Desktop Apps for now
 # RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/
