@@ -671,6 +671,7 @@
 		"signup",
 		"signup",
 		"signups",
+		"simstudio",
 		"slnt",
 		"sluggable",
 		"Smee",
@@ -868,7 +869,9 @@
 		"preloadable",
 		"Suivi",
 		"Démarrer",
-		"Neue"
+		"Neue",
+		"viewports",
+		"sidemenu"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

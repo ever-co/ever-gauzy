@@ -84,6 +84,7 @@ ARG MCP_WS_SESSION_COOKIE_NAME
 ARG MCP_WS_TRUSTED_PROXIES
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
+ARG VERDACCIO_TOKEN
 
 FROM node:24.14.0-alpine3.23 AS dependencies
 
@@ -112,9 +113,18 @@ COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
+ARG VERDACCIO_TOKEN
+RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
+    echo "registry=https://packages.ever.co/" >> .npmrc; \
+    fi
+
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
     && yarn postinstall.manual \
     && yarn cache clean
+
+# Remove .npmrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc
 
 COPY --chown=node:node apps/mcp ./apps/mcp
 COPY --chown=node:node packages/mcp-server ./packages/mcp-server/
@@ -160,17 +170,33 @@ RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc
     && npm install yarn -g --force \
     && npm install --quiet ts-node@10.9.2 -g
 
+# Create working directory with correct ownership so node user can create symlinks
+RUN mkdir -p /srv/gauzy-mcp && chown node:node /srv/gauzy-mcp
+
 USER node:node
 
 WORKDIR /srv/gauzy-mcp
 
 COPY --chown=node:node --from=build /srv/gauzy-mcp/dist .
+
+# Create dist -> . symlink so ../../../dist/ paths in package.json resolve correctly in Docker
+RUN ln -s . dist
+
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
+
+ARG VERDACCIO_TOKEN
+RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
+    echo "registry=https://packages.ever.co/" >> .npmrc; \
+    fi
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
     && yarn postinstall.manual \
     && yarn cache clean
+
+# Remove .npmrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc
 
 # PROD
 FROM proddependencies AS production

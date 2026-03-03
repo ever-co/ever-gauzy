@@ -6,8 +6,9 @@ import { NbButtonModule, NbFormFieldModule, NbIconModule, NbInputModule } from '
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, Subscription, catchError, filter, finalize, firstValueFrom, interval, tap } from 'rxjs';
+import { ALPHA_NUMERIC_CODE_LENGTH, patterns } from '@gauzy/constants';
 import { AuthService } from '../../../auth';
-import { GAUZY_ENV, patterns } from '../../../constants';
+import { GAUZY_ENV } from '../../../constants';
 import { DebounceClickDirective } from '../../../directives/debounce-click.directive';
 import { SpinnerButtonDirective } from '../../../directives/spinner-button.directive';
 import { ErrorHandlerService } from '../../../services';
@@ -41,6 +42,9 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	public countdown: number;
 	private timer: Subscription;
 
+	// Code length constant exposed for templates
+	public readonly codeLength = ALPHA_NUMERIC_CODE_LENGTH;
+
 	public isLoading: boolean = false;
 	public isCodeSent: boolean = false;
 	public isCodeResent: boolean = false;
@@ -59,7 +63,14 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			email: [null, Validators.compose([Validators.required, Validators.pattern(patterns.email)])],
-			code: [null, Validators.compose([Validators.required, Validators.minLength(6), Validators.maxLength(6)])]
+			code: [
+				null,
+				Validators.compose([
+					Validators.required,
+					Validators.minLength(ALPHA_NUMERIC_CODE_LENGTH),
+					Validators.maxLength(ALPHA_NUMERIC_CODE_LENGTH)
+				])
+			]
 		});
 	}
 

@@ -2,9 +2,9 @@ import { ChangeDetectorRef, Directive, OnDestroy } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { ALPHA_NUMERIC_CODE_LENGTH, patterns } from '@gauzy/constants';
 import { IAuthResponse, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { ErrorHandlingService, Store, WorkspaceAuthService } from '@gauzy/ui-core/core';
-import { patterns } from '@gauzy/ui-core/shared';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CountdownTimerService } from './countdown-timer.service';
 
@@ -18,6 +18,9 @@ import { CountdownTimerService } from './countdown-timer.service';
 export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponent implements OnDestroy {
 	// Timer properties
 	public countdown = 0;
+
+	// Code length constant exposed for templates
+	public readonly codeLength = ALPHA_NUMERIC_CODE_LENGTH;
 
 	// Loading and state properties
 	public isLoading = false;
@@ -42,7 +45,14 @@ export abstract class BaseWorkspaceAuthComponent extends TranslationBaseComponen
 	static buildEmailCodeForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			email: [null, Validators.compose([Validators.required, Validators.pattern(patterns.email)])],
-			code: [null, Validators.compose([Validators.required, Validators.minLength(6), Validators.maxLength(6)])]
+			code: [
+				null,
+				Validators.compose([
+					Validators.required,
+					Validators.minLength(ALPHA_NUMERIC_CODE_LENGTH),
+					Validators.maxLength(ALPHA_NUMERIC_CODE_LENGTH)
+				])
+			]
 		});
 	}
 

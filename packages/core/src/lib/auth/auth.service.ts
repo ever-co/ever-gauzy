@@ -902,6 +902,7 @@ export class AuthService extends SocialAuthService {
 
 			// Validate the password reset token
 			const record: IPasswordReset = await this.commandBus.execute(new PasswordResetGetCommand({ token }));
+
 			if (record.expired) {
 				throw new BadRequestException('Password Reset Failed: Token has expired.');
 			}
@@ -957,6 +958,7 @@ export class AuthService extends SocialAuthService {
 
 			return true;
 		} catch (error) {
+			this.logger.error(`Password reset failed: ${error?.message}`);
 			throw new BadRequestException('Password Reset Failed.');
 		}
 	}
@@ -2090,7 +2092,7 @@ export class AuthService extends SocialAuthService {
 						id: user.tenant.id, // Assuming tenantId is a direct property of tenant
 						name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
 						logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-				  })
+					})
 				: null // Sets tenant to null if user.tenant is undefined
 		});
 	}

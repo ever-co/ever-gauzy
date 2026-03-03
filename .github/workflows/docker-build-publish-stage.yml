@@ -44,6 +44,7 @@ jobs:
             DEMO=false
             NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+            VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
 
       - name: Docker images list
         run: |
@@ -125,6 +126,7 @@ jobs:
             DEMO=false
             NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+            VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
 
       - name: Docker images list
         run: |

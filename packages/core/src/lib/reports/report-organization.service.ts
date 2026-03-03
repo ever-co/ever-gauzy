@@ -1,12 +1,13 @@
-import { BadRequestException, Injectable, } from '@nestjs/common';
 import { IOrganization, IReport, UpdateReportMenuInput } from '@gauzy/contracts';
-import { MultiORMEnum, TenantAwareCrudService } from '@gauzy/core';
+import { BadRequestException, Injectable, } from '@nestjs/common';
 import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from '../core/crud';
+import { MultiORMEnum } from '../core/utils';
 import { ReportOrganization } from './report-organization.entity';
-import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
+import { MikroOrmReportOrganizationRepository } from './repository/mikro-orm-report-organization.repository';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
 import { TypeOrmReportOrganizationRepository } from './repository/type-orm-report-organization.repository';
-import { MikroOrmReportOrganizationRepository } from './repository/mikro-orm-report-organization.repository';
+import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
 
 @Injectable()
 export class ReportOrganizationService extends TenantAwareCrudService<ReportOrganization> {

@@ -62,6 +62,7 @@ ARG MOBILE_APP_DOWNLOAD_LINK
 ARG EXTENSION_DOWNLOAD_LINK
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
+ARG VERDACCIO_TOKEN
 
 FROM node:24.14.0-alpine3.23 AS dependencies
 
@@ -116,6 +117,7 @@ COPY --chown=node:node packages/plugins/integration-make-com/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-make-com-ui/package.json ./packages/plugins/integration-make-com-ui/
 COPY --chown=node:node packages/plugins/integration-zapier-ui/package.json ./packages/plugins/integration-zapier-ui/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
+COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-activepieces-ui/package.json ./packages/plugins/integration-activepieces-ui/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
@@ -151,10 +153,19 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
+ARG VERDACCIO_TOKEN
+RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+	echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
+	echo "registry=https://packages.ever.co/" >> .npmrc; \
+	fi
+
 # Must be without --production because we need dev deps installed
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
 RUN yarn postinstall.manual
 RUN yarn cache clean
+
+# Remove .npmrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc
 
 FROM node:24.14.0-alpine3.23 AS development
 
