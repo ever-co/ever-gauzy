@@ -32,12 +32,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	ngOnInit(): void {
-		const isEmployee = this._store.user && this._store.user.employee;
-		if (!this._isInitialized && isEmployee) {
-			this._electronService.ipcRenderer.send('app_is_init');
-			this._isInitialized = true;
-		}
-		this.tokenRefreshService.start();
+		this._electronService.ipcRenderer.send('app_is_init');
+		this._isInitialized = true;
 	}
 
 	ngAfterViewInit(): void {
@@ -50,11 +46,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 					this._store.token = arg.token;
 					this._store.organizationId = arg.organizationId;
 					this._store.tenantId = arg.tenantId;
-					if (!this._isInitialized) {
-						this._electronService.ipcRenderer.send('app_is_init');
-						this._isInitialized = true;
-					}
-					// Start token refresh timer on authentication
 					if (arg.token && this._store.refreshToken) {
 						this.tokenRefreshService.start();
 					}
