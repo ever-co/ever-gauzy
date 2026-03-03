@@ -1,26 +1,38 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ROUTES, RouterModule } from '@angular/router';
 import { NbMenuModule, NbToastrModule, NbSpinnerModule, NbIconModule } from '@nebular/theme';
 import { FeatureToggleModule as NgxFeatureToggleModule } from 'ngx-feature-toggle';
-import { AuthService, CommonNavModule, RoleGuard } from '@gauzy/ui-core/core';
+import { AuthService, CommonNavModule, PageRouteRegistryService, RoleGuard } from '@gauzy/ui-core/core';
 import { MiscellaneousModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { PagesComponent } from './pages.component';
-import { PagesRoutingModule } from './pages-routing.module';
-
-const NB_MODULES = [NbMenuModule, NbToastrModule.forRoot(), NbSpinnerModule, NbIconModule];
+import { getPagesRoutes } from './pages.routes';
 
 @NgModule({
 	imports: [
 		CommonModule,
-		...NB_MODULES,
+		RouterModule.forChild([]),
+		NbMenuModule,
+		NbToastrModule.forRoot(),
+		NbSpinnerModule,
+		NbIconModule,
 		NgxFeatureToggleModule,
-		PagesRoutingModule,
 		ThemeModule,
 		CommonNavModule,
 		MiscellaneousModule
 	],
 	declarations: [PagesComponent],
-	providers: [AuthService, RoleGuard]
+	providers: [
+		AuthService,
+		RoleGuard,
+		{
+			provide: ROUTES,
+			useFactory: (pageRouteRegistryService: PageRouteRegistryService) =>
+				getPagesRoutes(pageRouteRegistryService),
+			deps: [PageRouteRegistryService],
+			multi: true
+		}
+	]
 })
 export class PagesModule {}
