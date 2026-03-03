@@ -1767,6 +1767,7 @@ export class AuthService extends SocialAuthService {
 
 			// Look up the user with role relation
 			let user: User;
+
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const parsed = parseTypeORMFindToMikroOrm<User>({ where, relations: { role: true } });
@@ -1793,48 +1794,28 @@ export class AuthService extends SocialAuthService {
 			const organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
 
 			// Generate access and refresh tokens concurrently
-			const [access_token, refresh_token] = await Promise.all([
+			const [accessToken, refreshToken] = await Promise.all([
 				this.getJwtAccessToken(user, organizationId),
 				this.getJwtRefreshToken(user, organizationId)
 			]);
 
 			// Store refresh token and update login metadata concurrently
 			await Promise.all([
-				this.userService.setCurrentRefreshToken(refresh_token, user.id),
+				this.userService.setCurrentRefreshToken(refreshToken, user.id),
 				this.userService.setUserLastLoginTimestamp(user.id)
 			]);
 
-			// Update last organization/team preference
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					await this.mikroOrmUserRepository.nativeUpdate(
-						{ id: user.id },
-						{
-							lastOrganizationId: lastOrganizationId ?? user.lastOrganizationId,
-							lastTeamId
-						}
-					);
-					break;
-				case MultiORMEnum.TypeORM:
-					await this.typeOrmUserRepository.update(
-						{ id: user.id },
-						{
-							lastOrganizationId: lastOrganizationId ?? user.lastOrganizationId,
-							lastTeamId
-						}
-					);
-					break;
-				default:
-					throw new Error(`ORM type not implemented: ${this.ormType}`);
-			}
+			// Persist the resolved organization/team preference so the DB stays
+			// in sync with whatever value was embedded in the tokens above.
+			this.userService.setLastOrganizationAndTeam(user.id, organizationId, lastTeamId);
 
 			return {
 				user: new User({
 					...user,
 					...(employee && { employee })
 				}),
-				token: access_token,
-				refresh_token
+				token: accessToken,
+				refresh_token: refreshToken
 			};
 		} catch (error) {
 			if (error?.name === 'TokenExpiredError') {
