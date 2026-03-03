@@ -375,7 +375,7 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 			timeTrackerWindow?.webContents?.send?.('server_ping', {
 				host: getApiBaseUrl({
 					host: setupConfig.host,
-					port: setupConfig.port ? Number(setupConfig.port) : null,
+					port: setupConfig.port ? Number(setupConfig.port) : environment.API_DEFAULT_PORT,
 					protocol: setupConfig.protocol,
 					serverUrl: setupConfig.serverUrl
 				})
