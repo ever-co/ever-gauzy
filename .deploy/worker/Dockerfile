@@ -353,6 +353,8 @@ COPY --chown=node:node --from=build /srv/gauzy/dist/apps/worker .
 
 # Copy node_modules to a temporary location
 COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node_modules_temp
+# Ensure node_modules directory exists (webpack build may not include one)
+RUN mkdir -p ./node_modules
 # Add a script to merge directories inside the container (skip files that already exists)
 RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
 
