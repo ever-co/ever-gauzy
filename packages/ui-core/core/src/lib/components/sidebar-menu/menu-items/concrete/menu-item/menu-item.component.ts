@@ -1,19 +1,39 @@
-import { AfterViewChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+	AfterViewChecked,
+	ChangeDetectorRef,
+	Component,
+	EventEmitter,
+	inject,
+	Input,
+	OnInit,
+	Output
+} from '@angular/core';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
-import { NbSidebarService } from '@nebular/theme';
+import { NbAccordionModule, NbSidebarService, NbTooltipModule } from '@nebular/theme';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { IUser } from '@gauzy/contracts';
 import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum, JitsuService, Store } from '../../../../../services';
 import { IMenuItem } from '../../interface/menu-item.interface';
+import { TooltipDirective } from '../../../tooltip.directive';
+import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-item.component';
 
 @Component({
-    selector: 'ga-menu-item',
-    templateUrl: './menu-item.component.html',
-    styleUrls: ['./menu-item.component.scss'],
-    standalone: false
+	selector: 'ga-menu-item',
+	templateUrl: './menu-item.component.html',
+	styleUrls: ['./menu-item.component.scss'],
+	standalone: true,
+	imports: [NbAccordionModule, NbTooltipModule, NgxPermissionsModule, TooltipDirective, ChildrenMenuItemComponent]
 })
 export class MenuItemComponent implements OnInit, AfterViewChecked {
+	private readonly _router = inject(Router);
+	private readonly _sidebarService = inject(NbSidebarService);
+	private readonly _cdr = inject(ChangeDetectorRef);
+	private readonly _location = inject(Location);
+	private readonly _jitsuService = inject(JitsuService);
+	private readonly _store = inject(Store);
+
 	private _user: IUser;
 
 	/**
@@ -84,15 +104,6 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 
 	@Output() public collapsedChange: EventEmitter<any> = new EventEmitter();
 	@Output() public selectedChange: EventEmitter<any> = new EventEmitter();
-
-	constructor(
-		private readonly _router: Router,
-		private readonly _sidebarService: NbSidebarService,
-		private readonly _cdr: ChangeDetectorRef,
-		private readonly _location: Location,
-		private readonly _jitsuService: JitsuService,
-		private readonly _store: Store
-	) {}
 
 	ngOnInit(): void {
 		// Get the user data from the store

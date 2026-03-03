@@ -1,16 +1,20 @@
 import { Location } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { NbButtonModule, NbTooltipModule } from '@nebular/theme';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IMenuItem } from '../../interface/menu-item.interface';
+import { TooltipDirective } from '../../../tooltip.directive';
 
 @UntilDestroy()
 @Component({
     selector: 'ga-children-menu-item',
     templateUrl: './children-menu-item.component.html',
     styleUrls: ['./children-menu-item.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [NbButtonModule, NbTooltipModule, NgxPermissionsModule, TooltipDirective]
 })
 export class ChildrenMenuItemComponent implements OnInit {
 	/**
@@ -70,7 +74,8 @@ export class ChildrenMenuItemComponent implements OnInit {
 
 	@Output() public focusItemChange: EventEmitter<any> = new EventEmitter();
 
-	constructor(private readonly router: Router, private readonly location: Location) {}
+	private readonly router = inject(Router);
+	private readonly location = inject(Location);
 
 	ngOnInit(): void {
 		// Log and check the current URL

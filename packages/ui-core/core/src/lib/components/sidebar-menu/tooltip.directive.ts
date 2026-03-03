@@ -1,54 +1,77 @@
-import { Directive, ElementRef, HostListener, Input, OnDestroy, inject } from '@angular/core';
+import { Directive, ElementRef, HostListener, Input, OnDestroy, Renderer2, inject } from '@angular/core';
 
 @Directive({
 	selector: '[gaTooltip]',
-	standalone: false
+	standalone: true
 })
 export class TooltipDirective implements OnDestroy {
-	private readonly el = inject(ElementRef);
+	private readonly _el = inject(ElementRef);
+	private readonly _renderer = inject(Renderer2);
 
 	@Input() gaTooltip: string;
 	@Input() icon: string;
-	private popup: any;
+
+	private _popup: HTMLElement | null = null;
 
 	ngOnDestroy(): void {
-		if (this.popup) this.popup.remove();
+		this._removeTooltip();
 	}
 
 	/**
 	 * Handles the mouse enter event and creates a tooltip popup at the middle of the element.
-	 *
-	 * @return {void} This function does not return anything.
 	 */
-	@HostListener('mouseenter') onMouseEnter(): void {
-		const x = this.el.nativeElement.getBoundingClientRect().left + this.el.nativeElement.offsetWidth / 2; // Get the middle of the element
-		const y = this.el.nativeElement.getBoundingClientRect().top + this.el.nativeElement.offsetHeight + 6; // Get the bottom of the element, plus a little extra
-		this.createTooltipPopup(x, y);
+	@HostListener('mouseenter')
+	onMouseEnter(): void {
+		const rect = this._el.nativeElement.getBoundingClientRect();
+		const x = rect.left + rect.width / 2;
+		const y = rect.top + rect.height + 6;
+		this._createTooltipPopup(x, y);
 	}
 
 	/**
-	 * Removes the tooltip popup if it exists when the mouse leaves the element.
-	 *
-	 * @return {void} This function does not return anything.
+	 * Removes the tooltip popup when the mouse leaves the element.
 	 */
-	@HostListener('mouseleave') onMouseLeave(): void {
-		if (this.popup) this.popup.remove();
+	@HostListener('mouseleave')
+	onMouseLeave(): void {
+		this._removeTooltip();
 	}
 
 	/**
 	 * Creates a tooltip popup at the specified coordinates.
 	 *
-	 * @param {number} x - The x-coordinate of the popup.
-	 * @param {number} y - The y-coordinate of the popup.
-	 * @return {void} This function does not return anything.
+	 * @param x - The x-coordinate of the popup.
+	 * @param y - The y-coordinate of the popup.
 	 */
-	private createTooltipPopup(x: number, y: number): void {
-		const popup = document.createElement('div');
-		popup.innerHTML = "<i class='" + this.icon + "'></i>" + this.gaTooltip;
-		popup.setAttribute('class', 'tooltip-container');
-		popup.style.top = y.toString() + 'px';
-		popup.style.left = x.toString() + 'px';
-		document.body.appendChild(popup);
-		this.popup = popup;
+	private _createTooltipPopup(x: number, y: number): void {
+		this._removeTooltip();
+
+		const popup = this._renderer.createElement('div') as HTMLElement;
+
+		// Build content safely using Renderer2 instead of innerHTML
+		if (this.icon) {
+			const iconEl = this._renderer.createElement('i');
+			this._renderer.setAttribute(iconEl, 'class', this.icon);
+			this._renderer.appendChild(popup, iconEl);
+		}
+
+		const text = this._renderer.createText(this.gaTooltip ?? '');
+		this._renderer.appendChild(popup, text);
+
+		this._renderer.setAttribute(popup, 'class', 'tooltip-container');
+		this._renderer.setStyle(popup, 'top', `${y}px`);
+		this._renderer.setStyle(popup, 'left', `${x}px`);
+		this._renderer.appendChild(document.body, popup);
+
+		this._popup = popup;
+	}
+
+	/**
+	 * Removes the tooltip popup from the DOM if it exists.
+	 */
+	private _removeTooltip(): void {
+		if (this._popup) {
+			this._renderer.removeChild(document.body, this._popup);
+			this._popup = null;
+		}
 	}
 }
