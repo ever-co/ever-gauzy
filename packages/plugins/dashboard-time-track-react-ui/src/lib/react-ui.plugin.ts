@@ -38,8 +38,10 @@ export const DashboardTimeTrackReactUiPlugin = defineDeclarativePlugin('dashboar
 	// ── Versioning & Compatibility ────────────────────────────────
 	version: '1.0.0',
 
+	// ── Location ─────────────────────────────────────────────────
 	location: 'page-sections',
 
+	// ── Routes ───────────────────────────────────────────────────
 	routes: [REACT_TIME_TRACKING_DASHBOARD_ROUTE as PluginRouteInput],
 
 	// ── Namespace-isolated translations ──────────────────────────
