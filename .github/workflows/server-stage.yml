@@ -71,6 +71,9 @@ jobs:
           if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
             echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
             echo "registry=https://packages.ever.co/" >> .npmrc
+            echo 'registry "https://packages.ever.co/"' >> .yarnrc
+            sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
+            sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
           fi
 
       - name: Install Yarn dependencies
@@ -180,6 +183,9 @@ jobs:
           if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
             echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
             echo "registry=https://packages.ever.co/" >> .npmrc
+            echo 'registry "https://packages.ever.co/"' >> .yarnrc
+            sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
+            sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
           fi
 
       - name: Install Yarn dependencies
@@ -276,6 +282,9 @@ jobs:
           if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
             echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
             echo "registry=https://packages.ever.co/" >> .npmrc
+            echo 'registry "https://packages.ever.co/"' >> .yarnrc
+            sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
+            sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
           fi
 
       - name: Install Yarn dependencies
@@ -403,6 +412,9 @@ jobs:
           if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
             echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
             echo "registry=https://packages.ever.co/" >> .npmrc
+            echo 'registry "https://packages.ever.co/"' >> .yarnrc
+            sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
+            sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
           fi
 
       - name: Install Yarn dependencies
@@ -578,6 +590,9 @@ jobs:
           if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
             echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
             echo "registry=https://packages.ever.co/" >> .npmrc
+            echo 'registry "https://packages.ever.co/"' >> .yarnrc
+            sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
+            sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
           fi
 
       - name: Install Yarn dependencies
