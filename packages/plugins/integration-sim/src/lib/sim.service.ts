@@ -312,7 +312,7 @@ export class SimService {
 	/**
 	 * Get async job status.
 	 */
-	async getJobStatus(jobId: string): Promise<any> {
+	async getJobStatus(taskId: string): Promise<any> {
 		const tenantId = RequestContext.currentTenantId();
 		if (!tenantId) {
 			throw new BadRequestException('Tenant ID is required');
@@ -334,7 +334,7 @@ export class SimService {
 		}
 
 		const client = await this.simClientFactory.getClient(integrationTenant.id);
-		return client.getJobStatus(jobId);
+		return client.getJobStatus(taskId);
 	}
 
 	/**
@@ -558,11 +558,19 @@ export class SimService {
 	private mapExecutionResult(execution: SimWorkflowExecution, result: WorkflowExecutionResult | AsyncExecutionResult): void {
 		const syncResult = result as WorkflowExecutionResult;
 		const asyncResult = result as AsyncExecutionResult;
-		const jobId = (result as any).jobId || asyncResult.jobId;
+		const taskId = asyncResult.taskId;
 
-		execution.status = jobId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
+		if (taskId) {
+			execution.status = 'queued';
+		} else if (syncResult.success === true) {
+			execution.status = 'completed';
+		} else if (syncResult.success === false) {
+			execution.status = 'failed';
+		} else {
+			execution.status = 'completed';
+		}
 		execution.output = syncResult.output ?? result;
-		execution.executionId = (result as any).executionId || syncResult.metadata?.executionId || jobId;
+		execution.executionId = syncResult.metadata?.executionId || taskId;
 		execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
 		execution.error = syncResult.error ? { message: syncResult.error } : undefined;
 	}
