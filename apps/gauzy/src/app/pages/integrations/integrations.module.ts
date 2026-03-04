@@ -152,6 +152,15 @@ export class IntegrationsModule {
 				import('@gauzy/plugin-integration-activepieces-ui').then((m) => m.IntegrationActivepiecesUiModule)
 		});
 
+		// Register the routes for SIM AI integration
+		this._pageRouteRegistryService.registerPageRoute({
+			data: { selectors: false },
+			location: 'integrations-sections',
+			path: 'sim',
+			loadChildren: () =>
+				import('@gauzy/plugin-integration-sim-ui').then((m) => m.IntegrationSimUiModule)
+		});
+
 		// Set hasRegisteredRoutes to true
 		IntegrationsModule.hasRegisteredPageRoutes = true;
 	}

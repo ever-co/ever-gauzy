@@ -4,7 +4,6 @@ import { JobMatchingPlugin } from '@gauzy/plugin-job-matching-ui';
 import { JobProposalPlugin, JobProposalTemplatePlugin } from '@gauzy/plugin-job-proposal-ui';
 import { JobSearchPlugin } from '@gauzy/plugin-job-search-ui';
 import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
-import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
@@ -68,7 +67,6 @@ export const uiPluginConfig: PluginUiConfig = {
 		JobProposalPlugin,
 
 		// Integration Plugins
-		IntegrationSimPlugin,
 		IntegrationUpworkPlugin,
 
 		// Job Plugins
