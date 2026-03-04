@@ -11,6 +11,7 @@ import { OrganizationModule } from './../organization/organization.module';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { ContactModule } from '../contact/contact.module';
 import { TypeOrmOrganizationContactRepository } from './repository/type-orm-organization-contact.repository';
+import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
 
 @Module({
 	imports: [
@@ -23,7 +24,7 @@ import { TypeOrmOrganizationContactRepository } from './repository/type-orm-orga
 		CqrsModule
 	],
 	controllers: [OrganizationContactController],
-	providers: [OrganizationContactService, TypeOrmOrganizationContactRepository, ...CommandHandlers],
-	exports: [OrganizationContactService, TypeOrmOrganizationContactRepository]
+	providers: [OrganizationContactService, TypeOrmOrganizationContactRepository, MikroOrmOrganizationContactRepository, ...CommandHandlers],
+	exports: [OrganizationContactService, TypeOrmOrganizationContactRepository, MikroOrmOrganizationContactRepository]
 })
 export class OrganizationContactModule {}

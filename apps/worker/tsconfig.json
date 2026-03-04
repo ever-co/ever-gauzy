@@ -1,0 +1,14 @@
+{
+	"extends": "../../tsconfig.json",
+	"files": [],
+	"include": [],
+	"references": [
+		{
+			"path": "./tsconfig.app.json"
+		}
+	],
+	"compilerOptions": {
+		"incremental": true,
+		"types": ["node", "jest"]
+	}
+}

@@ -1,0 +1,111 @@
+{
+	"name": "worker",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "apps/worker/src",
+	"projectType": "application",
+	"tags": [],
+	"implicitDependencies": ["core"],
+	"generators": {
+		"@nx/nest:library": {
+			"directory": "api",
+			"unitTestRunner": "jest",
+			"linter": "eslint"
+		}
+	},
+	"targets": {
+		"build": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "development",
+			"options": {
+				"target": "node",
+				"compiler": "swc",
+				"outputPath": "dist/apps/worker",
+				"main": "apps/worker/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 8,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/worker/tsconfig.app.json",
+				"assets": [
+					"apps/worker/src/assets",
+					{
+						"input": "apps/worker/public",
+						"glob": "**/*",
+						"output": "public"
+					}
+				],
+				"webpackConfig": "apps/worker/config/webpack.config.js"				
+			},
+			"configurations": {
+				"development": {					
+				},
+				"production": {
+					"optimization": true,
+					"extractLicenses": true,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"prune-lockfile": {
+			"dependsOn": ["build"],
+			"cache": true,
+			"executor": "@nx/js:prune-lockfile",
+			"outputs": ["{workspaceRoot}/dist/apps/worker/package.json", "{workspaceRoot}/dist/apps/worker/yarn.lock"],
+			"options": {
+				"buildTarget": "build"
+			}
+		},
+		"copy-workspace-modules": {
+			"dependsOn": ["build"],
+			"cache": true,
+			"outputs": ["{workspaceRoot}/dist/apps/worker/workspace_modules"],
+			"executor": "@nx/js:copy-workspace-modules",
+			"options": {
+				"buildTarget": "build"
+			}
+		},
+		"prune": {
+			"dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+			"executor": "nx:noop"
+		},
+		"serve": {
+			"continuous": true,
+			"executor": "@nx/js:node",
+			"defaultConfiguration": "development",
+			"dependsOn": ["build"],
+			"options": {
+				"buildTarget": "worker:build",
+				"inspect": true,
+				"port": 9229,
+				"runBuildTargetDependencies": false
+			},
+			"configurations": {
+				"development": {
+					"buildTarget": "worker:build:development"
+				},
+				"production": {
+					"buildTarget": "worker:build:production"
+				}
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "apps/worker/jest.config.ts"
+			}
+		
+		}
+	}	
+}

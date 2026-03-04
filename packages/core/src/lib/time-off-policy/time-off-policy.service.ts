@@ -1,12 +1,13 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { In } from 'typeorm';
 import { ID, ITimeOffPolicyCreateInput, ITimeOffPolicyUpdateInput } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '../core/crud';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { In } from 'typeorm';
 import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from '../core/crud';
+import { MultiORMEnum } from '../core/utils';
 import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
-import { TypeOrmTimeOffPolicyRepository } from './repository/type-orm-time-off-policy.repository';
 import { MikroOrmTimeOffPolicyRepository } from './repository/mikro-orm-time-off-policy.repository';
+import { TypeOrmTimeOffPolicyRepository } from './repository/type-orm-time-off-policy.repository';
 import { TimeOffPolicy } from './time-off-policy.entity';
 
 @Injectable()
@@ -39,10 +40,22 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.paid = entity.paid;
 
 			// Find employees
-			const employees = await this.typeOrmEmployeeRepository.find({
-				where: { id: In(entity.employees), tenantId, organizationId },
-				relations: { user: true }
-			});
+			let employees;
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					employees = await this.mikroOrmEmployeeRepository.find(
+						{ id: { $in: entity.employees as unknown as string[] }, tenantId, organizationId } as any,
+						{ populate: ['user'] }
+					);
+					break;
+				case MultiORMEnum.TypeORM:
+				default:
+					employees = await this.typeOrmEmployeeRepository.find({
+						where: { id: In(entity.employees), tenantId, organizationId },
+						relations: { user: true }
+					});
+					break;
+			}
 			policy.employees = employees;
 
 			// Save the policy
@@ -78,10 +91,22 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.requiresApproval = entity.requiresApproval;
 			policy.paid = entity.paid;
 
-			const employees = await this.typeOrmEmployeeRepository.find({
-				where: { id: In(entity.employees), tenantId, organizationId },
-				relations: { user: true }
-			});
+			let employees;
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					employees = await this.mikroOrmEmployeeRepository.find(
+						{ id: { $in: entity.employees as unknown as string[] }, tenantId, organizationId } as any,
+						{ populate: ['user'] }
+					);
+					break;
+				case MultiORMEnum.TypeORM:
+				default:
+					employees = await this.typeOrmEmployeeRepository.find({
+						where: { id: In(entity.employees), tenantId, organizationId },
+						relations: { user: true }
+					});
+					break;
+			}
 			policy.employees = employees;
 
 			// Save the policy

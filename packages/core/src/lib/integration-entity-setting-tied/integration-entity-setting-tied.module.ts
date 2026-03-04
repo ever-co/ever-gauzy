@@ -7,6 +7,7 @@ import { IntegrationEntitySettingTiedController } from './integration-entity-set
 import { IntegrationEntitySettingTiedService } from './integration-entity-setting-tied.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmIntegrationEntitySettingTiedRepository } from './repository/type-orm-integration-entity-setting-tied.repository';
+import { MikroOrmIntegrationEntitySettingTiedRepository } from './repository/mikro-orm-integration-entity-setting-tied.repository';
 
 @Module({
 	imports: [
@@ -16,7 +17,7 @@ import { TypeOrmIntegrationEntitySettingTiedRepository } from './repository/type
 		CqrsModule
 	],
 	controllers: [IntegrationEntitySettingTiedController],
-	providers: [IntegrationEntitySettingTiedService, TypeOrmIntegrationEntitySettingTiedRepository],
+	providers: [IntegrationEntitySettingTiedService, TypeOrmIntegrationEntitySettingTiedRepository, MikroOrmIntegrationEntitySettingTiedRepository],
 	exports: [IntegrationEntitySettingTiedService]
 })
 export class IntegrationEntitySettingTiedModule {}

@@ -2,7 +2,8 @@ name: Release Apps Stage
 
 on:
   push:
-    branches: [stage-apps]
+    branches:
+      - stage-apps
 
 jobs:
   release:

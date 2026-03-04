@@ -9,6 +9,7 @@ import { TagService } from './tag.service';
 import { Tag } from './tag.entity';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
+import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
 		RolePermissionModule
 	],
 	controllers: [TagController],
-	providers: [TagService, TypeOrmTagRepository, ...CommandHandlers],
-	exports: [TagService, TypeOrmTagRepository]
+	providers: [TagService, TypeOrmTagRepository, MikroOrmTagRepository, ...CommandHandlers],
+	exports: [TagService, TypeOrmTagRepository, MikroOrmTagRepository]
 })
 export class TagModule {}

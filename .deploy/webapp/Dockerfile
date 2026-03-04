@@ -62,8 +62,9 @@ ARG MOBILE_APP_DOWNLOAD_LINK
 ARG EXTENSION_DOWNLOAD_LINK
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
+ARG VERDACCIO_TOKEN
 
-FROM node:24.12.0-alpine3.23 AS dependencies
+FROM node:24.14.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -152,12 +153,21 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
+ARG VERDACCIO_TOKEN
+RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+	echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
+	echo "registry=https://packages.ever.co/" >> .npmrc; \
+	fi
+
 # Must be without --production because we need dev deps installed
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
 RUN yarn postinstall.manual
 RUN yarn cache clean
 
-FROM node:24.12.0-alpine3.23 AS development
+# Remove .npmrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc
+
+FROM node:24.14.0-alpine3.23 AS development
 
 USER node:node
 
@@ -167,7 +177,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypo
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:24.12.0-alpine3.23 AS build
+FROM node:24.14.0-alpine3.23 AS build
 
 WORKDIR /srv/gauzy
 

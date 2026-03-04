@@ -694,6 +694,7 @@
 		"sslmode",
 		"SSSSZ",
 		"stackoverflow",
+		"subquery",
 		"stagecivo",
 		"stagecw",
 		"STARTTLS",
@@ -771,6 +772,7 @@
 		"ulimits",
 		"unassigning",
 		"unassignment",
+		"unassignments",
 		"undici",
 		"uninstallation",
 		"uninstallation",
@@ -853,7 +855,15 @@
 		"Hasher",
 		"VARCHAR",
 		"TOCTOU",
-		"Gmqh"
+		"Gmqh",
+		"bullmq",
+		"MAINLOADSPLASH",
+		"threadpool",
+		"THREADPOOL",
+		"EMFILE",
+		"gracefulify",
+		"viewports",
+		"sidemenu"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -8,6 +8,7 @@ import { TaskSizeService } from './size.service';
 import { TaskSizeController } from './size.controller';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmTaskSizeRepository } from './repository/type-orm-task-size.repository';
+import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmTaskSizeRepository } from './repository/type-orm-task-size.repos
 		RolePermissionModule
 	],
 	controllers: [TaskSizeController],
-	providers: [TaskSizeService, TypeOrmTaskSizeRepository, ...CommandHandlers]
+	providers: [TaskSizeService, TypeOrmTaskSizeRepository, MikroOrmTaskSizeRepository, ...CommandHandlers]
 })
 export class TaskSizeModule {}

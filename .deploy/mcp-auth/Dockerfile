@@ -36,9 +36,10 @@ ARG DB_SYNCHRONIZE
 ARG MCP_TRUSTED_PROXIES
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
+ARG VERDACCIO_TOKEN
 
 
-FROM node:24.12.0-alpine3.23 AS dependencies
+FROM node:24.14.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -63,12 +64,22 @@ COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
+COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
+
+ARG VERDACCIO_TOKEN
+RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
+    echo "registry=https://packages.ever.co/" >> .npmrc; \
+    fi
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
     && yarn postinstall.manual \
     && yarn cache clean
+
+# Remove .npmrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc
 
 COPY --chown=node:node apps/mcp-auth ./apps/mcp-auth
 COPY --chown=node:node packages/auth ./packages/auth/
@@ -79,6 +90,7 @@ COPY --chown=node:node packages/contracts ./packages/contracts/
 COPY --chown=node:node packages/core ./packages/core/
 COPY --chown=node:node packages/plugin ./packages/plugin/
 COPY --chown=node:node packages/utils ./packages/utils/
+COPY --chown=node:node packages/scheduler ./packages/scheduler/
 
 # BUILD
 FROM dependencies AS build
@@ -108,24 +120,40 @@ RUN rm -rf /srv/gauzy-mcp-auth/dist
 RUN yarn build:mcp-auth:prod
 
 # Only prod dependencies
-FROM node:24.12.0-alpine3.23 AS proddependencies
+FROM node:24.14.0-alpine3.23 AS proddependencies
 
 RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
     && npm install --quiet node-gyp@10.2.0 -g \
     && npm install yarn -g --force \
     && npm install --quiet ts-node@10.9.2 -g
 
+# Create working directory with correct ownership so node user can create symlinks
+RUN mkdir -p /srv/gauzy-mcp-auth && chown node:node /srv/gauzy-mcp-auth
+
 USER node:node
 
 WORKDIR /srv/gauzy-mcp-auth
 
 COPY --chown=node:node --from=build /srv/gauzy-mcp-auth/dist .
+
+# Create dist -> . symlink so ../../../dist/ paths in package.json resolve correctly in Docker
+RUN ln -s . dist
+
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
+
+ARG VERDACCIO_TOKEN
+RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
+    echo "registry=https://packages.ever.co/" >> .npmrc; \
+    fi
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
     && yarn postinstall.manual \
     && yarn cache clean
+
+# Remove .npmrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc
 
 # PROD
 FROM proddependencies AS production

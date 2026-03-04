@@ -8,6 +8,7 @@ import { DashboardWidget } from './dashboard-widget.entity';
 import { DashboardWidgetService } from './dashboard-widget.service';
 import { DashboardWidgetController } from './dashboard-widget.controller';
 import { TypeOrmDashboardWidgetRepository } from './repository/type-orm-dashboard-widget.repository';
+import { MikroOrmDashboardWidgetRepository } from './repository/mikro-orm-dashboard-widget.repository';
 
 @Module({
 	imports: [
@@ -17,6 +18,6 @@ import { TypeOrmDashboardWidgetRepository } from './repository/type-orm-dashboar
 		CqrsModule
 	],
 	controllers: [DashboardWidgetController],
-	providers: [DashboardWidgetService, TypeOrmDashboardWidgetRepository, ...CommandHandlers]
+	providers: [DashboardWidgetService, TypeOrmDashboardWidgetRepository, MikroOrmDashboardWidgetRepository, ...CommandHandlers]
 })
 export class DashboardWidgetModule {}

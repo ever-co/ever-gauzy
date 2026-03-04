@@ -8,6 +8,7 @@ import { SharedEntityService } from "./shared-entity.service";
 import { SharedEntityController } from "./shared-entity.controller";
 import { RolePermissionModule } from "../role-permission/role-permission.module";
 import { TypeOrmSharedEntityRepository } from "./repository/type-orm-shared-entity.repository";
+import { MikroOrmSharedEntityRepository } from './repository/mikro-orm-shared-entity.repository';
 
 @Module({
     imports: [
@@ -17,6 +18,6 @@ import { TypeOrmSharedEntityRepository } from "./repository/type-orm-shared-enti
         RolePermissionModule
     ],
     controllers: [SharedEntityController],
-    providers: [SharedEntityService, TypeOrmSharedEntityRepository, ...CommandHandlers]
+    providers: [SharedEntityService, TypeOrmSharedEntityRepository, MikroOrmSharedEntityRepository, ...CommandHandlers]
 })
 export class SharedEntityModule {}

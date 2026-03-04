@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { MultiORMEnum } from './../core/utils';
 import { TypeOrmKeyResultUpdateRepository } from './repository/type-orm-keyresult-update.repository';
 import { MikroOrmKeyResultUpdateRepository } from './repository/mikro-orm-keyresult-update.repository';
 import { KeyResultUpdate } from './keyresult-update.entity';
@@ -21,11 +22,19 @@ export class KeyResultUpdateService extends TenantAwareCrudService<KeyResultUpda
 	 * @returns
 	 */
 	async findByKeyResultId(keyResultId: ID): Promise<KeyResultUpdate[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('key_result_update')
-			.where('key_result_update.keyResultId = :keyResultId', {
-				keyResultId
-			})
-			.getMany();
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const items = await this.mikroOrmRepository.find({ keyResultId } as any);
+				return items.map((e) => this.serialize(e)) as KeyResultUpdate[];
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRepository
+					.createQueryBuilder('key_result_update')
+					.where('key_result_update.keyResultId = :keyResultId', {
+						keyResultId
+					})
+					.getMany();
+		}
 	}
 }

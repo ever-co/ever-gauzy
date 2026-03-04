@@ -16,6 +16,7 @@ import { OrganizationTeamJoinRequestController } from './organization-team-join-
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamJoinRequestService } from './organization-team-join-request.service';
 import { TypeOrmOrganizationTeamJoinRequestRepository } from './repository/type-orm-organization-team-join-request.repository';
+import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 
 @Module({
 	imports: [
@@ -32,7 +33,7 @@ import { TypeOrmOrganizationTeamJoinRequestRepository } from './repository/type-
 		RoleModule
 	],
 	controllers: [OrganizationTeamJoinRequestController],
-	providers: [OrganizationTeamJoinRequestService, TypeOrmOrganizationTeamJoinRequestRepository, ...CommandHandlers],
+	providers: [OrganizationTeamJoinRequestService, TypeOrmOrganizationTeamJoinRequestRepository, MikroOrmOrganizationTeamJoinRequestRepository, ...CommandHandlers],
 	exports: [OrganizationTeamJoinRequestService]
 })
 export class OrganizationTeamJoinRequestModule {}

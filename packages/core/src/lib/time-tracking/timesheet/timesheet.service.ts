@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import { IGetTimesheetInput, PermissionsEnum, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
-import { getDateRangeFormat } from './../../core/utils';
+import { getDateRangeFormat, MultiORMEnum } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repository';
@@ -26,16 +26,53 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns number - Count of timesheets
 	 */
 	async getTimeSheetCount(request: IGetTimesheetInput): Promise<number> {
-		const query = this.typeOrmRepository.createQueryBuilder('timesheet');
-		query.innerJoin(`${query.alias}.employee`, 'employee');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				let {
+					organizationId,
+					startDate,
+					endDate,
+					employeeIds = [],
+					status = [],
+					onlyMe: isOnlyMeSelected
+				} = request;
+				const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
+				const user = RequestContext.currentUser();
+				const hasChangeSelectedEmployeePermission = RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				);
+				if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
+					employeeIds = [user.employeeId];
+				}
+				const { start, end } = getDateRangeFormat(
+					moment.utc(startDate || moment().startOf('month')),
+					moment.utc(endDate || moment().endOf('month'))
+				);
+				const where: any = {
+					tenantId,
+					organizationId,
+					startedAt: { $gte: start, $lte: end }
+				};
+				if (employeeIds.length > 0) where.employeeId = { $in: employeeIds };
+				if (status.length > 0)
+					where.status = { $in: status.filter((s) => Object.values(TimesheetStatus).includes(s)) };
 
-		// Apply filters to the query
-		query.where((query: SelectQueryBuilder<Timesheet>) => {
-			this.getFilterTimesheetQuery(query, request);
-		});
+				return await this.mikroOrmRepository.count(where);
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmRepository.createQueryBuilder('timesheet');
+				query.innerJoin(`${query.alias}.employee`, 'employee');
 
-		// Return the total count of timesheets
-		return query.getCount();
+				// Apply filters to the query
+				query.where((query: SelectQueryBuilder<Timesheet>) => {
+					this.getFilterTimesheetQuery(query, request);
+				});
+
+				// Return the total count of timesheets
+				return query.getCount();
+			}
+		}
 	}
 
 	/**
@@ -45,35 +82,75 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns Promise<ITimesheet[]> - List of timesheets
 	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
-		const query = this.typeOrmRepository.createQueryBuilder('timesheet');
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-
-		// Set select options and optional relations
-		query.setFindOptions({
-			select: {
-				employee: {
-					id: true,
-					user: {
-						firstName: true,
-						lastName: true,
-						email: true
-					}
-				},
-				organization: {
-					name: true,
-					brandColor: true
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				let {
+					organizationId,
+					startDate,
+					endDate,
+					employeeIds = [],
+					status = [],
+					onlyMe: isOnlyMeSelected
+				} = request;
+				const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
+				const user = RequestContext.currentUser();
+				const hasChangeSelectedEmployeePermission = RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				);
+				if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
+					employeeIds = [user.employeeId];
 				}
-			},
-			...(request?.relations ? { relations: request.relations } : {})
-		});
+				const { start, end } = getDateRangeFormat(
+					moment.utc(startDate || moment().startOf('month')),
+					moment.utc(endDate || moment().endOf('month'))
+				);
+				const where: any = {
+					tenantId,
+					organizationId,
+					startedAt: { $gte: start, $lte: end }
+				};
+				if (employeeIds.length > 0) where.employeeId = { $in: employeeIds };
+				if (status.length > 0)
+					where.status = { $in: status.filter((s) => Object.values(TimesheetStatus).includes(s)) };
 
-		// Apply filters to the query
-		query.where((query: SelectQueryBuilder<Timesheet>) => {
-			this.getFilterTimesheetQuery(query, request);
-		});
+				const items = await this.mikroOrmRepository.find(where, {
+					populate: (request?.relations || []) as any[]
+				});
+				return items.map((e) => this.serialize(e)) as ITimesheet[];
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmRepository.createQueryBuilder('timesheet');
+				query.innerJoin(`${query.alias}.employee`, 'employee');
 
-		// Return the list of timesheets
-		return await query.getMany();
+				// Set select options and optional relations
+				query.setFindOptions({
+					select: {
+						employee: {
+							id: true,
+							user: {
+								firstName: true,
+								lastName: true,
+								email: true
+							}
+						},
+						organization: {
+							name: true,
+							brandColor: true
+						}
+					},
+					...(request?.relations ? { relations: request.relations } : {})
+				});
+
+				// Apply filters to the query
+				query.where((query: SelectQueryBuilder<Timesheet>) => {
+					this.getFilterTimesheetQuery(query, request);
+				});
+
+				// Return the list of timesheets
+				return await query.getMany();
+			}
+		}
 	}
 
 	/**

@@ -3,7 +3,8 @@ name: Deploy to DigitalOcean Droplet Stage
 on:
   workflow_run:
     workflows: ['Deploy to DigitalOcean Droplet Stage Pre']
-    branches: [droplets]
+    branches:
+      - droplets
     types:
       - completed
 
@@ -101,6 +102,8 @@ jobs:
           CLOUDINARY_API_KEY: '${{ secrets.CLOUDINARY_API_KEY }}'
           CLOUDINARY_API_SECRET: '${{ secrets.CLOUDINARY_API_SECRET }}'
           CLOUDINARY_CLOUD_NAME: '${{ secrets.CLOUDINARY_CLOUD_NAME }}'
+          CHATWOOT_SDK_TOKEN: '${{ secrets.CHATWOOT_SDK_TOKEN }}'
+          GOOGLE_MAPS_API_KEY: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
           MAIL_FROM_ADDRESS: '${{ secrets.MAIL_FROM_ADDRESS }}'
           MAIL_HOST: '${{ secrets.MAIL_HOST }}'
           MAIL_PORT: '${{ secrets.MAIL_PORT }}'

@@ -12,6 +12,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { OrganizationModule } from './../organization/organization.module';
 import { PdfmakerService } from './pdfmaker.service';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
+import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 
 @Module({
 	imports: [
@@ -24,7 +25,7 @@ import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.reposito
 		forwardRef(() => EstimateEmailModule)
 	],
 	controllers: [InvoiceController],
-	providers: [InvoiceService, PdfmakerService, TypeOrmInvoiceRepository, ...CommandHandlers],
-	exports: [InvoiceService, PdfmakerService, TypeOrmInvoiceRepository]
+	providers: [InvoiceService, PdfmakerService, TypeOrmInvoiceRepository, MikroOrmInvoiceRepository, ...CommandHandlers],
+	exports: [InvoiceService, PdfmakerService, TypeOrmInvoiceRepository, MikroOrmInvoiceRepository]
 })
 export class InvoiceModule {}

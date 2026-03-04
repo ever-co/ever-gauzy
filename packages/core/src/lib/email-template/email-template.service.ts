@@ -5,6 +5,7 @@ import { EmailTemplateEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@
 import { isNotEmpty } from '@gauzy/utils';
 import { EmailTemplate } from './email-template.entity';
 import { CrudService, BaseQueryDTO } from './../core/crud';
+import { MultiORMEnum } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmailTemplateRepository } from './repository/mikro-orm-email-template.repository';
@@ -25,56 +26,86 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 	 * @returns
 	 */
 	async findAll(params: BaseQueryDTO<EmailTemplate>): Promise<IPagination<IEmailTemplate>> {
-		const query = this.typeOrmRepository.createQueryBuilder('email_template');
-		query.setFindOptions({
-			select: {
-				organization: {
-					id: true,
-					name: true,
-					brandColor: true
-				}
-			},
-			...(params && params.relations
-				? {
-						relations: params.relations
-				  }
-				: {}),
-			...(params && params.order
-				? {
-						order: params.order
-				  }
-				: {})
-		});
-		query.where((qb: SelectQueryBuilder<EmailTemplate>) => {
-			qb.where(
-				new Brackets((web: WhereExpressionBuilder) => {
-					const { tenantId, organizationId, languageCode } = params.where;
-					if (isNotEmpty(tenantId)) {
-						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
-							tenantId: RequestContext.currentTenantId()
-						});
-					}
-					if (isNotEmpty(organizationId)) {
-						web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
-							organizationId
-						});
-					}
-					if (isNotEmpty(languageCode)) {
-						web.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), {
-							languageCode
-						});
-					}
-				})
-			);
-			qb.orWhere(
-				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
-					web.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
-				})
-			);
-		});
-		const [items, total] = await query.getManyAndCount();
-		return { items, total };
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const { tenantId: mTenantIdParam, organizationId: mOrgId, languageCode: mLang } = params.where;
+				const mTenantId = RequestContext.currentTenantId();
+
+				const mWhere = {
+					$or: [
+						{
+							...(isNotEmpty(mTenantId) ? { tenantId: mTenantId } : {}),
+							...(isNotEmpty(mOrgId) ? { organizationId: mOrgId } : {}),
+							...(isNotEmpty(mLang) ? { languageCode: mLang } : {})
+						},
+						{
+							organizationId: null,
+							tenantId: null
+						}
+					]
+				};
+
+				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere as any, {
+					...(params?.relations ? { populate: Object.keys(params.relations) as any[] } : {}),
+					...(params?.order ? { orderBy: params.order as any } : {})
+				});
+				return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
+
+			case MultiORMEnum.TypeORM:
+				const query = this.typeOrmRepository.createQueryBuilder('email_template');
+				query.setFindOptions({
+					select: {
+						organization: {
+							id: true,
+							name: true,
+							brandColor: true
+						}
+					},
+					...(params && params.relations
+						? {
+								relations: params.relations
+						  }
+						: {}),
+					...(params && params.order
+						? {
+								order: params.order
+						  }
+						: {})
+				});
+				query.where((qb: SelectQueryBuilder<EmailTemplate>) => {
+					qb.where(
+						new Brackets((web: WhereExpressionBuilder) => {
+							const { tenantId, organizationId, languageCode } = params.where;
+							if (isNotEmpty(tenantId)) {
+								web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
+									tenantId: RequestContext.currentTenantId()
+								});
+							}
+							if (isNotEmpty(organizationId)) {
+								web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
+									organizationId
+								});
+							}
+							if (isNotEmpty(languageCode)) {
+								web.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), {
+									languageCode
+								});
+							}
+						})
+					);
+					qb.orWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							web.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
+							web.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
+						})
+					);
+				});
+				const [items, total] = await query.getManyAndCount();
+				return { items, total };
+
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**

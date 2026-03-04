@@ -902,6 +902,7 @@ export class AuthService extends SocialAuthService {
 
 			// Validate the password reset token
 			const record: IPasswordReset = await this.commandBus.execute(new PasswordResetGetCommand({ token }));
+
 			if (record.expired) {
 				throw new BadRequestException('Password Reset Failed: Token has expired.');
 			}
@@ -957,6 +958,7 @@ export class AuthService extends SocialAuthService {
 
 			return true;
 		} catch (error) {
+			this.logger.error(`Password reset failed: ${error?.message}`);
 			throw new BadRequestException('Password Reset Failed.');
 		}
 	}
@@ -1751,100 +1753,70 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
-			let payload: JwtPayload | string = this.verifyToken(token);
-			if (typeof payload === 'object') {
-				const { userId, tenantId, code } = payload;
-
-				let user: User;
-				const findWhere = {
-					id: userId,
-					email,
-					tenantId,
-					code,
-					codeExpireAt: MoreThanOrEqual(new Date()),
-					isActive: true,
-					isArchived: false
-				};
-				const updateWhere = {
-					email,
-					id: userId,
-					tenantId,
-					code,
-					isActive: true,
-					isArchived: false
-				};
-
-				switch (this.ormType) {
-					case MultiORMEnum.MikroORM: {
-						const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
-							where: findWhere,
-							relations: { role: true }
-						});
-						user = (await this.mikroOrmUserRepository.findOneOrFail(where, mikroOptions)) as User;
-
-						await this.mikroOrmUserRepository.nativeUpdate(updateWhere, {
-							code: null,
-							codeExpireAt: null,
-							lastLoginAt: new Date(),
-							lastOrganizationId: lastOrganizationId ?? user.lastOrganizationId,
-							lastTeamId
-						});
-						break;
-					}
-					case MultiORMEnum.TypeORM: {
-						user = await this.typeOrmUserRepository.findOneOrFail({
-							where: findWhere,
-							relations: { role: true }
-						});
-
-						await this.typeOrmUserRepository.update(updateWhere, {
-							code: null,
-							codeExpireAt: null,
-							lastLoginAt: new Date(),
-							lastOrganizationId: lastOrganizationId ?? user.lastOrganizationId,
-							lastTeamId
-						});
-						break;
-					}
-					default:
-						throw new Error(`ORM type not implemented: ${this.ormType}`);
-				}
-
-				// Retrieve the employee details associated with the user.
-				const employee = await this.employeeService.findOneByUserId(user.id);
-
-				// Check if the employee is active and not archived. If not, throw an error.
-				if (employee && (!employee.isActive || employee.isArchived)) {
-					throw new UnauthorizedException();
-				}
-
-				// Determine organization context for tokens
-				const organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
-
-				// Generate both access and refresh tokens concurrently for efficiency.
-				const [access_token, refresh_token] = await Promise.all([
-					this.getJwtAccessToken(user, organizationId),
-					this.getJwtRefreshToken(user, organizationId)
-				]);
-
-				// Store the current refresh token with the user for later validation.
-				await this.userService.setCurrentRefreshToken(refresh_token, user.id);
-
-				// Update the last login timestamp for the user
-				await this.userService.setUserLastLoginTimestamp(user.id);
-
-				// Return the user object with user details, tokens, and optionally employee info if it exists.
-				return {
-					user: new User({
-						...user,
-						...(employee && { employee })
-					}),
-					token: access_token,
-					refresh_token: refresh_token
-				};
+			// Verify and decode the JWT token
+			const payload: JwtPayload | string = this.verifyToken(token);
+			if (typeof payload !== 'object') {
+				throw new UnauthorizedException();
 			}
 
-			throw new UnauthorizedException();
+			const { userId, tenantId } = payload;
+
+			// The magic code was already validated and consumed (set to null) by
+			// confirmWorkspaceSigninByCode. The signed JWT is the proof of auth here.
+			const where = { id: userId, email, tenantId, isActive: true, isArchived: false };
+
+			// Look up the user with role relation
+			let user: User;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const parsed = parseTypeORMFindToMikroOrm<User>({ where, relations: { role: true } });
+					user = (await this.mikroOrmUserRepository.findOneOrFail(parsed.where, parsed.mikroOptions)) as User;
+					break;
+				}
+				case MultiORMEnum.TypeORM: {
+					user = await this.typeOrmUserRepository.findOneOrFail({ where, relations: { role: true } });
+					break;
+				}
+				default:
+					throw new Error(`ORM type not implemented: ${this.ormType}`);
+			}
+
+			// Retrieve the employee details associated with the user
+			const employee = await this.employeeService.findOneByUserId(user.id);
+
+			// Check if the employee is active and not archived
+			if (employee && (!employee.isActive || employee.isArchived)) {
+				throw new UnauthorizedException();
+			}
+
+			// Determine organization context for tokens
+			const organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
+
+			// Generate access and refresh tokens concurrently
+			const [accessToken, refreshToken] = await Promise.all([
+				this.getJwtAccessToken(user, organizationId),
+				this.getJwtRefreshToken(user, organizationId)
+			]);
+			
+			await Promise.all([
+				// Store refresh token and update login metadata concurrently
+				this.userService.setCurrentRefreshToken(refreshToken, user.id),
+				this.userService.setUserLastLoginTimestamp(user.id),
+				
+				// Persist the resolved organization/team preference so the DB stays
+				// in sync with whatever value was embedded in the tokens above.
+				this.userService.setLastOrganizationAndTeam(user.id, organizationId, lastTeamId)
+			]);
+			
+			return {
+				user: new User({
+					...user,
+					...(employee && { employee })
+				}),
+				token: accessToken,
+				refresh_token: refreshToken
+			};
 		} catch (error) {
 			if (error?.name === 'TokenExpiredError') {
 				throw new BadRequestException('JWT token has been expired.');
@@ -2090,7 +2062,7 @@ export class AuthService extends SocialAuthService {
 						id: user.tenant.id, // Assuming tenantId is a direct property of tenant
 						name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
 						logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-				  })
+					})
 				: null // Sets tenant to null if user.tenant is undefined
 		});
 	}

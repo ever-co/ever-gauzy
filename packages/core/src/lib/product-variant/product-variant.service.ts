@@ -61,7 +61,8 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 					warehouseProductVariants: true
 				}
 			});
-			return await this.typeOrmRepository.remove(entities);
+			await this.deleteMany(ids);
+			return entities;
 		}
 		return [];
 	}

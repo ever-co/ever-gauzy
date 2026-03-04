@@ -55,73 +55,81 @@ export class OAuth2ClientManager {
 
 	constructor() {
 		this.securityLogger = new SecurityLogger();
-		this.initializeDefaultClients();
 	}
 
 	/**
-	 * Initialize default clients for common MCP integrations
+	 * Register well-known MCP clients (ChatGPT, Claude) as public clients.
+	 *
+	 * These are the primary MCP ecosystem clients with stable, well-known redirect URIs.
+	 * Pre-registering them allows out-of-the-box connectivity without manual setup.
+	 *
+	 * - All default clients are public (no secrets stored)
+	 * - Registration is non-blocking: if a client ID already exists (e.g., admin registered
+	 *   a custom one), the default is silently skipped
+	 * - Additional clients can be registered dynamically via POST /oauth2/register
 	 */
-	private initializeDefaultClients() {
-
-		//Test Client
-		void this.registerClient({
-			client_name: 'Test Client',
-			client_type: 'public',
-			redirect_uris: [
-				'http://localhost:3001/callback',
-			],
-			grant_types: ['authorization_code', 'refresh_token'],
-			response_types: ['code'],
-			scope: 'mcp.read mcp.write',
-			metadata: {
-				integration_type: 'test',
-				auto_created: true
+	async registerDefaultClients(): Promise<void> {
+		const defaults: Array<{ id: string; request: ClientRegistrationRequest }> = [
+			{
+				id: 'chatgpt-mcp-client',
+				request: {
+					client_name: 'ChatGPT MCP Integration',
+					client_type: 'public',
+					redirect_uris: [
+						'https://chatgpt.com/oauth/callback',
+						'https://chat.openai.com/oauth/callback'
+					],
+					grant_types: ['authorization_code', 'refresh_token'],
+					response_types: ['code'],
+					scope: 'mcp.read mcp.write',
+					logo_uri: 'https://openai.com/favicon.ico',
+					client_uri: 'https://chatgpt.com',
+					metadata: { integration_type: 'chatgpt', default_client: true }
+				}
+			},
+			{
+				id: 'claude-mcp-client',
+				request: {
+					client_name: 'Claude MCP Integration',
+					client_type: 'public',
+					redirect_uris: [
+						'http://localhost:*',
+						'https://claude.ai/oauth/callback'
+					],
+					grant_types: ['authorization_code'],
+					response_types: ['code'],
+					scope: 'mcp.read mcp.write',
+					logo_uri: 'https://claude.ai/favicon.ico',
+					client_uri: 'https://claude.ai',
+					metadata: { integration_type: 'claude', default_client: true }
+				}
 			}
-		}, 'test-client').catch((err) => this.securityLogger.error('Default client init failed:', err as Error));
+		];
 
-		// ChatGPT default client
-		void this.registerClient({
-			client_name: 'ChatGPT MCP Integration',
-			client_type: 'public',
-			redirect_uris: [
-				'https://chatgpt.com/oauth/callback',
-				'https://chat.openai.com/oauth/callback'
-			],
-			grant_types: ['authorization_code', 'refresh_token'],
-			response_types: ['code'],
-			scope: 'mcp.read mcp.write',
-			logo_uri: 'https://openai.com/favicon.ico',
-			client_uri: 'https://chat.openai.com',
-			metadata: {
-				integration_type: 'chatgpt',
-				auto_created: true
+		for (const { id, request } of defaults) {
+			try {
+				// Skip if a client with this ID already exists (admin may have registered a custom one)
+				if (this.clients.has(id)) {
+					this.securityLogger.log(`Default client '${id}' skipped: already registered`);
+					continue;
+				}
+				await this.registerClient(request, id);
+			} catch (err) {
+				// Non-blocking: log and continue — default clients should never prevent server startup
+				this.securityLogger.warn(`Default client '${id}' registration skipped: ${(err as Error).message}`);
 			}
-		}, 'chatgpt-mcp-client').catch((err) => this.securityLogger.error('Default client init failed:', err as Error));
+		}
 
-		// Claude Desktop default client
-		void this.registerClient({
-			client_name: 'Claude MCP Integration',
-			client_type: 'public',
-			redirect_uris: [
-				'http://localhost:*',
-				'https://claude.ai/oauth/callback'
-			],
-			grant_types: ['authorization_code'],
-			response_types: ['code'],
-			scope: 'mcp.read mcp.write',
-			logo_uri: 'https://claude.ai/favicon.ico',
-			client_uri: 'https://claude.ai',
-			metadata: {
-				integration_type: 'claude',
-				auto_created: true
-			}
-		}, 'claude-mcp-client').catch((err) => this.securityLogger.error('Default client init failed:', err as Error));
-
-		this.securityLogger.log('Default OAuth 2.0 clients initialized');
+		this.securityLogger.log(`Default MCP clients initialized (${this.clients.size} registered)`);
 	}
 
 	/**
-	 * Register a new OAuth 2.0 client
+	 * Register a new OAuth 2.0 client (public or confidential)
+	 *
+	 * - Public clients: No client_secret is generated (e.g., SPAs, native apps)
+	 * - Confidential clients: A client_secret is generated and hashed (e.g., server-side apps)
+	 *
+	 * Clients can also be registered dynamically via POST /oauth2/register.
 	 */
 	async registerClient(
 		request: ClientRegistrationRequest,

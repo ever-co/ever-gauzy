@@ -56,9 +56,10 @@ import {
 	createSettingsWindow,
 	createTimeTrackerWindow,
 	ScreenCaptureNotification,
-	SplashScreen,
-	timeTrackerPage
+	setLaunchPathAndLoad,
+	SplashScreen
 } from '@gauzy/desktop-window';
+import { DesktopSetupConfig } from '@gauzy/contracts';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 
@@ -228,7 +229,18 @@ function initializeAppManager() {
 	appWindowManager.preloadPath = pathWindow.preloadPath;
 }
 
-async function startServer(value, restart = false) {
+function setGlobalVariable(configs: {
+	isLocalServer?: boolean;
+	serverUrl?: string;
+	port?: string;
+}) {
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(configs || {}),
+		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
+	};
+}
+
+function updateApplicationConfig(setupConfig: DesktopSetupConfig) {
 	try {
 		const project = LocalStore.getStore('project') || {};
 		// Ensure that project.aw exists before spreading it
@@ -239,7 +251,7 @@ async function startServer(value, restart = false) {
 		// Update the aw object
 		const aw = {
 			...project.aw,
-			host: value.awHost
+			host: setupConfig.awHost
 		};
 
 		// Update the project
@@ -247,24 +259,28 @@ async function startServer(value, restart = false) {
 
 		// Update the setting
 		LocalStore.updateConfigSetting({
-			...value,
+			...setupConfig,
+			port: setupConfig.port ? Number(setupConfig.port) : undefined,
 			isSetup: true
 		});
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
 	}
+}
 
+async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
+	updateApplicationConfig(setupConfig);
 	/* create main window */
-	if (value.serverConfigConnected || !value.isLocalServer) {
+	if (setupConfig.serverConfigConnected || !setupConfig.isLocalServer) {
 		setupWindow?.close();
 		try {
 			/* ping server before launch the ui */
 			ipcMain.removeAllListeners('app_is_init');
 			ipcMain.on('app_is_init', () => {
-				if (!isAlreadyRun && value && !restart) {
+				if (!isAlreadyRun && setupConfig && !restart) {
 					onWaitingServer = true;
 					timeTrackerWindow.webContents.send('server_ping', {
-						host: getApiBaseUrl(value)
+						host: getApiBaseUrl(setupConfig)
 					});
 				}
 			});
@@ -272,16 +288,11 @@ async function startServer(value, restart = false) {
 				timeTrackerWindow = await createTimeTrackerWindow(
 					timeTrackerWindow,
 					pathWindow.timeTrackerUi,
-					pathWindow.preloadPath
+					pathWindow.preloadPath,
+					false
 				);
-			} else {
-				const currentUrl = timeTrackerWindow.webContents.getURL();
-				if (currentUrl) {
-					await timeTrackerWindow.loadURL(currentUrl);
-				} else {
-					await timeTrackerWindow.loadURL(timeTrackerPage(pathWindow.timeTrackerUi));
-				}
 			}
+			await setLaunchPathAndLoad(timeTrackerWindow, pathWindow.timeTrackerUi, '/time-tracker');
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);
 			await notificationWindow.loadURL();
 		} catch (error) {
@@ -307,17 +318,87 @@ async function startServer(value, restart = false) {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
 	});
 
-
-
 	return true;
 }
 
-const getApiBaseUrl = (configs) => {
+const getApiBaseUrl = (configs: {
+	serverUrl?: string;
+	port?: string;
+}) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
 		return configs.port ? `http://localhost:${configs.port}` : `http://localhost:${environment.API_DEFAULT_PORT}`;
 	}
 };
+
+async function launchSplashScreen() {
+	try {
+		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
+		await splashScreen.loadURL();
+		splashScreen.show();
+	} catch (error) {
+		console.error(error);
+		throw new AppError('MAINLOADSPLASH', error);
+	}
+}
+
+async function setupDatabase() {
+	if (['sqlite', 'better-sqlite', 'better-sqlite3'].includes(provider.dialect)) {
+		try {
+			const res = await knex.raw(`pragma journal_mode = WAL;`);
+			console.log(res);
+		} catch (error) {
+			console.log('ERROR', error);
+		}
+	}
+	try {
+		await provider.createDatabase();
+		await provider.migrate();
+	} catch (error) {
+		throw new AppError('MAINDB', error);
+	}
+}
+
+function initialAppMenu() {
+	const menu: MenuItemConstructorOptions[] = [
+		{
+			label: app.getName(),
+			submenu: [
+				{
+					role: 'about',
+					label: TranslateService.instant('MENU.ABOUT')
+				},
+				{ type: 'separator' },
+				{ type: 'separator' },
+				{
+					role: 'quit',
+					label: TranslateService.instant('BUTTONS.EXIT')
+				}
+			]
+		}
+	];
+	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
+}
+
+async function launchWidget(settings: any) {
+	const auth = store.get('auth');
+
+	if (settings?.alwaysOn && auth?.token && !auth?.isLogout) {
+		await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
+		appWindowManager.alwaysOnWindow.show();
+	}
+}
+
+async function setupUpdater() {
+	updater.settingWindow = appWindowManager.settingWindow;
+	updater.gauzyWindow = gauzyWindow;
+	appWindowManager.updater = updater;
+	try {
+		await updater.checkUpdate();
+	} catch (error) {
+		throw new UIError('400', error, 'MAINWININIT');
+	}
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -340,67 +421,20 @@ app.on('ready', async () => {
 	// Set up theme listener for desktop windows
 	new DesktopThemeListener();
 	// default global
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(configs || {}),
-		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
-	};
-	try {
-		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
-		await splashScreen.loadURL();
-		splashScreen.show();
-	} catch (error) {
-		console.error(error);
-	}
-
-	if (['sqlite', 'better-sqlite', 'better-sqlite3'].includes(provider.dialect)) {
-		try {
-			const res = await knex.raw(`pragma journal_mode = WAL;`);
-			console.log(res);
-		} catch (error) {
-			console.log('ERROR', error);
-		}
-	}
-	try {
-		await provider.createDatabase();
-		await provider.migrate();
-	} catch (error) {
-		throw new AppError('MAINDB', error);
-	}
-	const menu: MenuItemConstructorOptions[] = [
-		{
-			label: app.getName(),
-			submenu: [
-				{
-					role: 'about',
-					label: TranslateService.instant('MENU.ABOUT')
-				},
-				{ type: 'separator' },
-				{ type: 'separator' },
-				{
-					role: 'quit',
-					label: TranslateService.instant('BUTTONS.EXIT')
-				}
-			]
-		}
-	];
-	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
+	setGlobalVariable(configs || {});
+	await launchSplashScreen();
+	await setupDatabase();
+	initialAppMenu();
 	try {
 		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi,
-			pathWindow.preloadPath
+			pathWindow.preloadPath,
+			false
 		);
 
-		if (settings?.alwaysOn) {
-			await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
-			appWindowManager.alwaysOnWindow.show();
-		}
-
+		await launchWidget(settings);
 		if (configs && configs.isSetup) {
-			global.variableGlobal = {
-				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer
-			};
 			await startServer(configs);
 		} else {
 			setupWindow = await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
@@ -410,15 +444,7 @@ app.on('ready', async () => {
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
-	initializeAppManager();
-	updater.settingWindow = appWindowManager.settingWindow;
-	updater.gauzyWindow = gauzyWindow;
-	appWindowManager.updater = updater;
-	try {
-		await updater.checkUpdate();
-	} catch (error) {
-		throw new UIError('400', error, 'MAINWININIT');
-	}
+	await setupUpdater();
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 });
@@ -480,10 +506,7 @@ ipcMain.on('restart_app', async (event, arg) => {
 	initializeAppManager();
 	LocalStore.updateConfigSetting(arg);
 	const configs = LocalStore.getStore('configs');
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(configs),
-		IS_INTEGRATED_DESKTOP: configs.isLocalServer
-	};
+	setGlobalVariable(configs);
 	/* Killing the provider. */
 	await provider.kill();
 	/* Creating a database if not exit. */

@@ -6,6 +6,7 @@ import { OrganizationEmploymentTypeController } from './organization-employment-
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from './organization-employment-type.service';
 import { TypeOrmOrganizationEmploymentTypeRepository } from './repository/type-orm-organization-employment-type.repository';
+import { MikroOrmOrganizationEmploymentTypeRepository } from './repository/mikro-orm-organization-employment-type.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmOrganizationEmploymentTypeRepository } from './repository/type-o
 		RolePermissionModule
 	],
 	controllers: [OrganizationEmploymentTypeController],
-	providers: [OrganizationEmploymentTypeService, TypeOrmOrganizationEmploymentTypeRepository]
+	providers: [OrganizationEmploymentTypeService, TypeOrmOrganizationEmploymentTypeRepository, MikroOrmOrganizationEmploymentTypeRepository]
 })
 export class OrganizationEmploymentTypeModule {}

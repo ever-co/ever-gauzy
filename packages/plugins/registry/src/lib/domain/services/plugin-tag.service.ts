@@ -1,5 +1,5 @@
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { MultiORMEnum, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { FindOptionsWhere, In } from 'typeorm';
 import {
@@ -155,8 +155,17 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 			whereConditions.organizationId = input.organizationId;
 		}
 
-		const result = await this.typeOrmPluginTagRepository.delete(whereConditions);
-		return result.affected || 0;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const count = await this.mikroOrmRepository.nativeDelete(whereConditions as any);
+				return count;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const result = await this.typeOrmPluginTagRepository.delete(whereConditions);
+				return result.affected || 0;
+			}
+		}
 	}
 
 	/**
@@ -219,42 +228,80 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 	async findPluginsByTags(query: IPluginsByTagsQuery): Promise<IPagination<any>> {
 		const { tagIds, matchType = 'any', includeTags = false, includePluginDetails = true } = query;
 
-		let queryBuilder = this.typeOrmPluginTagRepository
-			.createQueryBuilder('pluginTag')
-			.leftJoinAndSelect('pluginTag.plugin', 'plugin');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// MikroORM: Use Knex for tag-based plugin discovery
+				const knex = (this.mikroOrmRepository as any).getKnex();
+				let qb = knex('plugin_tags as pluginTag')
+					.leftJoin('plugin as plugin', 'pluginTag.pluginId', 'plugin.id');
 
-		if (includeTags) {
-			queryBuilder = queryBuilder.leftJoinAndSelect('pluginTag.tag', 'tag');
+				if (includeTags) {
+					qb = qb.leftJoin('tag as tag', 'pluginTag.tagId', 'tag.id');
+				}
+
+				qb = qb.whereIn('pluginTag.tagId', tagIds);
+
+				if (query.tenantId) {
+					qb = qb.andWhere('pluginTag.tenantId', query.tenantId);
+				}
+				if (query.organizationId) {
+					qb = qb.andWhere('pluginTag.organizationId', query.organizationId);
+				}
+
+				if (matchType === 'all') {
+					qb = qb.select('pluginTag.*')
+						.groupBy('plugin.id')
+						.havingRaw('COUNT(DISTINCT "pluginTag"."tagId") = ?', [tagIds.length]);
+				} else {
+					qb = qb.select('pluginTag.*');
+				}
+
+				const items = await qb;
+				return {
+					items: includePluginDetails ? items : items.map((item: any) => ({ pluginId: item.pluginId })),
+					total: items.length
+				};
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				let queryBuilder = this.typeOrmPluginTagRepository
+					.createQueryBuilder('pluginTag')
+					.leftJoinAndSelect('pluginTag.plugin', 'plugin');
+
+				if (includeTags) {
+					queryBuilder = queryBuilder.leftJoinAndSelect('pluginTag.tag', 'tag');
+				}
+
+				// Apply tag filtering
+				if (matchType === 'all') {
+					// Plugin must have ALL specified tags
+					queryBuilder = queryBuilder
+						.where('pluginTag.tagId IN (:...tagIds)', { tagIds })
+						.groupBy('plugin.id')
+						.having('COUNT(DISTINCT pluginTag.tagId) = :tagCount', { tagCount: tagIds.length });
+				} else {
+					// Plugin must have ANY of the specified tags
+					queryBuilder = queryBuilder.where('pluginTag.tagId IN (:...tagIds)', { tagIds });
+				}
+
+				// Apply tenant/organization filtering
+				if (query.tenantId) {
+					queryBuilder = queryBuilder.andWhere('pluginTag.tenantId = :tenantId', { tenantId: query.tenantId });
+				}
+				if (query.organizationId) {
+					queryBuilder = queryBuilder.andWhere('pluginTag.organizationId = :organizationId', {
+						organizationId: query.organizationId
+					});
+				}
+
+				const [items, total] = await queryBuilder.getManyAndCount();
+
+				return {
+					items: includePluginDetails ? items : items.map((item) => ({ pluginId: item.pluginId })),
+					total
+				};
+			}
 		}
-
-		// Apply tag filtering
-		if (matchType === 'all') {
-			// Plugin must have ALL specified tags
-			queryBuilder = queryBuilder
-				.where('pluginTag.tagId IN (:...tagIds)', { tagIds })
-				.groupBy('plugin.id')
-				.having('COUNT(DISTINCT pluginTag.tagId) = :tagCount', { tagCount: tagIds.length });
-		} else {
-			// Plugin must have ANY of the specified tags
-			queryBuilder = queryBuilder.where('pluginTag.tagId IN (:...tagIds)', { tagIds });
-		}
-
-		// Apply tenant/organization filtering
-		if (query.tenantId) {
-			queryBuilder = queryBuilder.andWhere('pluginTag.tenantId = :tenantId', { tenantId: query.tenantId });
-		}
-		if (query.organizationId) {
-			queryBuilder = queryBuilder.andWhere('pluginTag.organizationId = :organizationId', {
-				organizationId: query.organizationId
-			});
-		}
-
-		const [items, total] = await queryBuilder.getManyAndCount();
-
-		return {
-			items: includePluginDetails ? items : items.map((item) => ({ pluginId: item.pluginId })),
-			total
-		};
 	}
 
 	/**
@@ -266,36 +313,68 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 	async findTagsByPlugins(query: ITagsByPluginsQuery): Promise<IPagination<any>> {
 		const { pluginIds, includePlugins = false, includeStatistics = false } = query;
 
-		let queryBuilder = this.typeOrmPluginTagRepository
-			.createQueryBuilder('pluginTag')
-			.leftJoinAndSelect('pluginTag.tag', 'tag');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = (this.mikroOrmRepository as any).getKnex();
+				let qb = knex('plugin_tags as pluginTag')
+					.leftJoin('tag as tag', 'pluginTag.tagId', 'tag.id');
 
-		if (includePlugins) {
-			queryBuilder = queryBuilder.leftJoinAndSelect('pluginTag.plugin', 'plugin');
+				if (includePlugins) {
+					qb = qb.leftJoin('plugin as plugin', 'pluginTag.pluginId', 'plugin.id');
+				}
+
+				qb = qb.whereIn('pluginTag.pluginId', pluginIds);
+
+				if (query.tenantId) {
+					qb = qb.andWhere('pluginTag.tenantId', query.tenantId);
+				}
+				if (query.organizationId) {
+					qb = qb.andWhere('pluginTag.organizationId', query.organizationId);
+				}
+
+				if (includeStatistics) {
+					qb = qb.select('pluginTag.*').count('pluginTag.pluginId as usageCount').groupBy('tag.id');
+				} else {
+					qb = qb.select('pluginTag.*');
+				}
+
+				const items = await qb;
+				return { items, total: items.length };
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				let queryBuilder = this.typeOrmPluginTagRepository
+					.createQueryBuilder('pluginTag')
+					.leftJoinAndSelect('pluginTag.tag', 'tag');
+
+				if (includePlugins) {
+					queryBuilder = queryBuilder.leftJoinAndSelect('pluginTag.plugin', 'plugin');
+				}
+
+				queryBuilder = queryBuilder.where('pluginTag.pluginId IN (:...pluginIds)', { pluginIds });
+
+				// Apply tenant/organization filtering
+				if (query.tenantId) {
+					queryBuilder = queryBuilder.andWhere('pluginTag.tenantId = :tenantId', { tenantId: query.tenantId });
+				}
+				if (query.organizationId) {
+					queryBuilder = queryBuilder.andWhere('pluginTag.organizationId = :organizationId', {
+						organizationId: query.organizationId
+					});
+				}
+
+				if (includeStatistics) {
+					queryBuilder = queryBuilder.addSelect('COUNT(pluginTag.pluginId)', 'usageCount').groupBy('tag.id');
+				}
+
+				const [items, total] = await queryBuilder.getManyAndCount();
+
+				return {
+					items,
+					total
+				};
+			}
 		}
-
-		queryBuilder = queryBuilder.where('pluginTag.pluginId IN (:...pluginIds)', { pluginIds });
-
-		// Apply tenant/organization filtering
-		if (query.tenantId) {
-			queryBuilder = queryBuilder.andWhere('pluginTag.tenantId = :tenantId', { tenantId: query.tenantId });
-		}
-		if (query.organizationId) {
-			queryBuilder = queryBuilder.andWhere('pluginTag.organizationId = :organizationId', {
-				organizationId: query.organizationId
-			});
-		}
-
-		if (includeStatistics) {
-			queryBuilder = queryBuilder.addSelect('COUNT(pluginTag.pluginId)', 'usageCount').groupBy('tag.id');
-		}
-
-		const [items, total] = await queryBuilder.getManyAndCount();
-
-		return {
-			items,
-			total
-		};
 	}
 
 	/**
@@ -313,75 +392,127 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 		// Total relationships
 		const totalRelationships = await this.count({ where: baseWhere });
 
-		// Unique plugins with tags
-		const taggedPluginsQuery = this.typeOrmPluginTagRepository
-			.createQueryBuilder('pluginTag')
-			.select('COUNT(DISTINCT pluginTag.pluginId)', 'count');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = (this.mikroOrmRepository as any).getKnex();
 
-		if (tenantId) taggedPluginsQuery.where('pluginTag.tenantId = :tenantId', { tenantId });
-		if (organizationId)
-			taggedPluginsQuery.andWhere('pluginTag.organizationId = :organizationId', { organizationId });
+				// Unique plugins with tags
+				let taggedPluginsQb = knex('plugin_tags').countDistinct('pluginId as count');
+				if (tenantId) taggedPluginsQb = taggedPluginsQb.where('tenantId', tenantId);
+				if (organizationId) taggedPluginsQb = taggedPluginsQb.andWhere('organizationId', organizationId);
+				const taggedPluginsRow = await taggedPluginsQb.first();
+				const taggedPlugins = parseInt(taggedPluginsRow?.count ?? '0', 10);
 
-		const taggedPluginsResult = await taggedPluginsQuery.getRawOne();
-		const taggedPlugins = parseInt(taggedPluginsResult.count) || 0;
+				// Unique tags used
+				let usedTagsQb = knex('plugin_tags').countDistinct('tagId as count');
+				if (tenantId) usedTagsQb = usedTagsQb.where('tenantId', tenantId);
+				if (organizationId) usedTagsQb = usedTagsQb.andWhere('organizationId', organizationId);
+				const usedTagsRow = await usedTagsQb.first();
+				const usedTags = parseInt(usedTagsRow?.count ?? '0', 10);
 
-		// Unique tags used
-		const usedTagsQuery = this.typeOrmPluginTagRepository
-			.createQueryBuilder('pluginTag')
-			.select('COUNT(DISTINCT pluginTag.tagId)', 'count');
+				// Most popular tags
+				let popularTagsQb = knex('plugin_tags as pt')
+					.leftJoin('tag', 'pt.tagId', 'tag.id')
+					.select('pt.tagId', 'tag.name as tagName')
+					.count('pt.pluginId as usageCount')
+					.groupBy('pt.tagId', 'tag.name')
+					.orderBy('usageCount', 'desc')
+					.limit(10);
+				if (tenantId) popularTagsQb = popularTagsQb.where('pt.tenantId', tenantId);
+				if (organizationId) popularTagsQb = popularTagsQb.andWhere('pt.organizationId', organizationId);
+				const popularTagsResults = await popularTagsQb;
+				const popularTags = popularTagsResults.map((r: any) => ({
+					tagId: r.tagId,
+					tagName: r.tagName,
+					usageCount: parseInt(r.usageCount)
+				}));
 
-		if (tenantId) usedTagsQuery.where('pluginTag.tenantId = :tenantId', { tenantId });
-		if (organizationId) usedTagsQuery.andWhere('pluginTag.organizationId = :organizationId', { organizationId });
+				// Most tagged plugins
+				let mostTaggedQb = knex('plugin_tags as pt')
+					.leftJoin('plugin', 'pt.pluginId', 'plugin.id')
+					.select('pt.pluginId', 'plugin.name as pluginName')
+					.count('pt.tagId as tagCount')
+					.groupBy('pt.pluginId', 'plugin.name')
+					.orderBy('tagCount', 'desc')
+					.limit(10);
+				if (tenantId) mostTaggedQb = mostTaggedQb.where('pt.tenantId', tenantId);
+				if (organizationId) mostTaggedQb = mostTaggedQb.andWhere('pt.organizationId', organizationId);
+				const mostTaggedResults = await mostTaggedQb;
+				const mostTaggedPlugins = mostTaggedResults.map((r: any) => ({
+					pluginId: r.pluginId,
+					pluginName: r.pluginName,
+					tagCount: parseInt(r.tagCount)
+				}));
 
-		const usedTagsResult = await usedTagsQuery.getRawOne();
-		const usedTags = parseInt(usedTagsResult.count) || 0;
+				return { totalRelationships, taggedPlugins, usedTags, popularTags, mostTaggedPlugins };
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Unique plugins with tags
+				const taggedPluginsQuery = this.typeOrmPluginTagRepository
+					.createQueryBuilder('pluginTag')
+					.select('COUNT(DISTINCT pluginTag.pluginId)', 'count');
 
-		// Most popular tags
-		const popularTagsQuery = this.typeOrmPluginTagRepository
-			.createQueryBuilder('pluginTag')
-			.leftJoin('pluginTag.tag', 'tag')
-			.select(['pluginTag.tagId', 'tag.name', 'COUNT(pluginTag.pluginId) as usageCount'])
-			.groupBy('pluginTag.tagId, tag.name')
-			.orderBy('usageCount', 'DESC')
-			.limit(10);
+				if (tenantId) taggedPluginsQuery.where('pluginTag.tenantId = :tenantId', { tenantId });
+				if (organizationId)
+					taggedPluginsQuery.andWhere('pluginTag.organizationId = :organizationId', { organizationId });
 
-		if (tenantId) popularTagsQuery.where('pluginTag.tenantId = :tenantId', { tenantId });
-		if (organizationId) popularTagsQuery.andWhere('pluginTag.organizationId = :organizationId', { organizationId });
+				const taggedPluginsResult = await taggedPluginsQuery.getRawOne();
+				const taggedPlugins = parseInt(taggedPluginsResult.count) || 0;
 
-		const popularTagsResults = await popularTagsQuery.getRawMany();
-		const popularTags = popularTagsResults.map((result) => ({
-			tagId: result.pluginTag_tagId,
-			tagName: result.tag_name,
-			usageCount: parseInt(result.usageCount)
-		}));
+				// Unique tags used
+				const usedTagsQuery = this.typeOrmPluginTagRepository
+					.createQueryBuilder('pluginTag')
+					.select('COUNT(DISTINCT pluginTag.tagId)', 'count');
 
-		// Most tagged plugins
-		const mostTaggedPluginsQuery = this.typeOrmPluginTagRepository
-			.createQueryBuilder('pluginTag')
-			.leftJoin('pluginTag.plugin', 'plugin')
-			.select(['pluginTag.pluginId', 'plugin.name', 'COUNT(pluginTag.tagId) as tagCount'])
-			.groupBy('pluginTag.pluginId, plugin.name')
-			.orderBy('tagCount', 'DESC')
-			.limit(10);
+				if (tenantId) usedTagsQuery.where('pluginTag.tenantId = :tenantId', { tenantId });
+				if (organizationId) usedTagsQuery.andWhere('pluginTag.organizationId = :organizationId', { organizationId });
 
-		if (tenantId) mostTaggedPluginsQuery.where('pluginTag.tenantId = :tenantId', { tenantId });
-		if (organizationId)
-			mostTaggedPluginsQuery.andWhere('pluginTag.organizationId = :organizationId', { organizationId });
+				const usedTagsResult = await usedTagsQuery.getRawOne();
+				const usedTags = parseInt(usedTagsResult.count) || 0;
 
-		const mostTaggedPluginsResults = await mostTaggedPluginsQuery.getRawMany();
-		const mostTaggedPlugins = mostTaggedPluginsResults.map((result) => ({
-			pluginId: result.pluginTag_pluginId,
-			pluginName: result.plugin_name,
-			tagCount: parseInt(result.tagCount)
-		}));
+				// Most popular tags
+				const popularTagsQuery = this.typeOrmPluginTagRepository
+					.createQueryBuilder('pluginTag')
+					.leftJoin('pluginTag.tag', 'tag')
+					.select(['pluginTag.tagId', 'tag.name', 'COUNT(pluginTag.pluginId) as usageCount'])
+					.groupBy('pluginTag.tagId, tag.name')
+					.orderBy('usageCount', 'DESC')
+					.limit(10);
 
-		return {
-			totalRelationships,
-			taggedPlugins,
-			usedTags,
-			popularTags,
-			mostTaggedPlugins
-		};
+				if (tenantId) popularTagsQuery.where('pluginTag.tenantId = :tenantId', { tenantId });
+				if (organizationId) popularTagsQuery.andWhere('pluginTag.organizationId = :organizationId', { organizationId });
+
+				const popularTagsResults = await popularTagsQuery.getRawMany();
+				const popularTags = popularTagsResults.map((result) => ({
+					tagId: result.pluginTag_tagId,
+					tagName: result.tag_name,
+					usageCount: parseInt(result.usageCount)
+				}));
+
+				// Most tagged plugins
+				const mostTaggedPluginsQuery = this.typeOrmPluginTagRepository
+					.createQueryBuilder('pluginTag')
+					.leftJoin('pluginTag.plugin', 'plugin')
+					.select(['pluginTag.pluginId', 'plugin.name', 'COUNT(pluginTag.tagId) as tagCount'])
+					.groupBy('pluginTag.pluginId, plugin.name')
+					.orderBy('tagCount', 'DESC')
+					.limit(10);
+
+				if (tenantId) mostTaggedPluginsQuery.where('pluginTag.tenantId = :tenantId', { tenantId });
+				if (organizationId)
+					mostTaggedPluginsQuery.andWhere('pluginTag.organizationId = :organizationId', { organizationId });
+
+				const mostTaggedPluginsResults = await mostTaggedPluginsQuery.getRawMany();
+				const mostTaggedPlugins = mostTaggedPluginsResults.map((result) => ({
+					pluginId: result.pluginTag_pluginId,
+					pluginName: result.plugin_name,
+					tagCount: parseInt(result.tagCount)
+				}));
+
+				return { totalRelationships, taggedPlugins, usedTags, popularTags, mostTaggedPlugins };
+			}
+		}
 	}
 
 	/**
@@ -426,23 +557,45 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 		pluginId: ID,
 		limit: number = 10
 	): Promise<Array<{ pluginId: ID; sharedTagsCount: number }>> {
-		const query = this.typeOrmPluginTagRepository
-			.createQueryBuilder('pt1')
-			.innerJoin('plugin_tags', 'pt2', 'pt1.tagId = pt2.tagId')
-			.select('pt2.pluginId', 'pluginId')
-			.addSelect('COUNT(*)', 'sharedTagsCount')
-			.where('pt1.pluginId = :pluginId', { pluginId })
-			.andWhere('pt2.pluginId != :pluginId', { pluginId })
-			.groupBy('pt2.pluginId')
-			.orderBy('sharedTagsCount', 'DESC')
-			.limit(limit);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = (this.mikroOrmRepository as any).getKnex();
+				const results = await knex('plugin_tags as pt1')
+					.innerJoin('plugin_tags as pt2', 'pt1.tagId', 'pt2.tagId')
+					.select('pt2.pluginId as pluginId')
+					.count('* as sharedTagsCount')
+					.where('pt1.pluginId', pluginId)
+					.andWhereNot('pt2.pluginId', pluginId)
+					.groupBy('pt2.pluginId')
+					.orderBy('sharedTagsCount', 'desc')
+					.limit(limit);
 
-		const results = await query.getRawMany();
+				return results.map((r: any) => ({
+					pluginId: r.pluginId,
+					sharedTagsCount: parseInt(r.sharedTagsCount)
+				}));
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmPluginTagRepository
+					.createQueryBuilder('pt1')
+					.innerJoin('plugin_tags', 'pt2', 'pt1.tagId = pt2.tagId')
+					.select('pt2.pluginId', 'pluginId')
+					.addSelect('COUNT(*)', 'sharedTagsCount')
+					.where('pt1.pluginId = :pluginId', { pluginId })
+					.andWhere('pt2.pluginId != :pluginId', { pluginId })
+					.groupBy('pt2.pluginId')
+					.orderBy('sharedTagsCount', 'DESC')
+					.limit(limit);
 
-		return results.map((result: any) => ({
-			pluginId: result.pluginId,
-			sharedTagsCount: parseInt(result.sharedTagsCount)
-		}));
+				const results = await query.getRawMany();
+
+				return results.map((result: any) => ({
+					pluginId: result.pluginId,
+					sharedTagsCount: parseInt(result.sharedTagsCount)
+				}));
+			}
+		}
 	}
 
 	/**

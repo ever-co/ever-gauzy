@@ -4,15 +4,15 @@ import { FormGroupDirective } from '@angular/forms';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 import { CookieService } from 'ngx-cookie-service';
 import { RolesEnum } from '@gauzy/contracts';
+import { patterns } from '@gauzy/constants';
 import { environment } from '@gauzy/ui-config';
 import { ElectronService } from '@gauzy/ui-core/core';
-import { patterns } from '@gauzy/ui-core/shared';
 
 @Component({
-    selector: 'ngx-login',
-    templateUrl: './login.component.html',
-    styleUrls: ['./login.component.scss'],
-    standalone: false
+	selector: 'ngx-login',
+	templateUrl: './login.component.html',
+	styleUrls: ['./login.component.scss'],
+	standalone: false
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	@ViewChild('form') private readonly form: FormGroupDirective;

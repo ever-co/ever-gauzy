@@ -7,7 +7,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { Expense } from './expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { getDateRangeFormat, getDaysBetweenDates } from './../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmExpenseRepository } from './repository/type-orm-expense.repository';
 import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
@@ -68,21 +68,67 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	 * @returns
 	 */
 	async getExpense(request: IGetExpenseInput) {
-		const query = this.filterQuery(request);
-		query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const { organizationId, startDate, endDate, categoryId, projectIds = [] } = request;
+				let { employeeIds = [] } = request;
+				const tenantId = RequestContext.currentTenantId() || request.tenantId;
+				const user = RequestContext.currentUser();
+				const { start, end } = getDateRangeFormat(
+					moment.utc(startDate || moment().startOf('week')),
+					moment.utc(endDate || moment().endOf('week'))
+				);
+				const hasChangeSelectedEmployeePermission = RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				);
+				const isOnlyMeSelected = request.onlyMe;
+				if (
+					(user.employeeId && isOnlyMeSelected) ||
+					(!hasChangeSelectedEmployeePermission && user.employeeId)
+				) {
+					employeeIds = [user.employeeId];
+				}
 
-		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');
-			query.leftJoinAndSelect(
-				`activityEmployee.user`,
-				'activityUser',
-				p('"employee"."userId" = activityUser.id')
-			);
+				const where: any = {
+					tenantId,
+					organizationId,
+					valueDate: { $gte: start, $lte: end }
+				};
+				if (isNotEmpty(employeeIds)) where.employeeId = { $in: employeeIds };
+				if (isNotEmpty(projectIds)) where.projectId = { $in: projectIds };
+				if (categoryId) where.categoryId = categoryId;
+
+				const populate = ['category', 'project'] as any[];
+				if (hasChangeSelectedEmployeePermission) {
+					populate.push('employee', 'employee.user');
+				}
+
+				const items = await this.mikroOrmRepository.find(where, {
+					populate,
+					orderBy: { valueDate: 'ASC' as any },
+					...(request.limit > 0 ? { limit: request.limit, offset: (request.page || 0) * request.limit } : {})
+				});
+				return items.map((e) => this.serialize(e));
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.filterQuery(request);
+				query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
+
+				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+					query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');
+					query.leftJoinAndSelect(
+						`activityEmployee.user`,
+						'activityUser',
+						p('"employee"."userId" = activityUser.id')
+					);
+				}
+
+				query.leftJoinAndSelect(`${query.alias}.category`, 'category');
+				query.leftJoinAndSelect(`${query.alias}.project`, 'project');
+				return await query.getMany();
+			}
 		}
-
-		query.leftJoinAndSelect(`${query.alias}.category`, 'category');
-		query.leftJoinAndSelect(`${query.alias}.project`, 'project');
-		return await query.getMany();
 	}
 
 	/**
@@ -91,13 +137,55 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	 * @returns
 	 */
 	async getDailyReportChartData(request: IGetExpenseInput) {
-		const query = this.filterQuery(request);
-		query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
+		const { startDate, endDate, organizationId, categoryId, projectIds = [] } = request;
+		let { employeeIds = [] } = request;
 
-		const { startDate, endDate } = request;
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		const user = RequestContext.currentUser();
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
-		const expenses = await query.getMany();
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+			employeeIds = [user.employeeId];
+		}
+
+		let expenses: IExpense[];
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where: any = {
+					tenantId,
+					organizationId,
+					valueDate: { $gte: start, $lte: end }
+				};
+				if (isNotEmpty(employeeIds)) where.employeeId = { $in: employeeIds };
+				if (isNotEmpty(projectIds)) where.projectId = { $in: projectIds };
+				if (categoryId) where.categoryId = categoryId;
+
+				const items = await this.mikroOrmRepository.find(where, {
+					orderBy: { valueDate: 'ASC' as any }
+				});
+				expenses = items.map((e) => this.serialize(e)) as IExpense[];
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.filterQuery(request);
+				query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
+				expenses = await query.getMany();
+				break;
+			}
+		}
+
 		const byDate = chain(expenses)
 			.groupBy((expense) => moment(expense.valueDate).format('YYYY-MM-DD'))
 			.mapObject((expenses: IExpense[], date) => {

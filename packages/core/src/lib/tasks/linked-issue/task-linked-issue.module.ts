@@ -8,6 +8,7 @@ import { CommandHandlers } from './commands/handlers';
 import { TaskLinkedIssueController } from './task-linked-issue.controller';
 import { TaskLinkedIssueService } from './task-linked-issue.service';
 import { TypeOrmTaskLinkedIssueRepository } from './repository/type-orm-linked-issue.repository';
+import { MikroOrmTaskLinkedIssueRepository } from './repository/mikro-orm-linked-issue.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { TypeOrmTaskLinkedIssueRepository } from './repository/type-orm-linked-i
 		CqrsModule
 	],
 	controllers: [TaskLinkedIssueController],
-	providers: [TaskLinkedIssueService, TypeOrmTaskLinkedIssueRepository, ...CommandHandlers],
+	providers: [TaskLinkedIssueService, TypeOrmTaskLinkedIssueRepository, MikroOrmTaskLinkedIssueRepository, ...CommandHandlers],
 	exports: [TaskLinkedIssueService]
 })
 export class TaskLinkedIssueModule {}

@@ -8,6 +8,7 @@ import { CandidatePersonalQualities } from './candidate-personal-qualities.entit
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmCandidatePersonalQualitiesRepository } from './repository/type-orm-candidate-personal-qualities.repository';
+import { MikroOrmCandidatePersonalQualitiesRepository } from './repository/mikro-orm-candidate-personal-qualities.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { TypeOrmCandidatePersonalQualitiesRepository } from './repository/type-o
 		CqrsModule
 	],
 	controllers: [CandidatePersonalQualitiesController],
-	providers: [CandidatePersonalQualitiesService, TypeOrmCandidatePersonalQualitiesRepository, ...CommandHandlers],
+	providers: [CandidatePersonalQualitiesService, TypeOrmCandidatePersonalQualitiesRepository, MikroOrmCandidatePersonalQualitiesRepository, ...CommandHandlers],
 	exports: [CandidatePersonalQualitiesService]
 })
 export class CandidatePersonalQualitiesModule {}

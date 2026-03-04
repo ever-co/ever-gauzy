@@ -5,22 +5,28 @@ import { moment } from '../../../../core/moment-extend';
 import { getStartEndIntervals } from '../../../time-slot/utils';
 import { decode, Data } from 'clarity-decode';
 import { RequestContext } from '../../../../core/context';
+import { MultiORM, MultiORMEnum, getORMType } from '../../../../core/utils';
 import { ICustomActivity, ITrackingSession, ITrackingPayload, ITimeSlot } from '@gauzy/contracts';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { CreateTimeSlotCommand } from '../../../time-slot/commands';
 import { ProcessTrackingDataCommand } from '../process-tracking-data.command';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-orm-time-slot.repository';
 import { TypeOrmTimeSlotSessionRepository } from '../../../time-slot-session/repository/type-orm-time-slot-session.repository';
+import { MikroOrmTimeSlotSessionRepository } from '../../../time-slot-session/repository/mikro-orm-time-slot-session.repository';
 import { parseFromDatabase, stringifyForDatabase } from '../../../../core/util/db-serialization-util';
 
 @CommandHandler(ProcessTrackingDataCommand)
 export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTrackingDataCommand> {
 	private readonly logger = new Logger(ProcessTrackingDataHandler.name);
+	protected ormType: MultiORM = getORMType();
 
 	constructor(
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		private readonly typeOrmTimeSlotSessionRepository: TypeOrmTimeSlotSessionRepository,
+		private readonly mikroOrmTimeSlotSessionRepository: MikroOrmTimeSlotSessionRepository,
 		private readonly timeSlotService: TimeSlotService,
 		private readonly commandBus: CommandBus
 	) {}
@@ -185,19 +191,40 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		const defaultStartDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
 		const defaultEndDate = new Date();
 
-		const timeSlotSessions = await this.typeOrmTimeSlotSessionRepository
-			.createQueryBuilder('tss')
-			.leftJoinAndSelect('tss.timeSlot', 'timeSlot')
-			.where('tss.sessionId = :sessionId', { sessionId })
-			.andWhere('tss.employeeId = :employeeId', { employeeId })
-			.andWhere('tss.organizationId = :organizationId', { organizationId })
-			.andWhere('tss.tenantId = :tenantId', { tenantId })
-			.andWhere('tss.createdAt BETWEEN :startDate AND :endDate', {
-				startDate: defaultStartDate,
-				endDate: defaultEndDate
-			})
-			.orderBy('tss.createdAt', 'ASC')
-			.getMany();
+		let timeSlotSessions: any[];
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmTimeSlotSessionRepository.getEntityManager();
+				timeSlotSessions = await em.find('TimeSlotSession', {
+					sessionId,
+					employeeId,
+					organizationId,
+					tenantId,
+					createdAt: { $gte: defaultStartDate, $lte: defaultEndDate }
+				} as any, {
+					populate: ['timeSlot'],
+					orderBy: { createdAt: 'ASC' }
+				}) as any[];
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				timeSlotSessions = await this.typeOrmTimeSlotSessionRepository
+					.createQueryBuilder('tss')
+					.leftJoinAndSelect('tss.timeSlot', 'timeSlot')
+					.where('tss.sessionId = :sessionId', { sessionId })
+					.andWhere('tss.employeeId = :employeeId', { employeeId })
+					.andWhere('tss.organizationId = :organizationId', { organizationId })
+					.andWhere('tss.tenantId = :tenantId', { tenantId })
+					.andWhere('tss.createdAt BETWEEN :startDate AND :endDate', {
+						startDate: defaultStartDate,
+						endDate: defaultEndDate
+					})
+					.orderBy('tss.createdAt', 'ASC')
+					.getMany();
+				break;
+		}
 
 		if (timeSlotSessions.length === 0) {
 			return null;
@@ -289,9 +316,7 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 			customActivity.trackingSessions.push(existingSession);
 		}
 
-		await this.typeOrmTimeSlotRepository.update(timeSlot.id, {
-			customActivity: stringifyForDatabase(customActivity)
-		});
+		await this.updateTimeSlotCustomActivity(timeSlot.id, customActivity);
 
 		await this.createOrUpdateTimeSlotSession(
 			sessionId,
@@ -306,6 +331,28 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 	}
 
 	/**
+	 * Update the customActivity field of a time slot using the active ORM.
+	 */
+	private async updateTimeSlotCustomActivity(timeSlotId: string, customActivity: ICustomActivity): Promise<void> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = this.mikroOrmTimeSlotRepository.getKnex();
+				await knex('time_slot')
+					.withSchema(knex.userParams.schema)
+					.where({ id: timeSlotId })
+					.update({ customActivity: stringifyForDatabase(customActivity) });
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmTimeSlotRepository.update(timeSlotId, {
+					customActivity: stringifyForDatabase(customActivity)
+				});
+				break;
+		}
+	}
+
+	/**
 	 * Create or update TimeSlotSession mapping entry
 	 */
 	private async createOrUpdateTimeSlotSession(
@@ -316,31 +363,63 @@ export class ProcessTrackingDataHandler implements ICommandHandler<ProcessTracki
 		organizationId: string,
 		timestamp: Date
 	): Promise<void> {
-		const existingMapping = await this.typeOrmTimeSlotSessionRepository.findOne({
-			where: {
-				sessionId,
-				timeSlotId,
-				tenantId,
-				organizationId
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmTimeSlotSessionRepository.getEntityManager();
+				const existing = await em.findOne('TimeSlotSession', {
+					sessionId,
+					timeSlotId,
+					tenantId,
+					organizationId
+				} as any);
+
+				if (!existing) {
+					const entity = em.create('TimeSlotSession', {
+						sessionId,
+						timeSlotId,
+						employeeId,
+						tenantId,
+						organizationId,
+						startTime: timestamp,
+						lastActivity: timestamp
+					} as any);
+					await em.persistAndFlush(entity);
+				} else {
+					em.assign(existing as any, { lastActivity: timestamp });
+					await em.persistAndFlush(existing);
+				}
+				break;
 			}
-		});
+			case MultiORMEnum.TypeORM:
+			default: {
+				const existingMapping = await this.typeOrmTimeSlotSessionRepository.findOne({
+					where: {
+						sessionId,
+						timeSlotId,
+						tenantId,
+						organizationId
+					}
+				});
 
-		if (!existingMapping) {
-			const timeSlotSession = this.typeOrmTimeSlotSessionRepository.create({
-				sessionId,
-				timeSlotId,
-				employeeId,
-				tenantId,
-				organizationId,
-				startTime: timestamp,
-				lastActivity: timestamp
-			});
+				if (!existingMapping) {
+					const timeSlotSession = this.typeOrmTimeSlotSessionRepository.create({
+						sessionId,
+						timeSlotId,
+						employeeId,
+						tenantId,
+						organizationId,
+						startTime: timestamp,
+						lastActivity: timestamp
+					});
 
-			await this.typeOrmTimeSlotSessionRepository.save(timeSlotSession);
-		} else {
-			await this.typeOrmTimeSlotSessionRepository.update(existingMapping.id, {
-				lastActivity: timestamp
-			});
+					await this.typeOrmTimeSlotSessionRepository.save(timeSlotSession);
+				} else {
+					await this.typeOrmTimeSlotSessionRepository.update(existingMapping.id, {
+						lastActivity: timestamp
+					});
+				}
+				break;
+			}
 		}
 	}
 }

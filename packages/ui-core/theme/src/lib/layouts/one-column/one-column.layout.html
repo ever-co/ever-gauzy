@@ -1,74 +1,86 @@
 <nb-layout windowMode>
-	@if (user$ | async) {
-	<nb-layout-header fixed>
-		<ngx-header [expanded]="isExpanded"></ngx-header>
-	</nb-layout-header>
-	} @if (user$ | async) {
-	<nb-sidebar class="menu-sidebar sidebar_class" tag="menu-sidebar" (stateChange)="onStateChange($event)">
-		<div class="custom-box">
-			<div class="custom-row logo">
-				<div
-					class="logo-container"
-					[class.not-collapsed]="isExpanded && !isCollapse"
-					[class.compacted]="!isExpanded"
-				>
-					<ngx-gauzy-logo
-						[controlled]="trigger"
-						(onCollapsed)="onCollapse($event)"
-						(onWorkspaceToggle)="onWorkspaceToggle($event)"
-					></ngx-gauzy-logo>
-					@if (isCollapse && isExpanded) {
-					<button class="hidden-menu" outline nbButton underConstruction>
-						<i class="fas fa-ellipsis-h"></i>
-					</button>
-					}
+	<!-- Header -->
+	@if (user()) {
+		<nb-layout-header fixed>
+			<ngx-header [expanded]="isExpanded()"></ngx-header>
+		</nb-layout-header>
+	}
+
+	<!-- Sidebar -->
+	@if (user()) {
+		<nb-sidebar
+			class="menu-sidebar sidebar_class"
+			tag="menu-sidebar"
+			(stateChange)="onStateChange($event)"
+		>
+			<div class="custom-box">
+				<div class="custom-row logo">
+					<div
+						class="logo-container"
+						[class.not-collapsed]="!isCollapse() && isExpanded()"
+						[class.compacted]="!isExpanded()"
+					>
+						<ngx-gauzy-logo
+							[controlled]="trigger()"
+							(onCollapsed)="onCollapse($event)"
+							(onWorkspaceToggle)="onWorkspaceToggle($event)"
+						></ngx-gauzy-logo>
+
+						@if (isCollapse() && isExpanded()) {
+							<button class="hidden-menu" outline nbButton underConstruction>
+								<i class="fas fa-ellipsis-h"></i>
+							</button>
+						}
+					</div>
 				</div>
-			</div>
-			<div class="custom-row menu">
-				<ng-content select="ga-main-nav-menu"></ng-content>
-			</div>
-			<div
-				[class.toggle-layout]="isExpanded"
-				[class.row]="isExpanded"
-				[class.toggle-layout]="!(isExpanded)"
-				[class.column]="!(isExpanded)"
-			>
-				<div class="custom-row user">
-					<gauzy-user [user$]="user$" (click)="isOpen = !isOpen"></gauzy-user>
+
+				<div class="custom-row menu">
+					<ng-content select="ga-main-nav-menu"></ng-content>
 				</div>
-				<div class="custom-row button">
-					<div [class.chevron]="isExpanded" [class.chevron]="!(isExpanded)" [class.collapsed]="!(isExpanded)">
-						<button (click)="toggle()" nbButton outline size="small">
-							<i
-								[class.fas]="isExpanded"
-								[class.fa-angle-double-left]="isExpanded"
-								[class.fas]="!(isExpanded)"
-								[class.fa-angle-double-right]="!(isExpanded)"
-							></i>
-						</button>
+
+				<div class="toggle-layout" [class.row]="isExpanded()" [class.column]="!isExpanded()">
+					<div class="custom-row user">
+						<gauzy-user [user$]="user$" (click)="toggleUserMenu()"></gauzy-user>
+					</div>
+
+					<div class="custom-row button">
+						<div class="chevron" [class.collapsed]="!isExpanded()">
+							<button (click)="toggle()" nbButton outline size="small">
+								<i
+									class="fas"
+									[class.fa-angle-double-left]="isExpanded()"
+									[class.fa-angle-double-right]="!isExpanded()"
+								></i>
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-	</nb-sidebar>
-	} @if (!loading) {
+		</nb-sidebar>
+	}
+
+	<!-- Main content -->
 	<nb-layout-column>
 		<ng-content select="router-outlet"></ng-content>
 	</nb-layout-column>
-	}
 
+	<!-- Footer -->
 	<nb-layout-footer fixed>
 		<ngx-footer></ngx-footer>
 	</nb-layout-footer>
 
-	@for (sidebar of (navigationBuilderService.sidebars$ | async); track sidebar) {
-	<nb-sidebar [class]="sidebar.class" [tag]="sidebar.id" state="collapsed" fixed [end]="true">
-		<ngx-theme-sidebar [config]="sidebar"></ngx-theme-sidebar>
-	</nb-sidebar>
+	<!-- Dynamic sidebars -->
+	@for (sidebar of navigationBuilderService.sidebars$ | async; track sidebar.id) {
+		<nb-sidebar [class]="sidebar.class" [tag]="sidebar.id" state="collapsed" fixed [end]="true">
+			<ngx-theme-sidebar [config]="sidebar"></ngx-theme-sidebar>
+		</nb-sidebar>
 	}
 </nb-layout>
-@if (isOpen) {
-<gauzy-user-menu [user$]="user$" (close)="isOpen=false"></gauzy-user-menu>
-} @if (isWorkspaceOpen) {
-<gauzy-workspace-menu (close)="isWorkspaceOpen=false"></gauzy-workspace-menu>
+
+@if (isOpen()) {
+	<gauzy-user-menu [user$]="user$" (close)="closeUserMenu()"></gauzy-user-menu>
+}
+
+@if (isWorkspaceOpen()) {
+	<gauzy-workspace-menu (close)="closeWorkspaceMenu()"></gauzy-workspace-menu>
 }

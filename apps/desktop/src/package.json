@@ -144,6 +144,7 @@
     "@gauzy/plugin-integration-jira": "file:../../../dist/packages/plugins/integration-jira",
     "@gauzy/plugin-integration-make-com": "file:../../../dist/packages/plugins/integration-make-com",
     "@gauzy/plugin-integration-upwork": "file:../../../dist/packages/plugins/integration-upwork",
+    "@gauzy/plugin-integration-sim": "file:../../../dist/packages/plugins/integration-sim",
     "@gauzy/plugin-integration-wakatime": "file:../../../dist/packages/plugins/integration-wakatime",
     "@gauzy/plugin-integration-zapier": "file:../../../dist/packages/plugins/integration-zapier",
     "@gauzy/plugin-jitsu-analytics": "file:../../../dist/packages/plugins/jitsu-analytics",
@@ -158,6 +159,7 @@
     "@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
     "@gauzy/plugin-soundshot": "file:../../../dist/packages/plugins/soundshot",
     "@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
+    "@gauzy/scheduler": "file:../../../dist/packages/scheduler",
     "@gauzy/ui-config": "file:../../../dist/packages/ui-config",
     "@gauzy/utils": "file:../../../dist/packages/utils",
     "@nestjs/platform-express": "^11.1.14",
@@ -215,6 +217,7 @@
     "@gauzy/plugin-integration-jira": "file:../../../dist/packages/plugins/integration-jira",
     "@gauzy/plugin-integration-make-com": "file:../../../dist/packages/plugins/integration-make-com",
     "@gauzy/plugin-integration-upwork": "file:../../../dist/packages/plugins/integration-upwork",
+    "@gauzy/plugin-integration-sim": "file:../../../dist/packages/plugins/integration-sim",
     "@gauzy/plugin-integration-wakatime": "file:../../../dist/packages/plugins/integration-wakatime",
     "@gauzy/plugin-integration-zapier": "file:../../../dist/packages/plugins/integration-zapier",
     "@gauzy/plugin-jitsu-analytics": "file:../../../dist/packages/plugins/jitsu-analytics",
@@ -229,6 +232,7 @@
     "@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
     "@gauzy/plugin-soundshot": "file:../../../dist/packages/plugins/soundshot",
     "@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
+    "@gauzy/scheduler": "file:../../../dist/packages/scheduler",
     "@gauzy/ui-config": "file:../../../dist/packages/ui-config",
     "@gauzy/utils": "file:../../../dist/packages/utils"
   },
@@ -238,4 +242,3 @@
     "node-windows": "^1.0.0-beta.8"
   }
 }
-

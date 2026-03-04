@@ -6,6 +6,7 @@ import { GoalTimeFrameService } from './goal-time-frame.service';
 import { GoalTimeFrame } from './goal-time-frame.entity';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmGoalTimeFrameRepository } from './repository/type-orm-goal-time-frame.repository';
+import { MikroOrmGoalTimeFrameRepository } from './repository/mikro-orm-goal-time-frame.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmGoalTimeFrameRepository } from './repository/type-orm-goal-time-
 		RolePermissionModule
 	],
 	controllers: [GoalTimeFrameController],
-	providers: [GoalTimeFrameService, TypeOrmGoalTimeFrameRepository]
+	providers: [GoalTimeFrameService, TypeOrmGoalTimeFrameRepository, MikroOrmGoalTimeFrameRepository]
 })
 export class GoalTimeFrameModule {}

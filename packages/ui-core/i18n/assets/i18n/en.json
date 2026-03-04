@@ -5081,6 +5081,7 @@
 			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"PASSWORD_STRENGTH": "Password must include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
 			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
 			"PASSWORDS_NOT_MATCH": "Password does not match the confirm password!",
 			"CHECK_BOX_TEXTS": {
@@ -5124,6 +5125,7 @@
 			"EMAIL_REAL_REQUIRED": "Email address should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"PASSWORD_STRENGTH": "Password must include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
 			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces.",
 			"CODE_REQUIRED_LENGTH": "Code should contain {{ requiredLength }} characters."
 		},
@@ -5177,7 +5179,8 @@
 			"NEW_PASSWORD_REQUIRED": "New password is required!",
 			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
 			"PASSWORDS_NOT_MATCH": "Password does not match with the confirm password!",
-			"PASSWORD_SHOULD_CONTAIN": "New password should contain from {{ minLength }} to {{ maxLength }} characters!"
+			"PASSWORD_SHOULD_CONTAIN": "New password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"PASSWORD_STRENGTH": "Password must include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character."
 		}
 	},
 	"PAGINATION": {

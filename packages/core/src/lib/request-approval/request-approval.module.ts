@@ -19,6 +19,7 @@ import { TaskModule } from './../tasks/task.module';
 import { StatisticModule } from '../time-tracking/statistic/statistic.module';
 import { TimerModule } from '../time-tracking/timer/timer.module';
 import { TypeOrmRequestApprovalRepository } from './repository/type-orm-request-approval.repository';
+import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
 
 @Module({
 	imports: [
@@ -39,7 +40,7 @@ import { TypeOrmRequestApprovalRepository } from './repository/type-orm-request-
 		StatisticModule
 	],
 	controllers: [RequestApprovalController],
-	providers: [RequestApprovalService, TypeOrmRequestApprovalRepository, ...CommandHandlers],
-	exports: [RequestApprovalService, TypeOrmRequestApprovalRepository]
+	providers: [RequestApprovalService, TypeOrmRequestApprovalRepository, MikroOrmRequestApprovalRepository, ...CommandHandlers],
+	exports: [RequestApprovalService, TypeOrmRequestApprovalRepository, MikroOrmRequestApprovalRepository]
 })
 export class RequestApprovalModule {}

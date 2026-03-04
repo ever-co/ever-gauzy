@@ -3,14 +3,19 @@ import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { RequestContext } from './../../../../core/context';
+import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { EmployeeService } from '../../../../employee/employee.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)
 export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<UpdateEmployeeTotalWorkedHoursCommand> {
+	protected ormType: MultiORM = getORMType();
+
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		private readonly _employeeService: EmployeeService,
 		private readonly _configService: ConfigService
 	) {}
@@ -41,22 +46,43 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 	 * @returns The total work hours.
 	 */
 	private async calculateTotalWorkHours(employeeId: ID, tenantId: ID): Promise<number> {
-		// Create a query builder for the TimeSlot entity
-		const query = this.typeOrmTimeLogRepository.createQueryBuilder();
-		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
+		let result: any;
 
-		// Get the sum of durations between startedAt and stoppedAt
-		const sumQuery = this.getSumQuery(query.alias);
-		console.log('sum of durations between startedAt and stoppedAt', sumQuery);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const knex = this.mikroOrmTimeLogRepository.getKnex();
+				const sumQuery = this.getSumQuery('time_log');
 
-		// Execute the query and get the duration
-		const result = await query
-			.select(sumQuery, 'duration')
-			.where({
-				employeeId,
-				tenantId
-			})
-			.getRawOne();
+				result = await knex('time_log')
+					.withSchema(knex.userParams.schema)
+					.innerJoin('time_slot_time_logs', 'time_slot_time_logs.timeLogId', 'time_log.id')
+					.innerJoin('time_slot', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
+					.select(knex.raw(`${sumQuery} as duration`))
+					.where({ 'time_log.employeeId': employeeId, 'time_log.tenantId': tenantId })
+					.first();
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				// Create a query builder for the TimeLog entity
+				const query = this.typeOrmTimeLogRepository.createQueryBuilder();
+				query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
+
+				// Get the sum of durations between startedAt and stoppedAt
+				const sumQuery = this.getSumQuery(query.alias);
+				console.log('sum of durations between startedAt and stoppedAt', sumQuery);
+
+				// Execute the query and get the duration
+				result = await query
+					.select(sumQuery, 'duration')
+					.where({
+						employeeId,
+						tenantId
+					})
+					.getRawOne();
+				break;
+			}
+		}
 
 		console.log(`get sum duration for specific employee: ${employeeId}`, +result.duration);
 

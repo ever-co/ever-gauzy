@@ -3,7 +3,9 @@ name: Deploy MCP Auth to DigitalOcean Demo
 on:
   workflow_run:
     workflows: ['Build and Publish Gauzy MCP Auth Image Demo']
-    branches: [develop, temp]
+    branches:
+      - develop
+      - temp
     types:
       - completed
 

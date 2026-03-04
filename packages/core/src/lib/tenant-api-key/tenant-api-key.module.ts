@@ -7,6 +7,7 @@ import { TenantApiKeyController } from './tenant-api-key.controller';
 import { TenantApiKey } from './tenant-api-key.entity';
 import { TenantApiKeyService } from './tenant-api-key.service';
 import { TypeOrmTenantApiKeyRepository } from './repository/type-orm-tenant-api-key.repository';
+import { MikroOrmTenantApiKeyRepository } from './repository/mikro-orm-tenant-api-key.repository';
 
 @Module({
 	imports: [
@@ -16,7 +17,7 @@ import { TypeOrmTenantApiKeyRepository } from './repository/type-orm-tenant-api-
 		UserModule
 	],
 	controllers: [TenantApiKeyController],
-	providers: [TenantApiKeyService, TypeOrmTenantApiKeyRepository],
-	exports: [TenantApiKeyService, TypeOrmTenantApiKeyRepository]
+	providers: [TenantApiKeyService, TypeOrmTenantApiKeyRepository, MikroOrmTenantApiKeyRepository],
+	exports: [TenantApiKeyService, TypeOrmTenantApiKeyRepository, MikroOrmTenantApiKeyRepository]
 })
 export class TenantApiKeyModule {}

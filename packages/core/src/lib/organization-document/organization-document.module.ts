@@ -6,6 +6,7 @@ import { OrganizationDocumentService } from './organization-document.service';
 import { OrganizationDocumentController } from './organization-document.controller';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmOrganizationDocumentRepository } from './repository/type-orm-organization-document.repository';
+import { MikroOrmOrganizationDocumentRepository } from './repository/mikro-orm-organization-document.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmOrganizationDocumentRepository } from './repository/type-orm-org
 		RolePermissionModule
 	],
 	controllers: [OrganizationDocumentController],
-	providers: [OrganizationDocumentService, TypeOrmOrganizationDocumentRepository]
+	providers: [OrganizationDocumentService, TypeOrmOrganizationDocumentRepository, MikroOrmOrganizationDocumentRepository]
 })
 export class OrganizationDocumentModule {}

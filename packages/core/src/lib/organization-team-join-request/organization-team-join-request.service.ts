@@ -16,6 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { generateAlphaNumericCode } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
+import { MultiORMEnum } from '../core/utils';
 import { RequestContext } from './../core/context';
 import { User } from './../core/entities/internal';
 import { EmailService } from './../email-send/email.service';
@@ -157,31 +158,50 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	): Promise<IOrganizationTeamJoinRequest> {
 		const { email, token, code, organizationTeamId } = options;
 		try {
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			query.setFindOptions({
-				select: {
-					id: true,
-					email: true,
-					organizationTeamId: true
+			let record: IOrganizationTeamJoinRequest;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const item = await this.mikroOrmRepository.findOneOrFail({
+						email,
+						organizationTeamId,
+						expiredAt: { $gte: new Date() },
+						status: null,
+						$or: [{ code }, { token }]
+					} as any);
+					record = this.serialize(item);
+					break;
 				}
-			});
-			query.where((qb: SelectQueryBuilder<OrganizationTeamJoinRequest>) => {
-				qb.andWhere({
-					email,
-					organizationTeamId,
-					expiredAt: MoreThanOrEqual(new Date()),
-					status: IsNull()
-				});
-				qb.andWhere([
-					{
-						code
-					},
-					{
-						token
-					}
-				]);
-			});
-			const record = await query.getOneOrFail();
+				case MultiORMEnum.TypeORM:
+				default: {
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					query.setFindOptions({
+						select: {
+							id: true,
+							email: true,
+							organizationTeamId: true
+						}
+					});
+					query.where((qb: SelectQueryBuilder<OrganizationTeamJoinRequest>) => {
+						qb.andWhere({
+							email,
+							organizationTeamId,
+							expiredAt: MoreThanOrEqual(new Date()),
+							status: IsNull()
+						});
+						qb.andWhere([
+							{
+								code
+							},
+							{
+								token
+							}
+						]);
+					});
+					record = await query.getOneOrFail();
+					break;
+				}
+			}
 
 			await super.update(record.id, {
 				status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
