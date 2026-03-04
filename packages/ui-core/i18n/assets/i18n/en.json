@@ -1633,8 +1633,8 @@
 				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
 				"INPUT_HINT": "Provide workflow input as valid JSON. This data will be passed to your SIM workflow.",
 				"RESULT": "Execution Result",
-				"JOB_ID": "Job ID",
-				"JOB_ID_PLACEHOLDER": "Enter the async job ID",
+				"TASK_ID": "Job ID",
+				"TASK_ID_PLACEHOLDER": "Enter the async job ID",
 				"CHECK_STATUS": "Check Status",
 				"JOB_RESULT": "Job Status"
 			}
