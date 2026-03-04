@@ -1,4 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, PayloadTooLargeException } from '@nestjs/common';
+import { Request } from 'express';
+import { HELP_CENTER_ARTICLE_MAX_BINARY_BYTES } from '@gauzy/constants';
 import {
 	Brackets,
 	FindOptionsWhere,
@@ -350,5 +352,46 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 			...(privacy !== undefined && where.privacy === undefined ? { privacy } : {}),
 			...(isLocked !== undefined && where.isLocked === undefined ? { isLocked } : {})
 		};
+	}
+
+	/**
+	 * Read and validate a raw binary stream from an HTTP request.
+	 * Rejects payloads that exceed HELP_CENTER_ARTICLE_MAX_BINARY_BYTES via:
+	 *   1. A fast Content-Length pre-check (before any data is buffered).
+	 *   2. A byte counter during streaming (catches chunked / lying clients).
+	 *
+	 * @param req - The Express request carrying the raw octet-stream body.
+	 * @returns The fully buffered binary payload as a Buffer.
+	 */
+	public async readBinaryStream(req: Request): Promise<Buffer> {
+		// 1. Fast pre-check — reject immediately when Content-Length is already too large.
+		const contentLength = parseInt(req.headers['content-length'] ?? '0', 10);
+		if (!isNaN(contentLength) && contentLength > HELP_CENTER_ARTICLE_MAX_BINARY_BYTES) {
+			throw new PayloadTooLargeException(
+				`Payload exceeds the maximum allowed size of ${HELP_CENTER_ARTICLE_MAX_BINARY_BYTES} bytes.`
+			);
+		}
+
+		// 2. Buffer the stream, counting bytes to catch chunked or lying clients.
+		const chunks: Buffer[] = [];
+		let bytesReceived = 0;
+		await new Promise<void>((resolve, reject) => {
+			(req as any).on('data', (chunk: Buffer) => {
+				bytesReceived += chunk.length;
+				if (bytesReceived > HELP_CENTER_ARTICLE_MAX_BINARY_BYTES) {
+					reject(
+						new PayloadTooLargeException(
+							`Payload exceeds the maximum allowed size of ${HELP_CENTER_ARTICLE_MAX_BINARY_BYTES} bytes.`
+						)
+					);
+					return;
+				}
+				chunks.push(chunk);
+			});
+			(req as any).on('end', resolve);
+			(req as any).on('error', reject);
+		});
+
+		return Buffer.concat(chunks);
 	}
 }
