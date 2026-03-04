@@ -1,0 +1,89 @@
+:host {
+	display: block;
+}
+
+.filters {
+	.label {
+		display: block;
+		margin-bottom: 0.25rem;
+		font-size: 0.85rem;
+		font-weight: 600;
+	}
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+
+	th {
+		font-weight: 600;
+		font-size: 0.85rem;
+		text-transform: uppercase;
+		opacity: 0.7;
+		padding: 0.75rem 0.5rem;
+		border-bottom: 2px solid var(--gauzy-card-border, #e4e7ea);
+		white-space: nowrap;
+	}
+
+	td {
+		padding: 0.75rem 0.5rem;
+		border-bottom: 1px solid var(--gauzy-card-border, #e4e7ea);
+		vertical-align: middle;
+	}
+
+	.workflow-id code {
+		font-size: 0.85rem;
+		word-break: break-all;
+	}
+}
+
+.table-responsive {
+	overflow-x: auto;
+}
+
+.spin-animation {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+.badge-status {
+	display: inline-block;
+	padding: 0.25rem 0.5rem;
+	border-radius: 4px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	text-align: center;
+
+	&.badge-success {
+		background-color: rgba(0, 214, 143, 0.15);
+		color: #00d68f;
+	}
+
+	&.badge-danger {
+		background-color: rgba(255, 61, 113, 0.15);
+		color: #ff3d71;
+	}
+
+	&.badge-warning {
+		background-color: rgba(255, 170, 0, 0.15);
+		color: #ffaa00;
+	}
+
+	&.badge-info {
+		background-color: rgba(0, 149, 255, 0.15);
+		color: #0095ff;
+	}
+
+	&.badge-basic {
+		background-color: rgba(143, 155, 179, 0.15);
+		color: #8f9bb3;
+	}
+}
+
+.pagination {
+	padding: 0.5rem 0;
+}

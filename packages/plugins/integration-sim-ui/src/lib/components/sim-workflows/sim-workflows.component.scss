@@ -1,0 +1,50 @@
+:host {
+	display: block;
+}
+
+nb-card {
+	background: var(--gauzy-card-2);
+	border: none;
+	margin-bottom: 0;
+
+	nb-card-header {
+		border-bottom: 1px solid var(--gauzy-card-border, #e4e7ea);
+	}
+}
+
+.label {
+	display: block;
+	margin-bottom: 0.25rem;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+.hint {
+	display: flex;
+	align-items: center;
+	font-size: 0.85rem;
+	opacity: 0.7;
+}
+
+.result-container {
+	.result-json {
+		background: var(--gauzy-card-3, #f5f5f5);
+		border: 1px solid var(--gauzy-card-border, #e4e7ea);
+		border-radius: 4px;
+		padding: 1rem;
+		max-height: 400px;
+		overflow: auto;
+		font-size: 0.85rem;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+}
+
+.spin-animation {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}

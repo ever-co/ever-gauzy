@@ -1,0 +1,51 @@
+<nb-card>
+	<nb-card-header class="d-flex align-items-center">
+		<ngx-back-navigation></ngx-back-navigation>
+		<h5 class="mb-0 ml-2">{{ 'INTEGRATIONS.SIM_PAGE.AUTHORIZE.TITLE' | translate }}</h5>
+	</nb-card-header>
+
+	<nb-card-body>
+		<div class="authorize-container">
+			<div class="integration-info mb-4">
+				<p class="text-hint">
+					{{ 'INTEGRATIONS.SIM_PAGE.AUTHORIZE.INFOS' | translate }}
+				</p>
+			</div>
+
+			<form [formGroup]="form" (ngSubmit)="setupApiKey()">
+				<div class="form-group">
+					<label class="label" for="api_key">
+						{{ 'INTEGRATIONS.SIM_PAGE.SETTINGS.API_KEY' | translate }}
+					</label>
+					<input
+						nbInput
+						fullWidth
+						type="password"
+						id="api_key"
+						formControlName="api_key"
+						[placeholder]="'INTEGRATIONS.SIM_PAGE.SETTINGS.API_KEY_PLACEHOLDER' | translate"
+						[status]="form.get('api_key')?.touched && form.get('api_key')?.invalid ? 'danger' : 'basic'"
+					/>
+					<div class="hint mt-1">
+						<nb-icon icon="info-outline" status="info"></nb-icon>
+						<span class="ml-1">{{ 'INTEGRATIONS.SIM_PAGE.AUTHORIZE.HINT' | translate }}</span>
+					</div>
+				</div>
+
+				<div class="form-actions mt-4">
+					<button
+						nbButton
+						status="primary"
+						type="submit"
+						[disabled]="form.invalid || loading()"
+					>
+						@if (loading()) {
+							<nb-icon icon="loader-outline" class="spin-animation"></nb-icon>
+						}
+						{{ 'INTEGRATIONS.SIM_PAGE.AUTHORIZE.NEXT' | translate }}
+					</button>
+				</div>
+			</form>
+		</div>
+	</nb-card-body>
+</nb-card>

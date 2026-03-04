@@ -1,0 +1,126 @@
+<div class="executions-container">
+	<!-- Filters -->
+	<div class="filters mb-3">
+		<div class="row g-2 align-items-end">
+			<div class="col-md-4">
+				<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.WORKFLOW_ID' | translate }}</label>
+				<input
+					nbInput
+					fullWidth
+					type="text"
+					[(ngModel)]="filterWorkflowId"
+					[placeholder]="'INTEGRATIONS.SIM_PAGE.EXECUTIONS.WORKFLOW_ID_PLACEHOLDER' | translate"
+				/>
+			</div>
+			<div class="col-md-3">
+				<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.STATUS' | translate }}</label>
+				<nb-select fullWidth [(ngModel)]="filterStatus" [placeholder]="'INTEGRATIONS.SIM_PAGE.EXECUTIONS.ALL_STATUSES' | translate">
+					@for (status of statusOptions; track status) {
+						<nb-option [value]="status">
+							@if (status === '') {
+								{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.ALL_STATUSES' | translate }}
+							} @else {
+								{{ status | titlecase }}
+							}
+						</nb-option>
+					}
+				</nb-select>
+			</div>
+			<div class="col-md-2">
+				<button nbButton status="primary" (click)="onFilterChange()" [disabled]="loading()">
+					@if (loading()) {
+						<nb-icon icon="loader-outline" class="spin-animation"></nb-icon>
+					} @else {
+						<nb-icon icon="search-outline"></nb-icon>
+					}
+					{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.LOAD' | translate }}
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Executions Table -->
+	@if (loading()) {
+		<div class="text-center py-4">
+			<nb-icon icon="loader-outline" class="spin-animation" style="font-size: 2rem;"></nb-icon>
+			<p class="mt-2 text-hint">{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.LOADING' | translate }}</p>
+		</div>
+	} @else if (executions().length === 0) {
+		<div class="text-center py-4">
+			<nb-icon icon="inbox-outline" style="font-size: 3rem;" class="text-hint"></nb-icon>
+			<p class="mt-2 text-hint">{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.NO_EXECUTIONS' | translate }}</p>
+		</div>
+	} @else {
+		<div class="table-responsive">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.WORKFLOW_ID' | translate }}</th>
+						<th>{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.EXECUTION_ID' | translate }}</th>
+						<th>{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.STATUS' | translate }}</th>
+						<th>{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.TRIGGERED_BY' | translate }}</th>
+						<th>{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.DURATION' | translate }}</th>
+						<th>{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.CREATED' | translate }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					@for (execution of executions(); track execution.id) {
+						<tr>
+							<td class="workflow-id">
+								<code>{{ execution.workflowId }}</code>
+							</td>
+							<td>
+								@if (execution.executionId) {
+									<code>{{ execution.executionId }}</code>
+								} @else {
+									<span class="text-hint">-</span>
+								}
+							</td>
+							<td>
+								<span class="badge-status badge-{{ getStatusClass(execution.status) }}">
+									{{ execution.status | titlecase }}
+								</span>
+							</td>
+							<td>{{ execution.triggeredBy | titlecase }}</td>
+							<td>{{ formatDuration(execution.duration) }}</td>
+							<td>{{ execution.createdAt | date: 'medium' }}</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Pagination -->
+		@if (totalPages > 1) {
+			<div class="pagination d-flex justify-content-between align-items-center mt-3">
+				<span class="text-hint">
+					{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.SHOWING' | translate }}
+					{{ (currentPage() - 1) * pageSize + 1 }}-{{ currentPage() * pageSize > total() ? total() : currentPage() * pageSize }}
+					{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.OF' | translate }}
+					{{ total() }}
+				</span>
+				<div class="d-flex gap-2">
+					<button
+						nbButton
+						size="small"
+						ghost
+						[disabled]="currentPage() <= 1"
+						(click)="onPageChange(currentPage() - 1)"
+					>
+						<nb-icon icon="arrow-back-outline"></nb-icon>
+					</button>
+					<span class="d-flex align-items-center px-2">{{ currentPage() }} / {{ totalPages }}</span>
+					<button
+						nbButton
+						size="small"
+						ghost
+						[disabled]="currentPage() >= totalPages"
+						(click)="onPageChange(currentPage() + 1)"
+					>
+						<nb-icon icon="arrow-forward-outline"></nb-icon>
+					</button>
+				</div>
+			</div>
+		}
+	}
+</div>

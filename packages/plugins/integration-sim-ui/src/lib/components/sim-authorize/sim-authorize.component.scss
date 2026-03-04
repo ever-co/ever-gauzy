@@ -1,0 +1,36 @@
+:host {
+	display: block;
+}
+
+nb-card {
+	background: var(--gauzy-card-2);
+	border: none;
+}
+
+.authorize-container {
+	max-width: 560px;
+	margin: 0 auto;
+}
+
+.hint {
+	display: flex;
+	align-items: center;
+	font-size: 0.85rem;
+	opacity: 0.7;
+}
+
+.form-actions {
+	button {
+		min-width: 120px;
+		box-shadow: var(--gauzy-shadow);
+	}
+}
+
+.spin-animation {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}

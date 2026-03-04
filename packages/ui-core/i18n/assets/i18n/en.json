@@ -1576,6 +1576,69 @@
 				}
 			}
 		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "SIM AI Workflow Integration",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Enter your SIM AI API key to connect your account. You can find your API key in your SIM dashboard at sim.ai.",
+				"NEXT": "Connect",
+				"HINT": "Your API key is stored securely and used to authenticate workflow executions.",
+				"ERRORS": {
+					"INVALID_FORM": "Please fill all required fields correctly",
+					"SAVE_SETTINGS": "Failed to save settings",
+					"ORGANIZATION_NOT_FOUND": "Organization not found",
+					"CHECK_REMEMBER_STATE": "Failed to check remember state"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "SIM AI integration configured successfully"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "SIM AI Settings",
+				"SUBTITLE": "Configure your SIM AI integration settings",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your SIM AI API Key"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Execution History",
+				"NO_EXECUTIONS": "No workflow executions found. Execute a workflow from the Workflows tab to see results here.",
+				"WORKFLOW_ID": "Workflow ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Filter by workflow ID",
+				"EXECUTION_ID": "Execution ID",
+				"STATUS": "Status",
+				"TRIGGERED_BY": "Triggered By",
+				"DURATION": "Duration",
+				"CREATED": "Created",
+				"LOADING": "Loading execution history...",
+				"LOAD": "Search",
+				"ALL_STATUSES": "All Statuses",
+				"SHOWING": "Showing",
+				"OF": "of"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Workflows",
+				"VALIDATE_TITLE": "Validate Workflow",
+				"EXECUTE_TITLE": "Execute Workflow",
+				"JOB_STATUS_TITLE": "Async Job Status",
+				"WORKFLOW_ID": "Workflow ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Enter your SIM workflow ID",
+				"VALIDATE": "Validate",
+				"DEPLOYED": "Workflow is deployed and ready to execute.",
+				"NOT_DEPLOYED": "Workflow is not deployed or not found.",
+				"EXECUTE": "Execute",
+				"ASYNC": "Async",
+				"TIMEOUT": "Timeout (ms)",
+				"INPUT": "Input (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Provide workflow input as valid JSON. This data will be passed to your SIM workflow.",
+				"RESULT": "Execution Result",
+				"JOB_ID": "Job ID",
+				"JOB_ID_PLACEHOLDER": "Enter the async job ID",
+				"CHECK_STATUS": "Check Status",
+				"JOB_RESULT": "Job Status"
+			}
+		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "Settings",
