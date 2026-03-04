@@ -13,6 +13,7 @@ import {
 	IHubstaffConfig,
 	IJitsuConfig,
 	ISMTPConfig,
+	ISimConfig,
 	IUnleashConfig,
 	IUpworkConfig,
 	IWasabiConfig,
@@ -128,6 +129,8 @@ export interface IEnvironment {
 	makeCom?: IMakeComConfig;
 	/** ActivePieces Configuration */
 	activepieces?: IActivepiecesConfig;
+	/** SIM (Sim Studio) Configuration */
+	sim?: ISimConfig;
 	isElectron?: boolean;
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;

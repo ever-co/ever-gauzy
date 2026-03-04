@@ -14,6 +14,7 @@ export interface DesktopSetupConfig {
 	port?: string;
 	portUi?: string;
 	host?: string;
+	protocol?: string;
 	serverUrl?: string;
 	isLocalServer?: boolean;
 	postgres?: {

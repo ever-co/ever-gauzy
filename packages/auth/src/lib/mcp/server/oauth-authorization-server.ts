@@ -605,7 +605,7 @@ export class OAuth2AuthorizationServer {
 		});
 
 		// Client registration endpoint (RFC 7591)
-		if (this.config.enableClientRegistration && this.config.registrationEndpoint) {
+		if (this.config.registrationEndpoint) {
 			this.app.post(this.config.registrationEndpoint, (req, res) => {
 				this.handleClientRegistration(req, res);
 			});

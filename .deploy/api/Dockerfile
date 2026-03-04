@@ -106,6 +106,7 @@ ARG REDIS_TLS
 ARG REDIS_URL
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
+ARG VERDACCIO_TOKEN
 
 FROM node:24.14.0-alpine3.23 AS dependencies
 
@@ -147,6 +148,9 @@ COPY --chown=node:node packages/constants/package.json ./packages/constants/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
+COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
+
+# Copy plugins
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
@@ -155,6 +159,7 @@ COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
+COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -175,7 +180,16 @@ COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
+ARG VERDACCIO_TOKEN
+RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
+    echo "registry=https://packages.ever.co/" >> .npmrc; \
+    fi
+
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
+
+# Remove .npmrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc
 
 FROM node:24.14.0-alpine3.23 AS prodDependencies
 
@@ -210,6 +224,9 @@ COPY --chown=node:node packages/constants/package.json ./packages/constants/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
+COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
+
+# Copy plugins
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
@@ -218,6 +235,7 @@ COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
+COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -238,7 +256,16 @@ COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
+ARG VERDACCIO_TOKEN
+RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
+    echo "registry=https://packages.ever.co/" >> .npmrc; \
+    fi
+
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn postinstall.manual && yarn cache clean
+
+# Remove .npmrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc
 
 # We remove Angular modules as it's not used in APIs
 RUN rm -r node_modules/@angular
@@ -321,6 +348,8 @@ COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
 # Copy node_modules to a temporary location
 COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node_modules_temp
+# Ensure node_modules directory exists (safety net in case build output doesn't include one)
+RUN mkdir -p ./node_modules
 # Add a script to merge directories inside the container (skip files that already exists)
 RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
 
@@ -337,6 +366,7 @@ RUN cp -r ./packages/utils/node_modules ./node_modules/@gauzy/utils/
 RUN cp -r ./packages/config/node_modules ./node_modules/@gauzy/config/
 RUN cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/
 RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
+RUN cp -r ./packages/scheduler/node_modules ./node_modules/@gauzy/scheduler/
 
 RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/ && \
     cp -r ./packages/plugins/integration-activepieces/node_modules ./node_modules/@gauzy/plugin-integration-activepieces/ && \
@@ -344,7 +374,10 @@ RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin
     cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/ && \
     cp -r ./packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/ && \
     cp -r ./packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/ && \
+    cp -r ./packages/plugins/integration-make-com/node_modules ./node_modules/@gauzy/plugin-integration-make-com/ && \
+    cp -r ./packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
     cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/ && \
+    cp -r ./packages/plugins/integration-zapier/node_modules ./node_modules/@gauzy/plugin-integration-zapier/ && \
     cp -r ./packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/ && \
     cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/ && \
     cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/ && \

@@ -115,7 +115,7 @@ spec:
                       - name: LOG_LEVEL
                         value: 'info'
                       - name: SENTRY_DSN
-                        value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+                        value: '$SENTRY_DSN'
                       - name: SENTRY_HTTP_TRACING_ENABLED
                         value: '$SENTRY_HTTP_TRACING_ENABLED'
                       - name: SENTRY_PROFILING_ENABLED
@@ -183,15 +183,15 @@ spec:
                       - name: CLIENT_BASE_URL
                         value: 'https://demo.gauzy.co'
                       - name: SENTRY_DSN
-                        value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+                        value: '$SENTRY_DSN'
                       - name: CHATWOOT_SDK_TOKEN
-                        value: 'jFoSXEjGmqhUhqU3zfgkFfMt'
+                        value: '$CHATWOOT_SDK_TOKEN'
                       - name: CLOUDINARY_API_KEY
-                        value: '256868982483961'
+                        value: '$CLOUDINARY_API_KEY'
                       - name: CLOUDINARY_CLOUD_NAME
-                        value: 'dv6ezkfxg'
+                        value: '$CLOUDINARY_CLOUD_NAME'
                       - name: GOOGLE_MAPS_API_KEY
-                        value: 'AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo'
+                        value: '$GOOGLE_MAPS_API_KEY'
                       - name: GOOGLE_PLACE_AUTOCOMPLETE
                         value: 'true'
                       - name: DEFAULT_LATITUDE
@@ -218,3 +218,67 @@ spec:
                   ports:
                       - containerPort: 4200
                         protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: gauzy-demo-worker
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: gauzy-demo-worker
+    template:
+        metadata:
+            labels:
+                app: gauzy-demo-worker
+        spec:
+            securityContext:
+                seccompProfile:
+                    type: RuntimeDefault
+            containers:
+                - name: gauzy-demo-worker
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
+                  image: registry.digitalocean.com/ever/gauzy-worker-demo:latest
+                  env:
+                      - name: API_HOST
+                        value: 0.0.0.0
+                      - name: DEMO
+                        value: 'true'
+                      - name: CLOUD_PROVIDER
+                        value: '$CLOUD_PROVIDER'
+                      - name: NODE_ENV
+                        value: 'development'
+                      - name: LOG_LEVEL
+                        value: 'info'
+                      - name: SENTRY_DSN
+                        value: '$SENTRY_DSN'
+                      - name: SENTRY_HTTP_TRACING_ENABLED
+                        value: '$SENTRY_HTTP_TRACING_ENABLED'
+                      - name: SENTRY_PROFILING_ENABLED
+                        value: '$SENTRY_PROFILING_ENABLED'
+                      - name: SENTRY_POSTGRES_TRACKING_ENABLED
+                        value: '$SENTRY_POSTGRES_TRACKING_ENABLED'
+                      - name: API_BASE_URL
+                        value: 'https://apidemo.gauzy.co'
+                      - name: CLIENT_BASE_URL
+                        value: 'https://demo.gauzy.co'
+                      - name: OTEL_ENABLED
+                        value: '$OTEL_ENABLED'
+                      - name: OTEL_PROVIDER
+                        value: '$OTEL_PROVIDER'
+                      - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+                        value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
+                      - name: OTEL_EXPORTER_OTLP_HEADERS
+                        value: '$OTEL_EXPORTER_OTLP_HEADERS'
+                      - name: WORKER_DEFAULT_QUEUE
+                        value: '$WORKER_DEFAULT_QUEUE'
+                      - name: WORKER_QUEUE_ENABLED
+                        value: '$WORKER_QUEUE_ENABLED'
+                      - name: WORKER_SCHEDULER_ENABLED
+                        value: '$WORKER_SCHEDULER_ENABLED'
+                      - name: WORKER_TIMEZONE
+                        value: '$WORKER_TIMEZONE'

@@ -125,7 +125,7 @@ export class ConfigManager {
 			issuer: authUrl,
 			baseUrl,
 			audience: this.config.oauth.resourceUri,
-			enableClientRegistration: this.config.environment === 'development',
+			enableClientRegistration: true,
 			authorizationEndpoint: `${authUrl}/oauth2/authorize`,
 			tokenEndpoint: `${authUrl}/oauth2/token`,
 			jwksEndpoint: `${authUrl}/.well-known/jwks.json`,
