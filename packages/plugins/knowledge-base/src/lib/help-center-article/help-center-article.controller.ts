@@ -124,13 +124,7 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 		@Param('id', UUIDValidationPipe) id: string,
 		@Req() req: Request
 	): Promise<void> {
-		const chunks: Buffer[] = [];
-		await new Promise<void>((resolve, reject) => {
-			(req).on('data', (chunk: Buffer) => chunks.push(chunk));
-			(req).on('end', resolve);
-			(req).on('error', reject);
-		});
-		const binary = Buffer.concat(chunks);
+		const binary = await this.helpCenterArticleService.readBinaryStream(req);
 		await this.commandBus.execute(
 			new HelpCenterUpdateArticleCommand(id, { descriptionBinary: new Uint8Array(binary) })
 		);

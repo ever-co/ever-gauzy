@@ -75,7 +75,7 @@ export interface ResetPluginSettingsRequest {
 	userId?: string;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 @StoreConfig({ name: 'pluginSettings' })
 export class PluginSettingsStore extends EntityStore<PluginSettingsState> {
 	constructor() {
