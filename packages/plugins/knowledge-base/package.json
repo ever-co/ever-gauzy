@@ -23,6 +23,7 @@
 	},
 	"dependencies": {
 		"@faker-js/faker": "^10.3.0",
+		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
