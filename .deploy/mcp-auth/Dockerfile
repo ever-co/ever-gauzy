@@ -72,6 +72,7 @@ ARG VERDACCIO_TOKEN
 RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
+    echo "always-auth=true" >> .npmrc && \
     echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
@@ -149,6 +150,7 @@ ARG VERDACCIO_TOKEN
 RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
+    echo "always-auth=true" >> .npmrc && \
     echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
