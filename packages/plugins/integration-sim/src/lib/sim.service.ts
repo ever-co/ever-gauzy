@@ -286,19 +286,7 @@ export class SimService {
 			this.logger.debug(`Workflow execution completed for workflow: ${input.workflowId}`);
 
 			// Update execution log — handle both sync and async response shapes
-			const syncResult = result as WorkflowExecutionResult;
-			const asyncResult = result as AsyncExecutionResult;
-
-			// Map result fields — the SIM API returns different shapes for sync vs async:
-			// Async: { success, async, jobId, executionId, message, statusUrl }
-			// Sync:  { success, output, metadata: { executionId, duration }, totalDuration }
-			const jobId = (result as any).jobId || asyncResult.jobId;
-
-			execution.status = jobId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
-			execution.output = syncResult.output ?? result;
-			execution.executionId = (result as any).executionId || syncResult.metadata?.executionId || jobId;
-			execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
-			execution.error = syncResult.error ? { message: syncResult.error } : undefined;
+			this.mapExecutionResult(execution, result);
 			await this.simRepositoryService.save(execution);
 
 			return result;
@@ -544,14 +532,7 @@ export class SimService {
 				);
 
 				// Update execution log with result
-				const syncResult = result as WorkflowExecutionResult;
-				const asyncResult = result as AsyncExecutionResult;
-
-				execution.status = (result as any).jobId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
-				execution.output = syncResult.output ?? result;
-				execution.executionId = syncResult.metadata?.executionId || asyncResult.jobId;
-				execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
-				execution.error = syncResult.error ? { message: syncResult.error } : undefined;
+				this.mapExecutionResult(execution, result);
 				await this.simRepositoryService.save(execution);
 			} catch (execError: any) {
 				// Update execution log with failure
@@ -568,6 +549,22 @@ export class SimService {
 				tenantId: params.tenantId
 			});
 		}
+	}
+
+	/**
+	 * Map a SIM API execution result onto a SimWorkflowExecution entity.
+	 * Handles both sync and async response shapes.
+	 */
+	private mapExecutionResult(execution: SimWorkflowExecution, result: WorkflowExecutionResult | AsyncExecutionResult): void {
+		const syncResult = result as WorkflowExecutionResult;
+		const asyncResult = result as AsyncExecutionResult;
+		const jobId = (result as any).jobId || asyncResult.jobId;
+
+		execution.status = jobId ? 'queued' : syncResult.success ? 'completed' : syncResult.success === false ? 'failed' : 'completed';
+		execution.output = syncResult.output ?? result;
+		execution.executionId = (result as any).executionId || syncResult.metadata?.executionId || jobId;
+		execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
+		execution.error = syncResult.error ? { message: syncResult.error } : undefined;
 	}
 
 	/**
