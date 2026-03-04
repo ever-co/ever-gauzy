@@ -364,32 +364,42 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	 * @returns The fully buffered binary payload as a Buffer.
 	 */
 	public async readBinaryStream(req: Request): Promise<Buffer> {
-		// 1. Fast pre-check — reject immediately when Content-Length is already too large.
-		const contentLength = parseInt(req.headers['content-length'] ?? '0', 10);
-		if (!isNaN(contentLength) && contentLength > HELP_CENTER_ARTICLE_MAX_BINARY_BYTES) {
-			throw new PayloadTooLargeException(
-				`Payload exceeds the maximum allowed size of ${HELP_CENTER_ARTICLE_MAX_BINARY_BYTES} bytes.`
-			);
+		// 1. Fast pre-check — only when the header is actually present to avoid masking its absence.
+		const rawContentLength = req.headers['content-length'];
+		if (rawContentLength !== undefined) {
+			const contentLength = parseInt(rawContentLength, 10);
+			if (!isNaN(contentLength) && contentLength > HELP_CENTER_ARTICLE_MAX_BINARY_BYTES) {
+				throw new PayloadTooLargeException(
+					`Payload exceeds the maximum allowed size of ${HELP_CENTER_ARTICLE_MAX_BINARY_BYTES} bytes.`
+				);
+			}
 		}
 
 		// 2. Buffer the stream, counting bytes to catch chunked or lying clients.
-		const chunks: Buffer[] = [];
+		let chunks: Buffer[] = [];
 		let bytesReceived = 0;
 		await new Promise<void>((resolve, reject) => {
 			(req as any).on('data', (chunk: Buffer) => {
 				bytesReceived += chunk.length;
 				if (bytesReceived > HELP_CENTER_ARTICLE_MAX_BINARY_BYTES) {
-					reject(
-						new PayloadTooLargeException(
-							`Payload exceeds the maximum allowed size of ${HELP_CENTER_ARTICLE_MAX_BINARY_BYTES} bytes.`
-						)
+					const err = new PayloadTooLargeException(
+						`Payload exceeds the maximum allowed size of ${HELP_CENTER_ARTICLE_MAX_BINARY_BYTES} bytes.`
 					);
+					// Destroy the stream immediately to stop further data events and free resources.
+					(req as any).destroy(err);
+					reject(err);
 					return;
 				}
 				chunks.push(chunk);
 			});
-			(req as any).on('end', resolve);
-			(req as any).on('error', reject);
+			(req as any).once('end', resolve);
+			(req as any).once('error', reject);
+			// Handles premature client disconnect — prevents the Promise from hanging forever.
+			(req as any).once('close', () => {
+				if (!(req as any).complete) {
+					reject(new BadRequestException('Request was aborted before upload completed.'));
+				}
+			});
 		});
 
 		return Buffer.concat(chunks);
