@@ -3,8 +3,9 @@
 	<div class="filters mb-3">
 		<div class="row g-2 align-items-end">
 			<div class="col-md-4">
-				<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.WORKFLOW_ID' | translate }}</label>
+				<label class="label" for="sim-workflow-id-filter">{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.WORKFLOW_ID' | translate }}</label>
 				<input
+					id="sim-workflow-id-filter"
 					nbInput
 					fullWidth
 					type="text"
@@ -13,8 +14,8 @@
 				/>
 			</div>
 			<div class="col-md-3">
-				<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.STATUS' | translate }}</label>
-				<nb-select fullWidth [(ngModel)]="filterStatus" [placeholder]="'INTEGRATIONS.SIM_PAGE.EXECUTIONS.ALL_STATUSES' | translate">
+				<label class="label" for="sim-status-filter">{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.STATUS' | translate }}</label>
+				<nb-select id="sim-status-filter" fullWidth [(ngModel)]="filterStatus" [placeholder]="'INTEGRATIONS.SIM_PAGE.EXECUTIONS.ALL_STATUSES' | translate">
 					@for (status of statusOptions; track status) {
 						<nb-option [value]="status">
 							@if (status === '') {
@@ -104,6 +105,7 @@
 						nbButton
 						size="small"
 						ghost
+						aria-label="Previous page"
 						[disabled]="currentPage() <= 1"
 						(click)="onPageChange(currentPage() - 1)"
 					>
@@ -114,6 +116,7 @@
 						nbButton
 						size="small"
 						ghost
+						aria-label="Next page"
 						[disabled]="currentPage() >= totalPages"
 						(click)="onPageChange(currentPage() + 1)"
 					>

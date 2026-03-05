@@ -2,7 +2,7 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, tap, switchMap } from 'rxjs';
+import { filter, tap, switchMap, of } from 'rxjs';
 import { SimService, SimStoreService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
@@ -28,15 +28,25 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 	filterStatus: string = '';
 	readonly pageSize = 20;
 
-	readonly statusOptions = ['', 'queued', 'processing', 'completed', 'failed'];
+	readonly statusOptions = ['', 'queued', 'processing', 'completed', 'failed', 'cancelled'];
 
 	constructor(readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
+		// Use store as primary source, fallback to route params
 		this._simStoreService.selectedIntegrationId$
 			.pipe(
+				switchMap((id) => {
+					if (id) return of(id);
+					// Fallback: read from parent route params
+					return this._activatedRoute.parent?.params.pipe(
+						filter((params) => !!params['id']),
+						tap((params) => this._simStoreService.setSelectedIntegrationId(params['id'])),
+						switchMap((params) => of(params['id']))
+					) ?? of(null);
+				}),
 				filter((id): id is string => !!id),
 				tap((id) => {
 					this.integrationId = id;
@@ -45,21 +55,6 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		// Fallback: read from parent route params
-		if (!this.integrationId) {
-			this._activatedRoute.parent?.params
-				.pipe(
-					filter((params) => !!params['id']),
-					tap((params) => {
-						this.integrationId = params['id'];
-						this._simStoreService.setSelectedIntegrationId(this.integrationId);
-						this.loadExecutions();
-					}),
-					untilDestroyed(this)
-				)
-				.subscribe();
-		}
 	}
 
 	loadExecutions(): void {
@@ -76,9 +71,9 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 			.pipe(untilDestroyed(this))
 			.subscribe({
 				next: (result) => {
-					this.executions.set(result.data);
-					this.total.set(result.total);
-					this._simStoreService.setExecutions(result.data);
+					this.executions.set(result.data ?? []);
+					this.total.set(result.total ?? 0);
+					this._simStoreService.setExecutions(result.data ?? []);
 					this.loading.set(false);
 				},
 				error: () => {
@@ -111,13 +106,15 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 				return 'warning';
 			case 'queued':
 				return 'info';
+			case 'cancelled':
+				return 'basic';
 			default:
 				return 'basic';
 		}
 	}
 
-	formatDuration(ms?: number): string {
-		if (!ms) return '-';
+	formatDuration(ms?: number | null): string {
+		if (ms == null) return '-';
 		if (ms < 1000) return `${ms}ms`;
 		return `${(ms / 1000).toFixed(2)}s`;
 	}

@@ -8,8 +8,9 @@
 			<form [formGroup]="validateForm" (ngSubmit)="validateWorkflow()">
 				<div class="row g-2 align-items-end">
 					<div class="col-md-8">
-						<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.WORKFLOW_ID' | translate }}</label>
+						<label class="label" for="sim-validate-workflow-id">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.WORKFLOW_ID' | translate }}</label>
 						<input
+							id="sim-validate-workflow-id"
 							nbInput
 							fullWidth
 							type="text"
@@ -55,8 +56,9 @@
 			<form [formGroup]="executeForm" (ngSubmit)="executeWorkflow()">
 				<div class="row g-3">
 					<div class="col-md-6">
-						<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.WORKFLOW_ID' | translate }}</label>
+						<label class="label" for="sim-execute-workflow-id">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.WORKFLOW_ID' | translate }}</label>
 						<input
+							id="sim-execute-workflow-id"
 							nbInput
 							fullWidth
 							type="text"
@@ -65,8 +67,9 @@
 						/>
 					</div>
 					<div class="col-md-3">
-						<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.TIMEOUT' | translate }}</label>
+						<label class="label" for="sim-execute-timeout">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.TIMEOUT' | translate }}</label>
 						<input
+							id="sim-execute-timeout"
 							nbInput
 							fullWidth
 							type="number"
@@ -81,8 +84,9 @@
 						</nb-toggle>
 					</div>
 					<div class="col-12">
-						<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.INPUT' | translate }}</label>
+						<label class="label" for="sim-execute-input">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.INPUT' | translate }}</label>
 						<textarea
+							id="sim-execute-input"
 							nbInput
 							fullWidth
 							formControlName="input"
@@ -117,7 +121,7 @@
 
 			@if (executionResult()) {
 				<div class="result-container mt-3">
-					<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.RESULT' | translate }}</label>
+					<p class="label mb-1">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.RESULT' | translate }}</p>
 					<pre class="result-json"><code>{{ executionResult() | json }}</code></pre>
 				</div>
 			}
@@ -133,8 +137,9 @@
 			<form [formGroup]="jobForm" (ngSubmit)="checkJobStatus()">
 				<div class="row g-2 align-items-end">
 					<div class="col-md-8">
-						<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.TASK_ID' | translate }}</label>
+						<label class="label" for="sim-job-task-id">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.TASK_ID' | translate }}</label>
 						<input
+							id="sim-job-task-id"
 							nbInput
 							fullWidth
 							type="text"
@@ -157,7 +162,7 @@
 
 			@if (jobStatus()) {
 				<div class="result-container mt-3">
-					<label class="label">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.JOB_RESULT' | translate }}</label>
+					<p class="label mb-1">{{ 'INTEGRATIONS.SIM_PAGE.WORKFLOWS.JOB_RESULT' | translate }}</p>
 					<pre class="result-json"><code>{{ jobStatus() | json }}</code></pre>
 				</div>
 			}

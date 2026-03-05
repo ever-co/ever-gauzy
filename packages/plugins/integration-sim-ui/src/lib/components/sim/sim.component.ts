@@ -4,8 +4,7 @@ import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs';
-import { IOrganization } from '@gauzy/contracts';
-import { SimStoreService, Store } from '@gauzy/ui-core/core';
+import { SimStoreService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 const INTEGRATION_SIM_PAGE_LINK = '/pages/integrations/sim';
 
@@ -18,7 +17,6 @@ const INTEGRATION_SIM_PAGE_LINK = '/pages/integrations/sim';
 export class SimComponent extends TranslationBaseComponent implements OnInit {
 	private readonly _activatedRoute = inject(ActivatedRoute);
 	private readonly _router = inject(Router);
-	private readonly _store = inject(Store);
 	private readonly _simStoreService = inject(SimStoreService);
 
 	tabs: NbRouteTab[] = [];
@@ -39,13 +37,6 @@ export class SimComponent extends TranslationBaseComponent implements OnInit {
 					this._buildTabs();
 					this._buildMenus();
 				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-
-		this._store.selectedOrganization$
-			.pipe(
-				filter((org): org is IOrganization => !!org),
 				untilDestroyed(this)
 			)
 			.subscribe();

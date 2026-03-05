@@ -1,7 +1,13 @@
 <nb-card>
 	<nb-card-header class="d-flex align-items-center justify-content-between">
 		<div class="d-flex align-items-center">
-			<ngx-back-navigation (click)="navigateToIntegrations()"></ngx-back-navigation>
+			<ngx-back-navigation
+				role="button"
+				tabindex="0"
+				(click)="navigateToIntegrations()"
+				(keydown.enter)="navigateToIntegrations()"
+				(keydown.space)="navigateToIntegrations(); $event.preventDefault()"
+			></ngx-back-navigation>
 			<nb-actions size="small" class="ml-2">
 				<nb-action>
 					<h5 class="mb-0">{{ 'INTEGRATIONS.SIM_PAGE.TITLE' | translate }}</h5>

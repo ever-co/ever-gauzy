@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, merge, tap, distinctUntilChanged } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,7 +12,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 	template: `<router-outlet></router-outlet>`,
 	standalone: false
 })
-export class IntegrationSimLayoutComponent implements OnInit, OnDestroy {
+export class IntegrationSimLayoutComponent implements OnInit {
 	constructor(
 		private readonly _translateService: TranslateService,
 		private readonly _store: Store,
@@ -38,6 +38,4 @@ export class IntegrationSimLayoutComponent implements OnInit, OnDestroy {
 
 		preferredLanguage$.subscribe();
 	}
-
-	ngOnDestroy(): void {}
 }

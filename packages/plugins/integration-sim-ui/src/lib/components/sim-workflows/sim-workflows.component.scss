@@ -8,7 +8,7 @@ nb-card {
 	margin-bottom: 0;
 
 	nb-card-header {
-		border-bottom: 1px solid var(--gauzy-card-border, #e4e7ea);
+		border-bottom: 1px solid var(--gauzy-card-border);
 	}
 }
 
@@ -23,14 +23,14 @@ nb-card {
 	display: flex;
 	align-items: center;
 	font-size: 0.85rem;
-	opacity: 0.7;
+	color: var(--gauzy-text-color-2);
 }
 
 .result-container {
 	.result-json {
-		background: var(--gauzy-card-3, #f5f5f5);
-		border: 1px solid var(--gauzy-card-border, #e4e7ea);
-		border-radius: 4px;
+		background: var(--gauzy-card-2);
+		border: 1px solid var(--gauzy-card-border);
+		border-radius: calc(var(--border-radius) * 0.5);
 		padding: 1rem;
 		max-height: 400px;
 		overflow: auto;

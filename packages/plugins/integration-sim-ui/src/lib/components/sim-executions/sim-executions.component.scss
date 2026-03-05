@@ -19,15 +19,15 @@
 		font-weight: 600;
 		font-size: 0.85rem;
 		text-transform: uppercase;
-		opacity: 0.7;
+		color: var(--gauzy-text-color-2);
 		padding: 0.75rem 0.5rem;
-		border-bottom: 2px solid var(--gauzy-card-border, #e4e7ea);
+		border-bottom: 2px solid var(--gauzy-card-border);
 		white-space: nowrap;
 	}
 
 	td {
 		padding: 0.75rem 0.5rem;
-		border-bottom: 1px solid var(--gauzy-card-border, #e4e7ea);
+		border-bottom: 1px solid var(--gauzy-card-border);
 		vertical-align: middle;
 	}
 
@@ -53,34 +53,34 @@
 .badge-status {
 	display: inline-block;
 	padding: 0.25rem 0.5rem;
-	border-radius: 4px;
+	border-radius: var(--border-radius);
 	font-size: 0.8rem;
 	font-weight: 600;
 	text-align: center;
 
 	&.badge-success {
-		background-color: rgba(0, 214, 143, 0.15);
-		color: #00d68f;
+		background-color: var(--gauzy-success-bg, rgba(0, 214, 143, 0.15));
+		color: var(--gauzy-text-success, #00d68f);
 	}
 
 	&.badge-danger {
-		background-color: rgba(255, 61, 113, 0.15);
-		color: #ff3d71;
+		background-color: var(--gauzy-danger-bg, rgba(255, 61, 113, 0.15));
+		color: var(--gauzy-text-danger, #ff3d71);
 	}
 
 	&.badge-warning {
-		background-color: rgba(255, 170, 0, 0.15);
-		color: #ffaa00;
+		background-color: var(--gauzy-warning-bg, rgba(255, 170, 0, 0.15));
+		color: var(--gauzy-text-warning, #ffaa00);
 	}
 
 	&.badge-info {
-		background-color: rgba(0, 149, 255, 0.15);
-		color: #0095ff;
+		background-color: var(--gauzy-info-bg, rgba(0, 149, 255, 0.15));
+		color: var(--gauzy-text-info, #0095ff);
 	}
 
 	&.badge-basic {
-		background-color: rgba(143, 155, 179, 0.15);
-		color: #8f9bb3;
+		background-color: var(--gauzy-basic-bg, rgba(143, 155, 179, 0.15));
+		color: var(--gauzy-text-color-2);
 	}
 }
 

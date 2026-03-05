@@ -1,5 +1,5 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
-import { UntypedFormGroup, UntypedFormControl, Validators } from '@angular/forms';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs';
@@ -11,7 +11,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ngx-sim-workflows',
 	templateUrl: './sim-workflows.component.html',
 	styleUrls: ['./sim-workflows.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SimWorkflowsComponent extends TranslationBaseComponent implements OnInit {
 	private readonly _simService = inject(SimService);
@@ -22,28 +23,28 @@ export class SimWorkflowsComponent extends TranslationBaseComponent implements O
 	readonly pollingJob = signal<boolean>(false);
 
 	readonly validationResult = signal<{ workflowId: string; isDeployed: boolean } | null>(null);
-	readonly executionResult = signal<any>(null);
-	readonly jobStatus = signal<any>(null);
+	readonly executionResult = signal<Record<string, unknown> | null>(null);
+	readonly jobStatus = signal<Record<string, unknown> | null>(null);
 	readonly executionError = signal<string | null>(null);
 
-	integrationId: string = '';
+	readonly integrationId = signal<string>('');
 
 	// Validate form
-	validateForm: UntypedFormGroup = new UntypedFormGroup({
-		workflowId: new UntypedFormControl('', [Validators.required, Validators.pattern(/\S+/)])
+	validateForm = new FormGroup({
+		workflowId: new FormControl('', [Validators.required, Validators.pattern(/\S+/)])
 	});
 
 	// Execute form
-	executeForm: UntypedFormGroup = new UntypedFormGroup({
-		workflowId: new UntypedFormControl('', [Validators.required, Validators.pattern(/\S+/)]),
-		input: new UntypedFormControl('{}'),
-		runAsync: new UntypedFormControl(false),
-		timeout: new UntypedFormControl(30000)
+	executeForm = new FormGroup({
+		workflowId: new FormControl('', [Validators.required, Validators.pattern(/\S+/)]),
+		input: new FormControl('{}'),
+		runAsync: new FormControl(false),
+		timeout: new FormControl(30000)
 	});
 
 	// Job status form
-	jobForm: UntypedFormGroup = new UntypedFormGroup({
-		taskId: new UntypedFormControl('', [Validators.required, Validators.pattern(/\S+/)])
+	jobForm = new FormGroup({
+		taskId: new FormControl('', [Validators.required, Validators.pattern(/\S+/)])
 	});
 
 	constructor(readonly translateService: TranslateService) {
@@ -55,7 +56,7 @@ export class SimWorkflowsComponent extends TranslationBaseComponent implements O
 			.pipe(
 				filter((id): id is string => !!id),
 				tap((id) => {
-					this.integrationId = id;
+					this.integrationId.set(id);
 				}),
 				untilDestroyed(this)
 			)
@@ -100,11 +101,11 @@ export class SimWorkflowsComponent extends TranslationBaseComponent implements O
 		const runAsync = this.executeForm.get('runAsync')?.value || false;
 		const timeout = this.executeForm.get('timeout')?.value || 30000;
 
-		let input: any;
+		let input: unknown;
 		try {
 			input = JSON.parse(inputRaw);
 		} catch {
-			this.executionError.set('Invalid JSON input');
+			this.executionError.set(this.getTranslation('INTEGRATIONS.SIM_PAGE.WORKFLOWS.INVALID_JSON'));
 			this.executing.set(false);
 			return;
 		}
@@ -120,7 +121,9 @@ export class SimWorkflowsComponent extends TranslationBaseComponent implements O
 				}
 			},
 			error: (err) => {
-				this.executionError.set(err?.error?.message || err?.message || 'Execution failed');
+				this.executionError.set(
+					err?.error?.message || err?.message || this.getTranslation('INTEGRATIONS.SIM_PAGE.WORKFLOWS.EXECUTION_FAILED')
+				);
 				this.executing.set(false);
 			}
 		});
