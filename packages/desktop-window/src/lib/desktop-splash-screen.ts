@@ -51,6 +51,9 @@ export class SplashScreen extends BaseWindow implements IBaseWindow {
 		this.browserWindow.on('close', () => {
 			if (this.isDestroyed()) return;
 			this.browserWindow.destroy();
+		});
+
+		this.browserWindow.on('closed', () => {
 			this.manager.unregister(RegisteredWindow.SPLASH);
 		});
 	}

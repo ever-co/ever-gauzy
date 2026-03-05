@@ -65,6 +65,9 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 				return;
 			}
 			this.browserWindow.destroy();
+		});
+
+		this.browserWindow.on('closed', () => {
 			this.manager.unregister(RegisteredWindow.WIDGET);
 		});
 	}
