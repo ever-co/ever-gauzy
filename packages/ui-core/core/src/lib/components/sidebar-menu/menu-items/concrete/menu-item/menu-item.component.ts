@@ -1,5 +1,6 @@
 import {
 	AfterViewChecked,
+	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	Component,
 	EventEmitter,
@@ -15,7 +16,7 @@ import { NbAccordionModule, NbSidebarService, NbTooltipModule } from '@nebular/t
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { IUser } from '@gauzy/contracts';
 import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum, JitsuService, Store } from '../../../../../services';
-import { IMenuItem } from '../../interface/menu-item.interface';
+import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
 import { TooltipDirective } from '../../../tooltip.directive';
 import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-item.component';
 
@@ -24,7 +25,8 @@ import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-i
 	templateUrl: './menu-item.component.html',
 	styleUrls: ['./menu-item.component.scss'],
 	standalone: true,
-	imports: [NbAccordionModule, NbTooltipModule, NgxPermissionsModule, TooltipDirective, ChildrenMenuItemComponent]
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NbAccordionModule, NbTooltipModule, NgxPermissionsModule, TooltipDirective, ChildrenMenuItemComponent],
 })
 export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private readonly _router = inject(Router);
@@ -130,7 +132,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	 * Focuses on a specific item.
 	 * @param event The event containing information about the item to focus on.
 	 */
-	public focusOn(event: any): void {
+	public focusOn(event: IMenuItemFocusChangeEvent): void {
 		// Set the selected children property to the children of the event
 		this.selectedChildren = event.children;
 

@@ -5,7 +5,7 @@ import { filter } from 'rxjs/operators';
 import { NbButtonModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IMenuItem } from '../../interface/menu-item.interface';
+import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
 import { TooltipDirective } from '../../../tooltip.directive';
 
 @UntilDestroy()
@@ -72,7 +72,7 @@ export class ChildrenMenuItemComponent implements OnInit {
 		return this._mouseHover;
 	}
 
-	@Output() public focusItemChange: EventEmitter<any> = new EventEmitter();
+	@Output() public focusItemChange = new EventEmitter<IMenuItemFocusChangeEvent>();
 
 	private readonly router = inject(Router);
 	private readonly location = inject(Location);

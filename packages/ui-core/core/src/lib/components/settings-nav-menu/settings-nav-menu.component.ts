@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseNavMenuComponent } from '../base-nav-menu/base-nav-menu.component';
@@ -12,7 +12,8 @@ import { SidebarMenuComponent } from '../sidebar-menu/sidebar-menu.component';
 	templateUrl: './settings-nav-menu.component.html',
 	styleUrls: ['./settings-nav-menu.component.scss'],
 	standalone: true,
-	imports: [AsyncPipe, SidebarMenuComponent]
+	imports: [AsyncPipe, SidebarMenuComponent],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingsNavMenuComponent extends BaseNavMenuComponent implements OnInit {
 	public settingsMenuConfig$: Observable<NavMenuSectionItem[]>;

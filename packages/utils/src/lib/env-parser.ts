@@ -32,7 +32,7 @@ export function parseEnvWithFallback<T>(value: string | undefined, fallback: T):
 
 	// Boolean parsing
 	if (typeof fallback === 'boolean') {
-		const lower = value.toLowerCase();
+		const lower = value.trim().toLowerCase();
 		if (lower === 'true') return true;
 		if (lower === 'false') return false;
 		return fallback;

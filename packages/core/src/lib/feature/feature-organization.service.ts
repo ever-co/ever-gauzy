@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { IFeature, IFeatureOrganization, IFeatureOrganizationUpdateInput, ITenant } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
@@ -10,6 +10,8 @@ import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-fe
 
 @Injectable()
 export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOrganization> {
+	private readonly logger = new Logger(FeatureOrganizationService.name);
+
 	constructor(
 		readonly typeOrmFeatureOrganizationRepository: TypeOrmFeatureOrganizationRepository,
 		readonly mikroOrmFeatureOrganizationRepository: MikroOrmFeatureOrganizationRepository,
@@ -57,7 +59,7 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 			}
 			return true;
 		} catch (error) {
-			console.log('Error while updating feature organization', error);
+			this.logger.error('Error while updating feature organization', error?.message);
 			return false;
 		}
 	}
@@ -69,34 +71,29 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 	 * @returns A Promise resolving to an array of IFeatureOrganization.
 	 */
 	public async updateTenantFeatureOrganizations(tenants: ITenant[]): Promise<IFeatureOrganization[]> {
-		try {
-			if (!tenants || tenants.length === 0) {
-				return [];
-			}
-
-			// Retrieve all available features
-			const features: IFeature[] = await this._featureService.find();
-
-			// Generate a cartesian product of features and tenants to create FeatureOrganization entities
-			const featureOrganizations: IFeatureOrganization[] = features.flatMap((feature: IFeature) =>
-				tenants.map(
-					(tenant: ITenant) =>
-						new FeatureOrganization({
-							isEnabled: !!feature.isEnabled,
-							tenant,
-							feature
-						})
-				)
-			);
-
-			/**
-			 * Use saveManyWithoutEnrichment to avoid TenantAwareCrudService.saveMany()
-			 * which would overwrite per-entity tenantId with the current RequestContext tenantId.
-			 */
-			return await this.saveManyWithoutEnrichment(featureOrganizations);
-		} catch (error) {
-			console.log('Error while updating tenant feature organizations', error);
+		if (!tenants || tenants.length === 0) {
 			return [];
 		}
+
+		// Retrieve all available features
+		const features: IFeature[] = await this._featureService.find();
+
+		// Generate a cartesian product of features and tenants to create FeatureOrganization entities
+		const featureOrganizations: IFeatureOrganization[] = features.flatMap((feature: IFeature) =>
+			tenants.map(
+				(tenant: ITenant) =>
+					new FeatureOrganization({
+						isEnabled: !!feature.isEnabled,
+						tenant,
+						feature
+					})
+			)
+		);
+
+		/**
+		 * Use saveManyWithoutEnrichment to avoid TenantAwareCrudService.saveMany()
+		 * which would overwrite per-entity tenantId with the current RequestContext tenantId.
+		 */
+		return await this.saveManyWithoutEnrichment(featureOrganizations);
 	}
 }
