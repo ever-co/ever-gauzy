@@ -107,35 +107,26 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 	 * @returns Promise resolving to an array of created task statuses
 	 */
 	async bulkCreateTenantsStatus(tenants: ITenant[]): Promise<TaskStatus[]> {
-		try {
-			if (!tenants?.length) {
-				return [];
-			}
-
-			/**
-			 * Generate task statuses for each tenant using default global statuses.
-			 */
-			const statuses: TaskStatus[] = tenants.flatMap((tenant: ITenant) =>
-				DEFAULT_GLOBAL_STATUSES.map(
-					(status) =>
-						new TaskStatus({
-							...status,
-							icon: `ever-icons/${status.icon}`,
-							isSystem: false,
-							tenant
-						})
-				)
-			);
-
-			/**
-			 * Save statuses without tenant enrichment to preserve
-			 * the original tenantId assigned to each entity.
-			 */
-			return await this.saveManyWithoutEnrichment(statuses);
-		} catch (error) {
-			this.logger.error('Error while creating bulk task statuses for tenants:', error.message);
+		if (!tenants?.length) {
 			return [];
 		}
+
+		// Generate task statuses for each tenant using default global statuses
+		const statuses: TaskStatus[] = tenants.flatMap((tenant: ITenant) =>
+			DEFAULT_GLOBAL_STATUSES.map(
+				(status) =>
+					new TaskStatus({
+						...status,
+						icon: `ever-icons/${status.icon}`,
+						isSystem: false,
+						tenant
+					})
+			)
+		);
+
+		// Save statuses without tenant enrichment to preserve
+		// the original tenantId assigned to each entity.
+		return await this.saveManyWithoutEnrichment(statuses);
 	}
 
 	/**
