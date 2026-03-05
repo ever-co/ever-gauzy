@@ -70,30 +70,36 @@ export class TaskRelatedIssueTypeService extends TaskMetadataService<TaskRelated
 	/**
 	 * Create bulk related issue types for a specific organization.
 	 *
+	 * This method retrieves issue types for the tenant and creates
+	 * organization-specific related issue types from them.
+	 *
 	 * @param organization The organization for which related issue types will be created.
-	 * @returns A promise that resolves to an array of created related issue types.
+	 * @returns Promise resolving to created related issue types.
 	 */
-	async bulkCreateOrganizationRelatedIssueTypes(
-		organization: IOrganization
-	): Promise<ITaskRelatedIssueType[] & TaskRelatedIssueType[]> {
+	async bulkCreateOrganizationRelatedIssueTypes(organization: IOrganization): Promise<ITaskRelatedIssueType[]> {
 		const tenantId = RequestContext.currentTenantId() ?? organization.tenantId;
+
 		const { items = [] } = await super.fetchAll({ tenantId });
 
-		const relatedIssueTypes = items.map(
-			(item) =>
+		if (!items.length) {
+			return [];
+		}
+
+		const relatedIssueTypes: TaskRelatedIssueType[] = items.map(
+			({ tenantId, name, value, description, icon, color }) =>
 				new TaskRelatedIssueType({
-					tenantId: item.tenantId,
-					name: item.name,
-					value: item.value,
-					description: item.description,
-					icon: item.icon,
-					color: item.color,
+					tenantId,
+					name,
+					value,
+					description,
+					icon,
+					color,
 					organization,
 					isSystem: false
 				})
 		);
 
-		return (await this.saveMany(relatedIssueTypes)) as ITaskRelatedIssueType[] & TaskRelatedIssueType[];
+		return await this.saveMany(relatedIssueTypes);
 	}
 
 	/**
