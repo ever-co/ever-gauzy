@@ -4,23 +4,23 @@ import { BehaviorSubject, Observable } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class SimStoreService {
 	// Selected integration tenant ID
-	private _selectedIntegrationId$ = new BehaviorSubject<string | null>(null);
+	private readonly _selectedIntegrationId$ = new BehaviorSubject<string | null>(null);
 	public selectedIntegrationId$: Observable<string | null> = this._selectedIntegrationId$.asObservable();
 
 	// Execution history
-	private _executions$ = new BehaviorSubject<any[]>([]);
+	private readonly _executions$ = new BehaviorSubject<any[]>([]);
 	public executions$: Observable<any[]> = this._executions$.asObservable();
 
 	// Integration enabled state
-	private _isEnabled$ = new BehaviorSubject<boolean>(false);
+	private readonly _isEnabled$ = new BehaviorSubject<boolean>(false);
 	public isEnabled$: Observable<boolean> = this._isEnabled$.asObservable();
 
 	// Loading state
-	private _isLoading$ = new BehaviorSubject<boolean>(false);
+	private readonly _isLoading$ = new BehaviorSubject<boolean>(false);
 	public isLoading$: Observable<boolean> = this._isLoading$.asObservable();
 
 	// Error state
-	private _error$ = new BehaviorSubject<string | null>(null);
+	private readonly _error$ = new BehaviorSubject<string | null>(null);
 	public error$: Observable<string | null> = this._error$.asObservable();
 
 	setSelectedIntegrationId(id: string | null): void {

@@ -30,7 +30,7 @@ export class SimService {
 	 */
 	executeWorkflow(
 		workflowId: string,
-		body: { input?: any; timeout?: number; runAsync?: boolean }
+		body: { input?: unknown; timeout?: number; runAsync?: boolean }
 	): Observable<any> {
 		return this.http.post<any>(`${this.API_URL}/workflows/${workflowId}/execute`, body);
 	}
@@ -63,8 +63,8 @@ export class SimService {
 		let params = new HttpParams();
 		if (query?.workflowId) params = params.set('workflowId', query.workflowId);
 		if (query?.status) params = params.set('status', query.status);
-		if (query?.limit) params = params.set('limit', query.limit.toString());
-		if (query?.offset) params = params.set('offset', query.offset.toString());
+		if (query?.limit != null) params = params.set('limit', query.limit.toString());
+		if (query?.offset != null) params = params.set('offset', query.offset.toString());
 		return this.http.get<{ data: any[]; total: number }>(`${this.API_URL}/executions`, { params });
 	}
 

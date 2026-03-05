@@ -1636,7 +1636,9 @@
 				"TASK_ID": "Job ID",
 				"TASK_ID_PLACEHOLDER": "Enter the async job ID",
 				"CHECK_STATUS": "Check Status",
-				"JOB_RESULT": "Job Status"
+				"JOB_RESULT": "Job Status",
+				"INVALID_JSON": "Invalid JSON input",
+				"EXECUTION_FAILED": "Execution failed"
 			}
 		},
 		"COMING_SOON": "Coming soon",
