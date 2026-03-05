@@ -116,7 +116,8 @@ export class AuthIPCHandler {
 	private closePluginsWindow(): void {
 		try {
 			const appWindowManager = AppWindowManager.getInstance();
-			appWindowManager.pluginsWindow?.close?.();
+			const pluginsWindow = appWindowManager.pluginsWindow;
+			if (pluginsWindow) pluginsWindow.close();
 		} catch (error) {
 			console.error('An error occurred while closing plugin window', error);
 		}
