@@ -1,17 +1,17 @@
-import { screen } from 'electron';
 import {
-	IBaseWindow,
 	BaseWindow,
-	WindowManager,
 	DefaultWindow,
+	IBaseWindow,
+	RegisteredWindow,
 	WindowConfig,
-	RegisteredWindow
+	WindowManager
 } from '@gauzy/desktop-core';
+import { screen } from 'electron';
 
 export class AlwaysOn extends BaseWindow implements IBaseWindow {
 	private static WIDTH: number = 60;
 	private static HEIGHT: number = 110;
-	private manager = WindowManager.getInstance();
+	private readonly manager = WindowManager.getInstance();
 
 	constructor(
 		private readonly path?: string,
@@ -32,40 +32,65 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 					roundedCorners: true,
 					width: AlwaysOn.WIDTH,
 					height: AlwaysOn.HEIGHT,
-					...(isExpandMode ? {
-						transparent: true
-					} : {
-						opacity: 0.8
-					}),
+					...(isExpandMode
+						? {
+								transparent: true
+							}
+						: {
+								opacity: 0.8
+							}),
 					alwaysOnTop: true,
 					center: false,
 					x: 16,
 					y: Math.floor((screen.getPrimaryDisplay().workAreaSize.height - AlwaysOn.HEIGHT) / 2),
-					...(contextIsolation && preloadPath ? {
-						webPreferences: {
-							nodeIntegration: false,
-							contextIsolation: true,
-							sandbox: false,
-							webSecurity: false,
-							preload: preloadPath
-						},
-					} : {})
+					...(contextIsolation && preloadPath
+						? {
+								webPreferences: {
+									nodeIntegration: false,
+									contextIsolation: true,
+									sandbox: false,
+									webSecurity: false,
+									preload: preloadPath
+								}
+							}
+						: {})
 				})
 			)
 		);
 		this.browserWindow.setMenuBarVisibility(false);
 		this.manager.register(RegisteredWindow.WIDGET, this);
 		this.manager.overrideSystemContextMenu(this.browserWindow);
+		this.browserWindow.on('close', () => {
+			if (this.isDestroyed()) {
+				return;
+			}
+			this.browserWindow.destroy();
+		});
 	}
 
-	public show(): void {
+	public override show(): void {
+		if (this.isDestroyed()) {
+			return;
+		}
 		this.onTop();
 		super.show();
 	}
 
-	public hide(): void {
+	public override hide(): void {
 		this.undoOnTop();
 		super.hide();
+	}
+
+	public override close(): void {
+		if (this.isDestroyed()) {
+			return;
+		}
+		this.hide();
+		super.close();
+	}
+
+	public isDestroyed(): boolean {
+		return !!this.browserWindow && this.browserWindow.isDestroyed();
 	}
 
 	private onTop(): void {
