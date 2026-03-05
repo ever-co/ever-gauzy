@@ -267,7 +267,7 @@ export class AppMenu {
 	public get pluginMenu(): MenuItemConstructorOptions {
 		// Retrieve submenu items from the plugin manager
 		const pluginSubmenu = this.pluginManager.getMenuPlugins();
-		const { employeeId = null, isLogout = false } = LocalStore.getStore('auth');
+		const { employeeId = null, isLogout = false } = LocalStore.getStore('auth') || {};
 		const visible = !!employeeId && !isLogout;
 
 		// Return the plugin menu structure
