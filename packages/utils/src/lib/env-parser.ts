@@ -40,7 +40,10 @@ export function parseEnvWithFallback<T>(value: string | undefined, fallback: T):
 
 	// Number parsing
 	if (typeof fallback === 'number') {
-		const parsed = Number(value);
+		const trimmed = value.trim();
+		if (trimmed === '') return fallback;
+
+		const parsed = Number(trimmed);
 		return Number.isNaN(parsed) ? fallback : parsed;
 	}
 

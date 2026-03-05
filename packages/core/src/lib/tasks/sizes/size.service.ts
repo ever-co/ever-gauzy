@@ -58,7 +58,10 @@ export class TaskSizeService extends TaskMetadataService<TaskSize> {
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			this.logger.error('Failed to retrieve task sizes. Ensure that the provided parameters are valid and complete.', error);
+			this.logger.error(
+				'Failed to retrieve task sizes. Ensure that the provided parameters are valid and complete.',
+				error
+			);
 			throw new BadRequestException(
 				'Failed to retrieve task sizes. Ensure that the provided parameters are valid and complete.',
 				error
@@ -109,7 +112,7 @@ export class TaskSizeService extends TaskMetadataService<TaskSize> {
 			const sizes = items.map(
 				(item) =>
 					new TaskSize({
-						tenantId: item.tenantId,
+						tenantId,
 						name: item.name,
 						value: item.value,
 						description: item.description,

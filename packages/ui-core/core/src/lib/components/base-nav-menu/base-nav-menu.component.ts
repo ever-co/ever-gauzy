@@ -1,6 +1,6 @@
 import { AfterViewInit, Directive, inject, OnDestroy, OnInit } from '@angular/core';
-import { combineLatest } from 'rxjs';
-import { debounceTime, filter, startWith, tap } from 'rxjs/operators';
+import { combineLatest, EMPTY, of } from 'rxjs';
+import { catchError, debounceTime, filter, startWith, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
@@ -38,9 +38,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	ngAfterViewInit(): void {
 		combineLatest([
 			this._favoriteStoreService.favoriteItems$,
-			this._translateService.onLangChange.pipe(startWith(undefined)),
+			this._translateService.onLangChange.pipe(startWith(null)),
 			this._store.selectedOrganization$.pipe(
-				filter((organization: IOrganization) => !!organization),
+				filter((organization: IOrganization | null): organization is IOrganization => !!organization),
 				distinctUntilChange()
 			),
 			this._store.featureOrganizations$,
@@ -53,16 +53,20 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 					this._favoriteItems = favorites;
 					this.defineBaseNavMenus();
 				}),
+				catchError((error) => {
+					console.error('Error updating navigation menu:', error);
+					return EMPTY;
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	/**
-	 * Returns an `{ add: link }` object if the user has any of the given permissions, or an empty object otherwise.
+	 * Returns an `{ add: link }` object if the user has any of the given permissions, or undefined otherwise.
 	 */
-	private _addLink(link: string, ...permissions: PermissionsEnum[]): { add: string } | {} {
-		return this._store.hasAnyPermission(...permissions) ? { add: link } : {};
+	private _addLink(link: string, ...permissions: PermissionsEnum[]): { add: string } | undefined {
+		return this._store.hasAnyPermission(...permissions) ? { add: link } : undefined;
 	}
 
 	/**

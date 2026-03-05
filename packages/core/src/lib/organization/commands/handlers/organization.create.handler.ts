@@ -135,8 +135,10 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				console.log('Error occurred during creation of contact details or updating the organization:', error);
 			}
 
-			// 6. Executes various organization update tasks concurrently.
-			this.executeOrganizationUpdateTasks(organization);
+			// 6. Execute organization update tasks in the background (fire-and-forget).
+			this.executeOrganizationUpdateTasks(organization).catch((error) =>
+				this.logger.error('Unhandled error in execute organization update tasks:', error?.message)
+			);
 
 			// 7. Create Import Records while migrating for relative organization.
 			if (isImporting && sourceId) {

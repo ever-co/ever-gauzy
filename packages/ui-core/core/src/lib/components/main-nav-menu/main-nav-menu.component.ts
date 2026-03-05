@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, input } from '@angular/core';
 import { Observable, catchError, map } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseNavMenuComponent } from '../base-nav-menu/base-nav-menu.component';
@@ -12,11 +12,12 @@ import { SidebarMenuComponent } from '../sidebar-menu/sidebar-menu.component';
 	templateUrl: './main-nav-menu.component.html',
 	styleUrls: ['./main-nav-menu.component.scss'],
 	standalone: true,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [AsyncPipe, SidebarMenuComponent]
 })
 export class MainNavMenuComponent extends BaseNavMenuComponent implements OnInit {
-	// Define the input property menuCategory of type NavMenuCategory | undefined
-	@Input() menuCategory: NavMenuCategory | undefined;
+	// Define the input signal menuCategory of type NavMenuCategory | undefined
+	readonly menuCategory = input<NavMenuCategory>();
 
 	// Define the observable property mainMenuConfig$ of type Observable<NavMenuSectionItem[]>
 	public mainMenuConfig$: Observable<NavMenuSectionItem[]>;
@@ -43,7 +44,7 @@ export class MainNavMenuComponent extends BaseNavMenuComponent implements OnInit
 	 */
 	private filterSectionsByCategory(sections: NavMenuSectionItem[]): NavMenuSectionItem[] {
 		return this.mapMenuSections(sections ?? []).filter((section) =>
-			this.menuCategory ? section?.menuCategory === this.menuCategory : !section?.menuCategory
+			this.menuCategory() ? section?.menuCategory === this.menuCategory() : !section?.menuCategory
 		);
 	}
 

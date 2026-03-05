@@ -133,10 +133,7 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 			 */
 			return await this.saveManyWithoutEnrichment(statuses);
 		} catch (error) {
-			this.logger.error(
-				'Error while creating bulk task statuses for tenants:',
-				error.message
-			);
+			this.logger.error('Error while creating bulk task statuses for tenants:', error.message);
 			return [];
 		}
 	}
@@ -163,7 +160,7 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 						color: item.color,
 						organization,
 						isSystem: false,
-						order: item.order || index,
+						order: item.order ?? index,
 						isCollapsed: item.isCollapsed
 					})
 			);
@@ -196,7 +193,7 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 				icon: item.icon,
 				color: item.color,
 				isSystem: false,
-				order: item.order || index,
+				order: item.order ?? index,
 				isCollapsed: item.isCollapsed
 			}));
 
