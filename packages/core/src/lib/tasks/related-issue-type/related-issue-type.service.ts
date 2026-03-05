@@ -68,69 +68,58 @@ export class TaskRelatedIssueTypeService extends TaskMetadataService<TaskRelated
 	}
 
 	/**
-	 * Create bulk statuses for specific organization
+	 * Create bulk related issue types for a specific organization.
 	 *
-	 * @param organization
+	 * @param organization The organization for which related issue types will be created.
+	 * @returns A promise that resolves to an array of created related issue types.
 	 */
 	async bulkCreateOrganizationRelatedIssueTypes(
 		organization: IOrganization
 	): Promise<ITaskRelatedIssueType[] & TaskRelatedIssueType[]> {
-		try {
-			const statuses: ITaskRelatedIssueType[] = [];
+		const tenantId = RequestContext.currentTenantId() ?? organization.tenantId;
+		const { items = [] } = await super.fetchAll({ tenantId });
 
-			const tenantId = RequestContext.currentTenantId();
-			const { items = [] } = await super.fetchAll({ tenantId });
-
-			for (const item of items) {
-				const { tenantId, name, value, description, icon, color } = item;
-				const status = new TaskRelatedIssueType({
-					tenantId,
-					name,
-					value,
-					description,
-					icon,
-					color,
+		const relatedIssueTypes = items.map(
+			(item) =>
+				new TaskRelatedIssueType({
+					tenantId: item.tenantId,
+					name: item.name,
+					value: item.value,
+					description: item.description,
+					icon: item.icon,
+					color: item.color,
 					organization,
 					isSystem: false
-				});
-				statuses.push(status);
-			}
-			return (await this.saveMany(statuses)) as ITaskRelatedIssueType[] & TaskRelatedIssueType[];
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+				})
+		);
+
+		return (await this.saveMany(relatedIssueTypes)) as ITaskRelatedIssueType[] & TaskRelatedIssueType[];
 	}
 
 	/**
-	 * Create bulk statuses for specific organization entity
+	 * Create bulk related issue types for a specific organization entity.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param entity Base entity input to use as a template for each related issue type.
+	 * @returns A promise that resolves to an array of created related issue types.
 	 */
 	async createBulkRelatedIssueTypesByEntity(
 		entity: Partial<ITaskRelatedIssueTypeCreateInput>
 	): Promise<ITaskRelatedIssueType[]> {
-		try {
-			const { organizationId } = entity;
-			const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
+		const organizationId = entity.organizationId;
 
-			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
+		const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			const entitiesToCreate = items.map((item) => {
-				const { name, value, description, icon, color } = item;
-				return {
-					...entity,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					isSystem: false
-				};
-			});
-			return await this.createMany(entitiesToCreate);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		const relatedIssueTypes = items.map((item) => ({
+			...entity,
+			name: item.name,
+			value: item.value,
+			description: item.description,
+			icon: item.icon,
+			color: item.color,
+			isSystem: false
+		}));
+
+		return await this.createMany(relatedIssueTypes);
 	}
 }
