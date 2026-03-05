@@ -1374,6 +1374,71 @@
 				}
 			}
 		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "crwdns20000:0crwdne20000:0",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "crwdns20002:0crwdne20002:0",
+				"NEXT": "crwdns20004:0crwdne20004:0",
+				"HINT": "crwdns20006:0crwdne20006:0",
+				"ERRORS": {
+					"INVALID_FORM": "crwdns20008:0crwdne20008:0",
+					"SAVE_SETTINGS": "crwdns20010:0crwdne20010:0",
+					"ORGANIZATION_NOT_FOUND": "crwdns20012:0crwdne20012:0",
+					"CHECK_REMEMBER_STATE": "crwdns20014:0crwdne20014:0"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "crwdns20016:0crwdne20016:0"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "crwdns20018:0crwdne20018:0",
+				"SUBTITLE": "crwdns20020:0crwdne20020:0",
+				"API_KEY": "crwdns20022:0crwdne20022:0",
+				"API_KEY_PLACEHOLDER": "crwdns20024:0crwdne20024:0"
+			},
+			"EXECUTIONS": {
+				"TITLE": "crwdns20026:0crwdne20026:0",
+				"NO_EXECUTIONS": "crwdns20028:0crwdne20028:0",
+				"WORKFLOW_ID": "crwdns20030:0crwdne20030:0",
+				"WORKFLOW_ID_PLACEHOLDER": "crwdns20032:0crwdne20032:0",
+				"EXECUTION_ID": "crwdns20034:0crwdne20034:0",
+				"STATUS": "crwdns20036:0crwdne20036:0",
+				"TRIGGERED_BY": "crwdns20038:0crwdne20038:0",
+				"DURATION": "crwdns20040:0crwdne20040:0",
+				"CREATED": "crwdns20042:0crwdne20042:0",
+				"LOADING": "crwdns20044:0crwdne20044:0",
+				"LOAD": "crwdns20046:0crwdne20046:0",
+				"ALL_STATUSES": "crwdns20048:0crwdne20048:0",
+				"SHOWING": "crwdns20050:0crwdne20050:0",
+				"OF": "crwdns20052:0crwdne20052:0"
+			},
+			"WORKFLOWS": {
+				"TITLE": "crwdns20054:0crwdne20054:0",
+				"VALIDATE_TITLE": "crwdns20056:0crwdne20056:0",
+				"EXECUTE_TITLE": "crwdns20058:0crwdne20058:0",
+				"JOB_STATUS_TITLE": "crwdns20060:0crwdne20060:0",
+				"WORKFLOW_ID": "crwdns20030:0crwdne20030:0",
+				"WORKFLOW_ID_PLACEHOLDER": "crwdns20062:0crwdne20062:0",
+				"VALIDATE": "crwdns20064:0crwdne20064:0",
+				"DEPLOYED": "crwdns20066:0crwdne20066:0",
+				"NOT_DEPLOYED": "crwdns20068:0crwdne20068:0",
+				"EXECUTE": "crwdns20070:0crwdne20070:0",
+				"ASYNC": "crwdns20072:0crwdne20072:0",
+				"TIMEOUT": "crwdns20074:0crwdne20074:0",
+				"INPUT": "crwdns20076:0crwdne20076:0",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "crwdns20078:0crwdne20078:0",
+				"RESULT": "crwdns20080:0crwdne20080:0",
+				"TASK_ID": "crwdns20082:0crwdne20082:0",
+				"TASK_ID_PLACEHOLDER": "crwdns20084:0crwdne20084:0",
+				"CHECK_STATUS": "crwdns20086:0crwdne20086:0",
+				"JOB_RESULT": "crwdns20088:0crwdne20088:0",
+				"INVALID_JSON": "crwdns20090:0crwdne20090:0",
+				"EXECUTION_FAILED": "crwdns20092:0crwdne20092:0"
+			}
+		},
 		"COMING_SOON": "crwdns4078:0crwdne4078:0",
 		"RE_INTEGRATE": "crwdns8132:0crwdne8132:0",
 		"SETTINGS": "crwdns8134:0crwdne8134:0",

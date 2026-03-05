@@ -1489,6 +1489,71 @@
 				}
 			}
 		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "SIM AI 工作流集成",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "输入您的 SIM AI API 密钥以连接您的账户。您可以在 sim.ai 的 SIM 控制面板中找到您的 API 密钥。",
+				"NEXT": "连接",
+				"HINT": "您的 API 密钥安全存储，用于验证工作流执行。",
+				"ERRORS": {
+					"INVALID_FORM": "请正确填写所有必填字段",
+					"SAVE_SETTINGS": "保存设置失败",
+					"ORGANIZATION_NOT_FOUND": "未找到组织",
+					"CHECK_REMEMBER_STATE": "检查记忆状态失败"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "SIM AI 集成配置成功"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "SIM AI 设置",
+				"SUBTITLE": "配置您的 SIM AI 集成设置",
+				"API_KEY": "API 密钥",
+				"API_KEY_PLACEHOLDER": "输入您的 SIM AI API 密钥"
+			},
+			"EXECUTIONS": {
+				"TITLE": "执行历史",
+				"NO_EXECUTIONS": "未找到工作流执行记录。从工作流选项卡执行工作流以在此处查看结果。",
+				"WORKFLOW_ID": "工作流 ID",
+				"WORKFLOW_ID_PLACEHOLDER": "按工作流 ID 过滤",
+				"EXECUTION_ID": "执行 ID",
+				"STATUS": "状态",
+				"TRIGGERED_BY": "触发者",
+				"DURATION": "持续时间",
+				"CREATED": "创建时间",
+				"LOADING": "正在加载执行历史...",
+				"LOAD": "搜索",
+				"ALL_STATUSES": "所有状态",
+				"SHOWING": "显示",
+				"OF": "共"
+			},
+			"WORKFLOWS": {
+				"TITLE": "工作流",
+				"VALIDATE_TITLE": "验证工作流",
+				"EXECUTE_TITLE": "执行工作流",
+				"JOB_STATUS_TITLE": "异步任务状态",
+				"WORKFLOW_ID": "工作流 ID",
+				"WORKFLOW_ID_PLACEHOLDER": "输入您的 SIM 工作流 ID",
+				"VALIDATE": "验证",
+				"DEPLOYED": "工作流已部署并可执行。",
+				"NOT_DEPLOYED": "工作流未部署或未找到。",
+				"EXECUTE": "执行",
+				"ASYNC": "异步",
+				"TIMEOUT": "超时时间 (ms)",
+				"INPUT": "输入 (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "以有效的 JSON 格式提供工作流输入。这些数据将传递给您的 SIM 工作流。",
+				"RESULT": "执行结果",
+				"TASK_ID": "任务 ID",
+				"TASK_ID_PLACEHOLDER": "输入异步任务 ID",
+				"CHECK_STATUS": "检查状态",
+				"JOB_RESULT": "任务状态",
+				"INVALID_JSON": "无效的 JSON 输入",
+				"EXECUTION_FAILED": "执行失败"
+			}
+		},
 		"COMING_SOON": "即将推出",
 		"RE_INTEGRATE": "重新整合",
 		"SETTINGS": "设置",

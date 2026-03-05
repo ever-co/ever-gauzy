@@ -1491,6 +1491,71 @@
 				}
 			}
 		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "Integración de flujos de trabajo SIM AI",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Ingrese su clave API de SIM AI para conectar su cuenta. Puede encontrar su clave API en su panel de SIM en sim.ai.",
+				"NEXT": "Conectar",
+				"HINT": "Su clave API se almacena de forma segura y se utiliza para autenticar las ejecuciones de flujos de trabajo.",
+				"ERRORS": {
+					"INVALID_FORM": "Por favor complete todos los campos obligatorios correctamente",
+					"SAVE_SETTINGS": "Error al guardar la configuración",
+					"ORGANIZATION_NOT_FOUND": "Organización no encontrada",
+					"CHECK_REMEMBER_STATE": "Error al verificar el estado recordado"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Integración SIM AI configurada exitosamente"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Configuración de SIM AI",
+				"SUBTITLE": "Configure los ajustes de su integración SIM AI",
+				"API_KEY": "Clave API",
+				"API_KEY_PLACEHOLDER": "Ingrese su clave API de SIM AI"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Historial de ejecución",
+				"NO_EXECUTIONS": "No se encontraron ejecuciones de flujos de trabajo. Ejecute un flujo de trabajo desde la pestaña Flujos de trabajo para ver los resultados aquí.",
+				"WORKFLOW_ID": "ID del flujo de trabajo",
+				"WORKFLOW_ID_PLACEHOLDER": "Filtrar por ID de flujo de trabajo",
+				"EXECUTION_ID": "ID de ejecución",
+				"STATUS": "Estado",
+				"TRIGGERED_BY": "Activado por",
+				"DURATION": "Duración",
+				"CREATED": "Creado",
+				"LOADING": "Cargando historial de ejecución...",
+				"LOAD": "Buscar",
+				"ALL_STATUSES": "Todos los estados",
+				"SHOWING": "Mostrando",
+				"OF": "de"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Flujos de trabajo",
+				"VALIDATE_TITLE": "Validar flujo de trabajo",
+				"EXECUTE_TITLE": "Ejecutar flujo de trabajo",
+				"JOB_STATUS_TITLE": "Estado de tarea asíncrona",
+				"WORKFLOW_ID": "ID del flujo de trabajo",
+				"WORKFLOW_ID_PLACEHOLDER": "Ingrese el ID de su flujo de trabajo SIM",
+				"VALIDATE": "Validar",
+				"DEPLOYED": "El flujo de trabajo está desplegado y listo para ejecutar.",
+				"NOT_DEPLOYED": "El flujo de trabajo no está desplegado o no se encontró.",
+				"EXECUTE": "Ejecutar",
+				"ASYNC": "Asíncrono",
+				"TIMEOUT": "Tiempo de espera (ms)",
+				"INPUT": "Entrada (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Proporcione la entrada del flujo de trabajo como JSON válido. Estos datos se pasarán a su flujo de trabajo SIM.",
+				"RESULT": "Resultado de la ejecución",
+				"TASK_ID": "ID de tarea",
+				"TASK_ID_PLACEHOLDER": "Ingrese el ID de la tarea asíncrona",
+				"CHECK_STATUS": "Verificar estado",
+				"JOB_RESULT": "Estado de la tarea",
+				"INVALID_JSON": "Entrada JSON inválida",
+				"EXECUTION_FAILED": "La ejecución falló"
+			}
+		},
 		"COMING_SOON": "Próximamente",
 		"RE_INTEGRATE": "Reintegrar",
 		"SETTINGS": "Ajustes",

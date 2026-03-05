@@ -1489,6 +1489,71 @@
 				}
 			}
 		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "SIM AI Workflow-integratie",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Voer uw SIM AI API-sleutel in om uw account te verbinden. U kunt uw API-sleutel vinden in uw SIM-dashboard op sim.ai.",
+				"NEXT": "Verbinden",
+				"HINT": "Uw API-sleutel wordt veilig opgeslagen en gebruikt om workflow-uitvoeringen te verifiëren.",
+				"ERRORS": {
+					"INVALID_FORM": "Vul alle verplichte velden correct in",
+					"SAVE_SETTINGS": "Instellingen opslaan mislukt",
+					"ORGANIZATION_NOT_FOUND": "Organisatie niet gevonden",
+					"CHECK_REMEMBER_STATE": "Controle van opgeslagen status mislukt"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "SIM AI-integratie succesvol geconfigureerd"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "SIM AI-instellingen",
+				"SUBTITLE": "Configureer uw SIM AI-integratie-instellingen",
+				"API_KEY": "API-sleutel",
+				"API_KEY_PLACEHOLDER": "Voer uw SIM AI API-sleutel in"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Uitvoeringsgeschiedenis",
+				"NO_EXECUTIONS": "Geen workflow-uitvoeringen gevonden. Voer een workflow uit via het tabblad Workflows om hier resultaten te zien.",
+				"WORKFLOW_ID": "Workflow-ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Filteren op workflow-ID",
+				"EXECUTION_ID": "Uitvoerings-ID",
+				"STATUS": "Status",
+				"TRIGGERED_BY": "Geactiveerd door",
+				"DURATION": "Duur",
+				"CREATED": "Aangemaakt",
+				"LOADING": "Uitvoeringsgeschiedenis laden...",
+				"LOAD": "Zoeken",
+				"ALL_STATUSES": "Alle statussen",
+				"SHOWING": "Weergave",
+				"OF": "van"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Workflows",
+				"VALIDATE_TITLE": "Workflow valideren",
+				"EXECUTE_TITLE": "Workflow uitvoeren",
+				"JOB_STATUS_TITLE": "Asynchrone taakstatus",
+				"WORKFLOW_ID": "Workflow-ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Voer uw SIM workflow-ID in",
+				"VALIDATE": "Valideren",
+				"DEPLOYED": "Workflow is geïmplementeerd en klaar voor uitvoering.",
+				"NOT_DEPLOYED": "Workflow is niet geïmplementeerd of niet gevonden.",
+				"EXECUTE": "Uitvoeren",
+				"ASYNC": "Asynchroon",
+				"TIMEOUT": "Time-out (ms)",
+				"INPUT": "Invoer (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Geef workflow-invoer op als geldige JSON. Deze gegevens worden doorgegeven aan uw SIM-workflow.",
+				"RESULT": "Uitvoeringsresultaat",
+				"TASK_ID": "Taak-ID",
+				"TASK_ID_PLACEHOLDER": "Voer de asynchrone taak-ID in",
+				"CHECK_STATUS": "Status controleren",
+				"JOB_RESULT": "Taakstatus",
+				"INVALID_JSON": "Ongeldige JSON-invoer",
+				"EXECUTION_FAILED": "Uitvoering mislukt"
+			}
+		},
 		"COMING_SOON": "Binnenkort beschikbaar.",
 		"RE_INTEGRATE": "Re-integreren",
 		"SETTINGS": "Instellingen",
