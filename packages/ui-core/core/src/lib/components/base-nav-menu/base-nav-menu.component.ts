@@ -1205,16 +1205,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 			// If any permission is not granted or custom hide function returns true, hide the section
 			if (!anyPermission || (data.hide && data.hide())) {
 				isHidden = true;
-				console.log(`Menu ${id} hidden by permissions or hide function. anyPermission: ${anyPermission}`);
 			}
 		}
 
 		// If feature key is provided, check if the feature is enabled
 		if (data.featureKey && isHidden === false) {
 			isHidden = !this._store.hasFeatureEnabled(data.featureKey);
-			if (isHidden) {
-				console.log(`Menu ${id} hidden by feature flag: ${data.featureKey}`);
-			}
 		}
 
 		// If none of the above conditions are met, the section should not be hidden

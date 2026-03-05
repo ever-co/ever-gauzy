@@ -32,13 +32,16 @@ export function parseEnvWithFallback<T>(value: string | undefined, fallback: T):
 
 	// Boolean parsing
 	if (typeof fallback === 'boolean') {
-		return value.toLowerCase() === 'true';
+		const lower = value.toLowerCase();
+		if (lower === 'true') return true;
+		if (lower === 'false') return false;
+		return fallback;
 	}
 
 	// Number parsing
 	if (typeof fallback === 'number') {
 		const parsed = Number(value);
-		return isNaN(parsed) ? fallback : parsed;
+		return Number.isNaN(parsed) ? fallback : parsed;
 	}
 
 	// String or other types - return value or fallback
