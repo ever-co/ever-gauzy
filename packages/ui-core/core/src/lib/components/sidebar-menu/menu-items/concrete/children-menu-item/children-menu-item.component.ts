@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { NbButtonModule, NbTooltipModule } from '@nebular/theme';
@@ -14,7 +14,8 @@ import { TooltipDirective } from '../../../tooltip.directive';
     templateUrl: './children-menu-item.component.html',
     styleUrls: ['./children-menu-item.component.scss'],
     standalone: true,
-    imports: [NbButtonModule, NbTooltipModule, NgxPermissionsModule, TooltipDirective]
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NbButtonModule, NbTooltipModule, NgxPermissionsModule, TooltipDirective],
 })
 export class ChildrenMenuItemComponent implements OnInit {
 	/**

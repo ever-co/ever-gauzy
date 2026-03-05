@@ -44,6 +44,6 @@ export function parseEnvWithFallback<T>(value: string | undefined, fallback: T):
 		return Number.isNaN(parsed) ? fallback : parsed;
 	}
 
-	// String or other types - return value or fallback
-	return value ?? (fallback as any);
+	// String or other types - return value as-is
+	return value;
 }
