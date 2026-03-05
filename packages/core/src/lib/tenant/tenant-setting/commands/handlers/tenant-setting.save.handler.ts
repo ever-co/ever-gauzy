@@ -19,7 +19,12 @@ export class TenantSettingSaveHandler implements ICommandHandler<TenantSettingSa
 	 * @returns The result of the save operation from _tenantSettingService.
 	 */
 	public async execute(command: TenantSettingSaveCommand) {
-		const tenantId = RequestContext.currentTenantId() || command.tenantId;
-		return await this._tenantSettingService.saveSettings(command.input, tenantId);
+		const tenantId = RequestContext.currentTenantId() ?? command.tenantId;
+
+		if (!tenantId) {
+			throw new Error('Tenant ID is required to save tenant settings.');
+		}
+
+		return this._tenantSettingService.saveSettings(command.input, tenantId);
 	}
 }

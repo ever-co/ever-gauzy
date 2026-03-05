@@ -1,5 +1,5 @@
 import { AfterViewInit, Directive, inject, OnDestroy, OnInit } from '@angular/core';
-import { combineLatest, EMPTY, of } from 'rxjs';
+import { combineLatest, EMPTY } from 'rxjs';
 import { catchError, debounceTime, filter, startWith, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
