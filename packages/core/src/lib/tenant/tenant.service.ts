@@ -108,22 +108,24 @@ export class TenantService extends CrudService<Tenant> {
 	 */
 	public async executeTenantUpdateTasks(tenant: Tenant): Promise<void> {
 		try {
-			// 2. Create Enabled/Disabled features for relative tenants.
-			await this.commandBus.execute(new TenantFeatureOrganizationCreateCommand([tenant]));
+			await Promise.all([
+				// 1. Create Enabled/Disabled features for relative tenants.
+				this.commandBus.execute(new TenantFeatureOrganizationCreateCommand([tenant])),
 
-			// 3. Create Default task statuses for relative tenants.
-			await this.commandBus.execute(new TenantStatusBulkCreateCommand([tenant]));
+				// 2. Create Default task statuses for relative tenants.
+				this.commandBus.execute(new TenantStatusBulkCreateCommand([tenant])),
 
-			// 4. Create default task sizes for relative tenants.
-			await this.commandBus.execute(new TenantTaskSizeBulkCreateCommand([tenant]));
+				// 3. Create default task sizes for relative tenants.
+				this.commandBus.execute(new TenantTaskSizeBulkCreateCommand([tenant])),
 
-			// 5. Create default task priorities for relative tenants.
-			await this.commandBus.execute(new TenantTaskPriorityBulkCreateCommand([tenant]));
+				// 4. Create default task priorities for relative tenants.
+				this.commandBus.execute(new TenantTaskPriorityBulkCreateCommand([tenant])),
 
-			// 6. Create default issue types for relative tenants.
-			await this.commandBus.execute(new TenantIssueTypeBulkCreateCommand([tenant]));
+				// 5. Create default issue types for relative tenants.
+				this.commandBus.execute(new TenantIssueTypeBulkCreateCommand([tenant]))
+			]);
 
-			// 7. Initializes and sets up the default settings for the new tenant, including configuring the file storage provider. This operation waits for completion before moving to the next step.
+			// 6. Initialize default settings for the new tenant, including file storage provider.
 			await this.initializeTenantSettings(tenant);
 		} catch (error) {
 			console.log(error, 'Error occurred while executing tenant create tasks:', error.message);

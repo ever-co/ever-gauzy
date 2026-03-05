@@ -1,12 +1,12 @@
 <div class="menu-container">
-  @for (item of items; track item) {
-    @if (!item?.hidden) {
-      <ga-menu-item
-        [id]="item?.id"
-        (selectedChange)="focusOn($event)"
-        [item]="item"
-        [selected]="item === selectedItem"
-      ></ga-menu-item>
-    }
-  }
+	@for (item of items; track item.id) {
+		@if (!item?.hidden) {
+			<ga-menu-item
+				[id]="item?.id"
+				(selectedChange)="focusOn($event)"
+				[item]="item"
+				[selected]="item === selectedItem"
+			></ga-menu-item>
+		}
+	}
 </div>
