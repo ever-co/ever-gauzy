@@ -90,7 +90,10 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 	}
 
 	public isDestroyed(): boolean {
-		return !!this.browserWindow && this.browserWindow.isDestroyed();
+		if(!this.browserWindow) {
+			return true;
+		}
+		return this.browserWindow.isDestroyed();
 	}
 
 	private onTop(): void {

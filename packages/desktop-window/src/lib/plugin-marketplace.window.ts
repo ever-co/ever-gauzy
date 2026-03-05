@@ -74,7 +74,10 @@ export class PluginMarketplaceWindow extends BaseWindow implements IBaseWindow {
 	 * @return {boolean} `true` if the window is destroyed; otherwise, `false`.
 	 */
 	public isDestroyed(): boolean {
-		return !!this.browserWindow && this.browserWindow.isDestroyed();
+		if (!this.browserWindow) {
+			return true;
+		}
+		return this.browserWindow.isDestroyed();
 	}
 
 	/**
