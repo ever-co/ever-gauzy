@@ -74,7 +74,10 @@ export class SplashScreen extends BaseWindow implements IBaseWindow {
 	 * Checks if the splash screen window has been destroyed.
 	 * @return {boolean} `true` if the window is destroyed; otherwise, `false`.
 	 */
-	private isDestroyed(): boolean {
-		return !!this.browserWindow && this.browserWindow.isDestroyed();
+	public isDestroyed(): boolean {
+		if (!this.browserWindow) {
+			return true;
+		}
+		return this.browserWindow.isDestroyed();
 	}
 }
