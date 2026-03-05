@@ -27,6 +27,7 @@ initSentry();
 
 remoteMain.initialize();
 
+import { DesktopSetupConfig } from '@gauzy/contracts';
 import {
 	AppError,
 	AppMenu,
@@ -59,7 +60,6 @@ import {
 	setLaunchPathAndLoad,
 	SplashScreen
 } from '@gauzy/desktop-window';
-import { DesktopSetupConfig } from '@gauzy/contracts';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 
@@ -229,11 +229,7 @@ function initializeAppManager() {
 	appWindowManager.preloadPath = pathWindow.preloadPath;
 }
 
-function setGlobalVariable(configs: {
-	isLocalServer?: boolean;
-	serverUrl?: string;
-	port?: string;
-}) {
+function setGlobalVariable(configs: { isLocalServer?: boolean; serverUrl?: string; port?: string }) {
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
 		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
@@ -314,17 +310,14 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 	// Create the tray icon and menu
 	tray = TrayIconFactory.create(environment, pathWindow, path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
 	// Language change
-	TranslateService.onLanguageChange(() => {
-		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
-	});
+	TranslateService.onLanguageChange(() =>
+		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false)
+	);
 
 	return true;
 }
 
-const getApiBaseUrl = (configs: {
-	serverUrl?: string;
-	port?: string;
-}) => {
+const getApiBaseUrl = (configs: { serverUrl?: string; port?: string }) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
 		return configs.port ? `http://localhost:${configs.port}` : `http://localhost:${environment.API_DEFAULT_PORT}`;
@@ -334,8 +327,10 @@ const getApiBaseUrl = (configs: {
 async function launchSplashScreen() {
 	try {
 		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
+		splashScreen.browserWindow.on('closed', () => (splashScreen = null));
 		await splashScreen.loadURL();
 		splashScreen.show();
+
 	} catch (error) {
 		console.error(error);
 		throw new AppError('MAINLOADSPLASH', error);
@@ -384,8 +379,8 @@ async function launchWidget(settings: any) {
 	const auth = store.get('auth');
 
 	if (settings?.alwaysOn && auth?.token && !auth?.isLogout) {
-		await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
-		appWindowManager.alwaysOnWindow.show();
+		const alwaysOnWindow = await appWindowManager.initAlwaysOnWindow(pathWindow.timeTrackerUi);
+		alwaysOnWindow.show();
 	}
 }
 
