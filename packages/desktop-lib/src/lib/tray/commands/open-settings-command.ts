@@ -15,10 +15,10 @@ export class OpenSettingsCommand extends MenuCommand {
 		if (appWindowManager.settingWindow && !appWindowManager.settingWindow.isDestroyed()) {
 			appWindowManager.settingShow('goto_top_menu');
 		} else {
-			await appWindowManager.initSettingWindow(timeTrackerUi);
 			const onReady = () => appWindowManager.settingShow('goto_top_menu');
 			ipcMain.once('setting_window_ready', onReady);
 			try {
+				await appWindowManager.initSettingWindow(timeTrackerUi);
 				await appWindowManager.loadSetting(timeTrackerUi);
 			} catch (error) {
 				ipcMain.removeListener('setting_window_ready', onReady);
