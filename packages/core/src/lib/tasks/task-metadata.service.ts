@@ -103,6 +103,11 @@ export class TaskMetadataService<BaseEntity extends TenantBaseEntity> extends Te
 			const { organizationId, projectId, organizationTeamId } = params;
 			const tenantId = RequestContext.currentTenantId() ?? params.tenantId;
 
+			// No tenant context — return system defaults to prevent cross-tenant leak
+			if (!tenantId) {
+				return await this.getDefaultEntities();
+			}
+
 			const options: FindManyOptions<TaskMetadataFindInput> = {
 				where: {
 					tenantId,
@@ -155,13 +160,8 @@ export class TaskMetadataService<BaseEntity extends TenantBaseEntity> extends Te
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<BaseEntity>(
-						options as FindManyOptions
-					);
-					[items, total] = (await this.mikroOrmBaseEntityRepository.findAndCount(
-						where,
-						mikroOptions
-					)) as any;
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<BaseEntity>(options as FindManyOptions);
+					[items, total] = (await this.mikroOrmBaseEntityRepository.findAndCount(where, mikroOptions)) as any;
 					items = items.map((entity) => this.serialize(entity));
 					break;
 				}
