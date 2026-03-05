@@ -3,7 +3,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { BaseNavMenuComponent } from './base-nav-menu/base-nav-menu.component';
 import { MainNavMenuComponent } from './main-nav-menu/main-nav-menu.component';
 import { SettingsNavMenuComponent } from './settings-nav-menu/settings-nav-menu.component';
-import { SidebarMenuComponent, TooltipDirective } from './sidebar-menu';
+import { SidebarMenuComponent } from './sidebar-menu';
+import { TooltipDirective } from '../directives/tooltip.directive';
 
 @NgModule({
 	imports: [

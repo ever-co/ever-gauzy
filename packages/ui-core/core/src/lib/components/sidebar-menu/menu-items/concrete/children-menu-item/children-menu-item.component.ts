@@ -6,7 +6,7 @@ import { NbButtonModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
-import { TooltipDirective } from '../../../tooltip.directive';
+import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 
 @UntilDestroy()
 @Component({

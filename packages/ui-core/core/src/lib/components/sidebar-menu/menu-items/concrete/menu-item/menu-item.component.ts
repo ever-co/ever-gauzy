@@ -17,8 +17,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { IUser } from '@gauzy/contracts';
 import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum, JitsuService, Store } from '../../../../../services';
 import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
-import { TooltipDirective } from '../../../tooltip.directive';
 import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-item.component';
+import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 
 @Component({
 	selector: 'ga-menu-item',
@@ -26,7 +26,7 @@ import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-i
 	styleUrls: ['./menu-item.component.scss'],
 	standalone: true,
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbAccordionModule, NbTooltipModule, NgxPermissionsModule, TooltipDirective, ChildrenMenuItemComponent],
+	imports: [NbAccordionModule, NbTooltipModule, NgxPermissionsModule, TooltipDirective, ChildrenMenuItemComponent]
 })
 export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private readonly _router = inject(Router);
