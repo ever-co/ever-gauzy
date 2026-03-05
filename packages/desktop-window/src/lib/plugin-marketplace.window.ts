@@ -15,7 +15,11 @@ export class PluginMarketplaceWindow extends BaseWindow implements IBaseWindow {
 	 *
 	 * @param {string} path - The file path to load in the plugin marketplace window.
 	 */
-	constructor(public path: string, public preloadPath?: string, public contextIsolation?: boolean) {
+	constructor(
+		public path: string,
+		public preloadPath?: string,
+		public contextIsolation?: boolean
+	) {
 		// Configure the plugin marketplace window with default properties
 		super(
 			new DefaultWindow(
@@ -37,6 +41,40 @@ export class PluginMarketplaceWindow extends BaseWindow implements IBaseWindow {
 		// Register the plugin marketplace window with the WindowManager
 		this.registerWindow();
 		this.manager.overrideSystemContextMenu(this.browserWindow);
+
+		this.browserWindow.on('close', () => {
+			if (this.isDestroyed()) return;
+			this.browserWindow.destroy();
+		});
+	}
+
+	public override show(): void {
+		if (this.isDestroyed()) {
+			return;
+		}
+
+		if (this.browserWindow.isMinimized()) {
+			this.browserWindow.restore();
+		}
+
+		super.show();
+		this.browserWindow.focus();
+	}
+
+	public override close(): void {
+		if (this.isDestroyed()) {
+			return;
+		}
+
+		super.close();
+	}
+
+	/**
+	 * Checks if the plugin marketplace window has been destroyed.
+	 * @return {boolean} `true` if the window is destroyed; otherwise, `false`.
+	 */
+	public isDestroyed(): boolean {
+		return !!this.browserWindow && this.browserWindow.isDestroyed();
 	}
 
 	/**
