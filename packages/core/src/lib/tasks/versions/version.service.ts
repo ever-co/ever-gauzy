@@ -11,7 +11,7 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
-import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
+import { TaskMetadataService } from '../task-metadata.service';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
 import { TaskVersion } from './version.entity';
@@ -20,7 +20,7 @@ import { MikroOrmTaskVersionRepository } from './repository/mikro-orm-task-versi
 import { TypeOrmTaskVersionRepository } from './repository/type-orm-task-version.repository';
 
 @Injectable()
-export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersion> {
+export class TaskVersionService extends TaskMetadataService<TaskVersion> {
 	constructor(
 		readonly typeOrmTaskVersionRepository: TypeOrmTaskVersionRepository,
 		readonly mikroOrmTaskVersionRepository: MikroOrmTaskVersionRepository,

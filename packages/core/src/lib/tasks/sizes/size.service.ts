@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
@@ -14,14 +14,16 @@ import {
 import { isPostgres } from '@gauzy/config';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
-import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
+import { TaskMetadataService } from '../task-metadata.service';
 import { TaskSize } from './size.entity';
 import { DEFAULT_GLOBAL_SIZES } from './default-global-sizes';
 import { TypeOrmTaskSizeRepository } from './repository/type-orm-task-size.repository';
 import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
 
 @Injectable()
-export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
+export class TaskSizeService extends TaskMetadataService<TaskSize> {
+	readonly logger = new Logger(TaskSizeService.name);
+
 	constructor(
 		readonly typeOrmTaskSizeRepository: TypeOrmTaskSizeRepository,
 		readonly mikroOrmTaskSizeRepository: MikroOrmTaskSizeRepository,
@@ -38,17 +40,15 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	 */
 	async delete(id: ID): Promise<DeleteResult> {
 		return await super.delete(id, {
-			where: {
-				isSystem: false
-			}
+			where: { isSystem: false }
 		});
 	}
 
 	/**
 	 * Find task sizes based on the provided parameters.
+	 *
 	 * @param params - The input parameters for the task size search.
-	 * @returns {Promise<IPagination<ITaskSize>>} A promise resolving to the paginated list of task sizes.
-	 * @throws {HttpException} Thrown if there's an issue with the request parameters, such as missing or unauthorized integration.
+	 * @returns A promise resolving to the paginated list of task sizes.
 	 */
 	public async fetchAll(params: ITaskSizeFindInput): Promise<IPagination<ITaskSize>> {
 		try {
@@ -58,10 +58,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log(
-				'Failed to retrieve task sizes. Please ensure that all required parameters are provided correctly.',
-				error
-			);
+			this.logger.error('Failed to retrieve task sizes. Ensure that the provided parameters are valid and complete.', error);
 			throw new BadRequestException(
 				'Failed to retrieve task sizes. Ensure that the provided parameters are valid and complete.',
 				error
@@ -70,58 +67,59 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	}
 
 	/**
-	 * Create bulk task sizes for tenants
+	 * Create bulk task sizes for tenants.
+	 * Uses saveManyWithoutEnrichment to preserve each entity's specific tenantId.
 	 *
 	 * @param tenants
 	 */
 	async bulkCreateTenantsTaskSizes(tenants: ITenant[]): Promise<ITaskSize[]> {
 		try {
-			const sizes: ITaskSize[] = [];
-			for (const tenant of tenants) {
-				for (const size of DEFAULT_GLOBAL_SIZES) {
-					const create = this.typeOrmRepository.create({
-						...size,
-						icon: `ever-icons/${size.icon}`,
-						tenant,
-						isSystem: false
-					});
-					sizes.push(create);
-				}
+			if (!tenants?.length) {
+				return [];
 			}
-			return this.ormType === MultiORMEnum.MikroORM
-				? await this.mikroOrmRepository.upsertMany(sizes as any)
-				: await this.typeOrmRepository.save(sizes);
+
+			const sizes = tenants.flatMap((tenant) =>
+				DEFAULT_GLOBAL_SIZES.map(
+					(size) =>
+						new TaskSize({
+							...size,
+							icon: `ever-icons/${size.icon}`,
+							tenant,
+							isSystem: false
+						})
+				)
+			);
+
+			return await this.saveManyWithoutEnrichment(sizes);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
 	}
 
 	/**
-	 * Create bulk task sizes for organization
+	 * Create bulk task sizes for organization.
 	 *
 	 * @param organization
 	 */
 	async bulkCreateOrganizationTaskSizes(organization: IOrganization): Promise<ITaskSize[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-
-			const sizes: ITaskSize[] = [];
 			const { items = [] } = await super.fetchAll({ tenantId });
 
-			for (const item of items) {
-				const { tenantId, name, value, description, icon, color } = item;
-				const create = this.typeOrmRepository.create({
-					tenantId,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					organization,
-					isSystem: false
-				});
-				sizes.push(create);
-			}
+			const sizes = items.map(
+				(item) =>
+					new TaskSize({
+						tenantId: item.tenantId,
+						name: item.name,
+						value: item.value,
+						description: item.description,
+						icon: item.icon,
+						color: item.color,
+						organization,
+						isSystem: false
+					})
+			);
+
 			return await this.saveMany(sizes);
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -129,7 +127,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	}
 
 	/**
-	 * Create bulk task sizes for specific organization entity
+	 * Create bulk task sizes for specific organization entity.
 	 *
 	 * @param entity
 	 * @returns
@@ -141,18 +139,16 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 
 			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			const entitiesToCreate = items.map((item) => {
-				const { name, value, description, icon, color } = item;
-				return {
-					...entity,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					isSystem: false
-				};
-			});
+			const entitiesToCreate = items.map((item) => ({
+				...entity,
+				name: item.name,
+				value: item.value,
+				description: item.description,
+				icon: item.icon,
+				color: item.color,
+				isSystem: false
+			}));
+
 			return await this.createMany(entitiesToCreate);
 		} catch (error) {
 			throw new BadRequestException(error);

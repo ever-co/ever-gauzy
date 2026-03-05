@@ -10,7 +10,7 @@ import {
 	ITaskRelatedIssueTypeFindInput
 } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
-import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
+import { TaskMetadataService } from '../task-metadata.service';
 import { MultiORMEnum } from '../../core/utils';
 import { RequestContext } from '../../core/context';
 import { TaskRelatedIssueType } from './related-issue-type.entity';
@@ -18,7 +18,7 @@ import { TypeOrmTaskRelatedIssueTypeRepository } from './repository/type-orm-rel
 import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-related-issue-type.repository';
 
 @Injectable()
-export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<TaskRelatedIssueType> {
+export class TaskRelatedIssueTypeService extends TaskMetadataService<TaskRelatedIssueType> {
 	constructor(
 		readonly typeOrmTaskRelatedIssueTypeRepository: TypeOrmTaskRelatedIssueTypeRepository,
 		readonly mikroOrmTaskRelatedIssueTypeRepository: MikroOrmTaskRelatedIssueTypeRepository,

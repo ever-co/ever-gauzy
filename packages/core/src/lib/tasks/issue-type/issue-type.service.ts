@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, SelectQueryBuilder } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
@@ -12,7 +12,7 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { IssueType } from './issue-type.entity';
-import { TaskStatusPrioritySizeService } from './../task-status-priority-size.service';
+import { TaskMetadataService } from './../task-metadata.service';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './default-global-issue-types';
 import { RequestContext } from './../../core/context';
 import { MultiORMEnum } from './../../core/utils';
@@ -20,7 +20,9 @@ import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.r
 import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.repository';
 
 @Injectable()
-export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
+export class IssueTypeService extends TaskMetadataService<IssueType> {
+	readonly logger = new Logger(IssueTypeService.name);
+
 	constructor(
 		readonly typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
 		readonly mikroOrmIssueTypeRepository: MikroOrmIssueTypeRepository,
@@ -85,7 +87,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 				}
 			}
 		} catch (error) {
-			console.log('Invalid request parameter: Some required parameters are missing or incorrect', error);
+			this.logger.error('Invalid request parameter: Some required parameters are missing or incorrect', error);
 			return await this.getDefaultEntities();
 		}
 	}
@@ -110,38 +112,42 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 */
 	async bulkCreateTenantsIssueTypes(tenants: ITenant[]): Promise<IIssueType[]> {
 		try {
-			// Fetch existing issue types
+			if (!tenants?.length) {
+				return [];
+			}
+
+			// Fetch existing issue types or fall back to defaults
 			const { items = [], total } = await super.fetchAll({});
 
-			// Define default issue types
-			const defaultIssueTypes = DEFAULT_GLOBAL_ISSUE_TYPES.map((issueType: IIssueType) => ({
-				...issueType,
-				icon: `ever-icons/${issueType.icon}`,
-				isSystem: false
-			}));
+			const source: IIssueType[] =
+				total > 0
+					? items
+					: DEFAULT_GLOBAL_ISSUE_TYPES.map((issueType: IIssueType) => ({
+							...issueType,
+							icon: `ever-icons/${issueType.icon}`,
+							isSystem: false
+						}));
 
-			// Function to generate issue types based on a source array
-			const generateIssueTypes = (source: IIssueType[]) =>
-				tenants.flatMap((tenant) =>
-					source.map(({ name, value, description, icon, color, isDefault, imageId = null }: IIssueType) => ({
-						name,
-						value,
-						description,
-						icon,
-						color,
-						imageId,
-						tenant,
-						isDefault,
-						isSystem: false
-					}))
-				);
+			// Cartesian product of tenants and source issue types
+			const issueTypes = tenants.flatMap((tenant) =>
+				source.map(
+					(item) =>
+						new IssueType({
+							name: item.name,
+							value: item.value,
+							description: item.description,
+							icon: item.icon,
+							color: item.color,
+							imageId: item.imageId ?? null,
+							isDefault: item.isDefault,
+							tenant,
+							isSystem: false
+						})
+				)
+			);
 
-			// Generate the array of issue types based on existing or default values
-			const issueTypes: IIssueType[] =
-				total > 0 ? generateIssueTypes(items) : generateIssueTypes(defaultIssueTypes);
-
-			// Save the created or fetched issue types to the repository and return the result.
-			return await this.saveMany(issueTypes);
+			// Use saveManyWithoutEnrichment to preserve each entity's specific tenantId
+			return await this.saveManyWithoutEnrichment(issueTypes);
 		} catch (error) {
 			throw new BadRequestException(
 				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',
@@ -200,20 +206,17 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			// Fetch items based on tenant and organizationId
 			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			const entitiesToCreate = items.map((item: IIssueType) => {
-				const { name, value, description, icon, color, imageId, isDefault } = item;
-				return {
-					...entity,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					imageId,
-					isDefault,
-					isSystem: false
-				};
-			});
+			const entitiesToCreate = items.map((item: IIssueType) => ({
+				...entity,
+				name: item.name,
+				value: item.value,
+				description: item.description,
+				icon: item.icon,
+				color: item.color,
+				imageId: item.imageId,
+				isDefault: item.isDefault,
+				isSystem: false
+			}));
 			return await this.createMany(entitiesToCreate);
 		} catch (error) {
 			// If an error occurs, throw an HttpException with a more specific message.
