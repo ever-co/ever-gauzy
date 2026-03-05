@@ -1194,7 +1194,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	 * @returns True if the section should be hidden, false otherwise.
 	 */
 	public isSectionHidden(section: NavMenuSectionItem): boolean {
-		const { data, id } = section;
+		const { data } = section;
 		let isHidden = false;
 
 		// Check if section should be hidden based on permissions or custom hide function

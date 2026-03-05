@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject } from '@nestjs/common';
+import { forwardRef, Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RequestContext } from '../../../../core/context';
 import { TenantSettingService } from './../../tenant-setting.service';
