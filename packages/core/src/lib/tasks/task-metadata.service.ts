@@ -15,6 +15,7 @@ import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-
 import { FileStorage } from '../core/file-storage';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
+import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { TenantBaseEntity } from '../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
 
@@ -131,6 +132,10 @@ export class TaskMetadataService<BaseEntity extends TenantBaseEntity> extends Te
 	/**
 	 * Retrieves system default entities (tenantId=null, organizationId=null, isSystem=true).
 	 *
+	 * Bypasses TenantAwareCrudService scoping by querying the repository directly,
+	 * since system defaults have tenantId IS NULL and would otherwise be overwritten
+	 * by the automatic tenant filter.
+	 *
 	 * @returns Paginated result of default system entities.
 	 */
 	async getDefaultEntities(): Promise<IPagination<BaseEntity>> {
@@ -145,7 +150,31 @@ export class TaskMetadataService<BaseEntity extends TenantBaseEntity> extends Te
 				}
 			};
 
-			return await super.findAll(options as FindManyOptions<BaseEntity>);
+			let items: BaseEntity[];
+			let total: number;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<BaseEntity>(
+						options as FindManyOptions
+					);
+					[items, total] = (await this.mikroOrmBaseEntityRepository.findAndCount(
+						where,
+						mikroOptions
+					)) as any;
+					items = items.map((entity) => this.serialize(entity));
+					break;
+				}
+				case MultiORMEnum.TypeORM:
+					[items, total] = await this.typeOrmBaseEntityRepository.findAndCount(
+						options as FindManyOptions<BaseEntity>
+					);
+					break;
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+
+			return { items, total };
 		} catch (error) {
 			this.logger.error(`Error while getting default entities (${this.ormType})`, error);
 			return { items: [], total: 0 };
