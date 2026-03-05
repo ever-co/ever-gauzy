@@ -184,6 +184,7 @@ export class SimService {
 					name: IntegrationEnum.SIM,
 					integration,
 					tenantId,
+					organizationId,
 					settings
 				});
 
@@ -558,6 +559,7 @@ export class SimService {
 	private mapExecutionResult(execution: SimWorkflowExecution, result: WorkflowExecutionResult | AsyncExecutionResult): void {
 		const syncResult = result as WorkflowExecutionResult;
 		const asyncResult = result as AsyncExecutionResult;
+		const resultAny = result as Record<string, any>;
 		const taskId = asyncResult.taskId;
 
 		if (taskId) {
@@ -569,9 +571,15 @@ export class SimService {
 		} else {
 			execution.status = 'completed';
 		}
+
 		execution.output = syncResult.output ?? result;
-		execution.executionId = syncResult.metadata?.executionId || taskId;
-		execution.duration = syncResult.metadata?.duration || syncResult.totalDuration;
+
+		// Extract executionId — check metadata (SDK type), root level (API may return it there), or async taskId
+		execution.executionId = syncResult.metadata?.executionId || resultAny['executionId'] || taskId;
+
+		// Extract duration — check metadata (SDK type), totalDuration, or root level
+		execution.duration = syncResult.metadata?.duration || syncResult.totalDuration || resultAny['duration'];
+
 		execution.error = syncResult.error ? { message: syncResult.error } : undefined;
 	}
 

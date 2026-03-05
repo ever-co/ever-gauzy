@@ -63,5 +63,12 @@ export const DEFAULT_INTEGRATION_TYPES = [
         order: 2,
         description: null,
         icon: null
+    },
+    {
+        name: IntegrationTypeEnum.AI_AGENTS,
+        groupName: IntegrationTypeGroupEnum.CATEGORIES,
+        order: 2,
+        description: null,
+        icon: null
     }
 ];
