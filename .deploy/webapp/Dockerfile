@@ -156,7 +156,11 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 ARG VERDACCIO_TOKEN
 RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
 	echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
-	echo "registry=https://packages.ever.co/" >> .npmrc; \
+	echo "registry=https://packages.ever.co/" >> .npmrc && \
+	echo "always-auth=true" >> .npmrc && \
+	echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
+	sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
+	sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
 	fi
 
 # Must be without --production because we need dev deps installed
@@ -164,8 +168,8 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
 RUN yarn postinstall.manual
 RUN yarn cache clean
 
-# Remove .npmrc so the auth token is not copied to downstream stages
-RUN rm -f .npmrc
+# Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc .yarnrc
 
 FROM node:24.14.0-alpine3.23 AS development
 

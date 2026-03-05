@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 /**
@@ -19,7 +19,7 @@ export class WorkflowExecutionQueryDto {
 	@ApiPropertyOptional({ description: 'Number of records to return', default: 20 })
 	@IsOptional()
 	@Type(() => Number)
-	@IsNumber()
+	@IsInt()
 	@Min(1)
 	@Max(100)
 	limit?: number;
@@ -27,7 +27,7 @@ export class WorkflowExecutionQueryDto {
 	@ApiPropertyOptional({ description: 'Number of records to skip', default: 0 })
 	@IsOptional()
 	@Type(() => Number)
-	@IsNumber()
+	@IsInt()
 	@Min(0)
 	offset?: number;
 }
