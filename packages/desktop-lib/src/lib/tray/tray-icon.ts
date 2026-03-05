@@ -1,6 +1,7 @@
 import { RegisteredWindow } from '@gauzy/desktop-core';
 import { ipcMain, nativeImage, Tray } from 'electron';
 import * as path from 'node:path';
+import { PluginEventManager } from '../plugin-system/events/plugin-event.manager';
 import { TrayIPCHandler } from './handlers/tray-ipc-handler';
 import { IConfigStore, ITranslationService, ITrayIconConfig, IWindowService } from './interfaces';
 import { TrayMenuManager } from './managers/tray-menu-manager';
@@ -11,29 +12,33 @@ import { ILanguageObserver, LanguageChangeSubject } from './observer/language-su
  * DOES NOT recreate on language change - only rebuilds menu
  */
 export class TrayIcon implements ILanguageObserver {
-	private tray: Tray;
-	private menuManager: TrayMenuManager;
-	private trayIPCHandler: TrayIPCHandler;
-	private languageSubject: LanguageChangeSubject;
+	private readonly tray: Tray;
+	private readonly menuManager: TrayMenuManager;
+	private readonly trayIPCHandler: TrayIPCHandler;
+	private readonly languageSubject: LanguageChangeSubject;
+	private readonly pluginEventManager: PluginEventManager;
 
 	constructor(
-		config: ITrayIconConfig,
-		private dependencies: {
+		private readonly config: ITrayIconConfig,
+		private readonly dependencies: {
 			windowService: IWindowService;
 			configStore: IConfigStore;
 			translationService: ITranslationService;
 		}
 	) {
+		// Initialize plugin event manager
+		this.pluginEventManager = PluginEventManager.getInstance();
+
 		// Create tray icon
-		this.tray = this.createTray(config.iconPath);
+		this.tray = this.createTray(this.config.iconPath);
 
 		// Create menu manager with Strategy pattern
 		this.menuManager = new TrayMenuManager(
 			this.tray,
-			dependencies.translationService,
-			dependencies.windowService,
-			dependencies.configStore,
-			config.windowPath
+			this.dependencies.translationService,
+			this.dependencies.windowService,
+			this.dependencies.configStore,
+			this.config.windowPath
 		);
 
 		// Build initial menu
@@ -42,8 +47,8 @@ export class TrayIcon implements ILanguageObserver {
 		// Setup IPC handlers
 		this.trayIPCHandler = new TrayIPCHandler(
 			this.menuManager,
-			dependencies.windowService,
-			dependencies.configStore
+			this.dependencies.windowService,
+			this.dependencies.configStore
 		);
 		this.trayIPCHandler.setupHandlers();
 
@@ -73,6 +78,7 @@ export class TrayIcon implements ILanguageObserver {
 	 */
 	onAuthStateChanged(isAuthenticated: boolean, authData?: any): void {
 		this.menuManager.updateAuthState(isAuthenticated, authData);
+		this.pluginEventManager.notify();
 	}
 
 	private createTray(iconPath: string): Tray {
