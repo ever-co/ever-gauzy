@@ -105,10 +105,10 @@ export class IssueTypeService extends TaskMetadataService<IssueType> {
 	}
 
 	/**
-	 * Create or fetch issue types for a list of tenants.
+	 * Create issue types for a list of tenants using DEFAULT_GLOBAL_ISSUE_TYPES.
 	 *
 	 * @param tenants The list of tenants.
-	 * @returns A promise resolving to an array of created or fetched issue types.
+	 * @returns A promise resolving to an array of created issue types.
 	 */
 	async bulkCreateTenantsIssueTypes(tenants: ITenant[]): Promise<IIssueType[]> {
 		try {
@@ -116,41 +116,33 @@ export class IssueTypeService extends TaskMetadataService<IssueType> {
 				return [];
 			}
 
-			// Fetch existing issue types or fall back to defaults
-			const { items = [], total } = await super.fetchAll({});
-
-			const source: IIssueType[] =
-				total > 0
-					? items
-					: DEFAULT_GLOBAL_ISSUE_TYPES.map((issueType: IIssueType) => ({
-							...issueType,
-							icon: `ever-icons/${issueType.icon}`,
-							isSystem: false
-						}));
-
-			// Cartesian product of tenants and source issue types
-			const issueTypes = tenants.flatMap((tenant) =>
-				source.map(
-					(item) =>
+			/**
+			 * Cartesian product of tenants and default global issue types.
+			 */
+			const issueTypes: IssueType[] = tenants.flatMap((tenant: ITenant) =>
+				DEFAULT_GLOBAL_ISSUE_TYPES.map(
+					(issueType: IIssueType) =>
 						new IssueType({
-							name: item.name,
-							value: item.value,
-							description: item.description,
-							icon: item.icon,
-							color: item.color,
-							imageId: item.imageId ?? null,
-							isDefault: item.isDefault,
+							name: issueType.name,
+							value: issueType.value,
+							description: issueType.description,
+							icon: `ever-icons/${issueType.icon}`,
+							color: issueType.color,
+							imageId: issueType.imageId ?? null,
+							isDefault: issueType.isDefault,
 							tenant,
 							isSystem: false
 						})
 				)
 			);
 
-			// Use saveManyWithoutEnrichment to preserve each entity's specific tenantId
+			/**
+			 * Use saveManyWithoutEnrichment to preserve each entity's specific tenantId.
+			 */
 			return await this.saveManyWithoutEnrichment(issueTypes);
 		} catch (error) {
 			throw new BadRequestException(
-				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',
+				'Failed to create issue types for the specified tenants.',
 				error
 			);
 		}
@@ -182,7 +174,12 @@ export class IssueTypeService extends TaskMetadataService<IssueType> {
 						isSystem: false
 					})
 			);
-			return await this.saveMany(issueTypes);
+
+			/**
+			 * Save statuses without tenant enrichment to preserve
+			 * the original tenantId assigned to each entity.
+			 */
+			return await this.saveManyWithoutEnrichment(issueTypes);
 		} catch (error) {
 			throw new BadRequestException(
 				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',

@@ -97,16 +97,23 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 	}
 
 	/**
+	 * Creates default task statuses for multiple tenants.
 	 *
+	 * This method generates a Cartesian product between the provided tenants
+	 * and the DEFAULT_GLOBAL_STATUSES, creating system-independent task statuses
+	 * for each tenant.
+	 *
+	 * @param tenants Array of tenants for which task statuses should be created
+	 * @returns Promise resolving to an array of created task statuses
 	 */
-	async bulkCreateTenantsStatus(tenants: ITenant[]): Promise<ITaskStatus[] & TaskStatus[]> {
+	async bulkCreateTenantsStatus(tenants: ITenant[]): Promise<TaskStatus[]> {
 		try {
-			if (!tenants || tenants.length === 0) {
+			if (!tenants?.length) {
 				return [];
 			}
 
 			/**
-			 * Cartesian product of tenants and default global statuses.
+			 * Generate task statuses for each tenant using default global statuses.
 			 */
 			const statuses: TaskStatus[] = tenants.flatMap((tenant: ITenant) =>
 				DEFAULT_GLOBAL_STATUSES.map(
@@ -121,12 +128,15 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 			);
 
 			/**
-			 * Use saveManyWithoutEnrichment to ensure that each entity's specific tenantId
-			 * is preserved. The standard saveMany() would force the current session's tenantId.
+			 * Save statuses without tenant enrichment to preserve
+			 * the original tenantId assigned to each entity.
 			 */
-			return (await this.saveManyWithoutEnrichment(statuses)) as ITaskStatus[] & TaskStatus[];
+			return await this.saveManyWithoutEnrichment(statuses);
 		} catch (error) {
-			this.logger.error('Error while creating bulk task statuses for tenants:', error.message);
+			this.logger.error(
+				'Error while creating bulk task statuses for tenants:',
+				error.message
+			);
 			return [];
 		}
 	}
