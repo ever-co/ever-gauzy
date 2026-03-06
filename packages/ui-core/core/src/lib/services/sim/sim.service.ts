@@ -4,6 +4,51 @@ import { Observable } from 'rxjs';
 import { ID, IIntegrationTenant } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
+/**
+ * Represents a single SIM workflow execution record.
+ */
+export interface ISimExecutionRecord {
+	id: string;
+	workflowId: string;
+	executionId?: string;
+	status: string;
+	triggeredBy?: string;
+	duration?: number;
+	createdAt: string;
+	updatedAt?: string;
+	result?: Record<string, unknown>;
+}
+
+/**
+ * Paginated response for execution history.
+ */
+export interface ISimExecutionHistoryResponse {
+	data: ISimExecutionRecord[];
+	total: number;
+}
+
+/**
+ * Result of a workflow execution (sync or async).
+ */
+export interface ISimWorkflowExecutionResult {
+	executionId?: string;
+	status?: string;
+	result?: Record<string, unknown>;
+	taskId?: string;
+	metadata?: Record<string, unknown>;
+	[key: string]: unknown;
+}
+
+/**
+ * Async job status response.
+ */
+export interface ISimJobStatusResponse {
+	taskId: string;
+	status: string;
+	result?: Record<string, unknown>;
+	[key: string]: unknown;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SimService {
 	private readonly API_URL = `${API_PREFIX}/integration/sim`;
@@ -31,8 +76,8 @@ export class SimService {
 	executeWorkflow(
 		workflowId: string,
 		body: { input?: unknown; timeout?: number; runAsync?: boolean }
-	): Observable<any> {
-		return this.http.post<any>(`${this.API_URL}/workflows/${workflowId}/execute`, body);
+	): Observable<ISimWorkflowExecutionResult> {
+		return this.http.post<ISimWorkflowExecutionResult>(`${this.API_URL}/workflows/${workflowId}/execute`, body);
 	}
 
 	/**
@@ -47,8 +92,8 @@ export class SimService {
 	/**
 	 * Get async job status.
 	 */
-	getJobStatus(taskId: string): Observable<any> {
-		return this.http.get<any>(`${this.API_URL}/jobs/${taskId}/status`);
+	getJobStatus(taskId: string): Observable<ISimJobStatusResponse> {
+		return this.http.get<ISimJobStatusResponse>(`${this.API_URL}/jobs/${taskId}/status`);
 	}
 
 	/**
@@ -59,13 +104,13 @@ export class SimService {
 		status?: string;
 		limit?: number;
 		offset?: number;
-	}): Observable<{ data: any[]; total: number }> {
+	}): Observable<ISimExecutionHistoryResponse> {
 		let params = new HttpParams();
 		if (query?.workflowId) params = params.set('workflowId', query.workflowId);
 		if (query?.status) params = params.set('status', query.status);
 		if (query?.limit != null) params = params.set('limit', query.limit.toString());
 		if (query?.offset != null) params = params.set('offset', query.offset.toString());
-		return this.http.get<{ data: any[]; total: number }>(`${this.API_URL}/executions`, { params });
+		return this.http.get<ISimExecutionHistoryResponse>(`${this.API_URL}/executions`, { params });
 	}
 
 	/**

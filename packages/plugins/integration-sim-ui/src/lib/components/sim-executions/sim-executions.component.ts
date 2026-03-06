@@ -1,9 +1,9 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap, switchMap, of } from 'rxjs';
-import { SimService, SimStoreService } from '@gauzy/ui-core/core';
+import { SimService, SimStoreService, ISimExecutionRecord } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
@@ -11,15 +11,18 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ngx-sim-executions',
 	templateUrl: './sim-executions.component.html',
 	styleUrls: ['./sim-executions.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SimExecutionsComponent extends TranslationBaseComponent implements OnInit {
 	private readonly _activatedRoute = inject(ActivatedRoute);
 	private readonly _simService = inject(SimService);
 	private readonly _simStoreService = inject(SimStoreService);
 
+	private _loadSeq = 0;
+
 	readonly loading = signal<boolean>(false);
-	readonly executions = signal<any[]>([]);
+	readonly executions = signal<ISimExecutionRecord[]>([]);
 	readonly total = signal<number>(0);
 	readonly currentPage = signal<number>(1);
 
@@ -58,6 +61,7 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 	}
 
 	loadExecutions(): void {
+		const seq = ++this._loadSeq;
 		this.loading.set(true);
 		const offset = (this.currentPage() - 1) * this.pageSize;
 
@@ -71,12 +75,14 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 			.pipe(untilDestroyed(this))
 			.subscribe({
 				next: (result) => {
+					if (seq !== this._loadSeq) return; // Discard stale response
 					this.executions.set(result.data ?? []);
 					this.total.set(result.total ?? 0);
 					this._simStoreService.setExecutions(result.data ?? []);
 					this.loading.set(false);
 				},
 				error: () => {
+					if (seq !== this._loadSeq) return;
 					this.loading.set(false);
 				}
 			});

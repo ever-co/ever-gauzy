@@ -1,9 +1,10 @@
 .hint {
-	margin-bottom: 20px;
+	margin-bottom: 16px;
 }
 
 button {
 	box-shadow: var(--gauzy-shadow);
+	border-radius: calc(var(--border-radius) * 1);
 	border: none !important;
 }
 

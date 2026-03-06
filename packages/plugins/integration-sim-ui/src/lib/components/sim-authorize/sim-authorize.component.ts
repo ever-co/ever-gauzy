@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormGroup, UntypedFormControl, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,8 +27,8 @@ export class SimAuthorizeComponent extends TranslationBaseComponent implements O
 	readonly organization = signal<IOrganization | null>(null);
 	readonly loading = signal<boolean>(false);
 
-	form: UntypedFormGroup = new UntypedFormGroup({
-		api_key: new UntypedFormControl('', [Validators.required, Validators.pattern(/\S+/)])
+	form = new FormGroup({
+		api_key: new FormControl('', [Validators.required, Validators.pattern(/\S+/)])
 	});
 
 	constructor(readonly translateService: TranslateService) {

@@ -1496,7 +1496,7 @@
 				"TITLE": "SIM AI",
 				"INFOS": "输入您的 SIM AI API 密钥以连接您的账户。您可以在 sim.ai 的 SIM 控制面板中找到您的 API 密钥。",
 				"NEXT": "连接",
-				"HINT": "您的 API 密钥安全存储，用于验证工作流执行。",
+				"HINT": "您的 API 密钥将被安全存储，用于验证工作流执行。",
 				"ERRORS": {
 					"INVALID_FORM": "请正确填写所有必填字段",
 					"SAVE_SETTINGS": "保存设置失败",

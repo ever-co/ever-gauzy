@@ -575,10 +575,10 @@ export class SimService {
 		execution.output = syncResult.output ?? result;
 
 		// Extract executionId — check metadata (SDK type), root level (API may return it there), or async taskId
-		execution.executionId = syncResult.metadata?.executionId || resultAny['executionId'] || taskId;
+		execution.executionId = syncResult.metadata?.executionId ?? resultAny['executionId'] ?? taskId;
 
 		// Extract duration — check metadata (SDK type), totalDuration, or root level
-		execution.duration = syncResult.metadata?.duration || syncResult.totalDuration || resultAny['duration'];
+		execution.duration = syncResult.metadata?.duration ?? syncResult.totalDuration ?? resultAny['duration'];
 
 		execution.error = syncResult.error ? { message: syncResult.error } : undefined;
 	}

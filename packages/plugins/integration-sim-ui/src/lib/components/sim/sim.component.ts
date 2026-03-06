@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,7 +12,8 @@ const INTEGRATION_SIM_PAGE_LINK = '/pages/integrations/sim';
 @Component({
 	selector: 'ngx-sim',
 	templateUrl: './sim.component.html',
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SimComponent extends TranslationBaseComponent implements OnInit {
 	private readonly _activatedRoute = inject(ActivatedRoute);
