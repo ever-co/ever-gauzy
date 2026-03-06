@@ -9,13 +9,14 @@
 					nbInput
 					fullWidth
 					type="text"
-					[(ngModel)]="filterWorkflowId"
+					[ngModel]="filterWorkflowId()"
+					(ngModelChange)="filterWorkflowId.set($event)"
 					[placeholder]="'INTEGRATIONS.SIM_PAGE.EXECUTIONS.WORKFLOW_ID_PLACEHOLDER' | translate"
 				/>
 			</div>
 			<div class="col-md-3">
 				<label class="label" for="sim-status-filter">{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.STATUS' | translate }}</label>
-				<nb-select id="sim-status-filter" fullWidth [(ngModel)]="filterStatus" [placeholder]="'INTEGRATIONS.SIM_PAGE.EXECUTIONS.ALL_STATUSES' | translate">
+				<nb-select id="sim-status-filter" fullWidth [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" [placeholder]="'INTEGRATIONS.SIM_PAGE.EXECUTIONS.ALL_STATUSES' | translate">
 					@for (status of statusOptions; track status) {
 						<nb-option [value]="status">
 							@if (status === '') {
@@ -92,7 +93,7 @@
 		</div>
 
 		<!-- Pagination -->
-		@if (totalPages > 1) {
+		@if (totalPages() > 1) {
 			<div class="pagination d-flex justify-content-between align-items-center mt-3">
 				<span class="text-hint">
 					{{ 'INTEGRATIONS.SIM_PAGE.EXECUTIONS.SHOWING' | translate }}
@@ -111,13 +112,13 @@
 					>
 						<nb-icon icon="arrow-back-outline"></nb-icon>
 					</button>
-					<span class="d-flex align-items-center px-2">{{ currentPage() }} / {{ totalPages }}</span>
+					<span class="d-flex align-items-center px-2">{{ currentPage() }} / {{ totalPages() }}</span>
 					<button
 						nbButton
 						size="small"
 						ghost
 						aria-label="Next page"
-						[disabled]="currentPage() >= totalPages"
+						[disabled]="currentPage() >= totalPages()"
 						(click)="onPageChange(currentPage() + 1)"
 					>
 						<nb-icon icon="arrow-forward-outline"></nb-icon>

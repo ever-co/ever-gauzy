@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,12 +27,14 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 	readonly total = signal<number>(0);
 	readonly currentPage = signal<number>(1);
 
-	integrationId: string = '';
-	filterWorkflowId: string = '';
-	filterStatus: string = '';
+	readonly integrationId = signal<string>('');
+	readonly filterWorkflowId = signal<string>('');
+	readonly filterStatus = signal<string>('');
 	readonly pageSize = 20;
 
 	readonly statusOptions = ['', 'queued', 'processing', 'completed', 'failed', 'cancelled'];
+
+	readonly totalPages = computed(() => (this.pageSize > 0 ? Math.ceil(this.total() / this.pageSize) : 0));
 
 	constructor(readonly translateService: TranslateService) {
 		super(translateService);
@@ -53,7 +55,7 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 				}),
 				filter((id): id is string => !!id),
 				tap((id) => {
-					this.integrationId = id;
+					this.integrationId.set(id);
 					this.loadExecutions();
 				}),
 				untilDestroyed(this)
@@ -68,8 +70,8 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 
 		this._simService
 			.getExecutionHistory({
-				workflowId: this.filterWorkflowId || undefined,
-				status: this.filterStatus || undefined,
+				workflowId: this.filterWorkflowId() || undefined,
+				status: this.filterStatus() || undefined,
 				limit: this.pageSize,
 				offset
 			})
@@ -98,10 +100,6 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 	onPageChange(page: number): void {
 		this.currentPage.set(page);
 		this.loadExecutions();
-	}
-
-	get totalPages(): number {
-		return this.pageSize > 0 ? Math.ceil(this.total() / this.pageSize) : 0;
 	}
 
 	getStatusClass(status: string): string {
