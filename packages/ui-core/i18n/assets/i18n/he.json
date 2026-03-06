@@ -1523,6 +1523,73 @@
 				}
 			}
 		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "שילוב תהליכי עבודה של SIM AI",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "הזן את מפתח ה-API של SIM AI כדי לחבר את החשבון שלך. תוכל למצוא את מפתח ה-API שלך בלוח הבקרה של SIM באתר sim.ai.",
+				"NEXT": "התחבר",
+				"HINT": "מפתח ה-API שלך מאוחסן בצורה מאובטחת ומשמש לאימות הרצות תהליכי עבודה.",
+				"ERRORS": {
+					"INVALID_FORM": "אנא מלא את כל השדות הנדרשים בצורה נכונה",
+					"SAVE_SETTINGS": "שמירת ההגדרות נכשלה",
+					"ORGANIZATION_NOT_FOUND": "הארגון לא נמצא",
+					"CHECK_REMEMBER_STATE": "בדיקת המצב השמור נכשלה"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "שילוב SIM AI הוגדר בהצלחה"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "הגדרות SIM AI",
+				"SUBTITLE": "הגדר את הגדרות השילוב של SIM AI",
+				"API_KEY": "מפתח API",
+				"API_KEY_PLACEHOLDER": "הזן את מפתח ה-API של SIM AI"
+			},
+			"EXECUTIONS": {
+				"TITLE": "היסטוריית הרצות",
+				"NO_EXECUTIONS": "לא נמצאו הרצות תהליכי עבודה. הרץ תהליך עבודה מלשונית תהליכי העבודה כדי לראות תוצאות כאן.",
+				"WORKFLOW_ID": "מזהה תהליך עבודה",
+				"WORKFLOW_ID_PLACEHOLDER": "סנן לפי מזהה תהליך עבודה",
+				"EXECUTION_ID": "מזהה הרצה",
+				"STATUS": "סטטוס",
+				"TRIGGERED_BY": "הופעל על ידי",
+				"DURATION": "משך",
+				"CREATED": "נוצר",
+				"LOADING": "טוען היסטוריית הרצות...",
+				"LOAD": "חיפוש",
+				"ALL_STATUSES": "כל הסטטוסים",
+				"SHOWING": "מציג",
+				"OF": "מתוך",
+				"PREVIOUS_PAGE": "עמוד קודם",
+				"NEXT_PAGE": "עמוד הבא"
+			},
+			"WORKFLOWS": {
+				"TITLE": "תהליכי עבודה",
+				"VALIDATE_TITLE": "אימות תהליך עבודה",
+				"EXECUTE_TITLE": "הרצת תהליך עבודה",
+				"JOB_STATUS_TITLE": "סטטוס משימה אסינכרונית",
+				"WORKFLOW_ID": "מזהה תהליך עבודה",
+				"WORKFLOW_ID_PLACEHOLDER": "הזן את מזהה תהליך העבודה של SIM",
+				"VALIDATE": "אמת",
+				"DEPLOYED": "תהליך העבודה פרוס ומוכן להרצה.",
+				"NOT_DEPLOYED": "תהליך העבודה אינו פרוס או לא נמצא.",
+				"EXECUTE": "הרץ",
+				"ASYNC": "אסינכרוני",
+				"TIMEOUT": "זמן קצוב (מילישניות)",
+				"INPUT": "קלט (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "ספק קלט לתהליך העבודה כ-JSON תקין. נתונים אלה יועברו לתהליך העבודה של SIM.",
+				"RESULT": "תוצאת ההרצה",
+				"TASK_ID": "מזהה משימה",
+				"TASK_ID_PLACEHOLDER": "הזן את מזהה המשימה האסינכרונית",
+				"CHECK_STATUS": "בדוק סטטוס",
+				"JOB_RESULT": "סטטוס המשימה",
+				"INVALID_JSON": "קלט JSON לא תקין",
+				"EXECUTION_FAILED": "ההרצה נכשלה"
+			}
+		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "הגדרות",
