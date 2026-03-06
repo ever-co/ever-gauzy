@@ -375,28 +375,24 @@ export class SetupComponent implements OnInit, OnDestroy {
 		if (this.connectivity.integrated) {
 			this.onProgress = true;
 		}
-		const gauzyConfig: DesktopSetupConfig  = {
+		const gauzyConfig: DesktopSetupConfig = {
 			...this.getServerConfig(),
 			...this.getDataBaseConfig(),
 			...this.getThirdPartyConfig(),
-			...this.getFeature()
+			...this.getFeature(),
+			isSetup: true
 		};
 		await this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE', this.languageSelector.preferredLanguage);
 
-		try {
-			let isStarted = false;
-			if (this.isServer) {
-				this.electronService.ipcRenderer.send('start_server', gauzyConfig);
-				isStarted = true;
-			} else {
-				isStarted = await this.electronService.ipcRenderer.invoke('START_SERVER', gauzyConfig);
-			}
-			if (isStarted && !gauzyConfig.isLocalServer) {
+		if (this.isServer || this.isServerApi) {
+			this.electronService.ipcRenderer.send('start_server', gauzyConfig);
+			if (!gauzyConfig.isLocalServer) {
 				this.electronService.ipcRenderer.send('app_is_init');
 			}
-		} catch (error) {
-			this._errorHandlerService.handleError(error);
+		} else {
+			this.electronService.ipcRenderer.send('restart_app', gauzyConfig);
 		}
+
 		this.isSaving = false;
 	}
 

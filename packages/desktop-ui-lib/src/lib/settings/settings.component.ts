@@ -970,8 +970,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			...this.config
 		};
 		if (this.config.timeTrackerWindow) newConfig.awHost = `http://127.0.0.1:${this.config.awPort}`;
-		this.electronService.ipcRenderer.send('restart_app', newConfig);
 		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
+		this.electronService.ipcRenderer.send('restart_app', newConfig);
 	}
 
 	portChange(val, type) {
