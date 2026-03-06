@@ -25,8 +25,10 @@ import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-fe
 	providers: [
 		FeatureService,
 		FeatureOrganizationService,
-		TypeOrmFeatureRepository, MikroOrmFeatureRepository,
-		TypeOrmFeatureOrganizationRepository, MikroOrmFeatureOrganizationRepository,
+		TypeOrmFeatureRepository,
+		MikroOrmFeatureRepository,
+		TypeOrmFeatureOrganizationRepository,
+		MikroOrmFeatureOrganizationRepository,
 		...CommandHandlers
 	],
 	exports: [FeatureService, FeatureOrganizationService]

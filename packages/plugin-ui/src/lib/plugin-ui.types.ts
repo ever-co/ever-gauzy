@@ -60,7 +60,7 @@ export interface PluginNavItemInput {
 	icon?: string;
 	link?: string;
 	items?: PluginNavItemInput[];
-	menuCategory?: 'main' | 'settings' | 'accordion';
+	menuCategory?: 'main' | 'settings' | 'workspace';
 	data: {
 		translationKey: string;
 		permissionKeys?: unknown[];

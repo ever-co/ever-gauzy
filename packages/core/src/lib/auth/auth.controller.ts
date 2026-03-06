@@ -1,14 +1,3 @@
-import { Public } from '@gauzy/common';
-import {
-	IAuthResponse,
-	ISocialAccount,
-	ISocialAccountExistUser,
-	ITokenPair,
-	IUserSigninWorkspaceResponse,
-	LanguagesEnum,
-	PermissionsEnum
-} from '@gauzy/contracts';
-import { parseToBoolean } from '@gauzy/utils';
 import {
 	BadRequestException,
 	Body,
@@ -25,6 +14,17 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { I18nLang } from 'nestjs-i18n';
+import { Public } from '@gauzy/common';
+import {
+	IAuthResponse,
+	ISocialAccount,
+	ISocialAccountExistUser,
+	ITokenPair,
+	IUserSigninWorkspaceResponse,
+	LanguagesEnum,
+	PermissionsEnum
+} from '@gauzy/contracts';
+import { parseToBoolean } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { UseValidationPipe } from '../shared/pipes';
 import { User as IUser } from '../user/user.entity';
@@ -37,7 +37,6 @@ import {
 	TenantPermissionGuard
 } from './../shared/guards';
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
-import { UserService } from './../user/user.service';
 import { AuthService } from './auth.service';
 import {
 	AuthLoginCommand,
@@ -61,7 +60,6 @@ import { FindUserBySocialLoginDTO, SocialLoginBodyRequestDTO } from './social-ac
 export class AuthController {
 	constructor(
 		private readonly authService: AuthService,
-		private readonly userService: UserService,
 		private readonly commandBus: CommandBus
 	) {}
 
@@ -245,10 +243,10 @@ export class AuthController {
 	@Public()
 	@UseValidationPipe({ whitelist: true })
 	@Throttle({ default: { limit: 5, ttl: 60000 } })
-	async confirmWorkspaceSigninByCode(
+	async signinWorkspacesByMagicCode(
 		@Body() input: WorkspaceSigninEmailVerifyDTO
 	): Promise<IUserSigninWorkspaceResponse> {
-		return await this.authService.confirmWorkspaceSigninByCode(input, parseToBoolean(input.includeTeams));
+		return await this.authService.signinWorkspacesByMagicCode(input, parseToBoolean(input.includeTeams));
 	}
 
 	/**

@@ -6,11 +6,10 @@ import { TenantSettingSaveCommand } from '../tenant-setting.save.command';
 
 @CommandHandler(TenantSettingSaveCommand)
 export class TenantSettingSaveHandler implements ICommandHandler<TenantSettingSaveCommand> {
-
 	constructor(
 		@Inject(forwardRef(() => TenantSettingService))
 		private readonly _tenantSettingService: TenantSettingService
-	) { }
+	) {}
 
 	/**
 	 * Executes a command to save tenant settings. Delegates to _tenantSettingService,
@@ -20,10 +19,12 @@ export class TenantSettingSaveHandler implements ICommandHandler<TenantSettingSa
 	 * @returns The result of the save operation from _tenantSettingService.
 	 */
 	public async execute(command: TenantSettingSaveCommand) {
-		const { input, tenantId } = command;
-		return await this._tenantSettingService.saveSettings(
-			input,
-			RequestContext.currentTenantId() || tenantId
-		);
+		const tenantId = RequestContext.currentTenantId() ?? command.tenantId;
+
+		if (!tenantId) {
+			throw new Error('Tenant ID is required to save tenant settings.');
+		}
+
+		return this._tenantSettingService.saveSettings(command.input, tenantId);
 	}
 }

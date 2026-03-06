@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { Server } from 'node:http';
 import { McpTransportConfig } from '../common/config';
+import { environment } from '../environments/environment';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
@@ -332,7 +333,8 @@ export class HttpTransport {
 		// Root endpoint
 		this.app.get('/', (req, res) => {
 			res.json({
-				name: 'Gauzy MCP Server',
+				name: environment.mcpAppName,
+				id: environment.appId,
 				status: 'running',
 				timestamp: new Date().toISOString()
 			});

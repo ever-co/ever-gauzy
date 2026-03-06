@@ -550,6 +550,10 @@ export class AuthService extends SocialAuthService {
 		});
 
 		if (response.total_workspaces > 0) {
+			// Invalidate the code immediately after successful validation.
+			// The signed JWT workspace tokens are the proof of auth from here on.
+			await this.userService.invalidateMagicCode(email, code);
+
 			return response;
 		} else {
 			this.logger.warn('Signin workspace failed: no matching workspaces found');
@@ -730,6 +734,7 @@ export class AuthService extends SocialAuthService {
 			tenantId: user.tenant ? user.tenantId : null,
 			code
 		};
+
 		return sign(payload, environment.JWT_SECRET, {
 			expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
 		});
@@ -1653,11 +1658,18 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Sign in and confirm by code for multi-tenant workspaces.
-	 * @param payload - The user invitation code confirmation input.
+	 * Validate a magic code and return the available workspaces for the user.
+	 *
+	 * The magic code is invalidated immediately after validation so it cannot
+	 * be replayed. A short-lived signed JWT is returned per workspace — that
+	 * JWT is the proof of authentication for the subsequent
+	 * `workspaceSigninVerifyToken` call.
+	 *
+	 * @param payload - The user email and magic code input.
+	 * @param includeTeams - Whether to include team information in the workspace response.
 	 * @returns The user sign-in workspace response.
 	 */
-	async confirmWorkspaceSigninByCode(
+	async signinWorkspacesByMagicCode(
 		payload: IUserEmailInput & IUserCodeInput,
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
@@ -1672,38 +1684,33 @@ export class AuthService extends SocialAuthService {
 			// Find users matching the criteria
 			let users: User[];
 
+			// Build the shared lookup criteria once, reused by both ORM adapters
+			const where = {
+				email,
+				code,
+				codeExpireAt: MoreThanOrEqual(new Date()),
+				isActive: true,
+				isArchived: false
+			};
+
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
-						where: {
-							email,
-							code,
-							codeExpireAt: MoreThanOrEqual(new Date()),
-							isActive: true,
-							isArchived: false
-						},
+					const { where: mikroWhere, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
+						where,
 						relations: { tenant: true }
 					});
-					users = (await this.mikroOrmUserRepository.find(where, mikroOptions)) as User[];
+					users = (await this.mikroOrmUserRepository.find(mikroWhere, mikroOptions)) as User[];
 					break;
 				}
-				case MultiORMEnum.TypeORM:
-					users = await this.typeOrmUserRepository.find({
-						where: {
-							email,
-							code,
-							codeExpireAt: MoreThanOrEqual(new Date()),
-							isActive: true,
-							isArchived: false
-						},
-						relations: { tenant: true }
-					});
+				case MultiORMEnum.TypeORM: {
+					users = await this.typeOrmUserRepository.find({ where, relations: { tenant: true } });
 					break;
+				}
 				default:
 					throw new Error(`ORM type not implemented: ${this.ormType}`);
 			}
 
-			// Determining the response based on the number of matching users
+			// Build the workspace response based on the matching users
 			const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
 				users,
 				code,
@@ -1711,25 +1718,14 @@ export class AuthService extends SocialAuthService {
 				includeTeams
 			});
 
-			// Return the response if there are matching users
+			// Return the response if there are matching workspaces
 			if (response.total_workspaces > 0) {
-				// Invalidate the magic code after first successful use
-				switch (this.ormType) {
-					case MultiORMEnum.MikroORM:
-						await this.mikroOrmUserRepository.nativeUpdate(
-							{ email, code },
-							{ code: null, codeExpireAt: null }
-						);
-						break;
-					case MultiORMEnum.TypeORM:
-						await this.typeOrmUserRepository.update({ email, code }, { code: null, codeExpireAt: null });
-						break;
-					default:
-						throw new Error(`ORM type not implemented: ${this.ormType}`);
-				}
-
+				// Invalidate the magic code immediately after successful validation.
+				// The signed JWT workspace tokens are the proof of auth from here on.
+				await this.userService.invalidateMagicCode(email, code);
 				return response;
 			}
+
 			throw new UnauthorizedException();
 		} catch (error) {
 			throw new UnauthorizedException();
@@ -1737,7 +1733,12 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Verify workspace signin token
+	 * Verify a workspace signin JWT and issue access/refresh tokens.
+	 *
+	 * The magic code was already validated and invalidated by
+	 * `signinWorkspacesByMagicCode`. The signed JWT (verified via
+	 * `JWT_SECRET` with a short expiry) is the sole proof of
+	 * authentication here — no DB code check is needed.
 	 *
 	 * @param input - The user email and token input.
 	 * @returns An object containing user information and tokens.
@@ -1753,100 +1754,76 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
-			let payload: JwtPayload | string = this.verifyToken(token);
-			if (typeof payload === 'object') {
-				const { userId, tenantId, code } = payload;
-
-				let user: User;
-				const findWhere = {
-					id: userId,
-					email,
-					tenantId,
-					code,
-					codeExpireAt: MoreThanOrEqual(new Date()),
-					isActive: true,
-					isArchived: false
-				};
-				const updateWhere = {
-					email,
-					id: userId,
-					tenantId,
-					code,
-					isActive: true,
-					isArchived: false
-				};
-
-				switch (this.ormType) {
-					case MultiORMEnum.MikroORM: {
-						const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
-							where: findWhere,
-							relations: { role: true }
-						});
-						user = (await this.mikroOrmUserRepository.findOneOrFail(where, mikroOptions)) as User;
-
-						await this.mikroOrmUserRepository.nativeUpdate(updateWhere, {
-							code: null,
-							codeExpireAt: null,
-							lastLoginAt: new Date(),
-							lastOrganizationId: lastOrganizationId ?? user.lastOrganizationId,
-							lastTeamId
-						});
-						break;
-					}
-					case MultiORMEnum.TypeORM: {
-						user = await this.typeOrmUserRepository.findOneOrFail({
-							where: findWhere,
-							relations: { role: true }
-						});
-
-						await this.typeOrmUserRepository.update(updateWhere, {
-							code: null,
-							codeExpireAt: null,
-							lastLoginAt: new Date(),
-							lastOrganizationId: lastOrganizationId ?? user.lastOrganizationId,
-							lastTeamId
-						});
-						break;
-					}
-					default:
-						throw new Error(`ORM type not implemented: ${this.ormType}`);
-				}
-
-				// Retrieve the employee details associated with the user.
-				const employee = await this.employeeService.findOneByUserId(user.id);
-
-				// Check if the employee is active and not archived. If not, throw an error.
-				if (employee && (!employee.isActive || employee.isArchived)) {
-					throw new UnauthorizedException();
-				}
-
-				// Determine organization context for tokens
-				const organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
-
-				// Generate both access and refresh tokens concurrently for efficiency.
-				const [access_token, refresh_token] = await Promise.all([
-					this.getJwtAccessToken(user, organizationId),
-					this.getJwtRefreshToken(user, organizationId)
-				]);
-
-				// Store the current refresh token with the user for later validation.
-				await this.userService.setCurrentRefreshToken(refresh_token, user.id);
-
-				// Update the last login timestamp for the user
-				await this.userService.setUserLastLoginTimestamp(user.id);
-
-				// Return the user object with user details, tokens, and optionally employee info if it exists.
-				return {
-					user: new User({
-						...user,
-						...(employee && { employee })
-					}),
-					token: access_token,
-					refresh_token: refresh_token
-				};
+			// Verify and decode the JWT token
+			const payload: JwtPayload | string = this.verifyToken(token);
+			if (typeof payload !== 'object') {
+				throw new UnauthorizedException();
 			}
 
-			throw new UnauthorizedException();
+			const { userId, tenantId } = payload;
+
+			// The magic code was already consumed by signinWorkspacesByMagicCode.
+			// The signed JWT is the proof of auth — verify identity and account status only.
+			const where = {
+				id: userId,
+				email,
+				tenantId,
+				isActive: true,
+				isArchived: false
+			};
+
+			// Look up the user with role relation
+			let user: User;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const parsed = parseTypeORMFindToMikroOrm<User>({ where, relations: { role: true } });
+					user = (await this.mikroOrmUserRepository.findOneOrFail(parsed.where, parsed.mikroOptions)) as User;
+					break;
+				}
+				case MultiORMEnum.TypeORM: {
+					user = await this.typeOrmUserRepository.findOneOrFail({ where, relations: { role: true } });
+					break;
+				}
+				default:
+					throw new Error(`ORM type not implemented: ${this.ormType}`);
+			}
+
+			// Retrieve the employee details associated with the user
+			const employee = await this.employeeService.findOneByUserId(user.id);
+
+			// Check if the employee is active and not archived
+			if (employee && (!employee.isActive || employee.isArchived)) {
+				throw new UnauthorizedException();
+			}
+
+			// Determine organization context for tokens
+			const organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
+
+			// Generate access and refresh tokens concurrently
+			const [accessToken, refreshToken] = await Promise.all([
+				this.getJwtAccessToken(user, organizationId),
+				this.getJwtRefreshToken(user, organizationId)
+			]);
+
+			await Promise.all([
+				// Store refresh token and update login metadata concurrently
+				this.userService.setCurrentRefreshToken(refreshToken, user.id),
+				this.userService.setUserLastLoginTimestamp(user.id),
+
+				// Persist the resolved organization/team preference so the DB stays
+				// in sync with whatever value was embedded in the tokens above.
+				this.userService.setLastOrganizationAndTeam(user.id, organizationId, lastTeamId)
+			]);
+
+			return {
+				user: new User({
+					...user,
+					...(employee && { employee })
+				}),
+				token: accessToken,
+				refresh_token: refreshToken
+			};
 		} catch (error) {
 			if (error?.name === 'TokenExpiredError') {
 				throw new BadRequestException('JWT token has been expired.');
@@ -2027,13 +2004,10 @@ export class AuthService extends SocialAuthService {
 		code: string;
 		includeTeams: boolean;
 	}): Promise<IUserSigninWorkspaceResponse> {
-		const workspaces: IWorkspaceResponse[] = [];
-
-		// Iterate through the users and create workspaces for each user
-		for (const user of users) {
-			const workspace = await this.createWorkspace(user, code, includeTeams);
-			workspaces.push(workspace);
-		}
+		// Build all workspace responses concurrently — each user is independent
+		const workspaces = await Promise.all(
+			users.map((user: IUser) => this.createWorkspace(user, code, includeTeams))
+		);
 
 		return {
 			workspaces,
@@ -2107,6 +2081,7 @@ export class AuthService extends SocialAuthService {
 		try {
 			// Get the current authenticated user
 			const currentUser = RequestContext.currentUser();
+
 			if (!currentUser || !currentUser.email) {
 				throw new UnauthorizedException('User not authenticated');
 			}
@@ -2116,34 +2091,22 @@ export class AuthService extends SocialAuthService {
 			// Find all users with the same email across different tenants using Multi-ORM pattern
 			let users: User[];
 
+			const options = {
+				where: { email, isActive: true, isArchived: false, tenantId: Not(IsNull()) },
+				relations: { tenant: true },
+				order: { createdAt: 'DESC' as const }
+			};
+
 			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
-						where: {
-							email,
-							isActive: true,
-							isArchived: false,
-							tenantId: { $ne: null }
-						},
-						relations: { tenant: true },
-						order: { createdAt: 'DESC' }
-					});
+				case MultiORMEnum.MikroORM: {
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>(options);
 					users = (await this.mikroOrmUserRepository.find(where, mikroOptions)) as User[];
 					break;
-
-				case MultiORMEnum.TypeORM:
-					users = await this.typeOrmUserRepository.find({
-						where: {
-							email,
-							isActive: true,
-							isArchived: false,
-							tenantId: Not(IsNull())
-						},
-						relations: { tenant: true },
-						order: { createdAt: 'DESC' }
-					});
+				}
+				case MultiORMEnum.TypeORM: {
+					users = await this.typeOrmUserRepository.find(options);
 					break;
-
+				}
 				default:
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
@@ -2186,44 +2149,31 @@ export class AuthService extends SocialAuthService {
 			const email = currentUser.email;
 
 			// Find the user in the target tenant using Multi-ORM pattern
-			let targetUser: User;
+			let user: User;
+
+			const where = { email, tenantId, isActive: true, isArchived: false };
+			const relations = { role: true, tenant: true };
 
 			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
-						where: {
-							email,
-							tenantId,
-							isActive: true,
-							isArchived: false
-						},
-						relations: { role: true, tenant: true }
-					});
-					targetUser = (await this.mikroOrmUserRepository.findOne(where, mikroOptions)) as User;
+				case MultiORMEnum.MikroORM: {
+					const parsed = parseTypeORMFindToMikroOrm<User>({ where, relations });
+					user = (await this.mikroOrmUserRepository.findOne(parsed.where, parsed.mikroOptions)) as User;
 					break;
-
-				case MultiORMEnum.TypeORM:
-					targetUser = await this.typeOrmUserRepository.findOne({
-						where: {
-							email,
-							tenantId,
-							isActive: true,
-							isArchived: false
-						},
-						relations: { role: true, tenant: true }
-					});
+				}
+				case MultiORMEnum.TypeORM: {
+					user = await this.typeOrmUserRepository.findOne({ where, relations });
 					break;
-
+				}
 				default:
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 
-			if (!targetUser) {
+			if (!user) {
 				throw new UnauthorizedException('User does not have access to this workspace');
 			}
 
 			// Retrieve the employee details associated with the user
-			const employee = await this.employeeService.findOneByUserId(targetUser.id);
+			const employee = await this.employeeService.findOneByUserId(user.id);
 
 			// Check if the employee is active and not archived
 			if (employee && (!employee.isActive || employee.isArchived)) {
@@ -2231,24 +2181,24 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Determine organization context for tokens
-			const organizationId = employee?.organizationId || targetUser.lastOrganizationId;
+			const organizationId = employee?.organizationId || user.lastOrganizationId;
 
 			// Generate new access and refresh tokens for the target workspace
 			const [access_token, refresh_token] = await Promise.all([
-				this.getJwtAccessToken(targetUser, organizationId),
-				this.getJwtRefreshToken(targetUser, organizationId)
+				this.getJwtAccessToken(user, organizationId),
+				this.getJwtRefreshToken(user, organizationId)
 			]);
 
 			// Store the current refresh token with the user
-			await this.userService.setCurrentRefreshToken(refresh_token, targetUser.id);
+			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
 			// Update the last login timestamp
-			await this.userService.setUserLastLoginTimestamp(targetUser.id);
+			await this.userService.setUserLastLoginTimestamp(user.id);
 
 			// Return the authentication response
 			return {
 				user: new User({
-					...this.serialize(targetUser),
+					...this.serialize(user),
 					...(employee && { employee })
 				}),
 				token: access_token,
@@ -2305,34 +2255,24 @@ export class AuthService extends SocialAuthService {
 			// Retrieve the user with role permissions
 			let user: User;
 
+			const where = {
+				id: currentUser.id,
+				tenantId,
+				isActive: true,
+				isArchived: false
+			};
+			const relations = { role: { rolePermissions: true } };
+
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<User>({
-						where: {
-							id: currentUser.id,
-							tenantId,
-							isActive: true,
-							isArchived: false
-						},
-						relations: { role: { rolePermissions: true } }
-					});
-					user = (await this.mikroOrmUserRepository.findOne(where, mikroOptions)) as User;
+					const parsed = parseTypeORMFindToMikroOrm<User>({ where, relations });
+					user = (await this.mikroOrmUserRepository.findOne(parsed.where, parsed.mikroOptions)) as User;
 					break;
 				}
-
 				case MultiORMEnum.TypeORM: {
-					user = await this.typeOrmUserRepository.findOne({
-						where: {
-							id: currentUser.id,
-							tenantId,
-							isActive: true,
-							isArchived: false
-						},
-						relations: { role: { rolePermissions: true } }
-					});
+					user = await this.typeOrmUserRepository.findOne({ where, relations });
 					break;
 				}
-
 				default:
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}

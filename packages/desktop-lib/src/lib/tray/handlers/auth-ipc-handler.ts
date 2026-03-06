@@ -36,6 +36,9 @@ export class AuthIPCHandler {
 			if (timeTrackerWindow && arg.employeeId) {
 				this.initializeTimeTracker(timeTrackerWindow, arg, appConfig.gauzyWindow);
 			}
+			if (appConfig.gauzyWindow && timeTrackerWindow) {
+				timeTrackerWindow.webContents.send('gauzy_auth_success', arg);
+			}
 
 			event.sender.send('refresh_menu');
 		});
@@ -113,7 +116,8 @@ export class AuthIPCHandler {
 	private closePluginsWindow(): void {
 		try {
 			const appWindowManager = AppWindowManager.getInstance();
-			appWindowManager.pluginsWindow?.close?.();
+			const pluginsWindow = appWindowManager.pluginsWindow;
+			if (pluginsWindow) pluginsWindow.close();
 		} catch (error) {
 			console.error('An error occurred while closing plugin window', error);
 		}
