@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -71,8 +72,12 @@ export class SimAuthorizeComponent extends TranslationBaseComponent implements O
 						this._router.navigate([INTEGRATION_SIM_PAGE_LINK, integration.id]);
 					}
 				},
-				error: () => {
-					// No existing integration found — stay on authorize page
+				error: (error: HttpErrorResponse) => {
+					if (error.status === 404 || error.message?.includes('not found')) {
+						// No existing integration found - stay on authorize page
+						return;
+					}
+					console.error('Failed to check SIM integration state:', error);
 				}
 			});
 	}

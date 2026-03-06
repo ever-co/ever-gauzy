@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap, switchMap, of } from 'rxjs';
-import { SimService, SimStoreService, ISimExecutionRecord } from '@gauzy/ui-core/core';
+import { SimService, SimStoreService, ISimExecutionRecord, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
@@ -18,6 +18,7 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 	private readonly _activatedRoute = inject(ActivatedRoute);
 	private readonly _simService = inject(SimService);
 	private readonly _simStoreService = inject(SimStoreService);
+	private readonly _toastrService = inject(ToastrService);
 
 	private _loadSeq = 0;
 
@@ -81,8 +82,9 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 					this._simStoreService.setExecutions(result.data ?? []);
 					this.loading.set(false);
 				},
-				error: () => {
+				error: (error) => {
 					if (seq !== this._loadSeq) return;
+					this._toastrService.danger(error, 'TOASTR.TITLE.ERROR');
 					this.loading.set(false);
 				}
 			});
@@ -99,7 +101,7 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 	}
 
 	get totalPages(): number {
-		return Math.ceil(this.total() / this.pageSize);
+		return this.pageSize > 0 ? Math.ceil(this.total() / this.pageSize) : 0;
 	}
 
 	getStatusClass(status: string): string {

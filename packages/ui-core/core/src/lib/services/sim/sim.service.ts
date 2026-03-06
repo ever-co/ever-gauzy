@@ -77,15 +77,20 @@ export class SimService {
 		workflowId: string,
 		body: { input?: unknown; timeout?: number; runAsync?: boolean }
 	): Observable<ISimWorkflowExecutionResult> {
-		return this.http.post<ISimWorkflowExecutionResult>(`${this.API_URL}/workflows/${workflowId}/execute`, body);
+		const encodedWorkflowId = encodeURIComponent(workflowId);
+		return this.http.post<ISimWorkflowExecutionResult>(
+			`${this.API_URL}/workflows/${encodedWorkflowId}/execute`,
+			body
+		);
 	}
 
 	/**
 	 * Validate a workflow is deployed and ready.
 	 */
 	validateWorkflow(workflowId: string): Observable<{ workflowId: string; isDeployed: boolean }> {
+		const encodedWorkflowId = encodeURIComponent(workflowId);
 		return this.http.get<{ workflowId: string; isDeployed: boolean }>(
-			`${this.API_URL}/workflows/${workflowId}/validate`
+			`${this.API_URL}/workflows/${encodedWorkflowId}/validate`
 		);
 	}
 
@@ -93,7 +98,8 @@ export class SimService {
 	 * Get async job status.
 	 */
 	getJobStatus(taskId: string): Observable<ISimJobStatusResponse> {
-		return this.http.get<ISimJobStatusResponse>(`${this.API_URL}/jobs/${taskId}/status`);
+		const encodedTaskId = encodeURIComponent(taskId);
+		return this.http.get<ISimJobStatusResponse>(`${this.API_URL}/jobs/${encodedTaskId}/status`);
 	}
 
 	/**
