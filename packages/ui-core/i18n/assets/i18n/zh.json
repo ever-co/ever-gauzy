@@ -1527,7 +1527,9 @@
 				"LOAD": "搜索",
 				"ALL_STATUSES": "所有状态",
 				"SHOWING": "显示",
-				"OF": "共"
+				"OF": "共",
+				"PREVIOUS_PAGE": "上一页",
+				"NEXT_PAGE": "下一页"
 			},
 			"WORKFLOWS": {
 				"TITLE": "工作流",

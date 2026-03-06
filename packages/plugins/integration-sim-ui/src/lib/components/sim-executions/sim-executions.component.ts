@@ -27,7 +27,6 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 	readonly total = signal<number>(0);
 	readonly currentPage = signal<number>(1);
 
-	readonly integrationId = signal<string>('');
 	readonly filterWorkflowId = signal<string>('');
 	readonly filterStatus = signal<string>('');
 	readonly pageSize = 20;
@@ -54,8 +53,7 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 					) ?? of(null);
 				}),
 				filter((id): id is string => !!id),
-				tap((id) => {
-					this.integrationId.set(id);
+				tap(() => {
 					this.loadExecutions();
 				}),
 				untilDestroyed(this)
@@ -86,6 +84,8 @@ export class SimExecutionsComponent extends TranslationBaseComponent implements 
 				},
 				error: (error) => {
 					if (seq !== this._loadSeq) return;
+					this.executions.set([]);
+					this.total.set(0);
 					this._toastrService.danger(error, 'TOASTR.TITLE.ERROR');
 					this.loading.set(false);
 				}

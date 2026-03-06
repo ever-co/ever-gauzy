@@ -1527,7 +1527,9 @@
 				"LOAD": "Zoeken",
 				"ALL_STATUSES": "Alle statussen",
 				"SHOWING": "Weergave",
-				"OF": "van"
+				"OF": "van",
+				"PREVIOUS_PAGE": "Vorige pagina",
+				"NEXT_PAGE": "Volgende pagina"
 			},
 			"WORKFLOWS": {
 				"TITLE": "Workflows",

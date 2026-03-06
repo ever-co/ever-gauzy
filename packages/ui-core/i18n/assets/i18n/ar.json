@@ -1526,7 +1526,9 @@
 				"LOAD": "بحث",
 				"ALL_STATUSES": "جميع الحالات",
 				"SHOWING": "عرض",
-				"OF": "من"
+				"OF": "من",
+				"PREVIOUS_PAGE": "الصفحة السابقة",
+				"NEXT_PAGE": "الصفحة التالية"
 			},
 			"WORKFLOWS": {
 				"TITLE": "سير العمل",

@@ -1527,7 +1527,9 @@
 				"LOAD": "Pesquisar",
 				"ALL_STATUSES": "Todos os status",
 				"SHOWING": "Exibindo",
-				"OF": "de"
+				"OF": "de",
+				"PREVIOUS_PAGE": "Página anterior",
+				"NEXT_PAGE": "Próxima página"
 			},
 			"WORKFLOWS": {
 				"TITLE": "Fluxos de trabalho",

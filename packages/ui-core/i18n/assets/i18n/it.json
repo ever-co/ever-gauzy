@@ -1527,7 +1527,9 @@
 				"LOAD": "Cerca",
 				"ALL_STATUSES": "Tutti gli stati",
 				"SHOWING": "Visualizzazione",
-				"OF": "di"
+				"OF": "di",
+				"PREVIOUS_PAGE": "Pagina precedente",
+				"NEXT_PAGE": "Pagina successiva"
 			},
 			"WORKFLOWS": {
 				"TITLE": "Flussi di lavoro",

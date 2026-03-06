@@ -1528,7 +1528,9 @@
 				"LOAD": "Rechercher",
 				"ALL_STATUSES": "Tous les statuts",
 				"SHOWING": "Affichage",
-				"OF": "sur"
+				"OF": "sur",
+				"PREVIOUS_PAGE": "Page précédente",
+				"NEXT_PAGE": "Page suivante"
 			},
 			"WORKFLOWS": {
 				"TITLE": "Workflows",

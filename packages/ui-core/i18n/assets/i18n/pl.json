@@ -1526,7 +1526,9 @@
 				"LOAD": "Szukaj",
 				"ALL_STATUSES": "Wszystkie statusy",
 				"SHOWING": "Wyświetlanie",
-				"OF": "z"
+				"OF": "z",
+				"PREVIOUS_PAGE": "Poprzednia strona",
+				"NEXT_PAGE": "Następna strona"
 			},
 			"WORKFLOWS": {
 				"TITLE": "Przepływy pracy",

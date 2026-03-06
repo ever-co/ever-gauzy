@@ -1561,7 +1561,9 @@
 				"LOAD": "חיפוש",
 				"ALL_STATUSES": "כל הסטטוסים",
 				"SHOWING": "מציג",
-				"OF": "מתוך"
+				"OF": "מתוך",
+				"PREVIOUS_PAGE": "עמוד קודם",
+				"NEXT_PAGE": "עמוד הבא"
 			},
 			"WORKFLOWS": {
 				"TITLE": "תהליכי עבודה",

@@ -1529,7 +1529,9 @@
 				"LOAD": "Buscar",
 				"ALL_STATUSES": "Todos los estados",
 				"SHOWING": "Mostrando",
-				"OF": "de"
+				"OF": "de",
+				"PREVIOUS_PAGE": "Página anterior",
+				"NEXT_PAGE": "Página siguiente"
 			},
 			"WORKFLOWS": {
 				"TITLE": "Flujos de trabajo",

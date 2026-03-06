@@ -1412,7 +1412,9 @@
 				"LOAD": "crwdns20046:0crwdne20046:0",
 				"ALL_STATUSES": "crwdns20048:0crwdne20048:0",
 				"SHOWING": "crwdns20050:0crwdne20050:0",
-				"OF": "crwdns20052:0crwdne20052:0"
+				"OF": "crwdns20052:0crwdne20052:0",
+				"PREVIOUS_PAGE": "Pot mukwongo",
+				"NEXT_PAGE": "Pot malubo"
 			},
 			"WORKFLOWS": {
 				"TITLE": "crwdns20054:0crwdne20054:0",

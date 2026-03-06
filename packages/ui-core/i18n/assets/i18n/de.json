@@ -1527,7 +1527,9 @@
 				"LOAD": "Suchen",
 				"ALL_STATUSES": "Alle Status",
 				"SHOWING": "Anzeige",
-				"OF": "von"
+				"OF": "von",
+				"PREVIOUS_PAGE": "Vorherige Seite",
+				"NEXT_PAGE": "Nächste Seite"
 			},
 			"WORKFLOWS": {
 				"TITLE": "Workflows",
