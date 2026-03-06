@@ -76,9 +76,6 @@ export const uiPluginConfig: PluginUiConfig = {
 				JobMatchingPlugin,
 				JobProposalTemplatePlugin
 			]
-		}),
-
-		// React UI Plugin
-		DashboardTimeTrackReactUiPlugin
+		})
 	]
 };
