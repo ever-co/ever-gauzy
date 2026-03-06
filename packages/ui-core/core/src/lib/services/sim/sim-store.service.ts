@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { ISimExecutionRecord } from './sim.service';
 
 @Injectable({ providedIn: 'root' })
 export class SimStoreService {
@@ -8,14 +9,14 @@ export class SimStoreService {
 	public selectedIntegrationId$: Observable<string | null> = this._selectedIntegrationId$.asObservable();
 
 	// Execution history
-	private readonly _executions$ = new BehaviorSubject<any[]>([]);
-	public executions$: Observable<any[]> = this._executions$.asObservable();
+	private readonly _executions$ = new BehaviorSubject<ISimExecutionRecord[]>([]);
+	public executions$: Observable<ISimExecutionRecord[]> = this._executions$.asObservable();
 
 	setSelectedIntegrationId(id: string | null): void {
 		this._selectedIntegrationId$.next(id);
 	}
 
-	setExecutions(executions: any[]): void {
+	setExecutions(executions: ISimExecutionRecord[]): void {
 		this._executions$.next(executions);
 	}
 

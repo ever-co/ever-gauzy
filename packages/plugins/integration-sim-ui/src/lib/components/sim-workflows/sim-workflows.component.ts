@@ -72,7 +72,7 @@ export class SimWorkflowsComponent extends TranslationBaseComponent implements O
 		this.validating.set(true);
 		this.validationResult.set(null);
 
-		const workflowId = this.validateForm.get('workflowId')?.value?.trim();
+		let workflowId = this.validateForm.get('workflowId')!.value!.trim();
 
 		this._simService.validateWorkflow(workflowId).pipe(untilDestroyed(this)).subscribe({
 			next: (result) => {
@@ -96,10 +96,10 @@ export class SimWorkflowsComponent extends TranslationBaseComponent implements O
 		this.executionResult.set(null);
 		this.executionError.set(null);
 
-		const workflowId = this.executeForm.get('workflowId')?.value?.trim();
-		const inputRaw = this.executeForm.get('input')?.value?.trim() || '{}';
-		const runAsync = this.executeForm.get('runAsync')?.value || false;
-		const timeout = this.executeForm.get('timeout')?.value || 30000;
+		let workflowId = this.executeForm.get('workflowId')!.value!.trim();
+		let inputRaw = this.executeForm.get('input')!.value?.trim() || '{}';
+		let runAsync = this.executeForm.get('runAsync')!.value ?? false;
+		let timeout = this.executeForm.get('timeout')!.value ?? 30000;
 
 		let input: unknown;
 		try {
@@ -138,7 +138,7 @@ export class SimWorkflowsComponent extends TranslationBaseComponent implements O
 		this.pollingJob.set(true);
 		this.jobStatus.set(null);
 
-		const taskId = this.jobForm.get('taskId')?.value?.trim();
+		let taskId = this.jobForm.get('taskId')!.value!.trim();
 
 		this._simService.getJobStatus(taskId).pipe(untilDestroyed(this)).subscribe({
 			next: (result) => {
