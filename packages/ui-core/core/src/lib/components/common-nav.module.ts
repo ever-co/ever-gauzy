@@ -29,6 +29,6 @@ const STANDALONE_COMPONENTS = [
 		...STANDALONE_COMPONENTS
 	],
 	declarations: [],
-	exports: [...STANDALONE_COMPONENTS]
+	exports: [...STANDALONE_COMPONENTS, TooltipDirective]
 })
 export class CommonNavModule {}
