@@ -9,10 +9,13 @@ export class TooltipDirective implements OnDestroy {
 
 	@Input() gaTooltip: string;
 	@Input() icon: string;
-	private popup: any;
+	private popup: HTMLDivElement | null = null;
 
 	ngOnDestroy(): void {
-		if (this.popup) this.popup.remove();
+		if (this.popup) {
+			this.popup.remove();
+			this.popup = null;
+		}
 	}
 
 	/**
@@ -32,7 +35,10 @@ export class TooltipDirective implements OnDestroy {
 	 * @return {void} This function does not return anything.
 	 */
 	@HostListener('mouseleave') onMouseLeave(): void {
-		if (this.popup) this.popup.remove();
+		if (this.popup) {
+			this.popup.remove();
+			this.popup = null;
+		}
 	}
 
 	/**
@@ -43,6 +49,11 @@ export class TooltipDirective implements OnDestroy {
 	 * @return {void} This function does not return anything.
 	 */
 	private createTooltipPopup(x: number, y: number): void {
+		// Remove existing tooltip if any
+		if (this.popup) {
+			this.popup.remove();
+		}
+
 		const popup = document.createElement('div');
 
 		// Create icon element safely
