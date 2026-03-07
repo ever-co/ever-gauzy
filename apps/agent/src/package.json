@@ -85,12 +85,39 @@
 				"snap",
 				"tar.gz",
 				"rpm",
-				"AppImage"
+				"AppImage",
+				"flatpak"
 			],
 			"executableName": "gauzy-agent",
 			"artifactName": "${name}-${arch}-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
+		},
+		"flatpak": {
+			"useWaylandFlags": true,
+			"finishArgs": [
+				"--share=ipc",
+				"--socket=x11",
+				"--socket=wayland",
+				"--socket=pulseaudio",
+				"--share=network",
+				"--device=dri",
+				"--filesystem=host",
+				"--talk-name=org.freedesktop.Notifications",
+				"--talk-name=org.kde.StatusNotifierWatcher",
+				"--talk-name=org.freedesktop.portal.Desktop",
+				"--system-talk-name=org.freedesktop.login1",
+				"--env=ELECTRON_TRASH=gio",
+				"--env=TMPDIR=/var/tmp",
+				"--env=ELECTRON_ENABLE_LOGGING=1",
+				"--env=ELECTRON_OZONE_PLATFORM_HINT=auto"
+			],
+			"executableArgs": ["--no-sandbox"],
+			"runtime": "org.freedesktop.Platform",
+			"runtimeVersion": "24.08",
+			"sdk": "org.freedesktop.Sdk",
+			"base": "org.electronjs.Electron2.BaseApp",
+			"baseVersion": "24.08"
 		},
 		"rpm": {
 			"fpm": [

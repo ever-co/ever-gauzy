@@ -1,0 +1,60 @@
+app-id: com.ever.gauzyagent
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: '24.08'
+
+command: gauzy-agent
+separate-locales: false
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --system-talk-name=org.freedesktop.portal.Inhibit
+  - --system-talk-name=org.freedesktop.NetworkManager
+  - --system-talk-name=org.freedesktop.UPower
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+
+modules:
+  - name: gauzy-agent
+    buildsystem: simple
+    build-commands:
+      - ar x gauzy-agent.deb
+      - tar xf data.tar.xz
+      - mkdir -p /app/lib/gauzy-agent
+      - cp -r "opt/Gauzy Agent"/* /app/lib/gauzy-agent/
+      - if [ -f "/app/lib/gauzy-agent/Gauzy Agent" ]; then mv "/app/lib/gauzy-agent/Gauzy Agent" /app/lib/gauzy-agent/gauzy-agent; fi
+      - install -Dm755 gauzy-agent.sh /app/bin/gauzy-agent
+      - install -Dm644 com.ever.gauzyagent.desktop /app/share/applications/com.ever.gauzyagent.desktop
+      - install -Dm644 com.ever.gauzyagent.metainfo.xml /app/share/metainfo/com.ever.gauzyagent.metainfo.xml
+
+      - install -Dm644 icons/16x16.png /app/share/icons/hicolor/16x16/apps/com.ever.gauzyagent.png
+      - install -Dm644 icons/32x32.png /app/share/icons/hicolor/32x32/apps/com.ever.gauzyagent.png
+      - install -Dm644 icons/64x64.png /app/share/icons/hicolor/64x64/apps/com.ever.gauzyagent.png
+      - install -Dm644 icons/128x128.png /app/share/icons/hicolor/128x128/apps/com.ever.gauzyagent.png
+      - install -Dm644 icons/256x256.png /app/share/icons/hicolor/256x256/apps/com.ever.gauzyagent.png
+      - install -Dm644 icons/512x512.png /app/share/icons/hicolor/512x512/apps/com.ever.gauzyagent.png
+    sources:
+      - type: script
+        dest-filename: gauzy-agent.sh
+        commands:
+          - export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
+          - /app/lib/gauzy-agent/gauzy-agent --no-sandbox --ozone-platform=x11
+
+      - type: file
+        path: com.ever.gauzyagent.desktop
+
+      - type: file
+        path: com.ever.gauzyagent.metainfo.xml
+
+      - type: dir
+        path: icons/linux
+        dest: icons
+
+      - type: file
+        url: https://github.com/ever-co/ever-gauzy-agent/releases/download/v50.0.1/gauzy-agent-amd64-50.0.1.deb
+        dest-filename: gauzy-agent.deb
+        sha256: b6a73edfbaf81c0287b180bca88d2c944ec9c14b2225e07ec2ac7ee071bf1924

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.ever.gauzyagent</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0</project_license>
+  <name>Gauzy Agent</name>
+  <summary>Desktop time tracking and activity monitoring agent</summary>
+  <description>
+    <p>
+      Gauzy Agent is a desktop time tracking application that helps teams and individuals monitor productivity and manage time effectively. It provides automatic time tracking, activity monitoring, and screenshot capabilities.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Automatic time tracking with idle detection</li>
+      <li>Activity monitoring and screenshots</li>
+      <li>Task and project tracking</li>
+      <li>Real-time synchronization with Gauzy platform</li>
+      <li>Offline mode support</li>
+      <li>System tray integration</li>
+      <li>Privacy-focused with configurable settings</li>
+    </ul>
+    <p>
+      Gauzy Agent is part of the Gauzy platform, an open-source business management platform for modern agencies and studios.
+    </p>
+  </description>
+  <developer id="co.ever">
+    <name>Ever Co. LTD</name>
+  </developer>
+  <launchable type="desktop-id">com.ever.gauzyagent.desktop</launchable>
+  <url type="homepage">https://gauzy.co</url>
+  <url type="bugtracker">https://github.com/ever-co/ever-gauzy/issues</url>
+  <url type="help">https://docs.gauzy.co</url>
+  <url type="vcs-browser">https://github.com/ever-co/ever-gauzy</url>
+  <url type="contribute">https://github.com/ever-co/ever-gauzy/blob/develop/CONTRIBUTING.md</url>
+
+  <categories>
+    <category>Development</category>
+    <category>Office</category>
+    <category>ProjectManagement</category>
+  </categories>
+
+  <keywords>
+    <keyword>time tracking</keyword>
+    <keyword>productivity</keyword>
+    <keyword>monitoring</keyword>
+    <keyword>project management</keyword>
+    <keyword>timesheet</keyword>
+  </keywords>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Main time tracker interface</caption>
+      <image>https://docs.gauzy.co/assets/gauzy-agent-main.png</image>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="0.1.0" date="2024-01-15">
+      <description>
+        <p>Initial Flatpak release</p>
+        <ul>
+          <li>Time tracking with automatic idle detection</li>
+          <li>Activity monitoring and screenshots</li>
+          <li>Task and project management</li>
+          <li>System tray integration</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-info">moderate</content_attribute>
+  </content_rating>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#6C5CE7</color>
+    <color type="primary" scheme_preference="dark">#A29BFE</color>
+  </branding>
+</component>

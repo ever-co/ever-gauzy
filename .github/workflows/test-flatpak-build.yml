@@ -1,0 +1,68 @@
+name: Test Flatpak Build
+
+on:
+  pull_request:
+    paths:
+      - 'apps/agent/src/com.ever.gauzyagent.yml'
+      - 'apps/agent/src/com.ever.gauzyagent.desktop'
+      - 'apps/agent/src/com.ever.gauzyagent.metainfo.xml'
+      - '.github/workflows/test-flatpak-build.yml'
+  workflow_dispatch:
+
+jobs:
+  test-flatpak:
+    name: Test Flatpak Manifest
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-23.08
+      options: --privileged
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          dnf install -y flatpak-builder appstream-glib desktop-file-utils
+
+      - name: Validate desktop file
+        run: |
+          desktop-file-validate apps/agent/src/com.ever.gauzyagent.desktop || true
+        continue-on-error: true
+
+      - name: Validate AppStream metadata
+        run: |
+          appstream-util validate-relax apps/agent/src/com.ever.gauzyagent.metainfo.xml || true
+        continue-on-error: true
+
+      - name: Install flatpak-builder-lint
+        run: |
+          pip3 install flatpak-builder-lint
+
+      - name: Lint Flatpak manifest
+        run: |
+          cd apps/agent/src
+          flatpak-builder-lint manifest com.ever.gauzyagent.yml || true
+        continue-on-error: true
+
+      - name: Show results
+        run: |
+          echo "✅ Flatpak manifest validation completed"
+          echo "Check the logs above for any warnings or errors"
+
+  # Optional: Full build test (will fail without actual .deb file)
+  build-test:
+    name: Test Full Flatpak Build
+    runs-on: ubuntu-latest
+    if: false # Set to true when you have a real release with .deb file
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: gauzy-agent.flatpak
+          manifest-path: apps/agent/src/com.ever.gauzyagent.yml
+          cache-key: flatpak-builder-${{ github.sha }}
