@@ -193,7 +193,7 @@
 		"ADD_TO_FAVORITES": "Add to favorites",
 		"DONE": "Done",
 		"SKIP": "Skip",
-		"UNSELECT_ALL": "Unselect All"
+		"UNSELECT_ALL": "Deselect All"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
