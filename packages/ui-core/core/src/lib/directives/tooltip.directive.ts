@@ -44,7 +44,18 @@ export class TooltipDirective implements OnDestroy {
 	 */
 	private createTooltipPopup(x: number, y: number): void {
 		const popup = document.createElement('div');
-		popup.innerHTML = "<i class='" + this.icon + "'></i>" + this.gaTooltip;
+
+		// Create icon element safely
+		if (this.icon) {
+			const iconElement = document.createElement('i');
+			iconElement.className = this.icon;
+			popup.appendChild(iconElement);
+		}
+
+		// Add text content safely (no HTML injection)
+		const textNode = document.createTextNode(this.gaTooltip || '');
+		popup.appendChild(textNode);
+
 		popup.setAttribute('class', 'tooltip-container');
 		popup.style.top = y.toString() + 'px';
 		popup.style.left = x.toString() + 'px';
