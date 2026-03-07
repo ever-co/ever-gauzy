@@ -2,7 +2,7 @@ import { Directive, ElementRef, HostListener, Input, OnDestroy, inject } from '@
 
 @Directive({
 	selector: '[gaTooltip]',
-	standalone: false
+	standalone: true
 })
 export class TooltipDirective implements OnDestroy {
 	private readonly el = inject(ElementRef);

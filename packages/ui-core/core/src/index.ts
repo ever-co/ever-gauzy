@@ -15,5 +15,6 @@ export * from './lib/resolvers';
 export * from './lib/sentry-error.handler';
 export * from './lib/services';
 export * from './lib/utils';
+export * from './lib/directives';
 export * from './lib/validators';
 export * from './lib/server-connection.factory';
