@@ -1,8 +1,7 @@
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
-import { from } from 'rxjs';
-import { filter, switchMap, tap } from 'rxjs/operators';
-import { Observable, BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, EMPTY, from, Observable, Subject } from 'rxjs';
+import { catchError, debounceTime, filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { chain, indexBy, pick, sortBy } from 'underscore';
 import * as moment from 'moment-timezone';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -17,7 +16,7 @@ import {
 	PermissionsEnum,
 	ID
 } from '@gauzy/contracts';
-import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone } from '@gauzy/ui-core/common';
+import { isEmpty, distinctUntilChange, toTimezone } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import {
 	BaseSelectorFilterComponent,
@@ -34,13 +33,18 @@ import {
 	styleUrls: ['./screenshot.component.scss'],
 	standalone: false
 })
-export class ScreenshotComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ScreenshotComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
+	private readonly _router = inject(Router);
+	private readonly _timesheetService = inject(TimesheetService);
+	private readonly _timesheetFilterService = inject(TimesheetFilterService);
+	private readonly _nbDialogService = inject(NbDialogService);
+	private readonly _galleryService = inject(GalleryService);
+
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 	screenshots$: Subject<boolean> = new Subject();
 	filters: ITimeLogFilters = this.request;
 	loading: boolean;
-	timeSlots: IScreenshotMap[];
-	checkAllCheckbox: any;
+	timeSlots: IScreenshotMap[] = [];
 	selectedIds: any = {};
 	screenshotsUrls: { thumbUrl: string; fullUrl: string }[] = [];
 	selectedIdsCount = 0;
@@ -51,12 +55,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
-		public readonly translateService: TranslateService,
-		private readonly _router: Router,
-		private readonly _timesheetService: TimesheetService,
-		private readonly _timesheetFilterService: TimesheetFilterService,
-		private readonly _nbDialogService: NbDialogService,
-		private readonly _galleryService: GalleryService,
+		protected readonly translateService: TranslateService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly timeZoneService: TimeZoneService
@@ -65,31 +64,36 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	}
 
 	ngOnInit(): void {
-		this.screenshots$
-			.pipe(
-				filter(() => !!this.organization),
-				tap(() => this.getTimeSlotsScreenshots()),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		// Filter changes → prepare request → fetch screenshots (single reactive chain)
 		this.subject$
 			.pipe(
 				filter(() => !!this.organization),
+				debounceTime(100),
 				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// When payloads change, fetch new screenshots
 		this.payloads$
 			.pipe(
 				distinctUntilChange(),
 				filter((payloads: ITimeLogFilters) => !!payloads),
-				tap(() => this.screenshots$.next(true)),
+				switchMap(() => this.fetchTimeSlotsScreenshots()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
 
-	ngAfterViewInit() {
+		// Re-fetch screenshots on single slot deletion
+		this.screenshots$
+			.pipe(
+				filter(() => !!this.organization && !isEmpty(this.request)),
+				switchMap(() => this.fetchTimeSlotsScreenshots()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		// Clear gallery on navigation away
 		this._router.events
 			.pipe(
 				filter((event) => event instanceof NavigationStart),
@@ -148,37 +152,30 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	}
 
 	/**
-	 * Retrieves daily time slot data and screenshots for the current organization.
+	 * Fetches time slot screenshots as an Observable.
+	 * Designed for use with switchMap to cancel in-flight requests on new emissions.
 	 */
-	async getTimeSlotsScreenshots() {
-		// Check if organization is available and request payload is not empty
-		if (!this.organization || isEmpty(this.request)) {
-			return;
-		}
-
-		// Set loading state to true
+	private fetchTimeSlotsScreenshots(): Observable<ITimeSlot[]> {
 		this.loading = true;
+		this.screenshotsUrls = [];
+		this.timeSlots = [];
+		this.originalTimeSlots = [];
 
-		try {
-			// Clear existing screenshots URLs
-			this.screenshotsUrls = [];
-			this.timeSlots = [];
-			this.originalTimeSlots = [];
+		const payloads = this.payloads$.getValue();
 
-			// Fetch time slots data using provided payloads
-			const payloads = this.payloads$.getValue();
-			const timeSlots = await this._timesheetService.getTimeSlots(payloads);
-
-			// Store original time slots and group them
-			this.originalTimeSlots = timeSlots;
-			this.timeSlots = this.groupTimeSlots(timeSlots);
-		} catch (error) {
-			// Handle any errors that occur during data retrieval
-			console.log('Error while retrieving screenshots for employee', error);
-		} finally {
-			// Set loading state back to false
-			this.loading = false;
-		}
+		return from(this._timesheetService.getTimeSlots(payloads)).pipe(
+			tap((timeSlots: ITimeSlot[]) => {
+				this.originalTimeSlots = timeSlots;
+				this.timeSlots = this.groupTimeSlots(timeSlots);
+			}),
+			catchError((error) => {
+				console.error('Error while retrieving screenshots for employee', error);
+				return EMPTY;
+			}),
+			finalize(() => {
+				this.loading = false;
+			})
+		);
 	}
 
 	/**
@@ -242,30 +239,23 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	 * After deletion, updates the screenshot gallery and notifies subscribers about the deletion.
 	 */
 	deleteSlots(): void {
-		// Open a confirmation dialog for deleting time slots
-		const dialog$ = this._nbDialogService.open(DeleteConfirmationComponent);
-		dialog$.onClose
-			.pipe(
+		// Extract IDs of selected time slots before opening dialog
+		const ids = Object.keys(this.selectedIds).filter((key) => this.selectedIds[key]);
+		if (!ids.length) {
+			return;
+		}
+
+		this._nbDialogService
+			.open(DeleteConfirmationComponent)
+			.onClose.pipe(
 				filter((type) => type === 'ok'),
 				switchMap(() => {
-					// Extract IDs of selected time slots
-					const ids = Object.keys(this.selectedIds).filter((key) => this.selectedIds[key]);
-
-					// Construct request object with organization ID
 					const { id: organizationId, tenantId } = this.organization;
-
-					// Call the deleteTimeSlots API with forceDelete set to true
-					const api$ = this._timesheetService.deleteTimeSlots({
-						ids,
-						organizationId,
-						tenantId
-					});
-
-					// Convert the promise to an observable and handle deletion
-					return from(api$).pipe(
-						tap(() => this._deleteScreenshotGallery(ids)),
-						tap(() => this.screenshots$.next(true))
-					);
+					return from(this._timesheetService.deleteTimeSlots({ ids, organizationId, tenantId }));
+				}),
+				tap(() => {
+					this._deleteScreenshotGallery(ids);
+					this.screenshots$.next(true);
 				}),
 				untilDestroyed(this)
 			)
@@ -276,90 +266,86 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	 * Groups time slots by hour and prepares data for display.
 	 * Also generates screenshot URLs and calculates employee work on the same time slots.
 	 *
-	 * @param timeSlots An array of time slots to be grouped.
+	 * @param slots An array of time slots to be grouped.
 	 * @returns An array of grouped time slots for display.
 	 */
-	private groupTimeSlots(timeSlots: ITimeSlot[]) {
+	private groupTimeSlots(slots: ITimeSlot[]): IScreenshotMap[] {
 		this.selectedIds = {};
-		if (this.checkAllCheckbox) {
-			this.checkAllCheckbox.checked = false;
-			this.checkAllCheckbox.indeterminate = false;
+		const timezone = this.filters?.timeZone;
+		const screenshotUrls: { thumbUrl: string; fullUrl: string }[] = [];
+
+		for (const slot of slots) {
+			this.selectedIds[slot.id] = false;
+
+			if (slot.screenshots?.length) {
+				for (const screenshot of slot.screenshots) {
+					screenshotUrls.push({ thumbUrl: screenshot.thumbUrl, fullUrl: screenshot.fullUrl });
+				}
+			}
 		}
+		this.screenshotsUrls = screenshotUrls;
 
-		const groupTimeSlots = chain(timeSlots)
-			.map((timeSlot) => {
-				this.selectedIds[timeSlot.id] = false;
+		const convertTime = (slot: ITimeSlot) => (timezone ? toTimezone(slot.startedAt, timezone) : moment.utc(slot.startedAt).local());
+		const getHour = (slot: ITimeSlot) => convertTime(slot).format('HH');
+		const getMinute = (slot: ITimeSlot) => convertTime(slot).format('mm');
 
-				// Concatenate screenshot URLs
-				this.screenshotsUrls = this.screenshotsUrls.concat(
-					timeSlot.screenshots.map((screenshot) => ({
-						thumbUrl: screenshot.thumbUrl,
-						fullUrl: screenshot.fullUrl
-					}))
-				);
+		const result = chain(slots)
+			.groupBy(getHour)
+			.mapObject((hourSlots: ITimeSlot[], hour): IScreenshotMap => {
+				const groupByMinutes = chain(hourSlots).groupBy(getMinute).value();
+				const byMinutes = indexBy(sortBy(hourSlots, 'screenshots'), getMinute);
 
-				return timeSlot;
-			})
-			.groupBy((timeSlot) => toTimezone(timeSlot?.startedAt, this.filters?.timeZone).format('HH'))
-			.mapObject((hourTimeSlots: ITimeSlot[], hour): IScreenshotMap => {
-				const groupByMinutes = chain(hourTimeSlots)
-					.groupBy((timeSlot) => toTimezone(timeSlot.startedAt, this.filters?.timeZone).format('mm'))
-					.value();
-				/**
-				 * First sort by screenshots then after index by of hoursTimeSlots
-				 * So, we can display screenshots in UI
-				 */
-				const byMinutes = indexBy(sortBy(hourTimeSlots, 'screenshots'), (timeSlot) =>
-					toTimezone(timeSlot?.startedAt, this.filters?.timeZone).format('mm')
-				);
-				timeSlots = ['00', '10', '20', '30', '40', '50'].map((key) => {
-					/**
-					 * Calculate employees work on same time slots by minutes
-					 */
-					if (key in byMinutes) {
-						byMinutes[key]['employees'] = chain(groupByMinutes[key])
-							.groupBy((timeSlot: ITimeSlot) => timeSlot.employeeId)
-							.values()
-							.flatten()
-							.map((timeSlot: ITimeSlot) => timeSlot.employee)
-							.value();
+				const slotsByMinute = ['00', '10', '20', '30', '40', '50'].map((key) => {
+					if (!(key in byMinutes)) {
+						return null;
 					}
 
-					return byMinutes[key] || null;
+					byMinutes[key]['employees'] = chain(groupByMinutes[key])
+						.groupBy((slot: ITimeSlot) => slot.employeeId)
+						.values()
+						.flatten()
+						.map((slot: ITimeSlot) => slot.employee)
+						.value();
+
+					return byMinutes[key];
 				});
 
 				const time = moment().set('hour', parseInt(hour, 0)).set('minute', 0);
 				const startTime = time.format('HH:mm');
 				const endTime = time.add(1, 'hour').format('HH:mm');
 
-				return { startTime, endTime, timeSlots };
+				return { startTime, endTime, timeSlots: slotsByMinute };
 			})
 			.values()
 			.sortBy(({ startTime }) => moment(startTime, 'HH:mm').toDate().getTime())
 			.value();
+
 		this.updateSelections();
-		return groupTimeSlots;
+		return result;
 	}
 
 	/**
 	 * Deletes screenshots associated with the specified time slots from the gallery.
 	 *
-	 * @param timeSlotIds An array of time slot IDs whose screenshots should be removed from the gallery.
+	 * @param slotIds An array of time slot IDs whose screenshots should be removed from the gallery.
 	 */
-	private _deleteScreenshotGallery(timeSlotIds: ID[]) {
-		if (isNotEmpty(this.originalTimeSlots)) {
-			// Extract all screenshots from time slots that match the provided time slot IDs
-			const screenshotsToRemove = this.originalTimeSlots
-				.filter((timeSlot: ITimeSlot) => timeSlotIds.includes(timeSlot.id))
-				.flatMap((timeSlot: ITimeSlot) =>
-					timeSlot.screenshots.map((screenshot: IScreenshot) => ({
-						thumbUrl: screenshot.thumbUrl,
-						fullUrl: screenshot.fullUrl,
-						...screenshot // Include other properties from the screenshot
-					}))
-				);
+	private _deleteScreenshotGallery(slotIds: ID[]): void {
+		if (isEmpty(slotIds) || isEmpty(this.originalTimeSlots)) {
+			return;
+		}
 
-			// Remove the extracted gallery items from the gallery
+		const idsToRemove = new Set(slotIds);
+		const screenshotsToRemove = this.originalTimeSlots
+			.filter((slot: ITimeSlot) => idsToRemove.has(slot.id))
+			.flatMap((slot: ITimeSlot) =>
+				(slot.screenshots ?? []).map((screenshot: IScreenshot) => ({
+					thumbUrl: screenshot.thumbUrl,
+					fullUrl: screenshot.fullUrl,
+					...screenshot
+				}))
+			);
+
+		if (screenshotsToRemove.length) {
 			this._galleryService.removeGalleryItems(screenshotsToRemove);
 		}
 	}
