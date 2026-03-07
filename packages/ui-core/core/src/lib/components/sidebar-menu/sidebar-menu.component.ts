@@ -1,33 +1,40 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input } from '@angular/core';
+import {
+	AfterContentChecked,
+	AfterViewInit,
+	ChangeDetectionStrategy,
+	ChangeDetectorRef,
+	Component,
+	Input
+} from '@angular/core';
 import { IMenuItem } from './menu-items/interface/menu-item.interface';
-import { MenuItemComponent } from './menu-items/concrete/menu-item/menu-item.component';
 import { SidebarMenuService } from '../../services';
 
 @Component({
-	selector: 'ga-sidebar-menu',
-	templateUrl: './sidebar-menu.component.html',
-	styleUrls: ['./sidebar-menu.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	standalone: true,
-	imports: [MenuItemComponent]
+    selector: 'ga-sidebar-menu',
+    templateUrl: './sidebar-menu.component.html',
+    styleUrls: ['./sidebar-menu.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
-export class SidebarMenuComponent {
-	private readonly _cdr = inject(ChangeDetectorRef);
-	private readonly _sidebarMenuService = inject(SidebarMenuService);
+export class SidebarMenuComponent implements AfterContentChecked, AfterViewInit {
+	@Input() items: IMenuItem[] = [];
 
-	private _items: IMenuItem[] = [];
-
-	@Input()
-	public set items(value: IMenuItem[]) {
-		this._items = value;
-	}
-
-	public get items(): IMenuItem[] {
-		return this._items;
-	}
-
-	public get selectedItem(): IMenuItem {
+	public get selectedItem() {
 		return this._sidebarMenuService.selectedItem;
+	}
+	public set selectedItem(value: IMenuItem) {
+		this._sidebarMenuService.selectedItem = value;
+		this._cdr.detectChanges();
+	}
+
+	constructor(private readonly _cdr: ChangeDetectorRef, private readonly _sidebarMenuService: SidebarMenuService) {}
+
+	ngAfterContentChecked(): void {
+		this._cdr.detectChanges();
+	}
+
+	ngAfterViewInit(): void {
+		this._cdr.detectChanges();
 	}
 
 	/**
@@ -36,7 +43,10 @@ export class SidebarMenuComponent {
 	 * @param event The menu item to focus on.
 	 */
 	public focusOn(event: IMenuItem): void {
+		// Set the selected item in the sidebar menu
 		this._sidebarMenuService.selectedItem = event;
-		this._cdr.markForCheck();
+
+		// Trigger change detection
+		this._cdr.detectChanges();
 	}
 }

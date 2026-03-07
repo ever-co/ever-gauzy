@@ -1,6 +1,6 @@
-import { AfterViewInit, Directive, inject, OnDestroy, OnInit } from '@angular/core';
-import { combineLatest, EMPTY } from 'rxjs';
-import { catchError, debounceTime, filter, startWith, tap } from 'rxjs/operators';
+import { Directive, OnDestroy, OnInit } from '@angular/core';
+import { combineLatest } from 'rxjs';
+import { filter, startWith, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
@@ -17,17 +17,18 @@ import {
 @UntilDestroy()
 @Directive({
 	selector: '[gaBaseNavMenu]',
-	standalone: true
+	standalone: false
 })
-export class BaseNavMenuComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, OnDestroy {
-	protected readonly _navMenuBuilderService = inject(NavMenuBuilderService);
-	protected readonly _store = inject(Store);
-	protected readonly _sidebarMenuService = inject(SidebarMenuService);
-	protected readonly _favoriteStoreService = inject(FavoriteStoreService);
-
+export class BaseNavMenuComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _favoriteItems: NavMenuSectionItem[] = [];
 
-	constructor(protected readonly _translateService: TranslateService) {
+	constructor(
+		protected readonly _navMenuBuilderService: NavMenuBuilderService,
+		protected readonly _store: Store,
+		protected readonly _sidebarMenuService: SidebarMenuService,
+		protected readonly _translateService: TranslateService,
+		protected readonly _favoriteStoreService: FavoriteStoreService
+	) {
 		super(_translateService);
 	}
 
@@ -35,38 +36,25 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 		this.defineBaseNavMenus();
 	}
 
-	ngAfterViewInit(): void {
-		combineLatest([
+	ngAfterViewInit() {
+		const merge$ = combineLatest([
 			this._favoriteStoreService.favoriteItems$,
 			this._translateService.onLangChange.pipe(startWith(null)),
 			this._store.selectedOrganization$.pipe(
-				filter((organization: IOrganization | null): organization is IOrganization => !!organization),
+				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange()
 			),
 			this._store.featureOrganizations$,
 			this._store.featureTenant$,
 			this._store.userRolePermissions$
-		])
-			.pipe(
-				debounceTime(50),
-				tap(([favorites]) => {
-					this._favoriteItems = favorites;
-					this.defineBaseNavMenus();
-				}),
-				catchError((error) => {
-					console.error('Error updating navigation menu:', error);
-					return EMPTY;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/**
-	 * Returns an `{ add: link }` object if the user has any of the given permissions, or undefined otherwise.
-	 */
-	private _addLink(link: string, ...permissions: PermissionsEnum[]): { add: string } | undefined {
-		return this._store.hasAnyPermission(...permissions) ? { add: link } : undefined;
+		]).pipe(
+			tap(([favorites]) => {
+				this._favoriteItems = favorites;
+				this.defineBaseNavMenus();
+			}),
+			untilDestroyed(this)
+		);
+		merge$.subscribe();
 	}
 
 	/**
@@ -81,28 +69,10 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	}
 
 	/**
-	 * Retrieves the main navigation menu configuration by composing all section menus.
+	 * Retrieves the main navigation menu configuration.
 	 * @returns An array of NavMenuSectionItem objects representing the main menu.
 	 */
 	private _getMainMenu(): NavMenuSectionItem[] {
-		return [
-			...this._getDashboardMenu(),
-			...this._getFavoritesMenu(),
-			...this._getAccountingMenu(),
-			...this._getSalesMenu(),
-			...this._getTasksMenu(),
-			...this._getEmployeesMenu(),
-			...this._getOrganizationMenu(),
-			...this._getContactsMenu(),
-			...this._getGoalsMenu(),
-			...this._getReportsMenu()
-		];
-	}
-
-	/**
-	 * Returns the dashboard-related menu items (Dashboards, Focus, Applications).
-	 */
-	private _getDashboardMenu(): NavMenuSectionItem[] {
 		return [
 			{
 				id: 'dashboards',
@@ -141,15 +111,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 					translationKey: 'MENU.APPLICATIONS',
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
 				}
-			}
-		];
-	}
-
-	/**
-	 * Returns the favorites menu section.
-	 */
-	private _getFavoritesMenu(): NavMenuSectionItem[] {
-		return [
+			},
 			{
 				id: 'favorites',
 				title: 'Favorites',
@@ -159,15 +121,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 					translationKey: 'MENU.FAVORITES'
 				},
 				items: this._favoriteItems
-			}
-		];
-	}
-
-	/**
-	 * Returns the accounting menu section with sub-items.
-	 */
-	private _getAccountingMenu(): NavMenuSectionItem[] {
-		return [
+			},
 			{
 				id: 'accounting',
 				title: 'Accounting',
@@ -185,11 +139,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.ESTIMATES',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
 							featureKey: FeatureEnum.FEATURE_ESTIMATE,
-							...this._addLink(
-								'/pages/accounting/invoices/estimates/add',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ESTIMATES_EDIT
-							)
+							) && {
+								add: '/pages/accounting/invoices/estimates/add'
+							})
 						}
 					},
 					{
@@ -213,11 +168,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.INVOICES',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
 							featureKey: FeatureEnum.FEATURE_INVOICE,
-							...this._addLink(
-								'/pages/accounting/invoices/add',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.INVOICES_EDIT
-							)
+							) && {
+								add: '/pages/accounting/invoices/add'
+							})
 						}
 					},
 					{
@@ -253,11 +209,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.INCOME',
 							permissionKeys: [PermissionsEnum.ORG_INCOMES_VIEW],
 							featureKey: FeatureEnum.FEATURE_INCOME,
-							...this._addLink(
-								'/pages/accounting/income?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_INCOMES_EDIT
-							)
+							) && {
+								add: '/pages/accounting/income?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -269,11 +226,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.EXPENSES',
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
 							featureKey: FeatureEnum.FEATURE_EXPENSE,
-							...this._addLink(
-								'/pages/accounting/expenses?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_EXPENSES_EDIT
-							)
+							) && {
+								add: '/pages/accounting/expenses?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -285,11 +243,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
-							...this._addLink(
-								'/pages/accounting/expense-recurring?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_EXPENSES_EDIT
-							)
+							) && {
+								add: '/pages/accounting/expense-recurring?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -301,23 +260,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.PAYMENTS',
 							permissionKeys: [PermissionsEnum.ORG_PAYMENT_VIEW],
 							featureKey: FeatureEnum.FEATURE_PAYMENT,
-							...this._addLink(
-								'/pages/accounting/payments?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_PAYMENT_ADD_EDIT
-							)
+							) && {
+								add: '/pages/accounting/payments?openAddDialog=true'
+							})
 						}
 					}
 				]
-			}
-		];
-	}
-
-	/**
-	 * Returns the sales menu section with sub-items.
-	 */
-	private _getSalesMenu(): NavMenuSectionItem[] {
-		return [
+			},
 			{
 				id: 'sales',
 				title: 'Sales',
@@ -337,11 +289,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.ESTIMATES',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
 							featureKey: FeatureEnum.FEATURE_PROPOSAL,
-							...this._addLink(
-								'/pages/sales/invoices/estimates/add',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ESTIMATES_EDIT
-							)
+							) && {
+								add: '/pages/sales/invoices/estimates/add'
+							})
 						}
 					},
 					{
@@ -353,11 +306,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.INVOICES',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
 							featureKey: FeatureEnum.FEATURE_INVOICE,
-							...this._addLink(
-								'/pages/sales/invoices/add',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.INVOICES_EDIT
-							)
+							) && {
+								add: '/pages/sales/invoices/add'
+							})
 						}
 					},
 					{
@@ -380,11 +334,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.PAYMENTS',
 							permissionKeys: [PermissionsEnum.ORG_PAYMENT_VIEW],
 							featureKey: FeatureEnum.FEATURE_PAYMENT,
-							...this._addLink(
-								'/pages/sales/payments?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_PAYMENT_ADD_EDIT
-							)
+							) && {
+								add: '/pages/sales/payments?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -396,23 +351,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.PIPELINES',
 							permissionKeys: [PermissionsEnum.VIEW_SALES_PIPELINES],
 							featureKey: FeatureEnum.FEATURE_PIPELINE,
-							...this._addLink(
-								'/pages/sales/pipelines?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.EDIT_SALES_PIPELINES
-							)
+							) && {
+								add: '/pages/sales/pipelines?openAddDialog=true'
+							})
 						}
 					}
 				]
-			}
-		];
-	}
-
-	/**
-	 * Returns the tasks menu section with sub-items.
-	 */
-	private _getTasksMenu(): NavMenuSectionItem[] {
-		return [
+			},
 			{
 				id: 'tasks',
 				title: 'Tasks',
@@ -431,11 +379,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.DASHBOARD',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW],
 							featureKey: FeatureEnum.FEATURE_DASHBOARD_TASK,
-							...this._addLink(
-								'/pages/tasks/dashboard?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_TASK_ADD
-							)
+							) && {
+								add: '/pages/tasks/dashboard?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -447,23 +396,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.TEAM_TASKS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW],
 							featureKey: FeatureEnum.FEATURE_TEAM_TASK,
-							...this._addLink(
-								'/pages/tasks/team?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_TASK_ADD
-							)
+							) && {
+								add: '/pages/tasks/team?openAddDialog=true'
+							})
 						}
 					}
 				]
-			}
-		];
-	}
-
-	/**
-	 * Returns the employees menu section with sub-items.
-	 */
-	private _getEmployeesMenu(): NavMenuSectionItem[] {
-		return [
+			},
 			{
 				id: 'employees',
 				title: 'Employees',
@@ -528,11 +470,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.APPROVALS',
 							permissionKeys: [PermissionsEnum.REQUEST_APPROVAL_VIEW],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_APPROVAL,
-							...this._addLink(
-								'/pages/employees/approvals?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.REQUEST_APPROVAL_EDIT
-							)
+							) && {
+								add: '/pages/employees/approvals?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -566,11 +509,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.TIME_OFF',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMEOFF,
-							...this._addLink(
-								'/pages/employees/time-off?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.TIME_OFF_ADD
-							)
+							) && {
+								add: '/pages/employees/time-off?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -582,11 +526,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.RECURRING_EXPENSE',
 							permissionKeys: [PermissionsEnum.EMPLOYEE_EXPENSES_VIEW],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_RECURRING_EXPENSE,
-							...this._addLink(
-								'/pages/employees/recurring-expenses?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.EMPLOYEE_EXPENSES_EDIT
-							)
+							) && {
+								add: '/pages/employees/recurring-expenses?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -598,23 +543,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.CANDIDATES',
 							permissionKeys: [PermissionsEnum.ORG_CANDIDATES_VIEW],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_CANDIDATE,
-							...this._addLink(
-								'/pages/employees/candidates?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_CANDIDATES_EDIT
-							)
+							) && {
+								add: '/pages/employees/candidates?openAddDialog=true'
+							})
 						}
 					}
 				]
-			}
-		];
-	}
-
-	/**
-	 * Returns the organization menu section with sub-items.
-	 */
-	private _getOrganizationMenu(): NavMenuSectionItem[] {
-		return [
+			},
 			{
 				id: 'organization',
 				title: 'Organization',
@@ -632,11 +570,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_EQUIPMENT_VIEW],
 							translationKey: 'MENU.EQUIPMENT',
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_EQUIPMENT,
-							...this._addLink(
-								'/pages/organization/equipment?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_EQUIPMENT_EDIT
-							)
+							) && {
+								add: '/pages/organization/equipment?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -649,11 +588,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.INVENTORY',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_INVENTORY,
-							...this._addLink(
-								'/pages/organization/inventory/create',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.INVENTORY_GALLERY_ADD
-							)
+							) && {
+								add: '/pages/organization/inventory/create'
+							})
 						}
 					},
 					{
@@ -665,11 +605,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'MENU.TAGS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TAGS_ADD],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TAG,
-							...this._addLink(
-								'/pages/organization/tags?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_TAGS_ADD
-							)
+							) && {
+								add: '/pages/organization/tags?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -681,10 +622,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'ORGANIZATIONS_PAGE.VENDORS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_VENDOR,
-							...this._addLink(
-								'/pages/organization/vendors?openAddDialog=true',
-								PermissionsEnum.ALL_ORG_EDIT
-							)
+							...(this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT) && {
+								add: '/pages/organization/vendors?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -696,26 +636,26 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'ORGANIZATIONS_PAGE.PROJECTS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_VIEW],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_PROJECT,
-							...this._addLink(
-								'/pages/organization/projects/create',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_PROJECT_ADD
-							)
+							) && {
+								add: '/pages/organization/projects/create'
+							})
 						}
 					},
 					{
 						id: 'organization-departments',
 						title: 'Departments',
-						icon: 'fas fa-briefcase',
+						icon: ' fas fa-briefcase',
 						link: `/pages/organization/departments`,
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_DEPARTMENT,
-							...this._addLink(
-								'/pages/organization/departments?openAddDialog=true',
-								PermissionsEnum.ALL_ORG_EDIT
-							)
+							...(this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT) && {
+								add: '/pages/organization/departments?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -727,11 +667,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_VIEW],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TEAM,
-							...this._addLink(
-								'/pages/organization/teams?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_TEAM_EDIT
-							)
+							) && {
+								add: '/pages/organization/teams?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -743,10 +684,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_DOCUMENT,
-							...this._addLink(
-								'/pages/organization/documents?openAddDialog=true',
-								PermissionsEnum.ALL_ORG_EDIT
-							)
+							...(this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT) && {
+								add: '/pages/organization/documents?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -758,10 +698,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE,
-							...this._addLink(
-								'/pages/organization/employment-types?openAddDialog=true',
-								PermissionsEnum.ALL_ORG_EDIT
-							)
+							...(this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT) && {
+								add: '/pages/organization/employment-types?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -773,11 +712,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
-							...this._addLink(
-								'/pages/organization/expense-recurring?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_EXPENSES_EDIT
-							)
+							) && {
+								add: '/pages/organization/expense-recurring?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -791,15 +731,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						}
 					}
 				]
-			}
-		];
-	}
-
-	/**
-	 * Returns the contacts menu section with sub-items.
-	 */
-	private _getContactsMenu(): NavMenuSectionItem[] {
-		return [
+			},
 			{
 				id: 'contacts',
 				title: 'Contacts',
@@ -826,11 +758,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						link: `/pages/contacts/leads`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.LEADS',
-							...this._addLink(
-								'/pages/contacts/leads?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_CONTACT_EDIT
-							)
+							) && {
+								add: '/pages/contacts/leads?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -840,11 +773,12 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						link: `/pages/contacts/customers`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.CUSTOMERS',
-							...this._addLink(
-								'/pages/contacts/customers?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_CONTACT_EDIT
-							)
+							) && {
+								add: '/pages/contacts/customers?openAddDialog=true'
+							})
 						}
 					},
 					{
@@ -854,23 +788,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						link: `/pages/contacts/clients`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.CLIENTS',
-							...this._addLink(
-								'/pages/contacts/clients?openAddDialog=true',
+							...(this._store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_CONTACT_EDIT
-							)
+							) && {
+								add: '/pages/contacts/clients?openAddDialog=true'
+							})
 						}
 					}
 				]
-			}
-		];
-	}
-
-	/**
-	 * Returns the goals menu section with sub-items.
-	 */
-	private _getGoalsMenu(): NavMenuSectionItem[] {
-		return [
+			},
 			{
 				id: 'goals',
 				title: 'Goals',
@@ -911,15 +838,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						}
 					}
 				]
-			}
-		];
-	}
-
-	/**
-	 * Returns the reports menu section with sub-items.
-	 */
-	private _getReportsMenu(): NavMenuSectionItem[] {
-		return [
+			},
 			{
 				id: 'reports',
 				title: 'Reports',

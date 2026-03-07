@@ -1,27 +1,18 @@
 import { Location } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, Input, OnInit, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { NbButtonModule, NbTooltipModule } from '@nebular/theme';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
-import { TooltipDirective } from '../../../../../directives/tooltip.directive';
+import { IMenuItem } from '../../interface/menu-item.interface';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-children-menu-item',
-	templateUrl: './children-menu-item.component.html',
-	styleUrls: ['./children-menu-item.component.scss'],
-	standalone: true,
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbButtonModule, NbTooltipModule, NgxPermissionsModule, TooltipDirective]
+    selector: 'ga-children-menu-item',
+    templateUrl: './children-menu-item.component.html',
+    styleUrls: ['./children-menu-item.component.scss'],
+    standalone: false
 })
 export class ChildrenMenuItemComponent implements OnInit {
-	private readonly router = inject(Router);
-	private readonly location = inject(Location);
-	public readonly focusItemChange = output<IMenuItemFocusChangeEvent>();
-
 	/**
 	 * Represents a menu item component.
 	 */
@@ -76,6 +67,10 @@ export class ChildrenMenuItemComponent implements OnInit {
 	get mouseHover() {
 		return this._mouseHover;
 	}
+
+	@Output() public focusItemChange: EventEmitter<any> = new EventEmitter();
+
+	constructor(private readonly router: Router, private readonly location: Location) {}
 
 	ngOnInit(): void {
 		// Log and check the current URL
