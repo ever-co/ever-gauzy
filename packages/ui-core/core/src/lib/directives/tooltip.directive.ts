@@ -6,24 +6,18 @@ import { Directive, ElementRef, HostListener, Input, OnDestroy, inject } from '@
 })
 export class TooltipDirective implements OnDestroy {
 	private readonly el = inject(ElementRef);
+	private popup: HTMLDivElement | null = null;
 
 	@Input() gaTooltip: string;
 	@Input() icon: string;
-	private popup: HTMLDivElement | null = null;
-
-	ngOnDestroy(): void {
-		if (this.popup) {
-			this.popup.remove();
-			this.popup = null;
-		}
-	}
 
 	/**
 	 * Handles the mouse enter event and creates a tooltip popup at the middle of the element.
 	 *
 	 * @return {void} This function does not return anything.
 	 */
-	@HostListener('mouseenter') onMouseEnter(): void {
+	@HostListener('mouseenter')
+	onMouseEnter(): void {
 		const x = this.el.nativeElement.getBoundingClientRect().left + this.el.nativeElement.offsetWidth / 2; // Get the middle of the element
 		const y = this.el.nativeElement.getBoundingClientRect().top + this.el.nativeElement.offsetHeight + 6; // Get the bottom of the element, plus a little extra
 		this.createTooltipPopup(x, y);
@@ -34,7 +28,17 @@ export class TooltipDirective implements OnDestroy {
 	 *
 	 * @return {void} This function does not return anything.
 	 */
-	@HostListener('mouseleave') onMouseLeave(): void {
+	@HostListener('mouseleave')
+	onMouseLeave(): void {
+		this.removeTooltip();
+	}
+
+
+
+	/**
+	 * Removes the tooltip popup from the DOM and clears the reference.
+	 */
+	private removeTooltip(): void {
 		if (this.popup) {
 			this.popup.remove();
 			this.popup = null;
@@ -46,13 +50,9 @@ export class TooltipDirective implements OnDestroy {
 	 *
 	 * @param {number} x - The x-coordinate of the popup.
 	 * @param {number} y - The y-coordinate of the popup.
-	 * @return {void} This function does not return anything.
 	 */
 	private createTooltipPopup(x: number, y: number): void {
-		// Remove existing tooltip if any
-		if (this.popup) {
-			this.popup.remove();
-		}
+		this.removeTooltip();
 
 		const popup = document.createElement('div');
 
@@ -72,5 +72,9 @@ export class TooltipDirective implements OnDestroy {
 		popup.style.left = x.toString() + 'px';
 		document.body.appendChild(popup);
 		this.popup = popup;
+	}
+
+	ngOnDestroy(): void {
+		this.removeTooltip();
 	}
 }
