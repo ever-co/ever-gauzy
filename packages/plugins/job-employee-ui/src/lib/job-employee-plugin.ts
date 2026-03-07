@@ -13,6 +13,7 @@ import { JOB_EMPLOYEE_PAGE_LINK, JOB_EMPLOYEE_PAGE_ROUTE } from './job-employee.
  * plugins: [
  *   JobsPlugin.init({
  *     plugins: [
+ *       JobProposalPlugin,
  *       JobEmployeePlugin,
  *       JobSearchPlugin,
  *       JobMatchingPlugin,
@@ -24,10 +25,21 @@ import { JOB_EMPLOYEE_PAGE_LINK, JOB_EMPLOYEE_PAGE_ROUTE } from './job-employee.
  */
 export const JobEmployeePlugin: PluginUiDefinition = {
 	id: 'job-employee',
+
+	// ── Versioning & Compatibility ────────────────────────────────
+	version: '1.0.0',
+
+	// ── Location & Module ────────────────────────────────────────
 	location: 'jobs-sections',
 	module: JobEmployeeModule,
+
+	// ── Access Control ───────────────────────────────────────────
 	permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW],
+
+	// ── Routes ───────────────────────────────────────────────────
 	routes: [JOB_EMPLOYEE_PAGE_ROUTE as PluginRouteInput],
+
+	// ── Navigation ───────────────────────────────────────────────
 	navMenu: [
 		{
 			type: 'section' as const,
