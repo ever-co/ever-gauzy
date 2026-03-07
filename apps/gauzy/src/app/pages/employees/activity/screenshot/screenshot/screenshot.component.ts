@@ -170,6 +170,10 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 			}),
 			catchError((error) => {
 				console.error('Error while retrieving screenshots for employee', error);
+				this._toastrService.danger(
+					this.translateService.instant('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED'),
+					this.translateService.instant('TOASTR.TITLE.ERROR')
+				);
 				return EMPTY;
 			}),
 			finalize(() => {
