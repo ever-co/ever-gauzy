@@ -310,7 +310,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 					return byMinutes[key];
 				});
 
-				const time = moment().set('hour', parseInt(hour, 0)).set('minute', 0);
+				const time = moment().set('hour', parseInt(hour, 10)).set('minute', 0);
 				const startTime = time.format('HH:mm');
 				const endTime = time.add(1, 'hour').format('HH:mm');
 

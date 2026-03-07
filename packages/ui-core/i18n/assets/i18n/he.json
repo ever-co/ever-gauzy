@@ -177,7 +177,8 @@
 		"RECOVER": "שחזר",
 		"ADD_MORE_SOURCES": "הוסף מקורות נוספים",
 		"REMOVE_FROM_FAVORITES": "הסר מהמועדפים",
-		"ADD_TO_FAVORITES": "הוסף למועדפים"
+		"ADD_TO_FAVORITES": "הוסף למועדפים",
+		"UNSELECT_ALL": "בטל בחירת הכל"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4654,7 +4655,8 @@
 		"VISITED_DATES": "Visited Dates",
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
-		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project."
+		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
+		"SCREEN_SELECTED": "{count} מסך נבחר"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",

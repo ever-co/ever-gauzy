@@ -9,7 +9,7 @@
 	</div>
 	<div class="custom-card-body">
 		<div
-			[ngClass]="{ 'px-3': timeSlots?.length > 0 }"
+			[class.px-3]="timeSlots?.length > 0"
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
@@ -49,7 +49,7 @@
 					</div>
 				}
 			} @else {
-				@if (!request.employeeIds) {
+				@if (!request.employeeIds.length) {
 					<ngx-no-data-message [message]="'ACTIVITY.NO_RECORD_FOUND' | translate"></ngx-no-data-message>
 				} @else {
 					<ngx-no-data-message [message]="'ACTIVITY.NO_SCREENSHOTS' | translate"></ngx-no-data-message>
@@ -60,7 +60,7 @@
 			<div class="selected-items-action">
 				<div class="card p-4 w-100">
 					<div class="row align-items-center">
-						<div class="col">{{ selectedIdsCount }} Screen selected</div>
+						<div class="col">{{ 'ACTIVITY.SCREEN_SELECTED' | translate: { count: selectedIdsCount } }}</div>
 						<div class="col-auto">
 							<button
 								class="ml-auto mr-2 select-hidden"
@@ -69,7 +69,7 @@
 								size="small"
 								(click)="toggleAllSelect()"
 							>
-								{{ allSelected ? 'Unselect All' : 'Select All' }}
+								{{ (allSelected ? 'BUTTONS.UNSELECT_ALL' : 'BUTTONS.SELECT_ALL') | translate }}
 							</button>
 							<button
 								class="ml-auto select-hidden"
