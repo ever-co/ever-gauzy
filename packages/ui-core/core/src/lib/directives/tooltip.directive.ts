@@ -1,4 +1,5 @@
-import { Directive, ElementRef, HostListener, Input, OnDestroy, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Directive, ElementRef, HostListener, Input, OnDestroy, PLATFORM_ID, inject } from '@angular/core';
 
 @Directive({
 	selector: '[gaTooltip]',
@@ -6,6 +7,7 @@ import { Directive, ElementRef, HostListener, Input, OnDestroy, inject } from '@
 })
 export class TooltipDirective implements OnDestroy {
 	private readonly el = inject(ElementRef);
+	private readonly platformId = inject(PLATFORM_ID);
 	private popup: HTMLDivElement | null = null;
 
 	@Input() gaTooltip: string;
@@ -51,6 +53,8 @@ export class TooltipDirective implements OnDestroy {
 	 * @param {number} y - The y-coordinate of the popup.
 	 */
 	private createTooltipPopup(x: number, y: number): void {
+		if (!isPlatformBrowser(this.platformId)) return;
+
 		this.removeTooltip();
 
 		const popup = document.createElement('div');
