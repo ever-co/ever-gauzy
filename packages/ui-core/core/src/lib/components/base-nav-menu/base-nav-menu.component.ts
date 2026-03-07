@@ -6,13 +6,11 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import {
-	FavoriteStoreService,
-	NavMenuBuilderService,
-	NavMenuSectionItem,
-	SidebarMenuService,
-	Store
-} from '../../services';
+import { FavoriteStoreService } from '../../services/favorite/favorite-store.service';
+import { NavMenuBuilderService } from '../../services/nav-builder/nav-menu-builder.service';
+import { NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types';
+import { SidebarMenuService } from '../../services/nav-builder/sidebar-menu.service';
+import { Store } from '../../services/store/store.service';
 
 @UntilDestroy()
 @Directive({
