@@ -1,10 +1,10 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, output, Output } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IMenuItem } from '../../interface/menu-item.interface';
+import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
 import { NbButtonModule, NbTooltipModule } from '@nebular/theme';
 import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 
@@ -17,6 +17,10 @@ import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 	imports: [CommonModule, NgxPermissionsModule, NbTooltipModule, NbButtonModule, TooltipDirective]
 })
 export class ChildrenMenuItemComponent implements OnInit {
+	private readonly router = inject(Router);
+	private readonly location = inject(Location);
+	public readonly focusItemChange = output<IMenuItemFocusChangeEvent>();
+
 	/**
 	 * Represents a menu item component.
 	 */
@@ -71,13 +75,6 @@ export class ChildrenMenuItemComponent implements OnInit {
 	get mouseHover() {
 		return this._mouseHover;
 	}
-
-	@Output() public focusItemChange: EventEmitter<any> = new EventEmitter();
-
-	constructor(
-		private readonly router: Router,
-		private readonly location: Location
-	) {}
 
 	ngOnInit(): void {
 		// Log and check the current URL

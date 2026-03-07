@@ -5,6 +5,7 @@ import {
 	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	Component,
+	inject,
 	Input
 } from '@angular/core';
 import { MenuItemComponent } from './menu-items/concrete/menu-item/menu-item.component';
@@ -20,7 +21,19 @@ import { SidebarMenuService } from '../../services/nav-builder/sidebar-menu.serv
 	imports: [CommonModule, MenuItemComponent]
 })
 export class SidebarMenuComponent implements AfterContentChecked, AfterViewInit {
-	@Input() items: IMenuItem[] = [];
+	private readonly _cdr = inject(ChangeDetectorRef);
+	private readonly _sidebarMenuService = inject(SidebarMenuService);
+
+	private _items: IMenuItem[] = [];
+
+	@Input()
+	public set items(value: IMenuItem[]) {
+		this._items = value;
+	}
+
+	public get items(): IMenuItem[] {
+		return this._items;
+	}
 
 	public get selectedItem() {
 		return this._sidebarMenuService.selectedItem;
@@ -29,11 +42,6 @@ export class SidebarMenuComponent implements AfterContentChecked, AfterViewInit 
 		this._sidebarMenuService.selectedItem = value;
 		this._cdr.detectChanges();
 	}
-
-	constructor(
-		private readonly _cdr: ChangeDetectorRef,
-		private readonly _sidebarMenuService: SidebarMenuService
-	) {}
 
 	ngAfterContentChecked(): void {
 		this._cdr.detectChanges();
