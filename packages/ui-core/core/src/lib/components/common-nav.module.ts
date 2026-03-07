@@ -8,16 +8,14 @@ import { SettingsNavMenuComponent } from './settings-nav-menu/settings-nav-menu.
 import { MenuItemComponent, SidebarMenuComponent, ChildrenMenuItemComponent } from './sidebar-menu';
 import { TooltipDirective } from '../directives/tooltip.directive';
 
-// Components that are not standalone
-const COMPONENTS = [SettingsNavMenuComponent];
-
 // Components that are standalone
 const STANDALONE_COMPONENTS = [
 	BaseNavMenuComponent,
 	MainNavMenuComponent,
 	SidebarMenuComponent,
 	MenuItemComponent,
-	ChildrenMenuItemComponent
+	ChildrenMenuItemComponent,
+	SettingsNavMenuComponent
 ];
 
 @NgModule({
@@ -30,7 +28,7 @@ const STANDALONE_COMPONENTS = [
 		TooltipDirective,
 		...STANDALONE_COMPONENTS
 	],
-	declarations: [...COMPONENTS],
-	exports: [...COMPONENTS, ...STANDALONE_COMPONENTS]
+	declarations: [],
+	exports: [...STANDALONE_COMPONENTS]
 })
 export class CommonNavModule {}
