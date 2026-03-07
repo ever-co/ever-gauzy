@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import {
 	AfterContentChecked,
 	AfterViewInit,
@@ -6,15 +7,17 @@ import {
 	Component,
 	Input
 } from '@angular/core';
+import { MenuItemComponent } from './menu-items/concrete/menu-item/menu-item.component';
 import { IMenuItem } from './menu-items/interface/menu-item.interface';
-import { SidebarMenuService } from '../../services';
+import { SidebarMenuService } from '../../services/nav-builder/sidebar-menu.service';
 
 @Component({
-    selector: 'ga-sidebar-menu',
-    templateUrl: './sidebar-menu.component.html',
-    styleUrls: ['./sidebar-menu.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+	selector: 'ga-sidebar-menu',
+	templateUrl: './sidebar-menu.component.html',
+	styleUrls: ['./sidebar-menu.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	standalone: true,
+	imports: [CommonModule, MenuItemComponent]
 })
 export class SidebarMenuComponent implements AfterContentChecked, AfterViewInit {
 	@Input() items: IMenuItem[] = [];
@@ -27,7 +30,10 @@ export class SidebarMenuComponent implements AfterContentChecked, AfterViewInit 
 		this._cdr.detectChanges();
 	}
 
-	constructor(private readonly _cdr: ChangeDetectorRef, private readonly _sidebarMenuService: SidebarMenuService) {}
+	constructor(
+		private readonly _cdr: ChangeDetectorRef,
+		private readonly _sidebarMenuService: SidebarMenuService
+	) {}
 
 	ngAfterContentChecked(): void {
 		this._cdr.detectChanges();
