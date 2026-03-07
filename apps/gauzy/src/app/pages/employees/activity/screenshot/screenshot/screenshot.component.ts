@@ -272,7 +272,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	private groupTimeSlots(slots: ITimeSlot[]): IScreenshotMap[] {
 		this.selectedIds = {};
 		const timezone = this.filters?.timeZone;
-		const screenshotUrls: { thumbUrl: string; fullUrl: string }[] = [];
+		let screenshotUrls: { thumbUrl: string; fullUrl: string }[] = [];
 
 		for (const slot of slots) {
 			this.selectedIds[slot.id] = false;
@@ -310,7 +310,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 					return byMinutes[key];
 				});
 
-				const time = moment().set('hour', parseInt(hour, 10)).set('minute', 0);
+				const time = moment().set('hour', Number.parseInt(hour, 10)).set('minute', 0);
 				const startTime = time.format('HH:mm');
 				const endTime = time.add(1, 'hour').format('HH:mm');
 
