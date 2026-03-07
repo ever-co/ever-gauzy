@@ -18,8 +18,9 @@ export class TooltipDirective implements OnDestroy {
 	 */
 	@HostListener('mouseenter')
 	onMouseEnter(): void {
-		const x = this.el.nativeElement.getBoundingClientRect().left + this.el.nativeElement.offsetWidth / 2; // Get the middle of the element
-		const y = this.el.nativeElement.getBoundingClientRect().top + this.el.nativeElement.offsetHeight + 6; // Get the bottom of the element, plus a little extra
+		const rect = this.el.nativeElement.getBoundingClientRect();
+		const x = rect.left + window.scrollX + this.el.nativeElement.offsetWidth / 2; // Get the middle of the element (page coordinates)
+		const y = rect.top + window.scrollY + this.el.nativeElement.offsetHeight + 6; // Get the bottom of the element, plus a little extra (page coordinates)
 		this.createTooltipPopup(x, y);
 	}
 
@@ -32,8 +33,6 @@ export class TooltipDirective implements OnDestroy {
 	onMouseLeave(): void {
 		this.removeTooltip();
 	}
-
-
 
 	/**
 	 * Removes the tooltip popup from the DOM and clears the reference.
