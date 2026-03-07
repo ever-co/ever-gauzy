@@ -4644,7 +4644,7 @@
 		"NO_SCREENSHOT": "没有屏幕截图",
 		"NO_SCREENSHOTS": "不允许截屏",
 		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。",
-		"SCREEN_SELECTED": "{count} 屏幕已选择"
+		"SCREEN_SELECTED": "{{ count }} 屏幕已选择"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "让我们创建您的第一个组织",
