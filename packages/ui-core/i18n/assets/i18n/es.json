@@ -178,7 +178,8 @@
 		"RECOVER": "Recuperar",
 		"ADD_MORE_SOURCES": "Añadir más fuentes",
 		"REMOVE_FROM_FAVORITES": "Quitar de favoritos",
-		"ADD_TO_FAVORITES": "Agregar a favoritos"
+		"ADD_TO_FAVORITES": "Agregar a favoritos",
+		"UNSELECT_ALL": "Deseleccionar todo"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4644,7 +4645,8 @@
 		"VISITED_DATES": "Fechas visitadas",
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Capturas de pantalla",
-		"NO_RECORD_FOUND": "No se encontraron registros. Por favor, seleccione un rango de fechas, empleado o proyecto."
+		"NO_RECORD_FOUND": "No se encontraron registros. Por favor, seleccione un rango de fechas, empleado o proyecto.",
+		"SCREEN_SELECTED": "{count} Pantalla seleccionada"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos a crear tu primera organización",
