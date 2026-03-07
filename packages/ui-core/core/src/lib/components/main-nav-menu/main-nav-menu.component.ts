@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, Input, OnInit } from '@angular/core';
+import { Component, input, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, catchError, map } from 'rxjs';
 import { BaseNavMenuComponent } from '../base-nav-menu/base-nav-menu.component';

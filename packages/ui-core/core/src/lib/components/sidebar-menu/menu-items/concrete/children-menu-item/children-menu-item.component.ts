@@ -1,5 +1,5 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, EventEmitter, inject, Input, OnInit, output, Output } from '@angular/core';
+import { Component, inject, Input, OnInit, output } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { filter } from 'rxjs/operators';
