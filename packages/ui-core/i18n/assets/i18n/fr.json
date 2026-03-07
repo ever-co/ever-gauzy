@@ -4635,7 +4635,7 @@
 		"NO_SCREENSHOT": "Aucune capture d'écran",
 		"NO_SCREENSHOTS": "Pas de captures d'écran.",
 		"NO_RECORD_FOUND": "Aucun résultat trouvé. Veuillez sélectionner une plage de dates, un employé ou un projet.",
-		"SCREEN_SELECTED": "{count} Écran sélectionné"
+		"SCREEN_SELECTED": "{{count}} Écrans sélectionnés"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Créons votre première organisation",
