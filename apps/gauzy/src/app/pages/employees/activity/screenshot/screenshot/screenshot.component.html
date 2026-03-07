@@ -71,15 +71,17 @@
 							>
 								{{ (allSelected ? 'BUTTONS.UNSELECT_ALL' : 'BUTTONS.SELECT_ALL') | translate }}
 							</button>
-							<button
-								class="ml-auto select-hidden"
-								status="danger"
-								nbButton
-								size="small"
-								(click)="deleteSlots()"
-							>
-								<nb-icon icon="trash-2-outline"></nb-icon>
-							</button>
+						<button
+							class="ml-auto select-hidden"
+							status="danger"
+							nbButton
+							size="small"
+							[attr.aria-label]="'BUTTONS.DELETE' | translate"
+							[attr.title]="'BUTTONS.DELETE' | translate"
+							(click)="deleteSlots()"
+						>
+							<nb-icon icon="trash-2-outline" aria-hidden="true"></nb-icon>
+						</button>
 						</div>
 					</div>
 				</div>
