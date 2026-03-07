@@ -6,7 +6,7 @@ import { BaseNavMenuComponent } from '../base-nav-menu/base-nav-menu.component';
 import { SidebarMenuComponent } from '../sidebar-menu/sidebar-menu.component';
 import { NavMenuCategory, NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
 	selector: 'ga-main-nav-menu',
 	templateUrl: './main-nav-menu.component.html',
