@@ -63,13 +63,13 @@ export interface SlotRegistrationOptions {
 @Injectable({ providedIn: 'root' })
 export class PageExtensionRegistryService {
 	private readonly _injector = inject(Injector);
-	private readonly _permissionChecker: IPluginPermissionChecker | null = inject(PLUGIN_PERMISSION_CHECKER, { optional: true }) ?? null;
-	private readonly _featureChecker: IPluginFeatureChecker | null = inject(PLUGIN_FEATURE_CHECKER, { optional: true }) ?? null;
+	private readonly _permissionChecker: IPluginPermissionChecker | null =
+		inject(PLUGIN_PERMISSION_CHECKER, { optional: true }) ?? null;
+	private readonly _featureChecker: IPluginFeatureChecker | null =
+		inject(PLUGIN_FEATURE_CHECKER, { optional: true }) ?? null;
 
 	// Extension storage with BehaviorSubject for reactivity
-	private readonly _extensions$ = new BehaviorSubject<Map<PageExtensionSlotId, PageExtensionDefinition[]>>(
-		new Map()
-	);
+	private readonly _extensions$ = new BehaviorSubject<Map<PageExtensionSlotId, PageExtensionDefinition[]>>(new Map());
 
 	// Slot definitions for dynamic slots
 	private readonly _slots$ = new BehaviorSubject<Map<PageExtensionSlotId, PageExtensionSlotDefinition>>(new Map());
@@ -150,8 +150,32 @@ export class PageExtensionRegistryService {
 	 */
 	register(extension: PageExtensionDefinition, options?: ExtensionRegistrationOptions): void {
 		const extensions = new Map(this._extensions$.value);
+		this._registerTo(extension, extensions, options);
+		this._extensions$.next(extensions);
+	}
+
+	/**
+	 * Registers multiple extensions.
+	 *
+	 * @param extensions Array of extension definitions
+	 * @param options Optional pluginId for lifecycle cleanup
+	 */
+	registerAll(extensions: PageExtensionDefinition[], options?: ExtensionRegistrationOptions): void {
+		const extensionsMap = new Map(this._extensions$.value);
+		extensions.forEach((e) => this._registerTo(e, extensionsMap, options));
+		this._extensions$.next(extensionsMap);
+	}
+
+	/**
+	 * Internal helper to register an extension to a specific map instance.
+	 */
+	private _registerTo(
+		extension: PageExtensionDefinition,
+		extensionsMap: Map<PageExtensionSlotId, PageExtensionDefinition[]>,
+		options?: ExtensionRegistrationOptions
+	): void {
 		const slotId = extension.slotId;
-		const list = [...(extensions.get(slotId) ?? [])];
+		const list = [...(extensionsMap.get(slotId) ?? [])];
 
 		// Add plugin ID to extension
 		const extWithPlugin: PageExtensionDefinition = {
@@ -179,8 +203,7 @@ export class PageExtensionRegistryService {
 			);
 		}
 
-		extensions.set(slotId, list);
-		this._extensions$.next(extensions);
+		extensionsMap.set(slotId, list);
 
 		// Track for plugin cleanup
 		if (options?.pluginId) {
@@ -190,16 +213,6 @@ export class PageExtensionRegistryService {
 				this._pluginToExtensions.set(options.pluginId, entries);
 			}
 		}
-	}
-
-	/**
-	 * Registers multiple extensions.
-	 *
-	 * @param extensions Array of extension definitions
-	 * @param options Optional pluginId for lifecycle cleanup
-	 */
-	registerAll(extensions: PageExtensionDefinition[], options?: ExtensionRegistrationOptions): void {
-		extensions.forEach((e) => this.register(e, options));
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -222,11 +235,9 @@ export class PageExtensionRegistryService {
 	 */
 	getExtensions$(slotId: PageExtensionSlotId): Observable<PageExtensionDefinition[]> {
 		return this._extensions$.pipe(
-			map((extensions) => extensions.get(slotId) ?? []),
-			distinctUntilChanged((prev, curr) => {
-				if (prev.length !== curr.length) return false;
-				return prev.every((p, i) => p.id === curr[i]?.id);
-			})
+			map((extensions) => extensions.get(slotId)),
+			distinctUntilChanged(),
+			map((extensions) => extensions ?? [])
 		);
 	}
 
@@ -393,17 +404,22 @@ export class PageExtensionRegistryService {
 			return false;
 		}
 
-		// Custom async visibility function — can't evaluate sync, show by default
+		// Custom visibility function — evaluate if sync, fall back to visible if async
 		if (ext.visible) {
-			return true;
+			const result = ext.visible(_context);
+			if (result instanceof Promise) {
+				// Async visibility can't be evaluated synchronously — show by default
+				return true;
+			}
+			return result;
 		}
 
 		// Check permissions synchronously (IPluginPermissionChecker is sync)
 		if (ext.permissions?.length && this._permissionChecker) {
-			if (!this._permissionChecker.hasAllPermissions(ext.permissions)) return false;
+			if (!this._permissionChecker.hasAllPermissions(...ext.permissions)) return false;
 		}
 		if (ext.permissionsAny?.length && this._permissionChecker) {
-			if (!this._permissionChecker.hasAnyPermission(ext.permissionsAny)) return false;
+			if (!this._permissionChecker.hasAnyPermission(...ext.permissionsAny)) return false;
 		}
 
 		// Check feature flag synchronously (IPluginFeatureChecker is sync)
@@ -428,8 +444,8 @@ export class PageExtensionRegistryService {
 			return true;
 		}
 		return mode === 'all'
-			? this._permissionChecker.hasAllPermissions(permissions)
-			: this._permissionChecker.hasAnyPermission(permissions);
+			? this._permissionChecker.hasAllPermissions(...permissions)
+			: this._permissionChecker.hasAnyPermission(...permissions);
 	}
 
 	/**

@@ -16,6 +16,7 @@ import {
 	ViewContainerRef
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { concatMap, from } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NbCardModule } from '@nebular/theme';
 import {
@@ -359,6 +360,9 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 	private readonly _viewContainerRef = inject(ViewContainerRef);
 	private readonly _elementRef = inject(ElementRef);
 
+	/** Tracks pending async cleanup to serialize mount/unmount operations. */
+	private _pendingCleanup: Promise<void> = Promise.resolve();
+
 	/**
 	 * The slot identifier to render extensions for.
 	 * Use PAGE_EXTENSION_SLOTS constants for well-known slots.
@@ -402,11 +406,12 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['slotId'] && !changes['slotId'].firstChange) {
-			this._unmountAll();
-			this._subscribeToExtensions();
+			this._pendingCleanup = this._unmountAll().then(() => {
+				this._subscribeToExtensions();
+			});
 		}
 		if (changes['visibilityContext'] && !changes['visibilityContext'].firstChange) {
-			this._refreshVisibility();
+			this._pendingCleanup = this._pendingCleanup.then(() => this._refreshVisibility());
 		}
 	}
 
@@ -443,10 +448,11 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 			// Reactive mode: Subscribe to extension changes
 			this._extensionRegistry
 				.getExtensions$(this.slotId)
-				.pipe(takeUntilDestroyed(this._destroyRef))
-				.subscribe((extensions) => {
-					this._updateExtensions(extensions);
-				});
+				.pipe(
+					concatMap((extensions) => from(this._updateExtensions(extensions))),
+					takeUntilDestroyed(this._destroyRef)
+				)
+				.subscribe();
 		} else {
 			// Static mode: Load once
 			const extensions = this._extensionRegistry.getExtensions(this.slotId);

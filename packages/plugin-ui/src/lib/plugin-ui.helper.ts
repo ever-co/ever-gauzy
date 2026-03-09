@@ -1,5 +1,5 @@
-import { InjectionToken, Injector, Type } from '@angular/core';
-import { Observable } from 'rxjs';
+import { DestroyRef, InjectionToken, Injector, Type } from '@angular/core';
+import { Observable, Subscription } from 'rxjs';
 import type { PageExtensionDefinition } from './plugin-extension/page-extension-slot.types';
 import {
 	PluginUiDefinition,
@@ -166,9 +166,9 @@ export interface IPluginPermissionChecker {
 	/** Returns true if the user has the specified permission. */
 	hasPermission(permission: string): boolean;
 	/** Returns true if the user has ALL specified permissions. */
-	hasAllPermissions(permissions: string[]): boolean;
+	hasAllPermissions(...permissions: string[]): boolean;
 	/** Returns true if the user has ANY of the specified permissions. */
-	hasAnyPermission(permissions: string[]): boolean;
+	hasAnyPermission(...permissions: string[]): boolean;
 }
 
 /**
@@ -638,9 +638,17 @@ export function defineDeclarativePlugin(
 
 				// Subscribe to future language changes — merge whenever core
 				// translations are loaded for a new language.
-				translateService.onLangChange.subscribe(({ lang }) => {
+				const langSub: Subscription = translateService.onLangChange.subscribe(({ lang }) => {
 					mergeForLang(lang);
 				});
+
+				// Auto-unsubscribe when the injector is destroyed (e.g., dynamic plugin unload).
+				// For statically bootstrapped plugins, DestroyRef may not be available — in that
+				// case the subscription intentionally lives for the app lifetime.
+				const destroyRef = injector.get(DestroyRef, null);
+				if (destroyRef) {
+					destroyRef.onDestroy(() => langSub.unsubscribe());
+				}
 			}
 		}
 

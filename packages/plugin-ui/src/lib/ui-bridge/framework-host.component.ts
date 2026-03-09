@@ -134,6 +134,8 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 	private readonly _injector = inject(Injector);
 	private readonly _cdr = inject(ChangeDetectorRef);
 	private _mountResult?: UiBridgeMountResult;
+	/** Incremented on each _mount call to detect stale async completions. */
+	private _mountVersion = 0;
 
 	/** Whether the component/bridge is currently loading. */
 	_loading = false;
@@ -177,6 +179,8 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 			return;
 		}
 
+		const currentVersion = ++this._mountVersion;
+
 		this._loading = true;
 		this._error = null;
 		this._cdr.markForCheck();
@@ -184,6 +188,10 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 		try {
 			// Resolve bridge (async — supports lazy bridges)
 			const bridge = await this._bridgeRegistry.getAsync(this.frameworkId);
+
+			// Abort if a newer mount was initiated while awaiting
+			if (this._mountVersion !== currentVersion) return;
+
 			if (!bridge) {
 				const available = this._bridgeRegistry.getRegisteredFrameworks();
 				const availableStr = available.length > 0 ? available.join(', ') : 'none';
@@ -200,6 +208,9 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 			let resolvedComponent = this.component;
 			if (this.loadComponent) {
 				resolvedComponent = await this.loadComponent();
+
+				// Abort if a newer mount was initiated while awaiting
+				if (this._mountVersion !== currentVersion) return;
 			}
 
 			if (!resolvedComponent) {
@@ -220,6 +231,9 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 			this._loading = false;
 			this._cdr.markForCheck();
 		} catch (error: any) {
+			// Ignore errors from stale mount attempts
+			if (this._mountVersion !== currentVersion) return;
+
 			const message = error?.message ?? String(error);
 			console.error(`[FrameworkHost] Failed to mount ${this.frameworkId} component:`, error);
 			this._error = `Failed to load: ${message}`;

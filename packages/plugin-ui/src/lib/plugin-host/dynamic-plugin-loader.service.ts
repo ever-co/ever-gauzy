@@ -67,8 +67,8 @@ export class DynamicPluginLoaderService {
 	private readonly _serviceRegistry = inject(PluginServiceRegistryService);
 	private readonly _stateService = inject(PluginStateService);
 
-	/** Tracks dynamically loaded plugins: pluginId → { definition, instance? } */
-	private readonly _loaded = new Map<string, { definition: PluginUiDefinition; instance?: any }>();
+	/** Tracks dynamically loaded plugins: pluginId → { definition, instance?, injector? } */
+	private readonly _loaded = new Map<string, { definition: PluginUiDefinition; instance?: any; injector?: Injector }>();
 
 	/** Observable of loaded plugin IDs. */
 	private readonly _loaded$ = new BehaviorSubject<Set<string>>(new Set());
@@ -113,13 +113,16 @@ export class DynamicPluginLoaderService {
 
 		try {
 			let instance: any = undefined;
+			let injector: Injector | undefined = undefined;
 
 			if (definition.module || definition.loadModule) {
 				// Module-based plugin
-				instance = await this._loadModulePlugin(definition);
+				const result = await this._loadModulePlugin(definition);
+				instance = result.instance;
+				injector = result.injector;
 			} else if (definition.bootstrap) {
 				// Declarative-only plugin
-				await this._loadDeclarativePlugin(definition);
+				injector = await this._loadDeclarativePlugin(definition);
 			} else {
 				return {
 					success: false,
@@ -128,7 +131,7 @@ export class DynamicPluginLoaderService {
 				};
 			}
 
-			this._loaded.set(id, { definition, instance });
+			this._loaded.set(id, { definition, instance, injector });
 			this._emitLoadedIds();
 
 			// Emit event
@@ -158,7 +161,7 @@ export class DynamicPluginLoaderService {
 		}
 
 		try {
-			const { instance } = entry;
+			const { instance, injector } = entry;
 
 			// Invoke lifecycle hooks on module-based plugins
 			if (instance) {
@@ -180,6 +183,15 @@ export class DynamicPluginLoaderService {
 				}
 
 				this._registry.deregister(instance);
+			}
+
+			// Destroy child injector to trigger OnDestroy on provided services
+			if (injector && typeof (injector as any).destroy === 'function') {
+				try {
+					(injector as any).destroy();
+				} catch (e) {
+					console.error(`[DynamicPluginLoader] Error destroying injector for '${pluginId}':`, e);
+				}
 			}
 
 			// Clean up extensions
@@ -232,7 +244,7 @@ export class DynamicPluginLoaderService {
 	 * instance in the environment injector context, registers it, and
 	 * invokes lifecycle hooks.
 	 */
-	private async _loadModulePlugin(definition: PluginUiDefinition): Promise<any> {
+	private async _loadModulePlugin(definition: PluginUiDefinition): Promise<{ instance: any; injector: Injector }> {
 		const resolvedModule: Type<any> | undefined =
 			definition.module ?? (definition.loadModule ? await definition.loadModule() : undefined);
 
@@ -263,16 +275,28 @@ export class DynamicPluginLoaderService {
 			if (result instanceof Promise) await result;
 		}
 
-		return instance;
+		return { instance, injector: childInjector };
 	}
 
 	/**
 	 * Loads a declarative-only plugin by running its bootstrap callback
-	 * inside the environment injector context.
+	 * inside a child injector context that provides PLUGIN_OPTIONS and
+	 * PLUGIN_DEFINITION, consistent with module-based plugins.
 	 */
-	private async _loadDeclarativePlugin(definition: PluginUiDefinition): Promise<void> {
-		const result = runInInjectionContext(this._envInjector, () => definition.bootstrap!(this._envInjector));
+	private async _loadDeclarativePlugin(definition: PluginUiDefinition): Promise<Injector> {
+		const options = definition.options ?? {};
+		const childInjector = Injector.create({
+			providers: [
+				{ provide: PLUGIN_OPTIONS, useValue: options },
+				{ provide: PLUGIN_DEFINITION, useValue: definition }
+			],
+			parent: this._envInjector
+		});
+
+		const result = runInInjectionContext(childInjector, () => definition.bootstrap!(childInjector));
 		if (result instanceof Promise) await result;
+
+		return childInjector;
 	}
 
 	/**
