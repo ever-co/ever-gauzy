@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { TimerStatusUpdatedEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
+import { SimEventName } from '../dto/event-mapping.dto';
 
 @Injectable()
 @EventsHandler(TimerStatusUpdatedEvent)
@@ -25,7 +26,7 @@ export class SimTimerStatusUpdatedHandler implements IEventHandler<TimerStatusUp
 			}
 
 			await this.simService.triggerEventWorkflow({
-				event: 'timer.status_updated',
+				event: SimEventName['TIMER_STATUS_UPDATED'],
 				data: {
 					duration: status.duration,
 					running: status.running,

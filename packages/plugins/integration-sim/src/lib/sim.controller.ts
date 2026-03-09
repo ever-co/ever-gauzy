@@ -19,6 +19,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { SimService } from './sim.service';
 import { ConfigureSimIntegrationDto, ExecuteWorkflowDto, WorkflowExecutionQueryDto, EventMappingDto } from './dto';
+import { SIM_SUPPORTED_EVENTS, SimEventType } from './dto/event-mapping.dto';
 
 @ApiTags('SIM Integration')
 @ApiBearerAuth()
@@ -272,12 +273,15 @@ export class SimController {
 	@ApiOperation({ summary: 'Remove an event-to-workflow mapping' })
 	@ApiResponse({ status: 200, description: 'Event mapping removed' })
 	@ApiResponse({ status: 404, description: 'SIM integration not found' })
-	@ApiParam({ name: 'event', description: 'The event type to unmap (e.g., timer.started)' })
+	@ApiParam({ name: 'event', description: 'The event type to remove from mapping (e.g., timer.started)' })
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
 	@Delete('/events/mappings/:event')
 	async removeEventMapping(@Param('event') event: string) {
 		try {
-			await this.simService.removeEventMapping(event as any);
+			if (!SIM_SUPPORTED_EVENTS.includes(event as SimEventType)) {
+				throw new HttpException(`Invalid event type: ${event}`, HttpStatus.BAD_REQUEST);
+			}
+			await this.simService.removeEventMapping(event as SimEventType);
 			return { removed: true, event };
 		} catch (error: any) {
 			if (error instanceof HttpException) {

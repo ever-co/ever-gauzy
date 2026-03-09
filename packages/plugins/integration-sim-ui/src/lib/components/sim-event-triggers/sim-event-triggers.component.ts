@@ -1,8 +1,8 @@
-import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy, computed } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, tap, finalize, forkJoin } from 'rxjs';
+import { filter, tap, finalize, forkJoin, switchMap } from 'rxjs';
 import { SimService, SimStoreService, ISimSupportedEvent, ISimEventMapping } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
@@ -45,20 +45,38 @@ export class SimEventTriggersComponent extends TranslationBaseComponent implemen
 				filter((id): id is string => !!id),
 				tap((id) => {
 					this.integrationId.set(id);
-					this._loadData();
+					this.loading.set(true);
 				}),
+				switchMap(() =>
+					forkJoin({
+						supported: this._simService.getSupportedEvents(),
+						mappings: this._simService.getEventMappings()
+					}).pipe(
+						finalize(() => this.loading.set(false))
+					)
+				),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe({
+				next: ({ supported, mappings }) => {
+					this.supportedEvents.set(supported);
+					this.eventMappings.set(mappings);
+				},
+				error: () => {
+					this.errorMessage.set(
+						this.getTranslation('INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.LOAD_FAILED')
+					);
+				}
+			});
 	}
 
 	/**
-	 * Get available events that are not yet mapped.
+	 * Available events that are not yet mapped.
 	 */
-	get availableEvents(): ISimSupportedEvent[] {
+	readonly availableEvents = computed(() => {
 		const mappedEventNames = new Set(this.eventMappings().map((m) => m.event));
 		return this.supportedEvents().filter((e) => !mappedEventNames.has(e.event));
-	}
+	});
 
 	/**
 	 * Get the description for a given event name.

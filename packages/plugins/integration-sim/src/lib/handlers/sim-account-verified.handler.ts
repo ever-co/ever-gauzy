@@ -1,7 +1,8 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Subscription, tap, filter, catchError, EMPTY } from 'rxjs';
+import { Subscription, filter, catchError, EMPTY, concatMap, from } from 'rxjs';
 import { EventBus, AccountVerifiedEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
+import { SimEventName } from '../dto/event-mapping.dto';
 
 @Injectable()
 export class SimAccountVerifiedHandler implements OnModuleInit, OnModuleDestroy {
@@ -18,11 +19,14 @@ export class SimAccountVerifiedHandler implements OnModuleInit, OnModuleDestroy 
 			.ofType(AccountVerifiedEvent)
 			.pipe(
 				filter((event: AccountVerifiedEvent) => !!event.user),
-				tap((event: AccountVerifiedEvent) => this.handleAccountVerified(event)),
-				catchError((error) => {
-					this.logger.error('Error in AccountVerifiedEvent subscription', error?.message);
-					return EMPTY;
-				})
+				concatMap((event: AccountVerifiedEvent) =>
+					from(this.handleAccountVerified(event)).pipe(
+						catchError((error) => {
+							this.logger.error('Error in AccountVerifiedEvent subscription', error?.message);
+							return EMPTY;
+						})
+					)
+				)
 			)
 			.subscribe();
 	}
@@ -40,7 +44,7 @@ export class SimAccountVerifiedHandler implements OnModuleInit, OnModuleDestroy 
 			}
 
 			await this.simService.triggerEventWorkflow({
-				event: 'account.verified',
+				event: SimEventName['ACCOUNT_VERIFIED'],
 				data: {
 					id: user.id,
 					email: user.email,
@@ -48,8 +52,7 @@ export class SimAccountVerifiedHandler implements OnModuleInit, OnModuleDestroy 
 					lastName: user.lastName,
 					tenantId: user.tenantId
 				},
-				tenantId,
-				organizationId: tenantId // Use tenantId as fallback since account verification may not have an organizationId
+				tenantId
 			});
 		} catch (error: any) {
 			this.logger.error('Failed to handle AccountVerifiedEvent for SIM workflow trigger', {

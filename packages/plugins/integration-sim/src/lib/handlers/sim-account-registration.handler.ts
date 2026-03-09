@@ -1,7 +1,8 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Subscription, tap, filter, catchError, EMPTY } from 'rxjs';
+import { Subscription, filter, catchError, EMPTY, concatMap, from } from 'rxjs';
 import { EventBus, AccountRegistrationEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
+import { SimEventName } from '../dto/event-mapping.dto';
 
 @Injectable()
 export class SimAccountRegistrationHandler implements OnModuleInit, OnModuleDestroy {
@@ -18,11 +19,14 @@ export class SimAccountRegistrationHandler implements OnModuleInit, OnModuleDest
 			.ofType(AccountRegistrationEvent)
 			.pipe(
 				filter((event: AccountRegistrationEvent) => !!event.user),
-				tap((event: AccountRegistrationEvent) => this.handleAccountRegistration(event)),
-				catchError((error) => {
-					this.logger.error('Error in AccountRegistrationEvent subscription', error?.message);
-					return EMPTY;
-				})
+				concatMap((event: AccountRegistrationEvent) =>
+					from(this.handleAccountRegistration(event)).pipe(
+						catchError((error) => {
+							this.logger.error('Error in AccountRegistrationEvent subscription', error?.message);
+							return EMPTY;
+						})
+					)
+				)
 			)
 			.subscribe();
 	}
@@ -40,7 +44,7 @@ export class SimAccountRegistrationHandler implements OnModuleInit, OnModuleDest
 			}
 
 			await this.simService.triggerEventWorkflow({
-				event: 'account.registered',
+				event: SimEventName['ACCOUNT_REGISTERED'],
 				data: {
 					id: user.id,
 					email: user.email,
@@ -48,8 +52,7 @@ export class SimAccountRegistrationHandler implements OnModuleInit, OnModuleDest
 					lastName: user.lastName,
 					tenantId: user.tenantId
 				},
-				tenantId,
-				organizationId: tenantId // Use tenantId as fallback since account registration may not have an organizationId
+				tenantId
 			});
 		} catch (error: any) {
 			this.logger.error('Failed to handle AccountRegistrationEvent for SIM workflow trigger', {

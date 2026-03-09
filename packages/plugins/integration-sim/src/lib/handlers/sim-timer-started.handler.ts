@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { TimerStartedEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
+import { SimEventName } from '../dto/event-mapping.dto';
 
 @Injectable()
 @EventsHandler(TimerStartedEvent)
@@ -23,7 +24,7 @@ export class SimTimerStartedHandler implements IEventHandler<TimerStartedEvent> 
 			}
 
 			await this.simService.triggerEventWorkflow({
-				event: 'timer.started',
+				event: SimEventName['TIMER_STARTED'],
 				data: timeLog,
 				tenantId: timeLog.tenantId,
 				organizationId: timeLog.organizationId

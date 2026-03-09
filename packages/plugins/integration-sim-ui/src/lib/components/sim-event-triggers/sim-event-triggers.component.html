@@ -17,7 +17,7 @@
 							formControlName="event"
 							[placeholder]="'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.SELECT_EVENT' | translate"
 						>
-							@for (event of availableEvents; track event.event) {
+							@for (event of availableEvents(); track event.event) {
 								<nb-option [value]="event.event">
 									{{ event.event }}
 								</nb-option>
@@ -81,9 +81,9 @@
 					<p>{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.NO_MAPPINGS' | translate }}</p>
 				</div>
 			} @else {
-				<div class="mappings-list">
+				<nb-list class="mappings-list">
 					@for (mapping of eventMappings(); track mapping.event) {
-						<div class="mapping-item">
+						<nb-list-item class="mapping-item">
 							<div class="mapping-info">
 								<div class="mapping-event">
 									<nb-icon icon="flash-outline" status="warning"></nb-icon>
@@ -103,6 +103,7 @@
 								(click)="removeMapping(mapping.event)"
 								[disabled]="removing() === mapping.event"
 								[nbTooltip]="'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.REMOVE' | translate"
+								[attr.aria-label]="(('INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.REMOVE' | translate) + ': ' + mapping.event)"
 							>
 								@if (removing() === mapping.event) {
 									<nb-icon icon="loader-outline" class="spin-animation"></nb-icon>
@@ -110,9 +111,9 @@
 									<nb-icon icon="trash-2-outline"></nb-icon>
 								}
 							</button>
-						</div>
+						</nb-list-item>
 					}
-				</div>
+				</nb-list>
 			}
 		</nb-card-body>
 	</nb-card>

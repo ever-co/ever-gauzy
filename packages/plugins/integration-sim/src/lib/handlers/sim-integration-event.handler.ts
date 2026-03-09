@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Subscription, tap, filter, catchError, EMPTY } from 'rxjs';
+import { Subscription, filter, catchError, EMPTY, concatMap, from } from 'rxjs';
 import { EventBus, IntegrationEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
 
@@ -18,11 +18,14 @@ export class SimIntegrationEventHandler implements OnModuleInit, OnModuleDestroy
 			.ofType(IntegrationEvent)
 			.pipe(
 				filter((event: IntegrationEvent) => !!event.entity),
-				tap((event: IntegrationEvent) => this.handleIntegrationEvent(event)),
-				catchError((error) => {
-					this.logger.error('Error in IntegrationEvent subscription', error?.message);
-					return EMPTY;
-				})
+				concatMap((event: IntegrationEvent) =>
+					from(this.handleIntegrationEvent(event)).pipe(
+						catchError((error) => {
+							this.logger.error('Error in IntegrationEvent subscription', error?.message);
+							return EMPTY;
+						})
+					)
+				)
 			)
 			.subscribe();
 	}

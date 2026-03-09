@@ -15,7 +15,7 @@ import { SimRepositoryService } from './sim-repository.service';
 import { SimWorkflowExecution } from './sim-workflow-execution.entity';
 import { SIM_DEFAULT_BASE_URL } from './sim.config';
 import { IConfigureSimInput, IExecuteWorkflowInput, ISimIntegrationSettings, SimSettingName } from './interfaces';
-import { SimEventType } from './dto/event-mapping.dto';
+import { SimEventType, SIM_SUPPORTED_EVENTS, SIM_EVENT_DESCRIPTIONS } from './dto/event-mapping.dto';
 
 @Injectable()
 export class SimService {
@@ -603,22 +603,10 @@ export class SimService {
 	 * Get the list of supported event types for workflow triggers.
 	 */
 	getSupportedEvents(): { event: string; description: string }[] {
-		return [
-			{ event: 'timer.started', description: 'Triggered when an employee starts their timer' },
-			{ event: 'timer.stopped', description: 'Triggered when an employee stops their timer' },
-			{ event: 'timer.status_updated', description: 'Triggered when a timer status is queried and updated' },
-			{ event: 'task.created', description: 'Triggered when a new task is created' },
-			{ event: 'task.updated', description: 'Triggered when a task is updated' },
-			{ event: 'task.deleted', description: 'Triggered when a task is deleted' },
-			{ event: 'screenshot.created', description: 'Triggered when a new screenshot is captured' },
-			{ event: 'screenshot.updated', description: 'Triggered when a screenshot is updated' },
-			{ event: 'screenshot.deleted', description: 'Triggered when a screenshot is deleted' },
-			{ event: 'integration.created', description: 'Triggered when a new integration is created' },
-			{ event: 'integration.updated', description: 'Triggered when an integration is updated' },
-			{ event: 'integration.deleted', description: 'Triggered when an integration is deleted' },
-			{ event: 'account.registered', description: 'Triggered when a new account is registered' },
-			{ event: 'account.verified', description: 'Triggered when an account is verified' }
-		];
+		return SIM_SUPPORTED_EVENTS.map((event) => ({
+			event,
+			description: SIM_EVENT_DESCRIPTIONS[event]
+		}));
 	}
 
 	/**
@@ -628,7 +616,7 @@ export class SimService {
 		event: string;
 		data: any;
 		tenantId: string;
-		organizationId: string;
+		organizationId?: string;
 	}): Promise<void> {
 		try {
 			let integrationTenant: IIntegrationTenant | null = null;

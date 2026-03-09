@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Subscription, tap, filter, catchError, EMPTY } from 'rxjs';
+import { Subscription, filter, catchError, EMPTY, concatMap, from } from 'rxjs';
 import { EventBus, ScreenshotEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
 
@@ -18,11 +18,14 @@ export class SimScreenshotEventHandler implements OnModuleInit, OnModuleDestroy 
 			.ofType(ScreenshotEvent)
 			.pipe(
 				filter((event: ScreenshotEvent) => !!event.entity),
-				tap((event: ScreenshotEvent) => this.handleScreenshotEvent(event)),
-				catchError((error) => {
-					this.logger.error('Error in ScreenshotEvent subscription', error?.message);
-					return EMPTY;
-				})
+				concatMap((event: ScreenshotEvent) =>
+					from(this.handleScreenshotEvent(event)).pipe(
+						catchError((error) => {
+							this.logger.error('Error in ScreenshotEvent subscription', error?.message);
+							return EMPTY;
+						})
+					)
+				)
 			)
 			.subscribe();
 	}
