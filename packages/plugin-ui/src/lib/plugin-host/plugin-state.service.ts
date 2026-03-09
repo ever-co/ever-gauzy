@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, distinctUntilChanged, filter, map } from 'rxjs';
+import { BehaviorSubject, Observable, distinctUntilChanged, filter } from 'rxjs';
 
 /**
  * Reactive, plugin-scoped state store.

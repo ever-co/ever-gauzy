@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Subject, Observable, filter, map, Subscription, TeardownLogic } from 'rxjs';
+import { Subject, Observable, filter, map, Subscription } from 'rxjs';
 
 /**
  * Event payload for plugin events.
@@ -151,11 +151,7 @@ export class PluginEventBusService implements OnDestroy {
 	 * @param callback Callback function
 	 * @param options Optional subscribe options
 	 */
-	once<T = unknown>(
-		type: string,
-		callback: (event: PluginEvent<T>) => void,
-		options?: SubscribeOptions
-	): void {
+	once<T = unknown>(type: string, callback: (event: PluginEvent<T>) => void, options?: SubscribeOptions): void {
 		const subscription = this.on<T>(type, options).subscribe((event) => {
 			callback(event);
 			subscription.unsubscribe();
@@ -256,11 +252,7 @@ export class PluginEventEmitter {
 	/**
 	 * Subscribes once then unsubscribes.
 	 */
-	once<T = unknown>(
-		type: string,
-		callback: (event: PluginEvent<T>) => void,
-		options?: SubscribeOptions
-	): void {
+	once<T = unknown>(type: string, callback: (event: PluginEvent<T>) => void, options?: SubscribeOptions): void {
 		this._eventBus.once<T>(type, callback, options);
 	}
 
