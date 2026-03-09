@@ -1,0 +1,119 @@
+<div class="event-triggers-container">
+	<!-- Add New Event Mapping -->
+	<nb-card>
+		<nb-card-header>
+			<h6 class="mb-0">{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.ADD_TITLE' | translate }}</h6>
+		</nb-card-header>
+		<nb-card-body>
+			<p class="description">{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.DESCRIPTION' | translate }}</p>
+
+			<form [formGroup]="mappingForm" (ngSubmit)="saveMapping()">
+				<div class="row g-3">
+					<div class="col-md-5">
+						<label class="label" for="sim-event-select">{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.EVENT' | translate }}</label>
+						<nb-select
+							id="sim-event-select"
+							fullWidth
+							formControlName="event"
+							[placeholder]="'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.SELECT_EVENT' | translate"
+						>
+							@for (event of availableEvents; track event.event) {
+								<nb-option [value]="event.event">
+									{{ event.event }}
+								</nb-option>
+							}
+						</nb-select>
+					</div>
+					<div class="col-md-5">
+						<label class="label" for="sim-trigger-workflow-id">{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.WORKFLOW_ID' | translate }}</label>
+						<input
+							id="sim-trigger-workflow-id"
+							nbInput
+							fullWidth
+							type="text"
+							formControlName="workflowId"
+							[placeholder]="'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.WORKFLOW_ID_PLACEHOLDER' | translate"
+						/>
+					</div>
+					<div class="col-md-2 d-flex align-items-end">
+						<button nbButton status="primary" type="submit" fullWidth [disabled]="mappingForm.invalid || saving()">
+							@if (saving()) {
+								<nb-icon icon="loader-outline" class="spin-animation"></nb-icon>
+							} @else {
+								<nb-icon icon="plus-outline"></nb-icon>
+							}
+							{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.ADD' | translate }}
+						</button>
+					</div>
+				</div>
+			</form>
+
+			@if (successMessage()) {
+				<nb-alert status="success" closable class="mt-3" (close)="successMessage.set(null)">
+					<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+					{{ successMessage() }}
+				</nb-alert>
+			}
+
+			@if (errorMessage()) {
+				<nb-alert status="danger" closable class="mt-3" (close)="errorMessage.set(null)">
+					<nb-icon icon="alert-triangle-outline"></nb-icon>
+					{{ errorMessage() }}
+				</nb-alert>
+			}
+		</nb-card-body>
+	</nb-card>
+
+	<!-- Active Event Mappings -->
+	<nb-card class="mt-3">
+		<nb-card-header>
+			<h6 class="mb-0">{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.ACTIVE_TITLE' | translate }}</h6>
+		</nb-card-header>
+		<nb-card-body>
+			@if (loading()) {
+				<div class="text-center py-4">
+					<nb-icon icon="loader-outline" class="spin-animation"></nb-icon>
+					<span class="ml-2">{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.LOADING' | translate }}</span>
+				</div>
+			} @else if (eventMappings().length === 0) {
+				<div class="no-mappings">
+					<nb-icon icon="flash-off-outline" class="no-mappings-icon"></nb-icon>
+					<p>{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.NO_MAPPINGS' | translate }}</p>
+				</div>
+			} @else {
+				<div class="mappings-list">
+					@for (mapping of eventMappings(); track mapping.event) {
+						<div class="mapping-item">
+							<div class="mapping-info">
+								<div class="mapping-event">
+									<nb-icon icon="flash-outline" status="warning"></nb-icon>
+									<span class="event-name">{{ mapping.event }}</span>
+								</div>
+								<div class="mapping-description">{{ getEventDescription(mapping.event) }}</div>
+								<div class="mapping-workflow">
+									<nb-icon icon="arrow-forward-outline"></nb-icon>
+									<span class="workflow-id">{{ mapping.workflowId }}</span>
+								</div>
+							</div>
+							<button
+								nbButton
+								ghost
+								status="danger"
+								size="small"
+								(click)="removeMapping(mapping.event)"
+								[disabled]="removing() === mapping.event"
+								[nbTooltip]="'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.REMOVE' | translate"
+							>
+								@if (removing() === mapping.event) {
+									<nb-icon icon="loader-outline" class="spin-animation"></nb-icon>
+								} @else {
+									<nb-icon icon="trash-2-outline"></nb-icon>
+								}
+							</button>
+						</div>
+					}
+				</div>
+			}
+		</nb-card-body>
+	</nb-card>
+</div>
