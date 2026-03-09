@@ -1,17 +1,25 @@
-import { ChangeDetectionStrategy, Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AfterViewInit, ChangeDetectionStrategy, Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { IPlugin, IUser } from '@gauzy/contracts';
-import { NB_DIALOG_CONFIG, NbDialogRef, NbDialogService, NbCardModule, NbIconModule, NbBadgeModule, NbTabsetModule, NbFormFieldModule, NbInputModule, NbUserModule, NbButtonModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import { NB_DIALOG_CONFIG, NbBadgeModule, NbButtonModule, NbCardModule, NbDialogRef, NbDialogService, NbFormFieldModule, NbIconModule, NbInputModule, NbSpinnerModule, NbTabsetModule, NbToggleModule, NbTooltipModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, distinctUntilChanged, filter, map, Observable, startWith, switchMap, take, tap } from 'rxjs';
+import { Angular2SmartTableModule, Cell, LocalDataSource } from 'angular2-smart-table';
+import { combineLatest, debounceTime, distinctUntilChanged, filter, map, Observable, startWith, switchMap, take, tap } from 'rxjs';
 import { UserManagementDialogViewModel, UserManagementFacade } from '../+state/facades/user-management.facade';
 import { PluginUserAssignment } from '../+state/stores/plugin-user-assignment.store';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../services';
-import { InfiniteScrollDirective } from '../../../../../directives/infinite-scroll.directive';
+import { NoDataMessageComponent } from '../../../../../time-tracker/no-data-message/no-data-message.component';
+import { PaginationComponent } from '../../../../../time-tracker/pagination/pagination.component';
 
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
+import { AccessToggleCellComponent } from './render/access-toggle/access-toggle-cell.component';
+import { AssignActionCellComponent } from './render/assign-action/assign-action-cell.component';
+import { AssignmentDateCellComponent } from './render/assignment-date/assignment-date-cell.component';
+import { AssignmentStatusCellComponent } from './render/assignment-status/assignment-status-cell.component';
+import { UnassignActionCellComponent } from './render/unassign-action/unassign-action-cell.component';
+import { UserCellComponent } from './render/user-cell/user-cell.component';
 
 export interface PluginUserManagementDialogData {
 	plugin: IPlugin;
@@ -43,9 +51,14 @@ export interface PluginUserManagementDialogData {
     templateUrl: './plugin-user-management.component.html',
     styleUrls: ['./plugin-user-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbCardModule, NbIconModule, NbBadgeModule, NbTabsetModule, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, NbUserModule, NbButtonModule, NbSpinnerModule, InfiniteScrollDirective, SpinnerButtonDirective, NbTooltipModule, AsyncPipe, DatePipe]
+    imports: [
+		NbCardModule, NbIconModule, NbBadgeModule, NbTabsetModule,
+		FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule,
+		NbButtonModule, NbSpinnerModule, SpinnerButtonDirective, NbTooltipModule, NbToggleModule,
+		Angular2SmartTableModule, PaginationComponent, NoDataMessageComponent, AsyncPipe
+	]
 })
-export class PluginUserManagementComponent implements OnInit, OnDestroy {
+export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnDestroy {
 	public plugin: IPlugin;
 	public subscriptionId?: string;
 	public assignmentForm: FormGroup;
@@ -54,14 +67,20 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	// View Model - Single source of truth for UI state
 	public viewModel$: Observable<UserManagementDialogViewModel>;
 
-	// Individual observables for template convenience
-	public filteredAvailableUsers$: Observable<IUser[]>;
-	public assignedUsers$: Observable<PluginUserAssignment[]>;
-	public selectedUsers$: Observable<IUser[]>;
+	// Loading observables for template
 	public loadingAvailableUsers$: Observable<boolean>;
-	public loadingMoreAvailableUsers$: Observable<boolean>;
-	public hasMoreAvailableUsers$: Observable<boolean>;
 	public loading$: Observable<boolean>;
+
+	// Selected count observable for template
+	public selectedCount$: Observable<number>;
+
+	// Smart table sources
+	public readonly availableUsersSource = new LocalDataSource([]);
+	public readonly assignedUsersSource = new LocalDataSource([]);
+
+	// Smart table settings
+	public availableUsersSettings: any;
+	public assignedUsersSettings: any;
 
 	public submitting = false;
 
@@ -78,10 +97,15 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
+		this.buildSmartTableSettings();
 		this.initializeForms();
 		this.initializeObservables();
 		this.loadInitialData();
 		this.setupSearch();
+	}
+
+	ngAfterViewInit(): void {
+		this.bindSourcesToStreams();
 	}
 
 	ngOnDestroy(): void {
@@ -116,16 +140,172 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 		// Get complete view model
 		this.viewModel$ = this.facade.viewModel$;
 
-		// Expose individual streams for template convenience
-		this.filteredAvailableUsers$ = this.facade.filteredAvailableUsers$.pipe(
-			map((users) => users.filter((user) => user.id !== this.store.userId))
-		);
-		this.assignedUsers$ = this.facade.assignedUsers$;
-		this.selectedUsers$ = this.facade.selectedUsers$;
+		// Loading states
 		this.loadingAvailableUsers$ = this.facade.loadingAvailableUsers$;
-		this.loadingMoreAvailableUsers$ = this.facade.loadingMoreAvailableUsers$;
-		this.hasMoreAvailableUsers$ = this.facade.hasMoreAvailableUsers$;
 		this.loading$ = this.facade.loadingAssignedUsers$;
+
+		// Selected count for badge/button text
+		this.selectedCount$ = this.facade.selectedUsers$.pipe(map((users) => users.length));
+	}
+
+	/**
+	 * Build smart table settings for both tables
+	 */
+	private buildSmartTableSettings(): void {
+		this.availableUsersSettings = {
+			columns: {
+				_user: {
+					title: 'User',
+					type: 'custom',
+					renderComponent: UserCellComponent,
+					componentInitFunction: (instance: UserCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
+				},
+				email: {
+					title: 'Email'
+				},
+				_action: {
+					title: '',
+					type: 'custom',
+					width: '60px',
+					filter: false,
+					sort: false,
+					renderComponent: AssignActionCellComponent,
+					componentInitFunction: (instance: AssignActionCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.toggle.pipe(untilDestroyed(this)).subscribe((rowData) => {
+							if (rowData.selected) {
+								this.onUserDeselect(rowData as IUser);
+							} else {
+								this.onUserSelect(rowData as IUser);
+							}
+						});
+					}
+				}
+			},
+			hideSubHeader: true,
+			actions: false,
+			noDataMessage: 'No users available to assign',
+			pager: {
+				display: true,
+				perPage: 8,
+				page: 1
+			}
+		};
+
+		this.assignedUsersSettings = {
+			columns: {
+				_user: {
+					title: 'User',
+					type: 'custom',
+					renderComponent: UserCellComponent,
+					componentInitFunction: (instance: UserCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
+				},
+				email: {
+					title: 'Email'
+				},
+				_assignedAt: {
+					title: 'Assigned On',
+					type: 'custom',
+					renderComponent: AssignmentDateCellComponent,
+					componentInitFunction: (instance: AssignmentDateCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
+				},
+				_status: {
+					title: 'Status',
+					type: 'custom',
+					width: '90px',
+					renderComponent: AssignmentStatusCellComponent,
+					componentInitFunction: (instance: AssignmentStatusCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
+				},
+				_access: {
+					title: 'Access',
+					type: 'custom',
+					width: '80px',
+					filter: false,
+					sort: false,
+					renderComponent: AccessToggleCellComponent,
+					componentInitFunction: (instance: AccessToggleCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.toggled.pipe(untilDestroyed(this)).subscribe((rowData) => {
+							this.onToggleUserAccess(rowData);
+						});
+					}
+				},
+				_actions: {
+					title: '',
+					type: 'custom',
+					width: '60px',
+					filter: false,
+					sort: false,
+					renderComponent: UnassignActionCellComponent,
+					componentInitFunction: (instance: UnassignActionCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.unassign.pipe(untilDestroyed(this)).subscribe((assignment) => {
+							this.onUnassignUser(assignment as PluginUserAssignment);
+						});
+					}
+				}
+			},
+			hideSubHeader: true,
+			actions: false,
+			noDataMessage: 'No users assigned to this plugin',
+			pager: {
+				display: true,
+				perPage: 8,
+				page: 1
+			}
+		};
+	}
+
+	/**
+	 * Bind reactive streams to LocalDataSources so smart tables stay in sync
+	 */
+	private bindSourcesToStreams(): void {
+		// Available users: merge filtered users + selected IDs to produce rows with `selected` flag
+		const filteredAvailableUsers$ = this.facade.filteredAvailableUsers$.pipe(
+			map((users) => users.filter((u) => u.id !== this.store.userId))
+		);
+
+		combineLatest([filteredAvailableUsers$, this.facade.selectedUserIds$])
+			.pipe(
+				tap(([users, selectedIds]) => {
+					const rows = users.map((user) => ({
+						...user,
+						_user: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+						selected: selectedIds.includes(user.id)
+					}));
+					this.availableUsersSource.load(rows);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		// Assigned users: flatten assignment.user into row data
+		this.facade.assignedUsers$
+			.pipe(
+				tap((assignments) => {
+					const rows = assignments.map((a) => ({
+						...a,
+						firstName: a.user?.firstName,
+						lastName: a.user?.lastName,
+						email: a.user?.email,
+						imageUrl: a.user?.imageUrl,
+						_user: `${a.user?.firstName || ''} ${a.user?.lastName || ''}`.trim(),
+						_assignedAt: a.assignedAt,
+						_status: a.isActive
+					}));
+					this.assignedUsersSource.load(rows);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -135,11 +315,7 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	private loadInitialData(): void {
 		const organizationId = this.store.organizationId;
 		const tenantId = this.store.tenantId;
-		// Load assigned users
 		this.facade.loadAssignedUsers(this.plugin.id, this.subscriptionId, false);
-
-		// Load available users with organization context
-		console.log('[PluginUserManagementComponent] Loading available users for org:', organizationId);
 		this.facade.setOrganizationContext(organizationId, tenantId);
 		this.facade.loadAvailableUsers(organizationId, tenantId, 0, 20);
 	}
@@ -156,7 +332,6 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 				debounceTime(300),
 				distinctUntilChanged(),
 				tap((term) => {
-					console.log('[PluginUserManagementComponent] Search term changed:', term);
 					this.facade.setSearchTerm(term || '');
 				}),
 				untilDestroyed(this)
@@ -176,8 +351,6 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	public onUserSelect(user: IUser): void {
 		if (!this.facade.isUserSelected(user.id)) {
 			this.facade.selectUser(user.id);
-
-			// Update form
 			this.facade.selectedUserIds$
 				.pipe(
 					tap((ids) => this.assignmentForm.patchValue({ userIds: ids })),
@@ -194,8 +367,6 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	 */
 	public onUserDeselect(user: IUser): void {
 		this.facade.deselectUser(user.id);
-
-		// Update form
 		this.facade.selectedUserIds$
 			.pipe(
 				tap((ids) => this.assignmentForm.patchValue({ userIds: ids })),
@@ -249,6 +420,60 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 				)
 				.subscribe();
 		}
+	}
+
+	/**
+	 * Toggle user access to the plugin (enable / disable)
+	 * @param rowData - Row data including userId and newState
+	 */
+	public onToggleUserAccess(rowData: any): void {
+		const pluginTenantId = this.facade.currentPluginTenantId;
+		if (!pluginTenantId) return;
+		if (rowData.newState) {
+			this.facade.enableUser(pluginTenantId, rowData.userId);
+		} else {
+			this.facade.disableUser(pluginTenantId, rowData.userId);
+		}
+	}
+
+	/**
+	 * Enable access for all assigned users in the organization
+	 */
+	public onEnableAllUsers(): void {
+		const pluginTenantId = this.facade.currentPluginTenantId;
+		if (!pluginTenantId) return;
+		this.facade.assignedUsers$
+			.pipe(
+				take(1),
+				tap((assignments) => {
+					const userIds = assignments.map((a) => a.userId);
+					if (userIds.length > 0) {
+						this.facade.enableAllUsers(pluginTenantId, userIds);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Disable access for all assigned users in the organization
+	 */
+	public onDisableAllUsers(): void {
+		const pluginTenantId = this.facade.currentPluginTenantId;
+		if (!pluginTenantId) return;
+		this.facade.assignedUsers$
+			.pipe(
+				take(1),
+				tap((assignments) => {
+					const userIds = assignments.map((a) => a.userId);
+					if (userIds.length > 0) {
+						this.facade.disableAllUsers(pluginTenantId, userIds);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -318,36 +543,10 @@ export class PluginUserManagementComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Get user avatar URL
-	 * Delegates to facade
-	 * @param user - User object
-	 */
-	public getUserAvatar(user: IUser | PluginUserAssignment['user']): string {
-		return this.facade.getUserAvatar(user as IUser);
-	}
-
-	/**
-	 * Get selected users observable
-	 */
-	public getSelectedUsers(): Observable<IUser[]> {
-		return this.facade.selectedUsers$;
-	}
-
-	/**
-	 * Get total assigned count
+	 * Get assigned users total count observable
 	 */
 	public getTotalAssignedCount(): Observable<number> {
 		return this.facade.assignedUsers$.pipe(map((assignments) => assignments.length));
-	}
-
-	/**
-	 * Get assignment date
-	 * Returns null if no valid date is available
-	 * Delegates to facade
-	 * @param assignment - Plugin user assignment
-	 */
-	public getAssignmentDate(assignment: PluginUserAssignment): Date | null {
-		return this.facade.getAssignmentDate(assignment);
 	}
 
 	// ============================================================================
