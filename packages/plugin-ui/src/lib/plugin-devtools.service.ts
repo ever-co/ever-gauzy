@@ -235,9 +235,14 @@ export class PluginDevToolsService {
 	// ─── Private ────────────────────────────────────────────────
 
 	private _getExtensionSlotSummary(): Array<{ slotId: string; extensionCount: number }> {
-		// Use the registry's actual extension map which includes dynamically registered extensions,
-		// not just static plugin config definitions.
-		return this._extRegistry.getSlotIds().map((slotId) => ({
+		// Merge slot IDs from two sources:
+		// 1. Slots with extensions registered (from _extensions$ map)
+		// 2. Slots registered via registerSlot() (may have zero extensions)
+		const allSlotIds = new Set([
+			...this._extRegistry.getSlotIds(),
+			...this._extRegistry.getRegisteredSlotIds()
+		]);
+		return Array.from(allSlotIds).map((slotId) => ({
 			slotId,
 			extensionCount: this._extRegistry.getExtensions(slotId).length
 		}));

@@ -282,7 +282,16 @@ interface MountedExtension {
 									class="extension-custom-wrapper"
 									[class]="getWrapperConfig(mounted.extension)?.cssClass"
 								>
-									@if (mounted.resolvedComponent) {
+									@if (getWrapperConfig(mounted.extension)?.component) {
+										<!-- Render custom wrapper component with extension info as inputs -->
+										<ng-container
+											*ngComponentOutlet="
+												getWrapperConfig(mounted.extension)!.component!;
+												inputs: getCustomWrapperInputs(mounted)
+											"
+										/>
+									} @else if (mounted.resolvedComponent) {
+										<!-- Fallback: no wrapper component, render extension directly -->
 										<ng-container
 											*ngComponentOutlet="
 												mounted.resolvedComponent;
@@ -679,6 +688,19 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 			return undefined;
 		}
 		return extension.wrapper;
+	}
+
+	/**
+	 * Builds inputs for a custom wrapper component.
+	 * Passes the extension's resolved component and config so the wrapper can render the content.
+	 */
+	getCustomWrapperInputs(mounted: MountedExtension): Record<string, unknown> {
+		return {
+			extensionComponent: mounted.resolvedComponent,
+			extensionConfig: mounted.extension.config,
+			extension: mounted.extension,
+			...((mounted.extension.config as Record<string, unknown>) ?? {})
+		};
 	}
 
 	/**

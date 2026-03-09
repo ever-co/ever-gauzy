@@ -10,30 +10,65 @@ interface SemVer {
 	major: number;
 	minor: number;
 	patch: number;
+	/** Prerelease tag (e.g. 'alpha', 'beta.1'). Undefined for release versions. */
+	prerelease?: string;
 }
 
 /**
- * Parses a version string like '1.2.3' into { major, minor, patch }.
+ * Parses a version string like '1.2.3' or '1.2.3-alpha.1' into a SemVer object.
+ * Build metadata (after '+') is accepted but ignored per semver spec.
  * Returns null for invalid versions.
  */
 export function parseSemVer(version: string): SemVer | null {
-	const match = version.trim().match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+	const match = version.trim().match(/^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*))?(?:\+.*)?$/);
 	if (!match) return null;
 	return {
 		major: parseInt(match[1], 10),
 		minor: parseInt(match[2], 10),
-		patch: parseInt(match[3], 10)
+		patch: parseInt(match[3], 10),
+		prerelease: match[4] ?? undefined
 	};
 }
 
 /**
  * Compares two semver versions.
  * Returns -1 (a < b), 0 (a == b), or 1 (a > b).
+ *
+ * Per semver spec: a prerelease version has lower precedence than
+ * the same version without prerelease (e.g. 1.0.0-alpha < 1.0.0).
  */
 export function compareSemVer(a: SemVer, b: SemVer): -1 | 0 | 1 {
 	if (a.major !== b.major) return a.major < b.major ? -1 : 1;
 	if (a.minor !== b.minor) return a.minor < b.minor ? -1 : 1;
 	if (a.patch !== b.patch) return a.patch < b.patch ? -1 : 1;
+
+	// Both release → equal
+	if (!a.prerelease && !b.prerelease) return 0;
+	// Prerelease < release
+	if (a.prerelease && !b.prerelease) return -1;
+	if (!a.prerelease && b.prerelease) return 1;
+
+	// Both have prerelease: compare dot-separated identifiers
+	const aParts = a.prerelease!.split('.');
+	const bParts = b.prerelease!.split('.');
+	const len = Math.max(aParts.length, bParts.length);
+	for (let i = 0; i < len; i++) {
+		if (i >= aParts.length) return -1; // fewer identifiers → lower precedence
+		if (i >= bParts.length) return 1;
+		const aNum = /^\d+$/.test(aParts[i]) ? parseInt(aParts[i], 10) : NaN;
+		const bNum = /^\d+$/.test(bParts[i]) ? parseInt(bParts[i], 10) : NaN;
+		// Both numeric: compare as integers
+		if (!isNaN(aNum) && !isNaN(bNum)) {
+			if (aNum !== bNum) return aNum < bNum ? -1 : 1;
+			continue;
+		}
+		// Numeric < string per semver spec
+		if (!isNaN(aNum)) return -1;
+		if (!isNaN(bNum)) return 1;
+		// Both string: compare lexicographically
+		if (aParts[i] < bParts[i]) return -1;
+		if (aParts[i] > bParts[i]) return 1;
+	}
 	return 0;
 }
 

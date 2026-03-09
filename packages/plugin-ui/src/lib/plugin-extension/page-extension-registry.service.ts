@@ -120,6 +120,14 @@ export class PageExtensionRegistryService {
 	}
 
 	/**
+	 * Returns all registered slot definition IDs (from `registerSlot()`).
+	 * These may have zero extensions — use alongside `getSlotIds()` for a complete picture.
+	 */
+	getRegisteredSlotIds(): PageExtensionSlotId[] {
+		return Array.from(this._slots$.value.keys());
+	}
+
+	/**
 	 * Observable of all registered slots.
 	 */
 	get slots$(): Observable<PageExtensionSlotDefinition[]> {

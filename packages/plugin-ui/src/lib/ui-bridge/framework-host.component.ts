@@ -148,16 +148,20 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
-		if (changes['props'] && !changes['props'].firstChange) {
-			if (this._mountResult?.updateProps) {
-				this._mountResult.updateProps(this.props);
-				return;
-			}
-		}
-
+		// Remount-triggering changes must be checked first — a simultaneous props
+		// change should not short-circuit via the fast-path when the component
+		// also needs a full remount (e.g. context changed at the same time).
 		if (changes['component'] || changes['loadComponent'] || changes['frameworkId'] || changes['context']) {
 			this._unmount();
 			this._mount();
+			return;
+		}
+
+		// Props-only fast-path: update in-place if the bridge supports it.
+		if (changes['props'] && !changes['props'].firstChange) {
+			if (this._mountResult?.updateProps) {
+				this._mountResult.updateProps(this.props);
+			}
 		}
 	}
 
