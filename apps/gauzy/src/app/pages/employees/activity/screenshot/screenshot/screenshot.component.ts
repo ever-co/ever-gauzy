@@ -72,7 +72,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	selectedIdsCount: number = 0;
 	loading: boolean = false;
 	allSelected: boolean = false;
-	selectedIds: any = {};
+	selectedIds: Record<ID, boolean> = {};
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
