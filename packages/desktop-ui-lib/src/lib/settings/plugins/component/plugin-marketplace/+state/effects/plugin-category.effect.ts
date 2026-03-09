@@ -4,7 +4,7 @@ import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, catchError, exhaustMap, filter, finalize, map, switchMap, take, tap } from 'rxjs';
+import { EMPTY, catchError, exhaustMap, filter, finalize, forkJoin, map, switchMap, take, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { PluginCategoryService } from '../../../../services/plugin-category.service';
 import { CreateCategoryDialogComponent } from '../../plugin-marketplace-item/create-category-dialog/create-category-dialog.component';
@@ -76,13 +76,14 @@ export class PluginCategoryEffects {
 					return EMPTY;
 				}
 
-				// Increment page
+				// Increment page and read fresh state
 				this.pluginCategoryStore.incrementPage();
+				const updatedState = this.pluginCategoryStore.getValue();
 
 				const paginationParams = {
-					...state.filters,
-					page: state.pagination.page,
-					limit: state.pagination.limit
+					...updatedState.filters,
+					page: updatedState.pagination.page,
+					limit: updatedState.pagination.limit
 				};
 
 				return this.pluginCategoryService.getAll(paginationParams).pipe(
@@ -381,20 +382,18 @@ export class PluginCategoryEffects {
 				this.toastrService.info('Updating categories...');
 			}),
 			switchMap(({ updates }) =>
-				// Process updates sequentially
-				Promise.all(updates.map(({ id, updates }) => this.pluginCategoryService.patch(id, updates).toPromise()))
-					.then(() => {
+				forkJoin(updates.map(({ id, updates }) => this.pluginCategoryService.patch(id, updates))).pipe(
+					tap(() => {
 						this.pluginCategoryStore.bulkUpdateCategories(updates);
 						this.toastrService.success('Categories updated successfully');
-					})
-					.catch((error) => {
+					}),
+					finalize(() => this.pluginCategoryStore.setUpdating(false)),
+					catchError((error) => {
 						this.pluginCategoryStore.setError(error.message || 'Failed to bulk update categories');
 						this.toastrService.error(error.message || 'Failed to update categories');
 						return EMPTY;
 					})
-					.finally(() => {
-						this.pluginCategoryStore.setUpdating(false);
-					})
+				)
 			)
 		)
 	);
@@ -408,20 +407,18 @@ export class PluginCategoryEffects {
 				this.toastrService.info('Deleting categories...');
 			}),
 			switchMap(({ ids }) =>
-				// Process deletions sequentially
-				Promise.all(ids.map((id) => this.pluginCategoryService.delete(id).toPromise()))
-					.then(() => {
+				forkJoin(ids.map((id) => this.pluginCategoryService.delete(id))).pipe(
+					tap(() => {
 						this.pluginCategoryStore.bulkDeleteCategories(ids);
 						this.toastrService.success('Categories deleted successfully');
-					})
-					.catch((error) => {
+					}),
+					finalize(() => this.pluginCategoryStore.setDeleting(false)),
+					catchError((error) => {
 						this.pluginCategoryStore.setError(error.message || 'Failed to bulk delete categories');
 						this.toastrService.error(error.message || 'Failed to delete categories');
 						return EMPTY;
 					})
-					.finally(() => {
-						this.pluginCategoryStore.setDeleting(false);
-					})
+				)
 			)
 		)
 	);
@@ -506,14 +503,13 @@ export class PluginCategoryEffects {
 	);
 
 	// Refresh
-	refresh$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginCategoryActions.refresh),
-			switchMap(() => {
-				// Trigger loadAll action
-				return [PluginCategoryActions.loadAll({})];
-			})
-		)
+	refresh$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginCategoryActions.refresh),
+				map(() => PluginCategoryActions.loadAll({}))
+			),
+		{ dispatch: true }
 	);
 
 	// Set loading
