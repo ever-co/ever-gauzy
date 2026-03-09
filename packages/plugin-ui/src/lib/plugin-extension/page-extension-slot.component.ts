@@ -696,10 +696,10 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 	 */
 	getCustomWrapperInputs(mounted: MountedExtension): Record<string, unknown> {
 		return {
+			...((mounted.extension.config as Record<string, unknown>) ?? {}),
 			extensionComponent: mounted.resolvedComponent,
 			extensionConfig: mounted.extension.config,
-			extension: mounted.extension,
-			...((mounted.extension.config as Record<string, unknown>) ?? {})
+			extension: mounted.extension
 		};
 	}
 
