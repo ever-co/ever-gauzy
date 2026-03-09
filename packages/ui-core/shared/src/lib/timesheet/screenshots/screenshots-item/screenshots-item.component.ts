@@ -3,7 +3,7 @@ import { NbDialogService } from '@nebular/theme';
 import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { sortBy } from 'underscore';
-import { ITimeSlot, IScreenshot, ITimeLog, IOrganization, IEmployee, TimeFormatEnum } from '@gauzy/contracts';
+import { ITimeSlot, IScreenshot, ITimeLog, IOrganization, IEmployee, TimeFormatEnum, ID } from '@gauzy/contracts';
 import { DEFAULT_SVG, distinctUntilChange, isNotEmpty, progressStatus } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 import { GalleryItem } from '../../../gallery/gallery.directive';
@@ -13,10 +13,10 @@ import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-screenshots-item',
-    templateUrl: './screenshots-item.component.html',
-    styleUrls: ['./screenshots-item.component.scss'],
-    standalone: false
+	selector: 'ngx-screenshots-item',
+	templateUrl: './screenshots-item.component.html',
+	styleUrls: ['./screenshots-item.component.scss'],
+	standalone: false
 })
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	public isShowBorder: boolean = false;
@@ -40,8 +40,9 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	@Input() galleryItems: GalleryItem[] = [];
 	@Input() isSelected: boolean;
 	@Input() employeeId: IEmployee['id'];
+	@Input() slotIds: ID[] = [];
 
-	@Output() delete: EventEmitter<any> = new EventEmitter();
+	@Output() delete: EventEmitter<ID[]> = new EventEmitter();
 	@Output() toggle: EventEmitter<any> = new EventEmitter();
 
 	/*
@@ -156,9 +157,11 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 			// Destructure the organization ID and tenant ID from the organization object
 			const { id: organizationId, tenantId } = this.organization;
 
-			// Delete time slots
+			// Delete all grouped time slots for this minute bucket
+			const ids = this.slotIds.length ? this.slotIds : [timeSlot.id];
+
 			await this._timesheetService.deleteTimeSlots({
-				ids: [timeSlot.id],
+				ids,
 				organizationId,
 				tenantId
 			});
@@ -180,8 +183,8 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 				organization: this.organization.name
 			});
 
-			// Trigger delete event
-			this.delete.emit();
+			// Trigger delete event with the IDs that were deleted
+			this.delete.emit(ids);
 		} catch (error) {
 			console.log('Error while deleting time slot', error);
 			this._errorHandlingService.handleError(error);
@@ -203,7 +206,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		dialog$.onClose
 			.pipe(
 				filter((data) => Boolean(data && data['isDelete'])),
-				tap(() => this.delete.emit()),
+				tap(() => this.delete.emit(this.slotIds.length ? this.slotIds : [timeSlot.id])),
 				take(1),
 				untilDestroyed(this)
 			)

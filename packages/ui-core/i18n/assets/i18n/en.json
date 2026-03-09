@@ -4791,7 +4791,7 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{count} Screen selected"
+		"SCREEN_SELECTED": "{{ count }} Screen(s) selected"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

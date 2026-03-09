@@ -34,9 +34,10 @@
 												[timezone]="filters?.timeZone"
 												[employees]="timeSlot.employees"
 												[timeSlot]="timeSlot"
+												[slotIds]="getSlotIds(timeSlot.id)"
 												[selectionMode]="selectedIdsCount > 0"
 												[isSelected]="selectedIds[timeSlot.id]"
-												(delete)="deleteSlot()"
+												(delete)="deleteSlot($event)"
 												(toggle)="toggleSelect($event)"
 											/>
 										</div>
