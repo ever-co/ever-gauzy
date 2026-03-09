@@ -533,14 +533,14 @@ Use the `useInjector` hook to access any Angular service from within a React com
 ```tsx
 // MyReactWidget.tsx
 import React from 'react';
-import { useInjector } from '@gauzy/plugin-ui';
+import { useInjector } from '@gauzy/ui-react';
 import { TimesheetStatisticsService } from '@gauzy/ui-core/core';
 
 export function MyReactWidget() {
   const injector = useInjector();
   const stats = injector.get(TimesheetStatisticsService);
 
-  const [data, setData] = React.useState(null);
+  const [data, setData] = React.useState<unknown | null>(null);
 
   React.useEffect(() => {
     stats.getStatistics().subscribe((result) => setData(result));

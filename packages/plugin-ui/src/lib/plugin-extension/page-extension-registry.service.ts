@@ -343,24 +343,59 @@ export class PageExtensionRegistryService {
 	/**
 	 * Removes all extensions registered by a specific plugin.
 	 * Call this from ngOnPluginDestroy when the plugin registered extensions with pluginId.
+	 *
+	 * Batches all mutations into single emissions to avoid N+M intermediate
+	 * state updates that would trigger unnecessary change detection cycles.
 	 */
 	deregisterByPlugin(pluginId: string): void {
-		// Deregister extensions
+		let extensionsChanged = false;
+		let slotsChanged = false;
+
+		// Batch-remove extensions (single _extensions$ emit)
 		const entries = this._pluginToExtensions.get(pluginId);
-		if (entries) {
+		if (entries?.length) {
+			const extensions = new Map(this._extensions$.value);
 			for (const { slotId, extensionId } of entries) {
-				this.deregister(slotId, extensionId);
+				const list = extensions.get(slotId);
+				if (list) {
+					const filtered = list.filter((e) => e.id !== extensionId);
+					if (filtered.length === 0) {
+						extensions.delete(slotId);
+					} else {
+						extensions.set(slotId, filtered);
+					}
+					extensionsChanged = true;
+				}
 			}
 			this._pluginToExtensions.delete(pluginId);
+			if (extensionsChanged) {
+				this._extensions$.next(extensions);
+			}
 		}
 
-		// Deregister slots
+		// Batch-remove slots (single _slots$ emit)
 		const slotIds = this._pluginToSlots.get(pluginId);
-		if (slotIds) {
+		if (slotIds?.length) {
+			const slots = new Map(this._slots$.value);
+			const extensions = extensionsChanged ? new Map(this._extensions$.value) : new Map(this._extensions$.value);
+			let extensionsChangedAgain = false;
+
 			for (const slotId of slotIds) {
-				this.unregisterSlot(slotId);
+				slots.delete(slotId);
+				slotsChanged = true;
+				// Also remove extensions for this slot
+				if (extensions.has(slotId)) {
+					extensions.delete(slotId);
+					extensionsChangedAgain = true;
+				}
 			}
 			this._pluginToSlots.delete(pluginId);
+			if (slotsChanged) {
+				this._slots$.next(slots);
+			}
+			if (extensionsChangedAgain) {
+				this._extensions$.next(extensions);
+			}
 		}
 	}
 
