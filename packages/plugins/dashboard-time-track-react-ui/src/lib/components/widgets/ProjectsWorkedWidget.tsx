@@ -1,4 +1,4 @@
-import { Card, ColorDots } from '@gauzy/ui-react-components';
+import { WidgetCard, ColorDots } from '@gauzy/ui-react-components';
 
 export interface ProjectsWorkedWidgetProps {
 	count: number;
@@ -7,8 +7,8 @@ export interface ProjectsWorkedWidgetProps {
 
 export function ProjectsWorkedWidget({ count, colors }: ProjectsWorkedWidgetProps) {
 	return (
-		<Card label="Projects worked" value={count}>
+		<WidgetCard label="Projects worked" value={count}>
 			<ColorDots count={Math.min(count, 5)} colors={colors} />
-		</Card>
+		</WidgetCard>
 	);
 }

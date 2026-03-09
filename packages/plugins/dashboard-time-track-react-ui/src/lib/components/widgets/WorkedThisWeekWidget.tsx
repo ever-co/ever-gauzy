@@ -1,14 +1,15 @@
-import { Card, Progress, theme } from '@gauzy/ui-react-components';
+import { WidgetCard, Progress, theme } from '@gauzy/ui-react-components';
 
 export interface WorkedThisWeekWidgetProps {
 	duration: string;
 	progressPercent?: number;
+	label?: string;
 }
 
-export function WorkedThisWeekWidget({ duration, progressPercent = 0 }: WorkedThisWeekWidgetProps) {
+export function WorkedThisWeekWidget({ duration, progressPercent = 0, label = 'Worked this week' }: WorkedThisWeekWidgetProps) {
 	return (
-		<Card label="Worked this week" value={duration}>
+		<WidgetCard label={label} value={duration}>
 			<Progress percent={progressPercent} color={theme.red} />
-		</Card>
+		</WidgetCard>
 	);
 }

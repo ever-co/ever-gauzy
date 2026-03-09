@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { TimesheetStatisticsService, Store } from '@gauzy/ui-core/core';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { TimesheetStatisticsService } from '@gauzy/ui-core/core';
 import { useInjector, useTypedEvent } from '@gauzy/ui-react';
-import { currentWeekRange, todayRange } from '@gauzy/ui-react-components';
 import { DashboardRefreshedEvent } from '../dashboard-time-track-react-ui.events';
+import { type DateRangeFilters } from './use-date-range-filters';
 
 // Mirrors ICountsStatistics from @gauzy/contracts
 export interface CountsStatistics {
@@ -14,50 +14,44 @@ export interface CountsStatistics {
 	todayDuration: number;
 }
 
+/** Return type of useCountsStatistics. */
+export interface UseCountsStatisticsResult {
+	counts: CountsStatistics | null;
+	/** Trigger a manual data refresh. */
+	refresh: () => void;
+}
+
 /**
  * useCountsStatistics
  *
- * Custom hook that fetches time tracking statistics from TimesheetStatisticsService
- * via the Angular injector bridge. Supports auto-refresh and emits a type-safe
- * `DashboardRefreshedEvent` after each successful fetch.
+ * Fetches time tracking counts from TimesheetStatisticsService whenever
+ * the provided `filters` change. Supports auto-refresh via `refreshInterval`
+ * and exposes a manual `refresh` function.
  *
- * @param refreshInterval - Auto-refresh interval in milliseconds. Set to 0 to disable.
- * @returns The latest counts statistics, or null if not yet loaded.
+ * @param filters - Resolved date-range filters from `useDateRangeFilters()`.
+ * @param refreshInterval - Auto-refresh interval in ms. 0 = disabled.
  */
-export function useCountsStatistics(refreshInterval: number): CountsStatistics | null {
+export function useCountsStatistics(
+	filters: DateRangeFilters | null,
+	refreshInterval: number
+): UseCountsStatisticsResult {
 	const [counts, setCounts] = useState<CountsStatistics | null>(null);
 	const injector = useInjector();
 	const dashboardEvent = useTypedEvent(DashboardRefreshedEvent);
 
+	const statsService = useMemo(
+		() => injector?.get(TimesheetStatisticsService, null) as TimesheetStatisticsService | null,
+		[injector]
+	);
+
 	const fetchCounts = useCallback(async () => {
-		if (!injector) return;
+		if (!statsService || !filters) return;
 
 		try {
-			const statsService = injector.get(TimesheetStatisticsService, null) as TimesheetStatisticsService | null;
-			const store = injector.get(Store, null) as Store | null;
-
-			if (!statsService || !store) return;
-
-			const organizationId = store.organizationId;
-			const tenantId = store.tenantId;
-			if (!organizationId || !tenantId) return;
-
-			const { startDate, endDate } = currentWeekRange();
-			const { todayStart, todayEnd } = todayRange();
-
-			const data = await statsService.getCounts({
-				organizationId,
-				tenantId,
-				startDate,
-				endDate,
-				todayStart,
-				todayEnd
-			} as any);
-
+			const data = await statsService.getCounts(filters as any);
 			const typedData = data as CountsStatistics;
 			setCounts(typedData);
 
-			// Emit type-safe event on successful refresh
 			dashboardEvent.emit({
 				employeesCount: typedData.employeesCount,
 				projectsCount: typedData.projectsCount,
@@ -68,17 +62,16 @@ export function useCountsStatistics(refreshInterval: number): CountsStatistics |
 		} catch (err) {
 			console.error('[useCountsStatistics] Failed to fetch counts:', err);
 		}
-	}, [injector, dashboardEvent]);
+	}, [statsService, filters, dashboardEvent]);
 
 	useEffect(() => {
 		fetchCounts();
 
-		// Auto-refresh at configurable interval (0 = disabled)
 		if (refreshInterval > 0) {
 			const interval = setInterval(fetchCounts, refreshInterval);
 			return () => clearInterval(interval);
 		}
 	}, [fetchCounts, refreshInterval]);
 
-	return counts;
+	return { counts, refresh: fetchCounts };
 }
