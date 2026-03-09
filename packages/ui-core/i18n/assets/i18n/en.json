@@ -1641,6 +1641,25 @@
 				"JOB_RESULT": "Job Status",
 				"INVALID_JSON": "Invalid JSON input",
 				"EXECUTION_FAILED": "Execution failed"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Event Triggers",
+				"ADD_TITLE": "Add Event Trigger",
+				"ACTIVE_TITLE": "Active Event Triggers",
+				"DESCRIPTION": "Configure automatic workflow triggers. When a platform event occurs, the mapped SIM workflow will execute automatically.",
+				"EVENT": "Event",
+				"SELECT_EVENT": "Select an event",
+				"WORKFLOW_ID": "Workflow ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Enter the SIM workflow ID to trigger",
+				"ADD": "Add",
+				"REMOVE": "Remove mapping",
+				"NO_MAPPINGS": "No event triggers configured. Add a mapping above to automatically trigger SIM workflows from platform events.",
+				"LOADING": "Loading event triggers...",
+				"MAPPING_SAVED": "Event trigger mapping saved successfully.",
+				"MAPPING_REMOVED": "Event trigger mapping removed successfully.",
+				"SAVE_FAILED": "Failed to save event trigger mapping.",
+				"REMOVE_FAILED": "Failed to remove event trigger mapping.",
+				"LOAD_FAILED": "Failed to load event triggers."
 			}
 		},
 		"COMING_SOON": "Coming soon",
