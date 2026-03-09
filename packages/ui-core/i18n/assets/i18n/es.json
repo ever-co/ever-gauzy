@@ -1557,6 +1557,25 @@
 				"JOB_RESULT": "Estado de la tarea",
 				"INVALID_JSON": "Entrada JSON inválida",
 				"EXECUTION_FAILED": "La ejecución falló"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Disparadores de eventos",
+				"ADD_TITLE": "Agregar disparador de evento",
+				"ACTIVE_TITLE": "Disparadores de eventos activos",
+				"DESCRIPTION": "Configure disparadores automáticos de flujos de trabajo. Cuando ocurra un evento de la plataforma, el flujo de trabajo SIM asignado se ejecutará automáticamente.",
+				"EVENT": "Evento",
+				"SELECT_EVENT": "Seleccionar un evento",
+				"WORKFLOW_ID": "ID del flujo de trabajo",
+				"WORKFLOW_ID_PLACEHOLDER": "Ingrese el ID del flujo de trabajo SIM a disparar",
+				"ADD": "Agregar",
+				"REMOVE": "Eliminar asignación",
+				"NO_MAPPINGS": "No hay disparadores de eventos configurados. Agregue una asignación arriba para disparar automáticamente flujos de trabajo SIM desde eventos de la plataforma.",
+				"LOADING": "Cargando disparadores de eventos...",
+				"MAPPING_SAVED": "Asignación de disparador de evento guardada exitosamente.",
+				"MAPPING_REMOVED": "Asignación de disparador de evento eliminada exitosamente.",
+				"SAVE_FAILED": "Error al guardar la asignación del disparador de evento.",
+				"REMOVE_FAILED": "Error al eliminar la asignación del disparador de evento.",
+				"LOAD_FAILED": "Error al cargar los disparadores de eventos."
 			}
 		},
 		"COMING_SOON": "Próximamente",

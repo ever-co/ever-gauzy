@@ -49,6 +49,22 @@ export interface ISimJobStatusResponse {
 	[key: string]: unknown;
 }
 
+/**
+ * Supported event type from the backend.
+ */
+export interface ISimSupportedEvent {
+	event: string;
+	description: string;
+}
+
+/**
+ * Event-to-workflow mapping.
+ */
+export interface ISimEventMapping {
+	event: string;
+	workflowId: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SimService {
 	private readonly API_URL = `${API_PREFIX}/integration/sim`;
@@ -131,5 +147,34 @@ export class SimService {
 	 */
 	getIntegrationTenant(integrationTenantId: ID): Observable<IIntegrationTenant> {
 		return this.http.get<IIntegrationTenant>(`${this.API_URL}/integration-tenant/${integrationTenantId}`);
+	}
+
+	/**
+	 * Get supported event types for workflow triggers.
+	 */
+	getSupportedEvents(): Observable<ISimSupportedEvent[]> {
+		return this.http.get<ISimSupportedEvent[]>(`${this.API_URL}/events/supported`);
+	}
+
+	/**
+	 * Get all event-to-workflow mappings for the current tenant.
+	 */
+	getEventMappings(): Observable<ISimEventMapping[]> {
+		return this.http.get<ISimEventMapping[]>(`${this.API_URL}/events/mappings`);
+	}
+
+	/**
+	 * Set an event-to-workflow mapping.
+	 */
+	setEventMapping(event: string, workflowId: string): Observable<ISimEventMapping> {
+		return this.http.post<ISimEventMapping>(`${this.API_URL}/events/mappings`, { event, workflowId });
+	}
+
+	/**
+	 * Remove an event-to-workflow mapping.
+	 */
+	removeEventMapping(event: string): Observable<{ removed: boolean; event: string }> {
+		const encodedEvent = encodeURIComponent(event);
+		return this.http.delete<{ removed: boolean; event: string }>(`${this.API_URL}/events/mappings/${encodedEvent}`);
 	}
 }

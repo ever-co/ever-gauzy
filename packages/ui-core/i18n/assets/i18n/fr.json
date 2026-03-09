@@ -1556,6 +1556,25 @@
 				"JOB_RESULT": "Statut de la tâche",
 				"INVALID_JSON": "Entrée JSON invalide",
 				"EXECUTION_FAILED": "L'exécution a échoué"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Déclencheurs d'événements",
+				"ADD_TITLE": "Ajouter un déclencheur d'événement",
+				"ACTIVE_TITLE": "Déclencheurs d'événements actifs",
+				"DESCRIPTION": "Configurez des déclencheurs automatiques de workflows. Lorsqu'un événement de la plateforme se produit, le workflow SIM associé s'exécutera automatiquement.",
+				"EVENT": "Événement",
+				"SELECT_EVENT": "Sélectionner un événement",
+				"WORKFLOW_ID": "ID du workflow",
+				"WORKFLOW_ID_PLACEHOLDER": "Entrez l'ID du workflow SIM à déclencher",
+				"ADD": "Ajouter",
+				"REMOVE": "Supprimer l'association",
+				"NO_MAPPINGS": "Aucun déclencheur d'événement configuré. Ajoutez une association ci-dessus pour déclencher automatiquement des workflows SIM à partir des événements de la plateforme.",
+				"LOADING": "Chargement des déclencheurs d'événements...",
+				"MAPPING_SAVED": "Association du déclencheur d'événement enregistrée avec succès.",
+				"MAPPING_REMOVED": "Association du déclencheur d'événement supprimée avec succès.",
+				"SAVE_FAILED": "Échec de l'enregistrement de l'association du déclencheur d'événement.",
+				"REMOVE_FAILED": "Échec de la suppression de l'association du déclencheur d'événement.",
+				"LOAD_FAILED": "Échec du chargement des déclencheurs d'événements."
 			}
 		},
 		"COMING_SOON": "Bientôt disponible",

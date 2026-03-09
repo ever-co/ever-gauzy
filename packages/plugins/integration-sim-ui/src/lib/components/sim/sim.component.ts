@@ -67,6 +67,13 @@ export class SimComponent extends TranslationBaseComponent implements OnInit {
 				route: `${INTEGRATION_SIM_PAGE_LINK}/${this.integrationId}/workflows`,
 				responsive: true,
 				activeLinkOptions: { exact: false }
+			},
+			{
+				title: this.getTranslation('INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.TITLE'),
+				icon: 'bell-outline',
+				route: `${INTEGRATION_SIM_PAGE_LINK}/${this.integrationId}/event-triggers`,
+				responsive: true,
+				activeLinkOptions: { exact: false }
 			}
 		];
 	}

@@ -10,6 +10,7 @@ import {
 	IntegrationModule,
 	IntegrationSettingModule,
 	IntegrationTenantModule,
+	PluginCommonModule,
 	RolePermissionModule
 } from '@gauzy/core';
 import { SimService } from './sim.service';
@@ -19,6 +20,7 @@ import { SimRepositoryService } from './sim-repository.service';
 import { SimWorkflowExecution } from './sim-workflow-execution.entity';
 import { MikroOrmSimWorkflowExecutionRepository } from './repository/mikro-orm-sim-workflow-execution.repository';
 import { TypeOrmSimWorkflowExecutionRepository } from './repository/type-orm-sim-workflow-execution.repository';
+import { EventHandlers } from './handlers';
 
 @Module({
 	imports: [
@@ -30,6 +32,7 @@ import { TypeOrmSimWorkflowExecutionRepository } from './repository/type-orm-sim
 		IntegrationModule,
 		IntegrationSettingModule,
 		IntegrationTenantModule,
+		PluginCommonModule,
 		RolePermissionModule,
 		TypeOrmModule.forFeature([SimWorkflowExecution]),
 		MikroOrmModule.forFeature([SimWorkflowExecution])
@@ -40,7 +43,8 @@ import { TypeOrmSimWorkflowExecutionRepository } from './repository/type-orm-sim
 		SimClientFactory,
 		SimRepositoryService,
 		MikroOrmSimWorkflowExecutionRepository,
-		TypeOrmSimWorkflowExecutionRepository
+		TypeOrmSimWorkflowExecutionRepository,
+		...EventHandlers
 	],
 	exports: [SimService, SimClientFactory, SimRepositoryService]
 })
