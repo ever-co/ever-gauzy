@@ -115,7 +115,7 @@ export class PluginDevToolsService {
 			definition: def,
 			hasModule: !!def.module || !!def.loadModule,
 			isDeclarative: !!def.bootstrap && !def.module && !def.loadModule,
-			extensionCount: this._getExtensionCountForPlugin(def.id),
+			extensionCount: def.extensions?.length ?? 0,
 			hasSettings: this._settingsRegistry.has(def.id),
 			serviceContracts: this._serviceRegistry.getByPlugin(def.id).map((r) => r.contractId),
 			dependencies: def.dependsOn ?? [],
@@ -130,7 +130,7 @@ export class PluginDevToolsService {
 					definition: { id: dynId },
 					hasModule: false,
 					isDeclarative: true,
-					extensionCount: this._getExtensionCountForPlugin(dynId),
+					extensionCount: 0,
 					hasSettings: this._settingsRegistry.has(dynId),
 					serviceContracts: this._serviceRegistry.getByPlugin(dynId).map((r) => r.contractId),
 					dependencies: [],
@@ -233,16 +233,6 @@ export class PluginDevToolsService {
 	}
 
 	// ─── Private ────────────────────────────────────────────────
-
-	private _getExtensionCountForPlugin(pluginId: string): number {
-		try {
-			const config = getPluginUiConfig();
-			const def = flattenPlugins(config.plugins).find((p) => p.id === pluginId);
-			return def?.extensions?.length ?? 0;
-		} catch {
-			return 0;
-		}
-	}
 
 	private _getExtensionSlotSummary(): Array<{ slotId: string; extensionCount: number }> {
 		const result: Array<{ slotId: string; extensionCount: number }> = [];
