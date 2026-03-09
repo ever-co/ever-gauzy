@@ -27,7 +27,7 @@ export type SimEventType = (typeof SIM_SUPPORTED_EVENTS)[number];
  * Constant map of SIM event names for use in handlers.
  * Avoids hardcoded string literals that can drift out of sync with SIM_SUPPORTED_EVENTS.
  */
-export const SimEventName: Record<string, SimEventType> = {
+export const SimEventName = {
 	TIMER_STARTED: 'timer.started',
 	TIMER_STOPPED: 'timer.stopped',
 	TIMER_STATUS_UPDATED: 'timer.status_updated',
@@ -42,7 +42,7 @@ export const SimEventName: Record<string, SimEventType> = {
 	INTEGRATION_DELETED: 'integration.deleted',
 	ACCOUNT_REGISTERED: 'account.registered',
 	ACCOUNT_VERIFIED: 'account.verified'
-} as const;
+} as const satisfies Record<string, SimEventType>;
 
 /**
  * Event descriptions map for use in the service layer.

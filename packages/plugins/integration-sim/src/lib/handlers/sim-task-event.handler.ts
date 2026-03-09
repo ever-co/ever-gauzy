@@ -2,6 +2,14 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/commo
 import { Subscription, filter, catchError, EMPTY, concatMap, from } from 'rxjs';
 import { EventBus, TaskEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
+import { SimEventName, SimEventType } from '../dto/event-mapping.dto';
+
+/** Map BaseEntityEventType to SimEventName keys */
+const TASK_EVENT_MAP: Record<string, SimEventType> = {
+	created: SimEventName.TASK_CREATED,
+	updated: SimEventName.TASK_UPDATED,
+	deleted: SimEventName.TASK_DELETED
+};
 
 @Injectable()
 export class SimTaskEventHandler implements OnModuleInit, OnModuleDestroy {
@@ -47,7 +55,8 @@ export class SimTaskEventHandler implements OnModuleInit, OnModuleDestroy {
 				return;
 			}
 
-			const simEventName = `task.${type}`;
+			const simEventName = TASK_EVENT_MAP[type];
+			if (!simEventName) return;
 
 			await this.simService.triggerEventWorkflow({
 				event: simEventName,

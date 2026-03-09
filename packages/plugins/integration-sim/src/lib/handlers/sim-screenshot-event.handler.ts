@@ -2,6 +2,14 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/commo
 import { Subscription, filter, catchError, EMPTY, concatMap, from } from 'rxjs';
 import { EventBus, ScreenshotEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
+import { SimEventName, SimEventType } from '../dto/event-mapping.dto';
+
+/** Map BaseEntityEventType to SimEventName keys */
+const SCREENSHOT_EVENT_MAP: Record<string, SimEventType> = {
+	created: SimEventName.SCREENSHOT_CREATED,
+	updated: SimEventName.SCREENSHOT_UPDATED,
+	deleted: SimEventName.SCREENSHOT_DELETED
+};
 
 @Injectable()
 export class SimScreenshotEventHandler implements OnModuleInit, OnModuleDestroy {
@@ -47,7 +55,8 @@ export class SimScreenshotEventHandler implements OnModuleInit, OnModuleDestroy 
 				return;
 			}
 
-			const simEventName = `screenshot.${type}`;
+			const simEventName = SCREENSHOT_EVENT_MAP[type];
+			if (!simEventName) return;
 
 			await this.simService.triggerEventWorkflow({
 				event: simEventName,

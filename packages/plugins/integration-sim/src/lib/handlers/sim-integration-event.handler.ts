@@ -2,6 +2,14 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/commo
 import { Subscription, filter, catchError, EMPTY, concatMap, from } from 'rxjs';
 import { EventBus, IntegrationEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
+import { SimEventName, SimEventType } from '../dto/event-mapping.dto';
+
+/** Map BaseEntityEventType to SimEventName keys */
+const INTEGRATION_EVENT_MAP: Record<string, SimEventType> = {
+	created: SimEventName.INTEGRATION_CREATED,
+	updated: SimEventName.INTEGRATION_UPDATED,
+	deleted: SimEventName.INTEGRATION_DELETED
+};
 
 @Injectable()
 export class SimIntegrationEventHandler implements OnModuleInit, OnModuleDestroy {
@@ -47,7 +55,8 @@ export class SimIntegrationEventHandler implements OnModuleInit, OnModuleDestroy
 				return;
 			}
 
-			const simEventName = `integration.${type}`;
+			const simEventName = INTEGRATION_EVENT_MAP[type];
+			if (!simEventName) return;
 
 			await this.simService.triggerEventWorkflow({
 				event: simEventName,

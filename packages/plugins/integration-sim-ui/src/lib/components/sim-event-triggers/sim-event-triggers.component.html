@@ -47,20 +47,6 @@
 					</div>
 				</div>
 			</form>
-
-			@if (successMessage()) {
-				<nb-alert status="success" closable class="mt-3" (close)="successMessage.set(null)">
-					<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
-					{{ successMessage() }}
-				</nb-alert>
-			}
-
-			@if (errorMessage()) {
-				<nb-alert status="danger" closable class="mt-3" (close)="errorMessage.set(null)">
-					<nb-icon icon="alert-triangle-outline"></nb-icon>
-					{{ errorMessage() }}
-				</nb-alert>
-			}
 		</nb-card-body>
 	</nb-card>
 

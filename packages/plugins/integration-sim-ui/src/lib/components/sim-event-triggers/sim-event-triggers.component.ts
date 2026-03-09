@@ -2,8 +2,8 @@ import { Component, OnInit, signal, inject, ChangeDetectionStrategy, computed } 
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, tap, finalize, forkJoin, switchMap } from 'rxjs';
-import { SimService, SimStoreService, ISimSupportedEvent, ISimEventMapping } from '@gauzy/ui-core/core';
+import { EMPTY, catchError, filter, tap, finalize, forkJoin, switchMap } from 'rxjs';
+import { SimService, SimStoreService, ISimSupportedEvent, ISimEventMapping, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
@@ -17,6 +17,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 export class SimEventTriggersComponent extends TranslationBaseComponent implements OnInit {
 	private readonly _simService = inject(SimService);
 	private readonly _simStoreService = inject(SimStoreService);
+	private readonly _toastrService = inject(ToastrService);
 
 	readonly loading = signal<boolean>(false);
 	readonly saving = signal<boolean>(false);
@@ -24,8 +25,6 @@ export class SimEventTriggersComponent extends TranslationBaseComponent implemen
 
 	readonly supportedEvents = signal<ISimSupportedEvent[]>([]);
 	readonly eventMappings = signal<ISimEventMapping[]>([]);
-	readonly successMessage = signal<string | null>(null);
-	readonly errorMessage = signal<string | null>(null);
 
 	readonly integrationId = signal<string>('');
 
@@ -52,6 +51,12 @@ export class SimEventTriggersComponent extends TranslationBaseComponent implemen
 						supported: this._simService.getSupportedEvents(),
 						mappings: this._simService.getEventMappings()
 					}).pipe(
+						catchError(() => {
+							this._toastrService.error(
+								this.getTranslation('INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.LOAD_FAILED')
+							);
+							return EMPTY;
+						}),
 						finalize(() => this.loading.set(false))
 					)
 				),
@@ -61,11 +66,6 @@ export class SimEventTriggersComponent extends TranslationBaseComponent implemen
 				next: ({ supported, mappings }) => {
 					this.supportedEvents.set(supported);
 					this.eventMappings.set(mappings);
-				},
-				error: () => {
-					this.errorMessage.set(
-						this.getTranslation('INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.LOAD_FAILED')
-					);
 				}
 			});
 	}
@@ -92,8 +92,6 @@ export class SimEventTriggersComponent extends TranslationBaseComponent implemen
 		if (this.mappingForm.invalid || this.saving()) return;
 
 		this.saving.set(true);
-		this.successMessage.set(null);
-		this.errorMessage.set(null);
 
 		const event = this.mappingForm.get('event')!.value!;
 		const workflowId = this.mappingForm.get('workflowId')!.value!.trim();
@@ -106,14 +104,14 @@ export class SimEventTriggersComponent extends TranslationBaseComponent implemen
 			)
 			.subscribe({
 				next: () => {
-					this.successMessage.set(
+					this._toastrService.success(
 						this.getTranslation('INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.MAPPING_SAVED')
 					);
 					this.mappingForm.reset({ event: '', workflowId: '' });
 					this._loadData();
 				},
 				error: (err) => {
-					this.errorMessage.set(
+					this._toastrService.error(
 						err?.error?.message ||
 							err?.message ||
 							this.getTranslation('INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.SAVE_FAILED')
@@ -129,8 +127,6 @@ export class SimEventTriggersComponent extends TranslationBaseComponent implemen
 		if (this.removing()) return;
 
 		this.removing.set(event);
-		this.successMessage.set(null);
-		this.errorMessage.set(null);
 
 		this._simService
 			.removeEventMapping(event)
@@ -140,13 +136,13 @@ export class SimEventTriggersComponent extends TranslationBaseComponent implemen
 			)
 			.subscribe({
 				next: () => {
-					this.successMessage.set(
+					this._toastrService.success(
 						this.getTranslation('INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.MAPPING_REMOVED')
 					);
 					this._loadData();
 				},
 				error: (err) => {
-					this.errorMessage.set(
+					this._toastrService.error(
 						err?.error?.message ||
 							err?.message ||
 							this.getTranslation('INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.REMOVE_FAILED')
@@ -175,7 +171,7 @@ export class SimEventTriggersComponent extends TranslationBaseComponent implemen
 					this.eventMappings.set(mappings);
 				},
 				error: () => {
-					this.errorMessage.set(
+					this._toastrService.error(
 						this.getTranslation('INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.LOAD_FAILED')
 					);
 				}
