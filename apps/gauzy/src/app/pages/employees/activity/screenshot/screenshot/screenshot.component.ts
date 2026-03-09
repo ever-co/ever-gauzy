@@ -1,6 +1,4 @@
 import {
-	ChangeDetectionStrategy,
-	ChangeDetectorRef,
 	Component,
 	OnInit,
 	OnDestroy,
@@ -50,8 +48,7 @@ export interface IScreenshotUrls {
 	selector: 'ngx-screenshots',
 	templateUrl: './screenshot.component.html',
 	styleUrls: ['./screenshot.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+	standalone: false
 })
 export class ScreenshotComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	private readonly _router = inject(Router);
@@ -60,7 +57,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	private readonly _nbDialogService = inject(NbDialogService);
 	private readonly _galleryService = inject(GalleryService);
 	private readonly _toastrService = inject(ToastrService);
-	private readonly _cdr = inject(ChangeDetectorRef);
+
 
 	private _slotIdsMap: Map<string, ID[]> = new Map();
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
@@ -191,7 +188,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 			tap((timeSlots: ITimeSlot[]) => {
 				this.originalTimeSlots = timeSlots;
 				this.timeSlots = this.groupTimeSlots(timeSlots);
-				this._cdr.markForCheck();
 			}),
 			catchError((error) => {
 				console.error('Error while retrieving screenshots for employee', error);
@@ -200,7 +196,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 			}),
 			finalize(() => {
 				this.loading = false;
-				this._cdr.markForCheck();
 			})
 		);
 	}
@@ -312,7 +307,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 		this._deleteScreenshotGallery(ids);
 		this.selectedIds = {};
 		this.selectedIdsCount = 0;
-		this._cdr.markForCheck();
 		this.screenshots$.next(true);
 	}
 
