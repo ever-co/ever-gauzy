@@ -5,11 +5,11 @@ import { SimService } from '../sim.service';
 import { SimEventName, SimEventType } from '../dto/event-mapping.dto';
 
 /** Map BaseEntityEventType to SimEventName keys */
-const SCREENSHOT_EVENT_MAP: Record<string, SimEventType> = {
+const SCREENSHOT_EVENT_MAP = {
 	created: SimEventName.SCREENSHOT_CREATED,
 	updated: SimEventName.SCREENSHOT_UPDATED,
 	deleted: SimEventName.SCREENSHOT_DELETED
-};
+} as const satisfies Partial<Record<string, SimEventType>>;
 
 @Injectable()
 export class SimScreenshotEventHandler implements OnModuleInit, OnModuleDestroy {
@@ -29,7 +29,7 @@ export class SimScreenshotEventHandler implements OnModuleInit, OnModuleDestroy 
 				concatMap((event: ScreenshotEvent) =>
 					from(this.handleScreenshotEvent(event)).pipe(
 						catchError((error) => {
-							this.logger.error('Error in ScreenshotEvent subscription', error?.message);
+							this.logger.error(`Error in ScreenshotEvent subscription: ${error?.message}`, error?.stack);
 							return EMPTY;
 						})
 					)
@@ -70,10 +70,10 @@ export class SimScreenshotEventHandler implements OnModuleInit, OnModuleDestroy 
 				organizationId
 			});
 		} catch (error: any) {
-			this.logger.error('Failed to handle ScreenshotEvent for SIM workflow trigger', {
-				message: error?.message,
-				stack: error?.stack
-			});
+			this.logger.error(
+				`Failed to handle ScreenshotEvent for SIM workflow trigger: ${error?.message}`,
+				error?.stack
+			);
 		}
 	}
 

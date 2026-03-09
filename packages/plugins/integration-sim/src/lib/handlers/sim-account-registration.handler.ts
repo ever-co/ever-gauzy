@@ -22,7 +22,7 @@ export class SimAccountRegistrationHandler implements OnModuleInit, OnModuleDest
 				concatMap((event: AccountRegistrationEvent) =>
 					from(this.handleAccountRegistration(event)).pipe(
 						catchError((error) => {
-							this.logger.error('Error in AccountRegistrationEvent subscription', error?.message);
+							this.logger.error(`Error in AccountRegistrationEvent subscription: ${error?.message}`, error?.stack);
 							return EMPTY;
 						})
 					)
@@ -55,10 +55,10 @@ export class SimAccountRegistrationHandler implements OnModuleInit, OnModuleDest
 				tenantId
 			});
 		} catch (error: any) {
-			this.logger.error('Failed to handle AccountRegistrationEvent for SIM workflow trigger', {
-				message: error?.message,
-				stack: error?.stack
-			});
+			this.logger.error(
+				`Failed to handle AccountRegistrationEvent for SIM workflow trigger: ${error?.message}`,
+				error?.stack
+			);
 		}
 	}
 

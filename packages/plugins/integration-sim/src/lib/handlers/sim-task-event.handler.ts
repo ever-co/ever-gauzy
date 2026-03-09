@@ -5,11 +5,11 @@ import { SimService } from '../sim.service';
 import { SimEventName, SimEventType } from '../dto/event-mapping.dto';
 
 /** Map BaseEntityEventType to SimEventName keys */
-const TASK_EVENT_MAP: Record<string, SimEventType> = {
+const TASK_EVENT_MAP = {
 	created: SimEventName.TASK_CREATED,
 	updated: SimEventName.TASK_UPDATED,
 	deleted: SimEventName.TASK_DELETED
-};
+} as const satisfies Partial<Record<string, SimEventType>>;
 
 @Injectable()
 export class SimTaskEventHandler implements OnModuleInit, OnModuleDestroy {
@@ -29,7 +29,7 @@ export class SimTaskEventHandler implements OnModuleInit, OnModuleDestroy {
 				concatMap((event: TaskEvent) =>
 					from(this.handleTaskEvent(event)).pipe(
 						catchError((error) => {
-							this.logger.error('Error in TaskEvent subscription', error?.message);
+							this.logger.error(`Error in TaskEvent subscription: ${error?.message}`, error?.stack);
 							return EMPTY;
 						})
 					)
@@ -73,10 +73,10 @@ export class SimTaskEventHandler implements OnModuleInit, OnModuleDestroy {
 				organizationId
 			});
 		} catch (error: any) {
-			this.logger.error('Failed to handle TaskEvent for SIM workflow trigger', {
-				message: error?.message,
-				stack: error?.stack
-			});
+			this.logger.error(
+				`Failed to handle TaskEvent for SIM workflow trigger: ${error?.message}`,
+				error?.stack
+			);
 		}
 	}
 

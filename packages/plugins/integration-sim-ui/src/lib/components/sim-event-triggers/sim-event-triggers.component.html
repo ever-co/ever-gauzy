@@ -55,18 +55,13 @@
 		<nb-card-header>
 			<h6 class="mb-0">{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.ACTIVE_TITLE' | translate }}</h6>
 		</nb-card-header>
-		<nb-card-body>
-			@if (loading()) {
-				<div class="text-center py-4">
-					<nb-icon icon="loader-outline" class="spin-animation"></nb-icon>
-					<span class="ml-2">{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.LOADING' | translate }}</span>
-				</div>
-			} @else if (eventMappings().length === 0) {
+		<nb-card-body [nbSpinner]="loading()" nbSpinnerStatus="primary" nbSpinnerSize="medium">
+			@if (!loading() && eventMappings().length === 0) {
 				<div class="no-mappings">
 					<nb-icon icon="flash-off-outline" class="no-mappings-icon"></nb-icon>
 					<p>{{ 'INTEGRATIONS.SIM_PAGE.EVENT_TRIGGERS.NO_MAPPINGS' | translate }}</p>
 				</div>
-			} @else {
+			} @else if (!loading() && eventMappings().length > 0) {
 				<nb-list class="mappings-list">
 					@for (mapping of eventMappings(); track mapping.event) {
 						<nb-list-item class="mapping-item">

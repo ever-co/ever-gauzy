@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsIn, Matches } from 'class-validator';
 
 /**
  * Supported Gauzy event types that can trigger SIM workflows.
@@ -79,5 +79,6 @@ export class EventMappingDto {
 	})
 	@IsString()
 	@IsNotEmpty()
+	@Matches(/\S/, { message: 'workflowId must contain non-whitespace characters' })
 	workflowId!: string;
 }

@@ -22,7 +22,7 @@ export class SimAccountVerifiedHandler implements OnModuleInit, OnModuleDestroy 
 				concatMap((event: AccountVerifiedEvent) =>
 					from(this.handleAccountVerified(event)).pipe(
 						catchError((error) => {
-							this.logger.error('Error in AccountVerifiedEvent subscription', error?.message);
+							this.logger.error(`Error in AccountVerifiedEvent subscription: ${error?.message}`, error?.stack);
 							return EMPTY;
 						})
 					)
@@ -55,10 +55,10 @@ export class SimAccountVerifiedHandler implements OnModuleInit, OnModuleDestroy 
 				tenantId
 			});
 		} catch (error: any) {
-			this.logger.error('Failed to handle AccountVerifiedEvent for SIM workflow trigger', {
-				message: error?.message,
-				stack: error?.stack
-			});
+			this.logger.error(
+				`Failed to handle AccountVerifiedEvent for SIM workflow trigger: ${error?.message}`,
+				error?.stack
+			);
 		}
 	}
 
