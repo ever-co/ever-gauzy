@@ -377,7 +377,7 @@ export class PageExtensionRegistryService {
 		const slotIds = this._pluginToSlots.get(pluginId);
 		if (slotIds?.length) {
 			const slots = new Map(this._slots$.value);
-			const extensions = extensionsChanged ? new Map(this._extensions$.value) : new Map(this._extensions$.value);
+			const extensions = new Map(this._extensions$.value);
 			let extensionsChangedAgain = false;
 
 			for (const slotId of slotIds) {
