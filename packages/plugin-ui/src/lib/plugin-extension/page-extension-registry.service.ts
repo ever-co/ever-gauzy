@@ -227,6 +227,14 @@ export class PageExtensionRegistryService {
 	}
 
 	/**
+	 * Returns all slot IDs that have at least one registered extension.
+	 * Includes dynamically registered extensions, not just static config.
+	 */
+	getSlotIds(): PageExtensionSlotId[] {
+		return Array.from(this._extensions$.value.keys());
+	}
+
+	/**
 	 * Returns an Observable of extensions for a slot (reactive).
 	 * Updates automatically when extensions are registered/unregistered.
 	 *

@@ -17,7 +17,7 @@ interface SemVer {
  * Returns null for invalid versions.
  */
 export function parseSemVer(version: string): SemVer | null {
-	const match = version.trim().match(/^(\d+)\.(\d+)\.(\d+)/);
+	const match = version.trim().match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
 	if (!match) return null;
 	return {
 		major: parseInt(match[1], 10),

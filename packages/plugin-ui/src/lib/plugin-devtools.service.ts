@@ -235,25 +235,11 @@ export class PluginDevToolsService {
 	// ─── Private ────────────────────────────────────────────────
 
 	private _getExtensionSlotSummary(): Array<{ slotId: string; extensionCount: number }> {
-		const result: Array<{ slotId: string; extensionCount: number }> = [];
-		// Collect all known slot IDs from extension definitions
-		try {
-			const config = getPluginUiConfig();
-			const allDefs = flattenPlugins(config.plugins);
-			const slotIds = new Set<string>();
-			for (const def of allDefs) {
-				if (def.extensions) {
-					for (const ext of def.extensions) {
-						slotIds.add(ext.slotId);
-					}
-				}
-			}
-			for (const slotId of slotIds) {
-				result.push({ slotId, extensionCount: this._extRegistry.getExtensions(slotId).length });
-			}
-		} catch {
-			// Config not loaded
-		}
-		return result;
+		// Use the registry's actual extension map which includes dynamically registered extensions,
+		// not just static plugin config definitions.
+		return this._extRegistry.getSlotIds().map((slotId) => ({
+			slotId,
+			extensionCount: this._extRegistry.getExtensions(slotId).length
+		}));
 	}
 }

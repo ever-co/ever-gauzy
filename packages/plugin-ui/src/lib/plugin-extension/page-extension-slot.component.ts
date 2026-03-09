@@ -16,7 +16,7 @@ import {
 	ViewContainerRef
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { concatMap, from } from 'rxjs';
+import { concatMap, from, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NbCardModule } from '@nebular/theme';
 import {
@@ -277,6 +277,21 @@ interface MountedExtension {
 									</div>
 								</div>
 							}
+							@case ('custom') {
+								<div
+									class="extension-custom-wrapper"
+									[class]="getWrapperConfig(mounted.extension)?.cssClass"
+								>
+									@if (mounted.resolvedComponent) {
+										<ng-container
+											*ngComponentOutlet="
+												mounted.resolvedComponent;
+												inputs: $any(mounted.extension.config)
+											"
+										/>
+									}
+								</div>
+							}
 							@default {
 								@if (mounted.resolvedComponent) {
 									<ng-container
@@ -363,6 +378,9 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 	/** Tracks pending async cleanup to serialize mount/unmount operations. */
 	private _pendingCleanup: Promise<void> = Promise.resolve();
 
+	/** Active extension subscription — cancelled before re-subscribing to avoid leaks. */
+	private _extensionSub?: Subscription;
+
 	/**
 	 * The slot identifier to render extensions for.
 	 * Use PAGE_EXTENSION_SLOTS constants for well-known slots.
@@ -444,9 +462,12 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 	private _subscribeToExtensions(): void {
 		if (!this.slotId) return;
 
+		// Cancel previous subscription to avoid leaks when slotId changes
+		this._extensionSub?.unsubscribe();
+
 		if (this.reactive) {
 			// Reactive mode: Subscribe to extension changes
-			this._extensionRegistry
+			this._extensionSub = this._extensionRegistry
 				.getExtensions$(this.slotId)
 				.pipe(
 					concatMap((extensions) => from(this._updateExtensions(extensions))),
@@ -496,38 +517,17 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 
 	/**
 	 * Filters extensions based on visibility rules.
+	 * Delegates to the registry's full visibility check which handles
+	 * permissions, permissionsAny, featureKey, hidden flag, and custom visible callbacks.
 	 */
-	private async _filterVisibleExtensions(extensions: PageExtensionDefinition[]): Promise<PageExtensionDefinition[]> {
-		const context: ExtensionVisibilityContext = {
-			injector: this._injector,
+	private async _filterVisibleExtensions(_extensions: PageExtensionDefinition[]): Promise<PageExtensionDefinition[]> {
+		const context: Partial<ExtensionVisibilityContext> = {
 			user: this.visibilityContext?.user,
 			organization: this.visibilityContext?.organization,
 			data: { ...this.visibilityContext?.data, ...this.contextData }
 		};
 
-		const visible: PageExtensionDefinition[] = [];
-		for (const ext of extensions) {
-			if (await this._isVisible(ext, context)) {
-				visible.push(ext);
-			}
-		}
-		return visible;
-	}
-
-	/**
-	 * Checks if an extension is visible.
-	 */
-	private async _isVisible(ext: PageExtensionDefinition, context: ExtensionVisibilityContext): Promise<boolean> {
-		if (ext.hidden) return false;
-
-		if (ext.visible) {
-			const result = ext.visible(context);
-			return result instanceof Promise ? await result : result;
-		}
-
-		// For permissions/features, delegate to registry
-		// (simplified for component - full check in registry)
-		return true;
+		return this._extensionRegistry.getVisibleExtensions(this.slotId, context);
 	}
 
 	/**
@@ -659,7 +659,16 @@ export class PageExtensionSlotComponent implements OnInit, OnChanges, OnDestroy 
 		if (typeof extension.wrapper === 'string') {
 			return extension.wrapper;
 		}
-		return extension.wrapper.type === 'custom' ? 'none' : extension.wrapper.type;
+		if (extension.wrapper.type === 'custom') {
+			if (extension.wrapper.component) {
+				return 'custom';
+			}
+			console.warn(
+				`[ExtensionSlot] Extension '${extension.id}' uses wrapper type 'custom' but no component was provided. Falling back to 'none'.`
+			);
+			return 'none';
+		}
+		return extension.wrapper.type;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Subject, Observable, filter, map, Subscription } from 'rxjs';
+import { Subject, Observable, filter, map, Subscription, TeardownLogic } from 'rxjs';
 
 /**
  * Event payload for plugin events.
@@ -124,7 +124,9 @@ export class PluginEventBusService implements OnDestroy {
 	 * @returns Observable of matching events
 	 */
 	onPattern<T = unknown>(pattern: string, options?: SubscribeOptions): Observable<PluginEvent<T>> {
-		const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+		// Escape regex metacharacters, then convert wildcard '*' back to '.*'
+		const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+		const regex = new RegExp('^' + escaped + '$');
 		return this._eventStream$.pipe(
 			filter((event) => {
 				if (!regex.test(event.type)) {
@@ -224,17 +226,31 @@ export class PluginEventEmitter {
 	}
 
 	/**
-	 * Subscribes to events and registers for automatic cleanup.
+	 * Subscribes to events and registers for automatic cleanup on `destroy()`.
 	 */
 	on<T = unknown>(type: string, options?: SubscribeOptions): Observable<PluginEvent<T>> {
-		return this._eventBus.on<T>(type, options);
+		return this._trackSubscription(this._eventBus.on<T>(type, options));
 	}
 
 	/**
-	 * Subscribes to events matching a pattern.
+	 * Subscribes to events matching a pattern and registers for automatic cleanup on `destroy()`.
 	 */
 	onPattern<T = unknown>(pattern: string, options?: SubscribeOptions): Observable<PluginEvent<T>> {
-		return this._eventBus.onPattern<T>(pattern, options);
+		return this._trackSubscription(this._eventBus.onPattern<T>(pattern, options));
+	}
+
+	/**
+	 * Wraps an observable so that subscriptions are automatically tracked
+	 * for cleanup when `destroy()` is called.
+	 */
+	private _trackSubscription<T>(source$: Observable<T>): Observable<T> {
+		const pluginId = this._pluginId;
+		const eventBus = this._eventBus;
+		return new Observable<T>((subscriber) => {
+			const sub = source$.subscribe(subscriber);
+			eventBus.registerSubscription(pluginId, sub);
+			return sub;
+		});
 	}
 
 	/**

@@ -128,15 +128,17 @@ export class PluginSettingsRegistryService {
 	/**
 	 * Gets the settings entry for a plugin.
 	 */
-	getEntry(pluginId: string): PluginSettingsEntry | undefined {
-		return this._entries$.value.get(pluginId);
+	getEntry(pluginId: string): Readonly<PluginSettingsEntry> | undefined {
+		const entry = this._entries$.value.get(pluginId);
+		return entry ? { ...entry, values: { ...entry.values } } : undefined;
 	}
 
 	/**
 	 * Gets all settings values for a plugin.
 	 */
-	getValues(pluginId: string): Record<string, unknown> {
-		return this._entries$.value.get(pluginId)?.values ?? {};
+	getValues(pluginId: string): Readonly<Record<string, unknown>> {
+		const values = this._entries$.value.get(pluginId)?.values;
+		return values ? { ...values } : {};
 	}
 
 	/**

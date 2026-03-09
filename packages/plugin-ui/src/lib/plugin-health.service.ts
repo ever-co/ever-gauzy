@@ -145,6 +145,7 @@ export class PluginHealthService implements OnDestroy {
 	 * Resets the health status for a plugin.
 	 */
 	reset(pluginId: string): void {
+		this._bootStarts.delete(pluginId);
 		const statuses = new Map(this._statuses$.value);
 		statuses.delete(pluginId);
 		this._statuses$.next(statuses);

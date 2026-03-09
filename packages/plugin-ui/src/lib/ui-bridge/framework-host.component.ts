@@ -155,7 +155,7 @@ export class FrameworkHostComponent implements OnInit, OnDestroy, OnChanges {
 			}
 		}
 
-		if (changes['component'] || changes['loadComponent'] || changes['frameworkId']) {
+		if (changes['component'] || changes['loadComponent'] || changes['frameworkId'] || changes['context']) {
 			this._unmount();
 			this._mount();
 		}

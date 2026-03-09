@@ -98,9 +98,12 @@ export class NamespacedTranslateHelper implements IPluginTranslateService {
 	}
 
 	setTranslation(lang: string, translations: Record<string, any>, shouldMerge?: boolean): void {
-		// Wrap translations under namespace before delegating
+		// Wrap translations under namespace before delegating.
+		// Always merge so that plugin translations are additive — passing
+		// shouldMerge=false would replace the entire language dictionary,
+		// wiping core and other plugins' translations.
 		const wrapped = wrapTranslationsInNamespace(this._namespace, translations);
-		this._delegate.setTranslation(lang, wrapped, shouldMerge);
+		this._delegate.setTranslation(lang, wrapped, shouldMerge ?? true);
 	}
 
 	getTranslations(lang: string): Readonly<Record<string, any>> | undefined {

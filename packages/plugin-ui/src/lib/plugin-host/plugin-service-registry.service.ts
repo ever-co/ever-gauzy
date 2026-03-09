@@ -63,6 +63,23 @@ export class PluginServiceRegistryService {
 	 */
 	register<T>(registration: PluginServiceRegistration<T>): void {
 		const services = new Map(this._services$.value);
+
+		// If another plugin previously owned this contract, remove it from that plugin's tracking
+		// to prevent unregisterByPlugin from deleting a contract it no longer owns.
+		const existing = services.get(registration.contractId);
+		if (existing && existing.pluginId !== registration.pluginId) {
+			const prevContracts = this._pluginToContracts.get(existing.pluginId);
+			if (prevContracts) {
+				const idx = prevContracts.indexOf(registration.contractId);
+				if (idx !== -1) {
+					prevContracts.splice(idx, 1);
+				}
+				if (prevContracts.length === 0) {
+					this._pluginToContracts.delete(existing.pluginId);
+				}
+			}
+		}
+
 		services.set(registration.contractId, registration as PluginServiceRegistration);
 		this._services$.next(services);
 

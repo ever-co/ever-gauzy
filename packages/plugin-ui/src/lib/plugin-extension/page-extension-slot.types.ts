@@ -66,7 +66,7 @@ export type PageExtensionSlotId = string;
  * Built-in wrapper types for extensions.
  * Wrappers provide consistent styling and layout for extensions.
  */
-export type ExtensionWrapperType = 'none' | 'card' | 'widget' | 'window' | 'panel';
+export type ExtensionWrapperType = 'none' | 'card' | 'widget' | 'window' | 'panel' | 'custom';
 
 /**
  * Custom wrapper configuration.

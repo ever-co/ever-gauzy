@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, distinctUntilChanged, map } from 'rxjs';
+import { BehaviorSubject, Observable, distinctUntilChanged, filter, map } from 'rxjs';
 
 /**
  * Reactive, plugin-scoped state store.
@@ -34,6 +34,8 @@ import { BehaviorSubject, Observable, distinctUntilChanged, map } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class PluginStateService {
 	private readonly _store = new Map<string, BehaviorSubject<unknown>>();
+	/** Keys that were explicitly set (not lazily created by select). */
+	private readonly _explicitKeys = new Set<string>();
 
 	// ─── Write ────────────────────────────────────────────────────────────────
 
@@ -41,6 +43,7 @@ export class PluginStateService {
 	 * Set a value. Creates the key if it doesn't exist.
 	 */
 	set<T>(key: string, value: T): void {
+		this._explicitKeys.add(key);
 		const subject = this._getOrCreate<T>(key, value);
 		subject.next(value);
 	}
@@ -86,7 +89,7 @@ export class PluginStateService {
 	 */
 	selectDefined<T>(key: string): Observable<T> {
 		return this.select<T>(key).pipe(
-			map((v) => v as T),
+			filter((v): v is T => v !== undefined),
 			distinctUntilChanged()
 		);
 	}
@@ -102,6 +105,7 @@ export class PluginStateService {
 			subject.complete();
 			this._store.delete(key);
 		}
+		this._explicitKeys.delete(key);
 	}
 
 	/**
@@ -127,15 +131,17 @@ export class PluginStateService {
 			subject.complete();
 		}
 		this._store.clear();
+		this._explicitKeys.clear();
 	}
 
 	// ─── Utilities ────────────────────────────────────────────────────────────
 
 	/**
-	 * Returns true if the key has been set.
+	 * Returns true if the key has been explicitly set via `set()` or `update()`.
+	 * Keys lazily created by `select()` do not count.
 	 */
 	has(key: string): boolean {
-		return this._store.has(key);
+		return this._explicitKeys.has(key);
 	}
 
 	/**

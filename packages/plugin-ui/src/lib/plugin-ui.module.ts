@@ -220,9 +220,8 @@ export class PluginUiModule implements OnDestroy {
 		const plugins = await this.createPluginInstances();
 		this._plugins.push(...plugins);
 
-		for (const { instance, definition } of plugins) {
+		for (const { instance } of plugins) {
 			this._registry.register(instance);
-			this._health.recordBootEnd(definition.id);
 		}
 
 		// Invoke ngOnPluginBootstrap for all plugins
@@ -230,6 +229,12 @@ export class PluginUiModule implements OnDestroy {
 
 		// Invoke ngOnPluginAfterBootstrap for all plugins
 		await this.invokeLifecycleMethod('ngOnPluginAfterBootstrap');
+
+		// Record boot end *after* all lifecycle hooks complete so bootTimeMs
+		// reflects the full bootstrap cost, not just instantiation.
+		for (const { definition } of plugins) {
+			this._health.recordBootEnd(definition.id);
+		}
 
 		// Handle bootstrap-only plugins (no module/loadModule — pure declarative registrations)
 		await this.bootstrapDeclarativePlugins();
@@ -317,7 +322,11 @@ export class PluginUiModule implements OnDestroy {
 			try {
 				this._health.recordBootStart(definition.id);
 				const resolvedModule = mod ?? (loadModule ? await loadModule() : null);
-				if (!resolvedModule) continue;
+				if (!resolvedModule) {
+					// Clean up orphaned boot-start entry since this plugin has no module to bootstrap
+					this._health.reset(definition.id);
+					continue;
+				}
 
 				const options = definition.options ?? {};
 				const childInjector = Injector.create({

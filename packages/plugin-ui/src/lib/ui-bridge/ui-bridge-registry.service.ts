@@ -266,8 +266,9 @@ export class UiBridgeRegistryService {
 	 * Unregister a bridge by framework ID.
 	 */
 	unregister(frameworkId: UiBridgeFramework): boolean {
-		const removed = this._bridges.delete(frameworkId);
-		this._lazyBridges.delete(frameworkId);
+		const removedBridge = this._bridges.delete(frameworkId);
+		const removedLazy = this._lazyBridges.delete(frameworkId);
+		const removed = removedBridge || removedLazy;
 		if (removed) {
 			this._notifyBridgeChange();
 		}
