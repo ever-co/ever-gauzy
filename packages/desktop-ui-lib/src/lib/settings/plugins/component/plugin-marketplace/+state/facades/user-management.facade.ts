@@ -426,7 +426,7 @@ export class UserManagementFacade {
 		}
 		const date = new Date(assignment.assignedAt);
 		// Check for Invalid Date
-		return isNaN(date.getTime()) ? null : date;
+		return Number.isNaN(date.getTime()) ? null : date;
 	}
 
 	// ============================================================================
@@ -460,5 +460,79 @@ export class UserManagementFacade {
 	 */
 	resetAvailableUsers(): void {
 		this.actions.dispatch(AvailableUsersActions.reset());
+	}
+
+	// ============================================================================
+	// PLUGIN TENANT USER ACCESS MANAGEMENT
+	// ============================================================================
+
+	/**
+	 * Get current plugin tenant ID (stream)
+	 */
+	get currentPluginTenantId$(): Observable<string | null> {
+		return this.assignmentQuery.currentPluginTenantId$;
+	}
+
+	/**
+	 * Get current plugin tenant ID (synchronous)
+	 */
+	get currentPluginTenantId(): string | null {
+		return this.assignmentQuery.currentPluginTenantId;
+	}
+
+	/**
+	 * Enable (allow) a user's access to the plugin tenant
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userId - User identifier
+	 */
+	enableUser(pluginTenantId: ID, userId: string): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.allowUsersToPluginTenant({
+				pluginTenantId,
+				userIds: [userId]
+			})
+		);
+	}
+
+	/**
+	 * Disable (deny) a user's access to the plugin tenant
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userId - User identifier
+	 */
+	disableUser(pluginTenantId: ID, userId: string): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.denyUsersFromPluginTenant({
+				pluginTenantId,
+				userIds: [userId]
+			})
+		);
+	}
+
+	/**
+	 * Enable all users' access to the plugin tenant
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userIds - Array of user identifiers
+	 */
+	enableAllUsers(pluginTenantId: ID, userIds: string[]): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.allowUsersToPluginTenant({
+				pluginTenantId,
+				userIds
+			})
+		);
+	}
+
+	/**
+	 * Disable all users' access to the plugin tenant
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userIds - Array of user identifiers
+	 */
+	disableAllUsers(pluginTenantId: ID, userIds: string[]): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.denyUsersFromPluginTenant({
+				pluginTenantId,
+				userIds
+			})
+		);
 	}
 }
