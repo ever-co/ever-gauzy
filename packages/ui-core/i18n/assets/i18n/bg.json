@@ -4693,7 +4693,7 @@
 		"NO_SCREENSHOT": "Няма екранна снимка",
 		"NO_SCREENSHOTS": "Няма екранни снимки",
 		"NO_RECORD_FOUND": "Не са намерени записи. Моля, изберете диапазон от дати, служител или проект.",
-		"SCREEN_SELECTED": "{count} Екран избран"
+		"SCREEN_SELECTED": "{{ count }} Екран(а) избран(и)"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Нека създадем първата ви организация",

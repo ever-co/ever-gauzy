@@ -4629,7 +4629,7 @@
 		"NO_SCREENSHOT": "لا توجد لقطة شاشة",
 		"NO_SCREENSHOTS": "لا توجد لقطات شاشة",
 		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع.",
-		"SCREEN_SELECTED": "{count} شاشة محددة"
+		"SCREEN_SELECTED": "{{ count }} شاشة محددة"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "لنقم بإنشاء مؤسستك الأولى",

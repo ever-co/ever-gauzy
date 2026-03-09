@@ -4640,7 +4640,7 @@
 		"NO_SCREENSHOT": "Kein Screenshot",
 		"NO_SCREENSHOTS": "Keine Screenshots",
 		"NO_RECORD_FOUND": "Keine Einträge gefunden. Bitte wählen Sie einen Datumsbereich, einen Mitarbeiter oder ein Projekt aus.",
-		"SCREEN_SELECTED": "{count} Bildschirm ausgewählt"
+		"SCREEN_SELECTED": "{{ count }} Bildschirm(e) ausgewählt"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Lass uns deine erste Organisation erstellen",

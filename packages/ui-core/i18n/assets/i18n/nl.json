@@ -4644,7 +4644,7 @@
 		"NO_SCREENSHOT": "Geen schermafbeelding",
 		"NO_SCREENSHOTS": "Geen screenshots",
 		"NO_RECORD_FOUND": "Geen gegevens gevonden. Selecteer alstublieft een datumbereik, medewerker of project.",
-		"SCREEN_SELECTED": "{count} Scherm geselecteerd"
+		"SCREEN_SELECTED": "{{ count }} Scherm(en) geselecteerd"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Laten we je eerste organisatie maken",

@@ -4643,7 +4643,7 @@
 		"NO_SCREENSHOT": "Brak zrzutu ekranu",
 		"NO_SCREENSHOTS": "Brak zrzutów ekranu",
 		"NO_RECORD_FOUND": "Nie znaleziono żadnych rekordów. Proszę wybrać zakres dat, pracownika lub projekt",
-		"SCREEN_SELECTED": "Liczba wybranych ekranów: {count}"
+		"SCREEN_SELECTED": "Liczba wybranych ekranów: {{ count }}"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
