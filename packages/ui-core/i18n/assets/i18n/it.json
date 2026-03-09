@@ -4644,7 +4644,7 @@
 		"NO_SCREENSHOT": "Nessuna schermata",
 		"NO_SCREENSHOTS": "Nessuna schermata",
 		"NO_RECORD_FOUND": "Nessun record trovato. Seleziona un intervallo di date, un dipendente o un progetto",
-		"SCREEN_SELECTED": "{count} Schermata selezionata"
+		"SCREEN_SELECTED": "{{ count }} Schermata/e selezionata/e"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Creiamo la tua prima organizzazione",

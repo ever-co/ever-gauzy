@@ -4055,7 +4055,7 @@
 		"NO_SCREENSHOT": "crwdns11443:0crwdne11443:0",
 		"NO_SCREENSHOTS": "crwdns11445:0crwdne11445:0",
 		"NO_RECORD_FOUND": "crwdns11447:0crwdne11447:0",
-		"SCREEN_SELECTED": "{count} Screen selected"
+		"SCREEN_SELECTED": "{{ count }} Screen(s) selected"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "crwdns3476:0crwdne3476:0",
