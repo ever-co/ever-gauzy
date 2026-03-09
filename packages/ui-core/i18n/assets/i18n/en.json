@@ -192,7 +192,8 @@
 		"REMOVE_FROM_FAVORITES": "Remove from favorites",
 		"ADD_TO_FAVORITES": "Add to favorites",
 		"DONE": "Done",
-		"SKIP": "Skip"
+		"SKIP": "Skip",
+		"UNSELECT_ALL": "Deselect All"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4789,7 +4790,8 @@
 		"VISITED_DATES": "Visited Dates",
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
-		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project."
+		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
+		"SCREEN_SELECTED": "{{ count }} Screen(s) selected"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

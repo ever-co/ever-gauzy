@@ -178,7 +178,8 @@
 		"RECOVER": "Récupérer",
 		"ADD_MORE_SOURCES": "Ajouter plus de sources",
 		"REMOVE_FROM_FAVORITES": "Retirer des favoris",
-		"ADD_TO_FAVORITES": "Ajouter aux favoris"
+		"ADD_TO_FAVORITES": "Ajouter aux favoris",
+		"UNSELECT_ALL": "Tout désélectionner"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4633,7 +4634,8 @@
 		"VISITED_DATES": "Dates de visite",
 		"NO_SCREENSHOT": "Aucune capture d'écran",
 		"NO_SCREENSHOTS": "Pas de captures d'écran.",
-		"NO_RECORD_FOUND": "Aucun résultat trouvé. Veuillez sélectionner une plage de dates, un employé ou un projet."
+		"NO_RECORD_FOUND": "Aucun résultat trouvé. Veuillez sélectionner une plage de dates, un employé ou un projet.",
+		"SCREEN_SELECTED": "{{count}} captures d’écran sélectionnées"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Créons votre première organisation",

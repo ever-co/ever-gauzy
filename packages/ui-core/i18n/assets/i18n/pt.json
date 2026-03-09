@@ -178,7 +178,8 @@
 		"RECOVER": "Recuperar",
 		"ADD_MORE_SOURCES": "Adicionar mais fontes",
 		"REMOVE_FROM_FAVORITES": "Remover dos favoritos",
-		"ADD_TO_FAVORITES": "Adicionar aos favoritos"
+		"ADD_TO_FAVORITES": "Adicionar aos favoritos",
+		"UNSELECT_ALL": "Desmarcar tudo"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4642,7 +4643,8 @@
 		"VISITED_DATES": "Datas Visitadas",
 		"NO_SCREENSHOT": "Sem captura de tela.",
 		"NO_SCREENSHOTS": "Sem capturas de tela",
-		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto."
+		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto.",
+		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização",

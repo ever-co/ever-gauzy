@@ -132,7 +132,8 @@
 		"START_WORK": "crwdns11525:0crwdne11525:0",
 		"ADD_MODULE": "Yamo Module",
 		"REMOVE_FROM_FAVORITES": "Kwanyo ki i jami me ayera",
-		"ADD_TO_FAVORITES": "Med i jami me ayera"
+		"ADD_TO_FAVORITES": "Med i jami me ayera",
+		"UNSELECT_ALL": "Unselect All"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4053,7 +4054,8 @@
 		"VISITED_DATES": "crwdns11130:0crwdne11130:0",
 		"NO_SCREENSHOT": "crwdns11443:0crwdne11443:0",
 		"NO_SCREENSHOTS": "crwdns11445:0crwdne11445:0",
-		"NO_RECORD_FOUND": "crwdns11447:0crwdne11447:0"
+		"NO_RECORD_FOUND": "crwdns11447:0crwdne11447:0",
+		"SCREEN_SELECTED": "{{ count }} Screen(s) selected"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "crwdns3476:0crwdne3476:0",
