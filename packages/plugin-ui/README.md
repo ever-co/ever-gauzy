@@ -48,7 +48,7 @@ Call `PluginUiModule.init()` once in your root bootstrap module. Pass the three 
 ```typescript
 // bootstrap.module.ts
 import { NgModule } from '@angular/core';
-import { PluginUiModule, PLUGIN_UI_CONFIG, getPluginUiConfig } from '@gauzy/plugin-ui';
+import { PluginUiModule, PLUGIN_UI_CONFIG, getPluginUiConfig, setPluginUiConfig } from '@gauzy/plugin-ui';
 import { NavMenuBuilderService, PageRouteRegistryService, PageTabRegistryService } from '@gauzy/ui-core/core';
 import { uiPluginConfig } from './plugin-ui.config';
 import { AppModule } from './app.module';

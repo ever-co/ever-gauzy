@@ -25,12 +25,12 @@ export class PermissionAdapterService implements IPluginPermissionChecker {
 	}
 
 	/** Returns true if the user has ALL specified permissions. */
-	hasAllPermissions(permissions: string[]): boolean {
+	hasAllPermissions(...permissions: string[]): boolean {
 		return this._store.hasAllPermissions(...permissions);
 	}
 
 	/** Returns true if the user has ANY of the specified permissions. */
-	hasAnyPermission(permissions: string[]): boolean {
+	hasAnyPermission(...permissions: string[]): boolean {
 		return this._store.hasAnyPermission(...permissions);
 	}
 }
