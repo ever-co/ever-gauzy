@@ -1,6 +1,5 @@
 import {
 	AfterViewChecked,
-	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	Component,
 	EventEmitter,
@@ -9,24 +8,32 @@ import {
 	OnInit,
 	Output
 } from '@angular/core';
-import { Location } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs/operators';
 import { NbAccordionModule, NbSidebarService, NbTooltipModule } from '@nebular/theme';
+import { tap } from 'rxjs/operators';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { IUser } from '@gauzy/contracts';
-import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum, JitsuService, Store } from '../../../../../services';
 import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
-import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-item.component';
+import { Store } from '../../../../../services/store/store.service';
+import { JitsuService } from '../../../../../services/analytics/jitsu.service';
+import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum } from '../../../../../services/analytics/event.type';
 import { TooltipDirective } from '../../../../../directives/tooltip.directive';
+import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-item.component';
 
 @Component({
 	selector: 'ga-menu-item',
 	templateUrl: './menu-item.component.html',
 	styleUrls: ['./menu-item.component.scss'],
 	standalone: true,
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbAccordionModule, NbTooltipModule, NgxPermissionsModule, TooltipDirective, ChildrenMenuItemComponent]
+	imports: [
+		CommonModule,
+		NbAccordionModule,
+		NbTooltipModule,
+		NgxPermissionsModule,
+		TooltipDirective,
+		ChildrenMenuItemComponent
+	]
 })
 export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private readonly _router = inject(Router);

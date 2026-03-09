@@ -1,19 +1,18 @@
-import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Observable, map } from 'rxjs';
 import { BaseNavMenuComponent } from '../base-nav-menu/base-nav-menu.component';
-import { NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types';
 import { SidebarMenuComponent } from '../sidebar-menu/sidebar-menu.component';
+import { NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
 	selector: 'ga-settings-nav-menu',
 	templateUrl: './settings-nav-menu.component.html',
 	styleUrls: ['./settings-nav-menu.component.scss'],
 	standalone: true,
-	imports: [AsyncPipe, SidebarMenuComponent],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	imports: [CommonModule, SidebarMenuComponent]
 })
 export class SettingsNavMenuComponent extends BaseNavMenuComponent implements OnInit {
 	public settingsMenuConfig$: Observable<NavMenuSectionItem[]>;

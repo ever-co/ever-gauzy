@@ -1490,6 +1490,73 @@
 				}
 			}
 		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "Intégration de workflows SIM AI",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Entrez votre clé API SIM AI pour connecter votre compte. Vous pouvez trouver votre clé API dans votre tableau de bord SIM sur sim.ai.",
+				"NEXT": "Connecter",
+				"HINT": "Votre clé API est stockée de manière sécurisée et utilisée pour authentifier les exécutions de workflows.",
+				"ERRORS": {
+					"INVALID_FORM": "Veuillez remplir correctement tous les champs obligatoires",
+					"SAVE_SETTINGS": "Échec de l'enregistrement des paramètres",
+					"ORGANIZATION_NOT_FOUND": "Organisation non trouvée",
+					"CHECK_REMEMBER_STATE": "Échec de la vérification de l'état mémorisé"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Intégration SIM AI configurée avec succès"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Paramètres SIM AI",
+				"SUBTITLE": "Configurez les paramètres de votre intégration SIM AI",
+				"API_KEY": "Clé API",
+				"API_KEY_PLACEHOLDER": "Entrez votre clé API SIM AI"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Historique d'exécution",
+				"NO_EXECUTIONS": "Aucune exécution de workflow trouvée. Exécutez un workflow depuis l'onglet Workflows pour voir les résultats ici.",
+				"WORKFLOW_ID": "ID du workflow",
+				"WORKFLOW_ID_PLACEHOLDER": "Filtrer par ID de workflow",
+				"EXECUTION_ID": "ID d'exécution",
+				"STATUS": "Statut",
+				"TRIGGERED_BY": "Déclenché par",
+				"DURATION": "Durée",
+				"CREATED": "Créé",
+				"LOADING": "Chargement de l'historique d'exécution...",
+				"LOAD": "Rechercher",
+				"ALL_STATUSES": "Tous les statuts",
+				"SHOWING": "Affichage",
+				"OF": "sur",
+				"PREVIOUS_PAGE": "Page précédente",
+				"NEXT_PAGE": "Page suivante"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Workflows",
+				"VALIDATE_TITLE": "Valider le workflow",
+				"EXECUTE_TITLE": "Exécuter le workflow",
+				"JOB_STATUS_TITLE": "Statut de la tâche asynchrone",
+				"WORKFLOW_ID": "ID du workflow",
+				"WORKFLOW_ID_PLACEHOLDER": "Entrez l'ID de votre workflow SIM",
+				"VALIDATE": "Valider",
+				"DEPLOYED": "Le workflow est déployé et prêt à être exécuté.",
+				"NOT_DEPLOYED": "Le workflow n'est pas déployé ou introuvable.",
+				"EXECUTE": "Exécuter",
+				"ASYNC": "Asynchrone",
+				"TIMEOUT": "Délai d'expiration (ms)",
+				"INPUT": "Entrée (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Fournissez l'entrée du workflow en JSON valide. Ces données seront transmises à votre workflow SIM.",
+				"RESULT": "Résultat de l'exécution",
+				"TASK_ID": "ID de la tâche",
+				"TASK_ID_PLACEHOLDER": "Entrez l'ID de la tâche asynchrone",
+				"CHECK_STATUS": "Vérifier le statut",
+				"JOB_RESULT": "Statut de la tâche",
+				"INVALID_JSON": "Entrée JSON invalide",
+				"EXECUTION_FAILED": "L'exécution a échoué"
+			}
+		},
 		"COMING_SOON": "Bientôt disponible",
 		"RE_INTEGRATE": "Réintégrer",
 		"SETTINGS": "Paramètres",
