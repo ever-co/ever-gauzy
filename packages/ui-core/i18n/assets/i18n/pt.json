@@ -1554,6 +1554,25 @@
 				"JOB_RESULT": "Status da tarefa",
 				"INVALID_JSON": "Entrada JSON inválida",
 				"EXECUTION_FAILED": "A execução falhou"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Gatilhos de eventos",
+				"ADD_TITLE": "Adicionar gatilho de evento",
+				"ACTIVE_TITLE": "Gatilhos de eventos ativos",
+				"DESCRIPTION": "Configure gatilhos automáticos de fluxos de trabalho. Quando um evento da plataforma ocorrer, o fluxo de trabalho SIM associado será executado automaticamente.",
+				"EVENT": "Evento",
+				"SELECT_EVENT": "Selecionar um evento",
+				"WORKFLOW_ID": "ID do fluxo de trabalho",
+				"WORKFLOW_ID_PLACEHOLDER": "Insira o ID do fluxo de trabalho SIM para acionar",
+				"ADD": "Adicionar",
+				"REMOVE": "Remover associação",
+				"NO_MAPPINGS": "Nenhum gatilho de evento configurado. Adicione uma associação acima para acionar automaticamente fluxos de trabalho SIM a partir de eventos da plataforma.",
+				"LOADING": "Carregando gatilhos de eventos...",
+				"MAPPING_SAVED": "Associação do gatilho de evento salva com sucesso.",
+				"MAPPING_REMOVED": "Associação do gatilho de evento removida com sucesso.",
+				"SAVE_FAILED": "Falha ao salvar a associação do gatilho de evento.",
+				"REMOVE_FAILED": "Falha ao remover a associação do gatilho de evento.",
+				"LOAD_FAILED": "Falha ao carregar os gatilhos de eventos."
 			}
 		},
 		"COMING_SOON": "Em breve",

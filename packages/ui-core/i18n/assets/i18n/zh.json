@@ -1554,6 +1554,25 @@
 				"JOB_RESULT": "任务状态",
 				"INVALID_JSON": "无效的 JSON 输入",
 				"EXECUTION_FAILED": "执行失败"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "事件触发器",
+				"ADD_TITLE": "添加事件触发器",
+				"ACTIVE_TITLE": "活跃的事件触发器",
+				"DESCRIPTION": "配置自动工作流触发器。当平台事件发生时，映射的 SIM 工作流将自动执行。",
+				"EVENT": "事件",
+				"SELECT_EVENT": "选择一个事件",
+				"WORKFLOW_ID": "工作流 ID",
+				"WORKFLOW_ID_PLACEHOLDER": "输入要触发的 SIM 工作流 ID",
+				"ADD": "添加",
+				"REMOVE": "移除映射",
+				"NO_MAPPINGS": "未配置事件触发器。在上方添加映射以自动从平台事件触发 SIM 工作流。",
+				"LOADING": "正在加载事件触发器...",
+				"MAPPING_SAVED": "事件触发器映射已成功保存。",
+				"MAPPING_REMOVED": "事件触发器映射已成功移除。",
+				"SAVE_FAILED": "保存事件触发器映射失败。",
+				"REMOVE_FAILED": "移除事件触发器映射失败。",
+				"LOAD_FAILED": "加载事件触发器失败。"
 			}
 		},
 		"COMING_SOON": "即将推出",

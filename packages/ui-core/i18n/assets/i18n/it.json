@@ -1554,6 +1554,25 @@
 				"JOB_RESULT": "Stato dell'attività",
 				"INVALID_JSON": "Input JSON non valido",
 				"EXECUTION_FAILED": "Esecuzione non riuscita"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Trigger degli eventi",
+				"ADD_TITLE": "Aggiungi trigger evento",
+				"ACTIVE_TITLE": "Trigger degli eventi attivi",
+				"DESCRIPTION": "Configura trigger automatici dei flussi di lavoro. Quando si verifica un evento della piattaforma, il flusso di lavoro SIM associato verrà eseguito automaticamente.",
+				"EVENT": "Evento",
+				"SELECT_EVENT": "Seleziona un evento",
+				"WORKFLOW_ID": "ID del flusso di lavoro",
+				"WORKFLOW_ID_PLACEHOLDER": "Inserisci l'ID del flusso di lavoro SIM da attivare",
+				"ADD": "Aggiungi",
+				"REMOVE": "Rimuovi associazione",
+				"NO_MAPPINGS": "Nessun trigger evento configurato. Aggiungi un'associazione sopra per attivare automaticamente i flussi di lavoro SIM dagli eventi della piattaforma.",
+				"LOADING": "Caricamento trigger degli eventi...",
+				"MAPPING_SAVED": "Associazione trigger evento salvata con successo.",
+				"MAPPING_REMOVED": "Associazione trigger evento rimossa con successo.",
+				"SAVE_FAILED": "Impossibile salvare l'associazione del trigger evento.",
+				"REMOVE_FAILED": "Impossibile rimuovere l'associazione del trigger evento.",
+				"LOAD_FAILED": "Impossibile caricare i trigger degli eventi."
 			}
 		},
 		"COMING_SOON": "Prossimamente",

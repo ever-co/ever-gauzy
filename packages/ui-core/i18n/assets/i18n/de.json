@@ -1554,6 +1554,25 @@
 				"JOB_RESULT": "Aufgabenstatus",
 				"INVALID_JSON": "Ungültige JSON-Eingabe",
 				"EXECUTION_FAILED": "Ausführung fehlgeschlagen"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Ereignisauslöser",
+				"ADD_TITLE": "Ereignisauslöser hinzufügen",
+				"ACTIVE_TITLE": "Aktive Ereignisauslöser",
+				"DESCRIPTION": "Konfigurieren Sie automatische Workflow-Auslöser. Wenn ein Plattformereignis eintritt, wird der zugeordnete SIM-Workflow automatisch ausgeführt.",
+				"EVENT": "Ereignis",
+				"SELECT_EVENT": "Ereignis auswählen",
+				"WORKFLOW_ID": "Workflow-ID",
+				"WORKFLOW_ID_PLACEHOLDER": "SIM-Workflow-ID zum Auslösen eingeben",
+				"ADD": "Hinzufügen",
+				"REMOVE": "Zuordnung entfernen",
+				"NO_MAPPINGS": "Keine Ereignisauslöser konfiguriert. Fügen Sie oben eine Zuordnung hinzu, um SIM-Workflows automatisch durch Plattformereignisse auszulösen.",
+				"LOADING": "Ereignisauslöser werden geladen...",
+				"MAPPING_SAVED": "Ereignisauslöser-Zuordnung erfolgreich gespeichert.",
+				"MAPPING_REMOVED": "Ereignisauslöser-Zuordnung erfolgreich entfernt.",
+				"SAVE_FAILED": "Fehler beim Speichern der Ereignisauslöser-Zuordnung.",
+				"REMOVE_FAILED": "Fehler beim Entfernen der Ereignisauslöser-Zuordnung.",
+				"LOAD_FAILED": "Fehler beim Laden der Ereignisauslöser."
 			}
 		},
 		"COMING_SOON": "Demnächst verfügbar.",
