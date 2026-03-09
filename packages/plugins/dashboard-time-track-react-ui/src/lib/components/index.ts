@@ -1,5 +1,4 @@
-export { ReactTimeTrackingPage } from './ReactTimeTrackingPage';
-export { TimeTrackingDashboardWidgets } from './TimeTrackingDashboardWidgets';
+export { DashboardTimeTrackReactUiPage } from './DashboardTimeTrackReactUiPage';
 export * from './widgets';
 
 // Re-export from @gauzy/ui-react-components for convenience

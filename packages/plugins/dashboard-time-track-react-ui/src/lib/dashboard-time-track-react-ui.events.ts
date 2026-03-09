@@ -27,8 +27,8 @@ export interface DashboardRefreshedPayload {
  * ```
  */
 export const DashboardRefreshedEvent = definePluginEvent<DashboardRefreshedPayload>(
-	'react-ui',
-	'react-ui:dashboard-refreshed',
+	'dashboard-time-track-react-ui',
+	'dashboard-time-track-react-ui:dashboard-refreshed',
 	'Emitted when the React Time Tracking dashboard data is refreshed.'
 );
 
@@ -44,7 +44,7 @@ export interface WidgetVisibilityPayload {
  * Emitted when a widget's visibility is toggled via settings.
  */
 export const WidgetVisibilityChangedEvent = definePluginEvent<WidgetVisibilityPayload>(
-	'react-ui',
-	'react-ui:widget-visibility-changed',
+	'dashboard-time-track-react-ui',
+	'dashboard-time-track-react-ui:widget-visibility-changed',
 	'Emitted when a dashboard widget is shown or hidden.'
 );

@@ -8,6 +8,8 @@ import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
+import { environment } from '@gauzy/ui-config';
+console.log('Active Environment: %s', environment.DEMO);
 
 /**
  * Application UI configuration.
@@ -76,6 +78,9 @@ export const uiPluginConfig: PluginUiConfig = {
 				JobMatchingPlugin,
 				JobProposalTemplatePlugin
 			]
-		})
+		}),
+
+		// React UI Plugin (demo only)
+		...(environment.DEMO ? [DashboardTimeTrackReactUiPlugin] : [])
 	]
 };

@@ -1,6 +1,6 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, IPluginI18nService, PluginRouteInput } from '@gauzy/plugin-ui';
-import { REACT_TIME_TRACKING_DASHBOARD_ROUTE, REACT_TIME_TRACKING_PATH } from './react-ui.routes';
+import { DASHBOARD_TIME_TRACK_ROUTE, DASHBOARD_TIME_TRACK_PATH } from './dashboard-time-track-react-ui.routes';
 import en from '../i18n/en.json';
 
 /**
@@ -20,7 +20,7 @@ import en from '../i18n/en.json';
  * - **Versioning**: `version: '1.0.0'` — enables compatibility checks
  * - **Namespace Isolation**: `translationNamespace: 'REACT_UI'` — prevents i18n key collisions
  * - **Settings**: Dashboard widget visibility toggles with auto-generated UI
- * - **Type-Safe Events**: `DashboardRefreshedEvent` / `WidgetVisibilityChangedEvent` in `react-ui.events.ts`
+ * - **Type-Safe Events**: `DashboardRefreshedEvent` / `WidgetVisibilityChangedEvent` in `dashboard-time-track-react-ui.events.ts`
  * - **Permissions**: Tab visibility gated by `ADMIN_DASHBOARD_VIEW` + `TIME_TRACKING_DASHBOARD`
  *
  * ## Usage
@@ -42,7 +42,7 @@ export const DashboardTimeTrackReactUiPlugin = defineDeclarativePlugin('dashboar
 	location: 'page-sections',
 
 	// ── Routes ───────────────────────────────────────────────────
-	routes: [REACT_TIME_TRACKING_DASHBOARD_ROUTE as PluginRouteInput],
+	routes: [DASHBOARD_TIME_TRACK_ROUTE as PluginRouteInput],
 
 	// ── Namespace-isolated translations ──────────────────────────
 	// All keys are auto-wrapped under 'REACT_UI' to avoid collisions.
@@ -117,7 +117,7 @@ export const DashboardTimeTrackReactUiPlugin = defineDeclarativePlugin('dashboar
 			tabsetId: 'dashboard-page',
 			tabId: 'react-time-tracking',
 			tabsetType: 'route',
-			path: `/pages/dashboard/${REACT_TIME_TRACKING_PATH}`,
+			path: `/pages/dashboard/${DASHBOARD_TIME_TRACK_PATH}`,
 			tabTitle: (_i18n: IPluginI18nService) =>
 				_i18n.getTranslation('REACT_UI.DASHBOARD_PAGE.TABS.REACT_TIME_TRACKING'),
 			tabIcon: 'code-outline',

@@ -1,21 +1,21 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactHostDirective } from '@gauzy/ui-react';
-import { ReactTimeTrackingPage } from './components/ReactTimeTrackingPage';
+import { DashboardTimeTrackReactUiPage } from './components/DashboardTimeTrackReactUiPage';
 
 /**
- * ReactTimeTrackingPageComponent
+ * DashboardTimeTrackReactUiPageComponent
  *
  * Angular standalone component used as the routed entry point for the
- * "React Time Tracking" dashboard tab. Mounts the ReactTimeTrackingPage
+ * "React Time Tracking" dashboard tab. Mounts the DashboardTimeTrackReactUiPage
  * React component via ReactHostDirective.
  */
 @Component({
-	selector: 'gz-react-time-tracking-page',
+	selector: 'gz-dashboard-time-track-react-ui-page',
 	standalone: true,
 	imports: [CommonModule, ReactHostDirective],
 	template: `<div [gaReactHost]="page"></div>`
 })
-export class ReactTimeTrackingPageComponent {
-	readonly page = ReactTimeTrackingPage;
+export class DashboardTimeTrackReactUiPageComponent {
+	readonly page = DashboardTimeTrackReactUiPage;
 }

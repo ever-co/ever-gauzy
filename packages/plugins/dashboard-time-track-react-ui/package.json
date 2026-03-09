@@ -7,11 +7,21 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/dashboard-time-track-react-ui"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
 		"lib:build": "yarn nx build plugin-dashboard-time-track-react-ui --configuration=development",
-		"lib:build:prod": "yarn nx build plugin-dashboard-time-track-react-ui --configuration=production"
+		"lib:build:prod": "yarn nx build plugin-dashboard-time-track-react-ui --configuration=production",
+		"lib:watch": "yarn nx build plugin-dashboard-time-track-react-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "21.0.7",
@@ -27,11 +37,23 @@
 		"@gauzy/ui-react-components": "^0.1.0",
 		"tslib": "^2.6.2"
 	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"jest-preset-angular": "16.0.0"
+	},
 	"keywords": [
-		"angular",
-		"react",
+		"Angular",
+		"React",
+		"UI",
 		"plugin",
-		"ever-gauzy"
+		"Ever Gauzy",
+		"dashboard",
+		"time tracking"
 	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
 	"sideEffects": false
 }

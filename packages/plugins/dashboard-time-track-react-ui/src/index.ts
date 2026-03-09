@@ -6,7 +6,7 @@
  */
 
 // Plugin definitions
-export { DashboardTimeTrackReactUiPlugin } from './lib/react-ui.plugin';
+export { DashboardTimeTrackReactUiPlugin } from './lib/dashboard-time-track-react-ui.plugin';
 
 // Type-safe event contracts (for cross-plugin consumption)
 export {
@@ -14,4 +14,4 @@ export {
 	WidgetVisibilityChangedEvent,
 	type DashboardRefreshedPayload,
 	type WidgetVisibilityPayload
-} from './lib/react-ui.events';
+} from './lib/dashboard-time-track-react-ui.events';
