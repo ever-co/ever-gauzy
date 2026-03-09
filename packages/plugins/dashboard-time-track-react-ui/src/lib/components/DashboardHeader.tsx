@@ -47,20 +47,33 @@ export function DashboardHeader({ filters, autoRefresh, onAutoRefreshChange, onR
 
 	// Format date range
 	const dateRangeText =
-		startDate && endDate
-			? `${moment(startDate).format('dddd, LL')} - ${moment(endDate).format('dddd, LL')}`
-			: '';
+		startDate && endDate ? `${moment(startDate).format('dddd, LL')} - ${moment(endDate).format('dddd, LL')}` : '';
 
 	return (
 		<>
 			{/* Top row: title + controls */}
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'flex-start',
+					flexWrap: 'wrap',
+					gap: '0.75rem'
+				}}
+			>
 				<div>
 					<h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600, color: theme.textPrimary }}>
 						{title}
 					</h4>
 					{dateRangeText && (
-						<span style={{ fontSize: '0.8125rem', color: theme.textHint, marginTop: '0.25rem', display: 'block' }}>
+						<span
+							style={{
+								fontSize: '0.8125rem',
+								color: theme.textHint,
+								marginTop: '0.25rem',
+								display: 'block'
+							}}
+						>
 							{dateRangeText}
 						</span>
 					)}
@@ -103,9 +116,8 @@ export function DashboardHeader({ filters, autoRefresh, onAutoRefreshChange, onR
 							border: `1px solid ${theme.border}`,
 							borderRadius: '0.25rem',
 							background: 'transparent',
-							color: autoRefresh ? theme.textHint : theme.textPrimary,
-							cursor: autoRefresh ? 'not-allowed' : 'pointer',
-							opacity: autoRefresh ? 0.6 : 1,
+							color: theme.textPrimary,
+							cursor: 'pointer',
 							fontFamily: theme.font
 						}}
 					>

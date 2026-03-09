@@ -223,7 +223,7 @@ export const JobsPlugin = definePluginGroup('jobs', JobsModule, {
 });
 ```
 
-Consumer can customise the child list at registration time:
+Consumer can customize the child list at registration time:
 
 ```typescript
 // plugin-ui.config.ts

@@ -10,7 +10,7 @@ export interface CardProps {
 }
 
 /**
- * Card — root layout card container (shadcn-style compound component).
+ * Card — root layout card container (compound component).
  *
  * Compose with `<CardHeader>`, `<CardContent>`, and `<CardFooter>`.
  */

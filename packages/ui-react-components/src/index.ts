@@ -11,7 +11,7 @@ export { theme } from './lib/theme';
 // Utility functions
 export { formatDuration, currentWeekRange, todayRange } from './lib/helpers/index';
 
-// Components — Card (layout, shadcn-style compound)
+// Components — Card (layout, compound component)
 export {
 	Card, type CardProps,
 	CardHeader, type CardHeaderProps,
