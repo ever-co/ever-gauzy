@@ -43,7 +43,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	@Input() slotIds: ID[] = [];
 
 	@Output() delete: EventEmitter<ID[]> = new EventEmitter();
-	@Output() toggle: EventEmitter<any> = new EventEmitter();
+	@Output() toggle: EventEmitter<ID> = new EventEmitter();
 
 	/*
 	 * Getter & Setter for TimeSlot

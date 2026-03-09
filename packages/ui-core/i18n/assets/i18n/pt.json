@@ -4644,7 +4644,7 @@
 		"NO_SCREENSHOT": "Sem captura de tela.",
 		"NO_SCREENSHOTS": "Sem capturas de tela",
 		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto.",
-		"SCREEN_SELECTED": "{count} Tela selecionada"
+		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização",
