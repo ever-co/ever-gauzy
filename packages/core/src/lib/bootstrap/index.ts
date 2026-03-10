@@ -171,7 +171,12 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			contentSecurityPolicy: isProduction
 				? undefined // use Helmet's strict default CSP in production
 				: false, // disable CSP in dev/stage so Swagger/Scalar inline scripts work
-			crossOriginResourcePolicy: { policy: 'cross-origin' } // Allow cross-origin loading of resources (e.g. screenshots, images)
+			crossOriginResourcePolicy: isProduction
+        		? { policy: 'same-origin' }  // Strict in prod — resources come from S3 or other storage anyway
+        		: { policy: 'cross-origin' }, // Relaxed in dev/stage — resources served from API
+    		crossOriginEmbedderPolicy: isProduction
+        		? true   // keep strict default in production
+        		: false  // Relaxed in dev/stage for Electron/desktop loading resources from API server
 		})
 	);
 
