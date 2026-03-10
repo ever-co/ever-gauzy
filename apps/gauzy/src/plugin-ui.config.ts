@@ -9,7 +9,6 @@ import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-tr
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { environment } from '@gauzy/ui-config';
-console.log('Active Environment: %s', environment.DEMO);
 
 /**
  * Application UI configuration.

@@ -49,13 +49,13 @@
 						</div>
 					</div>
 				}
+		} @else {
+			@if (!request.employeeIds?.length) {
+				<ngx-no-data-message [message]="'ACTIVITY.NO_RECORD_FOUND' | translate"></ngx-no-data-message>
 			} @else {
-				@if (!request.employeeIds.length) {
-					<ngx-no-data-message [message]="'ACTIVITY.NO_RECORD_FOUND' | translate"></ngx-no-data-message>
-				} @else {
-					<ngx-no-data-message [message]="'ACTIVITY.NO_SCREENSHOTS' | translate"></ngx-no-data-message>
-				}
+				<ngx-no-data-message [message]="'ACTIVITY.NO_SCREENSHOTS' | translate"></ngx-no-data-message>
 			}
+		}
 		</div>
 		@if (selectedIdsCount > 0) {
 			<div class="selected-items-action">
