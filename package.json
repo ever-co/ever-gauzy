@@ -569,7 +569,7 @@
 		"@sentry/core": "10.36.0",
 		"rxjs": "^7.8.2",
 		"autoprefixer": "^10.4.20",
-		"locutus": "^2.0.30",
+		"locutus": "^3.0.0",
 		"minizlib": "^2.1.2",
 		"node-abi": "^3.78.0",
 		"@electron/rebuild/node-abi": "^3.78.0",
@@ -761,7 +761,7 @@
 			"node-gyp": "$node-gyp"
 		},
 		"twing": {
-			"locutus": "2.0.30"
+			"locutus": "^3.0.0"
 		},
 		"electron-rebuild": {
 			"node-abi": "3.78.0"
