@@ -29,7 +29,9 @@ export class DesktopEnvironmentContent implements IContentGenerator {
 			IS_DESKTOP_TIMER: ${false},
 			IS_DESKTOP: ${true},
 			IS_SERVER: ${false},
-			IS_SERVER_API: ${false}
+			IS_SERVER_API: ${false},
+			JWT_SECRET: '${variable.DESKTOP_JWT_SECRET}',
+			JWT_REFRESH_TOKEN_SECRET: '${variable.DESKTOP_JWT_REFRESH_TOKEN_SECRET}'
 		`;
 	}
 }
