@@ -52,11 +52,11 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 		}
 
 		// Get plugin tenant with relations
-		const pluginTenant = await this.pluginTenantService.findOneByIdString(pluginTenantId, {
+		const {record: pluginTenant, success} = await this.pluginTenantService.findOneOrFailByIdString(pluginTenantId, {
 			relations: ['allowedUsers', 'deniedUsers', 'plugin']
 		});
 
-		if (!pluginTenant) {
+		if (!success) {
 			throw new NotFoundException(`Plugin tenant with ID "${pluginTenantId}" not found`);
 		}
 
@@ -137,13 +137,12 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 			organizationId
 		);
 
-		if (!subscription) {
-			throw new NotFoundException(`Subscription for Plugin Tenant ID "${pluginTenantId}" not found`);
-		}
-
 		// After allowed users are saved, create child subscriptions from parent
 		switch (operation) {
 			case 'allow':
+				if (!subscription) {
+					throw new NotFoundException(`Subscription for Plugin Tenant ID "${pluginTenantId}" not found`);
+				}
 				await this.pluginSubscriptionService.createChildSubscriptions(
 					subscription.id,
 					affectedUserIds,
@@ -154,12 +153,15 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 			case 'deny':
 			case 'remove-allowed':
 			case 'unassign':
-				await this.pluginSubscriptionService.revokeChildSubscriptions(subscription.id, affectedUserIds);
+				if (subscription) {
+					this.logger.log(`Revoking child subscriptions for ${affectedUserIds.length} user(s) due to ${operation} operation`);
+					await this.pluginSubscriptionService.revokeChildSubscriptions(subscription.id, affectedUserIds);
+				}
 				break;
 		}
 
 		// Fetch with full relations
-		const result = await this.pluginTenantService.findOneByIdString(pluginTenantId, {
+		const {record: result } = await this.pluginTenantService.findOneOrFailByIdString(pluginTenantId, {
 			relations: ['plugin', 'allowedUsers', 'deniedUsers', 'allowedRoles']
 		});
 
