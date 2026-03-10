@@ -192,7 +192,7 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 		return users;
 	}
 
-	private async validate(userId: ID): Promise<void> {
+	private validate(userId: ID): void {
 		const currentUserId = RequestContext.currentUserId();
 
 		if (userId === currentUserId) {
