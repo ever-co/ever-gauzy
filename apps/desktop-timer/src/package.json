@@ -165,7 +165,7 @@
     "squirrelly": "^8.0.8",
     "tslib": "^2.6.2",
     "twing": "^5.0.2",
-    "locutus": "^2.0.30",
+    "locutus": "^3.0.0",
     "underscore": "^1.13.8",
     "undici": "^6.10.2",
     "custom-electron-titlebar": "^4.2.8",
