@@ -9,8 +9,7 @@ import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 			ghost
 			size="small"
 			status="danger"
-			[disabled]="!isActive"
-			nbTooltip="Unassign user from plugin"
+			[nbTooltip]="tooltipText"
 			(click)="onClick($event)"
 		>
 			<nb-icon icon="person-remove-outline"></nb-icon>
@@ -23,8 +22,14 @@ export class UnassignActionCellComponent {
 	public rowData: any;
 	public unassign = new EventEmitter<any>();
 
-	get isActive(): boolean {
-		return !!this.rowData?.isActive;
+	get userName(): string {
+		const first = this.rowData?.firstName || '';
+		const last = this.rowData?.lastName || '';
+		return `${first} ${last}`.trim() || 'this user';
+	}
+
+	get tooltipText(): string {
+		return `Remove ${this.userName} from plugin entirely`;
 	}
 
 	onClick(event: Event): void {

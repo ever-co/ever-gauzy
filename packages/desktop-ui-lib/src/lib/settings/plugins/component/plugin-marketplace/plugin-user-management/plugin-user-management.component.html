@@ -13,14 +13,14 @@
 			<nb-icon icon="people-outline"></nb-icon>
 		</div>
 		<div class="header-info">
-			<h5 class="card-title mb-1">Manage Users - {{ plugin.name }}</h5>
-			<p class="card-subtitle text-hint mb-0">Assign and manage user access to this plugin installation</p>
+			<h5 class="card-title mb-1">{{ 'PLUGIN.USER_MANAGEMENT.MANAGE_TITLE' | translate }} - {{ plugin.name }}</h5>
+			<p class="card-subtitle text-hint mb-0">{{ 'PLUGIN.USER_MANAGEMENT.MANAGE_SUBTITLE' | translate }}</p>
 		</div>
 		@if(isAssignedAvailable) {
 		<div class="header-stats">
 			<nb-badge status="success" class="assignment-count">
 				<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
-				{{ totalCount || 0 }} assigned
+				{{ totalCount || 0 }} {{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED' | translate }}
 			</nb-badge>
 		</div>
 		}
@@ -29,7 +29,7 @@
 	<nb-card-body>
 		<nb-tabset>
 			<!-- Assign Users Tab -->
-			<nb-tab tabTitle="Assign Users" [badgeText]="selectedCount || 0" badgeStatus="primary">
+			<nb-tab [tabTitle]="'PLUGIN.USER_MANAGEMENT.ASSIGN_TAB' | translate" [badgeText]="selectedCount || 0" badgeStatus="primary">
 				<div class="assign-users-section">
 					<!-- Search Form -->
 					<form [formGroup]="searchForm" class="search-form mb-3">
@@ -38,7 +38,7 @@
 							<input
 								nbInput
 								fullWidth
-								placeholder="Search users by name or email..."
+								[placeholder]="'PLUGIN.USER_MANAGEMENT.SEARCH_PLACEHOLDER' | translate"
 								formControlName="searchTerm"
 								class="search-input"
 							/>
@@ -49,7 +49,7 @@
 					@if(loadingAvailableUsers$ | async) {
 					<div class="loading-state">
 						<nb-spinner size="medium"></nb-spinner>
-						<span class="loading-text">Loading users...</span>
+						<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
 					</div>
 					} @else {
 					<div class="custom-table">
@@ -69,12 +69,12 @@
 					@if(selectedCount && selectedCount > 0) {
 					<form [formGroup]="assignmentForm" class="assignment-form mt-4">
 						<nb-form-field>
-							<label class="label" for="assignReason">Assignment Reason (Optional)</label>
+							<label class="label" for="assignReason">{{ 'PLUGIN.USER_MANAGEMENT.REASON_LABEL' | translate }}</label>
 							<textarea
 								id="assignReason"
 								nbInput
 								fullWidth
-								placeholder="Enter reason for assignment..."
+								[placeholder]="'PLUGIN.USER_MANAGEMENT.REASON_PLACEHOLDER' | translate"
 								formControlName="reason"
 								rows="3"
 							>
@@ -90,7 +90,7 @@
 								class="assign-btn"
 							>
 								<nb-icon *gauzySpinnerButton="submitting" icon="person-add-outline"></nb-icon>
-								Assign {{ selectedCount }} User{{ selectedCount !== 1 ? 's' : '' }}
+								{{ 'PLUGIN.USER_MANAGEMENT.ASSIGN_COUNT' | translate : { count: selectedCount } }}
 							</button>
 						</div>
 					</form>
@@ -99,38 +99,44 @@
 			</nb-tab>
 
 			<!-- Current Assignments Tab -->
-			<nb-tab tabTitle="Current Assignments" [badgeText]="totalCount || 0" badgeStatus="info">
+			<nb-tab [tabTitle]="'PLUGIN.USER_MANAGEMENT.ASSIGNMENTS_TAB' | translate" [badgeText]="totalCount || 0" badgeStatus="info">
 				<div class="current-assignments-section">
 					<!-- Bulk Access Controls -->
 					@if(isAssignedAvailable) {
 					<div class="bulk-actions mb-3">
-						<span class="bulk-actions-label">Organization Access:</span>
+						<span class="bulk-actions-label">{{ 'PLUGIN.USER_MANAGEMENT.ORGANIZATION_ACCESS' | translate }}:</span>
 						<button
 							nbButton
 							size="small"
 							status="success"
-							nbTooltip="Enable access for all assigned users"
+							[nbTooltip]="'PLUGIN.USER_MANAGEMENT.ENABLE_ALL_TOOLTIP' | translate"
 							(click)="onEnableAllUsers()"
 						>
 							<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
-							Enable All
+							{{ 'PLUGIN.USER_MANAGEMENT.ENABLE_ALL' | translate }}
 						</button>
 						<button
 							nbButton
 							size="small"
 							status="danger"
-							nbTooltip="Disable access for all assigned users"
+							[nbTooltip]="'PLUGIN.USER_MANAGEMENT.DISABLE_ALL_TOOLTIP' | translate"
 							(click)="onDisableAllUsers()"
 						>
 							<nb-icon icon="close-circle-outline"></nb-icon>
-							Disable All
+							{{ 'PLUGIN.USER_MANAGEMENT.DISABLE_ALL' | translate }}
 						</button>
 					</div>
 					}
 					@if(loading) {
 					<div class="loading-state">
 						<nb-spinner size="medium"></nb-spinner>
-						<span class="loading-text">Loading assignments...</span>
+						<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
+					</div>
+					} @else if (!isAssignedAvailable) {
+					<!-- Empty state for current assignments -->
+					<div class="empty-state-inline">
+						<nb-icon icon="people-outline" class="empty-icon"></nb-icon>
+						<p class="empty-text">{{ 'PLUGIN.USER_MANAGEMENT.NO_ASSIGNMENTS_YET' | translate }}</p>
 					</div>
 					} @else {
 					<div class="custom-table">
@@ -151,7 +157,7 @@
 	</nb-card-body>
 
 	<nb-card-footer class="d-flex justify-content-end">
-		<button nbButton ghost status="basic" (click)="close()" class="me-2">Cancel</button>
-		<button nbButton status="primary" (click)="save()">Done</button>
+		<button nbButton ghost status="basic" (click)="close()" class="me-2">{{ 'BUTTONS.CANCEL' | translate }}</button>
+		<button nbButton status="primary" (click)="save()">{{ 'BUTTONS.DONE' | translate }}</button>
 	</nb-card-footer>
 </nb-card>

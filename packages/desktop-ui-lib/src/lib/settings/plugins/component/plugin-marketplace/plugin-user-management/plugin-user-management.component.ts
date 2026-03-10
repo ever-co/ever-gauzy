@@ -12,6 +12,7 @@ import { Store } from '../../../../../services';
 import { PaginationComponent } from '../../../../../time-tracker/pagination/pagination.component';
 
 import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 import { AssignActionCellComponent } from './render/assign-action/assign-action-cell.component';
 import { UserCellComponent } from './render/user-cell/user-cell.component';
@@ -51,7 +52,7 @@ export interface PluginUserManagementDialogData {
 		NbCardModule, NbIconModule, NbBadgeModule, NbTabsetModule,
 		FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule,
 		NbButtonModule, NbSpinnerModule, SpinnerButtonDirective, NbTooltipModule, NbToggleModule,
-		Angular2SmartTableModule, PaginationComponent, AsyncPipe
+		Angular2SmartTableModule, PaginationComponent, AsyncPipe, TranslatePipe
 	]
 })
 export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnDestroy {

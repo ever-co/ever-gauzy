@@ -207,6 +207,20 @@ export const PluginUserAssignmentActions = {
 		props<{ error: string }>()
 	),
 
+	// Unassign users from plugin tenant (remove from both allowed and denied lists)
+	unassignUsersFromPluginTenant: createAction(
+		'[Plugin User Assignment] Unassign Users From Plugin Tenant',
+		props<{ pluginTenantId: ID; userIds: string[]; reason?: string }>()
+	),
+	unassignUsersFromPluginTenantSuccess: createAction(
+		'[Plugin User Assignment] Unassign Users From Plugin Tenant Success',
+		props<{ message: string; affectedUserIds: string[] }>()
+	),
+	unassignUsersFromPluginTenantFailure: createAction(
+		'[Plugin User Assignment] Unassign Users From Plugin Tenant Failure',
+		props<{ error: string }>()
+	),
+
 	// Enable/disable plugin tenant
 	enablePluginTenant: createAction(
 		'[Plugin User Assignment] Enable Plugin Tenant',

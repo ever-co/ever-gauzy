@@ -13,6 +13,7 @@ import { PluginUserAssignment, PluginUserAssignmentStore } from '../stores/plugi
 export interface UserManagementViewModel {
 	assignments: PluginUserAssignment[];
 	activeAssignmentsCount: number;
+	disabledAssignmentsCount: number;
 	totalAssignmentsCount: number;
 	loading: boolean;
 	error: string | null;
@@ -105,16 +106,20 @@ export class PluginUserAssignmentFacade {
 	 */
 	get viewModel$(): Observable<UserManagementViewModel> {
 		return combineLatest([this.query.assignments$, this.query.loading$, this.query.error$]).pipe(
-			map(([assignments, loading, error]) => ({
-				assignments,
-				activeAssignmentsCount: assignments.filter((a) => a.isActive).length,
-				totalAssignmentsCount: assignments.length,
-				loading,
-				error,
-				hasError: !!error,
-				hasAssignments: assignments.length > 0,
-				isEmpty: assignments.length === 0 && !loading
-			}))
+			map(([assignments, loading, error]) => {
+				const activeCount = assignments.filter((a) => a.isActive).length;
+				return {
+					assignments,
+					activeAssignmentsCount: activeCount,
+					disabledAssignmentsCount: assignments.length - activeCount,
+					totalAssignmentsCount: assignments.length,
+					loading,
+					error,
+					hasError: !!error,
+					hasAssignments: assignments.length > 0,
+					isEmpty: assignments.length === 0 && !loading
+				};
+			})
 		);
 	}
 
@@ -388,12 +393,13 @@ export class PluginUserAssignmentFacade {
 
 	/**
 	 * Get assignment status badge configuration
+	 * Active (allowed) = success, Disabled (denied/revoked) = danger
 	 * @param assignment - Plugin user assignment
 	 */
 	getStatusBadge(assignment: PluginUserAssignment): { status: string; text: string } {
 		return {
-			status: assignment.isActive ? 'success' : 'warning',
-			text: assignment.isActive ? 'PLUGIN.USER_MANAGEMENT.ACTIVE' : 'PLUGIN.USER_MANAGEMENT.INACTIVE'
+			status: assignment.isActive ? 'success' : 'danger',
+			text: assignment.isActive ? 'PLUGIN.USER_MANAGEMENT.ACTIVE' : 'PLUGIN.USER_MANAGEMENT.DISABLED'
 		};
 	}
 
@@ -532,6 +538,23 @@ export class PluginUserAssignmentFacade {
 		);
 	}
 
+	/**
+	 * Unassign users from a plugin tenant (remove from both allowed and denied lists)
+	 * This completely removes the user's association with the plugin.
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userIds - Array of user IDs to unassign
+	 * @param reason - Optional reason for the operation
+	 */
+	unassignUsersFromPluginTenant(pluginTenantId: ID, userIds: string[], reason?: string): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.unassignUsersFromPluginTenant({
+				pluginTenantId,
+				userIds,
+				reason
+			})
+		);
+	}
+
 	// ============================================================================
 	// CONVENIENCE WRAPPERS — symmetric API with UserManagementFacade
 	// ============================================================================
@@ -541,9 +564,14 @@ export class PluginUserAssignmentFacade {
 		this.allowUsersToPluginTenant(pluginTenantId, [userId]);
 	}
 
-	/** Disable (deny) a single user's access to the plugin tenant. */
+	/** Disable (deny/revoke) a single user's access to the plugin tenant. */
 	disableUser(pluginTenantId: ID, userId: string): void {
 		this.denyUsersFromPluginTenant(pluginTenantId, [userId]);
+	}
+
+	/** Unassign a single user from the plugin tenant (remove entirely). */
+	unassignUserFromTenant(pluginTenantId: ID, userId: string, reason?: string): void {
+		this.unassignUsersFromPluginTenant(pluginTenantId, [userId], reason);
 	}
 
 	/** Enable (allow) all listed users' access to the plugin tenant. */
@@ -551,7 +579,7 @@ export class PluginUserAssignmentFacade {
 		this.allowUsersToPluginTenant(pluginTenantId, userIds);
 	}
 
-	/** Disable (deny) all listed users' access to the plugin tenant. */
+	/** Disable (deny/revoke) all listed users' access to the plugin tenant. */
 	disableAllUsers(pluginTenantId: ID, userIds: string[]): void {
 		this.denyUsersFromPluginTenant(pluginTenantId, userIds);
 	}

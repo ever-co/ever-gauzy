@@ -154,6 +154,34 @@ export class PluginUserAssignmentStore extends Store<PluginUserAssignmentState> 
 		this.update({ assignments });
 	}
 
+	/**
+	 * Optimistically update isActive (or other fields) for a set of userIds.
+	 * Used after allow/deny API calls to avoid a full server reload.
+	 */
+	updateAssignmentsByUserIds(userIds: string[], updates: Partial<PluginUserAssignment>): void {
+		const assignments = this.getValue().assignments.map((assignment) =>
+			userIds.includes(assignment.userId) ? { ...assignment, ...updates } : assignment
+		);
+		this.update({ assignments });
+	}
+
+	/**
+	 * Optimistically remove a set of users by userId from the store.
+	 * Used after unassign API calls to avoid a full server reload.
+	 */
+	removeAssignmentsByUserIds(userIds: string[]): void {
+		const current = this.getValue();
+		const assignments = current.assignments.filter((a) => !userIds.includes(a.userId));
+		const removed = current.assignments.length - assignments.length;
+		this.update({
+			assignments,
+			pagination: {
+				...current.pagination,
+				total: Math.max(0, current.pagination.total - removed)
+			}
+		});
+	}
+
 	updateAssignment(id: string, updates: Partial<PluginUserAssignment>): void {
 		const assignments = this.getValue().assignments.map((assignment) =>
 			assignment.id === id ? { ...assignment, ...updates } : assignment

@@ -286,3 +286,30 @@
 [nbButton] {
   border-radius: calc(var(--border-radius) * 1.2) !important;
 }
+
+// Inline empty state for current assignments tab
+.empty-state-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--gauzy-card-2);
+  border-radius: calc(var(--border-radius) * 1.2);
+  border: 2px dashed var(--border-basic-color-3);
+
+  .empty-icon {
+    font-size: 2.5rem;
+    color: var(--gauzy-text-color-2);
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .empty-text {
+    font-size: 0.9375rem;
+    color: var(--gauzy-text-color-2);
+    margin: 0;
+    font-weight: 500;
+  }
+}

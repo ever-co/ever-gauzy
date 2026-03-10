@@ -373,6 +373,25 @@ export class PluginUserAssignmentService {
 	}
 
 	/**
+	 * Unassign users from a plugin tenant (remove from both allowed and denied lists)
+	 * This completely removes the user's association with the plugin.
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userIds - Array of user IDs to unassign
+	 * @param reason - Optional reason for the operation
+	 */
+	unassignUsersFromPluginTenant(
+		pluginTenantId: ID,
+		userIds: string[],
+		reason?: string
+	): Observable<ManagePluginTenantUsersResponse> {
+		return this.http.post<ManagePluginTenantUsersResponse>(`/api/plugin-tenants/${pluginTenantId}/users`, {
+			userIds,
+			operation: 'unassign',
+			reason
+		});
+	}
+
+	/**
 	 * Get plugin tenant by plugin ID
 	 * This will find or create the plugin tenant for the current tenant/organization
 	 * @param pluginId - Plugin identifier

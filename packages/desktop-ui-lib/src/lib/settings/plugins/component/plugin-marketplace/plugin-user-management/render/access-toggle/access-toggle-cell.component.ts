@@ -4,12 +4,21 @@ import { NbToggleModule, NbTooltipModule } from '@nebular/theme';
 @Component({
 	selector: 'lib-access-toggle-cell',
 	template: `
-		<nb-toggle
-			[checked]="isEnabled"
-			(checkedChange)="onToggle($event)"
-			[nbTooltip]="isEnabled ? 'Click to disable access' : 'Click to enable access'"
-		></nb-toggle>
+		<div class="toggle-wrapper">
+			<nb-toggle
+				[checked]="isEnabled"
+				(checkedChange)="onToggle($event)"
+				[nbTooltip]="tooltipText"
+			></nb-toggle>
+		</div>
 	`,
+	styles: [`
+		.toggle-wrapper {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+	`],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NbToggleModule, NbTooltipModule]
 })
@@ -19,6 +28,18 @@ export class AccessToggleCellComponent {
 
 	get isEnabled(): boolean {
 		return !!this.rowData?.isActive;
+	}
+
+	get userName(): string {
+		const first = this.rowData?.firstName || '';
+		const last = this.rowData?.lastName || '';
+		return `${first} ${last}`.trim() || 'this user';
+	}
+
+	get tooltipText(): string {
+		return this.isEnabled
+			? `Disable access for ${this.userName}`
+			: `Enable access for ${this.userName}`;
 	}
 
 	onToggle(checked: boolean): void {

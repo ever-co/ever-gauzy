@@ -54,21 +54,57 @@
 				<span class="stat-value">{{ viewModel.activeAssignmentsCount }}</span>
 			</div>
 		</div>
+		<div class="stat-divider"></div>
+		<div class="stat-item disabled-stat">
+			<div class="stat-icon">
+				<nb-icon icon="close-circle-outline" status="danger"></nb-icon>
+			</div>
+			<div class="stat-content">
+				<span class="stat-label">{{ 'PLUGIN.USER_MANAGEMENT.DISABLED_USERS' | translate }}</span>
+				<span class="stat-value">{{ viewModel.disabledAssignmentsCount }}</span>
+			</div>
+		</div>
 	</div>
 	}
 
 	<!-- Error State -->
 	@if (viewModel.hasError) {
-	<nb-alert status="danger" class="mb-4">
-		<div class="d-flex align-items-center justify-content-between">
-			<div>
-				<nb-icon icon="alert-triangle-outline" class="mr-2"></nb-icon>
-				<span>{{ viewModel.error }}</span>
-			</div>
+	<nb-alert status="danger" class="mb-4" closable (close)="clearError()">
+		<div class="d-flex align-items-center gap-2">
+			<nb-icon icon="alert-triangle-outline"></nb-icon>
+			<span>{{ viewModel.error }}</span>
 		</div>
 	</nb-alert>
 	}
 
+	<!-- Loading State -->
+	@if (viewModel.loading) {
+	<div class="loading-state">
+		<nb-spinner size="medium"></nb-spinner>
+		<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
+	</div>
+	} @else if (viewModel.isEmpty) {
+	<!-- Empty State -->
+	<div class="empty-state">
+		<div class="empty-state-icon">
+			<nb-icon icon="people-outline"></nb-icon>
+		</div>
+		<h6 class="empty-state-title">{{ 'PLUGIN.USER_MANAGEMENT.NO_USERS_TITLE' | translate }}</h6>
+		<p class="empty-state-description">{{ 'PLUGIN.USER_MANAGEMENT.NO_USERS_DESCRIPTION' | translate }}</p>
+		@if (canAssign) {
+		<button
+			nbButton
+			status="primary"
+			size="medium"
+			(click)="showAssignmentDialog()"
+			class="empty-state-cta"
+		>
+			<nb-icon icon="person-add-outline"></nb-icon>
+			<span>{{ 'PLUGIN.BUTTONS.ASSIGN_USERS' | translate }}</span>
+		</button>
+		}
+	</div>
+	} @else {
 	<!-- Assigned Users Section -->
 	<div class="assigned-users-section">
 		<div class="section-header">
@@ -103,13 +139,6 @@
 		</div>
 		}
 
-		<!-- Loading State -->
-		@if (viewModel.loading) {
-		<div class="loading-state">
-			<nb-spinner size="medium"></nb-spinner>
-			<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
-		</div>
-		} @else {
 		<div class="custom-table">
 			<div class="table-scroll-container">
 				<angular2-smart-table
@@ -121,8 +150,8 @@
 				<ga-pagination [source]="assignedUsersSource"></ga-pagination>
 			</div>
 		</div>
-		}
 	</div>
+	}
 </div>
 } @else {
 <!-- Plugin Loading State -->
