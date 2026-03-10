@@ -172,7 +172,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 				? undefined // use Helmet's strict default CSP in production
 				: false, // disable CSP in dev/stage so Swagger/Scalar inline scripts work
 			crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin loading of resources (e.g. screenshots, images)
-			crossOriginEmbedderPolicy: false // Disable COEP so cross-origin resources (images, screenshots) can be loaded
+			crossOriginEmbedderPolicy: false // Disable Cross-Origin-Embedder-Policy so cross-origin resources (images, screenshots) can be loaded
 		})
 	);
 
