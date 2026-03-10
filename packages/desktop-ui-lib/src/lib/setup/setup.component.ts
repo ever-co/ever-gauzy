@@ -9,7 +9,7 @@ import {
 	OnDestroy
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { DesktopSetupConfig, IProxyConfig } from '@gauzy/contracts';
+import { DesktopSetupConfig, IProxyConfig, TaskRelatedIssuesRelationEnum } from '@gauzy/contracts';
 import {
 	NbDialogService,
 	NbLayoutModule,
@@ -389,10 +389,20 @@ export class SetupComponent implements OnInit, OnDestroy {
 			if (!gauzyConfig.isLocalServer) {
 				this.electronService.ipcRenderer.send('app_is_init');
 			}
-		} else {
-			this.electronService.ipcRenderer.send('restart_app', gauzyConfig);
+			this.isSaving = false;
+			return;
 		}
 
+		if (gauzyConfig.isLocalServer) {
+			const isStarted = await this.electronService.ipcRenderer.invoke('START_SERVER', gauzyConfig);
+			if (isStarted) {
+				this.electronService.ipcRenderer.send('restart_app', gauzyConfig);
+			}
+			this.isSaving = false;
+			return;
+		}
+
+		this.electronService.ipcRenderer.send('restart_app', gauzyConfig);
 		this.isSaving = false;
 	}
 

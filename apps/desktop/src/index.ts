@@ -585,17 +585,8 @@ app.on('ready', async () => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
 
 		if (configs && configs.isSetup) {
-			if (!configs.serverConfigConnected && !configs?.isLocalServer) {
-				await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
-				appWindowManager.setupWindow?.show();
-				closeSplashScreen();
-				appWindowManager.setupWindow?.webContents?.send?.('setup-data', {
-					...configs
-				});
-			} else {
-				setGlobalVariable(configs);
-				await startServer(configs);
-			}
+			setGlobalVariable(configs);
+			await startServer(configs);
 		} else {
 			await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
 			appWindowManager.setupWindow?.show?.();
