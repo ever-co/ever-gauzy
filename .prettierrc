@@ -7,7 +7,7 @@
     "arrowParens": "always",
     "trailingComma": "none",
     "quoteProps": "as-needed",
-    "endOfLine": "auto",
+    "endOfLine": "lf",
     "overrides": [
         {
             "files": "*.scss",
