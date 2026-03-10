@@ -268,7 +268,10 @@ function createCorsOriginCallback(allowedOrigins: string[]) {
 		if (!origin || allowedOrigins.includes(origin)) {
 			callback(null, true);
 		} else {
-			callback(new Error(`Origin "${origin}" is not allowed by CORS`));
+			// Suppress CORS headers without triggering Express error handler (avoids 500).
+			// The browser will block the request with a standard CORS error on the client side.
+			console.warn(`[CORS] Blocked request from origin: ${origin}`);
+			callback(null, false);
 		}
 	};
 }
