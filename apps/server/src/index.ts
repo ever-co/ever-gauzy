@@ -317,7 +317,11 @@ const runServer = async () => {
 		// Instantiate API and UI servers
 		await desktopServer.start(
 			{ api: path.join(__dirname, 'api/main.js'), ui: path.join(__dirname, 'preload', 'ui-server.js') },
-			envVal,
+			{
+				...envVal,
+				JWT_SECRET: environment.JWT_SECRET,
+				JWT_REFRESH_TOKEN_SECRET: environment.JWT_REFRESH_TOKEN_SECRET
+			},
 			serverWindow,
 			signal,
 			uiPort

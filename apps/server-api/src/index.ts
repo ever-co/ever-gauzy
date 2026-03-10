@@ -305,7 +305,17 @@ const runServer = async () => {
 		const uiPort = serverConfig.uiPort;
 
 		// Instantiate API and UI servers
-		await desktopServer.start({ api: path.join(__dirname, 'api/main.js') }, envVal, serverWindow, signal, uiPort);
+		await desktopServer.start({
+			api: path.join(__dirname, 'api/main.js') },
+			{
+				...envVal,
+				JWT_SECRET: environment.JWT_SECRET,
+				JWT_REFRESH_TOKEN_SECRET: environment.JWT_REFRESH_TOKEN_SECRET
+			},
+			serverWindow,
+			signal,
+			uiPort
+		);
 	} catch (error) {
 		if (error.name === 'AbortError') {
 			console.log('You exit without to stop the server');
