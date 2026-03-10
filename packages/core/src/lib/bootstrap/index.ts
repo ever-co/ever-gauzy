@@ -269,7 +269,7 @@ function createCorsOriginCallback(allowedOrigins: string[]) {
 		if (!origin || allowedOrigins.includes(origin)) {
 			callback(null, true);
 		} else {
-			callback(new Error(`Origin "${origin}" is not allowed by CORS`));
+			callback(null, false);
 		}
 	};
 }
