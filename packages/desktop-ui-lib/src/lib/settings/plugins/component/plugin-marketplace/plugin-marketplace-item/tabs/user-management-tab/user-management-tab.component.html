@@ -114,6 +114,7 @@
 
 		<!-- Bulk Access Controls -->
 		@if (viewModel.hasAssignments) {
+		@let enabling = enabling$ | async; @let disabling = disabling$ | async; @let unassigning = unassigning$ | async;
 		<div class="bulk-actions mb-3">
 			<span class="bulk-actions-label">{{ 'PLUGIN.USER_MANAGEMENT.ORGANIZATION_ACCESS' | translate }}:</span>
 			<button
@@ -121,9 +122,14 @@
 				size="small"
 				status="success"
 				[nbTooltip]="'PLUGIN.USER_MANAGEMENT.ENABLE_ALL_TOOLTIP' | translate"
+				[disabled]="enabling || disabling || unassigning"
 				(click)="onEnableAllUsers()"
 			>
-				<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+				@if (enabling) {
+					<nb-spinner size="tiny" status="basic"></nb-spinner>
+				} @else {
+					<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+				}
 				{{ 'PLUGIN.USER_MANAGEMENT.ENABLE_ALL' | translate }}
 			</button>
 			<button
@@ -131,9 +137,14 @@
 				size="small"
 				status="danger"
 				[nbTooltip]="'PLUGIN.USER_MANAGEMENT.DISABLE_ALL_TOOLTIP' | translate"
+				[disabled]="enabling || disabling || unassigning"
 				(click)="onDisableAllUsers()"
 			>
-				<nb-icon icon="close-circle-outline"></nb-icon>
+				@if (disabling) {
+					<nb-spinner size="tiny" status="basic"></nb-spinner>
+				} @else {
+					<nb-icon icon="close-circle-outline"></nb-icon>
+				}
 				{{ 'PLUGIN.USER_MANAGEMENT.DISABLE_ALL' | translate }}
 			</button>
 		</div>

@@ -92,6 +92,12 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 	 */
 	readonly assignedUsers$: Observable<PluginUserAssignment[]>;
 
+	// Granular operation state observables (for per-button spinners)
+	readonly enabling$: Observable<boolean>;
+	readonly disabling$: Observable<boolean>;
+	readonly unassigning$: Observable<boolean>;
+	readonly assigning$: Observable<boolean>;
+
 	// Smart table
 	public readonly assignedUsersSource = new LocalDataSource([]);
 	public assignedUsersSettings: any;
@@ -114,6 +120,10 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 		this.loading$ = this.userAssignmentFacade.loading$;
 		this.error$ = this.userAssignmentFacade.error$;
 		this.assignedUsers$ = this.userAssignmentFacade.assignments$;
+		this.enabling$ = this.userAssignmentFacade.enabling$;
+		this.disabling$ = this.userAssignmentFacade.disabling$;
+		this.unassigning$ = this.userAssignmentFacade.unassigning$;
+		this.assigning$ = this.userAssignmentFacade.assigning$;
 	}
 
 	/**

@@ -165,7 +165,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.assignUsers),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ assigning: true })),
 				switchMap(({ pluginId, userIds, reason }) =>
 					// First, get or create the plugin tenant
 					this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
@@ -211,7 +211,7 @@ export class PluginUserAssignmentEffects {
 							this.toastrService.error(errorMessage);
 							return of(PluginUserAssignmentActions.assignUsersFailure({ error: errorMessage }));
 						}),
-						finalize(() => this.store.setLoading(false))
+						finalize(() => this.store.setOperation({ assigning: false }))
 					)
 				)
 			);
@@ -227,7 +227,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.unassignUser),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ unassigning: true })),
 				switchMap(({ pluginId, userId }) =>
 					// First, get the plugin tenant
 					this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
@@ -274,7 +274,7 @@ export class PluginUserAssignmentEffects {
 							this.toastrService.error(errorMessage);
 							return of(PluginUserAssignmentActions.unassignUserFailure({ error: errorMessage }));
 						}),
-						finalize(() => this.store.setLoading(false))
+						finalize(() => this.store.setOperation({ unassigning: false }))
 					)
 				)
 			);
@@ -625,7 +625,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.allowUsersToPluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ enabling: true })),
 				switchMap(({ pluginTenantId, userIds, reason }) =>
 					this.pluginUserAssignmentService.allowUsersToPluginTenant(pluginTenantId, userIds, reason).pipe(
 						map((response) =>
@@ -640,7 +640,7 @@ export class PluginUserAssignmentEffects {
 								PluginUserAssignmentActions.allowUsersToPluginTenantFailure({ error: errorMessage })
 							);
 						}),
-						finalize(() => this.store.setLoading(false))
+						finalize(() => this.store.setOperation({ enabling: false }))
 					)
 				)
 			);
@@ -655,7 +655,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.denyUsersFromPluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ disabling: true })),
 				switchMap(({ pluginTenantId, userIds, reason }) =>
 					this.pluginUserAssignmentService.denyUsersFromPluginTenant(pluginTenantId, userIds, reason).pipe(
 						map((response) =>
@@ -670,7 +670,7 @@ export class PluginUserAssignmentEffects {
 								PluginUserAssignmentActions.denyUsersFromPluginTenantFailure({ error: errorMessage })
 							);
 						}),
-						finalize(() => this.store.setLoading(false))
+						finalize(() => this.store.setOperation({ disabling: false }))
 					)
 				)
 			);
@@ -685,7 +685,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.removeAllowedUsersFromPluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ removingAllowed: true })),
 				switchMap(({ pluginTenantId, userIds, reason }) =>
 					this.pluginUserAssignmentService
 						.removeAllowedUsersFromPluginTenant(pluginTenantId, userIds, reason)
@@ -705,7 +705,7 @@ export class PluginUserAssignmentEffects {
 									})
 								);
 							}),
-							finalize(() => this.store.setLoading(false))
+							finalize(() => this.store.setOperation({ removingAllowed: false }))
 						)
 				)
 			);
@@ -720,7 +720,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.removeDeniedUsersFromPluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ removingDenied: true })),
 				switchMap(({ pluginTenantId, userIds, reason }) =>
 					this.pluginUserAssignmentService
 						.removeDeniedUsersFromPluginTenant(pluginTenantId, userIds, reason)
@@ -740,7 +740,7 @@ export class PluginUserAssignmentEffects {
 									})
 								);
 							}),
-							finalize(() => this.store.setLoading(false))
+							finalize(() => this.store.setOperation({ removingDenied: false }))
 						)
 				)
 			);
@@ -756,7 +756,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.unassignUsersFromPluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ unassigning: true })),
 				switchMap(({ pluginTenantId, userIds, reason }) =>
 					this.pluginUserAssignmentService
 						.unassignUsersFromPluginTenant(pluginTenantId, userIds, reason)
@@ -776,7 +776,7 @@ export class PluginUserAssignmentEffects {
 									})
 								);
 							}),
-							finalize(() => this.store.setLoading(false))
+							finalize(() => this.store.setOperation({ unassigning: false }))
 						)
 				)
 			);
@@ -897,7 +897,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.enablePluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ togglingTenant: true })),
 				switchMap(({ pluginTenantId }) =>
 					this.pluginUserAssignmentService.enablePluginTenant(pluginTenantId).pipe(
 						map((response) => {
@@ -916,7 +916,7 @@ export class PluginUserAssignmentEffects {
 								PluginUserAssignmentActions.enablePluginTenantFailure({ error: errorMessage })
 							);
 						}),
-						finalize(() => this.store.setLoading(false))
+						finalize(() => this.store.setOperation({ togglingTenant: false }))
 					)
 				)
 			);
@@ -931,7 +931,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.disablePluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ togglingTenant: true })),
 				switchMap(({ pluginTenantId }) =>
 					this.pluginUserAssignmentService.disablePluginTenant(pluginTenantId).pipe(
 						map((response) => {
@@ -950,7 +950,7 @@ export class PluginUserAssignmentEffects {
 								PluginUserAssignmentActions.disablePluginTenantFailure({ error: errorMessage })
 							);
 						}),
-						finalize(() => this.store.setLoading(false))
+						finalize(() => this.store.setOperation({ togglingTenant: false }))
 					)
 				)
 			);

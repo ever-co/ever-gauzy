@@ -4,7 +4,7 @@ import { Actions } from '@ngneat/effects-ng';
 import { combineLatest, map, Observable } from 'rxjs';
 import { PluginUserAssignmentActions } from '../actions/plugin-user-assignment.actions';
 import { PluginUserAssignmentQuery } from '../queries/plugin-user-assignment.query';
-import { PluginUserAssignment, PluginUserAssignmentStore } from '../stores/plugin-user-assignment.store';
+import { PluginUserAssignment, PluginUserAssignmentStore, PluginUserOperationState } from '../stores/plugin-user-assignment.store';
 
 /**
  * View Model for User Management Tab
@@ -16,6 +16,7 @@ export interface UserManagementViewModel {
 	disabledAssignmentsCount: number;
 	totalAssignmentsCount: number;
 	loading: boolean;
+	operations: PluginUserOperationState;
 	error: string | null;
 	hasError: boolean;
 	hasAssignments: boolean;
@@ -100,13 +101,41 @@ export class PluginUserAssignmentFacade {
 		return this.query.getActiveAssignments();
 	}
 
+	// ============================================================================
+	// OPERATION STATE SELECTORS (granular — no global loading flag for mutations)
+	// ============================================================================
+
+	/** True while an allow / enable call is in-flight. */
+	get enabling$(): Observable<boolean> { return this.query.enabling$; }
+
+	/** True while a deny / revoke call is in-flight. */
+	get disabling$(): Observable<boolean> { return this.query.disabling$; }
+
+	/** True while an unassign call is in-flight. */
+	get unassigning$(): Observable<boolean> { return this.query.unassigning$; }
+
+	/** True while an assign (add) call is in-flight. */
+	get assigning$(): Observable<boolean> { return this.query.assigning$; }
+
+	/** True while a remove-from-allowed call is in-flight. */
+	get removingAllowed$(): Observable<boolean> { return this.query.removingAllowed$; }
+
+	/** True while a remove-from-denied call is in-flight. */
+	get removingDenied$(): Observable<boolean> { return this.query.removingDenied$; }
+
+	/** True while a plugin-tenant enable/disable call is in-flight. */
+	get togglingTenant$(): Observable<boolean> { return this.query.togglingTenant$; }
+
+	/** True when any mutation operation is in-flight (for disabling action bar holistically). */
+	get anyOperationInProgress$(): Observable<boolean> { return this.query.anyOperationInProgress$; }
+
 	/**
 	 * Get complete view model for user management
 	 * Combines multiple state slices into a single view model
 	 */
 	get viewModel$(): Observable<UserManagementViewModel> {
-		return combineLatest([this.query.assignments$, this.query.loading$, this.query.error$]).pipe(
-			map(([assignments, loading, error]) => {
+		return combineLatest([this.query.assignments$, this.query.loading$, this.query.error$, this.query.operations$]).pipe(
+			map(([assignments, loading, error, operations]) => {
 				const activeCount = assignments.filter((a) => a.isActive).length;
 				return {
 					assignments,
@@ -114,6 +143,7 @@ export class PluginUserAssignmentFacade {
 					disabledAssignmentsCount: assignments.length - activeCount,
 					totalAssignmentsCount: assignments.length,
 					loading,
+					operations,
 					error,
 					hasError: !!error,
 					hasAssignments: assignments.length > 0,
