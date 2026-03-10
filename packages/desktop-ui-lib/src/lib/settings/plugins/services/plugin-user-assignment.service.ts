@@ -380,4 +380,20 @@ export class PluginUserAssignmentService {
 	getPluginTenantByPluginId(pluginId: ID): Observable<{ id: string; pluginId: string }> {
 		return this.http.get<{ id: string; pluginId: string }>(`/api/plugins/${pluginId}/tenant`);
 	}
+
+	/**
+	 * Enable a plugin tenant, making it available for use
+	 * @param pluginTenantId - Plugin tenant identifier
+	 */
+	enablePluginTenant(pluginTenantId: ID): Observable<{ id: string; enabled: boolean }> {
+		return this.http.patch<{ id: string; enabled: boolean }>(`/api/plugin-tenants/${pluginTenantId}/enable`, {});
+	}
+
+	/**
+	 * Disable a plugin tenant, making it unavailable for use
+	 * @param pluginTenantId - Plugin tenant identifier
+	 */
+	disablePluginTenant(pluginTenantId: ID): Observable<{ id: string; enabled: boolean }> {
+		return this.http.patch<{ id: string; enabled: boolean }>(`/api/plugin-tenants/${pluginTenantId}/disable`, {});
+	}
 }

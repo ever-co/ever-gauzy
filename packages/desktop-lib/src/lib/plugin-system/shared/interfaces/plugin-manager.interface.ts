@@ -15,4 +15,5 @@ export interface IPluginManager {
 	getOnePlugin(name: string): Promise<IPluginMetadata>;
 	getMenuPlugins(): MenuItemConstructorOptions[];
 	checkInstallation(marketplaceId: ID): Promise<IPluginMetadata>;
+	updateTenantEnabled(marketplaceId: string, tenantEnabled: boolean): Promise<void>;
 }

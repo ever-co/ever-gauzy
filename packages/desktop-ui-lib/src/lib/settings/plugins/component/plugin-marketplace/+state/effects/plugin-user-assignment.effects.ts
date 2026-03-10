@@ -780,7 +780,9 @@ export class PluginUserAssignmentEffects {
 					PluginUserAssignmentActions.allowUsersToPluginTenantFailure,
 					PluginUserAssignmentActions.denyUsersFromPluginTenantFailure,
 					PluginUserAssignmentActions.removeAllowedUsersFromPluginTenantFailure,
-					PluginUserAssignmentActions.removeDeniedUsersFromPluginTenantFailure
+					PluginUserAssignmentActions.removeDeniedUsersFromPluginTenantFailure,
+					PluginUserAssignmentActions.enablePluginTenantFailure,
+					PluginUserAssignmentActions.disablePluginTenantFailure
 				),
 				tap(({ error }) => {
 					this.store.setErrorMessage(error);
@@ -790,5 +792,77 @@ export class PluginUserAssignmentEffects {
 			);
 		},
 		{ dispatch: false }
+	);
+
+	// ============================================================================
+	// PLUGIN TENANT ENABLE/DISABLE EFFECTS
+	// ============================================================================
+
+	/**
+	 * Enable a plugin tenant, making it available for use
+	 */
+	enablePluginTenant$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.enablePluginTenant),
+				tap(() => this.store.setLoading(true)),
+				switchMap(({ pluginTenantId }) =>
+					this.pluginUserAssignmentService.enablePluginTenant(pluginTenantId).pipe(
+						map((response) => {
+							this.toastrService.success(
+								this.translateService.instant('PLUGIN.USER_MANAGEMENT.SUCCESS.PLUGIN_ENABLED')
+							);
+							return PluginUserAssignmentActions.enablePluginTenantSuccess({
+								id: response.id,
+								enabled: response.enabled
+							});
+						}),
+						catchError((error) => {
+							const errorMessage =
+								error.error?.message || error.message || 'Failed to enable plugin tenant';
+							return of(
+								PluginUserAssignmentActions.enablePluginTenantFailure({ error: errorMessage })
+							);
+						}),
+						finalize(() => this.store.setLoading(false))
+					)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	/**
+	 * Disable a plugin tenant, making it unavailable for use
+	 */
+	disablePluginTenant$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.disablePluginTenant),
+				tap(() => this.store.setLoading(true)),
+				switchMap(({ pluginTenantId }) =>
+					this.pluginUserAssignmentService.disablePluginTenant(pluginTenantId).pipe(
+						map((response) => {
+							this.toastrService.success(
+								this.translateService.instant('PLUGIN.USER_MANAGEMENT.SUCCESS.PLUGIN_DISABLED')
+							);
+							return PluginUserAssignmentActions.disablePluginTenantSuccess({
+								id: response.id,
+								enabled: response.enabled
+							});
+						}),
+						catchError((error) => {
+							const errorMessage =
+								error.error?.message || error.message || 'Failed to disable plugin tenant';
+							return of(
+								PluginUserAssignmentActions.disablePluginTenantFailure({ error: errorMessage })
+							);
+						}),
+						finalize(() => this.store.setLoading(false))
+					)
+				)
+			);
+		},
+		{ dispatch: true }
 	);
 }

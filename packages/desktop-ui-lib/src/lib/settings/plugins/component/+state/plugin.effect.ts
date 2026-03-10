@@ -3,7 +3,9 @@ import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { catchError, EMPTY, filter, finalize, from, map, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../services';
+import { PluginAccessSyncService } from '../../services/plugin-access-sync.service';
 import { PluginElectronService } from '../../services/plugin-electron.service';
+import { PluginSubscriptionAccessService } from '../../services/plugin-subscription-access.service';
 import { PluginService } from '../../services/plugin.service';
 import { PluginActions } from './plugin.action';
 import { PluginStore } from './plugin.store';
@@ -15,7 +17,9 @@ export class PluginEffects {
 		private readonly action$: Actions,
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly pluginService: PluginService,
-		private readonly toastrService: ToastrNotificationService
+		private readonly toastrService: ToastrNotificationService,
+		private readonly pluginAccessSyncService: PluginAccessSyncService,
+		private readonly accessService: PluginSubscriptionAccessService
 	) {}
 
 	getAllPlugins$ = createEffect(
@@ -73,25 +77,42 @@ export class PluginEffects {
 			ofType(PluginActions.activate),
 			tap(() => this.pluginStore.update({ activating: true })),
 			switchMap(({ plugin }) => {
-				// First check with server-side to validate plugin can be activated
-				return this.pluginService.activate(plugin.marketplaceId, plugin.installationId).pipe(
-					switchMap(() => {
-						// If server validation passes, proceed with local activation
-						this.pluginElectronService.activate(plugin);
-						return this.pluginElectronService
-							.progress((message) => this.toastrService.info(message))
-							.pipe(
-								tap((res) => this.handleProgress(res)),
-								finalize(() => this.pluginStore.update({ activating: false })),
-								catchError((error) => {
-									this.toastrService.error(error);
-									return EMPTY;
-								})
-							);
+				// Gate: verify user has access before activation
+				return this.accessService.checkAccess(plugin.marketplaceId).pipe(
+					switchMap((access) => {
+						if (!access.hasAccess) {
+							this.toastrService.error('You do not have access to activate this plugin');
+							this.pluginStore.update({ activating: false });
+							return EMPTY;
+						}
+
+						// Validate with server then activate locally
+						return this.pluginService.activate(plugin.marketplaceId, plugin.installationId).pipe(
+							switchMap(() => {
+								this.pluginElectronService.activate(plugin);
+								return this.pluginElectronService
+									.progress((message) => this.toastrService.info(message))
+									.pipe(
+										tap((res) => this.handleProgress(res)),
+										finalize(() => this.pluginStore.update({ activating: false })),
+										catchError((error) => {
+											this.toastrService.error(error);
+											return EMPTY;
+										})
+									);
+							}),
+							catchError((error) => {
+								this.toastrService.error(
+									error?.error?.message || error?.message || 'Failed to activate plugin on server'
+								);
+								this.pluginStore.update({ activating: false });
+								return EMPTY;
+							})
+						);
 					}),
 					catchError((error) => {
 						this.toastrService.error(
-							error?.error?.message || error?.message || 'Failed to activate plugin on server'
+							error?.error?.message || error?.message || 'Failed to verify plugin access'
 						);
 						this.pluginStore.update({ activating: false });
 						return EMPTY;
@@ -156,6 +177,27 @@ export class PluginEffects {
 				this.toastrService.error(error);
 				return EMPTY;
 			})
+		)
+	);
+
+	/**
+	 * Sync local plugin activation state with backend access control.
+	 * Deactivates any locally-active plugin for which the user no longer has access.
+	 */
+	syncAccess$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginActions.syncAccess),
+			switchMap(() =>
+				this.pluginAccessSyncService.syncActivePlugins().pipe(
+					tap(() => this.action$.dispatch(PluginActions.refresh())),
+					catchError((error) => {
+						this.toastrService.error(
+							error?.message || 'Failed to sync plugin access'
+						);
+						return EMPTY;
+					})
+				)
+			)
 		)
 	);
 

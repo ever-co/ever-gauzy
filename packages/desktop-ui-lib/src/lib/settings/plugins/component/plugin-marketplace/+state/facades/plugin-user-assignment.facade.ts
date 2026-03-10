@@ -531,4 +531,28 @@ export class PluginUserAssignmentFacade {
 			})
 		);
 	}
+
+	// ============================================================================
+	// CONVENIENCE WRAPPERS — symmetric API with UserManagementFacade
+	// ============================================================================
+
+	/** Enable (allow) a single user's access to the plugin tenant. */
+	enableUser(pluginTenantId: ID, userId: string): void {
+		this.allowUsersToPluginTenant(pluginTenantId, [userId]);
+	}
+
+	/** Disable (deny) a single user's access to the plugin tenant. */
+	disableUser(pluginTenantId: ID, userId: string): void {
+		this.denyUsersFromPluginTenant(pluginTenantId, [userId]);
+	}
+
+	/** Enable (allow) all listed users' access to the plugin tenant. */
+	enableAllUsers(pluginTenantId: ID, userIds: string[]): void {
+		this.allowUsersToPluginTenant(pluginTenantId, userIds);
+	}
+
+	/** Disable (deny) all listed users' access to the plugin tenant. */
+	disableAllUsers(pluginTenantId: ID, userIds: string[]): void {
+		this.denyUsersFromPluginTenant(pluginTenantId, userIds);
+	}
 }

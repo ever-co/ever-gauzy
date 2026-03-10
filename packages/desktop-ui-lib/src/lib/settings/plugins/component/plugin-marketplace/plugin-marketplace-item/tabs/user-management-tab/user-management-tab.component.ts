@@ -4,8 +4,8 @@ import { IPlugin } from '@gauzy/contracts';
 import { NbAlertModule, NbBadgeModule, NbButtonModule, NbIconModule, NbSpinnerModule, NbToggleModule, NbTooltipModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Angular2SmartTableModule, Cell, LocalDataSource } from 'angular2-smart-table';
-import { distinctUntilChanged, filter, Observable, tap } from 'rxjs';
+import { Angular2SmartTableModule, LocalDataSource } from 'angular2-smart-table';
+import { distinctUntilChanged, filter, Observable, take, tap } from 'rxjs';
 import {
 	PluginUserAssignmentFacade,
 	UserManagementViewModel
@@ -13,13 +13,8 @@ import {
 import { PluginSubscriptionAccessFacade } from '../../../+state/plugin-subscription-access.facade';
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
 import { PluginUserAssignment } from '../../../+state/stores/plugin-user-assignment.store';
-import { NoDataMessageComponent } from '../../../../../../../time-tracker/no-data-message/no-data-message.component';
 import { PaginationComponent } from '../../../../../../../time-tracker/pagination/pagination.component';
-import { AccessToggleCellComponent } from '../../../plugin-user-management/render/access-toggle/access-toggle-cell.component';
-import { AssignmentDateCellComponent } from '../../../plugin-user-management/render/assignment-date/assignment-date-cell.component';
-import { AssignmentStatusCellComponent } from '../../../plugin-user-management/render/assignment-status/assignment-status-cell.component';
-import { UnassignActionCellComponent } from '../../../plugin-user-management/render/unassign-action/unassign-action-cell.component';
-import { UserCellComponent } from '../../../plugin-user-management/render/user-cell/user-cell.component';
+import { PluginAssignedUsersTableService } from '../../../plugin-user-management/services/plugin-assigned-users-table.service';
 
 /**
  * User Management Tab Component
@@ -51,7 +46,7 @@ import { UserCellComponent } from '../../../plugin-user-management/render/user-c
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
 		NbIconModule, NbButtonModule, NbAlertModule, NbSpinnerModule, NbBadgeModule, NbTooltipModule, NbToggleModule,
-		Angular2SmartTableModule, PaginationComponent, NoDataMessageComponent,
+		Angular2SmartTableModule, PaginationComponent,
 		AsyncPipe, TranslatePipe
 	]
 })
@@ -107,7 +102,8 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 	constructor(
 		private readonly marketplaceQuery: PluginMarketplaceQuery,
 		private readonly accessFacade: PluginSubscriptionAccessFacade,
-		private readonly userAssignmentFacade: PluginUserAssignmentFacade
+		private readonly userAssignmentFacade: PluginUserAssignmentFacade,
+		private readonly assignedUsersTableService: PluginAssignedUsersTableService
 	) {
 		// Initialize observables
 		this.plugin$ = this.marketplaceQuery.plugin$;
@@ -146,91 +142,20 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 	// ============================================================================
 
 	private buildSmartTableSettings(): void {
-		this.assignedUsersSettings = {
-			columns: {
-				_user: {
-					title: 'User',
-					type: 'custom',
-					renderComponent: UserCellComponent,
-					componentInitFunction: (instance: UserCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				email: {
-					title: 'Email'
-				},
-				_assignedAt: {
-					title: 'Assigned On',
-					type: 'custom',
-					renderComponent: AssignmentDateCellComponent,
-					componentInitFunction: (instance: AssignmentDateCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				_status: {
-					title: 'Status',
-					type: 'custom',
-					width: '90px',
-					renderComponent: AssignmentStatusCellComponent,
-					componentInitFunction: (instance: AssignmentStatusCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				_access: {
-					title: 'Access',
-					type: 'custom',
-					width: '80px',
-					filter: false,
-					sort: false,
-					renderComponent: AccessToggleCellComponent,
-					componentInitFunction: (instance: AccessToggleCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-						instance.toggled.pipe(untilDestroyed(this)).subscribe((rowData) => {
-							this.onToggleUserAccess(rowData);
-						});
-					}
-				},
-				_actions: {
-					title: '',
-					type: 'custom',
-					width: '60px',
-					filter: false,
-					sort: false,
-					renderComponent: UnassignActionCellComponent,
-					componentInitFunction: (instance: UnassignActionCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-						instance.unassign.pipe(untilDestroyed(this)).subscribe((assignment) => {
-							this.onUnassignUser(assignment as PluginUserAssignment);
-						});
-					}
-				}
-			},
-			hideSubHeader: true,
-			actions: false,
-			noDataMessage: 'No users assigned to this plugin',
-			pager: {
-				display: false,
-				perPage: 10,
-				page: 1
-			}
-		};
+		this.assignedUsersSettings = this.assignedUsersTableService.buildSettings({
+			onToggle: (rowData) => this.onToggleUserAccess(rowData),
+			onUnassign: (assignment) => this.onUnassignUser(assignment),
+			pipeUntilDestroyed: (obs) => obs.pipe(untilDestroyed(this))
+		});
 	}
 
 	private bindSourcesToStreams(): void {
 		this.userAssignmentFacade.assignments$
 			.pipe(
 				tap((assignments) => {
-					const rows = assignments.map((a) => ({
-						...a,
-						firstName: a.user?.firstName,
-						lastName: a.user?.lastName,
-						email: a.user?.email,
-						imageUrl: a.user?.imageUrl,
-						_user: `${a.user?.firstName || ''} ${a.user?.lastName || ''}`.trim(),
-						_assignedAt: a.assignedAt,
-						_status: a.isActive
-					}));
-					this.assignedUsersSource.load(rows);
+					this.assignedUsersSource.load(
+						assignments.map((a) => this.assignedUsersTableService.mapAssignmentToRow(a))
+					);
 				}),
 				untilDestroyed(this)
 			)
@@ -297,9 +222,9 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
 		if (!pluginTenantId) return;
 		if (rowData.newState) {
-			this.userAssignmentFacade.allowUsersToPluginTenant(pluginTenantId, [rowData.userId]);
+			this.userAssignmentFacade.enableUser(pluginTenantId, rowData.userId);
 		} else {
-			this.userAssignmentFacade.denyUsersFromPluginTenant(pluginTenantId, [rowData.userId]);
+			this.userAssignmentFacade.disableUser(pluginTenantId, rowData.userId);
 		}
 	}
 
@@ -310,13 +235,12 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
 		if (!pluginTenantId) return;
 		this.userAssignmentFacade.assignments$
-			.pipe(
-				filter((a) => a.length > 0),
-				untilDestroyed(this)
-			)
+			.pipe(take(1), untilDestroyed(this))
 			.subscribe((assignments) => {
 				const userIds = assignments.map((a) => a.userId);
-				this.userAssignmentFacade.allowUsersToPluginTenant(pluginTenantId, userIds);
+				if (userIds.length > 0) {
+					this.userAssignmentFacade.enableAllUsers(pluginTenantId, userIds);
+				}
 			});
 	}
 
@@ -327,13 +251,12 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
 		if (!pluginTenantId) return;
 		this.userAssignmentFacade.assignments$
-			.pipe(
-				filter((a) => a.length > 0),
-				untilDestroyed(this)
-			)
+			.pipe(take(1), untilDestroyed(this))
 			.subscribe((assignments) => {
 				const userIds = assignments.map((a) => a.userId);
-				this.userAssignmentFacade.denyUsersFromPluginTenant(pluginTenantId, userIds);
+				if (userIds.length > 0) {
+					this.userAssignmentFacade.disableAllUsers(pluginTenantId, userIds);
+				}
 			});
 	}
 

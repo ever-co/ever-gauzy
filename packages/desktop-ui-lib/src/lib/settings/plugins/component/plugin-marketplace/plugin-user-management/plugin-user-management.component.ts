@@ -9,17 +9,13 @@ import { UserManagementDialogViewModel, UserManagementFacade } from '../+state/f
 import { PluginUserAssignment } from '../+state/stores/plugin-user-assignment.store';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store } from '../../../../../services';
-import { NoDataMessageComponent } from '../../../../../time-tracker/no-data-message/no-data-message.component';
 import { PaginationComponent } from '../../../../../time-tracker/pagination/pagination.component';
 
 import { AsyncPipe } from '@angular/common';
 import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
-import { AccessToggleCellComponent } from './render/access-toggle/access-toggle-cell.component';
 import { AssignActionCellComponent } from './render/assign-action/assign-action-cell.component';
-import { AssignmentDateCellComponent } from './render/assignment-date/assignment-date-cell.component';
-import { AssignmentStatusCellComponent } from './render/assignment-status/assignment-status-cell.component';
-import { UnassignActionCellComponent } from './render/unassign-action/unassign-action-cell.component';
 import { UserCellComponent } from './render/user-cell/user-cell.component';
+import { PluginAssignedUsersTableService } from './services/plugin-assigned-users-table.service';
 
 export interface PluginUserManagementDialogData {
 	plugin: IPlugin;
@@ -55,7 +51,7 @@ export interface PluginUserManagementDialogData {
 		NbCardModule, NbIconModule, NbBadgeModule, NbTabsetModule,
 		FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule,
 		NbButtonModule, NbSpinnerModule, SpinnerButtonDirective, NbTooltipModule, NbToggleModule,
-		Angular2SmartTableModule, PaginationComponent, NoDataMessageComponent, AsyncPipe
+		Angular2SmartTableModule, PaginationComponent, AsyncPipe
 	]
 })
 export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -90,7 +86,8 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 		private readonly dialogService: NbDialogService,
 		private readonly formBuilder: FormBuilder,
 		private readonly facade: UserManagementFacade,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly assignedUsersTableService: PluginAssignedUsersTableService
 	) {
 		this.plugin = this.data.plugin;
 		this.subscriptionId = this.data.subscriptionId;
@@ -194,74 +191,11 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 			}
 		};
 
-		this.assignedUsersSettings = {
-			columns: {
-				_user: {
-					title: 'User',
-					type: 'custom',
-					renderComponent: UserCellComponent,
-					componentInitFunction: (instance: UserCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				email: {
-					title: 'Email'
-				},
-				_assignedAt: {
-					title: 'Assigned On',
-					type: 'custom',
-					renderComponent: AssignmentDateCellComponent,
-					componentInitFunction: (instance: AssignmentDateCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				_status: {
-					title: 'Status',
-					type: 'custom',
-					width: '90px',
-					renderComponent: AssignmentStatusCellComponent,
-					componentInitFunction: (instance: AssignmentStatusCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				_access: {
-					title: 'Access',
-					type: 'custom',
-					width: '80px',
-					filter: false,
-					sort: false,
-					renderComponent: AccessToggleCellComponent,
-					componentInitFunction: (instance: AccessToggleCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-						instance.toggled.pipe(untilDestroyed(this)).subscribe((rowData) => {
-							this.onToggleUserAccess(rowData);
-						});
-					}
-				},
-				_actions: {
-					title: '',
-					type: 'custom',
-					width: '60px',
-					filter: false,
-					sort: false,
-					renderComponent: UnassignActionCellComponent,
-					componentInitFunction: (instance: UnassignActionCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-						instance.unassign.pipe(untilDestroyed(this)).subscribe((assignment) => {
-							this.onUnassignUser(assignment as PluginUserAssignment);
-						});
-					}
-				}
-			},
-			hideSubHeader: true,
-			actions: false,
-			noDataMessage: 'No users assigned to this plugin',
-			pager: {
-				display: false,
-				perPage: 10,
-				page: 1
-			}
-		};
+		this.assignedUsersSettings = this.assignedUsersTableService.buildSettings({
+			onToggle: (rowData) => this.onToggleUserAccess(rowData),
+			onUnassign: (assignment) => this.onUnassignUser(assignment),
+			pipeUntilDestroyed: (obs) => obs.pipe(untilDestroyed(this))
+		});
 	}
 
 	/**
@@ -287,21 +221,13 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 			)
 			.subscribe();
 
-		// Assigned users: flatten assignment.user into row data
+		// Assigned users: delegate row mapping to shared service
 		this.facade.assignedUsers$
 			.pipe(
 				tap((assignments) => {
-					const rows = assignments.map((a) => ({
-						...a,
-						firstName: a.user?.firstName,
-						lastName: a.user?.lastName,
-						email: a.user?.email,
-						imageUrl: a.user?.imageUrl,
-						_user: `${a.user?.firstName || ''} ${a.user?.lastName || ''}`.trim(),
-						_assignedAt: a.assignedAt,
-						_status: a.isActive
-					}));
-					this.assignedUsersSource.load(rows);
+					this.assignedUsersSource.load(
+						assignments.map((a) => this.assignedUsersTableService.mapAssignmentToRow(a))
+					);
 				}),
 				untilDestroyed(this)
 			)

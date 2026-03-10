@@ -1,12 +1,12 @@
 import { IDatabaseProvider } from '../../interfaces';
 import { ProviderFactory } from '../../offline';
 import {
-	IPluginMetadataCreate,
-	IPluginMetadataDelete,
-	IPluginMetadataFindOne,
-	IPluginMetadataPersistance,
-	IPluginMetadataUpdate,
-	TABLE_PLUGINS
+    IPluginMetadataCreate,
+    IPluginMetadataDelete,
+    IPluginMetadataFindOne,
+    IPluginMetadataPersistance,
+    IPluginMetadataUpdate,
+    TABLE_PLUGINS
 } from '../shared';
 
 export class PluginMetadataService {
@@ -37,6 +37,32 @@ export class PluginMetadataService {
 
 	public async findActivated(): Promise<IPluginMetadataPersistance[]> {
 		return this.db.connection<IPluginMetadataPersistance>(TABLE_PLUGINS).select('*').where('isActivate', true);
+	}
+
+	public async findAllForUser(userId: string): Promise<IPluginMetadataPersistance[]> {
+		return this.db
+			.connection<IPluginMetadataPersistance>(TABLE_PLUGINS)
+			.select('*')
+			.where((builder) => {
+				builder.whereNull('userId').orWhere('userId', userId);
+			});
+	}
+
+	public async findActivatedForUser(userId: string): Promise<IPluginMetadataPersistance[]> {
+		return this.db
+			.connection<IPluginMetadataPersistance>(TABLE_PLUGINS)
+			.select('*')
+			.where('isActivate', true)
+			.where((builder) => {
+				builder.whereNull('userId').orWhere('userId', userId);
+			});
+	}
+
+	public async updateTenantEnabled(marketplaceId: string, tenantEnabled: boolean): Promise<void> {
+		await this.db
+			.connection<IPluginMetadataPersistance>(TABLE_PLUGINS)
+			.where('marketplaceId', marketplaceId)
+			.update({ tenantEnabled });
 	}
 
 	private buildQuery(input: { id?: string; name?: string; marketplaceId?: string }) {
