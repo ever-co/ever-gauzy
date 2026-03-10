@@ -1,3 +1,4 @@
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {
 	enableProdMode,
 	ErrorHandler,
@@ -6,19 +7,9 @@ import {
 	provideAppInitializer,
 	provideZoneChangeDetection
 } from '@angular/core';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
-import {
-	NbDialogModule,
-	NbDialogService,
-	NbMenuModule,
-	NbSidebarModule,
-	NbToastrModule,
-	NbIconLibraries
-} from '@nebular/theme';
-import * as Sentry from '@sentry/angular';
 import { akitaConfig, persistState } from '@datorama/akita';
 import {
 	ElectronService,
@@ -32,6 +23,16 @@ import {
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { provideI18n } from '@gauzy/ui-core/i18n';
 import { TablerIconsModule } from '@gauzy/ui-core/icons';
+import {
+	NbDialogModule,
+	NbDialogService,
+	NbIconLibraries,
+	NbMenuModule,
+	NbSidebarModule,
+	NbToastrModule
+} from '@nebular/theme';
+import { provideEffectsManager } from '@ngneat/effects-ng';
+import * as Sentry from '@sentry/angular';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
@@ -53,6 +54,7 @@ if (environment.SENTRY_DSN) {
 
 bootstrapApplication(AppComponent, {
 	providers: [
+		provideEffectsManager(),
 		provideZoneChangeDetection(),
 		importProvidersFrom(
 			NbDialogModule.forRoot(),

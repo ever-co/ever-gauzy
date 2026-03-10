@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
+import { provideEffects } from '@ngneat/effects-ng';
 import { PendingInstallationEffects } from './component/+state/pending-installation.effect';
 import { PluginEffects } from './component/+state/plugin.effect';
 import { AvailableUsersEffects } from './component/plugin-marketplace/+state/effects/available-users.effects';
@@ -24,7 +24,6 @@ export const PluginRoutingModule: Routes = [
 			import('./component/plugin-layout/plugin-layout.component').then((m) => m.PluginLayoutComponent),
 		loadChildren: () => import('./plugin.route').then((m) => m.routes),
 		providers: [
-			provideEffectsManager(),
 			provideEffects(
 				PluginEffects,
 				PluginInstallationEffects,

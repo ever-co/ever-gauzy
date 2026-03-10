@@ -1,7 +1,8 @@
 import { inject, NgModule, OnDestroy, provideZoneChangeDetection } from '@angular/core';
-import { PLUGIN_UI_CONFIG, getPluginUiConfig, PluginUiModule, PluginUiRegistryService } from '@gauzy/plugin-ui';
-import { AppModule } from './app.module';
+import { getPluginUiConfig, PLUGIN_UI_CONFIG, PluginUiModule, PluginUiRegistryService } from '@gauzy/plugin-ui';
+import { provideEffectsManager } from '@ngneat/effects-ng';
 import { AppComponent } from './app.component';
+import { AppModule } from './app.module';
 
 /**
  * Root-level bootstrap module for the Gauzy UI application.
@@ -28,6 +29,7 @@ import { AppComponent } from './app.component';
 			provide: PLUGIN_UI_CONFIG,
 			useFactory: getPluginUiConfig
 		},
+		provideEffectsManager(),
 		provideZoneChangeDetection({ eventCoalescing: true })
 	],
 	bootstrap: [AppComponent]
