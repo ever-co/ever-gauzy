@@ -1,7 +1,6 @@
 <!-- User Management Tab Template -->
 <!-- Uses reactive programming with async pipe and proper null-safety -->
-@let plugin = plugin$ | async; @let viewModel = viewModel$ | async; @let canAssign = canAssign$ | async; @let hasMore =
-hasMore$ | async; @let loadingMore = loadingMore$ | async; @if (plugin && viewModel) {
+@let plugin = plugin$ | async; @let viewModel = viewModel$ | async; @let canAssign = canAssign$ | async; @if (plugin && viewModel) {
 <div class="user-management-tab-content">
 	<!-- Header Section -->
 	<div class="header-section mb-4">
@@ -70,12 +69,39 @@ hasMore$ | async; @let loadingMore = loadingMore$ | async; @if (plugin && viewMo
 	</nb-alert>
 	}
 
-	<!-- Assigned Users List with Infinite Scroll -->
+	<!-- Assigned Users Section -->
 	<div class="assigned-users-section">
 		<div class="section-header">
 			<nb-icon icon="list-outline" status="primary"></nb-icon>
 			<h6 class="section-title">{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_USERS' | translate }}</h6>
 		</div>
+
+		<!-- Bulk Access Controls -->
+		@if (viewModel.hasAssignments) {
+		<div class="bulk-actions mb-3">
+			<span class="bulk-actions-label">{{ 'PLUGIN.USER_MANAGEMENT.ORGANIZATION_ACCESS' | translate }}:</span>
+			<button
+				nbButton
+				size="small"
+				status="success"
+				[nbTooltip]="'PLUGIN.USER_MANAGEMENT.ENABLE_ALL_TOOLTIP' | translate"
+				(click)="onEnableAllUsers()"
+			>
+				<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+				{{ 'PLUGIN.USER_MANAGEMENT.ENABLE_ALL' | translate }}
+			</button>
+			<button
+				nbButton
+				size="small"
+				status="danger"
+				[nbTooltip]="'PLUGIN.USER_MANAGEMENT.DISABLE_ALL_TOOLTIP' | translate"
+				(click)="onDisableAllUsers()"
+			>
+				<nb-icon icon="close-circle-outline"></nb-icon>
+				{{ 'PLUGIN.USER_MANAGEMENT.DISABLE_ALL' | translate }}
+			</button>
+		</div>
+		}
 
 		<!-- Loading State -->
 		@if (viewModel.loading) {
@@ -83,121 +109,17 @@ hasMore$ | async; @let loadingMore = loadingMore$ | async; @if (plugin && viewMo
 			<nb-spinner size="medium"></nb-spinner>
 			<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
 		</div>
-		}
-
-		<!-- Users List with Infinite Scroll -->
-		@else if (viewModel.hasAssignments) {
-		<div
-			class="users-list-container"
-			libInfiniteScroll
-			[scrollThreshold]="200"
-			[debounceTime]="300"
-			[disabled]="!hasMore || loadingMore"
-			(scrolled)="onLoadMore()"
-		>
-			<div class="users-list">
-				@for (assignment of viewModel.assignments; track trackByAssignmentId($index, assignment); let isLast =
-				$last) {
-				<div class="user-assignment-item">
-					<div class="user-card">
-						<div class="user-info">
-							<nb-user
-								[picture]="getUserAvatar(assignment.user)"
-								[name]="getUserDisplayName(assignment)"
-								[title]="assignment.user?.email || 'N/A'"
-								size="large"
-							></nb-user>
-						</div>
-
-						<div class="assignment-metadata">
-							<div class="metadata-row">
-								<div class="metadata-item">
-									<nb-icon icon="calendar-outline" class="metadata-icon"></nb-icon>
-									<span class="metadata-text">
-										{{ 'PLUGIN.USER_MANAGEMENT.ASSIGNED_ON' | translate }}: @if
-										(getAssignmentDate(assignment); as assignedDate) {
-										{{ assignedDate | date : 'medium' }}
-										} @else { N/A }
-									</span>
-								</div>
-								@if (assignment.reason) {
-								<div class="metadata-item">
-									<nb-icon icon="message-circle-outline" class="metadata-icon"></nb-icon>
-									<span class="metadata-text">{{ assignment.reason }}</span>
-								</div>
-								}
-							</div>
-
-							<div class="status-badge">
-								@let statusBadge = getStatusBadge(assignment);
-								<nb-badge
-									[status]="statusBadge.status"
-									[text]="statusBadge.text | translate"
-								></nb-badge>
-							</div>
-						</div>
-					</div>
-
-					@if (canAssign && isActive(assignment)) {
-					<div class="assignment-actions">
-						<button
-							nbButton
-							ghost
-							size="small"
-							status="danger"
-							(click)="onUnassignUser(assignment)"
-							[nbTooltip]="'PLUGIN.USER_MANAGEMENT.UNASSIGN' | translate"
-							[disabled]="viewModel.loading"
-							class="unassign-btn"
-						>
-							<nb-icon icon="person-remove-outline"></nb-icon>
-						</button>
-					</div>
-					}
-				</div>
-				@if (!isLast) {
-				<nb-divider></nb-divider>
-				} }
+		} @else {
+		<div class="custom-table">
+			<div class="table-scroll-container">
+				<angular2-smart-table
+					[settings]="assignedUsersSettings"
+					[source]="assignedUsersSource"
+				></angular2-smart-table>
 			</div>
-
-			<!-- Loading More Indicator -->
-			@if (loadingMore) {
-			<div class="loading-more-state">
-				<nb-spinner size="small"></nb-spinner>
-				<span class="loading-text">{{ 'SM_TABLE.LOADING_MORE' | translate }}</span>
+			<div class="pagination-container">
+				<ga-pagination [source]="assignedUsersSource"></ga-pagination>
 			</div>
-			}
-
-			<!-- End of List Indicator -->
-			@if (!hasMore && !loadingMore) {
-			<div class="end-of-list">
-				<span class="text-hint">{{ 'PLUGIN.USER_MANAGEMENT.END_OF_LIST' | translate }}</span>
-			</div>
-			}
-		</div>
-		}
-
-		<!-- Empty State -->
-		@else if (viewModel.isEmpty) {
-		<div class="empty-state">
-			<nb-icon icon="person-outline" class="empty-icon"></nb-icon>
-			<p class="empty-text">{{ 'PLUGIN.USER_MANAGEMENT.NO_USERS_ASSIGNED' | translate }}</p>
-			<small class="empty-hint">
-				{{ 'PLUGIN.USER_MANAGEMENT.NO_USERS_HINT' | translate }}
-			</small>
-			@if (canAssign) {
-			<button
-				nbButton
-				status="primary"
-				size="small"
-				(click)="showAssignmentDialog()"
-				class="mt-3"
-				[disabled]="viewModel.loading"
-			>
-				<nb-icon icon="person-add-outline" class="mr-1"></nb-icon>
-				{{ 'PLUGIN.BUTTONS.ASSIGN_FIRST_USER' | translate }}
-			</button>
-			}
 		</div>
 		}
 	</div>

@@ -1,7 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-import { IPlugin, IUser } from '@gauzy/contracts';
+import { AsyncPipe } from '@angular/common';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { IPlugin } from '@gauzy/contracts';
+import { NbAlertModule, NbBadgeModule, NbButtonModule, NbIconModule, NbSpinnerModule, NbToggleModule, NbTooltipModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChanged, filter, Observable } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
+import { Angular2SmartTableModule, Cell, LocalDataSource } from 'angular2-smart-table';
+import { distinctUntilChanged, filter, Observable, tap } from 'rxjs';
 import {
 	PluginUserAssignmentFacade,
 	UserManagementViewModel
@@ -9,10 +13,13 @@ import {
 import { PluginSubscriptionAccessFacade } from '../../../+state/plugin-subscription-access.facade';
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
 import { PluginUserAssignment } from '../../../+state/stores/plugin-user-assignment.store';
-import { NbIconModule, NbButtonModule, NbAlertModule, NbSpinnerModule, NbUserModule, NbBadgeModule, NbTooltipModule } from '@nebular/theme';
-import { InfiniteScrollDirective } from '../../../../../../../directives/infinite-scroll.directive';
-import { AsyncPipe, DatePipe } from '@angular/common';
-import { TranslatePipe } from '@ngx-translate/core';
+import { NoDataMessageComponent } from '../../../../../../../time-tracker/no-data-message/no-data-message.component';
+import { PaginationComponent } from '../../../../../../../time-tracker/pagination/pagination.component';
+import { AccessToggleCellComponent } from '../../../plugin-user-management/render/access-toggle/access-toggle-cell.component';
+import { AssignmentDateCellComponent } from '../../../plugin-user-management/render/assignment-date/assignment-date-cell.component';
+import { AssignmentStatusCellComponent } from '../../../plugin-user-management/render/assignment-status/assignment-status-cell.component';
+import { UnassignActionCellComponent } from '../../../plugin-user-management/render/unassign-action/unassign-action-cell.component';
+import { UserCellComponent } from '../../../plugin-user-management/render/user-cell/user-cell.component';
 
 /**
  * User Management Tab Component
@@ -42,9 +49,13 @@ import { TranslatePipe } from '@ngx-translate/core';
     templateUrl: './user-management-tab.component.html',
     styleUrls: ['./user-management-tab.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbIconModule, NbButtonModule, NbAlertModule, NbSpinnerModule, InfiniteScrollDirective, NbUserModule, NbBadgeModule, NbTooltipModule, AsyncPipe, DatePipe, TranslatePipe]
+    imports: [
+		NbIconModule, NbButtonModule, NbAlertModule, NbSpinnerModule, NbBadgeModule, NbTooltipModule, NbToggleModule,
+		Angular2SmartTableModule, PaginationComponent, NoDataMessageComponent,
+		AsyncPipe, TranslatePipe
+	]
 })
-export class UserManagementTabComponent implements OnInit, OnDestroy {
+export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDestroy {
 	// ============================================================================
 	// PUBLIC OBSERVABLES - Exposed to template
 	// ============================================================================
@@ -76,16 +87,6 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	readonly loading$: Observable<boolean>;
 
 	/**
-	 * Loading more state (for infinite scroll)
-	 */
-	readonly loadingMore$: Observable<boolean>;
-
-	/**
-	 * Has more data to load
-	 */
-	readonly hasMore$: Observable<boolean>;
-
-	/**
 	 * Error state
 	 */
 	readonly error$: Observable<string | null>;
@@ -95,10 +96,9 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	 */
 	readonly assignedUsers$: Observable<PluginUserAssignment[]>;
 
-	/**
-	 * Current plugin tenant ID from facade
-	 */
-	readonly currentPluginTenantId$: Observable<string | null>;
+	// Smart table
+	public readonly assignedUsersSource = new LocalDataSource([]);
+	public assignedUsersSettings: any;
 
 	// ============================================================================
 	// CONSTRUCTOR & LIFECYCLE
@@ -114,11 +114,8 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 		this.viewModel$ = this.userAssignmentFacade.viewModel$;
 		this.activeUsersCount$ = this.userAssignmentFacade.activeUsersCount$;
 		this.loading$ = this.userAssignmentFacade.loading$;
-		this.loadingMore$ = this.userAssignmentFacade.loadingMore$;
-		this.hasMore$ = this.userAssignmentFacade.hasMore$;
 		this.error$ = this.userAssignmentFacade.error$;
 		this.assignedUsers$ = this.userAssignmentFacade.assignments$;
-		this.currentPluginTenantId$ = this.userAssignmentFacade.currentPluginTenantId$;
 	}
 
 	/**
@@ -126,7 +123,12 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	 * Sets up reactive data streams and loads initial data
 	 */
 	ngOnInit(): void {
+		this.buildSmartTableSettings();
 		this.initializeDataStreams();
+	}
+
+	ngAfterViewInit(): void {
+		this.bindSourcesToStreams();
 	}
 
 	/**
@@ -142,6 +144,98 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	// ============================================================================
 	// PRIVATE METHODS - Initialization
 	// ============================================================================
+
+	private buildSmartTableSettings(): void {
+		this.assignedUsersSettings = {
+			columns: {
+				_user: {
+					title: 'User',
+					type: 'custom',
+					renderComponent: UserCellComponent,
+					componentInitFunction: (instance: UserCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
+				},
+				email: {
+					title: 'Email'
+				},
+				_assignedAt: {
+					title: 'Assigned On',
+					type: 'custom',
+					renderComponent: AssignmentDateCellComponent,
+					componentInitFunction: (instance: AssignmentDateCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
+				},
+				_status: {
+					title: 'Status',
+					type: 'custom',
+					width: '90px',
+					renderComponent: AssignmentStatusCellComponent,
+					componentInitFunction: (instance: AssignmentStatusCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
+				},
+				_access: {
+					title: 'Access',
+					type: 'custom',
+					width: '80px',
+					filter: false,
+					sort: false,
+					renderComponent: AccessToggleCellComponent,
+					componentInitFunction: (instance: AccessToggleCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.toggled.pipe(untilDestroyed(this)).subscribe((rowData) => {
+							this.onToggleUserAccess(rowData);
+						});
+					}
+				},
+				_actions: {
+					title: '',
+					type: 'custom',
+					width: '60px',
+					filter: false,
+					sort: false,
+					renderComponent: UnassignActionCellComponent,
+					componentInitFunction: (instance: UnassignActionCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.unassign.pipe(untilDestroyed(this)).subscribe((assignment) => {
+							this.onUnassignUser(assignment as PluginUserAssignment);
+						});
+					}
+				}
+			},
+			hideSubHeader: true,
+			actions: false,
+			noDataMessage: 'No users assigned to this plugin',
+			pager: {
+				display: false,
+				perPage: 10,
+				page: 1
+			}
+		};
+	}
+
+	private bindSourcesToStreams(): void {
+		this.userAssignmentFacade.assignments$
+			.pipe(
+				tap((assignments) => {
+					const rows = assignments.map((a) => ({
+						...a,
+						firstName: a.user?.firstName,
+						lastName: a.user?.lastName,
+						email: a.user?.email,
+						imageUrl: a.user?.imageUrl,
+						_user: `${a.user?.firstName || ''} ${a.user?.lastName || ''}`.trim(),
+						_assignedAt: a.assignedAt,
+						_status: a.isActive
+					}));
+					this.assignedUsersSource.load(rows);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	/**
 	 * Initialize reactive data streams
@@ -197,6 +291,53 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	}
 
 	/**
+	 * Toggle user access to the plugin (enable / disable)
+	 */
+	onToggleUserAccess(rowData: any): void {
+		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
+		if (!pluginTenantId) return;
+		if (rowData.newState) {
+			this.userAssignmentFacade.allowUsersToPluginTenant(pluginTenantId, [rowData.userId]);
+		} else {
+			this.userAssignmentFacade.denyUsersFromPluginTenant(pluginTenantId, [rowData.userId]);
+		}
+	}
+
+	/**
+	 * Enable access for all assigned users
+	 */
+	onEnableAllUsers(): void {
+		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
+		if (!pluginTenantId) return;
+		this.userAssignmentFacade.assignments$
+			.pipe(
+				filter((a) => a.length > 0),
+				untilDestroyed(this)
+			)
+			.subscribe((assignments) => {
+				const userIds = assignments.map((a) => a.userId);
+				this.userAssignmentFacade.allowUsersToPluginTenant(pluginTenantId, userIds);
+			});
+	}
+
+	/**
+	 * Disable access for all assigned users
+	 */
+	onDisableAllUsers(): void {
+		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
+		if (!pluginTenantId) return;
+		this.userAssignmentFacade.assignments$
+			.pipe(
+				filter((a) => a.length > 0),
+				untilDestroyed(this)
+			)
+			.subscribe((assignments) => {
+				const userIds = assignments.map((a) => a.userId);
+				this.userAssignmentFacade.denyUsersFromPluginTenant(pluginTenantId, userIds);
+			});
+	}
+
+	/**
 	 * Handle user unassignment (remove from allowed users)
 	 * Removes user from the plugin tenant's allowed users list
 	 * @param assignment - The assignment to remove
@@ -228,78 +369,9 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	// ============================================================================
 
 	/**
-	 * Get display name for user from assignment
-	 * Formats user's full name or falls back to email
-	 * @param assignment - Plugin user assignment
-	 * @returns Formatted display name
+	 * Get display name for user from assignment (used externally)
 	 */
 	getUserDisplayName(assignment: PluginUserAssignment): string {
 		return this.userAssignmentFacade.getUserDisplayName(assignment);
-	}
-
-	/**
-	 * Get avatar URL for user
-	 * Returns user's image URL or default avatar
-	 * @param user - User object from assignment
-	 * @returns Avatar URL
-	 */
-	getUserAvatar(user: IUser | PluginUserAssignment['user']): string {
-		if (!user) {
-			return '/assets/images/avatars/default-avatar.png';
-		}
-		return user.imageUrl || '/assets/images/avatars/default-avatar.png';
-	}
-
-	/**
-	 * Get formatted assignment date
-	 * Returns null if no valid date is available
-	 * @param assignment - Plugin user assignment
-	 * @returns Date object for formatting in template, or null if invalid
-	 */
-	getAssignmentDate(assignment: PluginUserAssignment): Date | null {
-		return this.userAssignmentFacade.getAssignmentDate(assignment);
-	}
-
-	/**
-	 * Track by function for ngFor optimization
-	 * Helps Angular track items for efficient DOM updates
-	 * @param index - Item index
-	 * @param assignment - Plugin user assignment
-	 * @returns Unique identifier for assignment
-	 */
-	trackByAssignmentId(index: number, assignment: PluginUserAssignment): string {
-		return assignment?.id || `${index}`;
-	}
-
-	/**
-	 * Check if assignment is active
-	 * @param assignment - Plugin user assignment
-	 * @returns True if assignment is active
-	 */
-	isActive(assignment: PluginUserAssignment): boolean {
-		return this.userAssignmentFacade.isAssignmentActive(assignment);
-	}
-
-	/**
-	 * Get status badge configuration
-	 * @param assignment - Plugin user assignment
-	 * @returns Badge status and text configuration
-	 */
-	getStatusBadge(assignment: PluginUserAssignment): { status: string; text: string } {
-		return this.userAssignmentFacade.getStatusBadge(assignment);
-	}
-
-	/**
-	 * Load more assignments for infinite scroll
-	 */
-	onLoadMore(): void {
-		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
-		if (!pluginTenantId) {
-			console.warn('Cannot load more: plugin tenant ID not found');
-			return;
-		}
-
-		// TODO: Implement proper pagination with skip/take
-		this.userAssignmentFacade.loadPluginTenantUsers(pluginTenantId, 'allowed');
 	}
 }

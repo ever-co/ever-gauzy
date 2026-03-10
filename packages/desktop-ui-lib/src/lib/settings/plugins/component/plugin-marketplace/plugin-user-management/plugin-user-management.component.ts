@@ -188,8 +188,8 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 			actions: false,
 			noDataMessage: 'No users available to assign',
 			pager: {
-				display: true,
-				perPage: 8,
+				display: false,
+				perPage: 10,
 				page: 1
 			}
 		};
@@ -257,8 +257,8 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 			actions: false,
 			noDataMessage: 'No users assigned to this plugin',
 			pager: {
-				display: true,
-				perPage: 8,
+				display: false,
+				perPage: 10,
 				page: 1
 			}
 		};
