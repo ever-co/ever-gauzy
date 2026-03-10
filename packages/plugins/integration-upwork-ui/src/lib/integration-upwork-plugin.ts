@@ -10,8 +10,17 @@ import { INTEGRATION_UPWORK_PAGE_ROUTE } from './integration-upwork.routes';
  */
 export const IntegrationUpworkPlugin: PluginUiDefinition = {
 	id: 'integration-upwork',
+
+	// ── Versioning & Compatibility ────────────────────────────────
+	version: '1.0.0',
+
+	// ── Location & Module ────────────────────────────────────────
 	location: 'integrations-sections',
 	module: IntegrationUpworkUiModule,
+
+	// ── Access Control ───────────────────────────────────────────
 	permissionKeys: [PermissionsEnum.INTEGRATION_VIEW],
+
+	// ── Routes ───────────────────────────────────────────────────
 	routes: [INTEGRATION_UPWORK_PAGE_ROUTE as PluginRouteInput]
 };

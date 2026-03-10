@@ -1,7 +1,16 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input } from '@angular/core';
-import { IMenuItem } from './menu-items/interface/menu-item.interface';
+import { CommonModule } from '@angular/common';
+import {
+	AfterContentChecked,
+	AfterViewInit,
+	ChangeDetectionStrategy,
+	ChangeDetectorRef,
+	Component,
+	inject,
+	Input
+} from '@angular/core';
 import { MenuItemComponent } from './menu-items/concrete/menu-item/menu-item.component';
-import { SidebarMenuService } from '../../services';
+import { IMenuItem } from './menu-items/interface/menu-item.interface';
+import { SidebarMenuService } from '../../services/nav-builder/sidebar-menu.service';
 
 @Component({
 	selector: 'ga-sidebar-menu',
@@ -9,9 +18,9 @@ import { SidebarMenuService } from '../../services';
 	styleUrls: ['./sidebar-menu.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: true,
-	imports: [MenuItemComponent]
+	imports: [CommonModule, MenuItemComponent]
 })
-export class SidebarMenuComponent {
+export class SidebarMenuComponent implements AfterContentChecked, AfterViewInit {
 	private readonly _cdr = inject(ChangeDetectorRef);
 	private readonly _sidebarMenuService = inject(SidebarMenuService);
 
@@ -26,8 +35,20 @@ export class SidebarMenuComponent {
 		return this._items;
 	}
 
-	public get selectedItem(): IMenuItem {
+	public get selectedItem() {
 		return this._sidebarMenuService.selectedItem;
+	}
+	public set selectedItem(value: IMenuItem) {
+		this._sidebarMenuService.selectedItem = value;
+		this._cdr.detectChanges();
+	}
+
+	ngAfterContentChecked(): void {
+		this._cdr.detectChanges();
+	}
+
+	ngAfterViewInit(): void {
+		this._cdr.detectChanges();
 	}
 
 	/**
@@ -36,7 +57,10 @@ export class SidebarMenuComponent {
 	 * @param event The menu item to focus on.
 	 */
 	public focusOn(event: IMenuItem): void {
+		// Set the selected item in the sidebar menu
 		this._sidebarMenuService.selectedItem = event;
-		this._cdr.markForCheck();
+
+		// Trigger change detection
+		this._cdr.detectChanges();
 	}
 }

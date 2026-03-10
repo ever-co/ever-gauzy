@@ -67,7 +67,7 @@
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.18.1",
 		"express": "^5.2.1",
-		"locutus": "^2.0.30",
+		"locutus": "^3.0.0",
 		"moment": "^2.30.1",
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",

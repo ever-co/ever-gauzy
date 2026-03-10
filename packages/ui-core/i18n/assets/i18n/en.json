@@ -192,7 +192,8 @@
 		"REMOVE_FROM_FAVORITES": "Remove from favorites",
 		"ADD_TO_FAVORITES": "Add to favorites",
 		"DONE": "Done",
-		"SKIP": "Skip"
+		"SKIP": "Skip",
+		"UNSELECT_ALL": "Deselect All"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1574,6 +1575,92 @@
 				"SUCCESS": {
 					"CONNECTION_CREATED": "Activepieces connection created successfully"
 				}
+			}
+		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "SIM AI Workflow Integration",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Enter your SIM AI API key to connect your account. You can find your API key in your SIM dashboard at sim.ai.",
+				"NEXT": "Connect",
+				"HINT": "Your API key is stored securely and used to authenticate workflow executions.",
+				"ERRORS": {
+					"INVALID_FORM": "Please fill all required fields correctly",
+					"SAVE_SETTINGS": "Failed to save settings",
+					"ORGANIZATION_NOT_FOUND": "Organization not found",
+					"CHECK_REMEMBER_STATE": "Failed to check remember state"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "SIM AI integration configured successfully"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "SIM AI Settings",
+				"SUBTITLE": "Configure your SIM AI integration settings",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your SIM AI API Key"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Execution History",
+				"NO_EXECUTIONS": "No workflow executions found. Execute a workflow from the Workflows tab to see results here.",
+				"WORKFLOW_ID": "Workflow ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Filter by workflow ID",
+				"EXECUTION_ID": "Execution ID",
+				"STATUS": "Status",
+				"TRIGGERED_BY": "Triggered By",
+				"DURATION": "Duration",
+				"CREATED": "Created",
+				"LOADING": "Loading execution history...",
+				"LOAD": "Search",
+				"ALL_STATUSES": "All Statuses",
+				"SHOWING": "Showing",
+				"OF": "of",
+				"PREVIOUS_PAGE": "Previous page",
+				"NEXT_PAGE": "Next page"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Workflows",
+				"VALIDATE_TITLE": "Validate Workflow",
+				"EXECUTE_TITLE": "Execute Workflow",
+				"JOB_STATUS_TITLE": "Async Job Status",
+				"WORKFLOW_ID": "Workflow ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Enter your SIM workflow ID",
+				"VALIDATE": "Validate",
+				"DEPLOYED": "Workflow is deployed and ready to execute.",
+				"NOT_DEPLOYED": "Workflow is not deployed or not found.",
+				"EXECUTE": "Execute",
+				"ASYNC": "Async",
+				"TIMEOUT": "Timeout (ms)",
+				"INPUT": "Input (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Provide workflow input as valid JSON. This data will be passed to your SIM workflow.",
+				"RESULT": "Execution Result",
+				"TASK_ID": "Job ID",
+				"TASK_ID_PLACEHOLDER": "Enter the async job ID",
+				"CHECK_STATUS": "Check Status",
+				"JOB_RESULT": "Job Status",
+				"INVALID_JSON": "Invalid JSON input",
+				"EXECUTION_FAILED": "Execution failed"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Event Triggers",
+				"ADD_TITLE": "Add Event Trigger",
+				"ACTIVE_TITLE": "Active Event Triggers",
+				"DESCRIPTION": "Configure automatic workflow triggers. When a platform event occurs, the mapped SIM workflow will execute automatically.",
+				"EVENT": "Event",
+				"SELECT_EVENT": "Select an event",
+				"WORKFLOW_ID": "Workflow ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Enter the SIM workflow ID to trigger",
+				"ADD": "Add",
+				"REMOVE": "Remove mapping",
+				"NO_MAPPINGS": "No event triggers configured. Add a mapping above to automatically trigger SIM workflows from platform events.",
+				"LOADING": "Loading event triggers...",
+				"MAPPING_SAVED": "Event trigger mapping saved successfully.",
+				"MAPPING_REMOVED": "Event trigger mapping removed successfully.",
+				"SAVE_FAILED": "Failed to save event trigger mapping.",
+				"REMOVE_FAILED": "Failed to remove event trigger mapping.",
+				"LOAD_FAILED": "Failed to load event triggers."
 			}
 		},
 		"COMING_SOON": "Coming soon",
@@ -4722,7 +4809,8 @@
 		"VISITED_DATES": "Visited Dates",
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
-		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project."
+		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
+		"SCREEN_SELECTED": "{{ count }} Screen(s) selected"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

@@ -1,5 +1,18 @@
 import { inject, NgModule, OnDestroy, provideZoneChangeDetection } from '@angular/core';
-import { PLUGIN_UI_CONFIG, getPluginUiConfig, PluginUiModule, PluginUiRegistryService } from '@gauzy/plugin-ui';
+import { TranslateService, TranslateStore } from '@ngx-translate/core';
+import {
+	PLUGIN_UI_CONFIG,
+	getPluginUiConfig,
+	PluginUiModule,
+	PluginUiRegistryService,
+	TranslateAdapterService,
+	PermissionAdapterService,
+	FeatureAdapterService,
+	PLUGIN_APP_STORE,
+	PLUGIN_TRANSLATE_DELEGATE,
+	PLUGIN_TRANSLATE_STORE_DELEGATE
+} from '@gauzy/plugin-ui';
+import { NavMenuBuilderService, PageRouteRegistryService, PageTabRegistryService, Store } from '@gauzy/ui-core/core';
 import { AppModule } from './app.module';
 import { AppComponent } from './app.component';
 
@@ -20,13 +33,32 @@ import { AppComponent } from './app.component';
  */
 @NgModule({
 	imports: [
-		PluginUiModule.init(), // Plugin lifecycle management (ngOnPluginBootstrap / ngOnPluginDestroy)
+		PluginUiModule.init({
+			navBuilder: NavMenuBuilderService,
+			routeRegistry: PageRouteRegistryService,
+			tabRegistry: PageTabRegistryService,
+			translateService: TranslateAdapterService,
+			permissionChecker: PermissionAdapterService,
+			featureChecker: FeatureAdapterService
+		}), // Plugin lifecycle management (ngOnPluginBootstrap / ngOnPluginDestroy)
 		AppModule // Core application module (declares AppComponent + all app logic)
 	],
 	providers: [
 		{
 			provide: PLUGIN_UI_CONFIG,
 			useFactory: getPluginUiConfig
+		},
+		{
+			provide: PLUGIN_APP_STORE,
+			useExisting: Store
+		},
+		{
+			provide: PLUGIN_TRANSLATE_DELEGATE,
+			useExisting: TranslateService
+		},
+		{
+			provide: PLUGIN_TRANSLATE_STORE_DELEGATE,
+			useExisting: TranslateStore
 		},
 		provideZoneChangeDetection({ eventCoalescing: true })
 	],

@@ -178,7 +178,8 @@
 		"RECOVER": "Recuperar",
 		"ADD_MORE_SOURCES": "Adicionar mais fontes",
 		"REMOVE_FROM_FAVORITES": "Remover dos favoritos",
-		"ADD_TO_FAVORITES": "Adicionar aos favoritos"
+		"ADD_TO_FAVORITES": "Adicionar aos favoritos",
+		"UNSELECT_ALL": "Desmarcar tudo"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1487,6 +1488,92 @@
 				"SUCCESS": {
 					"CONNECTION_CREATED": "Conexão ActivePieces criada com sucesso"
 				}
+			}
+		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "Integração de fluxos de trabalho SIM AI",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Insira sua chave API do SIM AI para conectar sua conta. Você pode encontrar sua chave API no painel do SIM em sim.ai.",
+				"NEXT": "Conectar",
+				"HINT": "Sua chave API é armazenada com segurança e usada para autenticar execuções de fluxos de trabalho.",
+				"ERRORS": {
+					"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios corretamente",
+					"SAVE_SETTINGS": "Falha ao salvar configurações",
+					"ORGANIZATION_NOT_FOUND": "Organização não encontrada",
+					"CHECK_REMEMBER_STATE": "Falha ao verificar o estado salvo"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Integração SIM AI configurada com sucesso"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Configurações do SIM AI",
+				"SUBTITLE": "Configure as definições da sua integração SIM AI",
+				"API_KEY": "Chave API",
+				"API_KEY_PLACEHOLDER": "Insira sua chave API do SIM AI"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Histórico de execução",
+				"NO_EXECUTIONS": "Nenhuma execução de fluxo de trabalho encontrada. Execute um fluxo de trabalho na aba Fluxos de trabalho para ver os resultados aqui.",
+				"WORKFLOW_ID": "ID do fluxo de trabalho",
+				"WORKFLOW_ID_PLACEHOLDER": "Filtrar por ID do fluxo de trabalho",
+				"EXECUTION_ID": "ID de execução",
+				"STATUS": "Status",
+				"TRIGGERED_BY": "Acionado por",
+				"DURATION": "Duração",
+				"CREATED": "Criado",
+				"LOADING": "Carregando histórico de execução...",
+				"LOAD": "Pesquisar",
+				"ALL_STATUSES": "Todos os status",
+				"SHOWING": "Exibindo",
+				"OF": "de",
+				"PREVIOUS_PAGE": "Página anterior",
+				"NEXT_PAGE": "Próxima página"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Fluxos de trabalho",
+				"VALIDATE_TITLE": "Validar fluxo de trabalho",
+				"EXECUTE_TITLE": "Executar fluxo de trabalho",
+				"JOB_STATUS_TITLE": "Status da tarefa assíncrona",
+				"WORKFLOW_ID": "ID do fluxo de trabalho",
+				"WORKFLOW_ID_PLACEHOLDER": "Insira o ID do seu fluxo de trabalho SIM",
+				"VALIDATE": "Validar",
+				"DEPLOYED": "O fluxo de trabalho está implantado e pronto para execução.",
+				"NOT_DEPLOYED": "O fluxo de trabalho não está implantado ou não foi encontrado.",
+				"EXECUTE": "Executar",
+				"ASYNC": "Assíncrono",
+				"TIMEOUT": "Tempo limite (ms)",
+				"INPUT": "Entrada (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Forneça a entrada do fluxo de trabalho como JSON válido. Esses dados serão passados ao seu fluxo de trabalho SIM.",
+				"RESULT": "Resultado da execução",
+				"TASK_ID": "ID da tarefa",
+				"TASK_ID_PLACEHOLDER": "Insira o ID da tarefa assíncrona",
+				"CHECK_STATUS": "Verificar status",
+				"JOB_RESULT": "Status da tarefa",
+				"INVALID_JSON": "Entrada JSON inválida",
+				"EXECUTION_FAILED": "A execução falhou"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Gatilhos de eventos",
+				"ADD_TITLE": "Adicionar gatilho de evento",
+				"ACTIVE_TITLE": "Gatilhos de eventos ativos",
+				"DESCRIPTION": "Configure gatilhos automáticos de fluxos de trabalho. Quando um evento da plataforma ocorrer, o fluxo de trabalho SIM associado será executado automaticamente.",
+				"EVENT": "Evento",
+				"SELECT_EVENT": "Selecionar um evento",
+				"WORKFLOW_ID": "ID do fluxo de trabalho",
+				"WORKFLOW_ID_PLACEHOLDER": "Insira o ID do fluxo de trabalho SIM para acionar",
+				"ADD": "Adicionar",
+				"REMOVE": "Remover associação",
+				"NO_MAPPINGS": "Nenhum gatilho de evento configurado. Adicione uma associação acima para acionar automaticamente fluxos de trabalho SIM a partir de eventos da plataforma.",
+				"LOADING": "Carregando gatilhos de eventos...",
+				"MAPPING_SAVED": "Associação do gatilho de evento salva com sucesso.",
+				"MAPPING_REMOVED": "Associação do gatilho de evento removida com sucesso.",
+				"SAVE_FAILED": "Falha ao salvar a associação do gatilho de evento.",
+				"REMOVE_FAILED": "Falha ao remover a associação do gatilho de evento.",
+				"LOAD_FAILED": "Falha ao carregar os gatilhos de eventos."
 			}
 		},
 		"COMING_SOON": "Em breve",
@@ -4575,7 +4662,8 @@
 		"VISITED_DATES": "Datas Visitadas",
 		"NO_SCREENSHOT": "Sem captura de tela.",
 		"NO_SCREENSHOTS": "Sem capturas de tela",
-		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto."
+		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto.",
+		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização",

@@ -1,0 +1,40 @@
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { filter, merge, tap, distinctUntilChanged } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { LanguagesEnum } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-core/core';
+import { I18nService } from '@gauzy/ui-core/i18n';
+
+@UntilDestroy({ checkProperties: true })
+@Component({
+	selector: 'ngx-integration-sim-layout',
+	template: `<router-outlet></router-outlet>`,
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class IntegrationSimLayoutComponent implements OnInit {
+	private readonly _translateService = inject(TranslateService);
+	private readonly _store = inject(Store);
+	private readonly _i18nService = inject(I18nService);
+
+	ngOnInit() {
+		this._initializeUiLanguagesAndLocale();
+	}
+
+	private _initializeUiLanguagesAndLocale() {
+		const preferredLanguage$ = merge(
+			this._store.preferredLanguage$,
+			this._i18nService.preferredLanguage$
+		).pipe(
+			distinctUntilChanged(),
+			filter((lang: string | LanguagesEnum) => !!lang),
+			tap((lang: string | LanguagesEnum) => {
+				this._translateService.use(lang);
+			}),
+			untilDestroyed(this)
+		);
+
+		preferredLanguage$.subscribe();
+	}
+}

@@ -56,6 +56,7 @@ export * from './selector';
 export * from './selector-builder';
 export * from './seo';
 export * from './server-connection';
+export * from './sim';
 export * from './skill';
 export * from './state';
 export * from './tag';
