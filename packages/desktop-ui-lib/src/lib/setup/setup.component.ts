@@ -9,7 +9,7 @@ import {
 	OnDestroy
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { DesktopSetupConfig, IProxyConfig, TaskRelatedIssuesRelationEnum } from '@gauzy/contracts';
+import { DesktopSetupConfig, IProxyConfig } from '@gauzy/contracts';
 import {
 	NbDialogService,
 	NbLayoutModule,
