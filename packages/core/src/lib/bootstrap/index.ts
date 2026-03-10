@@ -171,8 +171,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			contentSecurityPolicy: isProduction
 				? undefined // use Helmet's strict default CSP in production
 				: false, // disable CSP in dev/stage so Swagger/Scalar inline scripts work
-			crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin loading of resources (e.g. screenshots, images)
-			crossOriginEmbedderPolicy: false // Disable Cross-Origin-Embedder-Policy so cross-origin resources (images, screenshots) can be loaded
+			crossOriginResourcePolicy: { policy: 'cross-origin' } // Allow cross-origin loading of resources (e.g. screenshots, images)
 		})
 	);
 
@@ -269,7 +268,7 @@ function createCorsOriginCallback(allowedOrigins: string[]) {
 		if (!origin || allowedOrigins.includes(origin)) {
 			callback(null, true);
 		} else {
-			callback(null, false);
+			callback(new Error(`Origin "${origin}" is not allowed by CORS`));
 		}
 	};
 }
