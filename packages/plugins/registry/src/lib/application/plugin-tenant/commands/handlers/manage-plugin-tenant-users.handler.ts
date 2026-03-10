@@ -111,6 +111,16 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 				message = `Successfully removed ${userIds.length} user(s) from denied list`;
 				break;
 
+			case 'unassign':
+				for (const userId of userIds) {
+					this.validate(userId);
+					pluginTenant.removeAllowedUser(userId);
+					pluginTenant.removeDeniedUser(userId);
+					affectedUserIds.push(userId);
+				}
+				message = `Successfully unassigned ${userIds.length} user(s) from the plugin`;
+				break;
+
 			default:
 				throw new BadRequestException(`Unknown operation: ${operation}`);
 		}
@@ -143,6 +153,7 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 				break;
 			case 'deny':
 			case 'remove-allowed':
+			case 'unassign':
 				await this.pluginSubscriptionService.revokeChildSubscriptions(subscription.id, affectedUserIds);
 				break;
 		}

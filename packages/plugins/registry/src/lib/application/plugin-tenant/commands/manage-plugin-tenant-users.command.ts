@@ -4,7 +4,7 @@ import { ICommand } from '@nestjs/cqrs';
 /**
  * Operation type for managing plugin tenant users
  */
-export type PluginTenantUserOperation = 'allow' | 'deny' | 'remove-allowed' | 'remove-denied';
+export type PluginTenantUserOperation = 'allow' | 'deny' | 'remove-allowed' | 'remove-denied' | 'unassign';
 
 /**
  * Command to manage allowed/denied users for a plugin tenant
