@@ -1555,6 +1555,25 @@
 				"JOB_RESULT": "Taakstatus",
 				"INVALID_JSON": "Ongeldige JSON-invoer",
 				"EXECUTION_FAILED": "Uitvoering mislukt"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Gebeurtenistriggers",
+				"ADD_TITLE": "Gebeurtenistrigger toevoegen",
+				"ACTIVE_TITLE": "Actieve gebeurtenistriggers",
+				"DESCRIPTION": "Configureer automatische workflowtriggers. Wanneer een platformgebeurtenis plaatsvindt, wordt de gekoppelde SIM-workflow automatisch uitgevoerd.",
+				"EVENT": "Gebeurtenis",
+				"SELECT_EVENT": "Selecteer een gebeurtenis",
+				"WORKFLOW_ID": "Workflow-ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Voer de SIM-workflow-ID in om te activeren",
+				"ADD": "Toevoegen",
+				"REMOVE": "Koppeling verwijderen",
+				"NO_MAPPINGS": "Geen gebeurtenistriggers geconfigureerd. Voeg hierboven een koppeling toe om SIM-workflows automatisch te activeren vanuit platformgebeurtenissen.",
+				"LOADING": "Gebeurtenistriggers laden...",
+				"MAPPING_SAVED": "Gebeurtenistrigger-koppeling succesvol opgeslagen.",
+				"MAPPING_REMOVED": "Gebeurtenistrigger-koppeling succesvol verwijderd.",
+				"SAVE_FAILED": "Kan gebeurtenistrigger-koppeling niet opslaan.",
+				"REMOVE_FAILED": "Kan gebeurtenistrigger-koppeling niet verwijderen.",
+				"LOAD_FAILED": "Kan gebeurtenistriggers niet laden."
 			}
 		},
 		"COMING_SOON": "Binnenkort beschikbaar.",

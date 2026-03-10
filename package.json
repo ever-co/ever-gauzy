@@ -159,6 +159,14 @@
 		"build:package:plugin-ui:prod": "yarn ng:prod build plugin-ui --configuration=production",
 		"build:package:plugin-ui:docker": "yarn ng:docker build plugin-ui --configuration=production",
 		"build:package:plugin-ui:dev:docker": "yarn ng:dev:docker build plugin-ui --configuration=development --verbose",
+		"build:package:ui-react": "yarn ng build ui-react --configuration=development",
+		"build:package:ui-react:prod": "yarn ng:prod build ui-react --configuration=production",
+		"build:package:ui-react:docker": "yarn ng:docker build ui-react --configuration=production",
+		"build:package:ui-react:dev:docker": "yarn ng:dev:docker build ui-react --configuration=development --verbose",
+		"build:package:ui-react-components": "yarn nx build ui-react-components",
+		"build:package:ui-react-components:prod": "yarn nx build ui-react-components",
+		"build:package:ui-react-components:docker": "yarn nx build ui-react-components",
+		"build:package:ui-react-components:dev:docker": "yarn nx build ui-react-components",
 		"build:package:auth": "yarn ng build auth --configuration=development",
 		"build:package:auth:prod": "yarn ng:prod build auth --configuration=production",
 		"build:package:auth:docker": "yarn ng:docker build auth --configuration=production",
@@ -569,7 +577,7 @@
 		"@sentry/core": "10.36.0",
 		"rxjs": "^7.8.2",
 		"autoprefixer": "^10.4.20",
-		"locutus": "^2.0.30",
+		"locutus": "^3.0.0",
 		"minizlib": "^2.1.2",
 		"node-abi": "^3.78.0",
 		"@electron/rebuild/node-abi": "^3.78.0",
@@ -627,6 +635,8 @@
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2",
 		"yargs": "^17.5.0",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
 		"zone.js": "0.16.0"
 	},
 	"devDependencies": {
@@ -685,6 +695,8 @@
 		"@types/node": "^24.10.0",
 		"@types/webpack": "^5.28.5",
 		"@types/yargs": "^15.0.9",
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
 		"@typescript-eslint/utils": "^8.40.0",
 		"ajv-formats": "^2.1.1",
 		"angular-eslint": "^21.0.1",
@@ -762,7 +774,7 @@
 			"node-gyp": "$node-gyp"
 		},
 		"twing": {
-			"locutus": "2.0.30"
+			"locutus": "^3.0.0"
 		},
 		"electron-rebuild": {
 			"node-abi": "3.78.0"

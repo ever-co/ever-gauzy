@@ -12,6 +12,6 @@
 		"strictTemplates": false,
 		"strictInjectionParameters": false
 	},
-	"include": ["**/*.ts", "**/workers/*.js"],
+	"include": ["**/*.ts", "**/*.tsx", "**/workers/*.js"],
 	"exclude": ["jest.config.ts"]
 }

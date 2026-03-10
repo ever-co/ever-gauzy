@@ -1554,6 +1554,25 @@
 				"JOB_RESULT": "Status zadania",
 				"INVALID_JSON": "Nieprawidłowe dane wejściowe JSON",
 				"EXECUTION_FAILED": "Wykonanie nie powiodło się"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Wyzwalacze zdarzeń",
+				"ADD_TITLE": "Dodaj wyzwalacz zdarzenia",
+				"ACTIVE_TITLE": "Aktywne wyzwalacze zdarzeń",
+				"DESCRIPTION": "Skonfiguruj automatyczne wyzwalacze przepływów pracy. Gdy wystąpi zdarzenie platformy, przypisany przepływ pracy SIM zostanie wykonany automatycznie.",
+				"EVENT": "Zdarzenie",
+				"SELECT_EVENT": "Wybierz zdarzenie",
+				"WORKFLOW_ID": "ID przepływu pracy",
+				"WORKFLOW_ID_PLACEHOLDER": "Wprowadź ID przepływu pracy SIM do uruchomienia",
+				"ADD": "Dodaj",
+				"REMOVE": "Usuń przypisanie",
+				"NO_MAPPINGS": "Brak skonfigurowanych wyzwalaczy zdarzeń. Dodaj przypisanie powyżej, aby automatycznie uruchamiać przepływy pracy SIM ze zdarzeń platformy.",
+				"LOADING": "Ładowanie wyzwalaczy zdarzeń...",
+				"MAPPING_SAVED": "Przypisanie wyzwalacza zdarzenia zostało pomyślnie zapisane.",
+				"MAPPING_REMOVED": "Przypisanie wyzwalacza zdarzenia zostało pomyślnie usunięte.",
+				"SAVE_FAILED": "Nie udało się zapisać przypisania wyzwalacza zdarzenia.",
+				"REMOVE_FAILED": "Nie udało się usunąć przypisania wyzwalacza zdarzenia.",
+				"LOAD_FAILED": "Nie udało się załadować wyzwalaczy zdarzeń."
 			}
 		},
 		"COMING_SOON": "Niedługo będzie dostępne",

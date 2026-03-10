@@ -94,6 +94,7 @@ export class DashboardComponent extends TranslationBaseComponent implements OnIn
 			order: 3, // The order of the tab
 			permissions: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD]
 		});
+
 	}
 
 	/**

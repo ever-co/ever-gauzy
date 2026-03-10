@@ -83,9 +83,7 @@ export class IntegrationUpworkUiModule implements IOnPluginUiBootstrap, IOnPlugi
 	private readonly _log = inject(LoggerService).withContext('IntegrationUpworkUiModule');
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
-	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, {
-		optional: true
-	}) as PluginUiDefinition | null;
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true }) as PluginUiDefinition | null;
 
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 

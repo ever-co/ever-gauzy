@@ -1440,6 +1440,25 @@
 				"JOB_RESULT": "crwdns20088:0crwdne20088:0",
 				"INVALID_JSON": "crwdns20090:0crwdne20090:0",
 				"EXECUTION_FAILED": "crwdns20092:0crwdne20092:0"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Event Triggers",
+				"ADD_TITLE": "Med Event Trigger",
+				"ACTIVE_TITLE": "Event Triggers ma tye ka tic",
+				"DESCRIPTION": "Ter automatic workflow triggers. Ka event me platform otime, SIM workflow ma ki map bitic ki kene.",
+				"EVENT": "Event",
+				"SELECT_EVENT": "Yer event",
+				"WORKFLOW_ID": "Workflow ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Ket SIM workflow ID me trigger",
+				"ADD": "Med",
+				"REMOVE": "Kwany mapping",
+				"NO_MAPPINGS": "Pe tye event triggers ma ki ter. Med mapping i wi ka me trigger SIM workflows ki bot events me platform.",
+				"LOADING": "Cano event triggers...",
+				"MAPPING_SAVED": "Event trigger mapping ki gwoko maber.",
+				"MAPPING_REMOVED": "Event trigger mapping ki kwanyo maber.",
+				"SAVE_FAILED": "Pe olare gwoko event trigger mapping.",
+				"REMOVE_FAILED": "Pe olare kwanyo event trigger mapping.",
+				"LOAD_FAILED": "Pe olare cano event triggers."
 			}
 		},
 		"COMING_SOON": "crwdns4078:0crwdne4078:0",

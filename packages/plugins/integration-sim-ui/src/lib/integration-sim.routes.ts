@@ -5,6 +5,7 @@ import { SimAuthorizeComponent } from './components/sim-authorize/sim-authorize.
 import { SimComponent } from './components/sim/sim.component';
 import { SimExecutionsComponent } from './components/sim-executions/sim-executions.component';
 import { SimWorkflowsComponent } from './components/sim-workflows/sim-workflows.component';
+import { SimEventTriggersComponent } from './components/sim-event-triggers/sim-event-triggers.component';
 
 @NgModule({
 	imports: [
@@ -39,6 +40,10 @@ import { SimWorkflowsComponent } from './components/sim-workflows/sim-workflows.
 							{
 								path: 'workflows',
 								component: SimWorkflowsComponent
+							},
+							{
+								path: 'event-triggers',
+								component: SimEventTriggersComponent
 							}
 						]
 					}

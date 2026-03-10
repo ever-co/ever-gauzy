@@ -10,6 +10,7 @@ import {
 	NbContextMenuModule,
 	NbIconModule,
 	NbInputModule,
+	NbListModule,
 	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSpinnerModule,
@@ -25,6 +26,7 @@ import { SimAuthorizeComponent } from './components/sim-authorize/sim-authorize.
 import { SimComponent } from './components/sim/sim.component';
 import { SimExecutionsComponent } from './components/sim-executions/sim-executions.component';
 import { SimWorkflowsComponent } from './components/sim-workflows/sim-workflows.component';
+import { SimEventTriggersComponent } from './components/sim-event-triggers/sim-event-triggers.component';
 
 @NgModule({
 	declarations: [
@@ -32,7 +34,8 @@ import { SimWorkflowsComponent } from './components/sim-workflows/sim-workflows.
 		SimAuthorizeComponent,
 		SimComponent,
 		SimExecutionsComponent,
-		SimWorkflowsComponent
+		SimWorkflowsComponent,
+		SimEventTriggersComponent
 	],
 	imports: [
 		CommonModule,
@@ -46,6 +49,7 @@ import { SimWorkflowsComponent } from './components/sim-workflows/sim-workflows.
 		NbContextMenuModule,
 		NbIconModule,
 		NbInputModule,
+		NbListModule,
 		NbRouteTabsetModule,
 		NbSelectModule,
 		NbSpinnerModule,
